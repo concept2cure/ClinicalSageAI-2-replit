@@ -1,0 +1,36 @@
+# Gates, with D1-3's change in the shared tree at HEAD 75cc3c1c8, 2026-11-02T01:44:45Z
+## npm run --silent ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+exit 0
+
+## npm run --silent ci:check-css-selector-shadowing
+[css-shadowing] 3 baseline entr(y/ies) no longer shadowed — delete these lines:
+  · client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .cmdk-list
+  · client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .reg-eyebrow
+  · client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .tb-cmdk .lbl
+
+[css-shadowing] OK — 49 stylesheets, 15 known shadowed selector(s), 0 new.
+exit 0
+
+## npm run --silent ci:check-shell-css-collisions
+[ci:shell-css-collisions] 22 class name(s) defined in more than one shell tree (baseline 22) — pdev+v2:22
+[ci:shell-css-collisions] OK — no new cross-shell collisions.
+exit 0
+
+## npm run --silent ci:one-product
+ci:one-product: 102 surfaces, 10 rail entries, none new.
+exit 0
+
+## npm run --silent ci:token-contrast
+✅ token-contrast: 131 pairs checked — text ≥ 4.5:1, non-text ≥ 3:1.
+   15 documented exceptions (brand, muted-text ramp, structural borders) held at or above their recorded ratios.
+exit 0
+
+## npm run --silent ci:design-system
+[design-system] OK — no icon-library, spring/bounce or inline <style> violations on live concept2cure surfaces.
+exit 0
+
+## npm run --silent check:microcopy
+[ci:microcopy] OK — scanned 772 customer-facing files, no exclamations or pictographs.
+exit 0
+

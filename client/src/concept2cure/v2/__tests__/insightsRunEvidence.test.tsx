@@ -172,7 +172,9 @@ describe('the seal verdict', () => {
     expect(within(seal).getByText(/electronic signature signed the seal/)).toBeTruthy();
     // The 11.50 manifestation: signer, time of execution, and meaning.
     expect(within(seal).getByText('R. Mehta')).toBeTruthy();
-    expect(within(seal).getAllByText('approval').length).toBeGreaterThanOrEqual(1);
+    // The meaning in the signing dialog's own word, never the stored token (use walk, 2026-11-09).
+    expect(within(seal).getAllByText('Approval').length).toBeGreaterThanOrEqual(1);
+    expect(within(seal).queryByText('approval')).toBeNull();
     expect(within(seal).getByText(/Filed with the NDA submission package/)).toBeTruthy();
     // An intact seal whose signature check passed makes no "as recorded" caveat.
     expect(within(seal).queryByTestId('rl-seal-sig-unverified')).toBeNull();

@@ -1,0 +1,30 @@
+# S6b (F1 half) red: device-chat-cer-per.test.ts with device-section-registry.ts at df858efee. 5 new cases fail: every device block says generate_document.
+
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > 'CER' is CER_SECTIONS: 12 sections, same order and required flags 5ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > 'CER' carries equivalence, appraisal, evaluator qualification and references 2ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > 'CER' no longer files the PMCF plan as a CER section 1ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > 'IVDR' is PER_SECTIONS, not an empty list 1ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > the equivalence section applies only when equivalence is claimed 1ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > codes are keyed on the record id, never a retired numeric CER.n code 2ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > guidance comes from the record, not a restated citation 1ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > getDeviceSectionByCode resolves a projected section 0ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > getDeviceSections projects the canonical CER and PER outlines > the 510(k), PMA and De Novo outlines are untouched by this step 1ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > the chat device block is rendered from the projection > isDeviceSubmissionType knows CER and IVDR and nothing it cannot answer for 1ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > the chat device block is rendered from the projection > the CER block lists all 12 sections and marks equivalence as conditional 1ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > the chat device block is rendered from the projection > the IVDR block lists the PER outline and does not pass it off as the whole IVDR file 1ms
+ × server/services/ana/__tests__/device-chat-cer-per.test.ts > the chat device block is rendered from the projection > the 510K block names the tool that writes its sections, not generate_document 13ms
+   → expected '\n\n## 510K Submission Context\nThis …' not to contain 'generate_document'
+ × server/services/ana/__tests__/device-chat-cer-per.test.ts > the chat device block is rendered from the projection > the DE_NOVO block names the tool that writes its sections, not generate_document 4ms
+   → expected '\n\n## DE_NOVO Submission Context\nTh…' not to contain 'generate_document'
+ × server/services/ana/__tests__/device-chat-cer-per.test.ts > the chat device block is rendered from the projection > the PMA block names the tool that writes its sections, not generate_document 3ms
+   → expected '\n\n## PMA Submission Context\nThis i…' not to contain 'generate_document'
+ × server/services/ana/__tests__/device-chat-cer-per.test.ts > the chat device block is rendered from the projection > the CER block names the tool that writes its sections, not generate_document 3ms
+   → expected '\n\n## CER Submission Context\nThis i…' not to contain 'generate_document'
+ × server/services/ana/__tests__/device-chat-cer-per.test.ts > the chat device block is rendered from the projection > the IVDR block names the tool that writes its sections, not generate_document 2ms
+   → expected '\n\n## IVDR Submission Context\nThis …' not to contain 'generate_document'
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > the chat device block is rendered from the projection > an unknown type renders nothing 0ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > the chat device block is rendered from the projection > the chat route renders the block through the registry, not its own list 1ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > GET /device-status answers CER and IVDR from the canonical outlines > IVDR returns the PER sections 58ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > GET /device-status answers CER and IVDR from the canonical outlines > an artifact saved under a retired CER.n code does not mark a new section drafted 8ms
+ ✓ server/services/ana/__tests__/device-chat-cer-per.test.ts > GET /device-status answers CER and IVDR from the canonical outlines > refuses a type it does not know with 400, before reading artifacts 5ms
+      Tests  5 failed | 17 passed (22)

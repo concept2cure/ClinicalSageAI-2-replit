@@ -41,6 +41,7 @@ import { and, asc, eq } from 'drizzle-orm';
 import { db, pool } from '../../../db';
 import { cerv2510kSections } from '../../../../shared/schema';
 import { sectionPlainText } from '../../c2c/section-content';
+import { filingAgreesWithBoundDocuments, type FilingAgreementForFiling } from '../../c2c/filing-section-target';
 import type { FilingLeaf } from './estar-filing-readiness';
 
 /** The subset of a cerv2_510k_sections row the adapter needs. */
@@ -323,6 +324,40 @@ export async function loadGovernedDeviceDocument(
   const row = doc.rows[0];
   if (!row?.id) return null;
   return { id: row.id, docType: String(row.doc_type ?? '') };
+}
+
+/**
+ * Does the program's governed device document still hold the text its editing
+ * documents hold? The question every device and IVD exit asks before it builds
+ * from the filing (P-29.3, docs/EXIT_ATTESTATION_DECISION_2026-10-18.md).
+ *
+ * Until 2026-11-02 none asked it. `/build`, the official eSTAR's section
+ * attachments, the filing-readiness verdict and the assembly verdict all read
+ * `c2c_document_sections` and consulted neither store's seal nor its text, so a
+ * device client's package could carry text the document they signed did not.
+ *
+ * It resolves the document through {@link loadGovernedDeviceDocument} — the
+ * SAME lookup, with the same `docTypes`, that the loader the exit uses runs —
+ * so the filing compared is the filing built from, never the newest device
+ * document of another class. Then it asks `filingAgreesWithBoundDocuments`, the
+ * one question, of every editing document bound to it. A program with no
+ * governed document, or one nobody edits in the editor, is not applicable and
+ * says why in `reason`; a failed read throws.
+ */
+export async function governedDeviceFilingAgreement(
+  organizationId: number,
+  programId: string,
+  opts: Pick<LoadDeviceContentLeavesOptions, 'client' | 'docTypes'> = {},
+): Promise<FilingAgreementForFiling> {
+  const client = opts.client ?? pool;
+  const doc = await loadGovernedDeviceDocument(organizationId, programId, client, opts.docTypes ?? GOVERNED_DEVICE_DOC_TYPES);
+  if (!doc) {
+    return {
+      documentId: null, bound: [], diverged: [], rewritten: [], unfiled: [],
+      reason: 'This program has no governed device document here, so there is no filing to compare.',
+    };
+  }
+  return filingAgreesWithBoundDocuments(client, { documentId: doc.id, tenantId: organizationId });
 }
 
 /** The sections of one governed document, in outline order. */

@@ -1,0 +1,9 @@
+ ✓ server/db/__tests__/requestDbLease.test.ts > a request DB connection is returned to the pool however its request ends > when the client went away before the scope was bound 66ms
+ × server/db/__tests__/requestDbLease.test.ts > a request DB connection is returned to the pool however its request ends > when the client went away first and the scope was given a stand-in response 60ms
+   → the abandoned request kept its connection: expected 1 to be +0 // Object.is equality
+ ✓ server/db/__tests__/requestDbLease.test.ts > a request DB connection is returned to the pool however its request ends > when the client goes away while the handler holds the connection 54ms
+ ✓ server/db/__tests__/requestDbLease.test.ts > a request DB connection is returned to the pool however its request ends > when the response is sent 25ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/db/__tests__/requestDbLease.test.ts > a request DB connection is returned to the pool however its request ends > when the client went away first and the scope was given a stand-in response
+AssertionError: the abandoned request kept its connection: expected 1 to be +0 // Object.is equality
+      Tests  1 failed | 3 passed (4)

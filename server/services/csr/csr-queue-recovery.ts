@@ -18,6 +18,12 @@
  *     is not stalled.
  *   - Tenant lifecycle: an organization not permitted background work
  *     (filterTenantsForBackgroundWork) is left as it is.
+ *   - Tenant scope: each item is checked, claimed and run in its
+ *     organization's full tenant scope, its integer id and its uuid
+ *     (db/withTenantConnection.ts withOrganizationTenantConnection), as a
+ *     request of that organization carries it. An organization with no uuid
+ *     has its item recorded failed (CSR_TENANT_SCOPE_UNAVAILABLE) and not
+ *     resumed: the integer id alone reads its Vault as empty (B1, 2026-11-05).
  *   - Requester: the item runs as the user who asked, never as anyone else.
  *     Their access is checked now, under that organization's tenant scope, by
  *     the rule the routes apply to queue the work (requireCsrJobAccess, and a
@@ -107,8 +113,11 @@ const QUEUES: Record<CsrQueue, QueueSql> = {
 export interface CsrQueueRecoveryDeps {
   /** Estate-wide discovery, under the system scope. */
   discover(text: string, params: unknown[]): Promise<{ rows: Record<string, unknown>[] }>;
-  /** Run `fn` on a connection carrying that organization's tenant scope. */
-  withOrganization<T>(organizationId: number, fn: (client: CsrScopeExecutor) => Promise<T>): Promise<T>;
+  /**
+   * Run `fn` on a connection carrying that organization's full tenant scope (its integer id and its uuid). When the
+   * organization has no uuid, `fn` never runs: `refuse` runs instead, on a connection carrying the integer id alone.
+   */
+  withOrganization<T>(organizationId: number, fn: (client: CsrScopeExecutor) => Promise<T>, refuse?: (client: CsrScopeExecutor) => Promise<T>): Promise<T>;
   /** The organizations permitted background work. */
   permitted(organizationIds: number[]): Promise<Set<number>>;
   /** Run the queue's own worker for a claimed item, as its requester, to its end. */
@@ -154,29 +163,41 @@ export async function requesterRefusal(client: CsrScopeExecutor, item: StalledIt
   }
 }
 
+/**
+ * The organization has no uuid, so its full tenant scope (and its Vault) cannot be opened: the item is not resumed,
+ * and nothing runs in the integer scope alone, where the Vault reads as empty (B1, 2026-11-05).
+ */
+export const TENANT_SCOPE_REFUSAL: CsrRecoveryRefusal = { code: 'CSR_TENANT_SCOPE_UNAVAILABLE',
+  message: 'This organization has no tenant key, so its Vault sources cannot be read. It was not resumed after the server restarted.' };
+
 /** The error a refused item records, in its queue's own shape (a build's error carries a reason, as runCSRBuildJob writes it). */
 function refusalRecord(queue: CsrQueue, refusal: CsrRecoveryRefusal): string {
   if (queue !== 'build') return JSON.stringify(refusal);
-  const reason = refusal.code === QUEUES.build.requesterMissing ? 'requester_missing' : 'project_access_refused';
+  const reason = refusal.code === QUEUES.build.requesterMissing ? 'requester_missing'
+    : refusal.code === TENANT_SCOPE_REFUSAL.code ? 'tenant_scope_unavailable' : 'project_access_refused';
   return JSON.stringify({ reason, ...refusal });
 }
 
 type Outcome = CsrQueueRecoverySummary['items'][number];
 
+/** Record the refusal on the item, only while it is still stalled. */
+async function refuseItem(client: CsrScopeExecutor, item: StalledItem, refusal: CsrRecoveryRefusal): Promise<Outcome> {
+  const sql = QUEUES[item.queue];
+  const { rows } = await client.query(sql.refuse, [item.id, item.organizationId, sql.stallMinutes, refusalRecord(item.queue, refusal)]);
+  return { queue: item.queue, id: item.id, outcome: rows.length ? 'refused' : 'not_claimed', code: refusal.code };
+}
+
 async function recoverOne(item: StalledItem, deps: CsrQueueRecoveryDeps): Promise<Outcome> {
   const sql = QUEUES[item.queue];
   const decided = await deps.withOrganization(item.organizationId, async (client): Promise<Outcome | StalledItem> => {
     const refusal = await requesterRefusal(client, item);
-    if (refusal) {
-      const { rows } = await client.query(sql.refuse, [item.id, item.organizationId, sql.stallMinutes, refusalRecord(item.queue, refusal)]);
-      return { queue: item.queue, id: item.id, outcome: rows.length ? 'refused' : 'not_claimed', code: refusal.code };
-    }
+    if (refusal) return refuseItem(client, item, refusal);
     const { rows } = await client.query(sql.claim, [item.id, item.organizationId, sql.stallMinutes]);
     if (!rows[0]) return { queue: item.queue, id: item.id, outcome: 'not_claimed' };
     const requestedBy = rows[0].requested_by == null ? null : Number(rows[0].requested_by);
     // The row is the authority: a request that took it over first would have refreshed it, and the claim would not match.
     return { ...item, requestedBy };
-  });
+  }, client => refuseItem(client, item, TENANT_SCOPE_REFUSAL));
   if ('outcome' in decided) return decided;
   await deps.dispatch(decided);
   return { queue: item.queue, id: item.id, outcome: 'resumed' };

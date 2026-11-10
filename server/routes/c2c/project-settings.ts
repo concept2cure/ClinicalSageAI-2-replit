@@ -3,8 +3,7 @@ import type { Request, Response, Router } from 'express';
 import type { PoolClient } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { z } from 'zod';
-import { pool } from '../../db.js';
-import { requestPgClient } from '../../db/requestDb';
+import { requestConnectable, requestPgClient } from '../../db/requestDb';
 import { getTenantScope } from '../../db/tenantStore';
 import { resolveOrgId } from '../../types/auth-request';
 import { governedReason } from '../governed-reason';
@@ -181,7 +180,10 @@ async function changeSettings(req: Request, res: Response): Promise<Response> {
     const organizationId = resolveOrgId(req);
     const scope = getTenantScope();
     if (!organizationId || scope?.source !== 'request' || scope.tenantId !== String(organizationId)) throw unavailable();
-    client = await pool.connect();
+    // The request's pinned, tenant-scoped connection, whose scope was just checked to be this organization's,
+    // not a second shared-pool connection (ci:requestdb-coverage, 2026-11-09). release(discard) asks the
+    // request's owner to discard it when the outcome is unknown, as pool release(err) evicted one.
+    client = await requestConnectable(req).connect() as unknown as PoolClient;
     try { await client.query('BEGIN'); } catch (error) { discard = connectionError(error, 'Transaction admission unconfirmed'); throw error; }
     transactionStarted = true;
     const receipt = await applySettings(req, res, client, organizationId, write);

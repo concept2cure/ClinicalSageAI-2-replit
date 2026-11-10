@@ -1,0 +1,6 @@
+MUTATION M01-release-does-not-spend-S in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T13:39:43.821839Z): replaced [        await rules.spendTransmitSignature(asQueryable(client), {] with [        if (Date.now() < 0) await rules.spendTransmitSignature(asQueryable(client), {]
+ × server/services/submission-service/__tests__/held-send-settlement.pglite.test.ts > P-92 T1–T3: received on FDA's Ack2 or Ack3, or released on FDA's letter > T1 received on an Ack2: the sequence is sent with A kept; S is spent; the act is recorded with its reason 463ms
+ × server/services/submission-service/__tests__/held-send-settlement.pglite.test.ts > P-92 T1–T3: received on FDA's Ack2 or Ack3, or released on FDA's letter > T3 released on FDA's letter: pending, S and A cleared, the transmittal rejected (never rolled_back), S spent 59ms
+      Tests  2 failed | 29 skipped (31)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 2621075162e184977da0e6dcd6c07ebfa1f6a8eb469cad66a13df74acfd4d0f1 (expected 2621075162e184977da0e6dcd6c07ebfa1f6a8eb469cad66a13df74acfd4d0f1)

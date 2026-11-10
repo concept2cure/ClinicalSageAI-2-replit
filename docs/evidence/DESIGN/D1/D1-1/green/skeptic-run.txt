@@ -1,0 +1,84 @@
+# Skeptic's run, 2026-11-01, working tree on 0e2db6c3a with D1-1 + the notice fix (other sessions' uncommitted edits also in the tree: L8 Vault, L2 editor tests, R1 evidence).
+
+## Every test that imports or reads Shell.tsx, V2App.tsx or app-v2.css (grep of client/src and tests/), plus the three D0 guards
+# npx vitest run --maxWorkers=1 <54 files>
+⎯⎯⎯⎯⎯⎯ Failed Tests 29 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  5 failed | 49 passed (54)
+      Tests  29 failed | 587 passed (616)
+# failures by file:
+      3 accountMenuBilling.test.tsx
+     10 accountMenuMasterLicensing.test.tsx
+      2 clientNamesSlice1.test.tsx
+      9 railLicenseGating.test.tsx
+      5 runPolicySwitch.test.tsx
+# 24 of these are red at HEAD (red/neighbours-head.txt: railLicenseGating 9, accountMenuMasterLicensing 10, accountMenuBilling 3, clientNamesSlice1 2).
+# runPolicySwitch 5: each renders ConversationThread, whose module graph holds no D1-1 file (nothing outside V2App imports Shell.tsx); the error is
+#   → [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+# (an editor module reads authService from the test's own authService mock). Not this step's.
+# shellQuietChrome, railRecents, shellWiring (all five, Live Drive included), shellChromeTruth, shellNav, organizationAccess and the three D0 guards: all pass.
+ ✓ shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > the first two .rail-nav buttons are "New conversation" and "Search" 596ms
+ ✓ shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > New conversation opens Home, where a question starts a new conversation 684ms
+ ✓ shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > Search still opens the command palette 416ms
+ ✓ shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > names the organisation under the person, and in the button’s title 85ms
+ ✓ shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > with no organisation known, says the role in words, never the raw value 27ms
+ ✓ shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > the menu head names the organisation and the role on one line 52ms
+ ✓ shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > "What AnA remembers" follows Account, opens the drawer, and Escape returns focus to the account button 266ms
+ ✓ shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > keeps the admin entries gated exactly as before 480ms
+ ✓ shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > Organizations and invitations sits in the sidebar foot, after the account 24ms
+ ✓ shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > collapsed, the foot stacks the expand toggle, organisation access, then the avatar 139ms
+ ✓ shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > "Open the sidebar" is the bar’s first control and opens it 13ms
+ ✓ shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > draws no sidebar button that would do nothing 185ms
+ ✓ shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > has no Organizations and invitations button of its own 217ms
+ ✓ shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > a place, New conversation and Search each close it 1048ms
+ ✓ shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > the notice a choice raises is still seen once the drawer closes (it sits beside the rail, not in i
+ ✓ shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > wider than that, the sidebar stays as it is 171ms
+ ✓ shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > finds the sidebar’s rules 0ms
+ ✓ shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > the round "+" of New conversation is the sidebar’s one orange 1ms
+ ✓ shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > no brand fill beside Home’s own row, and the ".RI" in ink 1ms
+ ✓ shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > group labels are 12px sentence case in --text-300 4ms
+ ✓ shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > rows are 14px, recents 13px, and nothing in the sidebar is under 12px 1ms
+ ✓ shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > the avatar is ink, in the sidebar and the account menu’s head, ranked above the menu block’s own rule 1ms
+ ✓ shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > the account’s second line is 12px --text-300; the menu head’s line 13px 0ms
+ ✓ shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > at ≤640px no strip is reserved, the collapsed rail is not drawn, and the expanded one is the drawer 0ms
+
+## Gates
+### ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+### ci:check-shell-css-collisions
+[ci:shell-css-collisions] 22 class name(s) defined in more than one shell tree (baseline 22) — pdev+v2:22
+[ci:shell-css-collisions] OK — no new cross-shell collisions.
+### ci:check-css-selector-shadowing
+
+[css-shadowing] OK — 49 stylesheets, 17 known shadowed selector(s), 0 new.
+### ci:one-product
+ci:one-product: 102 surfaces, 10 rail entries, none new.
+### ci:token-contrast
+✅ token-contrast: 131 pairs checked — text ≥ 4.5:1, non-text ≥ 3:1.
+   15 documented exceptions (brand, muted-text ramp, structural borders) held at or above their recorded ratios.
+### ci:design-system
+[design-system] OK — no icon-library, spring/bounce or inline <style> violations on live concept2cure surfaces.
+### check:microcopy
+[ci:microcopy] OK — scanned 772 customer-facing files, no exclamations or pictographs.
+### ci:surface-text-ramp (scratch repo: HEAD's sheets + this app-v2.css): FAIL without green/surface-text-ramp.d1-1.patch; with it:
+[ci:surface-text-ramp] OK — 3 generated ramp sheet(s) match the stylesheets.
+
+## ESLint, working tree vs HEAD (git show HEAD:<file> | eslint --stdin)
+client/src/concept2cure/v2/Shell.tsx HEAD=0e/5w NOW=0e/5w ["max-lines-per-function:254,100","complexity:39,15","max-lines-per-function:138,100","max-lines:981,500","max-lines-per-function:267,100"]
+client/src/concept2cure/v2/V2App.tsx HEAD=0e/7w NOW=0e/7w ["max-lines-per-function:2,696,100","complexity:2,47,15","complexity:37,15","max-lines:852,500","null:","null:","null:"]
+client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx HEAD=(new) NOW=0e/0w []
+client/src/concept2cure/v2/__tests__/railRecents.test.tsx HEAD=0e/0w NOW=0e/0w []
+client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx HEAD=0e/0w NOW=0e/0w []
+client/src/concept2cure/v2/__tests__/shellWiring.test.tsx HEAD=0e/0w NOW=0e/0w []
+client/src/concept2cure/v2/__tests__/shellNav.test.tsx HEAD=0e/0w NOW=0e/0w []
+client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx HEAD=0e/0w NOW=0e/0w []
+client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx HEAD=0e/0w NOW=0e/0w []
+client/src/concept2cure/v2/__tests__/organizationAccess.test.tsx HEAD=0e/0w NOW=0e/0w []
+client/src/concept2cure/v2/__tests__/railLicenseGating.test.tsx HEAD=0e/0w NOW=0e/0w []
+
+## Narrow tsc (Shell.tsx, V2App.tsx, shellQuietChrome/railRecents/organizationAccess tests, the .d.ts files)
+client/src/concept2cure/components/ana/BriefingBookPanel.tsx(20,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/CrlPremortemPanel.tsx(28,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/GovernedActionSignoff.tsx(26,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/v2/Shell.tsx(21,23): error TS2307: Cannot find module '@/assets/concept2cure-icon.svg' or its corresponding type declarations.
+client/src/utils/sentry.ts(5,29): error TS2339: Property 'VITE_SENTRY_DSN' does not exist on type 'ImportMetaEnv'.
+# none is in a D1-1 change: the narrow include lacks the bundler's ambient module types (*.svg, *.module.css, ImportMetaEnv); Shell.tsx:21 is unchanged since HEAD.

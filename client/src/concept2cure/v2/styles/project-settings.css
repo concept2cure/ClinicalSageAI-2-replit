@@ -1,8 +1,15 @@
-.c2c-v2 .pj-settings{flex:0 0 auto;min-width:0;max-width:100%;}
-.c2c-v2 .pj-settings>button{float:right;}
-.c2c-v2 .pj-settings-panel{clear:both;padding:16px;margin-top:44px;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--bg-000);}
-.c2c-v2 .pj-settings-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
-.c2c-v2 .pj-settings-note{font-size:12px;line-height:1.5;overflow-wrap:anywhere;}
-.c2c-v2 .pj:has(.pj-settings-panel)>.pj-top{flex-wrap:wrap;}
-.c2c-v2 .pj:has(.pj-settings-panel)>.pj-top>.pj-settings{flex-basis:100%;}
-@media(max-width:600px){.c2c-v2 .pj-top:has(.pj-settings){flex-wrap:wrap;}.c2c-v2 .pj-settings{flex-basis:100%;}.c2c-v2 .pj-settings>button{float:none;}.c2c-v2 .pj-settings-panel{margin-top:12px;}.c2c-v2 .pj-settings-panel .npw-fields{grid-template-columns:1fr;}}
+/* Project settings (D3-1, .design/claude-convergence/D3.md §4.9). Since 2026-11-06 a gear beside the project's name
+   opens the settings as a drawer (`.de`, D0 §4.2.14, journey-v2.css), so nothing here lays out the header or frames
+   the panel. The rules that floated the button right, gave it the whole row under 600px and boxed the inline panel
+   with a 44px top margin were for the panel that opened inside the header; on a phone they squeezed the project's
+   name to no width beside the gear (found in the D3-1 walk, docs/evidence/DESIGN/D3/D3-1). */
+.c2c-v2 .pj-settings{flex:0 0 auto;}
+.c2c-v2 .pj-settings-actions{flex-wrap:wrap;}
+.c2c-v2 .pj-settings-note{font-size:12px;line-height:1.5;color:var(--text-300);overflow-wrap:anywhere;}
+/* A save or read that failed is said in the error colour, never in the quiet note's grey. */
+.c2c-v2 .pj-settings-note[role="alert"]{color:var(--error);}
+/* Archive: its own block below the settings, a close-out rather than a field. */
+.c2c-v2 .pj-settings-archive{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
+.c2c-v2 .pj-settings-archive h3{margin:0 0 4px;font-size:13px;font-weight:600;color:var(--text-100);}
+.c2c-v2 .pj-settings-archive>button{margin-top:6px;}
+@media(max-width:600px){.c2c-v2 .pj-settings-panel .npw-fields{grid-template-columns:1fr;}}

@@ -1,0 +1,22 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ tests/schema-contract/rbm-patient-profile-identity.pglite.test.ts > the existing RBM patient identity agrees across model and deploy > is already in the canonical replay set and is declared in the existing model 11ms
+ ✓ tests/schema-contract/rbm-patient-profile-identity.pglite.test.ts > the existing RBM patient identity agrees across model and deploy > fresh creation and two more replays retain the same index definitions 82ms
+ ✓ tests/schema-contract/rbm-patient-profile-identity.pglite.test.ts > the existing RBM patient identity agrees across model and deploy > repairs the historical bootstrap, then merges into one profile without erasing prior metrics 71ms
+ ✓ tests/schema-contract/rbm-patient-profile-identity.pglite.test.ts > the existing RBM patient identity agrees across model and deploy > keeps the original NULL-distinct behavior of unfiled legacy programs 80ms
+ ✓ tests/schema-contract/rbm-patient-profile-identity.pglite.test.ts > the existing RBM patient identity agrees across model and deploy > fails safely over existing conflicting triples and retains every row 69ms
+ ✓ tests/schema-contract/rbm-patient-profile-identity.pglite.test.ts > the existing RBM patient identity agrees across model and deploy > recognizes a usable same-key index despite key order and included columns 42ms
+ ✓ tests/schema-contract/rbm-patient-profile-identity.pglite.test.ts > the existing RBM patient identity agrees across model and deploy > refuses a wrong named index rather than reporting the repair complete: CREATE INDEX rbm_patient_profiles_organization_id_program_id_subject_id_key ON rbm_patient_profiles(organization_id,program_id,subject_id) 28ms
+ ✓ tests/schema-contract/rbm-patient-profile-identity.pglite.test.ts > the existing RBM patient identity agrees across model and deploy > refuses a wrong named index rather than reporting the repair complete: CREATE UNIQUE INDEX rbm_patient_profiles_organization_id_program_id_subject_id_key ON rbm_patient_profiles(organization_id,subject_id) 30ms
+ ✓ tests/schema-contract/rbm-patient-profile-identity.pglite.test.ts > the existing RBM patient identity agrees across model and deploy > refuses a wrong named index rather than reporting the repair complete: CREATE UNIQUE INDEX rbm_patient_profiles_organization_id_program_id_subject_id_key ON rbm_patient_profiles(organization_id,program_id,subject_id) WHERE deleted_at IS NULL 45ms
+ ✓ tests/schema-contract/rbm-patient-profile-identity.pglite.test.ts > the existing RBM patient identity agrees across model and deploy > refuses a wrong named index rather than reporting the repair complete: CREATE UNIQUE INDEX rbm_patient_profiles_organization_id_program_id_subject_id_key ON rbm_patient_profiles(organization_id,program_id,lower(subject_id)) 38ms
+ ✓ tests/schema-contract/rbm-patient-profile-identity.pglite.test.ts > the existing RBM patient identity agrees across model and deploy > refuses a wrong named index rather than reporting the repair complete: CREATE UNIQUE INDEX rbm_patient_profiles_organization_id_program_id_subject_id_key ON rbm_patient_profiles(organization_id,program_id,subject_id) NULLS NOT DISTINCT 49ms
+ ✓ tests/schema-contract/rbm-patient-profile-identity.pglite.test.ts > the existing RBM patient identity agrees across model and deploy > refuses a wrong named index rather than reporting the repair complete: ALTER TABLE rbm_patient_profiles ADD CONSTRAINT rbm_patient_profiles_organization_id_program_id_subject_id_key UNIQUE(organization_id,program_id,subject_id) DEFERRABLE INITIALLY IMMEDIATE 47ms
+ ✓ tests/schema-contract/rbm-patient-profile-identity.pglite.test.ts > the existing RBM patient identity agrees across model and deploy > refuses an invalid named index without replacing it 61ms
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  21:08:37
+   Duration  9.86s (transform 1.45s, setup 155ms, import 2.49s, tests 6.63s, environment 0ms)
+

@@ -1,0 +1,88 @@
+# Red run: the new Terraform runs against the unchanged validation (terraform/stack/variables.tf at HEAD f8e0d3210, 2026-10-25).
+# Terraform v1.11.4 (releases.hashicorp.com, SHA256 checked), providers hashicorp/aws 5.100.0 and hashicorp/random 3.6.3
+# (the versions terraform/environments/production/.terraform.lock.hcl pins) from a local filesystem mirror.
+# Run in a scratch copy of terraform/ (plus the repository files the suite reads), never in the working tree.
+# Each new run is in its own test file (header and file-level variables of boot_contract.tftest.hcl + that run),
+# because terraform test skips every later run in a file after one fails: run in place, the first new run
+# failed and the other five were skipped (38 passed, 1 failed, 45 skipped).
+# Command: terraform test -no-color -test-directory=tests-split
+
+tests-split/accepts_a_well_formed_agreement.tftest.hcl... in progress
+  run "accepts_a_well_formed_agreement"... pass
+tests-split/accepts_a_well_formed_agreement.tftest.hcl... tearing down
+tests-split/accepts_a_well_formed_agreement.tftest.hcl... pass
+tests-split/refuses_a_zero_retention_approval_that_names_no_agreement.tftest.hcl... in progress
+  run "refuses_a_zero_retention_approval_that_names_no_agreement"... fail
+
+Error: Missing expected failure
+
+  on tests-split/refuses_a_zero_retention_approval_that_names_no_agreement.tftest.hcl line 168, in run "refuses_a_zero_retention_approval_that_names_no_agreement":
+ 168:   expect_failures = [var.ai_provider_placement_approvals]
+
+The checkable object, var.ai_provider_placement_approvals, was expected to
+report an error but did not.
+tests-split/refuses_a_zero_retention_approval_that_names_no_agreement.tftest.hcl... tearing down
+tests-split/refuses_a_zero_retention_approval_that_names_no_agreement.tftest.hcl... fail
+tests-split/refuses_a_zero_retention_approval_this_stack_sets_no_flag_for.tftest.hcl... in progress
+  run "refuses_a_zero_retention_approval_this_stack_sets_no_flag_for"... fail
+
+Error: Missing expected failure
+
+  on tests-split/refuses_a_zero_retention_approval_this_stack_sets_no_flag_for.tftest.hcl line 168, in run "refuses_a_zero_retention_approval_this_stack_sets_no_flag_for":
+ 168:   expect_failures = [var.ai_provider_placement_approvals]
+
+The checkable object, var.ai_provider_placement_approvals, was expected to
+report an error but did not.
+tests-split/refuses_a_zero_retention_approval_this_stack_sets_no_flag_for.tftest.hcl... tearing down
+tests-split/refuses_a_zero_retention_approval_this_stack_sets_no_flag_for.tftest.hcl... fail
+tests-split/refuses_an_agreement_date_in_another_format.tftest.hcl... in progress
+  run "refuses_an_agreement_date_in_another_format"... fail
+
+Error: Missing expected failure
+
+  on tests-split/refuses_an_agreement_date_in_another_format.tftest.hcl line 168, in run "refuses_an_agreement_date_in_another_format":
+ 168:   expect_failures = [var.ai_provider_placement_approvals]
+
+The checkable object, var.ai_provider_placement_approvals, was expected to
+report an error but did not.
+tests-split/refuses_an_agreement_date_in_another_format.tftest.hcl... tearing down
+tests-split/refuses_an_agreement_date_in_another_format.tftest.hcl... fail
+tests-split/refuses_an_agreement_date_that_is_not_a_date.tftest.hcl... in progress
+  run "refuses_an_agreement_date_that_is_not_a_date"... fail
+
+Error: Missing expected failure
+
+  on tests-split/refuses_an_agreement_date_that_is_not_a_date.tftest.hcl line 168, in run "refuses_an_agreement_date_that_is_not_a_date":
+ 168:   expect_failures = [var.ai_provider_placement_approvals]
+
+The checkable object, var.ai_provider_placement_approvals, was expected to
+report an error but did not.
+tests-split/refuses_an_agreement_date_that_is_not_a_date.tftest.hcl... tearing down
+tests-split/refuses_an_agreement_date_that_is_not_a_date.tftest.hcl... fail
+tests-split/refuses_an_agreement_with_a_blank_reference.tftest.hcl... in progress
+  run "refuses_an_agreement_with_a_blank_reference"... fail
+
+Error: Missing expected failure
+
+  on tests-split/refuses_an_agreement_with_a_blank_reference.tftest.hcl line 168, in run "refuses_an_agreement_with_a_blank_reference":
+ 168:   expect_failures = [var.ai_provider_placement_approvals]
+
+The checkable object, var.ai_provider_placement_approvals, was expected to
+report an error but did not.
+tests-split/refuses_an_agreement_with_a_blank_reference.tftest.hcl... tearing down
+tests-split/refuses_an_agreement_with_a_blank_reference.tftest.hcl... fail
+
+Failure! 1 passed, 5 failed.
+
+# In place (whole boot_contract.tftest.hcl with the new runs, HEAD variables.tf): first failure, rest skipped.
+40:  run "refuses_a_zero_retention_approval_that_names_no_agreement"... fail
+41-
+42-Error: Missing expected failure
+43-
+44-  on tests/boot_contract.tftest.hcl line 1161, in run "refuses_a_zero_retention_approval_that_names_no_agreement":
+45-1161:   expect_failures = [var.ai_provider_placement_approvals]
+46-
+47-The checkable object, var.ai_provider_placement_approvals, was expected to
+48-report an error but did not.
+49-  run "refuses_a_zero_retention_approval_this_stack_sets_no_flag_for"... skip
+Failure! 38 passed, 1 failed, 45 skipped.

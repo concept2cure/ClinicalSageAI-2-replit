@@ -65,6 +65,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
    `apiRequest` throws for every non-OK status but 401. */
 import { ApiRequestError } from '@/lib/queryClient';
 import * as surfaceModule from '../surfaces/Biostatistics';
+import { isStatisticalSave, statisticalSaveReceipt } from './_statistical-handoff-fixture';
 
 const Surface = surfaceModule.Biostatistics as unknown as React.ComponentType<Record<string, unknown>>;
 
@@ -214,13 +215,15 @@ function serveEngine(over: (m: string, u: string, b?: any) => Response | Promise
   apiRequest.mockImplementation(async (m: string, u: string, b?: any) => {
     const o = over(m, u, b);
     if (o) return o;
-    if (m === 'POST' && u === COMPUTE) return res(COMPUTE_OK);
-    if (m === 'POST' && u === DOCUMENT) return res(DOC_RESPONSE);
+    if (m !== 'POST') return res({ data: [] });
+    if (isStatisticalSave(u, b)) return res(statisticalSaveReceipt(b, 'D-1'), 201);
+    if (u === COMPUTE) return res(COMPUTE_OK);
+    if (u === DOCUMENT) return res(DOC_RESPONSE);
     // Confirmed receipts: the writer proceeds only on `success: true` and a row
     // echoing the request's identity (authoringHandoff, since 9bd3ee734).
-    if (m === 'POST' && u === '/api/authoring/docs')
+    if (u === '/api/authoring/docs')
       return res({ success: true, document: { id: 'D-1', title: b?.title, client_program_id: b?.client_program_id } }, 201);
-    if (m === 'POST' && u === '/api/authoring/sections')
+    if (u === '/api/authoring/sections')
       return res({ success: true, section: { id: 'S-1', doc_id: b?.doc_id, code: b?.code, title: b?.title } }, 201);
     return res({ data: [] });
   });
@@ -248,6 +251,27 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
+});
+
+describe('Biostatistics — a preset is a worked example, not the person\'s study', () => {
+  /* 2026-10-31: with no study design recorded, the screen called the oncology
+     preset "your superiority design" on a psoriasis project. */
+  /* And changing an input does not make it the person's study either: until
+     2026-10-31 one edit to the oncology example turned it into "your design".
+     "Your" is keyed on where the inputs came from — a recorded study design. */
+  it('says so until a design is loaded — an edited example is still an example', async () => {
+    mount();
+    await engineAnswered();
+    expect(await screen.findByText(/Worked example — Pivotal OS \(survival\), not your study/)).toBeTruthy();
+    expect(screen.queryByText(/is ready to review/i)).toBeNull();
+    /* The act moved from the retired answer banner to the page's ONE primary
+       in the header (D5 §B.4.2), and its label lost the article with it. */
+    expect(screen.getByRole('button', { name: 'Copy example to editor' })).toBeTruthy();
+    fireEvent.change(screen.getByLabelText(/^Alpha$/), { target: { value: '0.04' } });
+    expect(await screen.findByText(/Worked example \(modified\) — Pivotal OS \(survival\), not your study/)).toBeTruthy();
+    expect(screen.queryByText(/is ready to review/i)).toBeNull();
+    expect(document.body.textContent ?? '').not.toMatch(/for your [\w\s–-]+ design/i);
+  });
 });
 
 describe('Biostatistics — the statistics come from the server engine', () => {
@@ -285,7 +309,13 @@ describe('Biostatistics — the statistics come from the server engine', () => {
     // The server's set.
     expect(mini()).toContain('733');
     expect(mini()).toMatch(/84%/);
-    expect(await screen.findByText(/733 subjects/)).toBeTruthy();
+    /* The engine's figures are read off ONE place now. They were in the mini
+       result and again in the answer banner's prose ("733 subjects, 84%
+       power"); the banner is retired (D5 §B.4.3) and its copy went with it,
+       which is the point — two renderings of one engine read is how they come
+       to disagree. What matters is that the figure on screen is the server's,
+       and the assertions below are what hold that. */
+    expect(await screen.findByText('733')).toBeTruthy();
 
     /* The deleted browser copy's set for this exact preset: 184 events, 396
        subjects after attrition, and the 90% TARGET reported as achieved power.
@@ -301,8 +331,9 @@ describe('Biostatistics — the statistics come from the server engine', () => {
     await engineAnswered();
     // From JUDGMENT above — a browser rule set could not have produced the
     // 'strong' endpoint-method fit, which the old copy answered 'not_assessed'.
-    expect(mini()).toContain('adequate');
-    expect(await screen.findByText(/reads as/)).toBeTruthy();
+    /* "not_adequate" is the engine's token; the chip reads it as a word. */
+    expect(mini()).toMatch(/adequate/i);
+    expect(mini(), 'the engine verdict is still rendered as its raw token').not.toMatch(/_/);
   });
 
   it('re-asks the engine when a design input changes, and never answers locally', async () => {
@@ -329,9 +360,9 @@ describe('Biostatistics — the statistics come from the server engine', () => {
     expect(body).toMatchObject({ documentType: 'sample_size_rationale' });
     // The document is generated FROM the server's computation and judgment, so
     // the prose and the figures cannot disagree.
-    expect(body.computation).toMatchObject({ adjustedTotal: 733 });
-    expect(body.judgment).toMatchObject({ overallVerdict: 'adequate' });
-    expect(body.domainAdaptation).toMatchObject({ track: 'biotech_pharma' });
+    expect(body).not.toHaveProperty('computation');
+    expect(body).not.toHaveProperty('judgment');
+    expect(body).not.toHaveProperty('domainAdaptation');
     expect(body.input).toMatchObject({ endpointType: 'time_to_event' });
 
     expect(rendered()).toContain('733');
@@ -343,12 +374,19 @@ describe('Biostatistics — the statistics come from the server engine', () => {
     mount();
     await waitFor(() => expect(rendered()).toMatch(/Sample Size Determination/));
 
-    fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
+    // A worked example here, so the bar's action says it copies the example.
+    fireEvent.click(screen.getByRole('button', { name: /Copy example to editor/ }));
     await waitFor(() =>
-      expect(apiRequest.mock.calls.some((c) => c[1] === '/api/authoring/sections')).toBe(true),
+      expect(apiRequest.mock.calls.some((c) => isStatisticalSave(c[1], c[2]))).toBe(true),
     );
-    const section = apiRequest.mock.calls.find((c) => c[1] === '/api/authoring/sections')![2];
-    expect(section.content).toBe(DOC_MARKDOWN);
+    const saved = apiRequest.mock.calls.find((c) => isStatisticalSave(c[1], c[2]))![2];
+    expect(saved.expectedMarkdown).toBe(DOC_RESPONSE.content);
+    const section = statisticalSaveReceipt(saved, 'D-1').data.sections[0];
+    // The engine's document as the page renders it: the editor stores section
+    // content verbatim, so Markdown arrived as "## …" and "|---|" (2026-10-31).
+    expect(section.content).toBe(document.querySelector('.bs-doc-render')!.innerHTML);
+    expect(section.content).toMatch(/<h2[^>]*>Sample Size Determination<\/h2>/);
+    expect(section.content).not.toMatch(/(^|\n)#{1,6} /);
   });
 });
 

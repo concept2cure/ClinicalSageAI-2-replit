@@ -1,0 +1,20 @@
+DEPARTMENT OF HEALTH AND HUMAN SERVICES
+Food and Drug Administration
+IND 123456
+INFORMATION REQUEST
+Dear Dr. Example:
+We have the following requests for information:
+1. Provide current letters of authorization for these drug master files:
+DMF 034567
+DMF 045678
+2. Provide Letters of Authorization for the drug master files cited in
+section 3.2.S.2.1, namely
+DMF 056789
+and the container closure file, and confirm their current status.
+3. Provide the batch analysis for lot 3.
+If you have any questions, please contact the Regulatory Project Manager.
+Sincerely,
+Jane Reviewer
+Reference ID: 5123456
+
+-- 1 of 1 --

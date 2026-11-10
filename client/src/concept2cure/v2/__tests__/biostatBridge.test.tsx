@@ -27,6 +27,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { Biostatistics } from '../surfaces/Biostatistics';
+import { isStatisticalSave, statisticalSaveReceipt } from './_statistical-handoff-fixture';
 import { stashNavParamsForTarget, clearNavParams } from '../navParams';
 
 const Surface = Biostatistics as unknown as React.ComponentType<Record<string, unknown>>;
@@ -63,7 +64,7 @@ function assessment(over: Record<string, unknown> = {}) {
     adapter: { input: SIZED_INPUT, gaps: [{ field: 'attritionRate', message: 'No dropout rate; 15% assumed.', severity: 'defaulted', designPath: 'statisticalPlan.dropoutRate' }], mapped: ['alpha'] },
     computation: { method: 'Two-sample t-test', sampleSize: { total: 420, perGroup: 210 }, adjustedTotal: 526, power: 0.9 },
     judgment: { overallVerdict: 'adequate', overallRisk: 'low', actionRecommendation: 'proceed' },
-    provenance: { engine: 'c2c-stats', engineVersion: '1.0.0', inputsSha256: 'abcdef0123456789' },
+    provenance: { engine: 'c2c-stats', engineVersion: '1.0.0', inputsSha256: 'abcdef0123456789'.repeat(4) },
     filing: { programId: PROGRAM.id, programType: 'NDA', applicationType: 'nda', projectId: 42 },
     validation: { riskLevel: 'high', summary: '1 major finding', counts: { critical: 0, major: 1, minor: 0, info: 0 } },
     review: {
@@ -133,6 +134,10 @@ const engineDocReady = (type: string) =>
 /** The engine's two routes, or null when this is not one of them. */
 function engineRoute(method: string, path: string, body?: any) {
   if (method !== 'POST') return null;
+  if (isStatisticalSave(path, body)) {
+    posted.push({ path, body });
+    return { ok: true, status: 201, json: async () => statisticalSaveReceipt(body, 'doc-1') };
+  }
   if (path === '/api/ana-biostats/compute') {
     return { ok: true, status: 200, json: async () => ENGINE_COMPUTE };
   }
@@ -158,13 +163,18 @@ function writeRoute(path: string, body: any, opts: { applyOk?: boolean }) {
   return null;
 }
 
-function route(opts: { assessment?: Record<string, unknown>; applyOk?: boolean } = {}) {
+function route(opts: { assessment?: Record<string, unknown>; applyOk?: boolean; designDelayMs?: number; designs?: unknown[] } = {}) {
   posted.length = 0;
+  /* A design read slower than the engine's 180 ms debounce: what a real
+     network does, and what let the worked example be sized first. */
+  const slow = () => (opts.designDelayMs ? new Promise((r) => setTimeout(r, opts.designDelayMs)) : Promise.resolve());
   apiRequest.mockImplementation(async (method: string, path: string, body?: any) => {
     if (method === 'GET' && path.startsWith('/api/biostat-bridge/designs?program_id=')) {
-      return { ok: true, status: 200, json: async () => ({ data: DESIGNS }) };
+      await slow();
+      return { ok: true, status: 200, json: async () => ({ data: opts.designs ?? DESIGNS }) };
     }
     if (method === 'GET' && /^\/api\/biostat-bridge\/designs\/STUDY-1\/assessment$/.test(path)) {
+      await slow();
       return { ok: true, status: 200, json: async () => ({ data: assessment(opts.assessment) }) };
     }
     if (method === 'GET' && /^\/api\/biostat-bridge\/designs\/STUDY-2\/assessment$/.test(path)) {
@@ -213,17 +223,32 @@ describe('Biostatistics — study design bridge', () => {
     expect(listCall![1]).toContain(encodeURIComponent(PROGRAM.id));
   });
 
-  it('picking a design seeds the engine from the server adapter, not from a preset', async () => {
+  it('with a project open, its first design loads on arrival, seeded from the server adapter, not from a preset', async () => {
+    /* 2026-10-31: the screen opened on the oncology preset and called it "your
+       superiority design" while the project's own design sat unloaded in the list. */
     route();
     mount();
-    await waitFor(() => expect(designRow('BX-204 pivotal in T2D')).toBeTruthy());
-    expect(alphaField().value).toBe('0.05'); // the survival preset
-    fireEvent.click(designRow('BX-204 pivotal in T2D'));
     await waitFor(() => expect(alphaField().value).toBe('0.04'));
+    expect(apiRequest.mock.calls.some((c) => c[1] === '/api/biostat-bridge/designs/STUDY-1/assessment')).toBe(true);
+    expect(screen.getByTitle('Load "BX-204 pivotal in T2D" into the engine').getAttribute('aria-pressed')).toBe('true');
     // The assessment panel shows the SERVER's sizing, provenance-stamped.
     expect(await screen.findByText('526')).toBeTruthy();
     expect(screen.getByText(/c2c-stats 1\.0\.0/)).toBeTruthy();
     expect(screen.getByText(/Files as a/).textContent).toContain('NDA');
+  });
+
+  it('opens on the project\'s first design, never on a record with no design to assess', async () => {
+    /* 2026-11-09, before a client demo: the list also carries study records with no design metadata (the server
+       lists them with no readiness checks, and their assessment answers 404). The newest of them was opened on
+       arrival, so the page led with "Couldn't assess the design". */
+    const record = { studyId: 'REGISTER-1', programId: PROGRAM.id, title: 'Stability study register entry', phase: '', indication: '', status: 'draft', updatedAt: null,
+      readiness: { percent: 0, checks: [], plannedSampleSize: null, power: null, alpha: null, primaryEndpoint: null } };
+    route({ designs: [record, ...DESIGNS] });
+    mount();
+    await waitFor(() => expect(alphaField().value).toBe('0.04'));
+    expect(apiRequest.mock.calls.some((c) => c[1] === '/api/biostat-bridge/designs/STUDY-1/assessment')).toBe(true);
+    expect(apiRequest.mock.calls.some((c) => String(c[1]).includes('/designs/REGISTER-1/assessment'))).toBe(false);
+    expect(screen.queryByText("Couldn't assess the design")).toBeNull();
   });
 
   it('loads the design handed over on the navigation channel', async () => {
@@ -245,6 +270,44 @@ describe('Biostatistics — study design bridge', () => {
     expect(apply.disabled).toBe(true);
     // The engine on screen was NOT reseeded from a null input.
     expect(alphaField().value).toBe('0.05');
+  });
+
+  /* D5 §B.4 steps 3 and 6: `ResultLead`'s headline facts moved into the
+     assessment section's heading. Measured in the running app on 2026-11-02,
+     the first build of it printed "137 subjects · 90% power · Inadequate"
+     twice, thirty pixels apart — once in the heading and once on the engine's
+     own line below it. Both halves are pinned: the heading says them, and the
+     section says them once. */
+  it('summarises the engine\'s figures in the section heading, once', async () => {
+    route();
+    mount();
+    await waitFor(() => expect(designRow('BX-204 pivotal in T2D')).toBeTruthy());
+    fireEvent.click(designRow('BX-204 pivotal in T2D'));
+    await waitFor(() => expect(alphaField().value).toBe('0.04'));
+
+    const assess = document.querySelector('.bs-assess')!;
+    const summary = assess.querySelector('.pj-sec-h .sec-sub')!;
+    expect(summary.textContent).toBe('526 subjects \u00b7 90% power \u00b7 Adequate \u00b7 1 of 1 checks pass');
+
+    const body = (assess.querySelector('.bs-assess-b')!.textContent || '');
+    expect(body, 'the heading\'s figures are printed again in the section body').not.toMatch(/526 subjects/);
+    // The method and the engine are NOT the heading's, so they stay on the line.
+    expect(body).toMatch(/Two-sample t-test/);
+    expect(body).toMatch(/c2c-stats 1\.0\.0/);
+  });
+
+  it('says "Not sized" in that heading for a design the engine could not size', async () => {
+    /* The honesty rule the lead carried comes with its figures: no dash where
+       a number belongs, and the heading agrees with the disabled write. */
+    route();
+    mount();
+    await waitFor(() => expect(designRow('BX-204 OS study')).toBeTruthy());
+    fireEvent.click(designRow('BX-204 OS study'));
+    await screen.findByText(/Not sized\./);
+
+    const summary = document.querySelector('.bs-assess .pj-sec-h .sec-sub')!;
+    expect(summary.textContent).toBe('Not sized \u00b7 1 of 1 checks pass');
+    expect(summary.textContent).not.toMatch(/\u2014|subjects|power/);
   });
 
   it('files the document under the module the placement catalog names, and says where', async () => {
@@ -269,9 +332,10 @@ describe('Biostatistics — study design bridge', () => {
     // authoring hand-off's `module` on a generator that HAS a placement.)
     fireEvent.click(screen.getByRole('button', { name: /Sample Size Rationale/ }));
     await engineDocReady('sample_size_rationale');
-    fireEvent.click(screen.getAllByRole('button', { name: /File it to the dossier/ })[0]);
-    await waitFor(() => expect(posted.some((p) => p.path === '/api/authoring/docs')).toBe(true));
-    expect(posted.find((p) => p.path === '/api/authoring/docs')!.body).toMatchObject({ module: 'M5', client_program_id: PROGRAM.id });
+    fireEvent.click(screen.getAllByRole('button', { name: /^Save as a working document$/ })[0]);
+    await waitFor(() => expect(posted.some(p => isStatisticalSave(p.path, p.body))).toBe(true));
+    expect(posted.find(p => isStatisticalSave(p.path, p.body))!.body).toMatchObject({ module: 'M5', programId: PROGRAM.id,
+      basis: { kind: 'study_design', studyId: 'STUDY-1', designInputsSha256: 'abcdef0123456789'.repeat(4) } });
   });
 
   it('applying the sample size requires a reason and reports only what the server confirmed', async () => {
@@ -325,7 +389,7 @@ describe('Biostatistics — study design bridge', () => {
     expect(await screen.findByText(/1 task raised on the board/)).toBeTruthy();
   });
 
-  it('renders the statistical review as a risk table with the verdict and the gate codes', async () => {
+  it('renders the statistical review as a risk table with the verdict and each row\'s finding', async () => {
     route();
     mount();
     await waitFor(() => expect(designRow('BX-204 pivotal in T2D')).toBeTruthy());
@@ -334,22 +398,100 @@ describe('Biostatistics — study design bridge', () => {
     expect(screen.getByText(/high statistical risk/)).toBeTruthy();
     expect(screen.getByText(/Regulatory challenge likelihood/).textContent).toMatch(/moderate.*Missing data/);
     const table = screen.getByRole('table', { name: /Statistical risk summary/ });
-    expect(within(table).getByText('MIS-002')).toBeTruthy();
     expect(within(table).getByText(/LOCF as the primary/)).toBeTruthy();
     expect(within(table).getByText(/Make MMRM or multiple imputation/)).toBeTruthy();
     // A clean row is still a row — it says which standard it meets.
     expect(within(table).getByText(/complete ICH E9\(R1\) estimand/)).toBeTruthy();
   });
 
+  /* D5 §B.4 step 6. `PWR-003 MIS-002` was printed in monospace under each
+     element's name — a second line of gate codes down the first column of
+     every row, which is the "ids and enums on screen" pattern §WA.4.2 rule 10
+     retires, and which a reader cannot look up anywhere in this product.
+     Moving them must not LOSE them: a finding is traced back to the gate that
+     raised it, so the codes are the row's own hover text. Both halves are
+     asserted here, because only the second one is the easy mistake. */
+  it('traces each finding to its gates in the row\'s title, and prints no gate code on screen', async () => {
+    route();
+    mount();
+    await waitFor(() => expect(designRow('BX-204 pivotal in T2D')).toBeTruthy());
+    fireEvent.click(designRow('BX-204 pivotal in T2D'));
+    await waitFor(() => expect(alphaField().value).toBe('0.04'));
+    const table = screen.getByRole('table', { name: /Statistical risk summary/ });
+
+    const cell = within(table).getByText('Missing data').closest('td')!;
+    const title = cell.getAttribute('title') ?? '';
+    expect(title, 'the gates the finding rests on are not reachable at all').toMatch(/MIS-002/);
+    expect(title).toMatch(/raised by gate MIS-002/);
+
+    expect(table.textContent, 'a gate code is still printed as visible text').not.toMatch(/[A-Z]{3}-\d{3}/);
+  });
+});
+
+describe('Biostatistics — the loaded design, where and when it shows', () => {
+  /* 2026-10-31 audit: the assessment and the review — wide tables of
+     assumptions, dimensions, findings and actions — rendered inside the 300px
+     left column, a word per line. They get the full width, under the document. */
+  it('renders the assessment and the review full width, not in the 300px design column', async () => {
+    route();
+    mount();
+    await waitFor(() => expect(alphaField().value).toBe('0.04'));
+    const review = await screen.findByRole('table', { name: /Statistical risk summary/ });
+    expect(review.closest('.bs-side'), 'the review is inside the narrow left column').toBeNull();
+    expect(review.closest('.bs-assess')).not.toBeNull();
+    const assessment = screen.getByText('Design assessment');
+    expect(assessment.closest('.bs-side')).toBeNull();
+    // Below the document, not beside it.
+    const doc = document.querySelector('.bs-doc-layout')!;
+    expect(doc.compareDocumentPosition(assessment) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('with a project open, never sizes a worked example before the project\'s design arrives', async () => {
+    route({ designDelayMs: 400 });
+    mount();
+    await waitFor(() => expect(alphaField().value).toBe('0.04'), { timeout: 4000 });
+    await waitFor(() => expect(apiRequest.mock.calls.some((c) => c[1] === '/api/ana-biostats/compute')).toBe(true));
+    const computed = apiRequest.mock.calls.filter((c) => c[1] === '/api/ana-biostats/compute').map((c) => (c[2] as { alpha?: number }).alpha);
+    expect(computed.every((a) => a === 0.04), `the engine was asked to size alphas ${computed.join(', ')}`).toBe(true);
+  });
+});
+
+/**
+ * The ask row carries a name a screen reader can reach.
+ *
+ * `BsStarters` was written in D5-3a with `aria-label="Ask AnA"` on a
+ * role-less `<div>`, where assistive technology ignores it: the row of
+ * starters has no accessible name at all. The coordinator found the identical
+ * shape in CMC on 2026-11-02, having been sent it from Insights; it was in
+ * this file's surface too, and a probe of the running app is what found it
+ * here. `getByRole` is the assertion because it resolves the name the way a
+ * reader's software does — with no role, the query cannot find the element
+ * even though the attribute is sitting on it.
+ */
+describe('Biostatistics — the ask row is named for a screen reader', () => {
+  it('exposes the starters as a group with an accessible name', async () => {
+    route();
+    mount();
+    const row = await screen.findByRole('group', { name: 'Ask AnA' });
+    expect(row.classList.contains('sp-starters')).toBe(true);
+    expect(row.querySelectorAll('button.sp-starter').length).toBeGreaterThan(0);
+  });
+});
+
+describe('Biostatistics — study design bridge, cross-links', () => {
   it('cross-links open the protocol workspace, the task board and the submission center', async () => {
     route();
     const onNav = mount();
     await waitFor(() => expect(designRow('BX-204 pivotal in T2D')).toBeTruthy());
     fireEvent.click(designRow('BX-204 pivotal in T2D'));
     await waitFor(() => expect(alphaField().value).toBe('0.04'));
-    fireEvent.click(screen.getByRole('button', { name: /Open protocol workspace/ }));
-    fireEvent.click(screen.getByRole('button', { name: /Open task board/ }));
-    fireEvent.click(screen.getByRole('button', { name: /Open submission center/ }));
+    /* The three doors are named for where they go, not for the kind of thing
+       that is there: "Open the protocol", not "Open protocol workspace"
+       (D5 §B.4 step 6 — the product has no workspaces, RULE 4). What they do
+       is unchanged, which is what this case is for. */
+    fireEvent.click(screen.getByRole('button', { name: /Open the protocol/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Open Tasks/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Open Submission Center/ }));
     expect(onNav.mock.calls.map((c) => c[0])).toEqual(['protocol-dev', 'tasks', 'submission-center']);
   });
 });

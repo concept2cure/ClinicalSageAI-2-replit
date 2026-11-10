@@ -1,0 +1,11 @@
+{
+  "argv": [
+    "node",
+    "scripts/ops/codespaces-doctor.mjs",
+    "--json"
+  ],
+  "exitCode": 0,
+  "elapsedSeconds": 0.155,
+  "rawOutput": "green-doctor-prerequisites.log.gz",
+  "rawGzipSha256": "d20c8287a3a445fc6c07cf22fb9db24bbafb89574e98aa982b362780f1b2f542"
+}

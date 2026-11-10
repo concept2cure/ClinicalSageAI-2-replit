@@ -10,6 +10,8 @@
  */
 
 import type { WarGameAuditor, AuditRule, WarGameFinding, AuditDimension } from '../types.js';
+import { ORPHAN_FEE_NOTE, orphanFeeStandingOf, orphanReadingOf } from '../../flows/ind-submission-orphan-designation.js';
+import { UNSUPPORTED_EXEMPTION_NOTE, isUnsupportedExemption, userFeeVerdictOf } from '../../flows/nda-submission-user-fee.js';
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                           */
@@ -352,24 +354,51 @@ const rules: AuditRule[] = [
   {
     id: rid('user_fee_not_paid'),
     dimension: 'regulatory_alignment',
-    title: 'PDUFA User Fee Not Paid',
-    question: 'The PDUFA user fee has not been paid. Per 21 USC 379h, the BLA will not be received for filing without fee payment. Has the applicant initiated the fee payment process or applied for a waiver?',
+    title: 'Application User Fee Not Paid',
+    question: 'The application user fee has not been paid. Per 21 USC 379h, the BLA will not be received for filing without fee payment. Has the applicant initiated the fee payment process, or does an exemption apply?',
+    /* 2026-11-02 (S4): the designation is read through its one reader, so a
+       granted one is an exemption claimed (info), not a "fee waiver request
+       for orphan designation", which does not exist; and a 351(k) application
+       is told it pays BsUFA fees, which hold no orphan exemption. The fee is
+       positions now (flows/nda-submission-user-fee.ts); an exemption the
+       designation or the pathway does not support is the finding. */
     check(answers) {
-      if (answers.user_fee_paid === false || answers.user_fee_paid === 'no') {
+      const biosimilar = answers.bla_pathway === '351k_biosimilar';
+      const verdict = userFeeVerdictOf(answers.user_fee_paid, answers.orphan_designation, biosimilar);
+      if (verdict === 'settled' || verdict === 'unstated') return null;
+      if (isUnsupportedExemption(verdict)) {
         return finding(
           this.id,
           this.dimension,
           'warning',
           this.title,
           this.question,
-          'The PDUFA user fee has not been paid.',
-          'Per PDUFA (21 USC 379h), the application fee (exceeding $4 million for FY2026) must be paid before the BLA will be received for filing. An application for an orphan-designated product (21 USC 360bb) is exempt from the application fee under 21 USC 379h(a)(1)(F), as long as it includes no indication other than the designated rare disease or condition.',
-          'PDUFA (21 USC 379h); 21 CFR 601.2',
-          'Initiate PDUFA user fee payment or, if applicable, submit a fee waiver request for orphan designation. Payment must be contemporaneous with or prior to BLA submission.',
-          ['user_fee_paid', 'orphan_designation'],
+          'The BLA claims the orphan exemption from the application fee.',
+          UNSUPPORTED_EXEMPTION_NOTE[verdict],
+          'PDUFA (21 USC 379h), including 379h(a)(1)(F) and (e); FD&C Act Section 526; BsUFA for a 351(k) biosimilar',
+          biosimilar
+            ? 'Pay the biosimilar user fee with the 351(k) submission.'
+            : 'Include FDA\u2019s orphan-drug designation letter and confirm that every indication in the BLA is the designated rare disease or condition. If the designation is not granted, pay the fee with the submission.',
+          ['user_fee_paid', 'orphan_designation', 'bla_pathway'],
         );
       }
-      return null;
+      const standing = biosimilar ? 'none' : orphanFeeStandingOf(orphanReadingOf(answers.orphan_designation));
+      const base = 'Per PDUFA (21 USC 379h), the application fee (exceeding $4 million for FY2026) must be paid before the BLA will be received for filing.';
+      const scope = biosimilar ? ' A 351(k) biosimilar application pays biosimilar user fees under BsUFA, which hold no orphan exemption.' : '';
+      return finding(
+        this.id,
+        this.dimension,
+        standing === 'exempt' ? 'info' : 'warning',
+        this.title,
+        this.question,
+        standing === 'exempt' ? 'The PDUFA user fee has not been paid, and the product is orphan-designated.' : 'The PDUFA user fee has not been paid.',
+        `${base}${scope} ${ORPHAN_FEE_NOTE[standing]}`.trim(),
+        'PDUFA (21 USC 379h), including 379h(a)(1)(F); 21 CFR 601.2',
+        standing === 'exempt'
+          ? 'Confirm that every indication in the BLA is the designated rare disease or condition, and claim the exemption on Form FDA 3397. If any indication is not, the fee is owed before the BLA will be received.'
+          : 'Pay the application fee before or with the BLA submission. A waiver or reduction under 21 USC 379h(d) is a separate request, decided before submission.',
+        ['user_fee_paid', 'orphan_designation', 'bla_pathway'],
+      );
     },
   },
   {

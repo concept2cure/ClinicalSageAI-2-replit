@@ -106,7 +106,7 @@ async function runReport() {
     </QueryClientProvider>,
   );
   const composer = await waitFor(() => {
-    const el = document.querySelector('.rc-input textarea') as HTMLTextAreaElement | null;
+    const el = document.querySelector('[data-work-area="insights"] .rc-find input') as HTMLInputElement | null;
     if (!el) throw new Error('composer not mounted');
     return el;
   });
@@ -143,7 +143,7 @@ describe('Insights — finalization belongs to the displayed run', () => {
     act(() => publishShellProject({ id: nextProgram, code: 'NEW-202' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     await waitFor(() => expect(document.body.textContent).toContain('NEW-202'));
-    const composer = document.querySelector('.rc-input textarea') as HTMLTextAreaElement;
+    const composer = document.querySelector('[data-work-area="insights"] .rc-find input') as HTMLInputElement;
     fireEvent.change(composer, { target: { value: 'Run the executive readiness digest report' } });
     fireEvent.click(screen.getByRole('button', { name: 'Find' }));
     await screen.findByText('Replacement report');
@@ -169,7 +169,8 @@ describe('Insights — Finalize is a signature, separate from Export', () => {
     expect(finalizeBodies[0]).toEqual({ reason: REASON, meaning: 'authorship', reauth: { password: 'correct horse' } });
 
     const seal = await screen.findByTestId('ro-seal');
-    expect(seal.textContent).toMatch(/Final\. Signed by Dana Reyes as authorship/);
+    // The meaning in the signing dialog's own word (21 CFR 11.50(a)(3)); it read "as authorship" (use walk, 2026-11-09).
+    expect(seal.textContent).toMatch(/Final\. Signed by Dana Reyes, meaning Authorship,/);
     expect(seal.textContent).toMatch(/Sealed sha256 abc123def456… over 12 provenance atoms/);
     expect(document.querySelector('.ro-status')?.textContent).toBe('final');
     // A final report is not offered Finalize again.
@@ -248,5 +249,55 @@ describe('Insights — Finalize is a signature, separate from Export', () => {
     await waitFor(() => expect(within(dialog).getByRole('alert').textContent).toMatch(/Your role does not permit applying an electronic signature/));
     expect(within(dialog).getByRole('alert').textContent).not.toMatch(/owners, admins and managers/);
     expect(screen.queryByTestId('ro-seal')).toBeNull();
+  });
+});
+
+/*
+ * Reporting use walk, 2026-11-09: Finalize was offered on a run the server
+ * would always refuse. The person chose a meaning, wrote a reason and typed a
+ * password, then read "Cannot mark final: 23 critical blocker(s) present". The
+ * rendered read now carries `finalEligibility`, from the finalize route's own
+ * evaluation. Where it says no, the canvas says why in Finalize's place and
+ * asks for no signature.
+ */
+describe('Insights — Finalize is offered only where a finalize can be admitted', () => {
+  const held = { ...RENDERED, finalEligibility: { eligible: false, reasons: ['Cannot mark final: 23 critical blocker(s) present.'] } };
+
+  it('says why a held run cannot be finalized, and offers no signature', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (url.includes('/api/insights-canvas/overview')) return ok(OVERVIEW);
+      if (method === 'POST' && url === '/api/report-os/runs') return ok({ data: { run: { id: RUN_ID } } });
+      if (url === `/api/report-os/runs/${RUN_ID}/rendered`) return ok(held);
+      return ok({});
+    });
+    await runReport();
+    expect(screen.queryByRole('button', { name: /Finalize/ })).toBeNull();
+    expect(screen.getByTestId('ro-finalize-held').textContent).toBe('Can’t be finalized: 23 critical blocker(s) present.');
+    expect(finalizeBodies).toEqual([]);
+  });
+
+  it('still offers Finalize where the run can be finalized', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (url.includes('/api/insights-canvas/overview')) return ok(OVERVIEW);
+      if (method === 'POST' && url === '/api/report-os/runs') return ok({ data: { run: { id: RUN_ID } } });
+      if (url === `/api/report-os/runs/${RUN_ID}/rendered`) return ok({ ...RENDERED, finalEligibility: { eligible: true, reasons: [] } });
+      return ok({});
+    });
+    await runReport();
+    expect(screen.getByRole('button', { name: /Finalize/ })).toBeTruthy();
+    expect(screen.queryByTestId('ro-finalize-held')).toBeNull();
+  });
+
+  it('says nothing of eligibility to a reader who may not finalize', async () => {
+    auth.user = MEMBER;
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (url.includes('/api/insights-canvas/overview')) return ok(OVERVIEW);
+      if (method === 'POST' && url === '/api/report-os/runs') return ok({ data: { run: { id: RUN_ID } } });
+      if (url === `/api/report-os/runs/${RUN_ID}/rendered`) return ok(held);
+      return ok({});
+    });
+    await runReport();
+    expect(screen.queryByRole('button', { name: /Finalize/ })).toBeNull();
+    expect(screen.queryByTestId('ro-finalize-held')).toBeNull();
   });
 });

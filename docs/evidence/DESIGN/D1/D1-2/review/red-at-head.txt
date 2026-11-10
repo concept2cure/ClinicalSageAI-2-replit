@@ -1,0 +1,59 @@
+# Review: D1-2's 12 changed test files against HEAD f0ade0abc's sources (scratch export of HEAD, the working tree's test files copied in), npx vitest run --maxWorkers=1, 2026-11-02
+# Pre-existing, not D1-2's: shellWiring 'locked for the workspace' (the cold lazy-import timeout D1-1 recorded) and clientNamesSlice1's two 'Not in client copy' cases.
+
+ × client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > the demo starter under a Live Drive lock > locked for the workspace: the conversation shows the offer as a record, not a button
+ × client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > the page root names its screen > data-surface follows the screen the shell shows
+ × client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell destinations preserve status-only protocol changes > refuses project before routing or action dispatch
+ × client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > creates a document from Plan and comes back to Plan through the real top-bar chip
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > draws no search box, organisation label, project chip, Task chip or Help; the open project is a crumb button
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on Vault with C2C-101 open it reads "C2C-101 › Vault", and the project crumb opens the project page
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on the project page it reads "C2C-101" once, as the current page
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > a project feature reads "the project › the feature"; a one-category or admin page names only itself
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on Home with no project open: exactly Collaborate, New task and Your work, and no text
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on Home and in a conversation with a project open, the project crumb is the bar’s one text
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > with no project open there is no project button (Projects is the sidebar’s), and none is invented for an id alone
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > Collaborate, New task and Your work are icon buttons, in that order, that keep their handlers
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > at phone width: the sidebar button first, New conversation last, and it opens Home
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > New conversation waits for unsaved work, as the sidebar’s does
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the lazy fallback says "Loading…" (§D1.B step 8) > a screen still loading shows one quiet status line, still busy for the probes that wait on it
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > at ≤640px no strip is reserved, the collapsed rail is not drawn, and the expanded one is the drawer
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > the bar: 4px between controls, a hairline under it that Home drops
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > the crumbs: 13px --text-300, the page --text-100 at 500, the project a quiet button that hovers --bg-100
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > icon buttons: 32px, --text-300, hover --bg-100; 44px at phone width
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > at phone width the menu and New conversation show, and Collaborate and New task go to ⌘K
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > the badge is ink at 12px, and red when something is overdue
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > no orange and nothing under 12px in the bar’s rules
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > the retired bar classes have no rule left
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > the lazy fallback is a quiet line, not a box (§D1.B step 8)
+ × client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > the header draws no category crumb at all
+ × client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132), now in the sidebar’s account > shows the organisation as words under the person, not as a control that does nothing
+ × client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132), now in the sidebar’s account > Help is the account menu’s "Get help", and the top bar draws no Help of its own
+ × client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > the header’s Task and Collaborate buttons open it — the path that replaced the floating button
+ × client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — the bell badge > when something is overdue, the bell is marked and its name says how many
+ × client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — the bell badge > a late item still marks the bell when another count failed, beside the "?"
+ × client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > uses orange only for the ✻
+ × client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > sets no text under the 12px floor
+ × client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx > the top bar shows no client type (FILING_SPINE F8) > with no program open, it shows no client type either
+ × client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > engineering evidence, with a project open: the project › the feature
+ × client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > IVDR evidence, with a project open: the same trail, and no "Medical Device & IVD" parent
+ × client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > names the project once, as the crumb button that opens its page
+ × client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > names a project with no code by its title
+ × client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > every MDX project feature: its parent is the open project, never the old tier
+ × client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > follows the channel when another project is opened
+ × client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > the crumb never invents a project name > with no project open: the feature alone
+ × client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > the crumb never invents a project name > with a project opened by id alone (a deep link, no name yet): the feature alone
+ × client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > other surfaces keep their crumbs > the project page is still named by the project, once, as the current page
+ × client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > other surfaces keep their crumbs > a core place carries the project crumb while a project is open
+ × client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > on the Vault with ONC-221 open, the project crumb names it and opens its project page
+ × client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > with no project open, the bar shows no project button and no "No project open"
+ × client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > names a project by its title when it has no code
+⎯⎯⎯⎯⎯⎯ Failed Tests 46 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  11 failed | 1 passed (12)
+      Tests  46 failed | 136 passed (182)
+(clientNamesSlice1 failed to load in the first export, which lacked server/ and .design/; re-run with them added, the working tree's test file against HEAD's sources:)
+ × client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > no surface a client can reach is named with a word from "Not in client copy"
+ × client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > the names AnA and the @ menu give a reachable screen (NAVIGATION_TARGETS) use none of the words
+ × client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > the project-home breadcrumb names the open project, once, as the current page
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 22 passed (25)

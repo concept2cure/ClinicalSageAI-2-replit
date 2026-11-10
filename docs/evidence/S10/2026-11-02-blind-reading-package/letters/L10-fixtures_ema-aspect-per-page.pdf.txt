@@ -1,0 +1,24 @@
+List of Questions
+The applicant is asked to respond to the following questions.
+Quality aspects
+EMA/CHMP/123456/2026
+
+-- 1 of 3 --
+
+Major objections
+1. The applicant should justify the absence of a specification for the mutagenic impurity.
+2. The applicant should provide the validation of the assay.
+Other concerns
+1. Clarify the retest period.
+Clinical aspects
+EMA/CHMP/123456/2026
+
+-- 2 of 3 --
+
+Major objections
+1. The pivotal study did not meet its secondary endpoint.
+Other concerns
+1. Provide the subgroup analyses.
+EMA/CHMP/123456/2026
+
+-- 3 of 3 --

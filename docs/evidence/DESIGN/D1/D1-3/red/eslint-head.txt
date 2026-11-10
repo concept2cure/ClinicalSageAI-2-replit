@@ -1,0 +1,18 @@
+# ESLint at HEAD (1c48581ae): each file's HEAD text through --stdin (_cssRules.ts is new: no HEAD text), 2026-11-02T01:39:39Z
+client/src/concept2cure/v2/__tests__/cmdkLicenseGating.test.tsx errors 0 warnings 1
+   max-lines-per-function Arrow function has too many lines (144). Maximum allowed is 100.
+client/src/concept2cure/v2/__tests__/cmdkPlaces.test.tsx errors 0 warnings 0
+client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx errors 0 warnings 0
+client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx errors 0 warnings 0
+client/src/concept2cure/v2/__tests__/shellNav.test.tsx errors 0 warnings 0
+client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx errors 0 warnings 0
+client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx errors 0 warnings 0
+client/src/concept2cure/v2/Shell.tsx errors 0 warnings 5
+   max-lines-per-function Function 'Rail' has too many lines (253). Maximum allowed is 100.
+   complexity Function 'Rail' has a complexity of 39. Maximum allowed is 15.
+   max-lines-per-function Function 'AccountMenu' has too many lines (138). Maximum allowed is 100.
+   max-lines File has too many lines (905). Maximum allowed is 500.
+   max-lines-per-function Function 'CmdK' has too many lines (267). Maximum allowed is 100.
+tests/e2e/golden-customer-journey.e2e.ts errors 0 warnings 1
+   max-lines-per-function Async arrow function has too many lines (234). Maximum allowed is 100.
+tests/e2e/launch-walk-no-lock.e2e.ts errors 0 warnings 0

@@ -268,6 +268,18 @@ async function validatedSession(baseUrl, body, method) {
   return { accessToken: body.accessToken, refreshToken: body.refreshToken, user: sess.user, method };
 }
 
+/**
+ * Whether the server under test is a development build, read from the server itself: it sends its CSP report-only
+ * exactly when config.isDevelopment (server/middleware/enterprise-security.ts), the flag that also opens the
+ * development fixture doors (server/routes/submission-orchestrator.ts). A step whose control is closed only outside
+ * development records a deviation on such a server and a failure anywhere else. Whether dev-login answers is not
+ * the test: the W3 posture refuses dev-login on a development server (VSR-001 §21, OQ-SUBC-16).
+ */
+export async function serverIsDevelopment(baseUrl = BASE_URL) {
+  const res = await fetch(`${baseUrl}/`, { headers: { Origin: baseUrl } });
+  return res.headers.has('content-security-policy-report-only') && !res.headers.has('content-security-policy');
+}
+
 /** Server log used to attribute a 500 to an environment defect (IQ-DEV-001). */
 export const SERVER_LOG = process.env.VALIDATION_SERVER_LOG || '/tmp/w3a-server.log';
 const PERMISSION_DENIED_RE = /permission denied for (table|schema|relation) ([A-Za-z0-9_.]+)/g;
@@ -345,7 +357,6 @@ export function createApiClient({ baseUrl, accessToken, onRecord, identity = nul
       else if (Number.isFinite(reset) && reset > Date.now()) waitMs = reset - Date.now() + 500;
       console.log(`    (429 on ${method} ${apiPath}; waiting ${Math.round(waitMs / 1000)}s, retry ${retries})`);
       await sleep(Math.min(waitMs, 70_000));
-      if (body instanceof FormData) break; // multipart bodies are single-use
     }
     let json = null;
     try {

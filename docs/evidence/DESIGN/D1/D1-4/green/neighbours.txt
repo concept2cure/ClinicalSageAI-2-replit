@@ -1,0 +1,199 @@
+# npx vitest run --config vitest.config.ts --maxWorkers=1 client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx client/src/concept2cure/v2/__tests__/taskTrayNoticeOpens.test.tsx client/src/concept2cure/v2/__tests__/taskTrayApprovalsFromAuthoring.test.tsx client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts client/src/concept2cure/v2/__tests__/homeOpenItems.test.tsx client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx client/src/concept2cure/v2/__tests__/notificationRecordJourney.test.tsx client/src/concept2cure/v2/__tests__/notificationSharedSignature.test.tsx client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts
+# on e4ea399d6c + the D1-4 working tree (uncommitted), 2026-11-01T22:06Z
+# exit code: 0
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > canceled creation still owns the existing authoring host > retires native creation before a same-project account replacement receives its old receipt 396ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > canceled creation still owns the existing authoring host > retires native creation before a same-project account replacement receives its old identified503 97ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > canceled creation still owns the existing authoring host > holds the exact assigned task after a synchronous document create and Cancel 124ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > canceled creation still owns the existing authoring host > holds the exact assigned task after a synchronous section create and Cancel 119ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > canceled creation still owns the existing authoring host > releases a confirmed document receipt before its normal callback and exact task navigation 112ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > canceled creation still owns the existing authoring host > releases a confirmed section receipt before its normal callback and exact task navigation 133ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > canceled creation still owns the existing authoring host > releases a definite403 refusal after the native form is closed 136ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > canceled creation still owns the existing authoring host > retains an HTTP408 as unknown and never claims nothing was created 182ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > creation recovery must finish before leaving for a task > holds unknown document, its recovery read and host refresh until all succeed 348ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > creation recovery must finish before leaving for a task > holds unknown section, its recovery read and host refresh until all succeed 392ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > creation recovery must finish before leaving for a task > retains uncertainty after a 403 recovery 185ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > creation recovery must finish before leaving for a task > retains uncertainty after a wrong scope recovery 168ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > creation recovery must finish before leaving for a task > retains uncertainty after a host refresh failure recovery 151ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > retained ledger ownership across authoring contexts > keeps an earlier project’s unresolved entry through A→B→A and suppresses its late receipt 259ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > retained ledger ownership across authoring contexts > unregisters a retired host without letting its late response recreate a guard or open a document 106ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > actual authoring host refresh is part of recovery > holds an unknown document when the actual host refresh fails after a valid recovery read 522ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > actual authoring host refresh is part of recovery > holds an unknown section when the actual host refresh fails after a valid recovery read 1136ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > actual authoring host refresh is part of recovery > refuses a wrong-scope document host refresh after the recovery read succeeded 574ms
+ ✓ client/src/concept2cure/v2/__tests__/taskDrawerCreationGuard.test.tsx > actual authoring host refresh is part of recovery > refuses a wrong-scope section host refresh after the recovery read succeeded 1127ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > refuses invalid or ambiguous saved preferences instead of guessing defaults 231ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > refuses invalid or ambiguous saved preferences instead of guessing defaults 26ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > refuses invalid or ambiguous saved preferences instead of guessing defaults 24ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > does not acknowledge an unconfirmed successful write 231ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > refuses a stale-organization write before sending it 133ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > notification preference safety > never delivers an old save acknowledgement to a changed account 131ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > saved preference ownership and request lifecycle > rejects a confirmation for another recipient scope 165ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > saved preference ownership and request lifecycle > rejects a confirmation for another recipient scope 134ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferenceSafety.test.tsx > saved preference ownership and request lifecycle > blocks duplicate writes and drops a reply after the settings close 105ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — messages & alerts > opens a saved report using its validated run resource instead of an arbitrary action URL 275ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — messages & alerts > does not offer a report link for a malformed or unrelated resource 74ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — messages & alerts > a failed notifications read is an alert, not "No unread messages" 32ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — messages & alerts > a genuinely empty inbox still says so 41ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — the bell badge > a failed unread-count read is not shown as zero waiting 19ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — the bell badge > a failed my-work read is not shown as zero waiting either 30ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — the bell badge > when every count loads and nothing is waiting, there is no badge 13ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — the bell badge > a real count still shows as a number 22ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — native task handoff > retains the exact unified task business key for assigned and approval rows 162ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — navigation ownership > holds triage when unsaved work owns the canvas 44ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — navigation ownership > holds triage when account work owns the canvas 110ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — navigation ownership > keeps the tray open with the native surface refusal and never writes or navigates 72ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — navigation ownership > refuses a same-tick bearer replacement before React sees the account change 39ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — navigation ownership > retires the old drawer and its pending reads when the actor changes 37ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > notification setup refresh ownership > refreshes counts for current-recipient preference changes and ignores a different organization 16ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > persists the actual task_update producer preference from its labelled mounted control 445ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > persists the actual schedule_milestone_slip producer preference from its labelled mounted control 128ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > persists a category preference and re-reads the saved value without enabling external channels 120ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > keeps the saved preference visible when a write fails 109ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > a failed preference read never presents assumed defaults as saved settings 21ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationPreferences.test.tsx > rejects a malformed successful preference response instead of displaying default settings 12ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > refuses a retained Accept decision after bearer replacement 313ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > refuses a retained Decline decision after bearer replacement 65ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > withholds a late invitation list after the bearer changes 39ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > does not accept an unnamed inviting organization 44ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > rejects duplicate pending invitation identities 46ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > does not acknowledge an unconfirmed membership: {"success":true} 66ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > does not acknowledge an unconfirmed membership: {"success":true,"data":{"invitationId":52,"organizationId":9,"userId":44,"role":"member","status":"accepted"}} 56ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > withholds a late consent acknowledgement after the owner changes 58ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > refuses a stale source before the shared helper rotates a session 3ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > does not adopt over or end an unrelated login while SELECT is pending 4ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > reserves the native editor before the shared helper spends a bearer 7ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > ends its own uncertain session after a network failure without navigating 1ms
+ ✓ client/src/concept2cure/v2/__tests__/organizationAccessOwnership.test.tsx > clears the canonical in-memory bearer when AuthService ends a session 1ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > pins Account reads and mutations to the validated captured actor 260ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > refuses a stale bearer before persona while auth context still shows the old owner 84ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > refuses a stale bearer before accept while auth context still shows the old owner 53ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > refuses a stale bearer before decline while auth context still shows the old owner 74ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > withholds a late read from a replaced bearer: /api/tenant-users/invitations/mine 22ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > withholds a late read from a replaced bearer: /api/users/me/persona 13ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > never caches a late reporting save after session change 40ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > never caches a late reporting save after unmount 29ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > does not refresh memberships or acknowledge a late invitation acceptance for a replaced session 32ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > rechecks ownership after response-body decoding 56ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > pins invitation acceptance and refreshes only after a current-owner confirmation 42ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > does not acknowledge or reload after a late decline for a replaced bearer 37ms
+ ✓ client/src/concept2cure/v2/__tests__/accountSelfServiceOwnership.test.tsx > keeps the mutation lock until the saved record is confirmed 32ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > TRIAGE_ASK: one source for the tray, Home and the task board (D1 §D1.C step 5, §D1.G step 2) > is exported with the words the tray has always asked 2ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > TRIAGE_ASK: one source for the tray, Home and the task board (D1 §D1.C step 5, §D1.G step 2) > the triage row asks exactly it, as a quiet ghost button led by the ✻ 271ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the header (D1 §D1.G step 1) > says "none overdue" rather than counting zero, and closes with a D0 button 125ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the header (D1 §D1.G step 1) > still gives the number when something is late 31ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > rows: colour only where something is late or blocked (D1 §D1.G step 3) > a row due in 14 days keeps its dot’s place but shows none; late and blocked rows keep theirs 93ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > messages and alerts (D1 §D1.G step 4) > shows a severity dot only for a warning or a critical notice 49ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > messages and alerts (D1 §D1.G step 4) > draws Mark read, the open button and the preferences button with D0’s buttons 47ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > finds the tray block 0ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > uses orange only for the ✻ 1ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > sets no text under the 12px floor 1ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > keeps the group heads in sentence case and hides a quiet dot 1ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > gives the panel title 16px and the counts line 13px 0ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > notification guard precedes channel mutation > preserves the project, editor and record params when native work refuses a 20000000-0000-4000-8000-000000000002 target 6ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > notification guard precedes channel mutation > preserves the project, editor and record params when native work refuses a null target 2ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > notification guard precedes channel mutation > checks the tray owner before changing any channel 1ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > notification guard precedes channel mutation > builds a confirmed task destination with the current actor and organization 10ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > notification guard precedes channel mutation > refuses a task when the current actor cannot be established before clearing existing targets 2ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > confirmed async notification response repeats admission > retains all channels when native creation becomes uncertain during the target read 204ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > confirmed async notification response repeats admission > rechecks the retained tray owner after the linked record is confirmed 27ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > confirmed async notification response repeats admission > rejects a changed live actor even if the bearer has not yet been replaced 22ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > confirmed async notification response repeats admission > does not resolve a linked record under a bearer for another actor 17ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > actual tray owns a pending notification target > refuses the confirmed target when the old tray actor changes before React retires it 89ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationNavigationGuard.test.tsx > actual tray owns a pending notification target > does not revive an old notification callback after an account round trip 50ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationRecordJourney.test.tsx > F19 actual notification-to-owning-record journey > waits for authorized resolution, switches to the actual UUID program and opens the exact record without marking read 241ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationRecordJourney.test.tsx > F19 actual notification-to-owning-record journey > keeps a refused target visible with retry, and opens it only after a later confirmed read 117ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationRecordJourney.test.tsx > F19 actual notification-to-owning-record journey > an authored section is handed to the real editor with exact identity and section code 47ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationRecordJourney.test.tsx > F19 actual notification-to-owning-record journey > a malformed successful target never borrows the current program or follows an arbitrary action 45ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationRecordJourney.test.tsx > F19 actual notification-to-owning-record journey > an unsaved native editor or open signature ceremony blocks navigation before target/program state changes 74ms
+ ✓ client/src/concept2cure/v2/__tests__/homeOpenItems.test.tsx > Home: your open items, listed > lists the deliverable assigned to you, and opens it on the board where it is worked 342ms
+ ✓ client/src/concept2cure/v2/__tests__/homeOpenItems.test.tsx > Home: your open items, listed > the same document assigned in two projects is told apart by each project's name 73ms
+ ✓ client/src/concept2cure/v2/__tests__/homeOpenItems.test.tsx > Home: your open items, listed > a task stored under an internal module id shows the module's words, never the id 55ms
+ ✓ client/src/concept2cure/v2/__tests__/homeOpenItems.test.tsx > Home: your open items, listed > lists the approval waiting for your signature, and opens Review 45ms
+ ✓ client/src/concept2cure/v2/__tests__/homeOpenItems.test.tsx > Home: your open items, listed > a failed read of your tasks is said, never "nothing assigned" 23ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationSharedSignature.test.tsx > a target resolved after the real signature form opens cannot change the program or navigate 444ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationSharedSignature.test.tsx > keeps the notification fence while the actual shared ceremony commits a delayed signed action 161ms
+ ✓ client/src/concept2cure/v2/__tests__/notificationSharedSignature.test.tsx > registers only while open and cleans up correctly across StrictMode toggles and unmount 21ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayNoticeOpens.test.tsx > a detached AnA turn's notice in TaskTray > names the conversation, and opens it once the server confirms it 293ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayNoticeOpens.test.tsx > a detached AnA turn's notice in TaskTray > a conversation the server will not confirm (not yours, or gone) is not opened 67ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayNoticeOpens.test.tsx > a detached AnA turn's notice in TaskTray > a notice with no record stays a row that only marks read 37ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > reads the client TSX and the v2 stylesheets 3ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-head`: no more than 18 uses, and gone from the CSS at 0 11ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-eyebrow`: no more than 19 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-title`: no more than 18 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-state`: no more than 23 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-head`: no more than 11 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-eyebrow`: no more than 9 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-title`: no more than 11 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-sub`: no more than 10 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-head`: no more than 3 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-kicker`: no more than 3 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-title`: no more than 3 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `surface-head`: no more than 5 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `surface-kicker`: no more than 2 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pj-eyebrow`: no more than 1 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-cta`: no more than 19 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `landing-newproj`: no more than 1 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `btn sm`: no more than 14 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-card`: no more than 15 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-tabs`: no more than 11 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-tab`: no more than 13 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-subtab`: no more than 0 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sc-ws`: no more than 1 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cc-tab`: no more than 1 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pj-seg`: no more than 2 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `ml-seg`: no more than 4 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cl-toast`: no more than 1 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `tb-detail`: no more than 4 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `rbm-modal`: no more than 3 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-connect`: no more than 0 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pj-stageband`: no more than 2 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `What to do now`: no more than 1 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `This work flows into`: no more than 1 uses, and gone from the CSS at 0 5ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayApprovalsFromAuthoring.test.tsx > TaskTray — approvals come from the authoring approval chain > lists the documents at my sign-off from the review board, and nothing from the unified store 264ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayApprovalsFromAuthoring.test.tsx > TaskTray — approvals come from the authoring approval chain > a failed board read says the approvals could not be loaded 35ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayApprovalsFromAuthoring.test.tsx > TaskTray — approvals come from the authoring approval chain > no sign-off waiting renders no approvals group 50ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > the route's notice opens the version (§2.11) > the shared contract admits the Vault version, only with its project, and a route task id 4ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > the route's notice opens the version (§2.11) > opening it publishes the project and the Vault target, then navigates to the Vault 14ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > the Review board's Vault queue (§2.11) > a named member whose turn it is reads "Your turn", with their due date 28ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > the Review board's Vault queue (§2.11) > the sender's row carries every member's outcome and Remind; Open the version opens that version 172ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > the Review board's Vault queue (§2.11) > a route that could not be read says so, and names nobody 4ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > the Review board's Vault queue (§2.11) > a withdrawn route says nothing is signed until a new one is sent 3ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > Tasks: a route member opens where the route is acted on (§2.11) > says what an approver waits on, and opens the Review board 28ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRouteInbox.test.tsx > Tasks: a route member opens where the route is acted on (§2.11) > an ordinary task still opens on the task board 26ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Review board at 390px > stacks the list above the detail 5ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Review board at 390px > wraps what does not fit in the detail, which cuts off what overflows it 19ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Review board at 390px > makes every control a reviewer taps there a 44px target 3ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Review board at 390px > marks the controls those rules name, and sets no inline height a rule cannot override 1ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Tasks tray at 390px > makes Close and each notice’s Mark read 44px square 24ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Tasks tray at 390px > makes Triage, Show more, Open the task board and every button in the tray 44px tall 23ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The review decision dialog at 390px > makes the decision, the reason and each button a 44px target 1ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > the shell resets every button’s padding and background 0ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > every rule that gives .es-btn-primary its box outranks that reset 2ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > every rule that gives .es-btn-secondary its box outranks that reset 1ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > every rule that gives .es-close its box outranks that reset 1ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > every rule that gives .es-meaning-opt its box outranks that reset 1ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > at 390px Sign and commit, Cancel, Done and each meaning are 44px tall, and the close control 44px square 1ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > reduced motion still stops their transitions, at the same rank 1ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > no second copy of the meaning pills’ rules works around the reset elsewhere 5ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts > sentence case: no stylesheet uppercases text (ONE_DESIGN_PLAN §2, D0 guard 1) > reads the stylesheets it guards 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts > sentence case: no stylesheet uppercases text (ONE_DESIGN_PLAN §2, D0 guard 1) > every allowlist entry carries a written reason 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts > sentence case: no stylesheet uppercases text (ONE_DESIGN_PLAN §2, D0 guard 1) > no `text-transform: uppercase` in v2/styles/*.css or design-system/colors_and_type.css 23ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > reads the v2 stylesheets and resolves nesting and :is() lists 3ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .btn is defined in exactly one stylesheet, app-v2.css 4ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .pj-card is defined in exactly one stylesheet, app-v2.css 2ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .pj-card-h is defined in exactly one stylesheet, app-v2.css 2ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .rd-chip is defined in exactly one stylesheet, app-v2.css 2ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .al-lead is defined in exactly one stylesheet, app-v2.css 2ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .al-k is defined in exactly one stylesheet, app-v2.css 2ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .ph-title is defined in exactly one stylesheet, app-v2.css 5ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .seg is defined in exactly one stylesheet, app-v2.css 2ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .tab is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .reg-tbl th is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .c2c-input is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .c2c-empty-state is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .de is defined in exactly one stylesheet, journey-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .de-toast is defined in exactly one stylesheet, journey-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .pj-seclbl is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > retired alias .btn.sm is defined at most once, in app-v2.css 1ms
+ Test Files  18 passed (18)
+      Tests  193 passed (193)
+   Duration  40.03s (transform 5.39s, setup 1.37s, import 13.41s, tests 15.00s, environment 7.59s)

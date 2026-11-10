@@ -369,6 +369,13 @@ describe('approving an artifact through PUT …/status', () => {
   afterEach(() => { vi.restoreAllMocks(); });
 
   it('an organization reviewer who is not an edit member, and holds signing authority, approves: the signed act commits', async () => {
+    // P-95 (2026-11-09): an artifact is approved only after its review. A's
+    // approver (14), neither the signer (13) nor the author (10), approved v1.
+    await h.state.pg.exec(`
+      INSERT INTO concept2cure_review_assignments (assignment_id, artifact_id, organization_id, reviewer_id, assigned_by_id, status)
+        VALUES ('asg_4099', 4099, ${ORG_A}, ${A_APPROVER.userId}, 10, 'completed');
+      INSERT INTO concept2cure_review_decisions (decision_id, assignment_id, artifact_id, organization_id, reviewer_id, review_round, decision, version_reviewed)
+        SELECT 'dec_4099', id, 4099, ${ORG_A}, ${A_APPROVER.userId}, review_round, 'approve', 1 FROM concept2cure_review_assignments WHERE assignment_id = 'asg_4099';`);
     const outcome = await approveAs(A_REVIEWER);
     expect(outcome.status, JSON.stringify({ ...outcome, body: undefined })).toBe(200);
     expect(await statusOf()).toBe('approved');
@@ -531,6 +538,30 @@ describe('GET /api/artifacts-center/:artifactId/export', () => {
     const res = await exportAs(A_OWNER, B_PROJECT);
     expect(res.status, JSON.stringify(res.body)).toBe(404);
     expect(res.attempted).toEqual([]);
+  });
+});
+
+// ── A project under the organization's second client ────────────────────────
+
+describe('a project under a second client of the organization', () => {
+  /* 2026-10-31: projects under a second client workspace (the Lumen demo's)
+     answered 404 PROJECT_NOT_FOUND here, because admission looked the project
+     up in the organization's FIRST workspace whenever a request named none. */
+  const SECOND = 404;
+  beforeEach(async () => {
+    await h.state.pg.exec(`
+      INSERT INTO client_workspaces (id, organization_id, name, slug) VALUES (101, ${ORG_A}, 'A second client', 'a-ws-2');
+      INSERT INTO projects (id, organization_id, client_workspace_id, name, type, status, owner_id, created_by_id, metadata)
+        VALUES (${SECOND}, ${ORG_A}, 101, 'A second-client program', 'IND', 'active', 10, 10, '{}');`);
+    h.state.dirty.add('projects');
+  });
+
+  it('is admitted in its own workspace for its owner, and still refused to a member it is not shared with', async () => {
+    const owner = await send('GET', `/api/concept2cure/projects/${SECOND}/artifacts`, A_OWNER);
+    expect(refusedByProjectAccess(owner), JSON.stringify({ ...owner, body: undefined })).toBe(false);
+    await h.state.pg.exec(`INSERT INTO project_visibility_settings (organization_id, project_id, visibility) VALUES (${ORG_A}, ${SECOND}, 'private')`);
+    const colleague = await send('GET', `/api/concept2cure/projects/${SECOND}/artifacts`, A_COLLEAGUE);
+    expect(refusedByProjectAccess(colleague), JSON.stringify({ ...colleague, body: undefined })).toBe(true);
   });
 });
 

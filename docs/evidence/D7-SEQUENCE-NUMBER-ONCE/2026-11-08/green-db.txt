@@ -1,0 +1,6 @@
+# GREEN on real PostgreSQL 16 (app_service, RLS on), after repair A, 2026-11-08T23:27:50Z
+ ✓ tests/db/sequence-number-once.dbtest.ts > a sequence number is used once in a submission (F1 repair A) > a second live 0000 is refused, by name
+ ✓ tests/db/sequence-number-once.dbtest.ts > a sequence number is used once in a submission (F1 repair A) > two creates of 0000 in flight together: the one that waits for the submission sees the other and is refused
+ ✓ tests/db/sequence-number-once.dbtest.ts > a sequence number is used once in a submission (F1 repair A) > a removed 0000 does not hold its number
+ ✓ tests/db/sequence-number-once.dbtest.ts > a sequence number is used once in a submission (F1 repair A) > a sequence removed while its transition is in flight does not move
+      Tests  4 passed (4)

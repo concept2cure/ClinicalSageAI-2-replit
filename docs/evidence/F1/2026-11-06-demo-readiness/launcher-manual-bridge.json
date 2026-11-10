@@ -1,0 +1,9 @@
+{
+  "fromFreeze": "csr-rehearsal-inputs.json",
+  "toFreeze": "manual-editor-inputs.json",
+  "runtimeChanges": [],
+  "addedTestHelper": {
+    "docs/evidence/F1/2026-11-06-demo-readiness/manual-editor.cjs": "645c63c9c2b224c0e351a7906b56a50c29d97d3050bde24d77346ed844522519"
+  },
+  "meaning": "Fresh browser-context persistence and existing inline controls only; no model generation."
+}

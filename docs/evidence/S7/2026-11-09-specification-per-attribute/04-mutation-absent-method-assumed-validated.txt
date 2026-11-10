@@ -1,0 +1,4 @@
+ × server/services/__tests__/module3Composer.specification-per-attribute.test.ts > §3.2.S.4 files one row per recorded attribute > says a named procedure is not in the register rather than inventing a status 9ms
+   → expected 'validated' to be 'not in the method register' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 6 passed (7)

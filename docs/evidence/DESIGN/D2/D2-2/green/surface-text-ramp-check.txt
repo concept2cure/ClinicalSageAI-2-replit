@@ -1,0 +1,10 @@
+# npm run ci:surface-text-ramp (generate-surface-text-ramp.mjs --check)
+# Already FAILING at HEAD a7e9f2e6b before any D2-2 edit (other lanes' rules: .bs-doc-bar, .tb-cmdk, .ed-viewtoggle/.ed-reason, .rc-ana, .rc-composer, .vd-*).
+# D2-2's own share is one selector, .c2c-v2 .npw-review, leaving the --bg-050 list (it no longer has a fill): surface-text-ramp.D2-2-share.patch, which applies to HEAD's ramp (git apply --check).
+
+[ci:surface-text-ramp] FAIL — generated ramp sheet(s) do not match the stylesheets:
+    client/src/concept2cure/v2/styles/surface-text-ramp.css — stale
+  A stylesheet gained or lost a tinted-surface rule, so the re-based
+  text ramp no longer covers what the sources imply. Regenerate:
+    node scripts/design/generate-surface-text-ramp.mjs
+exit=1

@@ -1,0 +1,110 @@
+{
+  "observedAt": "2026-11-06T20:35:28.751027+00:00",
+  "sourceCommit": "b8b73e2fc924a5f0b80510a8920d57ca22bf8459",
+  "sourceCommitAfterRuns": "b8b73e2fc924a5f0b80510a8920d57ca22bf8459",
+  "branch": "concept2cure-v2",
+  "scope": "Offline gateway/account/credential/redaction compatibility after canonical7d integration",
+  "results": {
+    "initialBatch": {
+      "files": 6,
+      "passedFiles": 5,
+      "failedFiles": 1,
+      "passedTests": 67,
+      "skippedTests": 38,
+      "exitCode": 1,
+      "durationSeconds": 89.07,
+      "cause": "Existing connector fixture beforeAll exceeded its explicit60000ms limit before any of38 cases ran. No assertion failure in that suite."
+    },
+    "unchangedRetry": {
+      "files": 1,
+      "tests": 38,
+      "passed": 38,
+      "failed": 0,
+      "exitCode": 0,
+      "durationSeconds": 7.89,
+      "test": "server/services/connectors/__tests__/connector-credentials-stored-unvalidated.pglite.test.ts",
+      "changes": "None: identical source/test/configuration and existing hook timeout."
+    },
+    "composedCoverage": {
+      "files": 6,
+      "passedCases": 105,
+      "note": "Five suites/67 passing cases from initial run plus38 passing connector cases from the single-suite retry. This is not a fresh full-group green execution."
+    }
+  },
+  "commands": {
+    "initialBatch": "NODE_OPTIONS=--max-old-space-size=4096 PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH npx --no-install vitest run --config vitest.config.ts --maxWorkers=1 --fileParallelism=false server/services/submission-gateways/__tests__/gateway-accounts.test.ts server/services/submission-gateways/__tests__/gateway-qualification.test.ts server/routes/__tests__/gateway-account-qualification.test.ts server/__tests__/security/telemetry-redaction.test.ts server/services/__tests__/account-canon-stores-no-unstated-confidence.test.ts server/services/connectors/__tests__/connector-credentials-stored-unvalidated.pglite.test.ts --reporter=dot",
+    "unchangedRetry": "NODE_OPTIONS=--max-old-space-size=4096 PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH npx --no-install vitest run --config vitest.config.ts --maxWorkers=1 --fileParallelism=false server/services/connectors/__tests__/connector-credentials-stored-unvalidated.pglite.test.ts --reporter=dot"
+  },
+  "inputsBeforeRuns": {
+    "observedAt": "2026-11-06T20:31:40.810552+00:00",
+    "sourceCommit": "b8b73e2fc924a5f0b80510a8920d57ca22bf8459",
+    "files": {
+      "server/routes/gateway-accounts.ts": "e12d685f627cc420262e3e1cdce956498195f0d2d6db2da745c2cf408937c34b",
+      "server/services/submission-gateways/gateway-accounts.ts": "fd5342b79d6b639798757bd78f48eb6d71c7ecac94bb13801be588bfab8bf949",
+      "server/services/submission-gateways/index.ts": "5f1a21d59c0783e5049479fb5d33c160ccc4d27edfb7f45e4b229a324874ff44",
+      "server/services/submission-gateways/types.ts": "c9877767ee5e8aa15a29b710e9a44ef5333ccd5e3a38f06bde008dd810670abe",
+      "server/services/account-canon.ts": "8bdb3f6b606b5d2197934b00521bc51db923374008af2a68e657e916e38617c1",
+      "server/services/connectors/connector-registry.ts": "e15fe91bc2fc06b122aecdd221e5416c3cbe1a483483ba3948e07cba2090b8e1",
+      "server/services/connectors/connector-interface.ts": "a57b0e9e17215e80469ab8fda689691a6a8be3f5cf60b261e16e2c44a72af378",
+      "server/services/observability/redaction.ts": "9696e29b4fda51a10f556c222e6e5bf51b85c18ded75f9050b52308078e2345b",
+      "server/middleware/auditLogger.js": "ff49365f37ac479c7a829664236eccd9fc0f6fc89677535d7f516c6882410f61",
+      "server/services/security/credential-cipher.ts": "648d7600af12e6365fab2cf421e02dd09e3f1dfcf2f6c4140a5e6160027f6cf9",
+      "server/services/part11/resolve-signer-role.ts": "d031cd07c7b946f4d91e5482b399b20d061307403031c012415c4616687e3f52",
+      "server/services/submission-gateways/__tests__/gateway-accounts.test.ts": "90adf2958bbe3ddbe389da5b3c014e51dd32c0ace118aed235579db0d1133496",
+      "server/services/submission-gateways/__tests__/gateway-qualification.test.ts": "f479614b628e4408bda4ddd73a8d075ae8c7fe300e35f5d47529962b62648714",
+      "server/routes/__tests__/gateway-account-qualification.test.ts": "ffa4a3f10ec5b8a2ca932d9b1463189ce54a56f86f66429f99595e928b81c8aa",
+      "server/__tests__/security/telemetry-redaction.test.ts": "d5b05a33cc3b542bd0407b443547627c942793063d99e71412d24613e671752a",
+      "server/services/__tests__/account-canon-stores-no-unstated-confidence.test.ts": "4fb23f81ddd4f13510c12ee91e21bbc404b98aead19ca1489b7d35de85251705",
+      "server/services/connectors/__tests__/connector-credentials-stored-unvalidated.pglite.test.ts": "3b0ab03882406b7e50e1b819af99b1dfa8d73886b9e4653656d1f6922730e168",
+      "server/services/submission-gateways/__tests__/sent-package-storage-stub.ts": "7ab5a1b3d00569dab34f995b8704adcc0cdd7e1688bb440a7624963b32f4617a"
+    }
+  },
+  "sourceFingerprintsAfterRuns": {
+    "server/routes/gateway-accounts.ts": "e12d685f627cc420262e3e1cdce956498195f0d2d6db2da745c2cf408937c34b",
+    "server/services/submission-gateways/gateway-accounts.ts": "fd5342b79d6b639798757bd78f48eb6d71c7ecac94bb13801be588bfab8bf949",
+    "server/services/submission-gateways/index.ts": "5f1a21d59c0783e5049479fb5d33c160ccc4d27edfb7f45e4b229a324874ff44",
+    "server/services/submission-gateways/types.ts": "c9877767ee5e8aa15a29b710e9a44ef5333ccd5e3a38f06bde008dd810670abe",
+    "server/services/account-canon.ts": "8bdb3f6b606b5d2197934b00521bc51db923374008af2a68e657e916e38617c1",
+    "server/services/connectors/connector-registry.ts": "e15fe91bc2fc06b122aecdd221e5416c3cbe1a483483ba3948e07cba2090b8e1",
+    "server/services/connectors/connector-interface.ts": "a57b0e9e17215e80469ab8fda689691a6a8be3f5cf60b261e16e2c44a72af378",
+    "server/services/observability/redaction.ts": "9696e29b4fda51a10f556c222e6e5bf51b85c18ded75f9050b52308078e2345b",
+    "server/middleware/auditLogger.js": "ff49365f37ac479c7a829664236eccd9fc0f6fc89677535d7f516c6882410f61",
+    "server/services/security/credential-cipher.ts": "648d7600af12e6365fab2cf421e02dd09e3f1dfcf2f6c4140a5e6160027f6cf9",
+    "server/services/part11/resolve-signer-role.ts": "d031cd07c7b946f4d91e5482b399b20d061307403031c012415c4616687e3f52",
+    "server/services/submission-gateways/__tests__/gateway-accounts.test.ts": "90adf2958bbe3ddbe389da5b3c014e51dd32c0ace118aed235579db0d1133496",
+    "server/services/submission-gateways/__tests__/gateway-qualification.test.ts": "f479614b628e4408bda4ddd73a8d075ae8c7fe300e35f5d47529962b62648714",
+    "server/routes/__tests__/gateway-account-qualification.test.ts": "ffa4a3f10ec5b8a2ca932d9b1463189ce54a56f86f66429f99595e928b81c8aa",
+    "server/__tests__/security/telemetry-redaction.test.ts": "d5b05a33cc3b542bd0407b443547627c942793063d99e71412d24613e671752a",
+    "server/services/__tests__/account-canon-stores-no-unstated-confidence.test.ts": "4fb23f81ddd4f13510c12ee91e21bbc404b98aead19ca1489b7d35de85251705",
+    "server/services/connectors/__tests__/connector-credentials-stored-unvalidated.pglite.test.ts": "3b0ab03882406b7e50e1b819af99b1dfa8d73886b9e4653656d1f6922730e168",
+    "server/services/submission-gateways/__tests__/sent-package-storage-stub.ts": "7ab5a1b3d00569dab34f995b8704adcc0cdd7e1688bb440a7624963b32f4617a"
+  },
+  "inputsUnchanged": true,
+  "logs": {
+    "shared-editor-gateway-account-compatibility.txt": {
+      "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/server/shared-editor-gateway-account-compatibility.txt",
+      "bytes": 2466,
+      "lines": 63,
+      "sha256": "16926e8484e375f0ea8b8fa20910f243e692849b4fe84b2be146e66b576973b3"
+    },
+    "shared-editor-connector-credential-retry.txt": {
+      "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/server/shared-editor-connector-credential-retry.txt",
+      "bytes": 20692,
+      "lines": 431,
+      "sha256": "27a14eb92c28a6ddd917a7aa57722c3b93d493d710f437d96725cca035eb8887"
+    }
+  },
+  "proof": [
+    "Gateway account identity is retained and rechecked after asynchronous package preparation; account rotation/deletion refuses before transport without platform fallback.",
+    "Credential configuration and transport implementation remain distinct from agency qualification; account management reads current persisted membership.",
+    "Gateway write reasons and request/telemetry surfaces redact synthetic credential material, PEM containers and deep/cyclic payloads.",
+    "Account canon mutation and immutable account event use the same transaction, preserving unstated confidence as null.",
+    "Connector credential capture, currentness, delegation, scope and redaction cases run on PGlite with fixture/generated credentials and stubbed outbound calls."
+  ],
+  "limits": [
+    "No actual credential/provider setup or provider/agency API calls were performed; positive outbound operations use existing transport/fetch test doubles. No native DB suite was run.",
+    "No source/test edits, timeout/configuration changes, full typecheck/build, commits or deployment in this scope.",
+    "The initial beforeAll timeout is retained as an observed setup failure; its underlying cause is not independently established.",
+    "The separately owned AI gateway/provider SDK source-currentness race repair is outside this batch and is not qualified here. Earlier authoring/source/ACL receipts retain their original snapshots."
+  ]
+}

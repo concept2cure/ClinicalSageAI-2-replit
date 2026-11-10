@@ -8,8 +8,9 @@
  * submit button of "Place into submission" jittered by 1px and never settled,
  * and the IND reference lane's driver could not click it ("element is not
  * stable"). A <button> clips its own content, so no pseudo-element inside it
- * can keep that row: the lift had to go, and the design system gives the lift
- * to cards, not buttons (design-system/README.md, "Animation & motion").
+ * can keep that row: the lift had to go. The design system lifts nothing on
+ * hover; the older card lifts are counted and only fall (design-system/README.md,
+ * "Animation & motion"; foundationsReadmeClaims.test.ts).
  *
  * jsdom does no layout or hover, so this holds the cause: a hover rule for a
  * dialog button changes how it is painted, never where its box is. The browser

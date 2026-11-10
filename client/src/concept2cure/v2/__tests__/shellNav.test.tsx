@@ -33,6 +33,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { isLaunchSurface } from '@shared/constants/launch-scope';
+import { noteRecentProject, publishShellProject, readShellProject } from '../shellProject';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 const authRoles = vi.hoisted(() => ({ current: ['admin'], permissions: ['governed:write', 'billing:admin'] as string[] }));
@@ -40,21 +41,34 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
+/* One signed-in account, the same object on every render, as AuthProvider holds it; a new one only when a
+   case changes the roles or permissions. The shell reads the navigation verdicts once per account visit
+   (navEntitlements.tsx useNavigationReadOwner, 0fc881c16f): a new user object on every render was a new
+   visit on every render, and the suite read and re-rendered until the worker ran out of memory. */
+const signedIn = vi.hoisted(() => ({ roles: null as unknown, permissions: null as unknown, value: null as unknown }));
 vi.mock('@/services/portal/authService', () => ({
-  useAuth: () => ({ user: { id: 7, firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: authRoles.current, permissions: authRoles.permissions }, logout: vi.fn() }),
+  useAuth: () => {
+    if (!signedIn.value || signedIn.roles !== authRoles.current || signedIn.permissions !== authRoles.permissions) {
+      signedIn.roles = authRoles.current; signedIn.permissions = authRoles.permissions;
+      signedIn.value = { user: { id: 7, firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: authRoles.current, permissions: authRoles.permissions }, logout: () => Promise.resolve() };
+    }
+    return signedIn.value;
+  },
 }));
 vi.mock('@/contexts/TenantContext', () => ({
   useTenant: () => ({ currentOrganization: { name: 'Concept2Cure Therapeutics' } }),
 }));
 
 import { NavEntitlementsProvider } from '../navEntitlements';
-import { CmdK, Rail, TopBar } from '../Shell';
+import { CmdK, Rail } from '../Shell';
 import { CLIENT_CATEGORIES, SEGMENTS, getSurfaceMeta } from '../registryModel';
 import { resolveSurfaceIdForTarget } from '../navParams';
 import { __resetSurfaceActionBus } from '../surfaceActions';
 import { TaskBoard } from '../surfaces/TaskBoard';
 
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => payload }) as Response;
+/* The account button's title names the person and the organisation (D1-1, D1.md §D1.A step 2). */
+const ACCOUNT = 'Ada Rowe · Concept2Cure Therapeutics';
 
 /* Two tasks on the board: the signed-in person's (assignee 7) and a
    colleague's (assignee 9). */
@@ -116,14 +130,98 @@ async function mountRail(segment = 'biopharma', collapsed = false) {
   return { onNav, setSegment, rail, scroll };
 }
 
+/** A project this account had open before, remembered but not currently open. */
+function rememberLastProject() {
+  sessionStorage.setItem('trialsage_user', JSON.stringify({ id: '7', email: '7@example.com' }));
+  publishShellProject({ id: '65f7b785-9abe-4b9d-a5c7-3ddc477074e4', title: 'LMN-101 — IND' });
+  sessionStorage.removeItem('c2c.shell-project');
+  (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = undefined;
+}
+
 /** Where every entry in the rail's list goes, in order, by pressing each. */
 function destinations(scroll: HTMLElement, onNav: ReturnType<typeof vi.fn>): string[] {
   for (const b of Array.from(scroll.querySelectorAll('button'))) fireEvent.click(b);
   return onNav.mock.calls.map((c) => c[0] as string);
 }
 
-const PLACES = ['Home', 'Projects', 'Tasks', 'Communication', 'Vault'];
-const WORK_AREAS = ['CMC / Module 3', 'Risk-based monitoring', 'Quality', 'Reporting & analytics'];
+describe('a work area opens from the rail', () => {
+  /* The remembered project lives in localStorage and the account in
+     sessionStorage, so a case that seeds one must clear it: otherwise the next
+     case's work area reopens it and the "Open a project" notice never fires. */
+  afterEach(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = undefined;
+    noteRecentProject(null);
+  });
+
+  /**
+   * Clicking Biostatistics has to OPEN Biostatistics.
+   *
+   * On 2026-11-09 its navigation target became `scope: 'project'` so that a
+   * project-less visit could not seed a pharma-oncology preset for a device
+   * organisation. That was right about the preset and wrong about the door: a
+   * project-scoped target with nothing open resolves to Projects
+   * (routing.ts destinationFor), so the rail entry became a dead end and the
+   * founder could not find the screen at all.
+   *
+   * `shellProject.reopenLastProject()` exists for exactly this and nothing
+   * called it — `railOpensWithoutProject.test.ts` states the rule in prose ("a
+   * project screen reopens the last project the signed-in account opened") and
+   * no code implemented it. The rail now reopens it before navigating, so the
+   * work area opens on the project the person last worked in. Someone who has
+   * never opened a project still lands on Projects, which is the one case where
+   * that is the right answer.
+   */
+  /* A PROJECT-SCOPED work area reopens the last project this account had open,
+     instead of dropping the person on Projects. CMC is the subject because it
+     is project-scoped; Biostatistics is global and opens directly, which
+     railOpensWithoutProject.test.ts records and a browser run proved. */
+  it('CMC reopens the last project so the work area actually opens', async () => {
+    rememberLastProject();
+    expect(readShellProject(), 'the case must start with no project open').toBeNull();
+    const { scroll } = await mountRail();
+    const entry = Array.from(scroll.querySelectorAll('button')).find((b) => (b.textContent ?? '').includes('CMC'));
+    expect(entry, 'no CMC entry on the rail').toBeTruthy();
+    fireEvent.click(entry!);
+    expect(readShellProject(), 'the rail did not reopen the last project, so the entry lands on Projects').toMatchObject({
+      id: '65f7b785-9abe-4b9d-a5c7-3ddc477074e4',
+    });
+  });
+
+  it('Biostatistics needs no project to open, so it reopens none', async () => {
+    const { scroll, onNav } = await mountRail();
+    const entry = Array.from(scroll.querySelectorAll('button')).find((b) => (b.textContent ?? '').includes('Biostatistics'));
+    expect(entry, 'no Biostatistics entry on the rail').toBeTruthy();
+    fireEvent.click(entry!);
+    expect(onNav.mock.calls.map((c) => c[0])).toContain('biostatistics');
+  });
+
+  /* A fresh browser has nothing remembered: the founder's demo, 2026-11-09, where CMC opened Projects.
+     The rail's Recents read already names this account's most recent project, so CMC opens on it. */
+  it('with no project ever opened, CMC opens on the most recent project the rail lists', async () => {
+    sessionStorage.setItem('trialsage_user', JSON.stringify({ id: '7', email: '7@example.com' }));
+    const base = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation(async (m: string, url: string, ...rest: unknown[]) => (url.startsWith('/api/c2c/projects')
+      ? ok([{ id: 'c2ed888d-2958-4332-b186-e81482f2ceec', title: 'C2C-101 — IND', code: 'C2C-101' }, { id: 'e00d4d40-5378-41dc-b85e-e49662afe6a6', title: 'LMN-201 — IND' }])
+      : base(m, url, ...rest)));
+    const { scroll, onNav } = await mountRail();
+    expect(readShellProject(), 'the rail must not open a project just by listing it').toBeNull();
+    fireEvent.click(within(scroll).getByRole('button', { name: /CMC/ }));
+    expect(onNav).toHaveBeenCalledWith('cmc');
+    expect(readShellProject(), 'CMC landed on Projects: nothing was reopened').toMatchObject({ id: 'c2ed888d-2958-4332-b186-e81482f2ceec', title: 'C2C-101 — IND' });
+    expect(screen.queryByText(/Open a project to see/)).toBeNull();
+  });
+});
+
+// Submission Center is back on the rail: the founder looked for it there in a client demo (2026-10-31).
+const PLACES = ['Home', 'Projects', 'Tasks', 'Communication', 'Vault', 'Submission Center'];
+// Biostatistics IS on the rail, as this list has it: the founder's words of
+// 2026-11-06 and P-107 item 1, which supersede RULE 4's 2026-10-31 list for
+// this entry. Its door is project-scoped, so it opens on a project
+// (railOpensWithoutProject.test.ts). The comment here said the opposite until
+// 2026-11-09, citing RULE 4 and P-79, while the list below already named it.
+const WORK_AREAS = ['CMC / Module 3', 'Biostatistics', 'Risk-based monitoring', 'Quality', 'Reporting & analytics'];
 
 describe('the rail lists the places, then the work areas', () => {
   it('exactly the places, then the work areas, in order', async () => {
@@ -138,10 +236,10 @@ describe('the rail lists the places, then the work areas', () => {
     expect(Array.from(group.querySelectorAll('button .lbl')).map((l) => l.textContent)).toEqual(WORK_AREAS);
   });
 
-  it('the feature catalog, Submission Center, Conversation and a second task entry are not on the rail', async () => {
+  it('the feature catalog, Conversation and a second task entry are not on the rail', async () => {
     const { scroll } = await mountRail();
     const labels = Array.from(scroll.querySelectorAll('button .lbl')).map((l) => l.textContent);
-    for (const gone of ['Workflows', 'Plan & features', 'Subscription & features', 'Submission Center', 'Conversation', 'My work', 'Tasking']) {
+    for (const gone of ['Workflows', 'Plan & features', 'Subscription & features', 'Conversation', 'My work', 'Tasking']) {
       expect(labels, gone).not.toContain(gone);
     }
   });
@@ -162,7 +260,7 @@ describe('the rail lists the places, then the work areas', () => {
       fireEvent.click(button);
     }
     expect(onNav.mock.calls.map(call => call[0])).toEqual(['tasks', 'communication-center']);
-    fireEvent.click(within(rail).getByTitle('Ada Rowe'));
+    fireEvent.click(within(rail).getByTitle(ACCOUNT));
     const menu = screen.getByRole('menu');
     expect(within(menu).queryByRole('menuitem', { name: /^Admin/ })).toBeNull();
     expect(within(menu).queryByRole('menuitem', { name: /Access requests/ })).toBeNull();
@@ -181,6 +279,39 @@ describe('the rail lists the places, then the work areas', () => {
     const { scroll, onNav } = await mountRail();
     fireEvent.click(within(scroll).getByRole('button', { name: 'Quality' }));
     expect(onNav).toHaveBeenCalledWith('quality');
+  });
+
+  /* Added in D1-2's review: the top bar's "No project open" chip, the shell's other door to
+     the Projects index, went (D1.md §D1.B step 4), so the sidebar's Projects is the shell's
+     door there (projectCreationDoors.contract.test.ts). It opens the index, not a wizard. */
+  it('Projects is on the rail, and opens the Projects index', async () => {
+    const { scroll, onNav } = await mountRail();
+    fireEvent.click(within(scroll).getByRole('button', { name: 'Projects' }));
+    expect(onNav.mock.calls).toEqual([['projects']]);
+  });
+
+  /* Found in the running app, 2026-10-31: with no project open, a project screen's click landed on
+     Projects and looked dead. The rail now says why. Since 5144702d21 (2026-11-06) the Vault opens
+     with no project (shared/navigation: scope 'global'), so Communication is the project screen here. */
+  it('says a project screen needs a project when none is open, instead of doing nothing visible', async () => {
+    const { clearShellProject, publishShellProject } = await import('../shellProject');
+    clearShellProject();
+    const { scroll, onNav } = await mountRail();
+    fireEvent.click(within(scroll).getByRole('button', { name: 'Communication' }));
+    expect(onNav).toHaveBeenCalledWith('communication-center');
+    expect(await screen.findByText('Open a project to see its Communication. Choose one in Projects.')).toBeTruthy();
+    // Tasks is not a project screen (shared/navigation: scope 'global', c5170db97f, 2026-10-31): it
+    // opens everyone's board with no project open, and follows the project once one is.
+    fireEvent.click(within(scroll).getByRole('button', { name: 'Tasks' }));
+    expect(onNav).toHaveBeenCalledWith('tasks');
+    expect(screen.queryByText('Open a project to see its Tasks. Choose one in Projects.')).toBeNull();
+    cleanup();
+    publishShellProject({ id: '11111111-2222-4333-8444-000000000001', title: 'SYN-201 IND' });
+    try {
+      const open = await mountRail();
+      fireEvent.click(within(open.scroll).getByRole('button', { name: 'Communication' }));
+      expect(screen.queryByText(/Open a project to see/)).toBeNull();
+    } finally { clearShellProject(); }
   });
 
   it('CMC / Module 3 is on the rail beside Quality, and opens CMC', async () => {
@@ -228,7 +359,8 @@ describe('the conversation in progress is reached without a rail entry', () => {
       </NavEntitlementsProvider>,
     );
     await settle();
-    fireEvent.change(screen.getByPlaceholderText(/Search surfaces/), { target: { value: 'conversation' } });
+    // D1-3 (D1.md §D1.F step 1): the field's words name projects, conversations and pages.
+    fireEvent.change(screen.getByPlaceholderText(/^Search projects, conversations and pages/), { target: { value: 'conversation' } });
     const hit = screen.getAllByRole('button').find((b) => b.querySelector('.lbl')?.textContent === 'Conversation');
     expect(hit, 'a Conversation result').toBeTruthy();
     fireEvent.click(hit!);
@@ -293,24 +425,28 @@ describe('the governed artifacts across projects, once the Artifacts center, are
      screen folded into the Vault (D2, fold F3 slice C, 2026-10-29), whose
      organization view lists the same rows. This is the path the journey takes
      now, by the same accessible names. ⌘K no longer lists the retired screen. */
-  it('the top bar’s search opens the palette, and the result opens the Vault, not a retired screen', async () => {
+  /* D1-2 (D1.md §D1.B step 4): the top bar's search box went; the sidebar's Search
+     (D1-1) and ⌘K open the same palette, so the path starts there. */
+  it('the sidebar’s Search opens the palette, and the result opens the Vault, not a retired screen', async () => {
     const onNav = vi.fn();
     function Harness() {
       const [open, setOpen] = React.useState(false);
       return (
         <NavEntitlementsProvider>
-          <TopBar surface={{ id: 'projects', label: 'Projects' }} onPalette={() => setOpen(true)} segment="biopharma" onSegment={vi.fn()} onNav={onNav} />
+          <Rail activeId="projects" onNav={onNav} collapsed={false} setCollapsed={vi.fn()} segment="biopharma" setSegment={vi.fn()} onSearch={() => setOpen(true)} />
           <CmdK open={open} onClose={() => setOpen(false)} onNav={onNav} onAsk={vi.fn()} onAct={vi.fn()} />
         </NavEntitlementsProvider>
       );
     }
     render(<Harness />);
     await settle();
-    fireEvent.click(screen.getByRole('button', { name: 'Search, jump, or run a command' }));
-    fireEvent.change(screen.getByPlaceholderText(/Search surfaces/), { target: { value: 'Artifacts' } });
+    fireEvent.click(within(screen.getByRole('navigation', { name: 'Primary' })).getByRole('button', { name: 'Search' }));
+    // D1-3 (D1.md §D1.F step 1): the field's words name projects, conversations and pages.
+    fireEvent.change(screen.getByPlaceholderText(/^Search projects, conversations and pages/), { target: { value: 'Artifacts' } });
     expect(screen.queryAllByRole('button', { name: /Artifacts center/i })).toEqual([]);
-    fireEvent.change(screen.getByPlaceholderText(/Search surfaces/), { target: { value: 'Vault' } });
-    fireEvent.click(screen.getAllByRole('button', { name: /^Vault/ })[0]);
+    fireEvent.change(screen.getByPlaceholderText(/^Search projects, conversations and pages/), { target: { value: 'Vault' } });
+    // The palette's own row: the sidebar beside it has a Vault place too.
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Command palette' })).getAllByRole('button', { name: /^Vault/ })[0]);
     expect(onNav).toHaveBeenCalledWith('vault');
   });
 });
@@ -318,7 +454,7 @@ describe('the governed artifacts across projects, once the Artifacts center, are
 describe('the account menu holds Subscription & features and the client type', () => {
   async function openMenu(segment = 'biopharma') {
     const m = await mountRail(segment);
-    const button = screen.getByTitle('Ada Rowe');
+    const button = screen.getByTitle(ACCOUNT);
     fireEvent.click(button);
     return { ...m, button, menu: screen.getByRole('menu') };
   }
@@ -382,7 +518,7 @@ describe('the account menu holds Subscription & features and the client type', (
 describe('the account menu works from the keyboard (WAI-ARIA menu pattern)', () => {
   async function openMenu() {
     await mountRail('biopharma');
-    const button = screen.getByTitle('Ada Rowe');
+    const button = screen.getByTitle(ACCOUNT);
     fireEvent.click(button);
     const menu = screen.getByRole('menu');
     const items = Array.from(menu.querySelectorAll<HTMLElement>('[role="menuitem"], [role="menuitemradio"]'));
@@ -456,7 +592,7 @@ describe('the collapsed rail does not clip its account menu', () => {
 
   it('the menu opens from the collapsed rail with every item present', async () => {
     await mountRail('biopharma', true);
-    fireEvent.click(screen.getByTitle('Ada Rowe'));
+    fireEvent.click(screen.getByTitle(ACCOUNT));
     const menu = screen.getByRole('menu');
     expect(within(menu).getByRole('menuitem', { name: 'Subscription & features' })).toBeTruthy();
     expect(within(menu).getAllByRole('menuitemradio')).toHaveLength(CLIENT_CATEGORIES.length);

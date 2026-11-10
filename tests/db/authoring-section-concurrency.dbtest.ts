@@ -24,9 +24,12 @@
  *   1. a stale save is REFUSED with 409, and the refusal names the situation
  *   2. the refused save changes NOTHING — the first author's text survives
  *   3. a save carrying the current timestamp still succeeds
- *   4. a caller that sends no token keeps the old behaviour (deliberate: the
- *      MDX dossier drawer PATCHes without having read one, and failing those
- *      closed would break saving to fix a race they cannot hit)
+ *   4. a caller that sends no token keeps the supported unconditional behavior
+ *      (the demo fixture and metadata PATCHes still use it; MDX has a different
+ *      route and never belonged in this caller list)
+ *   5. two requests that pass the initial read before either can acquire the
+ *      parent lock produce one commit and one conflict, not two successful saves
+ *   6. the observable timestamp advances even when the stored clock is ahead
  *
  * ── Every save carries a reason for change ───────────────────────────────────
  * Since fde9d704e the SERVER refuses a content save without a reason of at
@@ -43,7 +46,7 @@ import request from 'supertest';
 import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
 
-const PROBE = 'dbtest-concurrency';
+const PROBE = `dbtest-concurrency-${process.pid}-${Date.now().toString(36)}`;
 /** A reason that clears the server's 8-character floor (governed-reason.ts). */
 const REASON = 'Updated the filter validation statement.';
 
@@ -60,6 +63,28 @@ let app: express.Express;
 let bearer: string;
 /** The project the document is created in: a document belongs to a project (PF-07). */
 let programId: string;
+
+/** Observe real PostgreSQL waits, not a timing guess. The second writer can
+ * wait on the first queued writer's tuple lock as well as the held parent. */
+async function waitForParentWriter(holderPid: number, firstWriterPid = 0): Promise<number> {
+  const deadline = Date.now() + 15_000;
+  while (Date.now() < deadline) {
+    const { rows } = await owner.query(`SELECT pid FROM pg_stat_activity
+      WHERE datname=current_database() AND wait_event_type='Lock'
+        AND query LIKE '%SELECT status, locked_at FROM authoring_documents%FOR UPDATE%'
+        AND pg_blocking_pids(pid) && $1::int[] AND pid <> $2`, [[holderPid, firstWriterPid], firstWriterPid]);
+    if (rows.length) return Number(rows[0].pid);
+    await new Promise(resolve => setTimeout(resolve, 25));
+  }
+  throw new Error('The ordinary editor request never reached its expected native parent lock wait.');
+}
+
+async function savedState() {
+  return (await owner.query(`SELECT content, updated_at,
+    (SELECT count(*)::int FROM doc_revisions r WHERE r.section_id=s.id AND r.tenant_id=s.tenant_id) AS revisions,
+    (SELECT count(*)::int FROM authoring_audit_trail a WHERE a.section_id=s.id AND a.tenant_id=s.tenant_id) AS audits
+    FROM authoring_sections s WHERE s.id=$1 AND s.tenant_id=$2`, [sectionId, orgId])).rows[0];
+}
 
 async function buildApp(): Promise<express.Express> {
   const router = (await import('../../server/routes/authoring.router')).default;
@@ -251,11 +276,72 @@ describe('a second author cannot silently overwrite the first', () => {
     expect(after.rows[0].content).toContain('reapplied after reloading');
   });
 
+});
+
+describe('ordinary saves preserve concurrent edits and version ordering', () => {
+  it('commits one overlapping save and refuses the other after both passed their pre-read', async () => {
+    const before = await savedState();
+    const sharedToken = new Date(before.updated_at).toISOString();
+    const holder = await owner.connect();
+    const pending: Array<Promise<request.Response>> = [];
+    try {
+      await holder.query('BEGIN');
+      const holderPid = Number((await holder.query('SELECT pg_backend_pid() AS pid')).rows[0].pid);
+      await holder.query('SELECT id FROM authoring_documents WHERE id=$1 AND tenant_id=$2 FOR UPDATE', [docId, orgId]);
+      const bodies = ['<p>The first overlapping author saved this assertion.</p>', '<p>The second overlapping author saved this assertion.</p>'];
+      const save = (content: string) => request(app).patch(`/api/authoring/sections/${sectionId}`)
+        .set('Authorization', `Bearer ${bearer}`).send({ content, expectedUpdatedAt: sharedToken, changeReason: REASON }).then(response => response);
+      pending.push(save(bodies[0]));
+      const firstPid = await waitForParentWriter(holderPid);
+      pending.push(save(bodies[1]));
+      const secondPid = await waitForParentWriter(holderPid, firstPid);
+      expect(secondPid).not.toBe(firstPid);
+
+      // Both ordinary PATCHes have passed the initial read and are waiting on
+      // separate native connections. Only now allow either mutation to proceed.
+      await holder.query('COMMIT');
+      const results = await Promise.all(pending);
+      expect(results.map(result => result.status).sort()).toEqual([200, 409]);
+      const winner = results.findIndex(result => result.status === 200);
+      const loser = results[1 - winner];
+      expect(loser.body).toMatchObject({ success: false, error: { code: 'SECTION_CHANGED' },
+        currentUpdatedAt: results[winner].body.section.updated_at });
+      const after = await savedState();
+      expect(after.content).toBe(bodies[winner]);
+      expect(after.revisions).toBe(before.revisions + 1);
+      expect(after.audits).toBe(before.audits + 1);
+      const audit = (await owner.query(`SELECT before_content,after_content FROM authoring_audit_trail
+        WHERE section_id=$1 AND tenant_id=$2 AND operation_type='UPDATE'
+        ORDER BY created_at DESC LIMIT 1`, [sectionId, orgId])).rows[0];
+      expect(audit).toEqual({ before_content: before.content, after_content: bodies[winner] });
+    } finally {
+      await holder.query('ROLLBACK').catch(() => undefined);
+      holder.release();
+      await Promise.allSettled(pending);
+    }
+  });
+
+  it('advances the observable millisecond version when transaction time is behind the stored version', async () => {
+    // Isolated QA fault injection: represent clock rollback without sleeping
+    // or changing the machine clock. No governed content/history is rewritten.
+    const seeded = await owner.query(`UPDATE authoring_sections
+      SET updated_at=date_trunc('milliseconds',clock_timestamp()) + interval '1 minute'
+      WHERE id=$1 AND tenant_id=$2 RETURNING updated_at`, [sectionId, orgId]);
+    let token = new Date(seeded.rows[0].updated_at).toISOString();
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const saved = await request(app).patch(`/api/authoring/sections/${sectionId}`)
+        .set('Authorization', `Bearer ${bearer}`)
+        .send({ content: `<p>Clock rollback QA assertion ${attempt}.</p>`, expectedUpdatedAt: token, changeReason: REASON });
+      expect(saved.status, JSON.stringify(saved.body)).toBe(200);
+      const next = saved.body.section.updated_at;
+      expect(new Date(next).getTime()).toBeGreaterThan(new Date(token).getTime());
+      token = next;
+    }
+  });
+
   it('leaves a caller that sends no token exactly as it was', async () => {
-    /* Deliberate. Several callers PATCH sections without having read a
-       timestamp — the MDX dossier drawer among them — and failing those closed
-       would break saving in order to fix a race they cannot hit. They are no
-       less safe than yesterday; they are simply not yet opted in. */
+    /* Deliberate compatibility: the existing demo writer omits a token, as do
+       metadata callers. Such a save carries no stale-editor guarantee. */
     const res = await request(app)
       .patch(`/api/authoring/sections/${sectionId}`).set('Authorization', `Bearer ${bearer}`)
       .send({ content: '<p>Legacy caller with no token.</p>', changeReason: REASON });

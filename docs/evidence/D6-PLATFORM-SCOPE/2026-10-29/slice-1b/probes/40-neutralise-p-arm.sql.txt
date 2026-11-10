@@ -1,0 +1,29 @@
+-- P-72 slice 0: the "arm removed" copy. Every policy disjunct of the exact deparsed P form
+--   (current_setting('app.current_user_role'::text, true) = 'app_super_admin'::text)
+-- is replaced by `false`, in place (ALTER POLICY keeps the oid), under search_path = pg_catalog so the deparsed text
+-- re-parses to the same objects. Nothing else changes: the S arm, function bodies and SET clauses stay as they are, so
+-- a session still SETS app.current_user_role = 'app_super_admin' and the function preconditions still see it; only the
+-- policies stop honouring it. Run as the owner on a scratch copy only.
+\set ON_ERROR_STOP on
+SET search_path = pg_catalog;
+DO $$
+DECLARE
+  r record; q text; w text; pform constant text := '(current_setting(''app.current_user_role''::text, true) = ''app_super_admin''::text)';
+  n int := 0; stmt text;
+BEGIN
+  FOR r IN SELECT pol.polname, pol.polrelid, pol.polrelid::regclass::text AS tbl, pg_get_expr(pol.polqual, pol.polrelid) AS qual,
+                  pg_get_expr(pol.polwithcheck, pol.polrelid) AS wc
+             FROM pg_policy pol
+            WHERE strpos(coalesce(pg_get_expr(pol.polqual, pol.polrelid),'') || coalesce(pg_get_expr(pol.polwithcheck, pol.polrelid),''), pform) > 0
+  LOOP
+    q := replace(r.qual, pform, 'false'); w := replace(r.wc, pform, 'false');
+    stmt := format('ALTER POLICY %I ON %s', r.polname, r.tbl);
+    IF q IS NOT NULL THEN stmt := stmt || format(' USING (%s)', q); END IF;
+    IF w IS NOT NULL THEN stmt := stmt || format(' WITH CHECK (%s)', w); END IF;
+    EXECUTE stmt; n := n + 1;
+  END LOOP;
+  RAISE NOTICE 'policies rewritten: %', n;
+END $$;
+SELECT count(*) AS policies_still_reading_current_user_role FROM pg_policy pol
+ WHERE coalesce(pg_get_expr(pol.polqual, pol.polrelid),'') || coalesce(pg_get_expr(pol.polwithcheck, pol.polrelid),'') ~ 'app\.current_user_role';
+SELECT count(*) AS policies FROM pg_policy;

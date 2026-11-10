@@ -1,0 +1,43 @@
+# Fails on purpose: the fixed suites, with writingAgencyPresentation wrapped by vi.mock so an unrecorded section defaults to FDA (the pre-8013c9457 behaviour). Injected line:
+# vi.mock('../writingAgencyPresentation', async original => { const actual = await original<typeof import('../writingAgencyPresentation')>(); return { ...actual, writingAgencyPresentation: (input: Parameters<typeof actual.writingAgencyPresentation>[0]) => actual.writingAgencyPresentation({ ...input, initialRegion: input.initialRegion || 'FDA' }) }; });
+ ✓ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticMutant_savedAssemblySourcesFlow.test.tsx > saved references reopen in the one actual editor > checks history without selecting it, freshly reuses it and previews before building (AnA=false) 6701ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticMutant_savedAssemblySourcesFlow.test.tsx > saved references reopen in the one actual editor > checks history without selecting it, freshly reuses it and previews before building (AnA=true) 3081ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticMutant_savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > withholds saved source history when the current detail read admits only sections 764ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticMutant_savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > withholds saved source history when the current sections read admits only sections 425ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticMutant_savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > withdraws cached saved source history after the current document read becomes partial 2032ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticMutant_savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > distinguishes an admitted empty history from a failed read without selecting or changing text 2040ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticMutant_savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > does not publish or adopt malformed manifest 1109ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticMutant_savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > does not publish or adopt foreign scoped success 1046ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticMutant_savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > refuses a newer saved event during reuse instead of silently selecting it 1646ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticMutant_savedAssemblySourcesFlow.test.tsx > reuse respects the current editor and selection owner > lets dirty authors inspect but blocks reuse while text or a ceremony owns the editor 4030ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticMutant_savedAssemblySourcesFlow.test.tsx > reuse respects the current editor and selection owner > gives a new catalogue selection precedence over a delayed historical check 1417ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticMutant_savedAssemblySourcesFlow.test.tsx > reuse respects the current editor and selection owner > keeps an unresolved structural write held after checking historical references 3427ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticMutant_savedAssemblySourcesFlow.test.tsx > late saved references cannot revive a prior scope > suppresses a doubled check across project visit ABA 749ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticMutant_savedAssemblySourcesFlow.test.tsx > late saved references cannot revive a prior scope > suppresses a doubled check across account session ABA 1575ms
+ × client/src/concept2cure/v2/editor/__tests__/zzDpSkepticMutant_savedAssemblySourcesFlow.test.tsx > manual draft review retains its buffer during a saved-source reuse > blocks late reuse after the draft pane opens, then permits a fresh explicit check after closing it 1726ms
+   → expected 'FDA' to be '' // Object.is equality
+ × client/src/concept2cure/v2/editor/__tests__/zzDpSkepticMutant_workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA’s tracked changes > replaces the current paragraph the chosen one is paired with, naming the alternative’s turn 2390ms
+   → expected 'FDA' to be '' // Object.is equality
+ × client/src/concept2cure/v2/editor/__tests__/zzDpSkepticMutant_workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA’s tracked changes > adds chosen paragraphs to an empty section as one addition, each decided on its own 1296ms
+   → expected 'FDA' to be '' // Object.is equality
+ × client/src/concept2cure/v2/editor/__tests__/zzDpSkepticMutant_workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA’s tracked changes > keeps an answer the governed-write rule does not admit out of the section 1396ms
+   → expected 'FDA' to be '' // Object.is equality
+ × client/src/concept2cure/v2/editor/__tests__/zzDpSkepticMutant_workbenchDraftParagraphs.test.tsx > Chosen paragraphs land in the editor as AnA’s tracked changes > says before the click that chosen paragraphs carry no source citations 1370ms
+   → expected 'FDA' to be '' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'FDA' to be '' // Object.is equality
+ ❯ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticMutant_savedAssemblySourcesFlow.test.tsx:290:72
+AssertionError: expected 'FDA' to be '' // Object.is equality
+ ❯ openAlternatives client/src/concept2cure/v2/editor/__tests__/zzDpSkepticMutant_workbenchDraftParagraphs.test.tsx:78:24
+ ❯ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticMutant_workbenchDraftParagraphs.test.tsx:100:19
+AssertionError: expected 'FDA' to be '' // Object.is equality
+ ❯ openAlternatives client/src/concept2cure/v2/editor/__tests__/zzDpSkepticMutant_workbenchDraftParagraphs.test.tsx:78:24
+ ❯ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticMutant_workbenchDraftParagraphs.test.tsx:124:19
+AssertionError: expected 'FDA' to be '' // Object.is equality
+ ❯ openAlternatives client/src/concept2cure/v2/editor/__tests__/zzDpSkepticMutant_workbenchDraftParagraphs.test.tsx:78:24
+ ❯ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticMutant_workbenchDraftParagraphs.test.tsx:141:5
+AssertionError: expected 'FDA' to be '' // Object.is equality
+ ❯ openAlternatives client/src/concept2cure/v2/editor/__tests__/zzDpSkepticMutant_workbenchDraftParagraphs.test.tsx:78:24
+ ❯ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticMutant_workbenchDraftParagraphs.test.tsx:153:5
+ Test Files  2 failed (2)
+      Tests  5 failed | 14 passed (19)

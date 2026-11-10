@@ -9,7 +9,7 @@
  * check that did not finish is said not to have finished; it never reads as
  * "all intact".
  */
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import { ApiRequestError, apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { I } from '../icons';
 import { VaultViewOnly, useVaultCanWrite } from './VaultViewOnly';
@@ -64,6 +64,7 @@ export function VaultFixityCheck({ projectId }: { projectId: string | null }) {
   const [error, setError] = useState<string | null>(null);
   // The check records each verdict in the audit chain, so the route admits the writing roles only.
   const canWrite = useVaultCanWrite();
+  const headingId = useId();
   if (!projectId) return null;
   const check = async () => {
     if (busy) return;
@@ -79,14 +80,17 @@ export function VaultFixityCheck({ projectId }: { projectId: string | null }) {
     }
   };
   return (
-    <div className="vd-fix" data-testid="vault-fixity">
-      <div className="vd-dr-head">
-        <span className="vd-dr-title">{I.shieldCheck} Stored files</span>
-        <span className="vd-dr-meta">Re-reads every stored version and checks it against the SHA-256 recorded when it was received. Each result is recorded.</span>
+    /* A section of the Seals & fixity view (D6 §C.4 step 11). */
+    <section className="pj-sec" data-testid="vault-fixity" aria-labelledby={headingId}>
+      <div className="pj-sec-h">
+        <h2 id={headingId}>Stored files</h2>
+        <span className="sec-sub">Re-reads every stored version and checks it against the SHA-256 recorded when it was received. Each result is recorded.</span>
         {canWrite ? (
-          <button className="sp-ask" onClick={() => void check()} disabled={busy}>
-            {busy ? 'Checking…' : 'Check stored files'}
-          </button>
+          <div className="pj-sec-acts">
+            <button type="button" className="btn ghost small" onClick={() => void check()} disabled={busy}>
+              {busy ? 'Checking…' : 'Check stored files'}
+            </button>
+          </div>
         ) : null}
       </div>
       {canWrite ? null : <VaultViewOnly act="run the check" testId="vault-fixity-view-only" />}
@@ -105,6 +109,6 @@ export function VaultFixityCheck({ projectId }: { projectId: string | null }) {
           ) : null}
         </div>
       ) : null}
-    </div>
+    </section>
   );
 }

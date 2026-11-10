@@ -1,0 +1,67 @@
+import json, subprocess, pathlib, sys
+R = pathlib.Path('/home/user/ClinicalSageAI-2-replit')
+def rd(p): return (R / p).read_text()
+head810 = subprocess.run(['git','show','HEAD:db/migrations/20260810_reconcile_module_catalog.sql'],cwd=R,capture_output=True,text=True).stdout
+dw_row = [l for l in head810.splitlines() if l.startswith("  ('device-workstream'")][0]
+G = 'client/src/concept2cure/v2/__tests__/foldDeviceWorkstream.test.ts'
+LS = 'server/services/entitlements/__tests__/launch-scope.test.ts'
+GC = 'server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts'
+CC = 'tests/schema-contract/catalog-module-claims.contract.test.ts'
+PA = 'client/src/concept2cure/v2/__tests__/projectsActivity.test.tsx'
+PCR = 'client/src/concept2cure/v2/__tests__/projectClientReview.test.tsx'
+ADM = 'server/routes/__tests__/mdx-client-review-admits-project.test.ts'
+tour_old = "its stage, its readiness and its last activity, each read from the project\\'s own records.',\n        navigate: { target: 'mdx' },"
+spec = [
+ dict(id='M1', what="the old id no longer aliases to Projects", file='client/src/concept2cure/v2/registryModel.ts',
+      old="  'device-workstream': 'projects',\n", new='', test=[G, GC, 'client/src/concept2cure/v2/__tests__/projectDestination.test.ts']),
+ dict(id='M2', what="the alias opens Projects unfiltered (no MDX filter applied)", file='client/src/concept2cure/v2/registryModel.ts',
+      old="  'device-workstream': { actionId: 'projects.filter', params: { workstream: 'MDX' } },\n", new='', test=[G, 'client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts']),
+ dict(id='M3', what="the portfolio keeps a view of its own", file='client/src/concept2cure/v2/surfaceViews.ts',
+      old="  'device-510k': { component: DeviceSurfaces['device-510k'], full: true },\n",
+      new="  'device-510k': { component: DeviceSurfaces['device-510k'], full: true },\n  'device-workstream': { component: DeviceSurfaces['device-510k'], full: true },\n",
+      test=[G, 'client/src/concept2cure/v2/__tests__/navigationReachability.test.ts']),
+ dict(id='M4', what="the kit keeps the id", file='client/src/concept2cure/mdx/surfaceIds.ts',
+      old="  'device-510k',\n", new="  'device-workstream',\n  'device-510k',\n", test=[G, 'tests/ui/one-shell.test.ts']),
+ dict(id='M5', what="the host publishes for the retired id again", file='client/src/concept2cure/mdx/MdxSurfaceHost.tsx',
+      old="  usePublishSurfaceContext('device-510k', nav === 'device-510k' ? anaContext : null);\n",
+      new="  usePublishSurfaceContext('device-workstream', null);\n  usePublishSurfaceContext('device-510k', nav === 'device-510k' ? anaContext : null);\n", test=[G]),
+ dict(id='M6', what="the host has a bare default: fallthrough again", file='client/src/concept2cure/mdx/MdxSurfaceHost.tsx',
+      old="    default: {\n", new="    default:\n    {\n", test=[G]),
+ dict(id='M7', what="the device project feature list names it again", file='shared/constants/mdx-project-features.ts',
+      old="  'device-510k',\n", new="  'device-workstream',\n  'device-510k',\n", test=[LS, G]),
+ dict(id='M8', what="Projects' launch surfaces name it again", file='shared/constants/launch-scope.ts',
+      old="      'device-510k', 'device-pma', 'device-cer',\n", new="      'device-workstream', 'device-510k', 'device-pma', 'device-cer',\n", test=[LS, G]),
+ dict(id='M9', what="20260810's keep-list keeps it (replay no longer deprecates the row)", file='db/migrations/20260810_reconcile_module_catalog.sql',
+      old="   'device-510k',\n", new="   'device-510k',\n   'device-workstream',\n", test=[CC]),
+ dict(id='M10', what="20260810 upserts it again (a fresh database holds it)", file='db/migrations/20260810_reconcile_module_catalog.sql',
+      old="  ('doc-journey', 'Document journey',", new=dw_row + "\n  ('doc-journey', 'Document journey',", test=[CC]),
+ dict(id='M11', what="20260823 packages it again", file='db/migrations/20260823_module_catalog_commercial_packaging.sql',
+      old="  ('device-udi', 'standard'),\n", new="  ('device-udi', 'standard'),\n  ('device-workstream', 'standard'),\n", test=[CC]),
+ dict(id='M12', what="a device-workstream grant no longer carries to Projects", file='server/services/entitlements/folded-module-successors.ts',
+      old="  'device-workstream': 'projects',\n", new='', test=[GC]),
+ dict(id='M13', what="the Projects card drops the record's last activity", file='client/src/concept2cure/v2/surfaces/Projects.tsx',
+      old="Lead {p.lead}{p.activity ? ` · ${p.activity}` : ''}</div>", new="Lead {p.lead}</div>", test=[PA]),
+ dict(id='M14', what="the Projects list row drops the record's last activity", file='client/src/concept2cure/v2/surfaces/Projects.tsx',
+      old="{p.code}{p.activity ? ` · ${p.activity}` : ''}</div>", new="{p.code}</div>", test=[PA]),
+ dict(id='M15', what="Project home no longer mounts the Client Review Room", file='client/src/concept2cure/v2/surfaces/ProjectHome.tsx',
+      old="              {deviceFiling && <ProjectClientReview programId={pid} projectId={sharingProjectId} />}\n", new='', test=[G]),
+ dict(id='M16', what="the mount draws the room before the project is verified", file='client/src/concept2cure/v2/surfaces/ProjectClientReview.tsx',
+      old="  if (!programId || projectId == null) return null;\n", new='', test=[PCR]),
+ dict(id='M17', what="the room is asked without the project (the organization's room)", file='client/src/concept2cure/mdx/ClientReviewRoom.tsx',
+      old="<ClientReviewZone projectId={projectId} programId={programId} />", new="<ClientReviewZone programId={programId} />", test=[PCR, G]),
+ dict(id='M18', what="the route stops admitting the program before it reads (the P-61 item 5 proof, unchanged by this fold)", file='server/routes/mdx-client-review.ts',
+      old="  if (!(await admitProject(res, log, programId, orgId))) return null;\n", new="  if (false && !(await admitProject(res, log, programId, orgId))) return null;\n", test=[ADM]),
+ dict(id='M19', what="project-home no longer claims the room's read", file='shared/constants/ui-surface-registry.ts',
+      old="apiPrefixes: ['/api/projects', '/api/concept2cure/projects', '/api/mdx/client-review'],", new="apiPrefixes: ['/api/projects', '/api/concept2cure/projects'],", test=[G], cmd=['npm run -s ci:launch-scope-api']),
+ dict(id='M20', what="the training tour stops at the retired id again", file='shared/navigation/demo-scripts.ts',
+      old=tour_old, new=tour_old.replace("target: 'mdx'", "target: 'device-workstream'"), test=[G]),
+ dict(id='M21', what="AnA's kept target describes the retired portfolio again", file='shared/navigation/index.ts',
+      old="label: 'Device projects', description: 'Projects filtered to medical device and diagnostics projects,", new="label: 'Device portfolio', description: 'The device portfolio overview — project cards and portfolio health KPIs. Projects filtered to medical device and diagnostics projects,", test=[G]),
+ dict(id='M22', what="ID_BASELINE is not lowered for the retired publisher", file='scripts/ci/check-ana-surface-context.mjs',
+      old="const ID_BASELINE = 98;", new="const ID_BASELINE = 99;", cmd=['npm run -s ci:ana-surface-context']),
+]
+for m in spec:
+    c = rd(m['file']).count(m['old'])
+    if c != 1: print('NOT UNIQUE', m['id'], c); sys.exit(1)
+json.dump(spec, open(sys.argv[1], 'w'), indent=1, ensure_ascii=False)
+print(len(spec), 'mutations ok')

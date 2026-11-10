@@ -1,0 +1,8 @@
+[
+ {
+  "m": "PATCH",
+  "u": "/api/authoring/sections/f60e5d62-ac8d-4bbb-9f2c-b5585e9caa1e",
+  "s": 200,
+  "got": "{\"success\":true,\"section\":{\"id\":\"f60e5d62-ac8d-4bbb-9f2c-b5585e9caa1e\",\"doc_id\":\"d6005c76-f699-4d1f-a459-07bc83e84fcc\",\"code\":\"B1\",\"title\":\"Device description and principles of operation\",\"content\":\"<p>The Aurora pump is an ambulatory infusion pump for the subcutaneous delivery of insulin. It comprises a reusable controller, a disposable reservoir and an infusion set.</p>\",\"order_index\":0,\"track_changes\":false,\"tenant_id\":2,\"created_at\":\"2026-11-02T03:41:59.442Z\",\"updated_at\":\"2026-11-02T03:42:4"
+ }
+]

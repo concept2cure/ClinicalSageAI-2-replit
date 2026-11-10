@@ -19,9 +19,10 @@
  *   RLS_ENFORCE=shadow    — alias for off; intent: "I'm watching"
  *   RLS_ENFORCE=on        — policy filters. The flip.
  *
- * Outside production an unset RLS_ENFORCE defaults to off so dev/test keep
- * working with zero configuration. Production requires `on`; unset, invalid,
- * `off`, and `shadow` all refuse startup.
+ * Outside production and Codespaces an unset RLS_ENFORCE defaults to off so
+ * standalone dev/test keep working with zero configuration. Production AND
+ * Codespaces require canonical `on`; unset, invalid, `off`, and `shadow`
+ * all refuse startup.
  *
  * The setting is applied in the PostgreSQL startup packet so it is active
  * before a pooled connection can be checked out or execute its first query.
@@ -78,7 +79,12 @@ export function assertRlsEnforcementForProduction(
 ): RlsEnforcementMode {
   const mode = readEnforcementMode(env);
   const isProduction = (env.NODE_ENV ?? '').toLowerCase() === 'production';
-  if (!isProduction) return mode;
+  const isCodespace = env.C2C_CODESPACE === '1' || env.CODESPACES === 'true';
+  // A Codespace used for a regulated development demonstration must enforce
+  // tenant isolation just like production. All other local/test environments
+  // retain their existing configurable off/shadow behavior.
+  if (!isProduction && !isCodespace) return mode;
+  const environmentLabel = isProduction ? 'production' : 'Codespaces';
 
   const raw = (env.RLS_ENFORCE ?? '').trim();
   if (raw.toLowerCase() === 'on') return 'on';
@@ -91,16 +97,16 @@ export function assertRlsEnforcementForProduction(
     // authorities-consolidation refactor briefly accepted aliases here,
     // silently weakening the boot contract this module's tests pin.)
     throw new Error(
-      `[rls-enforcement] REFUSING TO BOOT: RLS_ENFORCE is set to "${raw}" in production. ` +
-        'Aliases are not accepted for the production kill-switch. Set RLS_ENFORCE=on (canonical form).'
+      `[rls-enforcement] REFUSING TO BOOT: RLS_ENFORCE is set to "${raw}" in ${environmentLabel}. ` +
+        'Aliases are not accepted for the tenant-isolation kill-switch. Set RLS_ENFORCE=on (canonical form).'
     );
   }
 
   const configured = raw === '' ? 'not set' : `set to "${raw}"`;
   throw new Error(
     `[rls-enforcement] FAIL-CLOSED: REFUSING TO BOOT because RLS_ENFORCE is ${configured} ` +
-      `in production (resolved mode "${mode}"). Production requires RLS_ENFORCE=on; ` +
-      'off and shadow modes are restricted to non-production environments.'
+      `in ${environmentLabel} (resolved mode "${mode}"). The regulated runtime requires RLS_ENFORCE=on; ` +
+      'off and shadow modes are restricted to non-Codespaces local development environments.'
   );
 }
 

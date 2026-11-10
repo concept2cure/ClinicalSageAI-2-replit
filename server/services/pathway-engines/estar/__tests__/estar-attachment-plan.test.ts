@@ -501,10 +501,15 @@ describe('createDeviceAttachmentResolver', () => {
       client,
     });
     await resolve({ kind: 'authored_section', sectionCode: 'A.1' });
+    const afterFirst = client.calls.length;
     await resolve({ kind: 'authored_section', sectionCode: 'A.1' });
     await resolve({ kind: 'authored_section', sectionCode: 'A.1' });
-    // Two queries for the first call (document, then sections), none after.
-    expect(client.calls).toHaveLength(2);
+    // The first call: the sections (document, then sections) and, once, whether
+    // the filing holds the document's text (P-29.3: document, then the editing
+    // store's probe, which this fake answers as not provisioned). None after.
+    expect(afterFirst).toBe(4);
+    expect(client.calls[2]).toMatch(/FROM c2c_documents/);
+    expect(client.calls).toHaveLength(afterFirst);
   });
 
   it("reads ONLY the export's own document class, never the newest device document", async () => {

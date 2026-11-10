@@ -1,0 +1,37 @@
+{
+  "rejected_candidate": "53860f36887d25508fd609624cb30c453794a488",
+  "normal_gates_passed": true,
+  "typescript_errors": 0,
+  "push_result": "rejected concurrent ref compare-and-swap, exit1",
+  "push_log": "source-push-race-8.txt",
+  "new_canonical_base": "e27f678dfed2f06fa4751c127aec9f36c76a016a",
+  "incoming_commits": 9,
+  "incoming_paths": [
+    "docs/evidence/D2-CSR/2026-10-30-narrative-prose/README.md",
+    "docs/evidence/D2-CSR/2026-10-30-narrative-prose/after-synthetic.txt",
+    "docs/evidence/D2-CSR/2026-10-30-narrative-prose/red.txt",
+    "docs/work-orders/README.md",
+    "server/services/ana/__tests__/safety-narrative.test.ts",
+    "server/services/ana/safety-narrative.ts",
+    "server/services/csr/__tests__/narrative-reconciliation.test.ts"
+  ],
+  "production_change": "existing safety-narrative controlled-term prose only; client and attachment owners unchanged",
+  "clean_merge": true,
+  "new_server_checks": {
+    "passed": 20,
+    "suites": 2,
+    "failed": 0,
+    "skipped": 0,
+    "log": "race-8-narrative-tests.txt"
+  },
+  "server_and_audit_verifier_build": {
+    "exit_code": 0,
+    "log": "race-8-server-build.txt"
+  },
+  "following_normal_push": {
+    "accepted": true,
+    "source_commit": "f53e6f71f2b3c3e97294bb2f8fe92015c3cf211c",
+    "exit_code": 0,
+    "log": "source-push.txt"
+  }
+}

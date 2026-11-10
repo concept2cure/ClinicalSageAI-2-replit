@@ -14,6 +14,7 @@ import {
 } from '../regulatory/submissionPackageBuilder';
 import { resolveRegistryId } from '../regulatory/registry/legacySubmissionTypeMapper';
 import { getApplicationType } from '../../../shared/regulatory/global-document-registry';
+import { filingDocumentClassForFiling, filingTypeInSentence } from '../../../shared/regulatory/filing-document-classes';
 import { explicitReportRegistry } from './registry-context';
 import type { InsightAtomRef } from './providers/types';
 
@@ -162,9 +163,21 @@ export async function computeInitialRun(
       const rawSubmissionType =
         typeof metadata.submissionType === 'string' ? metadata.submissionType : undefined;
       const registryId = explicitRegistryId || rawRegistryId || (rawSubmissionType ? resolveRegistryId(rawSubmissionType) : null);
+      // A filing document class (a CSR, a supplement, a meeting package) is a
+      // document, not an application (shared/regulatory/filing-document-classes.ts),
+      // so it has no submission readiness. evaluateReadiness below judged its
+      // registry entry as an application's, gaps and package manifest included
+      // (3b slice 3, 2026-11-01). Its completion is the dossier's figure for the
+      // document (server/services/c2c/dossier-read.ts).
+      const documentClass = registryId ? filingDocumentClassForFiling(registryId) : null;
 
       if (!registryId) {
         readinessNotComputed('the project records no registry context (registryId or submissionType).');
+      } else if (documentClass) {
+        readinessNotComputed(
+          `${filingTypeInSentence(documentClass.docType, true)} is a document rather than an application; ` +
+          "its completion is the approved or locked share of its governed outline, on its project's dossier.",
+        );
       } else {
         const [sectionRows, artifactRows] = await Promise.all([
           db
@@ -309,9 +322,12 @@ export async function computeInitialRun(
         if (readiness.gaps.length > 0) {
           const criticalGapMessages = readiness.gaps
             .filter(gap => gap.severity === 'critical')
-            .slice(0, 4)
             .map(gap => `${gap.title}: ${gap.message}`);
-          blockers.push(...criticalGapMessages);
+          // The blocker list a reader sees keeps its first four. The critical
+          // list is counted (the canvas lead, the portfolio rollup), so it keeps
+          // every one: cut to four, a project with 23 read "4 critical gaps
+          // outstanding" beside a digest that said 23 (running app, 2026-11-08).
+          blockers.push(...criticalGapMessages.slice(0, 4));
           criticalBlockers.push(...criticalGapMessages);
         }
 

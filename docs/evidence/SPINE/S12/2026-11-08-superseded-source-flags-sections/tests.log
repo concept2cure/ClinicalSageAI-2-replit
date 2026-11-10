@@ -1,0 +1,5 @@
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage-superseded.pglite.integration.test.ts > a section cites a version that has been superseded > counts the section as changed in the data room’s "Used in" 108ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage-superseded.pglite.integration.test.ts > a section cites a version that has been superseded > lists it as a change for the project, with the current version’s checksum, across several versions 82ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage-superseded.pglite.integration.test.ts > a section cites a version that has been superseded > a section citing the current version is not changed 179ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-usage-superseded.pglite.integration.test.ts > a section cites a version that has been superseded > a superseded citation that recorded no checksum is listed with its checksum as unknown, never the text "null" 78ms
+      Tests  4 passed (4)

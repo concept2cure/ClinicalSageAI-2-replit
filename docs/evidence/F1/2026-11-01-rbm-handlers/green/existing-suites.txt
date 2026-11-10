@@ -1,0 +1,5 @@
+# HEAD 88ac297b0 + the uncommitted F1 fix (AnaToolExecutor.ts three RBM handlers, rbm-actuator.ts, rbm-assessment-seed.ts, evidence-literature-tool-defs.ts), 2026-11-01T23:46:03Z
+# npx vitest run --maxWorkers=1 server/services/ana/__tests__/rbm-handlers.test.ts server/services/ana/__tests__/rbm-launch-admission.test.ts server/services/ana/__tests__/tool-authorization.test.ts server/services/ana/__tests__/ana-launch-scope.test.ts server/services/rbm/__tests__/rbm-actuator.test.ts server/services/rbm/__tests__/rbm-assessment-seed.test.ts server/services/rbm/__tests__/rbm-access.test.ts server/services/rbm/__tests__/rbm-engine.test.ts server/routes/__tests__/rbm-assessment-integrity.test.ts
+ Test Files  9 passed (9)
+      Tests  225 passed (225)
+# exit 0

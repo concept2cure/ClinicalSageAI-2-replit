@@ -1,0 +1,64 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/module3-os/contradictions/51e1fef6-b4ad-4a31-92b6-da93122fd087",
+    "anonymous": false,
+    "identity": null,
+    "body": {}
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 45,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "contradictions": [
+        {
+          "contradictionType": "method_validation_gap",
+          "severity": "high",
+          "details": "1 analytical method(s) lack validated status: RP-HPLC Assay. Specifications reference these methods.",
+          "impactedSections": [
+            "3.2.S.4",
+            "3.2.P.5"
+          ],
+          "requiredReviewers": [
+            "Analytical Lead",
+            "Method Validation Scientist"
+          ]
+        }
+      ],
+      "sweep": {
+        "inserted": 0,
+        "kept": 1,
+        "keptResolved": 0,
+        "cleared": 0
+      },
+      "examined": {
+        "specifications": 1,
+        "methods": 1,
+        "stability": 1,
+        "batches": 1,
+        "comparability": 0
+      },
+      "impactTasks": [
+        {
+          "title": "Resolve method_validation_gap",
+          "impactedSections": [
+            "3.2.S.4",
+            "3.2.P.5"
+          ],
+          "requiredReviewers": [
+            "Analytical Lead",
+            "Method Validation Scientist"
+          ],
+          "priority": "P1"
+        }
+      ],
+      "tasks": {
+        "created": 0,
+        "existing": 1
+      }
+    }
+  }
+}

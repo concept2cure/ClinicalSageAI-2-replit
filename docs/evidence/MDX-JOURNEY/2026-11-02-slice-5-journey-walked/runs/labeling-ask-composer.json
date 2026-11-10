@@ -1,0 +1,10 @@
+{
+ "url": "/concept2cure/conversation-thread?program=57ea2bb6-6e6b-4ace-9e09-ba12e60f5abd",
+ "sent": [],
+ "shown": {
+  "composer": [
+   "Start the labeling document for this project. Ask me which kind it is (IFU, package insert, patient label, operator or service manual, quick reference or box label) and its language, then create it."
+  ],
+  "userTurns": []
+ }
+}

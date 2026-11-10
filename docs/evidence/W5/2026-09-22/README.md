@@ -271,6 +271,17 @@ Options:
 
 ## Not done, and why
 
+> **Re-checked 2026-11-01** at HEAD `5f30fdda0d`; each item's current status, package and holder is
+> in `../2026-11-01/README.md`. Fixed since:
+> - the AS2 receipt checks, by `e1f3fd425`;
+> - `classifyDocument`, by `c3f2b287a`;
+> - the approval role tables and the quorum, by `7038fec50a` and `c91dba5264`;
+> - Shadow Review coverage, by `3cacf2e15a`;
+> - unapproved leaves in readiness;
+> - the AnA package tool's sequence `'0'`, by `c60cdcac25`.
+>
+> The list below is kept as it was written.
+
 - **The licensed artefacts and credentials** (13 of 15 preflight items). These
   are for Procurement or Regulatory Ops to obtain, from a network-permitted
   machine.

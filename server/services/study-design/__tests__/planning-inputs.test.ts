@@ -85,14 +85,14 @@ describe('parsePlanningInput — strict validation', () => {
   it('refuses an unknown key, an out-of-range target and an inconsistent start, each with its path', () => {
     const issues = issuesOf('doseEscalation', { ...BOIN, targetToxicity: 1.2, startingDoseIndex: 5, colour: 'red' }).join(' | ');
     expect(issues).toMatch(/value\.targetToxicity/);
-    expect(issues).toMatch(/Unrecognized key\(s\) in object: 'colour'/);
+    expect(issues).toMatch(/Unrecognized key: "colour"/);
     // An out-of-range target is reported once, as itself — not also as a neighbourhood the author never typed.
     expect(issues).not.toMatch(/phi1|neighbourhood/);
   });
 
   it('refuses an unknown key inside a nested entry, with the entry\'s path', () => {
     expect(issuesOf('doseEscalation', { ...BOIN, doseLevels: [{ label: 'DL1', mg: 10 }, { label: 'DL2' }] }).join(' | '))
-      .toMatch(/value\.doseLevels\.0: Unrecognized key\(s\) in object: 'mg'/);
+      .toMatch(/value\.doseLevels\.0: Unrecognized key: "mg"/);
   });
 
   it('refuses a start dose beyond the recorded levels, a max N smaller than a cohort, and a per-dose stop smaller than a cohort', () => {
@@ -122,7 +122,7 @@ describe('parsePlanningInput — strict validation', () => {
       .toEqual(['value.retention: has 2 values for 3 visits', 'value.retention: must never increase from one visit to the next']);
     expect(issuesOf('mmrmAssumptions', { ...MMRM, targetVisit: 3 })).toEqual(['value.targetVisit: is not one of the modelled visits']);
     const n = MMRM_MAX_VISITS + 1;
-    expect(issuesOf('mmrmAssumptions', { ...MMRM, visits: n, retention: Array(n).fill(0.9) }).join(' | ')).toMatch(/^value\.visits: Number must be less than or equal to 100/);
+    expect(issuesOf('mmrmAssumptions', { ...MMRM, visits: n, retention: Array(n).fill(0.9) }).join(' | ')).toMatch(/^value\.visits: Too big: expected number to be <=100/);
     expect(parse('mmrmAssumptions', { ...MMRM, visits: MMRM_MAX_VISITS, retention: Array(MMRM_MAX_VISITS).fill(0.9) }).ok).toBe(true);
   });
 
@@ -136,9 +136,9 @@ describe('parsePlanningInput — strict validation', () => {
   });
 
   it('refuses an unknown key in the master protocol, in a sub-study and in a specimen', () => {
-    expect(issuesOf('masterProtocol', { ...MASTER, owner: 'x' })).toEqual(["value: Unrecognized key(s) in object: 'owner'"]);
-    expect(issuesOf('masterProtocol', { subStudies: [{ ...MASTER.subStudies[0], cohort: 1 }] })).toEqual(["value.subStudies.0: Unrecognized key(s) in object: 'cohort'"]);
-    expect(issuesOf('activityAttributes', { activityId: 'pk', specimen: { type: 'blood', tube: 'EDTA' } })).toEqual(["value.specimen: Unrecognized key(s) in object: 'tube'"]);
+    expect(issuesOf('masterProtocol', { ...MASTER, owner: 'x' })).toEqual(['value: Unrecognized key: "owner"']);
+    expect(issuesOf('masterProtocol', { subStudies: [{ ...MASTER.subStudies[0], cohort: 1 }] })).toEqual(['value.subStudies.0: Unrecognized key: "cohort"']);
+    expect(issuesOf('activityAttributes', { activityId: 'pk', specimen: { type: 'blood', tube: 'EDTA' } })).toEqual(['value.specimen: Unrecognized key: "tube"']);
     expect(issuesOf('masterProtocol', { subStudies: [MASTER.subStudies[0], MASTER.subStudies[0]] })).toEqual(['value.subStudies.1.id: sub-study S1 is listed twice']);
   });
 
@@ -268,7 +268,7 @@ describe('registration titles — recorded by a person, read by the registries, 
     expect(parsePlanningInput({ block: 'registrationTitles', value: { acronym: 'DX-T2D' } }).ok).toBe(true);
     expect(issuesOf('registrationTitles', {})).toEqual(['value: record a public title or an acronym, or clear the block']);
     expect(issuesOf('registrationTitles', { publicTitle: 'A study\nof Drug X' })).toEqual(['value.publicTitle: must be one line']);
-    expect(issuesOf('registrationTitles', { publicTitle: 'x', officialTitle: 'y' })).toEqual(["value: Unrecognized key(s) in object: 'officialTitle'"]);
+    expect(issuesOf('registrationTitles', { publicTitle: 'x', officialTitle: 'y' })).toEqual(['value: Unrecognized key: "officialTitle"']);
   });
 
   it('writes both titles as one block — a title left out is removed, null clears both — and the registries read them', () => {

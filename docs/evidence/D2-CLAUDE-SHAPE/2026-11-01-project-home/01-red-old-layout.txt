@@ -1,0 +1,121 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — conversations > lists the program's threads from the program-scoped read and resumes one on click 212ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — conversations > shows an honest empty when the program has no threads, and a failure as a failure 273ms
+ × client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — conversations > the composer comes first in the main column; the readiness ring sits in the aside 79ms
+   → composer in the main column: expected null to be truthy
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — older conversations are reachable > shows a screenful, then the older ones a screenful at a time, until there are none 836ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — older conversations are reachable > a screenful exactly offers nothing more 185ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — older conversations are reachable > an older read that fails says so, keeps what is shown, and can be tried again 368ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — six steps follow the work > names the owning client rather than calling the CRO organization the sponsor 225ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — six steps follow the work > the steps are exactly Plan, Evidence, Author, Review, Submit and Respond, in that order 96ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — six steps follow the work > no tab says "Not in this release" 238ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — six steps follow the work > what Submit will hold is named as coming later, in words, with no button 68ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — AnA names each step, and the removed one > set-stage "plan" opens Plan, a step again 76ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — AnA names each step, and the removed one > set-stage "lifecycle" opens Submit too 82ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — the start box sits beside every step > a message typed in the start box survives switching tabs 470ms
+ × client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — the start box sits beside every step > the start box comes first, above the steps; the conversations sit beside them; both stay on every step 126ms
+   → start box before the steps: expected +0 to be truthy
+ × client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx > Project home: a door to this project's reports > the project offers it beside its facts, named for the job and the place 506ms
+   → the door is with the project’s facts: expected null not to be null
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx > Project home: a door to this project's reports > opens Reporting & analytics on this project, not on the organisation 271ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx > Project home: a door to this project's reports > is not offered when Reporting & analytics is not in this release 187ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx > Project home: a door to this project's reports > is not offered with no project open 21ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageTracker.test.tsx > Project home — lifecycle tracker > marks no stage done on a real project; only the open stage is marked 198ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageTracker.test.tsx > Project home — lifecycle tracker > opening a later stage does not complete the ones before it 91ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageTracker.test.tsx > Project home — lifecycle tracker > with no project selected, shows no lifecycle and no placeholder project name 28ms
+ × client/src/concept2cure/v2/__tests__/projectHomeStageTracker.test.tsx > Project home — lifecycle tracker > with a project selected, names it once, in the heading 74ms
+   → expected <div class="pj-crumb">…(1)</div> to be null
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — conversations > the composer comes first in the main column; the readiness ring sits in the aside
+AssertionError: composer in the main column: expected null to be truthy
+
+- Expected:
+true
+
++ Received:
+null
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx:104:70
+    102|     // Claude's project page (founder, 2026-11-01; RULE 4): the conver…
+    103|     const convo = container.querySelector('.pj-convo')!;
+    104|     expect(convo.closest('.pj-main'), 'composer in the main column').t…
+       |                                                                      ^
+    105|     const steps = container.querySelector('.pj-lc')!;
+    106|     expect(convo.compareDocumentPosition(steps) & Node.DOCUMENT_POSITI…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx > Project home: a door to this project's reports > the project offers it beside its facts, named for the job and the place
+AssertionError: the door is with the project’s facts: expected null not to be null
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx:106:112
+    104|     const door = await screen.findByRole('button', { name: DOOR });
+    105|     // Claude's project page (2026-11-01): it sits with what the proje…
+    106|     expect(door.closest('[aria-label="About this project"]'), 'the doo…
+       |                                                                                                                ^
+    107|     fireEvent.click(door);
+    108|     expect(onNav).toHaveBeenCalledWith('insights');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeStageTracker.test.tsx > Project home — lifecycle tracker > with a project selected, names it once, in the heading
+AssertionError: expected <div class="pj-crumb">…(1)</div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="pj-crumb"
+>
+  <span
+    class="pj-crumb-i"
+    data-cur="true"
+  >
+    <span
+      class="pj-crumb-k"
+    >
+      Project
+    </span>
+    BX-204
+  </span>
+</div>
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeStageTracker.test.tsx:101:49
+     99|     await waitFor(() => expect(document.querySelector('.pj-title')?.te…
+    100|     // A "PROJECT BX-204" crumb repeated the heading above it (Claude'…
+    101|     expect(document.querySelector('.pj-crumb')).toBeNull();
+       |                                                 ^
+    102|   });
+    103| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — the start box sits beside every step > the start box comes first, above the steps; the conversations sit beside them; both stay on every step
+AssertionError: start box before the steps: expected +0 to be truthy
+
+- Expected:
+true
+
++ Received:
+0
+
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx:183:118
+    181|     /* Claude's project page (founder, 2026-11-01; RULE 4), supersedin…
+    182|        the conversation with AnA first in the main column, then the st…
+    183|     expect(region.compareDocumentPosition(tablist) & Node.DOCUMENT_POS…
+       |                                                                                                                      ^
+    184|     expect(region.closest('.pj-main'), 'start box in the main column')…
+    185|     const threads = screen.getByTestId('pj-threads');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  4 failed | 18 passed (22)
+   Start at  01:11:55
+   Duration  16.21s (transform 4.26s, setup 530ms, import 7.30s, tests 4.73s, environment 2.77s)
+

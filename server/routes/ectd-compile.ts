@@ -40,11 +40,12 @@ import { promises as fs } from 'node:fs';
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
+import { isFiledDispatchStatus } from '../services/submission-service/filed-dispatch';
 import { writeChainedAuditRow } from '../services/auditService';
 import type { AuditRowOutcome } from '../services/audit/audit-write-outcome';
 import { parseEvalidatorJsonReport } from '../services/ectd/external-validator/lorenz-adapter';
 import { tallyFindings, type ExternalValidationFinding } from '../services/ectd/external-validator/types';
-import { resolveSequenceSpine, resolveSubmissionSpine, type SubmissionSpine } from '../services/cmc/submission-spine';
+import { resolveSequenceSpine, resolveSubmissionSpine, nonApplicationEctdReason, dispatchedSequenceOfProject, type SubmissionSpine } from '../services/cmc/submission-spine';
 import { sectionMatches } from '../services/ectd/section-code-match';
 import {
   loadSpineLeaves,
@@ -53,13 +54,15 @@ import {
   leafSatisfies,
   measureStatus,
   type SpineLeafRow,
+  submissionBlockers,
+  PROGRAM_SECTION_STORE_BLOCKER,
 } from '../services/ectd/compile-placement';
 import { toPackagerRegion } from '../services/ectd/core-to-packager';
 import { canonicalRegionOf } from '../../shared/regulatory/region-identity';
 import { buildLeafManifest } from '../services/ectd/sequence-manifest';
 import { loadFiledStateBySubmission } from '../services/ectd/prior-sequence-loader';
 import { usableIdentifier } from '../services/ectd/regulatory-identifiers';
-import { readSubmissionPackageIdentity, packageIdentityRefusal, recordedPackageIdentitySnapshot, fdaContactsForPackageIdentity } from '../services/ectd/package-identity';
+import { readSubmissionPackageIdentity, readRecordedPackageIdentity, packageIdentityGaps, packageIdentityRefusal, recordedPackageIdentitySnapshot, fdaContactsForPackageIdentity } from '../services/ectd/package-identity';
 import {
   resolveRequiredSections,
   type RequiredSectionSet,
@@ -67,7 +70,6 @@ import {
 } from '../services/ectd/required-sections';
 import { serverError, isConversionCapacityError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
-import { regionalDeviceApplicationClassOf } from '../../shared/regulatory/filing-catalog';
 import type { SubmissionBundle } from '../services/submission-gateways/types';
 import type { DtdValidationEvidence, DtdFileValidation } from '../../shared/regulatory/ectd-dtd-validation';
 import { hasPassedPackageDtdValidation, dtdFileValidationPassed } from '../services/ectd/dtd-bundler';
@@ -78,78 +80,6 @@ const log = createScopedLogger('ectd-compile');
 /** SHA-256 of a UTF-8 string, hex. Used for real content hashes in the backbone. */
 function sha256(input: string): string {
   return createHash('sha256').update(input, 'utf8').digest('hex');
-}
-
-/**
- * Why a compile has no leaf files, stated from the ACTUAL state of the
- * submission spine — not from a hardcoded capability flag. Leaf rendering IS
- * implemented (ectd/assemble-from-core renders real PDF leaves from placed
- * submission_leaves); what varies is whether THIS project is connected to it.
- * Every message keeps the words "leaf files" so the surface's blocker panel and
- * the pinned tests read consistently.
- */
-const NO_SPINE_LEAF_BLOCKER =
-  'No leaf files have been rendered for this compile: it is not linked to a canonical submission ' +
-  '(submissions → eCTD sequence) with placed documents, so this backbone describes authored ' +
-  'section content only and cannot be transmitted to an agency gateway. Leaf rendering runs from ' +
-  'the submission spine — create the program\'s submission and place approved documents into its ' +
-  'eCTD sequence.';
-
-const NO_SEQUENCE_LEAF_BLOCKER =
-  'No leaf files have been rendered: the linked submission has no eCTD sequence yet, so there are ' +
-  'no placed documents to render and the package cannot be transmitted. Create a sequence and ' +
-  'place approved documents into it.';
-
-const NO_PLACED_LEAVES_BLOCKER =
-  'No leaf files have been rendered: the submission\'s eCTD sequence has no placed documents, so ' +
-  'the package cannot be transmitted. Place approved documents into the sequence to render real ' +
-  'PDF leaf files.';
-
-/**
- * What stands between this project and a transmissible submission (draft-path
- * and status-endpoint variant — the spine-backed compile computes its blockers
- * from the actual assembly result instead).
- *
- * `submissionReady` previously meant "content validation raised no blocking
- * errors", and the surface rendered that as the words "Submission-ready" next to
- * a download button. Content completeness is a real and useful signal, but it is
- * not submission readiness: a package with no leaf files cannot be submitted no
- * matter how complete its section text. Telling a regulatory user otherwise is
- * the most consequential thing this route could get wrong.
- *
- * Blockers are returned as text so the surface can say WHY rather than showing a
- * bare negative.
- */
-function submissionBlockers(
-  contentErrors: string[],
-  anchor?: CompileAnchor,
-  spine?: SubmissionSpine | null,
-): string[] {
-  const blockers: string[] = [];
-  const leavesPlaced = (spine?.sequence?.leafCount ?? 0) > 0;
-  if (anchor && anchor.numericProjectId === null && !leavesPlaced) {
-    blockers.push(PROGRAM_SECTION_STORE_BLOCKER);
-  }
-  if (contentErrors.length > 0) {
-    blockers.push(
-      `${contentErrors.length} blocking content ${contentErrors.length === 1 ? 'issue' : 'issues'} must be resolved.`,
-    );
-  }
-  // The leaf-rendering answer, from the spine's real state.
-  if (!spine) {
-    blockers.push(NO_SPINE_LEAF_BLOCKER);
-  } else if (!spine.sequence) {
-    blockers.push(NO_SEQUENCE_LEAF_BLOCKER);
-  } else if (spine.sequence.leafCount === 0) {
-    blockers.push(NO_PLACED_LEAVES_BLOCKER);
-  } else {
-    // Documents are placed; rendering + verification happen at compile time.
-    blockers.push(
-      `${spine.sequence.leafCount} document(s) are placed in the submission's eCTD sequence. ` +
-        'Run Compile to render the leaf files and verify the package before it can be considered submission-ready.',
-    );
-  }
-  return blockers;
 }
 
 /**
@@ -176,18 +106,6 @@ function resolveOrgId(req: Request): number | null {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/**
- * Why a program-spine project compiles against an empty section set. Stated once
- * and returned verbatim as a blocker / validation finding so the caller is told,
- * in so many words, why readiness is 0% — never left to infer it from silence.
- */
-// Client-reaching copy: names the condition and the consequence, but no schema
-// object — table names must never reach a response body (BP-W0-5).
-const PROGRAM_SECTION_STORE_BLOCKER =
-  'This program has no linked section-tracking store: section tracking is keyed by the ' +
-  'legacy numeric project id and no numeric project row exists for this program, so no ' +
-  'authored sections are visible to the compiler (pending the document-identity contract).';
 
 interface CompileAnchor {
   /** Legacy numeric projects.id when the ident was numeric — keys project_sections. */
@@ -328,13 +246,13 @@ async function anchorFromRequest(
   return { orgId, anchor, ident };
 }
 
-/** Regional working documents cannot enter medicinal compilation or validation. */
-function refuseRegionalDeviceEctd(res: Response, anchor: CompileAnchor): boolean {
-  if (!regionalDeviceApplicationClassOf(anchor.programType)) return false;
-  res.status(422).json({ error: {
-    code: 'ECTD_NOT_APPLICABLE',
-    message: 'Device preparation projects are not eCTD applications. No submission package is built or transmitted for this preparation pathway.',
-  } });
+/** A project that is not an application (a regional device working document,
+ *  or a filing document class) is not compiled as an eCTD sequence: 422 with
+ *  the reason (3b slice 3 (c); submission-spine.ts nonApplicationEctdReason). */
+function refuseNonApplicationEctd(res: Response, anchor: CompileAnchor): boolean {
+  const message = nonApplicationEctdReason(anchor.programType);
+  if (!message) return false;
+  res.status(422).json({ error: { code: 'ECTD_NOT_APPLICABLE', message } });
   return true;
 }
 
@@ -368,6 +286,40 @@ async function spineForRequest(
     return null;
   }
   return { spine, named: true };
+}
+
+/**
+ * P-99 C1 (F1, founder 2026-11-03: "Nothing restores a sequence silently").
+ *
+ * A sequence's filed record is read from its transmit, or, for a send before
+ * the platform kept what each send carried, from its compiles. A compile made
+ * after the send was recorded like any other, so the fold read it as what was
+ * sent and the next sequence's refusal lifted with nobody saying so. A
+ * non-rehearsal compile of a sequence that is filed (filed-dispatch.ts) or in
+ * flight is therefore refused before anything is assembled or recorded. A
+ * sequence is put back on record only by P-99's own acts. True when refused
+ * (the response is sent).
+ */
+async function refuseCompileOfSequenceOnFile(
+  res: Response,
+  sequence: { id: number; sequenceNumber: string },
+  orgId: number,
+): Promise<boolean> {
+  const r = await pool.query(
+    `SELECT dispatch_status FROM ectd_sequences WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+    [sequence.id, orgId],
+  );
+  const status: unknown = r.rows[0]?.dispatch_status;
+  const n = sequence.sequenceNumber;
+  const message = status === 'transmitting'
+    ? `A send of sequence ${n} is unresolved, so a compile of it now is not recorded. Nothing was assembled.`
+    : isFiledDispatchStatus(status)
+      ? `Sequence ${n} is on file at the agency, so a compile of it now is not recorded: it would not be what it sent. ` +
+        'Its sent package is on Gateway transmittals when the platform kept it. Start the next sequence to compile again.'
+      : null;
+  if (!message) return false;
+  res.status(409).json({ error: { code: 'ECTD_SEQUENCE_ON_FILE', message } });
+  return true;
 }
 
 /** The type a compile of this sequence is recorded as: the sequence's own, in
@@ -440,10 +392,49 @@ function withAnchorFindings(results: ValidationResult[], anchor: CompileAnchor):
       rule: 'SECTION_STORE_UNLINKED',
       severity: 'error',
       message: PROGRAM_SECTION_STORE_BLOCKER,
-      fix: 'Author sections under a legacy sectioned project, or wait for the program → section-store mapping (document-identity contract).',
+      fix: 'Place approved documents into the sequence in Submission Center (Builder), or with Place into filing from the document.',
     },
     ...results,
   ];
+}
+
+/** Where a US IND records its application number and applicant (P-32). */
+const US_IND_IDENTITY_PLACE =
+  'Record it in Submission Center, Forms and letters (1571, cover letter, LOA), under Recorded applicant identity.';
+
+/** The package-identity read for a compile with nothing placed: the sequence's market when there is one (P-44). */
+async function draftPackageIdentity(orgId: number, anchor: CompileAnchor, spine: SubmissionSpine | null) {
+  if (!spine) return readRecordedPackageIdentity(pool, orgId, anchor.programId);
+  return readSubmissionPackageIdentity(pool, orgId, spine.submissionId, spine.sequence ? { region: spine.sequence.region } : {});
+}
+
+/**
+ * What the package would be refused for, read before anything is placed (B3,
+ * demo walk 2026-11-05). A compile with nothing placed never reached the
+ * package identity check, so the application number, the bound sponsor and
+ * its D-U-N-S were reported only once documents were placed. Each gap is its
+ * own error here, in package-identity's words, with where a US IND records it.
+ * It adds errors only: nothing the compile refuses is loosened. A legacy
+ * numeric project has no program record, so it has nothing to read here.
+ */
+async function packageIdentityFindings(
+  orgId: number,
+  anchor: CompileAnchor,
+  spine: SubmissionSpine | null,
+): Promise<ValidationResult[]> {
+  if (!anchor.programId) return [];
+  const finding = (message: string): ValidationResult => ({ rule: 'PACKAGE_IDENTITY_MISSING', severity: 'error', message });
+  try {
+    const identity = await draftPackageIdentity(orgId, anchor, spine);
+    const region = canonicalRegionOf(spine?.sequence?.region ?? spine?.primaryRegion ?? anchor.primaryAgency ?? '');
+    const usInd = region === 'US' && !identity.market
+      && String(spine?.applicationType ?? anchor.programType ?? '').toLowerCase() === 'ind';
+    return packageIdentityGaps(identity, { fda: region === 'US' }).gaps.map((gap) => finding(
+      `The package cannot be built yet: ${gap.trim().replace(/\.$/, '')}.${usInd ? ` ${US_IND_IDENTITY_PLACE}` : ''}`));
+  } catch (err) {
+    log.warn('package identity could not be read for a compile with nothing placed', { error: err instanceof Error ? err.message : String(err) });
+    return [finding('The application number and the applicant recorded for this project could not be read, so whether the package can name them is not known.')];
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -668,7 +659,7 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
   const resolved = await anchorFromRequest(req, res);
   if (!resolved) return;
   const { orgId, anchor, ident } = resolved;
-  if (refuseRegionalDeviceEctd(res, anchor)) return;
+  if (refuseNonApplicationEctd(res, anchor)) return;
 
   try {
     const { modules: targetModules, submissionType = 'initial', region = 'FDA' } = req.body;
@@ -719,6 +710,7 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
           },
         });
       }
+      if (req.body?.rehearsal !== true && await refuseCompileOfSequenceOnFile(res, spine.sequence, orgId)) return;
       // The recorded type decides the record; a contradiction is refused, as a region is.
       const recordedType = await recordedCompilationType(spine.sequence.id, orgId);
       const statedType = req.body?.submissionType == null ? '' : String(req.body.submissionType).trim().toLowerCase();
@@ -775,7 +767,10 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
     );
 
     // 2. Run pre-compile validation
-    const validationResults = withAnchorFindings(runPreCompileValidation(sections, region, required), anchor);
+    const validationResults = [
+      ...await packageIdentityFindings(orgId, anchor, spine),
+      ...withAnchorFindings(runPreCompileValidation(sections, region, required), anchor),
+    ];
     const hasBlockingErrors = validationResults.some(v => v.severity === 'error');
 
     // 3. Build module compilation status
@@ -1123,6 +1118,7 @@ async function compileFromSpine(
   let auditTrail: AuditRowOutcome | undefined;
   /** The number the package carries (P-44), stored with the compilation. */
   let packagedNumber: string | null = null;
+  let identityRefused = false;
 
   try {
     // The application and the applicant from the record, or nothing is
@@ -1136,7 +1132,7 @@ async function compileFromSpine(
     if (!region) throw new Error('The sequence region is not recognized, so its recorded package identity cannot be established. Nothing was assembled.');
     const fda = region === 'US';
     const missingIdentity = packageIdentityRefusal(identity, 'Nothing was assembled.', { fda });
-    if (missingIdentity) throw missingIdentity;
+    if (missingIdentity) { identityRefused = true; throw missingIdentity; }
     const assembled = await assembleSequence({
       sequenceId: seq.id,
       organizationId: orgId,
@@ -1240,6 +1236,10 @@ async function compileFromSpine(
       message: `eCTD assembly refused: ${assembleFailure}`,
       fix: 'Resolve the refusal (leaf sources, path safety, packager gates) and compile again.',
     });
+    // A refusal for the applicant identity leads with B3's per-gap findings,
+    // each saying where a US IND records it, as a compile with nothing placed
+    // does (J4 human test, 2026-11-06). The refusal itself stays; nothing is loosened.
+    if (identityRefused) validationResults.unshift(...await packageIdentityFindings(orgId, anchor, spine));
   }
   const errors = validationResults.filter((v) => v.severity === 'error').map((v) => v.message);
   // The compile STATUS reports whether the package assembled — the same
@@ -1392,7 +1392,7 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
   const resolved = await anchorFromRequest(req, res);
   if (!resolved) return;
   const { orgId, anchor, ident } = resolved;
-  if (refuseRegionalDeviceEctd(res, anchor)) return;
+  if (refuseNonApplicationEctd(res, anchor)) return;
 
   try {
     // Get project sections (tenant-scoped — readiness is tenant data). A failed
@@ -1524,17 +1524,31 @@ router.get('/:projectIdent/history', async (req: Request, res: Response) => {
 /* The current view of the application: every filed sequence of the spine's
    submission folded, by the fold compile and transmit already use
    (loadFiledStateBySubmission, prior-sequence-loader.ts). Only sent or
-   acknowledged sequences count; a preview or rehearsal compile never does.
-   An unreadable fold is 503, never an empty dossier. */
+   acknowledged sequences count, each read from what its transmit recorded it
+   sent; one sent before that record was kept is read from its compiles (never
+   a rehearsal), and each sequence's `basis` says which, passed through as is
+   (F1, 2026-11-01). An unreadable fold is 503, never an empty dossier. */
 router.get('/:projectIdent/filed-state', async (req: Request, res: Response) => {
   const resolved = await anchorFromRequest(req, res);
   if (!resolved) return;
   const { orgId, anchor, ident } = resolved;
-  if (refuseRegionalDeviceEctd(res, anchor)) return;
+  // P-97: refused here too unless the project already has a dispatched sequence.
+  const notApplicable = nonApplicationEctdReason(anchor.programType);
+  let filedSequenceId: number | null = null;
+  if (notApplicable) {
+    try {
+      filedSequenceId = await dispatchedSequenceOfProject(anchor, orgId);
+    } catch (err) {
+      log.warn('Whether the project has a dispatched sequence could not be read', { orgId, ident, err: err instanceof Error ? err.message : String(err) });
+      return res.status(503).json({ error: { code: 'FILED_STATE_UNAVAILABLE', message: 'What is on file at the agency could not be read. It is not shown as empty.' } });
+    }
+    if (filedSequenceId === null) return res.status(422).json({ error: { code: 'ECTD_NOT_APPLICABLE', message: notApplicable } });
+  }
   try {
     const chosen = await spineForRequest(req, res, anchor, orgId);
     if (!chosen) return;
-    const spine = chosen.spine;
+    // No spine resolves for such a type: fold the dispatched sequence's own (P-97).
+    const spine = chosen.spine ?? (filedSequenceId !== null ? await resolveSequenceSpine(anchor, orgId, filedSequenceId) : null);
     if (!spine) {
       return res.json({ projectIdent: ident, submissionId: null, throughSequence: null, sequences: [], leaves: [] });
     }
@@ -1566,7 +1580,7 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
   const resolved = await anchorFromRequest(req, res);
   if (!resolved) return;
   const { orgId, anchor, ident } = resolved;
-  if (refuseRegionalDeviceEctd(res, anchor)) return;
+  if (refuseNonApplicationEctd(res, anchor)) return;
 
   // An agency-validator report run outside the product, imported against the
   // compilation whose package it covered (WO-9 Click 6). Same route: it is a
@@ -1594,6 +1608,9 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
     if (spine?.sequence && spine.sequence.leafCount > 0) {
       const leaves = await loadSpineLeaves(spine.sequence.id, orgId);
       results = [
+        // What the package would be refused for, as with nothing placed (B3):
+        // Validate must not read cleaner than Compile (J4 human test, 2026-11-06).
+        ...await packageIdentityFindings(orgId, anchor, spine),
         {
           rule: 'SUBMISSION_SPINE_LINKED',
           severity: 'info',
@@ -1613,7 +1630,10 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
         `section_code, title, status, content, word_count, module, required`,
         {},
       );
-      results = withAnchorFindings(runPreCompileValidation(sections, region, required), anchor);
+      results = [
+        ...await packageIdentityFindings(orgId, anchor, spine),
+        ...withAnchorFindings(runPreCompileValidation(sections, region, required), anchor),
+      ];
     }
     const passCount = results.filter(r => r.severity === 'info').length;
     const warnCount = results.filter(r => r.severity === 'warning').length;

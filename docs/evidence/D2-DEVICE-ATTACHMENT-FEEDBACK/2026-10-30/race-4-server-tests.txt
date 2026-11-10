@@ -1,0 +1,33 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+stderr | server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > answers 503 when ownership cannot be checked, and reads no task
+{
+  "timestamp": "2026-10-30T19:43:07.849Z",
+  "level": "error",
+  "message": "[mdx-client-review] The project ownership check could not be run",
+  "context": {
+    "reason": "program ownership check could not be run: 57P01: connection terminated",
+    "correlationId": null
+  }
+}
+
+ ✓ server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > refuses another organization's project with 404, and reads no task 43ms
+ ✓ server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > refuses a project that does not exist with 404, and reads no task 14ms
+ ✓ server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > refuses the organization's own deleted project with 404, and reads no task 14ms
+ ✓ server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > answers 503 when ownership cannot be checked, and reads no task 13ms
+ ✓ server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > shares the admitted project's client-visible tasks only, and says the scope is that project 19ms
+ ✓ server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > refuses another organization's project id with 404, and reads no task 12ms
+ ✓ server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > refuses a project id that does not exist with 404, and reads no task 11ms
+ ✓ server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > refuses the organization's project of another program with 404, and reads no task 11ms
+ ✓ server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > a program and its own project id: the room is that project's 16ms
+ ✓ server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > a project id of the organization narrows the room to that project 16ms
+ ✓ server/routes/__tests__/mdx-client-review-admits-project.test.ts > GET /api/mdx/client-review admits the project first (P-61 item 5) > with neither, it is the organization's room, says so, and holds no other organization's task 11ms
+ ✓ server/services/ocr/__tests__/extracted-text-nul.test.ts > extracted text is safe for a PostgreSQL text column > replaces each NUL with U+FFFD and keeps every offset 2ms
+ ✓ server/services/ocr/__tests__/extracted-text-nul.test.ts > extracted text is safe for a PostgreSQL text column > leaves text without a NUL exactly as extracted 0ms
+
+ Test Files  2 passed (2)
+      Tests  13 passed (13)
+   Start at  19:43:03
+   Duration  5.14s (transform 1.61s, setup 90ms, import 2.48s, tests 2.17s, environment 0ms)
+

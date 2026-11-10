@@ -1,0 +1,44 @@
+waiting for server to start.... done
+server started
+(node:16) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:16) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:37) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"level":30,"time":"2026-11-08T17:00:25.826Z","pid":37,"hostname":"8e30f1e3f944","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-08T17:00:25.828Z","pid":37,"hostname":"8e30f1e3f944","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-08T17:00:25.828Z","pid":37,"hostname":"8e30f1e3f944","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/authoring-section-concurrency.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/authoring-section-concurrency.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/authoring-section-concurrency.dbtest.ts
+✅ Template tables initialized
+
+{"level":30,"time":"2026-11-08T17:00:30.238Z","pid":37,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc bf52448a-db1c-4616-bee0-85c67afa55a5 by d***@example.test"}
+{"level":30,"time":"2026-11-08T17:00:30.268Z","pid":37,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc bf52448a-db1c-4616-bee0-85c67afa55a5 by d***@example.test"}
+{"level":30,"time":"2026-11-08T17:00:30.291Z","pid":37,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc bf52448a-db1c-4616-bee0-85c67afa55a5 by d***@example.test"}
+ ✓ tests/db/authoring-section-concurrency.dbtest.ts > a second author cannot silently overwrite the first > creates a document and a section to contend over 60ms
+ ✓ tests/db/authoring-section-concurrency.dbtest.ts > a second author cannot silently overwrite the first > refuses a save whose token is stale, and overwrites nothing 33ms
+ ✓ tests/db/authoring-section-concurrency.dbtest.ts > a second author cannot silently overwrite the first > accepts a save that carries the current token 17ms
+{"level":30,"time":"2026-11-08T17:00:30.368Z","pid":37,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc bf52448a-db1c-4616-bee0-85c67afa55a5 by d***@example.test"}
+{"level":30,"time":"2026-11-08T17:00:30.403Z","pid":37,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc bf52448a-db1c-4616-bee0-85c67afa55a5 by d***@example.test"}
+{"level":30,"time":"2026-11-08T17:00:30.423Z","pid":37,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc bf52448a-db1c-4616-bee0-85c67afa55a5 by d***@example.test"}
+ ✓ tests/db/authoring-section-concurrency.dbtest.ts > a second author cannot silently overwrite the first > commits one overlapping save and refuses the other after both passed their pre-read 82ms
+ ✓ tests/db/authoring-section-concurrency.dbtest.ts > a second author cannot silently overwrite the first > advances the observable millisecond version when transaction time is behind the stored version 50ms
+{"level":30,"time":"2026-11-08T17:00:30.442Z","pid":37,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: UPDATE on doc bf52448a-db1c-4616-bee0-85c67afa55a5 by d***@example.test"}
+ ✓ tests/db/authoring-section-concurrency.dbtest.ts > a second author cannot silently overwrite the first > leaves a caller that sends no token exactly as it was 18ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  09:00:23
+   Duration  7.44s (transform 4.60s, setup 51ms, import 113ms, tests 7.03s, environment 0ms)
+
+waiting for server to shut down.... done
+server stopped

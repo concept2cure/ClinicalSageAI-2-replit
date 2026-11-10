@@ -14,7 +14,8 @@ version: '3.9'
 # Uploads are scanned by the `clamav` service (ClamAV, the image Terraform runs).
 # The first `up` waits up to 5 minutes while clamd loads its signature database
 # before the app starts. clamd holds about 1.3 GB, and twice that while it
-# reloads signatures, so the host needs about 8 GB of RAM for app plus scanner.
+# reloads signatures, and the embedding server about 3 GB, so the host needs
+# about 16 GB of RAM and 4 vCPUs for app, scanner and embeddings.
 # The pinned image is linux/amd64 only: on Apple silicon Docker runs it under
 # emulation (`platform: linux/amd64` below), which is slower to start.
 #
@@ -31,12 +32,54 @@ version: '3.9'
 # scripts/ci/check-compose-boot-contract.mjs (npm run ci:compose-boot-contract).
 
 services:
+  # ---------- Database TLS certificate (one-shot) ----------
+  # Production verifies the database it talks to: server/db/ssl.ts turns
+  # sslmode=require into verify-full and refuses prefer/disable for any host but
+  # loopback. The pgvector image serves no TLS by default (`SHOW ssl` → off), so
+  # until 2026-11-06 this stack's app crash-looped at boot on "The server does
+  # not support SSL connections" (docs/evidence/HUMAN-TEST/2026-11-06-beta-stack/).
+  # This makes, once, a self-signed certificate for the name `db`: the key on
+  # `dbtls-key` (db only), the certificate on `dbtls`, which db serves and
+  # provision and app trust (NODE_EXTRA_CA_CERTS / PGSSLROOTCERT below), as
+  # ci.yml's production-image-boot job does. Kept across restarts; delete both
+  # volumes to mint a new one.
+  db-tls:
+    image: pgvector/pgvector:pg15
+    restart: 'no'
+    user: root
+    entrypoint: ['/bin/sh', '-ec']
+    command:
+      - |
+        if [ ! -s /tls/server.crt ] || [ ! -s /tls-key/server.key ]; then
+          openssl req -new -x509 -days 825 -nodes -subj /CN=db \
+            -addext subjectAltName=DNS:db \
+            -keyout /tls-key/server.key -out /tls/server.crt
+        fi
+        chown 999:999 /tls-key/server.key
+        chmod 600 /tls-key/server.key
+        chmod 644 /tls/server.crt
+    volumes:
+      - dbtls:/tls
+      - dbtls-key:/tls-key
+    network_mode: none
+
   # ---------- Database ----------
   db:
     # pgvector image, not stock postgres: the schema's CSR knowledge tables
     # need `CREATE EXTENSION vector` (migrations/0005), which stock alpine lacks.
     image: pgvector/pgvector:pg15
     restart: unless-stopped
+    command:
+      - postgres
+      - -c
+      - ssl=on
+      - -c
+      - ssl_cert_file=/run/db-tls/server.crt
+      - -c
+      - ssl_key_file=/run/db-tls-key/server.key
+    depends_on:
+      db-tls:
+        condition: service_completed_successfully
     environment:
       POSTGRES_USER: ${DB_USER:-postgres}
       # Required with NO insecure default — compose fails closed if DB_PASSWORD is
@@ -45,9 +88,12 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
       POSTGRES_DB: ${DB_NAME:-concept2cure}
     ports:
-      - '${DB_PORT:-5432}:5432'
+      # Loopback only: the host's operator reaches it; the internet does not.
+      - '127.0.0.1:${DB_PORT:-5432}:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - dbtls:/run/db-tls:ro
+      - dbtls-key:/run/db-tls-key:ro
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U ${DB_USER:-postgres}']
       interval: 10s
@@ -61,7 +107,8 @@ services:
     image: redis:7-alpine
     restart: unless-stopped
     ports:
-      - '6379:6379'
+      # Loopback only: Redis has no password here.
+      - '127.0.0.1:6379:6379'
     volumes:
       - redisdata:/data
     healthcheck:
@@ -80,7 +127,7 @@ services:
   # Terraform configures it; scripts/ci/check-compose-boot-contract.mjs holds the
   # two together. clamd has no authentication (any client that reaches it can
   # send SHUTDOWN), so it publishes no host port and sits on c2c-beta, which
-  # holds only db, redis, app and this service: no optional-profile container
+  # holds only db, redis, provision, embeddings, app and this service: no optional-profile container
   # joins it, and the gate fails the stack if one does.
   clamav:
     image: clamav/clamav:1.4.6@sha256:57deb108fc4c72778aa83eafbca7bb7153e28c3f57c005afd38d31f16da86f23  # = terraform/stack/variables.tf scanner_image
@@ -123,6 +170,72 @@ services:
     networks:
       - c2c-beta
 
+  # ---------- Embeddings (the self-hosted lane; P1-54, ADR-0014 §1.5) ----------
+  # Vault and knowledge-base search embed through this server, as the hosted
+  # stack does (terraform/modules/embedding-service: Text Embeddings Inference
+  # serving BAAI/bge-m3, configured the same way here). Without it the lane was
+  # OpenAI, which production uses only for an organisation whose placement
+  # policy elects OpenAI, so /readyz reported `ana: needs_election` and search
+  # was refused for every organisation. The first start downloads the model
+  # (about 2.3 GB, from huggingface.co) onto `embeddings-model`; /readyz says
+  # `embedding_lane_down` until it answers, and probes again every 30 s.
+  embeddings:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.9.4@sha256:2538ea1c9640d3763b15af668039d24172d063b42337b0c27796fc2be180c78d # = terraform/stack/variables.tf embedding_image
+    restart: unless-stopped
+    environment:
+      MODEL_ID: BAAI/bge-m3
+      PORT: '8080'
+      # The runtime sends up to 100 texts per request; the server's default is 32.
+      MAX_CLIENT_BATCH_SIZE: '128'
+      PAYLOAD_LIMIT: '16000000'
+      RAYON_NUM_THREADS: '2'
+    volumes:
+      - embeddings-model:/data
+    healthcheck:
+      test: ['CMD', 'curl', '-fsS', '-o', '/dev/null', 'http://127.0.0.1:8080/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 600s
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+    networks:
+      - c2c-beta
+
+  # ---------- Database provisioning (one-shot, every `up`) ----------
+  # The production server creates no schema (MR-03 Stage 3, OPS-16): it serves
+  # as app_service from a database the deploy has provisioned. Nothing here did,
+  # so a booted app would have had no schema to serve. This runs the image's
+  # own `provision` target (Dockerfile.optimized; `npm run db:provision`, as
+  # deploy's provision-database.yml and ci.yml's production-image-boot do):
+  # pgvector, install-fresh, deploy-migrate, the app_service role minted with
+  # APP_SERVICE_DB_PASSWORD, and the readiness contract checked as that role.
+  # Over a complete database every step is idempotent (scripts/db/provision.mjs,
+  # "Re-runs"), so it runs on each `up` and later releases migrate the same way.
+  # The owner's credential stays here, never in the app.
+  provision:
+    build:
+      context: .
+      dockerfile: Dockerfile.optimized
+      target: provision
+    restart: 'no'
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_OWNER_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:?DB_PASSWORD must be set}@db:5432/${DB_NAME:-concept2cure}?sslmode=verify-full
+      APP_DATABASE_URL: ${APP_DATABASE_URL:?APP_DATABASE_URL must be set to the non-superuser app_service role}
+      APP_SERVICE_DB_PASSWORD: ${APP_SERVICE_DB_PASSWORD:?APP_SERVICE_DB_PASSWORD must be set (mints/rotates the non-superuser app_service role)}
+      # The db certificate above, in place of the RDS bundle the image trusts.
+      NODE_EXTRA_CA_CERTS: /run/db-tls/server.crt
+      PGSSLROOTCERT: /run/db-tls/server.crt
+    volumes:
+      - dbtls:/run/db-tls:ro
+    networks:
+      - c2c-beta
+
   # ---------- Application ----------
   app:
     build:
@@ -132,22 +245,29 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      provision:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
       clamav:
         condition: service_healthy
     ports:
-      - '${APP_PORT:-5000}:5000'
+      # Loopback only: testers reach the app through the HTTPS front on this host
+      # (APP_URL), never over plain HTTP.
+      - '127.0.0.1:${APP_PORT:-5000}:5000'
     environment:
       NODE_ENV: production
       PORT: 5000
-      # sslmode=require: refuse plaintext — the client always negotiates TLS for
-      # this data-bearing connection. The db service uses pgvector/pgvector:pg15
-      # (Debian-based postgres), which ships a default self-signed cert and
-      # serves TLS out of the box, so `require` works without extra cert mounts.
-      # TODO(GA-blocker): move to `verify-full` with a CA-pinned server cert so
-      # the connection is authenticated, not just encrypted.
-      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:?DB_PASSWORD must be set}@db:5432/${DB_NAME:-concept2cure}?sslmode=require
+      # No DATABASE_URL and no APP_SERVICE_DB_PASSWORD: the app serves as
+      # app_service only (APP_DATABASE_URL below), as ci.yml's production-image-boot
+      # runs the image. The owner's credential owns every table and bypasses RLS;
+      # only the provision service above holds it (MR-03 Stage 3, OPS-16).
+      #
+      # The database certificate the db-tls service made. NODE_EXTRA_CA_CERTS
+      # replaces the image's RDS bundle (there is no RDS here); the app checks the
+      # name `db` against it (verify-full, server/db/ssl.ts).
+      NODE_EXTRA_CA_CERTS: /run/db-tls/server.crt
+      PGSSLROOTCERT: /run/db-tls/server.crt
       # ── Production boot contract ────────────────────────────────────────────
       # NODE_ENV=production above puts the app under its fail-closed startup
       # assertions. Each variable below is checked at boot; a missing or invalid
@@ -161,15 +281,12 @@ services:
       # set NODE_ENV=production with no RLS_ENFORCE at all, which meant the beta
       # stack could not start.
       RLS_ENFORCE: ${RLS_ENFORCE:-on}
-      # RLS only filters rows for a NON-SUPERUSER role. DATABASE_URL above is the
-      # bundled Postgres owner (a superuser), and under RLS_ENFORCE=on the boot
-      # posture probe (server/index.ts → assertRlsCatalogPosture) FAILS CLOSED on
-      # a superuser / BYPASSRLS runtime role. So the request-serving pool must
-      # point at the `app_service` role. Mint it once with
-      # `APP_SERVICE_DB_PASSWORD=... node scripts/db/install-fresh.mjs` against
-      # this database, then set APP_DATABASE_URL to that role's URL, e.g.
-      #   APP_DATABASE_URL=postgresql://app_service:<pw>@db:5432/concept2cure?sslmode=require
-      APP_SERVICE_DB_PASSWORD: ${APP_SERVICE_DB_PASSWORD:?APP_SERVICE_DB_PASSWORD must be set (mints/rotates the non-superuser app_service role)}
+      # RLS only filters rows for a NON-SUPERUSER role, and under RLS_ENFORCE=on
+      # the boot posture probe (server/index.ts → assertRlsCatalogPosture) FAILS
+      # CLOSED on a superuser / BYPASSRLS runtime role. So the app serves as the
+      # `app_service` role, which the provision service mints with
+      # APP_SERVICE_DB_PASSWORD; APP_DATABASE_URL is that role's URL, e.g.
+      #   APP_DATABASE_URL=postgresql://app_service:<pw>@db:5432/concept2cure?sslmode=verify-full
       APP_DATABASE_URL: ${APP_DATABASE_URL:?APP_DATABASE_URL must be set to the non-superuser app_service role — RLS_ENFORCE=on refuses to boot on the owner role}
       REDIS_URL: redis://redis:6379
       # >=32 chars (server/config/environment.ts).
@@ -272,6 +389,12 @@ services:
       # ALLOWED_ORIGINS (server/middleware/enterprise-security.ts). Both are this
       # stack's https address behind your TLS proxy, e.g. https://beta.example.com.
       APP_URL: ${APP_URL:?APP_URL must be set to this stack's public https origin}
+      # ── First administrator (server/routes/setup.ts) ────────────────────────
+      # Production keeps POST /api/setup/initialize closed without this token, so
+      # this stack had no way to create its first account. The operator sends it
+      # once, in X-Setup-Token, to create the first administrator; the route
+      # closes itself once any user exists. 32+ characters.
+      SETUP_TOKEN: ${SETUP_TOKEN:?SETUP_TOKEN must be set (32+ chars; creates the first administrator once)}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?ALLOWED_ORIGINS must be set (comma-separated https origins; sign-in is refused from any other)}
       # ── Email (server/services/emailService.ts) ────────────────────────────
       # The emailed login code is the mandatory second factor: without SMTP the
@@ -297,8 +420,14 @@ services:
       # FILE_SCAN_UNAVAILABLE), and /readyz reports the scanner (virusScan).
       CLAMAV_HOST: clamav
       CLAMAV_PORT: '3310'
+      # ── Embeddings (the embeddings service above) ───────────────────────────
+      # The self-hosted lane serves every organisation without electing a second
+      # vendor (server/services/ai-gateway/embeddings/embedding-provider.ts).
+      EMBEDDING_PROVIDER: local
+      EMBEDDING_LOCAL_BASE_URL: http://embeddings:8080/v1
     volumes:
       - vaultdata:/app/storage
+      - dbtls:/run/db-tls:ro
     logging:
       driver: 'json-file'
       options:
@@ -317,6 +446,12 @@ services:
 
 volumes:
   clamav-db:
+    driver: local
+  embeddings-model:
+    driver: local
+  dbtls:
+    driver: local
+  dbtls-key:
     driver: local
   vaultdata:
     driver: local

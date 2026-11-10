@@ -1,0 +1,49 @@
+# Mutation 6: guard-sends-without-leaf-manifest
+# 2026-11-01T21:55:50Z
+# What it removes: The guard does not refuse a bound transmit whose bundle carries no leaf manifest.
+# File: server/services/submission-gateways/index.ts
+# Replaced:
+#   -   if (!Array.isArray(req.bundle?.leafManifest)) {
+#   -     throw new ValidationError(
+#   -       'This sequence transmit carries no leaf manifest: nothing records what it would carry, so it is not sent. Nothing was transmitted.',
+#   -       [],
+#   -       NOTHING_TRANSMITTED,
+#   -     );
+#   -   }
+# With:
+#   +   if (!Array.isArray(req.bundle?.leafManifest)) return undefined;
+# Test run: npx vitest run server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts  (exit 1)
+# Expected to fail on its own assertion: ['no leaf manifest is refused']
+# Failed as expected: {'no leaf manifest is refused': True}
+# Failed on an assertion (no build or syntax error): True
+# File restored byte for byte: True (sha256 before f2329d357d7c46e6827e2db069e485721b61a78e4f421e3c5d00c62c6ef12a98, after f2329d357d7c46e6827e2db069e485721b61a78e4f421e3c5d00c62c6ef12a98)
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > stamps the leaf manifest of the package it hands the gateway, and its binding 9ms
+ ✓ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > a caller cannot supply what was sent: a bound transmit’s are overwritten 2ms
+ ✓ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > and an unbound transmit’s are removed, so nothing reads it as a sequence’s send 3ms
+ × server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > a sequence transmit with no leaf manifest is refused before anything is kept or sent 6ms
+   → the transmit was refused: expected null to be an instance of ValidationError
+ ✓ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > the FDA ESG transmittal row, written before any connection, carries both 3ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  21:55:48
+   Duration  1.73s (transform 1.11s, setup 73ms, import 1.39s, tests 32ms, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > a sequence transmit with no leaf manifest is refused before anything is kept or sent
+AssertionError: the transmit was refused: expected null to be an instance of ValidationError
+ ❯ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts:133:45
+    131|     const wire = vi.spyOn(FdaEsgGateway.prototype, 'transmit').mockRes…
+    132|     const err = await getGateway('fda', 'esg').transmit(request({ disp…
+    133|     expect(err, 'the transmit was refused').toBeInstanceOf(ValidationE…
+       |                                             ^
+    134|     expect((err as Error).message).toMatch(/nothing records what it wo…
+    135|     expect(refusedBeforeWire(err)).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

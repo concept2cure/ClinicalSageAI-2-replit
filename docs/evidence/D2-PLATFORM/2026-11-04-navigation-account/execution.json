@@ -1,0 +1,271 @@
+{
+  "baselineCommit": "f79ab55bc4bf37af5f0928b69a69acdc72089822",
+  "baselineProductionBlob": "3c7da6617b4579fec65837951049b22b342c417c",
+  "runtime": {
+    "node": "22.16.0",
+    "typescript": "5.8.3"
+  },
+  "scope": "Actual provider/decoder, explicit React/auth/read-lifecycle substitutes. No DOM, authentication or server license enforcement qualified.",
+  "files": {
+    "client/src/concept2cure/v2/navEntitlements.tsx": {
+      "gitBlob": "4e1fcff7c8ea47006ea5fad5a86b50eba24d81cf",
+      "sha256": "f26e729cf42c34b33ed6e17d00a6f888d254136ac24d82cab1f02b9ebcbee7e7"
+    },
+    "client/src/concept2cure/v2/__tests__/navEntitlementsAccount.test.tsx": {
+      "gitBlob": "ee1cb09d395ce5b2ab00150ff5cafe21853877c8",
+      "sha256": "5fb3468bf028b30f10449602bdf39cf675901892f83c4008c287daf3e74b37b5"
+    },
+    "client/src/concept2cure/v2/__tests__/navEntitlementsAccount.dom.test.tsx": {
+      "gitBlob": "845301b5bfd52c8432d94a88fb94b6db58d54abb",
+      "sha256": "2fc76a18c909fa153670e4e85b5934a7d902bfde841efc9b954a753a9d8d689d"
+    },
+    "client/src/concept2cure/v2/__tests__/navEntitlementsIntegrity.test.tsx": {
+      "gitBlob": "2fd2924e912d681c710cd4c8cbaced58d1384195",
+      "sha256": "21a469ddfa10d05f953e73763f7265a8db4e5283a6aceaa64bef9cb168a7bc73"
+    },
+    "docs/evidence/D2-PLATFORM/2026-11-04-navigation-account/offline-runner.cjs": {
+      "gitBlob": "a05a7761ff0686702f91b76f2551b976e499ce4e",
+      "sha256": "9c89e555563f45799cb075ec70a2b0ecdef2f8e99f9782de179e837e7cfa0b16"
+    }
+  },
+  "runs": {
+    "account_baseline": {
+      "tests": 33,
+      "pass": 4,
+      "fail": 29,
+      "skipped": 0,
+      "logSha256": "ba07409cadd238c724b7fa069c7f1d5d1dacfb6c6d53bb1bc4caf4cd70a51471"
+    },
+    "account_patched": {
+      "tests": 33,
+      "pass": 33,
+      "fail": 0,
+      "skipped": 0,
+      "logSha256": "e92e27b5e080f7775e39384f4dcf4f28d72f641551cfbfa036fd7425bb7eea18"
+    },
+    "prior_contract_baseline": {
+      "tests": 66,
+      "pass": 66,
+      "fail": 0,
+      "skipped": 0,
+      "logSha256": "3621fe8028bbe00dc8189d801293776fd7c9329a1260da58f05e71fc398cce08"
+    },
+    "prior_contract_patched": {
+      "tests": 66,
+      "pass": 66,
+      "fail": 0,
+      "skipped": 0,
+      "logSha256": "87f2639f2415d6caa62bbde314247facb3c4f39b91efe0353bf750655d62dd86"
+    }
+  },
+  "transpilation": [
+    {
+      "file": "client/src/concept2cure/v2/navEntitlements.tsx",
+      "jsx": 2,
+      "errors": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/navEntitlements.tsx",
+      "jsx": 4,
+      "errors": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/navEntitlementsAccount.dom.test.tsx",
+      "jsx": 2,
+      "errors": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/navEntitlementsAccount.dom.test.tsx",
+      "jsx": 4,
+      "errors": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/navEntitlementsAccount.test.tsx",
+      "jsx": 2,
+      "errors": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/navEntitlementsAccount.test.tsx",
+      "jsx": 4,
+      "errors": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/navEntitlementsIntegrity.test.tsx",
+      "jsx": 2,
+      "errors": 0
+    },
+    {
+      "file": "client/src/concept2cure/v2/__tests__/navEntitlementsIntegrity.test.tsx",
+      "jsx": 4,
+      "errors": 0
+    }
+  ],
+  "unexecutedNativeDomCases": 6,
+  "accountCases": [
+    {
+      "name": "removes the previous organization verdict before the new read resolves",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "accepts only the new organization answer and keeps its actual restriction",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "separates two users of the same organization, including administration indicators",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "rechecks a replaced account profile even when its numeric identity is unchanged",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "does not revive the first visit after A to B to A, even with the same account object",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "ignores a delayed earlier-account reply after the new account was selected",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "does not let a late old request replace a current resolved answer",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "clears owner/admin/plan indicators on logout without issuing another read",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "will not publish a response completed after logout",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "does not query while no account is known, then queries after login",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "rejects a well-formed answer for the wrong authenticated organization",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "accepts an organization supplied as canonical numeric text in the account profile",
+      "baseline": true,
+      "patched": true
+    },
+    {
+      "name": "does not issue a read for invalid account organization 0",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "does not issue a read for invalid account organization -1",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "does not issue a read for invalid account organization 7.5",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "does not issue a read for invalid account organization NaN",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "does not issue a read for invalid account organization 2147483648",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "does not issue a read for invalid account organization ",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "does not issue a read for invalid account organization 7junk",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "does not issue a read for invalid account organization  7 ",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "does not issue a read for invalid account organization 07",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "does not invent an organization for a supported older account profile without that field",
+      "baseline": true,
+      "patched": true
+    },
+    {
+      "name": "reuses the current answer for an ordinary rerender with the same account",
+      "baseline": true,
+      "patched": true
+    },
+    {
+      "name": "keeps an independently resolved current admin fact on an unresolved current catalog",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "retires a captured projects verdict without creating a feature-specific context",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "retires a captured vault verdict without creating a feature-specific context",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "retires a captured authoring verdict without creating a feature-specific context",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "retires a captured submission-center verdict without creating a feature-specific context",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "retires a captured rbm verdict without creating a feature-specific context",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "retires a captured cmc verdict without creating a feature-specific context",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "retires a captured biostatistics verdict without creating a feature-specific context",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "retires a captured verdict when the provider unmounts",
+      "baseline": false,
+      "patched": true
+    },
+    {
+      "name": "keeps current response rows immutable",
+      "baseline": true,
+      "patched": true
+    }
+  ]
+}

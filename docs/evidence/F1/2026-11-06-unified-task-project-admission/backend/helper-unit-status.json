@@ -1,0 +1,8 @@
+{
+  "testsPassed": 48,
+  "exitCode": 0,
+  "sha256": {
+    "server/services/tasking/task-project.ts": "0dc2b50d3fcf9085c9511629dc36402229af98e9097feccb7fa50fd76ebd29ea",
+    "server/services/tasking/__tests__/task-project-admission.test.ts": "b00eee0c1d38830e8c20fe7c683c309ba9cefc4dd6a24766d34b113f9b7519b5"
+  }
+}

@@ -100,7 +100,7 @@ function routeReads(over: { patch?: (url: string) => Promise<Response> } = {}) {
 
 async function mount() {
   render(<MasterLicensing />);
-  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', LICENSING));
+  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', LICENSING, undefined, undefined, expect.any(AbortSignal)));
   await screen.findByText(MODULE.name);
 }
 
@@ -151,7 +151,7 @@ describe('Master Licensing — reads', () => {
       throw apiError(404, { error: 'unrouted' });
     });
     render(<MasterLicensing />);
-    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', LICENSING));
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', LICENSING, undefined, undefined, expect.any(AbortSignal)));
 
     await waitFor(() => {
       const text = document.body.textContent ?? '';
@@ -175,7 +175,7 @@ describe('Master Licensing — reads', () => {
       throw apiError(404, { error: 'unrouted' });
     });
     render(<MasterLicensing />);
-    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', LICENSING));
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', LICENSING, undefined, undefined, expect.any(AbortSignal)));
     await waitFor(() => {
       expect(
         /admin|permission|not permitted|access|couldn|could not|error/i.test(
@@ -206,7 +206,7 @@ describe('Master Licensing — applying a plan', () => {
 
   async function openTenant() {
     render(<MasterLicensing />);
-    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', LICENSING));
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', LICENSING, undefined, undefined, expect.any(AbortSignal)));
     const tenantsTab = screen.getAllByRole('button').find((b) => /^tenants$/i.test((b.textContent ?? '').trim()));
     expect(tenantsTab, 'a Tenants tab must exist').toBeTruthy();
     fireEvent.click(tenantsTab as HTMLButtonElement);
@@ -446,7 +446,7 @@ async function openEnforcement(report: unknown, over?: { del?: () => Promise<Res
   routeEnforcement(report, over);
   await mount();
   fireEvent.click(screen.getByRole('button', { name: /Enforcement/ }));
-  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', ENFORCEMENT));
+  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', ENFORCEMENT, undefined, undefined, expect.any(AbortSignal)));
 }
 
 describe('Master Licensing — enforcement report', () => {

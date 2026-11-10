@@ -1,0 +1,26 @@
+# ci:surface-text-ramp re-checked in the review at HEAD f0ade0abc (after D5-3's rule, 41cdf4c96), 2026-11-02T00:43:43Z
+# a scratch export of HEAD's tracked client/src CSS and scripts/design; git ls-files is answered from the repo's own list
+
+## 1. HEAD's sheets, HEAD's committed ramp: stale already (the Vault share; coordinator task 42)
+[ci:surface-text-ramp] FAIL — generated ramp sheet(s) do not match the stylesheets:
+    client/src/concept2cure/v2/styles/surface-text-ramp.css — stale
+exit 1
+
+## 2. HEAD's sheets, ramp regenerated from them (R0)
+[ci:surface-text-ramp] OK — 3 generated ramp sheet(s) match the stylesheets.
+exit 0
+
+## 3. + D1-2's app-v2.css with the review's fix, ramp R0: stale (D1-2 moves .tb-cmdk, .tb-btn:hover, .crumb-proj:hover)
+[ci:surface-text-ramp] FAIL — generated ramp sheet(s) do not match the stylesheets:
+    client/src/concept2cure/v2/styles/surface-text-ramp.css — stale
+exit 1
+
+## 4. + green/surface-text-ramp.d1-2.patch, remade against R0 at f0ade0abc
+[ci:surface-text-ramp] OK — 3 generated ramp sheet(s) match the stylesheets.
+exit 0
+
+## 5. The share, by selector (R0 -> R1)
+--bg-050: removed .c2c-v2 .tb-cmdk
+--bg-100: added .c2c-v2 .crumb-proj:hover, .c2c-v2 .tb-btn:hover
+--bg-200: removed .c2c-v2 .tb-btn:hover
+(The builder's patch, made at 2e4a9fe67, held the same share but counted --bg-100 one lower, before D5-3's rule; it no longer applied to R0.)

@@ -129,3 +129,20 @@ describe('the passive instruction is retired from the converted surfaces', () =>
     }
   });
 });
+
+/*
+ * 5. An empty state is quiet, and no chip's colour reaches it (D0 §4.2.12).
+ * EmptyState used to render `c2c-empty-state tone-idle`. `.tone-idle` is a CHIP's
+ * tone (app-v2.css: `.c2c-v2 .tone-idle { background: var(--idle-muted) }`), at the
+ * same specificity as `.c2c-empty-state` and declared later, so every idle empty
+ * state in the app drew a chip's tinted panel through D0's `background: none`.
+ * The CMC session found it on its registers (ff6825ef6) and undid it in CSS for
+ * that one pairing; the cause is the class, so the class goes.
+ */
+describe('EmptyState carries no chip tone', () => {
+  it('the idle panel is `c2c-empty-state` alone', () => {
+    render(<EmptyState title="No records yet" testId="quiet-empty" />);
+    const root = screen.getByTestId('quiet-empty');
+    expect([...root.classList]).toEqual(['c2c-empty-state']);
+  });
+});

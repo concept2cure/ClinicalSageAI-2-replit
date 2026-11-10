@@ -30,6 +30,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
+/* ProjectSettings (in Project home's header) reads the tenant; these tests mount no TenantProvider. */
+vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => ({ currentOrganization: null, currentClientWorkspace: null }) }));
 vi.mock('@/services/portal/authService', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/services/portal/authService')>();
   return { ...actual, useAuth: () => ({ user: actual.authService.getUser() }),
@@ -180,7 +182,7 @@ describe('Submit — one row per market, each with its own server verdict', () =
     expect(ind.textContent).toContain('Sequence 0000');
     expect(ind.textContent).toContain('Assembling');
     // The submission's lifecycle stage, as slice 24's row showed it.
-    expect(within(ind).getByTestId('pj-market-stage').textContent).toBe('original stage');
+    expect(within(ind).getByTestId('pj-market-stage').textContent).toBe('Original stage');
     // The announced verdict names its market.
     expect(within(ind).getByTestId('pj-market-verdict').textContent).toContain('IND · FDA (US): Dispatch blocked');
     // The server's blockers, verbatim.
@@ -263,6 +265,21 @@ describe('Submit — opening the Submission Center, and the list’s own states'
     fireEvent.click(within(markets).getByRole('button', { name: 'See every sequence in Submission Center' }));
     expect(onNav).toHaveBeenLastCalledWith('submission-center');
     expect(consumeNavParams(resolveSurfaceIdForTarget('submission-center'))).toEqual({ ws: 'portfolio' });
+  });
+
+  /* D3-4 (D3.md §4.7 Submit, §6 item 11): no orange on the project page except send. "Add a market" is a ghost button,
+     first among the header's doors; every other door, and each to-do's act, is a transparent small button. */
+  it('"Add a market" is a ghost button, first in the header; the other doors and each act are small buttons', async () => {
+    serve();
+    await openSubmit();
+    const markets = await screen.findByTestId('pj-markets');
+    await marketRow('ONC-221 IND');
+    const doors = Array.from(markets.querySelectorAll<HTMLButtonElement>('.pj-sec-h .pj-sec-acts > button'));
+    expect(doors[0]?.textContent).toMatch(/Add a market/);
+    expect(doors[0]?.className).toBe('btn ghost small');
+    for (const door of doors.slice(1)) expect(door.className, door.textContent ?? '').toBe('btn small');
+    expect(markets.querySelector('.btn.primary'), 'no primary button among the markets').toBeNull();
+    for (const act of Array.from(markets.querySelectorAll('.pj-mkt-todo-act'))) expect(act.classList.contains('small')).toBe(true);
   });
 
   it('a project with no submission says so in words and offers Add a market', async () => {

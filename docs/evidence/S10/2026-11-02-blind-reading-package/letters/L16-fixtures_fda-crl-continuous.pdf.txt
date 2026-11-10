@@ -1,0 +1,41 @@
+DEPARTMENT OF HEALTH AND HUMAN SERVICES
+Food and Drug Administration
+NDA 212345
+COMPLETE RESPONSE
+Dear Dr. Example:
+Please refer to your new drug application (NDA) dated January 5, 2026.
+We have completed our review and cannot approve this application in its
+present form. We describe our reasons below.
+CLINICAL
+1. The pivotal trial did not demonstrate a statistically significant effect on
+the primary endpoint.
+2. Provide an analysis of the hepatic adverse events by dose.
+Reference ID: 4987654
+
+-- 1 of 3 --
+
+NDA 212345
+Page 2
+Example Pharma Inc. Examplinib tablets
+3. Clarify the dose selection rationale for the
+phase 3 trial.
+PRODUCT QUALITY
+4. Provide stability data for the commercial packaging configuration
+covering 12 months at the long-term condition.
+5. Revise the drug product specification to include a test for
+Reference ID: 4987654
+
+-- 2 of 3 --
+
+NDA 212345
+Page 3
+Example Pharma Inc. Examplinib tablets
+particle size.
+FACILITIES INSPECTIONS
+6. During a recent inspection of the manufacturing facility, objectionable
+conditions were observed. Resolve these before you resubmit.
+If you have any questions, call the Regulatory Project Manager.
+Sincerely,
+Reference ID: 4987654
+
+-- 3 of 3 --

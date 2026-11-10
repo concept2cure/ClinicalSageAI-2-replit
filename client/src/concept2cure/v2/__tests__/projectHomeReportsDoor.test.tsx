@@ -98,11 +98,14 @@ const headerReady = () => waitFor(() => expect(document.querySelectorAll('.pj-lc
 const overviewUrls = () => apiRequest.mock.calls.map((c) => String(c[1])).filter((u) => u.startsWith('/api/insights-canvas/overview'));
 
 describe("Project home: a door to this project's reports", () => {
-  it('the project header offers it, named for the job and the place', async () => {
+  it('the project offers it beside its facts, named for the job and the place', async () => {
     const onNav = renderProject();
     await headerReady();
     const door = await screen.findByRole('button', { name: DOOR });
-    expect(door.closest('.pj-top'), 'the door is on the project header').not.toBeNull();
+    // Claude's project page (2026-11-01): it sits in Project knowledge, beside the work: since D3-2a, the Work areas
+    // card's last row, named "Reports" with the full sentence as its accessible name.
+    expect(door.closest('[aria-label="This project\u2019s work areas"]'), 'the door is a Work areas row').not.toBeNull();
+    expect(door.textContent).toContain('Reports');
     fireEvent.click(door);
     expect(onNav).toHaveBeenCalledWith('insights');
     // The shell's one program channel still names this project for the next surface.
@@ -116,9 +119,9 @@ describe("Project home: a door to this project's reports", () => {
     // The shell mounts the `insights` view (surfaceViews.ts: InsightsCanvas) in Project home's place.
     cleanup();
     render(<InsightsCanvas surface={{ id: 'insights', label: 'Reporting & analytics' } as OwnedSurfaceViewProps['surface']} segment="pharma" onNav={() => {}} />);
-    await waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
+    await waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
     expect(overviewUrls()).toEqual([`/api/insights-canvas/overview?programId=${PID}`]);
-    expect(document.querySelector('.rc-ana-head')?.textContent).toMatch(/BX-204/);
+    expect(document.querySelector('[data-work-area="insights"] > .ph')?.textContent).toMatch(/BX-204/);
     expect(screen.queryByTestId('rc-program-picker')).toBeNull();
   });
 

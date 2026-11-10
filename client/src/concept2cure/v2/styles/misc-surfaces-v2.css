@@ -10,7 +10,6 @@
      ================================================================ */
 
   .pdev{ padding:26px 30px 80px; }
-  .pdev .sp-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:16px; }
 
   /* Overall readiness card */
   .pdev-ready{ display:flex; align-items:center; gap:20px; background:var(--bg-000); border:1px solid var(--border); border-radius:var(--radius-lg,14px); padding:18px 22px; margin:16px 0 22px; }
@@ -24,8 +23,6 @@
   .pdev-ready-bar .fill{ position:absolute; left:0; top:0; bottom:0; border-radius:5px; background:var(--accent-100); }
   .pdev-ready-bar .thr{ position:absolute; top:-3px; bottom:-3px; width:2px; background:var(--text-300); }
 
-  .pj-seclbl{ font-size:12px; font-weight:600; color:var(--text-200); text-transform:uppercase; letter-spacing:.04em; margin:18px 0 10px; }
-  .pj-seclbl .s{ font-weight:500; text-transform:none; letter-spacing:0; color:var(--text-400); }
 
   /* Workstream strip */
   .pdev-ws-strip{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
@@ -51,28 +48,13 @@
   .pdev-act-meta{ font-size:10.5px; color:var(--text-400); margin-top:5px; }
   .pdev-act-actions{ display:flex; align-items:center; gap:7px; flex-shrink:0; }
 
-  /* chips */
-  .rd-chip{ font-size:10.5px; font-weight:600; padding:2px 8px; border-radius:20px; white-space:nowrap; }
-  /* An entitlement status is a short SENTENCE ("Included from Professional",
-     "Turned off for this workspace"), not the one-word state `.rd-chip` was
-     sized for. coverage-v2.css additionally sets `text-transform:uppercase` and
-     `white-space:nowrap` on the same class, which turns those into a shouted
-     line that runs off the edge of a 280px launch card in the Apps catalog.
-     Two classes so the override beats either sheet regardless of import order;
-     shape, colour and weight are still the chip's. */
-  .rd-chip.rd-chip-sentence{ white-space:normal; text-transform:none; letter-spacing:0; }
+  /* chips: the canonical .rd-chip and its tones are in app-v2.css (D0 block). */
   /* Inline single-line input for the collaboration toolbar (lock-takeover
      reason). Matches .tb-field's input treatment so the two surfaces do not
      drift, but sized for a toolbar row rather than a form column. */
   .rd-input{ font:inherit; font-size:12px; padding:6px 9px; border:1px solid var(--border-control); border-radius:var(--radius-md); background:var(--bg-000); color:var(--text-100); }
   .rd-input::placeholder{ color:var(--text-500); }
   .rd-input:focus{ outline:none; border-color:var(--accent-200); box-shadow:0 0 0 3px var(--accent-000); }
-  .rd-chip.tone-ok{ background:var(--success-muted); color:var(--success); }
-  .rd-chip.tone-err{ background:var(--error-muted); color:var(--error); }
-  .rd-chip.tone-warn{ background:var(--warning-muted); color:var(--warning); }
-  .rd-chip.tone-ai{ background:var(--accent-000); color:var(--accent-200); }
-  .rd-chip.tone-flight{ background:#eef2fb; color:#3a5bbf; }
-  .rd-chip.tone-idle{ background:var(--bg-200); color:var(--text-200); }
 
   /* buttons */
   .pdev-btn{ display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:600; padding:8px 14px; border-radius:var(--radius-lg); border:1px solid var(--border-strong); background:var(--bg-000); color:var(--text-100); cursor:pointer; transition:background var(--dur); }
@@ -92,13 +74,13 @@
   .pdev-back{ position:fixed; inset:0; background:rgba(20,20,19,.42); display:flex; justify-content:flex-end; z-index:1200; }
   .pdev-sheet{ width:min(920px,94vw); height:100%; background:var(--bg-050); border-left:1px solid var(--border-strong); display:flex; flex-direction:column; box-shadow:-16px 0 48px rgba(0,0,0,.16); }
   .pdev-sheet-h{ display:flex; justify-content:space-between; align-items:flex-start; padding:18px 22px; border-bottom:1px solid var(--border); }
-  .pdev-sheet-eye{ font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--accent-200); }
+  .pdev-sheet-eye{ font-size:var(--fs-caption); font-weight:600; color:var(--text-300); }
   .pdev-sheet-t{ font-size:17px; font-weight:600; color:var(--text-100); margin-top:3px; }
   .pdev-x{ width:32px; height:32px; border-radius:var(--radius-lg); border:1px solid var(--border-strong); background:var(--bg-000); cursor:pointer; color:var(--text-300); display:flex; align-items:center; justify-content:center; }
   .pdev-x svg{ width:16px; height:16px; }
   .pdev-aidraft{ flex:1; display:grid; grid-template-columns:340px 1fr; gap:0; overflow:hidden; }
   .pdev-aid-left{ padding:20px; border-right:1px solid var(--border); overflow-y:auto; display:flex; flex-direction:column; gap:16px; }
-  .pdev-fld .lbl{ font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--text-400); margin-bottom:5px; }
+  .pdev-fld .lbl{ font-size:var(--fs-caption); font-weight:600; color:var(--text-400); margin-bottom:5px; }
   .pdev-fld .val{ font-size:13px; color:var(--text-100); }
   .pdev-fld .val.mono{ font-family:var(--font-mono); font-size:11.5px; color:var(--text-300); }
   .pdev-modtag{ font-family:var(--font-mono); font-size:10px; background:var(--accent-000); color:var(--accent-200); padding:1px 6px; border-radius:5px; margin-left:6px; }
@@ -121,8 +103,6 @@
   .pdev-draft-sec .l{ font-size:13px; font-weight:600; color:var(--text-100); margin-bottom:3px; }
   .pdev-draft-sec .p{ font-size:12.5px; color:var(--text-300); line-height:1.55; }
   .pdev-sheet-f{ display:flex; justify-content:flex-end; gap:10px; padding:16px 22px; border-top:1px solid var(--border); }
-  .pdev-toast{ position:fixed; bottom:26px; left:50%; transform:translateX(-50%); background:var(--text-100); color:var(--bg-000); font-size:13px; font-weight:600; padding:11px 18px; border-radius:10px; display:flex; align-items:center; gap:8px; z-index:1300; box-shadow:0 8px 28px rgba(0,0,0,.24); }
-  .pdev-toast svg{ width:15px; height:15px; }
 
   /* ================================================================
      project-detail — Project workspace
@@ -152,7 +132,7 @@
   .pd-sub{ font-size:13.5px; color:var(--text-300); margin-top:8px; }
   .pd-head-meta{ display:flex; gap:28px; margin-top:16px; flex-wrap:wrap; }
   .pd-head-meta .col{ min-width:120px; }
-  .pd-head-meta .lbl{ font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-400); font-weight:600; }
+  .pd-head-meta .lbl{ font-size:var(--fs-caption); color:var(--text-400); font-weight:600; }
   .pd-head-meta .pct{ font-size:20px; font-weight:600; margin:3px 0; }
   .pd-head-meta .val{ font-size:13.5px; color:var(--text-200); margin-top:4px; font-weight:520; }
   .pd-head-meta .val.warn{ color:var(--accent-200); font-weight:600; }
@@ -190,7 +170,7 @@
   .pd-draft-row .when{ font-size:11.5px; color:var(--text-400); white-space:nowrap; min-width:96px; text-align:right; }
 
   .pd-aside-sec{ margin-bottom:24px; }
-  .pd-aside-sec h3{ display:flex; align-items:center; gap:6px; font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:var(--text-300); font-weight:600; margin:0 0 10px; }
+  .pd-aside-sec h3{ display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-300); font-weight:600; margin:0 0 10px; }
   .pd-aside-sec h3 .meta{ color:var(--text-400); font-weight:500; }
   .pd-aside-sec h3 .link{ margin-left:auto; border:none; background:none; color:var(--accent-200); font-size:11px; cursor:pointer; text-transform:none; letter-spacing:0; font-weight:540; }
   .pd-people{ display:flex; flex-direction:column; gap:9px; }
@@ -209,7 +189,7 @@
   .pd-haq-line b{ font-weight:600; color:var(--text-100); }
   .pd-haq-sub{ font-size:11px; color:var(--text-400); margin-top:3px; }
   .pd-evidence:first-of-type{ border-top:none; }
-  .pd-evidence .kind{ font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--accent-200); font-weight:600; }
+  .pd-evidence .kind{ font-size:var(--fs-caption); color:var(--text-300); font-weight:600; }
   .pd-evidence .title{ font-size:12.5px; font-weight:520; margin:2px 0 1px; }
   .pd-evidence .meta{ font-size:11px; color:var(--text-400); }
   .pd-audit-row{ display:flex; justify-content:space-between; gap:8px; padding:6px 0; font-size:12px; }
@@ -344,146 +324,186 @@
   .ev-chunk-snip{font-size:11.5px;line-height:1.5;color:var(--text-300);font-family:var(--font-serif);}
 
   /* ================================================================
-     vault-dms — Dossier-aligned document management
-     ================================================================ */
+     vault-dms — the Vault work area (D6 §C, on D5 §WA and D0 §3)
+     ================================================================
+     The page is `.page-inner.vd[data-work-area="vault"]`: D0's container,
+     header, buttons, tabs, inputs, chips and inspector (`.de`), placed by
+     D5-0's work-area block. This block keeps only what is the Vault's own:
+     the drop target, the library's panes, the record's parts, and the inner
+     rows of its sections. Type stays on D0's ramp, nothing under 12px; orange
+     only for focus and the view's one primary.
+     coverage-v2.css 862–938 still carries earlier Vault rules outside this
+     step's lines. Most no longer match any markup; the two hooks the tests
+     keep (`.vd-breadcrumb`, `.vd-row`) are restated below at a higher rank. */
 
-  .vd-wrap{ display:flex; flex-direction:column; height:100%; min-height:0; background:var(--bg-000); }
-  .vd-top{ display:flex; align-items:flex-end; gap:16px; padding:20px 24px 14px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
-  /* coexistence strip -- works alongside Veeva / SharePoint / OneDrive */
-  .vd-coexist{ display:flex; align-items:center; gap:14px; padding:8px 24px; background:var(--bg-050); border-bottom:1px solid var(--border); flex-wrap:wrap; }
-  /* Prose, not a row of boxes. This was `display:flex; gap:7px`, which makes
-     every text node and every <b> its own flex item: the sentence rendered
-     "Works alongside Veeva Vault , SharePoint & OneDrive" — 7px of gap on each
-     side of the comma — and could not line-wrap normally. Flex lays out boxes;
-     it should not be setting type. The icon needs `display:inline` because
-     app-v2.css:164 makes every svg in this shell display:block, which would
-     otherwise break the line on both sides of it. */
-  .vd-coexist-txt{ font-size:11.5px; color:var(--text-300); line-height:1.5; }
-  .vd-coexist-txt > svg{ display:inline; vertical-align:-.12em; margin-right:5px; }
-  .vd-coexist-txt b{ font-weight:600; color:var(--text-200); }
-  .vd-coexist-txt svg{ width:13px; height:13px; color:var(--text-400); flex-shrink:0; }
-  .vd-coexist-cta{ margin-left:auto; border:0; background:none; font-size:11.5px; font-weight:600; color:var(--accent-200); cursor:pointer; padding:2px 0; }
-  .vd-coexist-cta:hover{ text-decoration:underline; }
-  .vd-title{ font-size:22px; font-weight:600; color:var(--text-100); margin:2px 0 3px; letter-spacing:-0.01em; display:flex; align-items:center; gap:8px; }
-  .vd-sub{ font-size:12.5px; color:var(--text-400); }
-  .vd-searchbar{ flex:1; min-width:240px; display:flex; align-items:center; gap:8px; border:1px solid var(--border-control); border-radius:10px; padding:8px 12px; background:var(--bg-050); }
-  .vd-searchbar:focus-within{ border-color:var(--accent-200); background:var(--bg-000); }
-  .vd-search-ic{ color:var(--text-400); display:inline-flex; }
-  .vd-search-ic svg{ width:15px; height:15px; }
-  .vd-search{ flex:1; border:none; background:none; outline:none; font-size:13.5px; color:var(--text-100); }
-  .vd-search-x{ border:none; background:none; color:var(--text-400); cursor:pointer; font-size:15px; }
+  /* The page. The shell's `.page-full` row holds it and scrolls: no height or
+     background of its own. For the writing roles the whole page is the drop
+     zone (FileDropZone), and dragging a file over it draws one focus ring. */
+  .vd-wrap{ flex:1 1 auto; min-width:0; }
+  .vd-drop{ flex:1 1 auto; min-width:0; align-self:flex-start; min-height:100%; border-radius:var(--radius-lg); }
+  .vd-drop[data-dragging]{ outline:2px solid var(--border-focus); outline-offset:-2px; }
+  /* A part of the header's line wraps as a unit, so its dot never stands alone.
+     The dot is an svg, and an svg is display:block (preflight): inside the line
+     it broke the line before and after itself. */
+  .vd-sub-part{ display:inline-block; max-width:100%; }
+  .vd-sub-part svg{ display:inline-block; vertical-align:middle; }
+  /* What qualifies every view, between the starters and the tabs. */
+  .vd-notes{ display:flex; flex-direction:column; gap:8px; margin:0 0 16px; }
+  .vd-notes:empty{ display:none; }
+  .vd-wrap .scaf-note[data-tone="error"]{ color:var(--error); }
+  .vd-loading{ padding:8px 0; font-size:var(--fs-small); color:var(--text-300); }
 
-  .vd-grid{ flex:1; min-height:0; display:grid; grid-template-columns:290px 1fr 320px; }
-  .vd-tree{ border-right:1px solid var(--border); overflow-y:auto; padding:12px 8px; }
-  .vd-tree-lbl{ font-size:10px; text-transform:uppercase; letter-spacing:0.07em; color:var(--text-400); font-weight:600; padding:4px 8px 8px; }
-  .vd-folder{ width:100%; display:flex; align-items:center; gap:6px; padding:7px 8px; border:none; background:none; border-radius:7px; cursor:pointer; text-align:left; color:var(--text-200); font-size:12.5px; }
-  .vd-folder:hover{ background:var(--bg-050); }
-  .vd-folder[data-on]{ background:var(--accent-000); color:var(--accent-200); }
-  .vd-caret{ display:inline-flex; width:12px; transition:transform var(--dur); color:var(--text-400); font-size:11px; }
+  /* ── The library: structure 220 | list | record 360 (D6 §C.3) ──
+     `.wa-split` (D5-0) sets the record's 360px column at 1280px and wider;
+     below that the record is a drawer and the grid is the browse panes alone. */
+  .vd-view, .vd-grid{ min-width:0; }
+  .vd-browse{ display:grid; grid-template-columns:220px minmax(0,1fr); gap:24px; align-items:start; min-width:0; }
+  .vd-browse[data-tree="drawer"]{ grid-template-columns:minmax(0,1fr); }
+
+  /* The structure tree: the project's line as its caption and root, then the folders. */
+  .vd-tree{ position:sticky; top:0; max-height:calc(100vh - 96px); overflow-y:auto; min-width:0; padding:0 0 8px; }
+  .vd-tree-root{ display:flex; align-items:center; gap:6px; width:100%; padding:2px 8px 8px; border:0; background:none; text-align:left; font-size:var(--fs-small); line-height:1.45; color:var(--text-300); cursor:pointer; overflow-wrap:anywhere; transition:color var(--dur) var(--ease); }
+  .vd-tree-root:hover{ color:var(--text-100); }
+  .vd-tree-root svg{ width:14px; height:14px; flex-shrink:0; }
+  .vd-folder{ width:100%; display:flex; align-items:center; gap:6px; padding:6px 8px; border:none; background:none; border-radius:var(--radius-lg); cursor:pointer; text-align:left; color:var(--text-200); font-size:var(--fs-small); transition:background-color var(--dur) var(--ease); }
+  .vd-folder:hover{ background:var(--bg-100); }
+  /* The open folder takes a soft fill, as the rail's active item does: not orange. */
+  .vd-folder[data-on]{ background:var(--bg-100); color:var(--text-100); font-weight:500; }
+  .vd-caret{ display:inline-flex; width:12px; transition:transform var(--dur) var(--ease); color:var(--text-300); }
   .vd-caret[data-open]{ transform:rotate(90deg); }
   .vd-caret svg{ width:12px; height:12px; }
-  .vd-fico{ display:inline-flex; color:var(--text-400); }
+  .vd-fico{ display:inline-flex; color:var(--text-300); }
   .vd-fico svg{ width:14px; height:14px; }
   .vd-flabel{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .vd-flabel b{ font-weight:600; }
-  .vd-fcount{ font-size:10.5px; color:var(--text-400); font-variant-numeric:tabular-nums; }
+  .vd-fcount{ font-size:var(--fs-caption); color:var(--text-300); font-variant-numeric:tabular-nums; }
+  /* The tree as a drawer below 1024px. */
+  .vd-tree-drawer .de-body{ padding:12px; }
 
-  .vd-list{ display:flex; flex-direction:column; min-height:0; border-right:1px solid var(--border); }
-  .vd-list-hdr{ display:flex; align-items:baseline; justify-content:space-between; padding:14px 18px 10px; border-bottom:1px solid var(--border); }
-  .vd-list-hdr .t{ font-size:13.5px; font-weight:600; color:var(--text-100); }
-  .vd-list-hdr .s{ font-size:11.5px; color:var(--text-400); }
-  .vd-rows{ flex:1; overflow-y:auto; padding:8px; }
-  .vd-row{ width:100%; display:flex; align-items:center; gap:10px; padding:10px 12px; border:none; background:none; border-radius:var(--radius-lg); cursor:pointer; text-align:left; }
-  .vd-row:hover{ background:var(--bg-050); }
-  .vd-row[data-on]{ background:var(--accent-000); }
-  .vd-row-ic{ color:var(--text-400); display:inline-flex; }
-  .vd-row-ic svg{ width:16px; height:16px; }
-  .vd-row-b{ flex:1; display:flex; flex-direction:column; gap:2px; min-width:0; }
-  .vd-row-t{ font-size:13px; color:var(--text-100); font-weight:500; display:flex; gap:6px; align-items:baseline; }
-  .vd-num{ font-family:var(--font-mono,ui-monospace,monospace); font-size:11px; color:var(--accent-200); }
-  .vd-row-s{ font-size:11px; color:var(--text-400); }
+  /* The list: one toolbar row (search, saved views, the two scopes), the facets
+     under it, where the list is, then the rows. */
+  .vd-list{ display:flex; flex-direction:column; gap:10px; min-width:0; }
+  .vd-find{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; }
+  .vd-find-q{ position:relative; display:flex; align-items:center; flex:1 1 320px; min-width:0; }
+  .vd-find-q .c2c-input{ padding-left:34px; }
+  .vd-find-ic{ position:absolute; left:10px; display:inline-flex; color:var(--text-300); pointer-events:none; }
+  .vd-find-ic svg{ width:16px; height:16px; }
+  .vd-toggle{ display:inline-flex; align-items:center; gap:6px; font-size:var(--fs-small); color:var(--text-200); white-space:nowrap; cursor:pointer; }
+  .vd-toggle input{ width:16px; height:16px; margin:0; accent-color:var(--text-100); }
+  .vd-find-note{ flex-basis:100%; margin:0; font-size:var(--fs-small); line-height:1.5; color:var(--text-300); }
+  /* The facets, and the saved views' forms: labelled fields on a row that wraps. */
+  .vd-facets{ display:flex; flex-wrap:wrap; align-items:flex-end; gap:8px 10px; }
+  .vd-facet{ display:flex; flex-direction:column; gap:4px; min-width:0; font-size:var(--fs-small); color:var(--text-200); }
+  .vd-facet:has(> input[type="radio"]){ flex-direction:row; align-items:center; gap:6px; }
+  .vd-facet-l{ font-size:var(--fs-caption); color:var(--text-300); }
+  .vd-facet .c2c-input{ width:auto; max-width:220px; }
+  .vd-facet input.c2c-input{ width:160px; max-width:100%; }
+  /* Where the list is: the folder, or what is narrowing it (the earlier rule in coverage-v2.css drew a bordered 12px bar). */
+  .vd-list .vd-breadcrumb{ display:flex; flex-wrap:wrap; align-items:baseline; gap:6px; padding:0; border:0; font-size:var(--fs-small); color:var(--text-300); }
+  .vd-here b{ font-weight:600; color:var(--text-200); }
+
+  /* A row: the name and its filing status, then type, versions, review stage,
+     owner and date on one quiet line, the five fields the columns carried.
+     `.vd-row` is a grid in coverage-v2.css (`!important`); its template is
+     restated here at a higher rank. */
+  .vd-rows{ display:flex; flex-direction:column; min-width:0; border-top:1px solid var(--border); }
+  .vd-list .vd-row{ grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"name status" "meta meta"; gap:2px 12px; align-items:center; width:100%; padding:10px 8px; border:0; border-bottom:1px solid var(--border-subtle); border-radius:0; background:none; font-size:var(--fs-small); text-align:left; cursor:pointer; transition:background-color var(--dur) var(--ease); }
+  .vd-list .vd-row:hover{ background:var(--bg-050); }
+  .vd-list .vd-row[data-on]{ background:var(--bg-100); }
+  .vd-list .vd-row .vd-col-name{ grid-area:name; display:flex; align-items:center; gap:8px; min-width:0; }
+  .vd-list .vd-row .vd-col-status{ grid-area:status; justify-self:end; }
+  .vd-list .vd-row .vd-row-s{ grid-area:meta; min-width:0; padding-left:24px; font-size:var(--fs-small); color:var(--text-300); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .vd-list .vd-row-t{ display:block; min-width:0; font-size:var(--fs-body); font-weight:500; color:var(--text-100); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .vd-list .vd-row-ic{ flex:none; display:inline-flex; color:var(--text-300); }
+  .vd-list .vd-row-ic svg{ width:16px; height:16px; }
+  /* A CTD section code is read: mono, 12px, quiet. */
+  .vd-list .vd-num{ margin-right:6px; font-family:var(--font-mono,ui-monospace,monospace); font-size:var(--fs-caption); color:var(--text-300); }
   .vd-blk{ color:var(--warning); display:inline-flex; }
   .vd-blk svg{ width:14px; height:14px; }
-  .vd-empty{ padding:28px 16px; text-align:center; color:var(--text-400); font-size:12.5px; }
+  .vd-empty{ padding:16px 8px; color:var(--text-300); font-size:var(--fs-small); }
 
-  .vd-detail{ overflow-y:auto; padding:18px; display:flex; flex-direction:column; gap:2px; }
-  .vd-d-hdr{ display:flex; align-items:center; justify-content:space-between; }
-  .vd-d-ver{ font-size:11px; font-family:var(--font-mono,ui-monospace,monospace); color:var(--text-400); }
-  .vd-d-title{ font-size:15px; font-weight:600; color:var(--text-100); margin-top:8px; line-height:1.3; }
-  .vd-d-meta{ font-size:11.5px; color:var(--text-400); margin-top:3px; }
-  .vd-d-preview{ font-size:12.5px; color:var(--text-300); line-height:1.5; margin-top:10px; padding:10px 12px; background:var(--bg-050); border-radius:var(--radius-lg); border-left:3px solid var(--accent-100); }
-  .vd-d-seclbl{ font-size:10px; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-400); font-weight:600; margin-top:16px; margin-bottom:7px; }
-  .vd-d-idx{ display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-300); }
-  .vd-idx-dot{ width:8px; height:8px; border-radius:50%; background:var(--text-500,var(--text-400)); }
+  /* ── The record: D0's inspector (journey-v2.css `.de`), docked at 1280px and
+     wider, a drawer below (D6 §C.4 step 9). Docked, it stays in view while the
+     list scrolls, and its body scrolls inside it. ── */
+  .vd-detail{ min-width:0; }
+  .vd-detail.de[data-docked]{ position:sticky; top:0; max-height:calc(100vh - 96px); overflow:hidden; }
+  .vd-detail .de-body{ min-height:0; }
+  .vd-d-head-b{ min-width:0; display:flex; flex-direction:column; gap:6px; }
+  .vd-d-title{ font-size:var(--fs-body); font-weight:600; line-height:1.4; color:var(--text-100); overflow-wrap:anywhere; }
+  .vd-d-hdr{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+  .vd-d-ver{ font-size:var(--fs-small); color:var(--text-300); }
+  .vd-d-meta{ font-size:var(--fs-small); color:var(--text-300); }
+  .vd-d-preview{ margin:0 0 12px; padding:10px 12px; border-radius:var(--radius-lg); background:var(--bg-050); font-size:var(--fs-small); line-height:1.5; color:var(--text-200); }
+  .vd-d-actions{ display:flex; flex-wrap:wrap; gap:6px; margin:0 0 12px; }
+  /* Each part is a disclosure whose summary is its heading; the first is open.
+     A panel that draws its own heading (Versions, Review annotations, Related
+     documents, Details, History) shows it once: the summary is that heading. */
+  .vd-detail .de-body > .vd-sec{ margin:0; border-top:1px solid var(--border-subtle); }
+  .vd-detail .de-body > .vd-sec > summary{ padding:10px 0; }
+  .vd-detail .de-body > .vd-sec[open]{ padding-bottom:12px; }
+  .vd-sec > summary + * > .vd-d-seclbl:first-child{ display:none; }
+  /* A sub-panel's own label, where it is not the summary. */
+  .vd-d-seclbl{ margin:12px 0 6px; font-size:var(--fs-small); font-weight:600; color:var(--text-200); }
+  .vd-d-idx{ display:flex; align-items:center; gap:8px; font-size:var(--fs-small); line-height:1.5; color:var(--text-300); }
+  .vd-idx-dot{ width:8px; height:8px; flex-shrink:0; border-radius:50%; background:var(--text-400); }
   .vd-idx-dot.on{ background:var(--success); }
-  /* Upload (gap 7.1): the drop target around the upload controls, and one row per staged file. */
-  .vd-upload-zone{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; padding:4px 8px; border:1px dashed transparent; border-radius:var(--radius-lg); }
-  .vd-upload-zone[data-dragging]{ border-color:var(--accent-200); background:var(--accent-000); }
-  .vd-upload-zone-t{ font-size:12px; color:var(--text-300); }
-  .vd-stage{ margin:0 0 12px; padding:12px 14px; border:1px solid var(--border); border-radius:var(--radius-lg); }
-  .vd-stage-list{ list-style:none; margin:8px 0; padding:0; display:flex; flex-direction:column; gap:10px; }
-  .vd-stage-row{ padding:10px 0; border-top:1px solid var(--border); }
-  .vd-stage-h{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; }
-  .vd-stage-path{ flex:1 1 12rem; min-width:0; font-size:12px; color:var(--text-200); overflow-wrap:anywhere; }
-  .vd-stage .c2c-input:disabled{ background:var(--bg-100); cursor:not-allowed; }
-  .vd-stage-fields{ display:grid; grid-template-columns:max-content minmax(0,1fr); gap:6px 10px; align-items:center; font-size:12px; color:var(--text-300); }
-  .vd-stage-actions{ display:flex; gap:8px; margin-top:8px; }
-  /* How much of a row's file has been sent (MR-08 Stage 6 step 2). */
-  .vd-stage-progress{ display:block; width:100%; height:6px; margin:2px 0 6px; accent-color:var(--accent-200); }
   .vd-vers{ display:flex; flex-direction:column; gap:6px; }
   .vd-ver{ display:flex; gap:10px; align-items:baseline; }
-  .vd-ver-v{ font-family:var(--font-mono,ui-monospace,monospace); font-size:11px; color:var(--accent-200); min-width:42px; }
-  .vd-ver-m{ font-size:11.5px; color:var(--text-400); }
-  /* Version compare (plan critique 15): changes marked + / − as well as by colour. */
-  .vd-cmp{ display:flex; flex-direction:column; gap:6px; margin-top:8px; padding:10px; border:1px solid var(--border); border-radius:var(--radius-md); background:var(--bg-050); }
-  .vd-cmp-head{ display:flex; flex-wrap:wrap; align-items:baseline; gap:10px; font-size:12px; color:var(--text-100); }
-  .vd-cmp-details{ margin:0; padding-left:16px; font-size:11.5px; color:var(--text-300); }
-  .vd-cmp-lines{ max-height:320px; overflow:auto; font-family:var(--font-mono,ui-monospace,monospace); font-size:11px; line-height:1.5; }
-  .vd-cmp-line{ white-space:pre-wrap; padding:0 6px; color:var(--text-200); }
-  .vd-cmp-mark{ user-select:none; color:var(--text-400); }
-  .vd-cmp-added{ background:var(--success-muted); color:var(--text-100); }
-  .vd-cmp-removed{ background:var(--error-muted); color:var(--text-100); text-decoration:line-through; text-decoration-color:var(--error); }
-  .vd-cmp-skip{ padding:2px 6px; color:var(--text-400); font-style:italic; }
-  /* Library search (plan critique 15): hits from every project, each with its project. */
-  .vd-lib{ display:flex; flex-direction:column; gap:4px; margin-top:8px; }
-  .vd-lib-row{ display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 12px; padding:6px 8px; border-bottom:1px solid var(--border); font-size:12px; }
-  .vd-lib-title{ color:var(--text-100); font-weight:500; }
-  .vd-lib-proj{ color:var(--text-300); font-size:11.5px; }
-  .vd-lib-snip{ flex-basis:100%; color:var(--text-400); font-size:11px; }
-  .vd-lib-row .sp-ask{ margin-left:auto; }
-  /* Stored-file fixity check (plan critique 15). */
-  .vd-fix{ border-bottom:1px solid var(--border); background:var(--bg-050); padding:10px 24px; display:flex; flex-direction:column; gap:6px; }
-  .vd-fix .sp-ask{ margin-left:auto; }
+  .vd-ver-v{ min-width:42px; font-size:var(--fs-small); font-weight:500; color:var(--text-100); font-variant-numeric:tabular-nums; }
+  .vd-ver-m{ font-size:var(--fs-small); color:var(--text-300); }
   /* A version's review stage and sign-offs, one line each (VR-13). */
   .vd-ver-lc{ display:block; margin-top:2px; color:var(--text-300); }
   .vd-ver-acts{ display:flex; flex-wrap:wrap; align-items:baseline; gap:8px; }
-  .vd-ev{ display:flex; flex-direction:column; gap:6px; }
-  .vd-ev-row{ display:flex; align-items:center; gap:7px; font-size:12px; color:var(--text-300); }
-  .vd-ev-row svg{ width:13px; height:13px; color:var(--text-400); }
-  .vd-d-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
+  /* Version compare: changes marked + / − as well as by colour. */
+  .vd-cmp{ display:flex; flex-direction:column; gap:6px; margin-top:8px; padding:10px; border:1px solid var(--border); border-radius:var(--radius-lg); background:var(--bg-050); }
+  .vd-cmp-head{ display:flex; flex-wrap:wrap; align-items:baseline; gap:10px; font-size:var(--fs-small); color:var(--text-100); }
+  .vd-cmp-details{ margin:0; padding-left:16px; font-size:var(--fs-small); color:var(--text-300); }
+  .vd-cmp-lines{ max-height:320px; overflow:auto; font-family:var(--font-mono,ui-monospace,monospace); font-size:var(--fs-caption); line-height:1.5; }
+  .vd-cmp-line{ white-space:pre-wrap; padding:0 6px; color:var(--text-200); }
+  .vd-cmp-mark{ user-select:none; color:var(--text-300); }
+  .vd-cmp-added{ background:var(--success-muted); color:var(--text-100); }
+  .vd-cmp-removed{ background:var(--error-muted); color:var(--text-100); text-decoration:line-through; text-decoration-color:var(--error); }
+  .vd-cmp-skip{ padding:2px 6px; color:var(--text-300); font-style:italic; }
 
-  /* ── Data room lane (capture → classify → file pipeline) ── */
-  .vd-dr{ border-bottom:1px solid var(--border); background:var(--bg-050); padding:10px 24px; }
-  .vd-dr-head{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
-  .vd-dr-title{ display:flex; align-items:center; gap:7px; font-size:12px; font-weight:600; color:var(--text-200); }
-  .vd-dr-title svg{ width:14px; height:14px; color:var(--text-400); }
-  .vd-dr-meta{ font-size:11.5px; color:var(--text-400); }
-  .vd-dr-stages{ display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--text-300); }
+  /* The dossier filing block and the record's labelled rows. */
+  .vd-d-filing{ display:flex; flex-direction:column; gap:6px; font-size:var(--fs-small); }
+  .vd-d-filing-row{ display:flex; gap:10px; align-items:baseline; }
+  .vd-d-filing-row .k{ min-width:96px; flex-shrink:0; color:var(--text-300); font-size:var(--fs-small); }
+  .vd-d-filing-row .v{ min-width:0; color:var(--text-100); overflow-wrap:anywhere; }
+  .vd-d-filing-row .v.mono{ font-family:var(--font-mono,ui-monospace,monospace); font-size:var(--fs-caption); }
+  .vd-d-hash{ word-break:break-all; }
+  .vd-d-filing-why{ padding:8px 10px; border-radius:var(--radius-lg); background:var(--bg-050); font-size:var(--fs-small); line-height:1.5; color:var(--text-300); }
+  .vd-d-filing-acts{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:4px; }
+  /* The record's fields (filing reason, catalog correction, annotations, details): D0's field, 32px. */
+  .vd-d-filing-reason, .vd-d-move-sel{ min-height:32px; padding:5px 10px; font:inherit; font-size:var(--fs-small); color:var(--text-100); background:var(--bg-000); border:1px solid var(--border-control); border-radius:var(--radius-lg); }
+  .vd-d-filing-reason{ flex:1 1 200px; min-width:0; }
+  textarea.vd-d-filing-reason{ resize:vertical; line-height:1.5; }
+  .vd-d-filing-reason::placeholder{ color:var(--text-300); font-style:italic; }
+  .vd-d-move{ display:inline-flex; gap:6px; align-items:center; }
+  .vd-d-move-sel{ max-width:200px; }
+
+  /* ── The sections of the other views (D6 §C.4 step 11): typographic, under
+     `.pj-sec-h`; no band, no fill. Their inner rows follow. ── */
+  .vd-dr-meta{ font-size:var(--fs-small); color:var(--text-300); }
+  .vd-dr-stages{ display:inline-flex; flex-wrap:wrap; align-items:center; gap:4px 8px; font-size:var(--fs-small); color:var(--text-300); }
   .vd-dr-stage b{ font-weight:600; color:var(--text-100); font-variant-numeric:tabular-nums; }
-  .vd-dr-arrow{ color:var(--text-400); }
-  .vd-dr-toggle{ margin-left:auto; border:none; background:none; font-size:11.5px; font-weight:600; color:var(--accent-200); cursor:pointer; padding:2px 0; }
-  .vd-dr-toggle:hover{ text-decoration:underline; }
-  .vd-dr-empty{ font-size:11.5px; color:var(--text-400); padding:6px 0 2px; }
-  .vd-dr-err{ display:flex; align-items:center; gap:7px; font-size:12px; color:var(--error); padding:6px 0 2px; }
-  .vd-dr-err svg{ width:13px; height:13px; flex-shrink:0; }
-  .vd-dr-err-strip{ padding:8px 24px; border-bottom:1px solid var(--border); }
-  .vd-dr-rows{ display:flex; flex-direction:column; gap:2px; margin-top:8px; max-height:180px; overflow-y:auto; }
-  .vd-dr-row{ display:flex; align-items:center; gap:10px; padding:5px 8px; border-radius:7px; font-size:12px; }
-  .vd-dr-row:hover{ background:var(--bg-000); }
-  .vd-dr-kind{ font-size:10px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-400); min-width:38px; }
-  .vd-dr-name{ color:var(--text-100); font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:32%; }
+  .vd-dr-arrow{ color:var(--text-300); }
+  /* A text action inside a section (File into Vault, Confirm N suggested): quiet, underlined, not orange. */
+  .vd-dr-toggle{ margin-left:auto; padding:2px 0; border:none; background:none; font-size:var(--fs-small); font-weight:500; color:var(--text-200); text-decoration:underline; text-decoration-color:var(--border-strong); text-underline-offset:2px; cursor:pointer; transition:color var(--dur) var(--ease), text-decoration-color var(--dur) var(--ease); }
+  .vd-dr-toggle:hover{ color:var(--text-100); text-decoration-color:currentColor; }
+  .vd-dr-empty{ padding:4px 0 0; font-size:var(--fs-small); line-height:1.5; color:var(--text-300); }
+  .vd-dr-err{ display:flex; align-items:center; gap:8px; padding:6px 0 2px; font-size:var(--fs-small); color:var(--error); }
+  .vd-dr-err svg{ width:14px; height:14px; flex-shrink:0; }
+  .vd-dr-rows{ display:flex; flex-direction:column; margin-top:8px; }
+  .vd-dr-rows:not(.vd-cov-rows){ max-height:320px; overflow-y:auto; }
+  .vd-dr-row{ display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border-subtle); font-size:var(--fs-small); }
+  .vd-dr-row:last-child{ border-bottom:0; }
+  .vd-dr-kind{ min-width:44px; font-size:var(--fs-small); color:var(--text-300); }
+  .vd-dr-name{ max-width:32%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:500; color:var(--text-100); }
   /* The uploads lane's open button (Vault.tsx UploadsLane): the cap on the name. */
-  .vd-dr-open{ min-width:0; max-width:45%; flex-shrink:1; }
+  .vd-dr-open{ min-width:0; max-width:45%; flex-shrink:1; padding:0; border:0; background:none; text-align:left; cursor:pointer; }
+  .vd-dr-open .vd-dr-name{ display:block; max-width:none; }
+  .vd-dr-open:hover .vd-dr-name{ text-decoration:underline; text-underline-offset:2px; }
   /* A narrow screen. The row's fixed parts (type, "Auto-filed · confirm",
      size and date) took the whole row and the name, the one part that may
      shrink to nothing, rendered 0 px wide: no document could be opened from
@@ -493,76 +513,80 @@
     .vd-dr-row{ flex-wrap:wrap; row-gap:2px; }
     .vd-dr-open{ flex:1 1 60%; max-width:none; }
   }
-  .vd-dr-detail{ color:var(--text-400); font-size:11px; }
-  .vd-dr-suggest{ color:var(--text-300); font-size:11px; margin-left:auto; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .vd-dr-detail{ font-size:var(--fs-small); color:var(--text-300); }
+  .vd-dr-suggest{ margin-left:auto; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:var(--fs-small); color:var(--text-300); }
+  .vd-dr-more{ align-self:flex-start; margin-top:8px; }
   .vd-dr-row .rd-chip{ flex-shrink:0; }
   .vd-dr-suggest + .rd-chip{ margin-left:8px; }
   .vd-dr-row > .rd-chip:last-child{ margin-left:auto; }
   .vd-dr-suggest ~ .rd-chip:last-child{ margin-left:8px; }
+  /* Coverage: a module's line, then its missing sections with Upload and File here. */
+  .vd-cov-mod{ padding-top:12px; }
+  .vd-cov-mod .vd-dr-name{ max-width:none; }
+  .vd-cov-pick{ width:auto; max-width:240px; }
   /* File into Vault (VR-11): a checkbox per source not yet filed, the action, and a line per source answered. */
-  .vd-dr-pick{ flex-shrink:0; width:14px; height:14px; margin:0; accent-color:var(--accent-200); }
+  .vd-dr-pick{ flex-shrink:0; width:16px; height:16px; margin:0; accent-color:var(--text-100); }
   .vd-dr-file{ display:flex; flex-direction:column; gap:6px; margin-top:8px; }
   .vd-dr-file-acts{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
-  .vd-dr-file-result{ display:flex; flex-direction:column; gap:4px; font-size:11.5px; color:var(--text-300); }
+  .vd-dr-file-result{ display:flex; flex-direction:column; gap:4px; font-size:var(--fs-small); color:var(--text-300); }
   .vd-dr-file-result ul{ margin:0; padding-left:16px; display:flex; flex-direction:column; gap:2px; }
   .vd-dr-file-result b{ font-weight:600; color:var(--text-100); }
-  .vd-dr-file-partial{ font-size:11.5px; font-weight:600; color:var(--warning); }
+  .vd-dr-file-partial{ font-size:var(--fs-small); font-weight:600; color:var(--warning); }
   .vd-dr-file-refused{ color:var(--error); }
   /* Confirm N suggested (VR-11b): above a folder's list, one reason for the set. */
-  .vd-confirm{ display:flex; flex-direction:column; gap:6px; margin:8px 0 4px; }
+  .vd-confirm{ display:flex; flex-direction:column; gap:6px; margin:0; }
   .vd-confirm-acts{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
   .vd-confirm-form{ display:flex; flex-direction:column; gap:6px; max-width:560px; }
   .vd-confirm-form textarea{ height:auto; padding:6px 9px; resize:vertical; }
+  /* Library search: hits from every project the reader can open, each with its project. */
+  .vd-lib{ display:flex; flex-direction:column; border-top:1px solid var(--border); }
+  .vd-lib > .vd-dr-meta{ padding:8px 0; }
+  .vd-lib-row{ display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 12px; padding:10px 8px; border-bottom:1px solid var(--border-subtle); font-size:var(--fs-small); }
+  .vd-lib-title{ font-size:var(--fs-body); font-weight:500; color:var(--text-100); }
+  .vd-lib-proj{ color:var(--text-300); }
+  .vd-lib-snip{ flex-basis:100%; color:var(--text-300); }
+  .vd-lib-row .btn{ margin-left:auto; }
 
-  /* ── Dossier filing block (detail drawer, uploads) ── */
-  .vd-d-filing{ display:flex; flex-direction:column; gap:6px; font-size:12px; }
-  .vd-d-filing-row{ display:flex; gap:10px; align-items:baseline; }
-  .vd-d-filing-row .k{ min-width:82px; color:var(--text-400); font-size:11px; }
-  .vd-d-filing-row .v{ color:var(--text-100); }
-  .vd-d-filing-row .v.mono{ font-family:var(--font-mono,ui-monospace,monospace); font-size:11px; }
-  .vd-d-hash{ word-break:break-all; }
-  .vd-d-filing-why{ font-size:11.5px; color:var(--text-300); line-height:1.45; padding:8px 10px; background:var(--bg-050); border-radius:7px; }
-  .vd-d-filing-acts{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:4px; }
-  .vd-d-filing-reason{ flex:1 1 200px; min-width:0; height:30px; padding:0 9px; font:inherit; font-size:12px; color:var(--text-100); background:var(--bg-000); border:1px solid var(--border-control); border-radius:var(--radius-md); }
-  .vd-d-filing-reason::placeholder{ color:var(--text-400); }
-  .vd-d-move{ display:inline-flex; gap:6px; align-items:center; }
-  /* The Vault's seals (VR-19, VaultSeals.tsx). */
-  .vd-seals{ margin:14px 0; padding:12px 14px; background:var(--bg-000); border:1px solid var(--border); border-radius:var(--radius-md); }
-  .vd-seals-note{ font-size:12px; color:var(--text-300); line-height:1.45; margin:0 0 10px; }
-  .vd-seal-list{ list-style:none; margin:0 0 10px; padding:0; display:flex; flex-direction:column; gap:8px; }
-  .vd-seal{ padding:8px 10px; background:var(--bg-050); border-radius:7px; font-size:12px; color:var(--text-200); }
+  /* The Uploads view: the type for files added next, the drop line, the staged rows. */
+  .vd-upload{ display:flex; flex-direction:column; gap:12px; margin:0 0 32px; }
+  .vd-upload-bar{ display:flex; flex-wrap:wrap; align-items:center; gap:8px 16px; }
+  .vd-upload-type{ display:inline-flex; align-items:center; gap:8px; font-size:var(--fs-small); color:var(--text-200); }
+  .vd-upload-type-l{ white-space:nowrap; }
+  .vd-upload-type .c2c-input{ width:auto; max-width:260px; margin:0; }
+  .vd-upload-hint{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0; font-size:var(--fs-small); color:var(--text-300); }
+  .vd-stage{ margin:0; padding:16px; border:1px solid var(--border); border-radius:var(--radius-xl); }
+  .vd-stage-t{ margin:0 0 6px; font-size:var(--fs-section); font-weight:600; line-height:1.4; color:var(--text-100); }
+  .vd-stage-list{ list-style:none; margin:8px 0; padding:0; display:flex; flex-direction:column; gap:10px; }
+  .vd-stage-row{ padding:10px 0; border-top:1px solid var(--border-subtle); }
+  .vd-stage-h{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; }
+  .vd-stage-path{ flex:1 1 12rem; min-width:0; font-size:var(--fs-small); color:var(--text-200); overflow-wrap:anywhere; }
+  .vd-stage .c2c-input:disabled{ background:var(--bg-100); cursor:not-allowed; }
+  .vd-stage-fields{ display:grid; grid-template-columns:max-content minmax(0,1fr); gap:6px 10px; align-items:center; font-size:var(--fs-small); color:var(--text-300); }
+  .vd-stage-actions{ display:flex; gap:8px; margin-top:8px; }
+  /* How much of a row's file has been sent (MR-08 Stage 6 step 2). */
+  .vd-stage-progress{ display:block; width:100%; height:6px; margin:2px 0 6px; accent-color:var(--text-100); }
+
+  /* The Seals & fixity view: the seal list under the Seals heading. */
+  .vd-seals-empty{ margin:0; font-size:var(--fs-small); color:var(--text-300); }
+  .vd-seals-note{ margin:0; font-size:var(--fs-small); line-height:1.5; color:var(--text-300); }
+  .vd-seal-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; border-top:1px solid var(--border); }
+  .vd-seal{ padding:12px 0; border-bottom:1px solid var(--border-subtle); font-size:var(--fs-small); color:var(--text-200); }
   .vd-seal-head{ display:flex; gap:10px; align-items:baseline; justify-content:space-between; flex-wrap:wrap; }
   .vd-seal-reason{ margin-top:4px; color:var(--text-300); }
-  .vd-seal-verdict{ margin-top:6px; color:var(--text-100); line-height:1.45; }
+  .vd-seal-verdict{ margin-top:6px; line-height:1.5; color:var(--text-100); }
   .vd-seal-archive{ margin-top:6px; display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; }
-  .vd-seal-archive .vd-seals-note{ margin:0; }
   .vd-seal-archive-note{ overflow-wrap:anywhere; }
-  .vd-d-move-sel{ font-size:11.5px; color:var(--text-200); background:var(--bg-000); border:1px solid var(--border-control,var(--border)); border-radius:7px; padding:6px 8px; max-width:190px; }
 
-  /* The three-pane cabinet needs more width than a small screen provides.
-     Keep its existing tree, results and selected record in one vertical flow;
-     hiding horizontal overflow alone leaves search and record panes offscreen. */
-  @media (max-width:1200px){
-    .vd-wrap{ display:block; min-width:0; width:100%; max-width:100%; overflow-y:auto; }
-    .vd-top, .vd-coexist{ padding-left:16px; padding-right:16px; }
-    .vd-top > div{ min-width:0; max-width:100%; }
-    .vd-sub-x, .vd-coexist-txt{ overflow-wrap:anywhere; }
-    .vd-grid{ display:flex; flex-direction:column; min-width:0; }
-    .vd-tree, .vd-list, .vd-detail{ min-width:0; width:100%; border-right:0; }
-    .vd-tree{ max-height:240px; border-bottom:1px solid var(--border); }
-    .vd-list{ border-bottom:1px solid var(--border); }
-    .vd-rows{ flex:none; max-height:360px; }
-    .vd-detail{ overflow:visible; }
-    .vd-breadcrumb .vd-crumb{ min-width:0; max-width:100%; overflow-wrap:anywhere; text-align:left; }
-    .vd-breadcrumb .vd-search{ flex:1 1 100%; min-width:0; margin-left:0; }
-    .vd-breadcrumb .vd-search input[type="search"]{ min-width:0; }
-    .vd-breadcrumb .vd-search input[type="checkbox"]{ width:auto; flex:none; }
-    /* Preserve all row facts while the name and metadata wrap into two columns. */
-    .vd-cols{ display:none !important; }
-    .vd-row{ grid-template-columns:repeat(2,minmax(0,1fr)); }
-    .vd-row .vd-col-name{ grid-column:1 / -1; }
-    .vd-col-name .vd-row-t{ display:block; white-space:normal; overflow-wrap:anywhere; }
-    .vd-col-type, .vd-col-owner, .vd-col-mod{ white-space:normal; overflow-wrap:anywhere; }
+  /* The cross-project artifacts listing's row actions. */
+  .vd-org .art-acts{ display:flex; flex-wrap:wrap; gap:6px; }
+  .vd-org .rd-chip{ margin-right:6px; }
+
+  /* Phone: one column; the record and the structure are drawers (D6 §C.6 7). */
+  @media (max-width:640px){
+    .vd-find-q{ flex-basis:100%; }
+    .vd-facet .c2c-input{ max-width:100%; }
+    .vd-list .vd-row .vd-row-s{ white-space:normal; overflow-wrap:anywhere; }
+    .vd-upload-type{ flex-wrap:wrap; }
   }
 }
 
@@ -627,7 +651,7 @@
 .c2c-v2 .ml-toolbar{ display:flex; flex-wrap:wrap; align-items:flex-end; gap:12px; }
 .c2c-v2 .ml-field{ display:flex; flex-direction:column; gap:4px; min-width:150px; }
 .c2c-v2 .ml-field-grow{ flex:1 1 220px; }
-.c2c-v2 .ml-label{ font-size:11px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; color:var(--text-300); }
+.c2c-v2 .ml-label{ font-size:var(--fs-caption); font-weight:600; color:var(--text-300); }
 /* --border-control, not --border: this is an interactive boundary and the
    3:1 non-text floor applies to it. See app-v2.css on why --border keeps its
    divider job unchanged. */
@@ -666,7 +690,7 @@
 .c2c-v2 .ml-row{ display:grid; grid-template-columns:var(--ml-cols); gap:14px; align-items:start; }
 .c2c-v2 .ml-thead{
   padding:9px 14px; background:var(--bg-050); border-bottom:1px solid var(--border);
-  font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--text-300);
+  font-size:var(--fs-caption); font-weight:600; color:var(--text-300);
 }
 .c2c-v2 .ml-row{ padding:11px 14px; border-bottom:1px solid var(--border); font-size:12.5px; color:var(--text-100); }
 .c2c-v2 .ml-row:last-child{ border-bottom:none; }
@@ -699,17 +723,9 @@
 .c2c-v2 .ml-chip[data-tone="off"]{ color:var(--text-300); }
 
 /* ── Tier picker ─────────────────────────────────────────────────────────── */
-.c2c-v2 .ml-seg{ display:inline-flex; flex-wrap:wrap; gap:4px; }
-.c2c-v2 .ml-seg-btn{
-  display:inline-flex; align-items:center; gap:4px; padding:4px 9px;
-  border:1px solid var(--border-control); border-radius:99px;
-  background:var(--bg-000); font-size:11.5px; font-weight:500; color:var(--text-200);
-  cursor:pointer; white-space:nowrap; transition:background var(--dur) var(--ease);
-}
-.c2c-v2 .ml-seg-btn:hover{ background:var(--bg-050); }
-/* The tick is a redundant cue, not the only one: selection also changes the
-   fill and the border, so the state does not rest on colour alone. */
-.c2c-v2 .ml-seg-btn[data-on]{ background:var(--accent-strong); border-color:var(--accent-100); color:var(--accent-on-strong); font-weight:600; }
+/* The picker is the canonical segmented control (app-v2.css, D0 block). The tick
+   is a redundant cue, not the only one: the selected item also lifts onto its
+   own fill and ring, so the state does not rest on colour alone. */
 .c2c-v2 .ml-seg-tick{ display:inline-flex; }
 .c2c-v2 .ml-seg-tick svg{ width:12px; height:12px; }
 
@@ -744,7 +760,7 @@
 .c2c-v2 .ml-enf-stats{ display:flex; flex-wrap:wrap; gap:20px; }
 .c2c-v2 .ml-enf-stat{ display:flex; flex-direction:column; gap:2px; }
 .c2c-v2 .ml-enf-stat b{ font-size:18px; font-weight:600; color:var(--text-100); font-variant-numeric:tabular-nums; }
-.c2c-v2 .ml-enf-stat span{ font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:var(--text-300); }
+.c2c-v2 .ml-enf-stat span{ font-size:var(--fs-caption); color:var(--text-300); }
 .c2c-v2 .ml-enf-acts{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
 
 /* ── Master Licensing · provisioning outcome ──────────────────────────────
@@ -757,7 +773,7 @@
 .c2c-v2 .ml-provision-result{margin-top:12px;padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-050);}
 .c2c-v2 .ml-provision-line{font-size:13px;font-weight:500;color:var(--text-100);}
 .c2c-v2 .ml-provision-retained{margin-top:10px;padding-top:10px;border-top:1px solid var(--border);}
-.c2c-v2 .ml-provision-retained-h{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-300);}
+.c2c-v2 .ml-provision-retained-h{font-size:var(--fs-caption);font-weight:600;color:var(--text-300);}
 .c2c-v2 .ml-provision-retained .ml-sub{margin:4px 0 8px;}
 .c2c-v2 .ml-provision-list{margin:0;padding-left:18px;font-size:12.5px;line-height:1.7;color:var(--text-200);}
 
@@ -787,11 +803,14 @@
 .c2c-v2 .cro-pipe{display:flex;align-items:center;gap:6px;overflow-x:auto;}
 .c2c-v2 .cro-pipe-cell{flex:1 0 96px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 8px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-050);text-align:center;}
 .c2c-v2 .cro-pipe-n{font-size:18px;font-weight:600;line-height:1;color:var(--text-100);font-variant-numeric:tabular-nums;}
-.c2c-v2 .cro-pipe-n.tone-ok{color:var(--success);}
-.c2c-v2 .cro-pipe-n.tone-warn{color:var(--warning);}
+/* The fills on ok, warn, idle and ai (CRO_LIFECYCLE's tones) came from the bare `.c2c-v2 .tone-*`
+   rules in app-v2.css (deleted in D0 review fix 1); the same values, named here. */
+.c2c-v2 .cro-pipe-n.tone-ok{color:var(--success);background:var(--success-muted);}
+.c2c-v2 .cro-pipe-n.tone-warn{color:var(--warning);background:var(--warning-muted);}
 .c2c-v2 .cro-pipe-n.tone-err{color:var(--error);}
 .c2c-v2 .cro-pipe-n.tone-acc{color:var(--accent-100);}
-.c2c-v2 .cro-pipe-n.tone-idle{color:var(--text-300);}
+.c2c-v2 .cro-pipe-n.tone-idle{color:var(--text-300);background:var(--idle-muted);}
+.c2c-v2 .cro-pipe-n.tone-ai{background:var(--ai-muted);}
 .c2c-v2 .cro-pipe-l{font-size:11px;color:var(--text-300);line-height:1.25;}
 .c2c-v2 .cro-pipe-arr{flex-shrink:0;display:inline-flex;color:var(--text-400);}
 .c2c-v2 .cro-pipe-arr svg{width:14px;height:14px;}
@@ -827,7 +846,7 @@
 .c2c-v2 .cro-sow-banner.tone-warn{background:var(--warning-muted);color:var(--warning);}
 .c2c-v2 .cro-sow-banner.tone-err{background:var(--error-muted);color:var(--error);}
 .c2c-v2 .cro-sow-banner.tone-ok strong,.c2c-v2 .cro-sow-banner.tone-warn strong,.c2c-v2 .cro-sow-banner.tone-err strong{color:inherit;}
-.c2c-v2 .cro-sec-l{display:flex;align-items:baseline;gap:8px;margin-top:4px;font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-300);}
+.c2c-v2 .cro-sec-l{display:flex;align-items:baseline;gap:8px;margin-top:4px;font-size:var(--fs-caption);font-weight:600;color:var(--text-300);}
 .c2c-v2 .cro-sec-l span{font-family:var(--font-mono);font-weight:400;letter-spacing:0;text-transform:none;color:var(--text-400);}
 
 .c2c-v2 .cro-lc{display:flex;align-items:center;gap:6px;color:var(--text-200);}

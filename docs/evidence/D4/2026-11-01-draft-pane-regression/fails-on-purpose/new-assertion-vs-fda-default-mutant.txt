@@ -1,0 +1,46 @@
+
+ RUN  v4.1.7 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/tree-mutant
+
+ ↓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > saved references reopen in the one actual editor > checks history without selecting it, freshly reuses it and previews before building (AnA=false)
+ ↓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > saved references reopen in the one actual editor > checks history without selecting it, freshly reuses it and previews before building (AnA=true)
+ ↓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > withholds saved source history when the current detail read admits only sections
+ ↓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > withholds saved source history when the current sections read admits only sections
+ ↓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > withdraws cached saved source history after the current document read becomes partial
+ ↓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > distinguishes an admitted empty history from a failed read without selecting or changing text
+ ↓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > does not publish or adopt malformed manifest
+ ↓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > does not publish or adopt foreign scoped success
+ ↓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > historical checks fail closed in the actual editor > refuses a newer saved event during reuse instead of silently selecting it
+ ↓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > reuse respects the current editor and selection owner > lets dirty authors inspect but blocks reuse while text or a ceremony owns the editor
+ ↓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > reuse respects the current editor and selection owner > gives a new catalogue selection precedence over a delayed historical check
+ ↓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > reuse respects the current editor and selection owner > keeps an unresolved structural write held after checking historical references
+ ↓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > late saved references cannot revive a prior scope > suppresses a doubled check across project visit ABA
+ ↓ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > late saved references cannot revive a prior scope > suppresses a doubled check across account session ABA
+ × client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > manual draft review retains its buffer during a saved-source reuse > blocks late reuse after the draft pane opens, then permits a fresh explicit check after closing it 3848ms
+   → expected 'FDA' to be '' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx > manual draft review retains its buffer during a saved-source reuse > blocks late reuse after the draft pane opens, then permits a fresh explicit check after closing it
+AssertionError: expected 'FDA' to be '' // Object.is equality
+
+- Expected
++ Received
+
++ FDA
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx:289:72
+    287|        explicit choice (8013c9457; docs/evidence/D4/2026-10-30-ind-dev…
+    288|     const pane = within(screen.getByTestId('ai-draft-panel'));
+    289|     expect((pane.getByLabelText('Region') as HTMLSelectElement).value)…
+       |                                                                        ^
+    290|     expect(pane.getByTestId('ai-draft-region-note').textContent).toCon…
+    291|     fireEvent.change(pane.getByLabelText('Region'), { target: { value:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 14 skipped (15)
+   Start at  23:10:02
+   Duration  16.30s (transform 9.17s, setup 383ms, import 11.03s, tests 3.87s, environment 757ms)
+

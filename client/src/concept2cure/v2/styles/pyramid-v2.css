@@ -11,7 +11,7 @@
 .c2c-v2 .py-chip[data-tone="err"]{background:var(--error-muted);color:var(--error);}
 .c2c-v2 .py-chip[data-tone="ai"]{background:var(--ai-muted);color:var(--ai);}
 .c2c-v2 .py-chip[data-tone="neutral"]{background:var(--idle-muted);color:var(--text-300);}
-.c2c-v2 .py-crit{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--accent-200);border:1px solid var(--accent-muted);background:var(--accent-000);border-radius:var(--radius-sm);padding:0 5px;white-space:nowrap;}
+.c2c-v2 .py-crit{font-size:var(--fs-caption);font-weight:600;color:var(--text-300);border:1px solid var(--accent-muted);background:var(--accent-000);border-radius:var(--radius-sm);padding:0 5px;white-space:nowrap;}
 
 /* type picker */
 /* screen root — same scroll column as the other planning surfaces (.reg) */
@@ -19,14 +19,14 @@
 .c2c-v2 .py-picker{max-width:880px;}
 .c2c-v2 .py-picker-lead{font-size:12.5px;color:var(--text-300);margin:0 0 18px;max-width:560px;line-height:1.6;}
 .c2c-v2 .py-picker-grp{margin-bottom:20px;}
-.c2c-v2 .py-picker-grp-l{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-400);margin-bottom:8px;}
+.c2c-v2 .py-picker-grp-l{font-size:var(--fs-caption);font-weight:600;color:var(--text-400);margin-bottom:8px;}
 .c2c-v2 .py-picker-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
 .c2c-v2 .py-type{display:flex;flex-direction:column;gap:4px;text-align:left;background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);padding:13px 15px;transition:border-color var(--dur) var(--ease),transform var(--dur) var(--ease);}
 .c2c-v2 .py-type:hover{border-color:var(--text-400);transform:translateY(-1px);}
 .c2c-v2 .py-type[data-active]{border-color:var(--accent-100);}
 .c2c-v2 .py-type-h{display:flex;align-items:center;justify-content:space-between;gap:8px;}
 .c2c-v2 .py-type-id{font-family:var(--font-mono);font-size:11px;font-weight:600;color:var(--accent-200);background:var(--accent-000);border-radius:5px;padding:1px 7px;}
-.c2c-v2 .py-type-live{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--success);}
+.c2c-v2 .py-type-live{font-size:var(--fs-caption);font-weight:600;color:var(--success);}
 .c2c-v2 .py-type-l{font-size:12.5px;font-weight:600;color:var(--text-100);}
 .c2c-v2 .py-type-m{font-size:10.5px;color:var(--text-400);}
 
@@ -66,7 +66,7 @@
 .c2c-v2 .py-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;}
 .c2c-v2 .py-phase{display:flex;flex-direction:column;gap:5px;text-align:left;background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);padding:11px 12px;transition:border-color var(--dur) var(--ease),transform var(--dur) var(--ease);}
 .c2c-v2 .py-phase:hover{border-color:var(--text-400);transform:translateY(-1px);}
-.c2c-v2 .py-phase-n{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--accent-200);}
+.c2c-v2 .py-phase-n{font-size:var(--fs-caption);font-weight:600;color:var(--text-300);}
 .c2c-v2 .py-phase-name{font-size:11.5px;font-weight:600;color:var(--text-100);line-height:1.35;min-height:31px;}
 .c2c-v2 .py-phase-bar{height:5px;border-radius:var(--radius-sm);background:var(--bg-100);overflow:hidden;}
 .c2c-v2 .py-phase-bar span{display:block;height:100%;background:var(--accent-100);border-radius:var(--radius-sm);}
@@ -88,7 +88,7 @@
 .c2c-v2 .py-wbs{margin-top:16px;}
 .c2c-v2 .py-wbs-phase{margin-bottom:16px;}
 .c2c-v2 .py-wbs-phase-h{display:flex;align-items:baseline;gap:10px;position:sticky;top:0;background:var(--bg-000);padding:7px 2px;z-index:2;border-bottom:1px solid var(--border);}
-.c2c-v2 .py-wbs-phase-h .n{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--accent-200);}
+.c2c-v2 .py-wbs-phase-h .n{font-size:var(--fs-caption);font-weight:600;color:var(--text-300);}
 .c2c-v2 .py-wbs-phase-h .name{font-size:13.5px;font-weight:600;color:var(--text-100);}
 .c2c-v2 .py-wbs-phase-h .m{font-size:10.5px;color:var(--text-400);margin-left:auto;}
 .c2c-v2 .py-wbs-rows{display:flex;flex-direction:column;}
@@ -113,17 +113,17 @@
 .c2c-v2 .py-sheet-scrim{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);display:flex;justify-content:flex-end;}
 .c2c-v2 .py-sheet{width:460px;max-width:92vw;height:100%;background:var(--bg-000);border-left:1px solid var(--border-strong);box-shadow:var(--v2-shadow-lg);display:flex;flex-direction:column;}
 .c2c-v2 .py-sheet-h{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:16px 18px 12px;border-bottom:1px solid var(--border);}
-.c2c-v2 .py-sheet-crumb{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--accent-200);margin-bottom:4px;}
+.c2c-v2 .py-sheet-crumb{font-size:var(--fs-caption);font-weight:600;color:var(--text-300);margin-bottom:4px;}
 .c2c-v2 .py-sheet-h h3{margin:0;font-size:15px;font-weight:600;color:var(--text-100);line-height:1.4;}
 .c2c-v2 .py-sheet-x{color:var(--text-400);padding:4px;}
 .c2c-v2 .py-sheet-x svg{width:15px;height:15px;}
 .c2c-v2 .py-sheet-body{flex:1;overflow-y:auto;padding:14px 18px 24px;}
 .c2c-v2 .py-sheet-status{display:flex;align-items:center;gap:9px;margin-bottom:16px;flex-wrap:wrap;}
-.c2c-v2 .py-sheet-status label{font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-400);}
+.c2c-v2 .py-sheet-status label{font-size:var(--fs-caption);font-weight:600;color:var(--text-400);}
 .c2c-v2 .py-sheet-status select{border:1px solid var(--border-control);border-radius:var(--radius-md);font-size:12px;padding:5px 8px;background:var(--bg-000);cursor:pointer;}
 .c2c-v2 .py-sheet-meta{font-size:11px;color:var(--text-400);}
 .c2c-v2 .py-sheet-sec{margin-bottom:16px;}
-.c2c-v2 .py-sheet-sec-l{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-400);margin-bottom:7px;}
+.c2c-v2 .py-sheet-sec-l{font-size:var(--fs-caption);font-weight:600;color:var(--text-400);margin-bottom:7px;}
 .c2c-v2 .py-sheet-risk{border:1px solid var(--border);border-radius:var(--radius-md);padding:10px 12px;}
 .c2c-v2 .py-sheet-risk[data-sev="high"],.c2c-v2 .py-sheet-risk[data-sev="critical"]{border-left:3px solid var(--error);}
 .c2c-v2 .py-sheet-risk[data-sev="medium"]{border-left:3px solid var(--warning);}
@@ -157,7 +157,7 @@
 .c2c-v2 .py-res-row .bar span{display:block;height:100%;border-radius:5px;background:var(--ai);}
 .c2c-v2 .py-res-row[data-over] .bar span{background:var(--error);}
 .c2c-v2 .py-res-row .v{text-align:right;}
-.c2c-v2 .py-over{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--error);}
+.c2c-v2 .py-over{display:inline-flex;align-items:center;gap:4px;font-size:var(--fs-caption);font-weight:600;color:var(--error);}
 .c2c-v2 .py-over.ok{color:var(--text-500);font-weight:600;}
 .c2c-v2 .py-over svg{width:11px;height:11px;}
 .c2c-v2 .py-ana-note{font-size:11px;line-height:1.55;color:var(--text-400);padding:10px 15px;border-top:1px solid var(--bg-100);}
@@ -192,7 +192,7 @@
 .c2c-v2 .py-glob-fmt{font-size:10px;color:var(--text-400);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1px 6px;}
 .c2c-v2 .py-glob-agency{font-size:13.5px;font-weight:600;color:var(--text-100);}
 .c2c-v2 .py-glob-m{font-size:10.5px;color:var(--text-400);margin:3px 0 10px;}
-.c2c-v2 .py-glob-l{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);margin-bottom:5px;}
+.c2c-v2 .py-glob-l{font-size:var(--fs-caption);font-weight:600;color:var(--text-400);margin-bottom:5px;}
 .c2c-v2 .py-glob ul{margin:0;padding-left:17px;font-size:11.5px;line-height:1.6;color:var(--text-300);}
 
 /* ring */
@@ -208,8 +208,108 @@
 @media(max-width:800px){
   .c2c-v2 .py-strip{grid-template-columns:repeat(2,1fr);}
   .c2c-v2 .py-glob-grid{grid-template-columns:1fr;}
+  /* A task row at phone width: the task's name on its own line, then its badge, role, hours and risk. The fixed
+     110px role column left the name a word per line under the role (program plan walk, 2026-11-04, 390 px). */
+  .c2c-v2 .py-row-main{flex-wrap:wrap;row-gap:2px;}
+  .c2c-v2 .py-row-t{flex:1 1 100%;}
+  .c2c-v2 .py-row-main .py-crit,.c2c-v2 .py-row-role,.c2c-v2 .py-row-h,.c2c-v2 .py-row-risk{order:1;}
+  .c2c-v2 .py-row-role{width:auto;}
 }
 
 /* A refused task-status write. Announced where the board is, because the revert
    would otherwise read as the dropdown snapping back on its own. */
 .py-status-err{margin:0 0 10px;padding:8px 11px;border-radius:var(--radius-md,8px);font-size:12px;line-height:1.5;color:var(--error,#b42318);background:color-mix(in srgb, var(--error,#b42318) 8%, transparent);border:1px solid color-mix(in srgb, var(--error,#b42318) 30%, transparent);}
+
+/* S11 step 3: a project's row carries its owner and due date (PyramidProject.tsx RowPlan). Colour only where the
+   task is behind, and always with the words. */
+.c2c-v2 .py-row-plan{display:flex;flex-direction:column;align-items:flex-end;gap:1px;width:128px;flex-shrink:0;font-size:10.5px;color:var(--text-400);text-align:right;}
+.c2c-v2 .py-row-owner{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;color:var(--text-300);}
+.c2c-v2 .py-row-due{white-space:nowrap;font-variant-numeric:tabular-nums;}
+.c2c-v2 .py-row-plan[data-standing="overdue"] .py-row-due{color:var(--error);}
+.c2c-v2 .py-row-plan[data-standing="late-to-start"] .py-row-due{color:var(--warning);}
+.c2c-v2 .py-sheet-sched{font-size:12px;color:var(--text-200);margin:0 0 6px;}
+@media(max-width:800px){
+  .c2c-v2 .py-row-plan{order:1;flex-direction:row;gap:8px;width:auto;align-items:baseline;}
+}
+
+/* S11 step 4: the Plan step's "Due for you" (PlanAssign.tsx DueForYou) and the content plan's join beside a document
+   (PyramidProject.tsx ProducedBy). Quiet lines; colour only where a task is past due, always with the words. */
+.c2c-v2 .pj-due-list{list-style:none;margin:0;padding:0;}
+.c2c-v2 .pj-due-row{display:flex;align-items:baseline;gap:12px;padding:8px 0;border-bottom:1px solid var(--bg-100);font-size:13px;}
+.c2c-v2 .pj-due-t{flex:1;min-width:0;color:var(--text-100);}
+.c2c-v2 .pj-due-k{font-size:11px;color:var(--text-400);white-space:nowrap;}
+.c2c-v2 .pj-due-d{font-size:12px;color:var(--text-300);white-space:nowrap;font-variant-numeric:tabular-nums;}
+.c2c-v2 .pj-due-row[data-late] .pj-due-d{color:var(--error);}
+.c2c-v2 .pj-plan-producedby{display:block;margin-top:2px;font-size:12px;font-weight:400;color:var(--text-400);}
+@media(max-width:600px){
+  .c2c-v2 .pj-due-row{flex-wrap:wrap;row-gap:2px;}
+  .c2c-v2 .pj-due-t{flex:1 1 100%;}
+}
+
+/* THE_PROGRAM §8 item 3: workstreams, one quiet row each (PyramidProject.tsx Workstreams). Colour only on Blocked and
+   At risk, always beside the word. */
+.c2c-v2 .py-ws{margin-top:16px;}
+.c2c-v2 .py-ws-h{font-size:14px;font-weight:600;color:var(--text-100);margin:0 0 4px;}
+.c2c-v2 .py-ws-row{border-bottom:1px solid var(--bg-100);}
+.c2c-v2 .py-ws-row>summary{display:flex;align-items:baseline;gap:12px;padding:9px 0;cursor:pointer;font-size:13px;color:var(--text-300);}
+.c2c-v2 .py-ws-name{flex:1;min-width:0;color:var(--text-100);font-weight:500;}
+.c2c-v2 .py-ws-lead{width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.c2c-v2 .py-ws-n{width:130px;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.c2c-v2 .py-ws-date{width:150px;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.c2c-v2 .py-ws-status{width:84px;text-align:right;white-space:nowrap;color:var(--text-200);}
+.c2c-v2 .py-ws-row[data-status="blocked"] .py-ws-status{color:var(--error);}
+.c2c-v2 .py-ws-row[data-status="at-risk"] .py-ws-status{color:var(--warning);}
+.c2c-v2 .py-ws-row .py-wbs{margin:0 0 12px;}
+@media(max-width:800px){
+  .c2c-v2 .py-ws-row>summary{flex-wrap:wrap;row-gap:2px;}
+  .c2c-v2 .py-ws-name{flex:1 1 calc(100% - 100px);}
+  .c2c-v2 .py-ws-lead,.c2c-v2 .py-ws-n,.c2c-v2 .py-ws-date{width:auto;order:1;font-size:12px;}
+}
+
+/* THE_PROGRAM §8 item 4: one calm line (PyramidProject.tsx ScheduleLine). The critical path is the darker line; the
+   agency's clock after the submission is dashed; today is a thin mark. */
+.c2c-v2 .py-line{margin:16px 0 8px;}
+.c2c-v2 .py-line-track{position:relative;height:28px;margin:0 6px;}
+.c2c-v2 .py-line-base,.c2c-v2 .py-line-crit,.c2c-v2 .py-line-clock{position:absolute;top:13px;height:2px;border-radius:1px;}
+.c2c-v2 .py-line-base{background:var(--border);}
+.c2c-v2 .py-line-crit{background:var(--text-300);height:3px;top:12.5px;}
+/* Dashes drawn, not a dashed border: a 2px dashed border-top with a radius was painted solid in Chromium, so the
+   clock read as more of the work (found walking the global schedule, 2026-11-09). --text-400 so the dashes show on
+   both themes. */
+.c2c-v2 .py-line-clock{background:repeating-linear-gradient(90deg,var(--text-400) 0 5px,transparent 5px 9px);border-radius:0;}
+.c2c-v2 .py-line-dot{position:absolute;top:9px;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:var(--bg-000);border:2px solid var(--text-300);cursor:default;}
+.c2c-v2 .py-line-dot[data-kind="submission"]{width:12px;height:12px;margin-left:-6px;top:8px;background:var(--text-100);border-color:var(--text-100);}
+.c2c-v2 .py-line-dot[data-kind="clock"]{width:8px;height:8px;margin-left:-4px;top:10px;border-color:var(--border-strong);}
+.c2c-v2 .py-line-dot[data-kind="decision"]{border-color:var(--text-100);}
+.c2c-v2 .py-line-dot:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;}
+.c2c-v2 .py-line-today{position:absolute;top:2px;bottom:2px;width:0;border-left:1px solid var(--text-400);}
+.c2c-v2 .py-line-today>span{position:absolute;top:-14px;left:-14px;font-size:10.5px;color:var(--text-400);}
+.c2c-v2 .py-line figcaption{margin-top:6px;}
+
+/* THE_PROGRAM §5, §9 step 6: a Projects card's one quiet line about its plan (PyramidProject.tsx PortfolioLine).
+   Colour only when it is behind or blocked, beside the words. */
+.c2c-v2 .pj-card-plan{margin-top:6px;font-size:var(--fs-caption);color:var(--text-300);font-variant-numeric:tabular-nums;}
+.c2c-v2 .pj-card-plan[data-tone="warn"],.c2c-v2 .pj-list-sub[data-tone="warn"]{color:var(--warning);}
+.c2c-v2 .pj-card-plan[data-tone="err"],.c2c-v2 .pj-list-sub[data-tone="err"]{color:var(--error);}
+.c2c-v2 .pj-cards>.pf-sel-m{grid-column:1/-1;}
+
+/* THE_PROGRAM §5, §9 step 6: the global schedule in Reporting & analytics (PyramidProject.tsx GlobalSchedule). One
+   row per project on one shared axis: its name, filing and agency, and where its plan stands, beside the Plan step's
+   line. At a phone's width the line goes under its words. */
+.c2c-v2 .py-gs{margin:12px 0 0;}
+.c2c-v2 .py-gs-rows{list-style:none;margin:0;padding:0;border-bottom:1px solid var(--border);}
+.c2c-v2 .py-gs-row{display:grid;grid-template-columns:minmax(150px,220px) minmax(0,1fr);gap:4px 16px;align-items:center;padding:10px 0;}
+.c2c-v2 .py-gs-row+.py-gs-row{border-top:1px solid var(--border);}
+.c2c-v2 .py-gs-head{display:flex;flex-direction:column;gap:2px;min-width:0;}
+.c2c-v2 .py-gs-name{font-weight:500;color:var(--text-100);overflow-wrap:anywhere;}
+.c2c-v2 .py-gs-open{align-self:flex-start;padding:0;border:0;background:none;font:inherit;font-weight:500;text-align:left;color:var(--text-100);cursor:pointer;}
+.c2c-v2 .py-gs-open:hover{text-decoration:underline;text-underline-offset:2px;}
+.c2c-v2 .py-gs-open:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;border-radius:2px;}
+.c2c-v2 .py-gs-sub{font-size:var(--fs-caption);color:var(--text-300);}
+.c2c-v2 .py-gs-plan{font-size:var(--fs-caption);color:var(--text-300);font-variant-numeric:tabular-nums;}
+.c2c-v2 .py-gs-plan[data-tone="warn"]{color:var(--warning);}
+.c2c-v2 .py-gs-plan[data-tone="err"]{color:var(--error);}
+.c2c-v2 .py-gs figcaption,.c2c-v2 .py-gs>.pj-desc{margin-top:10px;}
+@media(max-width:760px){
+  .c2c-v2 .py-gs-row{grid-template-columns:minmax(0,1fr);}
+}

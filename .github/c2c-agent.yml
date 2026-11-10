@@ -12,8 +12,9 @@ version: '2.0'
 
 project:
   name: 'concept2cure'
-  id: 'ep-frosty-salad-afl93crk'
-  production_branch: 'ep-wild-forest-ahbojhu4-pooler'
+  id: 'concept2cure-v2'
+  # Never hardcode a Neon project ID or production branch in an agent config.
+  # Preview jobs require a separately approved, non-production parent.
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Agent Capabilities
@@ -47,15 +48,23 @@ agent:
 # Environment Secrets
 # ─────────────────────────────────────────────────────────────────────────────
 secrets:
-  - name: DATABASE_NEON_NEW_SECRET
-    source: github_secrets
+  - name: APP_DATABASE_URL
+    source: github_codespaces_secrets
     required: true
     validation: postgresql_connection_string
 
-  - name: OPENAI_API_KEY
-    source: github_secrets
+  - name: JWT_SECRET
+    source: github_codespaces_secrets
     required: true
-    zero_retention: true
+
+  # A provider key is not a high-risk authoring approval or a PQ receipt.
+  - name: ANTHROPIC_API_KEY
+    source: github_codespaces_secrets
+    required: false
+
+  - name: OPENAI_API_KEY
+    source: github_codespaces_secrets
+    required: false
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Database Configuration (Neon)
@@ -63,30 +72,31 @@ secrets:
 database:
   type: 'postgresql'
   provider: 'neon'
-  connection_string: '${DATABASE_NEON_NEW_SECRET}'
-  ssl_mode: 'require'
-  channel_binding: 'require'
+  connection_string: '${APP_DATABASE_URL}'
+  ssl_mode: 'verify-full'
   pooler_mode: true
 
+  # The request-serving Codespace cannot perform DDL or tenant/schema repair.
+  # Provisioning requires a separate, explicitly authorized maintenance job.
   migrations:
-    auto_run: true
+    auto_run: false
     validate_before_apply: true
-    rollback_on_failure: true
 
   branching:
-    strategy: 'git-branch-sync'
+    strategy: 'operator-approved'
     preview_branches:
-      enabled: true
-      naming_pattern: 'preview-{branch-name}'
-      auto_suspend: '1h'
+      enabled: false
+      # Enable only via an explicitly configured non-production Neon parent.
 
 # ─────────────────────────────────────────────────────────────────────────────
 # AI Training & Validation Pipeline
 # ─────────────────────────────────────────────────────────────────────────────
 ai:
-  data_retention_policy: 'zero' # ZDR enforced across all providers
-  provider: 'openai'
-  model: 'gpt-4o'
+  # Provider placement and contractual retention controls govern every call;
+  # API-key presence is not evidence of zero-data-retention eligibility.
+  data_retention_policy: 'provider-placement-governed'
+  provider: 'governed-gateway'
+  model_registry_source: 'server/services/ai-governance/approved-models.ts'
 
   # Quality gates — every AI output must pass these before reaching a user
   quality_gates:
@@ -151,37 +161,17 @@ ai:
     min_pass_rate: 0.95
     report_to: 'pr-comment'
 
-  # Model registry — tracks which models power each C2C capability
+  # No independently maintained or auto-approved GPT drafting list.
+  # The gateway registry, actual provider access, and recorded PQ determine
+  # what may be used for regulated authoring.
   model_registry:
-    - capability: 'regulatory-drafting'
-      model: 'gpt-4o'
-      context_window: 128000
-      temperature: 0.3
-      max_tokens: 8192
-      notes: 'Primary drafting model for all eCTD sections'
+    source_of_truth: 'server/services/ai-governance/approved-models.ts'
+    high_risk_rule: 'approvedForHighRisk'
+    production_drafting_rule: 'pq.status=passed'
+    openai_high_risk: 'not currently approved'
 
-    - capability: 'extraction-classification'
-      model: 'gpt-4o'
-      context_window: 128000
-      temperature: 0.1
-      max_tokens: 4096
-      notes: 'Document classification, entity extraction, keyword tagging'
-
-    - capability: 'claim-verification'
-      model: 'gpt-4o'
-      context_window: 128000
-      temperature: 0.0
-      max_tokens: 2048
-      notes: 'NLI-based claim vs evidence verification'
-
-    - capability: 'figure-generation'
-      model: 'gpt-4o'
-      context_window: 128000
-      temperature: 0.2
-      max_tokens: 4096
-      notes: 'Chart spec generation from data (SVG/Plotly output)'
-
-  # Data isolation — no client data leaves the platform boundary
+  # Data placement is tenant- and contract-governed. External model calls may
+  # transmit authorized data; never promise that no data leaves the platform.
   data_isolation:
     training_on_client_data: false
     prompt_logging: 'audit-trail-only' # logged to audit_logs table, not OpenAI

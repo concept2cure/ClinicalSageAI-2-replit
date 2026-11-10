@@ -394,3 +394,25 @@ describe("toolModelCalls 'refuse': a tool cannot call a model", () => {
     expect(gw.refused).toHaveLength(0);
   });
 });
+
+describe("every round's dispatch carries the loop's tenant (ci:ai-tenant-binding)", () => {
+  it('a request its caller left unbound is sent with the tool context\'s organization, on every round', async () => {
+    registerToolHandler('__test_tenant_round', async () => 'ok');
+    gw.responses = [reply([{ id: 't1', name: '__test_tenant_round' }], 'working'), final()];
+    await executeAgenticLoop(baseRequest() as any, { toolContext: { organizationId: 42, userId: 7 } as any });
+    expect(gw.calls.map(call => call.organizationId)).toEqual([42, 42]);
+  });
+
+  it("a caller's own binding is kept when the tool context agrees", async () => {
+    gw.responses = [final()];
+    await executeAgenticLoop(baseRequest({ organizationId: 42 }) as any, { toolContext: { organizationId: 42 } as any });
+    expect(gw.calls.map(call => call.organizationId)).toEqual([42]);
+  });
+
+  it('two tenants for one loop are refused before anything is sent', async () => {
+    gw.responses = [final('never')];
+    await expect(executeAgenticLoop(baseRequest({ organizationId: 41 }) as any, { toolContext: { organizationId: 42 } as any }))
+      .rejects.toThrow('TENANT_SCOPE_MISMATCH');
+    expect(gw.calls).toEqual([]);
+  });
+});

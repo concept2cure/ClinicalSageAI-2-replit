@@ -1,0 +1,18 @@
+T13 on real PostgreSQL (16.15), a throwaway database of its own (p86_retire_t13), the suite's own schema created and dropped. 2026-11-09T08:15:55Z, at 3a4dc407d plus the new test file.
+Command: TEST_DATABASE_URL=postgresql://postgres@127.0.0.1:5432/p86_retire_t13 npx vitest run server/services/submission-service/__tests__/sequence-retirement-lock.pg.test.ts
+-- run 1
+ ✓ server/services/submission-service/__tests__/sequence-retirement-lock.pg.test.ts > P-86: a retirement on two real PostgreSQL connections (T13) > a creation of 0001 holding the submission first: the retirement of 0000 waits for it, then refuses, naming 0001 91ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement-lock.pg.test.ts > P-86: a retirement on two real PostgreSQL connections (T13) > a retirement that waits 500 ms for its sequence row seals the instant it got the lock; a creation of the freed number waits for it, then takes 0000 558ms
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+-- run 2
+ ✓ server/services/submission-service/__tests__/sequence-retirement-lock.pg.test.ts > P-86: a retirement on two real PostgreSQL connections (T13) > a creation of 0001 holding the submission first: the retirement of 0000 waits for it, then refuses, naming 0001 57ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement-lock.pg.test.ts > P-86: a retirement on two real PostgreSQL connections (T13) > a retirement that waits 500 ms for its sequence row seals the instant it got the lock; a creation of the freed number waits for it, then takes 0000 581ms
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+-- run 3
+ ✓ server/services/submission-service/__tests__/sequence-retirement-lock.pg.test.ts > P-86: a retirement on two real PostgreSQL connections (T13) > a creation of 0001 holding the submission first: the retirement of 0000 waits for it, then refuses, naming 0001 79ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement-lock.pg.test.ts > P-86: a retirement on two real PostgreSQL connections (T13) > a retirement that waits 500 ms for its sequence row seals the instant it got the lock; a creation of the freed number waits for it, then takes 0000 553ms
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+Schemas left behind: 0

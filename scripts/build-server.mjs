@@ -2,12 +2,15 @@
  * build-server.mjs — Server production build via esbuild
  *
  * Bundles server/index.ts into dist/index.js (ESM) with CJS compatibility, and
- * the audit-chain verifier into dist/ops/verify-audit-chain.mjs
- * (productionBuilds, below).
+ * the audit-chain verifier and canonical qualification checker under dist/ops/
+ * (productionBuilds, below). Only controlled qualification assets are staged
+ * under dist/runtime-assets; source directories and run traces are not copied.
  */
 import { build } from 'esbuild';
 import { execSync } from 'child_process';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
+import { createHash } from 'node:crypto';
+import { mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -96,13 +99,51 @@ export function productionBuilds(outDir = path.join(root, 'dist')) {
         outfile: path.join(outDir, 'ops/verify-audit-chain.mjs'),
       },
     },
+    {
+      label: 'Qualification verifier',
+      options: {
+        ...SERVER_BUILD_OPTIONS,
+        entryPoints: [path.join(root, 'scripts/ops/verify-pq-claims.ts')],
+        outfile: path.join(outDir, 'ops/verify-pq-claims.mjs'),
+      },
+    },
   ];
+}
+
+/** Stage validated bytes in a fresh generated directory, then publish together. */
+export function stageQualificationRuntimeAssets(outDir, assets) {
+  mkdirSync(outDir, { recursive: true });
+  const staging = mkdtempSync(path.join(outDir, '.qualification-assets-'));
+  try {
+    for (const asset of assets) {
+      if (!asset.reference || path.isAbsolute(asset.reference) || asset.reference.includes('\\') ||
+          path.posix.normalize(asset.reference) !== asset.reference || asset.reference.startsWith('../') ||
+          !Buffer.isBuffer(asset.bytes) || createHash('sha256').update(asset.bytes).digest('hex') !== asset.sha256) {
+        throw new Error('Qualification asset reference or bytes failed integrity verification');
+      }
+      const target = path.resolve(staging, asset.reference);
+      if (!target.startsWith(`${path.resolve(staging)}${path.sep}`)) throw new Error('Qualification asset leaves generated output');
+      mkdirSync(path.dirname(target), { recursive: true });
+      writeFileSync(target, asset.bytes, { flag: 'wx' });
+      if (createHash('sha256').update(readFileSync(target)).digest('hex') !== asset.sha256) throw new Error('Copied qualification asset failed integrity verification');
+    }
+    // This is generated build output, not a source/evidence directory. Clearing
+    // the previous payload also prevents an old qualified record surviving a
+    // registry revocation or a return to pending.
+    const target = path.join(outDir, 'runtime-assets');
+    rmSync(target, { recursive: true, force: true });
+    renameSync(staging, target);
+  } catch (error) {
+    rmSync(staging, { recursive: true, force: true });
+    throw error;
+  }
 }
 
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === __filename;
 
 if (isMain) {
-  for (const { label, options } of productionBuilds()) {
+  const builds = productionBuilds();
+  for (const { label, options } of builds) {
     try {
       await build(options);
       console.log(`✅ ${label} build complete → ${path.relative(root, options.outfile)}`);
@@ -110,5 +151,15 @@ if (isMain) {
       console.error('❌ %s build failed: %s', label, err.message);
       process.exit(1);
     }
+  }
+  try {
+    const verifier = builds.find(entry => entry.label === 'Qualification verifier');
+    const { collectQualificationRuntimeAssets } = await import(pathToFileURL(verifier.options.outfile).href);
+    const assets = collectQualificationRuntimeAssets();
+    stageQualificationRuntimeAssets(path.join(root, 'dist'), assets);
+    console.log(`Qualification runtime assets packaged: ${assets.length} controlled files.`);
+  } catch (error) {
+    console.error('Qualification runtime assets could not be verified and packaged:', error.message);
+    process.exit(1);
   }
 }

@@ -1,0 +1,169 @@
+# mutant stale-lock-entry: shared/types/decision-architecture.ts
+# - "    action: 'lock-artifact',\n    authority: {\n      level: 'forbidden',\n      requiresHumanConfirmation: true,\n      requiresReviewerApproval: true,\n      requiresEscalation: false,\n      blockedReason: DECIDED_BY_THE_SIGNED_ACT,\n"
+# + "    action: 'lock-artifact',\n    authority: {\n      level: 'requires-reviewer-approval',\n      requiresHumanConfirmation: true,\n      requiresReviewerApproval: true,\n      requiresEscalation: false,\n      allowedActorRoles: ['approver', 'ra_lead', 'qa_lead', 'submission_lead'],\n"
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction Detection > confidence level mapping > maps score >= 0.85 to strong 3ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction Detection > confidence level mapping > maps score 0.65-0.84 to moderate 1ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction Detection > confidence level mapping > maps score 0.4-0.64 to provisional 1ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction Detection > confidence level mapping > maps score < 0.4 to uncertain 1ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction Detection > contradiction type taxonomy > all detection methods are documented 1ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction Detection > contradiction type taxonomy > extended contradiction types cover all pass 8 requirements 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction Typing and Severity > assumption drift severity depends on confidence level 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction Typing and Severity > approved-vs-working drift severity scales with divergence ratio 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction Typing and Severity > status conflict severity is higher for approved artifacts 1ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction Typing and Severity > body-specific gap severity scales with missing requirement count 1ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Regulator Overlay Logic > overlay consequence captures original and overridden values 1ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Regulator Overlay Logic > overlay can escalate from non-blocking to blocking 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Regulator Overlay Logic > different regulators can produce different severity for same contradiction type 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Consequence Paths > consequence path has required structure 1ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Consequence Paths > escalation consequence requires escalation authority 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Consequence Paths > critical severity always offers correction draft path 1ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction → Decision Linkage > contradiction decision link has required fields 1ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction → Decision Linkage > contradiction-resolution-decision kind is valid 1ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction → Decision Linkage > decision receipt captures contradiction consequence execution 1ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction → Preflight > preflight context structure is complete 1ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction → Preflight > preflight contradiction summary maps to UI context 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Failure Behavior > missing comparison objects produce no false findings 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Failure Behavior > unknown body context defaults to no overlay 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Failure Behavior > low confidence does not escalate to blocking 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Failure Behavior > authority requirement cannot be bypassed for forbidden actions 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Failure Behavior > unknown governed action defaults to requires-escalation 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Failure Behavior > invalid decision status transitions are rejected 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Failure Behavior > valid decision status transitions are allowed 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Failure Behavior > receipt persistence failure does not crash workflow 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Failure Behavior > user rejection of recommended action creates receipt with rejectionReason 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Authority Boundary Map > all governed action types are mapped 1ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Authority Boundary Map > read-only actions are autonomous 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Authority Boundary Map > promotion requires human confirmation 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Authority Boundary Map > approve-artifact admits no role through this map 1ms
+ × server/services/__tests__/contradiction-engine.test.ts > Authority Boundary Map > lock-artifact admits no role through this map 12ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Authority Boundary Map > an action the map does not list is refused for every role 1ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Authority Boundary Map > promote-to-review for undefined: authorized true, as before 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Authority Boundary Map > promote-to-review for author: authorized true, as before 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Authority Boundary Map > judge-dossier-ready for submission_lead: authorized true, as before 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Authority Boundary Map > judge-dossier-ready for ra_lead: authorized false, as before 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Authority Boundary Map > judge-dossier-ready for undefined: authorized false, as before 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Authority Boundary Map > judge-module-ready for ra_lead: authorized true, as before 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Authority Boundary Map > explain-preflight-results for undefined: authorized true, as before 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Authority Boundary Map > prepare-correction-draft for viewer: authorized true, as before 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Authority Boundary Map > prepare-harmonization-suggestion for undefined: authorized true, as before 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Authority Boundary Map > create-contradiction-consequence for author: authorized true, as before 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Authority Boundary Map > execute-multi-object-correction for admin: authorized false, as before 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Authority Boundary Map > contradiction consequence requires confirmation 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Contradiction Inline Detail > inline detail provides everything needed for UI display 1ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Sample Contradiction Payload > produces a complete sample assumption-drift contradiction finding 0ms
+ ✓ server/services/__tests__/contradiction-engine.test.ts > Sample Contradiction Payload > produces a complete sample cross-artifact contradiction with overlay 0ms
+ ✓ tests/resolution/promotion-lifecycle.test.ts > Full Promotion Lifecycle > defines 4 promotion stages from draft to submission_ready 3ms
+ ✓ tests/resolution/promotion-lifecycle.test.ts > Full Promotion Lifecycle > each stage has a corresponding governed action in AUTHORITY_BOUNDARY_MAP 1ms
+ × tests/resolution/promotion-lifecycle.test.ts > Full Promotion Lifecycle > authority requirements escalate through the lifecycle 8ms
+ ✓ tests/resolution/promotion-lifecycle.test.ts > Approve Artifact (review → approved) > is not decided by this map 1ms
+ ✓ tests/resolution/promotion-lifecycle.test.ts > Approve Artifact (review → approved) > reviewer role is not authorized through this map 0ms
+ ✓ tests/resolution/promotion-lifecycle.test.ts > Approve Artifact (review → approved) > approver role is not authorized through this map 0ms
+ ✓ tests/resolution/promotion-lifecycle.test.ts > Approve Artifact (review → approved) > creates decision + receipt on successful approval 1ms
+ × tests/resolution/promotion-lifecycle.test.ts > Lock Artifact (approved → locked) > is not decided by this map 1ms
+ ✓ tests/resolution/promotion-lifecycle.test.ts > Lock Artifact (approved → locked) > boundary service requires all decisions resolved for approved → locked 1ms
+ ✓ tests/resolution/promotion-lifecycle.test.ts > Lock Artifact (approved → locked) > creates receipt with lock metadata 0ms
+ ✓ tests/resolution/promotion-lifecycle.test.ts > Mark Submission Ready (locked → submission_ready) > requires escalation authority (RA/submission lead) 0ms
+ ✓ tests/resolution/promotion-lifecycle.test.ts > Mark Submission Ready (locked → submission_ready) > boundary service requires strong confidence + all assumptions/decisions resolved 0ms
+ ✓ tests/resolution/promotion-lifecycle.test.ts > Mark Submission Ready (locked → submission_ready) > creates governance-level transition receipt (artifact stays locked in DB) 0ms
+ ✓ tests/resolution/promotion-lifecycle.test.ts > Decision Receipt Persistence > receipt has all required fields for DB persistence 1ms
+ ✓ tests/resolution/promotion-lifecycle.test.ts > Decision Receipt Persistence > receipt serializes affected objects to JSON 0ms
+ ✓ tests/unit/decision-architecture.test.ts > DecisionRecord construction > buildPreflightDecision produces a valid decision record 3ms
+ ✓ tests/unit/decision-architecture.test.ts > DecisionRecord construction > buildGovernedActionDecision produces a valid governed decision 1ms
+ ✓ tests/unit/decision-architecture.test.ts > DecisionRecord construction > module-preflight-judgment maps to autonomous-read authority 0ms
+ ✓ tests/unit/decision-architecture.test.ts > DecisionRecord construction > dossier-preflight-judgment maps to autonomous-read authority 0ms
+ ✓ tests/unit/decision-architecture.test.ts > DecisionRecord construction > needs-reapproval overall maps to escalated status 0ms
+ ✓ tests/unit/decision-architecture.test.ts > DecisionRecord construction > unique decision IDs 1ms
+ ✓ tests/unit/decision-architecture.test.ts > Authority requirement mapping > AUTHORITY_BOUNDARY_MAP has all expected actions 1ms
+ ✓ tests/unit/decision-architecture.test.ts > Authority requirement mapping > read-only actions are autonomous 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Authority requirement mapping > draft-preparation actions require confirmation 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Authority requirement mapping > promote-to-review requires confirmation 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Authority requirement mapping > approve-artifact admits no role through this map 0ms
+ × tests/unit/decision-architecture.test.ts > Authority requirement mapping > lock-artifact admits no role through this map 9ms
+ ✓ tests/unit/decision-architecture.test.ts > Authority requirement mapping > judge-module-ready requires escalation 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Authority requirement mapping > judge-dossier-ready requires escalation 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Authority requirement mapping > execute-multi-object-correction is forbidden 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Authority requirement mapping > unknown action defaults to escalation (fail-safe) 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Actor authorization > autonomous-read always authorizes 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Actor authorization > forbidden never authorizes 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Actor authorization > role restriction blocks unauthorized actors 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Actor authorization > actor role unknown returns blocked with reason 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision status transitions > recommended → confirmed is valid 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision status transitions > recommended → rejected is valid 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision status transitions > recommended → escalated is valid 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision status transitions > confirmed → executed is valid 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision status transitions > executed → approved is valid 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision status transitions > executed → provisional is valid 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision status transitions > provisional → approved is valid 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision status transitions > approved → superseded is valid 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision status transitions > superseded → anything is invalid 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision status transitions > recommended → executed is invalid (must confirm first) 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision status transitions > rejected → confirmed is invalid 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision status transitions > escalated → confirmed is valid (escalation can be resolved) 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision receipt creation > buildDecisionReceipt creates a valid receipt 2ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision receipt creation > rejected confirmation receipt 1ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision receipt creation > receipt with provisional items 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Decision receipt creation > unique receipt IDs 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Blocked promotion decision > creates a decision with authority boundary for blocked promotion 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Provisional result handling > preflight with warnings produces provisional status 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Provisional result handling > executed but pending approval creates provisional receipt 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Contradiction consequence decision path > builds a contradiction-resolution decision from a finding 1ms
+ ✓ tests/unit/decision-architecture.test.ts > Failure behavior > unknown action authority defaults to escalation 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Failure behavior > actor with no role cannot approve 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Failure behavior > invalid transition returns false 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Failure behavior > missing context returns safe defaults in decision 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Failure behavior > receipt with execution error records failure 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Full workflow lifecycle > section preflight → promotion decision → receipt 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Full workflow lifecycle > contradiction finding → correction decision → receipt 0ms
+ ✓ tests/unit/decision-architecture.test.ts > Full workflow lifecycle > escalation path triggered for module readiness judgment 0ms
+ ✓ tests/resolution/governed-promotion-pipeline.test.ts > Governance Boundary Direction Validation > allows forward transitions 1ms
+ ✓ tests/resolution/governed-promotion-pipeline.test.ts > Governance Boundary Direction Validation > blocks backward transitions (except to advisory) 0ms
+ ✓ tests/resolution/governed-promotion-pipeline.test.ts > Governance Boundary Direction Validation > allows reversion to advisory from any boundary 0ms
+ ✓ tests/resolution/governed-promotion-pipeline.test.ts > Governance Boundary Direction Validation > blocks no-op transitions 0ms
+ ✓ tests/resolution/governed-promotion-pipeline.test.ts > Contradiction Gate in Governance Boundary > blocks transition when unresolved blocking contradictions exist 1ms
+ ✓ tests/resolution/governed-promotion-pipeline.test.ts > Contradiction Gate in Governance Boundary > allows transition when no blocking contradictions exist 0ms
+ ✓ tests/resolution/governed-promotion-pipeline.test.ts > Contradiction Gate in Governance Boundary > allows transition to advisory even with contradictions (reversion path) 0ms
+ ✓ tests/resolution/governed-promotion-pipeline.test.ts > Readiness Gate in Governance Boundary > blocks approved/locked/submission transitions when readiness fails 0ms
+ ✓ tests/resolution/governed-promotion-pipeline.test.ts > Readiness Gate in Governance Boundary > allows transition when readiness passes 0ms
+ ✓ tests/resolution/governed-promotion-pipeline.test.ts > Readiness Gate in Governance Boundary > does NOT check readiness for advisory → governed_draft 0ms
+ ✓ tests/resolution/governed-promotion-pipeline.test.ts > Promotion Authority Chain > promote-to-review requires confirmation (not autonomous) 0ms
+ ✓ tests/resolution/governed-promotion-pipeline.test.ts > Promotion Authority Chain > approve-artifact is not decided by this map 0ms
+ × tests/resolution/governed-promotion-pipeline.test.ts > Promotion Authority Chain > lock-artifact is not decided by this map 6ms
+ ✓ tests/resolution/governed-promotion-pipeline.test.ts > Promotion Authority Chain > judge-module-ready requires escalation 0ms
+ ✓ tests/resolution/governed-promotion-pipeline.test.ts > Promotion Authority Chain > decision lifecycle creates promotion receipt with affected objects 1ms
+ ✓ tests/resolution/governed-promotion-pipeline.test.ts > Wave 3 Action Routing > all Wave 3 actions have corresponding endpoints 0ms
+ ✓ tests/resolution/governed-promotion-pipeline.test.ts > Wave 3 Action Routing > plan action maps to plan endpoint 0ms
+ ✓ tests/resolution/governed-promotion-pipeline.test.ts > Wave 3 Action Routing > execute action maps to execute endpoint 0ms
+ ✓ tests/resolution/governed-promotion-pipeline.test.ts > Wave 3 Action Routing > explain action maps to explain endpoint 0ms
+ ✓ tests/resolution/governed-promotion-pipeline.test.ts > Wave 3 Action Routing > status action maps to GET endpoint with projectId param 0ms
+ ✓ tests/resolution/governed-promotion-pipeline.test.ts > End-to-End Promotion Pipeline > full promotion flow: contradiction check → boundary check → authority check → execute → receipt 0ms
+ ✓ tests/resolution/governed-promotion-pipeline.test.ts > End-to-End Promotion Pipeline > blocked promotion: contradictions → boundary blocks → decision records blocked attempt 0ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 1: detects assumption drift from conflicting endpoints 2ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 2: overlay escalates authority from requires_review to blocks_promotion 0ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 2: maps blocks_promotion to create-contradiction-consequence action 0ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 3: confidence maps to moderate (0.85 score) 0ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 3: assumption_drift maps to supersede path 0ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 3: affected objects include both assumptions 1ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 4: creates contradiction-resolution-decision 1ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 5: receipt proves what happened with full provenance chain 1ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 6: contradiction resolved → promotion gate passes 0ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 7a: draft → review (promote-to-review) 0ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 7b: review → approved (approve-artifact) is not decided by this map 0ms
+ × tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 7c: approved → locked (lock-artifact) is not decided by this map 7ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 7d: locked → submission_ready (judge-dossier-ready) 0ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 7e: decision status transitions are valid through lifecycle 0ms
+ ✓ tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 8: final receipt proves complete lifecycle from contradiction to submission-ready 1ms
+ Test Files  5 failed (5)
+      Tests  6 failed | 145 passed (151)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 7c: approved → locked (lock-artifact) is not decided by this map
+AssertionError: expected 'requires-reviewer-approval' to be 'forbidden' // Object.is equality
+ FAIL  tests/resolution/governed-promotion-pipeline.test.ts > Promotion Authority Chain > lock-artifact is not decided by this map
+AssertionError: expected 'requires-reviewer-approval' to be 'forbidden' // Object.is equality
+ FAIL  tests/resolution/promotion-lifecycle.test.ts > Full Promotion Lifecycle > authority requirements escalate through the lifecycle
+AssertionError: expected 'requires-reviewer-approval' to be 'forbidden' // Object.is equality
+ FAIL  tests/resolution/promotion-lifecycle.test.ts > Lock Artifact (approved → locked) > is not decided by this map
+AssertionError: expected 'requires-reviewer-approval' to be 'forbidden' // Object.is equality
+ FAIL  tests/unit/decision-architecture.test.ts > Authority requirement mapping > lock-artifact admits no role through this map
+AssertionError: expected 'requires-reviewer-approval' to be 'forbidden' // Object.is equality
+ FAIL  server/services/__tests__/contradiction-engine.test.ts > Authority Boundary Map > lock-artifact admits no role through this map
+AssertionError: expected 'requires-reviewer-approval' to be 'forbidden' // Object.is equality

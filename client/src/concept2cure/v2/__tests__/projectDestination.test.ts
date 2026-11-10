@@ -14,11 +14,16 @@ describe('one destination for a project-scoped visit', () => {
   });
 
   it('uses the shared target scope for normal and aliased destinations', () => {
-    for (const id of ['project-home', 'review', 'vault', 'documents', 'ind-lifecycle']) {
+    for (const id of ['project-home', 'review', 'ind-lifecycle']) {
       expect(destinationFor(id, false), id).toEqual({ surfaceId: 'projects' });
     }
+    /* Vault is reachable from the rail at all times (the founder, 2026-11-06, 5144702d21): with no project open it
+       opens itself and lists the projects whose Vaults the person can open. Its old alias 'documents' follows it. */
+    for (const id of ['vault', 'documents']) {
+      expect(destinationFor(id, false), id).toEqual({ surfaceId: 'vault' });
+      expect(destinationFor(id, true), id).toEqual({ surfaceId: 'vault' });
+    }
     expect(destinationFor('review', true)).toEqual({ surfaceId: 'review' });
-    expect(destinationFor('documents', true)).toEqual({ surfaceId: 'vault' });
   });
 
   it('keeps the public Subscription & features address and global places usable', () => {
@@ -47,9 +52,10 @@ describe('one destination for a project-scoped visit', () => {
     expect(destinationFor('mdx', false).applies?.params).toEqual({ workstream: 'MDX' });
   });
 
-  it('retains the device portfolio destination until its separate parity fold', () => {
-    expect(destinationFor('device-workstream', false)).toEqual({ surfaceId: 'device-workstream' });
-    expect(destinationFor('device-workstream', true)).toEqual({ surfaceId: 'device-workstream' });
+  it('sends the folded device portfolio to Projects with the MDX filter, with or without a project open (fold F6)', () => {
+    const filtered = { surfaceId: 'projects', applies: { actionId: 'projects.filter', params: { workstream: 'MDX' } } };
+    expect(destinationFor('device-workstream', false)).toEqual(filtered);
+    expect(destinationFor('device-workstream', true)).toEqual(filtered);
   });
 
   it('keeps the raw URL id until its requested action has been applied', () => {

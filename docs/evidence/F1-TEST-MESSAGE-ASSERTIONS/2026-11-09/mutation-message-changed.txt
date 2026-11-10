@@ -1,0 +1,13 @@
+# The same mutation under both forms of the assertion (run 2026-11-09T05:28:54Z at 312cdc711)
+# MUTATION in server/services/submission-service/submission-service.ts: the refusal 'Transmit requires an explicit environment: staging or production.' becomes 'Transmit needs a target.'
+
+## Before this commit: toMatchObject({ code, message: /explicit environment/ })
+ ✓ server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses when no environment is named — it never defaults to production
+      Tests  1 passed | 14 skipped (15)
+
+## After: toMatchObject({ code, message: expect.stringMatching(/explicit environment/) })
+ × server/services/submission-service/__tests__/transmit-refusals.test.ts > transmitSequence refusals (no database access) > refuses when no environment is named — it never defaults to production
+   → expected SubmissionError: Transmit needs a target. { code: '…' } to match object { code: 'VALIDATION', …(1) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 14 skipped (15)
+restored sha256 772e0d09dca7727f350109951b6f7666c2e1a1ce611cef2aeb4a316b23ee908d (expected 772e0d09dca7727f350109951b6f7666c2e1a1ce611cef2aeb4a316b23ee908d)

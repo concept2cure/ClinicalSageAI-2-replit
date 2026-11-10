@@ -1,10 +1,30 @@
 /** The portfolio card shared by GET and the canonical creator's 201 response.
- * Client means the anchor's workspace, never the regulatory applicant sponsor. */
+ * Client means the anchor's workspace, never the regulatory applicant sponsor.
+ *
+ * No `blocker` (2026-10-31). It was projected as a literal NULL — nothing at
+ * list level assesses a blocker — and the Projects list gave it a column that
+ * read "—" on every row. A project's blockers are its dispatch gate, read per
+ * sequence on Project home and in Submission Center; computing that for every
+ * row of a list is not a list read, so the field and its column are gone. */
 import { pathwaySqlCase, workstreamSqlCase, WORKSTREAM_FILING_TYPES, type Workstream } from '../../../shared/constants/domain/product-types';
 import { REGULATORY_PATHWAYS, type RegulatoryPathway } from '../../../shared/constants/mdx';
 import { projectIntakeId } from '../../../shared/project-intake-workspace';
 import type { ProgramAccessExecutor, VerifiedProgramAnchor } from './current-program-access';
 
+/** A stated text column as written, or NULL when it holds nothing but
+ * whitespace. Blank is not stated, so the card never shows a run of spaces as
+ * a description or an indication. The column is one of these literals, never
+ * input: ci:sql-interpolation cannot see SQL built in a constant, so the type
+ * holds it, as `projectAnchorFrom` does for its placeholders. */
+type StatedColumn = 'p.description' | 'p.indication' | 'p.primary_agency' | 'p.program_type';
+const stated = (column: StatedColumn): string => `CASE WHEN ${column} ~ '[^[:space:]]' THEN ${column} END`;
+
+/* What the project says it is, for the card's one line (D2's `cardLine`,
+ * 2026-11-01, S11): `description`, `indication`, `agency` (primary_agency) and
+ * `program_type`, each a regulatory_programs column
+ * (migrations/20260524_program_workbench_schema.sql). Each is NULL when
+ * nothing is stated; none is defaulted here. Additive: the earlier keys are
+ * unchanged, and GET /api/c2c/projects/:id still carries the full detail. */
 const PROJECT_CARD_SELECT = `SELECT p.id::text AS id,
   p.name AS title,
   ${workstreamSqlCase('p.program_type', 'p.product_type')} AS ws,
@@ -13,11 +33,14 @@ const PROJECT_CARD_SELECT = `SELECT p.id::text AS id,
   initcap(replace(COALESCE(p.phase, 'planning'), '_', ' ')) AS stage,
   p.status AS status,
   COALESCE(u.name, u.email, '—') AS lead,
-  NULL::text AS blocker,
   COALESCE(to_char(p.target_submission_date, 'Mon DD, YYYY'), '—') AS due,
   to_char(p.target_submission_date, 'YYYY-MM-DD') AS due_date,
   'Updated ' || to_char(p.updated_at, 'Mon DD') AS activity,
-  cw.id AS client_workspace_id, cw.name AS client_name`;
+  cw.id AS client_workspace_id, cw.name AS client_name,
+  ${stated('p.description')} AS description,
+  ${stated('p.indication')} AS indication,
+  ${stated('p.primary_agency')} AS agency,
+  ${stated('p.program_type')} AS program_type`;
 
 /** Both callers below build fixed SQL statements at module load. The only
  * substitutions here are their literal placeholder positions, never input. */

@@ -150,6 +150,96 @@ the FILED history and its fold — and delegates the diff itself to the canonica
   the inventory existed is exactly this case. The governed `sign` row and its signature
   manifest both record which sequence the signature filed and whether the history took it —
   a lost baseline used to leave no durable trace beyond a server log.
+- **The same rule on the sequence spine** (F1, row D7, 2026-11-01). A sequence transmitted
+  from Submission Center (`transmitSequence`, `submission-service.ts`) files only when it goes
+  to `production`. Its `dispatch_status` is the filed state every reader allow-lists (`'sent'`
+  or `'acknowledged'`, `filed-dispatch.ts`): the filed fold, the filing-order rule, the
+  commitment evidence and its trigger. Before this change a send to the agency's test
+  environment wrote `'sent'`, so the test send filed the very sequence production must file,
+  and the production send was refused as "already transmitted". Now:
+  - A send to `staging` leaves the sequence `'pending'`, whatever the test environment
+    answered (`toDispatchStatus`). Only `dispatch_status` is written; the claim's columns
+    still name the attempt. Its outcome is kept where it always was: on the transmittal
+    (`status`, `metadata.environment`) and on the `ECTD_TRANSMITTED` row (`environment`,
+    `status`, the `dispatchStatus` it left and, for a test send, `testSend` in words). That
+    row spends the signature (P-23), so the production send takes a fresh one.
+  - A signed MDN from the test environment, uploaded on the transmittal's row
+    (`fda-esg-receipts.ts`), settles the attempt it binds to `'pending'`, never `'sent'` or
+    `'rejected'`: the test environment's verdict is not FDA's.
+  - A send to `staging` that fails after the wire, in the gateway or in recording its result,
+    voids its signature (a `GOVERNED_SIGNATURE_VOIDED` row, as for a refused step, naming the
+    environment, the attempt and that a test send files nothing), and only then releases the
+    claim. Nothing a test environment holds is a filing, so it is not left `'transmitting'` for
+    a person to resolve. A later test MDN for that attempt is recorded on its transmittal and
+    moves no sequence.
+  - Only a void Gate 1 reads releases that claim: the signature row taken out of force, or the
+    chained `GOVERNED_SIGNATURE_VOIDED` row. A void kept in the tamper-proof log alone, or one
+    that reached no record, leaves the signature in force, so the claim stays `'transmitting'`
+    and the person is told so: a released claim would let that signature take the sequence
+    again, to production. A test MDN for the attempt settles it to `'pending'` (its
+    `ECTD_TRANSMITTED` row spends the signature); otherwise a person resolves it. A **production** failure after the wire is unchanged: it voids nothing
+    and stays `'transmitting'` until a receipt settles it (decision P-92 will settle such a
+    hold by a signed act). A test hold is not a held send under P-92: nothing at the test
+    environment is a filing, so there is no duplicate-filing risk to weigh.
+  - Consequence: the filing-order rule no longer reads a test send as filed. A later sequence
+    that shares a lifecycle key with one sent only to `staging` is refused at freeze,
+    dispatch and transmit until the earlier one is filed in production. A 0000-then-0001 run
+    in the test environment therefore cannot take 0001 past freeze; the rehearsal compile
+    (`loadRehearsalPriorManifestBySubmission`) is what judges 0001 against a 0000 not yet
+    filed.
+
+  **Sequences a test send marked filed before this change.** Nothing corrects them
+  automatically: no migration can tell a filing from a test send without reading the
+  audit trail, and the correction is a person's decision (owed, not built). Run both
+  queries as the database owner (RLS would scope them to one tenant); a row in either is a
+  sequence shown as on file whose filing act was not a production send. (a) reads the act
+  that set the status: the `ECTD_TRANSMITTED` row of the attempt the sequence's columns
+  bind, or the latest one for a sequence sent before `transmit_signature_action_id`
+  existed (20261014). A sequence with no such row, or one that names no environment, is
+  listed too, for a person to decide. (b) reads what the filed fold reads (F1 slice 1): the
+  transmittal that attempt bound.
+
+  ```sql
+  -- (a) the act that set the status
+  SELECT s.organization_id, s.id AS sequence_id, s.submission_id, s.sequence_number, s.dispatch_status,
+         a.id AS audit_id, a.occurred_at, a.new_values::jsonb ->> 'environment' AS environment
+    FROM ectd_sequences s
+    LEFT JOIN LATERAL (
+      SELECT al.id, al.occurred_at, al.new_values
+        FROM audit_logs al
+       WHERE al.tenant_id = s.organization_id
+         AND al.table_name = 'ectd_sequence'
+         AND al.record_id = s.id::text
+         AND al.action = 'ECTD_TRANSMITTED'
+         AND (s.transmit_signature_action_id IS NULL
+              OR al.new_values::jsonb ->> 'signatureActionId' = s.transmit_signature_action_id)
+       ORDER BY al.occurred_at DESC, al.id DESC
+       LIMIT 1
+    ) a ON true
+   WHERE s.deleted_at IS NULL
+     AND s.dispatch_status IN ('sent', 'acknowledged')
+     AND (a.new_values::jsonb ->> 'environment') IS DISTINCT FROM 'production'
+   ORDER BY s.organization_id, s.submission_id, s.sequence_number;
+
+  -- (b) the transmittal the filed fold reads
+  SELECT s.organization_id, s.id AS sequence_id, s.submission_id, s.sequence_number, s.dispatch_status,
+         t.id AS transmittal_id,
+         COALESCE(t.metadata ->> 'environment', t.metadata -> 'as2' ->> 'environment') AS environment
+    FROM ectd_sequences s
+    JOIN submission_transmittals t
+      ON t.organization_id = s.organization_id
+     AND lower(t.metadata -> 'dispatchBinding' ->> 'attemptId') = s.transmit_attempt_id::text
+     AND t.metadata -> 'dispatchBinding' ->> 'sequenceId' = s.id::text
+     AND t.metadata -> 'dispatchBinding' ->> 'signatureActionId' = s.transmit_signature_action_id
+   WHERE s.deleted_at IS NULL
+     AND s.dispatch_status IN ('sent', 'acknowledged')
+     AND COALESCE(t.metadata ->> 'environment', t.metadata -> 'as2' ->> 'environment') IS DISTINCT FROM 'production'
+   ORDER BY s.organization_id, s.submission_id, s.sequence_number;
+  ```
+
+  Binding on the attempt, not on any staging row, keeps a sequence whose test send was
+  rejected and which was then filed in production off the list. Both were run against the
+  real test database (`docs/evidence/D7-TEST-ENVIRONMENT-SEND/2026-11-01/1-server/runbook-query.txt`).
 - **One bundle per filed sequence** (2026-10-01, sweep F19). A production send of a bundle
   whose sequence the history already holds on file as a *different* bundle is refused
   before the bytes leave (`409`, `details.code: 'SEQUENCE_ALREADY_FILED'`): the agency
@@ -283,6 +373,59 @@ over the page, and `hasMore` says the page is shorter than `total`; the log scre
 `awaitingAcknowledgement` counts rows the agency may still acknowledge and has not: an
 active status (`pending`, `in_transit`, `received`, the duplicate-send lock's set) with no
 acknowledgement. A rejected, rolled-back or completed row is not counted.
+
+### 3a. A held send (P-92)
+
+A production send to FDA that was handed to the gateway, with no verified answer back, holds its sequence as
+`'transmitting'`. It is not sent again (`resendRefusal`), it is not retired (P-86 check 2b), and it is not filed until it
+is settled. The ways out, in order:
+
+1. **FDA's signed MDN.** "Record agency MDN" on Gateway transmittals (`ingestFdaAs2Receipt`) checks FDA's signature and
+   records the send by FDA's own answer. That includes an MDN the platform already keeps: download it from the send's
+   row and record it.
+2. **The signed settlement**, from the sequence's Dispatch tab (`settleHeldSend`,
+   `POST /api/submissions/sequences/:seqId/held-send/settle`).
+   - It is signed by someone other than the sequence's creator, with the meaning responsibility and a reason.
+   - **Recorded as received** on FDA's Ack2 or Ack3, kept in the project's Vault.
+   - **Released as not received** on FDA's written confirmation, or on the platform's own proof that nothing left
+     (P-108 1(b)). That proof is either:
+     - a bound AS2 send with no AS2 message identity (the identity is written before any byte); or
+     - a bound legacy SFTP send with nothing that came back (no image ever shipped the SFTP client;
+       `docs/evidence/RIM/2026-11-08-designs/p92-settle-held-fda-send.b1-sftp-search-2026-11-09.txt`).
+
+     A release states the duplicate-filing risk before the signer signs.
+   - A released send no longer keeps its sequence from being retired (P-108 2(a)).
+
+A send is not settled while it may still be in progress. It needs a finishing write, or 24 hours of quiet.
+
+If FDA's verified answer later contradicts a settlement, the answer is kept beside it. While FDA's receipt contradicts a
+release, the sequence is not sent again. Re-opening it is a second signed act (P-108 1(c), design C3).
+
+Read-only queries (each scoped to one organization; none changes anything):
+
+```sql
+-- Held sends on the sequence spine, with what the settlement will read.
+SELECT s.id, s.sequence_number, t.id AS transmittal_id, t.transport, t.status, t.metadata->>'environment' AS environment,
+       t.metadata->'as2'->>'messageId' AS as2_message_id, t.error_message, t.updated_at
+  FROM ectd_sequences s
+  LEFT JOIN submission_transmittals t ON t.organization_id = s.organization_id
+       AND t.metadata->'dispatchBinding'->>'sequenceId' = s.id::text
+       AND lower(t.metadata->'dispatchBinding'->>'attemptId') = lower(s.transmit_attempt_id::text)
+ WHERE s.organization_id = $1 AND s.dispatch_status = 'transmitting' AND s.deleted_at IS NULL;
+-- Legacy holds with no binding (expected zero; escalate, P-108 2(c)).
+SELECT id, sequence_number FROM ectd_sequences
+ WHERE organization_id = $1 AND dispatch_status = 'transmitting' AND deleted_at IS NULL
+   AND (transmit_signature_action_id IS NULL OR transmit_attempt_id IS NULL);
+-- Package-spine production sends with no verified answer (expected zero; escalate).
+SELECT count(*) FROM submission_transmittals
+ WHERE organization_id = $1 AND package_id IS NOT NULL AND COALESCE(metadata->>'environment', '') <> 'staging'
+   AND status IN ('pending', 'in_transit');
+-- Releases that FDA's verified receipt contradicts (the sequence is held from a resend).
+SELECT id, metadata->'heldSendSettlement' AS settlement FROM submission_transmittals
+ WHERE organization_id = $1 AND metadata->'heldSendSettlement'->>'outcome' = 'not-received'
+   AND EXISTS (SELECT 1 FROM jsonb_array_elements(COALESCE(metadata->'as2ReceiptHistory', '[]'::jsonb)) e
+                WHERE e->>'contradicts' = 'not-received');
+```
 
 ## What the platform does not claim
 

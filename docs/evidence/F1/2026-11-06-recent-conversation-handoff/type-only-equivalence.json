@@ -1,0 +1,9 @@
+{
+  "scope": "Two nullable handoff type assertions only; existing reader/writer contract. Held ProjectHome.tsx global declaration unchanged.",
+  "comparison": "esbuild TSX transform, target es2022, minified syntax/whitespace, stable identifiers, no source map",
+  "beforeSourceSha256": "99b4d381ab5eeae1f90e847e3e55468eb45c511184f764d5a55b5e0bb3f82cf1",
+  "afterSourceSha256": "35d7770e9adfb2689c951cc550f5443c3c245ebdebf08e35072be2e9b623764f",
+  "beforeEmittedJsSha256": "a4b5b736a66a92bf09efe20faa3c3938e4eef4fe2ba59bef47b9cd99fa65126b",
+  "afterEmittedJsSha256": "a4b5b736a66a92bf09efe20faa3c3938e4eef4fe2ba59bef47b9cd99fa65126b",
+  "emittedJavaScriptIdentical": true
+}

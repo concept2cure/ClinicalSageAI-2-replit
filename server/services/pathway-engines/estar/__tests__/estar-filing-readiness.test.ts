@@ -257,3 +257,41 @@ describe('assessEstarFilingReadiness', () => {
     expect(r.canFileNow).toBe(false);
   });
 });
+
+/* P-29.3 (docs/EXIT_ATTESTATION_DECISION_2026-10-18.md): the verdict is read
+   from the filing, and the eSTAR is built from it. A filed copy that is not
+   the text its document holds is a submission that would carry text the
+   document does not, so "Can file now" is not true of it. */
+describe('a filed copy that is not the document\'s text', () => {
+  const ready = {
+    catalogKey: '510k' as const,
+    variant: 'device' as const,
+    registration: ALL_REGISTERED,
+    leaves: complete510kLeaves,
+    deviceFlags: PLAIN_DEVICE,
+    templateAvailable: true,
+    fieldMapPopulated: true,
+    vendoredTemplateVersion: '7.1',
+  };
+
+  it('blocks filing, naming the section and the remedy', () => {
+    const r = assessEstarFilingReadiness({
+      ...ready,
+      filedCopyDiverged: [{ key: 'E1', section: { code: 'E1' } }],
+    })!;
+    expect(r.canFileNow, 'a submission with a rewritten filed copy read as "Can file now"').toBe(false);
+    expect(r.filedCopyDiverged).toEqual(['E1']);
+    const said = r.blockers.find((b) => /filed copy/.test(b));
+    expect(said).toMatch(/^Cannot file yet\. The filed copy of section E1 is not the document's text\./);
+    expect(said).toMatch(/Re-file saved text/);
+  });
+
+  it('is silent when the filing agrees, or was not compared', () => {
+    for (const filedCopyDiverged of [[], undefined]) {
+      const r = assessEstarFilingReadiness({ ...ready, filedCopyDiverged })!;
+      expect(r.canFileNow).toBe(true);
+      expect(r.filedCopyDiverged).toEqual([]);
+      expect(r.blockers).toEqual([]);
+    }
+  });
+});

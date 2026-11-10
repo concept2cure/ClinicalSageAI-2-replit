@@ -62,6 +62,9 @@ beforeAll(async () => {
       id SERIAL PRIMARY KEY, organization_id INTEGER, submission_id INTEGER, compilation_type TEXT,
       sequence_number TEXT, leaf_manifest JSONB, compiled_at TIMESTAMP DEFAULT NOW()
     );
+    -- The transmittal row the filed fold reads what a sequence sent from (F1, 2026-11-01);
+    -- no sequence here is sent with that record, so each is read from its compiles.
+    CREATE TABLE IF NOT EXISTS submission_transmittals (id SERIAL PRIMARY KEY, organization_id INTEGER NOT NULL, region TEXT, metadata JSONB DEFAULT '{}'::jsonb);
     INSERT INTO organizations (id, name) VALUES (${ORG}, 'Rehearsal Sponsor Inc.');
     INSERT INTO regulatory_programs (id, organization_id, name, code, program_type, product_name, application_number)
       VALUES ('0e000000-0000-4000-8000-0000000000e1', ${ORG}, 'Rehearsal IND', 'RH-1', 'IND', 'Rehearsalinib', '000101');
@@ -151,7 +154,12 @@ describe('the rehearsal prior state', () => {
   });
 
   it('the filed prior state never reads a rehearsal compile, even of a sequence that was sent', async () => {
-    const prior = await loadLatestPriorManifestBySubmission(pool(), { organizationId: ORG, submissionId: 2, currentSequence: '0002' });
+    // 0001 was sent and its only compile is a rehearsal, so nothing on record says what it
+    // carried: the read refuses rather than take the rehearsal for it, or leave it out
+    // (F1 review, 2026-11-01). Up to 0001, the filed 0000 is read without it.
+    await expect(loadLatestPriorManifestBySubmission(pool(), { organizationId: ORG, submissionId: 2, currentSequence: '0002' }))
+      .rejects.toThrow(/Sequence 0001 was sent to the agency, but nothing on record says what it carried/);
+    const prior = await loadLatestPriorManifestBySubmission(pool(), { organizationId: ORG, submissionId: 2, currentSequence: '0001' });
     expect(prior.leaves.map((l) => l.fileName)).toEqual(['filed.pdf']);
     expect(prior.priorSequenceNumber).toBe('0000');
   });

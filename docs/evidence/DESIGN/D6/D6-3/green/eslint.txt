@@ -1,0 +1,17 @@
+# eslint on the 9 D6-3 TSX files and the 17 changed/new tests: no new warning against HEAD
+
+## HEAD (5 warnings, 0 errors)
+client/src/concept2cure/v2/surfaces/Vault.tsx:685 max-lines — File has too many lines (2419). Maximum allowed is 500.
+client/src/concept2cure/v2/surfaces/Vault.tsx:1177 max-lines-per-function — Function 'VaultForProject' has too many lines (1509). Maximum allowed is 100.
+client/src/concept2cure/v2/surfaces/Vault.tsx:1177 complexity — Function 'VaultForProject' has a complexity of 233. Maximum allowed is 15.
+client/src/concept2cure/v2/surfaces/Vault.tsx:1850 complexity — Arrow function has a complexity of 51. Maximum allowed is 15.
+client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx:183 max-lines-per-function — Arrow function has too many lines (108). Maximum allowed is 100.
+
+## After D6-3 (5 warnings, 0 errors)
+client/src/concept2cure/v2/__tests__/anaDrivesScreens.test.tsx:183 max-lines-per-function — Arrow function has too many lines (109). Maximum allowed is 100.
+client/src/concept2cure/v2/surfaces/Vault.tsx:688 max-lines — File has too many lines (2560). Maximum allowed is 500.
+client/src/concept2cure/v2/surfaces/Vault.tsx:1250 max-lines-per-function — Function 'VaultForProject' has too many lines (1599). Maximum allowed is 100.
+client/src/concept2cure/v2/surfaces/Vault.tsx:1250 complexity — Function 'VaultForProject' has a complexity of 265. Maximum allowed is 15.
+client/src/concept2cure/v2/surfaces/Vault.tsx:1952 complexity — Arrow function has a complexity of 51. Maximum allowed is 15.
+
+Same five rule/site pairs. VaultForProject keeps its three file/function warnings (its line count 1509 -> 1599 and complexity 233 -> 265 move inside the same warnings); the anaContext memo (complexity 51) and anaDrivesScreens (108 -> 109 lines) are unchanged warnings.

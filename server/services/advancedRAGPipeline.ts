@@ -534,14 +534,18 @@ export function parsePgVector(value: unknown): number[] | undefined {
   return out;
 }
 
+/**
+ * "p.41 · 11.4.1 Primary Efficacy Endpoint": the page a reviewer can turn to,
+ * then the section the passage sits in, whichever of the two is recorded.
+ * The section used to REPLACE the page here, harmlessly while the vault writer
+ * left section_title NULL; once it was filled (2026-10-25) that would have
+ * taken the page out of every vault citation.
+ */
 function buildLocator(row: VaultChunkRow): string | undefined {
-  if (row.section_title && row.section_title.trim()) {
-    return row.section_title.trim();
-  }
-  if (row.page_number !== null && row.page_number !== undefined) {
-    return `p.${row.page_number}`;
-  }
-  return undefined;
+  const section = row.section_title?.trim() || null;
+  const page = row.page_number !== null && row.page_number !== undefined ? `p.${row.page_number}` : null;
+  if (page && section) return `${page} · ${section}`;
+  return section ?? page ?? undefined;
 }
 
 /** Canonical dense Vault statement: hash only the materialized, limited candidates. */

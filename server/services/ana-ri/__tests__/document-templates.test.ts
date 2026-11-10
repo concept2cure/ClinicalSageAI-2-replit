@@ -181,3 +181,34 @@ describe('buildDocumentTemplateBlock', () => {
     expect(block).toMatch(/~\d+–\d+ words/);
   });
 });
+
+describe('510(k) technological differences in the actual drafting brief', () => {
+  // FDA, The 510(k) Program (July 28, 2014), PDF pages 12 and 30:
+  // https://www.fda.gov/media/82395/download#page=30
+  // Decision 4 is distinct from whether sufficient performance evidence was supplied.
+  it('does not tell AnA to establish equivalence with more tests when different questions are raised', () => {
+    const detected = detectDocumentTemplate('draft a 510(k) substantial equivalence statement');
+    expect(detected?.template.id).toBe('fda_510k_se_statement');
+    const block = buildDocumentTemplateBlock(detected!);
+    expect(block).not.toMatch(/if yes, provide data demonstrating equivalence/i);
+    expect(block).toMatch(/different questions of safety or effectiveness/i);
+    expect(block).toMatch(/not substantially equivalent|\bNSE\b/i);
+    expect(block).toMatch(/human regulatory review/i);
+  });
+
+  it('cites the actual 2014 substantial-equivalence guidance in the rendered brief', () => {
+    const detected = detectDocumentTemplate('draft a 510(k) substantial equivalence statement');
+    const block = buildDocumentTemplateBlock(detected!);
+    expect(block).toContain('FDA 510(k) Program Guidance (2014)');
+    expect(block).not.toContain('FDA 510(k) Program Guidance (2019)');
+  });
+
+  it('keeps the conclusion conditional on recorded evidence and withholds an unsupported positive claim', () => {
+    const template = DOCUMENT_TEMPLATES['fda_510k_se_statement'];
+    const conclusion = template.sections.find(section => section.heading === 'Substantial Equivalence Conclusion');
+    expect(conclusion?.guidance).not.toMatch(/^Declarative statement that the subject device has/i);
+    expect(conclusion?.guidance).toMatch(/recorded evidence/i);
+    expect(conclusion?.guidance).toMatch(/do not assert substantial equivalence/i);
+    expect(conclusion?.guidance).toMatch(/human regulatory review/i);
+  });
+});

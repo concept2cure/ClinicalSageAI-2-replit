@@ -187,6 +187,16 @@ describe('Project home — device pathway actions reflect the supported workflow
     expect(within(panel).queryByRole('button', { name: 'Check what stops sending' })).toBeNull();
   });
 
+  // Human test J1 (2026-11-06): a 510(k) with no submission record read "No market for this project yet".
+  it.each(['510k', 'pma', 'de_novo'])('a %s project with no submission recorded says that, not that it has no market', async (programType) => {
+    serve({ subs: [], program: { ...PROGRAM, program_type: programType, product_type: 'device' } });
+    await openSubmit();
+    const panel = await screen.findByTestId('pj-markets');
+    await waitFor(() => expect(panel.textContent).toContain('No submission recorded to this project yet'));
+    expect(panel.textContent).not.toContain('No market for this project yet');
+    expect(panel.textContent).toContain('not as an eCTD sequence');
+  });
+
   it.each(['hde', 'mdl', 'ivd_licence', 'shonin', 'ninsho', 'todokede', 'ivd_approval', 'jp_cdx'])(
     'states the %s preparation limit before offering submission actions, even with inconsistent product data', async (programType) => {
       serve({ subs: [], program: { ...PROGRAM, program_type: programType, product_type: 'drug' } });
@@ -227,7 +237,8 @@ describe('Project home — the Submit stage lists the project’s submissions', 
     await openSubmit();
     expect(await screen.findByText("Couldn't load this project's markets")).toBeTruthy();
     expect(screen.queryByText('No market for this project yet')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    /* The step's own retry: since D3-2a the knowledge cards beside every step can show their own failed reads. */
+    fireEvent.click(within(document.querySelector('.pj-main') as HTMLElement).getByRole('button', { name: 'Try again' }));
     expect(await screen.findByTestId('pj-submission')).toBeTruthy();
   });
 

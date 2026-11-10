@@ -13,6 +13,9 @@
  */
 
 import { consentElementsFor } from '../../../../../shared/regulatory/informed-consent-elements.js';
+import { EAST_ASIAN_COUNTRY_WORDS } from '../cross-node-context.js';
+import { BIOMARKER_SELECTION_OPTIONS } from './protocol-development-biomarker-selection.js';
+import { euOrphanDesignationField, orphanProgrammeLeaves, usOrphanDesignationField } from './ind-submission-orphan-designation.js';
 
 /** The 50.25(a) elements, in order, from the one record. */
 const FDA_REQUIRED_CONSENT = consentElementsFor('fda')
@@ -158,6 +161,18 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             ],
             allowOther: {},
           },
+          /* 2026-11-02 (S4): xn_oncology_no_biomarker_strategy read biomarker
+             ids no flow asked, and in the IND its triggers were not asked
+             either; so it never fired. */
+          {
+            id: 'is_oncology',
+            label: 'Is this a cancer indication?',
+            type: 'yes_no',
+            required: true,
+            visibleWhen: { field: 'therapeutic_area', operator: 'in', value: ['hematology', 'gene_cell_therapy', 'rare_disease'] },
+            helpText:
+              'Asked because this therapeutic area holds malignant and non-malignant programmes alike, for example a haematologic malignancy or a CAR-T. It decides whether AnA asks how patients are selected by biomarker.',
+          },
           {
             id: 'indication',
             label: 'Indication',
@@ -182,14 +197,18 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
               { value: 'phase_3b_4', label: 'Phase 3b / 4' },
             ],
           },
-          {
-            id: 'orphan_designation',
-            label: 'Orphan Drug Designation',
-            type: 'yes_no',
-            required: false,
+          /* 2026-11-02 (S4): a yes/no for "FDA or EMA", so a yes never said
+             which regulator, and its help said the designation changes the
+             study's size, which it does not. One question per regulator, with
+             the positions every interview offers. */
+          usOrphanDesignationField({
             helpText:
-              'Has FDA or EMA granted orphan drug designation? Per 21 CFR 316, orphan status affects study size, exclusivity, and fee waivers.',
-          },
+              "FDA's designation under FD&C Act §526 (21 USC 360bb) and 21 CFR part 316. It changes neither the evidence standard nor the size the study needs; it bears on the application fee, PREA and exclusivity once the drug is filed.",
+          }),
+          euOrphanDesignationField({
+            helpText:
+              "The European Commission's designation, on the opinion of EMA's Committee for Orphan Medicinal Products. Answer where the programme may seek an EU marketing authorisation; leave it blank otherwise.",
+          }),
         ],
         defaultNext: 'sponsor_info',
       },
@@ -302,6 +321,58 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
               { value: 'historical', label: 'Historical Control' },
               { value: 'dose_comparison', label: 'Dose-Comparison' },
             ],
+          },
+          /* 2026-11-02 (S4): xn_orphan_without_natural_history read
+             `natural_history` / `disease_natural_history`, asked by no flow, and
+             triggered on `expedited_designations` / `special_designations`, which
+             none of the four flows it applies to asks. Dead on both sides. The
+             orphan leaves are the rule's own predicate (orphanProgrammeLeaves). */
+          {
+            id: 'natural_history',
+            label: 'Natural-history evidence for this disease',
+            type: 'select',
+            required: true,
+            visibleWhen: { anyOf: [...orphanProgrammeLeaves(), { field: 'therapeutic_area', operator: 'eq', value: 'rare_disease' }] },
+            helpText:
+              'Natural-history data describe the course of the disease without the investigational treatment. In a rare disease they inform the population, the endpoints and when to assess them, and they can supply an external control (FDA draft guidance, Rare Diseases: Natural History Studies for Drug Development, March 2019). Choose the strongest source this protocol relies on. This is a different question from the real-world evidence question asked later, which asks how real-world data will be used.',
+            options: [
+              {
+                value: 'prospective_study',
+                label: 'A prospective natural-history study, ongoing or completed',
+                commits:
+                  'Endpoints, timepoints and population are justified against its data. If it serves as a comparator, patient-level data collected with comparable eligibility, assessments and timing are needed.',
+                authority: 'FDA draft guidance, Rare Diseases: Natural History Studies for Drug Development (March 2019)',
+              },
+              {
+                value: 'retrospective_data',
+                label: "Retrospective data: a disease registry, chart review or earlier studies' patient-level data",
+                commits:
+                  "The data's relevance and reliability (provenance, completeness, variable and diagnostic definitions over the collection period) must be shown before they support design choices or a comparison.",
+                authority: 'FDA draft guidance, Rare Diseases: Natural History Studies for Drug Development (2019); FDA guidance, Real-World Data: Assessing Registries to Support Regulatory Decision-Making for Drug and Biological Products (2023; date to be verified)',
+              },
+              {
+                value: 'published_literature',
+                label: 'Published literature only (aggregate data)',
+                commits:
+                  'Endpoint and effect-size assumptions rest on aggregate published data, with no patient-level comparison available.',
+                authority: 'FDA draft guidance, Rare Diseases: Natural History Studies for Drug Development (2019)',
+              },
+              {
+                value: 'planned',
+                label: 'A natural-history study is planned but has not started',
+                commits:
+                  'Endpoint, timepoint and sample-size assumptions stay provisional until its data exist.',
+                authority: 'FDA draft guidance, Rare Diseases: Natural History Studies for Drug Development (2019)',
+              },
+              {
+                value: 'none',
+                label: 'No natural-history data identified',
+                commits:
+                  'Endpoint selection, assessment timing and any uncontrolled or historical comparison have no characterised disease course behind them. AnA records this as a finding.',
+                authority: 'FDA draft guidance, Rare Diseases: Natural History Studies for Drug Development (2019); ICH E10 (2000) §2.5',
+              },
+            ],
+            allowOther: { prompt: 'What natural-history evidence does this protocol rely on, in your own words?' },
           },
           {
             id: 'study_objective_type',
@@ -638,6 +709,17 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             required: true,
           },
           {
+            id: 'biomarker_strategy',
+            label: 'Patient selection by biomarker',
+            type: 'select',
+            required: true,
+            visibleWhen: { anyOf: [{ field: 'therapeutic_area', operator: 'eq', value: 'oncology' }, { field: 'is_oncology', operator: 'eq', value: true }] },
+            helpText:
+              'How the study population is defined with respect to a predictive biomarker (a gene alteration, protein expression or an imaging target). It decides whether the assay that selects or assigns patients is an investigational device study under 21 CFR 812, whether a companion diagnostic is co-developed, and what population the label can carry (FDA Enrichment Strategies guidance, 2019; In Vitro Companion Diagnostic Devices guidance, 2014).',
+            options: [...BIOMARKER_SELECTION_OPTIONS],
+            allowOther: { prompt: 'How is the population defined with respect to a biomarker, in your own words?' },
+          },
+          {
             id: 'includes_vulnerable_populations',
             label: 'Includes Vulnerable Populations',
             type: 'multi_select',
@@ -742,6 +824,78 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
             required: false,
             helpText:
               'ICH E17 requires a pre-specified strategy to evaluate consistency of treatment effects across regions in multi-regional clinical trials (MRCTs).',
+          },
+          /* 2026-11-02 (S4): the ethnic-factors position for East Asian sites.
+             xn_global_trial_no_ethnic_bridging read `ethnic_bridging` /
+             `ethnicity_factors`, asked by no flow, and required `countries` to be
+             an array of more than three — but `countries` is free text, so it
+             could never fire. Gated on `countries` in this same node: the engine
+             sends the field with its predicate and the card decides. A select,
+             not a multi_select: strVal of an array is '', so a multi_select
+             'not_defined' would read as an answer and silence the finding. Not
+             the same fact as the E17 consistency analysis above. */
+          {
+            id: 'ethnicity_factors',
+            label: 'How are ethnic factors addressed for the East Asian countries in this trial?',
+            type: 'select',
+            required: true,
+            visibleWhen: { anyOf: EAST_ASIAN_COUNTRY_WORDS.map(value => ({ field: 'countries', operator: 'contains' as const, value })) },
+            helpText:
+              'ICH E5(R1), Ethnic Factors in the Acceptability of Foreign Clinical Data (1998; Q&A R1 2006), decides whether foreign data can be relied on in a new region. It weighs how sensitive the medicine is to intrinsic factors (for example, polymorphic metabolism such as CYP2C19) and extrinsic factors (medical practice, diet), and how far the regions differ in those factors. Bridging data are needed case by case, not as a standing rule. ICH E17, General Principles for Planning and Design of Multi-Regional Clinical Trials (2017), expects this to be considered when a multi-regional trial is planned. This question is about exposure and dose; the regional consistency analysis is the separate question above.',
+            options: [
+              {
+                value: 'east_asian_pk_in_hand',
+                label: 'East Asian PK (and PD where relevant) is already characterised, for example in a Phase 1 in Japanese or Chinese participants',
+                commits:
+                  'The dose rationale and the IB cite those data for each East Asian country enrolled. If they show an exposure difference, the regional dose is justified before enrolment there.',
+                authority: 'ICH E5(R1) (1998), Appendix A (intrinsic and extrinsic ethnic factors)',
+              },
+              {
+                value: 'ethnic_pk_within_trial',
+                label:
+                  'Ethnic sensitivity is evaluated within this trial: PK sampling at the East Asian sites and in a comparator population, race and region as population-PK covariates, and an East Asian subgroup pre-specified',
+                commits:
+                  'The PK sampling plan, a population-PK analysis naming race and region covariates, and the East Asian subgroup are pre-specified in the protocol and SAP. A dose change this analysis prompts is a protocol amendment. For Japan, a December 2023 MHLW notice indicates a Japanese Phase 1 before joining an MRCT is in principle not required where safety at the MRCT dose can be judged from existing data (notice reference to be verified).',
+                authority: 'ICH E17 (2017); ICH E5(R1) (1998)',
+              },
+              {
+                value: 'low_ethnic_sensitivity_justified',
+                label:
+                  'Assessed as unlikely to be ethnically sensitive, with the reasons written down (for example linear PK, flat exposure-response, wide therapeutic range, little metabolism by polymorphic enzymes)',
+                commits:
+                  'A written E5 sensitivity assessment goes in the protocol rationale or the IB. A regional regulator may disagree and ask for regional PK or a bridging study.',
+                authority: 'ICH E5(R1) (1998), appendix on properties of a medicine affecting sensitivity to ethnic factors',
+              },
+              {
+                value: 'separate_bridging_study',
+                label: 'A separate bridging study is planned in the region',
+                commits:
+                  "A PK/PD or clinical bridging study runs outside this protocol before the filing in that region relies on the foreign data. This trial's East Asian participants may not be enough on their own.",
+                authority: 'ICH E5(R1) (1998), bridging study and bridging data package',
+              },
+              {
+                value: 'this_is_bridging_study',
+                label: 'This trial is itself the bridging study for the region',
+                commits:
+                  'The design answers the E5 bridging question: a pre-specified comparison of PK/PD, or of efficacy and safety, against the foreign data the region will rely on.',
+                authority: 'ICH E5(R1) (1998), bridging study',
+              },
+              {
+                value: 'no_foreign_data_relied_on',
+                label: "No foreign clinical data will be relied on in these countries: the filing there rests on data from that region's own population",
+                commits:
+                  'E5 bridging does not arise for that filing. A later filing elsewhere that relies on these data raises the question in that region.',
+                authority: 'ICH E5(R1) (1998), scope: acceptability of foreign clinical data',
+              },
+              {
+                value: 'not_defined',
+                label: 'Not yet assessed',
+                commits:
+                  'AnA raises the ethnic-factors finding. The protocol has no basis yet for its dose in the East Asian countries listed.',
+                authority: 'ICH E5(R1) (1998); ICH E17 (2017)',
+              },
+            ],
+            allowOther: { prompt: 'How does the programme address ethnic factors for these countries, in your own words?' },
           },
         ],
         issueChecks: [
@@ -1090,6 +1244,76 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
               { value: 'graphical', label: 'Graphical (Bretz et al.)' },
               { value: 'none', label: 'None (Single Primary Endpoint)' },
             ],
+          },
+          /* 2026-11-02 (S4): the interim-analysis plan for a large confirmatory trial.
+             xn_phase3_no_interim read `interim_analysis` / `planned_interim`, which
+             no flow asked, and its triggers were not fields at all, so it could
+             never fire. Asked only where that rule can hold; an adaptive design
+             answers `interim_analysis_planned` on its own branch instead, so no
+             programme is asked twice. 'none' and 'not_defined' are spelled for
+             the refusal set in cross-node-context.ts. */
+          {
+            id: 'interim_analysis',
+            label: 'Interim analyses planned',
+            type: 'select',
+            required: true,
+            visibleWhen: {
+              allOf: [
+                { field: 'phase', operator: 'in', value: ['phase_2b_3', 'phase_3', 'phase_3b_4'] },
+                { field: 'planned_enrollment', operator: 'gt', value: 200 },
+                { field: 'design_type', operator: 'neq', value: 'adaptive' },
+              ],
+            },
+            helpText:
+              'An interim analysis is any analysis comparing treatment arms for efficacy or safety before the trial formally completes (ICH E9, Section 4.5). None is required. Any that is planned should be described in the protocol before the trial starts, with its timing, the stopping guidelines and how the overall Type I error is preserved.',
+            options: [
+              {
+                value: 'efficacy_and_futility',
+                label: 'Group-sequential: efficacy and futility looks',
+                commits:
+                  "Pre-specify in the protocol and SAP the number and timing (information fractions) of the looks, an alpha-spending function for efficacy (for example Lan-DeMets with O'Brien-Fleming-type boundaries), and the futility criterion, stating whether it is binding. An independent DMC should review the unblinded results under a charter with firewall procedures. The final analysis is tested at the adjusted level, and an estimate from a trial stopped early for benefit may overstate the effect.",
+                authority:
+                  'ICH E9 (1998) Sections 4.5 and 4.6; FDA Guidance: Adaptive Designs for Clinical Trials of Drugs and Biologics (2019); FDA Guidance: Establishment and Operation of Clinical Trial Data Monitoring Committees (2006)',
+              },
+              {
+                value: 'efficacy_only',
+                label: 'Interim for efficacy only (early stop for overwhelming benefit)',
+                commits:
+                  'Alpha spending across the looks and an independent DMC, as above, with no futility stop. A trial stopped early has fewer participants exposed for less time, so the safety database and the secondary endpoints are thinner than planned, and the treatment-effect estimate may be biased upward.',
+                authority: 'ICH E9 (1998) Section 4.5; FDA Guidance: Adaptive Designs for Clinical Trials of Drugs and Biologics (2019)',
+              },
+              {
+                value: 'futility_only',
+                label: 'Interim for futility only',
+                commits:
+                  'Pre-specify the futility criterion and its timing. A non-binding rule leaves the Type I error controlled whether or not it is followed. A binding rule may allow a less stringent final boundary, but then the trial must stop when the rule is met. An independent DMC reviews the unblinded results against the rule and recommends to the sponsor. The trial cannot stop early for efficacy.',
+                authority: 'ICH E9 (1998) Section 4.5; FDA Guidance: Adaptive Designs for Clinical Trials of Drugs and Biologics (2019)',
+              },
+              {
+                value: 'safety_only',
+                label: 'Unblinded comparative safety review by a DMC, with no efficacy or futility test',
+                commits:
+                  'A DMC charter naming the safety data reviewed, how often, and the criteria for recommending modification or termination. Where no formal efficacy comparison is made and the protocol states the trial will not stop for benefit, no Type I error is ordinarily allocated to the review. Because it compares arms, it is still an interim analysis under E9, and it should be planned and documented.',
+                authority:
+                  'ICH E9 (1998) Sections 4.5 and 4.6; FDA Guidance: Establishment and Operation of Clinical Trial Data Monitoring Committees (2006)',
+              },
+              {
+                value: 'none',
+                label: 'No interim analysis: one final analysis',
+                commits:
+                  'The trial runs to its planned completion whatever the accumulating efficacy or futility data show. Safety is still monitored under the safety plan and expedited safety reporting (ICH E2A; for a trial under a US IND, 21 CFR 312.32). AnA will ask you to record in the protocol why a fixed design is preferred.',
+                authority:
+                  'ICH E9 (1998) Section 4.5, which sets out how a planned interim analysis is pre-specified and requires none; ICH E2A (1994); 21 CFR 312.32',
+              },
+              {
+                value: 'not_defined',
+                label: 'Not decided yet',
+                commits:
+                  'The interim plan is open. If any interim analysis will be made, E9 expects the protocol to state its schedule, or at least the considerations that will govern it, before the trial starts. AnA keeps the finding open until this is decided.',
+                authority: 'ICH E9 (1998) Section 4.5',
+              },
+            ],
+            allowOther: { prompt: 'Describe the interim plan, or why the design has none, in your own words.' },
           },
           {
             id: 'analysis_populations',
@@ -1525,7 +1749,8 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
               { value: 'breakthrough_therapy', label: 'Breakthrough Therapy' },
               { value: 'fast_track', label: 'Fast Track' },
               { value: 'priority_review', label: 'Priority Review' },
-              { value: 'orphan_drug', label: 'Orphan Drug' },
+              /* 2026-11-02 (S4): 'orphan_drug' removed. The designation is
+                 asked once, with its positions, under study_basics. */
               {
                 value: 'rmat',
                 label: 'RMAT (Regenerative Medicine Advanced Therapy)',
@@ -1541,7 +1766,7 @@ export function createProtocolDevelopmentFlow(): FlowDefinition {
               { value: 'none', label: 'None' },
               { value: 'prime', label: 'PRIME (Priority Medicines)' },
               { value: 'conditional_ma', label: 'Conditional Marketing Authorization' },
-              { value: 'orphan', label: 'Orphan Medicinal Product' },
+              /* 2026-11-02 (S4): 'orphan' removed; eu_orphan_designation asks it. */
               { value: 'atmp', label: 'ATMP (Advanced Therapy Medicinal Product)' },
             ],
           },

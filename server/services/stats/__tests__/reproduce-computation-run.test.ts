@@ -30,6 +30,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  latestRunFor,
   reproduceComputationRun,
   SAMPLE_SIZE_METHOD,
 } from '../computation-runs';
@@ -162,5 +163,24 @@ describe('what it will not claim', () => {
     // The integrity facts still hold — they do not depend on a recompute.
     expect(r.inputsIntact).toBe(true);
     expect(r.outputsIntact).toBe(true);
+  });
+});
+
+/**
+ * The run a screen asks about (R1, 2026-11-06). The design card names the stored run behind its planned N, so the
+ * reproduce route has a caller. The read is scoped to the organization, the design's row and the purpose.
+ */
+describe('latestRunFor, the run behind a design\u2019s figure', () => {
+  it('returns the run id, when it was recorded, and its stored outputs', async () => {
+    const outputs = canonicalOutputs();
+    const { calls, exec } = execFor([{ id: '12', created_at: new Date('2026-11-06T09:30:00Z'), outputs }]);
+    const run = await latestRunFor(exec, 7, 3, 'study-design:planned-sample-size');
+    expect(run).toEqual({ runId: 12, recordedAt: '2026-11-06T09:30:00.000Z', outputs });
+    expect(calls[0]).toEqual([7, 3, 'study-design:planned-sample-size']);
+  });
+
+  it('says there is none when no run was stored', async () => {
+    const { exec } = execFor([]);
+    expect(await latestRunFor(exec, 7, 3, 'study-design:planned-sample-size')).toBeNull();
   });
 });

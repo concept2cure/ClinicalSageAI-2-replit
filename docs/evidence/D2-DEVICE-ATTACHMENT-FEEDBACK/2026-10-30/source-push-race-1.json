@@ -1,0 +1,51 @@
+{
+  "rejected_candidate": "d744d42bf56d66986ca09f554b8aa3af6b5abdc5",
+  "normal_gate_result": {
+    "passed": true,
+    "typescript_errors": 0,
+    "typescript_baseline": 0
+  },
+  "push_result": "rejected concurrent ref compare-and-swap, exit1; no source accepted",
+  "push_log": "source-push-race-1.txt",
+  "previous_remote": "4f92b436430c7881df67b5b72cf3d0db96d39c71",
+  "new_canonical_base": "10b940486934007ddbed16c70658284dd5f722bb",
+  "incoming_commits": 5,
+  "incoming_paths": 69,
+  "incoming_source_paths": [
+    "scripts/ectd/qualify-ectd.ts",
+    "server/services/ectd/external-validator/__tests__/external-validator.test.ts",
+    "server/services/ectd/external-validator/index.ts",
+    "server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts",
+    "server/services/ectd/qualification/__tests__/qualification.test.ts",
+    "server/services/ectd/qualification/outcome.ts",
+    "server/services/ectd/qualification/qualify.ts"
+  ],
+  "incoming_preservation_mismatches": [],
+  "work_order_conflict": "resolved; both adjacent rows and every canonical row retained verbatim",
+  "prior_publication_inputs_unchanged": 62,
+  "browser_inputs_unchanged": 36,
+  "incoming_tests": {
+    "passed": 48,
+    "skipped": 6,
+    "failures": 0,
+    "suites": 3,
+    "log": "race-integration-tests.txt",
+    "skip_reason": "Six existing real-xmllint controls are conditionally skipped because xmllint is absent; no native eCTD qualification claimed. Existing incoming owner qualification retains its original attribution."
+  },
+  "server_and_audit_verifier_build": {
+    "exit_code": 0,
+    "log": "race-server-build.txt"
+  },
+  "new_publication_input_manifest": "race-publication-inputs.json",
+  "new_publication_inputs": 69,
+  "next_push": "pending all normal gates",
+  "independent_review": {
+    "verdict": "approved; no further attachment/browser execution requested",
+    "reviewer": "device_feedback_contract",
+    "verified_publication_pins": 62,
+    "verified_browser_pins": 36,
+    "canonical_work_order_rows_retained_verbatim": 339,
+    "unresolved_conflicts": 0,
+    "source_delta": "exactly expected five client paths only; no server/shared/scripts/package difference from current origin"
+  }
+}

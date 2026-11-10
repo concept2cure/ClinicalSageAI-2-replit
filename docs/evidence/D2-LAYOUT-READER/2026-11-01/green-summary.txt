@@ -1,0 +1,21 @@
+ ✓ extractDocumentTextLayout.test.ts > Vault ingestion reads a PDF with the layout reader when the deployment turned it on > a PDF asked for with layout is the reader's reading: its tables cell by cell, its rows read as tables
+ ✓ extractDocumentTextLayout.test.ts > Vault ingestion reads a PDF with the layout reader when the deployment turned it on > the upload request asks for it too
+ ✓ extractDocumentTextLayout.test.ts > Vault ingestion reads a PDF with the layout reader when the deployment turned it on > a reader that refuses the file leaves the platform's own reading, and says why
+ ✓ extractDocumentTextLayout.test.ts > Vault ingestion reads a PDF with the layout reader when the deployment turned it on > an unreachable reader is said, never silent
+ ✓ extractDocumentTextLayout.test.ts > the reader is reached only where it was admitted > with the flag off, nothing is sent to the reader and nothing is said
+ ✓ extractDocumentTextLayout.test.ts > the reader is reached only where it was admitted > a caller that does not ask for layout (a chat upload, a review) never reaches it
+ ✓ docling-client.test.ts > a DoclingDocument, as the platform reads it > reads five pages in reading order, each page's span verified, each heading a section
+ ✓ docling-client.test.ts > a DoclingDocument, as the platform reads it > keeps each table's cells, and writes its rows as tab-separated lines the Vault chunker reads as a table
+ ✓ docling-client.test.ts > a DoclingDocument, as the platform reads it > leaves page headers, page footers and other furniture out of the text
+ ✓ docling-client.test.ts > the client speaks docling-serve's v1 file endpoint > sends the file as a multipart form to /v1/convert/file, asks for JSON and no OCR, with the deployment's key
+ ✓ docling-client.test.ts > the client speaks docling-serve's v1 file endpoint > sends no key header when the deployment set none
+ ✓ docling-client.test.ts > the client speaks docling-serve's v1 file endpoint > a refused key, a failed conversion, an unreachable reader and a slow one are each refused with the reason
+ ✓ docling-client.test.ts > the client speaks docling-serve's v1 file endpoint > the intake pipeline's parse() returns the document's text and sections from a real reader
+ ✓ vault-inline-extraction.test.ts > the request reads within its budget > reads a born-digital file in the request
+ ✓ vault-inline-extraction.test.ts > the request reads within its budget > leaves a file over the size cap without reading it
+ ✓ vault-inline-extraction.test.ts > the request reads within its budget > leaves a read that outlasts the time budget, and does not wait for it
+ ✓ vault-inline-extraction.test.ts > the request reads within its budget > leaves what needs OCR
+ ✓ vault-inline-extraction.test.ts > the request reads within its budget > records a read that throws as a failure, with its reason
+ ✓ vault-inline-extraction.test.ts > extractDocumentText with ocr: false > defers a PDF with no text layer and an image, and reads text as before
+ Test Files  3 passed (3)
+      Tests  19 passed (19)

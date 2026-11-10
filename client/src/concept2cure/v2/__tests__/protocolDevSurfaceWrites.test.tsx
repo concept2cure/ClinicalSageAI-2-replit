@@ -75,7 +75,8 @@ const DOC = {
     },
   },
   amendments: [], deviations: [],
-  reviews: [{ id: '5', reviewer: 'Dr Iyer', role: 'scientific', status: 'assigned', disposition: '', dueDate: '2026-10-01', comments: [] }],
+  reviews: [{ id: '5', reviewer: 'Dr Iyer', role: 'scientific', status: 'assigned', disposition: '', dueDate: '2026-10-01' }],
+  reviewComments: [{ id: '41', sec: '9', sev: 'blocking', text: 'Clarify the SAP', resolved: false }, { id: '42', sec: '5.2', sev: 'minor', text: 'Name the comparator', resolved: true }],
   consent: [{ id: '90', el: 'Statement that the study involves research', key: 'research_statement', required: true, present: true }],
   consentForm: { id: '4', title: 'Main consent', version: '1.0', status: 'draft', formsLinked: 1 },
   completenessFindings: [],
@@ -597,5 +598,28 @@ describe('a review assigned to someone else says why it cannot be signed (GA-7)'
     expect(btn.hasAttribute('disabled')).toBe(false);
     expect(btn.getAttribute('aria-describedby')).toBeNull();
     expect(screen.queryByText(REASON_TEXT)).toBeNull();
+  });
+});
+
+describe('reviews — leave a comment and resolve one (R1: routes with no caller until now)', () => {
+  it('leaves a comment through the comments route, then re-reads the protocol', async () => {
+    await openTab(/Reviews/); const before = reads();
+    fireEvent.click(await screen.findByRole('button', { name: /Leave a comment/ }));
+    await completeDrawer({ '^Comment': 'Define the per-protocol population', 'Section': '9.3', 'Reason for change': REASON }, /Leave comment/);
+    await waitFor(() => expect(lastWrite()).toEqual(['POST', '/api/protocol-reviews/documents/2/comments',
+      { comment: 'Define the per-protocol population', sectionRef: '9.3', severity: 'minor', reason: REASON }]));
+    await waitFor(() => expect(reads()).toBeGreaterThan(before));
+  });
+  it('offers Resolve on the open comment only, and resolves it through the resolve route', async () => {
+    await openTab(/Reviews/); const resolve = await screen.findAllByRole('button', { name: /^Resolve comment/ });
+    expect(resolve.map((b) => b.getAttribute('aria-label'))).toEqual(['Resolve comment: Clarify the SAP']);
+    fireEvent.click(resolve[0]);
+    await completeDrawer({ 'Reason for change': REASON }, /^Resolve comment$/);
+    await waitFor(() => expect(lastWrite()).toEqual(['PATCH', '/api/protocol-reviews/comments/41/resolve', { reason: REASON }]));
+  });
+  it('refuses a short reason in the browser: nothing is sent', async () => {
+    await openTab(/Reviews/); fireEvent.click(await screen.findByRole('button', { name: /Leave a comment/ }));
+    await completeDrawer({ '^Comment': 'Too short a reason', 'Reason for change': 'short' }, /Leave comment/);
+    await new Promise((r) => setTimeout(r, 50)); expect(apiRequest.mock.calls.some((c) => String(c[1]).endsWith('/comments'))).toBe(false);
   });
 });

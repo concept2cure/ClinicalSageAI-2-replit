@@ -1,0 +1,150 @@
+{
+  "head": "4b7798ea1f1a1eb3423f73e2b40d6e02171db14c",
+  "tree": "650876f533e14b79de46069c014fc7697af3a9f8",
+  "inputs": [
+    {
+      "path": "client/src/concept2cure/v2/editor/AssemblySourcesNotice.tsx",
+      "bytes": 2767,
+      "sha256": "ebe11e523a8ffabf2ca3e66956ec112953d5d65115390955dd17abf8f1b34607",
+      "gitBlob": "c102f17fae3990017b3630d600f6ed6afc5bb7f6"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/DataRoomSourcesPanel.tsx",
+      "bytes": 11539,
+      "sha256": "556fbff1f4ced7ccae6c74b364951b824c70583b187135acb7c9d21e79274d09",
+      "gitBlob": "eb50c0f11ccd5213d33cf0ed02b93eb4bac6f28f"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/SavedAssemblySourcesNotice.tsx",
+      "bytes": 2951,
+      "sha256": "206d89524ae901610d4f8561ffc7176aff10cfa47593ae946f8f8e5af57c9fcf",
+      "gitBlob": "0e6ff2f98b675e8d824a0cb5a1faaec6e44eec8d"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/SourceCatalogLine.tsx",
+      "bytes": 2873,
+      "sha256": "1afbc32c8a5cb86328f500e5c4056e6537c0d0f1791b971475a34153643814a3",
+      "gitBlob": "9c5d03f5ffd60ffaefce7b66cd35d6bb3f8fb95b"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/projectSourceCatalog.ts",
+      "bytes": 4288,
+      "sha256": "d6327d96c7505835687c9e42888c947de6753827c88d7fb6568b89f337d02197",
+      "gitBlob": "e9bbec5e05409e0dc844bddc134bda38d7e9c48e"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/useProjectSourceCatalog.ts",
+      "bytes": 6466,
+      "sha256": "115b249479cadb9b3c4a90c8f5a4fc9269aac22c65f9bdb59863533bd2c9bd02",
+      "gitBlob": "227d6d0c2669ea5bd1bf764a2f2a5a165e1723bc"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/QualityModule.tsx",
+      "bytes": 2729,
+      "sha256": "1ddf0b66211151611d355025e2334405bdbb898518a91dbc0aaa0e2c6e79d3e5",
+      "gitBlob": "56a7fec1b2e8cf0695c3aa54c3152dc6c05ea179"
+    },
+    {
+      "path": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+      "bytes": 139651,
+      "sha256": "5d53933137acdc48da1fd61d6ca8bc5e54eb72b6f900ccd6deffd931fb890d83",
+      "gitBlob": "f50776e82d53c0d58f09352484a47a2e30db79b5"
+    },
+    {
+      "path": "client/src/concept2cure/v2/fixtures/task-board-data.ts",
+      "bytes": 6282,
+      "sha256": "550abe8b93fb90aa64cbd4e299f7ca58a35135fdde1c63ef16f77e4566b4ede4",
+      "gitBlob": "6b5b0e09c2c518029ee21fe41a7ba92c287c27bc"
+    },
+    {
+      "path": "client/src/concept2cure/v2/navParams.ts",
+      "bytes": 7104,
+      "sha256": "8d97064e17e362ae35285f6ae29f873aa5a446d9dfe6603e2c37a6a0c6c851ec",
+      "gitBlob": "75ada28448ba76eae1735eefbc1cfa3dbc08b14b"
+    },
+    {
+      "path": "client/src/concept2cure/v2/shellProject.ts",
+      "bytes": 17949,
+      "sha256": "f3eb25c1e08b3fff094c0b7aa468084dd4caa7d0ca48f8f582fbe670f7c7676e",
+      "gitBlob": "909e4cce7ad7c35e430a1679a114c41d107a208e"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/authoringCurrentRead.ts",
+      "bytes": 3869,
+      "sha256": "eeb1c7f6670a9372216bbb844bc11f52632e74e127260a3e9a29d50586a657d7",
+      "gitBlob": "93ad8226bd095ee6ce82b7d6e050efedaf3ba9a5"
+    },
+    {
+      "path": "client/src/services/portal/authService.tsx",
+      "bytes": 55628,
+      "sha256": "959331a8300594b1d1d7ff74fa75518310ccfded283b3a69564b9bad3aa56b54",
+      "gitBlob": "50ef15bf0f6fd8684fb0abb8ad3978e2f85dfa70"
+    },
+    {
+      "path": "shared/types/notification-navigation.ts",
+      "bytes": 4825,
+      "sha256": "15a4977beeca7e063a79b841ef2bf139d220642a832b1d4e449d1b6ccc829fc8",
+      "gitBlob": "f16a03c2ed1337ea061c476fd038eaefe4c88493"
+    },
+    {
+      "path": "shared/authoring/assembly-sources.ts",
+      "bytes": 5291,
+      "sha256": "40ee3f72ee20ab68c74bed33b84da837a22aecfe37eb5d40abb660475263749c",
+      "gitBlob": "8b5708a316363db175605f7ac2bc8a0002947a4f"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/qualityCoreHandoff.test.tsx",
+      "bytes": 3786,
+      "sha256": "d6d1af2c9d1522fab3859764b57596f3ba1311b7184ca1bdea1061dbedfbaf5f",
+      "gitBlob": "55713c32277694938bc4dd22a1e06d9a8c93c6ce"
+    },
+    {
+      "path": "client/src/concept2cure/v2/__tests__/taskBoardQualitySource.test.tsx",
+      "bytes": 6046,
+      "sha256": "ac2755845e06f90f260a9666e3590b0f78472cef2797874edb4914fbb364c107",
+      "gitBlob": "b0e870832031439cad631c92558d6703a52d5dff"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/sourceAssemblyEntry.test.tsx",
+      "bytes": 19728,
+      "sha256": "e5ccdff9cf656113cab3a8a182a1fc9033098df6c641fc9948d152c42435d8de",
+      "gitBlob": "3fdb66397f7154965d97ad971dc593150b72115e"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/sourceUiRules.test.tsx",
+      "bytes": 6372,
+      "sha256": "fffc6f9efc3a4acb5b2d6175c10aa164aa3e2b12fb988f16952528c0fd05ec44",
+      "gitBlob": "3a45d074c846b410da9158b34a5f4b99f48aef4e"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/savedAssemblySources.test.tsx",
+      "bytes": 22073,
+      "sha256": "cc1ba192337e3349eb306a68c84fb67a7024c9ba216c78d0df894d4f7df3a0de",
+      "gitBlob": "6e265f5911888849843f872eb18e5abcfecfe0b0"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx",
+      "bytes": 23495,
+      "sha256": "22edd1e52a9f771d84c9b62991c91b8226c46f68ab8cb3a9a86023701d744a33",
+      "gitBlob": "37fbc4fa99720a43909fb2c14bccc5712417bafa"
+    },
+    {
+      "path": "client/src/concept2cure/v2/editor/__tests__/projectSourceCatalog.test.tsx",
+      "bytes": 6288,
+      "sha256": "dbb5302850f8e19a751b2413b0cb69cfdc173df9f63069089a27534f37f873fb",
+      "gitBlob": "0df50d0845c5190bce3f99ec736f2d246e031181"
+    },
+    {
+      "path": "tests/setup.ts",
+      "bytes": 17904,
+      "sha256": "eb6b014829c2cdb10149e70b92a9b82f39642472217ee481224777733ec48ff4",
+      "gitBlob": "e127691f615afa52ea3d9f2191183247a05c6584"
+    },
+    {
+      "path": "vitest.config.ts",
+      "bytes": 3983,
+      "sha256": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d",
+      "gitBlob": "8935bc6c016ffc6bbfbb41cb54e2f5220f7f2215"
+    }
+  ]
+}

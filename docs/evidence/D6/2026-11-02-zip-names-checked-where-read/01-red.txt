@@ -1,0 +1,49 @@
+# The new cases against safeZip as on trunk at a9202589 (only the test file changed). 2026-11-02T04:20:09Z
+# npx vitest run server/services/archive
+ ✓ safe-zip.test.ts > what the directory declares > admits an ordinary archive and lists its entries without inflating them 23ms
+ ✓ safe-zip.test.ts > what the directory declares > refuses too many entries, before reading any of them 7ms
+ ✓ safe-zip.test.ts > what the directory declares > refuses a declared total over the limit 5ms
+ ✓ safe-zip.test.ts > what the directory declares > refuses an entry above the size floor that claims more than the ratio 23ms
+ ✓ safe-zip.test.ts > what the directory declares > refuses a name that is absolute, names a drive or climbs out 3ms
+ ✓ safe-zip.test.ts > what the directory declares > refuses an encrypted entry and an unknown compression method 1ms
+ ✓ safe-zip.test.ts > what the directory declares > refuses what it cannot read, rather than passing it on 1ms
+ ✓ safe-zip.test.ts > what each entry actually expands to > refuses an entry that inflates past the size its header declares 6ms
+ ✓ safe-zip.test.ts > what each entry actually expands to > counts overlapping entries that share one compressed body, the non-recursive bomb 2ms
+ × safe-zip.test.ts > the name a reader uses is the name that was checked (2026-11-02) > refuses a local header naming a file outside the archive that its directory names harmlessly 10ms
+ × safe-zip.test.ts > the name a reader uses is the name that was checked (2026-11-02) > refuses a local header naming another file, even a harmless one 2ms
+ ✓ safe-zip.test.ts > the name a reader uses is the name that was checked (2026-11-02) > admits headers that differ only in the backslash a Windows tool wrote in one of them 1ms
+ × safe-zip.test.ts > the name a reader uses is the name that was checked (2026-11-02) > refuses a Unicode path outside the archive 3ms
+ × safe-zip.test.ts > the name a reader uses is the name that was checked (2026-11-02) > refuses a Unicode path naming another file 2ms
+ × safe-zip.test.ts > the name a reader uses is the name that was checked (2026-11-02) > refuses a Unicode path that climbs out, which JSZip would resolve and read 1ms
+ ✓ safe-zip.test.ts > the name a reader uses is the name that was checked (2026-11-02) > admits a Unicode path that names the file as its directory does 1ms
+ ✓ safe-zip.test.ts > ZIP64 > reads a ZIP64 directory and its entries 10ms
+ ✓ safe-zip.test.ts > the ZIP64 extra field > reads an entry's sizes from it when the directory marks them 0xFFFFFFFF 3ms
+ ✓ safe-zip.test.ts > the defaults > are the work order’s: 10,000 entries, 512 MiB, 100:1 above 1 MiB 0ms
+ ✓ archive-limit-call-sites.test.ts > an upload is bounded before it is scanned or read (assertUploadSafe) > refuses a bomb DOCX with 422 ARCHIVE_LIMITS_EXCEEDED 75ms
+ ✓ archive-limit-call-sites.test.ts > an upload is bounded before it is scanned or read (assertUploadSafe) > refuses a "Word container" whose directory cannot be read, rather than handing it on 1ms
+ ✓ archive-limit-call-sites.test.ts > an upload is bounded before it is scanned or read (assertUploadSafe) > admits an ordinary DOCX 4ms
+ ✓ archive-limit-call-sites.test.ts > template extraction (extractTemplateFromFile) > refuses a bomb DOCX before it inflates 3109ms
+ ✓ archive-limit-call-sites.test.ts > template extraction (extractTemplateFromFile) > still reads an ordinary DOCX 6ms
+ ✓ archive-limit-call-sites.test.ts > document text extraction (extractDocumentText) > reads no text from a bomb DOCX, and never hands it to the DOCX reader 143ms
+ ✓ archive-limit-call-sites.test.ts > document text extraction (extractDocumentText) > still reads an ordinary DOCX 65ms
+ ✓ archive-limit-call-sites.test.ts > eCTD package validation (validateEctdPackage) > refuses a caller-supplied bomb package 414ms
+ ✓ archive-limit-call-sites.test.ts > eCTD package validation (validateEctdPackage) > still validates an ordinary package, and a package this server assembled is not bounded by an upload limit 490ms
+ ✓ archive-limit-call-sites.test.ts > legacy import detection (detectArchive) > reports a bomb archive as refused, reading none of its files 340ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+TypeError: .toMatch() expects to receive a string, but got undefined
+TypeError: .toMatch() expects to receive a string, but got undefined
+TypeError: .toMatch() expects to receive a string, but got undefined
+TypeError: .toMatch() expects to receive a string, but got undefined
+ Test Files  1 failed | 1 passed (2)
+      Tests  5 failed | 24 passed (29)
+
+# The reader's entry point, readFiledSequenceArchive, on a crafted upload, with trunk's safeZip (red) and this change's (green). 2026-11-02T04:24:56Z
+## trunk's safeZip
+ ✓ filed-sequence-reader-absolute-entry.test.ts > an absolute zip entry name > belongs to no sequence, and the archive is read 28ms
+ × filed-sequence-reader-absolute-entry.test.ts > an upload that names /x only in a local header (2026-11-02) > is refused by safeZip before the reader reads it 33ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 1 passed (2)
+## this change's safeZip
+ ✓ filed-sequence-reader-absolute-entry.test.ts > an absolute zip entry name > belongs to no sequence, and the archive is read 33ms
+ ✓ filed-sequence-reader-absolute-entry.test.ts > an upload that names /x only in a local header (2026-11-02) > is refused by safeZip before the reader reads it 15ms
+      Tests  2 passed (2)

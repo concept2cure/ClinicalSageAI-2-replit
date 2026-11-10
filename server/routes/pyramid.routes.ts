@@ -53,13 +53,23 @@ import { authMiddleware } from '../auth.js';
 import { enforceTenantLifecycle } from '../middleware/tenantLifecycleGuard.js';
 import { ok, clientError } from '../lib/api-response.js';
 import { createFeatureStore } from '../utils/feature-persistence.js';
+import { requestDb, requestPgClient } from '../db/requestDb';
+import { ProjectAdmissionRefusal, requireProjectAdmission } from './c2c/project-access';
+import { isSameSubmissionType } from '@shared/regulatory/submission-type-bridge';
+import { getTimeline } from '../services/market-specs/regulatory-timelines.js';
 import {
   getAllSupportedTypes,
   getPyramidForProject,
+  backSchedule,
+  ScheduleError,
+  phaseGate,
+  scheduleSummary,
+  type BackSchedule,
   type SubmissionType,
   type SubmissionPyramid,
   type PyramidPhase,
   type PyramidTask,
+  type TaskStatus,
 } from '../../services/regulatory/SubmissionPyramidEngine.js';
 import {
   getAvailableGlobalSubmissions,
@@ -106,6 +116,8 @@ interface PyPhase {
   name: string;
   order: number;
   weeks?: number;
+  /** The task that completes the phase (phaseGate): the workstream's milestone, and whose owner leads it. */
+  gate?: string;
 }
 
 interface PyPyramid {
@@ -218,8 +230,10 @@ function adaptTask(task: PyramidTask): PyTask {
   return out;
 }
 
-function adaptPhase(phase: PyramidPhase): PyPhase {
+function adaptPhase(phase: PyramidPhase, pyramid: SubmissionPyramid): PyPhase {
   const out: PyPhase = { id: phase.id, name: phase.name, order: phase.order };
+  const gate = phaseGate(pyramid, phase.id);
+  if (gate) out.gate = gate;
   // Only IF the engine ever carries a real week estimate — never fabricated.
   if (typeof phase.estimatedWeeks === 'number') out.weeks = phase.estimatedWeeks;
   return out;
@@ -231,7 +245,7 @@ function adaptPyramid(pyramid: SubmissionPyramid): PyPyramid {
     type: pyramid.type,
     label: meta?.label ?? String(pyramid.type),
     hours: pyramidHours(pyramid),
-    phases: pyramid.phases.map(adaptPhase),
+    phases: pyramid.phases.map((ph) => adaptPhase(ph, pyramid)),
     tasks: pyramid.tasks.map(adaptTask),
   };
 }
@@ -292,6 +306,13 @@ router.get(
   (_req: Request, res: Response) => ok(res, buildTypeList())
 );
 
+/* The project's pyramid (S11, founder decision P-82; THE_PROGRAM_2026-11-01.md §7.2): mounted here, before
+   '/pyramids/:type', so 'by-project' is never read as a submission type. The handlers are below the progress store. */
+router.get('/pyramids/by-project', authMiddleware, enforceTenantLifecycle, (req: Request, res: Response) => sendPortfolioLines(req, res));
+router.get('/pyramids/by-project/:ref', authMiddleware, enforceTenantLifecycle, (req: Request, res: Response) => sendProjectPyramid(req, res));
+router.patch('/pyramids/by-project/:ref/progress/:taskId', authMiddleware, enforceTenantLifecycle,
+  (req: Request, res: Response) => recordProjectTaskStatus(req, res));
+
 /** GET /pyramids/:type → PyPyramid (adapted). 404 on an unsupported type. */
 router.get(
   '/pyramids/:type',
@@ -318,8 +339,18 @@ router.get(
 // no DDL to become real in a deployment that already has project_memory_entries.
 const progressStore = createFeatureStore('pyramid_task_progress');
 
-/** The task statuses the surface's dropdown offers — the advisory's state machine. */
-const PY_TASK_STATUSES = new Set(['todo', 'in_progress', 'blocked', 'done']);
+/** The store's table is absent (42P01). Drizzle wraps the driver's error, so its code is on `cause`: reading only
+ *  `err.code` turned a deployment without project_memory_entries into a 500 instead of the honest
+ *  'not provisioned' answer (2026-11-04, the dev database the program-plan walk ran on). */
+function isUndefinedTable(err: unknown): boolean {
+  const e = err as { code?: string; cause?: { code?: string } } | null;
+  return e?.code === '42P01' || e?.cause?.code === '42P01';
+}
+
+/** The task statuses: the engine's own TaskStatus, which the surface's dropdown offers (PY_STATUS). Until
+ *  2026-11-01 this read 'in_progress' and had no 'review', so "In progress" and "In review" were refused. */
+const PY_TASK_STATUS_LIST: readonly TaskStatus[] = ['todo', 'in-progress', 'review', 'done', 'blocked'];
+const PY_TASK_STATUSES = new Set<string>(PY_TASK_STATUS_LIST);
 
 function progressOrgId(req: Request): number | null {
   const r = req as {
@@ -337,9 +368,9 @@ function matchType(raw: string): SubmissionType | null {
   return getAllSupportedTypes().find((t) => t === raw || t === raw.toUpperCase()) ?? null;
 }
 
-/** The org's stored progress row for one submission type, or null. */
-async function loadProgressRow(orgId: number, type: string) {
-  const rows = await progressStore.query(orgId, type);
+/** The org's stored progress row under one key (a submission type, or a project's key below), or null. */
+async function loadProgressRow(orgId: number, key: string) {
+  const rows = await progressStore.query(orgId, key);
   return rows[0] ?? null;
 }
 
@@ -359,7 +390,7 @@ router.get('/pyramids/:type/progress', authMiddleware, enforceTenantLifecycle, a
     // No recorded progress and an unreadable store are different claims, but
     // both render as "every task is todo" — so a broken read is reported, not
     // flattened into a clean board.
-    if ((err as { code?: string })?.code === '42P01') {
+    if (isUndefinedTable(err)) {
       return ok(res, { type: match, statuses: {}, pendingStore: true });
     }
     console.error('[pyramid] progress read failed:', err instanceof Error ? err.message : String(err));
@@ -410,7 +441,7 @@ router.patch('/pyramids/:type/progress/:taskId', authMiddleware, enforceTenantLi
 
     return ok(res, { type: match, taskId, status, statuses });
   } catch (err) {
-    if ((err as { code?: string })?.code === '42P01') {
+    if (isUndefinedTable(err)) {
       return res.status(503).json({
         error: { code: 'PROGRESS_STORE_UNPROVISIONED', message: 'The progress store is not provisioned in this deployment.' },
       });
@@ -419,6 +450,212 @@ router.patch('/pyramids/:type/progress/:taskId', authMiddleware, enforceTenantLi
     return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to record the task status.' } });
   }
 });
+
+// ─── The project's pyramid: its work breakdown, with this project's progress ──
+//
+// GET   /pyramids/by-project/:ref                    → { programId, type, label, pyramid, statuses, target, asOf, schedule } — or, for a
+//                                                       filing the engine has no pyramid for, { type: null, filing }
+// PATCH /pyramids/by-project/:ref/progress/:taskId   → record one task's status on this project
+//
+// Progress was kept per organisation and submission type, so two NDAs shared one board (THE_PROGRAM §6). Here it
+// is the project's: a row of the same store keyed on the program (subcategory 'project:<program uuid>:<type>'),
+// beside the per-type rows above, which stay readable as they are. :ref is the program UUID or its integer
+// project, admitted as the project's objective is (workspace, sharing, archive). The pyramid is the one its
+// recorded filing resolves to (shared/regulatory/submission-type-bridge.ts), never a guess: the exact catalogue
+// choice intake keeps in metadata.submissionTypeId (as serializeProgramDetail reads it), else program_type.
+
+const UUID_REF = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** The pyramid a recorded filing has: the supported type it resolves to, or null (fail closed). */
+export function pyramidTypeForFiling(recorded: string | null | undefined): SubmissionType | null {
+  const filing = String(recorded ?? '').trim();
+  if (!filing) return null;
+  return getAllSupportedTypes().find((t) => isSameSubmissionType(t, filing)) ?? null;
+}
+
+/** The store row's key for one project's progress over one pyramid. */
+export const projectProgressKey = (programId: string, type: SubmissionType) => `project:${programId.toLowerCase()}:${type}`;
+
+interface ProjectPyramidScope {
+  orgId: number; programId: string; filing: string | null; type: SubmissionType | null;
+  /** regulatory_programs.target_submission_date as YYYY-MM-DD (the date set at intake and in Project settings), or null. */
+  target: string | null;
+}
+
+type ScopeRefusal = { status: 403 | 404; message: string };
+
+/** The admitted project behind :ref, with its recorded filing and its pyramid. Answers the refusal itself and returns null. */
+async function projectPyramidScope(req: Request, res: Response, forWrite: boolean): Promise<ProjectPyramidScope | null> {
+  const scope = await resolveProjectPyramid(req, String(req.params.ref ?? '').trim(), forWrite);
+  if ('message' in scope) { clientError(res, scope.status, scope.message); return null; }
+  return scope;
+}
+
+/** The admitted project behind `ref`, in the session's organisation, or why not. An admission refusal is thrown. */
+async function resolveProjectPyramid(req: Request, ref: string, forWrite: boolean): Promise<ProjectPyramidScope | ScopeRefusal> {
+  const orgId = progressOrgId(req);
+  if (orgId === null) return { status: 403, message: 'Organization context required.' };
+  const { strictProjectRowForRef } = await import('../services/c2c/program-project-anchor.js');
+  const projectId = await strictProjectRowForRef(requestDb(req), { ref, orgId, context: 'pyramid-progress' });
+  if (projectId === null) return { status: 404, message: 'Project not found.' };
+  await requireProjectAdmission(req, String(projectId), forWrite,
+    UUID_REF.test(ref) ? { executor: requestPgClient(req), programId: ref.toLowerCase() } : undefined);
+  const { rows } = await requestPgClient(req).query(
+    `SELECT rp.id::text AS program_id, COALESCE(NULLIF(rp.metadata->>'submissionTypeId', ''), rp.program_type) AS filing,
+            to_char(rp.target_submission_date, 'YYYY-MM-DD') AS target
+       FROM projects p JOIN regulatory_programs rp ON rp.id = p.regulatory_program_id AND rp.organization_id = p.organization_id
+      WHERE p.id = $1 AND p.organization_id = $2`, [projectId, orgId]);
+  const row = rows[0] as { program_id?: string; filing?: string | null; target?: string | null } | undefined;
+  if (!row?.program_id) return { status: 404, message: 'This project has no program record.' };
+  return { orgId, programId: row.program_id, filing: row.filing ?? null, type: pyramidTypeForFiling(row.filing), target: row.target ?? null };
+}
+
+function projectPyramidRefusal(res: Response, err: unknown, doing: string) {
+  if (err instanceof ProjectAdmissionRefusal) {
+    return res.status(err.status).json({ error: { code: err.code, message: err.message } });
+  }
+  if (isUndefinedTable(err) && doing === 'record') {
+    return res.status(503).json({ error: { code: 'PROGRESS_STORE_UNPROVISIONED', message: 'The progress store is not provisioned in this deployment.' } });
+  }
+  console.error(`[pyramid] project progress ${doing} failed:`, err instanceof Error ? err.message : String(err));
+  return res.status(500).json({ error: { code: 'INTERNAL', message: doing === 'read'
+    ? "This project's plan could not be read." : 'The task status was not recorded. Nothing was changed.' } });
+}
+
+/** Today, UTC, YYYY-MM-DD: the day the schedule is read against. */
+const todayIso = () => new Date().toISOString().slice(0, 10);
+
+/** The project's schedule (S11 step 3): every task's start and due date, back-scheduled by the engine from the target
+ *  date along the pyramid's dependencies. No target recorded is said (null), never a date assumed. */
+function projectSchedule(type: SubmissionType, target: string | null): { schedule: BackSchedule | null; scheduleRefusal?: string } {
+  if (!target) return { schedule: null };
+  try {
+    return { schedule: backSchedule(getPyramidForProject(type), target) };
+  } catch (err) {
+    if (err instanceof ScheduleError) return { schedule: null, scheduleRefusal: err.message };
+    throw err;
+  }
+}
+
+/** The project's recorded statuses. As for the per-type read: a missing store is said, a broken read is an error. */
+async function projectStatuses(scope: ProjectPyramidScope & { type: SubmissionType }): Promise<{ statuses: Record<string, string>; pendingStore: boolean }> {
+  try {
+    const row = await loadProgressRow(scope.orgId, projectProgressKey(scope.programId, scope.type));
+    return { statuses: (row?.statuses as Record<string, string>) ?? {}, pendingStore: false };
+  } catch (err) {
+    if (!isUndefinedTable(err)) throw err;
+    return { statuses: {}, pendingStore: true };
+  }
+}
+
+/** Review-clock pathways (server/services/market-specs/regulatory-timelines.ts) for the pyramids that have one. */
+const REVIEW_PATHWAY: Partial<Record<SubmissionType, string>> = {
+  '510K': '510k', DE_NOVO: 'de_novo', PMA: 'pma', NDA: 'fda_nda', BLA: 'fda_nda', MAA: 'eu_maa',
+};
+const addDays = (iso: string, days: number) => new Date(Date.parse(`${iso}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
+
+/**
+ * The agency's clock after the filing (THE_PROGRAM §8 item 4), from the engines that hold it, never a model: the
+ * published goals by pathway (regulatory-timelines.ts) and the IND's 30-day review from its own pyramid
+ * (phase8.submit, 21 CFR 312.40). Calendar days from the target date. Null where none is held (J-NDA, the IND's
+ * amendment, annual report and safety report) or no target is recorded.
+ */
+export function reviewClock(type: SubmissionType, target: string | null) {
+  if (!target) return null;
+  const pathway = REVIEW_PATHWAY[type];
+  const t = pathway ? getTimeline(pathway) : undefined;
+  if (t?.targetDecisionDays) {
+    const decision = t.milestones.find((m) => m.kind === 'decision');
+    return { authority: t.authority, basis: t.basis, days: t.targetDecisionDays, ends: addDays(target, t.targetDecisionDays),
+      label: decision?.label ?? 'Decision goal', caveat: t.caveat, clockStops: t.clockStops,
+      milestones: t.milestones.filter((m) => m.day && m.kind !== 'submission' && m.kind !== 'decision')
+        .map((m) => ({ label: m.label, day: m.day as number, date: addDays(target, m.day as number) })) };
+  }
+  const days = type === 'IND' ? getPyramidForProject('IND').tasks.find((x) => x.id === 'phase8.submit')?.timeline?.regulatoryDeadlineDays : undefined;
+  if (!days) return null;
+  return { authority: 'FDA', basis: '21 CFR 312.40', days, ends: addDays(target, days), label: 'Study may proceed',
+    caveat: 'The study may begin 30 days after FDA receives the IND, unless FDA places it on clinical hold.', clockStops: false, milestones: [] };
+}
+
+/**
+ * GET /pyramids/by-project?refs=<ref>,<ref>… → { asOf, lines: { [ref]: line } }: the portfolio line on Projects and
+ * the global schedule in Reporting & analytics
+ * (THE_PROGRAM §5, §9 step 6), one read for a page of cards. Each ref is admitted as the single read admits it; a
+ * project the person may not read, or that is not in their organisation, answers { unavailable: true } and nothing
+ * else, so the batch tells no more than the single read would.
+ */
+async function sendPortfolioLines(req: Request, res: Response) {
+  const refs = [...new Set(String(req.query.refs ?? '').split(',').map((r) => r.trim()).filter(Boolean))];
+  if (refs.length === 0 || refs.length > 100) return clientError(res, 400, 'Name 1 to 100 projects in refs.');
+  if (progressOrgId(req) === null) return clientError(res, 403, 'Organization context required.');
+  const asOf = todayIso();
+  const lines: Record<string, unknown> = {};
+  for (const ref of refs) lines[ref] = await portfolioLine(req, ref, asOf);
+  return ok(res, { asOf, lines });
+}
+
+async function portfolioLine(req: Request, ref: string, asOf: string) {
+  try {
+    const scope = await resolveProjectPyramid(req, ref, false);
+    if ('message' in scope) return { unavailable: true };
+    if (!scope.type) return { type: null, filing: scope.filing };
+    const { statuses, pendingStore } = await projectStatuses(scope as ProjectPyramidScope & { type: SubmissionType });
+    const { schedule } = projectSchedule(scope.type, scope.target);
+    // The global schedule in Reporting draws each project from this line (THE_PROGRAM §5): its filing, the work's
+    // start and the agency's clock, the same as the single read gives.
+    return { type: scope.type, filing: scope.filing, target: scope.target, start: schedule?.start ?? null,
+      reviewClock: reviewClock(scope.type, scope.target),
+      summary: scheduleSummary(getPyramidForProject(scope.type), schedule, statuses, asOf),
+      ...(pendingStore ? { pendingStore: true } : {}) };
+  } catch (err) {
+    if (err instanceof ProjectAdmissionRefusal) return { unavailable: true };
+    console.error('[pyramid] portfolio line failed:', err instanceof Error ? err.message : String(err));
+    return { unreadable: true };
+  }
+}
+
+async function sendProjectPyramid(req: Request, res: Response) {
+  try {
+    const scope = await projectPyramidScope(req, res, false);
+    if (!scope) return;
+    if (!scope.type) return ok(res, { programId: scope.programId, type: null, filing: scope.filing });
+    const { statuses, pendingStore } = await projectStatuses(scope as ProjectPyramidScope & { type: SubmissionType });
+    const pyramid = adaptPyramid(getPyramidForProject(scope.type));
+    return ok(res, { programId: scope.programId, type: scope.type, label: pyramid.label, filing: scope.filing, pyramid, statuses,
+      target: scope.target, asOf: todayIso(), ...projectSchedule(scope.type, scope.target),
+      reviewClock: reviewClock(scope.type, scope.target),
+      ...(pendingStore ? { pendingStore: true } : {}) });
+  } catch (err) {
+    return projectPyramidRefusal(res, err, 'read');
+  }
+}
+
+async function recordProjectTaskStatus(req: Request, res: Response) {
+  const status = String((req.body ?? {}).status ?? '');
+  if (!PY_TASK_STATUSES.has(status)) {
+    return clientError(res, 400, `status must be one of: ${[...PY_TASK_STATUSES].join(', ')}.`);
+  }
+  try {
+    const scope = await projectPyramidScope(req, res, true);
+    if (!scope) return;
+    if (!scope.type) return clientError(res, 409, `The engine has no work breakdown for this project's filing (${scope.filing ?? 'none recorded'}).`);
+    const taskId = String(req.params.taskId ?? '');
+    if (!adaptPyramid(getPyramidForProject(scope.type)).tasks.some((t) => t.id === taskId)) {
+      return clientError(res, 404, `No task ${taskId} in the ${scope.type} pyramid.`);
+    }
+    const key = projectProgressKey(scope.programId, scope.type);
+    const row = await loadProgressRow(scope.orgId, key);
+    const statuses: Record<string, string> = { ...((row?.statuses as Record<string, string>) ?? {}) };
+    if (status === 'todo') delete statuses[taskId];
+    else statuses[taskId] = status;
+    const payload = { type: scope.type, programId: scope.programId, statuses };
+    if (row) await progressStore.update(row.id, scope.orgId, payload);
+    else await progressStore.insert(scope.orgId, key, `Pyramid task progress — ${scope.type}, program ${scope.programId}`, payload);
+    return ok(res, { programId: scope.programId, type: scope.type, taskId, status, statuses });
+  } catch (err) {
+    return projectPyramidRefusal(res, err, 'record');
+  }
+}
 
 /** GET /global-pyramids → PyGlobalConfig[] (distinct canonical global configs). */
 router.get(

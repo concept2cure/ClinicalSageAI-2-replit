@@ -1,0 +1,41 @@
+# History searches for the deletion record (P-108 3(b)), run 2026-11-09 on this clone
+
+## 1. Every client commit that ever named the upload store
+$ git log --all --format='%h %ad %s' --date=short -S'ctd_onboarding_documents' -- client
+a811b0d83 2026-10-17 D2: step 4 safety net; readiness refuses the vault leaves freeze would refuse
+8e2d0bd98 2026-10-15 Board: release the P-32..P-35 decisions with their commits; claim the agency-questions build (D2)
+1bd3af0bc 2026-10-14 Show required submission deliverables using current authorized evidence
+
+What each added (the only client line, in all three):
+-- a811b0d83
++  return ['coauthor_documents', 'unified_documents', 'ctd_onboarding_documents', 'rendered_leaf_files', 'c2c_document_sections'].includes(String(value.table)) && value.keyKind === 'integer' && intege
+-- 8e2d0bd98
++  return ['coauthor_documents', 'unified_documents', 'ctd_onboarding_documents', 'rendered_leaf_files', 'c2c_document_sections'].includes(String(value.table)) && value.keyKind === 'integer' && intege
+-- 1bd3af0bc
++  return ['coauthor_documents', 'unified_documents', 'ctd_onboarding_documents', 'rendered_leaf_files', 'c2c_document_sections'].includes(String(value.table)) && value.keyKind === 'integer' && intege
+That line is SubmissionRequiredDeliverables.tsx's type guard on an evidence reference it reads. No client line ever sent the store as a placement's document_table.
+a811b0d83 and 8e2d0bd98 are root commits of this clone (no parents), so history before them is not in this clone; the founder's P-108 3(b) record says the store 'has no upload caller in any history'.
+
+## 2. Files deleted under an onboarding name, all history
+$ git log --all --diff-filter=D --format='%h %ad %s' --date=short -- '*onboarding*' '*Onboarding*'
+7df89f4f7 2026-10-16 chore: pin upstream tools and resolve verification gates
+ .../autoplan-preconfigured-onboarding-ar.test.ts   |   111 -
+ .../gstack/test/onboarding-moved-literals.test.ts  |    93 -
+Both are gstack tool tests, unrelated to the upload store.
+
+## 3. The doors that reach upsertLeaf with a document pointer, today
+$ grep -rn "ctd_onboarding_documents" server shared --include=*.ts | grep -v __tests__ (placement doors only)
+server/mcp/tools/governed.ts:43:    document_table: z.enum(['coauthor_documents', 'unified_documents', 'ctd_onboarding_documents', 'c2c_document_sections']).opt
+server/services/ana/submission-center-tool-defs.ts:953:    "Place a document into an eCTD sequence of the canonical submission core — create or update a submi
+REST takes the table through isPlaceableDocumentTable (server/routes/submissions.ts upsertLeafSchema); AnA forwards a string; MCP's enum names the store. All three call upsertLeaf, where the refusal is.
+
+## 4. The replacement, by path, and what proves it is reachable
+$ grep -rn VaultPlaceIntoSubmission client/src/concept2cure/v2/surfaces/Vault.tsx
+8:import { VaultPlaceIntoSubmission } from './VaultPlaceIntoSubmission';
+3284:        <VaultPlaceIntoSubmission
+$ ls client/src/concept2cure/v2/__tests__ | grep -i vaultPlace
+authoringVaultPlacementFlow.test.tsx
+vaultPlaceFromVault.test.tsx
+vaultPlaceIntoSubmission.test.tsx
+vaultPlaceIntoSubmissionDialog.test.tsx
+vaultPlaceOccupancy.test.tsx

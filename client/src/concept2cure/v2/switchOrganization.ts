@@ -19,7 +19,16 @@ export function captureOrganizationOwner(source?: OrganizationSource): Organizat
   try {
     if (!user || String(user.id) !== identity.userId || String(user.organizationId) !== identity.organizationId) throw new Error();
     const headers = capturedActorHeaders({ userId: Number(identity.userId), organizationId: Number(identity.organizationId) });
-    return { ...identity, headers, current: () => authService.getUser() === user && headers.Authorization === `Bearer ${getAuthToken()}` };
+    /* The same account by value, under the same bearer. Object identity was
+       wrong: Account re-reads /session on open, which hands back a new user
+       object for the same account, so every membership read was discarded as
+       "Your session has changed" (J5-02, 2026-11-06). A switch or sign-out
+       still changes the bearer or the ids, and is still caught. */
+    const sameAccount = () => {
+      const now = authService.getUser();
+      return !!now && String(now.id) === identity.userId && String(now.organizationId) === identity.organizationId;
+    };
+    return { ...identity, headers, current: () => sameAccount() && headers.Authorization === `Bearer ${getAuthToken()}` };
   } catch { throw new OrganizationSwitchFailure(ORGANIZATION_SESSION_CHANGED); }
 }
 export function requireOrganizationOwner(owner: OrganizationOwner): void {

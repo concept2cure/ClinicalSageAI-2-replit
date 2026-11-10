@@ -42,27 +42,26 @@ import { eq, and, ne } from 'drizzle-orm';
 import { concept2cureArtifacts } from '../../../shared/schema.js';
 import { createScopedLogger } from '../../utils/logger';
 
+/* ── The lexicon ──────────────────────────────────────────────────────────
+   The curated label→pattern table and its per-label numeric normalisation
+   moved to ./labelled-figures on 2026-11-01, unchanged: seven services read
+   figures through it, this module is only one of them, and a vocabulary
+   buried inside one of its own callers is part of why its narrowness went
+   unnoticed. Re-exported here so no caller moves, and so there stays exactly
+   one definition of each name. */
+export type { NumericalFact } from './labelled-figures';
+export {
+  compareDecimalsFor,
+  extractNumericalFacts,
+  numericValueOf,
+  roundToCompare,
+} from './labelled-figures';
+import { extractNumericalFacts } from './labelled-figures';
+import type { NumericalFact } from './labelled-figures';
+
 const logger = createScopedLogger('cross-artifact-consistency');
 
 export type DivergenceSeverity = 'critical' | 'high' | 'medium' | 'low';
-
-export interface NumericalFact {
-  /** The label or key this number is attached to (e.g. "sample size", "LSM difference"). */
-  readonly label: string;
-  /** The raw numeric value as it appears in text. */
-  readonly value: string;
-  /**
-   * The upper bound of a two-number fact (confidence interval, age range);
-   * `value` is then the lower bound. Undefined for single-number facts.
-   */
-  readonly upper?: string;
-  /** Optional unit if detected (%, mg, kg, etc.). */
-  readonly unit?: string;
-  /** The surrounding sentence or phrase for the reviewer to inspect. */
-  readonly context: string;
-  /** Position in the source text, useful for diffs. */
-  readonly offset: number;
-}
 
 export interface ConsistencyDivergence {
   readonly kind:
@@ -106,173 +105,6 @@ export interface ConsistencyReport {
   readonly notCompared?: 'invalid_project' | 'draft_too_short' | 'no_draft_facts';
   /** Set when the project held more artifacts than `maxArtifacts`; only that many were compared. */
   readonly truncated?: true;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// NUMERIC FACT EXTRACTION
-//
-// Regulatory prose tends to attach numbers to recognizable keys: n=, N=,
-// sample size, LSM, mean, median, p=, CI, dose, NOAEL, LOAEL, MRSD, etc.
-// We extract ONLY the labelled cases, not every integer in the text, because
-// free-standing numbers have too much false-positive risk for comparison.
-// ─────────────────────────────────────────────────────────────────────────────
-
-const LABELLED_NUMERIC_PATTERNS: Array<{ label: string; pattern: RegExp }> = [
-  { label: 'sample_size',     pattern: /\b(?:N|n|sample\s+size|enrolled|randomi[sz]ed)\s*[=:]\s*([0-9,]+)/gi },
-  { label: 'p_value',         pattern: /\bp\s*[<=]\s*(0?\.[0-9]+|[0-9]+(?:\.[0-9]+)?[eE]-?[0-9]+)/gi },
-  { label: 'confidence_interval', pattern: /\b(?:95|99)\s*%?\s*CI[:\s]*([-−]?[0-9.]+)\s*(?:to|,|-|–|—)\s*([-−]?[0-9.]+)/gi },
-  { label: 'lsm_difference',  pattern: /\bLSM\s+difference[:\s]*[-−]?([0-9.]+)\s*%?/gi },
-  { label: 'mean_change',     pattern: /\bmean\s+change\s+(?:from\s+baseline\s+)?(?:of\s+|[=:]\s*)[-−]?([0-9.]+)/gi },
-  { label: 'hba1c_reduction', pattern: /\bHbA1[cC]\s+reduction\s*(?:of\s+|[=:]\s*)[-−]?([0-9.]+)\s*%/gi },
-  { label: 'dose_mg',         pattern: /\b([0-9]+(?:\.[0-9]+)?)\s*mg\s+(?:once|twice|dose|daily|QD|BID|TID|QID)/gi },
-  { label: 'dose_kg',         pattern: /\b([0-9]+(?:\.[0-9]+)?)\s*mg\/kg\b/gi },
-  { label: 'noael',           pattern: /\bNOAEL\s*(?:of\s+|[=:]\s*)([0-9]+(?:\.[0-9]+)?)\s*(mg\/kg\/day|mg\/kg|mg|ug\/kg\/day)?/gi },
-  { label: 'mrsd',            pattern: /\bMRSD\s*(?:of\s+|[=:]\s*)([0-9]+(?:\.[0-9]+)?)\s*(mg|mg\/kg|ug)?/gi },
-  { label: 'shelf_life',      pattern: /\b([0-9]+)\s*[-‒–—]\s*month\s+shelf[- ]life\b/gi },
-  { label: 'duration_weeks',  pattern: /\b(?:at\s+week|week\s+|through\s+week\s+)([0-9]+)\b/gi },
-  { label: 'age_range',       pattern: /\bages?\s+([0-9]+)\s*(?:to|-|–)\s*([0-9]+)\s*(?:years?|yrs?)?/gi },
-  { label: 'batches',         pattern: /\b([0-9]+)\s+(?:of\s+[0-9]+\s+)?(?:pivotal\s+|registration\s+|validation\s+)?batches?\b/gi },
-  // ── Medical device / IVD quantities ──────────────────────────────────────
-  // Anchored on an explicit label + connector so a bare percentage is never
-  // captured. Clinical performance, analytical performance, submission
-  // identifiers, and risk metrics — the governed values device/IVD documents
-  // cite across the technical documentation, SE discussion, CER, and IFU.
-  { label: 'sensitivity',      pattern: /\b(?:clinical\s+)?sensitivity(?:\s*\([^)]*\))?\s*(?:of|was|is|=|:)\s*([0-9]{1,3}(?:\.[0-9]+)?)\s*%/gi },
-  { label: 'specificity',      pattern: /\b(?:clinical\s+)?specificity(?:\s*\([^)]*\))?\s*(?:of|was|is|=|:)\s*([0-9]{1,3}(?:\.[0-9]+)?)\s*%/gi },
-  { label: 'ppa',              pattern: /\b(?:positive\s+percent\s+agreement|PPA)(?:\s*\([^)]*\))?\s*(?:of|was|is|=|:)\s*([0-9]{1,3}(?:\.[0-9]+)?)\s*%/gi },
-  { label: 'npa',              pattern: /\b(?:negative\s+percent\s+agreement|NPA)(?:\s*\([^)]*\))?\s*(?:of|was|is|=|:)\s*([0-9]{1,3}(?:\.[0-9]+)?)\s*%/gi },
-  { label: 'lod',              pattern: /\b(?:LoD|limit\s+of\s+detection)\s*(?:of|was|is|=|:)\s*([0-9]+(?:\.[0-9]+)?)\s*(copies\/mL|IU\/mL|ng\/mL|pg\/mL|cfu\/mL|mg\/L|%)?/gi },
-  { label: 'lob',              pattern: /\b(?:LoB|limit\s+of\s+blank)\s*(?:of|was|is|=|:)\s*([0-9]+(?:\.[0-9]+)?)/gi },
-  { label: 'loq',              pattern: /\b(?:LoQ|limit\s+of\s+quantitation)\s*(?:of|was|is|=|:)\s*([0-9]+(?:\.[0-9]+)?)/gi },
-  { label: 'precision_cv',     pattern: /\b(?:CV|coefficient\s+of\s+variation)(?:\s*\([^)]*\))?\s*(?:of|was|is|=|:)\s*([0-9]+(?:\.[0-9]+)?)\s*%/gi },
-  { label: 'predicate_knumber', pattern: /\b(K[0-9]{6})\b/g },
-  { label: 'de_novo_number',   pattern: /\b(DEN[0-9]{6})\b/g },
-  { label: 'pma_number',       pattern: /\b(P[0-9]{6})\b/g },
-  { label: 'rpn',              pattern: /\bRPN\s*(?:of|was|is|=|:)\s*([0-9]+(?:\.[0-9]+)?)/gi },
-  // ── Trial-design and statistical-plan quantities ─────────────────────────
-  // Folded in from server/services/ana/dossierReconciliation.ts (deleted 2026-10-19),
-  // which mined the same kind of figure out of the same prose for the same reviewer
-  // finding. Its five labels had no counterpart here, and its enrolled-N prose form read
-  // what `sample_size` above could not: that pattern required an `=`, so "randomized 240
-  // patients" was invisible to it. The patterns are that module's, unchanged.
-  { label: 'sample_size',      pattern: /(?:enroll(?:ed|ment of)|randomi[sz]ed|accrued)\s+(?:a\s+total\s+of\s+)?([\d,]{1,9})\s+(?:patients|subjects|participants)/gi },
-  { label: 'sample_size',      pattern: /(?:sample\s+size|target\s+(?:enrol+ment|N)|total\s+N)\s*(?:of|=|:|\bis\b)?\s*([\d,]{1,9})\b/gi },
-  { label: 'sites',            pattern: /([\d,]{1,6})\s+(?:investigational\s+)?(?:sites|centers|centres)\b/gi },
-  { label: 'events',           pattern: /([\d,]{1,7})\s+(?:primary\s+)?(?:events|deaths)\b/gi },
-  { label: 'alpha',            pattern: /(?:alpha|type\s*I\s*error(?:\s*rate)?|significance\s+level)\s*(?:of|=|:|\bis\b)?\s*(0?\.\d{1,4})/gi },
-  { label: 'power',            pattern: /power\s*(?:of|=|:|\bis\b)?\s*((?:0?\.\d{1,4})|(?:\d{1,3})\s*%)/gi },
-  { label: 'hazard_ratio',     pattern: /(?:hazard\s+ratio|\bHR\b)\s*(?:of|=|:|\bwas\b|\bis\b)?\s*(\d?\.\d{1,4})/gi },
-  // From harmonize-engine.ts's inline copy (migrated 2026-10-19), which held these two.
-  { label: 'odds_ratio',       pattern: /(?:odds\s+ratio|\bOR\b)\s*(?:of|=|:|\bwas\b|\bis\b)?\s*(\d?\.\d{1,4})/gi },
-  { label: 'response_rate',    pattern: /(?:\bORR\b|response\s+rate|\bCR\s+rate)\s*(?:of|was|is|=|:)\s*(\d+(?:\.\d+)?)\s*%/gi },
-];
-
-/**
- * How a label's written value becomes a number, and at what precision two of them are the
- * same figure.
- *
- * This is the one place per-label numeric normalisation lives. Until 2026-10-19 three
- * modules each had their own, and a `power` of "90%" was 0.9 in one, the string "90" in
- * another, and never compared in the third. `dp` is the decimal places at which two
- * readings count as the same figure: an alpha of 0.0500 and 0.05 agree, and a hazard ratio
- * is reported to three places, so 0.701 and 0.700 are not made to disagree at five.
- */
-const NUMERIC_READING: Readonly<Record<string, { parse?: (raw: string) => number | null; dp: number }>> = {
-  sample_size: { dp: 0 },
-  sites: { dp: 0 },
-  events: { dp: 0 },
-  batches: { dp: 0 },
-  duration_weeks: { dp: 0 },
-  shelf_life: { dp: 0 },
-  alpha: { dp: 4 },
-  p_value: { dp: 5 },
-  hazard_ratio: { dp: 3 },
-  odds_ratio: { dp: 3 },
-  response_rate: { dp: 2 },
-  power: {
-    /* "90%" and "0.90" are the same power. A bare number above 1 is a percentage written
-       without its sign, which is how a SAP states it as often as not. */
-    parse: (raw) => {
-      const pct = raw.includes('%');
-      const n = Number(raw.replace(/[%\s,]/g, ''));
-      if (!Number.isFinite(n)) return null;
-      return pct || n > 1 ? n / 100 : n;
-    },
-    dp: 3,
-  },
-};
-
-const DEFAULT_COMPARE_DP = 3;
-
-/** The decimal places at which two readings of `label` count as the same figure. */
-export function compareDecimalsFor(label: string): number {
-  return NUMERIC_READING[label]?.dp ?? DEFAULT_COMPARE_DP;
-}
-
-/**
- * A fact's value as a number, or null when it is not one.
- *
- * Null is an answer, not a zero: `predicate_knumber` is "K123456". A caller that gets null
- * does not compare the fact, and never coerces it — a NaN or a 0 standing in for a figure
- * nobody read is how a missing number becomes a false agreement.
- */
-export function numericValueOf(fact: Pick<NumericalFact, 'label' | 'value'>): number | null {
-  const spec = NUMERIC_READING[fact.label];
-  if (spec?.parse) return spec.parse(fact.value);
-  const n = Number(String(fact.value).replace(/[,\s]/g, ''));
-  return Number.isFinite(n) ? n : null;
-}
-
-/** Round to `dp` places, so two readings of one figure compare as written. */
-export function roundToCompare(n: number, label: string): number {
-  const f = 10 ** compareDecimalsFor(label);
-  return Math.round(n * f) / f;
-}
-
-/** Labels whose second capture is an upper bound, not a unit. */
-const TWO_BOUND_LABELS = new Set(['confidence_interval', 'age_range']);
-
-/** A Unicode minus (U+2212) does not parse; normalise it to '-'. */
-function normaliseSign(v: string): string {
-  return v.replace(/−/g, '-');
-}
-
-export function extractNumericalFacts(text: string): NumericalFact[] {
-  if (!text || text.length < 20) return [];
-  const facts: NumericalFact[] = [];
-  const seen = new Set<string>();
-
-  for (const { label, pattern } of LABELLED_NUMERIC_PATTERNS) {
-    pattern.lastIndex = 0;
-    let match: RegExpExecArray | null;
-    while ((match = pattern.exec(text)) !== null) {
-      const twoBound = TWO_BOUND_LABELS.has(label);
-      const value = normaliseSign(match[1]);
-      const offset = match.index;
-      const context = extractSentenceContext(text, offset);
-      // Dedup by label+value+offset so a single line isn't double-counted
-      const key = `${label}:${value}:${offset}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      facts.push({
-        label,
-        value,
-        context,
-        offset,
-        upper: twoBound ? normaliseSign(match[2]) : undefined,
-        unit: twoBound ? undefined : match[2] || undefined,
-      });
-    }
-  }
-
-  return facts;
-}
-
-function extractSentenceContext(text: string, offset: number): string {
-  const SEARCH_WINDOW = 160;
-  const start = Math.max(0, offset - 80);
-  const end = Math.min(text.length, offset + SEARCH_WINDOW);
-  return text.slice(start, end).replace(/\s+/g, ' ').trim();
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

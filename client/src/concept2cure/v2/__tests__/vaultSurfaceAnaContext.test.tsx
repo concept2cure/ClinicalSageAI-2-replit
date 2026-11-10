@@ -96,7 +96,8 @@ describe('Vault — only a completed search can establish matches', () => {
   it('an accessible-project library panel does not reuse the disabled project reader as a zero finding', async () => {
     const seen = setupSearch(() => ok({ query: 'stability', total: 0, limit: 100, offset: 0, results: [] }));
     await screen.findByTestId('vault-filing-block');
-    fireEvent.click(screen.getByLabelText('Accessible projects'));
+    // D6-3: the scope toggle reads "All my projects" now, said for a person (D6 §C.4 step 7).
+    fireEvent.click(screen.getByLabelText('All my projects'));
     fireEvent.change(screen.getByLabelText('Search this vault'), { target: { value: 'stability' } });
     await screen.findByTestId('vault-library-results');
     await screen.findByText(/0 documents in projects you can access match/);
@@ -168,7 +169,8 @@ describe('Vault — "N documents" counts documents, not tree entries', () => {
       </>,
     );
     await screen.findAllByText('Clinical overview');
-    const header = container.querySelector('.vd-sub-x')?.textContent ?? '';
+    // D6-3: the header line is D0's `.ph-sub` (D6 §C.4 step 2).
+    const header = container.querySelector('.ph-sub')?.textContent ?? '';
     // Named by its parts since QA 2026-10-08 (vaultHeaderHonesty.test.tsx):
     // the one document is an authored one, and there are no uploads.
     expect(header).toMatch(/\b1 authored document\b/);

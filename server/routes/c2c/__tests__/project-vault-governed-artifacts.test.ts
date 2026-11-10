@@ -25,6 +25,11 @@
 import express from 'express';
 import request from 'supertest';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+// The Vault refreshes the project's captured Quality records before its data room (2026-11-10); this suite's
+// database is mocked, so the refresh is too, as its source list is.
+vi.mock('../../../services/clinical-regulatory-evidence/record-source.js', async (importOriginal) => ({
+  ...(await importOriginal<object>()), syncQualityProjectSources: vi.fn(async () => ({ created: 0, unchanged: 0, superseded: 0 })),
+}));
 
 const queryMock = vi.fn();
 vi.mock('../../../db', () => ({
@@ -34,6 +39,14 @@ vi.mock('../../../db', () => ({
 const resolveSpineMock = vi.fn();
 vi.mock('../../../services/cmc/resolve-cmc-artifact-project.js', () => ({
   resolveCmcArtifactProject: (...args: unknown[]) => resolveSpineMock(...args),
+}));
+
+/* Since 8c4a9e5a8a (F1, 2026-11-10) the read refreshes the project's captured Quality records before it lists the
+   data room, in a transaction of its own on the pool. That refresh is not this file's subject, so it is a double
+   here, as it is in vault-data-room-counts.test.ts, which pins its order and its unverified case. */
+const { syncQualityProjectSources } = vi.hoisted(() => ({ syncQualityProjectSources: vi.fn() }));
+vi.mock('../../../services/clinical-regulatory-evidence/record-source.js', async (importOriginal) => ({
+  ...(await importOriginal<object>()), syncQualityProjectSources,
 }));
 
 vi.mock('../../../services/c2c/current-program-access', async (original) => {
@@ -114,6 +127,8 @@ beforeEach(() => {
   queryMock.mockResolvedValue({ rows: [] });
   resolveSpineMock.mockReset();
   resolveSpineMock.mockResolvedValue({ state: 'linked', artifactProjectId: 42, via: 'program-anchor' });
+  syncQualityProjectSources.mockReset();
+  syncQualityProjectSources.mockResolvedValue({ created: 0, unchanged: 0, superseded: 0 });
 });
 
 describe('GET /api/c2c/project-vault/:id — every artifact of the project, across all CTD sections', () => {
@@ -164,6 +179,7 @@ describe('GET /api/c2c/project-vault/:id — every artifact of the project, acro
     });
     expect(leaf.artifact).toEqual({
       artifactId: 'artifact_1',
+      version: 5,
       kind: 'Clinical Overview',
       format: 'docx',
       model: 'claude-opus-4',
@@ -179,6 +195,13 @@ describe('GET /api/c2c/project-vault/:id — every artifact of the project, acro
     // The recorded hash is not offered as an upload's SHA-256 of stored bytes:
     // the composer and the importer record theirs over other inputs.
     expect(leaf.hash).toBeUndefined();
+  });
+
+  it.each([null, 0, 1.5])('does not invent an importable version for an unrecorded or invalid head (%s)', async version => {
+    seed([artifact({ version })]);
+    const res = await request(app()).get(`/api/c2c/project-vault/${PROJECT}`);
+    expect(res.status).toBe(200);
+    expect(branch(res.body).children[0].children[0].artifact.version).toBeNull();
   });
 
   it('each leaf carries its stored content size, as the Artifacts center states it (slice B: the shared manifest)', async () => {

@@ -1,0 +1,111 @@
+{
+  "status": "source accepted on canonical branch",
+  "observed_at": "2026-10-30T19:59:51.867331+00:00",
+  "repository": "concept2cure/ClinicalSageAI-2-replit",
+  "canonical_branch": "concept2cure-v2",
+  "source_commit": "f53e6f71f2b3c3e97294bb2f8fe92015c3cf211c",
+  "source_tree": "1e1b6dbd7d3b6c4bb80f933bd56b53e32c03bad5",
+  "canonical_base": "e27f678dfed2f06fa4751c127aec9f36c76a016a",
+  "normal_push_exit_code": 0,
+  "normal_push_log": {
+    "path": "source-push.txt",
+    "sha256": "626c19b67f2e6ea89fbe2c64c86d2bee1ad5cbc29ae697deb0757011f5197326"
+  },
+  "normal_gates": "all passed, no bypass or baseline change by this workstream",
+  "typescript": {
+    "errors": 0,
+    "baseline": 0,
+    "exit_code": 0
+  },
+  "lint": {
+    "errors": 0,
+    "warning_growth": 0,
+    "existing_explicit_mdx_warnings": 7
+  },
+  "remote_observed_source": "f53e6f71f2b3c3e97294bb2f8fe92015c3cf211c",
+  "no_pr": true,
+  "no_force_push": true,
+  "all_conflicts_resolved": true,
+  "source_delta_paths": [
+    "client/src/concept2cure/mdx/pathway-tabs.css",
+    "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx",
+    "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx",
+    "client/src/concept2cure/mdx/surfaces/pathway/DossierAttachments.tsx",
+    "client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes.tsx"
+  ],
+  "qualification": {
+    "disjoint_tests": 727,
+    "suites": 54,
+    "failed": 0,
+    "skipped": 0,
+    "cohorts": [
+      {
+        "log": "race-2-regression.txt",
+        "tests": 618,
+        "suites": 45,
+        "scope": "actual client attachment, project, RBM and company workflows; includes the earlier 484-case cohort"
+      },
+      {
+        "log": "race-4-server-tests.txt",
+        "tests": 13,
+        "suites": 2,
+        "scope": "incoming OCR and client-review admission"
+      },
+      {
+        "log": "race-6-qms-tests.txt",
+        "tests": 76,
+        "suites": 5,
+        "scope": "incoming QMS and tasking"
+      },
+      {
+        "log": "race-8-narrative-tests.txt",
+        "tests": 20,
+        "suites": 2,
+        "scope": "incoming controlled-term safety narrative"
+      }
+    ],
+    "earlier_overlapping_counts_not_added": true
+  },
+  "accepted_source_full_build": {
+    "exit_code": 0,
+    "log": "accepted-source-build.txt",
+    "sha256": "414b607f2e9490bc288e4971666f49fc983352dcf41c6c72dfceeef68d52db7c"
+  },
+  "browser": {
+    "flows": 8,
+    "result": "ui/browser-converged/result.json",
+    "selected_inputs": 36,
+    "input_mismatches": [],
+    "browser_errors": 0,
+    "unexpected_requests": 0,
+    "qualification": "actual drawer/hook/receipt parser in Chromium with explicit synthetic HTTP; unchanged input bytes verified at accepted source; Dismiss click is unit-tested, not claimed as a browser click"
+  },
+  "selected_source_inputs": {
+    "count": 165,
+    "manifest": "final-publication-inputs.json",
+    "working_tree_mismatches": [],
+    "accepted_git_blob_mismatches": []
+  },
+  "independent_readiness": {
+    "reviewer": "device_feedback_contract",
+    "last_source": "a844806165d4880722a3cd649f22bb2ef14dfa96",
+    "verdict": "approved; prior 162 selected inputs and 36 browser inputs preserved; all 342 canonical table lines retained; no extra browser rerun warranted",
+    "later_safety_prose": "20 fresh checks / 2 suites, server build and final normal TypeScript0; current 165 pins bound to accepted source"
+  },
+  "publication_attempts": {
+    "accepted_attempt": 9,
+    "earlier_ref_races": 8,
+    "all_prior_gate_runs_passed": true,
+    "evidence": "source-push-race-1 through source-push-race-8 JSON/text records"
+  },
+  "ci_observation": "ci-source-observation.json",
+  "ci_completion_claimed": false,
+  "deployment_claimed": false,
+  "limits": [
+    "Synthetic engineering qualification; no hosted authentication, native storage, human OQ or agency acceptance claimed",
+    "Durable Dossier-to-Vault attachment association/reload remains a separate need",
+    "Native database and licensed eCTD qualification retain existing canonical owner attribution; the older bridge run skipped six xmllint-dependent controls, which are excluded from the 727 checks",
+    "Already dispatched writes can finish; existing canonical visit owner retires queued work and visible/local publication; no network recall or rollback added"
+  ],
+  "owned_qualification_server": "stopped on5201; intentional SIGTERM exit143 after completed browser qualification"
+}

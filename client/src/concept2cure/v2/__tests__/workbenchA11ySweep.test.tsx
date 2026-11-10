@@ -49,8 +49,14 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
 import { CanonicalAuthoringFlow, setAuthoringFlowScope, clearAuthoringFlowScope } from './canonicalAuthoringFlow';
+import { openEditorControl } from '../editor/__tests__/workbenchAssemblyBuild.testSupport';
 
 const ok = (payload: unknown, status = 200) => ({ ok: status < 400, status, json: async () => payload }) as Response;
+/** The list as GET /api/authoring/docs answers a project read (authoring-document-read.ts): success, and each row's program_id. */
+const scopedList = (url: string, body: { success?: boolean; documents: object[] }) => {
+  const programId = new URLSearchParams(url.split('?')[1]).get('programId');
+  return programId === null ? body : { success: true, ...body, documents: body.documents.map(row => ({ program_id: programId, ...row })) };
+};
 
 const DOCS = {
   success: true,
@@ -77,7 +83,7 @@ beforeEach(() => {
   ledgerAnswer = () => ok({ success: true, intact: true, revisionCount: 2, chainedCount: 2, preLedgerCount: 0, breaks: [] });
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
-    if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
+    if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(scopedList(url, DOCS));
     if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001') return docRead();
     if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001/sections') return ok({ success: true, sections: [SECTION] });
     if (method === 'GET' && url === '/api/authoring/sections/aaaaaaaa-0000-4000-8000-000000000001/history/verify') return ledgerAnswer();
@@ -96,10 +102,21 @@ async function mount() {
   await waitFor(() => expect(document.querySelector('.rse-body .tiptap')?.textContent).toContain('monoclonal antibody'));
 }
 
-/** The toolbar toggle that opens a rail, by its leading word. */
+/* D4-2, the bar (D4.md §D4.B): Comments and the version ("v{n}") are in the
+   bar; the other rails are items of its More menu, and a rail opened from
+   More returns focus to More's own button, since the item closes with it. */
+const IN_MORE: Record<string, string> = { Sources: '^Sources', Signatures: '^Signatures$', Audit: '^Audit trail$', Exports: '^Exports$', Tasks: '^Review tasks$' };
+/** The control a rail's close returns focus to, by the rail's old toggle word. */
 function toggle(word: string): HTMLButtonElement {
-  const bar = document.querySelector('.ed-doc-actions') as HTMLElement;
-  return within(bar).getByRole('button', { name: new RegExp('^\\s*' + word) }) as HTMLButtonElement;
+  if (word === 'Comments') return screen.getByTestId('ed-comments-open') as HTMLButtonElement;
+  if (word === 'History') return screen.getByTestId('ed-versions') as HTMLButtonElement;
+  /* The old "AnA" toggle opened the conversation; the bar calls it "Show the conversation". */
+  if (word === 'AnA') return screen.getByRole('button', { name: 'Show the conversation' }) as HTMLButtonElement;
+  return within(screen.getByTestId('ed-more')).getAllByRole('button')[0] as HTMLButtonElement;
+}
+/** Opens the rail from the bar, or from its More menu. */
+function openRail(word: string) {
+  fireEvent.click(word in IN_MORE ? openEditorControl(new RegExp(IN_MORE[word])) : toggle(word));
 }
 /** Every editor utility rail; AnA uses the canonical conversation. */
 const openRails = () => Array.from(document.querySelectorAll('aside.ed-comments'));
@@ -109,8 +126,7 @@ const RAILS = ['Comments', 'History', 'Sources', 'Signatures', 'Audit', 'Exports
 describe('GA-4: every right rail closes from the keyboard', () => {
   it.each(RAILS)('the %s rail closes on Escape and returns focus to its toggle', async (word) => {
     await mount();
-    const t = toggle(word);
-    fireEvent.click(t);
+    openRail(word);
     await waitFor(() => expect(openRails()).toHaveLength(1));
     /* Focus where it sits after a click on non-focusable chrome. */
     (document.activeElement as HTMLElement | null)?.blur();
@@ -121,7 +137,7 @@ describe('GA-4: every right rail closes from the keyboard', () => {
 
   it.each(RAILS)('the %s rail has its own labelled close control', async (word) => {
     await mount();
-    fireEvent.click(toggle(word));
+    openRail(word);
     await waitFor(() => expect(openRails()).toHaveLength(1));
     const close = within(openRails()[0] as HTMLElement).getByRole('button', { name: /^close /i });
     fireEvent.click(close);
@@ -131,7 +147,7 @@ describe('GA-4: every right rail closes from the keyboard', () => {
 
   it('leaves Escape to a text field inside the rail', async () => {
     await mount();
-    fireEvent.click(toggle('Comments'));
+    openRail('Comments');
     await waitFor(() => expect(openRails()).toHaveLength(1));
     const found = openRails()[0].querySelector('textarea');
     expect(found, 'the comments rail renders its comment field').not.toBeNull();
@@ -145,7 +161,7 @@ describe('GA-4: every right rail closes from the keyboard', () => {
 describe('GA-5: the ledger verdict is announced', () => {
   async function verify() {
     await mount();
-    fireEvent.click(toggle('History'));
+    openRail('History');
     const btn = await screen.findByRole('button', { name: /verify ledger/i });
     /* The regions exist BEFORE the verdict arrives — a live region mounted
        together with its text is not announced. */
@@ -251,18 +267,20 @@ describe('GE-P-3: governed acts the server will refuse are disabled with the rea
   it('disables each refused act, states why, and hands the bar its refusals', async () => {
     docAccess = { freeze: NO('Freezing'), esign: NO('Signing'), fileToVault: NO('Filing to the vault'), assignReview: NO('Sending for review') };
     await mount();
-    const assign = screen.getByTestId('send-for-review-open') as HTMLButtonElement;
-    const vault = screen.getByTestId('file-to-vault-open') as HTMLButtonElement;
-    await waitFor(() => expect(assign.disabled, 'Send for review offered to a caller the server will refuse').toBe(true));
-    expect(describedBy(assign)).toBe('Sending for review needs a grant you do not hold.');
-    expect(vault.disabled).toBe(true);
-    expect(describedBy(vault)).toBe('Filing to the vault needs a grant you do not hold.');
+    /* D4-2: both are items of the bar's More menu; a refused item is aria-disabled
+       (still reachable, so its reason is read) and described by that reason. */
+    const assign = () => openEditorControl('Send for review…');
+    const vault = () => openEditorControl('File to vault…');
+    await waitFor(() => expect(assign().getAttribute('aria-disabled'), 'Send for review offered to a caller the server will refuse').toBe('true'));
+    expect(describedBy(assign())).toBe('Sending for review needs a grant you do not hold.');
+    expect(vault().getAttribute('aria-disabled')).toBe('true');
+    expect(describedBy(vault())).toBe('Filing to the vault needs a grant you do not hold.');
     expect(JSON.parse(screen.getByTestId('bar-props').textContent ?? '{}')).toEqual({
       freeze: 'Freezing needs a grant you do not hold.',
       esign: 'Signing needs a grant you do not hold.',
     });
 
-    fireEvent.click(toggle('Tasks'));
+    openRail('Tasks');
     const rt = (await screen.findByTestId('rt-send-review')) as HTMLButtonElement;
     expect(rt.disabled).toBe(true);
     expect(describedBy(rt)).toBe('Sending for review needs a grant you do not hold.');
@@ -272,9 +290,9 @@ describe('GE-P-3: governed acts the server will refuse are disabled with the rea
     docAccess = { freeze: null, esign: 'garbage', fileToVault: { allowed: 'no' } };
     await mount();
     await waitFor(() => expect(screen.getByTestId('bar-props').textContent).toBe(JSON.stringify({ freeze: null, esign: null })));
-    expect((screen.getByTestId('send-for-review-open') as HTMLButtonElement).disabled).toBe(false);
-    expect((screen.getByTestId('file-to-vault-open') as HTMLButtonElement).disabled).toBe(false);
-    fireEvent.click(toggle('Tasks'));
+    expect(openEditorControl('Send for review…').getAttribute('aria-disabled')).toBeNull();
+    expect(openEditorControl('File to vault…').getAttribute('aria-disabled')).toBeNull();
+    openRail('Tasks');
     expect(((await screen.findByTestId('rt-send-review')) as HTMLButtonElement).disabled).toBe(false);
   });
 
@@ -282,6 +300,6 @@ describe('GE-P-3: governed acts the server will refuse are disabled with the rea
     docAccess = { freeze: { allowed: true, reason: null }, esign: { allowed: true, reason: null }, fileToVault: { allowed: true, reason: null }, assignReview: { allowed: true, reason: null } };
     await mount();
     await waitFor(() => expect(screen.getByTestId('bar-props').textContent).toBe(JSON.stringify({ freeze: null, esign: null })));
-    expect((screen.getByTestId('send-for-review-open') as HTMLButtonElement).disabled).toBe(false);
+    expect(openEditorControl('Send for review…').getAttribute('aria-disabled')).toBeNull();
   });
 });

@@ -32,6 +32,8 @@ import { Router, type Request, type Response } from 'express';
 import { pool } from '../db.js';
 import { currentTenantOrgUuid } from '../db/currentTenant.js';
 import { getEmbeddingService } from '../services/enhancedEmbeddingService.js';
+import { readDataRoomProjectScope } from '../services/data-room-retrieval.js';
+import { ProgramReadAccessError } from '../services/c2c/current-program-access.js';
 import { getGateway } from '../services/ai-gateway/index.js';
 import type { GatewayResponse } from '../services/ai-gateway/types.js';
 import { sha256, stableStringify } from './chat/provenance.js';
@@ -60,14 +62,30 @@ const SYSTEM_PROMPT_BASE =
 const router = Router();
 
 /**
+ * The answer when the project scope refuses (readDataRoomProjectScope). A
+ * project the person cannot open gets the words a missing project gets; a check
+ * that could not run is its own status, never an empty search.
+ */
+function sendProjectScopeRefusal(res: Response, error: unknown) {
+  if (error instanceof ProgramReadAccessError && error.status === 404) {
+    return res.status(404).json({ error: 'Project not found', code: 'PROJECT_NOT_FOUND' });
+  }
+  const failure = error instanceof ProgramReadAccessError ? error
+    : new ProgramReadAccessError(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Current project access could not be verified. Nothing was searched.');
+  return res.status(failure.status).json({ error: failure.message, code: failure.code });
+}
+
+/**
  * POST /api/evidence/ask
  *
  * Request body:
  *   message:        string (required) — the user's question. `question` is
  *                                       accepted as an alias for legacy callers.
- *   projectId?:     string | number    — optional project scoping; ownership
- *                                       is verified against the caller's org
- *                                       before it is honoured.
+ *   projectId?:     string | number    — optional project scoping, admitted by
+ *                                       the project sharing policy; one the
+ *                                       caller cannot open is answered as a
+ *                                       missing one. Without it, the search is
+ *                                       the projects the caller can open.
  *   topK?:          number             — override default top_k
  *   threshold?:     number             — override default semantic threshold
  *
@@ -143,39 +161,31 @@ router.post('/ask', async (req: Request, res: Response) => {
       return Number.isFinite(n) && n >= 0 && n <= 1 ? n : RETRIEVAL_THRESHOLD;
     })();
 
-    // ── PROJECT OWNERSHIP (fail-closed, before retrieval) ────────────────
-    // A project filter is only honoured once the project is proven to belong
-    // to the caller's tenant, so retrieval can never be scoped to another
-    // org's project id.
+    // ── PROJECT SCOPE (fail-closed, before retrieval) ────────────────────
+    // The projects this ask may search (F1, 2026-11-05): the named one if the
+    // person can open it, or with none every project they can open. It was the
+    // named project whenever it was the organization's, and with none every
+    // atom in the organization. A project they cannot open is answered as a
+    // missing one; a check that cannot run is an error, never an empty search.
+    let numericProjectId: number | undefined;
     if (normalizedProjectId !== undefined) {
-      const numericProjectId = Number(normalizedProjectId);
-      if (!Number.isFinite(numericProjectId) || numericProjectId <= 0) {
+      numericProjectId = Number(normalizedProjectId);
+      if (!Number.isSafeInteger(numericProjectId) || numericProjectId <= 0) {
         return res.status(400).json({
           error: 'Invalid projectId',
           code: 'INVALID_REQUEST',
         });
       }
-      try {
-        const owned = await pool.query(
-          'SELECT 1 FROM projects WHERE id = $1 AND organization_id = $2 LIMIT 1',
-          [numericProjectId, numericOrgId]
-        );
-        if (owned.rowCount === 0) {
-          return res.status(404).json({
-            error: 'Project not found',
-            code: 'PROJECT_NOT_FOUND',
-          });
-        }
-      } catch (ownErr: any) {
-        console.error(
-          '[Evidence Ask] Project ownership check failed:',
-          ownErr?.message
-        );
-        return res.status(500).json({
-          error: 'Failed to verify project ownership',
-          code: 'EVIDENCE_ASK_ERROR',
-        });
-      }
+    }
+    let projectIds: number[];
+    try {
+      projectIds = await readDataRoomProjectScope(pool, {
+        organizationId: numericOrgId,
+        userId: numericUserId,
+        projectId: numericProjectId,
+      });
+    } catch (scopeErr: unknown) {
+      return sendProjectScopeRefusal(res, scopeErr);
     }
 
     // ── GATEWAY AVAILABILITY ─────────────────────────────────────────────
@@ -212,7 +222,7 @@ router.post('/ask', async (req: Request, res: Response) => {
       const searchResults = await embeddingService.searchHybrid(message, {
         limit: topK,
         organizationUuid: orgUuid,
-        projectId: normalizedProjectId,
+        projectIds,
         minSemanticScore: threshold,
       });
       sources = searchResults.map(r => ({
@@ -365,7 +375,7 @@ router.post('/ask', async (req: Request, res: Response) => {
 
     const projectScope = projectId
       ? `Project scope: ${projectId}\n`
-      : 'Project scope: organization-wide (no project filter)\n';
+      : 'Project scope: the projects the user can open\n';
     const systemPrompt = `${SYSTEM_PROMPT_BASE}\n\n${projectScope}${evidenceBlock}`;
 
     // ── GENERATION ───────────────────────────────────────────────────────

@@ -23,6 +23,7 @@
 import type { EstarType, EstarInputLeaf, DeviceFlags } from '../pathway-engines/estar/estar-mapper';
 import type { EstarTemplateVariant } from '../pathway-engines/estar/estar-template-registry';
 import type { MarketId, ReadinessBand } from '../global-markets/types';
+import type { DivergedNode } from '../c2c/filing-section-target';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared advisory primitives
@@ -79,6 +80,13 @@ export interface DeviceReadinessAdviceInput {
   environment?: 'staging' | 'production';
   /** Override the ESTAR_REQUIRE_TEMPLATE flag. */
   requireTemplate?: boolean;
+  /**
+   * Sections whose filed copy is not the document's text (P-29.3), as
+   * `loadProgramDeviceAssemblyInput` reads them. Passed to the assembler, which
+   * then reports nothing producible; absent or empty when the filing agrees or
+   * was not compared.
+   */
+  filedCopyDiverged?: ReadonlyArray<DivergedNode>;
 }
 
 /** What kind of device artifact can honestly be produced right now. */

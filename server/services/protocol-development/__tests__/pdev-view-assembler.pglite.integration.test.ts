@@ -7,10 +7,12 @@
  * math, nested amendment changes, deviation CAPA, SoA cells, computed completeness —
  * with no blob, no fallback, and strict org scoping.
  */
+import { summarizeRiskRegister } from '../../protocol-risks/protocol-risks-logic';
 import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
 
 let pglite: PGlite;
+let capaIds: string[] = [];
 const pool = {
   query: async (sql: string, params?: unknown[]) => {
     const r = await pglite.query(sql, params as unknown[]);
@@ -32,8 +34,8 @@ CREATE TABLE protocol_objectives (id serial PRIMARY KEY, organization_id int, pr
 CREATE TABLE protocol_eligibility_criteria (id serial PRIMARY KEY, organization_id int, protocol_document_id int, kind text, criterion text, order_index int, deleted_at timestamptz);
 CREATE TABLE protocol_schedule_visits (id serial PRIMARY KEY, organization_id int, protocol_document_id int, visit_name text, timepoint text, order_index int, deleted_at timestamptz);
 CREATE TABLE protocol_risks (id serial PRIMARY KEY, organization_id int, protocol_document_id int, category text, description text, likelihood text, impact text, mitigation text, residual_likelihood text, residual_impact text, status text, deleted_at timestamptz, owner text);
-CREATE TABLE protocol_milestones (id serial PRIMARY KEY, organization_id int, protocol_document_id int, name text, milestone_type text, target_date date, actual_date date, deleted_at timestamptz);
-CREATE TABLE protocol_amendments (id serial PRIMARY KEY, organization_id int, protocol_document_id int, amendment_number text, title text, affects_consent boolean, submitted_date date, decided_date date, deleted_at timestamptz);
+CREATE TABLE protocol_milestones (id serial PRIMARY KEY, organization_id int, protocol_document_id int, name text, milestone_type text, target_date date, actual_date date, status text NOT NULL DEFAULT 'planned', deleted_at timestamptz);
+CREATE TABLE protocol_amendments (id serial PRIMARY KEY, organization_id int, protocol_document_id int, amendment_number text, title text, affects_consent boolean, affects_risk boolean, status text NOT NULL DEFAULT 'draft', submitted_date date, decided_date date, deleted_at timestamptz);
 CREATE TABLE protocol_amendment_changes (id serial PRIMARY KEY, amendment_id int, section_ref text, change_description text, previous_text text, proposed_text text);
 CREATE TABLE protocol_deviations (id serial PRIMARY KEY, organization_id int, protocol_document_id int, deviation_number text, description text, category text CHECK (category IN ('enrollment','consent','procedure','safety','data','other')), severity text CHECK (severity IN ('minor','major','critical')), is_reportable boolean, affects_safety boolean, status text NOT NULL DEFAULT 'open' CHECK (status IN ('open','under_review','capa_pending','closed')), deleted_at timestamptz);
 CREATE TABLE protocol_capa_actions (id serial PRIMARY KEY, deviation_id int, action text, status text);
@@ -77,10 +79,18 @@ async function seedFullProtocol(org: number): Promise<number> {
   await pglite.query(`INSERT INTO protocol_schedule_visits (organization_id, protocol_document_id, visit_name, timepoint, order_index) VALUES ($1,$2,'Screening','Day -28',0)`, [org, id]);
   await pglite.query(`INSERT INTO protocol_risks (organization_id, protocol_document_id, category, description, likelihood, impact, mitigation, residual_likelihood, residual_impact, status) VALUES ($1,$2,'regulatory','Endpoint may be questioned','likely','major','Pre-submission meeting','possible','moderate','mitigating')`, [org, id]);
   await pglite.query(`INSERT INTO protocol_milestones (organization_id, protocol_document_id, name, milestone_type, target_date) VALUES ($1,$2,'FPI','enrollment','2020-01-01')`, [org, id]);
-  const a = await pglite.query(`INSERT INTO protocol_amendments (organization_id, protocol_document_id, amendment_number, title, affects_consent, submitted_date) VALUES ($1,$2,'A1','Widen eligibility',true,'2026-06-01') RETURNING id`, [org, id]);
+  // Cancelled, with no actual date: the dates alone read it as pending and overdue.
+  await pglite.query(`INSERT INTO protocol_milestones (organization_id, protocol_document_id, name, milestone_type, target_date, status) VALUES ($1,$2,'Interim analysis','other','2020-06-01','cancelled')`, [org, id]);
+  const a = await pglite.query(`INSERT INTO protocol_amendments (organization_id, protocol_document_id, amendment_number, title, affects_consent, affects_risk, status, submitted_date) VALUES ($1,$2,'A1','Widen eligibility',true,false,'under_review','2026-06-01') RETURNING id`, [org, id]);
   await pglite.query(`INSERT INTO protocol_amendment_changes (amendment_id, section_ref, change_description, previous_text, proposed_text) VALUES ($1,'5.1','loosen age','18-65','18+')`, [(a.rows[0] as { id: number }).id]);
+  // Both impacts declared "no": risk was never read, so this showed as "not declared".
+  await pglite.query(`INSERT INTO protocol_amendments (organization_id, protocol_document_id, amendment_number, title, affects_consent, affects_risk, status) VALUES ($1,$2,'A2','Fix a typo',false,false,'draft')`, [org, id]);
   const dev = await pglite.query(`INSERT INTO protocol_deviations (organization_id, protocol_document_id, deviation_number, description, category, severity, is_reportable, status) VALUES ($1,$2,'D1','Missed visit','procedure','major',true,'capa_pending') RETURNING id`, [org, id]);
-  await pglite.query(`INSERT INTO protocol_capa_actions (deviation_id, action, status) VALUES ($1,'Retrain site','open')`, [(dev.rows[0] as { id: number }).id]);
+  const devId = (dev.rows[0] as { id: number }).id;
+  // Two actions on one deviation: each must keep its own id (it used to carry the deviation's).
+  const capa1 = await pglite.query(`INSERT INTO protocol_capa_actions (deviation_id, action, status) VALUES ($1,'Retrain site','open') RETURNING id`, [devId]);
+  const capa2 = await pglite.query(`INSERT INTO protocol_capa_actions (deviation_id, action, status) VALUES ($1,'Add a visit-window reminder','completed') RETURNING id`, [devId]);
+  capaIds = [String((capa1.rows[0] as { id: number }).id), String((capa2.rows[0] as { id: number }).id)];
   await pglite.query(`INSERT INTO protocol_budget_items (organization_id, protocol_document_id, category, description, unit_cost, quantity_per_subject) VALUES ($1,$2,'labs','Central lab',500,3)`, [org, id]);
   await pglite.query(`INSERT INTO protocol_budget_params (organization_id, protocol_document_id, target_enrollment, sponsor_payment_per_subject, indirect_rate_pct) VALUES ($1,$2,420,15000,28)`, [org, id]);
   const asm = await pglite.query(`INSERT INTO protocol_soa_assessments (organization_id, protocol_document_id, name, category, order_index) VALUES ($1,$2,'ECG','safety',0) RETURNING id`, [org, id]);
@@ -129,25 +139,40 @@ describe('assembleOrgPdevDocs', () => {
 
     // Risk: text enums map to the 1-5 ordinals the surface multiplies.
     expect(doc.risks[0]).toMatchObject({ hazard: 'Endpoint may be questioned', l: 4, i: 4, rl: 3, ri: 3, status: 'mitigating' });
+    // The register's summary is the QRM engine's own, the one GET /protocol-risks/documents/:id/register returns.
+    expect(doc.riskSummary).toEqual({ ...summarizeRiskRegister([{
+      category: 'regulatory', likelihood: 'likely', impact: 'major', residualLikelihood: 'possible', residualImpact: 'moderate', status: 'mitigating',
+    }]), unscored: 0 });
 
     // Budget: per-subject = unit_cost × quantity; params carried through.
     expect(doc.budget.items[0].perSubject).toBe(1500);
     expect(doc.budget.params).toMatchObject({ enrollment: 420, sponsorPerSubject: 15000, faRate: 28 });
 
     // Amendment with a nested change; deviation with CAPA.
-    expect(doc.amendments[0]).toMatchObject({ num: 'A1', reconsent: true, status: 'submitted' });
+    // The recorded status, not one derived from the dates (which read under_review as submitted).
+    expect(doc.amendments[0]).toMatchObject({ num: 'A1', reconsent: true, status: 'under_review', nextStatuses: ['approved', 'rejected'] });
     expect(doc.amendments[0].changes[0]).toMatchObject({ sec: '5.1', from: '18-65', to: '18+' });
+    expect(doc.amendments[1]).toMatchObject({ num: 'A2', reconsent: false, status: 'draft', nextStatuses: ['submitted'] });
     // Deviation severity/category/status carried through — a monitor must be able to
     // tell a critical reportable deviation from a minor closed one.
     expect(doc.deviations[0]).toMatchObject({ title: 'Missed visit', sev: 'major', cat: 'procedure', reportable: true, status: 'capa_pending' });
+    expect(doc.deviations[0].capa.map((c: { id: string }) => c.id)).toEqual(capaIds);
     expect(doc.deviations[0].capa[0]).toMatchObject({ action: 'Retrain site', status: 'open' });
+    // The closure gate's own reasons: unassessed (no safety impact recorded) and one action still open.
+    expect(doc.deviations[0].closeBlockers).toEqual(expect.arrayContaining([
+      expect.stringMatching(/not been assessed/), expect.stringMatching(/1 CAPA action\(s\) are not yet completed/),
+    ]));
 
     expect(doc.reviews[0].reviewer).toBe('Dr Reviewer');
     // No account named: the disposition can only be recorded under responsibility.
     expect(doc.reviews[0].reviewerUserId).toBeNull();
     // Review comment severity carried through so blocking-open counts can be real.
-    expect(doc.reviews[0].comments[0]).toMatchObject({ sec: '9', sev: 'blocking', text: 'Clarify the SAP', resolved: false });
+    expect(doc.reviewComments).toHaveLength(1);
+    expect(doc.reviewComments[0]).toMatchObject({ sec: '9', sev: 'blocking', text: 'Clarify the SAP', resolved: false });
+    expect(doc.reviews[0]).not.toHaveProperty('comments');
     expect(doc.milestones[0].urgency).toBe('overdue');              // target in the past, no actual date
+    expect(doc.milestones[0]).toMatchObject({ status: 'planned', date: '2020-01-01' });  // a date, not Date.toString()
+    expect(doc.milestones[1]).toMatchObject({ label: 'Interim analysis', status: 'cancelled', urgency: 'done' });
 
     // Completeness: one required section is not_started → a critical finding, <100%.
     expect(doc.completeness).toBe(50);

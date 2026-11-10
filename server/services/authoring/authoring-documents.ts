@@ -85,6 +85,22 @@ const filingAlreadyHeld = (filingId: string, holder: string): string =>
   'so this document is created in the project as an unbound working document. A project holds ' +
   'many working documents and one editing copy per filing.';
 
+/** Why a document created without naming a filing is a working document (2026-10-31). */
+export const WORKING_DOCUMENT_REASON =
+  'This is a working document of the project. A document is a filing’s editing copy only when it is ' +
+  'created as that copy, from the filing.';
+
+/**
+ * The filing a create named: the project's home filing (the one
+ * resolveGovernedDocument answers for the project), else a market's document
+ * of it (FILING_SPINE F22b), which that resolver checks is one.
+ */
+async function resolveNamedFiling(pool: AuthoringPool, tenantId: number, clientProgramId: string | null, filingId: string): Promise<Binding> {
+  const home = await resolveGovernedDocument({ db: pool, orgId: tenantId, projectId: clientProgramId });
+  if (home.documentId === filingId) return home;
+  return resolveGovernedDocument({ db: pool, orgId: tenantId, projectId: clientProgramId, marketDocumentId: filingId });
+}
+
 /**
  * GOVERNED BINDING. c2c_documents is the system of record for a regulatory
  * filing; this stack is the editing layer over it. Read-only resolution: it
@@ -105,17 +121,30 @@ const filingAlreadyHeld = (filingId: string, holder: string): string =>
  * `commitSectionToFiling` writes a bound document's sections into the filing's
  * slots by code, and two bound documents would fight over them — and every
  * other document is created IN the project (client_program_id) unbound, with
- * the reason stated. The first document's binding is unchanged.
+ * the reason stated.
+ *
+ * ONLY THE COPY THAT WAS ASKED FOR (2026-10-31, projects-list repair). The
+ * FIRST document created in a project used to take the filing, whatever it
+ * was: the demo's "Protocol Synopsis C2C-101-201", created first, became the
+ * IND's editing copy, so every Module 1–5 row and the readiness card on Project
+ * home opened the protocol, and Module 3 opened its Objectives section. A
+ * document is now bound only when its create NAMES the filing
+ * (`filingDocumentId`, POST /docs `c2c_document_id`) — the project's home
+ * filing or a market's document — the way the editor's filing list creates a
+ * copy (FilingMarkets.tsx). A create that names none (a title, a template, an
+ * AnA draft) is a working document of the project, with that reason stated,
+ * and the governance store is not consulted for it.
  */
 export async function resolveBinding(
   pool: AuthoringPool,
   tenantId: number,
   clientProgramId: string | null,
-  marketDocumentId: string | null = null,
+  filingDocumentId: string | null = null,
 ): Promise<Binding> {
+  if (!filingDocumentId) return { documentId: null, reason: WORKING_DOCUMENT_REASON };
   let binding: Binding;
   try {
-    binding = await resolveGovernedDocument({ db: pool, orgId: tenantId, projectId: clientProgramId, marketDocumentId });
+    binding = await resolveNamedFiling(pool, tenantId, clientProgramId, filingDocumentId);
   } catch (bindErr) {
     logger.warn('Governed-document binding unavailable; creating unbound document', {
       error: bindErr instanceof Error ? bindErr.message : String(bindErr),
@@ -148,7 +177,7 @@ export async function resolveBinding(
     nativeId: String(binding.documentId),
   });
   if (holder.available && holder.canonicalId) {
-    return { documentId: null, reason: filingAlreadyHeld(String(binding.documentId), holder.canonicalId) };
+    return { documentId: null, reason: 'This filing already has its editing copy in the project. Open that document; nothing was created.' };
   }
   return binding;
 }
@@ -364,9 +393,11 @@ export interface CreateDocumentInput {
   template_id?: unknown;
   client_program_id?: unknown;
   /**
-   * Bind to this market's document of the project rather than the home filing
-   * (FILING_SPINE F22b). A market document that cannot be bound is refused,
-   * never created unbound: the person asked for that market's copy.
+   * Create this filing's editing copy: the project's home filing, or a
+   * market's document of the project (FILING_SPINE F22b). Only a create that
+   * names a filing is bound to one (2026-10-31, resolveBinding). A named filing
+   * that cannot be bound is refused, never created unbound: the person asked
+   * for that filing's copy.
    */
   c2c_document_id?: unknown;
 }
@@ -442,35 +473,36 @@ async function refuseTemplateFigures(seeds: TemplateSectionSeed[]): Promise<Auth
 
 /**
  * What a create refuses before anything is read: a project the organization
- * does not own, and a market's copy seeded from a template. A template seeds
+ * does not own, and a filing's copy seeded from a template. A template seeds
  * the sections it carries, of any code; a market's copy holds only its Module 1
- * and 3.2.R (security review, 2026-10-15).
+ * and 3.2.R (security review, 2026-10-15), and a filing's copy starts its
+ * sections from the filing's outline.
  */
 async function refuseStart(ctx: CreateContext, input: CreateDocumentInput): Promise<AuthoringRefusal | null> {
   const programRefusal = await refuseProgramAnchor(ctx, input.client_program_id);
   if (programRefusal) return programRefusal;
   if (!input.c2c_document_id || !input.template_id) return null;
   return {
-    kind: 'refused', status: 400, code: 'MARKET_DOCUMENT_TEMPLATE',
-    error: "A market's document starts without a template: it holds only that market's Module 1 and 3.2.R. Nothing was created.",
+    kind: 'refused', status: 400, code: 'FILING_COPY_TEMPLATE',
+    error: "A filing's editing copy starts without a template: its sections start from the filing's outline. Nothing was created.",
   };
 }
 
 const programIdOf = (v: unknown): string | null => (v ? String(v) : null);
 
 /**
- * The new document's binding: the project's home filing, or the market's
- * document the caller named (FILING_SPINE F22b). A named market document that
- * cannot be bound is a refusal, never an unbound create: the person asked for
- * that market's copy.
+ * The new document's binding: the filing the caller named — the project's
+ * home filing or a market's document (FILING_SPINE F22b) — or none, a working
+ * document (resolveBinding). A named filing that cannot be bound is a refusal,
+ * never an unbound create: the person asked for that filing's copy.
  */
 async function createBinding(
   ctx: CreateContext, builtin: Parameters<typeof templateWorkingBinding>[0], clientProgramId: string | null, named: unknown,
 ): Promise<Binding | AuthoringRefusal> {
-  const marketDocumentId = named ? String(named) : null;
-  const binding = await templateWorkingBinding(builtin, () => resolveBinding(ctx.pool, ctx.tenantId, clientProgramId, marketDocumentId));
-  if (!marketDocumentId || binding.documentId === marketDocumentId) return binding;
-  return { kind: 'refused', status: 409, code: 'MARKET_DOCUMENT_NOT_BOUND', error: binding.reason ?? "The market's document could not be bound." };
+  const filingDocumentId = named ? String(named) : null;
+  const binding = await templateWorkingBinding(builtin, () => resolveBinding(ctx.pool, ctx.tenantId, clientProgramId, filingDocumentId));
+  if (!filingDocumentId || binding.documentId === filingDocumentId) return binding;
+  return { kind: 'refused', status: 409, code: 'FILING_NOT_BOUND', error: binding.reason ?? "The filing's editing copy could not be bound." };
 }
 
 /** POST /docs. The caller has already resolved the actor (401 without one). */

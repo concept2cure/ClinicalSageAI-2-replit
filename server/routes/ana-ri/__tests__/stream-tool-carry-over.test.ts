@@ -194,7 +194,15 @@ vi.mock('../../../services/memory-context-assembler.js', () => ({
 vi.mock('../../../services/ana-ri/context-enrichment.js', () => ({
   enrichContextForChat: async () => h.state.enrichment,
 }));
+// No standing or private rules in this fixture: since P-104 (4852aa78, a2f9264a) each tool
+// call reads them first, and the turn issues the member's private rules as model context.
+vi.mock('../../../services/ana/governed-tool-gate.js', async orig =>
+  (await import('../../../services/ana/__tests__/_standing-rule-fixture')).withNoStandingRules(await orig()));
+vi.mock('../../../services/ana-context-router.js', async orig =>
+  (await import('../../../services/ana/__tests__/_standing-rule-fixture')).withNoPrivateRules(await orig()));
 vi.mock('../../../services/chat-thread-helpers.js', () => ({
+  // A public thread: the turn reads its owner-private boundary first (a2f9264a).
+  threadHasOwnerPrivateBoundary: async () => false,
   getOrCreateThread: h.thread,
   getThreadMessages: async () => h.state.history,
   saveChatMessage: async () => {},

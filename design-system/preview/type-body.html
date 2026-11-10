@@ -1,14 +1,37 @@
-<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="_base.css"><style>
-.stack { display:flex; flex-direction:column; gap: 14px; }
-.r { display:flex; align-items:baseline; gap: 16px; }
-.lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-subtle); min-width: 110px; }
+<!doctype html><html><head><meta charset="utf-8"><title>Type scale</title><link rel="stylesheet" href="_base.css"><style>
+/* The sizes are the --fs-* tokens in design-system/colors_and_type.css (§3, after --leading-loose).
+   The rules below are copied from client/src/concept2cure/v2/styles/app-v2.css; the reading
+   faces (.prose-reading, .doc-content, .mono) are colors_and_type.css's own, loaded by _base.css. */
+.c2c-v2 :is(.ph-title, .sp-title, .reg-title, .cm-title, .adm-access .page-title) {
+  margin: 0; font-family: var(--font-serif); font-size: var(--fs-title); line-height: 1.25;
+  font-weight: 500; letter-spacing: -0.01em; color: var(--text-100); overflow-wrap: anywhere;
+}
+.c2c-v2 :is(.pj-sec-h h2, .sp-sec-h .t, .sec-title, .home-sec-h) { margin: 0; font-size: var(--fs-section); line-height: 1.4; font-weight: 600; color: var(--text-100); }
+.c2c-v2 .pj-card-m, .c2c-v2 .pj-card-note, .c2c-v2 .pj-card-body { margin: 2px 0 0; font-size: var(--fs-small); line-height: 1.5; color: var(--text-300); }
+.c2c-v2 .small:not(.btn) { font-size: var(--fs-caption); color: var(--text-300); }
+
+/* ── specimen only ── */
+.stack { display: flex; flex-direction: column; gap: 18px; margin-top: 8px; }
+.r { display: grid; grid-template-columns: 180px 1fr; align-items: baseline; gap: 16px; }
+.lbl { font-size: var(--fs-caption); font-weight: 500; color: var(--text-300); }
+.lbl .mono { color: var(--text-300); }
+/* --fs-greeting is declared and no rule reads it yet (D1's Home greeting will):
+   its face, weight and leading here are D0.md §3's. */
+.greet { font-family: var(--font-serif); font-size: var(--fs-greeting); line-height: 1.2; font-weight: 400; color: var(--text-100); }
+.note { margin: 16px 0 0; font-size: var(--fs-small); color: var(--text-300); max-width: 68ch; }
 </style></head><body><div class="card">
+<section class="c2c-v2 panel" aria-label="Type scale">
   <div class="stack">
-    <div class="r"><div class="lbl">Body · 13 / 1.625</div><div style="font-size: 13px; line-height: 1.625; color: var(--ink);">The 505(b)(2) pathway references the prior approval of an active moiety; the bridging study must be specified in Module 2.7.</div></div>
-    <div class="r"><div class="lbl">Body sm · 12</div><div style="font-size: 12px; color: var(--ink-muted);">Last edited 4 minutes ago by J. Chen · 3 open comments</div></div>
-    <div class="r"><div class="lbl">Meta · 10 upper</div><div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 500; color: var(--ink-subtle);">Updated · 21 Apr 2026 · 09:14 UTC</div></div>
-    <div class="r"><div class="lbl">Reading · 15 / 1.75</div><div style="font-size: 15px; line-height: 1.75; color: var(--ink); font-family: var(--font-sans);">AnA reviewed the protocol and flagged two divergences from the FDA 2023 draft guidance. Both are resolvable with a pre-IND clarification.</div></div>
-    <div class="r"><div class="lbl">Doc · serif</div><div style="font-family: var(--font-serif); font-size: 14px; line-height: 1.7; color: var(--stone-900);">The applicant submits this Module 2.5 Clinical Overview in support of NDA 212345 for the proposed indication.</div></div>
-    <div class="r"><div class="lbl">Mono · code</div><div style="font-family: var(--font-mono); font-size: 13px; color: var(--stone-900);">CFR §314.94(a)(8)(iv)</div></div>
+    <div class="r"><div class="lbl">Greeting · <span class="mono">--fs-greeting</span> · 32 / 1.2 · Lora 400</div><div class="greet">Good morning, Jordan</div></div>
+    <div class="r"><div class="lbl">Page title · <span class="mono">--fs-title</span> · 26 / 1.25 · Lora 500 (22 at 640px and under)</div><h1 class="ph-title">Projects</h1></div>
+    <div class="r"><div class="lbl">Section · <span class="mono">--fs-section</span> · 15 / 1.4 · sans 600</div><div class="pj-sec-h"><h2>Documents written for this project</h2></div></div>
+    <div class="r"><div class="lbl">Body · <span class="mono">--fs-body</span> · 14 / 1.5 · sans 400, the root</div><div>The 505(b)(2) pathway references the prior approval of an active moiety; the bridging study is specified in Module 2.7.</div></div>
+    <div class="r"><div class="lbl">Small · <span class="mono">--fs-small</span> · 13 / 1.5 · secondary lines, buttons, labels</div><div class="pj-card-m">Last edited 4 minutes ago by J. Chen · 3 open comments</div></div>
+    <div class="r"><div class="lbl">Caption · <span class="mono">--fs-caption</span> · 12 · chips, timestamps, table headers; the floor</div><div class="small">Updated 21 Apr 2026, 09:14 UTC</div></div>
+    <div class="r"><div class="lbl">Prose · <span class="mono">--fs-prose</span> · 16 / 1.65 · Lora 400 (<span class="mono">.prose-reading</span>)</div><div class="prose-reading">AnA reviewed the protocol against the FDA's 2023 draft guidance and found two divergences. Both can be resolved with a pre-IND clarification.</div></div>
+    <div class="r"><div class="lbl">Document · 16 / 1.7 · Lora 400 (<span class="mono">.doc-content</span>)</div><div class="doc-content">The applicant submits this Module 2.5 clinical overview in support of NDA 212345 for the proposed indication.</div></div>
+    <div class="r"><div class="lbl">Mono · regulatory codes only</div><div><span class="mono">CTD §3.2.S.4.1</span> · <span class="mono">21 CFR 314.94(a)(8)(iv)</span></div></div>
   </div>
+</section>
+<p class="note">Sentence case everywhere. No uppercase, no positive letter-spacing on labels, nothing below 12px, and weights stop at 600. Mono is for a code the person reads, never for an internal id.</p>
 </div></body></html>

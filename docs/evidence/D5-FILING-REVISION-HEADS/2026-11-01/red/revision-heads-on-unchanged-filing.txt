@@ -1,0 +1,8 @@
+ × server/routes/__tests__/authoringFileToVault.pglite.integration.test.ts > POST /docs/:docId/file-to-vault > names, for each filed section, the revision it rendered, its origin and its machine authors 197ms
+   → expected undefined to deeply equal [ { …(7) }, { …(7) }, { …(7) } ]
+ × server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts > each filed section names the revision it rendered (LX-10, 2026-11-01) > a receipt that records them projects them onto the derivation the package carries 18ms
+   → expected { status: 'recorded', …(5) } to match object { Object (status, source) }
+ × server/services/authoring/__tests__/authoring-vault-filing-receipt.pglite.test.ts > each filed section names the revision it rendered (LX-10, 2026-11-01) > a malformed revision head is not projected as provenance 12ms
+   → expected { status: 'recorded', …(5) } to deeply equal { status: 'unverified', …(1) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 39 passed (42)

@@ -116,7 +116,8 @@ describe('the audit-chain verifier ships in a form production can run', () => {
     expect(shipped!.options.define).toBeUndefined();
     const dockerfile = fs.readFileSync(path.join(REPO_ROOT, 'Dockerfile.optimized'), 'utf8');
     expect(dockerfile).toMatch(/RUN npm run build/);
-    expect(dockerfile).toMatch(/COPY --from=builder \/app\/dist \.\/dist/);
+    // The production stage owns what it copies as it writes it (MR-03 OPS-19): `COPY --chown=… --from=builder`.
+    expect(dockerfile).toMatch(/COPY (?:--chown=\S+ )?--from=builder \/app\/dist \.\/dist/);
   });
 
   it('runs in plain Node with no tsx and a clean environment, and refuses with exit 2 when there is no database', () => {

@@ -204,6 +204,12 @@ column. What already existed: `.pj-grid/.pj-main/.pj-side` (app-v2.css), used on
 `ProjectConversations` (ProjectHome.tsx); `ProjectSide.tsx`. Nothing new was built; the three composers (Home, project,
 thread) are still three, and converging them is its own change. Evidence: `docs/evidence/D2-CLIENT-JOURNEY/2026-10-25/pass4/`.
 
+*Superseded 2026-11-01* (founder: "It should match how Claude is designed entirely, from projects to the canvas"). The
+start box comes first in the main column again, as on Claude's project page, and the project's facts, reports link and
+filing status move into an "About this project" card at the top of the side column. The header lost its crumb, chip
+row and facts band (about 180 px), so the steps still start near 470 px. The start box stays outside the step switch,
+so the half-typed message still survives a change of step. Evidence: `docs/evidence/D2-CLAUDE-SHAPE/2026-11-01-project-home/`.
+
 ## Pass 5 — Home lists your open items; a new organisation's setup (done, same day)
 
 Decision 9. What already existed: the top bar's "Your work" (`TaskTray.tsx`) read and grouped exactly what Home

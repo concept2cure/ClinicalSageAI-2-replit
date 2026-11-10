@@ -1,0 +1,1009 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx > GlobalSchedule > reads every project once, for the whole chart 17ms
+   → Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+ × client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx > GlobalSchedule > draws one row per scheduled project, sorted by target date, each saying its filing, agency and where its plan stands 3ms
+   → Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+ × client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx > GlobalSchedule > marks the filing date and the agency's clock in words a reader can reach, from the read's dates only 2ms
+   → Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+ × client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx > GlobalSchedule > puts every row on one axis: a later date is further right in every row 2ms
+   → Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+ × client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx > GlobalSchedule > says why a project is not on the schedule, never leaving it out silently 3ms
+   → Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+ × client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx > GlobalSchedule > says a failed read, never an empty chart 1ms
+   → Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+ × client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx > GlobalSchedule > opens a project from its row when asked to 2ms
+   → Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+ × client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx > the global schedule in Reporting & analytics > is offered among the suggestions and opens on every plan, not only Enterprise 250ms
+   → Unable to find an accessible element with the role "button" and name `/When does each project file\?/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "How ready is C2C-101 to file?":
+  [36m<button[39m
+    [33mclass[39m=[32m"sp-starter"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------button:
+
+  Name "What reports can you run for C2C-101?":
+  [36m<button[39m
+    [33mclass[39m=[32m"sp-starter"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------button:
+
+  Name "Compare readiness across all my projects":
+  [36m<button[39m
+    [33mclass[39m=[32m"sp-starter"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-label[39m=[32m"Find suggestions"[39m
+  [33mclass[39m=[32m"sp-starters"[39m
+  [33mdata-layout[39m=[32m"row"[39m
+  [33mrole[39m=[32m"group"[39m
+[36m>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"sp-starter"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"sk"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-search"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.5"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<circle[39m
+          [33mcx[39m=[32m"11"[39m
+          [33mcy[39m=[32m"11"[39m
+          [33mr[39m=[32m"8"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m21 21-4.3-4.3"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</span>[39m
+    [36m<span>[39m
+      [0mHow ready is C2C-101 to file?[0m
+    [36m</span>[39m
+  [36m</button>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"sp-starter"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"sk"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-search"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.5"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<circle[39m
+          [33mcx[39m=[32m"11"[39m
+          [33mcy[39m=[32m"11"[39m
+          [33mr[39m=[32m"8"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m21 21-4.3-4.3"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</span>[39m
+    [36m<span>[39m
+      [0mWhat reports can you run for C2C-101?[0m
+    [36m</span>[39m
+  [36m</button>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"sp-starter"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"sk"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-search"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.5"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<circle[39m
+          [33mcx[39m=[32m"11"[39m
+          [33mcy[39m=[32m"11"[39m
+          [33mr[39m=[32m"8"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m21 21-4.3-4.3"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</span>[39m
+    [36m<span>[39m
+      [0mCompare readiness across all my projects[0m
+    [36m</span>[39m
+  [36m</button>[39m
+[36m</div>[39m
+ × client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx > the global schedule in Reporting & analytics > is reached from the find field by asking for the schedule or the timeline 5035ms
+   → expected [] to have a length of 3 but got +0
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner rc"[39m
+        [33mdata-work-area[39m=[32m"insights"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"ph"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"ph-title"[39m
+            [36m>[39m
+              [0mReporting & analytics[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"ph-sub"[39m
+            [36m>[39m
+              [0mGoverned reports for [0m
+              [0mC2C-101[0m
+              [0m. [0m
+              [0mC2C-101 scores 0% on submission readiness, with 4 critical gaps outstanding.[0m
+              [0m Every value is computed from the governed record; nothing is estimated.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-acts"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mAudit & compliance reports[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rc-find"[39m
+          [33mrole[39m=[32m"search"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"rc-find-l"[39m
+            [33mfor[39m=[32m"_r_4_"[39m
+          [36m>[39m
+            [0mFind a report[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"c2c-input rc-find-i"[39m
+            [33mid[39m=[32m"_r_4_"[39m
+            [33mplaceholder[39m=[32m"A report type, market or question for C2C-101"[39m
+            [33mtype[39m=[32m"text"[39m
+            [33mvalue[39m=[32m"show the filing timeline"[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mFind[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Find suggestions"[39m
+          [33mclass[39m=[32m"sp-starters"[39m
+          [33mdata-layout[39m=[32m"row"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"sp-starter"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sk"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-search"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.5"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"11"[39m
+                  [33mcy[39m=[32m"11"[39m
+                  [33mr[39m=[32m"8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m21 21-4.3-4.3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<span>[39m
+              [0mHow ready is C2C-101 to file?[0m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"sp-starter"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sk"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-search"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.5"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"11"[39m
+                  [33mcy[39m=[32m"11"[39m
+                  [33mr[39m=[32m"8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m21 21-4.3-4.3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<span>[39m
+              [0mWhat reports can you run for C2C-101?[0m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"sp-starter"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sk"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-search"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.5"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"11"[39m
+                  [33mcy[39m=[32m"11"[39m
+                  [33mr[39m=[32m"8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m21 21-4.3-4.3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<span>[39m
+              [0mCompare readiness across all my projects[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rc-ana"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-ana-scroll"[39m
+          [36m>[39m
+            [36m<section[39m
+              [33maria-label[39m=[32m"Result"[39m
+              [33mclass[39m=[32m"rc-result"[39m
+              [33mdata-testid[39m=[32m"rc-find-result"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"rc-op-body"[39m
+                [33mrole[39m=[32m"status"[39m
+                [33mstyle[39m=[32m""[39m
+              [36m>[39m
+                [0mNo governed report this release computes applies to C2C-101. Nothing is run in its place.[0m
+              [36m</p>[39m
+            [36m</section>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rc-canvas"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Reporting views"[39m
+            [33mclass[39m=[32m"tabs"[39m
+            [33mrole[39m=[32m"tablist"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"_r_3_-panel"[39m
+              [33maria-selected[39m=[32m"true"[39m
+              [33mclass[39m=[32m"tab"[39m
+              [33mid[39m=[32m"_r_3_-report"[39m
+              [33mrole[39m=[32m"tab"[39m
+              [33mtabindex[39m=[32m"0"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mReports[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"_r_3_-panel"[39m
+              [33maria-selected[39m=[32m"false"[39m
+              [33mclass[39m=[32m"tab"[39m
+              [33mid[39m=[32m"_r_3_-catalog"[39m
+              [33mrole[39m=[32m"tab"[39m
+              [33mtabindex[39m=[32m"-1"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mCatalog[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"_r_3_-panel"[39m
+              [33maria-selected[39m=[32m"false"[39m
+              [33mclass[39m=[32m"tab"[39m
+              [33mid[39m=[32m"_r_3_-runs"[39m
+              [33mrole[39m=[32m"tab"[39m
+              [33mtabindex[39m=[32m"-1"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mRun history[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"_r_3_-panel"[39m
+              [33maria-selected[39m=[32m"false"[39m
+              [33mclass[39m=[32m"tab"[39m
+              [33mid[39m=[32m"_r_3_-schedules"[39m
+              [33mrole[39m=[32m"tab"[39m
+              [33mtabindex[39m=[32m"-1"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mSchedules[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"_r_3_-panel"[39m
+              [33maria-selected[39m=[32m"false"[39m
+              [33mclass[39m=[32m"tab"[39m
+              [33mid[39m=[32m"_r_3_-bundles"[39m
+              [33mrole[39m=[32m"tab"[39m
+              [33mtabindex[39m=[32m"-1"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mBundles[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-labelledby[39m=[32m"_r_3_-report"[39m
+            [33mid[39m=[32m"_r_3_-panel"[39m
+            [33mrole[39m=[32m"tabpanel"[39m
+          [36m>[39m
+            [36m<section[39m
+              [33maria-labelledby[39m=[32m"_r_3_-packs"[39m
+              [33mclass[39m=[32m"pj-sec"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"pj-sec-h"[39m
+              [36m>[39m
+                [36m<h2[39m
+                  [33mid[39m=[32m"_r_3_-packs"[39m
+                [36m>[39m
+                  [0mStandard packs[0m
+                [36m</h2>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sec-sub"[39m
+                [36m>[39m
+                  [0m0[0m
+                  [0m for [0m
+                  [0mBiotech[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"rc-packs-none"[39m
+              [36m>[39m
+                [0mNo standard pack for [0m
+                [0mBiotech[0m
+                [0m can run here. Find a report above, or open the Catalog.[0m
+              [36m</p>[39m
+            [36m</section>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pj-more"[39m
+        [36m>[39m
+          [36m<summary>[39m
+            [0mHow reports are computed[0m
+          [36m</summary>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"rc-guardrail"[39m
+          [36m>[39m
+            [0mFind a report matches your words to an available governed report type and runs it; it does not answer in its own words. Metrics and scores come from recorded inputs and canonical providers; none is originated here. Prediction definitions remain unavailable as governed runs; no validated prediction model is part of this release.[0m
+          [36m</p>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx > GlobalSchedule > reads every project once, for the whole chart
+ FAIL  client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx > GlobalSchedule > draws one row per scheduled project, sorted by target date, each saying its filing, agency and where its plan stands
+ FAIL  client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx > GlobalSchedule > marks the filing date and the agency's clock in words a reader can reach, from the read's dates only
+ FAIL  client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx > GlobalSchedule > puts every row on one axis: a later date is further right in every row
+ FAIL  client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx > GlobalSchedule > says why a project is not on the schedule, never leaving it out silently
+ FAIL  client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx > GlobalSchedule > says a failed read, never an empty chart
+ FAIL  client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx > GlobalSchedule > opens a project from its row when asked to
+Error: Element type is invalid: expected a string (for built-in components) or a class/function (for composite components) but got: undefined. You likely forgot to export your component from the file it's defined in, or you might have mixed up default and named imports.
+ ❯ createFiberFromTypeAndProps node_modules/react-dom/cjs/react-dom-client.development.js:5021:28
+ ❯ createFiberFromElement node_modules/react-dom/cjs/react-dom-client.development.js:5035:14
+ ❯ reconcileChildFibersImpl node_modules/react-dom/cjs/react-dom-client.development.js:6920:31
+ ❯ node_modules/react-dom/cjs/react-dom-client.development.js:7098:33
+ ❯ reconcileChildren node_modules/react-dom/cjs/react-dom-client.development.js:9702:13
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11899:15
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx > the global schedule in Reporting & analytics > is offered among the suggestions and opens on every plan, not only Enterprise
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name `/When does each project file\?/`
+
+Here are the accessible roles:
+
+  button:
+
+  Name "How ready is C2C-101 to file?":
+  [36m<button[39m
+    [33mclass[39m=[32m"sp-starter"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------button:
+
+  Name "What reports can you run for C2C-101?":
+  [36m<button[39m
+    [33mclass[39m=[32m"sp-starter"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------button:
+
+  Name "Compare readiness across all my projects":
+  [36m<button[39m
+    [33mclass[39m=[32m"sp-starter"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33maria-label[39m=[32m"Find suggestions"[39m
+  [33mclass[39m=[32m"sp-starters"[39m
+  [33mdata-layout[39m=[32m"row"[39m
+  [33mrole[39m=[32m"group"[39m
+[36m>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"sp-starter"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"sk"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-search"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.5"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<circle[39m
+          [33mcx[39m=[32m"11"[39m
+          [33mcy[39m=[32m"11"[39m
+          [33mr[39m=[32m"8"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m21 21-4.3-4.3"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</span>[39m
+    [36m<span>[39m
+      [0mHow ready is C2C-101 to file?[0m
+    [36m</span>[39m
+  [36m</button>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"sp-starter"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"sk"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-search"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.5"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<circle[39m
+          [33mcx[39m=[32m"11"[39m
+          [33mcy[39m=[32m"11"[39m
+          [33mr[39m=[32m"8"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m21 21-4.3-4.3"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</span>[39m
+    [36m<span>[39m
+      [0mWhat reports can you run for C2C-101?[0m
+    [36m</span>[39m
+  [36m</button>[39m
+  [36m<button[39m
+    [33mclass[39m=[32m"sp-starter"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m>[39m
+    [36m<span[39m
+      [33maria-hidden[39m=[32m"true"[39m
+      [33mclass[39m=[32m"sk"[39m
+    [36m>[39m
+      [36m<svg[39m
+        [33maria-hidden[39m=[32m"true"[39m
+        [33mclass[39m=[32m"lucide lucide-search"[39m
+        [33mfill[39m=[32m"none"[39m
+        [33mfocusable[39m=[32m"false"[39m
+        [33mheight[39m=[32m"1em"[39m
+        [33mstroke[39m=[32m"currentColor"[39m
+        [33mstroke-linecap[39m=[32m"round"[39m
+        [33mstroke-linejoin[39m=[32m"round"[39m
+        [33mstroke-width[39m=[32m"1.5"[39m
+        [33mviewBox[39m=[32m"0 0 24 24"[39m
+        [33mwidth[39m=[32m"1em"[39m
+        [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+      [36m>[39m
+        [36m<circle[39m
+          [33mcx[39m=[32m"11"[39m
+          [33mcy[39m=[32m"11"[39m
+          [33mr[39m=[32m"8"[39m
+        [36m/>[39m
+        [36m<path[39m
+          [33md[39m=[32m"m21 21-4.3-4.3"[39m
+        [36m/>[39m
+      [36m</svg>[39m
+    [36m</span>[39m
+    [36m<span>[39m
+      [0mCompare readiness across all my projects[0m
+    [36m</span>[39m
+  [36m</button>[39m
+[36m</div>[39m
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx:166:35
+    164|     await open();
+    165|     const group = screen.getByRole('group', { name: 'Find suggestions'…
+    166|     fireEvent.click(within(group).getByRole('button', { name: /When do…
+       |                                   ^
+    167|     await waitFor(() => expect(rows()).toHaveLength(3));
+    168|     expect(document.querySelector('.ro-dash h2')?.textContent).toBe('G…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx > the global schedule in Reporting & analytics > is reached from the find field by asking for the schedule or the timeline
+AssertionError: expected [] to have a length of 3 but got +0
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"page-inner rc"[39m
+        [33mdata-work-area[39m=[32m"insights"[39m
+      [36m>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"ph"[39m
+        [36m>[39m
+          [36m<div>[39m
+            [36m<h1[39m
+              [33mclass[39m=[32m"ph-title"[39m
+            [36m>[39m
+              [0mReporting & analytics[0m
+            [36m</h1>[39m
+            [36m<p[39m
+              [33mclass[39m=[32m"ph-sub"[39m
+            [36m>[39m
+              [0mGoverned reports for [0m
+              [0mC2C-101[0m
+              [0m. [0m
+              [0mC2C-101 scores 0% on submission readiness, with 4 critical gaps outstanding.[0m
+              [0m Every value is computed from the governed record; nothing is estimated.[0m
+            [36m</p>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"ph-acts"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33mclass[39m=[32m"btn ghost"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mAudit & compliance reports[0m
+            [36m</button>[39m
+          [36m</div>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rc-find"[39m
+          [33mrole[39m=[32m"search"[39m
+        [36m>[39m
+          [36m<label[39m
+            [33mclass[39m=[32m"rc-find-l"[39m
+            [33mfor[39m=[32m"_r_4_"[39m
+          [36m>[39m
+            [0mFind a report[0m
+          [36m</label>[39m
+          [36m<input[39m
+            [33mclass[39m=[32m"c2c-input rc-find-i"[39m
+            [33mid[39m=[32m"_r_4_"[39m
+            [33mplaceholder[39m=[32m"A report type, market or question for C2C-101"[39m
+            [33mtype[39m=[32m"text"[39m
+            [33mvalue[39m=[32m"show the filing timeline"[39m
+          [36m/>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"btn ghost"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [0mFind[0m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33maria-label[39m=[32m"Find suggestions"[39m
+          [33mclass[39m=[32m"sp-starters"[39m
+          [33mdata-layout[39m=[32m"row"[39m
+          [33mrole[39m=[32m"group"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"sp-starter"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sk"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-search"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.5"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"11"[39m
+                  [33mcy[39m=[32m"11"[39m
+                  [33mr[39m=[32m"8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m21 21-4.3-4.3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<span>[39m
+              [0mHow ready is C2C-101 to file?[0m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"sp-starter"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sk"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-search"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.5"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"11"[39m
+                  [33mcy[39m=[32m"11"[39m
+                  [33mr[39m=[32m"8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m21 21-4.3-4.3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<span>[39m
+              [0mWhat reports can you run for C2C-101?[0m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"sp-starter"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"sk"[39m
+            [36m>[39m
+              [36m<svg[39m
+                [33maria-hidden[39m=[32m"true"[39m
+                [33mclass[39m=[32m"lucide lucide-search"[39m
+                [33mfill[39m=[32m"none"[39m
+                [33mfocusable[39m=[32m"false"[39m
+                [33mheight[39m=[32m"1em"[39m
+                [33mstroke[39m=[32m"currentColor"[39m
+                [33mstroke-linecap[39m=[32m"round"[39m
+                [33mstroke-linejoin[39m=[32m"round"[39m
+                [33mstroke-width[39m=[32m"1.5"[39m
+                [33mviewBox[39m=[32m"0 0 24 24"[39m
+                [33mwidth[39m=[32m"1em"[39m
+                [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+              [36m>[39m
+                [36m<circle[39m
+                  [33mcx[39m=[32m"11"[39m
+                  [33mcy[39m=[32m"11"[39m
+                  [33mr[39m=[32m"8"[39m
+                [36m/>[39m
+                [36m<path[39m
+                  [33md[39m=[32m"m21 21-4.3-4.3"[39m
+                [36m/>[39m
+              [36m</svg>[39m
+            [36m</span>[39m
+            [36m<span>[39m
+              [0mCompare readiness across all my projects[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rc-ana"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"rc-ana-scroll"[39m
+          [36m>[39m
+            [36m<section[39m
+              [33maria-label[39m=[32m"Result"[39m
+              [33mclass[39m=[32m"rc-result"[39m
+              [33mdata-testid[39m=[32m"rc-find-result"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"rc-op-body"[39m
+                [33mrole[39m=[32m"status"[39m
+                [33mstyle[39m=[32m""[39m
+              [36m>[39m
+                [0mNo governed report this release computes applies to C2C-101. Nothing is run in its place.[0m
+              [36m</p>[39m
+            [36m</section>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rc-canvas"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Reporting views"[39m
+            [33mclass[39m=[32m"tabs"[39m
+            [33mrole[39m=[32m"tablist"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"_r_3_-panel"[39m
+              [33maria-selected[39m=[32m"true"[39m
+              [33mclass[39m=[32m"tab"[39m
+              [33mid[39m=[32m"_r_3_-report"[39m
+              [33mrole[39m=[32m"tab"[39m
+              [33mtabindex[39m=[32m"0"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mReports[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"_r_3_-panel"[39m
+              [33maria-selected[39m=[32m"false"[39m
+              [33mclass[39m=[32m"tab"[39m
+              [33mid[39m=[32m"_r_3_-catalog"[39m
+              [33mrole[39m=[32m"tab"[39m
+              [33mtabindex[39m=[32m"-1"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mCatalog[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"_r_3_-panel"[39m
+              [33maria-selected[39m=[32m"false"[39m
+              [33mclass[39m=[32m"tab"[39m
+              [33mid[39m=[32m"_r_3_-runs"[39m
+              [33mrole[39m=[32m"tab"[39m
+              [33mtabindex[39m=[32m"-1"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mRun history[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"_r_3_-panel"[39m
+              [33maria-selected[39m=[32m"false"[39m
+              [33mclass[39m=[32m"tab"[39m
+              [33mid[39m=[32m"_r_3_-schedules"[39m
+              [33mrole[39m=[32m"tab"[39m
+              [33mtabindex[39m=[32m"-1"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mSchedules[0m
+            [36m</button>[39m
+            [36m<button[39m
+              [33maria-controls[39m=[32m"_r_3_-panel"[39m
+              [33maria-selected[39m=[32m"false"[39m
+              [33mclass[39m=[32m"tab"[39m
+              [33mid[39m=[32m"_r_3_-bundles"[39m
+              [33mrole[39m=[32m"tab"[39m
+              [33mtabindex[39m=[32m"-1"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mBundles[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<div[39m
+            [33maria-labelledby[39m=[32m"_r_3_-report"[39m
+            [33mid[39m=[32m"_r_3_-panel"[39m
+            [33mrole[39m=[32m"tabpanel"[39m
+          [36m>[39m
+            [36m<section[39m
+              [33maria-labelledby[39m=[32m"_r_3_-packs"[39m
+              [33mclass[39m=[32m"pj-sec"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"pj-sec-h"[39m
+              [36m>[39m
+                [36m<h2[39m
+                  [33mid[39m=[32m"_r_3_-packs"[39m
+                [36m>[39m
+                  [0mStandard packs[0m
+                [36m</h2>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"sec-sub"[39m
+                [36m>[39m
+                  [0m0[0m
+                  [0m for [0m
+                  [0mBiotech[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"rc-packs-none"[39m
+              [36m>[39m
+                [0mNo standard pack for [0m
+                [0mBiotech[0m
+                [0m can run here. Find a report above, or open the Catalog.[0m
+              [36m</p>[39m
+            [36m</section>[39m
+          [36m</div>[39m
+        [36m</div>[39m
+        [36m<details[39m
+          [33mclass[39m=[32m"pj-more"[39m
+        [36m>[39m
+          [36m<summary>[39m
+            [0mHow reports are computed[0m
+          [36m</summary>[39m
+          [36m<p[39m
+            [33mclass[39m=[32m"rc-guardrail"[39m
+          [36m>[39m
+            [0mFind a report matches your words to an available governed report type and runs it; it does not answer in its own words. Metrics and scores come from recorded inputs and canonical providers; none is originated here. Prediction definitions remain unavailable as governed runs; no validated prediction model is part of this release.[0m
+          [36m</p>[39m
+        [36m</details>[39m
+      [36m</div>[39m
+    [36m</div>[39m
+  [36m</body>[39m
+[36m</html>[39m
+
+- Expected
++ Received
+
+- 3
++ 0
+
+ ❯ client/src/concept2cure/v2/__tests__/reportingGlobalSchedule.test.tsx:177:40
+    175|     fireEvent.change(field, { target: { value: 'show the filing timeli…
+    176|     fireEvent.keyDown(field, { key: 'Enter' });
+    177|     await waitFor(() => expect(rows()).toHaveLength(3));
+       |                                        ^
+    178|   });
+    179| });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed (9)
+   Start at  05:30:16
+   Duration  8.83s (transform 1.30s, setup 212ms, import 1.97s, tests 5.32s, environment 1.19s)
+

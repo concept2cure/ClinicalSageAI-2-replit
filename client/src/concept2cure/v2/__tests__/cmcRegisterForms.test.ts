@@ -12,6 +12,11 @@ import {
   referenceStandardForm,
   referenceStandardBody,
   referenceStandardPatch,
+  METHOD_VALIDATION_OUTCOMES,
+  METHOD_SIGNED_STATES,
+  statusOptionsFor,
+  statusDefaultFor,
+  SIGNED_ACTS,
   qualifyForm,
   qualifyBody,
   parseRowLines,
@@ -1035,5 +1040,134 @@ describe('formulation register — the development rationale is carried, and cle
     expect(formulationRecordBody({ ...base, formulationDevelopment: 'QTPP-driven choice of IR tablet' }, 'p1').formulationDevelopment).toBe('QTPP-driven choice of IR tablet');
     expect(formulationRecordBody(base, 'p1')).not.toHaveProperty('formulationDevelopment');
     expect(formulationRecordPatch({ ...base, formulationDevelopment: '' }).formulationDevelopment).toBeNull();
+  });
+});
+
+/* ── P-110 item 1 (2026-11-09): the act records WHICH outcome ───────────────
+   The analytical-method register's one signed act records full ICH Q2(R2)
+   validation, or suitability for a stated phase. The words must match the
+   server's `SIGNED_REGISTERS.analyticalMethods.signedOutcomes` exactly: the
+   server refuses an outcome it does not list, so a label sent as a value
+   would make every suitability signature fail with a refusal about a word the
+   person never typed. */
+describe('the method validation outcomes', () => {
+  it('sends the server\u2019s own words, not the labels a person reads', () => {
+    expect(METHOD_VALIDATION_OUTCOMES.map((o) => o.value)).toEqual(['validated', 'phase-appropriate']);
+    for (const o of METHOD_VALIDATION_OUTCOMES) {
+      expect(o.label, o.value).not.toBe(o.value);
+    }
+  });
+
+  it('defaults to full validation, so a signature with no choice made is the stricter one', () => {
+    const form = qualifyForm('analytical method', 'AM-001 — Assay', SIGNED_ACTS.validate, METHOD_VALIDATION_OUTCOMES);
+    const outcome = form.fields.find((f) => f.key === 'outcome')!;
+    expect(outcome.default).toBe('validated');
+    expect(outcome.required).toBe(true);
+  });
+
+  it('offers the phase, and says when it is needed', () => {
+    const form = qualifyForm('analytical method', 'AM-001 — Assay', SIGNED_ACTS.validate, METHOD_VALIDATION_OUTCOMES);
+    const phase = form.fields.find((f) => f.key === 'phase')!;
+    expect(phase).toBeTruthy();
+    /* NOT required: it belongs to one outcome, this form has no conditional
+       field, and the server refuses a suitability signature with no phase in
+       its own sentence. A required field here would block full validation. */
+    expect(phase.required).toBeFalsy();
+    expect(phase.desc).toMatch(/suitability for a phase/i);
+  });
+
+  it('keeps every other register\u2019s signature dialog exactly as it was', () => {
+    const closure = qualifyForm('container closure system', 'Vial system');
+    expect(closure.fields.map((f) => f.key)).toEqual(['meaning', 'reason', 'password', 'totp']);
+  });
+
+  it('sends the outcome and the phase only when the dialog offered them', () => {
+    const withOutcome = qualifyBody({
+      outcome: 'phase-appropriate', phase: 'Phase 1',
+      reason: 'The Q2 package supports use at phase 1.', meaning: 'approval', password: 'pw', totp: '',
+    });
+    expect(withOutcome).toMatchObject({ outcome: 'phase-appropriate', phase: 'Phase 1' });
+
+    /* A register that records one outcome must send none: the server refuses a
+       named outcome there, so a body that always carried one would break every
+       other register's signature. */
+    const plain = qualifyBody({ reason: 'Qualification report QR-014 accepted.', meaning: 'approval', password: 'pw', totp: '' });
+    expect(plain).not.toHaveProperty('outcome');
+    expect(plain).not.toHaveProperty('phase');
+  });
+
+  it('drops a phase left blank rather than sending whitespace as an attestation', () => {
+    const body = qualifyBody({
+      outcome: 'validated', phase: '   ',
+      reason: 'Full ICH Q2(R2) validation is complete.', meaning: 'approval', password: 'pw', totp: '',
+    });
+    expect(body).toMatchObject({ outcome: 'validated' });
+    expect(body).not.toHaveProperty('phase');
+  });
+});
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * P-110 gave one register a second signed state, and the edit drawer knew one.
+ *
+ * `statusOptionsFor` re-offers the signed status to a record that already holds
+ * it, because offering only the ungoverned statuses sends the base status on
+ * every Save — reverting a Part 11 signature while leaving the signer and date
+ * populated, and (since the server refuses that) answering 409, so the record
+ * is uneditable through the product. It took ONE signed word. P-110 made
+ * `phase-appropriate` a second signed outcome of the analytical-method
+ * signature, so a method signed suitable for its phase opened its drawer on
+ * 'development' and could not be saved at all — the validated-process defect
+ * the parameter was added for, one register over.
+ * ────────────────────────────────────────────────────────────────────────────*/
+describe('a register that signs two states round-trips either one', () => {
+  const statusOf = (row?: Record<string, unknown>) =>
+    methodForm(row as never).fields.find((f) => f.key === 'status')!;
+
+  it('offers the drawer neither signed word on a new method', () => {
+    const status = statusOf();
+    expect(status.options).not.toContain('validated');
+    expect(status.options).not.toContain('phase-appropriate');
+    expect(status.default).toBe('development');
+  });
+
+  it('round-trips a validated method, as it always did', () => {
+    const status = statusOf({ status: 'validated' });
+    expect(status.default).toBe('validated');
+    expect(status.options).toContain('validated');
+    expect(status.options).not.toContain('development');
+  });
+
+  // The defect: default 'development', which the server answers 409 to.
+  it('round-trips a phase-appropriate method', () => {
+    const status = statusOf({ status: 'phase-appropriate' });
+    expect(status.default).toBe('phase-appropriate');
+    expect(status.options).toContain('phase-appropriate');
+    expect(status.options).not.toContain('development');
+  });
+
+  it('leaves a status that is neither signed nor the base alone', () => {
+    const status = statusOf({ status: 'validation' });
+    expect(status.default).toBe('validation');
+    expect(status.options).toEqual(['development', 'validation', 'retired']);
+  });
+
+  /* The edit drawer must recognise exactly what the Validate drawer can sign.
+     Two lists that drift are how the one-word version survived P-110 at all. */
+  it('recognises exactly the outcomes the signing drawer offers', () => {
+    expect([...METHOD_SIGNED_STATES]).toEqual(METHOD_VALIDATION_OUTCOMES.map((o) => o.value));
+  });
+
+  it('still takes a single word, for the eight registers that sign one', () => {
+    expect(statusOptionsFor(['draft', 'retired'], 'qualified')).toEqual(['qualified', 'retired']);
+    expect(statusDefaultFor(['draft', 'retired'], 'qualified')).toBe('qualified');
+    expect(statusOptionsFor(['draft', 'retired'], 'draft')).toEqual(['draft', 'retired']);
+  });
+
+  /* The stability register's vocabulary is upper-case; the register's own
+     casing comes back, not the stored row's. */
+  it('returns the register casing, matching case-insensitively', () => {
+    const statuses = ['DRAFT', 'ACTIVE', 'PAUSED'];
+    expect(statusDefaultFor(statuses, 'completed', 'COMPLETED')).toBe('COMPLETED');
+    expect(statusOptionsFor(statuses, ' Completed ', 'COMPLETED')).toEqual(['COMPLETED', 'ACTIVE', 'PAUSED']);
   });
 });

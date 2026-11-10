@@ -12,6 +12,8 @@
 
 import type { FlowDefinition } from './types.js';
 import type { QuestionPredicate } from '../../../../shared/types/intelligence-questions.js';
+import { evaluatePredicate } from '../../../../shared/ana/question-predicate.js';
+import { orphanProgrammeLeaves } from './flows/ind-submission-orphan-designation.js';
 
 /* ─── Reading one answer ─────────────────────────────────────────────────── */
 
@@ -31,6 +33,15 @@ export function numVal(val: unknown): number | null {
 export function strVal(val: unknown): string {
   return typeof val === 'string' ? val.toLowerCase().trim() : '';
 }
+
+/**
+ * The countries whose regulators the ethnic-factors rule speaks for, matched
+ * case-insensitively in the protocol's free-text country list. The question's
+ * gate in flows/protocol-development.ts and the rule's check both read this,
+ * so the question is asked exactly where its refusal is reported (2026-11-02,
+ * S4). This module has only type imports, so a flow importing it makes no cycle.
+ */
+export const EAST_ASIAN_COUNTRY_WORDS = ['japan', 'china', 'korea', 'taiwan'] as const;
 
 /**
  * Whether an answer MENTIONS any of these words — a string answer containing
@@ -159,4 +170,40 @@ export function contextFor(
     return ids.some(reached) ? 'blank' : 'pending';
   };
   return { asks: id => asked.has(id), mitigation, mitigationAbsent: () => mitigation() === 'blank' };
+}
+
+/* ── Orphan designation and natural history (2026-11-02, S4) ─────────────── */
+
+/**
+ * Whether the answers make this an orphan programme: the predicate every
+ * natural-history gate carries (orphanProgrammeLeaves), so the rule counts
+ * exactly the answers that open the question it waits on.
+ *
+ * 2026-11-02 (S4): it also read `regulatory_pathway` and `ema_designations`
+ * (orphan checkboxes the protocol no longer offers, since the designation is
+ * asked once per regulator), `exclusivity_claims` 'orphan_7yr' (an exclusivity
+ * CLAIM, which is not a designation) and `prea_applicable` 'orphan_exempt' (a
+ * PREA position). None of them opens a gate, so they only made the rule wait
+ * on answers that could never let it fire; and the last two are claims the
+ * designation should be checked against, not evidence of it.
+ */
+export function statesOrphanDesignation(flat: Record<string, unknown>): boolean {
+  return evaluatePredicate({ anyOf: orphanProgrammeLeaves() }, flat);
+}
+
+/**
+ * Whether the design rests on the disease course: any protocol; an IND study in
+ * patients (a healthy-volunteer PK study does not); an NDA or BLA comparison
+ * without a concurrent control — with a randomized control, no natural-history
+ * data is not a deficiency under any authority the finding cites.
+ */
+export function naturalHistoryBearsOnDesign(flat: Record<string, unknown>, category: string): boolean {
+  if (category === 'ind_submission') return strVal(flat['study_population']) !== 'healthy_volunteers';
+  if (category === 'nda_submission') {
+    return strVal(flat['pivotal_study_design']) === 'single_arm' || strVal(flat['control_type']) === 'historical';
+  }
+  if (category === 'bla_submission') {
+    return ['historical', 'none'].includes(strVal(flat['comparator_used'])) || strVal(flat['pivotal_design']) === 'single_arm';
+  }
+  return true;
 }

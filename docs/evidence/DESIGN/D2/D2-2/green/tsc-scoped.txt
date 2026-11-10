@@ -1,0 +1,10 @@
+# Scoped tsc over Projects.tsx and newProjectWizardLook.test.tsx (tsconfig extends the root; NODE_OPTIONS=--max-old-space-size=6144)
+{ "extends": "/home/user/ClinicalSageAI-2-replit/tsconfig.json",
+  "compilerOptions": { "noEmit": true, "incremental": false, "baseUrl": "/home/user/ClinicalSageAI-2-replit" },
+  "include": [],
+  "files": ["/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/Projects.tsx", "/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx"] }
+
+client/src/concept2cure/components/ana/BriefingBookPanel.tsx(20,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/CrlPremortemPanel.tsx(28,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/components/ana/GovernedActionSignoff.tsx(26,20): error TS2307: Cannot find module './styles.module.css' or its corresponding type declarations.
+client/src/concept2cure/v2/surfaceActions.ts(305,19): error TS2339: Property 'env' does not exist on type 'ImportMeta'.

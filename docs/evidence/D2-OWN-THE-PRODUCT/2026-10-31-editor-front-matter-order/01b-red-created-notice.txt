@@ -1,0 +1,5 @@
+ × filing guidance without hiding the global template library > offers to open the created document only while it is not the one open 511ms
+   → expected <button type="button" …(1)></button> to be null
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected <button type="button" …(1)></button> to be null
+      Tests  1 failed | 36 skipped (37)

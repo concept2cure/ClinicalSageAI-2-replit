@@ -21,7 +21,9 @@
 import React from 'react';
 import { apiRequest, redactInternals } from '@/lib/queryClient';
 import { I } from './icons';
+import { useShellProject } from './shellProject';
 import { getAuthToken } from '@/utils/authToken';
+import { describeReadFailure, readFailureFor, withReadDeadline } from '../mdx/hooks/useFetchJson';
 
 export function connected(): boolean {
   return Boolean(getAuthToken());
@@ -155,6 +157,10 @@ export interface DataResult<T> {
  */
 function failureFrom(e: unknown, path: string): DataResult<never> {
   const status = (e as { status?: unknown } | null)?.status;
+  const interrupted = (e as { code?: unknown } | null)?.code;
+  if (e instanceof Error && (interrupted === 'READ_TIMEOUT' || interrupted === 'READ_CANCELLED')) {
+    return { data: null, error: e.message, status: 0, code: interrupted };
+  }
   if (e instanceof Error && typeof status === 'number' && status > 0) {
     const code = (e as { code?: unknown }).code;
     return { data: null, error: e.message || `HTTP ${status} ${path}`, status, ...(typeof code === 'string' ? { code } : {}) };
@@ -255,22 +261,25 @@ export async function liveGetOrNull<T>(
   path: string,
   guard?: ShapeGuard<T>,
   headers?: Record<string, string>,
+  signal?: AbortSignal,
 ): Promise<DataResult<T>> {
   try {
-    const res = headers ? await apiRequest('GET', path, undefined, headers) : await apiRequest('GET', path);
-    if (!res.ok) {
-      return { data: null, error: `HTTP ${res.status} ${path}`, status: res.status };
-    }
-    if (res.status === 204) {
-      return { data: null, status: 204 };
-    }
-    const body = (await res.json()) as unknown;
-    const payload = unwrapEnvelope(body);
-    const meta = envelopeMeta(body);
-    if (guard && payload != null && !guard(payload)) {
-      return { data: null, error: shapeMismatch(path), meta, status: res.status };
-    }
-    return { data: payload as T, meta, status: res.status };
+    return await withReadDeadline(async readSignal => {
+      const res = await apiRequest('GET', path, undefined, headers, readSignal);
+      if (!res.ok) {
+        return { data: null, error: res.status === 401 ? 'Sign in again to continue.' : `HTTP ${res.status} ${path}`, status: res.status };
+      }
+      if (res.status === 204) {
+        return { data: null, status: 204 };
+      }
+      const body = (await res.json()) as unknown;
+      const payload = unwrapEnvelope(body);
+      const meta = envelopeMeta(body);
+      if (guard && payload != null && !guard(payload)) {
+        return { data: null, error: shapeMismatch(path), meta, status: res.status };
+      }
+      return { data: payload as T, meta, status: res.status };
+    }, signal);
   } catch (e) {
     return failureFrom(e, path);
   }
@@ -382,8 +391,8 @@ export function useLiveData<T>(
   owner?: DataReadOwner,
 ): DataState<T> {
   const owned = useDataReadVisit(path, owner);
-  const [read, setRead] = React.useState<{ visit: DataReadVisit | null; state: DataState<T> }>({
-    visit: null, state: { data: null, loading: Boolean(path), empty: false },
+  const [read, setRead] = React.useState<{ visit: DataReadVisit | null; path: string | null; state: DataState<T> }>({
+    visit: null, path: null, state: { data: null, loading: Boolean(path), empty: false },
   });
   // `guard` is deliberately not a dependency. It is read through a ref so an
   // inline arrow at the call site cannot re-trigger the fetch on every render,
@@ -395,17 +404,19 @@ export function useLiveData<T>(
     const current = () => !cancelled && owned.current();
     if (!current()) return undefined;
     if (!path) {
-      setRead({ visit: owned.visit, state: { data: null, loading: false, empty: false } });
+      setRead({ visit: owned.visit, path, state: { data: null, loading: false, empty: false } });
       return undefined;
     }
-    setRead(previous => ({ visit: owned.visit, state: owned.visit && previous.visit !== owned.visit
-      ? { data: null, loading: true, empty: false } : { ...previous.state, loading: true } }));
-    liveGetOrNull<T>(path, guardRef.current).then((r) => {
+    const controller = new AbortController();
+    setRead(previous => ({ visit: owned.visit, path, state: previous.path !== path || previous.visit !== owned.visit
+      ? { data: null, loading: true, empty: false }
+      : { ...previous.state, loading: true, empty: false, error: undefined, status: undefined, code: undefined } }));
+    liveGetOrNull<T>(path, guardRef.current, undefined, controller.signal).then((r) => {
       if (!current()) return;
       const isEmpty =
         !r.error &&
         (r.data == null || (Array.isArray(r.data) && r.data.length === 0));
-      setRead({ visit: owned.visit, state: {
+      setRead({ visit: owned.visit, path, state: {
         data: r.data,
         loading: false,
         error: r.error,
@@ -417,10 +428,18 @@ export function useLiveData<T>(
     });
     return () => {
       cancelled = true;
+      controller.abort();
     };
+    // A changed URL or null must retire the read even if caller deps omit it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [...deps, owned.visit]);
-  return owned.visit && (read.visit !== owned.visit || !owned.current())
+  }, [path, ...deps, owned.visit]);
+  if (owned.visit && !owned.current()) {
+    return { data: null, loading: false, empty: false, ...(path ? {
+      error: 'This view is no longer active. Reopen it to load the current data.',
+      status: 0, code: 'READ_CONTEXT_CHANGED',
+    } : {}) };
+  }
+  return read.path !== path || (owned.visit && read.visit !== owned.visit)
     ? { data: null, loading: Boolean(path), empty: false } : read.state;
 }
 
@@ -528,6 +547,41 @@ export function useLiveRows<T>(
  * The distinction is spatial, not semantic: both are `role="alert"`, both are
  * announced assertively, and both must offer a recovery path.
  */
+/** The failed read a panel reports: a v2 read's `{ status, code }` (DataState) or a ReadFailure. */
+export type FailedRead = { status?: number; code?: string | null } | null | undefined;
+
+/**
+ * What a refused read says, or null when the read was not refused (a failure to
+ * answer, or no read given) and the caller's own words and retry stand.
+ *
+ * The founder, 2026-11-05: a feature can be not licensed, not relevant to the
+ * project, blocked by missing evidence, or unavailable to this user, and those
+ * are never one generic failure. They are told apart by the one read classifier
+ * (`readFailureFor`, `describeReadFailure` in mdx/hooks/useFetchJson.ts), which
+ * the Vault, the Data Room and the editor's citation catalogue each used through
+ * a helper of their own; this is that rule in the one panel every screen shares.
+ * An expired session (401) is said too. Only the unavailable ownership check
+ * keeps a retry: it is the one refusal a retry can change.
+ */
+export function readRefusalWords(read: FailedRead, what = 'it'): { title: string; message: string; retryable: boolean } | null {
+  if (!read) return null;
+  if (read.status === 401) return { title: 'Your session has expired', message: `Sign in again to read ${what}.`, retryable: false };
+  const kind = readFailureFor(read.status, read.code ?? undefined);
+  if (kind === 'failed') return null;
+  return describeReadFailure(kind, what);
+}
+
+/** The title, message and retry a failure panel shows: the caller's, unless its read was refused. */
+function shownFailure(
+  given: { title: string; message?: React.ReactNode; retry?: () => void },
+  read: FailedRead,
+  readWhat: string | undefined,
+): { shownTitle: string; shownMessage?: React.ReactNode; recover?: () => void } {
+  const refusal = readRefusalWords(read, readWhat);
+  if (!refusal) return { shownTitle: given.title, shownMessage: given.message, recover: given.retry };
+  return { shownTitle: refusal.title, shownMessage: refusal.message, recover: refusal.retryable ? given.retry : undefined };
+}
+
 export function ErrorState({
   title,
   message,
@@ -539,8 +593,10 @@ export function ErrorState({
   icon,
   busy = false,
   testId,
+  read,
+  readWhat,
 }: {
-  /** What failed, in the user's terms. Always shown. */
+  /** What failed, in the user's terms. Shown unless `read` was refused. */
   title: string;
   /** The server's own sentence, when it sent one. Redacted before render. */
   message?: React.ReactNode;
@@ -555,12 +611,18 @@ export function ErrorState({
   icon?: React.ReactNode;
   busy?: boolean;
   testId?: string;
+  /** The failed read. When it was refused, the panel says that refusal in the
+   *  classifier's words, in place of `title` and `message`, and offers no retry. */
+  read?: FailedRead;
+  /** What was not read, as a sentence names it ("the task board"); used in a refusal's words. */
+  readWhat?: string;
 }) {
+  const { shownTitle, shownMessage, recover } = shownFailure({ title, message, retry }, read, readWhat);
   /* A string is only rendered if it survives the internals filter; otherwise the
      title carries the message alone, which is always safe because the caller
      wrote it. */
   const safe =
-    typeof message === 'string' ? redactInternals(message, '') : message ?? '';
+    typeof shownMessage === 'string' ? redactInternals(shownMessage, '') : shownMessage ?? '';
 
   return (
     <div
@@ -572,7 +634,7 @@ export function ErrorState({
     >
       <span className="c2c-error-ic" aria-hidden="true">{icon ?? I.alertTriangle}</span>
       <div className="c2c-error-body">
-        <div className="c2c-error-t">{title}</div>
+        <div className="c2c-error-t">{shownTitle}</div>
         {safe ? <div className="c2c-error-h">{safe}</div> : null}
         {correlationId ? (
           /* The support handle. It replaced the store name the API used to
@@ -583,10 +645,10 @@ export function ErrorState({
           </div>
         ) : null}
       </div>
-      {(retry || onDismiss) && (
+      {(recover || onDismiss) && (
         <div className="c2c-error-actions">
-          {retry && (
-            <button type="button" className="c2c-error-retry" onClick={retry} disabled={busy}>
+          {recover && (
+            <button type="button" className="c2c-error-retry" onClick={recover} disabled={busy}>
               {busy ? 'Retrying…' : retryLabel}
             </button>
           )}
@@ -649,6 +711,8 @@ export function EmptyState({
   action,
   regulation,
   testId,
+  read,
+  readWhat,
 }: {
   title: string;
   hint?: React.ReactNode;
@@ -666,6 +730,9 @@ export function EmptyState({
    *  (e.g. "Serves the CTD Module 3 record (ICH M4Q)"). */
   regulation?: string;
   testId?: string;
+  /** tone="error" only: the failed read, passed to ErrorState (a refusal is said as itself, no retry). */
+  read?: FailedRead;
+  readWhat?: string;
 }) {
   /* A failure is not an empty state. It has one renderer, and this is not it —
      every `tone="error"` call site is served by ErrorState above, so all 139 of
@@ -682,6 +749,8 @@ export function EmptyState({
         {...(retryLabel ? { retryLabel } : {})}
         busy={busy}
         testId={testId}
+        read={read}
+        readWhat={readWhat}
       />
     );
   }
@@ -690,7 +759,9 @@ export function EmptyState({
      status — it must not interrupt. The assertive case now lives in ErrorState. */
   return (
     <div
-      className="c2c-empty-state tone-idle"
+      /* No tone class: `.tone-idle` is a chip's tone, and it painted a chip's tinted
+         panel behind every empty state (emptyState.contract.test.tsx, case 5). */
+      className="c2c-empty-state"
       role="status"
       aria-live="polite"
       aria-busy={busy || undefined}
@@ -724,5 +795,54 @@ export function EmptyState({
       )}
       {regulation && <div className="c2c-empty-reg">{regulation}</div>}
     </div>
+  );
+}
+
+/**
+ * The work area's way back to its project (D5 §WA.4.2 rule 2): the open
+ * project's name after a left arrow, and a click goes to its Project home.
+ *
+ * One link, not one per screen. CMC (`CmBack`), Vault, Reporting
+ * (`ReportingHead`) and Biostatistics each drew it by hand; each converges here
+ * in its own lane (docs/evidence/DESIGN/D0/D0-7-project-back/README.md).
+ *
+ * - **Nothing renders while no project is open.** CMC's portfolio and the
+ *   org-scoped registers are readable without one, and a dead link is worse
+ *   than no link.
+ * - **The project is read from the shell channel, reactively**, so a project
+ *   opened after the screen mounted shows its link. `onNav('project-home')`
+ *   carries no id because the channel already does: Project home reads the
+ *   open project from it, and the shell writes `?program=` to the URL.
+ * - **The arrow is decorative** (every icon is `aria-hidden`), so the
+ *   project's title is the button's whole name. A missing or blank title falls
+ *   back to "Project", never to a button with no name. The title is read as
+ *   the channel's own `shellProgramName` reads it, `String(v ?? '')`, because
+ *   the global is loosely typed and restored from storage with only its id
+ *   checked: a `.trim()` on a non-string would take the work area down.
+ * - **A project opened by its link alone is in the shell by id only.** The
+ *   top bar names it once its own read answers (Shell.tsx
+ *   `useNameProjectOpenedById`); until then, or if that read fails, the link
+ *   read "Project" (the Reporting running-app run,
+ *   docs/evidence/DESIGN/D7/2026-11-02-reporting/). A screen that has read
+ *   the project itself passes that `name`. The label is the first non-blank
+ *   of: the shell's title (it names the project open now), `name`, the
+ *   shell's product, its code, then "Project". The design is the
+ *   coordinator's (2026-11-02), rebuilt here because its commit never reached
+ *   origin.
+ *
+ * The look is `.pj-back` in `styles/app-v2.css`, and its focus ring is the
+ * shared `.c2c-v2 button:focus-visible`. `ProjectHome`'s "All projects" link
+ * shares the class but leaves the project, so it is not this component.
+ */
+export function ProjectBack({ onNav, name }: { onNav?: (id: string) => void; name?: string | null }) {
+  const project = useShellProject();
+  if (!project) return null;
+  const label = [project.title, name, project.product, project.code]
+    .map((v) => String(v ?? '').trim())
+    .find(Boolean) ?? 'Project';
+  return (
+    <button type="button" className="pj-back" onClick={() => onNav?.('project-home')}>
+      {I.left} {label}
+    </button>
   );
 }

@@ -99,9 +99,19 @@ function routeReads(rows: unknown = ROWS) {
   });
 }
 
+/**
+ * The row for one artifact, found by the id in its `title`.
+ *
+ * It used to be found by the id in its visible text, because the id led the
+ * row in monospace. D5 §B.4 step 7 moved it into the `title`: an artifact id
+ * is an id on a screen that files to an agency (§WA.4.2 rule 10), and it
+ * pushed the study's name — the one thing a reader scans this list for — out
+ * of the row's first column. The id still identifies the row, which is what
+ * this helper needs and what `the id is reachable` below asserts directly.
+ */
 const rowFor = (artifactId: string) =>
   Array.from(document.querySelectorAll('.sp-list .sp-row'))
-    .find(r => r.textContent?.includes(artifactId)) as HTMLElement;
+    .find(r => r.getAttribute('title')?.includes(artifactId)) as HTMLElement;
 
 /** The document the generator is currently producing. */
 const activeGenerator = () =>
@@ -172,5 +182,35 @@ describe('Biostatistics — governed document rows', () => {
 
     expect(rowFor('ART-502').textContent).toContain('Statistical document');
     expect(rowFor('ART-502').textContent).not.toContain('DSMB');
+  });
+
+  /* D5 §B.4 step 7. The id leaves the visible row; it does not leave the
+     screen. A reviewer who has to quote an artifact id still has one to
+     quote, and the study's name leads the row instead. */
+  it('keeps the artifact id reachable on the row, and off its face', async () => {
+    routeReads();
+    mount();
+    await waitFor(() => expect(rowFor('ART-501')).toBeTruthy());
+
+    const row = rowFor('ART-501');
+    expect(row.getAttribute('title')).toMatch(/Document ART-501/);
+    expect(row.textContent, 'the artifact id is still printed on the row').not.toContain('ART-501');
+    // What leads the row now is the study, not the id.
+    expect(row.querySelector('.sp-row-t')!.textContent).toBe('BX-204 Phase 2');
+  });
+
+  /* The store records `draft | review | approved | locked`. A chip reading
+     `review` is a stored token on screen (§WA.4.2 rule 10) — and "review" is
+     not even what it means, which is that the document is IN review. */
+  it('says a stored status as a word, never as the token the store holds', async () => {
+    routeReads([
+      { id: 'ART-601', study: 'BX-204 Phase 2', endpoint: null, doc: 'dsmb_charter', status: 'review' },
+      { id: 'ART-602', study: 'BX-301 pivotal', endpoint: null, doc: 'dsmb_charter', status: 'approved' },
+    ]);
+    mount();
+    await waitFor(() => expect(rowFor('ART-601')).toBeTruthy());
+
+    expect(rowFor('ART-601').textContent).toContain('In review');
+    expect(rowFor('ART-602').textContent).toContain('Approved');
   });
 });

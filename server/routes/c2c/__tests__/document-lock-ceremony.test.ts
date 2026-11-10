@@ -19,6 +19,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
+import { clearSeats, seatMember, seatProgram } from './support/current-member';
+
+const PROGRAM = '11111111-1111-4111-8111-111111111111';
 
 const h = vi.hoisted(() => ({
   writeMutation: vi.fn(),
@@ -32,7 +35,7 @@ const h = vi.hoisted(() => ({
 vi.mock('../../../db.js', () => ({
   pool: {
     query: async (sql: string) =>
-      /FROM c2c_documents/.test(sql) ? { rows: [{ id: 'doc-1', status: 'draft' }] } : { rows: [] },
+      /FROM c2c_documents/.test(sql) ? { rows: [{ id: 'doc-1', project_id: PROGRAM, status: 'draft' }] } : { rows: [] },
     connect: async () => ({
       query: async (sql: string) => {
         h.statements.push(sql);
@@ -42,6 +45,14 @@ vi.mock('../../../db.js', () => ({
     }),
   },
 }));
+/* Project access (F1, 2026-11-05) is not under test here: the document's program is one the caller can open and
+   change. The access reads are answered from seats (support/current-member.ts) and the edit right is granted; the rules
+   themselves are proven on PostgreSQL in documents-project-scope.pglite.test.ts. */
+vi.mock('../../../services/c2c/current-program-access', async (original) => {
+  const real = await original<typeof import('../../../services/c2c/current-program-access')>();
+  return { ...real, ...(await import('./support/current-member')).currentAccessDouble(real.ProgramReadAccessError) };
+});
+vi.mock('../../../services/report-os/project-access', () => ({ canAccessReportProject: async () => true }));
 vi.mock('../actions.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../actions.js')>()),
   writeMutation: (...a: unknown[]) => h.writeMutation(...a),
@@ -91,6 +102,9 @@ const lock = async (body: Record<string, unknown>) =>
   request(await app()).post('/api/c2c/documents/doc-1/lock').send({ reason: 'Final for filing.', ...body });
 
 beforeEach(() => {
+  clearSeats();
+  seatMember(3, SIGNER, 'member');
+  seatProgram(3, PROGRAM);
   h.writeMutation.mockReset();
   h.writeMutation.mockResolvedValue({ actionId: 'act_1', auditId: 'aud_1' });
   h.compare.mockReset();

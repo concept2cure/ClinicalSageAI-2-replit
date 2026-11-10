@@ -1,0 +1,37 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > assessmentState — an empty findings set is not a finding of "none" > no scope is not-assessed, however many findings are absent 2ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > assessmentState — an empty findings set is not a finding of "none" > scope with zero findings and no evidence of a run is STILL not-assessed 0ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > assessmentState — an empty findings set is not a finding of "none" > clearance requires positive evidence that an assessment ran 0ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > assessmentState — an empty findings set is not a finding of "none" > a failed read is never an empty result 0ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > assessmentState — an empty findings set is not a finding of "none" > 0% complete never co-occurs with reassuring copy, even when clear 0ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > NDA cockpit over an empty program > states that nothing has been assessed, and asserts no clearance 72ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > NDA cockpit over an empty program > does not assert a review clock it has no store for 18ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > NDA cockpit over a FAILED read > says the read failed rather than narrating a clean program 22ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > NDA cockpit over a FAILED read > renders no number for a quantity it could not read 20ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > NDA cockpit over a FAILED read > never renders a failed Refuse-to-File read in the language of clearance 22ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > NDA cockpit over a FAILED read > offers no next step that would carry the failure into AnA 20ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > evaluateIndReadiness (the server engine the IND screen shows) — an empty checklist is not a fileable one > derives no clearance from zero items: not ready, never 100% 95ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > evaluateIndReadiness (the server engine the IND screen shows) — an empty checklist is not a fileable one > is still clearance-capable when every required item passes 2ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > evaluateIndReadiness (the server engine the IND screen shows) — an empty checklist is not a fileable one > the screen carries no copy of it 11ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > IND Lifecycle over an empty checklist > says nothing has been assessed, never READY TO FILE 1710ms
+ ✓ client/src/concept2cure/v2/__tests__/ndaCockpitRequiredSectionCompleteness.test.tsx > NdaCockpit — completeness is measured against the required sections > the KPI names what it measures and reports required sections complete across the whole profile 114ms
+ ✓ client/src/concept2cure/v2/__tests__/ndaCockpitRequiredSectionCompleteness.test.tsx > NdaCockpit — completeness is measured against the required sections > a module reads "N of M required sections complete"; an unstarted one says so; nothing reads "module complete" 68ms
+ ✓ client/src/concept2cure/v2/__tests__/ndaCockpitRequiredSectionCompleteness.test.tsx > NdaCockpit — completeness is measured against the required sections > the lead names the figure — it never says "You're N% ready" from a completeness count 53ms
+ ✓ client/src/concept2cure/v2/__tests__/ndaCockpitRequiredSectionCompleteness.test.tsx > NdaCockpit — completeness is measured against the required sections > tells AnA the canonical count, not a readiness percentage 68ms
+ ✓ client/src/concept2cure/v2/__tests__/ndaCockpitRequiredSectionCompleteness.test.tsx > NdaCockpit — completeness is measured against the required sections > renders no percentage when the application has no canonical required-section list, and says why 66ms
+ ✓ client/src/concept2cure/v2/__tests__/ndaCockpitRequiredSectionCompleteness.test.tsx > NdaCockpit — "ready to file" is said only when it is true by the required-section measure > a recorded clean review over 1 of 23 required sections does not say "ready to file" 72ms
+ ✓ client/src/concept2cure/v2/__tests__/ndaCockpitRequiredSectionCompleteness.test.tsx > NdaCockpit — "ready to file" is said only when it is true by the required-section measure > a recorded clean review over every required section complete may say it 64ms
+ ✓ client/src/concept2cure/v2/__tests__/riskHonesty.test.tsx > Risk (ISO 14971) — an unexamined register is not a controlled one > does not report hazards as controlled when no residual risk has been evaluated 131ms
+ ✓ client/src/concept2cure/v2/__tests__/riskHonesty.test.tsx > Risk (ISO 14971) — an unexamined register is not a controlled one > never renders a benefit-risk determination, in any state 29ms
+ ✓ client/src/concept2cure/v2/__tests__/riskHonesty.test.tsx > Risk (ISO 14971) — an unexamined register is not a controlled one > does not claim a hazard has no controls when its detail could not be read 47ms
+ ✓ client/src/concept2cure/v2/__tests__/riskHonesty.test.tsx > Risk (ISO 14971) — an unexamined register is not a controlled one > says nothing about residual risk when the read failed 14ms
+ ✓ client/src/concept2cure/v2/__tests__/riskHonesty.test.tsx > Risk (ISO 14971) — an unexamined register is not a controlled one > says nothing about residual risk over an empty register 8ms
+ ✓ client/src/concept2cure/v2/__tests__/riskHonesty.test.tsx > Risk (ISO 14971) — an unexamined register is not a controlled one > still reports a clean residual-risk picture when every hazard carries a recorded acceptance 25ms
+
+ Test Files  3 passed (3)
+      Tests  28 passed (28)
+   Start at  03:16:50
+   Duration  7.58s (transform 2.64s, setup 414ms, import 1.95s, tests 2.77s, environment 1.96s)
+

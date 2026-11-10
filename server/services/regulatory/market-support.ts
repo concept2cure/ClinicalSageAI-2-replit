@@ -150,6 +150,15 @@ export interface FilingOffer {
    * a Type A meeting because it creates an NDA project.)
    */
   appliesTo: string[] | null;
+  /**
+   * A reason of its own for named registered filings (registry ids, as
+   * `appliesTo`), where one sentence cannot be true of every filing that asks
+   * this (type, market). The tier is unchanged: a reader that knows the filing
+   * shows its sentence, any other reader shows `reason`. Absent when no filing
+   * has one; set only on ICH's not-offered statement (ichNotOffered; added
+   * 2026-11-01, D2 3b Slice 4).
+   */
+  reasonByFiling?: Readonly<Record<string, string>>;
 }
 
 export const FILING_OFFER_LABEL: Readonly<Record<FilingOfferTier, string>> = {
@@ -162,8 +171,8 @@ export const FILING_OFFER_LABEL: Readonly<Record<FilingOfferTier, string>> = {
  *  clearance, a master file or a designation is authored, not sequenced here. */
 const SEQUENCED_FAMILIES: ReadonlySet<string> = new Set(['clinical_trial', 'marketing_authorization']);
 
-function offerOf(tier: FilingOfferTier, reason: string, appliesTo: string[] | null = null): FilingOffer {
-  return { tier, label: FILING_OFFER_LABEL[tier], reason, appliesTo };
+function offerOf(tier: FilingOfferTier, reason: string, appliesTo: string[] | null = null, reasonByFiling?: Readonly<Record<string, string>>): FilingOffer {
+  return { tier, label: FILING_OFFER_LABEL[tier], reason, appliesTo, ...(reasonByFiling ? { reasonByFiling } : {}) };
 }
 
 /** The registered filings a build-and-sequence offer covers: the judged
@@ -537,17 +546,67 @@ function classStatement(
  * jurisdiction, so it has no region identity and every such filing read "Not
  * supported" (added 2026-10-18). A filing document class whose pack is the
  * harmonised one is stated here: its outline from the 'ich' pack, no Module 1,
- * no channel, authored only. Anything else asked of ICH keeps the unmapped
- * statement: ICH takes no application.
+ * no channel, authored only. Anything else asked of ICH is not offered: ICH
+ * takes no filing (ichNotOffered, below; amended 2026-11-01).
  */
 const HARMONISED_MARKET_KEYS: ReadonlySet<string> = new Set(['ich', 'ich_global']);
+
+/**
+ * Where the catalog's ICH quality rows are written (D2 3b Slice 4; P-55 row 5,
+ * F-D, decided 2026-10-26: no standalone Quality Overall Summary, drug
+ * substance or drug product project, and P-28 is not widened). The picker asks
+ * each as an NDA at ICH / Global (Projects.tsx programTypeFor), so the ICH
+ * sentence below would be all it said; each says instead where it is written.
+ * Keyed by registry id, as `appliesTo` is. The modules are the registry's
+ * ctdModule. AnA's Module 2.3 composer and CMC / Module 3 compose only P-28's
+ * scope, a small-molecule US IND (cmc/composition-scope.ts), and the sentences
+ * claim no more than that.
+ */
+const WRITTEN_IN_THE_APPLICATION_PROJECT: Readonly<Record<string, string>> = {
+  ICH_QOS: "Not offered as its own project: the Quality Overall Summary is Module 2.3 of its application, so it is written in that application's project. " +
+    "For a small-molecule US IND, AnA composes it there from the project's CMC / Module 3 records.",
+  ICH_M3_DS: "Not offered as its own project: drug substance quality is Module 3.2.S of its application, so it is written in that application's project; " +
+    'for a small-molecule US IND it is composed there in CMC / Module 3. A drug substance filed on its own by its holder is a Drug Master File (US) ' +
+    'or an Active Substance Master File (EU): choose that filing type instead.',
+  ICH_M3_DP: "Not offered as its own project: drug product quality is Module 3.2.P of its application, so it is written in that application's project; " +
+    'for a small-molecule US IND it is composed there in CMC / Module 3.',
+};
+
+/**
+ * ICH asked for anything that is not one of its harmonised document classes
+ * (an NDA, an IND, a supplement). ICH is no jurisdiction and takes no filing,
+ * so nothing is offered. Until 2026-11-01 this fell to unmappedSupport and read
+ * "Not supported: the platform has no filing outline or channel for ICH /
+ * Global", with "No document agency is defined for 'ICH / Global'." as its
+ * outline detail, on every such picker row; neither is the reason.
+ */
+const ICH_NOT_OFFERED_LINE =
+  'Not offered: ICH is no jurisdiction and takes no filing, and this filing is not authored here as a project of its own';
+
+function ichNotOffered(applicationType: string, market: string): MarketSupport {
+  return {
+    applicationType,
+    market,
+    region: null,
+    agency: 'ICH',
+    outline: { state: 'unmapped', pack: null, detail: 'ICH takes no filing, so no outline is mapped for an application there' },
+    module1: { state: null, detail: 'ICH takes no filing, so there is no Module 1' },
+    regionProfile: false,
+    channel: { state: 'none', detail: 'ICH takes no filing' },
+    summary: 'Not offered',
+    line: ICH_NOT_OFFERED_LINE,
+    buildable: false,
+    offered: false,
+    offer: offerOf('not_offered', `${ICH_NOT_OFFERED_LINE}.`, null, WRITTEN_IN_THE_APPLICATION_PROJECT),
+  };
+}
 
 function harmonisedSupport(input: MarketInput, packs: ActiveRulePacks): MarketSupport | null {
   const market = String(input.market ?? '').trim();
   if (!HARMONISED_MARKET_KEYS.has(marketKey(market))) return null;
   const applicationType = String(input.applicationType ?? '').trim();
   const documentClass = filingDocumentClassOf(applicationType);
-  if (!documentClass || documentClass.packAgency !== 'ich') return null;
+  if (!documentClass || documentClass.packAgency !== 'ich') return ichNotOffered(applicationType, market);
   const outline = outlineFor(documentClass.docType, 'ich', applicationType, packs);
   const lead = outline.state === 'outline' ? 'Outline only' : 'No outline';
   const statement: Omit<MarketSupport, 'offer'> = {
@@ -558,9 +617,11 @@ function harmonisedSupport(input: MarketInput, packs: ActiveRulePacks): MarketSu
     outline,
     module1: { state: null, detail: 'a harmonised document is not an application, so it has no Module 1 of its own' },
     regionProfile: false,
-    channel: { state: 'none', detail: "a harmonised document is placed into an application's sequence and is not sent on its own" },
+    // 2026-11-01 (D2 3b Slice 4): worded as classNotSequencedReason has been since
+    // 5ab138ed3. A class project opens no submission; its application's own project files it.
+    channel: { state: 'none', detail: "a harmonised document is filed in its application's sequence from that application's own project, and is not sent on its own" },
     summary: `${lead}, no package`,
-    line: `${lead}: a harmonised document is authored here and placed into an application's sequence`,
+    line: `${lead}: authored here; a harmonised document is filed in its application's sequence from that application's own project`,
     buildable: false,
     offered: true,
   };

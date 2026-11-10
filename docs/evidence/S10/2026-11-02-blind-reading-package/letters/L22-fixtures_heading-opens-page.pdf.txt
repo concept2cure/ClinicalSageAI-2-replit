@@ -1,0 +1,22 @@
+DEPARTMENT OF HEALTH AND HUMAN SERVICES
+Food and Drug Administration
+Silver Spring, MD 20993
+IND 123456
+INFORMATION REQUEST
+Dear Dr. Example:
+We have the following requests for information:
+1. Provide the batch analysis data for drug substance lots.
+2. Provide the updated stability data you committed to submit for the
+Reference ID: 5123456
+
+-- 1 of 2 --
+
+IND 123456
+Page 2
+Drug Product
+3. Provide the dissolution method development report.
+If you have any questions, please contact the Regulatory Project Manager.
+Sincerely,
+Reference ID: 5123456
+
+-- 2 of 2 --

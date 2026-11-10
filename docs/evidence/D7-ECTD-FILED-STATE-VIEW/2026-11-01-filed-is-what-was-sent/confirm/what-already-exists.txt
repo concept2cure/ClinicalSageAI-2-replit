@@ -1,0 +1,280 @@
+# What already exists, re-read by the verifier at HEAD 609ef94c7 (git show 609ef94c7:<path> | grep -n). 2026-11-02T02:24:05Z
+# Each block backs one line of the README's 'What already exists'.
+--- server/services/ectd/prior-sequence-loader.ts @ 609ef94c7: async function readFiledManifestRows|export async function loadLatestPriorManifestBySubmission|export async function loadFiledStateBySubmission|function foldManifestRows|export async function loadRehearsalPriorManifestBySubmission|export async function loadPriorSequenceManifest
+62:export async function loadPriorSequenceManifest(
+153:export async function loadLatestPriorManifestBySubmission(
+204:async function readFiledManifestRows(
+249:export async function loadFiledStateBySubmission(
+296:function foldManifestRows(
+381:export async function loadRehearsalPriorManifestBySubmission(
+--- server/services/ectd/prior-sequence-loader.ts @ 609ef94c7: FROM ectd_compilations c|dispatch_status IN \('sent', 'acknowledged'\)|compilation_type IS DISTINCT FROM 'rehearsal'
+81:       FROM ectd_compilations c
+91:        AND c.compilation_type IS DISTINCT FROM 'rehearsal'
+92:        AND s.dispatch_status IN ('sent', 'acknowledged')`,
+212:       FROM ectd_compilations c
+222:        AND c.compilation_type IS DISTINCT FROM 'rehearsal'
+223:        AND s.dispatch_status IN ('sent', 'acknowledged')
+392:       FROM ectd_compilations c
+--- server/services/submission-gateways/index.ts @ 609ef94c7: function assertDispatchBinding|archiveSentPackage|gatewayAccount: \{|sentPackage,|markRefusedBeforeWire|REFUSED_BEFORE_WIRE
+40:import { archiveSentPackage, type SentPackageRecord } from './sent-package-archive';
+127:function assertDispatchBinding(req: GatewayTransmitRequest): void {
+143:const REFUSED_BEFORE_WIRE = new WeakSet<object>();
+145:function markRefusedBeforeWire(err: unknown): unknown {
+146:  if (err !== null && typeof err === 'object') REFUSED_BEFORE_WIRE.add(err);
+180:  if (REFUSED_BEFORE_WIRE.has(err)) return true;
+302:        sentPackage = await archiveSentPackage(req, impl.region, impl.gateway);
+304:        throw markRefusedBeforeWire(err);
+--- server/services/submission-gateways/fda-esg.ts @ 609ef94c7: createTransmittalRow|dispatchBinding|jsonb_set
+360:async function createTransmittalRow(
+364:  const binding = req.dispatchBinding;
+378:      JSON.stringify({ ...(req.metadata ?? {}), dispatchBinding: binding ?? undefined, as2: undefined, as2Receipt: undefined, as2ReceiptHistory: [] }),
+670:    const result = await pool.query(`UPDATE submission_transmittals SET metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), ARRAY[$3]::text[], $4::jsonb)
+738:    const transmittalId = await createTransmittalRow(normalizedReq, transport);
+--- server/services/submission-gateways/rest-gateway-helpers.ts @ 609ef94c7: INSERT INTO submission_transmittals|metadata
+92:    `INSERT INTO submission_transmittals (
+95:       bundle_size_bytes, status, submitted_by, metadata
+110:      JSON.stringify(req.metadata ?? {}),
+148:/** Build a standard multipart/form-data body (metadata JSON + ZIP package). */
+151:  metadata: Buffer,
+157:      `--${boundary}\r\nContent-Disposition: form-data; name="metadata"\r\nContent-Type: application/json; charset=utf-8\r\n\r\n`,
+159:    metadata,
+--- server/services/submission-gateways/ema-cesp.ts @ 609ef94c7: INSERT INTO submission_transmittals|JSON.stringify\(req.metadata|metadata
+22: *   - Multipart upload of the eCTD zip + metadata.xml
+261:    `INSERT INTO submission_transmittals (
+264:       bundle_size_bytes, status, submitted_by, metadata
+271:      JSON.stringify(req.metadata ?? {}),
+312:       so the transmittal row and CESP metadata use the canonical identifier.
+343:      const metadata = {
+345:        productName:       normalizedReq.metadata?.productName ?? null,
+347:        procedureNumber:   normalizedReq.metadata?.applicationId ?? null,
+--- server/services/submission-gateways/fda-esg-receipts.ts @ 609ef94c7: current.metadata|\.\.\.\(current|metadata:
+17:function bindingOf(metadata: Record<string, unknown> | null): ReceiptBinding {
+72:    const liveBinding = bindingOf(current.metadata);
+74:    const history = Array.isArray(current.metadata?.as2ReceiptHistory) ? current.metadata.as2ReceiptHistory : [];
+82:    const metadata = { ...current.metadata, as2Receipt: receipt, as2ReceiptHistory: [...history, receipt] };
+98:type ReceiptTransmittal = { metadata: Record<string, unknown> | null; bundle_sha256: string };
+--- server/services/ectd/filed-sequence-rejection.ts @ 609ef94c7: metadata = .*\|\||metadata.*\|\|
+341:            metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('technicalRejection', $6::jsonb),
+--- server/services/submission-service/governed-transmit.ts @ 609ef94c7: metadata.*\|\|
+fatal: path 'server/services/submission-service/governed-transmit.ts' does not exist in '609ef94c7'
+--- migrations/20261014_ectd_transmit_attempt_binding.sql @ 609ef94c7: transmit_attempt_id|transmit_signature_action_id
+23:  ADD COLUMN IF NOT EXISTS transmit_signature_action_id TEXT,
+24:  ADD COLUMN IF NOT EXISTS transmit_attempt_id UUID;
+26:COMMENT ON COLUMN public.ectd_sequences.transmit_signature_action_id IS
+29:COMMENT ON COLUMN public.ectd_sequences.transmit_attempt_id IS
+--- shared/schema/submissions.ts @ 609ef94c7: transmit_attempt_id|transmitAttemptId|transmit_signature_action_id
+121:    transmitSignatureActionId: text('transmit_signature_action_id'),
+122:    transmitAttemptId: uuid('transmit_attempt_id'),
+--- server/services/submission-service/submission-service.ts @ 609ef94c7: transmit_attempt_id = |transmitAttemptId|function transmitSequence|dispatchBinding:|transmitRouteFor
+2253:export function transmitRouteFor(
+2302:/** The gateway pair `transmitRouteFor` names, or null when it refuses. */
+2308:  const route = transmitRouteFor(region, clientType, applicationType);
+2469:          SET dispatch_status = $3, transmit_signature_action_id = $4, transmit_attempt_id = $5, updated_at = NOW()
+2496:    `UPDATE ectd_sequences SET dispatch_status = 'pending', transmit_signature_action_id = NULL, transmit_attempt_id = NULL, updated_at = NOW()
+2497:      WHERE id = $1 AND organization_id = $2 AND dispatch_status = $3 AND transmit_signature_action_id = $4 AND transmit_attempt_id = $5`,
+2506:  /** The gateway transmitRouteFor names, or why it names none. */
+2585:  const routed = transmitRouteFor(seq.region, submission.clientType, submission.applicationType || seq.type);
+--- server/services/ectd/sequence-manifest.ts @ 609ef94c7: export function buildLeafManifest|export interface SequenceLeafManifestEntry|leafKey
+27:export interface SequenceLeafManifestEntry {
+98:export function buildLeafManifest(leaves: PublishableLeaf[]): SequenceLeafManifestEntry[] {
+--- server/routes/ectd-compile.ts @ 609ef94c7: buildLeafManifest|filed-state|loadFiledStateBySubmission
+59:import { buildLeafManifest } from '../services/ectd/sequence-manifest';
+60:import { loadFiledStateBySubmission } from '../services/ectd/prior-sequence-loader';
+1190:      const manifest = buildLeafManifest(assembled.bundle.leafManifest ?? []);
+1521:// GET /:projectIdent/filed-state — What the agency holds now (gap 6.1)
+1526:   (loadFiledStateBySubmission, prior-sequence-loader.ts). Only sent or
+1529:router.get('/:projectIdent/filed-state', async (req: Request, res: Response) => {
+1541:    let state: Awaited<ReturnType<typeof loadFiledStateBySubmission>>;
+1543:      state = await loadFiledStateBySubmission(pool, { organizationId: orgId, submissionId: spine.submissionId });
+--- server/services/submission-gateways/types.ts @ 609ef94c7: leafManifest\?:|dispatchBinding\?:|leafKey
+114:  leafManifest?: Array<{
+126:    leafKey?: string;
+292:  dispatchBinding?: {
+--- client/src/concept2cure/v2/surfaces/EctdFiledState.tsx @ 609ef94c7: function notFoldedReason|export function sequencesLine|read from the leaf manifests|Nothing is on file|Folds 
+56:function notFoldedReason(s: FiledSequenceState): string {
+63:/** "Folds 0000 (acknowledged), 0001 (sent). Not included: 0002 (not sent)." */
+64:export function sequencesLine(sequences: FiledSequenceState[]): string {
+67:  return [folded.length ? `Folds ${folded.join(', ')}.` : '', left.length ? `Not included: ${left.join(', ')}.` : ''].filter(Boolean).join(' ');
+132:          ? 'Nothing is on file: no sequence of this submission has been sent or acknowledged with a filed compile on record.'
+133:          : `${count} ${count === 1 ? 'document is' : 'documents are'} on file, read from the leaf manifests of the filed sequences.`}
+--- client/src/concept2cure/v2/surfaces/EctdCompile.tsx @ 609ef94c7: EctdFiledState
+54:import { EctdFiledState } from './EctdFiledState';
+1603:      <EctdFiledState identPath={identPath} seqQuery={seqQuery} isScopeCurrent={current} />
+--- client/src/concept2cure/v2/surfaces/CommitmentRow.tsx @ 609ef94c7: export function dispatchWords|not on file at the agency|sent to the agency|acknowledged by the agency
+114:export function dispatchWords(status: string | null | undefined): string {
+115:  if (status === 'sent') return 'sent to the agency';
+116:  if (status === 'acknowledged') return 'acknowledged by the agency';
+118:  return 'not on file at the agency';
+--- client/src/concept2cure/v2/surfaces/CommitmentFulfilment.tsx @ 609ef94c7: dispatchWords
+36:import { dispatchWords, typeName, type CommitmentRow, type FulfilmentRuleView } from './CommitmentRow';
+117:      ? `sequence ${sequence.sequenceNumber}${sequence.submission.title ? ` of ${sequence.submission.title}` : ''}, ${dispatchWords(sequence.dispatchStatus)}`
+167:            Sequence {sq.sequenceNumber} · {sq.submission.title ?? `submission ${sq.submission.id}`} · {dispatchWords(sq.dispatchStatus)}
+--- shared/regulatory/region-identity.ts @ 609ef94c7: export function canonicalRegionOf
+163:export function canonicalRegionOf(value: string | null | undefined): CanonicalRegion | undefined {
+--- server/services/ectd/package-sequence-lifecycle.ts @ 609ef94c7: function foldFiledState|filedSequences
+188:  const raw = (metadata ?? {}).filedSequences;
+231:export function foldFiledState(filed: readonly FiledSequence[]): PriorLeaf[] {
+--- server/services/ectd/regional-packager.ts @ 609ef94c7: leafManifest|export async function packageEctdSubmission
+fatal: path 'server/services/ectd/regional-packager.ts' does not exist in '609ef94c7'
+--- server/services/submission-service/filed-dispatch.ts @ 609ef94c7: FILED_DISPATCH_STATUSES|prior-sequence-loader
+5: * not filed (submission-service.ts dispatch; prior-sequence-loader.ts says the
+15: * ectd/prior-sequence-loader.ts and routes/c2c/documents.ts (named as owed in
+21:export const FILED_DISPATCH_STATUSES = ['sent', 'acknowledged'] as const;
+22:export type FiledDispatchStatus = (typeof FILED_DISPATCH_STATUSES)[number];
+26:  return typeof status === 'string' && (FILED_DISPATCH_STATUSES as readonly string[]).includes(status);
+
+--- triggers on submission_transmittals in the migration set (none means nothing guards its metadata)
+(end)
+
+--- deleted-file history searches (git log --all --diff-filter=D --name-only)
+*transmitted*: 0 deleted path(s)
+*sent-manifest*: 0 deleted path(s)
+*filed-state*: 0 deleted path(s)
+*prior-sequence*: 0 deleted path(s)
+*leaf-manifest*: 0 deleted path(s)
+*FiledState*: 0 deleted path(s)
+
+--- name searches for an existing record of what was sent (server shared client scripts) at 609ef94c7
+sentManifest: 0 file(s)
+transmittedManifest: 0 file(s)
+sent_manifest: 0 file(s)
+transmittedLeaves: 0 file(s)
+filedManifest: 0 file(s)
+whatWasSent: 0 file(s)
+
+# Addendum (paths corrected): governed-transmit.ts and regional-packager.ts live under server/services/submission-gateways/.
+--- server/services/submission-gateways/governed-transmit.ts @ 609ef94c7: writers of submission_transmittals.metadata
+646:  const metadata = agencyMetadata(input, bundle);
+842:            SET metadata = COALESCE(metadata, '{}'::jsonb) || $1::jsonb, updated_at = now()
+--- server/services/submission-gateways/regional-packager.ts @ 609ef94c7: packageEctdSubmission builds leafManifest and returns it
+220:  return { relPath, href: relPath, backboneDir: '' };
+289:  return { bytes, md5Override: createHash('md5').update(bytes).digest('hex'), isPdf: true, converted: true, encrypted: false };
+1004:export async function packageEctdSubmission(input: PackagerInput): Promise<SubmissionBundle> {
+1476:  const leafManifest = [
+1512:  return {
+1516:    leafManifest,
+--- server/services/ectd/package-from-core.ts @ 609ef94c7: loadLatestPriorManifestBySubmission feeds the next sequence; the bundle is returned
+25:import { loadLatestPriorManifestBySubmission, loadRehearsalPriorManifestBySubmission } from './prior-sequence-loader';
+462:        : { ...(await loadLatestPriorManifestBySubmission(pool, where)), unfiledSequences: [] as string[] };
+598:  const bundle = await packageEctdSubmission(input);
+617:  return { bundle, skipped, priorSequence, priorState, unfiledPriorSequences, auditTrail,
+--- server/services/ectd/assemble-from-core.ts @ 609ef94c7: spreads the packaged result
+   445	    }
+   446	  };
+   447	
+   448	  assembleReturned = true;
+   449	  return {
+   450	    ...result,
+   451	    dryRun,
+   452	    auditTrail: combineAuditRowOutcomes(result.auditTrail, assembledAudit),
+   453	    cleanup,
+   454	    materialized,
+   455	    unresolvedLeaves,
+--- every production caller that sets dispatchBinding on a transmit request @ 609ef94c7 (non-test)
+609ef94c7:server/services/submission-gateways/fda-esg.ts:378:      JSON.stringify({ ...(req.metadata ?? {}), dispatchBinding: binding ?? undefined, as2: undefined, as2Receipt: undefined, as2ReceiptHistory: [] }),
+609ef94c7:server/services/submission-service/submission-service.ts:2922:      dispatchBinding: { attemptId, organizationId: ctx.organizationId, sequenceId, signatureActionId, bundleSha256: assembled.bundle.sha256 },
+--- transmitSequence passes the assembled bundle @ 609ef94c7
+2916:      bundle: assembled.bundle,
+2922:      dispatchBinding: { attemptId, organizationId: ctx.organizationId, sequenceId, signatureActionId, bundleSha256: assembled.bundle.sha256 },
+--- AnA's compute_lifecycle_operations reads the same prior @ 609ef94c7
+609ef94c7:server/services/ana/AnaToolExecutor.ts:54:// Type-only: the prior-sequence auto-load path assigns loadPriorSequenceManifest's
+609ef94c7:server/services/ana/AnaToolExecutor.ts:9729:      const { loadPriorSequenceManifest } = await import('../ectd/prior-sequence-loader.js');
+609ef94c7:server/services/ana/AnaToolExecutor.ts:9732:      prior = await loadPriorSequenceManifest(getPool(), {
+
+--- leafKey parity @ 609ef94c7: the packager emits leafKey; SequenceLeafManifestEntry has none and buildLeafManifest copies none
+1488:      ...(p.leaf.leafKey ? { leafKey: p.leaf.leafKey } : {}),
+1506:        ...(leaf.leafKey ? { leafKey: leaf.leafKey } : {}),
+sequence-manifest.ts lines naming leafKey: 0
+--- the tree (this build): the guard's record uses the same buildLeafManifest
+36:import { buildLeafManifest, type SequenceLeafManifestEntry } from '../ectd/sequence-manifest';
+146: * shape every compile row uses (buildLeafManifest). Only a bound transmit
+163:  return buildLeafManifest(req.bundle.leafManifest);
+--- rehearsal read @ tree: unchanged by this build (git diff of its body)
+(no hunk names loadRehearsalPriorManifestBySubmission)
+--- FILED_DISPATCH_STATUSES is not imported by the loader on the tree; the literal remains
+103:        AND s.dispatch_status IN ('sent', 'acknowledged')`,
+316:          AND s.dispatch_status IN ('sent', 'acknowledged')
+565:    .filter((r) => !['sent', 'acknowledged'].includes(String(r.dispatch_status ?? '')))
+--- the guard's stamp on the tree
+32:  CredentialError, NOTHING_TRANSMITTED, TransmitAuthorizationError, TransportError, UnverifiedTransportError, ValidationError,
+154:function sentLeafManifest(req: GatewayTransmitRequest): SequenceLeafManifestEntry[] | undefined {
+160:      NOTHING_TRANSMITTED,
+182: *    their throw site passed NOTHING_TRANSMITTED (requiredAgencyMetadata's
+345:          dispatchBinding: req.dispatchBinding ?? undefined,
+346:          leafManifest: sentLeaves,
+--- loadRehearsalPriorManifestBySubmission body: byte-identical, HEAD vs tree (31 lines)
+--- foldManifestRows body, HEAD vs tree: one line differs, the parameter's type only
+2c2
+<   rows: Array<Record<string, unknown>>,
+---
+>   rows: ReadonlyArray<{ sequence_number?: unknown; leaf_manifest?: unknown }>,
+
+--- the filed-state route on the tree: an unreadable fold (a throw) answers 503, never an empty dossier
+1531:router.get('/:projectIdent/filed-state', async (req: Request, res: Response) => {
+1548:      return res.status(503).json({ error: { code: 'FILED_STATE_UNAVAILABLE', message: 'What is on file at the agency could not be read. It is not shown as empty.' } });
+--- dispatchWords on the tree (CommitmentRow.tsx, unchanged by this build)
+   113	/** How the agency holds a sequence, in words. */
+   114	export function dispatchWords(status: string | null | undefined): string {
+   115	  if (status === 'sent') return 'sent to the agency';
+   116	  if (status === 'acknowledged') return 'acknowledged by the agency';
+   117	  if (status === 'rejected') return 'rejected by the agency';
+   118	  return 'not on file at the agency';
+   119	}
+--- where decision P-86 is recorded in the repository (git grep -n 'P-86' -- docs CLAUDE.md, exact token)
+(no match: P-86 is not yet recorded in docs/LAUNCH_DEFINITION_OF_DONE.md or elsewhere in docs/)
+
+--- anchors on the tree for the README's 'noted, out of scope' items
+# the public transmit route accepts any metadata record (mdx-submission-gateway.ts)
+   336	  metadata: z.record(z.unknown()).optional(),
+   389	      metadata:       p.metadata,
+# GET /gateways/transmittals/:id returns the row (SELECT *), scoped to the organization
+   291	router.get('/gateways/transmittals/:id', async (req: Request, res: Response) => {
+   298	      `SELECT * FROM submission_transmittals WHERE id = $1 AND organization_id = $2`,
+# FDA ESG operator rollback flips the transmittal to 'rolled_back'; the fold reads no transmittal status
+  1102	    // 2) Flip the transmittal row to 'rolled_back'. This frees the partial
+# occurrences of t.status in prior-sequence-loader.ts: 0
+
+--- every gateway implementation is constructed only inside the guard's registry (no transmit bypasses getGateway); non-test server code on the tree
+server/services/submission-gateways/index.ts:53:  'fda:esg':                       new FdaEsgGateway(),
+server/services/submission-gateways/index.ts:54:  'ema:cesp':                      new EmaCespGateway(),
+server/services/submission-gateways/index.ts:55:  'ema:eudamed':                   new EudamedGateway(),
+server/services/submission-gateways/index.ts:56:  'pmda:pmda_gateway':             new PmdaGateway(),
+server/services/submission-gateways/index.ts:57:  'ca:hc_cesg':                    new HealthCanadaGateway(),
+--- every INSERT of a transmittal row (non-test server code): each stores the request's metadata, which the guard has stamped
+server/services/submission-gateways/rest-gateway-helpers.ts:92:    `INSERT INTO submission_transmittals (
+server/services/submission-gateways/fda-esg.ts:367:    `INSERT INTO submission_transmittals (
+server/services/submission-gateways/ema-cesp.ts:261:    `INSERT INTO submission_transmittals (
+
+--- the guard at HEAD: assertDispatchBinding, and the server-side stamp after the caller's metadata
+   127	function assertDispatchBinding(req: GatewayTransmitRequest): void {
+   128	  const binding = req.dispatchBinding;
+   129	  if (!binding) return;
+   130	  if (
+   131	    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(binding.attemptId ?? '') ||
+   132	    !Number.isSafeInteger(binding.sequenceId) || binding.sequenceId <= 0 ||
+   133	    binding.organizationId !== req.organizationId ||
+   134	    req.authorization.kind !== 'governed-signature' ||
+   135	    binding.signatureActionId !== req.authorization.signatureActionId ||
+   136	    binding.bundleSha256 !== req.bundle?.sha256
+   137	  ) {
+   138	    throw new TransmitAuthorizationError('The internal sequence attempt binding does not match its organization, verified signature and package. Nothing was transmitted.');
+   139	  }
+   140	}
+   141	
+313:          ...(req.metadata ?? {}),
+314:          gatewayAccount: { mode: account.mode, senderIdentifier: account.senderIdentifier },
+315:          sentPackage,
+322:        gatewayAccount: { mode: account.mode, senderIdentifier: account.senderIdentifier },
+324:        sentPackage,
+--- fda-esg.ts @ 609ef94c7: the only jsonb_set writer is typed to two keys
+668:async function writeAs2Metadata(transmittalId: number, organizationId: number, key: 'as2' | 'as2Receipt', value: Record<string, unknown>): Promise<void> {
+--- the fold imports the one region resolver (tree)
+26:import { canonicalRegionOf } from '../../../shared/regulatory/region-identity';
+
+--- the rehearsal rule is the founder's decision of 2026-09-23 (docs/reports/wo9-phase1-ectd-unblock-2026-09-03.md)
+  1653	**JM's decision on §19's open question** (2026-09-23): *rehearsal binding*.
+  1654	
+  1655	- A follow-up sequence compiles and exports against the latest recorded compile
+  1656	  of each earlier sequence, whether or not it was filed.
+  1657	- Every screen, record and download says "rehearsal — prior not filed".
+  1658	- Transmit still binds only against filed sequences.

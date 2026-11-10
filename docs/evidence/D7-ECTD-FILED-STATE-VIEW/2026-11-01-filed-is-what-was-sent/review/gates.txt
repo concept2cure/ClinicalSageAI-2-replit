@@ -1,0 +1,128 @@
+# The repo's gates, run on the working tree after the F1 review fixes, 2026-11-02T01:46:58Z.
+# Each: the command, its output (ANSI stripped, trimmed to its last 15 lines), and its exit code.
+# Before the review these outputs were only in the scratchpad (scratchpad/f1-impl1/gate-ci:*.txt); they are filed here now.
+
+## npm run -s ci:json-operator-types
+[ci:json-operator-types] 960 json column(s) (0 more retyped to jsonb by a migration, 28 more created jsonb by the migration that owns an unpushed table, 18 declared inconsistently); 3560 server file(s) read; 0 finding(s), 0 baselined
+[ci:json-operator-types] ✅ no jsonb operator on a json column.
+exit=0
+
+## npm run -s ci:sql-interpolation
+  server/services/ha-interactions/commitment-fulfilment.ts:464:54 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/keywordExtractionService.ts:119:82 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/keywordExtractionService.ts:446:16 artifactDataEligibleSql('a') <- ./document-data-disposition/eligibility
+  server/services/pathway-engines/estar/estar-attachment-source-access.ts:50:62 vaultBinaryAvailableSql('d') <- ../../document-data-disposition/eligibility
+  server/services/report-os/report-package-legal.ts:46:40 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility
+  server/services/vault/vault-folder-export.ts:64:15 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-seal.service.ts:107:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+  server/services/vault/vault-seal.service.ts:110:15 vaultDataEligibleSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-seal.service.ts:111:19 supersededSql('d') <- ./vault-version-family.js
+  server/services/vault/vault-seal.service.ts:223:17 vaultBinaryAvailableSql('d') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-search.ts:203:15 vaultLifecycleStageSql('d') <- ./vault-document-filter.js
+  server/services/vault/vault-search.ts:204:19 supersededSql('d') <- ./vault-version-family.js
+  server/services/vault/vault-version-restore.ts:64:67 vaultBinaryAvailableSql('s') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-version-restore.ts:134:15 vaultBinaryAvailableSql('s') <- ../document-data-disposition/eligibility.js
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1056 baselined interpolation(s) in 223 file(s); the baseline may only shrink.
+exit=0
+
+## npm run -s ci:column-reachability
+[ci:column-reachability] OK — 3131 column add(s) on no applier, 0 queried by the server.
+exit=0
+
+## npm run -s ci:runtime-ddl
+[ci:runtime-ddl] 75 DDL statement(s) in 11 runtime server file(s); 13 baselined
+[ci:runtime-ddl] ✅ 2 baselined file(s) now issue LESS DDL — lower or remove their entries:
+    • server/routes/c2c/context-intelligence.ts — 1 → 0
+    • server/services/integrations/credentialVault.ts — 2 → 0
+[ci:runtime-ddl] ✅ no new runtime DDL.
+exit=0
+
+## npm run -s ci:fixture-fallback
+[ci:fixture-fallback] `live ?? FIXTURE`, `live?.length ? live : FIXTURE` and sample mode in client/src/concept2cure
+  ungated content fallbacks  : 0
+  baselined (known, unfixed) : 0
+
+✅ no new ungated fixture fallback. 0 baselined.
+exit=0
+
+## npm run -s ci:ectd-stubs
+[ectd-validate] ✅ Loaded sub-schema: leaf_map.schema.json
+[ectd-validate] ✅ Loaded sub-schema: sequence_plan.schema.json
+[ectd-validate] ✅ Loaded sub-schema: m1_index.schema.json
+[ectd-validate] ✅ Bundle data validates against bundle schema (AJV compile + validate)
+[ectd-validate] Computed bundle hash: e4446ba912b572d27dbd382f…
+[ectd-validate] ✅ Bundle hash verified: e4446ba912b572d2…
+[ectd-validate] ✅ Proof-pack layout validated
+[ectd-validate] ✅ Cross-reference: leaf_map ↔ sequence_plan leaf_ids are 1:1
+[ectd-validate] ✅ Cross-reference: m1_index leaf_ids ⊆ leaf_map leaf_ids
+
+[ectd-validate] All eCTD stubs validated successfully (AJV schema + hash + layout + cross-ref).
+exit=0
+
+## npm run -s ci:drizzle-tenant-scope
+[ci:drizzle-tenant-scope] OK — 90 site(s), all baselined.
+exit=0
+
+## npm run -s ci:server-error-leaks
+[ci:server-error-leaks] OK — 10 baselined site(s) across 10 file(s); no file gained one.
+exit=0
+
+## npm run -s ci:fabricated-identity
+[ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+exit=0
+
+## npm run -s ci:discarded-audit-write
+check-discarded-audit-write: no new occurrences. 0 baselined across 0 file(s).
+exit=0
+
+## npm run -s ci:no-mock-in-prod-routes
+✅ no-mock-in-prod-routes check passed (current=0, baseline=0, new=0)
+exit=0
+
+## npm run -s ci:session-scoped-rls-bypass
+[ci:session-scoped-rls-bypass] OK — no new session-scoped RLS bypass. 0 baselined occurrence(s) remain in 0 unmounted innovation service(s), every one of them releasing through releaseWithoutBypass(); the baseline may only shrink.
+[ci:session-scoped-rls-bypass] OK — no policy, function or code reads app.bypass_rls / app.is_admin (791 migration file(s) and 4392 code file(s) read), and no script writes either (P-70).
+exit=0
+
+## npm run -s ci:one-product
+ci:one-product: 102 surfaces, 10 rail entries, none new.
+exit=0
+
+## npm run -s ci:filing-exit-agreement
+[ci:filing-exit-agreement] OK — every seal and every filing-built package asks the agreement question, or is baselined with a reason. 5 baselined site(s) in 2 file(s), exactly as baselined.
+exit=0
+
+## npm run -s ci:untracked-imports
+[ci:untracked-imports] no source files changed against origin/concept2cure-v2.
+exit=0
+
+## npm run -s check:catalog-copy
+[ci:catalog-copy] OK — 105 catalog description(s) across 3 migration(s) read as product copy.
+exit=0
+
+## npm run -s ci:internals-in-copy
+
+❌ Internal identifiers in user-visible copy.
+
+   client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:745  [table name]
+     coauthor_documents
+
+   The reader of these surfaces is a regulatory director. A route name tells
+   them nothing they can act on, and the internal shape of a governed system is
+   an information-disclosure finding in a regulated product, not a cosmetic one.
+   (BIOPHARMA_WORK_ORDER.md guardrail 3; BP-W0-5.)
+
+   Name the CAPABILITY, not the endpoint:
+     "GET /api/cmc/stability-studies didn't respond."
+     → "The stability register didn't respond."
+
+exit=1
+
+## ci:internals-in-copy's one finding is pre-existing
+# The gate lists files with git ls-files, so it cannot run in the git-less HEAD export. Its one finding is reported at
+# :745; the table name it quotes is at :750 of the same function. The file is one this build does not touch: unchanged
+# against HEAD, and HEAD's own copy carries the same table name there.
+$ git diff --quiet HEAD -- client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx; echo $?
+0
+$ git show HEAD:client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx | grep -n coauthor_documents
+750:    documentTable: 'coauthor_documents' as const, documentId: copy.snapshotId, ...form.payload };

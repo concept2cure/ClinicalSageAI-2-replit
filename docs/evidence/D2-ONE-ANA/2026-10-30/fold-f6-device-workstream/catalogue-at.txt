@@ -1,0 +1,15 @@
+# Catalogue replay (CLAUDE.md Rule 1; as 303f49012's worker did): every catalogue writer of C2C_MIGRATION_FILES replayed on a fresh PGlite (../fold-f4-device-analytics/tools/catalog-at.mjs.txt).
+# At HEAD (55d58630b), before the folds, and the working tree after both (F4: device-analytics; F6: device-workstream):
+# ref HEAD: 13 catalogue writers replayed on a fresh database
+device-analytics: row, tiers ["professional"], industries [], deprecated false
+insights: row, tiers ["standard"], industries [], deprecated false
+device-workstream: row, tiers ["standard"], industries [], deprecated false
+projects: row, tiers ["free"], industries [], deprecated false
+
+# ref WT: 13 catalogue writers replayed on a fresh database
+device-analytics: no row
+insights: row, tiers ["standard"], industries [], deprecated false
+device-workstream: no row
+projects: row, tiers ["free"], industries [], deprecated false
+
+device-workstream was a catalogue module, packaged at 'standard', so grant continuity applies (P-61 item 4): FOLDED_MODULE_SUCCESSORS gains device-workstream -> projects. projects is offered at 'free', below 'standard', with no industry list, so a plan that included the folded module includes Projects already; only an above-plan grant needs carrying, and the pin (folded-module-grant-continuity.test.ts) proves the resolver carries it.

@@ -1,0 +1,10 @@
+== project home (/concept2cure/project-home?program=11111111-2222-3333-4444-000000000204) chars=4348 pageerrors=0 console=0 failed=0
+== with project: Vault (/concept2cure/vault?program=11111111-2222-3333-4444-000000000204) chars=6235 pageerrors=0 console=0 failed=0
+== with project: Tasks (/concept2cure/tasks?program=11111111-2222-3333-4444-000000000204) chars=4095 pageerrors=0 console=0 failed=0
+== with project: Communication (/concept2cure/communication-center?program=11111111-2222-3333-4444-000000000204) chars=991 pageerrors=0 console=0 failed=0
+== with project: CMC / Module 3 (/concept2cure/cmc?program=11111111-2222-3333-4444-000000000204) chars=1752 pageerrors=0 console=0 failed=0
+== with project: Risk-based monitoring (/concept2cure/rbm?program=11111111-2222-3333-4444-000000000204) chars=1808 pageerrors=0 console=0 failed=0
+== with project: Quality (/concept2cure/quality?program=11111111-2222-3333-4444-000000000204) chars=4393 pageerrors=0 console=0 failed=0
+== with project: Reporting & analytics (/concept2cure/insights?program=11111111-2222-3333-4444-000000000204) chars=2612 pageerrors=0 console=0 failed=0
+== with project: Projects (/concept2cure/projects?program=11111111-2222-3333-4444-000000000204) chars=2982 pageerrors=0 console=0 failed=0
+== with project: Home (/concept2cure?program=11111111-2222-3333-4444-000000000204) chars=1701 pageerrors=0 console=0 failed=0

@@ -20,6 +20,8 @@
 import React, { useMemo } from 'react';
 import * as PG from './ProtocolGov';
 import { PaneHead } from './ProtocolDevShared';
+import { hasKeys, useLiveData } from '../dataConnect';
+import { assessmentState } from '../assessmentState';
 
 type Row = Record<string, unknown>;
 const asRows = (v: unknown): Row[] => (Array.isArray(v) ? (v as Row[]) : []);
@@ -149,12 +151,18 @@ export function EligibilityTab({ doc, onAdd }: ListPaneProps) {
 }
 
 /* ---- Milestones ---- */
+/** The timeline engine's buckets (protocol-milestones-logic.ts milestoneBucket). */
 const URG: Record<string, { l: string; t: string }> = {
-  done: { l: 'Complete', t: 'ok' }, overdue: { l: 'Overdue', t: 'err' },
-  soon: { l: 'Due ≤30d', t: 'warn' }, normal: { l: 'Upcoming', t: 'idle' },
+  done: { l: 'Done', t: 'ok' }, overdue: { l: 'Overdue', t: 'err' },
+  due_30: { l: 'Due ≤30d', t: 'warn' }, due_90: { l: 'Due ≤90d', t: 'idle' },
+  upcoming: { l: 'Upcoming', t: 'idle' }, undated: { l: 'No target date', t: 'idle' },
 };
+/** The node's existing style hooks: met is done, in progress is active. */
+const NODE: Record<string, string> = { met: 'done', in_progress: 'active' };
 
-export function MilestonesTab({ doc, onAdd }: ListPaneProps) {
+export function MilestonesTab({ doc, onAdd, onEdit }: ListPaneProps & {
+  onEdit?: (kind: 'milestone-status', target: { id: number; label: string; defaults?: Record<string, string> }) => void;
+}) {
   const ms = asRows(doc.milestones);
   return (
     <div className="pd-pane">
@@ -163,19 +171,28 @@ export function MilestonesTab({ doc, onAdd }: ListPaneProps) {
       <div className="pd-timeline">{ms.map((m, idx) => (
         <div key={str(m.id)} className="pd-tl-row" data-status={str(m.status)}>
           <div className="pd-tl-rail">
-            <span className="pd-tl-node" data-status={str(m.status)}>{m.status === 'complete' ? '✓' : ''}</span>
+            <span className="pd-tl-node" data-status={NODE[str(m.status)] ?? str(m.status)}>{m.status === 'met' ? '✓' : ''}</span>
             {idx < ms.length - 1 ? <span className="pd-tl-line" /> : null}
           </div>
           <div className="pd-tl-card">
             <div className="pd-tl-date">{str(m.date)}</div><div className="pd-tl-label">{str(m.label)}</div>
-            <span className="pg-badge" data-tone={(URG[str(m.urgency)] || URG.normal).t}>{(URG[str(m.urgency)] || URG.normal).l}</span>
+            <span className="pg-badge" data-tone={(URG[str(m.urgency)] || URG.upcoming).t}>{(URG[str(m.urgency)] || URG.upcoming).l}</span>
+            <PG.StatusBadge status={str(m.status)} />
+            {onEdit && (
+              <button type="button" className="pde-rowbtn" aria-label={'Update status: ' + str(m.label)}
+                onClick={() => onEdit('milestone-status', { id: Number(m.id), label: str(m.label), defaults: { status: str(m.status) } })}>
+                Update status
+              </button>
+            )}
           </div>
         </div>))}</div>
     </div>);
 }
 
 /* ---- Amendments ---- */
-export function AmendmentsTab({ doc, onAdd }: ListPaneProps) {
+export function AmendmentsTab({ doc, onAdd, onEdit }: ListPaneProps & {
+  onEdit?: (kind: 'amendment-change' | 'amendment-status', target: { id: number; label: string; options?: string[] }) => void;
+}) {
   const amendments = asRows(doc.amendments);
   return (
     <div className="pd-pane">
@@ -192,6 +209,8 @@ export function AmendmentsTab({ doc, onAdd }: ListPaneProps) {
             <PG.StatusBadge status={str(a.status)} />
           </div>
           <div className="pd-card-sum">{str(a.summary)}</div>
+          {onEdit && <AmendmentActions a={a} onEdit={onEdit} />}
+          <AmendmentSubstantiality amendmentId={str(a.id)} />
           {/* The changeset is its own child table — an amendment recorded before
               its diff was itemised carries a summary and no changes. */}
           <div className="pd-changeset">{asRows(a.changes).map((c, i) => (
@@ -201,14 +220,124 @@ export function AmendmentsTab({ doc, onAdd }: ListPaneProps) {
     </div>);
 }
 
+/** The EU substantiality read (GET /api/protocol-amendments/amendments/:id/substantiality),
+ *  asked for on demand. The engine (substantiality.ts) never returns "non-substantial":
+ *  its verdict sentence and the indicators that fired are shown as it gives them, and
+ *  the classification stays the sponsor's (EU CTR Article 2(2)(13)). Nothing is read
+ *  until it is asked for, and nothing is written. */
+function AmendmentSubstantiality({ amendmentId }: { amendmentId: string }) {
+  type Indicator = { id: string; scope: string; clause: string; title: string; status: string; message: string };
+  type Read = { assessment: { verdictReason: string; indicators: Indicator[]; notComparable: string[]; declarationConflict: string | null; us?: { indicated: number; note: string } } };
+  const [asked, setAsked] = React.useState(false);
+  const read = useLiveData<Read>(
+    asked && /^\d+$/.test(amendmentId) ? `/api/protocol-amendments/amendments/${amendmentId}/substantiality` : null,
+    [asked, amendmentId],
+    hasKeys<Read>('assessment'),
+  );
+  if (!asked) {
+    return (
+      <button type="button" className="pde-rowbtn" onClick={() => setAsked(true)}>
+        Check EU substantiality indicators
+      </button>
+    );
+  }
+  if (read.loading && !read.data) return <div className="pde-note" role="status">Reading the indicators…</div>;
+  if (read.error || !read.data) return <div className="pde-note" role="note">The substantiality indicators could not be read.</div>;
+  const a = read.data.assessment;
+  // Only Article 2(2)(13) indicators count toward the EU verdict; the US IND view stays apart (substantiality.ts).
+  const fired = a.indicators.filter((i) => i.status === 'indicated' && i.scope === 'eu_sm');
+  return (
+    <div className="pde-note" data-testid="amendment-substantiality">
+      <div><strong>EU substantial-modification indicators (Article 2(2)(13)).</strong> The classification is the sponsor&rsquo;s.</div>
+      <div>{a.verdictReason}</div>
+      {fired.map((i) => <div key={i.id}>{i.title} ({i.clause}): {i.message}</div>)}
+      {a.declarationConflict && <div>{a.declarationConflict}</div>}
+      {a.notComparable.length > 0 && <div>Not comparable: {a.notComparable.join(', ')}.</div>}
+      {a.us && a.us.indicated > 0 && <div>Under a US IND, separately: {a.us.note}</div>}
+    </div>
+  );
+}
+
+/** An amendment's writes: a change while it is a draft, and the next statuses
+ *  the server's lifecycle allows (`nextStatuses`, from its transition table). */
+function AmendmentActions({ a, onEdit }: {
+  a: Row;
+  onEdit: (kind: 'amendment-change' | 'amendment-status', target: { id: number; label: string; options?: string[] }) => void;
+}) {
+  const next = Array.isArray(a.nextStatuses) ? (a.nextStatuses as unknown[]).map(String) : [];
+  const label = str(a.num) || str(a.summary);
+  if (str(a.status) !== 'draft' && next.length === 0) return null;
+  return (
+    <div className="pd-card-sum">
+      {str(a.status) === 'draft' && (
+        <button type="button" className="pde-rowbtn" onClick={() => onEdit('amendment-change', { id: Number(a.id), label })}>
+          Add a change
+        </button>
+      )}
+      {next.length > 0 && (
+        <button type="button" className="pde-rowbtn" onClick={() => onEdit('amendment-status', { id: Number(a.id), label, options: next })}>
+          Change status
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** Closing a deviation is a signed act behind the server's CAPA-closure gate.
+ *  The gate's own reasons are shown while it would refuse, and the button waits. */
+function DeviationClose({ d, onClose }: { d: Row; onClose: (target: { id: number; label: string }) => void }) {
+  const blockers = Array.isArray(d.closeBlockers) ? (d.closeBlockers as unknown[]).map(String) : [];
+  const whyId = 'pd-close-why-' + str(d.id);
+  return (
+    <div className="pd-card-sum">
+      <button type="button" className="pde-rowbtn" disabled={blockers.length > 0}
+        aria-describedby={blockers.length > 0 ? whyId : undefined}
+        onClick={() => onClose({ id: Number(d.id), label: str(d.title) })}>
+        Close deviation
+      </button>
+      {blockers.length > 0 && <span id={whyId} className="pde-note">{blockers.join(' ')}</span>}
+    </div>
+  );
+}
+
+/** The deviation trend engine's signals for this protocol (GET
+ *  /api/protocol-deviations/deviations/trends, trendDeviations: category spike,
+ *  severity rise, aging), in the engine's own sentences. Nothing is computed
+ *  here. A failed read is said; no signal is said as no signal. */
+function DeviationTrendSignals({ documentId }: { documentId: string }) {
+  // The route answers { documentId, trends } (protocol-industry-service.ts deviationTrendsForProtocol).
+  type Trends = { trends: { signals: Array<{ code: string; message: string }>; basis?: string } };
+  const read = useLiveData<Trends>(
+    /^\d+$/.test(documentId) ? `/api/protocol-deviations/deviations/trends?protocolDocumentId=${documentId}` : null,
+    [documentId],
+    (v: unknown): v is Trends => hasKeys<Trends>('trends')(v) && Array.isArray((v as Trends).trends?.signals),
+  );
+  if (read.loading && !read.data) return null;
+  if (read.error && !read.data) return <div className="pde-note" role="note">The deviation trends could not be read.</div>;
+  const signals = read.data?.trends.signals ?? [];
+  // "No trend signal" is a finding only because the engine answered: the loading and failed reads returned above,
+  // so reaching here with data is the positive evidence the assessment ran (assessmentState.ts).
+  const state = assessmentState({ scopeExists: true, findingCount: signals.length, assessmentRan: Boolean(read.data) });
+  return (
+    <div className="pde-note" data-testid="deviation-trend-signals">
+      {state === 'assessed-clear'
+        ? 'No trend signal over the window the trend engine reads.'
+        : signals.map((s, i) => <div key={s.code + i}><strong>{s.code}</strong> {s.message}</div>)}
+    </div>
+  );
+}
+
 /* ---- Deviations & CAPA ---- */
-export function DeviationsTab({ doc, onAdd, onEdit }: ListPaneProps & {
-  onEdit?: (kind: 'deviation-assess', target: { id: number; label: string }) => void;
+export function DeviationsTab({ doc, onAdd, onEdit, onCloseDeviation }: ListPaneProps & {
+  onEdit?: (kind: 'deviation-assess' | 'capa-add' | 'capa-status', target: { id: number; label: string; defaults?: Record<string, string> }) => void;
+  /** Opens the signing ceremony for closing this deviation. */
+  onCloseDeviation?: (target: { id: number; label: string }) => void;
 }) {
   const deviations = asRows(doc.deviations);
   return (
     <div className="pd-pane">
       <PaneHead title="Deviations & CAPA" sub={deviations.length + ' deviations'} action="Report deviation" onAction={onAdd} />
+      {deviations.length > 0 && <DeviationTrendSignals documentId={str(doc.id)} />}
       {deviations.length === 0 && <div className="pde-note">No deviation has been reported against this protocol.</div>}
       {deviations.map((d) => (
         <div key={str(d.id)} className="pd-card">
@@ -234,9 +363,21 @@ export function DeviationsTab({ doc, onAdd, onEdit }: ListPaneProps & {
           {/* CAPA is a child register of the deviation: a deviation logged
               before any corrective action was agreed has none. */}
           <div className="pd-capa"><div className="pd-capa-h">CAPA actions</div>
-            {asRows(d.capa).map((c, i) => (<div key={i} className="pd-capa-row">
+            {asRows(d.capa).map((c) => (<div key={str(c.id)} className="pd-capa-row">
               <span className="pd-capa-dot" data-status={str(c.status)} /><span>{str(c.action)}</span><PG.StatusBadge status={str(c.status)} />
-            </div>))}</div>
+              {onEdit && d.status !== 'closed' && (
+                <button type="button" className="pde-rowbtn" aria-label={'Update status: ' + str(c.action).slice(0, 60)}
+                  onClick={() => onEdit('capa-status', { id: Number(c.id), label: str(c.action).slice(0, 80), defaults: { status: str(c.status) } })}>
+                  Update status
+                </button>
+              )}
+            </div>))}
+            {onEdit && d.status !== 'closed' && (
+              <button type="button" className="pde-rowbtn" onClick={() => onEdit('capa-add', { id: Number(d.id), label: str(d.title) })}>
+                Add a CAPA action
+              </button>
+            )}</div>
+          {onCloseDeviation && d.status !== 'closed' && <DeviationClose d={d} onClose={onCloseDeviation} />}
         </div>))}
     </div>);
 }

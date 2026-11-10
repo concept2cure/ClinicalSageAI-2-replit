@@ -16,8 +16,10 @@
  *
  * Slice A.1 (INFORMATION_ARCHITECTURE.md sections 3, 8 and 9) gave every step
  * its line, Plan, Evidence, Author and Review as well as Submit and Respond,
- * each naming what that step will hold once it works; a device project reads
- * its own line where the step has one (PJ_LIFECYCLE laterDevice).
+ * each naming what that step will hold once it works. On 2026-10-31 the lines
+ * were removed: a client read them as the product apologising for itself, and
+ * Evidence's named risk-based monitoring, which works, as still to come. No
+ * step names a roadmap now.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -100,12 +102,9 @@ const STEPS = ['Plan', 'Evidence', 'Author', 'Review', 'Submit', 'Respond'] as c
 
 describe('Project home and the launch scope', () => {
   it.each(STEPS.flatMap((label) => (Object.keys(FILINGS) as Array<keyof typeof FILINGS>).map((filing) => [label, filing] as const)))(
-    'the %s step of %s offers no locked tool, and names what comes later in one bare line of words', async (label, filing) => {
+    'the %s step of %s offers no locked tool, and names nothing as coming later', async (label, filing) => {
     project = { ...PROJECT, ...FILINGS[filing] };
-    const device = filing === 'a device 510(k)';
-    const step = PJ_LIFECYCLE.find((s) => s.label === label)!;
-    const words = (device && step.laterDevice) || step.later;
-    expect(words, `${label} has a Coming later line`).toBeTruthy();
+    expect(PJ_LIFECYCLE.find((s) => s.label === label), `${label} is a step`).toBeTruthy();
     const onNav = vi.fn();
     render(<ProjectHome surface={{ id: 'project-home', label: 'Project home' } as never} onAsk={vi.fn()} onNav={onNav} segment="biotech" />);
     await waitFor(() => expect(document.querySelectorAll('.pj-lc-stage').length).toBe(6));
@@ -115,12 +114,9 @@ describe('Project home and the launch scope', () => {
     expect(ids.filter((id) => !isLaunchSurface(id)), `${label} offers tools that open "not in this release"`).toEqual([]);
     // What is not in this release is a line of words, never a panel or a button.
     expect(screen.queryByText('Not in this release')).toBeNull();
-    // One line per step, read once the project's filing is known (a device reads its own line).
-    await waitFor(() => expect(screen.getByTestId('pj-coming-later').textContent).toBe(`Coming later: ${words}`));
-    // The same bare line on every step: Respond's sat inside its tool card
-    // (filing-spine design review, open item 10, 2026-10-08).
-    expect(screen.getByTestId('pj-coming-later').closest('.pj-sec')).toBeNull();
-    expect(screen.getByTestId('pj-coming-later').querySelector('button, a')).toBeNull();
+    // No roadmap line on any step (2026-10-31): a step says what works, never what is planned.
+    expect(screen.queryByTestId('pj-coming-later')).toBeNull();
+    expect(document.body.textContent).not.toMatch(/Coming later/);
     // The removed Plan stage pointed at meetings, eTMF and grants "above".
     expect(screen.queryByText('Meetings, eTMF and grants open in their own surfaces')).toBeNull();
   });

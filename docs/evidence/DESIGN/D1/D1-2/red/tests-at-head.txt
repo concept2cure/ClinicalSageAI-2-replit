@@ -1,0 +1,1301 @@
+# (trimmed: the run's React act() and console stderr noise removed; every per-test verdict, every failure and the summary kept)
+# The new and rewritten tests against HEAD's sources (2e4a9fe67; no D1-2 source change yet; the D1-2 files equal 16df5ed4b7's), 2026-11-02T00:00Z
+# npx vitest run --config vitest.config.ts --maxWorkers=1 <12 files>
+ × client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > the demo starter under a Live Drive lock > locked for the workspace: the conversation shows the offer as a record, not a button 5456ms
+ ✓ client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > the demo starter under a Live Drive lock > not locked: the same offer is a button that starts the demonstration 2251ms
+ ✓ client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > choosing a client type from the account menu > lands on that type’s default screen, which is in this release 509ms
+ ✓ client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > choosing a client type from the account menu > choosing the type already chosen leaves the person where they are 529ms
+ ✓ client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > the top bar opens the sidebar > "Open the sidebar" expands a collapsed sidebar 441ms
+ × client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > the page root names its screen > data-surface follows the screen the shell shows 107ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > section 9 decides the scope: every slice 1 row is checked here, and only those 6ms
+ × client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > no surface a client can reach is named with a word from "Not in client copy" 23ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > no surface a client can reach is named after a folded feature (section 5.8) 12ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > each slice 1 row carries its section 9 name, exactly 1ms
+ × client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > the names AnA and the @ menu give a reachable screen (NAVIGATION_TARGETS) use none of the words 3ms
+ × client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > the project-home breadcrumb names the open project, once, as the current page 101ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > section 9's own names pass this file's word and fold checks (so the guard can be met) 8ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · doors: one job, one name (section 9, Door names) > section 9 lists the doors 1ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · doors: one job, one name (section 9, Door names) > the door names live in one module, one constant per job, each with its section 9 name 5ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · doors: one job, one name (section 9, Door names) > no step door still carries today's name (Project*.tsx) 413ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · doors: one job, one name (section 9, Door names) > a job name is written once, in projectDoors.ts, and read from there by every door 569ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · doors: one job, one name (section 9, Door names) > each device workstream door is drawn with its job name, by pathway 718ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · no step carries a Coming later line (removed 2026-10-31) > Plan, Evidence, Author, Review, Submit and Respond carry no roadmap field 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · no step carries a Coming later line (removed 2026-10-31) > each step still says what to do on it, in client copy 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the IND catalogue Plan shows ("{n}. {phase name}") > phase 1 is "Planning", in the catalogue, so Plan and AnA read one name 11ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the IND catalogue Plan shows ("{n}. {phase name}") > no phase name uses a word from "Not in client copy" 4ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · /concept2cure/features (section 12) > /concept2cure/features opens Subscription & features 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · /concept2cure/features (section 12) > the shell writes /concept2cure/features for apps, and an old /concept2cure/apps link still arrives 1ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · /concept2cure/features (section 12) > no address a client can reach has "app" in it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > the account menu: Subscription & features, Subscription & billing (P-68), Platform licensing 636ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > a member's menu offers Compare subscriptions 122ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > the lock copy (rail, ⌘K, Subscription & features, unlock panel) names the subscription and the job 1ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > every door to Compare subscriptions has that name (no "View all plans", "View plans", "See plans", "Manage plan") 375ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > no heading or label outside the registry still carries a slice 1 row's old name 2764ms
+ ✓ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the subscription is "subscription"; "Plan" is the step > Setup's module panel no longer sends anyone to the Workflows 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell destinations preserve status-only protocol changes > refuses Vault before routing or action dispatch 1611ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell destinations preserve status-only protocol changes > refuses Tasks before routing or action dispatch 566ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell destinations preserve status-only protocol changes > refuses logo before routing or action dispatch 541ms
+ × client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell destinations preserve status-only protocol changes > refuses project before routing or action dispatch 428ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell destinations preserve status-only protocol changes > refuses help before routing or action dispatch 620ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell destinations preserve status-only protocol changes > refuses account before routing or action dispatch 637ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell destinations preserve status-only protocol changes > refuses client type before routing or action dispatch 443ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > the palette exempts only its own navigation dialog > preserves query and selection when pending work refuses a keyboard-selected result before action dispatch 490ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > the palette exempts only its own navigation dialog > permits a clean result despite its own dialog while the shared default remains strict 243ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > the palette exempts only its own navigation dialog > still refuses an underlying native dialog with the same cmdk class 291ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > the palette exempts only its own navigation dialog > fails closed and reports the canonical reason when a registered guard throws 280ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > palette actions and questions keep pending protocol work > refuses a step result before creating a deferred action or conversation handoff 669ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > palette actions and questions keep pending protocol work > refuses a action result before creating a deferred action or conversation handoff 457ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > palette actions and questions keep pending protocol work > refuses a ask result before creating a deferred action or conversation handoff 450ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > palette actions and questions keep pending protocol work > does not replay a rejected palette result after changes are reverted; a fresh keyboard request succeeds 598ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > palette actions and questions keep pending protocol work > keeps governed ceremony ownership even when the palette itself is ignored 720ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell requests respect shared-editor text and in-flight saves > preserves a real protocol text edit when a rail navigation is requested 494ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell requests respect shared-editor text and in-flight saves > retains the legacy editor beforeunload refusal when no shared registry guard is active 332ms
+ ✓ client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell requests respect shared-editor text and in-flight saves > does not leave while the protocol section PATCH is unresolved 698ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > exactly the places, then the work areas, in order 268ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > the work areas are a named group under their own heading 63ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > the feature catalog, Conversation and a second task entry are not on the rail 53ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > no two entries share an icon 61ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > keeps the client destinations reachable for a member (collapsed=false) 468ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > keeps the client destinations reachable for a member (collapsed=true) 291ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > every entry opens a screen in this release 110ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > Quality is on the rail, and opens Quality 92ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > says a project screen needs a project when none is open, instead of doing nothing visible 263ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > CMC / Module 3 is on the rail beside Quality, and opens CMC 103ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > Home is explicitly labelled and opens Home 81ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > no entry carries an AnA badge, and no section lists retired or locked screens 39ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > the mark goes to Home 108ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the conversation in progress is reached without a rail entry > ⌘K finds Conversation and opens the conversation screen 92ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Tasks is one entry: everyone’s tasks, with the board’s own filter for the person’s > opens the task board on everyone’s tasks 419ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Tasks is one entry: everyone’s tasks, with the board’s own filter for the person’s > the board’s My tasks gives the person’s own, and Tasks stays the marked entry 626ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Tasks is one entry: everyone’s tasks, with the board’s own filter for the person’s > opens the board at its own address, not the action’s alias 193ms
+ × client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the governed artifacts across projects, once the Artifacts center, are reached from ⌘K as the Vault > the sidebar’s Search opens the palette, and the result opens the Vault, not a retired screen 427ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > offers an organization administrator Subscription & features, which opens the catalog 220ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > names each subscription entry by its surface's registry label, as the breadcrumb and ⌘K do 231ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > gives a billing administrator one entry to Licensing, Subscription & billing (P-68) 163ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > offers every client type once, the current one checked, by more than colour 51ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > choosing a client type sets it 68ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > choosing the type already chosen changes nothing and closes the menu 110ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the button names the menu it opens, and focus moves into it 54ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the items are one Tab stop: arrows, Home and End move between them, wrapping 110ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Escape closes it and gives focus back to the button 74ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Tab closes it, from the button 68ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > .rail does not hide its overflow; the list scrolls and clips inside .rail-scroll 3ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > the menu opens from the collapsed rail with every item present 122ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > every client type defaults to a screen in this release 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > the four whose default was outside it now open Projects 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > the first two .rail-nav buttons are "New conversation" and "Search" 413ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > New conversation opens Home, where a question starts a new conversation 345ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top of the sidebar: New conversation, then Search (§D1.A step 1) > Search still opens the command palette 185ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > names the organisation under the person, and in the button’s title 47ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > with no organisation known, says the role in words, never the raw value 62ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > the menu head names the organisation and the role on one line 127ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > "What AnA remembers" follows Account, opens the drawer, and Escape returns focus to the account button 288ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > keeps the admin entries gated exactly as before 197ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > Organizations and invitations sits in the sidebar foot, after the account 61ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the account (§D1.A steps 2–3) > collapsed, the foot stacks the expand toggle, organisation access, then the avatar 39ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > "Open the sidebar" is the bar’s first control and opens it 16ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > draws no sidebar button that would do nothing 56ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar no longer carries organisation access, and opens the sidebar at phone width > has no Organizations and invitations button of its own 66ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > a place, New conversation and Search each close it 538ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > the notice a choice raises is still seen once the drawer closes (it sits beside the rail, not in it) 132ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > wider than that, the sidebar stays as it is 224ms
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > draws no search box, organisation label, project chip, Task chip or Help; the open project is a crumb button 45ms
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on Vault with C2C-101 open it reads "C2C-101 › Vault", and the project crumb opens the project page 23ms
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on the project page it reads "C2C-101" once, as the current page 26ms
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > a project feature reads "the project › the feature"; a one-category or admin page names only itself 15ms
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on Home with no project open: exactly Collaborate, New task and Your work, and no text 76ms
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on Home and in a conversation with a project open, the project crumb is the bar’s one text 19ms
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > with no project open there is no project button (Projects is the sidebar’s), and none is invented for an id alone 33ms
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > Collaborate, New task and Your work are icon buttons, in that order, that keep their handlers 19ms
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > at phone width: the sidebar button first, New conversation last, and it opens Home 16ms
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > New conversation waits for unsaved work, as the sidebar’s does 9ms
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the lazy fallback says "Loading…" (§D1.B step 8) > a screen still loading shows one quiet status line, still busy for the probes that wait on it 16ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > finds the sidebar’s rules 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > the round "+" of New conversation is the sidebar’s one orange 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > no brand fill beside Home’s own row, and the ".RI" in ink 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > group labels are 12px sentence case in --text-300 5ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > rows are 14px, recents 13px, and nothing in the sidebar is under 12px 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > the avatar is ink, in the sidebar and the account menu’s head, ranked above the menu block’s own rule 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > the account’s second line is 12px --text-300; the menu head’s line 13px 0ms
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > at ≤640px no strip is reserved, the collapsed rail is not drawn, and the expanded one is the drawer 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > finds the bar’s rules 1ms
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > the bar: 4px between controls, a hairline under it that Home drops 1ms
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > the crumbs: 13px --text-300, the page --text-100 at 500, the project a quiet button that hovers --bg-100 1ms
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > icon buttons: 32px, --text-300, hover --bg-100; 44px at phone width 2ms
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > at phone width the menu and New conversation show, and Collaborate and New task go to ⌘K 1ms
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > the badge is ink at 12px, and red when something is overdue 1ms
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > no orange and nothing under 12px in the bar’s rules 1ms
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > the retired bar classes have no rule left 1ms
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > the lazy fallback is a quiet line, not a box (§D1.B step 8) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — messages & alerts > opens a saved report using its validated run resource instead of an arbitrary action URL 766ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — messages & alerts > does not offer a report link for a malformed or unrelated resource 135ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — messages & alerts > a failed notifications read is an alert, not "No unread messages" 52ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — messages & alerts > a genuinely empty inbox still says so 50ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — the bell badge > a failed unread-count read is not shown as zero waiting 19ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — the bell badge > a failed my-work read is not shown as zero waiting either 31ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — the bell badge > when every count loads and nothing is waiting, there is no badge 16ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — the bell badge > a real count still shows as a number 12ms
+ × client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — the bell badge > when something is overdue, the bell is marked and its name says how many 5017ms
+ × client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — the bell badge > a late item still marks the bell when another count failed, beside the "?" 5008ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — native task handoff > retains the exact unified task business key for assigned and approval rows 199ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — navigation ownership > holds triage when unsaved work owns the canvas 78ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — navigation ownership > holds triage when account work owns the canvas 51ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — navigation ownership > keeps the tray open with the native surface refusal and never writes or navigates 54ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — navigation ownership > refuses a same-tick bearer replacement before React sees the account change 56ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — navigation ownership > retires the old drawer and its pending reads when the actor changes 55ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > notification setup refresh ownership > refreshes counts for current-recipient preference changes and ignores a different organization 31ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > names no category for a surface that belongs to both — the launch core 3ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > names the one category a surface belongs to, and Admin for an admin surface 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > does not repeat the surface’s own name ("Medical Device & IVD › Medical Device & IVD"), for every surface 4ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > never names a category the rail does not list the surface under — for every surface 1ms
+ × client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > the header draws no category crumb at all 66ms
+ × client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132), now in the sidebar’s account > shows the organisation as words under the person, not as a control that does nothing 32ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132), now in the sidebar’s account > names no organisation when none is known: no "Organization" placeholder (P-25) 60ms
+ × client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132), now in the sidebar’s account > Help is the account menu’s "Get help", and the top bar draws no Help of its own 352ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > marks the open surface as the current page, and lists no client category beside it 265ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > draws the current page, and no rule draws a client category on the rail 5ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > collapsed, the brand mark keeps the top and the toggle moves to the foot 33ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > expanded, the toggle stays at the top 29ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > draws no floating launcher — the header’s Task and Collaborate buttons open it 5ms
+ × client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > the header’s Task and Collaborate buttons open it — the path that replaced the floating button 178ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > names the surface, not its URL slug or the payload field 84ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > offers each module once, by name, with the server’s value 91ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > labels priorities for people, and posts the server’s values 48ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > keeps the auto-assign note one sentence beside its icon 83ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > TRIAGE_ASK: one source for the tray, Home and the task board (D1 §D1.C step 5, §D1.G step 2) > is exported with the words the tray has always asked 4ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > TRIAGE_ASK: one source for the tray, Home and the task board (D1 §D1.C step 5, §D1.G step 2) > the triage row asks exactly it, as a quiet ghost button led by the ✻ 343ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the header (D1 §D1.G step 1) > says "none overdue" rather than counting zero, and closes with a D0 button 104ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the header (D1 §D1.G step 1) > still gives the number when something is late 37ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > rows: colour only where something is late or blocked (D1 §D1.G step 3) > a row due in 14 days keeps its dot’s place but shows none; late and blocked rows keep theirs 67ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > messages and alerts (D1 §D1.G step 4) > shows a severity dot only for a warning or a critical notice 56ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > messages and alerts (D1 §D1.G step 4) > draws Mark read, the open button and the preferences button with D0’s buttons 57ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > finds the tray block 0ms
+ × client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > uses orange only for the ✻ 7ms
+ × client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > sets no text under the 12px floor 2ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > keeps the group heads in sentence case and hides a quiet dot 1ms
+ ✓ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > gives the panel title 16px and the counts line 13px 1ms
+ × client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > on the Vault with ONC-221 open, the project crumb names it and opens its project page 489ms
+ ✓ client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > has no "Switch client domain" control: the client type is chosen in the account menu 13ms
+ × client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > with no project open, the bar shows no project button and no "No project open" 18ms
+ × client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > names a project by its title when it has no code 114ms
+ ✓ client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > follows the channel when another project is opened 62ms
+ ✓ client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx > segmentForShellProject (pure) > maps product type first, workstream second, nothing otherwise 4ms
+ ✓ client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx > the top bar shows no client type (FILING_SPINE F8) > with an IVD program open and a pharma preference, it names the program and no client type 63ms
+ × client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx > the top bar shows no client type (FILING_SPINE F8) > with no program open, it shows no client type either 22ms
+ ✓ client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx > the top bar shows no client type (FILING_SPINE F8) > when the program publishes its product type, the top bar still names the program 14ms
+ ✓ client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx > the account menu's Client type is the one place the type is chosen > opening an IVD program does not change the setting: the preference stays checked 417ms
+ ✓ client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx > the account menu's Client type is the one place the type is chosen > choosing another type there sets it 254ms
+ × client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > engineering evidence, with a project open: the project › the feature 84ms
+ × client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > IVDR evidence, with a project open: the same trail, and no "Medical Device & IVD" parent 19ms
+ × client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > names the project once, as the crumb button that opens its page 14ms
+ × client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > names a project with no code by its title 12ms
+ × client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > every MDX project feature: its parent is the open project, never the old tier 27ms
+ × client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > follows the channel when another project is opened 20ms
+ × client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > the crumb never invents a project name > with no project open: the feature alone 12ms
+ × client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > the crumb never invents a project name > with a project opened by id alone (a deep link, no name yet): the feature alone 8ms
+ × client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > other surfaces keep their crumbs > the project page is still named by the project, once, as the current page 9ms
+ × client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > other surfaces keep their crumbs > a core place carries the project crumb while a project is open 19ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > other surfaces keep their crumbs > a one-category surface keeps its category; an admin surface keeps Admin 1ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > the registry model names Projects as a project feature’s parent > for every MDX project feature 1ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > the registry model names Projects as a project feature’s parent > no surface is crumbed with the old tier 0ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > ⌘K’s hint names Projects for a project feature > engineering evidence 82ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > ⌘K’s hint names Projects for a project feature > IVDR evidence 30ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > ⌘K’s hint names Projects for a project feature > no row for a folded screen: risk management, design controls and IVD completeness live in their targets 136ms
+ ✓ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > ⌘K’s hint names Projects for a project feature > no ⌘K row is hinted with the old tier 50ms
+ × client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > creates a document from Plan and comes back to Plan through the real top-bar chip 892ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > restores a remembered explicit step even when the document list is empty 59ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > resets a different project to its own default without a surface remount 173ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > honors the Tasks stage handoff above remembered state and a pending action 95ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > honors a pending step action above remembered state and the empty-list default 60ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > falls back to Review for a bare workId, including an invalid stage 56ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 50 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > no surface a client can reach is named with a word from "Not in client copy"
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "biostat-workbench: \"Biostat workbench\" (workbench)",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:264:96
+    262|
+    263|   it('no surface a client can reach is named with a word from "Not in …
+    264|     expect(offending(CLIENT_SURFACE_IDS.map((id) => [id, getSurfaceMet…
+       |                                                                                                ^
+    265|   });
+    266|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > the names AnA and the @ menu give a reachable screen (NAVIGATION_TARGETS) use none of the words
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "NAVIGATION_TARGETS biostat-workbench: \"Biostatistics workbench\" (workbench)",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:280:135
+    278|
+    279|   it('the names AnA and the @ menu give a reachable screen (NAVIGATION…
+    280|     expect(offending(NAVIGATION_TARGETS.filter((t) => reachable(t.id))…
+       |                                                                                                                                       ^
+    281|   });
+    282|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > the project-home breadcrumb names the open project, once, as the current page
+AssertionError: expected undefined to be 'BX-301' // Object.is equality
+
+- Expected:
+"BX-301"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx:290:32
+    288|     // and the root crumb ("Concept2Cure.RI") went to the sidebar's wo…
+    289|     const crumb = document.querySelector('.crumbs .crumb-proj');
+    290|     expect(crumb?.textContent).toBe('BX-301');
+       |                                ^
+    291|     expect(crumb?.getAttribute('aria-current')).toBe('page');
+    292|     expect(document.querySelector('.crumbs .here')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > engineering evidence, with a project open: the project › the feature
+AssertionError: expected [ 'Concept2Cure.RI', 'Projects', …(2) ] to deeply equal [ 'NPX-510', 'Engineering evidence' ]
+
+- Expected
++ Received
+
+  [
++   "Concept2Cure.RI",
++   "Projects",
+    "NPX-510",
+    "Engineering evidence",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx:98:22
+     96|     publishShellProject(PROJECT);
+     97|     bar('device-engineering');
+     98|     expect(crumbs()).toEqual(['NPX-510', 'Engineering evidence']);
+       |                      ^
+     99|     expect(document.querySelector('.crumbs')?.textContent).not.toConta…
+    100|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > IVDR evidence, with a project open: the same trail, and no "Medical Device & IVD" parent
+AssertionError: expected [ 'Concept2Cure.RI', 'Projects', …(2) ] to deeply equal [ 'NPX-510', 'IVDR evidence' ]
+
+- Expected
++ Received
+
+  [
++   "Concept2Cure.RI",
++   "Projects",
+    "NPX-510",
+    "IVDR evidence",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx:105:22
+    103|     publishShellProject(PROJECT);
+    104|     bar('device-diagnostics');
+    105|     expect(crumbs()).toEqual(['NPX-510', 'IVDR evidence']);
+       |                      ^
+    106|     expect(document.querySelector('.crumbs')?.textContent).not.toConta…
+    107|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > names the project once, as the crumb button that opens its page
+TypeError: Cannot read properties of null (reading 'tagName')
+ ❯ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx:114:18
+    112|     bar('labeling');
+    113|     const crumb = document.querySelector('.crumbs > .crumb-proj') as H…
+    114|     expect(crumb.tagName).toBe('BUTTON');
+       |                  ^
+    115|     expect(crumb.textContent).toBe('NPX-510');
+    116|     expect(document.querySelector('.tb-proj')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > names a project with no code by its title
+AssertionError: expected [ 'Concept2Cure.RI', 'Projects', …(2) ] to deeply equal [ 'NeuroPanel-Dx 510(k)', …(1) ]
+
+- Expected
++ Received
+
+  [
++   "Concept2Cure.RI",
++   "Projects",
+    "NeuroPanel-Dx 510(k)",
+    "Human factors (IEC 62366-1)",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx:123:22
+    121|     publishShellProject({ id: PROJECT.id, title: PROJECT.title });
+    122|     bar('human-factors');
+    123|     expect(crumbs()).toEqual(['NeuroPanel-Dx 510(k)', 'Human factors (…
+       |                      ^
+    124|   });
+    125|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > every MDX project feature: its parent is the open project, never the old tier
+AssertionError: device-510k: expected [ 'Concept2Cure.RI', 'Projects', …(1) ] to deeply equal [ 'NPX-510' ]
+
+- Expected
++ Received
+
+  [
++   "Concept2Cure.RI",
++   "Projects",
+    "NPX-510",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx:130:29
+    128|     for (const id of MDX_PROJECT_FEATURE_SURFACE_IDS) {
+    129|       bar(id);
+    130|       expect(parents(), id).toEqual(['NPX-510']);
+       |                             ^
+    131|       expect(here(), id).toBe(surface(id).label);
+    132|       cleanup();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > a project feature is crumbed under the open project > follows the channel when another project is opened
+AssertionError: expected [ 'Concept2Cure.RI', 'Projects', …(1) ] to deeply equal [ 'NPX-510' ]
+
+- Expected
++ Received
+
+  [
++   "Concept2Cure.RI",
++   "Projects",
+    "NPX-510",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx:139:23
+    137|     publishShellProject(PROJECT);
+    138|     bar('device-engineering');
+    139|     expect(parents()).toEqual(['NPX-510']);
+       |                       ^
+    140|     act(() => {
+    141|       publishShellProject({ id: '1c0d9e8f-7a6b-4c5d-8e9f-0a1b2c3d4e5f'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > the crumb never invents a project name > with no project open: the feature alone
+AssertionError: expected [ 'Concept2Cure.RI', 'Projects', …(1) ] to deeply equal [ 'Engineering evidence' ]
+
+- Expected
++ Received
+
+  [
++   "Concept2Cure.RI",
++   "Projects",
+    "Engineering evidence",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx:150:22
+    148|   it('with no project open: the feature alone', () => {
+    149|     bar('device-engineering');
+    150|     expect(crumbs()).toEqual(['Engineering evidence']);
+       |                      ^
+    151|   });
+    152|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > the crumb never invents a project name > with a project opened by id alone (a deep link, no name yet): the feature alone
+AssertionError: expected [ 'Concept2Cure.RI', 'Projects', …(1) ] to deeply equal [ 'IVDR evidence' ]
+
+- Expected
++ Received
+
+  [
++   "Concept2Cure.RI",
++   "Projects",
+    "IVDR evidence",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx:156:22
+    154|     publishShellProject({ id: PROJECT.id });
+    155|     bar('device-diagnostics');
+    156|     expect(crumbs()).toEqual(['IVDR evidence']);
+       |                      ^
+    157|   });
+    158| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > other surfaces keep their crumbs > the project page is still named by the project, once, as the current page
+AssertionError: expected [ 'Concept2Cure.RI', 'NPX-510' ] to deeply equal [ 'NPX-510' ]
+
+- Expected
++ Received
+
+  [
++   "Concept2Cure.RI",
+    "NPX-510",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx:164:22
+    162|     publishShellProject(PROJECT);
+    163|     bar('project-home');
+    164|     expect(crumbs()).toEqual(['NPX-510']);
+       |                      ^
+    165|     expect(document.querySelector('.crumb-proj')?.getAttribute('aria-c…
+    166|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx > other surfaces keep their crumbs > a core place carries the project crumb while a project is open
+AssertionError: expected [ 'Concept2Cure.RI', 'Vault' ] to deeply equal [ 'NPX-510', 'Vault' ]
+
+- Expected
++ Received
+
+  [
+-   "NPX-510",
++   "Concept2Cure.RI",
+    "Vault",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx:173:22
+    171|     publishShellProject(PROJECT);
+    172|     bar('vault');
+    173|     expect(crumbs()).toEqual(['NPX-510', 'Vault']);
+       |                      ^
+    174|   });
+    175|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeStepReturn.test.tsx > the project’s step survives leaving the page > creates a document from Plan and comes back to Plan through the real top-bar chip
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "A-101"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Open projectA-101":
+  [36m<button[39m
+    [33mclass[39m=[32m"tb-proj"[39m
+    [33mtitle[39m=[32m"A-101 — Project A"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------button:
+
+  Name "Search, jump, or run a command":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Search, jump, or run a command"[39m
+    [33mclass[39m=[32m"tb-cmdk"[39m
+    [33mtitle[39m=[32m"Search, jump, or run a command (⌘K)"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+   … (rest of this failure trimmed)
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > the header draws no category crumb at all
+AssertionError: expected 'Concept2Cure.RI›Projects›510(k) and e…' to be '510(k) and eSTAR' // Object.is equality
+
+Expected: "510(k) and eSTAR"
+Received: "Concept2Cure.RI›Projects›510(k) and eSTAR"
+
+ ❯ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx:118:27
+    116|     // D1-2 (D1.md §D1.B step 1): the root and tier crumbs went (the s…
+    117|     // its active row say them); a project feature with no project ope…
+    118|     expect(crumbs.trim()).toBe('510(k) and eSTAR');
+       |                           ^
+    119|   });
+    120| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132), now in the sidebar’s account > shows the organisation as words under the person, not as a control that does nothing
+AssertionError: the top bar keeps no organisation label: expected <div class="tb-org" …(1)>…(2)</div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="tb-org"
+  title="Concept2Cure Therapeutics"
+>
+  <span
+    aria-hidden="true"
+    class="tb-org-mark"
+  >
+    CT
+  </span>
+  <span
+    class="tb-org-name"
+  >
+    Concept2Cure Therapeutics
+  </span>
+</div>
+
+   … (rest of this failure trimmed)
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132), now in the sidebar’s account > Help is the account menu’s "Get help", and the top bar draws no Help of its own
+AssertionError: expected <button type="button" …(3)>…(1)</button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  aria-label="Get help"
+  class="tb-btn"
+  title="Get help"
+  type="button"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-circle-help"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+   … (rest of this failure trimmed)
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > the header’s Task and Collaborate buttons open it — the path that replaced the floating button
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "New task from this screen"
+
+Here are the accessible roles:
+
+  banner:
+
+  Name "":
+  [36m<header[39m
+    [33mclass[39m=[32m"topbar"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "No project open. Choose one in Projects":
+  [36m<button[39m
+    [33mclass[39m=[32m"tb-proj"[39m
+    [33mdata-empty[39m=[32m"true"[39m
+    [33mtitle[39m=[32m"Choose a project in Projects"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Search, jump, or run a command":
+   … (rest of this failure trimmed)
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the governed artifacts across projects, once the Artifacts center, are reached from ⌘K as the Vault > the sidebar’s Search opens the palette, and the result opens the Vault, not a retired screen
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'vault' ]
+
+Number of calls: 0
+
+ ❯ client/src/concept2cure/v2/__tests__/shellNav.test.tsx:344:19
+    342|     fireEvent.change(screen.getByPlaceholderText(/Search surfaces/), {…
+    343|     fireEvent.click(screen.getAllByRole('button', { name: /^Vault/ })[…
+    344|     expect(onNav).toHaveBeenCalledWith('vault');
+       |                   ^
+    345|   });
+    346| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellProtocolLeaveGuard.test.tsx > shell destinations preserve status-only protocol changes > refuses project before routing or action dispatch
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "BX-410"
+
+Here are the accessible roles:
+
+  button:
+
+  Name "Open projectBX-410":
+  [36m<button[39m
+    [33mclass[39m=[32m"tb-proj"[39m
+    [33mtitle[39m=[32m"BX-410"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  --------------------------------------------------button:
+
+  Name "Search, jump, or run a command":
+  [36m<button[39m
+    [33maria-label[39m=[32m"Search, jump, or run a command"[39m
+    [33mclass[39m=[32m"tb-cmdk"[39m
+    [33mtitle[39m=[32m"Search, jump, or run a command (⌘K)"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+   … (rest of this failure trimmed)
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > draws no search box, organisation label, project chip, Task chip or Help; the open project is a crumb button
+AssertionError: .tb-cmdk: expected <button type="button" …(3)>…(3)</button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  aria-label="Search, jump, or run a command"
+  class="tb-cmdk"
+  title="Search, jump, or run a command (⌘K)"
+  type="button"
+>
+  <span
+    class="ico"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-search"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+      stroke-linecap="round"
+   … (rest of this failure trimmed)
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on Vault with C2C-101 open it reads "C2C-101 › Vault", and the project crumb opens the project page
+AssertionError: expected [ 'Concept2Cure.RI', '›', 'Vault' ] to deeply equal [ 'C2C-101', '›', 'Vault' ]
+
+- Expected
++ Received
+
+  [
+-   "C2C-101",
++   "Concept2Cure.RI",
+    "›",
+    "Vault",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx:335:28
+    333|     publishShellProject(C2C_101);
+    334|     const { bar, onNav } = mountBar(registry('vault'));
+    335|     expect(crumbText(bar)).toEqual(['C2C-101', '›', 'Vault']);
+       |                            ^
+    336|     const crumb = within(bar).getByRole('button', { name: 'C2C-101' });
+    337|     expect(crumb.getAttribute('aria-current')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on the project page it reads "C2C-101" once, as the current page
+AssertionError: expected [ 'Concept2Cure.RI', '›', 'C2C-101' ] to deeply equal [ 'C2C-101' ]
+
+- Expected
++ Received
+
+  [
++   "Concept2Cure.RI",
++   "›",
+    "C2C-101",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx:346:28
+    344|     publishShellProject(C2C_101);
+    345|     const { bar } = mountBar(registry('project-home'));
+    346|     expect(crumbText(bar)).toEqual(['C2C-101']);
+       |                            ^
+    347|     expect(within(bar).getByRole('button', { name: 'C2C-101' }).getAtt…
+    348|     expect(bar.querySelector('.crumbs .here')).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > a project feature reads "the project › the feature"; a one-category or admin page names only itself
+AssertionError: expected [ 'Concept2Cure.RI', '›', …(5) ] to deeply equal [ 'C2C-101', '›', …(1) ]
+
+- Expected
++ Received
+
+  [
++   "Concept2Cure.RI",
++   "›",
++   "Projects",
++   "›",
+    "C2C-101",
+    "›",
+    "Engineering evidence",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx:354:28
+    352|     publishShellProject(C2C_101);
+    353|     const { bar } = mountBar(registry('device-engineering'));
+    354|     expect(crumbText(bar)).toEqual(['C2C-101', '›', registry('device-e…
+       |                            ^
+    355|     cleanup();
+    356|     clearShellProject();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on Home with no project open: exactly Collaborate, New task and Your work, and no text
+AssertionError: expected [ null, …(5) ] to deeply equal [ 'Collaborate on this screen', …(2) ]
+
+- Expected
++ Received
+
+  [
+-   "Collaborate on this screen",
+-   "New task from this screen",
++   null,
++   "Search, jump, or run a command",
++   null,
++   "Collaborate",
+    "Your work",
++   "Get help",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx:367:72
+    365|   it('on Home with no project open: exactly Collaborate, New task and …
+    366|     const { bar } = mountBar({ id: 'home', label: 'Home' }, { onOpenRa…
+    367|     expect(wideControls(bar).map((b) => b.getAttribute('aria-label')))…
+       |                                                                        ^
+    368|       'Collaborate on this screen', 'New task from this screen', 'Your…
+    369|     ]);
+   … (rest of this failure trimmed)
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > on Home and in a conversation with a project open, the project crumb is the bar’s one text
+AssertionError: home: expected [ 'Concept2Cure.RI', '›', 'Home' ] to deeply equal [ 'C2C-101' ]
+
+- Expected
++ Received
+
+  [
+-   "C2C-101",
++   "Concept2Cure.RI",
++   "›",
++   "Home",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx:378:42
+    376|     for (const surface of [{ id: 'home', label: 'Home' }, registry('co…
+    377|       const { bar } = mountBar(surface);
+    378|       expect(crumbText(bar), surface.id).toEqual(['C2C-101']);
+       |                                          ^
+    379|       expect(visibleWords(bar), surface.id).toBe('C2C-101');
+    380|       cleanup();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar: where you are, in one quiet line (§D1.B steps 1 and 4) > with no project open there is no project button (Projects is the sidebar’s), and none is invented for an id alone
+AssertionError: expected 'Concept2Cure.RI›VaultNo project open.…' not to match /No project open|Open project/
+
+- Expected:
+/No project open|Open project/
+
++ Received:
+"Concept2Cure.RI›VaultNo project open. Choose one in ProjectsCTConcept2Cure TherapeuticsSearch, jump, or run a command⌘KTask"
+
+ ❯ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx:387:33
+    385|     const { bar } = mountBar(registry('vault'));
+    386|     expect(bar.querySelector('.crumb-proj')).toBeNull();
+    387|     expect(bar.textContent).not.toMatch(/No project open|Open project/…
+       |                                 ^
+    388|     expect(crumbText(bar)).toEqual(['Vault']);
+    389|     cleanup();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > Collaborate, New task and Your work are icon buttons, in that order, that keep their handlers
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx:407:91
+    405|     const { bar } = mountBar(registry('vault'));
+    406|     const [collab, task, work] = wideControls(bar);
+    407|     expect(collab.classList.contains('tb-collab') && collab.classList.…
+       |                                                                                           ^
+    408|     expect(task.classList.contains('tb-newtask') && task.classList.con…
+    409|     expect(work.classList.contains('tt-trigger')).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > at phone width: the sidebar button first, New conversation last, and it opens Home
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx:422:47
+    420|     expect(buttons[0].classList.contains('tb-rail')).toBe(true);
+    421|     const last = buttons[buttons.length - 1];
+    422|     expect(last.classList.contains('tb-new')).toBe(true);
+       |                                               ^
+    423|     expect(last.getAttribute('aria-label')).toBe('New conversation');
+    424|     fireEvent.click(last);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s controls (§D1.B steps 2 and 3) > New conversation waits for unsaved work, as the sidebar’s does
+Error: Unable to fire a "click" event - please provide a DOM element.
+ ❯ createEvent node_modules/@testing-library/dom/dist/events.js:27:11
+ ❯ Function.createEvent.<computed> [as click] node_modules/@testing-library/dom/dist/events.js:106:38
+ ❯ Function.fireEvent.<computed> [as click] node_modules/@testing-library/dom/dist/events.js:110:68
+ ❯ Function.fireEvent.<computed> [as click] node_modules/@testing-library/react/dist/fire-event.js:15:52
+ ❯ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx:432:17
+    430|     try {
+    431|       const { bar, onNav } = mountBar(registry('vault'));
+    432|       fireEvent.click(bar.querySelector('.tb-new') as HTMLElement);
+       |                 ^
+    433|       expect(onNav).not.toHaveBeenCalled();
+    434|     } finally {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the lazy fallback says "Loading…" (§D1.B step 8) > a screen still loading shows one quiet status line, still busy for the probes that wait on it
+AssertionError: expected 'Loading surface…' to be 'Loading…' // Object.is equality
+
+Expected: "Loading…"
+Received: "Loading surface…"
+
+ ❯ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx:445:32
+    443|     render(<View surface={registry('access-requests')} onNav={() => {}…
+    444|     const status = screen.getByRole('status');
+    445|     expect(status.textContent).toBe('Loading…');
+       |                                ^
+    446|     expect(status.getAttribute('aria-busy')).toBe('true');
+    447|     expect(status.classList.contains('scaf-note')).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the sidebar’s rules (app-v2.css, §D1.A step 6) > at ≤640px no strip is reserved, the collapsed rail is not drawn, and the expanded one is the drawer
+TypeError: .toMatch() expects to receive a string, but got undefined
+ ❯ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx:565:70
+    563|     // The top bar's button shows only there. D1-2 folded D1-1's inter…
+    564|     // rules into the bar's own `:is(.tb-rail, .tb-new)` pair (§D1.B s…
+    565|     expect(unconditional('.c2c-v2 :is(.tb-rail, .tb-new)')[0]?.body).t…
+       |                                                                      ^
+    566|     expect(sel('.c2c-v2 :is(.tb-rail, .tb-new)')).toMatch(/display:inl…
+    567|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > the bar: 4px between controls, a hairline under it that Home drops
+AssertionError: expected 'height:var(--topbar);display:flex;ali…' to match /gap:4px/
+
+- Expected:
+/gap:4px/
+
++ Received:
+"height:var(--topbar);display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:1px solid var(--border);flex-shrink:0;"
+
+ ❯ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx:585:37
+    583|
+    584|   it('the bar: 4px between controls, a hairline under it that Home dro…
+    585|     expect(body('.c2c-v2 .topbar')).toMatch(/gap:4px/);
+       |                                     ^
+    586|     expect(body('.c2c-v2 .topbar')).toMatch(/border-bottom:1px solid v…
+    587|     expect(body('.c2c-v2 .main[data-surface="home"] .topbar')).toMatch…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > the crumbs: 13px --text-300, the page --text-100 at 500, the project a quiet button that hovers --bg-100
+AssertionError: expected 'display:flex;align-items:center;gap:7…' to match /font-size:var\(--fs-small,\s*13px\)/
+
+- Expected:
+/font-size:var\(--fs-small,\s*13px\)/
+
++ Received:
+"display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-300);min-width:0;flex:0 1 auto;overflow:hidden;white-space:nowrap;"
+
+ ❯ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx:591:37
+    589|
+    590|   it('the crumbs: 13px --text-300, the page --text-100 at 500, the pro…
+    591|     expect(body('.c2c-v2 .crumbs')).toMatch(/font-size:var\(--fs-small…
+       |                                     ^
+    592|     expect(body('.c2c-v2 .crumbs')).toMatch(/color:var\(--text-300\)/);
+    593|     expect(body('.c2c-v2 .crumbs .here')).toMatch(/color:var\(--text-1…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > icon buttons: 32px, --text-300, hover --bg-100; 44px at phone width
+AssertionError: expected 'width:32px;height:32px;border-radius:…' to match /color:var\(--text-300\)/
+
+- Expected:
+/color:var\(--text-300\)/
+
++ Received:
+"width:32px;height:32px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;color:var(--text-400);font-size:17px;"
+
+ ❯ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx:602:37
+    600|   it('icon buttons: 32px, --text-300, hover --bg-100; 44px at phone wi…
+    601|     expect(body('.c2c-v2 .tb-btn')).toMatch(/width:32px;height:32px/);
+    602|     expect(body('.c2c-v2 .tb-btn')).toMatch(/color:var\(--text-300\)/);
+       |                                     ^
+    603|     expect(body('.c2c-v2 .tb-btn:hover')).toMatch(/background:var\(--b…
+    604|     expect(body('.c2c-v2 :is(.tb-btn)', 'phone')).toMatch(/width:44px;…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > at phone width the menu and New conversation show, and Collaborate and New task go to ⌘K
+AssertionError: expected '' to match /display:none/
+
+- Expected:
+/display:none/
+
++ Received:
+""
+
+ ❯ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx:608:52
+    606|
+    607|   it('at phone width the menu and New conversation show, and Collabora…
+    608|     expect(body('.c2c-v2 :is(.tb-rail, .tb-new)')).toMatch(/display:no…
+       |                                                    ^
+    609|     expect(body('.c2c-v2 :is(.tb-rail, .tb-new)', 'phone')).toMatch(/d…
+    610|     expect(body('.c2c-v2 .topbar .tb-collab, .c2c-v2 .topbar .tb-newta…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > the badge is ink at 12px, and red when something is overdue
+AssertionError: expected 'position:absolute;top:1px;right:1px;m…' to match /background:var\(--text-100\)/
+
+- Expected:
+/background:var\(--text-100\)/
+
++ Received:
+"position:absolute;top:1px;right:1px;min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:var(--accent-strong);color:var(--accent-on-strong);font-size:10px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;"
+
+ ❯ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx:614:39
+    612|
+    613|   it('the badge is ink at 12px, and red when something is overdue', ()…
+    614|     expect(body('.c2c-v2 .tt-badge')).toMatch(/background:var\(--text-…
+       |                                       ^
+    615|     expect(body('.c2c-v2 .tt-badge')).toMatch(/color:var\(--bg-000\)/);
+    616|     expect(body('.c2c-v2 .tt-badge')).toMatch(/font-size:var\(--fs-cap…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > no orange and nothing under 12px in the bar’s rules
+AssertionError: expected [ '.c2c-v2 .tt-badge' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   ".c2c-v2 .tt-badge",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx:622:20
+    620|   it('no orange and nothing under 12px in the bar’s rules', () => {
+    621|     const orange = bar.filter((r) => /var\(--accent-(strong|100|200|00…
+    622|     expect(orange).toEqual([]);
+       |                    ^
+    623|     const small = bar.flatMap((r) =>
+    624|       Array.from(r.body.matchAll(/font-size\s*:\s*(?:var\(--fs-[\w-]+,…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > the retired bar classes have no rule left
+AssertionError: tb-cmdk: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx:632:46
+    630|     // Each name and every `-suffix` of it (`.tb-task-lbl`, `.tb-org-m…
+    631|     for (const gone of ['tb-cmdk', 'tb-org', 'tb-task', 'tb-proj', 'cr…
+    632|       expect(CSS.includes(`.${gone}`), gone).toBe(false);
+       |                                              ^
+    633|     }
+    634|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[39/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > the top bar’s rules (app-v2.css, §D1.B step 7) > the lazy fallback is a quiet line, not a box (§D1.B step 8)
+AssertionError: expected '' to match /border:0/
+
+- Expected:
+/border:0/
+
++ Received:
+""
+
+ ❯ client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx:638:22
+    636|   it('the lazy fallback is a quiet line, not a box (§D1.B step 8)', ()…
+    637|     const fallback = body('.c2c-v2 .scaf-note[aria-busy="true"]');
+    638|     expect(fallback).toMatch(/border:0/);
+       |                      ^
+    639|     expect(fallback).toMatch(/background:none/);
+    640|     expect(fallback).toMatch(/text-align:center/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[40/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx > the top bar shows no client type (FILING_SPINE F8) > with no program open, it shows no client type either
+AssertionError: expected 'Concept2Cure.RI›ProjectNo project ope…' not to contain 'No project open'
+
+Expected: "No project open"
+Received: "Concept2Cure.RI›ProjectNo project open. Choose one in ProjectsCDConcept2Cure DiagnosticsSearch, jump, or run a command⌘KTask"
+
+ ❯ client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx:97:27
+     95|     // names no project at all (Projects is the sidebar's).
+     96|     expect(document.querySelector('header.topbar .crumb-proj')).toBeNu…
+     97|     expect(barText()).not.toContain('No project open');
+       |                           ^
+     98|     expect(barText()).not.toMatch(/Biotech & Pharma|In Vitro Diagnosti…
+     99|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[41/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > the demo starter under a Live Drive lock > locked for the workspace: the conversation shows the offer as a record, not a button
+TestingLibraryElementError: Unable to find an element with the text: Start demonstration: Sales demonstration. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"c2c-v2 shell"[39m
+      [33mdata-ana-open[39m=[32m"false"[39m
+      [33mdata-collapsed[39m=[32m"false"[39m
+      [33mdata-editor[39m=[32m"true"[39m
+    [36m>[39m
+      [36m<a[39m
+        [33mclass[39m=[32m"skip-link"[39m
+        [33mhref[39m=[32m"#c2c-page"[39m
+      [36m>[39m
+        [0mSkip to content[0m
+      [36m</a>[39m
+      [36m<nav[39m
+        [33maria-label[39m=[32m"Primary"[39m
+        [33mclass[39m=[32m"rail"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"rail-top"[39m
+   … (rest of this failure trimmed)
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[42/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/shellWiring.test.tsx > the page root names its screen > data-surface follows the screen the shell shows
+AssertionError: expected null to be 'vault' // Object.is equality
+
+- Expected:
+"vault"
+
++ Received:
+null
+
+ ❯ client/src/concept2cure/v2/__tests__/shellWiring.test.tsx:217:47
+    215|     await mountShell('vault');
+    216|     const main = document.querySelector('main.main') as HTMLElement;
+    217|     expect(main.getAttribute('data-surface')).toBe('vault');
+       |                                               ^
+    218|     fireEvent.click(within(screen.getByRole('navigation', { name: 'Pri…
+    219|     await waitFor(() => expect(main.getAttribute('data-surface')).toBe…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[43/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — the bell badge > when something is overdue, the bell is marked and its name says how many
+AssertionError: expected 'Your work — 4 items waiting' to be 'Your work — 4 items waiting, 2 overdue' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<button[39m
+        [33maria-expanded[39m=[32m"false"[39m
+        [33maria-label[39m=[32m"Your work — 4 items waiting"[39m
+        [33mclass[39m=[32m"tt-trigger tb-btn"[39m
+        [33mtitle[39m=[32m"Your tasks, approvals and messages"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-bell"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.5"[39m
+   … (rest of this failure trimmed)
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[44/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/taskTrayHonestReads.test.tsx > TaskTray — the bell badge > a late item still marks the bell when another count failed, beside the "?"
+AssertionError: expected 'Your work — couldn\'t load every coun…' to match /couldn't load every count; at least 1…/
+
+Ignored nodes: comments, script, style
+[36m<html>[39m
+  [36m<head />[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<button[39m
+        [33maria-expanded[39m=[32m"false"[39m
+        [33maria-label[39m=[32m"Your work — couldn't load every count; at least 1 item waiting"[39m
+        [33mclass[39m=[32m"tt-trigger tb-btn"[39m
+        [33mtitle[39m=[32m"Your tasks, approvals and messages — some counts couldn't be loaded"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-bell"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.5"[39m
+   … (rest of this failure trimmed)
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[45/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > uses orange only for the ✻
+AssertionError: expected [ '.c2c-v2 .tt-badge' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   ".c2c-v2 .tt-badge",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx:226:20
+    224|   it('uses orange only for the ✻', () => {
+    225|     const orange = OWN.filter((r) => /--accent/.test(r.decls) && r.sel…
+    226|     expect(orange).toEqual([]);
+       |                    ^
+    227|     expect(decl('.c2c-v2 .tt-spark', 'color')).toEqual(['var(--accent-…
+    228|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[46/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx > the tray's rules (app-v2.css, D1 §D1.G step 5) > sets no text under the 12px floor
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   ".c2c-v2 .tt-badge { font-size: 10px }",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/taskTrayQuiet.test.tsx:233:19
+    231|     const small = OWN.flatMap((r) => [...r.decls.matchAll(/font-size\s…
+    232|       .filter((m) => !(px(m[1]) >= 12)).map((m) => `${r.sel} { font-si…
+    233|     expect(small).toEqual([]);
+       |                   ^
+    234|   });
+    235|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[47/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > on the Vault with ONC-221 open, the project crumb names it and opens its project page
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "ONC-221"
+
+Here are the accessible roles:
+
+  banner:
+
+  Name "":
+  [36m<header[39m
+    [33mclass[39m=[32m"topbar"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Open projectONC-221":
+  [36m<button[39m
+    [33mclass[39m=[32m"tb-proj"[39m
+    [33mtitle[39m=[32m"ONC-221 — Oncology 221 NDA"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Search, jump, or run a command":
+  [36m<button[39m
+   … (rest of this failure trimmed)
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[48/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > with no project open, the bar shows no project button and no "No project open"
+AssertionError: expected <button type="button" …(3)>…(3)</button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  class="tb-proj"
+  data-empty="true"
+  title="Choose a project in Projects"
+  type="button"
+>
+  <span
+    aria-hidden="true"
+    class="ico"
+  >
+    <svg
+      aria-hidden="true"
+      class="lucide lucide-folder"
+      fill="none"
+      focusable="false"
+      height="1em"
+      stroke="currentColor"
+   … (rest of this failure trimmed)
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[49/50]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/topBarProject.test.tsx > the top bar names the open project > names a project by its title when it has no code
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "NeuroPanel-Dx 510(k)"
+
+Here are the accessible roles:
+
+  banner:
+
+  Name "":
+  [36m<header[39m
+    [33mclass[39m=[32m"topbar"[39m
+  [36m/>[39m
+
+  --------------------------------------------------
+  button:
+
+  Name "Open projectNeuroPanel-Dx 510(k)":
+  [36m<button[39m
+    [33mclass[39m=[32m"tb-proj"[39m
+    [33mtitle[39m=[32m"NeuroPanel-Dx 510(k)"[39m
+    [33mtype[39m=[32m"button"[39m
+  [36m/>[39m
+
+  Name "Search, jump, or run a command":
+  [36m<button[39m
+   … (rest of this failure trimmed)
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[50/50]⎯
+
+
+ Test Files  12 failed (12)
+      Tests  50 failed | 157 passed (207)
+   Start at  00:00:43
+   Duration  80.16s (transform 12.72s, setup 1.89s, import 15.07s, tests 50.84s, environment 9.65s)
+
+# exit code: 1
+

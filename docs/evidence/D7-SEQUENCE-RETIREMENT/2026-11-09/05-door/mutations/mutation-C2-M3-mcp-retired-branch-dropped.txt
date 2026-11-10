@@ -1,0 +1,10 @@
+MUTATION C2-M3-mcp-retired-branch-dropped in server/mcp/tools/catalog.ts (on the final code and tests, 2026-11-09T08:12:02.275357Z): replaced [return (await notInUseAnswer(svc, input.sequence_id, orgId, err)) ?? refused(errorMessage(err));] with [return refused(errorMessage(err));]
+ × server/mcp/__tests__/sequence-status-retired.test.ts > c2c_get_sequence_status on a sequence no longer in use > a retired sequence: when, by whom, with what meaning and why; kept as history 16ms
+ × server/mcp/__tests__/sequence-status-retired.test.ts > c2c_get_sequence_status on a sequence no longer in use > a retirer the record no longer names is said so, not left blank 2ms
+ × server/mcp/__tests__/sequence-status-retired.test.ts > c2c_get_sequence_status on a sequence no longer in use > a removed sequence with no retirement record is not in use, and nothing more is claimed 3ms
+ ✓ server/mcp/__tests__/sequence-status-retired.test.ts > c2c_get_sequence_status on a sequence no longer in use > another organisation's id, or none at all, keeps the existing refusal 1ms
+ ✓ server/mcp/__tests__/sequence-status-retired.test.ts > c2c_get_sequence_status on a sequence no longer in use > a refusal other than not-found is not looked up as a retirement 1ms
+ × server/mcp/__tests__/sequence-status-retired.test.ts > c2c_get_sequence_status on a sequence no longer in use > a retirement record that cannot be read is a refusal, never "not in use" 3ms
+      Tests  4 failed | 2 passed | 1 skipped (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 88d3082c7be7fb760670787319e766d6687cf960e94b8510cb59e0b309c1fd10 (expected 88d3082c7be7fb760670787319e766d6687cf960e94b8510cb59e0b309c1fd10)

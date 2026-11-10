@@ -1,0 +1,3 @@
+ × server/services/ana-ri/__tests__/mdx-agent-audit-contract.test.ts > correspondence.ingest is retired (P-39 step 3, 2026-10-30) > is neither a handler nor a command AnA is offered: a person records the letter in the project inbox 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 17 passed (18)

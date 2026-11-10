@@ -57,9 +57,7 @@ import { continueOrchestratorRun, requireOrchestratorProgramAccess, Orchestrator
 import { readProgramAnchorRow } from '../services/c2c/program-project-anchor.js';
 import { resolveSubmissionSpine, resolveSequenceSpine } from '../services/cmc/submission-spine.js';
 import { readSubmissionPackageIdentity, packageIdentityRefusal } from '../services/ectd/package-identity.js';
-import { CsrSourceSelectionSchema } from '../../shared/csr-source-input.js';
-import { requestConnectable } from '../db/requestDb.js';
-import { withCsrVaultSource, CsrSourceInputError } from '../services/csr/vault-source-input.js';
+import { CsrSourceInputError } from '../services/csr/vault-source-input.js';
 import { createCsrSourceInputRouter } from './csr-source-inputs.js';
 
 const log = createScopedLogger('submission-orchestrator');
@@ -221,13 +219,16 @@ function requireOrchestratorWrite(req: Request, res: Response, next: () => void)
   return requireEditorAccess(req, res, next);
 }
 
-const ProgramRunSchema = z.object({ programId: z.string().uuid(), sequenceId: z.number().int().positive().optional(), enableCSRNarrative: z.boolean().optional(), clinicalSource: CsrSourceSelectionSchema.optional() });
+/* No clinicalSource (RULE 4, 2026-10-31): a study's clinical source is frozen as its CSR document's study data,
+   in the editor (POST /csr/study-data, services/csr/csr-study-data.ts), not chosen for a package run. Strict, so a
+   caller still sending one is refused rather than given a run without it. */
+const ProgramRunSchema = z.object({ programId: z.string().guid(), sequenceId: z.number().int().positive().optional(), enableCSRNarrative: z.boolean().optional() }).strict();
 
 /** Read retained summaries separately from the unimplemented clinical-data adapter. */
 router.get('/csr/readiness', async (req, res) => {
   const organizationId = requireTenant(req, res);
   if (organizationId == null) return;
-  const parsed = z.string().uuid().safeParse(req.query.programId);
+  const parsed = z.string().guid().safeParse(req.query.programId);
   if (!parsed.success) return res.status(400).json({ error: 'CSR_SCOPE_INVALID', message: 'A project UUID is required.' });
   const userId = orchestratorActorId(req);
   try {
@@ -242,7 +243,7 @@ router.get('/csr/readiness', async (req, res) => {
 router.get('/runs', async (req, res) => {
   const organizationId = requireTenant(req, res);
   if (organizationId == null) return;
-  const parsed = z.string().uuid().safeParse(req.query.programId);
+  const parsed = z.string().guid().safeParse(req.query.programId);
   if (!parsed.success) return res.status(400).json({ error: 'program_scope_required' });
   try {
     // Read-side program privacy follows the canonical org-scoped program policy.
@@ -264,9 +265,9 @@ function recordedProgramAnchor(programId: string, program: Record<string, unknow
 }
 
 async function sendStartedProgramRun(res: Response, input: {
-  run: OrchestratorRun; organizationId: number; userId: number; m3Refusal: string | null; clinicalSource: boolean;
+  run: OrchestratorRun; organizationId: number; userId: number; m3Refusal: string | null;
 }) {
-  const { run, organizationId, userId, m3Refusal, clinicalSource } = input;
+  const { run, organizationId, userId, m3Refusal } = input;
     let currentRun = run;
     let continuationError: string | undefined;
     if (currentRun.status === 'awaiting-async') {
@@ -277,8 +278,7 @@ async function sendStartedProgramRun(res: Response, input: {
     }
     return res.json({ ...currentRun, steps: currentRun.steps.map(redactStepOutputRef), m3Refusal, continuationError,
       inputGaps: ['No nonclinical study corpus is linked to this project.',
-        ...(clinicalSource ? ['Clinical tables use the selected supporting source. Clinical verification and CDISC/FDA qualification are not established; first-study AI narrative generation remains unavailable.']
-          : ['No clinical supporting source was selected for this run. Only completed, accessible CSR summaries are included.'])],
+        'A study’s clinical data is its CSR document’s, frozen in the editor. Only completed, accessible CSR summaries are included in a run.'],
     });
 }
 
@@ -299,7 +299,7 @@ router.post('/runs/for-program', requireOrchestratorWrite, async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: 'invalid_request' });
   const userId = orchestratorActorId(req);
   try {
-    const { programId, sequenceId, enableCSRNarrative, clinicalSource } = parsed.data;
+    const { programId, sequenceId, enableCSRNarrative } = parsed.data;
     const program = await requireOrchestratorProgramAccess(organizationId, programId, userId);
     // The current project loader supplies completed narrative summaries only.
     // Opting into fresh CSR drafting would recycle those summaries with missing
@@ -323,13 +323,9 @@ router.post('/runs/for-program', requireOrchestratorWrite, async (req, res) => {
       sequenceNumber: spine.sequence.sequenceNumber, region: normalizeSubmissionRegion(spine.sequence.region) as OrchestratorInputs['region'], submissionType: spine.applicationType.toUpperCase() as OrchestratorInputs['submissionType'],
       cmcSources: cmc.sources, csrInputs, clinicalStudyData: [], nonclinicalStudies: [], module3ExportRefusal: cmc.gate === 'open' ? null : cmc.reason, enableCSRNarrative,
     };
-    const result = clinicalSource
-      ? await withCsrVaultSource(requestConnectable(req), { organizationId, userId, programId }, clinicalSource, { requireApproval: true, consume: async (loaded, onInputsCaptured) => runOrchestrator({ ...commonInputs,
-          clinicalStudyData: [loaded.envelope.studyData], clinicalSourceReceipts: [loaded.source],
-        }, { onInputsCaptured }) })
-      : await runOrchestrator(commonInputs);
+    const result = await runOrchestrator(commonInputs);
     return await sendStartedProgramRun(res, {
-      run: result.run, organizationId, userId, m3Refusal: cmc.gate === 'open' ? null : cmc.reason, clinicalSource: Boolean(clinicalSource),
+      run: result.run, organizationId, userId, m3Refusal: cmc.gate === 'open' ? null : cmc.reason,
     });
   } catch (err) {
     return startProgramRunRefusal(res, err);
@@ -339,7 +335,7 @@ router.post('/runs/for-program', requireOrchestratorWrite, async (req, res) => {
 router.post('/runs/:runId/resume', requireOrchestratorWrite, async (req, res) => {
   const organizationId = requireTenant(req, res);
   if (organizationId == null) return;
-  const runId = z.string().uuid().safeParse(req.params.runId);
+  const runId = z.string().guid().safeParse(req.params.runId);
   if (!runId.success) return res.status(400).json({ error: 'invalid_run_id' });
   try {
     const result = await continueOrchestratorRun(runId.data, organizationId, orchestratorActorId(req));
@@ -447,8 +443,8 @@ const RunCommonSchema = z.object({
   skipValidation: z.boolean().optional(),
   // Development fixtures only. Outside development a non-empty array is refused
   // before parsing (refusedInlineRunInputs, Rule 2 audit S1): the run's
-  // clinical study data comes from the approved CSR Vault source, through
-  // POST /runs/for-program with `clinicalSource`.
+  // clinical study data comes from the approved CSR Vault source, frozen as the
+  // CSR document's study data (POST /csr/study-data), not supplied to a run.
   clinicalStudyData: z.array(StudyDataSchema).default([]),
 });
 
@@ -463,7 +459,7 @@ const RunCommonSchema = z.object({
 // caller's project model maps to ours unambiguously.
 const RunModeASchema = RunCommonSchema.extend({
   projectId: z.number().int().positive(),
-  cmcProjectId: z.string().uuid().optional(),
+  cmcProjectId: z.string().guid().optional(),
   ctdProgramId: z.number().int().positive().optional(),
   // Mode A explicitly rejects hand-built inputs.
   cmcSources: z.undefined().optional(),
@@ -570,8 +566,8 @@ function refusedInlineRunInputs(rawBody: any, res: Response, organizationId: num
       field,
       message:
         'Clinical and nonclinical data cannot be supplied in the request. Start the run from the program ' +
-        '(POST /api/submission-orchestrator/runs/for-program) and choose its approved CSR source (clinicalSource); ' +
-        'the run reads the project\u2019s completed CSR builds. Module 2.4 has no record source yet, so a run carries none.',
+        '(POST /api/submission-orchestrator/runs/for-program); the run reads the project\u2019s completed CSR builds. ' +
+        'A study\u2019s clinical data is frozen as its CSR document\u2019s study data in the editor. Module 2.4 has no record source yet, so a run carries none.',
     });
     return true;
   }

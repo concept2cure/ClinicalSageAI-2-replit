@@ -1,0 +1,318 @@
+
+ RUN  v4.1.7 <scratch>
+
+stdout | server/routes/ind-lifecycle/__tests__/dispatch-verdict-parity.pglite.test.ts
+{
+  "timestamp": "2026-11-02T00:45:34.932Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-02T00:45:34.934Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/ind-lifecycle/__tests__/dispatch-verdict-parity.pglite.test.ts
+{
+  "timestamp": "2026-11-02T00:45:34.934Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ × server/routes/ind-lifecycle/__tests__/dispatch-verdict-parity.pglite.test.ts > the IND route and Submit give one verdict for one sequence > a complete amendment: both clear it — no hold read from a body, no checksum the governed path cannot set 103ms
+   → {"cleared":false,"blockers":["Shadow Review run #1 was completed over different leaves: the sequence's documents changed after it ran, so it does not cover this dossier. Run Shadow Review again before transmitting."]}: expected false to be true // Object.is equality
+stdout | server/routes/ind-lifecycle/__tests__/dispatch-verdict-parity.pglite.test.ts > the IND route and Submit give one verdict for one sequence > the snapshot records that verdict and the gate that produced it; the cockpit agrees, sequence by sequence
+{
+  "timestamp": "2026-11-02T00:45:41.203Z",
+  "level": "info",
+  "message": "[ind-dispatch-snapshot-service] Recorded IND dispatch snapshot",
+  "context": {
+    "sequenceId": 4,
+    "canDispatch": false,
+    "organizationId": 71
+  }
+}
+
+ ✓ server/routes/ind-lifecycle/__tests__/dispatch-verdict-parity.pglite.test.ts > the IND route and Submit give one verdict for one sequence > an amendment with only its 1571: both block it, for the same missing sections 101ms
+ ✓ server/routes/ind-lifecycle/__tests__/dispatch-verdict-parity.pglite.test.ts > the IND route and Submit give one verdict for one sequence > a cross-reference with no LOA: both block it 61ms
+ × server/routes/ind-lifecycle/__tests__/dispatch-verdict-parity.pglite.test.ts > the IND route and Submit give one verdict for one sequence > the snapshot records that verdict and the gate that produced it; the cockpit agrees, sequence by sequence 38ms
+   → expected false to be true // Object.is equality
+ ✓ server/routes/ind-lifecycle/__tests__/dispatch-verdict-parity.pglite.test.ts > the IND route and Submit give one verdict for one sequence > a snapshot recorded under the previous gate is reported as such, not as drift 27ms
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts
+{
+  "timestamp": "2026-11-02T00:45:42.160Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > if the signature row cannot be written, nothing is committed
+{
+  "timestamp": "2026-11-02T00:45:43.111Z",
+  "level": "error",
+  "message": "[protocol-development] handling the protocol development request failed",
+  "context": {
+    "err": "signer identity unresolvable",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses without re-authentication, and writes nothing 25ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses a wrong password the same way 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses an undeclared meaning before asking for credentials (21 CFR 11.50) 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > refuses a meaning finalization cannot carry 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > a viewer cannot sign, and nothing is asked or written 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > a signer with no authenticator where one is required (production, ADR-0014 P1-2b) is told to enrol one, and nothing is written 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: refused before the transaction > an enrolled second factor that was not given is named as such 6ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > reserves before checking authorship, then finalizes and writes the ledger AND signature row in one transaction 5ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > records the second factor only when one was verified 4ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > a non-author cannot sign as the author 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an approval is checked for independence on the signing client 2ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an author approving their own protocol is refused before the finalization runs 2ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > checks independence after reservation when authorship changed while the signer waited 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > a refused target reservation rolls back before authorship or signature work (ProtocolDevError: No current protocol target.) 2ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > a refused target reservation rolls back before authorship or signature work (ProtocolDevError: Protocol changed while reservation waited.) 2ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > an authorship lookup that fails is a 503 with an authored sentence; its internal cause is logged, not returned 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > POST /documents/:id/finalize is a real electronic signature: the signing transaction > if the signature row cannot be written, nothing is committed 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > refuses without re-authentication, and records no disposition 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > a viewer cannot sign a disposition 2ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > passes the signer and the declared meaning to the domain write, then signs 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > a review assigned to someone else is refused and rolled back 2ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > PATCH /assignments/:id/disposition is a real electronic signature > refuses authorship as a review meaning 2ms
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > an unreadable membership signs nothing and says it could not be checked
+[signing-authority] signer role lookup failed: organization_users unreadable: secret-detail
+
+stderr | server/routes/__tests__/protocol-signatures.routes.test.ts > current transaction authority after protocol reservation > returns typed unavailable authority when the reserved transaction role cannot be verified
+[signing-authority] signer role lookup failed: membership verification interrupted
+
+ × server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > a member cannot finalize: 403 ESIGNATURE_NO_AUTHORITY, no password asked, nothing written 9ms
+   → expected "vi.fn()" to be called with arguments: [ 11, 2, { …(2) } ]
+
+Received:
+
+  1st vi.fn() call:
+
+@@ -3,6 +3,7 @@
+    2,
+    {
+      "connect": [Function connect],
+      "query": [Function Mock],
+    },
++   undefined,
+  ]
+
+
+Number of calls: 1
+
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > the role is the membership row’s, not the token’s 3ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > a member cannot sign a review disposition either 2ms
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > an unreadable membership signs nothing and says it could not be checked 3ms
+ × server/routes/__tests__/protocol-signatures.routes.test.ts > current transaction authority after protocol reservation > rechecks the actual transaction role after reservation before SoD or domain writes 5ms
+   → expected 1st "vi.fn()" call to have been called with [ 11, 2, { …(2) } ]
+ ✓ server/routes/__tests__/protocol-signatures.routes.test.ts > current transaction authority after protocol reservation > returns typed unavailable authority when the reserved transaction role cannot be verified 3ms
+stderr | server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > production with LAUNCH_SCOPE_API_UNATTRIBUTED unset ENFORCES (stage 3); report is an explicit choice; an unknown value refuses to boot
+{
+  "timestamp": "2026-11-02T00:45:44.688Z",
+  "level": "warn",
+  "message": "[launch-scope] [launch-scope] LAUNCH_SCOPE_API_UNATTRIBUTED=report in production: API paths no surface claims are served and recorded, not refused",
+  "context": {}
+}
+
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > refuses a write to a surface outside the launch catalog, 403 LAUNCH_SCOPE, and does not call the route 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > refuses it for a request with no organisation too: scope is about the product, not the tenant 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > passes a prefix any launch surface claims, even when an out-of-scope surface claims it too 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > passes the narrow launch sub-path, and refuses the rest of the out-of-scope prefix 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > matches at a segment boundary: a longer, unclaimed name is not the out-of-scope prefix 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope enforced, MODULE_ENFORCEMENT off (production as configured) > passes a path no surface claims (unmapped) and a never-gated path 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > launch scope off (a development server) > passes the out-of-scope path through to the module modes, which are off 0ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the default reads LAUNCH_SCOPE_ENFORCE once, when the gate is built > production with LAUNCH_SCOPE_ENFORCE unset enforces 0ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the default reads LAUNCH_SCOPE_ENFORCE once, when the gate is built > production with a value that is not on/off refuses to build (boot), rather than guess 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the locked boards' APIs: the contradiction scan and the execution history (VSR-001 §16.5) 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the workflow runner AnA Command used, now that AnA Command is locked 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > passes what the launch catalog and AnA use: the package model, tasks, dispatch readiness 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > judges a path as Express routes it, whatever its letter case 7ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the device kit under /api/mdx, and passes the launch apps that live there 6ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the package transmit, and passes the transmittal log and its reads 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses Global RI and RIM, and passes the eSTAR routes launch screens call 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > keeps the retired dossier APIs unclaimed and refused under production enforcement 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses the device predicate-intelligence and RTM routes under /api/programs, and passes Projects 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, launch scope on > refuses a surface outside the catalog, and leaves the public API and webhooks alone 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > report (the default): passes the request and records the would-refuse 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > enforce: refuses it 403 LAUNCH_SCOPE and records it as enforced 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > enforce: never refuses infrastructure (the public API, webhooks) or a non-API path (the app itself) 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > records one row per route, not per record: numeric and uuid segments collapse to :id 7ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > a request with no organisation is recorded against organisation 0, not dropped 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > production with LAUNCH_SCOPE_API_UNATTRIBUTED unset ENFORCES (stage 3); report is an explicit choice; an unknown value refuses to boot 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > unattributed paths (stage 2b) > outside production, unset still only reports (a development server serves everything) 0ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > never refuses a path the auth boundary serves unauthenticated (PUBLIC_API_ALLOWLIST) 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > passes the identity router at its second mount, /api/user 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > refuses a mounted namespace no launch screen, shell or external caller uses 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > refuses the unrecorded regulatory-document generators 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry, unattributed paths enforced > a public prefix does not widen: an exact public path is not its parent namespace 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > claims none of the deleted or withheld /api/cmc paths: each is unmapped, which production refuses 3ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > the gate production builds refuses them 403 LAUNCH_SCOPE, and serves what the CMC screens call 2ms
+ × server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > every /api/cmc path the CMC screens name answers launch, and ci:launch-scope-api finds nothing to refuse 8ms
+   → expected [ Array(1) ] to deeply equal []
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > claims no /api/cmc prefix the CMC screens do not call 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the IND surface is in the catalog the gate reads; agency questions and pharmacovigilance are not 0ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > refuses the safety and ICSR routes 403 LAUNCH_SCOPE even when unattributed paths are only reported 2ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the gate production builds refuses the unclaimed IND routes too, and serves what the screens call 3ms
+ × server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > every IND path the IND screen names answers launch, and ci:launch-scope-api finds nothing to refuse 2ms
+   → expected [ Array(1) ] to deeply equal []
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the IND screen names no safety or ICSR route: the card is hidden and its code is outside the graph 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > claims no IND prefix the IND screen does not call 1ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > the locked agency-questions surface claims nothing, and no surface claims the retired store 0ms
+ ✓ server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > answers launch for the agency-response paths Communication and Respond call 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > every /api/cmc path the CMC screens name answers launch, and ci:launch-scope-api finds nothing to refuse
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "unmapped /api/charters/by-project/:p/objectives ← project-home",
++ ]
+
+ ❯ server/middleware/__tests__/launch-scope-api-gate.test.ts:503:93
+    501|     expect(cmcCalls.length).toBeGreaterThan(40);
+    502|     expect(cmcCalls.filter(([, e]) => e.verdict !== 'launch').map(([p,…
+    503|     expect(walk.violations.map((v) => `${v.verdict} ${v.path} ← ${v.su…
+       |                                                                                             ^
+    504|   });
+    505|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > every IND path the IND screen names answers launch, and ci:launch-scope-api finds nothing to refuse
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "unmapped /api/charters/by-project/:p/objectives ← project-home",
++ ]
+
+ ❯ server/middleware/__tests__/launch-scope-api-gate.test.ts:612:93
+    610|     expect(ind.map(([p]) => p)).toContain('/api/ind-lifecycle/clock');
+    611|     expect(ind.filter(([, e]) => e.verdict !== 'launch').map(([p, e]) …
+    612|     expect(walk.violations.map((v) => `${v.verdict} ${v.path} ← ${v.su…
+       |                                                                                             ^
+    613|     // No launch or shell screen reaches the agency-questions API.
+    614|     expect([...walk.all].filter(([p]) => p.startsWith('/api/haq-manage…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > a member cannot finalize: 403 ESIGNATURE_NO_AUTHORITY, no password asked, nothing written
+AssertionError: expected "vi.fn()" to be called with arguments: [ 11, 2, { …(2) } ]
+
+Received:
+
+  1st vi.fn() call:
+
+@@ -3,6 +3,7 @@
+    2,
+    {
+      "connect": [Function connect],
+      "query": [Function Mock],
+    },
++   undefined,
+  ]
+
+
+Number of calls: 1
+
+ ❯ server/routes/__tests__/protocol-signatures.routes.test.ts:448:34
+    446|       message: 'Your role does not permit applying an electronic signa…
+    447|     });
+    448|     expect(resolveSignerOrgRole).toHaveBeenCalledWith(11, 2, pinnedSig…
+       |                                  ^
+    449|     expect(verifyReauth).not.toHaveBeenCalled();
+    450|     expect(finalizeProtocolTx).not.toHaveBeenCalled();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/routes/__tests__/protocol-signatures.routes.test.ts > current transaction authority after protocol reservation > rechecks the actual transaction role after reservation before SoD or domain writes
+AssertionError: expected 1st "vi.fn()" call to have been called with [ 11, 2, { …(2) } ]
+
+- Expected
++ Received
+
+@@ -3,6 +3,7 @@
+    2,
+    {
+      "connect": [Function connect],
+      "query": [Function Mock],
+    },
++   undefined,
+  ]
+
+ ❯ server/routes/__tests__/protocol-signatures.routes.test.ts:489:34
+    487|     expect(r.status).toBe(403);
+    488|     expect(r.body.error.code).toBe('ESIGNATURE_NO_AUTHORITY');
+    489|     expect(resolveSignerOrgRole).toHaveBeenNthCalledWith(1, 11, 2, pin…
+       |                                  ^
+    490|     expect(resolveSignerOrgRole).toHaveBeenNthCalledWith(2, 11, 2, pin…
+    491|     expect(resolveSignerOrgRole.mock.invocationCallOrder[1]).toBeGreat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/routes/ind-lifecycle/__tests__/dispatch-verdict-parity.pglite.test.ts > the IND route and Submit give one verdict for one sequence > a complete amendment: both clear it — no hold read from a body, no checksum the governed path cannot set
+AssertionError: {"cleared":false,"blockers":["Shadow Review run #1 was completed over different leaves: the sequence's documents changed after it ran, so it does not cover this dossier. Run Shadow Review again before transmitting."]}: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/routes/ind-lifecycle/__tests__/dispatch-verdict-parity.pglite.test.ts:136:57
+    134|     const v = await bothVerdicts(sequenceId);
+    135|     expect(v.ind).toBe(v.submit);
+    136|     expect(v.submit, JSON.stringify(v.submitBody.gate)).toBe(true);
+       |                                                         ^
+    137|     expect(v.indBody.verdict.source).toBe('assess-dispatch-readiness');
+    138|     // Cleared, and it says what it did not assess.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/routes/ind-lifecycle/__tests__/dispatch-verdict-parity.pglite.test.ts > the IND route and Submit give one verdict for one sequence > the snapshot records that verdict and the gate that produced it; the cockpit agrees, sequence by sequence
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/routes/ind-lifecycle/__tests__/dispatch-verdict-parity.pglite.test.ts:178:44
+    176|     const snap = await request(app).post(`/api/ind-lifecycle/sequence/…
+    177|     expect(snap.status).toBe(201);
+    178|     expect(snap.body.snapshot.canDispatch).toBe(true);
+       |                                            ^
+    179|     expect(snap.body.snapshot.verdict.source).toBe('assess-dispatch-re…
+    180|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  6 failed | 70 passed (76)
+   Start at  00:45:28
+   Duration  15.85s (transform 5.72s, setup 103ms, import 10.31s, tests 4.84s, environment 0ms)
+

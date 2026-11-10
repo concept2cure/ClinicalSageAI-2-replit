@@ -1,0 +1,785 @@
+[
+ [
+  "survey",
+  {
+   "slices": [
+    {
+     "id": "S1",
+     "verdict": "done",
+     "evidence": "e0ad84e84, 7ed7f2fb7. server/routes/submission-orchestrator.ts:558-589 has refusedInlineRunInputs, which returns INLINE_RUN_INPUTS_REFUSED, CTD_PROGRAM_INPUTS_REFUSED and REGENERATE_MODE_A_UNSUPPORTED. The regenerate route calls it before reading the run (:908)."
+    },
+    {
+     "id": "S2",
+     "verdict": "done",
+     "evidence": "43f0e72b1 and the review fix b5b44678b. server/services/ana/module2-nonclinical-inputs.ts and record-source-project.ts exist on HEAD."
+    },
+    {
+     "id": "S3",
+     "verdict": "done",
+     "evidence": "5aa47407d and the review fix dd60c6e12. AnaToolExecutor.ts:5787-5797: assess_nonclinical_program with no studies returns only requiredNonclinicalBattery. :6963-6990: assess_mdr_reportability returns needs_parameters for every unstated fact."
+    },
+    {
+     "id": "S4",
+     "verdict": "done",
+     "evidence": "640f7016f (nonclinical-safety-tool.ts; calculate_safety_margin now runs on the FIH dose engine). The only item left was the R-2/F2 policy. It was decided on 2026-10-29 under P-55: keep the calculators, labelled (FOUNDER-DECISIONS-OWED-2026-10-26.md:3,20), which is what the code already does. The 'pending' row at design.md:17 is out of date."
+    },
+    {
+     "id": "S5-0",
+     "verdict": "done",
+     "evidence": "33694a45a. server/services/ana/stated-input-result.ts:2 defines STATED_BASIS; statedInputEnvelope is used throughout AnaToolExecutor.ts (e.g. :4002, :5483)."
+    },
+    {
+     "id": "S5a-coa-pro",
+     "verdict": "done",
+     "evidence": "49211250d; evidence in s5a-coa-pro/."
+    },
+    {
+     "id": "S5a-pediatric",
+     "verdict": "done",
+     "evidence": "23eb03578; evidence in s5a-pediatric/."
+    },
+    {
+     "id": "S5a-vaccine",
+     "verdict": "done",
+     "evidence": "955d1b4c3; evidence in s5a-vaccine/."
+    },
+    {
+     "id": "S5a-dose-optimization",
+     "verdict": "open",
+     "evidence": "No commit since 2026-10-20 to dose-optimization-knowledge.ts or doseOptimizationTools.ts, and the engine never uses not_stated. The defect is still there at dose-optimization-knowledge.ts:777: `if (!params.doseSelectedByMtdAlone)` gives an omitted fact 20 points and a 'met' pillar.",
+     "remaining": "Apply the S5a mechanism (statedBoolean, not_stated, dependent conclusions not_assessed) to the six functions in queued-clinical-families.md. That includes the Optimus pillar, the RP2D selected without toxicity or exposure evidence, and backfill's 'biopsy not feasible'."
+    },
+    {
+     "id": "S5a-rwe",
+     "verdict": "open",
+     "evidence": "No commit to rwe-methodology-knowledge.ts or rweMethodologyTools.ts, and no not_stated in the engine. All 21 required booleans are still unvalidated at runtime (inventory, queued-clinical-families.md).",
+     "remaining": "Validate the booleans and enums and add not_stated. When a fact is omitted, data-source scoring, bias assessment and acceptability must not assert a negative ('no validation study') or pick a default branch."
+    },
+    {
+     "id": "S5a-pharmacovigilance",
+     "verdict": "open",
+     "evidence": "No commit to pharmacovigilance-knowledge.ts or pharmacovigilanceTools.ts, and no not_stated. pharmacovigilance-knowledge.ts:334 still sets `clockDays = fatalOrLT ? 7 : 15`, so omitted seriousness criteria give a 15-day clock.",
+     "remaining": "Make omitted seriousness, region and intervention facts not_stated, so the 7-day and 15-day clocks, the DME case threshold, the priority score and the PV-system defaults are never chosen from absence."
+    },
+    {
+     "id": "S5b",
+     "verdict": "open",
+     "evidence": "No commit since 2026-10-26 to biomarkerTools, ivdLifecycleTools, digitalHealthTools or medicalDeviceTools. biomarkers/biomarker-knowledge.ts and medical-device/medical-device-knowledge.ts never use not_stated. Neither biomarkerTools.ts nor tool-record-scope.ts mentions study_id or ivd_clinical_performance/ivd_analytical_performance. S3 fixed only the cybersecurity defaults and the biomarker 2x2.",
+     "remaining": "Run the omitted-boolean audit over the IVD tools (traceability, scientific validity, shelf-life and accelerated stability), digital health, medical device, assess_qms and assess_pathway_eligibility. Give the biomarker clinical and analytical validation tools a study_id that reads ivd_*_performance under a RECORD_SCOPES entry, with the I-22 provenance line."
+    },
+    {
+     "id": "S5c",
+     "verdict": "open",
+     "evidence": "gcp-operations-knowledge.ts and gmp-quality-systems-knowledge.ts are unchanged since 2026-10-26 and never use not_stated.",
+     "remaining": "Run the omitted-boolean audit and the not_stated change over gcpOperationsTools and gmpQualitySystemsTools, with a red case per family."
+    },
+    {
+     "id": "S5d",
+     "verdict": "open",
+     "evidence": "There is no not_stated in the benefit-risk tools, biosimilar, immunogenicity, post-approval, regulatory-strategy or bioequivalence engines. The orphan defect stands at regulatory-strategy-knowledge.ts:2309-2310: `fdaEligible = fdaPrevalenceMet` takes no account of whether the prevalence has a source. One sub-item is already on HEAD and predates the design: the dissolution instruction pointing to compare_recorded_dissolution (bioequivalenceTools.ts:185-186, via 182fed957, 2026-10-15).",
+     "remaining": "Run the per-family omitted-boolean audit. assess_orphan_designation returns fdaEligible null when the prevalence has no stated source."
+    },
+    {
+     "id": "S6",
+     "verdict": "open",
+     "evidence": "No commit touches plan_ind_module_authoring (git log -G since 10-26 is empty). It is still live: server/services/ana/ind-module-authoring.ts, the handler at AnaToolExecutor.ts:~3057, ana-launch-scope.inventory.json:708 (inScope), tool-authorization.register.json:5221, intelligence-questions/engine.ts:558, skills submissions.ts:124,145 and medical-writing.ts:120,136,191,210, biotech-program.ts:153, submission-context-block.ts:32,108 and its test :46.",
+     "remaining": "Delete the tool, its module and its tests. Repoint the intake action and the skill and context text to draft_clinical_overview_m2_5 / draft_clinical_summary_m2_7, and add plan-ind-module-authoring-retired.test.ts."
+    },
+    {
+     "id": "S6b",
+     "verdict": "open",
+     "evidence": "AnaToolExecutor.ts:7149-7226: the scratch branch (:7188) builds a DOCX of any document_type from model sections, and the ectd_backbone/icsr refusal (:7213) comes after it, so a call with sections gets past even that refusal. intelligence-questions/engine.ts:552 (csr), :568 (510k), :580 (cer), :594 (pma) and :604 (ctd_module3, described as 'from the recorded registers') still end in generate_document. R-7 has since been decided: withhold PMA. The task list has 'Rule 2 S6b' pending in another plan (task #20), not started.",
+     "remaining": "Refuse ctd_module3, csr, cer, 510k and pma, and move the existing ectd_backbone/icsr refusal ahead of the scratch branch. Each refusal names its record path. Repoint the five intake actions."
+    },
+    {
+     "id": "S7",
+     "verdict": "open",
+     "evidence": "server/services/regulatory/benefit-risk.ts and __tests__/benefit-risk.test.ts exist. The tool is still defined (deepeningTools.ts:124), handled (AnaToolExecutor.ts:18146), listed inScope (inventory:294) and registered (register:714). b86433174 names regulatory/benefit-risk.ts assessBenefitRisk as one replacement for the retired /api/csr-builder/analyze-benefit-risk.",
+     "remaining": "Retire the tool and the module, move the deepening-tools cases, and add a retirement test. The commit must name benefit-risk/benefit-risk-knowledge.ts and assess_benefit_risk_balance as the replacement, because b86433174 cites the deleted module."
+    },
+    {
+     "id": "S8",
+     "verdict": "open",
+     "evidence": "There is no server/services/ana/effects-table-inputs.ts. benefitRiskTools.ts:215-218 still takes treatmentValue, controlValue and ciLow. The build_effects_table handler (AnaToolExecutor.ts:20421) is unchanged.",
+     "remaining": "Compose the rows from the approved CSR clinical source (withCsrVaultSource with requireApproval, or since RULE 4 6fe917060 the retained-study reader in csr/saved-clinical-tables.ts), and remove the figure fields from the schema. This touches the CSR lane, so coordinate with it."
+    },
+    {
+     "id": "S9",
+     "verdict": "partial",
+     "evidence": "cefd62a86 (D5) labels the output factSource 'as-given' and points to the sourced CSR narrative job, POST /api/csr/jobs/:jobId/narratives (AnaToolExecutor.ts:3903-3906). The handler still composes from typed age, sex, dose and event (:3877-3901). There is no safety-narrative-tool.ts and no narrativeInputFromCsrSource. R-4 has been decided: narratives come from the approved CSR source.",
+     "remaining": "Have draft_safety_narrative read the subject from the approved, retained CSR source (or the narrative store) and refuse typed facts (ignoredSuppliedFigures), listing missingFields. Alternatively, refuse it and route to the narrative job. This is in the CSR lane."
+    },
+    {
+     "id": "S10",
+     "verdict": "open",
+     "evidence": "build_postmarket_report (AnaToolExecutor.ts:6837-6869) still builds eMDR and MIR from typed `fields` through ivdComputed. No mdr_event_id or complaint_id appears in tool-record-scope.ts or the IVD tool definitions. Its prerequisite, S3, is done.",
+     "remaining": "Build eMDR and MIR from mdr_event_id through getMdrEvent/getComplaint, under a RECORD_SCOPES entry joined through regulatory_programs, and remove `fields`. Give assess_mdr_reportability an optional complaint_id that reads the stored classification, with a caveat for classifications stored before S3."
+    },
+    {
+     "id": "S11a",
+     "verdict": "open",
+     "evidence": "assess_device_cybersecurity (AnaToolExecutor.ts:20353-20357) is still runStatsTool over the typed input. S3 fixed only the defaults; it does not read loadProgramDeviceAssemblyInput.",
+     "remaining": "Read the program's cyberDevice flag and its governed cybersecurity/SBOM leaves through loadProgramDeviceAssemblyInput, and report presence and status only, never pass."
+    },
+    {
+     "id": "S11b",
+     "verdict": "open",
+     "evidence": "build_device_blueprint (:10547) uses the typed `present`. assess_device_evidence_structure (:10441-10447) uses the typed present_section_ids. assess_substantial_equivalence (:20284) still returns a determination from stated input through runStatsTool.",
+     "remaining": "Add a project mode that reads the stored CER (assessStoredCer), ivdr_per_documents and risk_items. Label typed sections as hypothetical (DEVICE_ASSEMBLY_HYPOTHETICAL_BASIS). For SE, return the decision flow with determination null."
+    },
+    {
+     "id": "S12-cover-letter",
+     "verdict": "open",
+     "evidence": "compose_correspondence_cover_letter (AnaToolExecutor.ts:18221-18238) still requires typed issues[]. R-8 has been decided: one letter, one generator.",
+     "remaining": "Converge it onto the Communication response package (agency-responses/response-package-docx.ts, with readQuestions at response-service.ts:349) as one generator, instead of only re-sourcing the issues."
+    },
+    {
+     "id": "S12-510k-summary",
+     "verdict": "open",
+     "evidence": "compose_510k_summary (:18241-18266) still prints the typed predicates, deviceClass, productCode and regulationNumber. The record columns exist (migrations/20260903_regulatory_programs_estar_device_fields.sql:35,38).",
+     "remaining": "Read the predicates, class, product code and regulation number from the program's classification record. Refuse typed values and list the missing ones in missingSections."
+    },
+    {
+     "id": "S12-declaration-of-conformity",
+     "verdict": "open",
+     "evidence": "generate_declaration_of_conformity (:6827-6835) passes `input as any`. registration-listing.ts:125-139 returns valid:true once typed notifiedBodyNumber, certificateNumber and basicUdiDi are present.",
+     "remaining": "Take the Basic UDI-DI from udi_records and the class from the program. List the notified-body and certificate numbers as missing, so the result is never valid:true."
+    },
+    {
+     "id": "S12-output-confidence",
+     "verdict": "open",
+     "evidence": "assess_output_confidence is still registered (AnaToolExecutor.ts:1238) and listed inScope.",
+     "remaining": "Retire it with a retirement test. honesty-envelope.ts stays for its other callers."
+    },
+    {
+     "id": "S12-biowaiver",
+     "verdict": "open",
+     "evidence": "assess_biowaiver (:19169) is still runStatsTool over the typed input. There is no cmc/recorded-dissolution.ts.",
+     "remaining": "Extract the inline dissolution read of compare_recorded_dissolution into cmc/recorded-dissolution.ts, scoped by organization and project. assess_biowaiver then takes profile ids and refuses a typed f2."
+    },
+    {
+     "id": "S12-spl",
+     "verdict": "open",
+     "evidence": "generate_spl (:18822) and generate_spl_xml (:19053) are both registered and inScope. R-5 has been decided (labeling-pi out of launch; converge the generators), so this is no longer waiting on the founder.",
+     "remaining": "Converge the two SPL generators into one, with the record path labeling-pi.routes.ts:321 kept outside the catalog."
+    },
+    {
+     "id": "S13",
+     "verdict": "open",
+     "evidence": "The five routes are still at submission-orchestrator.ts:979, 1004, 1032, 1062 and 1092. Production already refuses them with 403, because the apiPrefixes narrowing (ui-surface-registry.ts:458-467) leaves them unmapped. That makes this dead-code cleanup, not live exposure. Regenerate (:904) still runs with every array empty.",
+     "remaining": "Delete the five handlers and the schemas only they use (red: 404 in development). Refuse or retire regenerate outside development, naming /runs/for-program as the replacement."
+    },
+    {
+     "id": "S14a",
+     "verdict": "open",
+     "evidence": "R-1/F1 has been decided (nonclinical_studies; in_reporting counts for an IND; P-55, FOUNDER-DECISIONS-OWED:18), so this is no longer waiting on the founder. migrations/20260610_iacuc_animal_governance.sql and 20260610_nonclinical_send.sql are still only in scripts/ci/migration-deploy-path-baseline.json:64,68 and not on C2C_MIGRATION_FILES. There is no program_id column file.",
+     "remaining": "Check that both creators replay safely, add them before 20260716_nonclinical_display.sql (migration-set.mjs:725), and add a program_id column with a backfill and index. Rule 1 applies."
+    },
+    {
+     "id": "S14b",
+     "verdict": "open",
+     "evidence": "createStudyTx (nonclinical-service.ts:44) takes no programId. The only writers are create_nonclinical_study (hiddenApp, surface 'nonclinical', inventory ~:93-97) and the preclinical bridge. In production nobody can write a study.",
+     "remaining": "Have the writers take programId, durationLabel and keyFinding. A writer inside the catalog is needed (the FD-9/P-47 Nonclinical fold), or S14c will read an empty store in production."
+    },
+    {
+     "id": "S14c",
+     "verdict": "open",
+     "evidence": "listStudiesForSummary(orgId) (nonclinical-service.ts:209) has no programId or status filter. module2-nonclinical-inputs.ts still always returns needs_data. 3cb38d54f's Module 2 QC reports 2.4 as 'waits on R-1'.",
+     "remaining": "Filter by program and status (per R-1), switch the needs_data branch to ok so M2.4 and M2.6 compose from the record, and adapt the S4 tools onto the same rows."
+    },
+    {
+     "id": "S14d",
+     "verdict": "open",
+     "evidence": "Depends on S14c. /runs/for-program still passes [] for nonclinical, and the loader still returns [] when the flag is off.",
+     "remaining": "Pass the loader's output to /runs/for-program, and report the switched-off feature as unavailable, not [] (development only)."
+    },
+    {
+     "id": "S14e",
+     "verdict": "open",
+     "evidence": "GET and POST /api/nonclinical-summary are unchanged. The surface is still hidden (nonclinical).",
+     "remaining": "Once the Nonclinical fold (P-47) admits the surface, have GET take a program, and delete POST /document."
+    }
+   ],
+   "next": [
+    {
+     "id": "S6b",
+     "why": "Of the open slices, this has the most direct Rule 2 harm. generate_document writes a regulated DOCX (CSR, Module 3, CER, 510(k), PMA) from section text the model types. Five intake actions send users there, and the Module 3 action goes around the P-28 boundary. The existing ectd_backbone/icsr refusal is placed after the scratch branch (AnaToolExecutor.ts:7188 vs :7213), so a call with sections gets past it. That gives a clean red. It depends on nothing: R-7 (withhold PMA) is decided, and the change is server-only (AnaToolExecutor.ts plus intelligence-questions/engine.ts). It is already queued as task #20 in the parent plan."
+    },
+    {
+     "id": "S6",
+     "verdict": "open",
+     "why": "A small, independent retirement of a tool whose input is facts the model supplies. The replacements (record-composed M2.5 and M2.7) already exist with tests. It removes one intake action (engine.ts:558) and the skill text that steers the model to it. It touches only server/services/ana and its tests, outside the UI lane. Running it after S6b keeps both engine.ts changes in sequence."
+    },
+    {
+     "id": "S12-510k-summary + S12-declaration-of-conformity",
+     "why": "Two governed device documents in the launch catalog are built from identity facts the model types. The public \u00a7807.92 summary prints typed predicates, class and product code. The EU Declaration of Conformity returns valid:true from typed notified-body and certificate numbers. The records already exist (the regulatory_programs eSTAR device columns, udi_records), and the S2 scope helper they depend on is done. The work is server-only, one commit each. S7 and S13 are cheaper but lower value: S13's routes already get 403 in production, and S8/S9/S14 are in the CSR lane or wait on a writer the catalog can reach."
+    }
+   ]
+  }
+ ],
+ [
+  "survey",
+  {
+   "slices": [
+    {
+     "id": "1",
+     "verdict": "done",
+     "evidence": "461f00e9a (2026-10-26). On HEAD, server/services/ana/module2-csr-inputs.ts:20-28 resolves the project through record-source-project.ts:107-110 (resolveCsrScope with actorUserId; cross_project and access_denied at :21, :61, :80). m2-summary-builders.ts:784-790 no longer counts caller prose toward 2.5.1. The test server/services/ana/__tests__/module2-csr-inputs.pglite.test.ts exists, red evidence is 3b-s1-csr-inputs-red.txt, and README \u00a7g records it. Later commits 45f571e9a, 9b0a63be0 and cb14dfc51 refine it and revert nothing."
+    },
+    {
+     "id": "2",
+     "verdict": "done",
+     "evidence": "Delivered as Rule 2 S2, 43f0e72b1, then refined by b5b44678b and 640f7016f. README \u00a7h says 'This is the same change as Rule 2 audit slice S2.' The design differs from the plan: there is no ctdProgramId and no loadNonclinicalProgram. module2-nonclinical-inputs.ts:24-52 refuses studies/findings (MODEL_SUPPLIED_NONCLINICAL_KEYS) and answers with the ICH M4S outline as needs_data. AnaToolExecutor.ts:5600 and :5769 hold the 2.4/2.6 handlers, and :5686 says 'they take no studies'. Test: server/services/ana/__tests__/nonclinical-drafts-refuse-model-figures.test.ts. Cleanup S44 is marked superseded (inventory-plan.md L575).",
+     "remaining": "Outside 3b. R-1 was decided by P-55: 2.4/2.6 read nonclinical_studies, counting in_reporting. The needs_data branch still says 'does not yet record nonclinical studies against a project' (module2-nonclinical-inputs.ts:45-50). That work is Rule 2 S14, in the Rule 2 lane."
+    },
+    {
+     "id": "3",
+     "verdict": "partial",
+     "evidence": "Creation half done by 5ab138ed3 (2026-10-29). submission-service.ts:138/177 adds NOT_AN_APPLICATION (422). insertSubmissionRow :267-271 refuses a class applicationType. refuseDocumentClassProject :316-330 is called from createSubmission :358. Test: submission-service/__tests__/document-class-not-an-application.pglite.test.ts (4 cases). Still open on HEAD: (a) ectd-compile.ts:332-339 refuseRegionalDeviceEctd refuses only regional device projects (call sites :671, :1395, :1533, :1569), so the compile/status/validate/filed-state doors do not refuse class projects. (b) report-os/orchestrator.ts:163-168 has no class branch. (c) createSubmissionTx :400-409 skips refuseDocumentClassProject, and no creation path refuses a regional-device project. (d) EctdModuleReadiness.tsx:129 still renders 'Compilation readiness could not be read' for a 422. (e) The planned cases in ectd-compile-ident.test.ts, ectdModuleReadiness.test.tsx and orchestrator-readiness are not written.",
+     "remaining": "Server: extend refuseRegionalDeviceEctd to filing classes, add the orchestrator readinessNotComputed class branch, and add the device-project and createSubmissionTx refusals, with their red tests. The client not_applicable state in EctdCompile/EctdModuleReadiness belongs to the UI session. The eCTD door should land only alongside it, because a bare 422 shows the false 'could not be read' text (plan P-2)."
+    },
+    {
+     "id": "4",
+     "verdict": "open",
+     "evidence": "No reasonByFiling or WRITTEN_IN_THE_APPLICATION_PROJECT anywhere on HEAD; git log -S matches only the plan text in 461f00e9a. market-support.ts:545-551 harmonisedSupport still returns null for a non-class type at ICH, so unmappedSupport :431 prints 'Not supported: the platform has no filing outline or channel for ICH / Global'. The route projects.ts:751 sends the generic offer, and the picker AnaVerbs.tsx:169 shows row.offer.reason. F-D was decided by P-55 row 5 ('No. The \"not offered\" reason will name where each is written'), which makes this slice the decided follow-through.",
+     "remaining": "Server half: add FilingOffer.reasonByFiling and the QOS/3.2.S/3.2.P strings, make harmonisedSupport return the ICH not-offered statement, and send the per-filing 422 reason in projects.ts. Also align harmonisedSupport's ICH-class channel/line text (:563-565, still 'placed into an application's sequence') with 5ab138ed3's new classNotSequencedReason. The AnaVerbs.tsx:169 per-filing lookup goes to the UI session."
+    },
+    {
+     "id": "5",
+     "verdict": "open",
+     "evidence": "filing-document-classes.ts:110-115: the ICH classes stop at dsur, and there is no clin_overview or nonclin_overview row and no ctdComponentOf. filing-class-packs.ts has no component specs. filing-catalog.ts:128 still routes ich_clin_overview to 'ctd', which becomes nda and is not offered at ICH / Global. No component migration exists; the last class-pack file is 20261029_us_biotech_filing_class_packs.sql (migration-set.mjs:3209). scripts/db/emit-filing-class-packs.ts still writes no 'eCTD REGULATORY AUDIT CONTEXT' marker, and the 20261029 file also lacks it. The plan's numbers are stale: the doc_type CHECK is now 63 values (20261029:139), not 46, and contract CLASS_FILES now includes US_BIOTECH (c2c-filing-class-packs.contract.test.ts:52-53, :75).",
+     "remaining": "Execute after Slice 3. The component sentence must be rewritten against 5ab138ed3's new ICH branch of classNotSequencedReason. CHECK goes 63 to 65, and the set entry goes after :3209. The emitter header fix lands in the same commit. Each commit needs RULE 5/6 trailers (Plan: L1 or F1, plus Completes:). P-82/P-83 (THE_PROGRAM_2026-11-01.md \u00a77.1 L211-214: Module 2 summaries stay views inside the filing project) should be confirmed as not retiring standalone component projects. F-A..F-D themselves are decided."
+    },
+    {
+     "id": "6",
+     "verdict": "open",
+     "evidence": "No clin_summary class row, spec, alias or migration on HEAD; the same greps as Slice 5 come back empty. It depends on Slice 5.",
+     "remaining": "Mint 2.7 (49 nodes) after Slice 5, with the CHECK at the then-current count + 1. The 2.7.4.6 ceiling stays until the F-B N/A status, decided yes by P-55 row 1, is built (task #4). No commit implements it."
+    },
+    {
+     "id": "7",
+     "verdict": "open",
+     "evidence": "No nonclin_summary class row or pack on HEAD. FD-11/F-A is decided: LAUNCH_DEFINITION_OF_DONE.md P-55 (L1042-1049, c7fccfbe6) says '2.6's tabulated summaries are a preparation worksheet'. The FOUNDER-DECISIONS-OWED-2026-10-26.md header records all 22 rows as decided as recommended. No commit since implements the worksheet withholding.",
+     "remaining": "After Slice 5: the label carries ' \u00b7 preparation worksheet'. Withholding AnA drafting from 2.6.3/2.6.5/2.6.7 moves from 'not done' into scope; it touches the AnA drafting brief and possibly the editor (UI lane). The 'do not fabricate data' generationPrompt pin is still owed."
+    },
+    {
+     "id": "8",
+     "verdict": "open",
+     "evidence": "The composers still return one root sectionKey: m2-summary-builders.ts:421 ('2.4'), :800 ('2.5'), :973 ('2.7'). No per-section split is returned by the AnaToolExecutor.ts 2.5/2.7 handlers (:15867, :5893). Application packs hold 2.5 as one node (20261005_fda_jnda_m1_outline_v2_2.sql), so the split only matters for subdivided class packs.",
+     "remaining": "Optional, and of value only once Slice 5's subdivided packs exist: return sections:[{code,title,content}] so filingSectionKey can place each. It is in the AnA lane (ledger S4), where task #20 (Rule 2 S6b) is pending."
+    }
+   ],
+   "next": [
+    {
+     "id": "4",
+     "why": "The founder's P-55 row 5 (F-D) states this exact outcome: the not-offered reason names where the QOS, drug substance and drug product are written. A false string ('no filing outline or channel for ICH / Global') shows today on every ICH / Global not-offered row (market-support.ts:431, via harmonisedSupport :550). It needs no migration and no other slice. The server half (market-support.ts, projects.ts:751) is outside the UI lane, and only AnaVerbs.tsx:169 is handed to the UI session. Fold in the stale ICH-class channel/line wording at :563-565 so it matches 5ab138ed3. Commit as Plan: L1 (or F1) with Completes: server/services/regulatory/market-support.ts."
+    },
+    {
+     "id": "3",
+     "why": "It is half done (5ab138ed3) and it gates Slices 5-7: a class project must not reach compile or readiness as if it were an application. Do these first, since they need no client change: the orchestrator.ts:163-168 class branch, the createSubmissionTx/device-project refusals, and their red tests. Extend ectd-compile.ts:332-339 to filing classes only together with the UI session's EctdModuleReadiness not_applicable state (message them first). That avoids the false 'Compilation readiness could not be read' on screen. Files are in S5/F1 scope, not UI-owned."
+    },
+    {
+     "id": "5",
+     "why": "This is the plan's core deliverable (2.5/2.4 author-only class projects). Every founder question it named (F-A..F-D) was decided by P-55. Run it right after Slice 3 lands, with refreshed numbers: CHECK 63 to 65, set entry after migration-set.mjs:3209, contract CLASS_FILES L53. Fix the emitter's missing eCTD header in the same commit; 20261029 already shipped without it. Before the first commit, get one line from the founder that P-82/P-83's 'Module 2 summaries stay views inside the filing project' (THE_PROGRAM \u00a77.1) does not retire standalone component projects. All files are server/shared/migrations/tests, outside the UI lane."
+    }
+   ]
+  }
+ ],
+ [
+  "check",
+  {
+   "corrections": [
+    {
+     "id": "S6b",
+     "claimed": "open, not started ('Rule 2 S6b' pending as task #20 in another plan); recommended as next #1",
+     "actual": "Open on HEAD, but in progress right now and uncommitted in the shared working tree by another session (Plan: S4, task #20). It is not available. The in-flight change also misses R-7: it keeps 'pma' in the enum and leaves the device_pma intake action on generate_document, although R-7 (decided P-55) says withhold PMA until a record path exists.",
+     "evidence": "git status at d914c2618: M AnaToolExecutor.ts, M intelligence-questions/engine.ts, M AnaToolDefinitions.ts, M skills/library/clinical.ts, ?? ana/generate-document-refusals.ts, ?? __tests__/generate-document-refuses-record-documents.test.ts. The diff moves the refusal ahead of the scratch branch (HEAD AnaToolExecutor.ts:7188 vs :7213) and repoints engine.ts:552/568/580/604. Working-tree AnaToolDefinitions enum: ['ctd_module1','pma','protocol','sap']. HEAD engine.ts:594 'Generate PMA Document' is untouched. R-7: FOUNDER-DECISIONS-OWED-2026-10-26.md row 12. The other session edited these files while this audit ran: handler line numbers shifted by +5 between my reads."
+    },
+    {
+     "id": "S6",
+     "claimed": "open; recommended next #2 'after S6b keeps both engine.ts changes in sequence'",
+     "actual": "Open is confirmed on HEAD: no commit, and the tool is inScope. It cannot run while S6b is uncommitted, because it edits the same two files: the engine.ts:558 hunk sits beside S6b's :552 edit, and AnaToolExecutor.ts too. In a shared working tree either session's commit could take the other's hunks. Run it immediately after the S6b commit lands. Not the next three.",
+     "evidence": "HEAD AnaToolExecutor.ts:3060 registerToolHandler('plan_ind_module_authoring'); engine.ts:558; inventory /tools/inScope; register:5221; ind-module-authoring.ts, __tests__/ind-module-authoring.test.ts and ind-module-tool.test.ts exist. git log --all --diff-filter=D -- '*ind-module*' is empty. git log -G plan_ind_module_authoring since 10-26 is empty."
+    },
+    {
+     "id": "S12-declaration-of-conformity",
+     "claimed": "remaining: take the Basic UDI-DI from udi_records and the class from the program",
+     "actual": "No deployed record holds a Basic UDI-DI. udi_records stores a GUDID udi_di, not the EU Basic UDI-DI. The only Basic UDI-DI column is product_master.udi_identifiers.eudamed_basic_udi_di, and its migration is on neither C2C_MIGRATION_FILES nor the deploy baseline. The slice should read only the manufacturer and class from the program (eu_ivdr_class), list basicUdiDi, notifiedBodyNumber and certificateNumber as missing, refuse typed values, and never return valid:true. The design's premise at design.md S12 is wrong.",
+     "evidence": "migrations/20260507_mdx_beta_surfaces.sql:19-48 (udi_di text NOT NULL; no basic column); db/migrations/057_gcc_product_master.sql:349 (not on the set: no match in migration-set.mjs or migration-deploy-path-baseline.json); migrations/20261012b_regulatory_programs_eu_device_classes.sql:47-48 eu_ivdr_class; registration-listing.ts:124-139 returns valid once typed fields are present; HEAD AnaToolExecutor.ts:6827-6835 passes input as any."
+    },
+    {
+     "id": "S12-510k-summary",
+     "claimed": "open; record columns exist (20260903 :35,38). The next-3 rationale says 'the records already exist'",
+     "actual": "Open is confirmed. Only class, product code and regulation number have program columns. No program-scoped predicate record was found, so the predicates must be listed in missingSections. The tool then cannot print a predicate until one exists, which lowers its value now.",
+     "evidence": "migrations/20260903_regulatory_programs_estar_device_fields.sql:12-38 (product_code, regulation_number, associated_product_codes; on the set at migration-set.mjs:590); 20261012b (device_class is US 860). Predicate tables are only the predicate.* intelligence schema (db/migrations/20260207_phase6_6_predicate_intelligence.sql) and legacy 0000_sweet_joseph.sql:2430-2431. design.md I-14: se_matrix_rows has no reader or writer. HEAD AnaToolExecutor.ts:18241-18266 still requires typed predicates[] and deviceClass."
+    },
+    {
+     "id": "S12-output-confidence",
+     "claimed": "retire it; 'honesty-envelope.ts stays for its other callers'",
+     "actual": "Open is confirmed, but honesty-envelope.ts has no other production caller. Retiring the tool leaves it dead. Zero duplication means the slice also deletes honesty-envelope.ts and its test and drops the IQ/OQ pack entry, or records a reason for keeping it.",
+     "evidence": "rg honesty-envelope: only AnaToolExecutor.ts:1246 (inside the assess_output_confidence handler at HEAD :1238), __tests__/honesty-envelope.test.ts, and scripts/ops/generate-iq-oq-pack.mjs:132, which lists the test."
+    },
+    {
+     "id": "S12-biowaiver",
+     "claimed": "extract the dissolution read into cmc/recorded-dissolution.ts",
+     "actual": "Open is confirmed. RULE 6 (25fbc1d49, 2026-11-01) now says 'a file split out of a large one goes inside the folder it came from'. The extract from AnaToolExecutor.ts therefore belongs under server/services/ana/, not cmc/. compare_recorded_dissolution is at HEAD :17653, not :17615-17625.",
+     "evidence": "CLAUDE.md RULE 6 'Split, don't add'; scripts/ci/check-one-design-plan.mjs:25-28 (a new file directly under server/services/ is a service); HEAD AnaToolExecutor.ts:17653 and :19169."
+    },
+    {
+     "id": "S9",
+     "claimed": "partial; remaining: read the subject from the approved CSR source (narrativeInputFromCsrSource) or route to the narrative job",
+     "actual": "Partial is confirmed. The design's narrativeInputFromCsrSource is superseded in method: the ADaM subject-facts mapper and the narrative job already exist. Under Rule 3 the remainder must reuse csr/narrative-subject-facts.ts subjectNarrativeFacts and csr-narrative-store, not add a mapper. The CSR lane records the labelling as the fix and names this tool as its extension point, so the remainder is in the CSR lane.",
+     "evidence": "cefd62a86 (factSource 'as-given', HEAD AnaToolExecutor.ts:3860-3907). csr/narrative-subject-facts.ts:249 subjectNarrativeFacts (ac904e8ac, CSR slice 7) and csr/csr-narrative-job.ts. docs/design/CSR_PATH_REVIEW_2026-10-29.md:93 says 'Fixed'. docs/design/CSR_END_TO_END_2026-10-29.md:240 'Extends: \u2026 draft_safety_narrative'. No safety-narrative-tool.ts."
+    },
+    {
+     "id": "S13",
+     "claimed": "open; dead-code cleanup, not live exposure",
+     "actual": "Open is confirmed. The five builders get 403 in production. Regenerate is different: it sits under the mapped /api/submission-orchestrator/runs prefix, so it is served in production with no client caller. The R1 session's inventory (df6d18838) lists all six handlers with no caller under package S5, and R1's README says it deletes nothing without the founder. Coordinate with R1 so the handlers are not also put to the founder. The CSR lane last touched this file (6fe917060).",
+     "evidence": "HEAD submission-orchestrator.ts:904, 979, 1004, 1032, 1062, 1092; ui-surface-registry.ts:458-474; docs/evidence/DESIGN/R1/2026-11-01-inventory/inventory.json:42961-43119; R1 README.md:297."
+    },
+    {
+     "id": "S5b/S5c/S5d",
+     "claimed": "open; no not_stated in these engines",
+     "actual": "Open is confirmed. Three S3/S5a pieces already use not_stated, but none is the family audit: benefit-risk uncertainty, the digital-health cybersecurity sections, and the reusable booleanInputStates adapter. The orphan defect stands. The dissolution-instruction sub-item of S5d is already done.",
+     "evidence": "benefit-risk-knowledge.ts:1589-1592,1738-1744 (dd60c6e12); digital-health-knowledge.ts:1631-1680 (dd60c6e12); immunogenicity-reference.ts:109-111 (23eb03578). regulatory-strategy-knowledge.ts:2309-2310 fdaEligible = fdaPrevalenceMet. bioequivalenceTools.ts:185-186 (182fed957). Tools files unchanged since 182fed957 (10-15), except digitalHealthTools/benefitRiskTools (dd60c6e12) and postApprovalTools (42bbb941e: US biotech identities, not S5d)."
+    },
+    {
+     "id": "S14b-e",
+     "claimed": "open",
+     "actual": "Open is confirmed and not blocked on the founder: R-1 and FD-9/P-47 are decided. Production value still waits on a writer the catalog can reach. create_nonclinical_study is hiddenApp, and the Nonclinical fold is UI/Spine-12 (P-83) work. S14a alone can be executed now but adds research-admin tables to deployed databases with no reader in production, so it is low priority. No nonclinical file has changed since 10-26.",
+     "evidence": "inventory /tools/hiddenApp[8] create_nonclinical_study; nonclinical-service.ts:44 createStudyTx (no programId), :209 listStudiesForSummary(orgId); module2-nonclinical-inputs.ts:46 needs_data; submission-orchestrator.ts:324 nonclinicalStudies: []; migration-set.mjs:725 (nonclinical_display on the set, its creator not); migration-deploy-path-baseline.json:64,68."
+    },
+    {
+     "id": "ALL-OTHER-SLICES",
+     "claimed": "S1, S2, S3, S4, S5-0 and the 3 S5a families done; S5a-dose-optimization, S5a-rwe, S5a-pharmacovigilance, S7, S8, S10, S11a, S11b, S12-cover-letter, S12-spl and S14a open, as surveyed",
+     "actual": "Confirmed on HEAD, with the surveyor's HEAD line numbers correct. Every slice tool except create_nonclinical_study is inScope, so it is offered in production. No commit since 10-18 performed any of these slices under another name: c862373aa (dispatch_qc_check), c1d3a1589 (check_consistency) and 3cb38d54f (M2 QC route) fix Rule 2 tools the design never listed, and only cefd62a86 touches a design slice (S9). S4's status row at design.md:17 is stale: R-2 was decided under P-55 (c7fccfbe6). New constraint since the plan was written: RULE 5 (6ca86a74f) and RULE 6 (25fbc1d49) require every slice commit to carry 'Plan: <open package>' (F1 'Repairs', paths **, fits engine plus tool-def spans; S4 covers server/services/ana/** only) and 'Completes: <existing path>', with no new AnA tool name and no new top-level service file or folder. None of the remaining slices needs one.",
+     "evidence": "S1 submission-orchestrator.ts:555-592 (INLINE_RUN_INPUTS_REFUSED, CTD_PROGRAM_INPUTS_REFUSED, REGENERATE_MODE_A_UNSUPPORTED), :908. S3 HEAD AnaToolExecutor.ts:5782-5800, :6963-6995. S5-0 stated-input-result.ts:2. S7 HEAD :18146, deepeningTools.ts:124, csr-builder-routes.ts:15 (b86433174 cites regulatory/benefit-risk.ts, so S7 must update that comment and csr-builder-retired-endpoints.test.ts:16). S8 benefitRiskTools.ts:215-219, HEAD :20421 (readers: csr/vault-source-input.ts:155 withCsrVaultSource; saved-clinical-tables.ts:41 readVerifiedRetainedStudies). S10 HEAD :6837-6869. S11 HEAD :20284, :20353, :10441, :10547 (the existing pattern is loadOpenProjectDeviceInput and DEVICE_ASSEMBLY_HYPOTHETICAL_BASIS at :17000-17130). S12-cover HEAD :18221. S12-spl HEAD :18822/:19053. S5a engines: grep -c not_stated = 0, no commits since 10-15. pharmacovigilance-knowledge.ts:241 `if (!criteria) return false;` \u2192 :334; dose-optimization-knowledge.ts:777. docs/design/one-design-plan.json packages F1/S4; check-one-design-plan.mjs:1-30."
+    }
+   ],
+   "nextConfirmed": [
+    {
+     "id": "S5a-pharmacovigilance",
+     "why": "Replaces S6b, which another session holds uncommitted. All six PV tools are inScope, and the family decides reporting obligations from absence. classify_expedited_reporting picks the 15-day IND safety clock when seriousnessCriteria is omitted (pharmacovigilance-knowledge.ts:241 `if (!criteria) return false;` \u2192 :334 `clockDays = fatalOrLT ? 7 : 15`). An omitted intervention flag gives postmarketing rules, omitted DME raises the signal threshold to 3 cases, and the PV-system defaults conclude routine PV. The read-only inventory already exists and ranks this family highest (s5a-coa-pro/queued-clinical-families.md:146-172). The mechanism exists too (statedBoolean, booleanInputStates at immunogenicity-reference.ts:109, and causality's existing 'unknown'), with three precedent commits. The work is in pharmacovigilance-knowledge.ts and pharmacovigilanceTools.ts, which no session has touched since 10-15 and which are outside S6b's in-flight files. Defer any skills/library/clinical.ts text until S6b commits. Plan: F1 (the work spans S3 and S4 paths); Completes: server/services/pharmacovigilance/pharmacovigilance-knowledge.ts."
+    },
+    {
+     "id": "S5a-dose-optimization",
+     "why": "assess_project_optimus_alignment grants a 'met' pillar and 20 points for an omitted doseSelectedByMtdAlone (dose-optimization-knowledge.ts:777). select_rp2d selects a dose with no toxicity or exposure evidence, and backfill turns an omitted biopsy fact into 'biopsy not feasible'. All six tools are inScope. Same mechanism and inventory (queued-clinical-families.md:92-118); engine and doseOptimizationTools.ts only, no S6b file overlap, untouched since 10-15. Plan: F1; Completes: server/services/dose-optimization/dose-optimization-knowledge.ts."
+    },
+    {
+     "id": "S5a-rwe",
+     "why": "This closes the last open item on the design's S5a status row. score_rwe_data_source asserts 'no validation study' or 'no death linkage' from omitted facts, and acceptability grades omitted preregistration as not_met. All 21 schema-required booleans go unvalidated at runtime (queued-clinical-families.md:120-144). All six tools are inScope. It is third because the inventory calls it a broader validation audit than the boolean families. Same files profile, no lane overlap, Plan: F1. Queue after these three: once S6b's commit lands, run S6, then S7 (update csr-builder-routes.ts:15), then S12-output-confidence, all small S4 retirements in AnaToolExecutor.ts. Not recommended now: the original #3 pair S12-510k-summary + S12-DoC, because the predicate and Basic UDI-DI records it assumed do not exist."
+    }
+   ]
+  }
+ ],
+ [
+  "survey",
+  {
+   "slices": [
+    {
+     "id": "S01",
+     "verdict": "done",
+     "evidence": "0c69304aa (D2 cleanup S01)"
+    },
+    {
+     "id": "S02",
+     "verdict": "done",
+     "evidence": "0fc2fc294 (D2 cleanup S02)"
+    },
+    {
+     "id": "S03",
+     "verdict": "done",
+     "evidence": "0f0705fc8 (D2 cleanup S03)"
+    },
+    {
+     "id": "S04",
+     "verdict": "done",
+     "evidence": "aaf83b232 (D2 cleanup S04)"
+    },
+    {
+     "id": "S05a",
+     "verdict": "done",
+     "evidence": "e943e0d49 (D2 cleanup S05a); README.md:473-508"
+    },
+    {
+     "id": "S05b",
+     "verdict": "open",
+     "evidence": "db/migrations/038_gcc_ectd_seeder_service.sql still exists (ectd.module_structure :16, ectd.project_folders :323, three functions :352-485). It is still listed at migrations_manifest.json:248 and :348, and applied by install-fresh step 6 (*_gcc_*, install-fresh.mjs:37,56). It is named by scripts/ci/check-tables-against-live-schema.mjs and check-unbacked-tables.mjs. No commit on it since e943e0d49.",
+     "remaining": "Delete 038. Drop its manifest entries and re-sync (db:sync-manifest). Remove its ectd.* objects from the two live-schema gates and their baselines. Re-run the CI psql loops and the install-fresh and migration gates. Leave the to_regclass-guarded RLS row at 20260813:629."
+    },
+    {
+     "id": "S07",
+     "verdict": "done",
+     "evidence": "46cb575bd. Carried item: docx/templateRegistry.ts:441-483 indTemplate ('ind-fda') is still a heading copy. The README moved it to Tier C, but no slice number was given.",
+     "remaining": "Give templateRegistry.ts indTemplate a Tier C convergence slice (it is reachable via tools/index.ts documents.generate_docx)."
+    },
+    {
+     "id": "S08",
+     "verdict": "open",
+     "evidence": "check-regulatory-reference-data-single-copy.mjs:45-47: GUARDED = {fallbackTemplates} only. The grep roots are server/client/shared (:54), and there is no --selftest. package.json:256 defines ci:reg-reference-single-copy, but nothing in .github/workflows or .husky runs it. No commits since 2026-10-18.",
+     "remaining": "Add the seven record exports to GUARDED, widen the matcher (export {NAME, default) and add services/. Add a --selftest with a planted second ICH_M4_HEADINGS, and wire both into the ci.yml lint job."
+    },
+    {
+     "id": "S09",
+     "verdict": "open",
+     "evidence": "misc-inline-routes.ts:3 (fallbackTemplates import), :24 generateDocumentContent, :48 GET /templates, :205/:269 /ectd/templates, :348 POST /v1/drafting/start_task (INSERT ... status 'COMPLETED' with a placeholder fill, ~:373), :385 task_status. ectd-fallback-templates.ts and drafting-task-object-authz.test.ts both still exist. 0 commits on the file since 10-18, and no client caller.",
+     "remaining": "Run the whole slice as written: delete the 5 handlers, the fallback catalog and the authz test; repoint the 4 tests; drop drafting_tasks from unkeyed-request-tables-baseline; edit the smoke script and comments. Needs S08 first."
+    },
+    {
+     "id": "S10",
+     "verdict": "open",
+     "evidence": "submissions.ts:523 and :539 GET /document-templates[/:templateId]; shared/types/submission-api.ts:530,538; regulatory-capabilities-index.ts:39 still carries route 'GET /document-templates'; verify-submission-center.mjs:251-253. No client caller.",
+     "remaining": "Delete both handlers and the two types. Drop the route field at capabilities-index:39, keeping anaTool, and the verify-submission-center checks."
+    },
+    {
+     "id": "S11",
+     "verdict": "open",
+     "evidence": "server/api/ai/routes.ts still exists: the keyword 'score' at :16-92 is an invented figure. Endpoints at :302, :389, :474, :501 and :693. Mounted at register-core-routes.ts:6 and :41-42. No client caller of /api/ai/*.",
+     "remaining": "Delete the file and the import/mount at :6 and :42, keeping the :41 auth line for ai-assistance. Re-run the route-mount gates and baselines."
+    },
+    {
+     "id": "S12",
+     "verdict": "open",
+     "evidence": "routes/biopharma/ctd.ts is still mounted at register-inline-routes.ts:1039-1040. ctd-module-structure.ts:257 coerceStatus, :264 moduleReadiness and :279 annotateModuleBuildState are still present. 0 commits since 10-18.",
+     "remaining": "Delete the router, its mount and the build-state helpers and their cases. Edit bla-biologics-tool-defs.ts:287, tenant-resolvers-baseline:32 and the csr-workflow-routes comment."
+    },
+    {
+     "id": "S13",
+     "verdict": "open",
+     "evidence": "submission-orchestrator.ts:979 /m2/nonclinical, :1004 /m2/clinical, :1032 /m2/clinical-overview, :1062 /csr/tabulate and :1092 /validate/hardened still take request bodies. Rule 2 S1 (e0ad84e84, 7ed7f2fb7) refused inline figures only on /runs. The Rule 2 design adopted this slice as its own S13 (docs/evidence/RULE2/2026-10-26-model-figures-audit/design.md:721-729) and added /runs/:runId/regenerate.",
+     "remaining": "Delete the five handlers and the schemas only they use, keeping NonclinicalStudySchema, CSRInputSchema and StudyDataSchema for Mode B. Add a 404 red. Coordinate with the Rule 2 lane, which also lists it."
+    },
+    {
+     "id": "S14",
+     "verdict": "open",
+     "evidence": "deep-research.ts:265 POST /document/generate and :277 sectionTemplates; ana-cortex-ft.ts:1216 /generate-section; ana-intelligence.ts:111 /draft, :172 /draft/stream, :276 /review, :315 /gap-analysis; enterprise/routes.js:40, :89 and :124 /regulatory/*; planner at register-project-routes.ts:22 and :100. No client callers.",
+     "remaining": "Delete the handlers and the planner router as written, with their tests and baseline entries. The routes-reach-the-bundle representative needs updating."
+    },
+    {
+     "id": "S15",
+     "verdict": "open",
+     "evidence": "coauthor.ts:1076 GET /templates; concept2cure.ts:1665 TEMPLATES, :1953 GET /templates, :1997 /templates/:id, :157 importing concept2cure-ib-template.js; inline /api/c2c/rule-packs alias at register-inline-routes.ts:819-832.",
+     "remaining": "Delete the duplicate listings, the IB template file and the alias. Repoint rule-pack-provenance-exposure.test.ts to /api/c2c/documents/rule-packs."
+    },
+    {
+     "id": "S16",
+     "verdict": "open",
+     "evidence": "mission-control.ts:1233 IND_IB_SCAFFOLD_ROWS and :1241 POST /programs/:programId/scaffold; universal-packager.ts:51,217 and services/universal-packager.ts:30,165,177,809 'ectd-zip'; stability.router.ts:16 and :2088 /ai/draft-p8; ai/stability.ts:133 aiDraftP8; ana-features.ts:370 ectdRequirements and :1391 /gap-analysis.",
+     "remaining": "Delete as written, with the tests, UAT script and baseline-reason fixes. The R1 inventory lists stability.router.ts and ana-features.ts (DESIGN/R1/2026-11-01-inventory/README.md:241-250): tell R1."
+    },
+    {
+     "id": "S17",
+     "verdict": "open",
+     "evidence": "predictive-sections is mounted at register-inline-routes.ts:33 and :155. project-sections is mounted at register-document-routes.ts:212-213. The comment at :243 says the project dossier reads it, but no client caller exists. ui-surface-registry.ts:285 still claims /api/project-sections.",
+     "remaining": "Delete both routers, the service and the tests. Move the actor-display assertions onto a c2c route. The ui-surface-registry:285 prefix goes to the UI session (H10)."
+    },
+    {
+     "id": "S18",
+     "verdict": "open",
+     "evidence": "ectd-documents is mounted at register-document-routes.ts:18 and :102. regulatorySubmissions is mounted at register-inline-routes.ts:41 and :1144. Neither file has changed since 10-18.",
+     "remaining": "Delete both routers and their tests. Trim the coauthorPutStatus halves and the drizzle-tenant-scope and tenant-resolvers baselines as written."
+    },
+    {
+     "id": "S19",
+     "verdict": "open",
+     "evidence": "server/api/gcc/index.ts:17,21,27,31 still mount ectd and drafting. gcc/modules.ts:54 'ectd' and :78 'drafting'.",
+     "remaining": "Delete server/api/drafting/routes.ts, gcc/ectd/routes.js and their entries, plus the live-schema, unbacked-tables, model-pin and embedding baselines."
+    },
+    {
+     "id": "S20",
+     "verdict": "partial",
+     "evidence": "ce8cae239 (2026-10-26, A2.9) deleted POST /api/ctd/projects and createCTDProject. Still live: ctd-onboarding.ts:65, :84, :114, :185 and :215 (list, status, upload, validate, detect-section), mounted at register-document-routes.ts:414-415, and ctd-ingestion-service.ts:26, :37, :116, :129, :166 and :307.",
+     "remaining": "Delete the rest of the router and the project half of the service, keeping m1Section, SECTION_PATTERNS, NOT_CTD and detectCTDSection. FD-12 is decided (P-55): migrate the ctdOnboardingDocuments readers to Vault before the store is retired."
+    },
+    {
+     "id": "S21",
+     "verdict": "open",
+     "evidence": "knowledge-base.ts:898, :936, :1001, :1033, :1417, :1479, :2301 and :2454: all eight generator endpoints are present. 0 commits since 10-18. R1 inventory README:273 lists the file.",
+     "remaining": "Delete the eight endpoints and their helpers, test cases and mocks. Lower the drizzle-tenant-scope and writerless-stores baselines. This also closes the P-28 bypass in /generate-module3-docx."
+    },
+    {
+     "id": "S22",
+     "verdict": "open",
+     "evidence": "server/api/templates/routes.ts is still mounted at register-core-routes.ts:5 and :37. /api/templates is claimed at ui-surface-registry.ts:713 and ui-surface-registry.ui-v2.ts:210.",
+     "remaining": "After S09: delete the router, its mount and the upload-safety test, plus the shadowPaths, smoke and drizzle entries. The registry claim goes to H10."
+    },
+    {
+     "id": "S23",
+     "verdict": "open",
+     "evidence": "The file is at server/routes/c2c/ai-editing.ts. Still present: :124 edit-section, :1019 and :1059 templates, :1347 compliance-scan, :1430 citation-search, :1521 batch-edit, :1610 validate-references, :1671 check-inconsistency, :1780 extract-metadata. Last commit e1f3fd425 (2026-10-17).",
+     "remaining": "Delete the nine endpoints and PROMPT_TEMPLATES and their tests, keeping /ai/autocomplete for GF-1. Add the draft_safety_narrative test."
+    },
+    {
+     "id": "S24",
+     "verdict": "open",
+     "evidence": "register-clinical-intel-routes.ts:16 and :51 still mount /api/ind. indCopilot.js:633 headingCodesIn and :667 sectionRequirementCoverage are present. No sectionHeadingCoverage or record_heading_coverage exists anywhere.",
+     "remaining": "Carry the heading coverage into section-brief.ts and the deficiency scan, with a red in authoringDeficiencyScan.test.ts. Then delete routes/ind.ts, indCopilot.js and their tests."
+    },
+    {
+     "id": "S25",
+     "verdict": "open",
+     "evidence": "register-ai-routes.ts:3 and :50 still mount /api/ind-generation. ind-generation.ts:69-73 holds UNRESOLVED_PLACEHOLDER_PATTERN. shared/authoring/unresolved-placeholders.ts does not exist. A detector already exists at server/services/csr/csr-placeholders.ts:24-30 (b265d6fc0).",
+     "remaining": "Converge the scan's unresolved_placeholders check onto the existing csr-placeholders.ts detector (move it under shared/ if needed) instead of a third copy (Rule 3). Then delete ind-generation.ts and its tests."
+    },
+    {
+     "id": "S26",
+     "verdict": "partial",
+     "evidence": "ce8cae239 deleted router.post('/projects'), '/projects/:id/duplicate' and generateDefaultCustomInstructions, so FD-1(b) is moot (and approved under P-55). Still present: concept2cure.ts:2117 bootstrap-preview and globalDocumentRegistryService.ts:176 getBootstrapPreview. projectBootstrapFromRegistry.ts and suggestedActionsCatalog.ts now have no production importer. tests/e2e/golden-customer-journey.e2e.ts:110-116 still POSTs /api/concept2cure/projects and expects 201, while project-creator-retirement.e2e.ts:4 asserts that path is retired. tier5-browser-smoke.yml:130 runs it, so it is red.",
+     "remaining": "Repoint golden-customer-journey to POST /api/c2c/projects plus the anchor id. Delete bootstrap-preview, projectBootstrapFromRegistry.ts and suggestedActionsCatalog.ts with their tests. Keep getBootstrapPreview, or repoint its c2c pglite test (projects-create-us-biotech-identities:29)."
+    },
+    {
+     "id": "S27",
+     "verdict": "open",
+     "evidence": "submissions.ts:64 imports server/services/authoring/section-generation-service.ts (still present); :1538 POST /:id/sections/generate. Prompts are in ai-gateway/prompts/section-generation/. Types are at shared/types/submission-api.ts:172-190.",
+     "remaining": "Run the turn-record and ungrounded-claims check first. FD-1(e) is decided as 'decide after the check'. Then delete the route, the service, the prompts and the tests as written."
+    },
+    {
+     "id": "S28",
+     "verdict": "open",
+     "evidence": "command-executor.ts:3505 draftSection, :4739 union member, :5013 registry entry, :5435 map entry; command-rbac.ts:235. ui-surface-registry.ui-v2.ts:195, :211 and :648 still list 'draft_section' (UI lane).",
+     "remaining": "Delete the command, its RBAC and inventory entries and its tests. The anaToolFamilies entries need the UI session's H10 edit in the same change."
+    },
+    {
+     "id": "S29",
+     "verdict": "open",
+     "evidence": "cmc-module3-compiler.ts:3 CmcSourceObject, :20 SECTION_MAP, :67 compileModule3Sections, :107 markStaleSections. No production importer of either function (grep over server/shared/services/client).",
+     "remaining": "Delete the second compile path. Repoint or delete the module3-e2e-journey and workflow-convergence cases that pin the wrong map."
+    },
+    {
+     "id": "S30",
+     "verdict": "open",
+     "evidence": "client/.../v2/surfaces/AnaDocContext.tsx exists. ConversationThread.tsx:16 import and :401-405. useAnaChat.ts:2042 and :2051 store detectedDocumentTemplate. These files are in the D1 package paths (one-design-plan.json) and the UI session's lane.",
+     "remaining": "Hand to the UI/D1 session: delete AnaDocContext, stop storing the template, and pin AnaActivity's 'Drafting {documentType}' line."
+    },
+    {
+     "id": "S31",
+     "verdict": "open",
+     "evidence": "No scripts/ci/ctd-heading-copies-baseline.json, and the single-copy gate has no heading-copy check (check-regulatory-reference-data-single-copy.mjs:45-80).",
+     "remaining": "Add the per-file CTD code/title pair ratchet with a shrink-only baseline and a --selftest. Update the comments at ctd-registry-consistency.test.ts:67 and ANA_REGULATORY_RECORD.md:492."
+    },
+    {
+     "id": "S32",
+     "verdict": "open",
+     "evidence": "ind/ctd/index.ts:288 headingTitle is still private. m2-summary-builders.ts:36 heading, :50 notComposed and :65 notComposedGap are private. ichFiledHeadingTitle exists nowhere.",
+     "remaining": "Export ichFiledHeadingTitle from ich-m4-headings.ts and move the three helpers into ctd-component-outlines.ts. Add pins for 2.1, 2.3, 2.6.1, 3.2.S.2, 3.2.S.7 and 3.2.A."
+    },
+    {
+     "id": "S33",
+     "verdict": "open",
+     "evidence": "lumen-context/sections.ts:40, :65-66, :89, :120-124, :150, :170 and :193 still hold literal 'Sub-sections', 'Full Structure' and 'Required Studies' lists. f4c692b09 only scoped buildSectionSpecificPrompt to US_IND documents (:424-425).",
+     "remaining": "Render the parent playbooks' lists from ctdRecordSubtree, with the title-equals-record red in ana-ctd-section-truth.test.ts."
+    },
+    {
+     "id": "S34",
+     "verdict": "open",
+     "evidence": "ctd-module-structure.ts:186-192 M2_SECTIONS are hand-typed literals. ana/ctd-structure.ts:36-101 sections are literals (5.3.3 at :99) with no ichHeadingTitle. 0 commits since 10-18.",
+     "remaining": "Converge both onto the record, with sourceModules from rule-data DEPENDENCIES and the reds as written."
+    },
+    {
+     "id": "S35",
+     "verdict": "open",
+     "evidence": "ana/medical-writing.ts:164 (2.5) and :176 (2.7) structure lists are hand-typed, and :392 still says '2.3.1 forms'. The IB, RMP (:31-32) and CSR (:132) entries already read records, but those are not this slice.",
+     "remaining": "Use getDocumentTemplate('clinical_overview'|'clinical_summary') at :164 and :176, change :392 to '1.1 forms', and add the missingSections [] red."
+    },
+    {
+     "id": "S36",
+     "verdict": "open",
+     "evidence": "ana-ri/document-routing.ts:108: the 5.2 row is still 'Tabulated Summary Data' and catches 'tabulated summar'. No ichHeadingTitle. 0 commits since 10-18.",
+     "remaining": "Take the titles from the record with a load-time assertion, fix 5.2 and the 2.6 routing and the row order, and point CTD generation at draft_authoring_document."
+    },
+    {
+     "id": "S37",
+     "verdict": "open",
+     "evidence": "in-text-references.ts:422-439 ctdTree is built from listCtdGuidanceCodes() only. CTD_M4_CHILD_COUNT (:396-418) lacks 2.4, 2.6.4, 2.6.6 and 2.7.4.",
+     "remaining": "Build the tree from CTD_AUTHORING_GUIDANCE plus ICH_M4_HEADINGS, add the four counts, and move the in-text-references.test.ts pins at :173 and :225-230."
+    },
+    {
+     "id": "S38",
+     "verdict": "open",
+     "evidence": "HEAD engine.ts:587: NDA/BLA still suggests draft_quality_overall_summary_m2_3. generate_document at :546, :547, :552, :568, :580, :594, :604 and :644. HEAD AnaToolExecutor.ts:15683 assemble_ectd_module_from_artifacts sorts with localeCompare and has no 3.x/2.3 refusal. Council: agentic-workflow-tools.ts:214 has no record_requirements. An uncommitted working-tree diff (Rule 2 S6b) is rewriting engine.ts's CSR, 510(k), CER and CMC actions now.",
+     "remaining": "Do the NDA/BLA 2.3, protocol/SAP and PMA actions, the assemble refusal, compareSectionCode, ichHeadingTitle and the council brief. FD-10 is decided: read authoring_documents. Wait for the Rule 2 S6b engine.ts change to land."
+    },
+    {
+     "id": "S39",
+     "verdict": "open",
+     "evidence": "services/precedent-engine.ts:1613 still says 'ICH E1/CTD format', and :1622-1627 still file the QOS under 'Module 3'.",
+     "remaining": "Have the four CTD rows read 'Module '+code and ichHeadingTitle(code), with the QOS-under-2.3 red."
+    },
+    {
+     "id": "S40",
+     "verdict": "open",
+     "evidence": "templates/nonclinical-templates.ts: no import of ctdRecordSubtree or ichHeadingTitle, and 0 commits since 10-18.",
+     "remaining": "Generate the heading lines from ctdRecordSubtree('2.6'|'4.2.x') with a field-placeholder overlay, plus the record-title test."
+    },
+    {
+     "id": "S41",
+     "verdict": "open",
+     "evidence": "clinical-csr-templates.ts:197-245: the protocol body is hand-typed (labelled E6(R3) Appendix B, not M11). The synopsis at :70-112 is hand-typed. Last commit 182fed957 (10-15). Only the CSR body (:21, :67) reads renderE3Scaffold.",
+     "remaining": "Take the protocol from ICH_M11_PROTOCOL_SECTIONS level 1 and the synopsis from E3 \u00a72 'contains'. Per FD-6 (decided, P-55), derive ISS/ISE from 2.7.4/2.7.3 and label them platform convention."
+    },
+    {
+     "id": "S42",
+     "verdict": "open",
+     "evidence": "safety-reports/psur-dsur-service.ts:53 PSUR_SECTIONS and :191 DSUR_SECTIONS are literals. No commits since 10-18.",
+     "remaining": "Replace them with flattenings of PBRER_TEMPLATE and ICH_E2F_DSUR_SECTIONS, and rewrite psur-dsur-service.test.ts as the red."
+    },
+    {
+     "id": "S43",
+     "verdict": "done",
+     "evidence": "Done under another name: 8cf9bd399 (CSR slice 2, 2026-10-29) deleted ICH_E3_STRUCTURE. csr-builder.ts:92-104 and :801-804 derive the tree from ICH_E3_GUIDANCE (e3TopLevel/e3Children, :14), pinned by csr-builder-e3-outline.test.ts."
+    },
+    {
+     "id": "S44",
+     "verdict": "partial",
+     "evidence": "The handler bullet is superseded and done by Rule 2 S2 (43f0e72b1, b5b44678b): supplied studies are refused and the record outline is answered. Still open: nonclinical/m26-m4-view.ts:104-118 hand-typed M26_SUBSECTIONS and M4_GROUPS labels; preclinical/m26-nonclinical-summaries.ts:109-125 hand-typed headings that do not use heading(); nonclinical-summary.routes.ts:94 POST /document.",
+     "remaining": "After S32, take the m26 view labels and composer headings from ichFiledHeadingTitle/heading(). Delete POST /api/nonclinical-summary/document, which the Rule 2 design also lists as S14e."
+    },
+    {
+     "id": "S45",
+     "verdict": "superseded",
+     "evidence": "788624107 (P-73 slice 2, 2026-10-30): /sections/:id/ai/draft builds its requirements via recordedFilingDraftContext then resolveDraftingRequirements (authoring-draft-template.ts:232-256, authoring.router.ts:3624). It records requirementsSource in the draft record (authoring.router.ts:3966), tested by authoring-draft-recorded-filing.test.ts. With no recorded application it is deliberately UNASSESSED, not briefed."
+    },
+    {
+     "id": "S46",
+     "verdict": "open",
+     "evidence": "ctd-ingestion-service.ts:236-240: titles hand-typed ('Quality Overall Summary', 'Drug Substance', ...), no ichHeadingTitle.",
+     "remaining": "Give the heading rows ichHeadingTitle(section) and keep document labels for ISS/ISE/CSR, with the registry-equality red."
+    },
+    {
+     "id": "S47",
+     "verdict": "open",
+     "evidence": "coauthor.ts:695 ECTD_MODULE_STRUCTURE is a literal, and :999-1008 m4Rules (M4-004) are hand-written.",
+     "remaining": "Derive both from resolveRequiredSections/FALLBACK_REQUIRED_MODULES and MODULE_NAMES, with the red: 2.5 present and 2.7 absent fails."
+    },
+    {
+     "id": "S48",
+     "verdict": "open",
+     "evidence": "shared/regulatory/project-bootstrap.ts:183 QOS_SECTIONS, :192 M3_DS_SECTIONS, :203 M3_DP_SECTIONS, :764-765 blueprint entries. sectionBlueprintCatalog.ts has no ICH_QOS, ICH_M3_DS or ICH_M3_DP.",
+     "remaining": "Add the six record-derived blueprints with formerTitles and delete the local copies in the same commit. Extend section-blueprint-consistency.test.ts. FD-5 is decided: keep ICH_TABULATED_SUMMARIES withheld."
+    },
+    {
+     "id": "S49",
+     "verdict": "open",
+     "evidence": "ctdBlueprintNormalizer.ts:48 CTD_COMMON_MODULES is a literal, and :231 still sorts with localeCompare.",
+     "remaining": "Take the codes and titles from ctdRecordSubtree with an overlay, use compareSectionCode, and add the S-before-P and 1.1-before-1.14 reds."
+    },
+    {
+     "id": "S50",
+     "verdict": "open",
+     "evidence": "regulatory/templateCatalog.ts:31-51 entries still carry title and sectionCode. :130 getTemplatesForType and :146 getTemplateCategories are still present.",
+     "remaining": "Make it a code-free overlay over DOCUMENT_TEMPLATES and delete the test-only helpers. FD-11 is decided (2.6 is a preparation worksheet)."
+    },
+    {
+     "id": "S51",
+     "verdict": "open",
+     "evidence": "ich-m4-headings.ts has no 3.2.A.1-3 rows (comment at :117; only 2.3.A.1 at :153). module3-convergence-service.ts:94 SECTION_LABELS is a literal. template-seeds.ts:35 SEEDS_VERSION is '1.1.0'.",
+     "remaining": "Append 3.2.A.1-3 with a recall basis, then converge SECTION_LABELS, the module3Composer 3.1 rows, module3-extensions and the seeds to 1.2.0 with a row count. The verbatim read is still waiting on the environment owner (P-55, row 14)."
+    },
+    {
+     "id": "S52",
+     "verdict": "open",
+     "evidence": "template-seeds.ts:35 SEEDS_VERSION is '1.1.0'. The 2.5 and 2.7.3 seeds and CTD_MODULE_OUTLINE are not derived from the record.",
+     "remaining": "Derive the seeds from getDocumentTemplate and ctdRecordSubtree, take the outline titles from ichFiledHeadingTitle, and set version 1.3.0."
+    },
+    {
+     "id": "S53",
+     "verdict": "open",
+     "evidence": "services/regulatory/ind-ectd-sections.ts has no ichHeadingTitle or module1Heading. Its only change since 10-18 is S07's 46cb575bd.",
+     "remaining": "Take the titles from the record, with the 'deep IND eCTD map' equality red (30 titles). Notify the UI session."
+    },
+    {
+     "id": "S54",
+     "verdict": "open",
+     "evidence": "ind-pyramid.ts:21 has only m1Binding, plus 32 literal ctdSection pairs. ind-annual-report-pyramid.ts:206, :239 and :349-350 hold append bindings at 5.3.5, 2.7.4, 3.2.S and 3.2.P, outside 1.13.",
+     "remaining": "Add ctdBinding, rebind the annual report to 1.13 lifecycle components, and register both pyramids in REGISTRIES."
+    },
+    {
+     "id": "S55",
+     "verdict": "open",
+     "evidence": "ind/ind-section-registry.ts:59-92 holds hand-written generationPrompt strings and no CTD_AUTHORING_GUIDANCE.",
+     "remaining": "Derive the rows from CTD_AUTHORING_GUIDANCE plus the IND overlay, take required from the ind:fda pack, and add the registry-equality red at ctd-registry-consistency.test.ts:72."
+    },
+    {
+     "id": "S56",
+     "verdict": "open",
+     "evidence": "market-specs/submission-requirements.ts:144-192: requiredModules hand-typed. requiredArtifactMatrix.ts:54 and :64: clinical_overview required: true.",
+     "remaining": "Take the drug rows from requiredSectionProfileFor, answer ANDA/CTA as not assessed, and take the IND 2.5 flag from requiredSectionsFor('IND')."
+    },
+    {
+     "id": "S57",
+     "verdict": "open",
+     "evidence": "reasoning-engine/rule-data.ts:15 PROFILE_VERSION '2026-06-01'; :64 requiredSections is a hand table. No commits since 10-18.",
+     "remaining": "Read requiredSectionProfileFor, return supported:false for 510k/pma/anda/cta, and bump PROFILE_VERSION."
+    },
+    {
+     "id": "S58",
+     "verdict": "partial",
+     "evidence": "Creation is converged: f9c84bdf1 (A2.4) retired AnA create_project in favour of the Projects wizard calling POST /api/c2c/projects. ce8cae239 removed ana-platform-controller createProject. Still open: command-executor.ts:297-325 listProjects queries the projects table directly, not the GET /api/c2c/projects query (c2c/projects.ts:579).",
+     "remaining": "Have list_projects run the c2c GET / query through a shared function, and rewrite project-tools-use-the-real-projects-schema.test.ts."
+    },
+    {
+     "id": "S59",
+     "verdict": "open",
+     "evidence": "HEAD AnaToolExecutor.ts:7502-7516: fetch_template_and_fill still calls templateService.getTemplateById. templateService.ts is still imported by api/templates/routes.ts and services/index.ts.",
+     "remaining": "After S09 and S22, read the c2c template store via templateRenderAdapter.ts, with the red: an uploaded c2c template is found and filled. Then delete templateService.ts."
+    },
+    {
+     "id": "S60",
+     "verdict": "open",
+     "evidence": "check-unreferenced-modules.mjs:71 SCAN_ROOTS = ['server','client/src']. No closure reachability from ENTRY_POINTS and no selftest. No commits since 10-18.",
+     "remaining": "Add services/ to the scan roots, add mount-manifest closure reachability and the two-file-island selftest, and regenerate the baseline."
+    },
+    {
+     "id": "GF-1",
+     "verdict": "open",
+     "evidence": "FD-1(a) approved under P-55 (LAUNCH_DEFINITION_OF_DONE.md:1042; FOUNDER-DECISIONS-OWED-2026-10-26.md header 'Decided 2026-10-29'). c2c/ai-editing.ts:1292 /ai/autocomplete is still present.",
+     "remaining": "After S23, delete /ai/autocomplete, the file and its mount (register-concept2cure-routes.ts:11,37)."
+    },
+    {
+     "id": "GF-2",
+     "verdict": "open",
+     "evidence": "FD-2 decided (P-55): carry the M2/M4/M5 QC rules into Submission Readiness as named findings. server/routes/authoring-pdf.routes.ts is still present.",
+     "remaining": "Carry the QC rules into assess-dispatch-readiness and ind-program-findings, then delete the route, its six services and the ind-openapi entries."
+    },
+    {
+     "id": "GF-3",
+     "verdict": "open",
+     "evidence": "FD-1(d) approved (P-55). regulatory-intelligence.ts:505-537 /templates*, with compareAcrossAgencies at :83 and :537.",
+     "remaining": "Delete the /templates* handlers, template-registry.ts and template-validator.ts with its test, and the sql-interpolation entry."
+    },
+    {
+     "id": "GF-4",
+     "verdict": "open",
+     "evidence": "FD-1(c) approved (P-55). server/templates/m3/ still exists. authoring.router.ts:6194 loadTemplates and the apply-template path (:1280) are still present.",
+     "remaining": "Delete overwrite mode and the m3 templates (merge mode has the assembly twin), with the gate edits as listed."
+    },
+    {
+     "id": "GF-5",
+     "verdict": "open",
+     "evidence": "authoring-actions.ts:1810 /section-expectations and the preflights are still present. They depend on the ui-surface-registry.ts claim (H10, UI lane).",
+     "remaining": "Repoint mdx-command-handlers to assess-dispatch-readiness and replace section-expectations with get_document_section_requirements, coordinated with the UI session's H10."
+    },
+    {
+     "id": "GF-6",
+     "verdict": "blocked-on-founder",
+     "evidence": "The remainder of knowledge-base.ts is outside this lens. The R1 inventory (DESIGN/R1/2026-11-01-inventory/README.md:273, :297) puts the file on its founder retirement list.",
+     "remaining": "Wait for R1's founder retirement decision, or for the connector (D8) owner."
+    }
+   ],
+   "next": [
+    {
+     "id": "S08",
+     "why": "It must come before S09: once S09 deletes fallbackTemplates, the gate would guard nothing. The gate already exists but runs nowhere (it is only in package.json:256, with no ci.yml or .husky reference), so this extends it and wires it in, as Rule 3 requires. It touches only scripts/ci and ci.yml, which no other session holds and no UI-lane file depends on, and it needs no founder decision. Commit under RULE 5 with 'Plan: L1' and 'Completes: scripts/ci/check-regulatory-reference-data-single-copy.mjs'."
+    },
+    {
+     "id": "S09",
+     "why": "This is a shipped fabrication defect. POST /api/v1/drafting/start_task is served in production and records a placeholder fill as status 'COMPLETED' (misc-inline-routes.ts:348-374), which breaks the fail-closed rule. It has no client caller and its replacements are named (draft_authoring_document, batch_draft_sections, GET /api/authoring/templates). The file has had 0 commits since 10-18, and the slice unblocks S22 and S59. The R1 inventory lists the misc-inline GET /api/templates row (R1 README:154), so tell that session the file is taken."
+    },
+    {
+     "id": "S11",
+     "why": "/api/ai serves an invented keyword 'compliance score' (api/ai/routes.ts:16-92), which is a defect under Rule 2. No client calls /api/ai/*. The change is one file deletion plus the import and mount at register-core-routes.ts:6 and :42 (one commit there since 10-18), and the replacement is named (get_document_section_requirements and the deficiency scan). It needs no founder decision and no UI-lane edit. Runners-up: S10, a small server-only deletion; S32, which unblocks S44 and S51-S53; and S05b, the leftover from this session's own S05 split."
+    }
+   ]
+  }
+ ]
+]

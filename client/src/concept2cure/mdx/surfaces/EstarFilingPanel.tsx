@@ -563,7 +563,12 @@ function CorrespondentBlock({
  * out. Making the prop required means the compiler catches the next surface
  * that forgets, instead of it silently reading org-wide again.
  */
-export function EstarFilingPanel({ programId }: { programId: string | null }) {
+/** `defaultVariant`: the eSTAR form the program files on, from its product type
+ *  (officialEstarVariantFor). Until 2026-11-01 (MDX journey M6(c)) the panel always
+ *  started on the nIVD form, so an IVD project was assessed and tracked against the
+ *  wrong eSTAR unless the user changed the select. The select stays, for a product
+ *  type nobody recorded. */
+export function EstarFilingPanel({ programId, defaultVariant = 'device' }: { programId: string | null; defaultVariant?: 'device' | 'ivd' }) {
   /*
    * BOTH `error`s were dropped on the floor, and both reads then failed into a
    * sentence that reads like an answer. A registration that could not be read
@@ -602,7 +607,9 @@ export function EstarFilingPanel({ programId }: { programId: string | null }) {
   const { catalog } = useEstarCatalog();
 
   const [selectedKey, setSelectedKey] = useState<string>('');
-  const [variant, setVariant] = useState<'device' | 'ivd'>('device');
+  const [variant, setVariant] = useState<'device' | 'ivd'>(defaultVariant);
+  /* A different project, or its product type read late, restarts from its own form. */
+  useEffect(() => { setVariant(defaultVariant); }, [defaultVariant, programId]);
   const [readiness, setReadiness] = useState<FilingReadinessResult | null>(null);
   /** Why an assessment did not run — shown instead of a verdict nobody computed. */
   const [assessRefusal, setAssessRefusal] = useState<string | null>(null);

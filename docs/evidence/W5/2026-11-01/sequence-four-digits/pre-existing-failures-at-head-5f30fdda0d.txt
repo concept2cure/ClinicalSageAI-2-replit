@@ -1,0 +1,343 @@
+
+ RUN  v4.1.7 <HEAD 5f30fdda0d export>
+
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP
+{
+  "timestamp": "2026-11-01T22:43:45.598Z",
+  "level": "warn",
+  "message": "[assemble-technical-file] Technical-file assemble could not materialize some leaf sources (not dropped silently)",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 2,
+    "organizationId": 7,
+    "regulation": "mdr",
+    "unresolved": [
+      {
+        "documentTable": "vault_documents",
+        "documentId": null,
+        "documentUuid": "44444444-4444-4444-8444-444444444444",
+        "reason": "vault document not found in this organization"
+      }
+    ]
+  }
+}
+
+stderr | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP
+{
+  "timestamp": "2026-11-01T22:43:45.600Z",
+  "level": "warn",
+  "message": "[audit-write-outcome] Audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist",
+  "context": {
+    "action": "DEVICE_TECHNICAL_FILE_ASSEMBLED",
+    "resourceType": "ectd_sequence",
+    "resourceId": 2
+  }
+}
+
+stdout | server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP
+{
+  "timestamp": "2026-11-01T22:43:45.600Z",
+  "level": "info",
+  "message": "[assemble-technical-file] Assembled technical file from core",
+  "context": {
+    "resourceType": "ectd_sequence",
+    "resourceId": 2,
+    "organizationId": 7,
+    "regulation": "mdr",
+    "materialized": 7,
+    "skipped": 1,
+    "unresolved": 1
+  }
+}
+
+ × server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > puts the vault CER in the technical-file ZIP instead of skipping it 116ms
+   → Failed query: SELECT id,document FROM public.company_legal_registry
+    WHERE organization_id=$1 AND lower(document->>'vaultDocumentId')=lower($2)
+    ORDER BY document->>'registeredAt',id
+params: 7,33333333-3333-4333-8333-333333333333
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > is not ready when a leaf that fills a required slot was left out of the ZIP 100ms
+stderr | tests/routes/ectd-compile-dtd-evidence.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/ectd-compile-dtd-evidence.test.ts
+{
+  "timestamp": "2026-11-01T22:43:46.608Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > projects complete index, regional and STF proof and persists it in the existing findings record
+{
+  "timestamp": "2026-11-01T22:43:48.434Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-01T22:43:48.435Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > projects complete index, regional and STF proof and persists it in the existing findings record
+{
+  "timestamp": "2026-11-01T22:43:48.435Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > projects complete index, regional and STF proof and persists it in the existing findings record
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > counts an executed invalid STF as an error while preserving report-only compilation
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > reports invalid XML even when an executed validator supplied no diagnostics
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never calls contradictory valid flags with diagnostics a passed DTD check
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads missing evidence as a passed DTD check
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads empty evidence as a passed DTD check
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads not-ran evidence as a passed DTD check
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads duplicate evidence as a passed DTD check
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+stdout | tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > reports integrity failures through the existing validation findings and counters
+[eCTD Compile] Program BX-204: spine-backed completed | sequence 0000 | 2 leaf file(s) rendered, 0 unresolved | sha256 aaaaaaaaaaaa…
+
+ × tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > projects complete index, regional and STF proof and persists it in the existing findings record 1344ms
+   → expected { Object (rule, severity, ...) } to match object { Object (severity, evidence) }
+(3 matching properties omitted from actual)
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > counts an executed invalid STF as an error while preserving report-only compilation 12ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > reports invalid XML even when an executed validator supplied no diagnostics 11ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never calls contradictory valid flags with diagnostics a passed DTD check 8ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads missing evidence as a passed DTD check 7ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads empty evidence as a passed DTD check 7ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads not-ran evidence as a passed DTD check 7ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > never reads duplicate evidence as a passed DTD check 6ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > reports integrity failures through the existing validation findings and counters 7ms
+ × tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > projects the typed proof and preserves the separate imported agency report 3ms
+   → expected null to deeply equal { …(2) }
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 0 1ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 1 0ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 2 0ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 3 1ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 4 0ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > returns unverified for absent, ambiguous or malformed stored proof 5 1ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > rejects forged passed history with empty proof 0ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > rejects forged passed history with duplicate proof 1ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > rejects forged passed history with not-ran proof 0ms
+ ✓ tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > rejects forged passed history with missing-integrity proof 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > projects complete index, regional and STF proof and persists it in the existing findings record
+AssertionError: expected { Object (rule, severity, ...) } to match object { Object (severity, evidence) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -107,7 +107,7 @@
+          "version": 1,
+        },
+      },
+      "packageSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    },
+-   "severity": "info",
++   "severity": "warning",
+  }
+
+ ❯ tests/routes/ectd-compile-dtd-evidence.test.ts:64:21
+     62|     expect(payload.package.regionalStatus).toMatchObject({ region: 'fd…
+     63|     const summary = payload.validationResults.find(row => row.rule ===…
+     64|     expect(summary).toMatchObject({ severity: 'info', evidence: { pack…
+       |                     ^
+     65|     const insert = poolQuery.mock.calls.find(call => /INSERT INTO ectd…
+     66|     expect(JSON.parse(String(insert?.[1]?.[5]))).toContainEqual(summar…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > projects the typed proof and preserves the separate imported agency report
+AssertionError: expected null to deeply equal { …(2) }
+
+- Expected:
+{
+  "dtdStatus": {
+    "missing": [],
+    "missingStylesheets": [],
+    "present": [
+      "ich-ectd-3-2.dtd",
+      "us-regional-v3-3.dtd",
+      "ich-stf-v2-2.dtd",
+    ],
+    "presentStylesheets": [
+      "ectd-2-0.xsl",
+      "us-regional.xsl",
+    ],
+    "required": [
+      "ich-ectd-3-2.dtd",
+      "us-regional-v3-3.dtd",
+      "ich-stf-v2-2.dtd",
+    ],
+    "requiredStylesheets": [
+      "ectd-2-0.xsl",
+      "us-regional.xsl",
+    ],
+    "selfContained": true,
+    "validation": {
+      "expectedFiles": [
+        "index.xml",
+        "m1/us/us-regional.xml",
+        "m5/stf-study-101.xml",
+      ],
+      "files": [
+        {
+          "doctype": {
+            "errors": [],
+            "valid": true,
+          },
+          "dtd": {
+            "errors": [],
+            "mode": "dtd",
+            "ran": true,
+            "valid": true,
+          },
+          "relPath": "index.xml",
+          "wellFormed": {
+            "errors": [],
+            "mode": "well-formed",
+            "ran": true,
+            "valid": true,
+          },
+        },
+        {
+          "doctype": {
+            "errors": [],
+            "valid": true,
+          },
+          "dtd": {
+            "errors": [],
+            "mode": "dtd",
+            "ran": true,
+            "valid": true,
+          },
+          "relPath": "m1/us/us-regional.xml",
+          "wellFormed": {
+            "errors": [],
+            "mode": "well-formed",
+            "ran": true,
+            "valid": true,
+          },
+        },
+        {
+          "doctype": {
+            "errors": [],
+            "valid": true,
+          },
+          "dtd": {
+            "errors": [],
+            "mode": "dtd",
+            "ran": true,
+            "valid": true,
+          },
+          "relPath": "m5/stf-study-101.xml",
+          "wellFormed": {
+            "errors": [],
+            "mode": "well-formed",
+            "ran": true,
+            "valid": true,
+          },
+        },
+      ],
+      "integrity": {
+        "mismatched": [],
+        "missingFiles": [],
+        "ok": true,
+        "unlistedFiles": [],
+        "verified": [
+          "index.xml",
+          "us-regional.xml",
+          "stf-study-101.xml",
+          "ich-ectd-3-2.dtd",
+          "us-regional-v3-3.dtd",
+          "ich-stf-v2-2.dtd",
+          "ectd-2-0.xsl",
+          "us-regional.xsl",
+        ],
+      },
+      "passed": true,
+      "version": 1,
+    },
+  },
+  "packageSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+}
+
++ Received:
+null
+
+ ❯ tests/routes/ectd-compile-dtd-evidence.test.ts:113:57
+    111|     const status = dtdStatus(); const report = { validator: 'External …
+    112|     const result = await history([{ id: 3, validation_results: [record…
+    113|     expect(result.compilations[0].packageDtdValidation).toEqual({ pack…
+       |                                                         ^
+    114|     expect(result.compilations[0].external_validation).toEqual(report);
+    115|     const read = poolQuery.mock.calls.find(call => /FROM ectd_compilat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > puts the vault CER in the technical-file ZIP instead of skipping it
+Error: Failed query: SELECT id,document FROM public.company_legal_registry
+    WHERE organization_id=$1 AND lower(document->>'vaultDocumentId')=lower($2)
+    ORDER BY document->>'registeredAt',id
+params: 7,33333333-3333-4333-8333-333333333333
+ ❯ PglitePreparedQuery.queryWithCache ../../../../../..<repo>/node_modules/src/pg-core/session.ts:73:10
+ ❯ Object.query server/db/drizzle-queryable.ts:43:23
+     41|         );
+     42|       }
+     43|       const result = (await runner.execute(sql.join(chunks))) as
+       |                       ^
+     44|         | { rows?: unknown[]; rowCount?: number | null }
+     45|         | unknown[];
+ ❯ readCompanyLegalRegistryForVault server/services/company-documents/legal-registry.ts:46:20
+ ❯ materializeLeafSources server/services/ectd/leaf-source-resolver.ts:710:30
+ ❯ Module.assembleTechnicalFileFromCore server/services/pathway-engines/mdr-ivdr/assemble-technical-file-from-core.ts:298:7
+ ❯ server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts:121:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { query: 'SELECT id,document FROM public.company_legal_registry\n    WHERE organization_id=$1 AND lower(document->>\'vaultDocumentId\')=lower($2)\n    ORDER BY document->>\'registeredAt\',id', params: [ 7, '33333333-3333-4333-8333-333333333333' ] }
+Caused by: error: relation "public.company_legal_registry" does not exist
+ ❯ pe.Le ../../../../../..<repo>/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:17572
+ ❯ pe.Xe ../../../../../..<repo>/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:14961
+ ❯ pe.parse ../../../../../..<repo>/node_modules/@electric-sql/pglite/dist/chunk-XJLHLW5W.js:1:13713
+ ❯ O.qe ../../../../../..<repo>/node_modules/@electric-sql/pglite/dist/index.js:5:1762
+ ❯ ../../../../../..<repo>/node_modules/@electric-sql/pglite/dist/index.js:5:1155
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5922082
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2616592
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649078
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:2649682
+ ❯ null.<anonymous> wasm:/wasm/0267bdc2:1:5570415
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 128, severity: 'ERROR', code: '42P01', detail: undefined, hint: undefined, position: '25', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'parserOpenTable', query: 'SELECT id,document FROM public.company_legal_registry\n    WHERE organization_id=$1 AND lower(document->>\'vaultDocumentId\')=lower($2)\n    ORDER BY document->>\'registeredAt\',id', params: [ 7, '33333333-3333-4333-8333-333333333333' ], queryOptions: { rowMode: 'object', parsers: { '1082': 'Function<1082>', '1114': 'Function<1114>', '1115': 'Function<1115>', '1182': 'Function<1182>', '1184': 'Function<1184>', '1185': 'Function<1185>', '1186': 'Function<1186>', '1187': 'Function<1187>', '1231': 'Function<1231>' } } }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 19 passed (22)
+   Start at  22:43:38
+   Duration  10.34s (transform 3.29s, setup 103ms, import 5.58s, tests 4.18s, environment 0ms)
+

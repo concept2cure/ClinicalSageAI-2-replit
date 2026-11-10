@@ -23,17 +23,6 @@ function m1Section(role: DocumentRole, kind: ApplicationKind = 'ind'): string | 
   return soleModule1Placement(role, 'US', kind)?.code ?? null;
 }
 
-export interface CTDDocumentUpload {
-  fileName: string;
-  fileSize: number;
-  mimeType: string;
-  storagePath: string;
-  ctdModule: number;
-  ctdSection: string;
-  sectionTitle: string;
-  documentType: string;
-}
-
 export interface ComplianceGap {
   ctdModule: number;
   ctdSection: string;
@@ -160,52 +149,6 @@ export async function getCTDProjectStatus(ctdProjectId: number, organizationId: 
 }
 
 // ============================================================================
-// DOCUMENT UPLOAD
-// ============================================================================
-
-export async function uploadCTDDocument(
-  ctdProjectId: number,
-  organizationId: number,
-  doc: CTDDocumentUpload
-) {
-  const projectResult = await pool.query(
-    `SELECT id FROM ctd_onboarding_projects WHERE id = $1 AND organization_id = $2`,
-    [ctdProjectId, organizationId]
-  );
-  if (projectResult.rows.length === 0) {
-    throw new Error('CTD project not found for organization');
-  }
-
-  const result = await pool.query(
-    `INSERT INTO ctd_onboarding_documents (
-      ctd_project_id, organization_id, file_name, file_size, mime_type,
-      storage_path, ctd_module, ctd_section, section_title, document_type,
-      status, created_at, updated_at
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'uploaded', NOW(), NOW())
-    RETURNING id, uuid`,
-    [
-      ctdProjectId, organizationId, doc.fileName, doc.fileSize, doc.mimeType,
-      doc.storagePath, doc.ctdModule, doc.ctdSection, doc.sectionTitle,
-      doc.documentType,
-    ]
-  );
-
-  // Mark matching compliance gaps as resolved
-  await pool.query(
-    `UPDATE ctd_compliance_gaps
-     SET resolved = TRUE, resolved_at = NOW()
-     WHERE ctd_project_id = $1 AND organization_id = $2
-       AND ctd_section = $3 AND resolved = FALSE`,
-    [ctdProjectId, organizationId, doc.ctdSection]
-  );
-
-  // Recalculate completion percentage
-  await recalculateCompletion(ctdProjectId, organizationId);
-
-  return result.rows[0];
-}
-
-// ============================================================================
 // SECTION DETECTION
 // ============================================================================
 
@@ -225,14 +168,20 @@ export const SECTION_PATTERNS: Array<{
   title: string;
   docType: string;
   confidence?: number;
+  /** What a Module 1 document is in the regional record. `section` is its US heading; another region's is the
+   *  record's heading for this role (the Vault's classifier asks it, S6/F1 2026-11-05). */
+  role?: DocumentRole;
 }> = [
   /* Module 1 placements come from the record (m1Section below), not from this table: the three
      rows here each named the wrong heading — the cover letter at 1.1 and the application form at
      1.2 are swapped (US 1.1 is Forms, 1.2 is the Cover Letter), and patent information at 1.3.1,
      which is Contact/Sponsor/Applicant Information, belongs at 1.3.5. */
-  { pattern: /\bcover ?letter\b/, module: 1, section: m1Section('cover_letter'), title: 'Cover Letter', docType: 'cover_letter' },
-  { pattern: /\b(application ?form|356h|form ?1571)\b/, module: 1, section: m1Section('application_form'), title: 'Application Form', docType: 'form' },
-  { pattern: /\bpatent\b/, module: 1, section: m1Section('patent', 'nda'), title: 'Patent Information', docType: 'patent_info' },
+  { pattern: /\bcover ?letter\b/, module: 1, section: m1Section('cover_letter'), role: 'cover_letter', title: 'Cover Letter', docType: 'cover_letter' },
+  /* An FDA form number names a US form, which no other region files; only the generic name is an application
+     form in every region's record. */
+  { pattern: /\b(356h|form ?1571)\b/, module: 1, section: m1Section('application_form'), title: 'Application Form', docType: 'form' },
+  { pattern: /\bapplication ?form\b/, module: 1, section: m1Section('application_form'), role: 'application_form', title: 'Application Form', docType: 'form' },
+  { pattern: /\bpatent\b/, module: 1, section: m1Section('patent', 'nda'), role: 'patent', title: 'Patent Information', docType: 'patent_info' },
   { pattern: /\b(quality ?overall ?summary|qos)\b/, module: 2, section: '2.3', title: 'Quality Overall Summary', docType: 'summary' },
   { pattern: /\bnonclinical ?overview\b/, module: 2, section: '2.4', title: 'Nonclinical Overview', docType: 'summary' },
   { pattern: /\bclinical ?overview\b/, module: 2, section: '2.5', title: 'Clinical Overview', docType: 'summary' },
@@ -258,7 +207,7 @@ export const SECTION_PATTERNS: Array<{
      ("withdrawal, inactivation, reactivation and reinstatement requests") with no child sections at
      all, so the platform was proposing that a sponsor file their risk-management plan under the
      heading whose controlled meaning is that they are withdrawing the IND. */
-  { pattern: /\b(risk ?management|rmp)\b/, module: 1, section: m1Section('rmp'), title: 'Risk Management Plan', docType: 'risk_management' },
+  { pattern: /\b(risk ?management|rmp)\b/, module: 1, section: m1Section('rmp'), role: 'rmp', title: 'Risk Management Plan', docType: 'risk_management' },
 ];
 
 /** Names that look like CTD content and are not: a chemical safety data sheet. */
@@ -273,19 +222,22 @@ const NOT_CTD = /\b(safety ?data ?sheet|m?sds)\b/;
  */
 export function detectCTDSection(fileName: string): {
   module: number;
+  /** The US heading for a Module 1 document; Modules 2 to 5 are harmonised (ICH M4). */
   section: string | null;
   title: string;
   documentType: string;
   confidence: number;
+  /** A Module 1 document's role in the regional record, so another region's heading can be read for it. */
+  role?: DocumentRole;
 } | null {
   // Hyphens, underscores and dots separate words in file names; '_' is a word
   // character to \b, so they become spaces before the anchored patterns run.
   const name = fileName.toLowerCase().replace(/[-_.]+/g, ' ');
   if (NOT_CTD.test(name)) return null;
 
-  for (const { pattern, module, section, title, docType, confidence } of SECTION_PATTERNS) {
+  for (const { pattern, module, section, title, docType, confidence, role } of SECTION_PATTERNS) {
     if (pattern.test(name)) {
-      return { module, section, title, documentType: docType, confidence: confidence ?? 0.8 };
+      return { module, section, title, documentType: docType, confidence: confidence ?? 0.8, ...(role ? { role } : {}) };
     }
   }
 

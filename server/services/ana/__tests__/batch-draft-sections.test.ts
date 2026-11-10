@@ -5,6 +5,10 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+// Not a standing-rule suite: its stub sqlClient has no rule store (see _standing-rule-fixture.ts).
+vi.mock('../governed-tool-gate.js', async orig =>
+  (await import('./_standing-rule-fixture')).withNoStandingRules(await orig()));
+import { syntheticCurrentPolicyQuery } from './support/source-read-tool-fixture.js';
 
 const batchDraftMock = vi.fn();
 const sourceMocks = vi.hoisted(() => ({ scope: vi.fn(), load: vi.fn() }));
@@ -22,7 +26,10 @@ vi.mock('../AnaDocumentDraftingService', () => ({
 import { getToolHandler } from '../AnaToolExecutor';
 import { draftSourceIdentityForText } from '../draft-source-identity';
 
-const executor = { query: async () => ({ rows: [] }) };
+// This handler suite assumes a current member of the open project and no
+// mandatory approval rules. The real admission/loader still performs its reads;
+// the synthetic source and provider handoffs below remain the things observed.
+const executor = { query: syntheticCurrentPolicyQuery };
 const ctx = { organizationId: 7, userId: 3, projectId: 11, sqlClient: executor } as any;
 
 beforeEach(() => {

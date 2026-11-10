@@ -110,6 +110,10 @@ beforeAll(async () => {
   // The real binary-availability predicate requires the existing disposition
   // ledger; apply its canonical constraints and guards to exercise that read.
   await harness.pglite.exec(readFileSync(new URL('../../../../../migrations/20261006_document_data_dispositions.sql', import.meta.url), 'utf8'));
+  // A staged vault leaf reads which company legal originals it is (leaf-source-resolver.ts
+  // readCompanyLegalRegistryForVault, 5ebfcfd2c5), so the registry's real migration, as
+  // assemble-from-core.vault-uuid.pglite.test.ts applies it. Empty: the CER is no legal original.
+  await harness.pglite.exec(readFileSync(new URL('../../../../../migrations/20261018_company_legal_registry.sql', import.meta.url), 'utf8'));
 });
 
 afterAll(async () => {

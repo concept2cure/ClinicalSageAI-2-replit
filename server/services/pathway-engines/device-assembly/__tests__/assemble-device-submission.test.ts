@@ -286,3 +286,41 @@ describe('assembleDeviceSubmission — PMA pathway', () => {
     expect(r.artifactKind).toBe('content-package-draft');
   });
 });
+
+/* P-29.3 (docs/EXIT_ATTESTATION_DECISION_2026-10-18.md): what can honestly be
+   produced, when the filing holds text its document does not. /build refuses
+   such a package and the official eSTAR refuses the section's attachment, so
+   the verdict says nothing is producible until it is re-filed, and why. */
+describe('assembleDeviceSubmission — a filed copy that is not the document\'s text', () => {
+  const ready = {
+    pathway: '510k' as const,
+    variant: 'device' as const,
+    leaves: complete510kLeaves,
+    deviceFlags: PLAIN_DEVICE,
+    presentTemplates: [TEMPLATE_510K_DEVICE],
+    environment: 'production' as const,
+    requireTemplate: true,
+  };
+
+  it('produces nothing, and names the section and the remedy', () => {
+    const r = assembleDeviceSubmission({
+      ...ready,
+      filedCopyDiverged: [{ key: 'B1', section: { code: 'B1' } }, { key: 'E1', section: { code: 'E1' } }],
+    });
+    expect(r.canProduceOfficialEstar, 'a rewritten filed copy read as a producible official eSTAR').toBe(false);
+    expect(r.artifactKind).toBe('none');
+    expect(r.filedCopyDiverged).toEqual(['B1', 'E1']);
+    const said = r.blockers.find((b) => /filed copy/.test(b));
+    expect(said).toMatch(/^Nothing can be assembled yet\. The filed copies of sections B1, E1 are not the document's text\./);
+    expect(said).toMatch(/Re-file saved text/);
+  });
+
+  it('is unchanged when the filing agrees, or was not compared', () => {
+    for (const filedCopyDiverged of [[], undefined]) {
+      const r = assembleDeviceSubmission({ ...ready, filedCopyDiverged });
+      expect(r.canProduceOfficialEstar).toBe(true);
+      expect(r.artifactKind).toBe('official-estar');
+      expect(r.filedCopyDiverged).toEqual([]);
+    }
+  });
+});

@@ -27,6 +27,7 @@ import type {
   StatisticalDocumentType,
   RoleExplanations,
 } from './types';
+import { phaseOf } from './input-normalizer';
 
 export class SMERouter {
 
@@ -268,7 +269,7 @@ export class SMERouter {
     const guidance: string[] = [];
     switch (body) {
       case 'FDA':
-        if (input.phase === 'III') guidance.push('FDA: Confirmatory Phase III — ensure prospective statistical planning with separate SAP.');
+        if (phaseOf(input) === 'III') guidance.push('FDA: Confirmatory Phase III — ensure prospective statistical planning with separate SAP.');
         if (judgment.dimensions.find(d => d.name === 'Multiplicity Control')?.verdict !== 'adequate') {
           guidance.push('FDA: Multiplicity concerns may trigger review questions. Pre-specify adjustment in protocol/SAP.');
         }
@@ -398,7 +399,7 @@ export class SMERouter {
       if (condition.includes('fragility') && judgment.fragility.fragilityIndex > 65) {
         notes.push(`Escalation: ${condition}`);
       }
-      if (condition.includes('Phase III') && input.phase === 'III') {
+      if (condition.includes('Phase III') && phaseOf(input) === 'III') {
         if (condition.includes('estimand') && !input.estimandStrategy) {
           notes.push(`Escalation: ${condition}`);
         }

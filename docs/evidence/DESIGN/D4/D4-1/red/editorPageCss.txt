@@ -1,0 +1,193 @@
+
+ RUN  v4.1.7 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/red
+
+ ❯ v2/__tests__/editorPageCss.test.ts (11 tests | 10 failed) 29ms
+     × reads the section in the serif at the prose size, and its paragraphs inherit it (defect 1) 9ms
+     × reads document view the same way, wherever a section body is drawn 4ms
+     × scopes the page type to `.ed`, so RichSectionEditor's other hosts keep theirs 1ms
+     × colours a drafted section's dot in the outline (defect 2) 1ms
+     × marks the current item with a soft fill, not orange (defect 3) 2ms
+     × contains the outline in its own scroll, so the page does not scroll (defect 4) 1ms
+     × sets the page on a centred reading measure 1ms
+     × keeps the ribbon on one row that scrolls inside itself, each control at its own width (defect 5) 1ms
+     × keeps notes and links quiet in the editor (defect 5) 1ms
+     × holds the outline's and the page's own text at the 12px floor or above (D0 §3) 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  v2/__tests__/editorPageCss.test.ts > the one editor's page type (D4-1, .design/claude-convergence/D4.md §D4.K) > reads the section in the serif at the prose size, and its paragraphs inherit it (defect 1)
+AssertionError: expected undefined to be 'var(--font-serif)' // Object.is equality
+
+- Expected:
+"var(--font-serif)"
+
++ Received:
+undefined
+
+ ❯ v2/__tests__/editorPageCss.test.ts:147:64
+    145|
+    146|   it('reads the section in the serif at the prose size, and its paragr…
+    147|     expect(value(RSE, '.ed .rse-body .tiptap', 'font-family')).toBe('v…
+       |                                                                ^
+    148|     expect(px(value(RSE, '.ed .rse-body .tiptap', 'font-size'))).toBe(…
+    149|     expect(value(RSE, '.ed .rse-body .tiptap', 'line-height')).toBe('1…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  v2/__tests__/editorPageCss.test.ts > the one editor's page type (D4-1, .design/claude-convergence/D4.md §D4.K) > reads document view the same way, wherever a section body is drawn
+AssertionError: expected 14 to be 16 // Object.is equality
+
+- Expected
++ Received
+
+- 16
++ 14
+
+ ❯ v2/__tests__/editorPageCss.test.ts:161:71
+    159|   it('reads document view the same way, wherever a section body is dra…
+    160|     expect(value(AUTH, '.c2c-v2 .ed-full-sec-body', 'font-family')).to…
+    161|     expect(px(value(AUTH, '.c2c-v2 .ed-full-sec-body', 'font-size'))).…
+       |                                                                       ^
+    162|     expect(value(AUTH, '.c2c-v2 .ed-full-sec-body', 'line-height')).to…
+    163|     for (const el of ['p', 'li', 'blockquote']) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  v2/__tests__/editorPageCss.test.ts > the one editor's page type (D4-1, .design/claude-convergence/D4.md §D4.K) > scopes the page type to `.ed`, so RichSectionEditor's other hosts keep theirs
+AssertionError: expected 0 to be greater than 0
+ ❯ v2/__tests__/editorPageCss.test.ts:173:26
+    171|   it("scopes the page type to `.ed`, so RichSectionEditor's other host…
+    172|     const prose = SHEETS[RSE].filter((b) => [...b.decls.values()].some…
+    173|     expect(prose.length).toBeGreaterThan(0);
+       |                          ^
+    174|     for (const b of prose) for (const s of b.selectors) expect(s.start…
+    175|     /* The unscoped rule the other hosts read is still there. */
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  v2/__tests__/editorPageCss.test.ts > the one editor's outline, page and ribbon (D4-1, .design/claude-convergence/D4.md §D4.K) > colours a drafted section's dot in the outline (defect 2)
+AssertionError: expected undefined to be 'var(--success)' // Object.is equality
+
+- Expected:
+"var(--success)"
+
++ Received:
+undefined
+
+ ❯ v2/__tests__/editorPageCss.test.ts:182:71
+    180| describe("the one editor's outline, page and ribbon (D4-1, .design/cla…
+    181|   it("colours a drafted section's dot in the outline (defect 2)", () =…
+    182|     expect(value(AUTH, ".c2c-v2 .ed-dot[data-s='ok']", 'background')).…
+       |                                                                       ^
+    183|     expect(value(AUTH, ".c2c-v2 .ed-dot[data-s='complete']", 'backgrou…
+    184|     expect(value(AUTH, ".c2c-v2 .ed-dot[data-s='review']", 'background…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  v2/__tests__/editorPageCss.test.ts > the one editor's outline, page and ribbon (D4-1, .design/claude-convergence/D4.md §D4.K) > marks the current item with a soft fill, not orange (defect 3)
+AssertionError: expected 'var(--accent-000)' to be 'var(--bg-200)' // Object.is equality
+
+Expected: "var(--bg-200)"
+Received: "var(--accent-000)"
+
+ ❯ v2/__tests__/editorPageCss.test.ts:191:44
+    189|   it('marks the current item with a soft fill, not orange (defect 3)',…
+    190|     const row = ".c2c-v2 .ed-tree-row[data-active='true']";
+    191|     expect(value(AUTH, row, 'background')).toBe('var(--bg-200)');
+       |                                            ^
+    192|     expect(value(AUTH, row, 'color')).toBe('var(--text-100)');
+    193|     expect(value(AUTH, '.c2c-v2 .ed-mast-num', 'color')).toBe('var(--t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  v2/__tests__/editorPageCss.test.ts > the one editor's outline, page and ribbon (D4-1, .design/claude-convergence/D4.md §D4.K) > contains the outline in its own scroll, so the page does not scroll (defect 4)
+AssertionError: expected undefined to be 'auto' // Object.is equality
+
+- Expected:
+"auto"
+
++ Received:
+undefined
+
+ ❯ v2/__tests__/editorPageCss.test.ts:209:59
+    207|
+    208|   it('contains the outline in its own scroll, so the page does not scr…
+    209|     expect(value(AUTH, '.c2c-v2 .ed-tree', 'overflow-y')).toBe('auto');
+       |                                                           ^
+    210|     expect(value(AUTH, '.c2c-v2 .ed-tree-scroll', 'min-height')).toBe(…
+    211|     expect(value(AUTH, '.c2c-v2 .ed-doc-scroll', 'min-height')).toBe('…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  v2/__tests__/editorPageCss.test.ts > the one editor's outline, page and ribbon (D4-1, .design/claude-convergence/D4.md §D4.K) > sets the page on a centred reading measure
+AssertionError: expected 'min(1440px, 100%)' to be '816px' // Object.is equality
+
+Expected: "816px"
+Received: "min(1440px, 100%)"
+
+ ❯ v2/__tests__/editorPageCss.test.ts:216:63
+    214|
+    215|   it('sets the page on a centred reading measure', () => {
+    216|     expect(value(AUTH, '.c2c-v2 .ed-doc-inner', 'max-width')).toBe('81…
+       |                                                               ^
+    217|     expect(value(AUTH, '.c2c-v2 .ed-doc-inner', 'margin')).toBe('0 aut…
+    218|     expect(value(AUTH, '.c2c-v2 .ed-mast-t', 'font-family')).toBe('var…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  v2/__tests__/editorPageCss.test.ts > the one editor's outline, page and ribbon (D4-1, .design/claude-convergence/D4.md §D4.K) > keeps the ribbon on one row that scrolls inside itself, each control at its own width (defect 5)
+AssertionError: expected undefined to be 'nowrap' // Object.is equality
+
+- Expected:
+"nowrap"
+
++ Received:
+undefined
+
+ ❯ v2/__tests__/editorPageCss.test.ts:223:56
+    221|
+    222|   it('keeps the ribbon on one row that scrolls inside itself, each con…
+    223|     expect(value(RSE, '.ed .rse-ribbon', 'flex-wrap')).toBe('nowrap');
+       |                                                        ^
+    224|     expect(value(RSE, '.ed .rse-ribbon', 'overflow-x')).toBe('auto');
+    225|     /* A labelled control ("Ask for a source", "Track changes") must n…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  v2/__tests__/editorPageCss.test.ts > the one editor's outline, page and ribbon (D4-1, .design/claude-convergence/D4.md §D4.K) > keeps notes and links quiet in the editor (defect 5)
+AssertionError: expected undefined to be 'var(--bg-100)' // Object.is equality
+
+- Expected:
+"var(--bg-100)"
+
++ Received:
+undefined
+
+ ❯ v2/__tests__/editorPageCss.test.ts:231:65
+    229|
+    230|   it('keeps notes and links quiet in the editor (defect 5)', () => {
+    231|     expect(value(AUTH, '.c2c-v2 .ed .scaf-note', 'background')).toBe('…
+       |                                                                 ^
+    232|     expect(value(AUTH, '.c2c-v2 .ed .scaf-note', 'border')).toBe('0');
+    233|     expect(value(AUTH, ".c2c-v2 .ed .scaf-note[role='alert']", 'color'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  v2/__tests__/editorPageCss.test.ts > the one editor's outline, page and ribbon (D4-1, .design/claude-convergence/D4.md §D4.K) > holds the outline's and the page's own text at the 12px floor or above (D0 §3)
+AssertionError: .c2c-v2 .ed-tree-m font-size: expected 10 to be greater than or equal to 12
+ ❯ v2/__tests__/editorPageCss.test.ts:255:40
+    253|     for (const [file, sel] of checks) {
+    254|       const size = px(value(file, sel, 'font-size'));
+    255|       expect(size, `${sel} font-size`).toBeGreaterThanOrEqual(12);
+       |                                        ^
+    256|     }
+    257|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 1 passed (11)
+   Start at  22:33:39
+   Duration  363ms (transform 62ms, setup 0ms, import 145ms, tests 29ms, environment 0ms)
+

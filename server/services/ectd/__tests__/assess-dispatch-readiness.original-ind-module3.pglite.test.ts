@@ -38,6 +38,7 @@ vi.mock('../release-signature-status', async (importOriginal) => ({
 }));
 
 import { assessSequenceDispatchReadiness, readinessOptionsForSequence } from '../assess-dispatch-readiness';
+import { coverCurrentLeaves } from '../../shadow-review/__tests__/review-covers-current-leaves';
 
 let harness: IndPgliteDb;
 const ORG = 52;
@@ -108,7 +109,12 @@ async function recordCrossReference(
   );
 }
 
-const assess = (sequenceId: number) => assessSequenceDispatchReadiness({ sequenceId, organizationId: ORG, asOf: '2026-10-05' });
+// The completed review seeded with each sequence is over the leaves as they stand
+// when the suite assesses (2026-10-25): this suite is about the structural gate.
+const assess = async (sequenceId: number) => {
+  await coverCurrentLeaves({ query: q }, sequenceId, ORG);
+  return assessSequenceDispatchReadiness({ sequenceId, organizationId: ORG, asOf: '2026-10-05' });
+};
 const m3Errors = (a: Awaited<ReturnType<typeof assess>>) =>
   a.readiness.findings.filter((f) => f.code === 'IND_MODULE3_REQUIRED');
 

@@ -93,10 +93,11 @@ describe('Project home — lifecycle tracker', () => {
     expect(apiRequest.mock.calls.filter(([, url]) => String(url).startsWith('/api/c2c/projects/'))).toEqual([]);
   });
 
-  it('with a project selected, names it in the crumb and the heading', async () => {
+  it('with a project selected, names it once, in the heading', async () => {
     (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-204' };
     render(<ProjectHome {...props()} />);
     await waitFor(() => expect(document.querySelector('.pj-title')?.textContent).toBe('BX-204'));
-    expect(document.querySelector('.pj-crumb')?.textContent).toContain('BX-204');
+    // A "PROJECT BX-204" crumb repeated the heading above it (Claude's project page has neither, 2026-11-01).
+    expect(document.querySelector('.pj-crumb')).toBeNull();
   });
 });

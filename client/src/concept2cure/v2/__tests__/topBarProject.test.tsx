@@ -12,11 +12,15 @@
  * had two controls for one setting.
  *
  * ── What this holds ───────────────────────────────────────────────────────────
- * The project is the filing, so the top bar says which one is open: a chip
- * from the shell's project channel (useShellProject) that reads the project's
- * code, or its title when it has no code, and opens its project page. With no
- * project open it reads "No project open" and opens Projects. The client type
- * is chosen in the account menu only.
+ * The project is the filing, so the top bar says which one is open: the first
+ * crumb, a button from the shell's project channel (useShellProject) that reads
+ * the project's code, or its title when it has no code, and opens its project
+ * page. The client type is chosen in the account menu only.
+ *
+ * D1-2 (.design/claude-convergence/D1.md §D1.B steps 1 and 4, §D1.I): the chip
+ * (`.tb-proj`) folded into that crumb (`.crumb-proj`), same name, title and click,
+ * so the project is named once. With none open the bar shows no project button:
+ * the dashed "No project open" chip went, and Projects is the sidebar's.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -50,11 +54,16 @@ afterEach(() => {
 });
 
 describe('the top bar names the open project', () => {
-  it('on the Vault with ONC-221 open, the chip names it and opens its project page', () => {
+  it('on the Vault with ONC-221 open, the project crumb names it and opens its project page', () => {
     publishShellProject({ id: '6f1c2a90-0d1e-4b7a-9c55-3a2f1e0b9d21', code: 'ONC-221', title: 'Oncology 221 NDA' });
-    const { onNav } = renderBar();
-    const chip = screen.getByRole('button', { name: /ONC-221/ });
-    fireEvent.click(chip);
+    const { onNav, bar } = renderBar();
+    const crumb = screen.getByRole('button', { name: 'ONC-221' });
+    // The chip folded into the first crumb (D1-2): one name for the project, not two.
+    expect(crumb.classList.contains('crumb-proj')).toBe(true);
+    expect(bar.querySelector('.crumbs')?.firstElementChild).toBe(crumb);
+    expect(crumb.getAttribute('title')).toBe('ONC-221 — Oncology 221 NDA');
+    expect(bar.querySelector('.tb-proj')).toBeNull();
+    fireEvent.click(crumb);
     expect(onNav).toHaveBeenCalledWith('project-home');
     expect(onNav).toHaveBeenCalledTimes(1);
   });
@@ -68,20 +77,20 @@ describe('the top bar names the open project', () => {
     expect(bar.textContent).not.toMatch(/Biotech & Pharma|Client domain/);
   });
 
-  it('with no project open, reads "No project open", says it opens Projects, and does', () => {
-    const { onNav } = renderBar();
-    // The visible label is the state; the accessible name also says the action,
-    // which the title tooltip alone does not carry to a screen reader.
-    const chip = screen.getByRole('button', { name: 'No project open. Choose one in Projects' });
-    expect(chip.querySelector('.tb-proj-lbl')?.textContent).toBe('No project open');
-    fireEvent.click(chip);
-    expect(onNav).toHaveBeenCalledWith('projects');
+  /* Rewritten for D1-2: the dashed "No project open" chip that opened Projects went with
+     the chip (§D1.B step 4). Projects is the sidebar's place, and ⌘K lists projects. */
+  it('with no project open, the bar shows no project button and no "No project open"', () => {
+    const { bar } = renderBar();
+    expect(bar.querySelector('.crumb-proj, .tb-proj')).toBeNull();
+    expect(bar.textContent).not.toMatch(/No project open|Choose one in Projects/);
+    expect(screen.queryByRole('button', { name: /project/i })).toBeNull();
   });
 
   it('names a project by its title when it has no code', () => {
     publishShellProject({ id: '82d3b729', title: 'NeuroPanel-Dx 510(k)', ws: 'MDX', productType: 'ivd' });
     renderBar();
-    expect(screen.getByRole('button', { name: /NeuroPanel-Dx 510\(k\)/ })).toBeTruthy();
+    const crumb = screen.getByRole('button', { name: 'NeuroPanel-Dx 510(k)' });
+    expect(crumb.getAttribute('title')).toBe('NeuroPanel-Dx 510(k)');
   });
 
   it('follows the channel when another project is opened', () => {

@@ -263,7 +263,10 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
     // '/api/mdx/ana/memory/profile' (2026-10-29, fold of ana-memory): WhatAnaRemembers.tsx reads the caller's own
     // relational profile beside the conversation. Only that read: the rest of /api/mdx/ana/memory stays ana-memory's.
-    apiPrefixes: ['/api/chat', '/api/authoring-actions/decision-context', '/api/authoring-actions/decisions', '/api/authoring-actions/module-preflight', '/api/c2c/documents', '/api/concept2cure/artifacts', '/api/concept2cure/projects', '/api/mdx/ana/memory/profile'],
+    // '/api/client-intelligence/ana/user-profile' (2026-11-08, F1 of P-104's a2f9264a5): WhatAnaRemembers.tsx reads and
+    // edits the person's own private rules there, the only route that serves them. Only that path: the rest of
+    // /api/client-intelligence stays unmapped, and production refused this read until it was named here.
+    apiPrefixes: ['/api/chat', '/api/authoring-actions/decision-context', '/api/authoring-actions/decisions', '/api/authoring-actions/module-preflight', '/api/c2c/documents', '/api/concept2cure/artifacts', '/api/concept2cure/projects', '/api/mdx/ana/memory/profile', '/api/client-intelligence/ana/user-profile'],
     anaToolFamilies: [],
     sharedContract: '@shared/schema',
     discoveryCatalog: null,
@@ -346,24 +349,14 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     compliance: [A11Y, TONE],
     notes: 'Regional marketing-application administrative module (eCTD Module 1) — per-agency required-component checklist for EMA/PMDA/MHRA/TGA/HC/Swissmedic/NMPA over the global-RI regional-module1-requirements engine.',
   },
-  {
-    id: 'device-workstream',
-    label: 'Medical Device & IVD',
-    navTier: 'project',
-    layoutMode: 'section-workspace',
-    group: 'device',
-    icon: 'stethoscope',
-    uiKit: 'mdx',
-    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
-    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
-    apiPrefixes: ['/api/mdx/client-review', '/api/510k/estar', '/api/510k/device', '/api/cer', '/api/cerv2', '/api/ivdr', '/api/manufacturing'],
-    anaToolFamilies: [],
-    sharedContract: '@shared/types/predicate-intelligence',
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: 'The MDX workstream — one door. Programs portfolio with classification + 510(k)/PMA/CER/De Novo pathway tabs, predicate intelligence, eSTAR/Annex XIV editors. Built in the MDX kit.',
-  },
+  // No device-workstream. The kit portfolio (mdx/surfaces/Overview.tsx) folded into
+  // Projects (D2, fold F6, 2026-10-30; decision P-61 item 5): Projects with its MDX
+  // filter counts the device portfolio on the server, and 'device-workstream' is a
+  // DEEP_LINK_ALIASES entry for 'projects' that applies the filter. Of its claims,
+  // the portfolio itself called only /api/mdx/client-review, which moved to
+  // project-home with the Client Review Room (ui-surface-registry.ts); the device
+  // families it also listed are claimed by the pathway screens that call them
+  // (device-510k, device-cer, device-diagnostics).
   /* ── The device kit's own destinations ──
      These twelve were surfaces the kit rendered but the product could not
      route to. `mdx/App.tsx` drew a second rail with fifteen entries; only five
@@ -519,24 +512,14 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
   // DEEP_LINK_ALIASES entry for 'submission-center', whose device filings read
   // /api/510k/estar/submissions (its claim). The screen claimed nothing at the
   // end: it called /api/submission-ops/packages, which no client calls now.
-  {
-    id: 'device-analytics',
-    label: 'Device pathway analytics',
-    navTier: 'specialist',
-    layoutMode: 'section-workspace',
-    group: 'device',
-    icon: 'barChart3',
-    uiKit: 'mdx',
-    // 2026-10-29 (trunk-red-sweep-2): the families this feature's screens call, not the /api/mdx root.
-    // A Projects feature since 62a8d5e7; a root claim served every device-kit route under it.
-    apiPrefixes: ['/api/mdx/analytics'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [PART11, A11Y, TONE],
-    notes: 'Pathway-scoped device analytics. insights and report-engine answer protocol and report-run questions instead.',
-  },
+  // No device-analytics. Device analytics joined Reporting & analytics at its
+  // tier (D2, fold F4, 2026-10-30; decision P-61 item 3): its status counts,
+  // submission pace and AnA draft acceptance rate are the device section of
+  // GET /api/insights-canvas/overview, over the projects the reader can open,
+  // which `insights` already claims. 'device-analytics' is a DEEP_LINK_ALIASES
+  // entry for 'insights'. Its claim, /api/mdx/analytics, has no client caller
+  // now (the kit-shaped aggregate went with the screen; the facet routes had
+  // none), so no screen claims it and production refuses it.
   {
     id: 'protocol-dev',
     label: 'The protocol workspace',
@@ -548,7 +531,8 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     // Launch-scope API (2026-09-25, ci:launch-scope-api): ProtocolDevDesign.tsx / ProtocolDevProjections.tsx read the study design.
     // Launch-scope API (2026-09-25, ci:launch-scope-api): Protocol Dev exports, files IRB packages and reads its hub.
     // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
-    apiPrefixes: ['/api/protocol-development', '/api/protocol-soa', '/api/protocol-risks', '/api/protocol-milestones', '/api/protocol-budget', '/api/protocol-amendments', '/api/protocol-deviations', '/api/protocol-reviews', '/api/protocol-consent', '/api/protocol-export', '/api/biostat-bridge/designs', '/api/study-design', '/api/concept2cure/artifacts', '/api/irb', '/api/protocol-dev'],
+    // Protocol statistics now reaches the assessment's stored-run reproduction, not the bridge root.
+    apiPrefixes: ['/api/protocol-development', '/api/protocol-soa', '/api/protocol-risks', '/api/protocol-milestones', '/api/protocol-budget', '/api/protocol-amendments', '/api/protocol-deviations', '/api/protocol-reviews', '/api/protocol-consent', '/api/protocol-export', '/api/biostat-bridge/designs', '/api/biostat-bridge/computation-runs', '/api/study-design', '/api/concept2cure/artifacts', '/api/irb', '/api/protocol-dev'],
     anaToolFamilies: ['create_protocol_document', 'update_protocol_section', 'review_protocol_completeness', 'finalize_protocol_document', 'add_soa_assessment', 'review_soa_matrix'],
     sharedContract: null,
     discoveryCatalog: null,
@@ -1328,7 +1312,12 @@ export const UI_V2_SURFACES: UiV2Surface[] = [
     // Settings by ValidationKitCard.tsx (decision P-67, 2026-10-29), which replaced the
     // AdminConsole no surface had mounted since af973c5e8 (2026-07-27)
     // (docs/evidence/D4/2026-10-29/validation-kit-settings/).
-    apiPrefixes: ['/api/admin/access', '/api/admin/scim-tenants', '/api/api-keys', '/api/setup', '/api/tenant-users', '/api/mdx/admin', '/api/tenant-config', '/api/vault/legal-holds/retention', '/api/vault/legal-holds', '/api/validation-kit'],
+    // 2026-11-08, F1 of P-104 (e6a7c391c, b8cee0745, a2f9264a5): Client Administration's credential vault cards
+    // (AdminSettings.tsx) call '/api/deep-research/connectors'. That is the existing connector-credential store the
+    // founder asked those cards to extend, and the only route serving it; only that path is claimed, and
+    // /api/deep-research/jobs stays out of scope. Its placement policy card calls '/api/ai-placement-policy', the
+    // setting's only home (ChangeControl.tsx's learning step reads it too). Production refused both until named here.
+    apiPrefixes: ['/api/admin/access', '/api/admin/scim-tenants', '/api/api-keys', '/api/setup', '/api/tenant-users', '/api/mdx/admin', '/api/tenant-config', '/api/vault/legal-holds/retention', '/api/vault/legal-holds', '/api/validation-kit', '/api/deep-research/connectors', '/api/ai-placement-policy'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,

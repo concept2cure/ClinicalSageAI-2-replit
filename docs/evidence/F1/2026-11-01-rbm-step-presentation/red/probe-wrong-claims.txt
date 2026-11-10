@@ -1,0 +1,22 @@
+baseline: 0 finding(s), 139 engine claims
+FAILS AS IT SHOULD  remove the present block of generate_rbm_report
+        MISSING generate_rbm_report: no `present` block: its steps would read "Ran a step"
+FAILS AS IT SHOULD  claim engine on add_ctq_factor (class confirm: it INSERTs rbm_risk_items)
+        ENGINE add_ctq_factor: class "confirm" writes; an engine claim is for a computation
+FAILS AS IT SHOULD  claim engine on assess_site_risk (class confirm: it rewrites rbm_site_risk_scores)
+        ENGINE assess_site_risk: class "confirm" writes; an engine claim is for a computation
+FAILS AS IT SHOULD  give approve_rbm_plan (refusedBy handler) the verb finalize
+        REFUSAL approve_rbm_plan: the handler refuses, so its finished row must not read as the act: verb "finalize", expected explain or check
+FAILS AS IT SHOULD  give approve_rbm_assessment a verb outside STEP_VERBS ("approve")
+        VERB approve_rbm_assessment: verb "approve" is not in STEP_VERBS
+FAILS AS IT SHOULD  use the tool name as the object of get_rbm_attention
+        OBJECT get_rbm_attention: object "get rbm_attention" reads like a tool name
+FAILS AS IT SHOULD  preview an id field (signalId) on triage_signal
+        PREVIEW triage_signal: preview field "signalId" is not in STEP_PREVIEW_FIELDS
+FAILS AS IT SHOULD  source "rbm" (not in STEP_SOURCES) on set_qtl
+        SOURCE set_qtl: source "rbm" is not in STEP_SOURCES
+FAILS AS IT SHOULD  claim engine on critique_document (same file, its handler reaches a model)
+        ENGINE critique_document: its handler can reach a model: server/services/ana/AnaToolExecutor.ts → critiqueSavedDocument from './saved-document-critique' → server/services/ana/saved-document-critique.ts → server/services/ana/agentic-loop.ts → server/services/ana/step-presentation.ts → server/services/ana/catalog-scope.ts → server/services/vault/document-catalog.service.ts → server/services/enhancedEmbeddingService.ts → server/services/ai-gateway/embeddings/embedding-provider.ts → server/services/ai-gateway/gateway.ts
+
+9/9 wrong claims refused.
+exit 0

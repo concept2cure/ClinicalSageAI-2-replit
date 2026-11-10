@@ -40,7 +40,7 @@ import { stashNavParamsForTarget, clearNavParams } from '../navParams';
 
 const SUBS = [
   { id: 3, title: 'AB-1 Phase 2 IND', productName: 'Abelix', applicationType: 'ind', clientType: 'biotech', primaryRegion: 'fda', status: 'active', lifecycleStage: 'original', programId: null },
-  { id: 5, title: 'ZX-9 First-in-Human', productName: 'Zexanib', applicationType: 'ind', clientType: 'biotech', primaryRegion: 'fda', status: 'active', lifecycleStage: 'original', programId: null },
+  { id: 5, title: 'ZX-9 First-in-Human', productName: 'Zexanib', applicationType: 'ind', clientType: 'biotech', primaryRegion: 'fda', status: 'active', lifecycleStage: 'original', programId: '05000000-0000-4000-8000-000000000005' },
 ];
 const seqs5 = (status = 'draft') => [
   { id: 6, sequenceNumber: '0000', type: 'original', status: 'dispatched', region: 'fda', validationStatus: null },
@@ -50,7 +50,10 @@ const LEAVES_7 = [
   { id: 77, sectionCode: '2.7.3', title: 'M2.7 Clinical Summary', granularity: null, lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 501, documentType: null },
   { id: 78, sectionCode: 'm1.3.1', title: 'Cover letter', granularity: null, lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 502, documentType: null },
 ];
-const DOCS = { documents: [{ id: 601, title: 'Form FDA 1571', moduleNumber: null, status: 'approved' }], total: 1 };
+/* The Builder places the project's documents (2026-10-31): the 1571
+   worksheet is filed as its filing copy, 601, and the leaf names that copy. */
+const DOC_1571 = 'f1571000-0000-4000-8000-000000001571';
+const DOCS = { success: true, documents: [{ id: DOC_1571, title: 'Form FDA 1571', module: 'M1', status: 'approved' }] };
 
 const json = (body: unknown, status = 200) => ({ ok: status < 400, status, json: async () => body }) as Response;
 
@@ -60,7 +63,9 @@ function mockApi(over: Record<string, () => Response> = {}) {
     'GET /api/submissions/3/sequences': () => json([]),
     'GET /api/submissions/5/sequences': () => json(seqs5()),
     'GET /api/submissions/sequences/7/leaves': () => json(LEAVES_7),
-    'GET /api/coauthor/documents': () => json(DOCS),
+    'GET /api/authoring/docs': () => json(DOCS),
+    [`GET /api/authoring/docs/${DOC_1571}/sections`]: () => json({ sections: [{ code: '1.2', title: 'Form FDA 1571', content: '<p>Saved worksheet.</p>' }] }),
+    'POST /api/coauthor/documents': () => json({ success: true, written: true, document: { id: 601, status: 'approved', metadata: { source: 'authoring-document', docId: DOC_1571 } } }),
     ...over,
   };
   apiRequest.mockImplementation(async (method: string, url: string) => {
@@ -199,7 +204,7 @@ describe('F18: the section a sender names is read, not trusted', () => {
 describe('F18 review: the arrival is used once, then retires', () => {
   const RECEIPT = { id: 79, sequenceId: 7, sectionCode: '1.2', title: 'Form FDA 1571', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 601, auditTrail: { persisted: true, chained: true } };
   const placeIt = async () => {
-    fireEvent.change(await screen.findByLabelText('Source document'), { target: { value: '601' } });
+    fireEvent.change(await screen.findByLabelText('Source document'), { target: { value: DOC_1571 } });
     fireEvent.change(screen.getByLabelText(/Reason for/), { target: { value: 'Place the cover letter the readiness finding names' } });
     fireEvent.click(screen.getByRole('button', { name: 'Place leaf in the sequence' }));
   };

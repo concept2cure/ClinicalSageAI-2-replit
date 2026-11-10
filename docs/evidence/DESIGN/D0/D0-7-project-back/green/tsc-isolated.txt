@@ -1,0 +1,12 @@
+# tsc on the two changed TSX files and their import graph, with the repo tsconfig (temporary tsconfig extending ./tsconfig.json, files only; removed after)
+$ npx tsc -p <tmp tsconfig: files = client/src/types/global.d.ts, client/src/types/api.d.ts, dataConnect.tsx, __tests__/projectBack.test.tsx>
+client/src/concept2cure/v2/shellProject.ts(96,10): error TS2339: Property 'C2C_PROJECT' does not exist on type 'Window & typeof globalThis'.
+client/src/concept2cure/v2/shellProject.ts(98,10): error TS2339: Property 'C2C_PROJECT' does not exist on type 'Window & typeof globalThis'.
+client/src/concept2cure/v2/shellProject.ts(98,54): error TS2339: Property 'C2C_PROJECT' does not exist on type 'Window & typeof globalThis'.
+client/src/concept2cure/v2/shellProject.ts(183,16): error TS2339: Property 'C2C' does not exist on type 'Window & typeof globalThis'.
+client/src/concept2cure/v2/shellProject.ts(183,40): error TS2339: Property 'C2C' does not exist on type 'Window & typeof globalThis'.
+client/src/concept2cure/v2/shellProject.ts(191,17): error TS2339: Property 'C2C_PROJECT' does not exist on type 'Window & typeof globalThis'.
+exit 2
+# Reading: no error is in dataConnect.tsx or projectBack.test.tsx. The six are in shellProject.ts (unchanged), whose
+# `window.C2C_PROJECT` and `window.C2C` are declared by `declare global` in surfaces/ProjectHome.tsx:68-77, a file
+# outside this partial program. A full `npm run typecheck` includes it; that run needs a 24 GB heap and was not made.

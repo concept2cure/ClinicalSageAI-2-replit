@@ -1,0 +1,232 @@
+# Skeptic re-run, HEAD 1427862c2 + the uncommitted F1 fix with the skeptic's edits, 2026-11-02T00:39:55Z
+# npx vitest run --maxWorkers=1 server/services/ana/__tests__/rbm-handlers.test.ts server/services/ana/__tests__/rbm-launch-admission.test.ts server/services/ana/__tests__/tool-authorization.test.ts server/services/ana/__tests__/ana-launch-scope.test.ts server/services/rbm/__tests__/rbm-actuator.test.ts server/services/rbm/__tests__/rbm-assessment-seed.test.ts server/services/rbm/__tests__/rbm-access.test.ts server/services/rbm/__tests__/rbm-engine.test.ts server/routes/__tests__/rbm-assessment-integrity.test.ts
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > commits a draft and its default factors together, with the actor and no signature 22ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > rolls back the assessment and already-written factors when a later factor fails 9ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > rechecks current write authority inside the transaction before any record is inserted 6ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > leaves a caller-owned transaction open so the caller can roll the seed back 10ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > uses an already-connected client as supplied instead of inferring ownership from its connect method 10ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > uses one explicitly owned pool lease and releases it after its atomic seed 10ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > does not roll back a caller’s earlier work when a caller-owned seed fails 11ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > rolls back another RBM write through the shared owned transaction when its work fails 5ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > commits another RBM write on one released pool lease 7ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor joins the study's open draft assessment, as POST /rbm-risk-items does > a1: attaches the factor to the study's one open draft, inside one transaction 36ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor joins the study's open draft assessment, as POST /rbm-risk-items does > a1b: with a signed v1 and an open amendment v2, the factor joins the draft v2 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor joins the study's open draft assessment, as POST /rbm-risk-items does > a2: refuses with the actuator's read-only reason, and writes nothing, when the only version is signed 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor joins the study's open draft assessment, as POST /rbm-risk-items does > a3: refuses a named signed assessment, as the route does (requireDraftAssessment) 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor joins the study's open draft assessment, as POST /rbm-risk-items does > a3b: a named draft is used even when the study has two drafts 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor joins the study's open draft assessment, as POST /rbm-risk-items does > a3c: the snake_case assessment_id the admission checks is the one the factor joins 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a4: refuses likelihood 7, which the route refuses with 422 (SCALE_1_5), and writes nothing 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a4b: refuses a category the route does not accept 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a4c: refuses an unreadable optional input instead of saving the default in its place 3ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a5: refuses when the study has no assessment, pointing to the seed, and writes nothing 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a6: refuses when the study has more than one draft, naming each 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a7: rechecks write authority on the transaction before the insert, and a revoked one writes nothing 2ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a8: leases the canonical pool for the transaction instead of transacting through pool.query 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a9: transacts on a pinned request client as supplied 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (b) generate_rbm_plan proposes what POST /rbm-monitoring-plans/generate would save > b1: refuses with the route's reason when the study has no risk assessment, instead of answering "medium" 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (b) generate_rbm_plan proposes what POST /rbm-monitoring-plans/generate would save > b2: refuses with the route's reason when the only assessment is an unsigned draft 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (b) generate_rbm_plan proposes what POST /rbm-monitoring-plans/generate would save > b3: derives from the approved version and its factors only, not a newer draft amendment 2ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (b) generate_rbm_plan proposes what POST /rbm-monitoring-plans/generate would save > b4: refuses an approved assessment that records no overall risk, instead of "medium" 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (b) generate_rbm_plan proposes what POST /rbm-monitoring-plans/generate would save > b5: the proposal is the route's derivation — an issue per open critical factor, a visit per enhanced site — and nothing is written 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (b) generate_rbm_plan proposes what POST /rbm-monitoring-plans/generate would save > b6: says when a draft plan is already open, since generating would then be refused 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (c) run_rbm_assessment summarizes one version; its seed is the canonical template start > c1 (guard): seed:true writes the canonical library as one unsigned draft, in one transaction 2ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (c) run_rbm_assessment summarizes one version; its seed is the canonical template start > c2 (guard): seed:true does not write when the study already has an assessment, and says so 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (c) run_rbm_assessment summarizes one version; its seed is the canonical template start > c2b: a draft summary says the draft governs nothing; an approved one carries no such note 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (c) run_rbm_assessment summarizes one version; its seed is the canonical template start > c3: the summary reads the factors of the assessment it returns, not every version 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (c) run_rbm_assessment summarizes one version; its seed is the canonical template start > c4: after an amendment it returns the draft v2 as a draft, with each factor once 1ms
+ ✓ server/services/ana/__tests__/rbm-handlers.test.ts > (c) run_rbm_assessment summarizes one version; its seed is the canonical template start > c5: the "No RACT yet" hint appears only when the study has no assessment 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor infers risk score and criticality from the band 3ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor leaves a low-risk item non-critical 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor honors an explicit isCritical override 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor refuses likelihood 7 before any write 3ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor refuses impact 0 before any write 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor refuses likelihood 2.5 before any write 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor refuses detectability 6 before any write 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor refuses category "quality" before any write 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > defineKri infers amber status from value vs thresholds (higher worse) 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > setQtl infers the 75% secondary limit and approaching status 4ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > setQtl evaluates a lower-bound limit in its own direction and infers no upper-side secondary 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > setQtl refuses a two-sided limit without both bounds 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > inferSecondaryLimit is null without a threshold 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > recordKriReading resolves by id, computes status, and writes value + KRI update 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > recordKriReading returns unresolved when the KRI is not found 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > draftPlan infers strategy from the assessment overall risk 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > draftPlan falls back to risk_based when no assessment exists, and takes the next version 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > draftPlan reports an open draft rather than opening a second one 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > raiseSignal defaults source=manual, severity=medium and scopes to tenant 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > triageSignal reports no_fields when nothing changes 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > createAction refuses when the plan is not in-tenant 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > updateAction with no fields is a no-op 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > approveAssessment writes reason + approver and scopes to tenant 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > approveAssessment returns null when not found in tenant 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > archives the version it supersedes, so a program has one governing basis 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > does not archive anything when the assessment has no program 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > records that the two-person rule was enforced 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > records when there was no author to check against 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > refuses to approve an assessment it cannot attribute 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > refuses to approve a monitoring plan it cannot attribute 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > generatePlanFromAssessment — derives the plan from the RACT > derives strategy from the overall risk and seeds actions from the critical CtQs and enhanced sites 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > generatePlanFromAssessment — derives the plan from the RACT > scopes the seeded actions to the governing assessment, not the program 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > generatePlanFromAssessment — derives the plan from the RACT > generates nothing when the study has no risk assessment to derive from 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > generatePlanFromAssessment — derives the plan from the RACT > refuses to derive a plan from an unapproved RACT 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > derivePlanFromAssessment — the read-only half, shared with AnA > proposes exactly the actions generatePlanFromAssessment inserts, and writes nothing 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > derivePlanFromAssessment — the read-only half, shared with AnA > reports an approved assessment that records no overall risk as unrecorded, not "medium" 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > derivePlanFromAssessment — the read-only half, shared with AnA > refuses with the actuator's reasons: no assessment, and an unapproved one 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > amendAssessment — versioned revision of a signed RACT > opens the next version as a draft, copying the register forward 3ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > amendAssessment — versioned revision of a signed RACT > refuses to amend a draft — a draft is already editable 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > amendAssessment — versioned revision of a signed RACT > refuses a second concurrent amendment 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > amendAssessment — versioned revision of a signed RACT > reports not_found for an assessment outside the tenant 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring plan versioning — a signed plan stops being editable > nextPlanVersion counts past every version on file, including deleted ones 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring plan versioning — a signed plan stops being editable > generatePlanFromAssessment refuses while a draft version is already open 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring plan versioning — a signed plan stops being editable > amend opens the next version as an unsigned draft and copies no actions 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring plan versioning — a signed plan stops being editable > amend refuses a draft plan, and a second concurrent amendment 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring plan versioning — a signed plan stops being editable > approvePlan archives the version it supersedes in the same executor 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring plan versioning — a signed plan stops being editable > approvePlan moves the superseded version's unfinished actions to the new version, with provenance 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring plan versioning — a signed plan stops being editable > approvePlan moves nothing when no version was superseded 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring actions are execution records under the plan in force > createAction logs an action against the active (approved) plan 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring actions are execution records under the plan in force > createAction logs an action on a study's first plan while it is still a draft 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring actions are execution records under the plan in force > createAction refuses a superseded (archived) version and names the plan in force 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring actions are execution records under the plan in force > createAction refuses an open amendment draft — it governs nothing until approved 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > governingPlanId — the plan new actions are logged against > is the active plan, even while a higher draft amendment is open 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > governingPlanId — the plan new actions are logged against > is the first draft when the study has no approved plan 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > governingPlanId — the plan new actions are logged against > is null when only archived versions remain 0ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > signed assessments remain immutable until an amendment > refuses a title change on the 'active' signed version 53ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > signed assessments remain immutable until an amendment > refuses a title change on the 'archived' signed version 20ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > signed assessments remain immutable until an amendment > cannot reopen the 'active' signed version with status=draft 14ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > signed assessments remain immutable until an amendment > cannot reopen the 'archived' signed version with status=draft 16ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > signed assessments remain immutable until an amendment > continues to edit an unsigned draft 17ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > refuses editing a factor linked to the 'active' assessment 22ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > refuses editing a factor linked to the 'archived' assessment 20ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > refuses adding a factor under the 'active' signed assessment 13ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > refuses adding a factor under the 'archived' signed assessment 15ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > continues to edit a factor linked to a draft 13ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > a signed assessment freezes its linked risk register > continues to add a factor to a draft 11ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > retained children and amendment provenance > does not disclose another project or tenant child through the public assessment 9ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > retained children and amendment provenance > does not copy or return a private-project retained child in a public amendment 11ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > retained children and amendment provenance > records the amendment creator independently of the prior version author 12ms
+ ✓ server/routes/__tests__/rbm-assessment-integrity.test.ts > retained children and amendment provenance > requires a second person to approve the amendment opened by this actor 15ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > canonical RBM program admission > uses the verified actor and current sharing policy for an explicit project 5ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > canonical RBM program admission > preserves a private-project refusal without using the read as a write grant 2ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > canonical RBM program admission > asks the canonical governed-write policy as well as read access for a write 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > canonical RBM program admission > derives an ID-only plan from its recorded program before admission 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > canonical RBM program admission > derives an ID-only action from its recorded program before admission 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > canonical RBM program admission > refuses a supplied project that differs from the persisted record parent 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > canonical RBM program admission > refuses two record IDs with different project parents 0ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > canonical RBM program admission > refuses a 'absent or foreign-tenant' record 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > canonical RBM program admission > refuses a 'unanchored' record 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > canonical RBM program admission > refuses a project-free list rather than reading the whole organization 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > canonical RBM program admission > does not turn an unavailable sharing read into an empty successful admission 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > AnA RBM admission > is inert for a non-RBM tool even when the input names a project 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > AnA RBM admission > refuses an RBM operation without a verified actor 0ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > AnA RBM admission > checks current private-project access even with commercial enforcement off 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > AnA RBM admission > uses the trusted tool SQL client rather than replacing its request scope 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > AnA RBM admission > uses the existing trusted pool when the server supplied no tool SQL client 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > AnA RBM admission > resolves a plan-only monitoring action and checks the linked signal belongs to that project 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > AnA RBM admission > rejects another project’s optional parent on record_kri_reading 0ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > AnA RBM admission > rejects another project’s optional parent on draft_monitoring_plan 0ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > AnA RBM admission > honors the canonical commercial master-administrator exception without bypassing project sharing 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > AnA RBM admission > honors an explicit commercial denial in enforce mode 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > AnA RBM admission > cannot bypass private-project access when commercial resolution is unavailable 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > AnA RBM admission > keeps report mode observational while still checking project access 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > RBM HTTP boundary > does not gate another router stacked under /api/mdx 0ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > RBM HTTP boundary > fails closed when an RBM request has no pinned request SQL client 1ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > RBM HTTP target coherence through the mounted guard > cannot replace a private summary path with an accessible query alias 19ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > RBM HTTP target coherence through the mounted guard > refuses a collection read with only a 'query alias the handler ignores' 10ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > RBM HTTP target coherence through the mounted guard > refuses a collection read with only a 'body-only project the collection hand…' 4ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > RBM HTTP target coherence through the mounted guard > refuses unequal query program spellings before a private collection filter can run 3ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > RBM HTTP target coherence through the mounted guard > cannot replace the private query filter with a public GET body field 4ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > RBM HTTP target coherence through the mounted guard > decodes a private UUID path before comparing it with the query project 3ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > RBM HTTP target coherence through the mounted guard > cannot bypass the persisted record parent with row path %34%32 3ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > RBM HTTP target coherence through the mounted guard > cannot bypass the persisted record parent with row path +42 2ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > RBM HTTP target coherence through the mounted guard > cannot bypass the persisted record parent with row path 4.2e1 4ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > RBM HTTP target coherence through the mounted guard > checks query and body parent IDs instead of letting the body hide the query parent 3ms
+ ✓ server/services/rbm/__tests__/rbm-access.test.ts > RBM HTTP target coherence through the mounted guard > still admits the exact program_id collection filter consumed by the handler 2ms
+ ✓ server/services/ana/__tests__/rbm-launch-admission.test.ts > registered RBM tool admission and draft seed > refuses a private same-organization project before reading its RBM records 5ms
+ ✓ server/services/ana/__tests__/rbm-launch-admission.test.ts > registered RBM tool admission and draft seed > seeds an unsigned assessment as a draft through the registered handler 6ms
+ ✓ server/services/ana/__tests__/rbm-launch-admission.test.ts > registered RBM tool admission and draft seed > leases the canonical pool supplied as sqlClient instead of transacting through pool.query 2ms
+ ✓ server/services/ana/__tests__/rbm-launch-admission.test.ts > registered RBM tool admission and draft seed > uses a supplied pinned client without reconnecting it or falling back to the pool 2ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > classifies every enabled tool: a new one must be added as hiddenApp or inScope 3ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > classifies every platform command 1ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > names only real tools and commands, and only surfaces outside the launch catalog 7ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > the inventory > brings a tool back when its surface joins the launch catalog, without editing the inventory 0ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > existing project analysis commands after portfolio convergence > evidence_sufficiency.assess keeps the same dispatch and scope without device-workstream 0ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > existing project analysis commands after portfolio convergence > reviewer_simulation.run keeps the same dispatch and scope without device-workstream 0ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > existing project analysis commands after portfolio convergence > evidence_sufficiency.assess describes the selected project and its existing confirmation gate 0ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > existing project analysis commands after portfolio convergence > reviewer_simulation.run describes the selected project and its existing confirmation gate 0ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > in production, withholds tools that serve only hidden apps and keeps the rest 2ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > withholds them for a request with no organisation too 1ms
+ ✓ server/services/ana/__tests__/ana-launch-scope.test.ts > governedToolsetFor, the one toolset every chat door composes > with launch scope off (a development server), offers everything 1ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > every registered tool has a class 2ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > every entry names a registered tool 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > is the whole surface, not a sample of it 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > every conditional entry has its rule, and every rule an entry 1ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > every refusal says where the person does it 1ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > the register covers the registry exactly > only the command carrier defers to the command partition 1ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > cast_committee_vote is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > ack_training is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > approve_qms_document is refuse 1ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > retire_qms_document is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > revise_qms_document is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > transmit_submission is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > raise_monitoring_signal is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > predict_change_impact is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > catalog_project_document is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > check_consistency is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > assess_site_risk is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > set_protocol_budget_params is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > save_document_to_vault is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > seed_tmf is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > list_vault_documents is read 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > global_ri_exclusivity is read 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > set_specifications is read 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > answer_intelligence_question is self 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > what the register says about specific tools > a tool the register does not know is proposed, not run 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > qms_change_transition {"to":"under_assessment"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > qms_change_transition {"to":"approved"} is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > qms_change_transition {"to":" Closed "} is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > create_clinical_study {"title":"P1"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > create_clinical_study {"title":"P1","irb_approved":true} is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > update_tmf_artifact_status {"status":"received"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > update_tmf_artifact_status {"status":"final"} is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > set_registration_status {"market_status":"submitted"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > set_registration_status {"market_status":"approved"} is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > log_cs_transaction {"quantity":2} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > log_cs_transaction {"quantity":2,"witnessed_by":"R. Ortiz"} is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > report_protocol_deviation {"severity":"major"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > report_protocol_deviation {"severity":"major","affects_safety":false} is refuse 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > review_schedule_of_events_health {"apply":false} is read 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > review_schedule_of_events_health {} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > run_rbm_assessment {} is read 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > run_rbm_assessment {"seed":true} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > commit_intelligence_flow {"dry_run":true} is read 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > commit_intelligence_flow {} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > convert_docx_to_pdf {"input_docx_path":"tmp/docbuilder/a/x.docx"} is self 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > convert_docx_to_pdf {"input_docx_path":"tmp/docbuilder/a/x.docx","output_pdf_path":"uploads/7/x.pdf"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > convert_docx_to_pdf {"input_docx_path":"uploads/7/x.docx"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > generate_document {"output_format":"docx"} is self 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > generate_document {"output_format":"xml"} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > place_project_document {"document_id":3} is confirm 0ms
+ ✓ server/services/ana/__tests__/tool-authorization.test.ts > a conditional tool is judged on what it was asked to do > place_project_document {"document_id":3,"confirm_suggested":true} is refuse 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > scoreRisk / bandFromScore > computes likelihood × impact and clamps 1..5 2ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > scoreRisk / bandFromScore > bands by RACT thresholds (>=15 high, >=8 medium, else low) 1ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > overallRiskFromScores > any high score -> high 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > overallRiskFromScores > two+ medium -> high; one medium -> medium; none -> low 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > kriStatus > higher_worse: red at/above red, amber at/above amber 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > kriStatus > lower_worse inverts the comparison 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > kriStatus > an indicator with no reading is not evaluated — never green 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > kriStatus > an indicator with no threshold to read against is not evaluated 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > kriStatus > one configured threshold is enough to evaluate 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > qtlStatus > upper: breached at/above threshold, approaching at/above secondary 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > qtlStatus > upper is the default direction, so an unspecified limit keeps its meaning 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > qtlStatus > lower: breached at/below threshold — an attainment limit is not inverted 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > qtlStatus > two_sided: breached beyond either bound, approaching inside either 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > qtlStatus > a QTL with no value or no limit is not evaluated — never within 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > qtlStatus > two_sided with only one bound configured is not evaluated 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > qtlRangeError > accepts upper/lower limits with a single threshold (or none yet) 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > qtlRangeError > rejects a two-sided limit missing a bound, or inverted 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > monitoringTierFromRisk > maps composite risk to a proportionate tier 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > defaultPlanStrategy > escalates strategy with overall risk 0ms
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > seed libraries > ship non-empty, well-formed catalogs 1ms
+ Test Files  9 passed (9)
+      Tests  227 passed (227)
+# exit 0

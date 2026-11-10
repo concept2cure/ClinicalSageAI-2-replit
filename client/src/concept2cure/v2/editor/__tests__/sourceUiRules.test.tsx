@@ -6,7 +6,12 @@ import userEvent from '@testing-library/user-event';
 import { GOVERNED_REASON_MAX, GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 
 const apiRequest = vi.hoisted(() => vi.fn());
-vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
+/* The panel also reads what the project uses (GET …/evidence, S2 step 3); it answers "nothing yet" here, so
+   these cases count and answer the sources reads alone, as they always did. */
+vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()),
+  apiRequest: (...args: unknown[]) => String(args[1]).endsWith('/evidence')
+    ? Promise.resolve(new Response(JSON.stringify({ evidence: [] }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+    : apiRequest(...args) }));
 import { SourceImportDialog } from '../SourceImportDialog';
 import { DataRoomSourcesPanel } from '../DataRoomSourcesPanel';
 import { authService } from '@/services/portal/authService';
@@ -94,6 +99,6 @@ describe('source catalogue disclosures and availability', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Clear search' }));
     await screen.findByText(source.title);
     expect(search.value).toBe('');
-    await waitFor(() => expect(apiRequest).toHaveBeenLastCalledWith('GET', expect.not.stringContaining('&q=')));
+    await waitFor(() => expect(apiRequest).toHaveBeenLastCalledWith('GET', expect.not.stringContaining('&q='), undefined, undefined, expect.any(AbortSignal)));
   });
 });

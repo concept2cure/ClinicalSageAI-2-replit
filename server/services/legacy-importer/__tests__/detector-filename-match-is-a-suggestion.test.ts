@@ -23,6 +23,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { detectArchive } from '../detector';
+import { handSequenceFiles } from './support/conformant-sequence';
 
 const dir = mkdtempSync(path.join(tmpdir(), 'legacy-detector-'));
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
@@ -36,12 +37,15 @@ async function zipOf(entries: Record<string, string>): Promise<string> {
   return file;
 }
 
-const US_REGIONAL = `<?xml version="1.0"?>
-<fda-regional>
-  <m1-regional>
-    <leaf ID="L1" operation="new" xlink:href="m1/us/1-1/cover-letter.pdf"><title>Cover letter</title></leaf>
-  </m1-regional>
-</fda-regional>`;
+/**
+ * A sequence as a publisher writes it: index.xml at the root pointing at
+ * m1/us/us-regional.xml, whose hrefs are relative to m1/us/. Until 2026-11-01
+ * this fixture was a bare us-regional.xml with a root-relative href and no
+ * index.xml, the one shape the regex reader then in detector.ts could map.
+ */
+const DECLARED = handSequenceFiles({
+  m1: [{ headings: ['m1-2-cover-letters'], href: '1-2/cover-letter.pdf', id: 'L1', title: 'Cover letter', bytes: 'letter' }],
+});
 
 describe('detectArchive — a filename pattern suggests, it does not map', () => {
   it('stores protocol_deviation_log.xlsx and software_license.pdf as suggestions naming the rule, with no confidence figure', async () => {
@@ -76,15 +80,14 @@ describe('detectArchive — a filename pattern suggests, it does not map', () =>
 
   it('maps a leaf only where the regional backbone declares it', async () => {
     const archive = await zipOf({
-      'm1/us/us-regional.xml': US_REGIONAL,
-      'm1/us/1-1/cover-letter.pdf': 'letter',
+      ...DECLARED,
       'm5/53-clin-stud-rep/protocol-amendment-2.pdf': 'amendment',
     });
     const { files } = await detectArchive(archive);
 
-    const declared = files.find((f) => f.relativePath === 'm1/us/1-1/cover-letter.pdf');
+    const declared = files.find((f) => f.relativePath === 'm1/us/1-2/cover-letter.pdf');
     expect(declared).toMatchObject({
-      mappingSource: 'backbone_xml', reviewStatus: 'mapped', mappingRuleId: null, mappedCtdSection: '1.1',
+      mappingSource: 'backbone_xml', reviewStatus: 'mapped', mappingRuleId: null, mappedCtdSection: '1.2',
     });
     // In the archive but not in its backbone: still only a suggestion.
     const undeclared = files.find((f) => f.relativePath === 'm5/53-clin-stud-rep/protocol-amendment-2.pdf');

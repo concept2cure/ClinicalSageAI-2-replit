@@ -1,0 +1,198 @@
+# Red (client): the signing dialogs offer the document's creator meanings the server always refuses
+#
+# Code under test: HEAD 619052719's client. AuthoringFilingBar.tsx and DocumentWorkbench.tsx were
+# unchanged when this ran; only the two test files carry the new cases.
+# Command: RLS_ENFORCE=off npx vitest run client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx \
+#            client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx
+#
+# Expected: the creator's E-sign offers Authorship, Review and Approval, and Freeze offers Authorship
+# and Review, though the server refuses an author every meaning but authorship. A creator whose grant
+# permits the review signature alone is offered E-sign, which no meaning can pass. The workbench does
+# not tell the bar who created the document. The controls pass: a signer who did not create it is
+# offered every meaning, and created_by "2" or null reads false.
+# Result: 5 failed, 53 passed (58).
+#   x the document's author is offered the authorship signature alone on E-sign, and told why
+#       -> [ 'Authorship', 'Review', 'Approval' ]
+#   x Freeze offers the document's author the authorship seal alone, and says why
+#       -> [ 'Authorship', 'Review' ]
+#   x a creator whose grant permits the review signature alone has no signature to apply: E-sign is
+#     refused, and says why                                        -> E-sign enabled
+#   x created_by "1", signed in as user 1: signerIsAuthor true     -> 'false'
+#   x created_by 1, signed in as user 1: signerIsAuthor true       -> 'false'
+#
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > current authoring reads retain the server edit decision > retains the current server edit refusal for a document projection 296ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > current authoring reads retain the server edit decision > retains the current server edit refusal for a sections projection 122ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > current authoring lists retain their canonical session owner > rejects an old deferred list body after the same actor replaces the canonical session 200ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > current authoring lists retain their canonical session owner > retains a current deferred document list during ordinary canonical token refresh 168ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > current authoring reads restrict whole-document ceremonies > withdraws metadata and whole-source controls when a sections refresh confirms an access change 556ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > current authoring reads restrict whole-document ceremonies > keeps partial section editing/navigation while refusing optimistic whole-document hints 424ms
+ × client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > the signing bar knows when the signed-in user created the document > created_by "1", signed in as user 1: signerIsAuthor true 123ms
+   → expected 'false' to be 'true' // Object.is equality
+ × client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > the signing bar knows when the signed-in user created the document > created_by 1, signed in as user 1: signerIsAuthor true 121ms
+   → expected 'false' to be 'true' // Object.is equality
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > the signing bar knows when the signed-in user created the document > created_by "2", signed in as user 1: signerIsAuthor false 124ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > the signing bar knows when the signed-in user created the document > created_by null, signed in as user 1: signerIsAuthor false 142ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > current authoring bodies retain their project and session owner > refuses deferred old bodies for the same document after changing programme 240ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > current authoring bodies retain their project and session owner > masks old prose immediately across a same-actor session replacement and ignores its deferred sections 129ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > current authoring bodies retain their project and session owner > retains a current deferred body across ordinary canonical bearer refresh 138ms
+stderr | client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > document access is reachable from the canonical authoring editor > opens the current document access rail and uses its verified roster and outline choices
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to DocumentWorkbench inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > document access is reachable from the canonical authoring editor > opens the current document access rail and uses its verified roster and outline choices 269ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > saved text re-filing requires the currently admitted clean source > sends only the pinned saved-source intent from the existing toolbar, without an editor change 299ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > saved text re-filing requires the currently admitted clean source > does not offer unbound source text as a re-filing write 207ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > saved text re-filing requires the currently admitted clean source > does not offer partial source text as a re-filing write 196ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > saved text re-filing requires the currently admitted clean source > does not offer sealed source text as a re-filing write 161ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > saved text re-filing requires the currently admitted clean source > does not offer approved source text as a re-filing write 167ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > saved text re-filing requires the currently admitted clean source > does not offer read-only source text as a re-filing write 207ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > saved text re-filing requires the currently admitted clean source > does not offer unversioned source text as a re-filing write 210ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > saved text re-filing requires the currently admitted clean source > requires deliberate save or discard when the actual editor is dirty 238ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > an open re-filing confirmation rechecks its source before writing > refuses a source timestamp changed by a current saved-section refresh 516ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > an open re-filing confirmation rechecks its source before writing > refuses after the current read confirms access withdrawal 396ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > an open re-filing confirmation rechecks its source before writing > refuses to replay an old confirmation after its session changes 313ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > an open re-filing confirmation rechecks its source before writing > refuses to replay an old confirmation after its programme changes 363ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > a sent re-filing receipt cannot claim success in an obsolete editor context > suppresses a late confirmed receipt after access changes 401ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > a sent re-filing receipt cannot claim success in an obsolete editor context > suppresses a late confirmed receipt after session changes 364ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > a sent re-filing receipt cannot claim success in an obsolete editor context > suppresses a late confirmed receipt after programme changes 381ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > an open signing ceremony follows the current read without losing sent writes > blocks a current refusal before any new credential verification or signature request 266ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > an open signing ceremony follows the current read without losing sent writes > rechecks a restriction after deferred credential verification before the freeze writer 108ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > an open signing ceremony follows the current read without losing sent writes > retains the confirmed receipt of an already-sent signature after the read becomes restricted 96ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > freezes through the shared signing dialog: meaning, reason and password go to the real endpoint 56ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > offers only the meanings a freeze carries — approval is E-sign 52ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > sends the authenticator code with the freeze when one is enrolled, and a review meaning as REVIEWER 92ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > a 401 on freeze is shown in the dialog as not sealed — never as "frozen and sealed" 64ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > when the server refuses because the document is not settled > re-asks, naming what is outstanding, instead of reporting a failure 53ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > when the server refuses because the document is not settled > sends the acknowledgement only when the user deliberately chooses to seal, under a fresh signature 81ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > when the server refuses because the document is not settled > sends nothing at all when the user chooses to go back and resolve 46ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > when the server refuses because the document is not settled > a settled document goes straight to the signature, with nothing to acknowledge 22ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > when the server refuses an approval because the document is not settled > re-asks, naming what is outstanding, and sends the acknowledgement only on a deliberate, re-signed approval 97ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > when the server refuses an approval because the document is not settled > sends nothing more when the approver chooses to go back and resolve 54ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > signs through the shared dialog: the password and meaning go to the real endpoint (approves + freezes) 52ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > asks for the authenticator code when one is enrolled, and sends it with the signature 61ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > offers only the meanings the authoring store takes 42ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > a refused credential is shown in the dialog, and nothing is signed or claimed 56ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — real filing actions > disables Freeze once the document is already frozen 9ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — the server’s refusal, before the dialog > disables Freeze and E-sign with the reason as visible, described text 12ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — the server’s refusal, before the dialog > a Reviewer grant signs the review: E-sign is offered with the Review meaning alone 29ms
+ × client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — the server’s refusal, before the dialog > the document’s author is offered the authorship signature alone on E-sign, and told why 33ms
+   → expected [ 'Authorship', 'Review', 'Approval' ] to deeply equal [ 'Authorship' ]
+ × client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — the server’s refusal, before the dialog > Freeze offers the document’s author the authorship seal alone, and says why 30ms
+   → expected [ 'Authorship', 'Review' ] to deeply equal [ 'Authorship' ]
+ × client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — the server’s refusal, before the dialog > a creator whose grant permits the review signature alone has no signature to apply: E-sign is refused, and says why 9ms
+   → expected false to be true // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — the server’s refusal, before the dialog > a signer who did not create it is offered every meaning, and the server decides 33ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — the server’s refusal, before the dialog > leaves both enabled when the permission is unknown 10ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > workflow adoption is a deliberate reviewer act in the existing ceremony > starts unchecked, discloses the assignment/model boundary and sends no adoption by default 61ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > workflow adoption is a deliberate reviewer act in the existing ceremony > posts adoption only after explicit consent for REVIEWER 58ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > workflow adoption is a deliberate reviewer act in the existing ceremony > resets consent when the current document changes, even with unchanged source fingerprint 45ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > workflow adoption is a deliberate reviewer act in the existing ceremony > does not carry reviewer adoption into another meaning or back into review 62ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — the server’s refusal, before the dialog > the document’s author is offered the authorship signature alone on E-sign, and told why
+AssertionError: expected [ 'Authorship', 'Review', 'Approval' ] to deeply equal [ 'Authorship' ]
+
+- Expected
++ Received
+
+  [
+    "Authorship",
++   "Review",
++   "Approval",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx:502:31
+    500|     fireEvent.click(screen.getByRole('button', { name: /E-sign/ }));
+    501|     const dialog = await screen.findByRole('dialog');
+    502|     expect(offeredIn(dialog)).toEqual(['Authorship']);
+       |                               ^
+    503|     expect(dialog.textContent).toMatch(/You created this document, so …
+    504|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — the server’s refusal, before the dialog > Freeze offers the document’s author the authorship seal alone, and says why
+AssertionError: expected [ 'Authorship', 'Review' ] to deeply equal [ 'Authorship' ]
+
+- Expected
++ Received
+
+  [
+    "Authorship",
++   "Review",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx:510:31
+    508|     fireEvent.click(screen.getByRole('button', { name: /Freeze/ }));
+    509|     const dialog = await screen.findByRole('dialog');
+    510|     expect(offeredIn(dialog)).toEqual(['Authorship']);
+       |                               ^
+    511|     expect(dialog.textContent).toMatch(/You created this document, so …
+    512|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx > AuthoringFilingBar — the server’s refusal, before the dialog > a creator whose grant permits the review signature alone has no signature to apply: E-sign is refused, and says why
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringFilingBar.test.tsx:517:27
+    515|     renderWith({ esignRefusal: null, reviewOnly: true, signerIsAuthor:…
+    516|     const sign = screen.getByRole('button', { name: /E-sign/ }) as HTM…
+    517|     expect(sign.disabled).toBe(true);
+       |                           ^
+    518|     expect(describedBy(sign)).toBe('You created this document, so you …
+    519|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > the signing bar knows when the signed-in user created the document > created_by "1", signed in as user 1: signerIsAuthor true
+ FAIL  client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx > the signing bar knows when the signed-in user created the document > created_by 1, signed in as user 1: signerIsAuthor true
+AssertionError: expected 'false' to be 'true' // Object.is equality
+
+Expected: "true"
+Received: "false"
+
+ ❯ client/src/concept2cure/v2/editor/__tests__/workbenchDocumentAccess.test.tsx:180:71
+    178|       pinnedDocId={DOC} programId={PID} onNav={vi.fn()} />);
+    179|     await waitFor(() => expect(document.querySelector('.tiptap')?.text…
+    180|     expect(screen.getByTestId('filing-signer-is-author').textContent).…
+       |                                                                       ^
+    181|   });
+    182| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  5 failed | 53 passed (58)
+   Start at  15:49:22
+   Duration  14.57s (transform 3.13s, setup 224ms, import 4.06s, tests 9.17s, environment 816ms)
+

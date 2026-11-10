@@ -17,6 +17,14 @@ export interface AuthoringHandoff {
   code: string;
   content: string;
   subject: string;
+  /** The existing statistical endpoint recomputes this input and saves the
+   * document with its verified origin in one authoring transaction. */
+  statisticalDraft?: StatisticalDraftHandoff;
+}
+export interface StatisticalDraftHandoff {
+  documentType: string; input: object; expectedMarkdown: string;
+  basis: { kind: 'worked_example'; label: string }
+    | { kind: 'study_design'; studyId: string; designInputsSha256: string; sizingRunId?: number };
 }
 export interface HandoffContext {
   programId: string | null;
@@ -31,40 +39,83 @@ type StageResult =
   | { phase: 'confirmed'; body: Record<string, unknown>; row: Record<string, unknown> }
   | { phase: 'refused' | 'unknown' | 'stale'; message?: string; recovery?: AuthoringCreationRecoveryIdentity };
 const nonempty = (value: unknown): value is string => typeof value === 'string' && Boolean(value.trim());
-const record = (value: unknown): Record<string, unknown> | null =>
-  value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
+const record = (value: unknown): Record<string, unknown> | null => value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
 
 function captureHandoffContext(code: string, mounted: () => boolean): HandoffContext {
   const programId = shellProgramId();
-  const projectCurrent = captureShellProjectGuard();
-  const session = authService.captureSessionReadGuard();
+  const projectCurrent = captureShellProjectGuard(), session = authService.captureSessionReadGuard();
   const account = authService.getUser();
   const actor = `${account?.organizationId ?? ''}:${account?.id ?? ''}`;
   return { programId, code, isCurrent: () => mounted() && projectCurrent() && session.sameRevision()
     && `${authService.getUser()?.organizationId ?? ''}:${authService.getUser()?.id ?? ''}` === actor };
 }
 
-function confirmedStage(kind: 'document' | 'section', raw: unknown, request: Record<string, unknown>): StageResult {
+const isSha256 = (value: unknown): boolean => /^[a-f0-9]{64}$/.test(String(value));
+
+function statisticalCalculationMatches(origin: Record<string, unknown>, draft: StatisticalDraftHandoff): boolean {
+  const calculation = record(origin.computation);
+  return calculation?.execution === 'server_recomputed' && isSha256(origin.contentSha256)
+    && isSha256(calculation.inputsSha256) && isSha256(calculation.outputsSha256)
+    && stableStringify(calculation.computationInputs) === stableStringify(draft.input);
+}
+
+function statisticalStudyMatches(origin: Record<string, unknown>, basis: Extract<StatisticalDraftHandoff['basis'], { kind: 'study_design' }>): boolean {
+  const design = record(origin.design), run = record(origin.sizingRun);
+  return design?.studyId === basis.studyId && design.adaptedInputsSha256 === basis.designInputsSha256
+    && Number.isSafeInteger(design.studyRef) && Number(design.studyRef) > 0
+    && (!basis.sizingRunId || (run?.state === 'recorded' && run.runId === basis.sizingRunId));
+}
+
+export function statisticalOriginMatches(raw: unknown, draft: StatisticalDraftHandoff, programId: string): boolean {
+  const origin = record(raw);
+  if (!origin || origin.programId !== programId || origin.documentType !== draft.documentType || !Number.isSafeInteger(origin.projectId)
+      || Number(origin.projectId) <= 0 || !statisticalCalculationMatches(origin, draft)
+      || stableStringify(record(origin.basis)) !== stableStringify(draft.basis)) return false;
+  const accountOrg = authService.getUser()?.organizationId;
+  if (accountOrg != null && Number(origin.organizationId) !== Number(accountOrg)) return false;
+  if (draft.basis.kind === 'worked_example') return origin.design === null && record(origin.sizingRun)?.state === 'not_applicable';
+  return statisticalStudyMatches(origin, draft.basis);
+}
+
+function statisticalSectionMatches(raw: unknown, docId: unknown, code: string): boolean {
+  if (!Array.isArray(raw) || raw.length !== 1) return false;
+  const section = record(raw[0]);
+  return !!section && nonempty(section.id) && section.doc_id === docId && section.code === code && nonempty(section.content);
+}
+
+function confirmedStatisticalStage(body: Record<string, unknown>, request: Record<string, unknown>): StageResult {
+  const data = record(body.data), row = record(data?.doc), provenance = record(row?.provenance);
+  const draft = request as unknown as StatisticalDraftHandoff;
+  if (!row || !nonempty(row.id) || row.client_program_id !== request.programId || provenance?.source !== 'import' ||
+      !statisticalOriginMatches(provenance.statisticalSource, draft, String(request.programId)) ||
+      !statisticalSectionMatches(data?.sections, row.id, draft.documentType)) return { phase: 'unknown' };
+  return { phase: 'confirmed', body, row };
+}
+
+function confirmedStage(kind: 'document' | 'section' | 'statistical', raw: unknown, request: Record<string, unknown>): StageResult {
   const body = record(raw);
-  const row = record(body?.[kind]);
-  if (body?.success !== true || !row || !nonempty(row.id) || typeof row.title !== 'string') return { phase: 'unknown' };
+  if (!body || body.success !== true) return { phase: 'unknown' };
+  if (kind === 'statistical') return confirmedStatisticalStage(body, request);
+  const row = record(body[kind]);
+  if (!row || !nonempty(row.id) || typeof row.title !== 'string') return { phase: 'unknown' };
   const matches = kind === 'document' ? row.client_program_id === request.client_program_id
     : row.doc_id === request.doc_id && row.code === request.code;
   return matches ? { phase: 'confirmed', body, row } : { phase: 'unknown' };
 }
 
-async function writeHandoffStage(kind: 'document' | 'section', request: Record<string, unknown>, current: () => boolean): Promise<StageResult> {
+async function writeHandoffStage(kind: 'document' | 'section' | 'statistical', request: Record<string, unknown>, current: () => boolean): Promise<StageResult> {
   try {
-    const response = await apiRequest('POST', kind === 'document' ? '/api/authoring/docs' : '/api/authoring/sections', request);
+    const endpoint = kind === 'statistical' ? '/api/ana-biostats/document' : kind === 'document' ? '/api/authoring/docs' : '/api/authoring/sections';
+    const response = await apiRequest('POST', endpoint, request);
     if (!current()) return { phase: 'stale' };
     const body: unknown = await response.json().catch(() => null);
     if (!current()) return { phase: 'stale' };
-    if (kind === 'document' && hasAuthoringCreationOutcome(body)) return recoveryStage(body, request);
+    if (kind !== 'section' && hasAuthoringCreationOutcome(body)) return recoveryStage(body, request);
     if (!response.ok) return { phase: response.status >= 400 && response.status < 500 ? 'refused' : 'unknown', message: response.status === 401 ? 'your session isn’t authenticated' : serverMessage(body) ?? undefined };
     return confirmedStage(kind, body, request);
   } catch (error) {
     if (!current()) return { phase: 'stale' };
-    if (kind === 'document' && error instanceof ApiRequestError && hasAuthoringCreationOutcome(error.payload)) return recoveryStage(error.payload, request);
+    if (kind !== 'section' && error instanceof ApiRequestError && hasAuthoringCreationOutcome(error.payload)) return recoveryStage(error.payload, request);
     return error instanceof ApiRequestError && error.status >= 400 && error.status < 500
       ? { phase: 'refused', message: redactInternals(error.message, 'The server refused this write.') } : { phase: 'unknown' };
   }
@@ -72,7 +123,7 @@ async function writeHandoffStage(kind: 'document' | 'section', request: Record<s
 
 function recoveryStage(body: unknown, request: Record<string, unknown>): StageResult {
   const recovery = readAuthoringCreationRecovery(body, authService.getUser()?.organizationId,
-    typeof request.client_program_id === 'string' ? request.client_program_id : null);
+    typeof request.client_program_id === 'string' ? request.client_program_id : typeof request.programId === 'string' ? request.programId : null);
   return { phase: 'unknown', ...(recovery ? { recovery } : {}) };
 }
 
@@ -103,6 +154,13 @@ export async function saveToAuthoring(h: AuthoringHandoff, mounted: () => boolea
   if (!context.programId) return { ...context, ok: false, phase: 'refused',
     message: `Not opened — open a project first: a document belongs to a project. Nothing was saved; ${h.subject} is still here.` };
   if (!context.isCurrent()) return failedHandoff(context, { phase: 'stale' }, h.subject);
+  if (h.statisticalDraft) {
+    const created = await writeHandoffStage('statistical', { ...globalThis.structuredClone(h.statisticalDraft),
+      action: 'save_to_authoring', programId: context.programId, module: h.module }, context.isCurrent);
+    if (created.phase !== 'confirmed') return failedHandoff(context, created, h.subject);
+    return { ...context, ok: true, programId: context.programId, docId: String(created.row.id), bound: bindingOutcome(created.body),
+      message: `Saved to the authoring store with its calculation inputs and source basis — open Document authoring to review it.` + unboundNotice(created.body.governance) };
+  }
   const created = await writeHandoffStage('document', {
     title: h.title, module: h.module, client_program_id: context.programId,
   }, context.isCurrent);
@@ -121,6 +179,8 @@ export async function saveToAuthoring(h: AuthoringHandoff, mounted: () => boolea
 /** Explicit continuation into an already confirmed document; callers verify
  * its current project membership and section inventory before invoking it. */
 async function continueAuthoringText(h: AuthoringHandoff, context: HandoffContext, docId: string): Promise<AuthoringHandoffResult> {
+  if (h.statisticalDraft) return { ...context, ok: false, phase: 'blocked', docId,
+    message: 'This statistical save is atomic. Review the identified document and its provenance before requesting another copy.' };
   if (!context.isCurrent()) return failedHandoff(context, { phase: 'stale' }, h.subject, docId);
   const saved = await writeHandoffStage('section', { doc_id: docId, code: h.code, title: h.title, content: h.content }, context.isCurrent);
   if (saved.phase !== 'confirmed') return failedHandoff(context, saved, h.subject, docId);
@@ -144,7 +204,7 @@ export function openSavedAuthoring(result: AuthoringHandoffResult, onNav: (id: s
 export type { WorkflowImportSource } from '@shared/authoring/source-import';
 import type { AuthoringImportOrigin, AuthoringImportSource, AuthoringSourceImportData, AuthoringSourceImportPreviewData,
   BinaryImportOrigin, BinaryImportSource, WorkflowImportOrigin, WorkflowImportSource } from '@shared/authoring/source-import';
-import { agencyResponseImportId, studyDesignImportId } from '@shared/authoring/source-import';
+import { agencyResponseImportId, artifactImportId, isWorkflowSourceKind, studyDesignImportId } from '@shared/authoring/source-import';
 import { stableStringify } from '@shared/canonical-json';
 import { authoringCurrentReadPath } from './editor/authoringCurrentRead';
 
@@ -172,16 +232,17 @@ export type SourceImportInspection = { ok: true; inventory: Array<{ id: string; 
 export function isWorkflowSource(source: unknown): source is WorkflowImportSource {
   if (!source || typeof source !== 'object') return false;
   const kind = (source as { kind?: unknown }).kind;
-  return kind === 'protocol' || kind === 'csr' || kind === 'ivd-assessment' || kind === 'ivd-document' || kind === 'study-design-crf' || kind === 'agency-response';
+  return isWorkflowSourceKind(kind);
 }
 
 /** Stable selection identity; ordering does not change a CSR selection. */
 export function workflowSourceKey(source: WorkflowImportSource): string {
+  if (source.kind === 'artifact') return `artifact:${JSON.stringify([source.artifactId, source.version])}`;
   if (source.kind === 'agency-response') return `agency-response:${agencyResponseImportId(source.eventId, source.questionId) ?? 'invalid-selection'}`;
   if (source.kind === 'study-design-crf') return `${source.kind}:${source.studyId}`;
   if (source.kind !== 'csr') return `${source.kind}:${source.documentId}`;
   if (source.sectionNumbers !== undefined && (!Array.isArray(source.sectionNumbers) || !source.sectionNumbers.every(s => typeof s === 'string'))) return 'invalid-selection';
-  return `csr:${source.jobId}:${[...new Set(source.sectionNumbers?.map(s => s.trim()) ?? [])].sort().join(',')}`;
+  return `csr:${source.jobId}:${source.approvedOnly === true ? 'approved-only' : 'working-draft'}:${[...new Set(source.sectionNumbers?.map(s => s.trim()) ?? [])].sort().join(',')}`;
 }
 const importHash = (value: unknown): value is string => typeof value === 'string' && /^[a-f0-9]{64}$/i.test(value);
 const importUuid = (value: unknown): value is string => typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
@@ -194,12 +255,18 @@ const uniqueCodes = (rows: Array<{ code: string }>): boolean => new Set(rows.map
 
 function validWorkflowSource(source: unknown): source is WorkflowImportSource {
   if (!isWorkflowSource(source)) return false;
+  if (source.kind === 'artifact') return artifactImportId(source.artifactId, source.version) !== null;
   if (source.kind === 'agency-response') return agencyResponseImportId(source.eventId, source.questionId) !== null;
   if (source.kind === 'study-design-crf') return nonempty(source.studyId) && studyDesignImportId(source.studyId) === source.studyId;
   if (source.kind === 'protocol') return importInteger(source.documentId);
   if (source.kind !== 'csr') return importUuid(source.documentId);
-  return importInteger(source.jobId) && (source.sectionNumbers === undefined || (Array.isArray(source.sectionNumbers)
-    && source.sectionNumbers.length > 0 && source.sectionNumbers.length <= 200 && source.sectionNumbers.every(nonempty)));
+  return validCsrImportSource(source);
+}
+function validCsrImportSource(source: Extract<WorkflowImportSource, { kind: 'csr' }>): boolean {
+  return importInteger(source.jobId) && (source.approvedOnly === undefined || source.approvedOnly === true)
+    && (source.sectionNumbers === undefined || (Array.isArray(source.sectionNumbers)
+      && source.sectionNumbers.length > 0 && source.sectionNumbers.length <= 200 && source.sectionNumbers.every(nonempty)))
+    && (source.approvedOnly !== true || (Array.isArray(source.sectionNumbers) && source.sectionNumbers.length > 0));
 }
 function validBinarySource(source: unknown): source is BinaryImportSource {
   const value = record(source);
@@ -211,6 +278,7 @@ function validSectionOrigin(section: WorkflowImportOrigin['sectionOrigins'][numb
     && ['unrecorded', 'recorded-name-only'].includes(section.modelEvidence) && nullableText(section.model);
 }
 const workflowConversions: Record<WorkflowImportSource['kind'], WorkflowImportOrigin['conversion']> = {
+  artifact: 'artifact-snapshot',
   'agency-response': 'agency-response-snapshot',
   'study-design-crf': 'study-design-crf-projection',
   protocol: 'protocol-structure', csr: 'ich-e3-sections', 'ivd-assessment': 'ivd-assessment-snapshot', 'ivd-document': 'ivd-document-snapshot',
@@ -229,11 +297,15 @@ function validWorkflowOrigins(origin: WorkflowImportOrigin): boolean {
   return Array.isArray(origin.sectionOrigins) && origin.sectionOrigins.length > 0 && origin.sectionOrigins.every(validSectionOrigin)
     && uniqueCodes(origin.sectionOrigins) && stringList(origin.gaps) && validWorkflowMetadata(origin);
 }
-export function workflowOriginMatches(origin: WorkflowImportOrigin | undefined, programId: string, source: WorkflowImportSource | undefined): boolean {
-  if (!origin || !importUuid(programId) || !validWorkflowSource(source) || origin.kind !== source.kind || origin.programId !== programId) return false;
+function workflowIdentityMatches(origin: WorkflowImportOrigin, source: WorkflowImportSource): boolean {
+  if (source.kind === 'artifact') return origin.id === source.artifactId && origin.version === String(source.version);
   const id = source.kind === 'agency-response' ? agencyResponseImportId(source.eventId, source.questionId)
     : source.kind === 'csr' ? source.jobId : source.kind === 'study-design-crf' ? source.studyId : source.documentId;
-  if (origin.id !== String(id) || !validWorkflowSource(origin.selection) || workflowSourceKey(origin.selection) !== workflowSourceKey(source)) return false;
+  return origin.id === String(id);
+}
+export function workflowOriginMatches(origin: WorkflowImportOrigin | undefined, programId: string, source: WorkflowImportSource | undefined): boolean {
+  if (!origin || !importUuid(programId) || !validWorkflowSource(source) || origin.kind !== source.kind || origin.programId !== programId) return false;
+  if (!workflowIdentityMatches(origin, source) || !validWorkflowSource(origin.selection) || workflowSourceKey(origin.selection) !== workflowSourceKey(source)) return false;
   return importHash(origin.fingerprint) && nonempty(origin.title) && validWorkflowOrigins(origin);
 }
 function validPreviewSections(sections: AuthoringSourceImportPreviewData['sections']): boolean {

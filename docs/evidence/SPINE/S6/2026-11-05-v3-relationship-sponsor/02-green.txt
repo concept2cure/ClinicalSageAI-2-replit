@@ -1,0 +1,61 @@
+ ✓ tests/db/vault-document-relationships.dbtest.ts > relating documents (critique 15) > relates two versions, and both ends list it in their own words 159ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > relating documents (critique 15) > relates to a version in another project of the organisation, and names that project 74ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > relating documents (critique 15) > refuses a document of another sponsor's project, and records nothing 66ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > relating documents (critique 15) > says when the related version has since been superseded 71ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > relating documents (critique 15) > refuses a self relationship, two versions of one document, a duplicate and an unknown kind 97ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > relating documents (critique 15) > refuses another organisation's document, a viewer, and another organisation's project 32ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > removing a relationship, and the record it leaves (critique 15) > removing one requires a reason, keeps the row, and cannot be done twice 81ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > removing a relationship, and the record it leaves (critique 15) > each relate and unrelate is a chained row on both documents' histories 117ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > removing a relationship, and the record it leaves (critique 15) > the table refuses every other change, for every role, and another organisation reads none of it 28ms
+ ✓ tests/db/vault-document-relationships.dbtest.ts > removing a relationship, and the record it leaves (critique 15) > the tenant purge takes an organisation's relationships with its documents, and no one else's 74ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > actual authenticated native controls > proves actual runtime app_service, non-owner NOSUPERUSER/NOBYPASSRLS and FORCE RLS 5ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > actual authenticated native controls > has native FORCE RLS on Vault after canonical migration repair without changing table ownership 3ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > actual authenticated native controls > proves the same real sharing policy admits public/owner/member and refuses an unassigned private actor 12ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > actual authenticated native controls > serves authorized public, private owner and explicitly assigned member detail through real authentication 99ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > actual authenticated native controls > serves the authorized public document search and relationship to an actor with both parents 105ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read  38ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /dossier 53ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /drafts 30ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /team 31ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /evidence 28ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /activity 28ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /records 50ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /conversation-files 33ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /sources 125ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Project read /source-changes 66ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Vault document read /versions 168ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Vault document read /compare 59ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Vault document read /history 61ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Vault document read /catalog 48ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Vault document read /relationships 45ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Vault document read /annotations 77ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Vault document read /text 24ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > protects the Vault tree and separately mounted disposition preview 186ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > all parent read families deny before content or download effects > denies private bytes before filesystem reads or a download audit, then serves the exact authorized bytes 36ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > source and Authoring admission positive boundaries > retains a genuinely global_public source under restricted runtime RLS 114ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > source and Authoring admission positive boundaries > admits public SELECT only and preserves recorded global rows on runtime INSERT UPDATE and DELETE attempts 9ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > source and Authoring admission positive boundaries > admits creator-only unbound conversation adoption and preserves same-target idempotence 353ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > source and Authoring admission positive boundaries > shows only Authoring documents with a whole-document grant in accessible project records 79ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > native identity and retained anchor controls > refuses unattributed409 or foreign404 Vault identity before bytes or audits 21ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > native identity and retained anchor controls > excludes unattributed and foreign Vault metadata before tree search and record-card projection 159ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > native identity and retained anchor controls > refuses malformed or nonexistent parent identities without exposing metadata 14ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > native identity and retained anchor controls > requires reconciliation for missing or deleted anchors and preserves archived retained reads 34ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > native identity and retained anchor controls > retains the canonical native uniqueness constraint rather than selecting a second anchor 8ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > current parent privacy through actual authenticated routes > refuses an unassigned actor before private project metadata 10ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > current parent privacy through actual authenticated routes > refuses an unassigned actor before private Vault snippets or identity 8ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > current parent privacy through actual authenticated routes > pages the accessible portfolio rather than a newer private project 31ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > current parent privacy through actual authenticated routes > counts and pages only accessible library documents 31ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > current parent privacy through actual authenticated routes > rechecks current organization membership for a previously authenticated public reader 27ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > current parent privacy through actual authenticated routes > denies a now-viewer lead mutation despite the retained member JWT and lead identity 37ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > current parent privacy through actual authenticated routes > does not return a private counterpart from an accessible public document relationship 80ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > current parent privacy through actual authenticated routes > rechecks current write eligibility after request admission and before the real adoption transaction 21ms
+ ✓ tests/db/project-vault-parent-access.dbtest.ts > current parent privacy through actual authenticated routes > refuses a privately bound source selected into an owned target through conversation adoption 23ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > finds matches in every project the organisation holds, each named with its project, and never another organisation's 35ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > lists an earlier version only when asked 23ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > an empty query answers no results and says why 16ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > from inside a project, lists only its sponsor's projects, and names the sponsor 23ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > across every project, each hit names its own sponsor 26ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > refuses a project that is not the caller's to scope by, and never widens to it 14ms
+ ✓ tests/db/vault-library-search.dbtest.ts > library search across every project (critique 15) > the project search still searches its project only 35ms
+ Test Files  3 passed (3)
+      Tests  59 passed (59)

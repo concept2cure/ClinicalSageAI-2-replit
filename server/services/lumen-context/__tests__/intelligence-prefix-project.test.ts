@@ -16,6 +16,7 @@ const h = vi.hoisted(() => ({
   project: vi.fn(async (id: number, _org?: number) => `intelligence of project ${id}`),
   wisdom: vi.fn(async () => null),
   anchor: vi.fn(async (): Promise<number | null> => null),
+  objective: vi.fn(async (_db: unknown, _scope: { orgId: number; projectId: number }) => ({ charterId: null, current: null, history: [] }) as unknown),
 }));
 vi.mock('../../client-intelligence-memory.js', () => ({
   buildClientIntelligenceContext: async () => null,
@@ -24,6 +25,10 @@ vi.mock('../../client-intelligence-memory.js', () => ({
 vi.mock('../../ana-wisdom-engine.js', () => ({ buildWisdomContext: h.wisdom }));
 vi.mock('../../../db.js', () => ({ db: { tag: 'shared-db' } }));
 vi.mock('../../c2c/program-project-anchor.js', () => ({ resolveProgramProjectAnchor: h.anchor }));
+vi.mock('../../c2c/charter-objectives.js', async (importOriginal) => ({
+  objectivesContextBlock: (await importOriginal<typeof import('../../c2c/charter-objectives')>()).objectivesContextBlock,
+  readProjectObjectives: h.objective,
+}));
 
 import { getIntelligencePrefix, invalidateIntelligencePrefix } from '../intelligence-prefix';
 
@@ -85,5 +90,25 @@ describe('the cache', () => {
     invalidateIntelligencePrefix(org, DIGITS_FIRST);
     await getIntelligencePrefix(org, DIGITS_FIRST);
     expect(h.project).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("the project's objective of record (P-80)", () => {
+  it("is read for the open project and put before AnA, with its sources", async () => {
+    h.anchor.mockResolvedValue(42);
+    h.objective.mockResolvedValueOnce({ charterId: 3, history: [], current: { version: 2, contentHash: 'h', status: 'draft', updatedAt: '2026-11-01T00:00:00.000Z', updatedBy: 7,
+      content: { objective: 'Show the primary endpoint is met, and file the NDA.', successCriteria: null,
+        sources: [{ kind: 'registry', title: 'ClinicalTrials.gov entry', url: 'https://clinicaltrials.gov/study/NCT00000000' }] } } });
+    const prefix = await getIntelligencePrefix(org, DIGITS_FIRST);
+    expect(h.objective).toHaveBeenCalledWith({ tag: 'shared-db' }, { orgId: org, projectId: 42 });
+    expect(prefix).toContain("The project's objective (of record, version 2)");
+    expect(prefix).toContain('Show the primary endpoint is met, and file the NDA.');
+    expect(prefix).toContain('ClinicalTrials.gov entry (https://clinicaltrials.gov/study/NCT00000000) [registry]');
+  });
+
+  it('is not read when no project is open', async () => {
+    h.objective.mockClear();
+    await getIntelligencePrefix(org);
+    expect(h.objective).not.toHaveBeenCalled();
   });
 });

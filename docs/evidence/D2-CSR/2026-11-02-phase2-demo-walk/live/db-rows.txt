@@ -1,0 +1,25 @@
+# Vault lifecycle rows for the seven study-data files (2026-11-02, local c2c_live)
+adae.xpt|approved|t
+adlbc.xpt|approved|t
+adlbh.xpt|approved|t
+adsl.xpt|approved|t
+advs.xpt|approved|t
+cdiscpilot01-adam-bundle.json|approved|t
+cdiscpilot01-efficacy-results.json|approved|t
+
+# CSR build jobs
+1|failed|53|missing_section_outputs
+2|failed|26|missing_section_outputs
+
+# Saved section outputs by build: job | ai_generated | model | rows | rows with the demo-mode text
+1|t|demo-mode|30|30
+1|f|(none)|7|0
+2|f|(none)|18|0
+
+# Authoring documents made from the two 'Clinical Study Report (CSR)' entries
+CDISCPILOT01 Clinical Study Report|component:clinical_study_report
+Template check: second CSR entry|registry:ICH_CSR
+
+# After the import path walk (later, 2026-11-02)
+build 2 headings: approved 20
+working copy: importSource.kind=csr, importSource.id=2, sections=20

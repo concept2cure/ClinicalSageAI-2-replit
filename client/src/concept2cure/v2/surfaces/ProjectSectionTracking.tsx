@@ -120,9 +120,11 @@ export function SectionTracking({ read }: { read: DossierState }) {
   } else {
     body = <TrackingRecords tracking={tracking} />;
   }
-  return <section className="pj-sec" aria-labelledby={heading}>
-    <div className="pj-sec-h"><h2 id={heading}>Section tracking</h2></div>
-    <p className="pj-card-note">Recorded section tracking counts approved, signed or locked sections as complete. These tracking figures are separate from document completion and artifact status; they do not establish filing readiness.</p>
-    {body}
-  </section>;
+  return <details className="pj-more" data-testid="pj-section-tracking">
+    <summary id={heading}>Section tracking</summary>
+    <section aria-labelledby={heading}>
+      <p className="pj-card-note">Recorded section tracking counts approved, signed or locked sections as complete. These tracking figures are separate from document completion and artifact status; they do not establish filing readiness.</p>
+      {body}
+    </section>
+  </details>;
 }

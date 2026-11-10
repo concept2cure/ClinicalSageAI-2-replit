@@ -1,0 +1,18 @@
+[
+  "client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx",
+  "client/src/concept2cure/v2/editor/__tests__/useScopedDocuments.test.tsx",
+  "client/src/concept2cure/v2/editor/useScopedDocuments.ts",
+  "client/src/concept2cure/v2/surfaces/ReviewThreads.tsx",
+  "scripts/ci/__tests__/lineage-save-gate-strings.test.mjs",
+  "scripts/ci/check-lineage-save-gate.mjs",
+  "scripts/ci/lib/lineage-authoring-transaction.mjs",
+  "scripts/ci/lib/lineage-content-writers.mjs",
+  "server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts",
+  "server/services/authoring/__tests__/authoring-program-access.pglite.test.ts",
+  "server/services/authoring/authoring-program-access.ts",
+  "server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts",
+  "shared/constants/ui-surface-registry.ts",
+  "shared/constants/ui-surface-registry.ui-v2.ts",
+  "docs/evidence/F1/2026-11-06-authoring-project-write-access/lint.mjs",
+  "docs/evidence/F1/2026-11-06-authoring-project-write-access/browser-scope.cjs"
+]

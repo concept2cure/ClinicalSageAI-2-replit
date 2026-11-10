@@ -55,10 +55,29 @@ function substance(payload: Record<string, unknown>): CanonicalSource {
   return { id: 'ds-1', sourceType: 'drug_substance', sourcePayload: payload } as unknown as CanonicalSource;
 }
 
-/** The small molecule the shipping scope is for. */
+/**
+ * The small molecule the shipping scope is for.
+ *
+ * `modality` is stated, and under P-110 (2026-11-09) it has to be: the
+ * boundary admits a small molecule only on a recorded fact. This fixture
+ * carried a chemical route and no modality until then, and was admitted by
+ * inference — which is exactly what mutation 5 showed admitting a mAb.
+ */
 const SMALL_MOLECULE = substance({
   name: 'BX-701',
+  modality: 'small_molecule',
   manufacturingRoute: 'Three-step chemical synthesis from 2-aminopyridine; isolated by crystallisation',
+});
+
+/**
+ * Mutation 5's substance (`docs/evidence/S7/2026-11-09-demo-cmc-materials/`):
+ * a monoclonal antibody whose record says nothing biological, because its route
+ * is terse. `classifySubstanceModality` reads it as a small molecule by
+ * inference, which P-110 refuses at the boundary.
+ */
+const TERSE_ROUTE_ONLY = substance({
+  name: 'C2C-101',
+  manufacturingRoute: 'Proprietary process (fictional).',
 });
 
 /** The simulation's own substance: a monoclonal antibody. */
@@ -343,4 +362,59 @@ describe('interviewMoleculeTypeRefusal', () => {
       expect(interviewMoleculeTypeRefusal(odd)?.code, String(odd)).toBe('CMC_MODALITY_NOT_ESTABLISHED');
     }
   });
+});
+
+/* ── P-110: the boundary rests on a recorded fact, not an inference ──────────
+   Decided 2026-11-09 by the coordinating session under the founder's delegation
+   of 2026-11-08, after mutation 5 of
+   `docs/evidence/S7/2026-11-09-demo-cmc-materials/` admitted a monoclonal
+   antibody whose only route text was "Proprietary process (fictional)." */
+describe('a small molecule is admitted only when the record states it (P-110)', () => {
+  it('refuses a small molecule the record only INFERS — mutation 5’s antibody', () => {
+    const refusal = compositionRefusal([TERSE_ROUTE_ONLY], 'ind');
+    expect(refusal, 'a terse route admitted a monoclonal antibody into small-molecule Module 3').not.toBeNull();
+    expect(refusal!.code).toBe('CMC_MODALITY_NOT_ESTABLISHED');
+    /* What is established is nothing, not "small molecule" — the refusal is
+       read into an audit row. */
+    expect(refusal!.modality).toBe('unknown');
+    expect(refusal!.message).toMatch(/Record the substance.s modality/i);
+  });
+
+  it('says the verdict was an inference, not that the record is empty', () => {
+    const inferred = compositionRefusal([TERSE_ROUTE_ONLY], 'ind')!;
+    const empty = compositionRefusal([substance({ name: 'BX-701' })], 'ind')!;
+    expect(inferred.message).not.toBe(empty.message);
+    /* The empty record's remedy is the route; this record HAS a route, so
+       asking for it again would send the reader to fix what is already there. */
+    expect(inferred.message).not.toMatch(/Record the manufacturing route/);
+    expect(empty.message).toMatch(/Record the manufacturing route/);
+  });
+
+  it('admits a small molecule once its modality is recorded, and only then', () => {
+    expect(compositionRefusal([TERSE_ROUTE_ONLY], 'ind')).not.toBeNull();
+    expect(
+      compositionRefusal([substance({ ...(TERSE_ROUTE_ONLY.sourcePayload as object), modality: 'small_molecule' })], 'ind'),
+      'the boundary refused a substance that states it is a small molecule',
+    ).toBeNull();
+  });
+
+  it('still refuses a stated biologic ahead of the modality question', () => {
+    /* Order matters: a biologic that also states nothing else must read as
+       OUT_OF_SCOPE, which names Q6B/Q5A/Q5C, not as NOT_ESTABLISHED. */
+    expect(compositionRefusal([THE_SIMULATION_MAB], 'ind')!.code).toBe('CMC_MODALITY_OUT_OF_SCOPE');
+    expect(compositionRefusal([substance({ name: 'X-1', cellLine: 'CHO-K1' })], 'ind')!.code).toBe(
+      'CMC_MODALITY_OUT_OF_SCOPE',
+    );
+  });
+
+  it('leaves §3.2.A.2’s own reading alone — the classifier is unchanged', () => {
+    /* P-110: "§3.2.A.2 keeps its current reading." The inference lives in
+       classifySubstanceModality and is defensible there; only the BOUNDARY
+       declines to rest on it. */
+    expect(classifySubstanceModality(TERSE_ROUTE_ONLY.sourcePayload as object)).toMatchObject({
+      modality: 'small_molecule',
+      explicit: false,
+    });
+  });
+
 });

@@ -1,0 +1,15 @@
+ × client/src/concept2cure/v2/__tests__/authoringFilingBarFigures.test.tsx > when the server refuses over figures not in their cited sources > asks about each figure by name, each starting at "go back", and sends no acknowledgement first
+   → Unable to find an element by: [data-testid="form-title"]
+ × client/src/concept2cure/v2/__tests__/authoringFilingBarFigures.test.tsx > when the server refuses over figures not in their cited sources > re-signs with every key only when every figure is kept
+   → Unable to find an element by: [data-testid="form-fields"]
+ × client/src/concept2cure/v2/__tests__/authoringFilingBarFigures.test.tsx > when the server refuses over figures not in their cited sources > keeping one figure and correcting another sends nothing and goes back
+ × client/src/concept2cure/v2/__tests__/authoringFilingBarFigures.test.tsx > when the server refuses over figures not in their cited sources > a freeze asks the same, and re-seals with every key once every figure is kept
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/authoringFilingBarFigures.test.tsx > when the server refuses over figures not in their cited sources > asks about each figure by name, each starting at "go back", and sends no acknowledgement first
+TestingLibraryElementError: Unable to find an element by: [data-testid="form-title"]
+ FAIL  client/src/concept2cure/v2/__tests__/authoringFilingBarFigures.test.tsx > when the server refuses over figures not in their cited sources > re-signs with every key only when every figure is kept
+TestingLibraryElementError: Unable to find an element by: [data-testid="form-fields"]
+ FAIL  client/src/concept2cure/v2/__tests__/authoringFilingBarFigures.test.tsx > when the server refuses over figures not in their cited sources > keeping one figure and correcting another sends nothing and goes back
+ FAIL  client/src/concept2cure/v2/__tests__/authoringFilingBarFigures.test.tsx > when the server refuses over figures not in their cited sources > a freeze asks the same, and re-seals with every key once every figure is kept
+ Test Files  1 failed (1)
+      Tests  4 failed (4)

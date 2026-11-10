@@ -16,7 +16,7 @@
 
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -79,7 +79,8 @@ function canvasEditor(): Editor {
 
 const DOCS = {
   success: true,
-  documents: [{ id: 'D1', title: 'Nonclinical Overview', module: 'M3', product_code: 'ABC', status: 'draft', updated_at: '2026-07-20T10:00:00Z', section_count: 1 }],
+  // No project and no filing: the list and header (authoring-document-read.ts) state the copy unbound.
+  documents: [{ id: 'D1', title: 'Nonclinical Overview', module: 'M3', product_code: 'ABC', status: 'draft', updated_at: '2026-07-20T10:00:00Z', section_count: 1, c2c_document_id: null }],
 };
 const SECTIONS = {
   success: true,
@@ -100,6 +101,7 @@ beforeEach(() => {
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
     if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
+    if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1') return ok({ success: true, document: { ...DOCS.documents[0], client_program_id: null } });
     if (method === 'GET' && url.startsWith('/api/authoring/sections/S1/history')) return ok({ success: true, revisions: [] });
     if (method === 'GET' && url.startsWith('/api/authoring/documents/D1/comments')) return ok({ success: true, comments: [] });
     if (method === 'PATCH' && url === '/api/authoring/sections/S1') {
@@ -147,8 +149,8 @@ describe('the save confirmation carries whether the text reached the filing', ()
     canvasEditor().chain().focus().selectAll().insertContent('Revised substance description.').run();
     await waitFor(() => expect(canvasText()).toBe('Revised substance description.'));
     fireEvent.change(screen.getByTestId('change-reason'), { target: { value: 'Corrected the potency limit.' } });
-    const save = within(screen.getByRole('group', { name: 'Save and sign' }))
-      .getByRole('button', { name: /^Save(?:d)?$/i }) as HTMLButtonElement;
+    /* D4-2: Save is in the editor's one bar (D4.md §D4.B); the "Save and sign" group is gone. */
+    const save = screen.getByTestId('save-section') as HTMLButtonElement;
     await waitFor(() => expect(save.disabled).toBe(false));
     fireEvent.click(save);
     await waitFor(() => expect(apiRequest.mock.calls.some((c) => c[0] === 'PATCH')).toBe(true));

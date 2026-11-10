@@ -1,6 +1,46 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+Pro:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap');
+/* The specimen pages' shared base.
+   The fonts are the ones the app loads (client/index.html: Lora and JetBrains
+   Mono). The sans is the system stack, `--font-sans` in colors_and_type.css, so
+   no web font is loaded for it. Every token comes from colors_and_type.css. The
+   `.c2c-v2` lines below are copied from client/src/concept2cure/v2/styles/app-v2.css
+   as they stand. Each specimen page copies its component's rules from the same
+   sheet, so a specimen shows what the app shows (D0.md §4.5). */
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import url('../colors_and_type.css');
 
+/* app-v2.css `:root`: aliases the app declares and colors_and_type.css does not. */
+:root {
+  --accent-000: var(--accent-main-000);
+  --accent-100: var(--accent-main-100);
+  --accent-200: var(--accent-main-200);
+  --dur: var(--dur-normal);
+  --v2-shadow-lg: 0 12px 28px -6px rgb(20 20 19 / .14), 0 4px 10px -4px rgb(20 20 19 / .08);
+}
+/* app-v2.css `.c2c-v2.dark`: the aliases resolve again where the dark tokens apply. */
+.c2c-v2.dark {
+  --accent-000: var(--accent-main-000);
+  --accent-100: var(--accent-main-100);
+  --accent-200: var(--accent-main-200);
+  --v2-shadow-lg: 0 12px 28px -6px rgb(0 0 0 / .5);
+  color-scheme: dark;
+}
+/* app-v2.css: the root type (14px body) and the resets the primitives sit on. */
+.c2c-v2 {
+  font-family: var(--font-sans);
+  font-size: var(--fs-body); line-height: 1.5;
+  color: var(--text-100);
+  background: var(--bg-000);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.c2c-v2 *, .c2c-v2 *::before, .c2c-v2 *::after { box-sizing: border-box; }
+:where(.c2c-v2) button { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; text-align: left; }
+.c2c-v2 button { font-family: inherit; }
+.c2c-v2 button:focus-visible { outline: 2px solid var(--accent-200); outline-offset: 2px; border-radius: var(--radius-md); }
+.c2c-v2 input, .c2c-v2 textarea, .c2c-v2 select { font: inherit; color: inherit; background: transparent; border: 0; outline: 0; }
+.c2c-v2 svg { display: block; }
+
+/* ── specimen layout only (not app rules) ── */
 html, body {
   margin: 0;
   padding: 0;
@@ -14,15 +54,23 @@ html, body {
   box-sizing: border-box;
   min-height: 100vh;
 }
+/* A light and a dark panel side by side: `.c2c-v2` and `.c2c-v2.dark`. */
+.panels { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+.panel { padding: 16px 20px; border: 1px solid var(--border); border-radius: var(--radius-xl); }
 .row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
 .col { display: flex; flex-direction: column; gap: 12px; }
 .grid { display: grid; gap: 12px; }
-.chip {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 4px 10px; border-radius: var(--radius-full);
-  font-size: 11px; font-weight: 500;
-  background: var(--stone-100); color: var(--ink-muted);
-}
 .swatch { border-radius: var(--radius-md); border: 1px solid var(--border-subtle); }
 .mono { font-family: var(--font-mono); }
-.label { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-subtle); }
+/* Specimen labels: sentence case, 12px, quiet. */
+.label { font-size: var(--fs-caption); font-weight: 500; color: var(--text-300); }
+/* colors_and_type.css sets `code` and `.mono` at 0.8125em. Inside a 12px label that is
+   9.75px, under the 12px floor, so code in a label or a note keeps the text's size. */
+.label :is(code, .mono), .lbl :is(code, .mono), .note code { font-size: inherit; }
+/* A quiet chip for specimen pages that do not load the app's `.rd-chip`: the
+   same values (app-v2.css `.rd-chip`). */
+.chip {
+  display: inline-block; vertical-align: middle; padding: 2px 8px; border-radius: var(--radius-md);
+  font-size: var(--fs-caption); font-weight: 500; line-height: 16px; white-space: nowrap;
+  background: var(--bg-100); color: var(--text-200);
+}

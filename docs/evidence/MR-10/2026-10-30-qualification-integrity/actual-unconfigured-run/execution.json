@@ -1,0 +1,65 @@
+{
+  "recordedAt": "2026-10-30T19:51:36.721301+00:00",
+  "canonicalBase": "32eafdbf2c57bfa70d98429b8d312652eb08afe5",
+  "command": [
+    "npm",
+    "exec",
+    "--yes",
+    "--package=node@22",
+    "--",
+    "node",
+    "--import",
+    "tsx",
+    "scripts/ectd/qualify-ectd.ts",
+    "--region",
+    "fda",
+    "--no-v4",
+    "--report-dir",
+    "/tmp/ectd-integrity-actual-odzxwxt3/reports",
+    "--work-dir",
+    "/tmp/ectd-integrity-actual-odzxwxt3/packages"
+  ],
+  "selectorPresenceOnly": {
+    "ECTD_DTD_DIR": false,
+    "ECTD_SCHEMA_DIR": false,
+    "EVALIDATOR_BINARY": false,
+    "EVALIDATOR_ENDPOINT": false,
+    "EVALIDATOR_PROFILE_FDA": false,
+    "EVALIDATOR_PROFILE": false,
+    "EVALIDATOR_USE_FDA_CRITERIA_FALLBACK": false,
+    "ECTD_REQUIRE_DTD": false,
+    "ECTD_REQUIRE_EVALIDATOR": false,
+    "ECTD_REQUIRE_RPS_SCHEMA": false
+  },
+  "exitCode": 1,
+  "status": "blocked",
+  "availableChecksPassed": true,
+  "canonicalZipValidation": {
+    "original": {
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "index.xml references a DTD via DOCTYPE but no DTD is bundled under util/dtd/ \u2014 the package is not self-contained and is not submission-ready until the ICH/regional DTDs are vendored into util/dtd/.",
+        "index.xml references stylesheet \"util/style/ectd-2-0.xsl\" but no stylesheet is bundled under util/style/ \u2014 the package is not self-contained and is not submission-ready until the ICH/regional stylesheets are vendored into util/style/.",
+        "Module folder \"m4/\" is empty or missing"
+      ]
+    },
+    "amendment": {
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "index.xml references a DTD via DOCTYPE but no DTD is bundled under util/dtd/ \u2014 the package is not self-contained and is not submission-ready until the ICH/regional DTDs are vendored into util/dtd/.",
+        "index.xml references stylesheet \"util/style/ectd-2-0.xsl\" but no stylesheet is bundled under util/style/ \u2014 the package is not self-contained and is not submission-ready until the ICH/regional stylesheets are vendored into util/style/.",
+        "Module folder \"m3/\" is empty or missing",
+        "Module folder \"m4/\" is empty or missing"
+      ]
+    }
+  },
+  "purpose": "Actual golden synthetic CLI, canonical ZIP integrity assessed; absent official assets/external engine remains BLOCKED, no agency acceptance",
+  "sha256": {
+    "amendment.zip": "1443eebee7678498540dd4c4c687add4522bee17da7cb5e56dbb7299e301171e",
+    "original.zip": "b383befccfa086371fd6feb53422409a957c7a0a3b560116e04964281b1ed41a",
+    "v3.2.2-fda.json": "a5b01880cb3e05c7540cc6024e590f5314ea2bc897c8c7340022e4115903b0e1",
+    "summary.json": "48092255c52b59e0661d01f22d0fc32cb4e23d115ecc79f4823dca2b4ddd2294"
+  }
+}

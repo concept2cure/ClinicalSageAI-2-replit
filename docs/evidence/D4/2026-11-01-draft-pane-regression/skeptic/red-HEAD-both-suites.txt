@@ -1,0 +1,28 @@
+# HEAD 0e2db6c3a: both suites as committed (git show HEAD:<file>), copied beside the originals as zzDpSkepticHead*.test.tsx and run with vitest --maxWorkers=1. Result lines and the pane hold text only; DOM dumps omitted (../red/ has the pane DOM).
+ ✓ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticHeadSaved.test.tsx > saved references reopen in the one actual editor > checks history without selecting it, freshly reuses it and previews before building (AnA=false) 3069ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticHeadSaved.test.tsx > saved references reopen in the one actual editor > checks history without selecting it, freshly reuses it and previews before building (AnA=true) 2410ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticHeadSaved.test.tsx > historical checks fail closed in the actual editor > withholds saved source history when the current detail read admits only sections 728ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticHeadSaved.test.tsx > historical checks fail closed in the actual editor > withholds saved source history when the current sections read admits only sections 502ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticHeadSaved.test.tsx > historical checks fail closed in the actual editor > withdraws cached saved source history after the current document read becomes partial 1190ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticHeadSaved.test.tsx > historical checks fail closed in the actual editor > distinguishes an admitted empty history from a failed read without selecting or changing text 1048ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticHeadSaved.test.tsx > historical checks fail closed in the actual editor > does not publish or adopt malformed manifest 785ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticHeadSaved.test.tsx > historical checks fail closed in the actual editor > does not publish or adopt foreign scoped success 1168ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticHeadSaved.test.tsx > historical checks fail closed in the actual editor > refuses a newer saved event during reuse instead of silently selecting it 1464ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticHeadSaved.test.tsx > reuse respects the current editor and selection owner > lets dirty authors inspect but blocks reuse while text or a ceremony owns the editor 1500ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticHeadSaved.test.tsx > reuse respects the current editor and selection owner > gives a new catalogue selection precedence over a delayed historical check 565ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticHeadSaved.test.tsx > reuse respects the current editor and selection owner > keeps an unresolved structural write held after checking historical references 1287ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticHeadSaved.test.tsx > late saved references cannot revive a prior scope > suppresses a doubled check across project visit ABA 420ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/zzDpSkepticHeadSaved.test.tsx > late saved references cannot revive a prior scope > suppresses a doubled check across account session ABA 836ms
+ × client/src/concept2cure/v2/editor/__tests__/zzDpSkepticHeadSaved.test.tsx > manual draft review retains its buffer during a saved-source reuse > blocks late reuse after the draft pane opens, then permits a fresh explicit check after closing it 6301ms
+   → Unable to find an element by: [data-testid="ai-draft-body"]
+ × client/src/concept2cure/v2/editor/__tests__/zzDpSkepticHeadParas.test.tsx > Chosen paragraphs land in the editor as AnA’s tracked changes > replaces the current paragraph the chosen one is paired with, naming the alternative’s turn 6211ms
+   → Unable to find role="radiogroup" and name `/alternatives/i`
+ × client/src/concept2cure/v2/editor/__tests__/zzDpSkepticHeadParas.test.tsx > Chosen paragraphs land in the editor as AnA’s tracked changes > adds chosen paragraphs to an empty section as one addition, each decided on its own 6034ms
+   → Unable to find role="radiogroup" and name `/alternatives/i`
+ × client/src/concept2cure/v2/editor/__tests__/zzDpSkepticHeadParas.test.tsx > Chosen paragraphs land in the editor as AnA’s tracked changes > keeps an answer the governed-write rule does not admit out of the section 5647ms
+   → Unable to find role="radiogroup" and name `/alternatives/i`
+ × client/src/concept2cure/v2/editor/__tests__/zzDpSkepticHeadParas.test.tsx > Chosen paragraphs land in the editor as AnA’s tracked changes > says before the click that chosen paragraphs carry no source citations 5615ms
+   → Unable to find role="radiogroup" and name `/alternatives/i`
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  5 failed | 14 passed (19)

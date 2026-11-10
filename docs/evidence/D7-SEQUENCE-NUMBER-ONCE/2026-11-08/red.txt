@@ -1,0 +1,10 @@
+# RED on real PostgreSQL 16 (app_service, RLS on): the final repair A cases against submission-service.ts at HEAD a7f5b4801, 2026-11-08T23:28:35Z
+ × tests/db/sequence-number-once.dbtest.ts > a sequence number is used once in a submission (F1 repair A) > a second live 0000 is refused, by name
+   → expected 201 to be 409 // Object.is equality
+ × tests/db/sequence-number-once.dbtest.ts > a sequence number is used once in a submission (F1 repair A) > two creates of 0000 in flight together: the one that waits for the submission sees the other and is refused
+   → {"id":10041,"submissionId":735,"region":"fda","sequenceNumber":"0000","type":"original","status":"draft","validationStatus":null,"dispatchStatus":null,"transmitSignatureActionId":null,"transmitAttemptId":null,"frozenAt":null,"organizationId":1023,"creat
+ ✓ tests/db/sequence-number-once.dbtest.ts > a sequence number is used once in a submission (F1 repair A) > a removed 0000 does not hold its number
+ × tests/db/sequence-number-once.dbtest.ts > a sequence number is used once in a submission (F1 repair A) > a sequence removed while its transition is in flight does not move
+   → {"id":10045,"submissionId":737,"region":"fda","sequenceNumber":"0000","type":"original","status":"assembling","validationStatus":null,"dispatchStatus":null,"transmitSignatureActionId":null,"transmitAttemptId":null,"frozenAt":null,"organizationId":1023,"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 1 passed (4)

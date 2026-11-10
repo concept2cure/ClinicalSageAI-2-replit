@@ -15,7 +15,7 @@
  *              before it is delivered). A refusal says why.
  *   manifest   the Artifacts center's CSV index, one builder for both screens
  *              (the gallery is the Vault's organization view since slice C).
- *   editor     the authoring.open-document directive the Artifacts center rides.
+ *   editor     the exact governed source opens through the existing working-copy intake.
  *   AnA        Ask AnA on the leaf, and vault.focus-document.
  *
  * A failed versions or audit read is an error, never an empty history.
@@ -39,8 +39,7 @@ vi.mock('../download', async (importOriginal) => ({
 import { ApiRequestError } from '@/lib/queryClient';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { Vault } from '../surfaces/Vault';
-import { __resetSurfaceActionBus, applySurfaceAction, registerSurfaceActionHandlers, registeredSurfaceId } from '../surfaceActions';
-import { resolveSurfaceIdForTarget } from '../navParams';
+import { __resetSurfaceActionBus, applySurfaceAction, registeredSurfaceId } from '../surfaceActions';
 import { useActiveSurfaceContext, type SurfaceContext } from '../surfaceContext';
 import { PID, ok, props } from './_vault-surface-fixtures';
 
@@ -60,7 +59,7 @@ function leaf(id: number, over: Record<string, unknown> = {}, facts: Record<stri
     id: `art-${id}`, num: '2.5', title: `Artifact ${id}`, type: 'Clinical overview', status: 'draft', pct: 0,
     owner: 'R. Writer', ver: 'v5', updated: '2h ago', preview: `Artifact ${id}`, src: 'artifact', sizeLabel: '24 KB',
     artifact: {
-      artifactId: `artifact_${id}`, kind: 'Clinical overview', format: 'docx', model: null, origin: 'ana',
+      artifactId: `artifact_${id}`, version: 5, kind: 'Clinical overview', format: 'docx', model: null, origin: 'ana',
       author: 'R. Writer', contentHash: 'c'.repeat(64), ctdSection: '2.5', signature: 'none',
       signedVersion: null, reviewed: false, sourceCount: 0, ...facts,
     },
@@ -315,6 +314,8 @@ describe('the governed-artifact manifest — one builder for the Vault’s proje
     mockApi();
     render(<Vault {...props()} />);
     const laneEl = await screen.findByTestId('vault-artifacts-lane');
+    // D6-3: the branch's counts are a section of the Governed artifacts view (D6 §C.4 step 5).
+    fireEvent.click(screen.getByRole('tab', { name: 'Governed artifacts' }));
     fireEvent.click(within(laneEl).getByRole('button', { name: /Export manifest/ }));
     expect(dl.csv).toHaveBeenCalledTimes(1);
     const [name, headers, rows] = dl.csv.mock.calls[0] as [string, string[], unknown[][]];
@@ -337,17 +338,12 @@ describe('the governed-artifact manifest — one builder for the Vault’s proje
 });
 
 describe('an artifact leaf — the editor, and Ask AnA', () => {
-  it('opens the artifact in the editor through authoring.open-document', async () => {
+  it('opens the exact artifact source intake while retaining its original', async () => {
     mockApi();
     const p = await openClinicalOverview();
-    fireEvent.click(screen.getByRole('button', { name: /Open in editor/ }));
-    expect(p.onNav).toHaveBeenCalledWith('authoring');
-    // The directive waits for the editor and is performed there, by title.
-    const open = vi.fn(() => ({ ok: true as const, detail: 'Opened' }));
-    cleanup();
-    registerSurfaceActionHandlers(resolveSurfaceIdForTarget('authoring'), { 'authoring.open-document': open });
-    expect(open).toHaveBeenCalledTimes(1);
-    expect((open.mock.calls[0] as unknown[])[0]).toEqual({ title: 'Clinical overview' });
+    fireEvent.click(screen.getByRole('button', { name: /Work on document/ }));
+    expect(p.onNav).not.toHaveBeenCalled();
+    expect(await screen.findByTestId('source-import-dialog')).toBeTruthy();
   });
 
   it('asks AnA about this artifact by name, section, version and governance', async () => {

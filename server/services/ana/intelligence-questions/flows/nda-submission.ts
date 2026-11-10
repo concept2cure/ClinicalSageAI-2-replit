@@ -18,6 +18,8 @@
  */
 
 import type { FlowDefinition } from '../../../../../shared/types/intelligence-questions.js';
+import { orphanProgrammeLeaves, usOrphanDesignationField } from './ind-submission-orphan-designation.js';
+import { FEE_SETTLED, userFeeField } from './nda-submission-user-fee.js';
 
 export function createNdaSubmissionFlow(): FlowDefinition {
   return {
@@ -166,6 +168,15 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             ],
             allowOther: {},
           },
+          /* 2026-11-02 (S4): the NDA asked no orphan designation at all, so no
+             rule could know a marketing application was for a designated drug.
+             The positions every interview offers
+             (ind-submission-orphan-designation.ts). */
+          usOrphanDesignationField({
+            label: 'US orphan-drug designation for this indication',
+            helpText:
+              'Orphan-drug designation is granted under FD&C Act §526 (21 USC 360bb) and 21 CFR part 316 for a drug for a rare disease or condition (in general, fewer than 200,000 persons in the US). The request must be made before the marketing application is submitted (FD&C Act §526(a)(1)). Approval of a designated drug for the designated use may carry 7-year orphan exclusivity (FD&C Act §527; 21 USC 360cc).',
+          }),
           {
             id: 'accelerated_pathway',
             label: 'Expedited Program Designations',
@@ -260,19 +271,20 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             type: 'text',
             placeholder: 'e.g., (617) 555-0100',
           },
-          {
-            id: 'user_fee_paid',
-            label: 'PDUFA User Fee Paid',
-            type: 'yes_no',
+          /* 2026-11-02 (S4): a yes/no, so an orphan-designated NDA, which is
+             exempt and correctly answered "no", drew a critical. The positions
+             (nda-submission-user-fee.ts). */
+          userFeeField({
+            label: 'PDUFA application fee',
             required: true,
             helpText:
-              'Per PDUFA (FD&C Act section 736, 21 USC 379h), the application fee must be paid at the time of NDA submission. FDA will not file an application without fee payment or a valid waiver/reduction.',
-          },
+              'Per PDUFA (FD&C Act section 736, 21 USC 379h), the application fee is due at the time of NDA submission, and an application is not accepted for filing until the fees owed are paid. An application for a drug FDA has designated an orphan drug is exempt unless it also includes an indication for other than a rare disease or condition; a waiver or reduction is a separate decision FDA makes on request.',
+          }),
           {
             id: 'pdufa_goal_date',
             label: 'PDUFA Goal Date (if known)',
             type: 'date',
-            visibleWhen: { field: 'user_fee_paid', operator: 'eq', value: true },
+            visibleWhen: FEE_SETTLED,
             helpText:
               'The PDUFA goal date is set by FDA after filing (Day 60). NME NDAs (PDUFA "Program"): standard review 10 months, priority review 6 months, from the 60-day filing date (about 12 or 8 months from receipt). Non-NME NDAs: standard review 10 months, priority review 6 months, from receipt.',
           },
@@ -281,12 +293,12 @@ export function createNdaSubmissionFlow(): FlowDefinition {
         issueChecks: [
           {
             id: 'pdufa_fee_not_paid',
-            condition: { field: 'user_fee_paid', operator: 'eq', value: false },
+            condition: { field: 'user_fee_paid', operator: 'eq', value: 'not_paid' },
             severity: 'critical',
             title: 'PDUFA User Fee Required',
             message:
-              'The Prescription Drug User Fee must be paid at the time of NDA submission. FDA will refuse to file the application without fee payment per FD&C Act section 736(e) (21 USC 379h). Fee waivers may be available for small businesses or orphan products under certain conditions.',
-            reference: 'FD&C Act section 736 (21 USC 379h), including 736(e); PDUFA',
+              'The Prescription Drug User Fee must be paid at the time of NDA submission: an application is not accepted for filing until the fees owed are paid (FD&C Act section 736(e), 21 USC 379h). If FDA has designated the drug an orphan drug and the application includes no other indication, the application is exempt (section 736(a)(1)(F)): choose the exemption instead, and claim it on the user fee cover sheet (Form FDA 3397). A waiver or reduction, for example for a small business submitting its first application, is a separate request under section 736(d).',
+            reference: 'FD&C Act section 736 (21 USC 379h), including 736(a)(1)(F), 736(d) and 736(e); PDUFA',
           },
         ],
       },
@@ -478,6 +490,70 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             ],
             helpText:
               'Per ICH Q1A(R2), NDA stability data should include at least 12 months long-term (25°C/60% RH) and 6 months accelerated (40°C/75% RH) data at the time of submission. Proposed shelf life may be up to twice the period covered by long-term data, but no more than 12 months beyond it, when the data support extrapolation (ICH Q1E).',
+          },
+          /* 2026-11-02 (S4): the shelf-life claim, so xn_stability_insufficient_for_shelf_life
+             has a claim to hold against stability_data_duration. Not asked for a
+             supplement whose change cannot touch the dating period. */
+          {
+            id: 'proposed_shelf_life_months',
+            label: 'Proposed expiration dating period for the drug product',
+            type: 'select',
+            required: false,
+            visibleWhen: { field: 'supplement_type', operator: 'not_in', value: ['labeling_change', 'new_indication', 'efficacy_supplement'] },
+            helpText:
+              'The shelf life you will propose in 3.2.P.8. ICH Q1A(R2) expects at least 12 months of long-term data at submission. ICH Q1E allows a claim beyond the data only where the data support it: at most twice the long-term period and no more than 12 months beyond it. Refrigerated storage, or significant change at the accelerated condition, allows less, and frozen storage allows none.',
+            options: [
+              {
+                value: '12',
+                label: '12 months',
+                commits:
+                  'Supported by 12 months of long-term data without extrapolation.',
+                authority: 'ICH Q1A(R2) §2.2.7',
+              },
+              {
+                value: '18',
+                label: '18 months',
+                commits:
+                  'From 12 months of data this is within the 1.5x / +6-month limit of Q1E\u2019s less favourable cases. It is not available for frozen storage, or where significant change at accelerated leaves the data without statistical support.',
+                authority: 'ICH Q1E Appendix A',
+              },
+              {
+                value: '24',
+                label: '24 months',
+                commits:
+                  'From 12 months of data this needs Q1E\u2019s most favourable case: room-temperature storage, no significant change at accelerated, data with little change or statistical support. Or 24 months of data.',
+                authority: 'ICH Q1E Appendix A',
+              },
+              {
+                value: '30',
+                label: '30 months',
+                commits:
+                  'Needs at least 18 months of long-term data even in the most favourable case.',
+                authority: 'ICH Q1E Appendix A',
+              },
+              {
+                value: '36',
+                label: '36 months',
+                commits:
+                  'Needs at least 24 months of long-term data even in the most favourable case.',
+                authority: 'ICH Q1E Appendix A',
+              },
+              {
+                value: '48',
+                label: '48 months',
+                commits:
+                  'Needs at least 36 months of long-term data even in the most favourable case.',
+                authority: 'ICH Q1E Appendix A',
+              },
+              {
+                value: '60',
+                label: '60 months',
+                commits:
+                  'Needs at least 48 months of long-term data even in the most favourable case.',
+                authority: 'ICH Q1E Appendix A',
+              },
+            ],
+            allowOther: { prompt: 'State the proposed period, with its storage condition, in your own words (e.g., per strength or pack).' },
           },
           {
             id: 'container_closure',
@@ -1077,6 +1153,62 @@ export function createNdaSubmissionFlow(): FlowDefinition {
               { value: 'multiple', label: 'Multiple Tumor Types (tissue-agnostic)' },
             ],
           },
+          /* 2026-11-02 (S4): xn_oncology_no_biomarker_strategy read biomarker
+             ids no flow asked, and in the IND its triggers were not asked
+             either; so it never fired. */
+          {
+            id: 'companion_diagnostic_position',
+            label: 'How the indicated population is identified, and the test the label will name',
+            type: 'select',
+            required: true,
+            visibleWhen: { anyOf: [{ field: 'therapeutic_area', operator: 'eq', value: 'oncology' }, { field: 'is_oncology', operator: 'eq', value: true }] },
+            helpText:
+              "Where the drug is safe and effective only in patients a test identifies, FDA generally will not approve it unless the in vitro companion diagnostic is approved or cleared contemporaneously, and the drug's labeling specifies use of that test. The guidance describes an exception for a serious or life-threatening condition with no satisfactory alternative (FDA Guidance: In Vitro Companion Diagnostic Devices, 2014).",
+            options: [
+              {
+                value: 'cdx_new_contemporaneous',
+                label: 'Biomarker-defined indication; a new companion diagnostic is submitted for contemporaneous approval',
+                commits:
+                  "The test's own marketing submission (generally a PMA under 21 CFR Part 814; a 510(k) or De Novo only where FDA agrees that route applies) is reviewed alongside this NDA; a bridging study if the clinical-trial assay differs from the final test; and an indication worded to the FDA-approved or cleared test.",
+                authority: 'FDA Guidance: In Vitro Companion Diagnostic Devices (2014); 21 CFR Part 814; FDA Draft Guidance: Principles for Codevelopment of an In Vitro Companion Diagnostic Device with a Therapeutic Product (2016)',
+              },
+              {
+                value: 'cdx_existing_supplement',
+                label: "Biomarker-defined indication; an already-approved companion diagnostic adds this drug's claim",
+                commits:
+                  "The test's holder files a PMA supplement for the new therapeutic claim, with evidence that the test identifies the population studied.",
+                authority: '21 CFR 814.39; FDA Guidance: In Vitro Companion Diagnostic Devices (2014)',
+              },
+              {
+                value: 'cdx_group_claim',
+                label: 'Biomarker-defined indication; a companion diagnostic with a group or class oncology claim covers it',
+                commits:
+                  'Reliance on a test whose labeling names the oncology group or class, and confirmation that this drug falls within it.',
+                authority: 'FDA Guidance: Developing and Labeling In vitro Companion Diagnostic Devices for a Specific Group or Class of Oncology Therapeutic Products (2020)',
+              },
+              {
+                value: 'complementary_diagnostic',
+                label: 'A test informs use but is not required (complementary diagnostic)',
+                commits:
+                  'The label may describe marker-defined results without restricting use to tested patients; the test is not a condition of safe and effective use.',
+                authority: 'Unverified: "complementary diagnostic" is FDA usage, not defined in regulation or in a guidance cited here.',
+              },
+              {
+                value: 'not_biomarker_defined',
+                label: 'The indication is not biomarker-defined (efficacy shown in an unselected population)',
+                commits:
+                  'An unselected labelled population. If the pivotal data show a marker-dependent effect, FDA may restrict the indication.',
+                authority: 'FDA Guidance: Enrichment Strategies (2019)',
+              },
+              {
+                value: 'not_defined',
+                label: 'Not yet determined',
+                commits:
+                  'AnA raises the finding: the device route, the test the label names and its timing relative to the NDA are open.',
+              },
+            ],
+            allowOther: { prompt: 'How is the indicated population identified, in your own words?' },
+          },
           {
             id: 'uses_surrogate_endpoint',
             label: 'Is approval sought based on a surrogate endpoint?',
@@ -1135,6 +1267,51 @@ export function createNdaSubmissionFlow(): FlowDefinition {
               { value: 'historical', label: 'Historical Control' },
               { value: 'none', label: 'No Control (add-on design)' },
             ],
+          },
+          /* 2026-11-02 (S4): xn_orphan_without_natural_history read
+             `natural_history` / `disease_natural_history`, asked by no flow, and
+             triggered on `expedited_designations` / `special_designations`, which
+             none of the four flows it applies to asks. Dead on both sides. The
+             orphan leaves are the rule's own predicate (orphanProgrammeLeaves). */
+          {
+            id: 'natural_history',
+            label: 'How natural-history data enter the efficacy evidence',
+            type: 'select',
+            required: true,
+            visibleWhen: { allOf: [{ anyOf: [...orphanProgrammeLeaves(['orphan_designation']), { field: 'therapeutic_area', operator: 'eq', value: 'rare_disease' }] }, { field: 'supplement_type', operator: 'not_in', value: ['new_strength', 'labeling_change', 'manufacturing_change'] }] },
+            helpText:
+              'What role natural-history data play in the evidence of effectiveness. A historical control is one of the designs 21 CFR 314.126(b)(2)(v) recognises: a comparison with the adequately documented natural history of the disease or condition.',
+            options: [
+              {
+                value: 'external_control',
+                label: 'Natural-history data are the external control for the pivotal comparison',
+                commits:
+                  'Patient-level data, a pre-specified comparison, comparable eligibility and outcome ascertainment, and bias analyses. Historical control designs are usually reserved for special circumstances, such as a disease with high and predictable mortality or an effect that is self-evident.',
+                authority: '21 CFR 314.126(b)(2)(v); ICH E10 (2000) §2.5; FDA draft guidance, Considerations for the Design and Conduct of Externally Controlled Trials for Drug and Biological Products (February 2023)',
+              },
+              {
+                value: 'endpoint_development',
+                label: 'Natural-history data supported endpoint selection, timing or clinical meaningfulness, with a concurrent control',
+                commits:
+                  'The application shows how the natural-history data justify the endpoint, its timing and the change judged meaningful.',
+                authority: 'FDA draft guidance, Rare Diseases: Natural History Studies for Drug Development (2019)',
+              },
+              {
+                value: 'disease_context',
+                label: 'Registry or published data describe the disease course, as context only',
+                commits:
+                  'No efficacy inference rests on them, and their sources are documented.',
+                authority: 'FDA draft guidance, Rare Diseases: Natural History Studies for Drug Development (2019)',
+              },
+              {
+                value: 'none',
+                label: 'No natural-history data in the application',
+                commits:
+                  'A single-arm or historical-control pivotal result has no documented disease course to compare against. With a concurrent randomized control, this is not a finding.',
+                authority: '21 CFR 314.126(b)(2)(v); ICH E10 (2000) §2.5',
+              },
+            ],
+            allowOther: { prompt: 'What role do natural-history data play in this application, in your own words?' },
           },
           {
             id: 'blinding',
@@ -1962,6 +2139,8 @@ export function createNdaSubmissionFlow(): FlowDefinition {
             id: 'confirmatory_study_planned',
             label: 'Confirmatory Post-Approval Study Planned',
             type: 'yes_no',
+            helpText:
+              'Applies to an application seeking accelerated approval (21 CFR 314.510; FD&C Act 506(c)). Answer Yes if the confirmatory trial is planned, underway or complete. If this NDA does not seek accelerated approval, answer No.',
           },
           {
             id: 'confirmatory_study_design',
@@ -2024,17 +2203,6 @@ export function createNdaSubmissionFlow(): FlowDefinition {
         ],
         defaultNext: 'pediatric_commitments',
         provideExpertFeedback: true,
-        issueChecks: [
-          {
-            id: 'accelerated_approval_no_confirmatory',
-            condition: { field: 'confirmatory_study_planned', operator: 'eq', value: false },
-            severity: 'critical',
-            title: 'Confirmatory Study Required for Accelerated Approval',
-            message:
-              'If this NDA seeks accelerated approval (21 CFR 314.510), a confirmatory post-marketing study demonstrating clinical benefit is mandatory per 21 CFR 314.510 and FD&C Act 506(c); approval may be withdrawn under 21 CFR 314.530 if it fails to verify benefit. Per FDORA 2022 amendments, FDA has enhanced authority to require that confirmatory studies are underway prior to accelerated approval and to withdraw approval on an expedited timeline if studies fail to verify clinical benefit. The confirmatory study protocol should be agreed upon with FDA before NDA submission.',
-            reference: '21 CFR 314.510; FD&C Act 506(c); 21 CFR 314.530 (withdrawal); FDORA 2022',
-          },
-        ],
       },
 
       {
@@ -2172,7 +2340,7 @@ export function createNdaSubmissionFlow(): FlowDefinition {
               { value: 'none', label: 'No Exclusivity Claims' },
             ],
             helpText:
-              'NCE exclusivity (5 years) applies to drugs containing an active moiety never previously approved. Clinical data exclusivity (3 years) applies to supplements with new clinical studies. Orphan exclusivity (7 years) applies to drugs with orphan designation.',
+              'NCE exclusivity (5 years) applies to drugs containing an active moiety never previously approved. Clinical data exclusivity (3 years) applies to supplements with new clinical studies. Orphan exclusivity (7 years) may attach on approval of a designated drug for the designated use (FD&C Act §527; 21 CFR 316.31, 316.34); designation alone does not confer it.',
           },
           {
             id: 'patent_certifications',

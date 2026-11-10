@@ -142,3 +142,35 @@ export function unplaceableDocumentTableMessage(table: string): string {
     `Allowed: ${PLACEABLE_DOCUMENT_TABLE_LIST.join(', ')}.`
   );
 }
+
+/**
+ * Stores that keep their history but take no new content.
+ *
+ * P-108 3(b) (founder, 2026-11-08): "Retire ctd_onboarding_documents as a
+ * source of placeable leaves; it has no upload caller in any history and no
+ * deploy applier. Its replacement is VaultPlaceIntoSubmission.tsx." An upload
+ * reaches a sequence the way every other file does: into the project's Vault,
+ * approved there, and that Vault version placed.
+ *
+ * The store stays in the vocabulary above, on purpose. An upload already placed
+ * or filed still resolves, readiness still judges it (P-94: it is released only
+ * when the same bytes are approved in the project's Vault), and a filed upload
+ * can still be withdrawn. Taking it out of PLACEABLE_DOCUMENT_TABLES would turn
+ * that history into an unknown table. What is retired is new content: a leaf
+ * naming the store with any lifecycle operation but `delete`. upsertLeaf, the
+ * one write that REST, AnA and the MCP connector share, refuses it with this
+ * sentence. Only the exact operation `delete` is a withdrawal; an absent one
+ * is not, because it would keep whatever operation the leaf already has.
+ */
+const WITHDRAWAL_ONLY_DOCUMENT_TABLES: Record<string, string> = {
+  ctd_onboarding_documents:
+    'Uploads are no longer placed in a sequence. Upload the file to the project’s Vault, approve it there, and ' +
+    'place that Vault version. An upload already filed can still be withdrawn (lifecycle operation delete).',
+};
+
+/** The refusal for new content from a store that now takes only withdrawals, or null when the write is allowed. */
+export function retiredPlacementRefusal(table: unknown, lifecycleOp: unknown): string | null {
+  if (typeof table !== 'string' || !Object.prototype.hasOwnProperty.call(WITHDRAWAL_ONLY_DOCUMENT_TABLES, table)) return null;
+  if (lifecycleOp === 'delete') return null;
+  return `${WITHDRAWAL_ONLY_DOCUMENT_TABLES[table]} Nothing was placed.`;
+}

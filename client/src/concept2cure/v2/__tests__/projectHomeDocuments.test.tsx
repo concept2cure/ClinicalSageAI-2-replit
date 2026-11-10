@@ -409,7 +409,7 @@ describe('Evidence — every way a source comes in', () => {
     serve();
     render(<ProjectHome {...props()} />);
     await open('Evidence');
-    expect(document.querySelector('.pj-stageband-blurb')?.textContent).toBe('Project files and the data room the documents are written from');
+    expect(document.querySelector('.pj-step-blurb')?.textContent).toBe('Project files and the data room the documents are written from');
   });
 });
 
@@ -475,31 +475,23 @@ describe('Review findings — the row, the handoff and the filing type say what 
     expect(String(p.onAsk.mock.calls[0][0])).toBe("Use the 2 newest readable sources in this project's data room as the context for drafting.");
   });
 
-  it('a device project is not offered the eCTD compiler, and its coming-later line names no IND work', async () => {
+  it('a device project is not offered the eCTD compiler, and Submit carries no roadmap line', async () => {
     serve({ program: { product_type: 'device', program_type: '510(k)', regulatory_path: '510k' } });
     render(<ProjectHome {...props()} />);
     await open('Submit');
     await screen.findByRole('button', { name: 'See every sequence in Submission Center' });
     expect(screen.queryByRole('button', { name: /Compile and download/ }), 'an eCTD compile door on a 510(k)').toBeNull();
-    const later = screen.getByTestId('pj-coming-later').textContent ?? '';
-    expect(later).not.toMatch(/IND/);
-    expect(later).not.toMatch(/variation classifier/);
-    // The device line's wording (PJ_LIFECYCLE laterDevice), not the drug line's.
-    expect(later).toBe('Coming later: Each market’s registration status and renewal date; renewals and post-market obligations tracked as they fall due.');
+    /* The "Coming later:" lines were removed on 2026-10-31: a step says what works. */
+    expect(screen.queryByTestId('pj-coming-later')).toBeNull();
+    expect(document.body.textContent).not.toMatch(/Coming later/);
   });
 
-  it('a drug project names what Submit does not show yet, and nothing IND forms already does', async () => {
+  it('a drug project\'s Submit names nothing as coming later', async () => {
     serve();
     render(<ProjectHome {...props()} />);
     await open('Submit');
     await screen.findByRole('button', { name: /Compile and download/ });
-    const later = screen.getByTestId('pj-coming-later').textContent ?? '';
-    /* Slice A.1: it named "IND annual-report tracking", which IND forms assembles, downloads and files
-       into a sequence today, and AnA's variation classifier and regulatory intelligence. */
-    expect(later).toBe(
-      'Coming later: Each approved market’s registration status and renewal date; renewals and post-approval ' +
-      'obligations tracked as they fall due; safety reports with their reporting clock.',
-    );
-    expect(later).not.toMatch(/annual[- ]report|variation classifier|intelligence/i);
+    expect(screen.queryByTestId('pj-coming-later')).toBeNull();
+    expect(document.body.textContent).not.toMatch(/Coming later|annual[- ]report tracking|variation classifier/i);
   });
 });

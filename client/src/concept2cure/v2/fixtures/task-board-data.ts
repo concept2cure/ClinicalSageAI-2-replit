@@ -52,6 +52,8 @@ export interface ProjectEntry {
   id: string;
   label: string;
   type: string;
+  /** The regulatory_programs UUID the project is anchored to, when it is one. */
+  programId?: string | null;
 }
 
 export interface BoardColumn {
@@ -148,18 +150,22 @@ export const TB_TYPE: Record<string, string> = {
 
 /* ── sourceEntityType -- the 7-table provenance (Gap 1) ── */
 export const TB_SRC: Record<string, TaskSource> = {
-  unified: { l: 'Board', t: 'unifiedTasks' },
-  section: { l: 'Section', t: 'projectTasks -- section state-machine' },
-  pyramid: { l: 'Pyramid', t: 'in-memory -- not persisted' },
-  wbs: { l: 'WBS', t: 'project_tasks -- legacy/CRO' },
-  template: { l: 'Template', t: 'taskTemplates' },
-  module: { l: 'Module', t: 'crossModuleTaskLinks' },
+  // `t` is shown to people (the chip's tooltip and line), so it says what the
+  // work is, never which table holds it (2026-10-31: a client demo read
+  // "project_tasks -- legacy/CRO" and "in-memory -- not persisted").
+  unified: { l: 'Board', t: 'Tasks created on this board' },
+  quality: { l: 'Quality', t: 'Quality records and controlled documents' },
+  section: { l: 'Section', t: 'Work on a document section' },
+  pyramid: { l: 'Pyramid', t: 'Planning view, not saved' },
+  wbs: { l: 'WBS', t: "A project's work breakdown" },
+  template: { l: 'Template', t: 'Started from a workflow template' },
+  module: { l: 'Module', t: 'Linked across work areas' },
   // Other stores, read through the cross-store work view (2026-10-01). Their
   // cards are read-only on the board and open where they live.
-  schedule: { l: 'Schedule', t: 'project_tasks -- the schedule and Communication Center' },
-  correspondence: { l: 'Correspondence', t: 'c2c_project_work_items -- agency correspondence' },
-  review: { l: 'Review', t: 'c2c_project_work_items -- review work' },
-  filing: { l: 'Filing', t: 'estar_submissions -- tracked filings' },
+  schedule: { l: 'Schedule', t: 'The project schedule and Communication' },
+  correspondence: { l: 'Correspondence', t: 'Agency correspondence' },
+  review: { l: 'Review', t: 'Review work' },
+  filing: { l: 'Filing', t: 'Tracked filings' },
 };
 
 

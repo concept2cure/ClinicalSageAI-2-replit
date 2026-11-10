@@ -15,7 +15,7 @@
  *      pinned with the verdict a release without it returns.
  *   2. Vault, with a project open: "Inspection readiness" opened `etmf`, also
  *      locked.
- *   3. Vault, with no project open: "Open a project to see its vault" and
+ *   3. Vault, with no project open: each project's Vault is listed (2026-11-06; it read "Open a project to see its vault") and
  *      nothing to click.
  *   4. Submission Center, Builder: with no Co-Author documents it said to
  *      "author one in the eCTD Co-Author first", a surface that is locked and
@@ -87,7 +87,6 @@ beforeEach(() => {
     if (method === 'GET' && url === '/api/submissions/68/sequences') return ok(SEQS);
     if (method === 'GET' && url === '/api/submissions/sequences/29/leaves') return ok([]);
     if (method === 'GET' && url === '/api/510k/estar/submissions') return ok({ submissions: FILINGS });
-    if (method === 'GET' && url === '/api/coauthor/documents') return ok({ documents: [] });
     if (method === 'GET' && url === `/api/c2c/project-vault/${PID}`) {
       return ok({ success: true, data: { program: 'BX-204', spine: 'IND · 21 CFR 312', standard: 'pharma', documentCount: 0, tree: [] } });
     }
@@ -142,6 +141,16 @@ describe('No dead ends on the filing path (F16)', () => {
       expect(document.body.textContent).not.toContain('which is not part of this release');
     });
 
+    /* J4 human test, 2026-11-06 (docs/evidence/HUMAN-TEST/J4/): the empty state
+       named the filing panel and gave no way to it. */
+    it('the empty state opens the 510(k) surface it names', async () => {
+      const onNav = vi.fn();
+      render(<SubmissionCenter onAsk={vi.fn()} onNav={onNav} />);
+      await waitFor(() => expect(document.body.textContent).toContain('No device filings tracked yet'));
+      fireEvent.click(screen.getByRole('button', { name: 'Open the 510(k) filing panel' }));
+      expect(onNav).toHaveBeenCalledWith('device-510k');
+    });
+
     it('where the 510(k) surface is not in the release, the empty state says so and sends no one there', async () => {
       lockedHere.add('device-510k');
       render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
@@ -158,13 +167,18 @@ describe('No dead ends on the filing path (F16)', () => {
     expect(screen.queryByText(/Inspection readiness/)).toBeNull();
   });
 
-  it('Vault, with no project open: one button opens Projects', async () => {
+  it('Vault, with no project open: lists each project\'s Vault, and a row opens that project and its Vault', async () => {
+    /* The founder, 2026-11-06: Vault "should be accessible all the time, not just from within the project, but on
+       the left rail". It read "Open a project to see its vault" and sent the person to Projects. */
+    const base = apiRequest.getMockImplementation()!;
+    apiRequest.mockImplementation(async (method: string, url: string) =>
+      method === 'GET' && url === '/api/c2c/projects?limit=200' ? ok([{ id: PID, title: 'BX-204', code: 'BX-204' }]) : base(method, url));
     const onNav = vi.fn();
     render(<Vault surface={{ id: 'vault', label: 'Vault' } as never} onAsk={vi.fn()} onNav={onNav} segment="biotech" />);
-    expect(await screen.findByText('Open a project to see its vault')).toBeTruthy();
-    // "Go to", not "Open": beside the header's "Open project" it read as a second door to the same place.
-    fireEvent.click(screen.getByRole('button', { name: /Go to Projects/ }));
-    expect(onNav).toHaveBeenCalledWith('projects');
+    expect(await screen.findByText("Choose a project's Vault")).toBeTruthy();
+    fireEvent.click(await screen.findByRole('button', { name: 'Open the Vault of BX-204' }));
+    expect(onNav).toHaveBeenCalledWith('vault');
+    expect((window as unknown as { C2C_PROJECT?: { id?: unknown } }).C2C_PROJECT?.id).toBe(PID);
     /* Design review 2026-10-08 (open item 10): with no project open, the
        header's "Open project" led to Project home's "No project selected". */
     expect(screen.queryByRole('button', { name: /^.?Open project$/ })).toBeNull();
@@ -178,16 +192,20 @@ describe('No dead ends on the filing path (F16)', () => {
 
     const note = await screen.findByTestId('sc-builder-sources');
     expect(note.textContent).toMatch(/Place into filing/);
-    expect(note.textContent).toMatch(/comes later/);
+    // D7-A2 step 9: a disclosure that says how documents arrive, and no promise of what comes later.
+    expect(note.textContent).toMatch(/^How documents reach this sequence/);
+    expect(note.textContent).not.toMatch(/comes later/);
     fireEvent.click(screen.getByRole('button', { name: 'Open documents' }));
     expect(onNav).toHaveBeenLastCalledWith('document-authoring');
     fireEvent.click(screen.getByRole('button', { name: 'Open the Vault' }));
     expect(onNav).toHaveBeenLastCalledWith('vault');
 
-    // With no Co-Author documents, the empty state no longer sends the person there.
-    fireEvent.click(screen.getByRole('button', { name: /Place a Co-Author document as a leaf/ }));
-    await waitFor(() => expect(apiRequest.mock.calls.some(([, u]) => u === '/api/coauthor/documents')).toBe(true));
-    await waitFor(() => expect(document.body.textContent).toMatch(/No Co-Author documents in this organization/));
+    // The form places the project's documents (2026-10-31). This submission
+    // names no project, so it says so and points at the Vault — never at the
+    // Co-Author, whose list it no longer reads.
+    fireEvent.click(screen.getByRole('button', { name: /Place a project document as a leaf/ }));
+    await waitFor(() => expect(document.body.textContent).toMatch(/This submission is not in a project/));
+    expect(apiRequest.mock.calls.some(([, u]) => String(u).startsWith('/api/coauthor/documents'))).toBe(false);
     expect(document.body.textContent).not.toMatch(/author one in the eCTD Co-Author/);
   });
 

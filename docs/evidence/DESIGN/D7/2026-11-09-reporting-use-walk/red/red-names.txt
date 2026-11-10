@@ -1,0 +1,9 @@
+ × client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > every repeated control says what it acts on, and no row shows a database key > names each Catalog Run by its report
+   → expected null to be 'Run IACUC Protocol & Animal Census Re…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > every repeated control says what it acts on, and no row shows a database key > names each Run history Open by its run, and says a scope with no name without its key
+   → Unable to find role="button" and name `/^Open the Executive Readiness Digest run of /`
+ × client/src/concept2cure/v2/__tests__/insightsLibraryReachesBackend.test.tsx > every repeated control says what it acts on, and no row shows a database key > names each schedule’s Pause by its report
+   → Unable to find role="button" and name "Pause the Executive Readiness Digest schedule"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected null to be 'Run IACUC Protocol & Animal Census Re…' // Object.is equality
+      Tests  3 failed | 31 skipped (34)

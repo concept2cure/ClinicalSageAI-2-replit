@@ -38,7 +38,9 @@
  * Every write runs governedQmsWrite: a reason of at least 8 characters, the
  * acting user, a strict body, then BEGIN → tenant vars → the change → its
  * ledger pair → COMMIT on the request client. A refusal decided inside the
- * transaction rolls back with nothing written.
+ * transaction rolls back with nothing written. A change to who must train
+ * then moves the training tasks of the people it covers, after COMMIT and
+ * before the answer (services/qms/training-task.ts; slice 4).
  *
  * @module server/routes/mdx-qms-training
  */
@@ -56,7 +58,7 @@ import {
 } from '../services/qms/governed-qms-write';
 import {
   currentStanding, QmsTrainingRefused, readQmsTrainingCompliance, readQmsTrainingExpiring, summarizeQmsTrainingCompliance,
-  type TrainingSqlClient,
+  QMS_TRAINING_EXPIRY_ROW_CAP, type TrainingSqlClient,
 } from '../services/qms/training';
 import {
   addQmsJobRoleMember, addQmsTrainingAssignment, createQmsJobRole, deleteQmsJobRole, readQmsJobRoles, readQmsTrainingAssignments,
@@ -68,6 +70,7 @@ import {
   qmsGovernedRemovalSchema, qmsJobRoleCreateSchema, qmsJobRoleMemberSchema, qmsJobRoleUpdateSchema, qmsTrainingAssignmentSchema,
 } from '../../shared/qms/training';
 import { getOrgId, getUserId, positiveId, qmsClient } from './mdx-qms-context';
+import { documentsAssignedToRole, reconcileTrainingTasks, type TrainingTaskScope } from '../services/qms/training-task';
 
 const router = Router();
 const log = createScopedLogger('mdx-qms-training');
@@ -212,9 +215,11 @@ interface StoreWrite<T> {
   status: 200 | 201;
   /** Path parameters that must be positive integers, in the order `run` takes them. */
   params: readonly string[];
-  schema: z.ZodType<T, z.ZodTypeDef, unknown>;
+  schema: z.ZodType<T, unknown>;
   failure: string;
   run: (client: TrainingSqlClient, orgId: number, actorId: number, body: T, ids: number[]) => Promise<TrainingStoreChange>;
+  /** Whose training tasks the change moves, read inside the transaction; planned and written after it commits. */
+  tasks?: (client: TrainingSqlClient, orgId: number, body: T, ids: number[]) => Promise<TrainingTaskScope>;
 }
 
 interface StoreAuthority {
@@ -250,7 +255,9 @@ async function storeWrite<T>(req: Request, res: Response, authority: StoreAuthor
     const client = requestPgClient(req);
     await authority.authorize(client, orgId, userId);
     const change = await spec.run(client, orgId, userId, parsed.data, ids as number[]);
-    return { target: change.target, payload: change.payload, status: spec.status, body: { data: change.data } };
+    const scope = spec.tasks ? await spec.tasks(client, orgId, parsed.data, ids as number[]) : null;
+    return { target: change.target, payload: change.payload, status: spec.status, body: { data: change.data },
+      ...(scope ? { afterCommit: () => reconcileTrainingTasks(client, orgId, scope, userId) } : {}) };
   });
 }
 
@@ -285,13 +292,16 @@ router.get('/qms/training/expiring', async (req: Request, res: Response) => {
      record with an expiry inside the window: a superseded version, a receipt
      its member had renewed, a departed member's. No client called it. Person by
      person, it is for administrators and designated QMS approvers; anyone else
-     gets their own rows (P-50 Q3). */
+     gets their own rows (P-50 Q3). Slice 5 (2026-11-10): it also lists who has not
+     yet acknowledged, overdue or due within the window, from the task resolver; at
+     most QMS_TRAINING_EXPIRY_ROW_CAP rows, and `truncated` says when there were more. */
   try {
     const client = requestPgClient(req);
     const userId = getUserId(req);
     const everyone = await seesEveryAssignee(client, orgId, userId);
-    const rows = (await readQmsTrainingExpiring(client, orgId, withinDays)).filter(r => everyone || r.userId === userId);
-    return ok(res, rows, { count: rows.length, withinDays, scope: everyone ? 'everyone' : 'own' });
+    const all = (await readQmsTrainingExpiring(client, orgId, withinDays)).filter(r => everyone || r.userId === userId);
+    const rows = all.slice(0, QMS_TRAINING_EXPIRY_ROW_CAP);
+    return ok(res, rows, { count: rows.length, withinDays, scope: everyone ? 'everyone' : 'own', truncated: all.length > rows.length });
   } catch (err) { return serverError(res, log, 'training-expiring', err); }
 });
 
@@ -341,11 +351,13 @@ router.delete('/qms/job-roles/:id', requireEditorAccess, (req: Request, res: Res
 router.post('/qms/job-roles/:id/members', requireEditorAccess, (req: Request, res: Response) => jobRoleWrite(req, res, {
   command: 'create', status: 201, params: ['id'], schema: qmsJobRoleMemberSchema, failure: 'QMS_JOB_ROLE_MEMBER_ADD_FAILED',
   run: (client, orgId, actorId, body, [roleId]) => addQmsJobRoleMember(client, orgId, actorId, roleId, body.userId),
+  tasks: async (client, orgId, body, [roleId]) => ({ documentIds: await documentsAssignedToRole(client, orgId, roleId), userIds: [body.userId] }),
 }));
 
 router.delete('/qms/job-roles/:id/members/:userId', requireEditorAccess, (req: Request, res: Response) => jobRoleWrite(req, res, {
   command: 'delete', status: 200, params: ['id', 'userId'], schema: qmsGovernedRemovalSchema, failure: 'QMS_JOB_ROLE_MEMBER_REMOVE_FAILED',
   run: (client, orgId, actorId, _body, [roleId, userId]) => removeQmsJobRoleMember(client, orgId, actorId, roleId, userId),
+  tasks: async (client, orgId, _body, [roleId, userId]) => ({ documentIds: await documentsAssignedToRole(client, orgId, roleId), userIds: [userId] }),
 }));
 
 /* ─── Who must train on each controlled document (P-49) ─── */
@@ -370,11 +382,13 @@ router.get('/qms/documents/:id/training-assignments', async (req: Request, res: 
 router.post('/qms/documents/:id/training-assignments', requireEditorAccess, (req: Request, res: Response) => assignmentWrite(req, res, {
   command: 'create', status: 201, params: ['id'], schema: qmsTrainingAssignmentSchema, failure: 'QMS_TRAINING_ASSIGN_FAILED',
   run: (client, orgId, actorId, body, [documentId]) => addQmsTrainingAssignment(client, orgId, actorId, documentId, body),
+  tasks: async (_client, _orgId, _body, [documentId]) => ({ documentIds: [documentId] }),
 }));
 
 router.delete('/qms/documents/:id/training-assignments/:assignmentId', requireEditorAccess, (req: Request, res: Response) => assignmentWrite(req, res, {
   command: 'delete', status: 200, params: ['id', 'assignmentId'], schema: qmsGovernedRemovalSchema, failure: 'QMS_TRAINING_UNASSIGN_FAILED',
   run: (client, orgId, actorId, _body, [documentId, assignmentId]) => removeQmsTrainingAssignment(client, orgId, actorId, documentId, assignmentId),
+  tasks: async (_client, _orgId, _body, [documentId]) => ({ documentIds: [documentId] }),
 }));
 
 export default router;

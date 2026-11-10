@@ -17,6 +17,7 @@ vi.mock('../ProjectFilesPanel', () => ({ ProjectFilesPanel: ({ onAsk }: { onAsk?
 import { DocumentAuthoring } from '../../surfaces/DocumentAuthoring';
 import { clearEditorTarget } from '../../editorTarget';
 import { publishShellProject } from '../../shellProject';
+import { openEditorControl } from './workbenchAssemblyBuild.testSupport';
 
 const DOC = 'dddddddd-0000-4000-8000-000000000001';
 const SEC = 'aaaaaaaa-0000-4000-8000-000000000001';
@@ -37,7 +38,7 @@ beforeEach(() => {
   window.C2C_PROJECT = { id: PID } as typeof window.C2C_PROJECT;
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string, body?: { content?: string }) => {
-    if (url.startsWith('/api/authoring/docs?')) return ok({ documents: [doc] });
+    if (url.startsWith('/api/authoring/docs?')) return ok({ success: true, documents: [{ ...doc, program_id: PID }] });
     if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ document: doc });
     if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) return ok({ sections: [section] });
     if (method === 'PATCH' && url === `/api/authoring/sections/${SEC}`) return ok({ section: { ...section, content: body?.content, updated_at: SAVED_AT } });
@@ -60,8 +61,7 @@ async function mount(dirty = false) {
   return onNav;
 }
 function review() {
-  fireEvent.click(screen.getByText('Review with AnA'));
-  fireEvent.click(screen.getByRole('button', { name: 'Prepare targeted fixes' }));
+  fireEvent.click(openEditorControl('Prepare targeted fixes', 'ana'));
 }
 
 describe('new editor asks use the guarded canonical conversation', () => {
@@ -92,7 +92,7 @@ describe('new editor asks use the guarded canonical conversation', () => {
 
   it('uses the same leave guard for saved source requests, excluding unsaved text after explicit leave', async () => {
     const onNav = await mount(true);
-    fireEvent.click(screen.getByTestId('vault-rail-open'));
+    fireEvent.click(openEditorControl('Vault'));
     fireEvent.click(screen.getByRole('button', { name: 'Ask about saved source' }));
     await screen.findByRole('alertdialog', { name: 'Unsaved changes in 3.2.P.8.1' });
     expect(handoff()).toBeUndefined();
@@ -142,17 +142,20 @@ describe('save disposition supplies only a confirmed saved version', () => {
 describe('workflow copies preserve exact conversation scope after reconciliation', () => {
   it('names the saved unbound copy without implying its project IND filing is its binding', async () => {
     const normal = apiRequest.getMockImplementation()!;
+    const unbound = { ...doc, client_program_id: PID, module: null, c2c_document_id: null };
+    const home = { id: 'filing-id', project_id: PID, title: 'Project IND filing', doc_type: 'ind', agency: 'fda' };
     apiRequest.mockImplementation((method: string, url: string, body?: unknown) => {
-      if (url.startsWith('/api/authoring/docs?')) return Promise.resolve(ok({ documents: [{ ...doc, module: null, c2c_document_id: null }] }));
-      if (url.startsWith('/api/c2c/documents?')) return Promise.resolve(ok({ documents: [{ id: 'filing-id' }] }));
-      if (url === '/api/c2c/documents/filing-id/outline') return Promise.resolve(ok({ document: {
-        id: 'filing-id', title: 'Project IND filing', doc_type: 'ind', agency: 'fda' }, outline: [
+      if (url.startsWith('/api/authoring/docs?')) return Promise.resolve(ok({ success: true, documents: [{ ...unbound, program_id: PID }] }));
+      if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return Promise.resolve(ok({ document: unbound }));
+      if (url.startsWith('/api/c2c/documents?')) return Promise.resolve(ok({ documents: url.includes('scope=market') ? [] : [home] }));
+      if (url === '/api/c2c/documents/filing-id/outline') return Promise.resolve(ok({ document: { ...home, filing_scope: 'home' }, outline: [
         { key: 'M1', parent_key: null, label: 'FDA forms', path_order: 1, mandatory: true },
       ] }));
       return normal(method, url, body);
     });
     await mount();
-    await waitFor(() => expect(apiRequest.mock.calls.some(([, url]) => url === '/api/c2c/documents/filing-id/outline')).toBe(true));
+    await screen.findByText(/Unbound working copy/);
+    expect(apiRequest.mock.calls.some(([, url]) => url === '/api/c2c/documents/filing-id/outline')).toBe(false);
     review();
     const origin = handoff()?.origin;
     expect(origin?.authoringContext).toMatchObject({ projectId: PID, artifactId: DOC, sectionId: SEC });
@@ -170,7 +173,7 @@ describe('project decisions and canonical conversation handoffs share the same g
     act(() => { publishShellProject({ id: OTHER, title: 'Other program' }); });
     fireEvent.click(await screen.findByRole('button', { name: 'Cancel' }));
     review();
-    fireEvent.click(screen.getByRole('button', { name: 'AnA' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Show the conversation' }));
     expect(handoff()).toBeUndefined();
     expect(onNav).not.toHaveBeenCalled();
     expect(document.querySelector('.tiptap')?.textContent).toContain('Unsaved private note.');

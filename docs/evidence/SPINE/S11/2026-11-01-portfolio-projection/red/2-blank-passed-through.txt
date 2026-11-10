@@ -1,0 +1,42 @@
+# Red 2: the projection as D2.md §1.4 item 10 words it, with no blank handling:
+#   p.description AS description, p.indication AS indication, p.primary_agency AS agency, p.program_type AS program_type
+# A blank indication ('   ') is passed through as if stated. The fail-closed case catches it.
+# npx vitest run --config vitest.config.ts --maxWorkers=2 server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts
+# exit 1
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > reads a stated description, indication, agency and filing type as stored, in the list 15ms
+ ✓ server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > reads the same four facts in the creator’s 201 projection 6ms
+ × server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > answers null for an absent or blank description or indication, never a default 12ms
+   → expected { …(17) } to have property "indication" with value null
+ ✓ server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > is additive: every key the card carried before is still there, with its value 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > answers null for an absent or blank description or indication, never a default
+AssertionError: expected { …(17) } to have property "indication" with value null
+
+- Expected:
+null
+
++ Received:
+"   "
+
+ ❯ server/services/c2c/__tests__/project-portfolio-card-facts.pglite.test.ts:118:20
+    116|     const maa = cards.find(row => row.id === MAA)!;
+    117|     expect(device).toHaveProperty('description', null);
+    118|     expect(device).toHaveProperty('indication', null);
+       |                    ^
+    119|     expect(device).toMatchObject({ agency: 'FDA', program_type: '510k'…
+    120|     expect(maa).toHaveProperty('description', null);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  20:52:17
+   Duration  6.22s (transform 547ms, setup 85ms, import 1.02s, tests 4.73s, environment 0ms)
+

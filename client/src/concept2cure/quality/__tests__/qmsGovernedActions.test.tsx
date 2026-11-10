@@ -23,9 +23,17 @@ import * as React from 'react';
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { render, screen, cleanup, fireEvent, waitFor, within } from '@testing-library/react';
 
+/** D7-B item 6: a register row shows its next step and "More"; the rest open in the row (SopRegisterRow.tsx). */
+function openMore(scope: HTMLElement = document.body) {
+  for (const b of within(scope).queryAllByRole('button', { name: /^More actions for / })) {
+    if (b.getAttribute('aria-expanded') !== 'true') fireEvent.click(b);
+  }
+}
+
 const H = vi.hoisted(() => ({
   apiRequest: vi.fn(),
   refresh: vi.fn(),
+  summaryRefresh: vi.fn(),
   docs: [] as unknown[],
   reviewRows: [] as unknown[],
 }));
@@ -65,9 +73,11 @@ vi.mock('../hooks', () => ({
 }));
 vi.mock('../changeHooks', async () => {
   const { CHANGE_SUMMARY } = await import('./changeRows');
-  return { useChangeSummary: () => ({ summary: CHANGE_SUMMARY, loading: false, error: null }) };
+  return { useChangeSummary: () => ({ summary: CHANGE_SUMMARY, loading: false, error: null, refresh: H.summaryRefresh }) };
 });
-vi.mock('@/services/portal/authService', () => ({
+// a2f9264a5d: ChangeControl's ReviewedLearningPreparation keys its read to the session (authService), so keep the real module.
+vi.mock('@/services/portal/authService', async original => ({
+  ...(await original<typeof import('@/services/portal/authService')>()),
   useAuthUser: () => ({ id: 9, organizationId: 3, name: 'Q. Author', role: 'editor' }),
 }));
 vi.mock('@/lib/queryClient', () => ({
@@ -158,12 +168,17 @@ describe('SOP register — governed actions reach their routes', () => {
     expect(asked).toEqual([]);
   });
 
-  it('a library card opens the same create form with its template chosen', async () => {
+  // D7-B (2026-11-06, RULE 4): the library's cards became the template field of the one
+  // "New controlled document"; choosing a type there sets the same template and type the card did.
+  it('the template field of New controlled document sets the type, as the library card did', async () => {
     renderRegister();
-    fireEvent.click(screen.getByRole('button', { name: /Change-request form/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'New controlled document' }));
     const d = drawer(/New controlled document/);
-    expect(within(d).getByText('Template: Change-request form')).toBeTruthy();
+    const field = within(d).getByLabelText('Template') as HTMLSelectElement;
+    const option = [...field.options].find((o) => /^Change-request form/.test(o.textContent ?? ''))!;
+    fireEvent.change(field, { target: { value: option.value } });
     expect((within(d).getByLabelText(/Document type/) as HTMLSelectElement).value).toBe('form');
+    expect((within(d).getByLabelText('Title') as HTMLInputElement).value).toBe('Change-request form');
     expect(asked).toEqual([]);
   });
 
@@ -176,6 +191,7 @@ describe('SOP register — governed actions reach their routes', () => {
 
   it('Revise opens a reason-for-change dialog and posts the reason to /revise', async () => {
     renderRegister();
+    openMore();
     fireEvent.click(screen.getByRole('button', { name: /Revise/ }));
     const d = screen.getByRole('dialog', { name: 'Create controlled revision' });
     fill(d, /^Reason$/, 'Periodic review found the supplier tiers out of date.');
@@ -192,14 +208,17 @@ describe('SOP register — governed actions reach their routes', () => {
   it('a periodic-review row opens the document instead of asking AnA to "schedule" it', () => {
     renderRegister();
     fireEvent.click(screen.getByRole('button', { name: /periodic review/i }));
-    expect(screen.getByRole('dialog', { name: 'Controlled document' }).getAttribute('data-document-id')).toBe('6');
+    // C5: it opens the one editor, as every other way of opening a document does (it opened the training reader).
+    expect(screen.getByRole('region', { name: 'Controlled editing copy' }).getAttribute('data-document-id')).toBe('6');
+    expect(screen.queryByRole('dialog', { name: 'Controlled document' })).toBeNull();
     expect(asked).toEqual([]);
   });
 
-  it('the pre-inspection check says it is a request to AnA', () => {
+  // D7-B (2026-11-06): the pre-inspection check is a starter in the work area's
+  // "Ask AnA" row (App.tsx), pinned by QualityWorkArea.test.tsx; the register has no second door to it.
+  it('the register carries no AnA request of its own above its rows', () => {
     renderRegister();
-    fireEvent.click(screen.getByRole('button', { name: /Ask AnA.*pre-inspection check/i }));
-    expect(asked).toHaveLength(1);
+    expect(screen.queryByRole('button', { name: /pre-inspection check/i })).toBeNull();
   });
 });
 
@@ -219,12 +238,16 @@ describe('Change control — governed actions reach their routes', () => {
       })),
     );
     expect(H.refresh).toHaveBeenCalled();
+    // C3, found walking it: the figure line re-reads with the log, so a raised change is counted, not just listed.
+    expect(H.summaryRefresh).toHaveBeenCalled();
     expect(asked).toEqual([]);
   });
 
   it("Advance offers the server's next states, never approval, and posts the move with its reason", async () => {
     renderLog();
-    const row = screen.getByText('CC-2026-014').closest('.qms-row') as HTMLElement;
+    // C8: under assessment, the row's next step is Approve; Advance is behind its More.
+    const row = screen.getByText('CC-2026-014').closest('tbody') as HTMLElement;
+    fireEvent.click(within(row).getByRole('button', { name: 'More actions for CC-2026-014' }));
     fireEvent.click(within(row).getByRole('button', { name: /Advance/ }));
     const d = drawer(/Advance CC-2026-014/);
     const to = within(d).getByLabelText(/Move to/) as HTMLSelectElement;
@@ -241,8 +264,31 @@ describe('Change control — governed actions reach their routes', () => {
     expect(asked).toEqual([]);
   });
 
+  // C9: the assessment is edited while the change is under assessment, through the existing PATCH route.
+  it('edits the assessment through PATCH /changes/:id, starting from the recorded one', async () => {
+    renderLog();
+    fireEvent.click(screen.getByRole('button', { name: 'More actions for CC-2026-014' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit assessment' }));
+    const d = drawer(/Assess CC-2026-014/);
+    expect((within(d).getByLabelText(/Impact assessment/) as HTMLTextAreaElement).value)
+      .toBe('Filter qualification and an extractables study; no filing change.');
+    fill(d, /Implementation plan/, 'Qualify the second source; validate the fill line; update the batch record.');
+    fireEvent.click(within(d).getByRole('button', { name: 'Save assessment' }));
+    await waitFor(() =>
+      expect(H.apiRequest).toHaveBeenCalledWith('PATCH', '/api/mdx/qms/changes/1', {
+        riskLevel: 'high',
+        impactAssessment: 'Filter qualification and an extractables study; no filing change.',
+        implementationPlan: 'Qualify the second source; validate the fill line; update the batch record.',
+        targetImplementationDate: '2026-09-15',
+      }),
+    );
+    expect(H.refresh).toHaveBeenCalled();
+    expect(asked).toEqual([]);
+  });
+
   it('links a record through POST /changes/:id/links', async () => {
     renderLog();
+    fireEvent.click(screen.getByRole('button', { name: 'More actions for CC-2026-014' }));
     fireEvent.click(screen.getByRole('button', { name: /Link a record/ }));
     const d = drawer(/Link a record to CC-2026-014/);
     fill(d, /Record type/, 'capa');
@@ -256,20 +302,25 @@ describe('Change control — governed actions reach their routes', () => {
     expect(asked).toEqual([]);
   });
 
-  it('the forms gallery is the server library, and a card opens the create form', () => {
+  // C10: one door, "New controlled document", offering the library's change-control templates; no button per template.
+  it('opens the one New controlled document door with the change-control templates to choose from', () => {
     renderLog();
     expect(screen.queryByText('Impact-assessment form')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: /Change-control procedure/ }));
+    expect(screen.queryByRole('button', { name: /Change-control procedure|Change-request form/ })).toBeNull();
+    fireEvent.click(within(screen.getByRole('region', { name: 'Change-control documents and forms' })).getByRole('button', { name: 'New controlled document' }));
     const d = drawer(/New controlled document/);
-    expect(within(d).getByText('Template: Change-control procedure')).toBeTruthy();
+    const options = Array.from((within(d).getByLabelText(/^Template/) as HTMLSelectElement).options).map((o) => o.textContent);
+    expect(options).toEqual(['Standard controlled-document sections', 'Change-request form (CC-)', 'Change-control procedure (SOP-CC-)']);
+    fireEvent.change(within(d).getByLabelText(/^Template/), { target: { value: 'change_control_sop' } });
     expect((within(d).getByLabelText(/Document type/) as HTMLSelectElement).value).toBe('sop');
     expect(asked).toEqual([]);
   });
 
-  it('creates a gallery document with the selected program and reason, then opens its bound editing copy', async () => {
+  it('creates a change-control document with the selected program and reason, then opens its bound editing copy', async () => {
     renderLog();
-    fireEvent.click(screen.getByRole('button', { name: /Change-control procedure/ }));
+    fireEvent.click(within(screen.getByRole('region', { name: 'Change-control documents and forms' })).getByRole('button', { name: 'New controlled document' }));
     const d = drawer(/New controlled document/);
+    fireEvent.change(within(d).getByLabelText(/^Template/), { target: { value: 'change_control_sop' } });
     await waitFor(() => expect((within(d).getByLabelText('Project') as HTMLSelectElement).value).toBe(PROGRAM));
     expect((within(d).getByRole('button', { name: 'Create and open' }) as HTMLButtonElement).disabled).toBe(true);
     expect(H.apiRequest.mock.calls.some(([method]) => method === 'POST')).toBe(false);
@@ -284,9 +335,9 @@ describe('Change control — governed actions reach their routes', () => {
     expect(screen.queryByRole('dialog', { name: 'Controlled document' })).toBeNull();
   });
 
-  it('the health check says it is a request to AnA', () => {
+  // D7-B: the health check is the Change control tab's third starter (QualityWorkArea.test.tsx).
+  it('the log carries no AnA request of its own above its rows', () => {
     renderLog();
-    fireEvent.click(screen.getByRole('button', { name: /Ask AnA.*health check/i }));
-    expect(asked).toHaveLength(1);
+    expect(screen.queryByRole('button', { name: /health check|Explain the pipeline|Explain the procedure/i })).toBeNull();
   });
 });

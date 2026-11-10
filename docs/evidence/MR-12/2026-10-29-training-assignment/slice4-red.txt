@@ -1,0 +1,43 @@
+# Slice 4 (distribution), red at 065b8ef70d — the tests alone, no implementation
+
+## bash dbtest.sh tests/db/qms-training-tasks.dbtest.ts (PostgreSQL 16, app_service, RLS on)
+ × tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > reaches each person assigned with one task due the day it takes effect, and one notice
+ × tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > writes nothing when planned again
+ × tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > completes only the task of the person who acknowledged the version
+ × tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > writes a task only for the people an added assignment or role member newly covers
+ × tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > withdraws a task when its person is no longer covered, and keeps the task of a person still named
+ × tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > withdraws every open task when the document is retired
+ × tests/db/qms-training-tasks.dbtest.ts > a version in force > is due now for someone it reached with no training period, and the sweep does not also say overdue
+ × tests/db/qms-training-tasks.dbtest.ts > a version in force > is due 14 days after they were covered for someone assigned after it was in force (P-50 Q1)
+ × tests/db/qms-training-tasks.dbtest.ts > a version in force > gives a task due in the future one due-soon notice and one overdue notice from the sweep
+ ✓ tests/db/qms-training-tasks.dbtest.ts > a version in force > never undoes an approval whose tasks could not be written
+ × tests/db/qms-training-tasks.dbtest.ts > a version in force > closes nothing when the plan could not be read
+ × tests/db/qms-training-tasks.dbtest.ts > the next version approved for a later day > withdraws the open tasks of the version in force, writes its own, and only its own receipt completes them
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [] to deeply equal [ 1900, 1902, 1903 ]
+Error: Cannot find module '/server/services/qms/training-task' imported from /home/user/ClinicalSageAI-2-replit/tests/db/qms-training-tasks.dbtest.ts
+AssertionError: expected [] to deeply equal [ 'completed' ]
+AssertionError: expected [] to deeply equal [ 'pending' ]
+AssertionError: {"error":"QMS_JOB_ROLE_MEMBER_NOT_FOUND","message":"That person does not hold \"Quality assurance 3265\". Nothing was changed."}: expected 404 to be 200 // Object.is equality
+AssertionError: expected [] to deeply equal [ 'completed' ]
+AssertionError: expected undefined to match object { status: 'pending', …(1) }
+AssertionError: expected undefined to match object { status: 'pending', …(1) }
+TypeError: Cannot read properties of undefined (reading 'task_id')
+AssertionError: expected 0 to be greater than 0
+AssertionError: expected [] to deeply equal [ '1.0', '1.0' ]
+      Tests  11 failed | 1 passed (12)
+
+## npx vitest run server/services/tasking/__tests__/source-task.test.ts server/services/qms/__tests__/training-task.test.ts
+      Tests  3 failed | 4 passed (7)
+   → reconcileSourceTasks is not a function
+ FAIL  server/services/qms/__tests__/training-task.test.ts [ server/services/qms/__tests__/training-task.test.ts ]
+ × server/services/tasking/__tests__/source-task.test.ts > reconcileSourceTasks > keeps what is wanted, closes the rest as the act says, and writes what is missing
+ × server/services/tasking/__tests__/source-task.test.ts > reconcileSourceTasks > never treats document 10 as under the prefix of document 1
+ × server/services/tasking/__tests__/source-task.test.ts > reconcileSourceTasks > reports a failure part way and never throws
+ ✓ server/services/tasking/__tests__/source-task.test.ts > replaceSourceTask > closes the open task as the act says and writes none when nothing is owed
+ ✓ server/services/tasking/__tests__/source-task.test.ts > replaceSourceTask > closes the open task, then writes the next under the organisation, the source and the actor
+ ✓ server/services/tasking/__tests__/source-task.test.ts > replaceSourceTask > leaves the open task when it already records the same thing
+ ✓ server/services/tasking/__tests__/source-task.test.ts > replaceSourceTask > reports a failure and never throws into the act it follows
+Error: Cannot find module '../training-task' imported from /home/user/ClinicalSageAI-2-replit/server/services/qms/__tests__/training-task.test.ts
+TypeError: reconcileSourceTasks is not a function
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯

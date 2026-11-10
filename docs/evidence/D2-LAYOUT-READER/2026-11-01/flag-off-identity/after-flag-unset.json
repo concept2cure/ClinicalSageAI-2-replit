@@ -1,0 +1,966 @@
+{
+ "label": "after, flag unset",
+ "flag": "(unset)",
+ "files": {
+  "server/tests/fixtures/testdoc.pdf": {
+   "sweep": {
+    "method": "none",
+    "chars": 0,
+    "text": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "result": "d26541065bdb6e9fe6fb6a8bc984523623a75bea7b964489b8cd26fd400aaeac",
+    "keys": [
+     "coverage",
+     "method",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "none",
+    "chars": 0,
+    "text": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "result": "997bc621f44d10fee8e72f6b7d5be00b3c03e7188fba9b6d55f13c44502c9973",
+    "keys": [
+     "method",
+     "ocrDeferred",
+     "text"
+    ]
+   }
+  },
+  "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-dark/manifest.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 636,
+    "text": "80fd20d2ffd380d218b9cc0d60418e65dd973a188a0342e895fbc728b0fdf026",
+    "result": "8502d6eef9af8c953c3de9415a6618e1d22027e87db9eb3ebd87fbebf33b841a",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 636,
+    "text": "80fd20d2ffd380d218b9cc0d60418e65dd973a188a0342e895fbc728b0fdf026",
+    "result": "8502d6eef9af8c953c3de9415a6618e1d22027e87db9eb3ebd87fbebf33b841a",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-mobile/manifest.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 636,
+    "text": "b1fd63af9a50507594dea61833e31a98442e7f244d337038cac62c4b167e3624",
+    "result": "6a936efc9d7fd5f83cbb280f31f110db60e40d45ee8a08dadbee72b4b1354265",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 636,
+    "text": "b1fd63af9a50507594dea61833e31a98442e7f244d337038cac62c4b167e3624",
+    "result": "6a936efc9d7fd5f83cbb280f31f110db60e40d45ee8a08dadbee72b4b1354265",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-light/manifest.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 636,
+    "text": "b7b7870c348f231074816066f6e995f82be81e7bc3d4ee70c3cb8c1d5d9e9359",
+    "result": "a5e0308c4430e46b7856e3af2f500ff532f2a84815a0b9abf3e398202cd36558",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 636,
+    "text": "b7b7870c348f231074816066f6e995f82be81e7bc3d4ee70c3cb8c1d5d9e9359",
+    "result": "a5e0308c4430e46b7856e3af2f500ff532f2a84815a0b9abf3e398202cd36558",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/integration/account-inspection.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 1674,
+    "text": "ec1900d1a49fd8a3da2d7c02ab3ab62f9e447129dafacbc15af50e41180476c3",
+    "result": "067e6b35c5b006d21f07bbc469d8456199d928e4e1c38572eb278a668b5dc1f1",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 1674,
+    "text": "ec1900d1a49fd8a3da2d7c02ab3ab62f9e447129dafacbc15af50e41180476c3",
+    "result": "067e6b35c5b006d21f07bbc469d8456199d928e4e1c38572eb278a668b5dc1f1",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/evidence/COMPANY-DOCUMENTS/gap-closure/correspondence/2026-10-23-updated/historical-correspondence.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 12450,
+    "text": "05a79f4c70857de6f905a094de563a5334a7bf53ab0065b171efb0e8b1bff5bd",
+    "result": "eeea875080cdc8f2a0e3e4f538a7cb50a030d066fede1e6aaa32b0a7a2d0ddc1",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 12450,
+    "text": "05a79f4c70857de6f905a094de563a5334a7bf53ab0065b171efb0e8b1bff5bd",
+    "result": "eeea875080cdc8f2a0e3e4f538a7cb50a030d066fede1e6aaa32b0a7a2d0ddc1",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/evidence/COMPANY-DOCUMENTS/gap-closure/correspondence/historical-correspondence.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 12450,
+    "text": "05a79f4c70857de6f905a094de563a5334a7bf53ab0065b171efb0e8b1bff5bd",
+    "result": "eeea875080cdc8f2a0e3e4f538a7cb50a030d066fede1e6aaa32b0a7a2d0ddc1",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 12450,
+    "text": "05a79f4c70857de6f905a094de563a5334a7bf53ab0065b171efb0e8b1bff5bd",
+    "result": "eeea875080cdc8f2a0e3e4f538a7cb50a030d066fede1e6aaa32b0a7a2d0ddc1",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/evidence/D2-AUTHORING-PDF/2026-10-23/artifacts/historical-company/historical-correspondence.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 12450,
+    "text": "05a79f4c70857de6f905a094de563a5334a7bf53ab0065b171efb0e8b1bff5bd",
+    "result": "eeea875080cdc8f2a0e3e4f538a7cb50a030d066fede1e6aaa32b0a7a2d0ddc1",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 12450,
+    "text": "05a79f4c70857de6f905a094de563a5334a7bf53ab0065b171efb0e8b1bff5bd",
+    "result": "eeea875080cdc8f2a0e3e4f538a7cb50a030d066fede1e6aaa32b0a7a2d0ddc1",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/investor/INVESTOR_ONE_PAGER_2026-09-08.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 3630,
+    "text": "1db87697c9b36f972f53fd57085dc7b8322d07b0944fa99d639ff1b418c2c4f5",
+    "result": "63568f1b1613b950ec3ad77ffb2b21dc1aeee68d8d2ff6cc3d270d4ef16434a4",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 3630,
+    "text": "1db87697c9b36f972f53fd57085dc7b8322d07b0944fa99d639ff1b418c2c4f5",
+    "result": "63568f1b1613b950ec3ad77ffb2b21dc1aeee68d8d2ff6cc3d270d4ef16434a4",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "dev_ops/Project Cortex/Automated Data Harvester Design for the Concept2Cure Platform.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 25216,
+    "text": "c542023eeb2d9533cfa7d96e35e260107ca8b5c9334941e5c748f8e902cc3047",
+    "result": "ac27a857b740a811855ae4ef3d651ccdd6c4f13eb5569e206849aa4517c9a2b0",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 25216,
+    "text": "c542023eeb2d9533cfa7d96e35e260107ca8b5c9334941e5c748f8e902cc3047",
+    "result": "ac27a857b740a811855ae4ef3d651ccdd6c4f13eb5569e206849aa4517c9a2b0",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/evidence/D2-AUTHORING-PDF/2026-10-23/artifacts/ordinary-review.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 16311,
+    "text": "d86046e060d159bab694b405e2e82050fc7189862c0e1a29bc8a9a0f5a36eb61",
+    "result": "200dbb4b8f050db12b1192cff25d83a20b078f1a94a85b6aef737817fe891496",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 16311,
+    "text": "d86046e060d159bab694b405e2e82050fc7189862c0e1a29bc8a9a0f5a36eb61",
+    "result": "200dbb4b8f050db12b1192cff25d83a20b078f1a94a85b6aef737817fe891496",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/evidence/D2-AUTHORING-PDF/2026-10-23/artifacts/ordinary-stale-signature.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 16446,
+    "text": "cdbc2a0e499ae2728ffa9c18d3aa7b7804ba6efe41fa3f59874d5feb4e17cf39",
+    "result": "3164d9171fb2357602bf75cf3e9fd09ee37741b4aca94629b8fb4148cad2e89c",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 16446,
+    "text": "cdbc2a0e499ae2728ffa9c18d3aa7b7804ba6efe41fa3f59874d5feb4e17cf39",
+    "result": "3164d9171fb2357602bf75cf3e9fd09ee37741b4aca94629b8fb4148cad2e89c",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/evidence/D2-AUTHORING-PDF/2026-10-23/artifacts/ordinary-working-copy.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 16595,
+    "text": "af719acd954620b227565b8266be761d50c92bda0fd7d689f3b97e1bcb447377",
+    "result": "c0fe87161b35740bbcf22672631b9418e0b0547fc92a9e83d48e7457b7730c5b",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 16595,
+    "text": "af719acd954620b227565b8266be761d50c92bda0fd7d689f3b97e1bcb447377",
+    "result": "c0fe87161b35740bbcf22672631b9418e0b0547fc92a9e83d48e7457b7730c5b",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/publications/data-room-2026-10-14/exports/Concept2Cure-enhancement-delivery-plan-2026-10-14.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 31198,
+    "text": "b73fbb881b2787552864f5afab534b3fea4219ce1a91ac352dc9a1749ed80856",
+    "result": "fd8fd8178bdced978fa7554f0c7b0efd93811aab0b7e33c7929989137fa73bc5",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 31198,
+    "text": "b73fbb881b2787552864f5afab534b3fea4219ce1a91ac352dc9a1749ed80856",
+    "result": "fd8fd8178bdced978fa7554f0c7b0efd93811aab0b7e33c7929989137fa73bc5",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/publications/data-room-2026-10-14/exports/rebuilt/Concept2Cure-enhancement-delivery-plan-2026-10-14.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 31198,
+    "text": "b73fbb881b2787552864f5afab534b3fea4219ce1a91ac352dc9a1749ed80856",
+    "result": "fd8fd8178bdced978fa7554f0c7b0efd93811aab0b7e33c7929989137fa73bc5",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 31198,
+    "text": "b73fbb881b2787552864f5afab534b3fea4219ce1a91ac352dc9a1749ed80856",
+    "result": "fd8fd8178bdced978fa7554f0c7b0efd93811aab0b7e33c7929989137fa73bc5",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-13/exports/multilingual-charts.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 674,
+    "text": "e7e07b0aa71d414ed3933d2e3678e6fd39b6161790f8ee8a68f1c196bbfb3092",
+    "result": "ed29483956ac11297bffa1056caf792834bcad60769684154e46a465cdd72a9b",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 674,
+    "text": "e7e07b0aa71d414ed3933d2e3678e6fd39b6161790f8ee8a68f1c196bbfb3092",
+    "result": "ed29483956ac11297bffa1056caf792834bcad60769684154e46a465cdd72a9b",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "templates/authoring/Bioanalytical_Methods_Template_v1.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 12187,
+    "text": "ec2d1756a8d9d414243ae7b5c205826a5c685d3dfecaca94641707826555a087",
+    "result": "14af5c65df5701657de9746f524b186958eba0463262f0a8048481a4862d0666",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 12187,
+    "text": "ec2d1756a8d9d414243ae7b5c205826a5c685d3dfecaca94641707826555a087",
+    "result": "14af5c65df5701657de9746f524b186958eba0463262f0a8048481a4862d0666",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/evidence/D2/2026-10-27-cdi-csr-reference-package/originals/0aa6f061f208320ab919c8fe70e5785cad0a7f6542d4812b6a0d274009b33525.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 1289,
+    "text": "d52ed216fefdcc96c55da1c1542d174f67fd8cf4c31ba032d9489fdbcf80d88c",
+    "result": "35593fd027b1ffe6419dd9cd8191c2c9b1b2178ba5f69995701bd849102109c0",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 1289,
+    "text": "d52ed216fefdcc96c55da1c1542d174f67fd8cf4c31ba032d9489fdbcf80d88c",
+    "result": "35593fd027b1ffe6419dd9cd8191c2c9b1b2178ba5f69995701bd849102109c0",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "server/data/public-csr-reference/originals/0aa6f061f208320ab919c8fe70e5785cad0a7f6542d4812b6a0d274009b33525.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 1289,
+    "text": "d52ed216fefdcc96c55da1c1542d174f67fd8cf4c31ba032d9489fdbcf80d88c",
+    "result": "35593fd027b1ffe6419dd9cd8191c2c9b1b2178ba5f69995701bd849102109c0",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 1289,
+    "text": "d52ed216fefdcc96c55da1c1542d174f67fd8cf4c31ba032d9489fdbcf80d88c",
+    "result": "35593fd027b1ffe6419dd9cd8191c2c9b1b2178ba5f69995701bd849102109c0",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-mobile/reports.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 34158,
+    "text": "4a722fb1595d201c2e9f3fdd1ec3c0ed19a38d76d10af7be4698048f1467044b",
+    "result": "4a8511dca2017b3303df59683c41fc447c482d12eb7f66c193f5270351cfbeee",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 34158,
+    "text": "4a722fb1595d201c2e9f3fdd1ec3c0ed19a38d76d10af7be4698048f1467044b",
+    "result": "4a8511dca2017b3303df59683c41fc447c482d12eb7f66c193f5270351cfbeee",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/backend/synthetic-native-packet.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 34158,
+    "text": "f06554f4ce5844d423f9e909b32ca723943a32a9031d47de7da806701e0240ad",
+    "result": "86f370241a12b97e973f5dce7ffcd98e9432de41086bf8078a0e6ea09a74bcea",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 34158,
+    "text": "f06554f4ce5844d423f9e909b32ca723943a32a9031d47de7da806701e0240ad",
+    "result": "86f370241a12b97e973f5dce7ffcd98e9432de41086bf8078a0e6ea09a74bcea",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-dark/reports.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 34158,
+    "text": "35897b0a10ad62d0d39f070d3452cc651103cb83cb7c050b41ccdf9783a2c578",
+    "result": "9c482f4cbe65dcc01f72c3c724c49d6ac5b5809f3940f0115b3775fa178c3fcb",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 34158,
+    "text": "35897b0a10ad62d0d39f070d3452cc651103cb83cb7c050b41ccdf9783a2c578",
+    "result": "9c482f4cbe65dcc01f72c3c724c49d6ac5b5809f3940f0115b3775fa178c3fcb",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/evidence/D2-PLATFORM-COMPLETION/2026-10-14/retained-report-pack/browser/report-pack-browser-light/reports.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 34158,
+    "text": "faa2ba50407844624d4b0c8fd9471086ec5e568648198c7d997d49ea288fc179",
+    "result": "2ddce6ad16ee1eb315e91972d8f0a99b21746173f8eada43d3fcbc2374f02b9e",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 34158,
+    "text": "faa2ba50407844624d4b0c8fd9471086ec5e568648198c7d997d49ea288fc179",
+    "result": "2ddce6ad16ee1eb315e91972d8f0a99b21746173f8eada43d3fcbc2374f02b9e",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/publications/data-room-2026-10-14/exports/Concept2Cure-data-room-study-2026-10-14.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 42111,
+    "text": "688b5311da21a116f13cd3ed3026ec37d6488cca40c619572ac22dc970741217",
+    "result": "a8f4abf06d7df2e1f41bbcf6ea1fe0dc3e62be5bc666a39ead22275fdf5b9683",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 42111,
+    "text": "688b5311da21a116f13cd3ed3026ec37d6488cca40c619572ac22dc970741217",
+    "result": "a8f4abf06d7df2e1f41bbcf6ea1fe0dc3e62be5bc666a39ead22275fdf5b9683",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/publications/data-room-2026-10-14/exports/rebuilt/Concept2Cure-data-room-study-2026-10-14.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 42111,
+    "text": "688b5311da21a116f13cd3ed3026ec37d6488cca40c619572ac22dc970741217",
+    "result": "a8f4abf06d7df2e1f41bbcf6ea1fe0dc3e62be5bc666a39ead22275fdf5b9683",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 42111,
+    "text": "688b5311da21a116f13cd3ed3026ec37d6488cca40c619572ac22dc970741217",
+    "result": "a8f4abf06d7df2e1f41bbcf6ea1fe0dc3e62be5bc666a39ead22275fdf5b9683",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/evidence/D2/2026-10-27-cdi-csr-reference-package/originals/c329524d4ca9e64d528d550ee4201b753adb5e6dfcd1d36755b66af59e143ee8.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 1513,
+    "text": "3bfb00d7685de6b9dc6905d79353fb270a01b191c10556a38330b8a1eb1889dd",
+    "result": "1e6504db7631a13981851f82dc9dfe8ee9432a8e9eeab35b8bcdb56295fcd159",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 1513,
+    "text": "3bfb00d7685de6b9dc6905d79353fb270a01b191c10556a38330b8a1eb1889dd",
+    "result": "1e6504db7631a13981851f82dc9dfe8ee9432a8e9eeab35b8bcdb56295fcd159",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "server/data/public-csr-reference/originals/c329524d4ca9e64d528d550ee4201b753adb5e6dfcd1d36755b66af59e143ee8.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 1513,
+    "text": "3bfb00d7685de6b9dc6905d79353fb270a01b191c10556a38330b8a1eb1889dd",
+    "result": "1e6504db7631a13981851f82dc9dfe8ee9432a8e9eeab35b8bcdb56295fcd159",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 1513,
+    "text": "3bfb00d7685de6b9dc6905d79353fb270a01b191c10556a38330b8a1eb1889dd",
+    "result": "1e6504db7631a13981851f82dc9dfe8ee9432a8e9eeab35b8bcdb56295fcd159",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/Convergent Portal Build Protocol – Concept2Cure Platform.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 66313,
+    "text": "8e29ed0c4459f637f506ece2c9bc02f54463dcc28cdd13a7580efd825c1b6c3a",
+    "result": "08b83774988d2616f3878cc3f55a26f200fbbc78a08f816a5c95eb53bee4bec1",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 66313,
+    "text": "8e29ed0c4459f637f506ece2c9bc02f54463dcc28cdd13a7580efd825c1b6c3a",
+    "result": "08b83774988d2616f3878cc3f55a26f200fbbc78a08f816a5c95eb53bee4bec1",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/evidence/D2/2026-10-27-cdi-csr-reference-package/originals/a4eb50cb0e683c938d5ab340f623167d7b1eafc6aae3ae6a29d2bb5bb4fd0263.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 4184,
+    "text": "5c5cd742f28a8a9f998a80708b8b14899b271a49ef74c447885bb7fdd8e5912b",
+    "result": "3597c65fe260ec1abaa13b4d4655c07ee2cd05bf520ec8ca5f333f07154cbca6",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 4184,
+    "text": "5c5cd742f28a8a9f998a80708b8b14899b271a49ef74c447885bb7fdd8e5912b",
+    "result": "3597c65fe260ec1abaa13b4d4655c07ee2cd05bf520ec8ca5f333f07154cbca6",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "server/data/public-csr-reference/originals/a4eb50cb0e683c938d5ab340f623167d7b1eafc6aae3ae6a29d2bb5bb4fd0263.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 4184,
+    "text": "5c5cd742f28a8a9f998a80708b8b14899b271a49ef74c447885bb7fdd8e5912b",
+    "result": "3597c65fe260ec1abaa13b4d4655c07ee2cd05bf520ec8ca5f333f07154cbca6",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 4184,
+    "text": "5c5cd742f28a8a9f998a80708b8b14899b271a49ef74c447885bb7fdd8e5912b",
+    "result": "3597c65fe260ec1abaa13b4d4655c07ee2cd05bf520ec8ca5f333f07154cbca6",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/evidence/D2/2026-10-27-cdi-csr-reference-package/originals/90a9014683db23b78e98de11e9fd1a9399fb51c47a28e17ed36dafeb8605dbfe.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 3565,
+    "text": "991fed960764472d85e80eb3a9e72d440be8d1f6ecfe11c0467d66ed34c78924",
+    "result": "fb816ef14dad30ca5646951fb99528898efaaed3904db463059fa3d3e663e270",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 3565,
+    "text": "991fed960764472d85e80eb3a9e72d440be8d1f6ecfe11c0467d66ed34c78924",
+    "result": "fb816ef14dad30ca5646951fb99528898efaaed3904db463059fa3d3e663e270",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "server/data/public-csr-reference/originals/90a9014683db23b78e98de11e9fd1a9399fb51c47a28e17ed36dafeb8605dbfe.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 3565,
+    "text": "991fed960764472d85e80eb3a9e72d440be8d1f6ecfe11c0467d66ed34c78924",
+    "result": "fb816ef14dad30ca5646951fb99528898efaaed3904db463059fa3d3e663e270",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 3565,
+    "text": "991fed960764472d85e80eb3a9e72d440be8d1f6ecfe11c0467d66ed34c78924",
+    "result": "fb816ef14dad30ca5646951fb99528898efaaed3904db463059fa3d3e663e270",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/evidence/D2/2026-10-27-cdi-csr-reference-package/originals/37c342c886f0cb67bcddc01a15eac9bc3e0ada5f59d4113aedc24aba481e3604.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 9118,
+    "text": "4f25a1572d35cb120b668bcd9732ae41f55d977c8df141d583d0406a4110ca8a",
+    "result": "00e61732e51d2ca49f24d27ba19546aa9d2dd2ade6e187d34fe245e9b319d629",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 9118,
+    "text": "4f25a1572d35cb120b668bcd9732ae41f55d977c8df141d583d0406a4110ca8a",
+    "result": "00e61732e51d2ca49f24d27ba19546aa9d2dd2ade6e187d34fe245e9b319d629",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "server/data/public-csr-reference/originals/37c342c886f0cb67bcddc01a15eac9bc3e0ada5f59d4113aedc24aba481e3604.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 9118,
+    "text": "4f25a1572d35cb120b668bcd9732ae41f55d977c8df141d583d0406a4110ca8a",
+    "result": "00e61732e51d2ca49f24d27ba19546aa9d2dd2ade6e187d34fe245e9b319d629",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 9118,
+    "text": "4f25a1572d35cb120b668bcd9732ae41f55d977c8df141d583d0406a4110ca8a",
+    "result": "00e61732e51d2ca49f24d27ba19546aa9d2dd2ade6e187d34fe245e9b319d629",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/evidence/D2/2026-10-27-cdi-csr-reference-package/originals/d178317cefb787bb1c51fca5ea31e1d237c423761cb1b2804a4c78774de85474.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 6222,
+    "text": "1cb1340887575d4b39750f9053c011ca670bf87ffa1878234fe6e293f17463d7",
+    "result": "318cb0edfea2b4a0c3b7dbde69b376967cf457b1db61ad67c10ade1f41d2887c",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 6222,
+    "text": "1cb1340887575d4b39750f9053c011ca670bf87ffa1878234fe6e293f17463d7",
+    "result": "318cb0edfea2b4a0c3b7dbde69b376967cf457b1db61ad67c10ade1f41d2887c",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "server/data/public-csr-reference/originals/d178317cefb787bb1c51fca5ea31e1d237c423761cb1b2804a4c78774de85474.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 6222,
+    "text": "1cb1340887575d4b39750f9053c011ca670bf87ffa1878234fe6e293f17463d7",
+    "result": "318cb0edfea2b4a0c3b7dbde69b376967cf457b1db61ad67c10ade1f41d2887c",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 6222,
+    "text": "1cb1340887575d4b39750f9053c011ca670bf87ffa1878234fe6e293f17463d7",
+    "result": "318cb0edfea2b4a0c3b7dbde69b376967cf457b1db61ad67c10ade1f41d2887c",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/evidence/D2/2026-10-27-cdi-csr-reference-package/originals/11ae2acf961bf729ad30dc89259c5bb77c7fe00fd8a01b90423adcd93df9a86e.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 14522,
+    "text": "82bf1505829658bbd940a1aca812db705741b7570f855278ead4d533baa5be01",
+    "result": "ed6bfd9e8d72232852f0bf16d09c2e0c903f363c182c2eb7a3dd6fc1257ba054",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 14522,
+    "text": "82bf1505829658bbd940a1aca812db705741b7570f855278ead4d533baa5be01",
+    "result": "ed6bfd9e8d72232852f0bf16d09c2e0c903f363c182c2eb7a3dd6fc1257ba054",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "server/data/public-csr-reference/originals/11ae2acf961bf729ad30dc89259c5bb77c7fe00fd8a01b90423adcd93df9a86e.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 14522,
+    "text": "82bf1505829658bbd940a1aca812db705741b7570f855278ead4d533baa5be01",
+    "result": "ed6bfd9e8d72232852f0bf16d09c2e0c903f363c182c2eb7a3dd6fc1257ba054",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 14522,
+    "text": "82bf1505829658bbd940a1aca812db705741b7570f855278ead4d533baa5be01",
+    "result": "ed6bfd9e8d72232852f0bf16d09c2e0c903f363c182c2eb7a3dd6fc1257ba054",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "docs/evidence/D2/2026-10-27-cdi-csr-reference-package/originals/8028f46f640e989a16a08120656935883c317b6f7d94b6382b0e40c6140763c3.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 9009,
+    "text": "2f48b30660824ec59846ac47db65d1194aeb161bffdfb3a85bedb26af07dac30",
+    "result": "3578721e306b2e1058a70ef1317feab1e17d0ddcb4a237c8f51bc84cde5e7869",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 9009,
+    "text": "2f48b30660824ec59846ac47db65d1194aeb161bffdfb3a85bedb26af07dac30",
+    "result": "3578721e306b2e1058a70ef1317feab1e17d0ddcb4a237c8f51bc84cde5e7869",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  },
+  "server/data/public-csr-reference/originals/8028f46f640e989a16a08120656935883c317b6f7d94b6382b0e40c6140763c3.pdf": {
+   "sweep": {
+    "method": "pdf-text",
+    "chars": 9009,
+    "text": "2f48b30660824ec59846ac47db65d1194aeb161bffdfb3a85bedb26af07dac30",
+    "result": "3578721e306b2e1058a70ef1317feab1e17d0ddcb4a237c8f51bc84cde5e7869",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   },
+   "inline": {
+    "method": "pdf-text",
+    "chars": 9009,
+    "text": "2f48b30660824ec59846ac47db65d1194aeb161bffdfb3a85bedb26af07dac30",
+    "result": "3578721e306b2e1058a70ef1317feab1e17d0ddcb4a237c8f51bc84cde5e7869",
+    "keys": [
+     "method",
+     "pageSpans",
+     "text"
+    ]
+   }
+  }
+ }
+}

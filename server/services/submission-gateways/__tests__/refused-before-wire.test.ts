@@ -21,12 +21,12 @@
  *
  * 2026-09-23 (W5/D7, round-3 skeptic): two more pre-wire refusals stranded the
  * claim. (3) CredentialError — raised only by credential checks before any
- * request, including transmitViaSftp's check on a >1 GiB FDA sequence, which
- * isConfigured (AS2 only) does not see — is now recognised by class; the
- * source pin below fails when a new site appears, so each is audited. (4) A
- * TransportError can now carry NOTHING_TRANSMITTED, for the SFTP client-module
- * refusal that runs before connect(); without the proof it still proves
- * nothing.
+ * request — is now recognised by class; the source pin below fails when a new
+ * site appears, so each is audited. (4) A TransportError can now carry
+ * NOTHING_TRANSMITTED, for a refusal proven to run before anything is sent;
+ * without the proof it still proves nothing. The FDA SFTP branch these were
+ * first found on was retired on 2026-11-09 (P-93); an FDA package over 1 GiB is
+ * refused before anyone signs, and in FdaEsgGateway.transmit before any row.
  */
 import { describe, it, expect, vi, beforeAll, afterEach } from 'vitest';
 import JSZip from 'jszip';
@@ -240,7 +240,7 @@ describe('refusedBeforeWire — CredentialError and the proof-carrying Transport
     // The gateway recorded its own row as refused before any request.
     expect(dbCalls.some((t) => /UPDATE submission_transmittals/.test(t))).toBe(true);
     expect(refusedBeforeWire(err)).toBe(true);
-    expect(refusedBeforeWire(new CredentialError('fda', 'esg', 'staging', ['FDA_ESG_STAGING_SFTP_HOST']))).toBe(true);
+    expect(refusedBeforeWire(new CredentialError('fda', 'esg', 'staging', ['FDA_ESG_STAGING_URL']))).toBe(true);
   });
 
   it('is true for a TransportError only when its throw site passed NOTHING_TRANSMITTED', () => {
@@ -262,13 +262,15 @@ describe('refusedBeforeWire — CredentialError and the proof-carrying Transport
       'server/services/submission-gateways/cdsco-sugam-gateway.ts': 1,
       'server/services/submission-gateways/ema-cesp.ts': 2,
       // loadFdaCredentials, loadFdaClientCredentials (the organisation's own
-      // account, 2026-10-01), resolveFdaEsgTransport, loadFdaRestCredentials,
-      // and transmitViaSftp's check before the client module loads or connects.
-      'server/services/submission-gateways/fda-esg.ts': 5,
+      // account, 2026-10-01), resolveFdaEsgTransport and loadFdaRestCredentials.
+      // transmitViaSftp's check left with the SFTP branch (P-93, 2026-11-09).
+      'server/services/submission-gateways/fda-esg.ts': 4,
       // clientAccountRefusal: the organisation chose its own account and it
       // cannot send (gateway not supported yet / credentials missing). Thrown
       // inside the guard's pre-wire try in index.ts, before impl.transmit.
-      'server/services/submission-gateways/gateway-accounts.ts': 2,
+      // resolveGatewayAccountForUse (026c0e96ff, 2026-11-06): the account recheck after
+      // archiveSentPackage, also inside that try and before impl.transmit (audited 2026-11-08).
+      'server/services/submission-gateways/gateway-accounts.ts': 3,
       // health-canada-gateway.ts left this set on 2026-10-08 (F19b): it reads no
       // credentials and refuses before the wire (UnverifiedTransportError).
       'server/services/submission-gateways/hsa-prism-gateway.ts': 1,

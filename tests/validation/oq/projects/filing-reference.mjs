@@ -51,7 +51,8 @@ export async function filingReferenceStep(ctx, stamp) {
 
   const name = `OQ-001 exact IND reference ${stamp}`;
   const created = await ctx.api('POST', '/api/c2c/projects', {
-    name, programType: 'ind', primaryAgency: 'FDA', submissionTypeId: 'us_ind',
+    /* v0.12: intake refuses an IND with no product class (4f53d90f3b, 2026-10-08), as OQ-PROJ-04 states since v0.11. */
+    name, programType: 'ind', productType: 'drug', primaryAgency: 'FDA', submissionTypeId: 'us_ind',
     indication: 'Validation exercise — authored filing reference', priority: 'medium',
   });
   const record = created.json?.program;

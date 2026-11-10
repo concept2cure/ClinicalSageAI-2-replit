@@ -1,0 +1,11 @@
+# .ws-switch / .ws-btn: no remaining user (before deleting surfaces-v2.css's three rules), after D2-1's markup change
+# grep -rn 'ws-switch\|ws-btn' client/src --include=*.tsx --include=*.ts --include=*.jsx --include=*.js --include=*.css | grep -v surface-text-ramp.css
+# (run after ProjectPortfolioFilters.tsx stopped rendering them; the only hits were the three rules themselves:)
+client/src/concept2cure/v2/styles/surfaces-v2.css:140:.c2c-v2 .ws-switch{...}
+client/src/concept2cure/v2/styles/surfaces-v2.css:141:.c2c-v2 .ws-btn{...}
+client/src/concept2cure/v2/styles/surfaces-v2.css:142:.c2c-v2 .ws-btn.on{...}
+# grep for a built class name (`ws-${…}`, 'ws-' + …) in client/src *.ts(x): no hits.
+
+# After the deletion:
+$ grep -rn 'ws-switch\|ws-btn' client/src design-system shared | grep -v node_modules
+(no output)

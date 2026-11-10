@@ -170,7 +170,8 @@ describe('applying a view sets the find view, and the search runs it', () => {
     const filters = screen.getByRole('group', { name: 'Filter documents' });
     expect((within(filters).getByLabelText('Type') as HTMLSelectElement).value).toBe('CSR');
     expect((within(filters).getByLabelText('CTD section') as HTMLInputElement).value).toBe('3.2.P');
-    expect((screen.getByLabelText('Include earlier versions') as HTMLInputElement).checked).toBe(true);
+    // D6-3: the scope toggle reads "Earlier versions" now (D6 §C.4 step 7).
+    expect((screen.getByLabelText('Earlier versions') as HTMLInputElement).checked).toBe(true);
     expect(screen.getByText(/View “Stability CSRs”/)).toBeTruthy();
     expect(screen.queryByText(/\(changed\)/)).toBeNull();
   });
@@ -181,7 +182,8 @@ describe('applying a view sets the find view, and the search runs it', () => {
     const p = params(librarySearches().at(-1)!);
     expect(p.getAll('documentType')).toEqual(['PROTOCOL']);
     expect(p.has('folderId')).toBe(false);
-    expect((screen.getByLabelText('Accessible projects') as HTMLInputElement).checked).toBe(true);
+    // D6-3: the scope toggle reads "All my projects" now, said for a person (D6 §C.4 step 7).
+    expect((screen.getByLabelText('All my projects') as HTMLInputElement).checked).toBe(true);
     expect(projectSearches()).toEqual([]);
   });
 
@@ -203,12 +205,15 @@ describe('applying a view sets the find view, and the search runs it', () => {
     onViews = () => listOf(view({ label: 'Module 3 only', q: '', filters: { folderId: ['module-3'] }, includeSuperseded: false }));
     await applyView('Module 3 only');
     await waitFor(() => expect(params(projectSearches().at(-1) ?? '?').getAll('folderId')).toEqual(['module-3']));
-    expect((screen.getByLabelText('Accessible projects') as HTMLInputElement).disabled).toBe(true);
-    expect(screen.getByText('A folder is one project’s cabinet. Remove the folder filter to search accessible projects.')).toBeTruthy();
+    // D6-3: the scope toggle reads "All my projects" now, said for a person (D6 §C.4 step 7).
+    expect((screen.getByLabelText('All my projects') as HTMLInputElement).disabled).toBe(true);
+    // D6-3: the held-folder reason names the renamed toggle's scope (D6 §C.4 step 7).
+    expect(screen.getByText('A folder is one project’s cabinet. Remove the folder filter to search all your projects.')).toBeTruthy();
     const filters = screen.getByRole('group', { name: 'Filter documents' });
     expect(within(filters).getByText('Also filtering by:')).toBeTruthy();
     fireEvent.click(within(filters).getByRole('button', { name: 'Remove the filter Folder: Module 3 · Quality' }));
-    await waitFor(() => expect((screen.getByLabelText('Accessible projects') as HTMLInputElement).disabled).toBe(false));
+    // D6-3: the scope toggle reads "All my projects" now, said for a person (D6 §C.4 step 7).
+    await waitFor(() => expect((screen.getByLabelText('All my projects') as HTMLInputElement).disabled).toBe(false));
   });
 
   it('several values in one dimension are shown, not hidden behind the select', async () => {
@@ -270,7 +275,8 @@ describe('saving sends the state on screen, and a refusal is said in the server\
     fireEvent.change(screen.getByLabelText('Search this vault'), { target: { value: '  stability ' } });
     const select = within(screen.getByRole('group', { name: 'Filter documents' })).getByLabelText('Type');
     fireEvent.change(select, { target: { value: 'CSR' } });
-    fireEvent.click(screen.getByLabelText('Include earlier versions'));
+    // D6-3: the scope toggle reads "Earlier versions" now (D6 §C.4 step 7).
+    fireEvent.click(screen.getByLabelText('Earlier versions'));
     await waitFor(() => expect((within(g).getByRole('button', { name: 'Save current search…' }) as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(within(g).getByRole('button', { name: 'Save current search…' }));
     const form = await within(g).findByRole('group', { name: 'Save current search' });

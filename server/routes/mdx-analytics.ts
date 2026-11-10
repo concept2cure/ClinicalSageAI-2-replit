@@ -1,7 +1,6 @@
 /**
- * Analytics — read-only aggregations across the kit's domains. Backs the
- * `analytics` rail item (currently stubbed). No new tables; pure
- * derivations from existing rows.
+ * Analytics — read-only aggregations across the kit's domains, organization-wide.
+ * No new tables; pure derivations from existing rows.
  *
  *   GET /api/mdx/analytics/portfolio                program / pathway counts
  *   GET /api/mdx/analytics/submissions              transmittal cycle times + success
@@ -12,6 +11,13 @@
  *
  * Each endpoint returns the canonical { data, meta? } envelope. Optional
  * unavailable tables or columns are reported as unavailable, never zero activity.
+ *
+ * 2026-10-30 (D2, fold F4): no screen calls these facets, and no registry entry
+ * claims /api/mdx/analytics, so production's launch-scope gate refuses them.
+ * They are kept and handed on as the reference the parity table names
+ * (.design/client-journey/FUNCTION_PARITY.md, "Server facets with no caller"):
+ * none reads the projects a reader can open, so none may be claimed as it is.
+ * The kit-shaped aggregate retired with its screen (below).
  */
 
 import { Router, Request, Response } from 'express';
@@ -261,81 +267,14 @@ router.get('/analytics/ana-usage', async (req: Request, res: Response) => {
   } catch (err) { return analyticsError(res, 'ana-usage', err); }
 });
 
-/* ── GET /api/mdx/analytics — kit-shaped aggregate ───────────────────────────
- * The Analytics surface (client useAnalytics) consumes a single payload
- * { kpis, phases, blockers, reviewers, anaUsage, pace24m }. The per-facet
- * routes above return server-native metric objects; this route assembles the
- * exact kit shape from the tables we have. Facets with no backing source
- * (reviewer velocity = FDA public decision corpus; per-tool AnA usage) return
- * null — unavailable sources, never zero activity or fixtures. */
-router.get('/analytics', async (req: Request, res: Response) => {
-  const orgId = getOrgId(req);
-  if (orgId === null) return orgRequired(res);
-  if (req.query.pathway !== undefined && req.query.pathway !== 'all') {
-    return res.status(400).json({ error: 'ANALYTICS_PATHWAY_UNAVAILABLE', message: 'Pathway filtering is unavailable across the current analytics sources. Use organization-wide analytics.' });
-  }
-  try {
-    const prog = await safeAgg<{ total: number; active: number; submitted: number; approved: number }>(requestPgClient(req),
-      `SELECT COUNT(*)::int AS total,
-              COUNT(*) FILTER (WHERE status = 'active')::int AS active,
-              COUNT(*) FILTER (WHERE status = 'submitted')::int AS submitted,
-              COUNT(*) FILTER (WHERE status = 'approved')::int AS approved
-         FROM regulatory_programs WHERE organization_id = $1 AND deleted_at IS NULL`,
-      [orgId], { total: 0, active: 0, submitted: 0, approved: 0 },
-    );
-    const draft = await safeAgg<{ pending: number; accepted: number }>(requestPgClient(req),
-      `SELECT COUNT(*) FILTER (WHERE draft_source = 'ana' AND accepted_at IS NULL)::int AS pending,
-              COUNT(*) FILTER (WHERE draft_source = 'ana' AND accepted_at IS NOT NULL)::int AS accepted
-         FROM cerv2_510k_sections WHERE organization_id = $1`,
-      [orgId], { pending: 0, accepted: 0 },
-    );
-    const acceptRate = draft.accepted + draft.pending > 0
-      ? Math.round((draft.accepted / (draft.accepted + draft.pending)) * 100) : null;
-
-    const kpis = [
-      { label: 'Projects', metric: String(prog.total), meta: `${prog.active} active` },
-      { label: 'Approved projects', metric: String(prog.approved), meta: `${prog.submitted} submitted` },
-      { label: 'AnA acceptance rate', metric: acceptRate == null ? '—' : String(acceptRate), unit: acceptRate == null ? '' : '%', meta: acceptRate == null ? 'No recorded AnA drafts' : `${draft.accepted} accepted · ${draft.pending} pending` },
-    ];
-
-    // Blockers grouped from the live c2c_blockers registry.
-    const blockerRows = await safeRows<{ cause: string; count: number; pathway: string | null }>(requestPgClient(req),
-      `SELECT COALESCE(blocker_type, 'other') AS cause, COUNT(*)::int AS count,
-              MAX(document_family) AS pathway
-         FROM c2c_blockers WHERE org_id = $1 AND status = 'open'
-        GROUP BY blocker_type ORDER BY COUNT(*) DESC LIMIT 20`,
-      [orgId],
-    );
-    const blockers = blockerRows.map((b) => ({
-      cause: b.cause, count: b.count, median: null, owner: null,
-      pathway: b.pathway ?? 'not recorded', trend: null,
-    }));
-
-    // 24-month submission pace from actual submission dates (oldest → newest).
-    const paceRows = await safeRows<{ ym: string; n: number }>(requestPgClient(req),
-      `SELECT to_char(date_trunc('month', actual_submission_date), 'YYYY-MM') AS ym, COUNT(*)::int AS n
-         FROM regulatory_programs
-        WHERE organization_id = $1 AND deleted_at IS NULL AND actual_submission_date IS NOT NULL
-          AND actual_submission_date >= (date_trunc('month', CURRENT_DATE) - interval '23 months')
-        GROUP BY 1 ORDER BY 1`,
-      [orgId],
-    );
-    const paceMap = new Map(paceRows.map((r) => [r.ym, r.n]));
-    const pace24m: number[] = [];
-    for (let i = 23; i >= 0; i--) {
-      const now = new Date();
-      const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
-      pace24m.push(paceMap.get(d.toISOString().slice(0, 7)) ?? 0);
-    }
-
-    // kpis / blockers / pace24m are LIVE from tenant data above. The three
-    // facets below need sources we do not hold. Null means unavailable,
-    // not zero activity; the client names those missing sources explicitly.
-    return ok(res, {
-      kpis, blockers, pace24m,
-      phases: null, reviewers: null, anaUsage: null,
-    });
-  } catch (err) { return analyticsError(res, 'analytics-aggregate', err); }
-});
+/* No GET /api/mdx/analytics. The kit-shaped aggregate was the device analytics
+ * screen's (mdx/surfaces/AnalyticsSurface.tsx), counting every program of the
+ * organization whether or not the reader could open it. Device analytics joined
+ * Reporting & analytics (D2, fold F4, 2026-10-30; decision P-61 item 3): its
+ * status counts, submission pace and AnA draft acceptance rate are the device
+ * section of GET /api/insights-canvas/overview, over the projects the reader
+ * can open (server/services/report-os/device-portfolio.ts). Its open-blocker
+ * causes are not carried: there is no organization-wide blocker list (P-61
+ * item 2). */
 
 export default router;

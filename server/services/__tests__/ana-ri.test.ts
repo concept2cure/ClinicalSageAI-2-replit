@@ -1108,8 +1108,9 @@ describe('AnA RI Command System', () => {
 
     it('includes all critical workflow commands', () => {
       const names = COMMAND_REGISTRY.map(c => c.name);
-      // Project
-      expect(names).toContain('create_project');
+      // Project. AnA's separate create_project command was retired onto the Projects wizard
+      // (f9c84bdf1f, D2 A2.4): a project is created in one place, and AnA lists and opens it.
+      expect(names).not.toContain('create_project');
       expect(names).toContain('list_projects');
       // Documents
       expect(names).toContain('create_artifact');
@@ -1201,10 +1202,10 @@ describe('AnA RI Context Enrichment', () => {
     // was read, so the model was never told which app was invoked.
     const result = await enrichContextForChat({ message: '@biostats size a two-arm superiority study' });
     expect(result.enrichmentMeta?.triggerType).toBe('app_mention');
-    expect(result.enrichmentMeta?.detectedAppMention).toBe('biostat-workbench');
-    expect(result.sources).toContain('app:biostat-workbench');
+    expect(result.enrichmentMeta?.detectedAppMention).toBe('biostatistics');
+    expect(result.sources).toContain('app:biostatistics');
     expect(result.block).toContain('=== INVOKED APPS');
-    expect(result.block).toContain('Biostatistics workbench (id: biostat-workbench)');
+    expect(result.block).toContain('Biostatistics designer (id: biostatistics)');
     expect(result.rewrittenMessage).toBe('size a two-arm superiority study');
   });
 
@@ -1216,10 +1217,10 @@ describe('AnA RI Context Enrichment', () => {
       submissionType: 'ind',
     });
     expect(result.enrichmentMeta?.triggerType).toBe('app_mention');
-    expect(result.enrichmentMeta?.detectedAppMention).toBe('biostat-workbench');
+    expect(result.enrichmentMeta?.detectedAppMention).toBe('biostatistics');
     expect(result.block).toContain('=== INVOKED APPS');
     const attempted = [...(result.sources ?? []), ...(result.enrichmentMeta?.sourcesFailed ?? [])];
-    expect(attempted.some((x) => x.startsWith('app:biostat-workbench/biostatistics'))).toBe(true);
+    expect(attempted.some((x) => x.startsWith('app:biostatistics/'))).toBe(true);
     expect(result.rewrittenMessage).toBe('please ask about the interim');
   });
 

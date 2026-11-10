@@ -1,0 +1,24 @@
+date: 2026-11-02T02:17:57Z
+Real PostgreSQL 16 (127.0.0.1:55432/c2c_test), the app connecting as app_service (NOSUPERUSER, NOBYPASSRLS), RLS_ENFORCE=on
+$ AUDIT_HMAC_KEY=*** CI=true NODE_ENV=test RLS_ENFORCE=on DATABASE_URL=postgresql://postgres@127.0.0.1:55432/c2c_test TEST_DATABASE_URL=postgresql://postgres@127.0.0.1:55432/c2c_test APP_DATABASE_URL=postgresql://app_service:***@127.0.0.1:55432/c2c_test npx vitest run --config vitest.db.config.ts tests/db/ectd-filed-state-view.dbtest.ts --reporter=verbose
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-11-02T02:18:00.575Z","pid":31078,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-02T02:18:00.578Z","pid":31078,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-02T02:18:00.578Z","pid":31078,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > folds every filed sequence: the untouched leaf from 0000, the replacement from 0001, nothing never sent
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > folds every filed sequence: the untouched leaf from 0000, the replacement from 0001, nothing never sent 3479ms
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > lists every sequence and says which it did not fold 16ms
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > never reads another organisation’s filings, and answers empty for a program with no submission 80ms
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > what the agency holds is what was sent (F1) > a leaf only an earlier preview of the sent sequence carried is not on file 17ms
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > what the agency holds is what was sent (F1) > a sequence sent with no compile on record is filed, read from what its transmit recorded 26ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  02:17:58
+   Duration  4.29s (transform 2.34s, setup 83ms, import 149ms, tests 3.72s, environment 0ms)
+
+exit=0

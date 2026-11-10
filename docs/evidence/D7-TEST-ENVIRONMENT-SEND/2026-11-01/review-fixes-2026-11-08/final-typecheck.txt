@@ -1,0 +1,3 @@
+# npm run typecheck (tsc --noEmit) on the final working tree (submission-service.ts sha256 1eb39576d1bbe697…), finished 2026-11-08T21:54:14Z
+# error TS count: 0
+exit=0

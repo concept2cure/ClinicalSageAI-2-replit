@@ -25,6 +25,7 @@
  * @module client/src/concept2cure/v2/surfaces/biostatEngineResult
  */
 import React, { useState } from 'react';
+import { parameterLabel } from '@shared/biostat-vocabulary';
 
 /* The two formatting primitives both halves of this pair use. They are
    declared in this module because it is the lower of the two: the bridge
@@ -218,8 +219,30 @@ export function engineFigureIsUsable(a: EngineResult): boolean {
   return computedTotalN(a.computation) !== null;
 }
 
-const verdictTone = (v: string) => (v === 'adequate' ? 'ok' : v === 'marginal' ? 'warn' : 'err');
-const dashed = (v: string) => v.replace(/_/g, ' ');
+/**
+ * A verdict's chip tone. There were two of these too: this one read only
+ * `adequate` and `marginal`, while `Biostatistics.tsx`'s `vTone` also toned
+ * `insufficient_information` as a warning rather than an error — which is the
+ * truthful reading, since "the engine could not tell" is not "the design is
+ * wrong". The wider one is now the only one.
+ */
+export const verdictTone = (v: string) =>
+  v === 'adequate' ? 'ok' : v === 'marginal' || v === 'insufficient_information' ? 'warn' : 'err';
+
+/**
+ * An engine verdict token as a word: `not_adequate` -> "Not adequate".
+ *
+ * There were two of these. This module opened the separators and left the
+ * token lower-cased (`dashed`); `Biostatistics.tsx` had its own `verdictWord`
+ * that also capitalised, because a chip reading "not adequate" next to one
+ * reading "Inadequate" is two spellings of one state (D5 WA.4.2 rule 10). One
+ * definition, in the lower module of the pair, so the designer, the protocol
+ * Statistics tab and the design assessment cannot spell a verdict differently.
+ */
+export function verdictWord(verdict: string): string {
+  const opened = String(verdict || '').replace(/_/g, ' ').trim();
+  return opened ? opened.charAt(0).toUpperCase() + opened.slice(1) : '\u2014';
+}
 
 /** Where an assumed value came from. `user_provided` says "the design", because
  *  on this path the "user" is the design record, not the person reading it. */
@@ -228,11 +251,23 @@ const SOURCE_LABEL: Record<ComputationAssumption['source'], string> = {
 };
 
 /**
- * What the engine computed, stamped with the engine and the hash of its inputs
- * — or the sentence that says it computed nothing. The two are never blended:
- * an unsized design shows no number at all, not a zero.
+ * The engine, its version and the hash of the inputs it ran on, as one
+ * hoverable sentence — or undefined when the read carried no provenance, so
+ * the line gets no empty tooltip claiming a record that is not there.
  */
-export function ComputedSizeLine({ assessment: a }: { assessment: EngineResult }) {
+function engineTitle(a: EngineResult): string | undefined {
+  const prov = provenanceOf(a);
+  if (!prov) return undefined;
+  const engine = `Engine ${prov.engine} ${prov.engineVersion}`;
+  return prov.inputsSha256 ? `${engine} · input record ${prov.inputsSha256}` : engine;
+}
+
+/**
+ * What the engine computed, stamped with the engine that computed it — or the
+ * sentence that says it computed nothing. The two are never blended: an
+ * unsized design shows no number at all, not a zero.
+ */
+export function ComputedSizeLine({ assessment: a, figuresInLead = false }: { assessment: EngineResult; figuresInLead?: boolean }) {
   const n = computedTotalN(a.computation);
   const prov = provenanceOf(a);
   const blocked = gapsOf(a).some((g) => g.severity === 'blocking');
@@ -258,15 +293,29 @@ export function ComputedSizeLine({ assessment: a }: { assessment: EngineResult }
   }
   return (
     <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', fontSize: 12 }}>
-      <span><b>{n}</b> subjects</span>
-      <span><b>{pct(a.computation.power)}</b> power</span>
-      {a.judgment && (
-        <span className={'rd-chip tone-' + verdictTone(a.judgment.overallVerdict)}>{dashed(a.judgment.overallVerdict)}</span>
+      {/* Measured in the running app on 2026-11-02: with D5-3's section heading
+          summarising the assessment, "137 subjects · 90% power · Inadequate"
+          was printed twice, thirty pixels apart — the repetition §WA.4.2 rule 4
+          retires. The caller says when a lead above already carries them; the
+          method and the engine, which no lead carries, stay either way. The
+          "Not sized" sentence above is never suppressed: a word in a heading is
+          not the engine's reason for refusing. */}
+      {!figuresInLead && <span><b>{n}</b> subjects</span>}
+      {!figuresInLead && <span><b>{pct(a.computation.power)}</b> power</span>}
+      {!figuresInLead && a.judgment && (
+        <span className={'rd-chip tone-' + verdictTone(a.judgment.overallVerdict)}>{verdictWord(a.judgment.overallVerdict)}</span>
       )}
-      <span style={muted}>
+      {/* The engine and its version are the reader's provenance and stay on
+          screen. The input record's hash does not: a 12-character hex fragment
+          is an id on a screen that files to an agency (D5 WA.4.2 rule 10), and
+          it told a statistician nothing they could act on. It moves into the
+          line's `title`, whole sentence and all, so a reviewer who needs to
+          quote the record still hovers one line to get it. The full hash is
+          unchanged in the API response and in the document's provenance
+          footer; nothing was dropped, only un-shouted. */}
+      <span style={muted} title={engineTitle(a)}>
         {a.computation.method}
         {prov ? ` · ${prov.engine} ${prov.engineVersion}` : ''}
-        {prov?.inputsSha256 ? ' · inputs ' + prov.inputsSha256.slice(0, 12) : ''}
       </span>
     </div>
   );
@@ -308,7 +357,8 @@ export function EngineAssumptionsTable({ assumptions: raw }: { assumptions: Comp
         <tbody>
           {assumptions.map((x) => (
             <tr key={x.parameter}>
-              <td style={{ whiteSpace: 'nowrap' }}>{x.parameter}</td>
+              {/* The engine's key (`effect_size`, `dropoutRate`) said as words. */}
+              <td style={{ whiteSpace: 'nowrap' }}>{parameterLabel(x.parameter)}</td>
               <td style={{ fontFamily: 'var(--font-mono)' }}>{String(x.value)}</td>
               <td>{SOURCE_LABEL[x.source] ?? x.source}</td>
               <td><span className={'rd-chip tone-' + (x.sensitivity === 'high' ? 'warn' : 'idle')}>{x.sensitivity}</span></td>
@@ -339,7 +389,7 @@ export function JudgmentDimensionTable({ judgment }: { judgment: DesignJudgment 
               {dims.map((d) => (
                 <tr key={d.name}>
                   <td style={{ whiteSpace: 'nowrap' }}>{d.name}</td>
-                  <td><span className={'rd-chip tone-' + verdictTone(d.verdict)}>{dashed(d.verdict)}</span></td>
+                  <td><span className={'rd-chip tone-' + verdictTone(d.verdict)}>{verdictWord(d.verdict)}</span></td>
                   {/* A dimension the engine did not score says so. A 0 would read as "scored zero". */}
                   <td style={{ whiteSpace: 'nowrap' }}>{typeof d.score === 'number' ? `${d.score}/100` : 'not scored'}</td>
                   <td style={{ fontSize: 12 }}>{d.rationale}{Array.isArray(d.flags) && d.flags.length > 0 ? ` — ${d.flags.join('; ')}` : ''}</td>
@@ -366,17 +416,17 @@ export function JudgmentDimensionTable({ judgment }: { judgment: DesignJudgment 
  * assumptions and the judgment by dimension. Both surfaces mount THIS, so
  * neither can show a narrower version of the same answer.
  */
-export function EngineResultPanel({ assessment: a }: { assessment: EngineResult }) {
+export function EngineResultPanel({ assessment: a, figuresInLead = false }: { assessment: EngineResult; figuresInLead?: boolean }) {
   const judgment = a.judgment;
   return (
     <div style={{ display: 'grid', gap: 8 }}>
-      <ComputedSizeLine assessment={a} />
+      <ComputedSizeLine assessment={a} figuresInLead={figuresInLead} />
       <DesignGapList gaps={gapsOf(a)} />
       <EngineAssumptionsTable assumptions={a.computation?.assumptions ?? []} />
       {judgment && (
         <>
           <div style={{ fontSize: 12 }}>
-            Recommended action: <b>{dashed(judgment.actionRecommendation)}</b>
+            Recommended action: <b>{verdictWord(judgment.actionRecommendation)}</b>
             <span style={muted}> · {judgment.overallRisk} statistical risk</span>
           </div>
           <JudgmentDimensionTable judgment={judgment} />
@@ -389,6 +439,20 @@ export function EngineResultPanel({ assessment: a }: { assessment: EngineResult 
 
 const riskTone = (r: string) => (r === 'low' ? 'ok' : r === 'medium' ? 'warn' : 'err');
 
+/**
+ * The gates a review row rests on, as the row's own hover text.
+ *
+ * `PWR-003 MIS-002` was printed in monospace under each element's name: a
+ * second line of codes down the first column of every row, which is the "ids
+ * and enums on screen" pattern D5 WA.4.2 rule 10 retires, and which a reader
+ * cannot look up anywhere in this product. The codes stay — they are how a
+ * finding is traced back to the gate that raised it — as the cell's `title`,
+ * named rather than listed bare.
+ */
+function rowGatesTitle(r: ReviewRow): string | undefined {
+  return r.codes.length ? `${r.element} — raised by ${r.codes.length === 1 ? 'gate' : 'gates'} ${r.codes.join(', ')}` : undefined;
+}
+
 export function StatisticalReviewTable({ review }: { review: StatisticalReview }) {
   const [open, setOpen] = useState(review.overallRisk !== 'low');
   const v = review.verdict;
@@ -397,7 +461,7 @@ export function StatisticalReviewTable({ review }: { review: StatisticalReview }
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', fontSize: 12 }}>
         <span className={'rd-chip tone-' + riskTone(review.overallRisk)}>{review.overallRisk} statistical risk</span>
         <span>Regulatory challenge likelihood: <b>{v.challengeLikelihood}</b>{v.mostVulnerable ? <> — most vulnerable: <b>{v.mostVulnerable}</b></> : null}</span>
-        <button className="btn" style={{ height: 24, fontSize: 11, marginLeft: 'auto' }} aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        <button type="button" className="btn small" style={{ marginLeft: 'auto' }} aria-expanded={open} onClick={() => setOpen((o) => !o)}>
           {open ? 'Hide' : 'Show'} review
         </button>
       </div>
@@ -408,7 +472,7 @@ export function StatisticalReviewTable({ review }: { review: StatisticalReview }
             <tbody>
               {review.rows.map((r) => (
                 <tr key={r.element}>
-                  <td style={{ whiteSpace: 'nowrap' }}>{r.element}{r.codes.length ? <span style={{ ...muted, display: 'block', fontFamily: 'var(--font-mono)' }}>{r.codes.join(' ')}</span> : null}</td>
+                  <td style={{ whiteSpace: 'nowrap' }} title={rowGatesTitle(r)}>{r.element}</td>
                   <td><span className={'rd-chip tone-' + riskTone(r.risk)}>{r.risk}</span></td>
                   <td style={{ fontSize: 12 }}>{r.finding}</td>
                   <td style={{ fontSize: 12 }}>{r.action}</td>
@@ -416,7 +480,6 @@ export function StatisticalReviewTable({ review }: { review: StatisticalReview }
               ))}
             </tbody>
           </table>
-          {review.standardsChecked.length > 0 && <div style={muted}>Standards checked: {review.standardsChecked.join(' · ')}</div>}
         </div>
       )}
     </div>

@@ -344,3 +344,45 @@ describe('a routed version names every signer on its sign-off lines (RR2 records
     expect(shown.match(/Approval signed by/g)).toHaveLength(2);
   });
 });
+
+/* B8 (demo walk 2026-11-05): in the Vault the file's next step (Send for review, Sign review, Approve) sat inside the
+   record's collapsed Versions section. A person saw "In review" on the row and had to know to open Versions. The one
+   next step is now shown above the Versions disclosure, which stays collapsed, from the same single versions read. */
+describe("a Vault file's next step is seen without opening Versions (B8)", () => {
+  const versionsDisclosure = () => [...document.querySelectorAll<HTMLElement & { open: boolean }>('details')]
+    .find((d) => d.querySelector(':scope > summary')?.textContent === 'Versions');
+
+  it.each([
+    ['Sign review', { canonicalId: 'C-3', stage: 'in_review', review: null, approval: null }],
+    ['Approve', { canonicalId: 'C-4', stage: 'in_review', review: signOff('Rae Reviewer', 'REVIEWED', 5), approval: null }],
+    ['Send for review', null],
+  ])('"%s" stands outside the collapsed list, named as the next step for the current version', async (step, lifecycle) => {
+    versions = [version({ lifecycle }), earlier];
+    mockApi();
+    mount();
+    const button = await screen.findByRole('button', { name: new RegExp(`^${step}:`) });
+    const list = versionsDisclosure();
+    expect(list).toBeTruthy();
+    expect(list!.open).toBe(false);
+    expect(list!.contains(button)).toBe(false);
+    expect(button.parentElement?.textContent).toMatch(/^Next step · v2\.0/);
+    // One step, once: the current version's row in the list does not repeat it.
+    expect(screen.getAllByRole('button', { name: new RegExp(`^${step}:`) })).toHaveLength(1);
+  });
+
+  it('when no step is the person\'s, nothing is shown above the list', async () => {
+    versions = [version({ lifecycle: { canonicalId: 'C-2', stage: 'approved', review: signOff('Rae Reviewer', 'REVIEWED', 5), approval: signOff('Abe Approver', 'APPROVED', 7) } }), earlier];
+    mockApi();
+    mount();
+    await waitFor(() => expect(versionsDisclosure()?.textContent).toContain('Approval signed by Abe Approver'));
+    expect(screen.queryByText(/^Next step/)).toBeNull();
+  });
+
+  it('reads the versions once for the step and the list together', async () => {
+    versions = [version({ lifecycle: { canonicalId: 'C-3', stage: 'in_review', review: null, approval: null } }), earlier];
+    mockApi();
+    mount();
+    await screen.findByRole('button', { name: /^Sign review:/ });
+    expect(calls.filter((c) => c.method === 'GET' && c.url === VERSIONS_URL)).toHaveLength(1);
+  });
+});

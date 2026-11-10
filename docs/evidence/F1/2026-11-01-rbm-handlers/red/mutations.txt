@@ -1,0 +1,21 @@
+# HEAD 88ac297b0 + the F1 fix, each fix undone in turn and restored at once; 2026-11-01T23:47:17Z
+## mutation (a) remove requireDraftAssessment from add_ctq_factor
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor joins the study's open draft assessment, as POST /rbm-risk-items does > a2: refuses with the actuator's read-only reason, and writes nothing, when the only version is signed 15ms
+   → expected undefined to be 'This assessment and its factors are r…' // Object.is equality
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor joins the study's open draft assessment, as POST /rbm-risk-items does > a3: refuses a named signed assessment, as the route does (requireDraftAssessment) 2ms
+   → expected undefined to be 'This assessment and its factors are r…' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 22 passed (24)
+## mutation (b) drop generate_rbm_plan's refusal of an unrecorded overall risk
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (b) generate_rbm_plan proposes what POST /rbm-monitoring-plans/generate would save > b4: refuses an approved assessment that records no overall risk, instead of "medium" 11ms
+   → expected null to be undefined
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 23 passed (24)
+## mutation (c) drop assessment_id from run_rbm_assessment's factor read
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (c) run_rbm_assessment summarizes one version; its seed is the canonical template start > c3: the summary reads the factors of the assessment it returns, not every version 24ms
+   → expected 'SELECT category, ctq_factor, likeliho…' to match /assessment_id\s*=\s*\$\d/
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (c) run_rbm_assessment summarizes one version; its seed is the canonical template start > c4: after an amendment it returns the draft v2 as a draft, with each factor once 4ms
+   → expected [ 'SAE reporting', 'SAE reporting' ] to deeply equal [ 'SAE reporting' ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 22 passed (24)
+# (c) was restored by hand: its mutated text was not unique in the file, so the scripted restore refused.

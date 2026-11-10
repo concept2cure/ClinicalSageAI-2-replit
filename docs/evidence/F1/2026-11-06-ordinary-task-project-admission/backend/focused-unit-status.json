@@ -1,0 +1,24 @@
+{
+  "status": "frozen",
+  "focusedUnitResult": {
+    "exitCode": 0,
+    "files": 6,
+    "tests": 116,
+    "durationSeconds": 7.97,
+    "log": "focused-units.txt.gz"
+  },
+  "checksNotRunByThisWorker": [
+    "typecheck",
+    "build",
+    "gates",
+    "scoped lint"
+  ],
+  "sha256": {
+    "server/routes/taskManagement.routes.ts": "2a88aa5b39137a81e22d3fb4f7d79b194975517819a6ea2079788fbbf5abac0d",
+    "server/services/tasking/task-project.ts": "09bd032687f878562a61a1267ee261e19553ae4d2644bd9eff66fd8a1b16e7d4",
+    "server/services/tasking/__tests__/task-project-admission.test.ts": "77d3e68094960b0fcf9ee242646d5006a09f77deb0f6fb1970c785ffeac1fae7",
+    "server/routes/__tests__/_task-management-governed-harness.ts": "7aca86140bb58b82f4261e6dc3b842ee000b83f94a24c3e7a52da7bbcd4a4473",
+    "server/routes/__tests__/task-management-source-project.test.ts": "1706a08a2176ddea3bfc0dd5e85df2893d78285629bc81b0ce94f6d91b08ba54"
+  },
+  "scope": "Ordinary-task route, existing admission helper and truthful focused unit fixtures. Native evidence and aggregate qualification are owned by separate workers."
+}

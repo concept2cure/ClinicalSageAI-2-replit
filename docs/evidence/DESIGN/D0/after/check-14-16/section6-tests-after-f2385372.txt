@@ -1,0 +1,294 @@
+# npx vitest run --config vitest.config.ts --maxWorkers=2 <the three D0 guards and the D0.md §6 tests>
+# tree: git archive of f2385372 (after D0), extracted to a scratch directory (node_modules symlinked to the main tree)
+# run: 2026-11-01, by the D0 verdict pass
+
+## files
+client/src/concept2cure/v2/__tests__/riskHonesty.test.tsx
+client/src/concept2cure/v2/__tests__/biopharmaSpecialtyNoFixtures.test.tsx
+client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx
+client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx
+client/src/concept2cure/v2/__tests__/projectHomeNextStep.test.tsx
+client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx
+client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx
+client/src/concept2cure/v2/__tests__/ProjectHome.mdxWorkflow.test.tsx
+client/src/concept2cure/v2/__tests__/onboardingCurrentOrganization.test.tsx
+client/src/concept2cure/v2/__tests__/taskBoardClientReadable.test.tsx
+client/src/concept2cure/v2/__tests__/dialogButtonHoverSettles.test.ts
+client/src/concept2cure/v2/__tests__/shellButtonResetYields.test.ts
+client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx
+client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts
+client/src/concept2cure/v2/__tests__/insightsThemeTokens.test.ts
+client/src/concept2cure/v2/__tests__/projectHomeStageCss.test.tsx
+client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts
+client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts
+client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts
+tests/ui/motion-token.test.ts
+tests/ui/pj-title-authority.test.ts
+tests/ui/token-authority.test.ts
+
+## results (per-test lines, failures and summary)
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > lists the project's documents from the program-scoped read, with status in words 900ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a row opens THAT document, by id, in this program 1605ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a failed read is an error with a retry, never an empty list, and the retry reads again 888ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > an empty project says so in words 553ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > "Recent drafts" and the Workspace grid are gone, and nothing reads the drafts 461ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > a module row opens the editing copy of the filing it measures, never the newest document tagged with its module 549ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > an added market's rows open that market's editing copy 599ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > with no editing copy the row says so and has nothing to click; a market's says where one is made 435ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > two documents bound to one filing: said, and neither is opened 357ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > when the documents could not be read, the row says its copy is not known, never that there is none 205ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the project's documents > offers the editor and the protocol workspace as doors 939ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the readiness card's market line (F3 part C) > an added market's line opens that market's editing copy, whole, and each market its own 283ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the readiness card's market line (F3 part C) > with no editing copy the line says where one is made, in the rows' words, and has nothing to click 368ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the readiness card's market line (F3 part C) > two documents bound to the market's filing: said, and neither is opened 186ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the readiness card's market line (F3 part C) > when the documents could not be read, the line says its copy is not known, never that there is none 67ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the readiness card's market line (F3 part C) > while the documents are read, the line says so and has nothing to click 521ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the readiness card's home line > opens the home filing's editing copy, whole, never an added market's 340ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the readiness card's home line > with no editing copy it says so in the home rows' words, and has nothing to click 175ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the readiness card's home line > two documents bound to the home filing: said, and neither is opened 124ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the readiness card's home line > when the documents could not be read, it says its copy is not known, never that there is none 177ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the readiness card's home line > while the documents are read, it says so and has nothing to click 289ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Author — the readiness card's home line > a figure over two home documents opens neither, and says why 92ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > Evidence has the data room and Author does not 494ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > "Write from these sources" hands the readable sources to AnA and never opens the editor 827ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > the project files' door names its job: "Add or find files in Vault" opens the Vault 892ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Evidence — every way a source comes in > the Evidence blurb says what the tab holds 411ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Submit — the grid's filing doors > "Compile and download" opens eCTD compile; readiness has no door of its own 443ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a module row names the sections as the figure and the document it opens in words 143ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > "Write from these sources" hands over the 10 newest readable sources, and says "newest" 1242ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a data room cut by the server window says "newest", even under the limit 698ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a device project is not offered the eCTD compiler, and Submit carries no roadmap line 464ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDocuments.test.tsx > Review findings — the row, the handoff and the filing type say what they do > a drug project's Submit names nothing as coming later 295ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — completeness on the section-approval table > shows each section's completeness, names the missing inputs, and withholds approval from an incomplete one 1511ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — completeness on the section-approval table > a 409 shows the server's own reason — 409 no longer means only "contradictions" 1633ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a signature is over content, not a section number > shows the composed narrative and tables BEFORE the signature form appears 772ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a signature is over content, not a section number > sends the content hash the signer actually read with the signature 1140ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a signature is over content, not a section number > offers NO signature when the section could not be read 661ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a signature is over content, not a section number > warns when the section is stale or its tables are unknown 426ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — no reassurance over an earlier CMC file that was not read > reassures when both reads are measured and nothing is open 260ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — no reassurance over an earlier CMC file that was not read > withholds it, and says why, when the earlier file could not be read 338ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — no reassurance over an earlier CMC file that was not read > withholds it while the earlier file holds questions not closed there 188ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a failed register read is an error, never an empty register > sectionsUnreadable renders the failed-read copy and not "No Module 3 sections yet" 122ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a failed register read is an error, never an empty register > renders a null submission count as unknown even without a portfolioUnreadable flag 26ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — a failed register read is an error, never an empty register > portfolioUnreadable renders the failed-read copy and not "No submissions yet" 52ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — the build-state card reads the export gate, never a percentage > says Not export ready with the gate's reasons when every section is approved but one is incomplete 62ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — the build-state card reads the export gate, never a percentage > says Export ready only when the gate does 121ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — the build-state card reads the export gate, never a percentage > renders a failed readiness read as a failed read, not as ready and not as not-ready 210ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — counts its submissions in words > says one submission in the singular, with its preparedness index 67ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — counts its submissions in words > says no preparedness index is computed, rather than "RPI — average" 25ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcOverviewCompleteness.test.tsx > CmOverview — counts its submissions in words > counts two or more in the plural 15ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > a US IND’s Plan is what the filing needs, by phase > opens study and protocol design from the project's work-area doors, beside the steps, in one click 1757ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > a US IND’s Plan is what the filing needs, by phase > a new project opens on it, phases in order, with the target date 1002ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > a US IND’s Plan is what the filing needs, by phase > a started deliverable opens this project’s working copy; the rest start from their template 1138ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > a US IND’s Plan is what the filing needs, by phase > a failed catalogue read is a failure with a retry, never an empty plan 258ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > Assign makes a deliverable one person’s task > writes one task to the task store, scoped and linked, and reads the assignment back 870ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > Assign makes a deliverable one person’s task > is not offered to a viewer, whose task writes the server refuses 752ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > Assign makes a deliverable one person’s task > is not offered while the project’s id is unverified, so no task is written unscoped 966ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > Assign makes a deliverable one person’s task > an unreadable assignment list is said, and Assign still works 391ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > a phase opens the feature that composes it, on this project > a small-molecule US IND: Module 3 in CMC, Module 1 in the IND forms, QA on Submit 978ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > a phase opens the feature that composes it, on this project > a biologic IND is not sent to CMC, which composes small-molecule Module 3 only 420ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > other filings > a device project’s Plan is its workstreams, each assignable 1138ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > other filings > an NDA is told the list is not available here and where its documents are, with no invented list 580ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > the assignment model > keys tasks by this project’s deliverable; the newest wins; another project’s and cancelled tasks are ignored 1ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > the assignment model > never Number()s the program UUID: the project id is the verified numeric one 1ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > while the project record is read, Plan says so, and never that the filing has no list 386ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > does not offer project initiation for a returned record belonging to another project 184ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > a filing with no list is not told to "see every document" by the step band 152ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > the target date is the recorded day, never shifted by the viewer’s zone 177ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > a working copy titled as its template counts as started 160ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > an unconfirmed Assign reads the lists again, so they say what is there 996ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > a deliverable someone already has offers "Assign another person", and a finished task is the task’s, not the deliverable’s 640ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > assessmentState — an empty findings set is not a finding of "none" > no scope is not-assessed, however many findings are absent 31ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > assessmentState — an empty findings set is not a finding of "none" > scope with zero findings and no evidence of a run is STILL not-assessed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > assessmentState — an empty findings set is not a finding of "none" > clearance requires positive evidence that an assessment ran 1ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > assessmentState — an empty findings set is not a finding of "none" > a failed read is never an empty result 17ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > assessmentState — an empty findings set is not a finding of "none" > 0% complete never co-occurs with reassuring copy, even when clear 1ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > NDA cockpit over an empty program > states that nothing has been assessed, and asserts no clearance 618ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > NDA cockpit over an empty program > does not assert a review clock it has no store for 29ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > NDA cockpit over a FAILED read > says the read failed rather than narrating a clean program 84ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > NDA cockpit over a FAILED read > renders no number for a quantity it could not read 81ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > NDA cockpit over a FAILED read > never renders a failed Refuse-to-File read in the language of clearance 112ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > NDA cockpit over a FAILED read > offers no next step that would carry the failure into AnA 88ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > evaluateIndReadiness (the server engine the IND screen shows) — an empty checklist is not a fileable one > derives no clearance from zero items: not ready, never 100% 72ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > evaluateIndReadiness (the server engine the IND screen shows) — an empty checklist is not a fileable one > is still clearance-capable when every required item passes 1ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > evaluateIndReadiness (the server engine the IND screen shows) — an empty checklist is not a fileable one > the screen carries no copy of it 7ms
+ ✓ client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx > IND Lifecycle over an empty checklist > says nothing has been assessed, never READY TO FILE 1779ms
+ ✓ tests/ui/pj-title-authority.test.ts > .pj-title — the 2026-07-28 serif decision > is declared by at least one rule 2229ms
+ ✓ tests/ui/pj-title-authority.test.ts > .pj-title — the 2026-07-28 serif decision > has exactly one rule declaring font-family, and it is serif 1337ms
+ ✓ tests/ui/pj-title-authority.test.ts > .pj-title — the 2026-07-28 serif decision > no sheet other than the owner declares a BARE .pj-title rule 1812ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeNextStep.test.tsx > a project opens on its first step with work to do > with no documents yet, on Plan: what the filing needs 349ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeNextStep.test.tsx > a project opens on its first step with work to do > with documents, on Author 300ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeNextStep.test.tsx > a project opens on its first step with work to do > when the list could not be read, on Author: a failure decides nothing 256ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeNextStep.test.tsx > a project opens on its first step with work to do > a step the person chose is kept when the empty list lands afterwards 215ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeNextStep.test.tsx > each step says what to do now, and leads to the next > Plan says to start and assign each document, and its next step is Evidence 707ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeNextStep.test.tsx > each step says what to do now, and leads to the next > Evidence says what to add, and its next step is Author 573ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeNextStep.test.tsx > each step says what to do now, and leads to the next > the steps follow in order to Respond, which has no next step 1013ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeNextStep.test.tsx > each step says what to do now, and leads to the next > a device filing is told to draft from its device evidence 133ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeNextStep.test.tsx > each step offers the tools that belong to it, on this project > a US drug IND: CMC / Module 3 on Author, the IND forms on Submit 874ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeNextStep.test.tsx > each step offers the tools that belong to it, on this project > a biologic IND is offered its forms, and not CMC, which composes small-molecule Module 3 only 880ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeNextStep.test.tsx > each step offers the tools that belong to it, on this project > an NDA is offered neither 863ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardClientReadable.test.tsx > the board’s own classes do not collide with page rules > marks regulatory impact and spaces the drawer with board-scoped classes only 1783ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardClientReadable.test.tsx > the board’s own classes do not collide with page rules > styles the renamed classes, and the page rules they collided with still exist 4ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardClientReadable.test.tsx > cards and the table say which project a task belongs to > names the project on every card, and the table has Project in place of Task ID 225ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardClientReadable.test.tsx > cards and the table say which project a task belongs to > draws no type pill for a task with no type 364ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardClientReadable.test.tsx > no internal ids or developer vocabulary on screen > the board, its table and its analytics 607ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardClientReadable.test.tsx > no internal ids or developer vocabulary on screen > the task drawer: no task id, no account number, "Came from" 347ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardClientReadable.test.tsx > no internal ids or developer vocabulary on screen > the New task and Start workflow dialogs 600ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardClientReadable.test.tsx > New task > offers only the statuses a task can be created in 304ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardClientReadable.test.tsx > New task > sends a description and the due date picked on the calendar 1064ms
+ ✓ tests/ui/token-authority.test.ts > design-token authority > the entry graph resolves — the walker is not silently finding nothing 2ms
+ ✓ tests/ui/token-authority.test.ts > design-token authority > only the four authorised stylesheets declare tokens in the app graph 1ms
+ ✓ tests/ui/token-authority.test.ts > design-token authority > no orphaned token file has been wired back into the graph 0ms
+ ✓ tests/ui/token-authority.test.ts > design-token authority > canonical tokens are inlined exactly once 0ms
+ ✓ tests/ui/token-authority.test.ts > design-token authority > no two authorities disagree about the same token 151ms
+ ✓ tests/ui/token-authority.test.ts > design-token authority > declares each token at most once per file — no self-shadowing 151ms
+ ✓ tests/ui/token-authority.test.ts > the deleted stylesheets stay deleted > zen.css is gone — 799 lines with zero consumers 0ms
+ ✓ tests/ui/token-authority.test.ts > the deleted stylesheets stay deleted > no source file references a --zen-* token or a .zen-* class 5349ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectHome.mdxWorkflow.test.tsx > MDX starts inside the verified client project > reaches the workflow compiler from Project home and keeps work in the project 2291ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectHome.mdxWorkflow.test.tsx > MDX starts inside the verified client project > retires the previous project workflow while the next project record is loading 899ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > names no category for a surface that belongs to both — the launch core 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > names the one category a surface belongs to, and Admin for an admin surface 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > does not repeat the surface’s own name ("Medical Device & IVD › Medical Device & IVD"), for every surface 4ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > never names a category the rail does not list the surface under — for every surface 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > breadcrumb client category (finding 128) > the header draws exactly that crumb 56ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132) > shows the organisation as a label, not as a control that does nothing 22ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132) > names no organisation when none is known: no "Organization" placeholder (P-25) 35ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > header controls (findings 131, 132) > Help goes where the account menu’s "Get help" goes 334ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > marks the open surface as the current page, and lists no client category beside it 561ms
+ × client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > draws the current page, and no rule draws a client category on the rail 20ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > collapsed, the brand mark keeps the top and the toggle moves to the foot 18ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > expanded, the toggle stays at the top 14ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > draws no floating launcher — the header’s Task and Collaborate buttons open it 4ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > the header’s Task and Collaborate buttons open it — the path that replaced the floating button 482ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > names the surface, not its URL slug or the payload field 78ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > offers each module once, by name, with the server’s value 40ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > labels priorities for people, and posts the server’s values 75ms
+ ✓ client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > task launcher (findings 136, 137, 139) > keeps the auto-assign note one sentence beside its icon 80ms
+ ✓ client/src/concept2cure/v2/__tests__/biopharmaSpecialtyNoFixtures.test.tsx > BiopharmaSpecialty — real rows render (no fixture) > Pediatric renders the REAL plan and milestone rows 339ms
+ ✓ client/src/concept2cure/v2/__tests__/biopharmaSpecialtyNoFixtures.test.tsx > BiopharmaSpecialty — real rows render (no fixture) > Orphan renders the REAL designation row 179ms
+ ✓ client/src/concept2cure/v2/__tests__/biopharmaSpecialtyNoFixtures.test.tsx > BiopharmaSpecialty — real rows render (no fixture) > Lifecycle renders the REAL supplement row 87ms
+ ✓ client/src/concept2cure/v2/__tests__/biopharmaSpecialtyNoFixtures.test.tsx > BiopharmaSpecialty — real rows render (no fixture) > Pharmacovigilance renders the REAL board signals and aggregate reports 93ms
+ ✓ client/src/concept2cure/v2/__tests__/biopharmaSpecialtyNoFixtures.test.tsx > BiopharmaSpecialty — honest empty states > Pediatric shows EmptyStates — never a fixture — when the org has nothing 55ms
+ ✓ client/src/concept2cure/v2/__tests__/biopharmaSpecialtyNoFixtures.test.tsx > BiopharmaSpecialty — honest empty states > Orphan shows EmptyStates — never a fixture 65ms
+ ✓ client/src/concept2cure/v2/__tests__/biopharmaSpecialtyNoFixtures.test.tsx > BiopharmaSpecialty — honest empty states > Lifecycle shows EmptyStates — never a fixture 106ms
+ ✓ client/src/concept2cure/v2/__tests__/biopharmaSpecialtyNoFixtures.test.tsx > BiopharmaSpecialty — honest empty states > Pharmacovigilance shows EmptyStates — never a fixture 93ms
+ ✓ client/src/concept2cure/v2/__tests__/biopharmaSpecialtyNoFixtures.test.tsx > BiopharmaSpecialty — honest error states > Pediatric shows an error EmptyState — never a fixture — when the read fails 60ms
+ ✓ client/src/concept2cure/v2/__tests__/biopharmaSpecialtyNoFixtures.test.tsx > BiopharmaSpecialty — honest error states > Pharmacovigilance shows an error EmptyState — never a fixture — when the board fails 89ms
+ ✓ client/src/concept2cure/v2/__tests__/biopharmaSpecialtyNoFixtures.test.tsx > BiopharmaSpecialty — a failed read is never narrated as an empty one > Pediatric does not claim "no plans on file" when the plan read failed 44ms
+ ✓ client/src/concept2cure/v2/__tests__/biopharmaSpecialtyNoFixtures.test.tsx > BiopharmaSpecialty — a failed read is never narrated as an empty one > Orphan does not claim "no designations on file" when the read failed 27ms
+ ✓ client/src/concept2cure/v2/__tests__/biopharmaSpecialtyNoFixtures.test.tsx > BiopharmaSpecialty — a failed read is never narrated as an empty one > Lifecycle does not claim "no post-approval records" when the reads failed 112ms
+ ✓ client/src/concept2cure/v2/__tests__/biopharmaSpecialtyNoFixtures.test.tsx > BiopharmaSpecialty — a failed read is never narrated as an empty one > Pharmacovigilance does not report safety standing off an unread board 68ms
+ ✓ client/src/concept2cure/v2/__tests__/biopharmaSpecialtyNoFixtures.test.tsx > BiopharmaSpecialty — a failed read is never narrated as an empty one > offers no next step and no reassurance over a record it could not read 48ms
+ ✓ client/src/concept2cure/v2/__tests__/biopharmaSpecialtyNoFixtures.test.tsx > BiopharmaSpecialty — no fixture/SampleTag symbol remains in source > defines no retired sample-content fixture constant 1ms
+ ✓ client/src/concept2cure/v2/__tests__/biopharmaSpecialtyNoFixtures.test.tsx > BiopharmaSpecialty — no fixture/SampleTag symbol remains in source > no longer uses the retired live-or-fixture helpers or SampleTag 0ms
+ ✓ client/src/concept2cure/v2/__tests__/biopharmaSpecialtyNoFixtures.test.tsx > BiopharmaSpecialty — no fixture/SampleTag symbol remains in source > stays on the honest data path (useLiveRows/useLiveData + EmptyState) 10ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > reads the client TSX and the v2 stylesheets 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-head`: no more than 18 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-eyebrow`: no more than 19 uses, and gone from the CSS at 0 30ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-title`: no more than 18 uses, and gone from the CSS at 0 15ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-state`: no more than 23 uses, and gone from the CSS at 0 15ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-head`: no more than 11 uses, and gone from the CSS at 0 11ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-eyebrow`: no more than 9 uses, and gone from the CSS at 0 27ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-title`: no more than 11 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-sub`: no more than 10 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-head`: no more than 3 uses, and gone from the CSS at 0 10ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-kicker`: no more than 3 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-title`: no more than 3 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `surface-head`: no more than 5 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `surface-kicker`: no more than 2 uses, and gone from the CSS at 0 11ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pj-eyebrow`: no more than 1 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-cta`: no more than 19 uses, and gone from the CSS at 0 12ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `landing-newproj`: no more than 1 uses, and gone from the CSS at 0 14ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `btn sm`: no more than 14 uses, and gone from the CSS at 0 13ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-card`: no more than 15 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-tabs`: no more than 11 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-tab`: no more than 13 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-subtab`: no more than 0 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sc-ws`: no more than 1 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cc-tab`: no more than 1 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pj-seg`: no more than 2 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `ml-seg`: no more than 4 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cl-toast`: no more than 1 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `tb-detail`: no more than 4 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `rbm-modal`: no more than 3 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-connect`: no more than 0 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pj-stageband`: no more than 2 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `What to do now`: no more than 1 uses, and gone from the CSS at 0 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `This work flows into`: no more than 1 uses, and gone from the CSS at 0 5ms
+ ✓ client/src/concept2cure/v2/__tests__/riskHonesty.test.tsx > Risk (ISO 14971) — an unexamined register is not a controlled one > does not report hazards as controlled when no residual risk has been evaluated 373ms
+ ✓ client/src/concept2cure/v2/__tests__/riskHonesty.test.tsx > Risk (ISO 14971) — an unexamined register is not a controlled one > never renders a benefit-risk determination, in any state 67ms
+ ✓ client/src/concept2cure/v2/__tests__/riskHonesty.test.tsx > Risk (ISO 14971) — an unexamined register is not a controlled one > does not claim a hazard has no controls when its detail could not be read 191ms
+ ✓ client/src/concept2cure/v2/__tests__/riskHonesty.test.tsx > Risk (ISO 14971) — an unexamined register is not a controlled one > says nothing about residual risk when the read failed 9ms
+ ✓ client/src/concept2cure/v2/__tests__/riskHonesty.test.tsx > Risk (ISO 14971) — an unexamined register is not a controlled one > says nothing about residual risk over an empty register 8ms
+ ✓ client/src/concept2cure/v2/__tests__/riskHonesty.test.tsx > Risk (ISO 14971) — an unexamined register is not a controlled one > still reports a clean residual-risk picture when every hazard carries a recorded acceptance 83ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingCurrentOrganization.test.tsx > the wizard names the organisation it will change > does not call itself a new organization 158ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingCurrentOrganization.test.tsx > the form starts from what the organisation records > prefills the recorded name 115ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingCurrentOrganization.test.tsx > the form starts from what the organisation records > pre-selects the archetype whose write-back is the recorded industry, not "Virtual biotech" 117ms
+ ✓ client/src/concept2cure/v2/__tests__/onboardingCurrentOrganization.test.tsx > the form starts from what the organisation records > never overwrites a name the person typed before the read answered 136ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Review board at 390px > stacks the list above the detail 19ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Review board at 390px > wraps what does not fit in the detail, which cuts off what overflows it 106ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Review board at 390px > makes every control a reviewer taps there a 44px target 3ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Review board at 390px > marks the controls those rules name, and sets no inline height a rule cannot override 1ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Tasks tray at 390px > makes Close and each notice’s Mark read 44px square 42ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The Tasks tray at 390px > makes Triage, Show more, Open the task board and every button in the tray 44px tall 31ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The review decision dialog at 390px > makes the decision, the reason and each button a 44px target 1ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > the shell resets every button’s padding and background 0ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > every rule that gives .es-btn-primary its box outranks that reset 2ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > every rule that gives .es-btn-secondary its box outranks that reset 1ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > every rule that gives .es-close its box outranks that reset 1ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > every rule that gives .es-meaning-opt its box outranks that reset 0ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > at 390px Sign and commit, Cancel, Done and each meaning are 44px tall, and the close control 44px square 1ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > reduced motion still stops their transitions, at the same rank 0ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewRoutePhoneWidth.test.ts > The signing dialog keeps its buttons inside the v2 shell > no second copy of the meaning pills’ rules works around the reset elsewhere 9ms
+ ✓ client/src/concept2cure/v2/__tests__/dialogButtonHoverSettles.test.ts > dialog buttons hold still under a resting pointer > finds the hover rules it holds, so an empty scan is not a pass 67ms
+ ✓ client/src/concept2cure/v2/__tests__/dialogButtonHoverSettles.test.ts > dialog buttons hold still under a resting pointer > a hover rule for a dialog button changes paint only, never the box 32ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts > sentence case: no stylesheet uppercases text (ONE_DESIGN_PLAN §2, D0 guard 1) > reads the stylesheets it guards 20ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts > sentence case: no stylesheet uppercases text (ONE_DESIGN_PLAN §2, D0 guard 1) > every allowlist entry carries a written reason 2ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts > sentence case: no stylesheet uppercases text (ONE_DESIGN_PLAN §2, D0 guard 1) > no `text-transform: uppercase` in v2/styles/*.css or design-system/colors_and_type.css 21ms
+ ✓ client/src/concept2cure/v2/__tests__/shellButtonResetYields.test.ts > the shell’s button reset > still resets every button in the shell 2ms
+ ✓ client/src/concept2cure/v2/__tests__/shellButtonResetYields.test.ts > the shell’s button reset > is outranked by a single class 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellButtonResetYields.test.ts > the shell’s button reset > keeps the shell’s font family on every button, over a one-class legacy rule 22ms
+ ✓ client/src/concept2cure/v2/__tests__/shellButtonResetYields.test.ts > the shell’s button reset > keeps the whole font (size, weight, line height) at the old strength outside Quality 7ms
+ ✓ client/src/concept2cure/v2/__tests__/shellButtonResetYields.test.ts > the shell’s button reset > Quality’s .qms-tab keeps the box its own rule gives it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellButtonResetYields.test.ts > the shell’s button reset > Quality’s .qms-btn keeps the box its own rule gives it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellButtonResetYields.test.ts > the shell’s button reset > Quality’s .qms-chip keeps the box its own rule gives it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellButtonResetYields.test.ts > the shell’s button reset > Quality’s .qms-tpl-card keeps the box its own rule gives it 0ms
+ ✓ client/src/concept2cure/v2/__tests__/shellButtonResetYields.test.ts > the shell’s button reset > Quality’s .qms-tb-btn keeps the box its own rule gives it 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > reads the v2 stylesheets and resolves nesting and :is() lists 11ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .btn is defined in exactly one stylesheet, app-v2.css 19ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .pj-card is defined in exactly one stylesheet, app-v2.css 14ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .pj-card-h is defined in exactly one stylesheet, app-v2.css 5ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .rd-chip is defined in exactly one stylesheet, app-v2.css 14ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .al-lead is defined in exactly one stylesheet, app-v2.css 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .al-k is defined in exactly one stylesheet, app-v2.css 2ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .ph-title is defined in exactly one stylesheet, app-v2.css 9ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .seg is defined in exactly one stylesheet, app-v2.css 10ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .tab is defined in exactly one stylesheet, app-v2.css 2ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .reg-tbl th is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .c2c-input is defined in exactly one stylesheet, app-v2.css 2ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .c2c-empty-state is defined in exactly one stylesheet, app-v2.css 4ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .de is defined in exactly one stylesheet, journey-v2.css 3ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .de-toast is defined in exactly one stylesheet, journey-v2.css 2ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .pj-seclbl is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > retired alias .btn.sm is defined at most once, in app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeStageCss.test.tsx > the filing spine’s project-page classes > the block is found 1ms
+ × client/src/concept2cure/v2/__tests__/projectHomeStageCss.test.tsx > the filing spine’s project-page classes > defines no class another v2 stylesheet already defines 28ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsThemeTokens.test.ts > Reporting canvas colours follow the theme > .ro-status.st-ok takes its colours from tokens, with no literal and no mix toward black 3ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsThemeTokens.test.ts > Reporting canvas colours follow the theme > .ro-status.st-warn takes its colours from tokens, with no literal and no mix toward black 1ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsThemeTokens.test.ts > Reporting canvas colours follow the theme > .ro-m-st.st-ready takes its colours from tokens, with no literal and no mix toward black 1ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsThemeTokens.test.ts > Reporting canvas colours follow the theme > .ro-m-st.st-partial takes its colours from tokens, with no literal and no mix toward black 0ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsThemeTokens.test.ts > Reporting canvas colours follow the theme > .ro-m-st.st-missing takes its colours from tokens, with no literal and no mix toward black 0ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsThemeTokens.test.ts > Reporting canvas colours follow the theme > .ro-sev.sev-critical takes its colours from tokens, with no literal and no mix toward black 0ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsThemeTokens.test.ts > Reporting canvas colours follow the theme > .ro-sev.sev-high takes its colours from tokens, with no literal and no mix toward black 0ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsThemeTokens.test.ts > Reporting canvas colours follow the theme > .ro-sev.sev-medium takes its colours from tokens, with no literal and no mix toward black 0ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsThemeTokens.test.ts > Reporting canvas colours follow the theme > .ro-lock-chip takes its colours from tokens, with no literal and no mix toward black 1ms
+ ✓ client/src/concept2cure/v2/__tests__/insightsThemeTokens.test.ts > Reporting canvas colours follow the theme > Critical is not quieter than High: same hue, heavier weight 1ms
+ ✓ tests/ui/motion-token.test.ts > the motion tokens > --ease is an ease-out with no overshoot 3ms
+ ✓ tests/ui/motion-token.test.ts > the motion tokens > the default duration is 200ms 1ms
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeStageCss.test.tsx > the filing spine’s project-page classes > defines no class another v2 stylesheet already defines
+AssertionError: expected [ '.pj-sec-acts (also app-v2.css)' ] to deeply equal []
+ FAIL  client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx > rail: where you are vs what you chose (findings 130, 135) > draws the current page, and no rule draws a client category on the rail
+AssertionError: expected '/* ══════════════════════════════════…' to match /\.nav-item\[aria-current="page"\]\{ba…/
+ Test Files  2 failed | 20 passed (22)
+      Tests  2 failed | 256 passed (258)
+exit 1

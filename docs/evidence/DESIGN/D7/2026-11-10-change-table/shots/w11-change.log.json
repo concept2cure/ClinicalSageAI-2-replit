@@ -1,0 +1,190 @@
+{
+  "apiErrors": [],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "closed-1440",
+      "table": true,
+      "heads": [
+        "Number",
+        "Title",
+        "Type",
+        "Class",
+        "Status",
+        "Target",
+        "Links",
+        "Actions"
+      ],
+      "bodies": 6,
+      "rowHeight": 49,
+      "firstRowButtons": [
+        "CC-F1-275489",
+        "0 linked records",
+        "Advance",
+        "More actions for CC-F1-275489"
+      ],
+      "oldClasses": 0,
+      "cellSize": "13px",
+      "tableScroll": 0,
+      "docScroll": 0
+    },
+    {
+      "name": "more-1440",
+      "group": "Link a recordAsk AnA"
+    },
+    {
+      "name": "detail-1440",
+      "detail": "Linked recordsNo linked records yet.To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record)."
+    },
+    {
+      "name": "open-1440",
+      "table": true,
+      "heads": [
+        "Number",
+        "Title",
+        "Type",
+        "Class",
+        "Status",
+        "Target",
+        "Links",
+        "Actions"
+      ],
+      "bodies": 6,
+      "rowHeight": 49,
+      "firstRowButtons": [
+        "CC-F1-275489",
+        "0 linked records",
+        "Advance",
+        "More actions for CC-F1-275489"
+      ],
+      "oldClasses": 0,
+      "cellSize": "13px",
+      "tableScroll": 0,
+      "docScroll": 0
+    },
+    {
+      "name": "closed-390",
+      "table": true,
+      "heads": [
+        "Number",
+        "Title",
+        "Type",
+        "Class",
+        "Status",
+        "Target",
+        "Links",
+        "Actions"
+      ],
+      "bodies": 6,
+      "rowHeight": 59,
+      "firstRowButtons": [
+        "CC-F1-275489",
+        "0 linked records",
+        "Advance",
+        "More actions for CC-F1-275489"
+      ],
+      "oldClasses": 0,
+      "cellSize": "13px",
+      "tableScroll": 523,
+      "docScroll": 0
+    },
+    {
+      "name": "more-390",
+      "group": "Link a recordAsk AnA"
+    },
+    {
+      "name": "detail-390",
+      "detail": "Linked recordsNo linked records yet.To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record)."
+    },
+    {
+      "name": "open-390",
+      "table": true,
+      "heads": [
+        "Number",
+        "Title",
+        "Type",
+        "Class",
+        "Status",
+        "Target",
+        "Links",
+        "Actions"
+      ],
+      "bodies": 6,
+      "rowHeight": 59,
+      "firstRowButtons": [
+        "CC-F1-275489",
+        "0 linked records",
+        "Advance",
+        "More actions for CC-F1-275489"
+      ],
+      "oldClasses": 0,
+      "cellSize": "13px",
+      "tableScroll": 523,
+      "docScroll": 0
+    },
+    {
+      "name": "closed-1440-dark",
+      "table": true,
+      "heads": [
+        "Number",
+        "Title",
+        "Type",
+        "Class",
+        "Status",
+        "Target",
+        "Links",
+        "Actions"
+      ],
+      "bodies": 6,
+      "rowHeight": 49,
+      "firstRowButtons": [
+        "CC-F1-275489",
+        "0 linked records",
+        "Advance",
+        "More actions for CC-F1-275489"
+      ],
+      "oldClasses": 0,
+      "cellSize": "13px",
+      "tableScroll": 0,
+      "docScroll": 0
+    },
+    {
+      "name": "more-1440-dark",
+      "group": "Link a recordAsk AnA"
+    },
+    {
+      "name": "detail-1440-dark",
+      "detail": "Linked recordsNo linked records yet.To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record)."
+    },
+    {
+      "name": "open-1440-dark",
+      "table": true,
+      "heads": [
+        "Number",
+        "Title",
+        "Type",
+        "Class",
+        "Status",
+        "Target",
+        "Links",
+        "Actions"
+      ],
+      "bodies": 6,
+      "rowHeight": 49,
+      "firstRowButtons": [
+        "CC-F1-275489",
+        "0 linked records",
+        "Advance",
+        "More actions for CC-F1-275489"
+      ],
+      "oldClasses": 0,
+      "cellSize": "13px",
+      "tableScroll": 0,
+      "docScroll": 0
+    },
+    {
+      "name": "w11-change",
+      "ok": true
+    }
+  ]
+}

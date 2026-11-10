@@ -316,12 +316,13 @@ test('fixture-free golden journey persists evidence, content edits, review, prov
 
   // The Artifacts center folded into the Vault (D2, fold F3 slice C, 2026-10-29):
   // with no project open, the Vault lists the governed artifacts of every project
-  // the author can open, with the gallery's governance line. Open it from the top
-  // bar's search, by accessible names: the path
-  // client/src/concept2cure/v2/__tests__/shellNav.test.tsx pins. A direct URL load
+  // the author can open, with the gallery's governance line. Open it from the
+  // sidebar's Search (the top bar's search box went in D1-2), by accessible names: the
+  // path client/src/concept2cure/v2/__tests__/shellNav.test.tsx pins. A direct URL load
   // bounces back to Home (the shell restores its own state on a cold load).
-  await page.getByRole('button', { name: 'Search, jump, or run a command' }).click();
-  await page.getByPlaceholder(/Search surfaces/).fill('Vault');
+  await page.locator('nav[aria-label="Primary"]').getByRole('button', { name: /^Search/ }).first().click();
+  // D1-3 (D1.md §D1.F step 1): the field's words name projects, conversations and pages.
+  await page.getByPlaceholder(/^Search projects, conversations and pages/).fill('Vault');
   await page.getByRole('button', { name: /^Vault/ }).first().click();
   // Anchor on the row's testid, not the exact title: the listing truncates
   // long titles in the cell text, so an exact-text locator can never match.
@@ -380,9 +381,16 @@ async function createIndProject(page: Page, projectName: string) {
   await page.getByRole('button', { name: /Create project/ }).click();
 }
 
+/** An act the editor's bar holds in one of its two menus since D4-2 (D4.md §D4.B): AnA (✻) or More. */
+async function chooseFromEditorMenu(page: Page, menu: 'ed-ana' | 'ed-more', item: string) {
+  const trigger = menu === 'ed-ana' ? 'AnA' : 'More document actions';
+  await page.getByTestId(menu).getByRole('button', { name: trigger, exact: true }).click();
+  await page.getByRole('menuitem', { name: item }).click();
+}
+
 /** The editor's Send for review, to one reviewer, with a reason; returns the dialog showing its outcome. */
 async function sendForReview(page: Page, reviewer: string) {
-  await page.getByRole('button', { name: 'Send for review' }).click();
+  await chooseFromEditorMenu(page, 'ed-more', 'Send for review…');
   const dialog = page.getByRole('dialog');
   // Offered only when the document's existing review requests were read; a
   // refused read (2026-10-25: the 20-a-minute document bucket) offers no one.
@@ -473,7 +481,7 @@ test('first session: create an IND project, add a source, assign, draft with AnA
   });
 
   await test.step('AnA: the draft request arrives in the conversation, and leads back', async () => {
-    await page.getByRole('button', { name: 'Draft with AnA', exact: true }).first().click();
+    await chooseFromEditorMenu(page, 'ed-ana', 'Draft with AnA');
     await expect(page).toHaveURL(/conversation-thread/);
     await expect(page.locator('textarea').first()).toHaveValue(new RegExp(deliverable));
     await snap('first-session-04-ana.png');

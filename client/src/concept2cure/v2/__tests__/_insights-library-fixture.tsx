@@ -92,7 +92,7 @@ export async function renderCanvas() {
       onNav={() => {}}
     />,
   );
-  await waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
+  await waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
 }
 
 /** Click one of the artifact pane's tabs by its visible name. */

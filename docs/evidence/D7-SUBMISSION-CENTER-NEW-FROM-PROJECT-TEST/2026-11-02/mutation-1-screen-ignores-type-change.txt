@@ -1,0 +1,7 @@
+MUTATION 1: NewSubmissionForm.tsx:205 useMarketSupport(appType || null) -> useMarketSupport(appType ? 'nda' : null) (the screen stops following a change of type)
+ × client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > each region option carries the server's statement for the chosen application type, and follows a change of type 5378ms
+   → expected 'EU (EMA)' to contain 'Module 1 without the agency\'s headin…'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterNewFromProject.test.tsx > New submission takes the open project's filing (F20) > each region option carries the server's statement for the chosen application type, and follows a change of type
+AssertionError: expected 'EU (EMA)' to contain 'Module 1 without the agency\'s headin…'
+      Tests  1 failed | 16 skipped (17)

@@ -1,0 +1,8 @@
+# Skeptic's red run: the new shellQuietChrome case against the builder's Shell.tsx (the notice inside <nav class="rail">), 2026-11-01
+# npx vitest run --maxWorkers=1 client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx -t "notice a choice raises"
+ × client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > the notice a choice raises is still seen once the drawer closes (it sits beside the rail, not in it) 552ms
+   → expected true to be false // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx > at phone width, choosing an item closes the drawer (§D1.A step 7) > the notice a choice raises is still seen once the drawer closes (it sits beside the rail, not in it)
+AssertionError: expected true to be false // Object.is equality
+      Tests  1 failed | 23 skipped (24)

@@ -1,0 +1,75 @@
+# P-87 and the next R1 question: caller check, origin ffd2bd772, 2026-11-02T03:58:06Z
+
+## Corrected R1 inventory (d8f559377) rows for IND sequence/portfolio routes
+GET /api/ind-lifecycle/portfolio/drift | caller=None | confidence=none | file=server/routes/ind-lifecycle/submission.routes.ts
+GET /api/ind-lifecycle/portfolio/drift/csv | caller=None | confidence=none | file=server/routes/ind-lifecycle/submission.routes.ts
+GET /api/ind-lifecycle/sequence/:currentId/diff | caller=None | confidence=none | file=server/routes/ind-lifecycle/sequence.routes.ts
+GET /api/ind-lifecycle/sequence/:currentId/diff/pdf | caller=client/src/concept2cure/v2/surfaces/IndLifecycle.tsx | confidence=probable | file=server/routes/ind-lifecycle/sequence.routes.ts
+POST /api/ind-lifecycle/sequence/:seqId/dispatch-gate | caller=None | confidence=none | file=server/routes/ind-lifecycle/sequence.routes.ts
+POST /api/ind-lifecycle/sequence/:seqId/dispatch-gate/snapshot | caller=None | confidence=none | file=server/routes/ind-lifecycle/sequence.routes.ts
+GET /api/ind-lifecycle/sequence/:seqId/manifest | caller=None | confidence=none | file=server/routes/ind-lifecycle/sequence.routes.ts
+GET /api/ind-lifecycle/sequence/:seqId/manifest/pdf | caller=client/src/concept2cure/v2/surfaces/IndLifecycle.tsx | confidence=probable | file=server/routes/ind-lifecycle/sequence.routes.ts
+GET /api/ind-lifecycle/sequence/:seqId/snapshots | caller=None | confidence=none | file=server/routes/ind-lifecycle/sequence.routes.ts
+GET /api/ind-lifecycle/sequence/:seqId/validate | caller=shared/constants/ui-surface-registry.ts | confidence=probable | file=server/routes/ind-lifecycle/sequence.routes.ts
+POST /api/ind-lifecycle/submission/:id/cockpit | caller=None | confidence=none | file=server/routes/ind-lifecycle/submission.routes.ts
+POST /api/ind-lifecycle/submission/:id/drift | caller=None | confidence=none | file=server/routes/ind-lifecycle/submission.routes.ts
+
+## Plain-text segment searches (git grep on origin/ffd2bd772 over client/src shared server/services/ana server/mcp scripts tests e2e; excluding __tests__, *.test.*, and server/routes/ind-lifecycle itself)
+### /diff/pdf
+### manifest/pdf
+### /diff\b
+client/src/concept2cure/v2/surfaces/AuthoringExports.tsx:23: *   CITATION drift — `…/diff-since-export`, which lists `authoring_citations`
+client/src/concept2cure/v2/surfaces/AuthoringExports.tsx:54:/** A citation created since the last export, per GET …/diff-since-export. */
+client/src/concept2cure/v2/surfaces/AuthoringExports.tsx:197:      const res = await apiRequest('GET', `/api/authoring/docs/${id}/diff-since-export`);
+scripts/ci/check-unbacked-tables.mjs:21: *     /docs/:id/export, GET /docs/:id/diff-since-export).
+scripts/ci/proof-tier-baseline.json:79:      "tests/e2e/diff-history.e2e.ts",
+scripts/uat-authoring.mjs:147:    const j = await fetchJson(`${BASE_URL}/api/authoring/docs/${docId}/diff-since-export`);
+### /manifest\b
+client/src/concept2cure/mdx/hooks/useIvd.ts:30:import { calculateClinical2x2 } from '../../../../../shared/ivdr/manifest';
+scripts/create_component_snapshot.sh:41:MANIFEST_FILE="${SNAPSHOT_DIR}/manifest.txt"
+scripts/demo/launch-demo/seed.mjs:20: * manifest of the ids it created to docs/evidence/DEMO/<pack>/manifest.json so
+scripts/release-evidence/cli.mjs:43:  await writeFile(path.join(output,'index.md'),index); console.log(`Generated ${path.relative(root,output)}/manifest.json for ${commit}`);
+scripts/release-evidence/cli.mjs:45:  const manifest=await readJson(args.manifest||'release-evidence/manifest.json');
+shared/ivdr/manifest.ts:9: * @module shared/ivdr/manifest
+### dispatch-gate
+client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:1711:  verdictSource: 'assess-dispatch-readiness' | 'dispatch-gate';
+client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:2363:                    : qc.data.verdictSource === 'dispatch-gate'
+server/services/ana/AnaToolDefinitions.ts:2638:      'findings, dispatch-gate failures, correspondence-driven blockers) — ordered by severity ' +
+server/services/ana/deviceSubmissionTools.ts:11: *       Deterministic, no render/transmit — mirrors the eCTD dispatch-gate.
+server/services/ana/submission-center-tool-defs.ts:980:    "Determine whether an eCTD sequence is clear to dispatch, with every input computed SERVER-SIDE from the canonical core — never a client-su
+shared/constants/ui-surface-registry.ui-v2.ts:148:    engineering: 'dispatch-gate.ts. Bound to GET /api/submissions/sequences/:seqId/dispatch-readiness.',
+shared/regulatory/filing-copy-status.ts:15: * (server/services/ectd/dispatch-gate.ts evaluateReleaseApprovalGate;
+shared/schema/ind-dispatch-snapshots.ts:4: * A point-in-time record of a sequence's dispatch-gate verdict, so a program's
+tests/db/ind-audit-outcomes.dbtest.ts:253:      const response = await post(`/sequence/${sequenceId}/dispatch-gate/snapshot`, {});
+tests/db/ind-audit-outcomes.dbtest.ts:266:      expect((await post(`/sequence/${sequenceId}/dispatch-gate/snapshot`, {}, foreignToken)).status).toBe(404);
+### /snapshots
+tests/db/ind-audit-outcomes.dbtest.ts:263:      const history = await get(`/sequence/${sequenceId}/snapshots`);
+tests/db/report-os-tenant-from-session.dbtest.ts:262:      .post(`/api/report-os/program-groups/${groupA}/snapshots`)
+tests/e2e/governed-lifecycle.e2e.spec.ts:13: *   11F: GET /snapshots returns immutable records
+tests/e2e/governed-lifecycle.e2e.spec.ts:244:  // ── 11F: GET /snapshots returns immutable records ─────────────────────
+tests/e2e/governed-lifecycle.e2e.spec.ts:246:  test('11F: GET /snapshots returns immutable publish/lock record', async ({ request }) => {
+tests/e2e/governed-lifecycle.e2e.spec.ts:248:      `${API_BASE}/projects/${projectId}/artifacts/${artifactId}/snapshots`,
+tests/e2e/governed-lifecycle.e2e.spec.ts:341:      `${API_BASE}/projects/${projectId}/artifacts/${artifactId}/snapshots`,
+### /cockpit
+### portfolio/drift
+### /drift
+client/src/concept2cure/v2/surfaces/SubmissionTwin.tsx:11: *   • GET  /drift/:pkg            — active narrative-drift alerts
+client/src/concept2cure/v2/surfaces/SubmissionTwin.tsx:12: *   • POST /drift/detect/:pkg     — detect drift; POST /drift/:id/resolve
+client/src/concept2cure/v2/surfaces/SubmissionTwin.tsx:90:      readData<DriftAlert[]>('GET', `/api/submission-twin/drift/${id}`),
+client/src/concept2cure/v2/surfaces/SubmissionTwin.tsx:126:      const { ok, status } = await readData('POST', `/api/submission-twin/drift/detect/${pkg}`);
+client/src/concept2cure/v2/surfaces/SubmissionTwin.tsx:145:    const { ok } = await readData('POST', `/api/submission-twin/drift/${alertId}/resolve`);
+tests/db/bla-ivd-request-connection.dbtest.ts:110:    expect((await post('/api/ivd-lifecycle/drift/detect', {})).status).toBe(200);
+tests/db/provenance-audit-outcomes.dbtest.ts:235:    const scanned = await post(`${graph}/programs/${PROGRAM}/drift/scan`, {});
+tests/db/provenance-audit-outcomes.dbtest.ts:322:      const { runDriftSentinelSweep } = await import('../../server/jobs/driftSentinelSweep');
+### sequence/\$\{
+tests/db/ind-audit-outcomes.dbtest.ts:253:      const response = await post(`/sequence/${sequenceId}/dispatch-gate/snapshot`, {});
+tests/db/ind-audit-outcomes.dbtest.ts:263:      const history = await get(`/sequence/${sequenceId}/snapshots`);
+tests/db/ind-audit-outcomes.dbtest.ts:266:      expect((await post(`/sequence/${sequenceId}/dispatch-gate/snapshot`, {}, foreignToken)).status).toBe(404);
+
+## IndLifecycle.tsx PDF calls (the inventory's 'probable' caller of diff/pdf and manifest/pdf)
+220:  pdf?: { path: string; filename: string };
+871:      const res = await apiRequest('POST', '/api/ind-lifecycle/cover-letter/pdf', coverLetterPayload());
+952:      const res = await apiRequest('POST', w.pdf.path, w.payload());
+1050:      pdf: { path: '/api/ind-lifecycle/loa/pdf', filename: 'ind-letter-of-authorization.pdf' },
+1072:      pdf: { path: '/api/ind-lifecycle/right-of-reference/pdf', filename: 'ind-right-of-reference.pdf' },
+1094:      pdf: { path: '/api/ind-lifecycle/annual-report/pdf', filename: 'ind-annual-report.pdf' },

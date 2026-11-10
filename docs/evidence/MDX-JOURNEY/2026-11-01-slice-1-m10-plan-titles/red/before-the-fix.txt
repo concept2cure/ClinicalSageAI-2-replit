@@ -1,0 +1,24 @@
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > targets the existing risk panel for the same project when opening engineering work 159ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > keeps a US diagnostic on its recorded 510(k) route and adds the assay bench 1ms
+ × client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > gives MDR clinical evaluation and IVDR performance evaluation different leads and deliverables 5ms
+ × client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > names an EU MDR project by its technical documentation, and a CER project by the CER 1ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > shares evidence across recorded filings without converting a De Novo into a 510(k) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > hands De Novo assembly to project authoring while preserving its filing identity 42ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > does not fabricate a 510(k) for an unknown device route or an MDX workflow for a drug 0ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > opens an existing feature and uses project evidence for specialist laboratory reports 67ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > states an unreadable additional-filing list and never offers a locked feature 95ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > opens a secondary MDR evaluation from its clinical evidence without changing the primary 510(k) 27ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > uses project evidence for US assay work and only opens IVDR evidence for a recorded IVDR filing 160ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a 510(k) project names its strategy and assembly doors for the pathway, and opens its feature 33ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a PMA project names its strategy and assembly doors for the pathway, and opens its feature 49ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a MDR project names its strategy and assembly doors for the pathway, and opens its feature 35ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a IVDR project names its strategy and assembly doors for the pathway, and opens its feature 33ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > names the software, agency, post-market and clinical-studies doors for their jobs 50ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > heads a filing with no recorded route by its kind, in words a client reads 0ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > places each of the 12 project features once, each opened from Plan 0ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > opens exactly those twelve features from a device project's Plan, over every recorded route and product type 1078ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'What this EU IVDR PER needs' to be 'What this EU IVDR technical documenta…' // Object.is equality
+AssertionError: expected 'What this EU MDR CER needs' to be 'What this EU MDR technical documentat…' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  2 failed | 17 passed (19)

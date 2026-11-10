@@ -162,9 +162,18 @@ describe('ui-v2 registry model ↔ shared registry parity', () => {
     expect(isLaunchSurface('cmc')).toBe(true);
     const ids = RAIL_CORE.map((s) => s.id);
     expect(ids).toContain('cmc');
-    expect(ids.indexOf('quality') - ids.indexOf('cmc'), 'CMC sits directly before Quality').toBe(1);
+    // Risk-based monitoring (P-76) joined the same work areas since; CMC still
+    // opens them and Quality follows in the group. Biostatistics was reached only
+    // from the project (RULE 4, P-79) until the founder, 2026-11-06: "Our core
+    // modules are … CMC, biostatistics, RBM … the left rail should be a navigation
+    // point for all of those entry points" (one-product-baseline founderDecisions).
+    const workAreas = RAIL_CORE.filter((s) => (s as { group?: string }).group === 'work-areas').map((s) => s.id);
+    expect(workAreas[0], 'CMC opens the work areas').toBe('cmc');
+    expect(workAreas.indexOf('quality'), 'Quality is in the work areas beside CMC').toBeGreaterThan(0);
     expect(NAV_HIDDEN.has('cmc')).toBe(false);
     expect(getSurface('cmc')).toBeDefined();
+    expect(workAreas.indexOf('biostatistics'), 'Biostatistics is a work area on the rail, after CMC').toBe(workAreas.indexOf('cmc') + 1);
+    expect(isLaunchSurface('biostatistics'), 'Biostatistics stays in the launch catalog').toBe(true);
   });
 
   it('Quality is a place, not a hidden surface', () => {

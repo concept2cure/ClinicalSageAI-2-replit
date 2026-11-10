@@ -14,7 +14,7 @@
  *
  * ── Handles ──────────────────────────────────────────────────────────────────
  * An app answers to its label (`@Biostatistics workbench`, what the composer
- * inserts), its navigation id (`@biostat-workbench`), and any short alias
+ * inserts), its navigation id (`@biostatistics`), and any short alias
  * (`@biostats`). The aliases are the handles AnA's context enrichment has
  * accepted since before the composer offered a menu; they live here so there
  * is one vocabulary, not a client one and a server one that drift.
@@ -48,7 +48,7 @@ export interface CallableApp {
 
 /** Targets outside group `module` that are capabilities rather than places. */
 const EXTRA_CALLABLE: ReadonlySet<string> = new Set([
-  'deep-research', 'biostat-workbench', 'biostatistics', 'crl-library', 'vault',
+  'deep-research', 'biostatistics', 'crl-library', 'vault',
 ]);
 
 /**
@@ -65,9 +65,12 @@ const ALIASES: Readonly<Record<string, string>> = {
   'cer': 'device-cer',
   'pv': 'safety',
   'pharmacovigilance': 'safety',
-  'biostats': 'biostat-workbench',
-  'biostat': 'biostat-workbench',
-  'stats': 'biostat-workbench',
+  /* These three pointed at `biostat-workbench` until it was retired into
+     `biostatistics` on 2026-11-09. A message using the old handle still lands
+     on the one surface that holds the calculators. */
+  'biostats': 'biostatistics',
+  'biostat': 'biostatistics',
+  'stats': 'biostatistics',
   'protocol': 'biostatistics',
   'ectd': 'ectd-coauthor',
   'crl': 'crl-library',
@@ -85,6 +88,8 @@ const ALIASES: Readonly<Record<string, string>> = {
   'device engineering': 'device-engineering',
   'post-market vigilance': 'device-postmarket',
   'dispatch readiness': 'dispatch-readiness',
+  /* Renamed 2026-11-05: "workbench" is not client copy (section 9). */
+  'biostatistics workbench': 'biostatistics',
 };
 
 function toApp(t: NavigationTarget): CallableApp {

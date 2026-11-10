@@ -12,12 +12,14 @@
  * a confirmed write, so the screen shows the record and not the form.
  */
 import React, { useEffect, useState } from 'react';
-import { C2CForm, type C2CFormConfig, type C2CFormField } from '../C2CForm';
+import { C2CForm, type C2CFormConfig, type C2CFormField, type C2CFormFieldOption } from '../C2CForm';
 import { memberLabels } from '@shared/utils/member-labels';
 import { useAuthUser } from '@/services/portal/authService';
 import {
   addBudgetItem, addScheduleVisit, addSoaAssessment, assessProtocolDeviation, listReviewerCandidates, optionalNumber,
   removeScheduleVisit, removeSoaAssessment, renameScheduleVisit, requestProtocolReview,
+  addProtocolReviewComment, resolveProtocolReviewComment, addAmendmentChange, setAmendmentStatus,
+  addCapaAction, setCapaStatus, setMilestoneStatus,
   setBudgetParams, startProtocolDocument, updateProtocolHeader, updateProtocolRisk,
   type ReviewerCandidate,
 } from './ProtocolDevWrites';
@@ -28,7 +30,8 @@ export type PdevFormKind =
   | 'risk-residual'
   | 'deviation-assess'
   | 'budget-item' | 'budget-params'
-  | 'review-request' | 'review-disposition'
+  | 'review-request' | 'review-disposition' | 'review-comment' | 'comment-resolve'
+  | 'amendment-change' | 'amendment-status' | 'capa-add' | 'capa-status' | 'milestone-status'
   | 'cover-page'
   | 'start-protocol';
 
@@ -44,6 +47,8 @@ export interface PdevFormTarget {
   defaults?: Record<string, string>;
   /** A review's assigned user; null when it names a reviewer with no account. */
   reviewerUserId?: number | null;
+  /** The choices the server allows for this row (an amendment's next statuses). */
+  options?: string[];
 }
 
 const REASON: C2CFormField = {
@@ -57,6 +62,21 @@ const SOA_CATEGORY = ['lab', 'imaging', 'exam', 'vital_signs', 'pk', 'questionna
 const BUDGET_CATEGORY = ['personnel', 'procedure', 'lab', 'imaging', 'overhead', 'equipment', 'patient_stipend', 'other'];
 const REVIEW_ROLE = ['scientific', 'statistical', 'ethics', 'safety', 'regulatory', 'general'];
 const DISPOSITION = ['approve', 'approve_with_changes', 'reject', 'abstain'];
+const COMMENT_SEVERITY = ['blocking', 'major', 'minor', 'info'];
+/** A CAPA action's statuses, as the server's vocabulary has them. */
+const CAPA_STATUS: C2CFormFieldOption[] = [
+  { value: 'open', label: 'Open' }, { value: 'in_progress', label: 'In progress' },
+  { value: 'completed', label: 'Completed' }, { value: 'verified', label: 'Verified' },
+];
+/** A milestone's statuses, as the server's schema has them. */
+const MILESTONE_STATUS: C2CFormFieldOption[] = [
+  { value: 'planned', label: 'Planned' }, { value: 'in_progress', label: 'In progress' }, { value: 'met', label: 'Met' },
+  { value: 'missed', label: 'Missed' }, { value: 'cancelled', label: 'Cancelled' },
+];
+/** The amendment lifecycle's statuses in words (the server's values stay the values). */
+const AMENDMENT_STATUS_LABEL: Record<string, string> = {
+  draft: 'Draft', submitted: 'Submitted', under_review: 'Under review', approved: 'Approved', rejected: 'Rejected', implemented: 'Implemented',
+};
 const PROTOCOL_KIND = ['clinical', 'irb', 'iacuc', 'ibc'];
 
 /** Every drawer's static half. The dynamic half (defaults, the row's name) is
@@ -175,6 +195,75 @@ const FORMS: Record<PdevFormKind, C2CFormConfig> = {
       { key: 'disposition', label: 'Disposition', type: 'select', options: DISPOSITION, default: 'approve' },
     ],
   },
+  'review-comment': {
+    eyebrow: 'Protocol · review', title: 'Leave a comment',
+    sub: 'A review comment on this protocol. A blocking comment stays open in the review until it is resolved.',
+    governed: true, submitLabel: 'Leave comment',
+    fields: [
+      { key: 'comment', label: 'Comment', type: 'textarea', required: true, placeholder: 'What should change, and why' },
+      { key: 'sectionRef', label: 'Section', type: 'text', placeholder: 'For example 9.2', half: true },
+      { key: 'severity', label: 'Severity', type: 'select', options: COMMENT_SEVERITY, default: 'minor', half: true },
+      REASON,
+    ],
+  },
+  'comment-resolve': {
+    eyebrow: 'Protocol · review', title: 'Resolve comment',
+    sub: 'Marks this comment resolved. Recorded as a governed action with your reason.',
+    governed: true, submitLabel: 'Resolve comment',
+    fields: [REASON],
+  },
+  'amendment-change': {
+    eyebrow: 'Protocol · amendment', title: 'Add a change',
+    sub: 'A line item in this amendment’s changeset. An amendment is submitted only once it carries at least one change.',
+    governed: true, submitLabel: 'Add change',
+    fields: [
+      { key: 'changeDescription', label: 'What changed', type: 'textarea', required: true, placeholder: 'For example: widen the upper age limit' },
+      { key: 'sectionRef', label: 'Section', type: 'text', placeholder: 'For example 5.1', half: true },
+      { key: 'previousText', label: 'Previous text', type: 'textarea' },
+      { key: 'proposedText', label: 'Proposed text', type: 'textarea' },
+      REASON,
+    ],
+  },
+  'amendment-status': {
+    eyebrow: 'Protocol · amendment', title: 'Change status',
+    sub: 'Records the amendment’s next status. Only the moves the lifecycle allows are offered.',
+    governed: true, submitLabel: 'Record status',
+    fields: [
+      // Options are the amendment's own next statuses, from the server (configFor).
+      { key: 'status', label: 'New status', type: 'select', options: [] },
+      REASON,
+    ],
+  },
+  'capa-add': {
+    eyebrow: 'Protocol · deviation', title: 'Add a CAPA action',
+    sub: 'A corrective or preventive action. The deviation can be closed once every action is completed or verified.',
+    governed: true, submitLabel: 'Add action',
+    fields: [
+      { key: 'action', label: 'Action', type: 'textarea', required: true, placeholder: 'For example: retrain site staff on the visit window' },
+      { key: 'owner', label: 'Owner', type: 'text', half: true },
+      { key: 'dueDate', label: 'Due date', type: 'date', half: true },
+      REASON,
+    ],
+  },
+  'capa-status': {
+    eyebrow: 'Protocol · deviation', title: 'Update CAPA status',
+    sub: 'Records the action\u2019s status. Recorded as a governed action with your reason.',
+    governed: true, submitLabel: 'Record status',
+    fields: [
+      { key: 'status', label: 'Status', type: 'select', options: CAPA_STATUS, default: 'in_progress' },
+      REASON,
+    ],
+  },
+  'milestone-status': {
+    eyebrow: 'Protocol · milestone', title: 'Update milestone',
+    sub: 'Records the milestone\u2019s status. Met with no actual date records today.',
+    governed: true, submitLabel: 'Record status',
+    fields: [
+      { key: 'status', label: 'Status', type: 'select', options: MILESTONE_STATUS, half: true },
+      { key: 'actualDate', label: 'Actual date', type: 'date', half: true },
+      REASON,
+    ],
+  },
   'cover-page': {
     eyebrow: 'Protocol · cover page', title: 'Sponsor and principal investigator',
     sub: 'The cover-page record. An empty field clears the stored value; the roster is unchanged either way.',
@@ -270,7 +359,11 @@ export function configFor(kind: PdevFormKind, target?: PdevFormTarget, reviewers
     : base.fields;
   const fields = kind === 'review-request'
     ? withDefaults.map((f) => reviewRequestField(f, reviewers ?? { state: 'unavailable' }))
-    : withDefaults;
+    : kind === 'amendment-status'
+      ? withDefaults.map((f) => (f.key === 'status'
+        ? { ...f, options: (target?.options ?? []).map((value) => ({ value, label: AMENDMENT_STATUS_LABEL[value] ?? value })), default: target?.options?.[0] }
+        : f))
+      : withDefaults;
   const sub = target?.label ? `${target.label} — ${base.sub ?? ''}`.trim() : base.sub;
   return { ...base, sub, fields };
 }
@@ -296,6 +389,41 @@ async function submitSchedule(
       return true;
     case 'assessment-remove':
       await removeSoaAssessment(documentId, rowId, v.reason);
+      return true;
+    default:
+      return false;
+  }
+}
+
+/** Review comments and amendment changes and status: the writes reached by R1,
+ *  kept in their own switch so no dispatch passes the repo's complexity budget. */
+async function submitReviewAndAmendment(
+  kind: PdevFormKind, documentId: number, target: PdevFormTarget | undefined, v: Record<string, string>,
+): Promise<boolean> {
+  switch (kind) {
+    case 'amendment-change':
+      await addAmendmentChange(Number(target?.id), {
+        sectionRef: v.sectionRef, changeDescription: v.changeDescription,
+        previousText: v.previousText, proposedText: v.proposedText, reason: v.reason,
+      });
+      return true;
+    case 'amendment-status':
+      await setAmendmentStatus(Number(target?.id), v.status, v.reason);
+      return true;
+    case 'capa-add':
+      await addCapaAction(Number(target?.id), { action: v.action, owner: v.owner, dueDate: v.dueDate, reason: v.reason });
+      return true;
+    case 'capa-status':
+      await setCapaStatus(Number(target?.id), v.status, v.reason);
+      return true;
+    case 'milestone-status':
+      await setMilestoneStatus(Number(target?.id), { status: v.status, actualDate: v.actualDate, reason: v.reason });
+      return true;
+    case 'review-comment':
+      await addProtocolReviewComment(documentId, { comment: v.comment, sectionRef: v.sectionRef, severity: v.severity, reason: v.reason });
+      return true;
+    case 'comment-resolve':
+      await resolveProtocolReviewComment(Number(target?.id), v.reason);
       return true;
     default:
       return false;
@@ -361,6 +489,7 @@ export async function submitPdevForm(
   }
   if (await submitSchedule(kind, documentId, target, v)) return;
   if (await submitRegister(kind, documentId, target, v)) return;
+  if (await submitReviewAndAmendment(kind, documentId, target, v)) return;
   throw new Error(`No write is registered for "${kind}". Nothing was written.`);
 }
 

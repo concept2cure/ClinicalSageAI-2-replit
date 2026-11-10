@@ -1,0 +1,69 @@
+// @vitest-environment jsdom
+import React from 'react';
+import { afterEach, describe, it, vi, expect } from 'vitest';
+import { cleanup, render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { computeAccessibleName } from 'dom-accessibility-api';
+
+const apiRequest = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/queryClient', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/queryClient')>()),
+  apiRequest,
+}));
+vi.mock('@/services/portal/authService', async original => {
+  const actual = await original<typeof import('@/services/portal/authService')>();
+  return { ...actual,
+    authService: { getUser: vi.fn().mockReturnValue({ id: 1, organizationId: 1 }),
+      captureSessionReadGuard: actual.authService.captureSessionReadGuard.bind(actual.authService),
+      on: actual.authService.on.bind(actual.authService) },
+    useAuth: () => ({ user: { displayName: 'Test Author', email: 'author@test.co' } }) };
+});
+const emptyRects = function () { return [] as unknown as DOMRectList; };
+for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unknown as Array<Record<string, unknown>>) {
+  if (typeof proto.getClientRects !== 'function') proto.getClientRects = emptyRects;
+  if (typeof proto.getBoundingClientRect !== 'function') {
+    proto.getBoundingClientRect = function () { return { top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, x: 0, y: 0 } as DOMRect; };
+  }
+}
+import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
+const ok = (p: unknown) => ({ ok: true, status: 200, json: async () => p } as Response);
+const DOCS = { success: true, documents: [{ id: 'D1', title: 'Nonclinical Overview', module: 'M3', product_code: 'ABC', status: 'draft', updated_at: '2026-07-20T10:00:00Z', section_count: 1 }] };
+const SECTIONS = { success: true, sections: [{ id: 'S1', doc_id: 'D1', code: '3.2.S.1', title: 'General Information', content: 'The drug substance is a monoclonal antibody.', order_index: 0, comment_count: 0, revision_count: 2, citation_count: 1, updated_at: '2026-07-20T10:00:00Z' }] };
+afterEach(() => cleanup());
+
+function owner(el: Element): string {
+  const key = Object.keys(el).find((k) => k.startsWith('__reactFiber$'));
+  let f: any = key ? (el as any)[key] : null; const names: string[] = [];
+  while (f && names.length < 4) { const t = f.type; if (typeof t === 'function' && t.name) names.push(t.name); else if (t && typeof t === 'object' && (t.displayName || t.render?.name)) names.push(t.displayName || t.render.name); f = f.return; }
+  return names.join(' < ');
+}
+function dump(tag: string, re: RegExp) {
+  const out: string[] = [];
+  for (const b of Array.from(document.querySelectorAll('button, [role=button]'))) {
+    const name = computeAccessibleName(b as Element);
+    if (!re.test(name)) continue;
+    const grp = (b as Element).closest('[role=group]');
+    out.push(`  name=${JSON.stringify(name)} testid=${b.getAttribute('data-testid')} aria-label=${JSON.stringify(b.getAttribute('aria-label'))} title=${JSON.stringify(b.getAttribute('title'))} disabled=${(b as HTMLButtonElement).disabled} group=${JSON.stringify(grp?.getAttribute('aria-label') ?? null)} class=${JSON.stringify(b.getAttribute('class'))} owner=${owner(b as Element)}`);
+  }
+  console.log(`PROBE[${tag}] ${re} matched ${out.length}\n${out.join('\n')}`);
+}
+describe('probe', () => {
+  it('dumps Save/Check buttons clean and dirty', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
+      if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
+      return ok({ success: true, revisions: [], comments: [], sources: [] });
+    });
+    render(<DocumentAuthoring {...({ surface: { id: 'document-authoring', label: 'Authoring' }, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biotech' } as any)} />);
+    await waitFor(() => expect(document.querySelector('.rse-body .tiptap')?.textContent?.trim()).toBe('The drug substance is a monoclonal antibody.'));
+    dump('clean', /Save/i); dump('clean', /check/i);
+    const ed = (document.querySelector('.rse-body .tiptap') as any).editor;
+    ed.chain().focus().selectAll().insertContent('Revised.').run();
+    await waitFor(() => expect(document.querySelector('.rse-body .tiptap')?.textContent?.trim()).toBe('Revised.'));
+    await new Promise((r) => setTimeout(r, 300));
+    dump('dirty', /Save/i); dump('dirty', /check/i);
+    const sc = document.querySelector('[data-testid=section-check]');
+    console.log('PROBE section-check present before click:', !!sc);
+    const exact = Array.from(document.querySelectorAll('button')).filter((b) => computeAccessibleName(b) === 'Check');
+    console.log('PROBE exact Check buttons:', exact.length, exact.map((b) => owner(b)).join(' | '));
+  }, 30000);
+});

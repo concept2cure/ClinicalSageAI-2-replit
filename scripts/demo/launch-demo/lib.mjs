@@ -24,10 +24,14 @@ import { makePdfBuffer, sha256 } from '../../../tests/validation/lib/fixtures.mj
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const REPO_ROOT = path.resolve(HERE, '..', '..', '..');
-export const MANIFEST_ROOT = path.join(REPO_ROOT, 'docs', 'evidence', 'DEMO');
+// DEMO_MANIFEST_ROOT keeps a run's manifests out of the repository (a Codespace's own seed,
+// .devcontainer/post-start.sh, writes them to its state directory, not over the committed evidence).
+export const MANIFEST_ROOT = process.env.DEMO_MANIFEST_ROOT
+  ? path.resolve(process.env.DEMO_MANIFEST_ROOT)
+  : path.join(REPO_ROOT, 'docs', 'evidence', 'DEMO');
 
 /** Prefix on every demo record's title. A customer never sees it unless they run the seed. */
-export const DEMO_PREFIX = { biotech: '[Demo · Biotech]', mdx: '[Demo · MDX]' };
+export const DEMO_PREFIX = { biotech: '[Demo · Biotech]', mdx: '[Demo · MDX]', lumen: '[Demo · Lumen]', faux: '[Demo · Faux]' };
 
 export { makePdfBuffer, sha256 };
 
@@ -37,13 +41,99 @@ export { makePdfBuffer, sha256 };
  *   email   — dev-login email (local only; server must run ALLOW_DEV_AUTH=1)
  * The token wins when both are present. Refuses when neither is usable.
  */
-export async function connect({ baseUrl, email, token, onRecord } = {}) {
+export async function connect({ baseUrl, email, token, onRecord, expectedOrganizationId, clientWorkspaceId } = {}) {
+  // Validate operator scope before authentication; never truncate a malformed id.
+  const expectedOrg = optionalPositiveId(expectedOrganizationId, 'organization');
+  const workspaceId = optionalPositiveId(clientWorkspaceId, 'client workspace');
   const base = (baseUrl || process.env.DEMO_BASE_URL || 'http://localhost:5200').replace(/\/$/, '');
   const auth = await bearerFor(base, { email, token });
   const api = createApiClient({ baseUrl: base, accessToken: auth.accessToken, onRecord: onRecord || (() => {}) });
-  const me = await api('GET', '/api/auth/me');
-  if (me.status !== 200) throw new Error(`could not resolve the signed-in user (${me.status}): ${String(me.text ?? '').slice(0, 200)}`);
-  return { api, baseUrl: base, identity: identityOf(me.json, auth.identity) };
+  // /me can carry an account's default organization; the verified session names
+  // the actual tenant of this bearer and rechecks its membership.
+  const response = await api('GET', '/api/auth/session');
+  if (response.status !== 200) throw new Error(`Demo session verification failed (HTTP ${response.status}). No demo records were written.`);
+  const identity = identityOf(response.json);
+  const expectedEmail = (email || process.env.DEMO_SEED_EMAIL || auth.identity.email || '').trim().toLowerCase();
+  if (expectedEmail && identity.email.toLowerCase() !== expectedEmail) {
+    throw new Error('The signed-in account does not match the requested demo email. No demo records were written.');
+  }
+  if (expectedOrg !== undefined && Number(identity.organizationId) !== expectedOrg) {
+    throw new Error('The signed-in organization does not match the requested demo organization. No demo records were written.');
+  }
+  // Exercise the same protected stores Projects and Tasking use. An empty
+  // provisioned tenant may be seeded; an unread store is not an empty tenant.
+  const projects = await api('GET', '/api/c2c/projects?limit=1');
+  if (projects.status !== 200 || !Array.isArray(projects.json?.data) ||
+      projects.json?.meta?.pendingStore === true || projects.json?.meta?.reconciliationRequired === true) {
+    throw new Error('Demo Projects are unavailable or require access reconciliation. No demo records were written.');
+  }
+  const tasks = await api('GET', '/api/task-management/board');
+  if (tasks.status !== 200 || !Array.isArray(tasks.json?.data) ||
+      tasks.json?.meta?.partial !== false || !Array.isArray(tasks.json?.meta?.unreadSources) ||
+      tasks.json.meta.unreadSources.length > 0) {
+    throw new Error('Demo Tasking could not be read completely. No demo records were written.');
+  }
+  return { api, baseUrl: base, identity, clientWorkspaceId: workspaceId,
+    preflight: { session: 'verified', projects: 'readable', tasking: 'readable',
+      taskCount: tasks.json.data.length, browser: 'not_executed' } };
+}
+
+/** The work areas the demo walks through, as rail and catalog name them. */
+export const DEMO_AREAS = {
+  projects: 'Projects', tasks: 'Tasks', 'communication-center': 'Communication', vault: 'Vault',
+  'submission-center': 'Submission Center', cmc: 'CMC / Module 3', rbm: 'Risk-based monitoring',
+  biostatistics: 'Biostatistics', quality: 'Quality', insights: 'Reporting & analytics',
+};
+
+/** The demo areas this organisation's plan leaves locked: [{ id, label, requiredTier }]. */
+async function lockedDemoAreas(api) {
+  const nav = must(await api('GET', '/api/module-subscriptions/navigation'), 200, 'read the organisation\'s subscription');
+  const byId = new Map((nav.surfaces ?? []).map((s) => [s.id, s]));
+  const locked = Object.entries(DEMO_AREAS)
+    .filter(([id]) => byId.get(id)?.entitled === false)
+    .map(([id, label]) => ({ id, label, requiredTier: byId.get(id).requiredTier ?? null }));
+  return { tier: nav.tier ?? null, masterAdmin: nav.masterAdmin === true, locked };
+}
+
+/**
+ * Before seeding, make sure the demo's work areas are open to the organisation,
+ * or say plainly which are not. `plan` (from --plan) is applied only by the
+ * platform owner, through the Master licensing route a person would use, with
+ * a reason on the audit trail; nothing else changes an organisation's plan.
+ */
+export async function ensureDemoPlan({ api, identity }, plan) {
+  let state = await lockedDemoAreas(api);
+  // The owner sees every area whatever the plan; the organisation's other
+  // members see the plan's set, so --plan applies whenever the plan differs.
+  if (plan && state.tier !== plan) {
+    if (!state.masterAdmin) {
+      throw new Error(`--plan ${plan}: only the platform owner can change an organisation's plan, and ${identity.email} is not. Nothing was seeded.`);
+    }
+    must(await api('PATCH', `/api/admin/master/licensing/tenants/${identity.organizationId}/tier`, {
+      tier: plan, reason: 'Demo seed: the demonstration organisation needs every work area the demo shows.',
+    }), 200, `set the organisation's plan to ${plan}`);
+    state = await lockedDemoAreas(api);
+  }
+  if (state.locked.length) {
+    console.warn(`\n⚠ On the ${state.tier ?? 'current'} plan these demo areas are locked for organisation ${identity.organizationId}, and show "not included in your subscription":`);
+    for (const l of state.locked) console.warn(`    ${l.label}${l.requiredTier ? ` (from ${l.requiredTier})` : ''}`);
+    console.warn('  Their records are still seeded. To open them, the platform owner sets the plan in Master licensing → Tenants, or re-runs this with --plan enterprise.\n');
+  } else if (state.masterAdmin && state.tier !== 'enterprise') {
+    console.info(`Every demo area is open to you as platform owner. Other members of organisation ${identity.organizationId} see what the ${state.tier ?? 'current'} plan includes; --plan enterprise opens every area to them.`);
+  } else {
+    console.info(`Every demo area is open on the ${state.tier ?? 'current'} plan.`);
+  }
+  return { tier: state.tier, locked: state.locked.map((l) => l.id), changedTo: plan && state.tier === plan ? plan : null };
+}
+
+/** Explicit ids are positive integers, not preferences inferred from a profile. */
+function optionalPositiveId(value, label) {
+  if (value === undefined) return undefined;
+  if ((typeof value !== 'number' && typeof value !== 'string') || !/^[1-9]\d*$/.test(String(value)) ||
+      !Number.isSafeInteger(Number(value))) {
+    throw new Error(`A valid positive ${label} id is required. No demo records were written.`);
+  }
+  return Number(value);
 }
 
 /** A bearer token: the one given (DEMO_SEED_TOKEN) or a local dev-login as the account the operator names. */
@@ -64,14 +154,19 @@ async function bearerFor(base, { email, token }) {
   return { accessToken: auth.accessToken, identity: { email: who } };
 }
 
-/** The signed-in identity from /api/auth/me, whichever envelope the route uses. */
-function identityOf(body, fallback) {
-  const u = body?.user ?? body?.data ?? body ?? {};
-  return {
-    email: u.email ?? fallback.email ?? null,
-    userId: u.id ?? null,
-    organizationId: u.organizationId ?? u.organization_id ?? u.defaultOrganizationId ?? null,
-  };
+/** Only the server-verified session supplies the actor and organization. */
+function identityOf(body) {
+  const u = body?.user;
+  if (body?.authenticated !== true || !u || typeof u !== 'object' || Array.isArray(u) ||
+      u.id == null || u.organizationId == null ||
+      typeof u.email !== 'string' || !u.email.trim() ||
+      typeof u.organizationName !== 'string' || !u.organizationName.trim()) {
+    throw new Error('The demo account has no complete authenticated organization context. No demo records were written.');
+  }
+  optionalPositiveId(u.id, 'user');
+  optionalPositiveId(u.organizationId, 'organization');
+  return { email: u.email.trim(), userId: u.id, organizationId: u.organizationId,
+    organizationName: u.organizationName.trim() };
 }
 
 /** Throw with the response when a call did not answer one of the accepted statuses. */
@@ -83,7 +178,7 @@ export function must(res, accepted, what) {
 
 /** A step runner that prints progress and collects a manifest of what exists after the run. */
 export function makeRun(pack) {
-  const manifest = { pack, prefix: DEMO_PREFIX[pack], startedAt: new Date().toISOString(), records: {}, notes: [] };
+  const manifest = { pack, prefix: DEMO_PREFIX[pack], outcome: 'in_progress', browserQualification: 'not_executed', startedAt: new Date().toISOString(), records: {}, notes: [] };
   return {
     manifest,
     async step(title, fn) {
@@ -103,7 +198,9 @@ export function makeRun(pack) {
     note(text) {
       manifest.notes.push(text);
     },
-    write() {
+    write(outcome = 'unqualified') {
+      if (!['seeded_unqualified', 'purged', 'failed', 'unqualified'].includes(outcome)) throw new Error('Invalid demo run outcome');
+      manifest.outcome = outcome;
       const dir = path.join(MANIFEST_ROOT, pack);
       fs.mkdirSync(dir, { recursive: true });
       manifest.finishedAt = new Date().toISOString();
@@ -248,4 +345,48 @@ export function makeMultiPagePdfBuffer({ title, subtitle = '', footer = '', sect
   for (const off of offsets) body += `${String(off).padStart(10, '0')} 00000 n \n`;
   body += `trailer\n<< /Size ${objs.length + 1} /Root ${catalog} 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
   return Buffer.from(body, 'latin1');
+}
+
+/**
+ * Write an SOP's text into its editing copy, where a section is still empty
+ * (2026-10-31). A QMS document's text is authored in the editor, never posted
+ * with the register entry, and it cannot be sent for review or approved with
+ * no saved text (QMS_CONTENT_REQUIRED). The editing copy's sections are coded
+ * `qms-<key>`; `textByKey` maps each key to plain text. Returns how many
+ * sections were written.
+ */
+/**
+ * Send a QMS draft for review, naming the second signer as its approver
+ * (2026-11-09). The server has refused, since 2026-10-08, to approve a draft:
+ * only a document under review is approved (QMS_INVALID_STATE). It also refuses
+ * to send one with no review route that names its approver (RR4,
+ * REVIEW_ROUTE_REQUIRED). The packs approved straight from draft and sent
+ * without a route, so on a fresh database each stopped at its QMS step. The
+ * author sends; the approver is the signer, never the author (two-person
+ * rule). `approvalDueDate` is the route's due date (YYYY-MM-DD).
+ */
+export async function sendQmsForReview(api, doc, signer, { reason, approvalDueDate }) {
+  if (!signer?.userId) throw new Error(`QMS document ${doc.docNumber ?? doc.id}: the approver (the second signer) has no account id`);
+  const res = must(await api('PATCH', `/api/mdx/qms/documents/${doc.id}`, {
+    status: 'in_review',
+    reason,
+    route: { approvers: [Number(signer.userId)], approvalDueDate },
+  }), 200, `send ${doc.docNumber ?? doc.id} for review`);
+  return res.data?.status ?? 'in_review';
+}
+
+export async function fillQmsSections(api, qmsId, textByKey) {
+  const editor = must(await api('GET', `/api/mdx/qms/documents/${qmsId}/editor`), 200, `open the editing copy of QMS document ${qmsId}`);
+  const docId = (editor.data ?? editor)?.document?.id;
+  if (!docId) throw new Error(`QMS document ${qmsId} has no editing copy`);
+  const sections = must(await api('GET', `/api/authoring/docs/${docId}/sections`), 200, `read the sections of ${docId}`).sections ?? [];
+  const html = (text) => `<p>${String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`;
+  let written = 0;
+  for (const s of sections) {
+    const text = textByKey?.[String(s.code ?? '').replace(/^qms-/, '')];
+    if (!text || String(s.content ?? '').replace(/<[^>]*>/g, '').trim()) continue;
+    must(await api('PATCH', `/api/authoring/sections/${s.id}`, { content: html(text), changeReason: 'Demo: write the SOP text for the demonstration' }), 200, `write section ${s.code}`);
+    written += 1;
+  }
+  return written;
 }

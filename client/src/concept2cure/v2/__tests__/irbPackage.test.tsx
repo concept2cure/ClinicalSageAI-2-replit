@@ -58,7 +58,7 @@ const BASE_DOC = {
   content: {}, objectives: [], eligibility: { inclusion: [], exclusion: [] },
   soa: { visits: [], assessments: [], cells: {}, issues: [] }, risks: [], milestones: [],
   budget: { params: null, items: [], summary: null }, amendments: [], deviations: [],
-  reviews: [], consent: [], completenessFindings: [], studyDesign: null,
+  reviews: [], reviewComments: [], consent: [], completenessFindings: [], studyDesign: null,
 };
 
 /** As `GET /api/irb/submissions` returns them — raw columns, snake_case. */

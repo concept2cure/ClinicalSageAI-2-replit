@@ -70,20 +70,33 @@ export function CmcRegisterLinks({ onRecovered }: { onRecovered?: () => void }) 
   };
 
   if (!showLinks(projectId, receipt, read.error, pending, note)) return null;
+  /* A section, not a boxed card above the work (D5 §A.4.9, §WA.4.2 rule 6).
+     It sits above the tab bodies because a pending link must survive a tab
+     switch, and it renders nothing at all when nothing is pending — so what a
+     reader sees first on a healthy project is their own work, not a panel
+     about plumbing. Every row, its wording, its retry and its receipt are
+     unchanged; only the frame around them is. */
   return (
-    <section className="pj-card" style={{ margin: '12px 24px' }} aria-label="Module 3 register links">
-      <div className="pj-card-h"><span className="t">Module 3 register links</span><span className="s">saved records and dossier sources</span></div>
-      <div className="pj-card-b">
+    <section className="pj-sec" aria-label="Module 3 register links">
+      <div className="pj-sec-h">
+        <h2>Module 3 register links</h2>
+        <span className="sec-sub">saved records and dossier sources</span>
+      </div>
+      <>
         {receipt?.warning && <div role="alert">{receipt.label}: {receipt.warning}</div>}
-        {read.error && <EmptyState tone="error" icon={null} title="Couldn’t verify the saved records’ Module 3 links" hint="The link record could not be read. Register saves remain recorded; dossier linkage is unknown until this check succeeds." retry={() => setRevision((n) => n + 1)} />}
-        {pending.length > 0 && <ul style={{ margin: 0, paddingLeft: 20 }}>
-          {pending.map((row) => <li key={`${row.register}:${row.recordId}`} style={{ marginBottom: 8 }}>
+        {/* D0: a refused read says what it is and offers no retry it cannot
+            change; the words below stand for a failure to answer, where the
+            distinction between "saves are recorded" and "linkage is unknown"
+            is the whole point of the panel. */}
+        {read.error && <EmptyState tone="error" icon={null} title="Couldn’t verify the saved records’ Module 3 links" hint="The link record could not be read. Register saves remain recorded; dossier linkage is unknown until this check succeeds." retry={() => setRevision((n) => n + 1)} read={read} readWhat="the Module 3 link record" />}
+        {pending.length > 0 && <ul className="cm-list">
+          {pending.map((row) => <li key={`${row.register}:${row.recordId}`}>
             <b>{row.label}</b> — {row.state === 'unfiled' ? 'no project recorded; edit the record to file it under its project' : row.state === 'outdated' ? 'the dossier source is older than the saved record' : 'the saved record has no dossier source'}.
-            {row.retryable && <button type="button" className="nda-open" style={{ marginLeft: 8 }} disabled={retrying !== null} onClick={() => void retry(row)}>{retrying === `${row.register}:${row.recordId}` ? 'Retrying…' : 'Retry Module 3 link'}</button>}
+            {row.retryable && <button type="button" className="btn ghost small" disabled={retrying !== null} onClick={() => void retry(row)}>{retrying === `${row.register}:${row.recordId}` ? 'Retrying…' : 'Retry Module 3 link'}</button>}
           </li>)}
         </ul>}
-        {note && <div role="status" style={{ marginTop: 8 }}>{note}</div>}
-      </div>
+        {note && <div role="status" className="cm-meta">{note}</div>}
+      </>
     </section>
   );
 }

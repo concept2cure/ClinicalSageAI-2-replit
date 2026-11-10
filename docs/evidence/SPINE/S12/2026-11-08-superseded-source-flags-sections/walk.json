@@ -1,0 +1,66 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "program": "6065271c-d4b0-4936-aad1-02855423a738",
+  "startedAt": "2026-11-09T00:15:22.088Z",
+  "steps": [
+    {
+      "name": "uploaded version 1",
+      "sourceId": 228
+    },
+    {
+      "name": "cited version 1",
+      "document": "2.3 · Quality Overall Summary",
+      "section": "2.3"
+    },
+    {
+      "name": "uploaded version 2 under the same name",
+      "sourceId": 229
+    },
+    {
+      "name": "the project lists the section as written from a superseded version",
+      "currentChecksum": "f11f28a6221d3c76336866c0d2ad636e4899c9486c77191185e14ec9e863869f",
+      "citedChecksum": "1e31c53a643e7454044ca2644f87c847a863268cd5738acc9c5f34de95d7fa03"
+    },
+    {
+      "name": "Evidence's data room says a citation points to a source that has since changed",
+      "text": "5 accessible citations shown in this project point to a source that has since changed."
+    }
+  ],
+  "v1": {
+    "status": 200,
+    "sourceId": 228
+  },
+  "cite": {
+    "status": 201,
+    "body": {
+      "success": true,
+      "citationId": "f1d5a003-23e0-408a-a04e-b02802006419",
+      "citedChecksum": "1e31c53a643e7454044ca2644f87c847a863268cd5738acc9c5f34de95d7fa03",
+      "created": true
+    }
+  },
+  "v2": {
+    "status": 200,
+    "sourceId": 229
+  },
+  "changes": {
+    "status": 200,
+    "mine": [
+      {
+        "citationId": "f1d5a003-23e0-408a-a04e-b02802006419",
+        "sectionId": "98a9d347-d5b7-4d1b-a0d1-b91a0411ab23",
+        "sectionCode": "2.3",
+        "sectionTitle": "Quality Overall Summary (QOS)",
+        "documentId": "eb436c7d-b9c3-478e-a0dd-1227368f8512",
+        "documentTitle": "2.3 · Quality Overall Summary",
+        "sourceId": 228,
+        "sourceTitle": "stability-data-cut-1794183324923.txt",
+        "citedChecksum": "1e31c53a643e7454044ca2644f87c847a863268cd5738acc9c5f34de95d7fa03",
+        "currentChecksum": "f11f28a6221d3c76336866c0d2ad636e4899c9486c77191185e14ec9e863869f",
+        "citedAt": "2026-11-09T00:15:25.475Z",
+        "sourceUpdatedAt": "2026-11-09T00:15:25.284Z"
+      }
+    ]
+  },
+  "finishedAt": "2026-11-09T00:15:37.095Z"
+}

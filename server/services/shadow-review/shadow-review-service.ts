@@ -20,10 +20,21 @@ import { createScopedLogger } from '../../utils/logger';
 import { PROMPTS_DIR } from '../ai-gateway/prompts-dir';
 import {
   classifyShadowReviewFailure,
+  describeShadowReviewFailure,
   isWaivableShadowReviewFailure,
   type ClassifiedShadowReviewFailure,
   type ShadowReviewFailureErrorCode,
 } from './shadow-review-failure';
+import { reviewedLeavesDigest } from './shadow-review-coverage';
+import {
+  buildReviewerInput,
+  readLeafTextsForReview,
+  titlesOnlyInput,
+  type ReviewInputCoverage,
+  type ReviewLeaf,
+  type ReviewerLeaf,
+} from './shadow-review-input';
+import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 
 const logger = createScopedLogger('shadow-review-service');
 
@@ -54,7 +65,7 @@ export interface ShadowReviewOutput {
 /** Where a run's RTF/CRL score comes from. v1.0 runs recorded the model's own figure. */
 export type ShadowScoreBasis = 'severity_aggregate' | 'model_reported';
 
-export const SHADOW_REVIEW_PROMPT_VERSION = 'shadow-review@v1.1';
+export const SHADOW_REVIEW_PROMPT_VERSION = 'shadow-review@v1.2';
 
 /** The basis of a stored run's score, by the prompt version that produced it. */
 export function scoreBasisOf(promptVersion: string | null | undefined): ShadowScoreBasis {
@@ -164,8 +175,19 @@ export const EMPTY_SEQUENCE_FINDING: ShadowFinding = {
 };
 
 async function loadPrompt(): Promise<string> {
-  return fs.readFile(path.join(PROMPTS_DIR, 'shadow-review', 'v1.1.md'), 'utf8');
+  return fs.readFile(path.join(PROMPTS_DIR, 'shadow-review', 'v1.2.md'), 'utf8');
 }
+
+/**
+ * The gateway refusals that are about what was SENT (a placement or content
+ * policy refusal), as distinct from an outage or a reply that was not an
+ * assessment. With the leaves' text sent, a run answered with one of these is
+ * retried once with titles only (2026-10-25), and the run records that the text
+ * was withheld and why. Without the retry, a sequence whose text the placement
+ * policy will not send could never be reviewed, and a policy refusal is not
+ * waivable (P-34), so it could never be dispatched.
+ */
+const TEXT_REFUSALS: ReadonlySet<string> = new Set(['placement_refused', 'policy_blocked']);
 
 export interface RunShadowReviewParams {
   sequenceId: number;
@@ -185,6 +207,11 @@ export interface RunShadowReviewResult {
   /** Whether the run's §11.10(e) AI_GENERATE row was written. The run stands
    *  either way; the route answers this result verbatim, so the caller sees it. */
   auditTrail: AuditRowOutcome;
+  /** What the reviewer was given to read (2026-10-25). */
+  inputCoverage: ReviewInputCoverage;
+  /** False when the leaves changed while the run read them: it covers no
+   *  current leaves and the dispatch gate does not count it. */
+  coversCurrentLeaves: boolean;
 }
 
 export async function runShadowReview(params: RunShadowReviewParams): Promise<RunShadowReviewResult> {
@@ -198,10 +225,16 @@ export async function runShadowReview(params: RunShadowReviewParams): Promise<Ru
     .limit(1);
   if (!sequence) throw new ShadowReviewError('NOT_FOUND', 'Sequence not found for this organization.');
 
+  // The leaves' digest before and after they are read (shadow-review-coverage.ts).
+  // A run records the digest only when both agree, so it never claims to cover
+  // leaves that changed while it read them.
+  const reads = queryableFromDrizzle(db);
+  const digestBefore = await reviewedLeavesDigest(reads, sequenceId, organizationId);
   const leaves = await db
     .select()
     .from(submissionLeaves)
-    .where(and(eq(submissionLeaves.sequenceId, sequenceId), eq(submissionLeaves.organizationId, organizationId), isNull(submissionLeaves.deletedAt)));
+    .where(and(eq(submissionLeaves.sequenceId, sequenceId), eq(submissionLeaves.organizationId, organizationId), isNull(submissionLeaves.deletedAt)))
+    .orderBy(submissionLeaves.sectionCode, submissionLeaves.id);
 
   // Open the run row first so a failure is still recorded.
   const [run] = await db
@@ -217,46 +250,26 @@ export async function runShadowReview(params: RunShadowReviewParams): Promise<Ru
     })
     .returning({ id: shadowReviewRuns.id });
 
-  const userPayload = JSON.stringify({
-    lens,
-    region: sequence.region,
-    submissionType: sequence.type,
-    leaves: leaves.map(l => ({ sectionCode: l.sectionCode, title: l.title, lifecycleOp: l.lifecycleOp })),
-  });
+  const reviewLeaves: ReviewLeaf[] = leaves.map(l => ({
+    id: l.id, sectionCode: l.sectionCode, title: l.title, lifecycleOp: l.lifecycleOp,
+    documentTable: l.documentTable, documentId: l.documentId, documentUuid: l.documentUuid,
+  }));
+  let input = await reviewerInputFor(reviewLeaves, { runId: run.id, organizationId, sequenceId });
+  const digestAfter = await reviewedLeavesDigest(reads, sequenceId, organizationId);
+  const leafManifestDigest = digestBefore && digestBefore === digestAfter ? digestBefore : null;
 
   let output: ShadowReviewOutput;
   let model: string | undefined;
   try {
-    // Inside the try (P-34): a prompt that could not be read used to leave the
-    // run 'running' for ever, which also hid it from every "newest run" read.
-    const systemPrompt = await loadPrompt();
-    const response = await getGateway().route({
-      taskType: 'regulatory_review',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPayload },
-      ],
-      jsonMode: true,
-      temperature: 0.2,
-      maxTokens: 4096,
-      promptVersion: SHADOW_REVIEW_PROMPT_VERSION,
-      organizationId,
-      userId,
-      callerModule: 'shadow-review-service',
-      metadata: { task: 'shadow-review', sequenceId, lens },
-    });
-    model = response.model;
-    const cleaned = response.content.trim().replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim();
-    const parsed = parseShadowReviewOutput(JSON.parse(cleaned));
-    if (!parsed.ok) {
-      throw new ShadowReviewError('INVALID_AI_RESPONSE', `Shadow review returned no countable assessment (${parsed.reason}).`);
-    }
-    output = parsed.output;
+    const reply = await askReviewerWithTextFallback(input, reviewLeaves, { lens, sequence, organizationId, userId, sequenceId, runId: run.id });
+    ({ output, model, input } = reply);
   } catch (err) {
     const failure = classifyShadowReviewFailure(err);
-    await recordRunFailure(run.id, failure, { organizationId, userId, lens, sequenceId, model, err });
+    await recordRunFailure(run.id, failure, { organizationId, userId, lens, sequenceId, model, err, inputCoverage: input.coverage });
     throw new ShadowReviewError(failure.errorCode, failure.message);
   }
+  input.coverage.leafDigest = leafManifestDigest ? 'recorded'
+    : digestBefore && digestAfter ? 'changed_during_read' : 'not_derivable';
 
   const findings = leaves.length === 0 ? [EMPTY_SEQUENCE_FINDING, ...output.findings] : output.findings;
   // The gate score is the severity aggregate and nothing else (Rule 2).
@@ -281,7 +294,10 @@ export async function runShadowReview(params: RunShadowReviewParams): Promise<Ru
 
   await db
     .update(shadowReviewRuns)
-    .set({ status: 'complete', model, rtfRiskScore, crlRiskScore, summary: output.summary ?? null, updatedAt: new Date() })
+    .set({
+      status: 'complete', model, rtfRiskScore, crlRiskScore, summary: output.summary ?? null,
+      leafManifestDigest, inputCoverage: input.coverage, updatedAt: new Date(),
+    })
     .where(eq(shadowReviewRuns.id, run.id));
 
   // WO-16C: was `await auditService.logAction(…)` with its outcome discarded.
@@ -291,12 +307,96 @@ export async function runShadowReview(params: RunShadowReviewParams): Promise<Ru
     action: 'AI_GENERATE',
     resourceType: 'shadow_review_run',
     resourceId: run.id,
-    details: { task: 'shadow-review', promptVersion: SHADOW_REVIEW_PROMPT_VERSION, lens, sequenceId, findingCount: findings.length, rtfRiskScore, crlRiskScore },
+    details: {
+      task: 'shadow-review', promptVersion: SHADOW_REVIEW_PROMPT_VERSION, lens, sequenceId, findingCount: findings.length, rtfRiskScore, crlRiskScore,
+      leafManifestDigest, textSent: input.coverage.textSent, charsSent: input.coverage.charsSent,
+    },
   });
 
   logger.info('Shadow review complete', { runId: run.id, sequenceId, organizationId, findings: findings.length });
   const summary = output.summary ?? '';
-  return { runId: run.id, rtfRiskScore, crlRiskScore, summary, findingCount: findings.length, scoreBasis: 'severity_aggregate', auditTrail };
+  return {
+    runId: run.id, rtfRiskScore, crlRiskScore, summary, findingCount: findings.length, scoreBasis: 'severity_aggregate', auditTrail,
+    inputCoverage: input.coverage, coversCurrentLeaves: leafManifestDigest !== null,
+  };
+}
+
+type ReviewerInput = ReturnType<typeof buildReviewerInput>;
+type AskContext = { lens: ReviewLens; sequence: { region: string; type: string | null }; organizationId: number; userId: number; sequenceId: number };
+
+/** The leaves as the reviewer reads them, or their titles when the text cannot be read. */
+async function reviewerInputFor(
+  leaves: ReviewLeaf[],
+  at: { runId: number; organizationId: number; sequenceId: number },
+): Promise<ReviewerInput> {
+  try {
+    return buildReviewerInput(leaves, await readLeafTextsForReview(leaves, at));
+  } catch (err) {
+    logger.warn('Shadow review could not read the leaves\' text; reviewing titles only', {
+      runId: at.runId, sequenceId: at.sequenceId, err: err instanceof Error ? err.message : String(err),
+    });
+    return titlesOnlyInput(leaves, 'The leaves\' text could not be read on the server.');
+  }
+}
+
+/**
+ * Ask the reviewer; when the gateway refuses the text it was sent (TEXT_REFUSALS),
+ * ask once more with titles only. Returns the input the answer was given.
+ */
+async function askReviewerWithTextFallback(
+  input: ReviewerInput,
+  leaves: ReviewLeaf[],
+  at: AskContext & { runId: number },
+): Promise<{ output: ShadowReviewOutput; model?: string; input: ReviewerInput }> {
+  try {
+    return { ...(await askReviewer(input.leaves, at)), input };
+  } catch (err) {
+    const refusal = classifyShadowReviewFailure(err);
+    if (!input.coverage.textSent || !TEXT_REFUSALS.has(refusal.failureCode)) throw err;
+    logger.warn('Shadow review text was refused by the gateway; reviewing titles only', {
+      runId: at.runId, sequenceId: at.sequenceId, failureCode: refusal.failureCode,
+    });
+    const titles = titlesOnlyInput(
+      leaves,
+      `The AI gateway refused the leaves' text (${describeShadowReviewFailure(refusal.failureCode)}), so the reviewer was sent section codes and titles only.`,
+    );
+    return { ...(await askReviewer(titles.leaves, at)), input: titles };
+  }
+}
+
+/** One reviewer call through the gateway, and its reply as a countable assessment. */
+async function askReviewer(leaves: ReviewerLeaf[], at: AskContext): Promise<{ output: ShadowReviewOutput; model?: string }> {
+  // Inside the caller's try (P-34): a prompt that could not be read used to leave
+  // the run 'running' for ever, which also hid it from every "newest run" read.
+  const systemPrompt = await loadPrompt();
+  const response = await getGateway().route({
+    taskType: 'regulatory_review',
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: JSON.stringify({ lens: at.lens, region: at.sequence.region, submissionType: at.sequence.type, leaves }) },
+    ],
+    jsonMode: true,
+    temperature: 0.2,
+    maxTokens: 4096,
+    promptVersion: SHADOW_REVIEW_PROMPT_VERSION,
+    organizationId: at.organizationId,
+    userId: at.userId,
+    callerModule: 'shadow-review-service',
+    metadata: { task: 'shadow-review', sequenceId: at.sequenceId, lens: at.lens },
+  });
+  // The gateway's fixed demo-mode reply (no provider configured) is not a
+  // model's reply: record it as what it is, not as an invalid assessment (J4
+  // human test, 2026-11-06). Named, not constructed from the gateway class, so
+  // failureCodeOf tells it apart the way it tells every gateway error apart.
+  if ((response as { deterministic?: boolean }).deterministic === true || response.model === 'demo-mode') {
+    throw Object.assign(new Error('No AI provider is configured on this deployment, so no review was performed.'), { name: 'GatewayNoProviderError' });
+  }
+  const cleaned = response.content.trim().replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim();
+  const parsed = parseShadowReviewOutput(JSON.parse(cleaned));
+  if (!parsed.ok) {
+    throw new ShadowReviewError('INVALID_AI_RESPONSE', `Shadow review returned no countable assessment (${parsed.reason}).`);
+  }
+  return { output: parsed.output, model: response.model };
 }
 
 /**
@@ -310,13 +410,13 @@ export async function runShadowReview(params: RunShadowReviewParams): Promise<Ru
 async function recordRunFailure(
   runId: number,
   failure: ClassifiedShadowReviewFailure,
-  at: { organizationId: number; userId: number; lens: ReviewLens; sequenceId: number; model?: string; err: unknown },
+  at: { organizationId: number; userId: number; lens: ReviewLens; sequenceId: number; model?: string; err: unknown; inputCoverage?: ReviewInputCoverage },
 ): Promise<void> {
   const { failureCode } = failure;
   try {
     await db
       .update(shadowReviewRuns)
-      .set({ status: 'failed', failureCode, model: at.model ?? null, updatedAt: new Date() })
+      .set({ status: 'failed', failureCode, model: at.model ?? null, inputCoverage: at.inputCoverage ?? null, updatedAt: new Date() })
       .where(eq(shadowReviewRuns.id, runId));
   } catch (writeErr) {
     logger.error('A failed shadow review could not be recorded as failed', {

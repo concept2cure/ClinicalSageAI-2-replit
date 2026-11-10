@@ -79,12 +79,19 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
     // 2026-10-30 (D2, fold F5 item 1): the device submission packages folded into
     // Submission Center's device filings, over one store (P-61 item 1); the old
     // address opens it, and a subscription carries there.
+    // 2026-10-30 (D2, fold F4): device analytics joined Reporting & analytics at
+    // its tier (P-61 item 3), over the projects the reader can open; its address
+    // opens Reporting, and a subscription carries there.
+    // 2026-10-30 (D2, fold F6): the device portfolio folded into Projects with
+    // its MDX filter (P-61 item 5); its address opens filtered Projects, the
+    // Client Review Room is on the device project's Review step, and a
+    // subscription carries to Projects.
     surfaces: [
       'projects', 'project-home', 'tasks', 'communication-center',
-      'device-workstream', 'device-510k', 'device-pma', 'device-cer',
+      'device-510k', 'device-pma', 'device-cer',
       'device-diagnostics', 'device-clinical-studies', 'device-software',
       'device-engineering', 'device-udi', 'device-postmarket', 'device-presub',
-      'device-analytics', 'human-factors', 'labeling',
+      'human-factors', 'labeling',
     ],
     modules: ['projects', 'tasks'],
   },
@@ -221,6 +228,33 @@ export const LAUNCH_APPS: readonly LaunchApp[] = [
     // admission preserves its professional-tier and explicit grant verdicts;
     // adding a module here would silently grant it to every new organization.
     surfaces: ['rbm'],
+    modules: [],
+  },
+  {
+    id: 'biostatistics',
+    label: 'Biostatistics',
+    // Founder, 2026-10-31 (P-77): "My cmc, biostatistics, tasking, projects is
+    // all gone" — the screens existed and nothing reached them. They are in the
+    // catalog, reached from the project's "Start work in this project"
+    // (ProjectCoreWork.tsx), ⌘K, and — since 2026-11-06 — the rail.
+    //
+    // This comment said until 2026-11-09 that they are reached "not from a rail
+    // entry: RULE 4 refuses a new rail entry". That was superseded before it was
+    // corrected. The founder, 2026-11-06: "Our core modules are, project
+    // management, Vault, CMC, biostatistics, RBM, submission center, tasking,
+    // and collaboration, and reporting. … And the left rail should be a
+    // navigation point for all of those entry points. But again, everything
+    // starts with a project." P-107 item 1 confirms it and records that "RULE
+    // 4's 2026-10-31 list of Core work workspaces to converge is superseded for
+    // Biostatistics' rail entry only"; the entry is in RAIL_CORE
+    // (registryModel.ts) and in the rail baseline
+    // (scripts/ci/one-product-baseline.json, `rail:biostatistics`). The rail
+    // door is project-scoped (shared/navigation/index.ts), which is the "starts
+    // with a project" half. Surfaces only, as for
+    // risk-based monitoring (P-76): professional-tier and explicit grants keep
+    // deciding who holds it, and no module is granted to a new organisation.
+    // One surface since 2026-11-09: `biostat-workbench` was retired into it.
+    surfaces: ['biostatistics'],
     modules: [],
   },
   {

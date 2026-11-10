@@ -1,0 +1,659 @@
+# Red run: the new and updated tests against the unchanged source (HEAD f8e0d3210, 2026-10-25).
+# For this run only, these three source files were set to their HEAD content, then restored:
+#   server/services/ai-gateway/sensitive-placement-policy.ts
+#   server/services/ai-gateway/providers/placement.ts
+#   server/services/ai-gateway/gateway.ts
+# Command: NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts \
+#   server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts \
+#   server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts \
+#   server/services/ai-gateway/providers/__tests__/placement.test.ts
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts
+[database] Database connection successful
+
+stderr | server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts > a zero-retention approval names its agreement > an approval with no agreement fails closed, as misconfiguration, and nothing is sent
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts > both keys: the approval and the placement registry > the approval alone is not zero retention: with ANTHROPIC_ZERO_RETENTION unset, PII is not sent
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts > both keys: the approval and the placement registry > an agreement that takes effect tomorrow is not in force today
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts > both keys: the approval and the placement registry > both keys and an agreement in force today: sent, and the ledger row names the agreement
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts > the ledger names the agreement only where a dispatch relied on it > a non-sensitive call relied on nothing and names no agreement
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+(node:31230) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:31230) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:31230) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:31230) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:31230) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ × server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts > a zero-retention approval names its agreement > an approval with no agreement fails closed, as misconfiguration, and nothing is sent 33ms
+   → promise resolved "{ content: 'ok', …(7) }" instead of rejecting
+ × server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts > both keys: the approval and the placement registry > the approval alone is not zero retention: with ANTHROPIC_ZERO_RETENTION unset, PII is not sent 5ms
+   → promise resolved "{ content: 'ok', …(7) }" instead of rejecting
+ × server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts > both keys: the approval and the placement registry > an agreement that takes effect tomorrow is not in force today 4ms
+   → promise resolved "{ content: 'ok', …(7) }" instead of rejecting
+ × server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts > both keys: the approval and the placement registry > both keys and an agreement in force today: sent, and the ledger row names the agreement 6ms
+   → expected { requestId: 'fake', …(41) } to match object { provider: 'anthropic', …(3) }
+(42 matching properties omitted from actual)
+ ✓ server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts > the ledger names the agreement only where a dispatch relied on it > a non-sensitive call relied on nothing and names no agreement 2ms
+ × server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts > the ledger names the agreement only where a dispatch relied on it > an embedding of PII on a third-party lane names the agreement on its row 2ms
+   → expected { …(4) } to match object { …(2) }
+(12 matching properties omitted from actual)
+ ✓ server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts > the ledger names the agreement only where a dispatch relied on it > the self-hosted lane needs no agreement and names none 1ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > no PII 2ms
+ × server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > ordinary PII 12ms
+   → expected { allowed: false, …(4) } to match object { allowed: true, …(1) }
+(3 matching properties omitted from actual)
+ × server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > health information 2ms
+   → expected { allowed: false, …(4) } to match object { allowed: true, …(1) }
+(3 matching properties omitted from actual)
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > shared without ZDR 1ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > unknown provider 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > missing region 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > region outside approval 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > detector failure 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > tenant policy lookup failure 1ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > allows only an authorized, reasoned ordinary-PII false-positive override and never a PHI override 1ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > production deployment guard > rejects missing mode, missing settings, and contradictory approval 2ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > production deployment guard > accepts an explicit internally consistent human-supplied contract 1ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > production deployment guard > rejects malformed fields instead of trusting a JSON type assertion 0ms
+ × server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > refuses a zero-retention approval that names no agreement, saying what is missing 1ms
+   → expected [Function] to throw an error
+ × server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > refuses it at production boot through the existing path 1ms
+   → expected [Function] to throw an error
+ × server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > refuses an agreement with a blank reference 1ms
+   → expected [Function] to throw an error
+ × server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > refuses an agreement with no reference 1ms
+   → expected [Function] to throw an error
+ × server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > refuses an agreement with a date that is not one 1ms
+   → expected [Function] to throw an error
+ × server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > refuses an agreement with a date in another format 1ms
+   → expected [Function] to throw an error
+ × server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > refuses an agreement with a string instead of an object 1ms
+   → expected [Function] to throw an error
+ × server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > reads a JSON null as no agreement, as Terraform does 1ms
+   → expected [Function] to throw an error
+ × server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > keeps the agreement it parsed 1ms
+   → expected undefined to deeply equal { reference: 'BAA-1', …(1) }
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > a self-hosted lane needs no agreement: no third party receives its text (ADR-0014 §1.5) 1ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > an approval without zero retention needs no agreement 0ms
+ × server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the approval and the placement registry cannot disagree at production boot > refuses a zero-retention approval for a provider whose registry entry retains data 1ms
+   → expected [Function] to throw an error
+ × server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the approval and the placement registry cannot disagree at production boot > refuses one for Moonshot, which is never a zero-retention lane 3ms
+   → expected [Function] to throw an error
+ × server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the approval and the placement registry cannot disagree at production boot > refuses one for a name the gateway does not route to 1ms
+   → expected [Function] to throw an error
+ × server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the approval and the placement registry cannot disagree at production boot > refuses a registry zero-retention flag that no approval and agreement back 1ms
+   → expected [Function] to throw an error
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the approval and the placement registry cannot disagree at production boot > boots when both say so 0ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the dispatch decision relies on zero retention only when both keys say so and the agreement is in force > the registry alone, or the approval alone, is not zero retention 0ms
+ × server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the dispatch decision relies on zero retention only when both keys say so and the agreement is in force > an agreement that takes effect later is not yet in force 2ms
+   → expected { allowed: false, …(4) } to match object { allowed: true, …(1) }
+(3 matching properties omitted from actual)
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the dispatch decision relies on zero retention only when both keys say so and the agreement is in force > a third-party lane with no agreement is not zero retention, even if the approval says so 0ms
+ × server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the dispatch decision relies on zero retention only when both keys say so and the agreement is in force > names the agreement an allowed dispatch relied on, and none when zero retention was not required 1ms
+   → expected { allowed: false, …(4) } to match object { allowed: true, …(1) }
+(4 matching properties omitted from actual)
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > provider placement registry > marks shared frontier providers as multi-tenant without ZDR by default 2ms
+ × server/services/ai-gateway/providers/__tests__/placement.test.ts > provider placement registry > marks private-cloud Claude (bedrock) as frontier_private without ZDR by default 6ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > provider placement registry > marks local as the only self-hosted, on-prem, air-gappable substrate 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > placement compliance > allows any provider when no requirements are set 0ms
+ × server/services/ai-gateway/providers/__tests__/placement.test.ts > placement compliance > excludes shared frontier when zero data retention is required 1ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > placement compliance > requires a self-hosted substrate for on-prem residency 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > placement compliance > enforces regional residency against the provider region list 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > placement compliance > combines residency and ZDR (both must hold) 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud residency follows the region the client calls (D6) > default Vertex (us-east5) claims us only — never eu 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud residency follows the region the client calls (D6) > Vertex pointed at an EU region claims eu 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud residency follows the region the client calls (D6) > Bedrock residency comes from the client region, not a declaration 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud residency follows the region the client calls (D6) > a region with no residency code guarantees none 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud residency follows the region the client calls (D6) > Azure claims no residency unless one is declared 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud residency follows the region the client calls (D6) > a declared residency is known codes only: an unknown token claims nothing, and is reported 1ms
+ × server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud zero retention (D6) > Bedrock claims zero retention only when the operator records it 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud zero retention (D6) > no lane a third party runs claims zero retention without configuration; the self-hosted lane does 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud zero retention (D6) > reads the environment it is given 1ms
+   → expected false to be true // Object.is equality
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud zero retention (D6) > Vertex and Azure claim zero retention only when the operator records it 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > assertPlacementRegistryConsistency — production boot (D6) > refuses a declared Bedrock residency the client region does not serve 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > assertPlacementRegistryConsistency — production boot (D6) > refuses a declared Vertex residency list wider than the client region 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > assertPlacementRegistryConsistency — production boot (D6) > boots when the declaration matches the client region 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > assertPlacementRegistryConsistency — production boot (D6) > judges only enabled lanes, and only in production 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > what the region and the SDK say about residency (D6 review) > London and Zurich are not EU residency; the EU regions are 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > what the region and the SDK say about residency (D6 review) > an SDK base-URL override means the region no longer says where requests go 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > what the region and the SDK say about residency (D6 review) > Bedrock zero retention is claimed only for true 1ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 27 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > ordinary PII
+ FAIL  server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > health information
+AssertionError: expected { allowed: false, …(4) } to match object { allowed: true, …(1) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "allowed": true,
+-   "reasonCode": "ALLOW_APPROVED_PLACEMENT",
++   "allowed": false,
++   "reasonCode": "DENY_SHARED_PROVIDER_WITHOUT_ZDR",
+  }
+
+ ❯ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts:28:61
+     26|     // `detectedDataClass` to `string` and stops the spread below type…
+     27|   ] as Array<[string, Partial<SensitivePlacementInput>, boolean, strin…
+     28|     expect(decideSensitivePlacement({ ...base, ...patch })).toMatchObj…
+       |                                                             ^
+     29|   });
+     30|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/27]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > refuses a zero-retention approval that names no agreement, saying what is missing
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts:74:55
+     72|   it('refuses a zero-retention approval that names no agreement, sayin…
+     73|     const env = { AI_PROVIDER_PLACEMENT_APPROVALS: JSON.stringify({ an…
+     74|     expect(() => readProviderPlacementApprovals(env)).toThrow(
+       |                                                       ^
+     75|       /approves zero retention for anthropic but names no agreement it…
+     76|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/27]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > refuses it at production boot through the existing path
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts:81:8
+     79|   it('refuses it at production boot through the existing path', () => {
+     80|     expect(() => assertSensitivePlacementConfiguration(prod({ anthropi…
+     81|       .toThrow(/names no agreement/);
+       |        ^
+     82|   });
+     83|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/27]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > refuses an agreement with a blank reference
+ FAIL  server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > refuses an agreement with no reference
+ FAIL  server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > refuses an agreement with a date that is not one
+ FAIL  server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > refuses an agreement with a date in another format
+ FAIL  server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > refuses an agreement with a string instead of an object
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts:92:55
+     90|   ])('refuses an agreement with %s', (_name, agreement) => {
+     91|     const env = { AI_PROVIDER_PLACEMENT_APPROVALS: JSON.stringify({ an…
+     92|     expect(() => readProviderPlacementApprovals(env)).toThrow(/invalid…
+       |                                                       ^
+     93|   });
+     94|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/27]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > reads a JSON null as no agreement, as Terraform does
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts:97:67
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/27]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > keeps the agreement it parsed
+AssertionError: expected undefined to deeply equal { reference: 'BAA-1', …(1) }
+
+- Expected:
+{
+  "effectiveFrom": "2026-01-01",
+  "reference": "BAA-1",
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts:103:82
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/27]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the approval and the placement registry cannot disagree at production boot > refuses a zero-retention approval for a provider whose registry entry retains data
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts:128:8
+    126|   it('refuses a zero-retention approval for a provider whose registry …
+    127|     expect(() => assertSensitivePlacementConfiguration(prod({ anthropi…
+    128|       .toThrow(/anthropic is approved for zero retention, but the plac…
+       |        ^
+    129|   });
+    130|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/27]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the approval and the placement registry cannot disagree at production boot > refuses one for Moonshot, which is never a zero-retention lane
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts:133:8
+    131|   it('refuses one for Moonshot, which is never a zero-retention lane',…
+    132|     expect(() => assertSensitivePlacementConfiguration(prod({ moonshot…
+    133|       .toThrow(/moonshot is approved for zero retention, but the place…
+       |        ^
+    134|   });
+    135|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/27]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the approval and the placement registry cannot disagree at production boot > refuses one for a name the gateway does not route to
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts:138:8
+    136|   it('refuses one for a name the gateway does not route to', () => {
+    137|     expect(() => assertSensitivePlacementConfiguration(prod({ 'private…
+    138|       .toThrow(/private-deployment is approved for zero retention, but…
+       |        ^
+    139|   });
+    140|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/27]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the approval and the placement registry cannot disagree at production boot > refuses a registry zero-retention flag that no approval and agreement back
+AssertionError: expected [Function] to throw an error
+
+- Expected:
+null
+
++ Received:
+undefined
+
+ ❯ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts:144:8
+    142|     const interim = { region: 'global', zeroRetentionApproved: false, …
+    143|     expect(() => assertSensitivePlacementConfiguration(prod({ anthropi…
+    144|       .toThrow(/ANTHROPIC_ZERO_RETENTION=true claims zero retention fo…
+       |        ^
+    145|     expect(() => assertSensitivePlacementConfiguration(prod({ anthropi…
+    146|       .toThrow(/AI_BEDROCK_ZERO_RETENTION=true claims zero retention f…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/27]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the dispatch decision relies on zero retention only when both keys say so and the agreement is in force > an agreement that takes effect later is not yet in force
+AssertionError: expected { allowed: false, …(4) } to match object { allowed: true, …(1) }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "allowed": true,
+-   "reasonCode": "ALLOW_APPROVED_PLACEMENT",
++   "allowed": false,
++   "reasonCode": "DENY_SHARED_PROVIDER_WITHOUT_ZDR",
+  }
+
+ ❯ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts:164:8
+    162|     expect(decideSensitivePlacement({ ...base, providerApproval: later…
+    163|     expect(decideSensitivePlacement({ ...base, providerApproval: later…
+    164|       .toMatchObject({ allowed: true, reasonCode: 'ALLOW_APPROVED_PLAC…
+       |        ^
+    165|   });
+    166|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/27]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the dispatch decision relies on zero retention only when both keys say so and the agreement is in force > names the agreement an allowed dispatch relied on, and none when zero retention was not required
+AssertionError: expected { allowed: false, …(4) } to match object { allowed: true, …(1) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "allowed": true,
+-   "zeroRetentionAgreement": {
+-     "effectiveFrom": "2026-01-01",
+-     "reference": "TEST-ZDR-ADDENDUM-0001",
+-   },
++   "allowed": false,
+  }
+
+ ❯ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts:173:44
+    171|
+    172|   it('names the agreement an allowed dispatch relied on, and none when…
+    173|     expect(decideSensitivePlacement(base)).toMatchObject({ allowed: tr…
+       |                                            ^
+    174|     const notRequired = decideSensitivePlacement({ ...base, environmen…
+    175|     expect(notRequired).toMatchObject({ allowed: true, reasonCode: 'AL…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/27]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts > a zero-retention approval names its agreement > an approval with no agreement fails closed, as misconfiguration, and nothing is sent
+AssertionError: promise resolved "{ content: 'ok', …(7) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "cached": false,
++   "content": "ok",
++   "latencyMs": 1,
++   "model": "claude-opus-5-5",
++   "placementReasonCode": "ALLOW_APPROVED_PLACEMENT",
++   "provider": "anthropic",
++   "requestId": "fake",
++   "usage": {
++     "estimatedCostUsd": 0,
++     "inputTokens": 1,
++     "outputTokens": 1,
++     "totalTokens": 2,
++   },
+  }
+
+ ❯ server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts:132:39
+    130|     const dispatch = stubDispatch(gateway);
+    131|
+    132|     await expect(gateway.route(chat())).rejects.toMatchObject({
+       |                                       ^
+    133|       name: GatewayPolicyError.name,
+    134|       message: expect.stringContaining('approves zero retention for an…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/27]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts > both keys: the approval and the placement registry > the approval alone is not zero retention: with ANTHROPIC_ZERO_RETENTION unset, PII is not sent
+AssertionError: promise resolved "{ content: 'ok', …(7) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "cached": false,
++   "content": "ok",
++   "latencyMs": 1,
++   "model": "claude-opus-5-5",
++   "placementReasonCode": "ALLOW_APPROVED_PLACEMENT",
++   "provider": "anthropic",
++   "requestId": "fake",
++   "usage": {
++     "estimatedCostUsd": 0,
++     "inputTokens": 1,
++     "outputTokens": 1,
++     "totalTokens": 2,
++   },
+  }
+
+ ❯ server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts:146:39
+    144|     const dispatch = stubDispatch(gateway);
+    145|
+    146|     await expect(gateway.route(chat())).rejects.toMatchObject({
+       |                                       ^
+    147|       name: GatewayPolicyError.name,
+    148|       message: expect.stringContaining('DENY_SHARED_PROVIDER_WITHOUT_Z…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/27]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts > both keys: the approval and the placement registry > an agreement that takes effect tomorrow is not in force today
+AssertionError: promise resolved "{ content: 'ok', …(7) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "cached": false,
++   "content": "ok",
++   "latencyMs": 1,
++   "model": "claude-opus-5-5",
++   "placementReasonCode": "ALLOW_APPROVED_PLACEMENT",
++   "provider": "anthropic",
++   "requestId": "fake",
++   "usage": {
++     "estimatedCostUsd": 0,
++     "inputTokens": 1,
++     "outputTokens": 1,
++     "totalTokens": 2,
++   },
+  }
+
+ ❯ server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts:161:39
+    159|     const dispatch = stubDispatch(gateway);
+    160|
+    161|     await expect(gateway.route(chat())).rejects.toMatchObject({
+       |                                       ^
+    162|       name: GatewayPolicyError.name,
+    163|       message: expect.stringContaining('DENY_SHARED_PROVIDER_WITHOUT_Z…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/27]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts > both keys: the approval and the placement registry > both keys and an agreement in force today: sent, and the ledger row names the agreement
+AssertionError: expected { requestId: 'fake', …(41) } to match object { provider: 'anthropic', …(3) }
+(42 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "metadata": {
+-     "zeroRetentionAgreement": {
+-       "effectiveFrom": "2026-10-25",
+-       "reference": "TEST-ZDR-ADDENDUM-0003",
++     "contentPolicy": {
++       "action": "redact",
++       "findings": [
++         {
++           "action": "redact",
++           "confidence": 0.9,
++           "contentClass": "pii",
++           "detector": "email",
++           "messageIndex": 0,
++           "redactedSample": "ja…(20 chars)",
++           "role": "user",
++           "scope": "pii",
+          },
++       ],
++     },
++     "regulatoryContentDetected": false,
+    },
+    "placementReasonCode": "ALLOW_APPROVED_PLACEMENT",
+    "provider": "anthropic",
+    "retentionPolicy": "zero_retention",
+  }
+
+ ❯ server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts:178:17
+    176|     expect(dispatch).toHaveBeenCalledTimes(1);
+    177|     const row = rows(gateway).find(r => r.success);
+    178|     expect(row).toMatchObject({
+       |                 ^
+    179|       provider: 'anthropic',
+    180|       placementReasonCode: 'ALLOW_APPROVED_PLACEMENT',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/27]⎯
+
+ FAIL  server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts > the ledger names the agreement only where a dispatch relied on it > an embedding of PII on a third-party lane names the agreement on its row
+AssertionError: expected { …(4) } to match object { …(2) }
+(12 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "placementReasonCode": "ALLOW_APPROVED_PLACEMENT",
+-   "zeroRetentionAgreement": {
+-     "effectiveFrom": "2026-01-01",
+-     "reference": "TEST-ZDR-ADDENDUM-0001",
+-   },
+  }
+
+ ❯ server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts:208:27
+    206|
+    207|     const authorization = await gateway.authorizeEmbedding({ provider:…
+    208|     expect(authorization).toMatchObject({ placementReasonCode: 'ALLOW_…
+       |                           ^
+    209|
+    210|     await gateway.recordEmbeddingCall(authorization, { provider: 'open…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/27]⎯
+
+ FAIL  server/services/ai-gateway/providers/__tests__/placement.test.ts > provider placement registry > marks private-cloud Claude (bedrock) as frontier_private without ZDR by default
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ai-gateway/providers/__tests__/placement.test.ts:29:39
+     27|     const bedrock = resolvePlacement('bedrock');
+     28|     expect(bedrock.substrate).toBe('frontier_private');
+     29|     expect(bedrock.zeroDataRetention).toBe(false);
+       |                                       ^
+     30|   });
+     31|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/27]⎯
+
+ FAIL  server/services/ai-gateway/providers/__tests__/placement.test.ts > placement compliance > excludes shared frontier when zero data retention is required
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ai-gateway/providers/__tests__/placement.test.ts:50:76
+     48|   it('excludes shared frontier when zero data retention is required', …
+     49|     expect(isPlacementCompliant(reg.openai, { zeroDataRetention: true …
+     50|     expect(isPlacementCompliant(reg.bedrock, { zeroDataRetention: true…
+       |                                                                            ^
+     51|     expect(isPlacementCompliant({ ...reg.bedrock, zeroDataRetention: t…
+     52|     expect(isPlacementCompliant(reg.local, { zeroDataRetention: true }…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/27]⎯
+
+ FAIL  server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud zero retention (D6) > Bedrock claims zero retention only when the operator records it
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ai-gateway/providers/__tests__/placement.test.ts:173:82
+    171| describe('private-cloud zero retention (D6)', () => {
+    172|   it('Bedrock claims zero retention only when the operator records it'…
+    173|     withEnv({}, () => expect(buildPlacementRegistry().bedrock.zeroData…
+       |                                                                                  ^
+    174|     withEnv({ AI_BEDROCK_ZERO_RETENTION: '' }, () => expect(buildPlace…
+    175|     withEnv({ AI_BEDROCK_ZERO_RETENTION: 'false' }, () =>
+ ❯ withEnv server/services/ai-gateway/providers/__tests__/placement.test.ts:105:5
+ ❯ server/services/ai-gateway/providers/__tests__/placement.test.ts:173:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/27]⎯
+
+ FAIL  server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud zero retention (D6) > no lane a third party runs claims zero retention without configuration; the self-hosted lane does
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/ai-gateway/providers/__tests__/placement.test.ts:185:42
+    183|       const reg = buildPlacementRegistry({});
+    184|       for (const p of ['openai', 'anthropic', 'moonshot', 'bedrock', '…
+    185|         expect(reg[p].zeroDataRetention).toBe(false);
+       |                                          ^
+    186|       }
+    187|       expect(reg.local.zeroDataRetention).toBe(true);
+ ❯ withEnv server/services/ai-gateway/providers/__tests__/placement.test.ts:105:5
+ ❯ server/services/ai-gateway/providers/__tests__/placement.test.ts:182:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/27]⎯
+
+ FAIL  server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud zero retention (D6) > reads the environment it is given
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/ai-gateway/providers/__tests__/placement.test.ts:193:104
+    191|   it('reads the environment it is given', () => {
+    192|     withEnv({}, () => {
+    193|       expect(buildPlacementRegistry({ ANTHROPIC_ZERO_RETENTION: 'true'…
+       |                                                                                                        ^
+    194|       expect(buildPlacementRegistry({}).anthropic.zeroDataRetention).t…
+    195|     });
+ ❯ withEnv server/services/ai-gateway/providers/__tests__/placement.test.ts:105:5
+ ❯ server/services/ai-gateway/providers/__tests__/placement.test.ts:192:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/27]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  27 failed | 38 passed (65)
+   Start at  21:47:34
+   Duration  2.90s (transform 1.26s, setup 129ms, import 1.95s, tests 131ms, environment 0ms)
+

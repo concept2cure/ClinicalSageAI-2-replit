@@ -1,0 +1,23 @@
+{
+ "createOffered": true,
+ "after": {
+  "title": "C2C-101 (anti-IL-23p19 monoclonal antibody, fictional) — IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5",
+  "meta": "IND · FDA · 92 sections",
+  "rows": 105,
+  "rings": 52,
+  "ringsWithSrText": 52,
+  "visibleRequiredWords": 0,
+  "dimmed": 0,
+  "unstarted": 92,
+  "ringBorder": "rgb(117, 115, 109) 1px",
+  "basis": {
+   "open": false,
+   "summary": "Harmonised standardAbout this outline"
+  },
+  "key": "required, not started ·  drafted"
+ },
+ "basisOpened": {
+  "open": true,
+  "detail": "The section tree follows a published international standard rather than one agency’s regulation. Governing rule: ICH M4 — Organisation of the CTD (Modules 2–5);"
+ }
+}

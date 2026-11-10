@@ -1,0 +1,7 @@
+applied mutant no-separator: "(m) => `${m.toUpperCase()} `)" -> "(m) => m.toUpperCase())"
+ × server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a word that only begins with 'plan' is not a plan; a mixed-case IFU is the IFU > a capitalised word glued after an IFU keeps its own slot, as before this change 12ms
+ × server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a word that only begins with 'plan' is not a plan; a mixed-case IFU is the IFU > a plan glued to an IFU is read as a plan, as when it is spelt apart 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ 'manufacturer-information' ] to deeply equal [ 'manufacturer-information', 'gspr' ]
+AssertionError: IFUPLAN_Biocompatibility: expected [ 'manufacturer-information', …(1) ] to deeply equal [ 'manufacturer-information' ]
+      Tests  2 failed | 50 passed (52)

@@ -1,0 +1,52 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > visible device attachment refusals and uncertain results > shows the actual version refusal without adding a file or a local activity event 280ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > visible device attachment refusals and uncertain results > shows check-before-retry guidance for 'malformed successful reply' and sends no automatic retry 64ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > visible device attachment refusals and uncertain results > shows check-before-retry guidance for 'explicit uncertain commit' and sends no automatic retry 55ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > visible device attachment refusals and uncertain results > shows check-before-retry guidance for 'complete-send reply loss' and sends no automatic retry 48ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > visible device attachment refusals and uncertain results > shows partial success and the refused file while listing only the confirmed attachment 53ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > visible device attachment refusals and uncertain results > keeps a mixed unknown result distinct from a known refusal 49ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > visible confirmed uploads and deliberate later selections > reports a valid 'created' receipt with its existing Vault wording 45ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > visible confirmed uploads and deliberate later selections > reports a valid 'unchanged same-bytes' receipt with its existing Vault wording 34ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > visible confirmed uploads and deliberate later selections > clears an earlier refusal when a deliberate new selection starts and publishes its own result 63ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > one active device attachment batch > shows pending status and disables selection while ignoring later input and drop gestures 72ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > one active device attachment batch > blocks overlapping input and drop calls before the pending state can repaint 29ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > keyboard selection and ordinary drawer tab changes > opens the native chooser once per keyboard activation without submitting an upload 56ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > keyboard selection and ordinary drawer tab changes > opens the existing drop-zone chooser once per pointer gesture 19ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > keyboard selection and ordinary drawer tab changes > keeps pending progress and the eventual result while visiting Document and Activity tabs 78ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires completion after replacing the 'section id' 231ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires completion after replacing the 'backend document' 62ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires completion after replacing the 'program' 40ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires completion after replacing the 'pathway' 43ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires a section-label A to B to A visit instead of reviving the first completion 39ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires a batched shell A to B to A visit even when drawer props return unchanged 33ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload completion cannot cross account or mounted-view lifetime > retires a replacement session, same actor=false 39ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload completion cannot cross account or mounted-view lifetime > retires a replacement session, same actor=true 39ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload completion cannot cross account or mounted-view lifetime > retires an upload across close and reopening the same section 44ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload completion cannot cross account or mounted-view lifetime > retires an upload across unmount and reopening the same section 59ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > current device upload visits retain legitimate completion > publishes a confirmed file when its original visit remains current 31ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > current device upload visits retain legitimate completion > keeps an ordinary bearer refresh current and accepts its valid unchanged receipt 42ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device dossier attachment confirmation through the actual upload hook > does not add an attachment or activity from an affirmative response with no document receipt 239ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device dossier attachment confirmation through the actual upload hook > adds the selected file after a full producer receipt and keeps activity server-owned 63ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device dossier attachment confirmation through the actual upload hook > adds only confirmed files from a mixed batch of unique filenames 55ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index +0 when its same-name sibling has a '409 version refusal' 41ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index 1 when its same-name sibling has a '409 version refusal' 49ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index +0 when its same-name sibling has a 'malformed successful reply' 44ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index 1 when its same-name sibling has a 'malformed successful reply' 47ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index +0 when its same-name sibling has a 'explicit uncertain commit' 52ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index 1 when its same-name sibling has a 'explicit uncertain commit' 43ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index +0 when its same-name sibling has a 'lost complete-send reply' 38ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index 1 when its same-name sibling has a 'lost complete-send reply' 36ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches neither same-name selection when one is refused and the other is unconfirmed 32ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > keeps both confirmed selections for a valid create followed by an unchanged same-bytes receipt 36ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment selection lifetime > uses the original sent File when a live selection is replaced before its receipt arrives 53ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx > device attachment identity through the actual drop handler > attaches only the confirmed same-name dropped file when its sibling is refused 234ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx > device attachment identity through the actual drop handler > keeps repeated references to one File independent when only the second selection is confirmed 64ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx > device attachment identity through the actual drop handler > keeps both confirmed dropped selections for a new receipt and a valid same-bytes reupload 48ms
+
+ Test Files  4 passed (4)
+      Tests  43 passed (43)
+   Start at  19:00:09
+   Duration  7.66s (transform 720ms, setup 497ms, import 1.47s, tests 2.83s, environment 2.18s)
+

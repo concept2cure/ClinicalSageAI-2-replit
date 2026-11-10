@@ -1,0 +1,56 @@
+# Pre-deploy check of transmittal rows already on record (F1 review, finding: the fold trusts rows written before the guard).
+#
+# Before this change no legitimate writer put metadata.leafManifest on a transmittal row, and only FDA ESG set
+# metadata.dispatchBinding itself. So on a database that has not yet run this change, EVERY row this query returns
+# was written from a caller's metadata. Expected on each deployed database, run BEFORE this commit deploys: no rows.
+# Any row it returns is a founder decision, not something to edit in place. The fold now also reads only a row of
+# the sequence's own agency, under the sequence's own transmit signature, and refuses two rows binding one attempt.
+#
+# THIS SESSION HAS NO ACCESS TO ANY DEPLOYED DATABASE. The run below is the local test database (c2c_test,
+# 127.0.0.1:55432), in a READ ONLY transaction, 2026-11-02T01:33:12Z. Owed: the same query on each deployed database.
+#
+# The query, exactly:
+#   SELECT t.id, t.region, t.gateway, t.submitted_at FROM submission_transmittals t WHERE t.metadata ? 'dispatchBinding' AND jsonb_typeof(t.metadata -> 'leafManifest') = 'array' ORDER BY t.id
+
+BEGIN
+ id | region | gateway |         submitted_at          
+----+--------+---------+-------------------------------
+  1 | fda    | esg     | 2026-11-01 21:31:22.78466+00
+  2 | fda    | esg     | 2026-11-01 21:31:22.788671+00
+  3 | fda    | esg     | 2026-11-01 21:33:48.952568+00
+  4 | fda    | esg     | 2026-11-01 21:33:48.956701+00
+  5 | fda    | esg     | 2026-11-01 22:03:02.03359+00
+  6 | fda    | esg     | 2026-11-01 22:03:02.036817+00
+  7 | fda    | esg     | 2026-11-01 23:45:17.442107+00
+  8 | fda    | esg     | 2026-11-01 23:45:17.446581+00
+  9 | fda    | esg     | 2026-11-02 00:09:17.828865+00
+ 10 | fda    | esg     | 2026-11-02 00:09:17.832557+00
+ 11 | fda    | esg     | 2026-11-02 01:22:43.937157+00
+ 12 | ema    | cesp    | 2026-11-02 01:22:43.942539+00
+ 13 | fda    | esg     | 2026-11-02 01:22:43.945226+00
+(13 rows)
+
+COMMIT
+# Every row above, with its tenant and signature (local only): all are fixtures of tests/db/ectd-filed-state-view.dbtest.ts,
+# written today by this build's runs (signature '<TAG>-sig-<sequence>', tenant marked inactive by the test's afterAll),
+# after the change, not before it. Row 12 is that test's forged CESP row.
+
+BEGIN
+ id | organization_id | org_status | region | gateway |           signature            |         submitted_at          
+----+-----------------+------------+--------+---------+--------------------------------+-------------------------------
+  1 |             879 | inactive   | fda    | esg     | dbtest-filed-09f8546b-sig-0000 | 2026-11-01 21:31:22.78466+00
+  2 |             879 | inactive   | fda    | esg     | dbtest-filed-09f8546b-sig-0001 | 2026-11-01 21:31:22.788671+00
+  3 |             883 | inactive   | fda    | esg     | dbtest-filed-75d4717a-sig-0000 | 2026-11-01 21:33:48.952568+00
+  4 |             883 | inactive   | fda    | esg     | dbtest-filed-75d4717a-sig-0001 | 2026-11-01 21:33:48.956701+00
+  5 |             887 | inactive   | fda    | esg     | dbtest-filed-9302f9e2-sig-0000 | 2026-11-01 22:03:02.03359+00
+  6 |             887 | inactive   | fda    | esg     | dbtest-filed-9302f9e2-sig-0001 | 2026-11-01 22:03:02.036817+00
+  7 |             891 | inactive   | fda    | esg     | dbtest-filed-ad937e15-sig-0000 | 2026-11-01 23:45:17.442107+00
+  8 |             891 | inactive   | fda    | esg     | dbtest-filed-ad937e15-sig-0001 | 2026-11-01 23:45:17.446581+00
+  9 |             895 | inactive   | fda    | esg     | dbtest-filed-04535b2a-sig-0000 | 2026-11-02 00:09:17.828865+00
+ 10 |             895 | inactive   | fda    | esg     | dbtest-filed-04535b2a-sig-0001 | 2026-11-02 00:09:17.832557+00
+ 11 |             899 | inactive   | fda    | esg     | dbtest-filed-56aa169c-sig-0000 | 2026-11-02 01:22:43.937157+00
+ 12 |             899 | inactive   | ema    | cesp    | dbtest-filed-56aa169c-sig-0000 | 2026-11-02 01:22:43.942539+00
+ 13 |             899 | inactive   | fda    | esg     | dbtest-filed-56aa169c-sig-0001 | 2026-11-02 01:22:43.945226+00
+(13 rows)
+
+COMMIT

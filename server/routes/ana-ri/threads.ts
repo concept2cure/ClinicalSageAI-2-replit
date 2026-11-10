@@ -16,6 +16,9 @@ import type { Request, Response, Router } from 'express';
 import { getPool } from '../../db.js';
 import { buildTraceTimeline, type TimelineRow } from '../../services/ana/trace-timeline.js';
 import { extractRequestContext, sendSuccess, sendError } from './shared.js';
+import { requestPgClient } from '../../db/requestDb';
+import { readOwnerPrivateBoundary } from '../../services/ana/run-control';
+import { readOwnerPrivateThreadMessages } from '../../services/chat-thread-helpers';
 
 /** Register thread read endpoints on the given router. */
 export function mountThreadRoutes(router: Router): void {
@@ -23,13 +26,21 @@ export function mountThreadRoutes(router: Router): void {
   // GET /api/ana-ri/threads/:threadId/timeline — tool-trace + grounding timeline
   // ───────────────────────────────────────────────────────────────────────────
   router.get('/threads/:threadId/timeline', async (req: Request, res: Response) => {
-    const { orgId } = extractRequestContext(req);
+    const { orgId,userId } = extractRequestContext(req);
     if (orgId == null) {
       return sendError(res, 401, 'Organization context required', null, 'ORG_REQUIRED');
     }
     const threadId = String(req.params.threadId);
 
     try {
+      const boundary=await readOwnerPrivateBoundary(requestPgClient(req),{organizationId:Number(orgId),threadId});
+      if (boundary) {
+        res.locals.ownerPrivateCapture=true;
+        if (userId!==boundary.ownerUserId) return sendError(res,403,'This private conversation belongs to its owner.',null,'OWNER_PRIVATE_THREAD_DENIED');
+        const messages=await readOwnerPrivateThreadMessages(requestPgClient(req),{threadId,organizationId:Number(orgId),userId});
+        const timeline=buildTraceTimeline(messages as TimelineRow[]);
+        return sendSuccess(res,{threadId,timeline},{count:timeline.length});
+      }
       const pool = getPool();
       // Tenant scope: the thread must belong to the caller's organization.
       const owner = await pool.query(
@@ -51,12 +62,8 @@ export function mountThreadRoutes(router: Router): void {
 
       const timeline = buildTraceTimeline(rows as TimelineRow[]);
       return sendSuccess(res, { threadId, timeline }, { count: timeline.length });
-    } catch (err: any) {
-      // Tables or the metadata column not provisioned yet → empty, not a 500.
-      if (err?.code === '42P01' || err?.code === '42703') {
-        return sendSuccess(res, { threadId, timeline: [] }, { count: 0 });
-      }
-      return sendError(res, 500, err?.message || 'Failed to load trace timeline');
+    } catch {
+      return sendError(res,503,'The conversation timeline could not be securely read.',null,'THREAD_TIMELINE_UNAVAILABLE');
     }
   });
 }

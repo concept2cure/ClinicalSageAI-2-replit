@@ -1,0 +1,53 @@
+# CI gates on b3c9e4421 + the D1-1 working tree (uncommitted), 2026-11-01T23:21Z
+# The tree also holds other sessions' uncommitted edits (L8 Vault: surfaces/Vault*.tsx, coverage-v2.css, misc-surfaces-v2.css; R1 evidence).
+
+## npm run --silent ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+# exit code: 0
+
+## npm run --silent ci:check-css-selector-shadowing
+[css-shadowing] 1 baseline entr(y/ies) no longer shadowed — delete these lines:
+  · client/src/concept2cure/v2/styles/app-v2.css::.c2c-v2 .reg-eyebrow
+
+[css-shadowing] OK — 49 stylesheets, 17 known shadowed selector(s), 0 new.
+# exit code: 0
+
+## npm run --silent ci:check-shell-css-collisions
+[ci:shell-css-collisions] 22 class name(s) defined in more than one shell tree (baseline 22) — pdev+v2:22
+[ci:shell-css-collisions] OK — no new cross-shell collisions.
+# exit code: 0
+
+## npm run --silent ci:one-product
+ci:one-product: 102 surfaces, 10 rail entries, none new.
+# exit code: 0
+
+## npm run --silent ci:token-contrast
+✅ token-contrast: 131 pairs checked — text ≥ 4.5:1, non-text ≥ 3:1.
+   15 documented exceptions (brand, muted-text ramp, structural borders) held at or above their recorded ratios.
+# exit code: 0
+
+## npm run --silent ci:design-system
+[design-system] OK — no icon-library, spring/bounce or inline <style> violations on live concept2cure surfaces.
+# exit code: 0
+
+## npm run --silent check:microcopy
+[ci:microcopy] OK — scanned 772 customer-facing files, no exclamations or pictographs.
+# exit code: 0
+
+## npm run --silent ci:surface-text-ramp
+[ci:surface-text-ramp] FAIL — generated ramp sheet(s) do not match the stylesheets:
+    client/src/concept2cure/v2/styles/surface-text-ramp.css — stale
+  A stylesheet gained or lost a tinted-surface rule, so the re-based
+  text ramp no longer covers what the sources imply. Regenerate:
+    node scripts/design/generate-surface-text-ramp.mjs
+# exit code: 1
+
+## ci:surface-text-ramp, D1-1's share alone (scratch git repo: git archive HEAD scripts/design client/src package.json, plus D1-1's app-v2.css)
+# before the patch:
+[ci:surface-text-ramp] FAIL — generated ramp sheet(s) do not match the stylesheets:
+    client/src/concept2cure/v2/styles/surface-text-ramp.css — stale
+# after git apply green/surface-text-ramp.d1-1.patch:
+[ci:surface-text-ramp] OK — 3 generated ramp sheet(s) match the stylesheets.
+
+## git apply --cached --check green/surface-text-ramp.d1-1.patch (against the index, nothing staged)
+OK

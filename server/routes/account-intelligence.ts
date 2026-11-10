@@ -74,7 +74,7 @@ router.post('/canon', authMiddleware, async (req: Request, res: Response) => {
       sourceDocumentId: z.string().optional(),
       sourceDescription: z.string().optional(),
       confidenceScore: z.number().min(0).max(1).optional(),
-      metadata: z.record(z.unknown()).optional(),
+      metadata: z.record(z.string(), z.unknown()).optional(),
     });
 
     const parsed = schema.safeParse(req.body);
@@ -394,8 +394,8 @@ router.post('/templates', authMiddleware, async (req: Request, res: Response) =>
         defaultContent: z.string().optional(),
         order: z.number().optional(),
       })).optional(),
-      defaultMetadata: z.record(z.unknown()).optional(),
-      headerFooter: z.record(z.unknown()).optional(),
+      defaultMetadata: z.record(z.string(), z.unknown()).optional(),
+      headerFooter: z.record(z.string(), z.unknown()).optional(),
       namingConvention: z.string().optional(),
     });
 

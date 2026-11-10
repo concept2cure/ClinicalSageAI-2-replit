@@ -22,7 +22,7 @@ import {
   formulationRecordForm, formulationRecordBody, formulationRecordPatch,
   manufacturingProcessForm, manufacturingProcessBody, manufacturingProcessPatch,
   characterizationStudyForm, characterizationStudyBody, characterizationStudyPatch,
-  qualifyForm, qualifyBody, SIGNED_ACTS, type SignedWord,
+  qualifyForm, qualifyBody, SIGNED_ACTS, METHOD_VALIDATION_OUTCOMES, type SignedWord,
   signedUpdateBlocked, retireSignedForm, retireSignedBody,
   asUserId,
 } from './cmcRegisterForms';
@@ -245,7 +245,6 @@ interface RegisterCardProps<T> {
   errorHint: React.ReactNode;
   columns: RegisterColumn<T>[];
   rowKey: (row: T, index: number) => React.Key;
-  style?: React.CSSProperties;
   create?: RegisterCreate;
   rowActions?: RegisterRowAction<T>[];
   /** Called with the adopted server row after any successful write. */
@@ -279,9 +278,11 @@ const SCOPE_NOTE: Record<RegisterScope | 'program-none', { testId: string; text:
   organization: { testId: 'register-scope-organization', text: '· all projects' },
 };
 
+/* The scope in words, inside the section's one grey line rather than as a
+   second chip of its own (D5 §A.4.9). Same text, same testId, same title. */
 function RegisterScopeNote({ scope, hasProgram }: { scope: RegisterScope; hasProgram: boolean }) {
   const note = SCOPE_NOTE[scope === 'program' && !hasProgram ? 'program-none' : scope];
-  return <span className="s" data-testid={note.testId} title={note.title}>{note.text}</span>;
+  return <span data-testid={note.testId} title={note.title}>{note.text}</span>;
 }
 
 /**
@@ -386,7 +387,7 @@ function RegisterRowActionCell<T>({
 
 export function RegisterCard<T>({
   path, title, meta, icon, loadingTitle, emptyTitle, emptyHint,
-  errorTitle, errorHint, columns, rowKey, style, create, rowActions, onWrite,
+  errorTitle, errorHint, columns, rowKey, create, rowActions, onWrite,
 }: RegisterCardProps<T>) {
   const projectId = cmcProjectUuid();
   /* Read the register at the scope its record type actually has — see
@@ -483,27 +484,42 @@ export function RegisterCard<T>({
   const visibleActions = (row: T) => (rowActions ?? []).filter((a) => !a.when || a.when(row));
   const hasActions = actionColumnShown(rows, visibleActions, historyTitle !== null);
 
+  /* A section, not a boxed card with a grey header band (D5 §A.4.9,
+     §WA.4.2 rule 6). One change here converts all fifteen Substance & product
+     registers and every other register in the work area: Substance & product
+     was 3,588px of dashed empty boxes at 1440 with nothing recorded in it.
+     Everything the card carried is here — the title, the count, the scope, the
+     create button, the table, the row actions, the history, the forms — and
+     the empty state's copy is unchanged; §WA.4.1 left-aligns it and drops the
+     icon inside a work area's section. The `marginTop: 16` default and the
+     `padding: 0` / `padding: 12` wrappers go: the section rhythm is CSS. */
   return (
-    <div className="pj-card" style={style ?? { marginTop: 16 }}>
-      <div className="pj-card-h">
-        <span className="t">{title}</span>
-        <span className="s">{meta(rows)}</span>
-        <RegisterScopeNote scope={scope} hasProgram={Boolean(projectId)} />
+    <section className="pj-sec" aria-label={title}>
+      <div className="pj-sec-h">
+        <h2>{title}</h2>
+        {/* `SCOPE_NOTE`'s text already opens with its own "·", so the line
+            joins them with a space, not a second separator. */}
+        <span className="sec-sub">
+          {meta(rows)} <RegisterScopeNote scope={scope} hasProgram={Boolean(projectId)} />
+        </span>
         {create && (
-          <button
-            className="nda-open cm-reg-add"
-            onClick={() => setCreating(true)}
-            disabled={create.needsProject && !projectId}
-            title={create.needsProject && !projectId ? 'Open a project to file this record' : ''}
-          >
-            {I.plus} {create.label}
-          </button>
+          <div className="pj-sec-acts">
+            <button
+              type="button"
+              className="btn ghost small"
+              onClick={() => setCreating(true)}
+              disabled={create.needsProject && !projectId}
+              title={create.needsProject && !projectId ? 'Open a project to file this record' : ''}
+            >
+              {I.plus} {create.label}
+            </button>
+          </div>
         )}
       </div>
-      <div className="pj-card-b" style={{ padding: 0 }}>
-        {linkageWarning && <div role="alert" style={{ padding: 12 }}>{linkageWarning}</div>}
+      <>
+        {linkageWarning && <div role="alert" className="cm-meta">{linkageWarning}</div>}
         {rows.length === 0 ? (
-          <div style={{ padding: 12 }}>
+          <>
             {live.loading ? (
               <EmptyState icon={icon} title={loadingTitle} busy testId={`register-loading-${title}`} />
             ) : live.error ? (
@@ -511,7 +527,7 @@ export function RegisterCard<T>({
             ) : (
               <EmptyState icon={icon} title={emptyTitle} hint={emptyHint} />
             )}
-          </div>
+          </>
         ) : (
           <table className="reg-tbl">
             <thead>
@@ -542,7 +558,7 @@ export function RegisterCard<T>({
             </tbody>
           </table>
         )}
-      </div>
+      </>
       {creating && create && (
         <C2CForm config={create.form()} onCancel={() => setCreating(false)} onSubmit={submitCreate} />
       )}
@@ -551,7 +567,7 @@ export function RegisterCard<T>({
       )}
       <RecordHistorySlot target={historyFor} registerPath={historySegment} onClose={() => setHistoryFor(null)} />
       <C2CToast msg={toast} />
-    </div>
+    </section>
   );
 }
 
@@ -639,7 +655,10 @@ export function CmMethodLibrary() {
              completed exercise: §3.2.S.4.3's Validation Status column, the Q2
              engine's shortfall check and the contradiction sweep. */
           when: (r) => String(r.status || '').toLowerCase() !== 'validated',
-          form: (r) => qualifyForm('analytical method', `${r.methodCode} — ${r.title}`, SIGNED_ACTS.validate),
+          /* The act records WHICH outcome (P-110 item 1): full ICH Q2(R2)
+             validation, or suitability for a stated phase. One ceremony, one
+             route; the outcome is part of what is signed. */
+          form: (r) => qualifyForm('analytical method', `${r.methodCode} — ${r.title}`, SIGNED_ACTS.validate, METHOD_VALIDATION_OUTCOMES),
           path: (r) => `/api/cmc/analytical-methods/${r.id}/validate`,
           method: 'POST',
           toBody: (v) => qualifyBody(v),

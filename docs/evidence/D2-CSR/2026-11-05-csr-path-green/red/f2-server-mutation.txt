@@ -1,0 +1,4 @@
+# F2 server case with the placeholder flag removed from buildHeadings (mutation, then restored)
+     × marks a template row, whose saved text still holds a data placeholder, as template text, not a draft (F2) 51ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 20 skipped (21)

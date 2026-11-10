@@ -40,7 +40,7 @@ import { and, eq, isNull, lt, sql } from 'drizzle-orm';
 import { db } from '../../db';
 import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import { submissionLeaves, ectdSequences, submissions } from '../../../shared/schema/submissions';
-import { shadowReviewRuns } from '../../../shared/schema/shadow-review';
+import { shadowReviewCurrency } from '../shadow-review/shadow-review-coverage';
 // P-34: the presence gate reads the sequence's signed Shadow Review waiver.
 import {
   evaluateShadowPresenceWithWaiver,
@@ -380,9 +380,12 @@ export interface DispatchReadinessAssessment {
   /** Authoritative, server-computed gate inputs. */
   validationErrors: number;
   unacknowledgedShadowCriticals: number;
-  /** Completed Shadow Review runs for this sequence. */
+  /** Completed Shadow Review runs over this sequence's CURRENT leaves (2026-10-25). */
   shadowReviewRunCount: number;
-  /** No completed Shadow Review has run for this sequence. The presence gate
+  /** Completed runs over leaves that have since changed, or recorded before runs
+   *  carried a leaf digest. They clear nothing; the presence gate names the newest. */
+  shadowReviewStaleRunCount: number;
+  /** No completed Shadow Review covers this sequence's leaves. The presence gate
    *  blocks on it unless an active signed waiver stands in (P-34); either way
    *  the dossier was not adversarially reviewed, and this stays true. */
   shadowReviewMissing: boolean;
@@ -601,35 +604,6 @@ export function composeStepVerdicts(
 }
 
 /**
- * Completed Shadow Review runs for a sequence.
- *
- * Zero open criticals means nothing different whether the dossier is clean OR
- * was never reviewed — so the count is read separately and fed to the presence
- * gate, which surfaces that blind spot instead of letting it read as clean.
- *
- * Extracted from assessSequenceDispatchReadiness only to keep that function
- * under the max-lines-per-function ceiling; the query and its filters are
- * unchanged, including `status = 'complete'` and the soft-delete exclusion.
- */
-async function countCompletedShadowRuns(
-  sequenceId: number,
-  organizationId: number,
-): Promise<number> {
-  const [{ value }] = await db
-    .select({ value: sql<number>`count(*)::int` })
-    .from(shadowReviewRuns)
-    .where(
-      and(
-        eq(shadowReviewRuns.sequenceId, sequenceId),
-        eq(shadowReviewRuns.organizationId, organizationId),
-        eq(shadowReviewRuns.status, 'complete'),
-        isNull(shadowReviewRuns.deletedAt)
-      )
-    );
-  return value ?? 0;
-}
-
-/**
  * Flatten a region profile's Module-1 tree to the section codes marked required
  * for this application type.
  *
@@ -793,20 +767,36 @@ async function waivabilityOrNotOffered(
   }
 }
 
+/** The not-found answer for a sequence this tenant has no live row of: by its
+ *  number when it was removed from its submission, so the reader is told which
+ *  and why; the plain one otherwise. */
+async function sequenceNotFound(sequenceId: number, organizationId: number): Promise<Error> {
+  const [removed] = await db
+    .select({ sequenceNumber: ectdSequences.sequenceNumber })
+    .from(ectdSequences)
+    .where(and(eq(ectdSequences.id, sequenceId), eq(ectdSequences.organizationId, organizationId)))
+    .limit(1);
+  const message = removed
+    ? `Sequence ${removed.sequenceNumber} was removed from this submission, so it has no dispatch readiness.`
+    : 'Sequence not found in this organization.';
+  return Object.assign(new Error(message), { code: 'NOT_FOUND' });
+}
+
 export async function assessSequenceDispatchReadiness(
   params: AssessDispatchReadinessParams
 ): Promise<DispatchReadinessAssessment> {
   const { sequenceId, organizationId } = params;
 
-  // 1. Tenant-scoped sequence (region + status).
+  // 1. Tenant-scoped LIVE sequence (region + status). A removed sequence (the
+  // filed baseline's removal of drafts, filed-sequence-baseline.ts) has no
+  // readiness: it is answered as not found, never as ready or not ready (F1
+  // repair B, 2026-11-08).
   const [sequence] = await db
     .select()
     .from(ectdSequences)
-    .where(and(eq(ectdSequences.id, sequenceId), eq(ectdSequences.organizationId, organizationId)))
+    .where(and(eq(ectdSequences.id, sequenceId), eq(ectdSequences.organizationId, organizationId), isNull(ectdSequences.deletedAt)))
     .limit(1);
-  if (!sequence) {
-    throw Object.assign(new Error('Sequence not found in this organization.'), { code: 'NOT_FOUND' });
-  }
+  if (!sequence) throw await sequenceNotFound(sequenceId, organizationId);
   const submissionApplicationType = await loadApplicationType(sequence.submissionId, organizationId);
   const asOf = params.asOf ?? dispatchAsOfDate();
   // P-33: a US IND's cross-reference register, read once — the Module 3
@@ -890,8 +880,9 @@ export async function assessSequenceDispatchReadiness(
   const shadowCriticals = await criticalsStandingOpen(asWaiverQueryable(), { sequenceId, organizationId });
   const unacknowledgedShadowCriticals = shadowCriticals.count;
 
-  // 4b. Has this sequence ever been Shadow-Reviewed? See countCompletedShadowRuns.
-  const shadowReviewRunCount = await countCompletedShadowRuns(sequenceId, organizationId);
+  // 4b. Completed Shadow Reviews over THESE leaves; earlier leaves' runs are stale (shadow-review-coverage.ts).
+  const shadowCoverage = await shadowReviewCurrency(asWaiverQueryable(), { sequenceId, organizationId });
+  const shadowReviewRunCount = shadowCoverage.current;
 
   // 4c. The signed Shadow Review waiver (P-34), and — while no review has
   //     completed — whether one is offered. A failed read resolves to
@@ -940,7 +931,7 @@ export async function assessSequenceDispatchReadiness(
   //     waiver stands in for it — and then the gate clears as not assessed,
   //     naming the signature. The waiver never reaches open critical findings:
   //     those are the structural gate's (§6).
-  const shadowPresence = evaluateShadowPresenceWithWaiver(shadowReviewRunCount, shadowReviewWaiver);
+  const shadowPresence = evaluateShadowPresenceWithWaiver(shadowReviewRunCount, shadowReviewWaiver, shadowCoverage);
   const shadowPresenceGate: DispatchGateResult = { cleared: shadowPresence.cleared, blockers: shadowPresence.blockers };
 
   // 6c. Release-signature gate (21 CFR Part 11 §11.70). Until this landed, the
@@ -1025,6 +1016,7 @@ export async function assessSequenceDispatchReadiness(
     validationErrors: readiness.errors,
     unacknowledgedShadowCriticals,
     shadowReviewRunCount,
+    shadowReviewStaleRunCount: shadowCoverage.stale,
     externalValidation: externalValidationView(externalGate),
     /** True when no completed Shadow Review has run for this sequence. It blocks
      *  the gate (§6b) unless an active waiver stands in; informational here. */

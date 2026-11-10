@@ -45,11 +45,11 @@ afterEach(() => cleanup());
 async function renderCanvas(seg: string) {
   segment = seg;
   render(<InsightsCanvas surface={{ id: 'insights', label: 'Insights' } as OwnedSurfaceViewProps['surface']} segment={seg} onNav={() => {}} />);
-  await waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
+  await waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
 }
 
 function ask(text: string) {
-  const composer = document.querySelector('.rc-input textarea') as HTMLTextAreaElement;
+  const composer = document.querySelector('[data-work-area="insights"] .rc-find input') as HTMLInputElement;
   fireEvent.change(composer, { target: { value: text } });
   fireEvent.keyDown(composer, { key: 'Enter' });
 }
@@ -68,14 +68,14 @@ describe('Insights — no prediction it cannot make', () => {
     },
   );
 
-  it.each(['pharma', 'biotech'])('the %s opener no longer suggests a CRL risk question', async (seg) => {
+  it.each(['pharma', 'biotech'])('the %s header and suggestions no longer offer a CRL risk question', async (seg) => {
     await renderCanvas(seg);
-    expect(document.querySelector('.rc-opener')?.textContent ?? '').not.toMatch(/CRL risk/);
+    expect((document.querySelector('[data-work-area="insights"] > .ph')?.textContent ?? '') + (document.querySelector('[aria-label="Find suggestions"]')?.textContent ?? '')).not.toMatch(/CRL risk/);
   });
 
   it.each(['pharma', 'biotech'])('no %s standard pack offers a prediction tile', async (seg) => {
     await renderCanvas(seg);
-    fireEvent.click(document.querySelector('.rc-preset-btn') as HTMLElement);
+    fireEvent.click(document.querySelector('[data-work-area="insights"] .ph-acts .btn.primary') as HTMLElement);
     await waitFor(() => expect(document.querySelector('.ro-pack-grid')).not.toBeNull());
     const grid = document.querySelector('.ro-pack-grid')?.textContent ?? '';
     expect(grid).not.toMatch(/Forecast|Pre-Mortem|Predictive/i);

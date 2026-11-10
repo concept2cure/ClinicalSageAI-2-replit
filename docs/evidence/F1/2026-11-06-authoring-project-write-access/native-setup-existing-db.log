@@ -1,0 +1,17 @@
+Concept2Cure — local bring-up
+
+[1] Checking Postgres
+    ✓ connected to 127.0.0.1:55432
+
+[2] Ensuring database "c2c_project_editor_20261106"
+    ✓ already present
+
+[3] Provisioning schema (install-fresh) — this takes a few minutes
+◇ injected env (0) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+
+▶ 1/8 Prerequisites — schemas + extensions
+  ✓ schemas (vault, precedent, audit, extensions) + extensions (pgcrypto, uuid-ossp, pg_trgm)
+  ✓ pgvector (extension "vector") present
+
+▶ 2/8 Tables — drizzle-kit push
+  • schema source: drizzle-kit push from ./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts (drizzle.config.ts)

@@ -14,6 +14,8 @@
 
 import type { FlowDefinition } from '../../../../../shared/types/intelligence-questions.js';
 import { getDocumentTemplate } from '../../../market-specs/document-template-library.js';
+import { BIOMARKER_SELECTION_OPTIONS } from './protocol-development-biomarker-selection.js';
+import { orphanProgrammeLeaves, usOrphanDesignationField } from './ind-submission-orphan-designation.js';
 
 /** The IB body headings, from the platform's one IB outline ('investigators_brochure'). */
 const IB_BODY = (getDocumentTemplate('investigators_brochure')?.sections ?? []).map((sec) => `${sec.number}. ${sec.heading}`).join('; ');
@@ -309,17 +311,14 @@ export function createIndSubmissionFlow(): FlowDefinition {
             helpText:
               'Biologic products (monoclonal antibodies, gene therapies, cell therapies, vaccines) are regulated under Section 351 of the PHS Act and require a BLA rather than an NDA for marketing approval.',
           },
-          {
-            id: 'orphan_designation',
-            label: 'Has Orphan Drug Designation been granted or applied for?',
-            type: 'select',
-            options: [
-              { value: 'granted', label: 'Yes — Orphan Designation Granted' },
-              { value: 'applied', label: 'Applied — Pending Review' },
-              { value: 'not_applicable', label: 'No / Not Applicable' },
-            ],
-            helpText: 'Orphan Drug Act (21 CFR 316) provides incentives for rare diseases (<200,000 US prevalence).',
-          },
+          /* 2026-11-02 (S4): the positions every interview offers, written once
+             (ind-submission-orphan-designation.ts). This list offered granted,
+             applied and "No / not applicable", so a request still to be made,
+             or one FDA refused, had no position. */
+          usOrphanDesignationField({
+            helpText:
+              'Orphan-drug designation is granted under FD&C Act §526 (21 USC 360bb) and 21 CFR part 316 for a drug for a rare disease or condition: one affecting fewer than 200,000 persons in the US, or one for which there is no reasonable expectation that US sales would recover the cost of developing the drug and making it available. The request must be made before the marketing application.',
+          }),
           {
             id: 'fast_track_status',
             label: 'Expedited Program Designations',
@@ -718,6 +717,17 @@ export function createIndSubmissionFlow(): FlowDefinition {
             placeholder: 'e.g., Locally advanced or metastatic non-small cell lung cancer (NSCLC)',
             required: true,
           },
+          /* 2026-11-02 (S4): xn_oncology_no_biomarker_strategy read biomarker
+             ids no flow asked, and in the IND its triggers were not asked
+             either; so it never fired. */
+          {
+            id: 'is_oncology',
+            label: 'Is this an oncology indication?',
+            type: 'yes_no',
+            required: true,
+            helpText:
+              'Include haematologic malignancies. It decides whether AnA asks how patients are selected by biomarker. ICH S9 (2009) frames the nonclinical package for anticancer pharmaceuticals in patients with advanced cancer; it does not cover every oncology IND.',
+          },
           {
             id: 'first_study_phase',
             label: 'Phase of First Study',
@@ -740,6 +750,22 @@ export function createIndSubmissionFlow(): FlowDefinition {
               { value: 'patients', label: 'Patients with Target Disease' },
               { value: 'both', label: 'Both (e.g., separate PK and efficacy cohorts)' },
             ],
+          },
+          {
+            id: 'biomarker_strategy',
+            label: 'Patient selection by biomarker',
+            type: 'select',
+            required: true,
+            visibleWhen: {
+              allOf: [
+                { field: 'is_oncology', operator: 'eq', value: true },
+                { field: 'study_population', operator: 'neq', value: 'healthy_volunteers' },
+              ],
+            },
+            helpText:
+              "How the proposed study's population is defined with respect to a predictive biomarker. An investigational assay whose result decides eligibility or treatment assignment is generally not exempt under 21 CFR 812.2(c)(3); for an oncology trial its study-risk determination can be requested through this IND (FDA Guidance: Investigational In Vitro Diagnostics in Oncology Trials: Streamlined Submission Process for Study Risk Determination, 2019).",
+            options: [...BIOMARKER_SELECTION_OPTIONS],
+            allowOther: { prompt: 'How is the population defined with respect to a biomarker, in your own words?' },
           },
           {
             id: 'study_design_overview',
@@ -783,6 +809,58 @@ export function createIndSubmissionFlow(): FlowDefinition {
             type: 'textarea',
             placeholder: 'e.g., Safety and tolerability; maximum tolerated dose (MTD) determination; or ORR per RECIST v1.1',
             required: true,
+          },
+          /* 2026-11-02 (S4): xn_orphan_without_natural_history read
+             `natural_history` / `disease_natural_history`, asked by no flow, and
+             triggered on `expedited_designations` / `special_designations`, which
+             none of the four flows it applies to asks. Dead on both sides. The
+             gate is the rule's own predicate (orphanProgrammeLeaves). */
+          {
+            id: 'natural_history',
+            label: 'Natural-history evidence for this disease',
+            type: 'select',
+            required: true,
+            visibleWhen: { allOf: [{ anyOf: orphanProgrammeLeaves(['orphan_designation']) }, { field: 'ind_type_selection', operator: 'neq', value: 'emergency' }] },
+            helpText:
+              'For a rare disease, what is known of the untreated disease course informs the population, endpoints and assessment timing of the development programme (FDA draft guidance, Rare Diseases: Natural History Studies for Drug Development, March 2019). Choose the strongest source the programme relies on.',
+            options: [
+              {
+                value: 'prospective_study',
+                label: 'A prospective natural-history study, ongoing or completed',
+                commits:
+                  'Endpoints, timepoints and population are justified against its data. If it serves as a comparator, patient-level data collected with comparable eligibility, assessments and timing are needed.',
+                authority: 'FDA draft guidance, Rare Diseases: Natural History Studies for Drug Development (March 2019)',
+              },
+              {
+                value: 'retrospective_data',
+                label: "Retrospective data: a disease registry, chart review or earlier studies' patient-level data",
+                commits:
+                  "The data's relevance and reliability (provenance, completeness, variable and diagnostic definitions over the collection period) must be shown before they support design choices or a comparison.",
+                authority: 'FDA draft guidance, Rare Diseases: Natural History Studies for Drug Development (2019); FDA guidance, Real-World Data: Assessing Registries to Support Regulatory Decision-Making for Drug and Biological Products (2023; date to be verified)',
+              },
+              {
+                value: 'published_literature',
+                label: 'Published literature only (aggregate data)',
+                commits:
+                  'Endpoint and effect-size assumptions rest on aggregate published data, with no patient-level comparison available.',
+                authority: 'FDA draft guidance, Rare Diseases: Natural History Studies for Drug Development (2019)',
+              },
+              {
+                value: 'planned',
+                label: 'A natural-history study is planned but has not started',
+                commits:
+                  'Endpoint and sample-size assumptions stay provisional until its data exist. Raise it with FDA at a formal meeting before the pivotal design is fixed.',
+                authority: 'FDA draft guidance, Rare Diseases: Natural History Studies for Drug Development (2019)',
+              },
+              {
+                value: 'none',
+                label: 'No natural-history data identified',
+                commits:
+                  "The proposed study's endpoints and assessment timing have no characterised disease course behind them. AnA records this as a finding.",
+                authority: 'FDA draft guidance, Rare Diseases: Natural History Studies for Drug Development (2019); ICH E10 (2000) §2.5',
+              },
+            ],
+            allowOther: { prompt: 'What natural-history evidence does the programme rely on, in your own words?' },
           },
           {
             id: 'data_safety_monitoring',

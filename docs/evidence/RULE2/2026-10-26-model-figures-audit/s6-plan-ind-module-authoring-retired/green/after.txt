@@ -1,0 +1,13 @@
+# S6 green: the same test after the change. The 41-file neighbourhood (988 tests) also passes.
+
+ ✓ server/services/ana/__tests__/plan-ind-module-authoring-retired.test.ts > plan_ind_module_authoring is retired > has no handler: the one it had put the model’s figure into the plan 3ms
+ ✓ server/services/ana/__tests__/plan-ind-module-authoring-retired.test.ts > plan_ind_module_authoring is retired > is not offered to the model and has no definition 2ms
+ ✓ server/services/ana/__tests__/plan-ind-module-authoring-retired.test.ts > plan_ind_module_authoring is retired > is absent from the authorization register and the launch-scope inventory 3ms
+ ✓ server/services/ana/__tests__/plan-ind-module-authoring-retired.test.ts > plan_ind_module_authoring is retired > its module is gone 0ms
+ ✓ server/services/ana/__tests__/plan-ind-module-authoring-retired.test.ts > where it was offered, the record-composed 2.5 and 2.7 tools are > the IND interview ends in both, each a registered tool, and offers no draft from its answers 3ms
+ ✓ server/services/ana/__tests__/plan-ind-module-authoring-retired.test.ts > where it was offered, the record-composed 2.5 and 2.7 tools are > the IND chat is told to compose 2.5 and 2.7 from the records and to pass them no figures 1ms
+ ✓ server/services/ana/__tests__/plan-ind-module-authoring-retired.test.ts > where it was offered, the record-composed 2.5 and 2.7 tools are > no platform skill names it; the IND, 2.5 and 2.7 skills route to the record tools 102ms
+ ✓ server/services/ana/__tests__/plan-ind-module-authoring-retired.test.ts > where it was offered, the record-composed 2.5 and 2.7 tools are > no program phase offers it; the phase that produces the pivotal CSRs offers the record tools 1ms
+ ✓ server/services/ana/__tests__/plan-ind-module-authoring-retired.test.ts > what it held that the record tools lack is carried over > its 2.7 headings: get_document_template serves the record’s 2.7 outline, headed as the record titles it 224ms
+ Test Files  1 passed (1)
+      Tests  9 passed (9)

@@ -23,7 +23,27 @@ vi.mock('../navEntitlements', async original => {
 
 import { ReportEngine } from '../surfaces/ReportEngine';
 import { Biostatistics } from '../surfaces/Biostatistics';
-import { BiostatWorkbench } from '../surfaces/BiostatWorkbench';
+import { isStatisticalSave, statisticalSaveReceipt } from './_statistical-handoff-fixture';
+import { DefensibilitySection, DesignCalculatorsSection } from '../surfaces/BiostatWorkbench';
+import { C2CToast, useToast } from '../toast';
+
+/* `BiostatWorkbench` was a registered surface until 2026-11-09, when the merge
+   `docs/SURFACE_CONSOLIDATION_2026-08.md` §5 decided ("Survivor: biostatistics.
+   Fold the workbench in as a tab") was carried out. Its two capabilities are
+   now sections of the one Biostatistics surface. This harness composes them
+   exactly as `surfaces/Biostatistics.tsx` does — same components, same toast —
+   so every case below still exercises the real thing. */
+function BiostatWorkbench(p: { onNav?: (id: string) => void }) {
+  const [toast, fireToast] = useToast();
+  return (
+    <div className="page-inner" data-work-area="biostatistics">
+      <DefensibilitySection fireToast={fireToast} />
+      <DesignCalculatorsSection fireToast={fireToast} onNav={p.onNav} />
+      <C2CToast msg={toast} />
+    </div>
+  );
+}
+
 import { PvCockpit } from '../surfaces/PvCockpit';
 import { CmChange } from '../surfaces/CmcModule';
 import { CmQuality } from '../surfaces/CmcQuality';
@@ -119,7 +139,7 @@ const BOARD = {
   meta: { projectId: PROGRAM, portfolioProvisioned: true, sectionsProvisioned: null, generatedAt: '2026-10-16T12:00:00Z' },
 };
 function authoringCalls() {
-  return apiRequest.mock.calls.filter(([method, url]) => method === 'POST' && String(url).startsWith('/api/authoring/'));
+  return apiRequest.mock.calls.filter(([method, url, body]) => method === 'POST' && (String(url).startsWith('/api/authoring/') || isStatisticalSave(url, body)));
 }
 function specialistResponse(method: string, url: string): Response | Promise<Response> {
   if (url.startsWith('/api/cmc/module3-board')) return json(200, { success: true, data: BOARD });
@@ -160,6 +180,14 @@ beforeEach(async () => {
   sectionReply = () => sectionReceipt(sectionCode);
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string, body?: Record<string, unknown>) => {
+    if (method === 'POST' && isStatisticalSave(url, body)) {
+      const response = await createReply();
+      if (!response.ok) return response;
+      const payload = await response.clone().json();
+      if (payload.success !== true || !payload.document) return response;
+      const receipt = statisticalSaveReceipt(body, payload.document.id, { organizationId: 8, governance: payload.governance });
+      return json(response.status, { ...receipt, ...(payload.governance ? {} : { governance: undefined }) });
+    }
     if (method === 'POST' && url === '/api/authoring/docs') return createReply();
     if (method === 'POST' && url === '/api/authoring/sections') {
       sectionCode = String(body?.code); return sectionReply();
@@ -285,10 +313,10 @@ describe('Biostatistics distinguishes saved working documents from filed documen
     createReply = () => docReceipt(bound);
     render(<Biostatistics {...props('biostatistics')} />);
     await waitFor(() => expect(document.querySelector('.bs-doc-render')?.textContent).toContain('Sample Size Rationale'));
-    fireEvent.click(screen.getByRole('button', { name: 'File it to the dossier' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save the example as a working document' }));
     await waitFor(() => expect(document.querySelector('.de-toast')).not.toBeNull());
     const message = document.querySelector('.de-toast')?.textContent ?? '';
-    expect(authoringCalls()).toHaveLength(2);
+    expect(authoringCalls()).toHaveLength(1);
     expect(message).toMatch(/saved/i);
     expect(message).not.toMatch(/filed to the dossier/i);
     if (bound === false) expect(message).toContain('Not bound to a filing');
@@ -351,7 +379,7 @@ describe('other existing specialist controls use the exact editor target', () =>
     const onNav = vi.fn(() => targets.push(consumeEditorTarget()));
     render(<Biostatistics {...props('biostatistics', onNav)} />);
     await waitFor(() => expect(document.querySelector('.bs-doc-render')?.textContent).toContain('Sample Size Rationale'));
-    fireEvent.click(screen.getByRole('button', { name: 'Open in document editor' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Copy example to editor' }));
     await waitFor(() => expect(onNav).toHaveBeenCalledWith('document-authoring'));
     expect(targets[0]).toMatchObject({ docId: DOC_ID, programId: PROGRAM, sectionCode: 'sample_size_rationale' });
   });
@@ -359,7 +387,7 @@ describe('other existing specialist controls use the exact editor target', () =>
 });
 
 async function calculatorInsert() {
-  render(<BiostatWorkbench {...props('biostat-workbench')} />);
+  render(<BiostatWorkbench {...props('biostatistics')} />);
   for (const [label, value] of [[/Prior mean effect/, '0.4'], [/^Prior SD/, '0.15'], [/^n per arm/, '120']] as const) {
     fireEvent.change(screen.getByLabelText(label), { target: { value } });
   }

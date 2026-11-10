@@ -15,15 +15,13 @@ import { ProjectSide } from '../surfaces/ProjectSide';
 
 afterEach(() => cleanup());
 
-const dossier = { state: { loading: true, data: null }, retry: () => {} } as never;
-
-describe('Author side column: no selected project', () => {
+describe('Project knowledge: no selected project', () => {
+  /* D3-2a: Memory and Instructions are one card, "What AnA knows", which says once that it cannot read. */
   it('offers no profile absence claim or request without a current project', () => {
-    render(<ProjectSide pid={null} dossier={dossier} copyFor={() => ({ kind: 'none' })} onOpenDoc={() => {}} />);
-    for (const name of ['Memory', 'Instructions']) {
-      const card = screen.getByRole('heading', { name }).closest('section') as HTMLElement;
-      expect(within(card).getByText('Select a project and sign in to read its saved profile context.')).toBeTruthy();
-    }
+    render(<ProjectSide pid={null} records={{ data: null, loading: false, empty: false }} />);
+    const card = screen.getByRole('heading', { name: 'What AnA knows' }).closest('section') as HTMLElement;
+    expect(within(card).getAllByText('Select a project and sign in to read its saved profile context.')).toHaveLength(1);
+    expect(screen.queryByRole('heading', { name: 'Records' })).toBeNull();
     expect(screen.queryByText(/No project memory yet/)).toBeNull();
     expect(screen.queryByText(/No custom instructions yet/)).toBeNull();
     expect(screen.queryByText('No saved intelligence profile for this project.')).toBeNull();

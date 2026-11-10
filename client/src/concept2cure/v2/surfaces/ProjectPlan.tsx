@@ -13,7 +13,14 @@
  *   · a device or diagnostic filing: its workstreams (ProjectMdxWorkflow, which
  *     sat above the steps until this pass), each opening its existing feature.
  * Each item can be assigned to a person with a due date (PlanAssign.tsx), and
- * the team and the project's tasks follow, moved here from Author.
+ * the project's tasks follow, moved here from Author. The team left Plan on 2026-11-06 (D3-3): it is the
+ * Team card in Project knowledge, on every step, and the Team drawer it opens.
+ *
+ * S11 step 4 (THE_PROGRAM §3.5, §8): the step opens with what is due for the
+ * signed-in person in this project's plan, and each IND document says the
+ * work-breakdown task that produces it, with that task's due date and owner
+ * (the content plan joined to the work). The project's pyramid is read once
+ * here (useProjectPyramid) and shared with the Program plan below.
  *
  * A filing with neither plan says so and where its documents are; it is not
  * given an invented list.
@@ -21,16 +28,14 @@
 import React, { useState } from 'react';
 import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
-import { applySurfaceAction } from '../surfaceActions';
-import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { IndFilingPlan } from '../editor/IndDocumentLibrary';
 import { ProjectMdxWorkflow, mdxProjectPlan, type MdxWorkflowProject } from './ProjectMdxWorkflow';
-import { AssignAction, AssignmentLine, usePlanAssignments, type PlanDeliverable } from './PlanAssign';
-import { ComingLater } from './ProjectComingLater';
+import { AssignAction, AssignmentLine, DueForYou, planDueFor, usePlanAssignments, type PlanDeliverable } from './PlanAssign';
+import { useAuthUser } from '@/services/portal/authService';
 import { STEP_DOORS } from '../projectDoors';
 import { biotechPlanEntry, ProjectBiotechPlan } from './ProjectBiotechPlan';
 import { FilingLifecycleReference } from './FilingLifecycleReference';
-import { ProjectCoreWork } from './ProjectCoreWork';
+import { ProducedBy, producingTask, ProjectProgramPlan, useProjectPyramid } from './PyramidProject';
 
 /** The features a US IND phase is composed in, when they serve this project. Each opens on the open project, and
  *  is named as the same job is named wherever its door appears (projectDoors.ts). */
@@ -49,38 +54,10 @@ function IndPhaseDoor({ phaseId, usInd, cmcComposes, available, onNav, onStage }
   return <div className="pj-plan-door"><button type="button" className="btn ghost" onClick={door.act}>{door.label} {I.right}</button></div>;
 }
 
-/* ════ Your tasks on this project ══════════════════════════════════════════
-   ONE_ANA_ONE_CANVAS.md slice 24; on Plan since pass 3 (moved from Project
-   home). The program's tasks and approvals are listed just above it (ProjectWorkPanel, read by the program UUID through
-   the server's anchor). The signed-in person's own tasks are not filtered to
-   this project yet (slice 5); this says so in one line and links to them.
-   This section said "Tasks & submission readiness aren't wired"; the dispatch
-   readiness is on the Submit stage now. It was named "My work" until slice A.1
-   (section 9: Tasks is the place, "Your tasks" the section).
-
-   Its door opens Tasks on the signed-in person's own tasks, asked of the board
-   through the same validated action bus (tasking.filter, mine), not the board
-   on everyone's. */
-function MyWorkLine({ onNav, available }: { onNav: (id: string) => void; available: (id: string) => boolean }) {
-  const openMyWork = () => {
-    const res = resolveSurfaceAction('tasking.filter', { mine: 'true' });
-    if (res.ok) applySurfaceAction(res.directive, () => onNav('tasks'));
-    else onNav('tasks');
-  };
-  return (
-    <section className="pj-sec" aria-labelledby="pj-mywork-h">
-      <div className="pj-sec-h">
-        <h2 id="pj-mywork-h">{STEP_DOORS.yourTasksHeading}</h2>
-        {available('tasks') && (
-          <button type="button" className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={openMyWork}>
-            {STEP_DOORS.yourTasks} {I.right}
-          </button>
-        )}
-      </div>
-      <p className="pj-desc">Your tasks are not filtered to this project yet. Tasks lists them for every project.</p>
-    </section>
-  );
-}
+/* "Your tasks" was a section here that listed none: it said the person's own
+   tasks were not filtered to this project and linked to Tasks for every
+   project. Removed 2026-10-31. This project's tasks are the Tasks section above
+   (ProjectWorkPanel, read by the program UUID through the server's anchor). */
 
 const DATE = { year: 'numeric', month: 'short', day: 'numeric' } as const;
 /** The recorded date, as recorded: the column is a date stored as midnight with no zone, so its date part is
@@ -91,8 +68,37 @@ function targetWords(iso: string | null | undefined): string {
   return d && Number.isFinite(d.getTime()) ? `Target submission ${d.toLocaleDateString(undefined, { ...DATE, timeZone: 'UTC' })}` : 'No target submission date recorded';
 }
 
+/** Under the work breakdown's workstreams, for a device plan: its own workstreams (above) carry no work-breakdown key,
+ *  so they are not counted in these, and the plan says so rather than guessing a mapping. */
+function deviceWorkstreamNote(devicePlan: unknown): string | undefined {
+  return devicePlan ? 'The device workstreams above are listed by their own items, which have no work-breakdown key, so they are not counted in these workstreams.' : undefined;
+}
+
+/**
+ * The Plan step's shared reads: the plan's tasks (once, for assignments, owners and what is due for the person) and
+ * the project's pyramid (once, for the content plan's join and the Program plan). A deliverable's line says who it is
+ * assigned to and, for an IND document, the work-breakdown task that produces it.
+ */
+function usePlanReads(pid: string, prog: { target_submission_date?: string | null } | null, epoch: number) {
+  const assignments = usePlanAssignments(pid, epoch);
+  const user = useAuthUser();
+  const pyramid = useProjectPyramid(pid, prog?.target_submission_date ?? null);
+  const assignmentOf = (id: string) => {
+    const found = assignments.byDeliverable.get(id);
+    if (!found && !producingTask(id, pyramid.data)) return null;
+    return <>
+      {found && <AssignmentLine assignment={found} />}
+      <ProducedBy deliverableId={id} read={pyramid.data} owners={assignments.byPyramidTask} />
+    </>;
+  };
+  // Whose tasks they are is the session's, never guessed: no signed-in person, no list.
+  const dueForYou = user?.id == null ? null
+    : <DueForYou items={planDueFor(assignments.rows, pid, user.id)} unread={Boolean(assignments.error)} />;
+  return { assignments, pyramid, assignmentOf, dueForYou };
+}
+
 export function ProjectPlan({ pid, prog, usInd, cmcComposes, deviceFiling, otherFilings, marketsState, projectId,
-  available, onNav, onStage, onAsk, onOpenDocument, team, tasks }: {
+  available, onNav, onStage, onAsk, onOpenDocument, onWorkChanged, tasks }: {
   pid: string;
   /** The verified project read (ProjectHome `prog`), for the device plan and the target date. */
   prog: (MdxWorkflowProject & { target_submission_date?: string | null; registry_id?: string | null; submission_type_id?: string | null }) | null;
@@ -108,18 +114,16 @@ export function ProjectPlan({ pid, prog, usInd, cmcComposes, deviceFiling, other
   onStage: (id: string) => void;
   onAsk: (text: string) => void;
   onOpenDocument: (docId: string) => void;
-  team: React.ReactNode;
+  /** The page's unified-work read is read again after an assignment (D3-2b: it is lifted, so a remount no longer re-reads it). */
+  onWorkChanged?: () => void;
   tasks: React.ReactNode;
 }) {
   const [epoch, setEpoch] = useState(0);
-  const assignments = usePlanAssignments(pid, epoch);
-  const assignmentOf = (id: string) => {
-    const found = assignments.byDeliverable.get(id);
-    return found ? <AssignmentLine assignment={found} /> : null;
-  };
+  const assigned = () => { setEpoch(value => value + 1); onWorkChanged?.(); };
+  const { assignments, pyramid, assignmentOf, dueForYou } = usePlanReads(pid, prog, epoch);
   const assignAction = (deliverable: PlanDeliverable) => (
     <AssignAction deliverable={deliverable} programId={pid} projectId={projectId} assigned={assignments.byDeliverable.has(deliverable.id)}
-      onAssigned={() => setEpoch(value => value + 1)} />
+      onAssigned={assigned} />
   );
   const devicePlan = deviceFiling && prog ? mdxProjectPlan(prog, otherFilings) : null;
   const biotech = biotechPlanEntry(prog, pid);
@@ -130,7 +134,9 @@ export function ProjectPlan({ pid, prog, usInd, cmcComposes, deviceFiling, other
   );
   return (
     <div className="pj-stagebody" data-testid="pj-plan">
-      {prog?.id === pid && <ProjectCoreWork key={pid} programId={pid} cmcComposes={cmcComposes} available={available} onNav={onNav} />}
+      {/* What is due for the person, first (THE_PROGRAM §8 item 2). Only for a signed-in person: whose tasks they are
+          is the session's, never guessed. */}
+      {prog && dueForYou}
       {!prog ? (
         /* The project record is still being read: which plan applies is not known yet. */
         <EmptyState busy icon={I.fileText} title="Reading this project…" />
@@ -168,12 +174,15 @@ export function ProjectPlan({ pid, prog, usInd, cmcComposes, deviceFiling, other
           <div className="pj-plan-door"><button type="button" className="btn ghost" onClick={() => onStage('author')}>{STEP_DOORS.filingDocuments} {I.right}</button></div>
         </section>
       )}
-      {prog && <FilingLifecycleReference filingId={prog.submission_type_id} recorded={{ programType: prog.program_type, primaryAgency: prog.primary_agency }} />}
-      {team}
-      {/* Read again after each Assign, so the new task is listed without a reload. */}
+      {/* The filing's work breakdown with this project's progress (S11): beside what the filing needs, the work
+          that produces it, phase by phase, with its critical path. */}
+      {prog && <ProjectProgramPlan programId={pid} read={pyramid} projectId={projectId} workstreamNote={deviceWorkstreamNote(devicePlan)} owners={assignments.byPyramidTask}
+        ownersUnread={Boolean(assignments.error)} onAssigned={assigned}
+        onNav={onNav} onAsk={onAsk} />}
+      {/* Tasks and approvals, by due date, before the reference (D3-4, D3.md §4.7 Plan item 1). Read again after each
+          Assign, so the new task is listed without a reload. */}
       <React.Fragment key={epoch}>{tasks}</React.Fragment>
-      <MyWorkLine onNav={onNav} available={available} />
-      <ComingLater stage="plan" device={deviceFiling} />
+      {prog && <FilingLifecycleReference filingId={prog.submission_type_id} recorded={{ programType: prog.program_type, primaryAgency: prog.primary_agency }} />}
     </div>
   );
 }

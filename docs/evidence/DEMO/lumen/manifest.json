@@ -1,0 +1,94 @@
+{
+  "pack": "lumen",
+  "prefix": "[Demo · Lumen]",
+  "outcome": "seeded_unqualified",
+  "browserQualification": "not_executed",
+  "startedAt": "2026-11-01T16:06:52.325Z",
+  "records": {
+    "target": {
+      "baseUrl": "http://127.0.0.1:5000",
+      "userId": "1",
+      "organizationId": "1",
+      "clientWorkspaceId": null
+    },
+    "preflight": {
+      "session": "verified",
+      "projects": "readable",
+      "tasking": "readable",
+      "taskCount": 27,
+      "browser": "not_executed",
+      "plan": {
+        "tier": "enterprise",
+        "locked": [],
+        "changedTo": null
+      }
+    },
+    "tally": {
+      "created": {},
+      "found": {
+        "client-workspace": 1,
+        "program": 4,
+        "vault-document": 5,
+        "task": 10,
+        "study-design": 1,
+        "cmc-spec": 5,
+        "cmc-stability": 2,
+        "cmc-batch": 3,
+        "plan-document": 4,
+        "data-room-source": 1,
+        "agency-communication": 1
+      }
+    },
+    "client": {
+      "name": "Lumen Bioscience (demo — not affiliated)",
+      "slug": "lumen-bioscience-demo",
+      "id": 3
+    },
+    "projects": {
+      "LMN-201": {
+        "code": "LMN-201",
+        "title": "[Demo · Lumen] LMN-201 — prevention of recurrent C. difficile infection (IND)",
+        "id": "94223e96-6cd8-4f3e-80c3-85745b1434b5"
+      },
+      "LMN-801": {
+        "code": "LMN-801",
+        "title": "[Demo · Lumen] LMN-801 — oral hormone protein for weight loss (IND)",
+        "id": "6cb0f780-0d47-4d38-8188-1b2a77cdb111"
+      },
+      "LMN-301": {
+        "code": "LMN-301",
+        "title": "[Demo · Lumen] LMN-301 — intranasal biologic for viral respiratory infection (IND)",
+        "id": "8def3781-5390-4bc6-a344-85a147aebb9f"
+      },
+      "LMN-401": {
+        "code": "LMN-401",
+        "title": "[Demo · Lumen] LMN-401 — antibody cocktail for travelers' diarrhea (pre-IND)",
+        "id": "049c6723-12cd-471d-b00d-8135b1636d02"
+      }
+    },
+    "approvalLetter": {
+      "title": "[Demo] FDA approval letter (fictional) - LMN-201 BLA 761901.txt",
+      "sourceId": 157,
+      "eventId": "ace_1793510204507_ca0d5511",
+      "proposals": {
+        "questions": 0,
+        "commitments": [
+          "4710-1",
+          "4710-2",
+          "4710-3",
+          "4710-4"
+        ],
+        "commitmentsRecorded": 3
+      }
+    },
+    "summary": {
+      "created": 0,
+      "found": 37
+    }
+  },
+  "notes": [
+    "Lumen Bioscience demonstration built from public information (data/seeds/lumen-demo). Not affiliated with Lumen Bioscience, Inc.; every specification, stability result, batch, planning assumption and task is illustrative.",
+    "The LMN-201 approval letter (BLA 761901) is FICTIONAL: not issued by FDA, LMN-201 is not approved, and no Lumen Bioscience authorization is represented. It is addressed to the demonstration's fictional sponsor."
+  ],
+  "finishedAt": "2026-11-01T16:07:01.018Z"
+}

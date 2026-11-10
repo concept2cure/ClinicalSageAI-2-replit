@@ -36,12 +36,12 @@ Primitives (Button, Badge, Input, Textarea, Card, Dialog, Tabs, Select, Alert, T
 **Voice is reviewer-grade, not marketing-grade.** The product speaks to regulatory professionals whose work is audited under 21 CFR Part 11 / GxP. Every string must feel factual enough to survive an FDA inspection.
 
 - **Second person, direct.** "You". Avoid "we" unless referring to the company.
-- **Sentence case everywhere** — titles, headings, buttons, menu items. Never Title Case. Never ALL CAPS except 10px metadata labels.
+- **Sentence case everywhere** — titles, headings, buttons, menu items, labels, chips and table headers. Never Title Case. Never ALL CAPS. No stylesheet uppercases text (`client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts`). The guard allows one rule, `.rd-chip::first-letter`, which capitalises only a chip's first letter so that a printed value reads in sentence case. Text that must read in capitals, such as an agency acronym or a code, is written in capitals. Title Case is the target too: 25 `text-transform: capitalize` rules remain in 12 sheets (2026-11-09), held so the count only falls (`client/src/concept2cure/v2/__tests__/foundationsReadmeClaims.test.ts`).
 - **Active voice, specific verbs.** "Draft Section 2.5", not "Let's get started with drafting!".
 - **No exclamation marks. No emoji.** Ever. Not in UI, not in copy, not in empty states. Emoji in a regulatory tool reads as unprofessional and will break client trust.
 - **No cheerleading.** No "", "Awesome!", "You're all set!". The system never celebrates — it confirms.
 - **No "Are you sure?"**. Trust the user. Destructive actions get a calm confirmation dialog with a clear action label, not a panicked one.
-- **Status is factual.** "Drafting", "In review", "Approved", "Blocked", "Locked", "Ready" — these are the workflow states, and they appear as quiet stone-colored pills, not neon badges.
+- **Status is factual.** "Drafting", "In review", "Approved", "Blocked", "Locked", "Ready" — these are the workflow states, and they appear as quiet chips (`.rd-chip`), not neon badges.
 - **Microcopy is specific.** Empty states describe what will appear, not "Nothing here yet!". Errors say what failed and what to try — never "Oops!" or "Something went wrong".
 - **Time-of-day greeting is the only warmth.** "Good morning, {firstName}" on the home surface — once, subtle, no follow-up fluff.
 - **Numbers over adjectives.** "Reviewed by 12 reviewers across 4 agencies" beats "comprehensively reviewed".
@@ -68,47 +68,62 @@ Seed content is drawn from `config/domain-prompts.ts` — 106 prompts across 19 
 **Calm, intelligent, restrained.** A reviewer's desk, not a marketing site. Warm cream paper, terracotta ink for actions, olive for approval, amber for review. The visual vocabulary is *Anthropic Claude* — intentional; the product openly claims inspiration.
 
 ### Color
-- **Canvas** is warm cream `#faf9f5`, not white. White is reserved for *elevated* surfaces (cards, popovers). This single decision sets the whole tone.
+- **Canvas** is warm cream `#faf9f5`, not white. Cards sit on it with a hairline. White (`--canvas-elevated`) is reserved for what floats: the composer, menus and dialogs. This single decision sets the whole tone.
 - **Accent** is terracotta `#d97757` — used sparingly, only for the primary call-to-action, brand marks, and focus rings. Never decoratively.
 - **AI persona** is a muted blue `#6a9bcc` — used exclusively for the AnA assistant avatar, typing dots, and assistant message bubbles.
-- **Status** colors are earthy, never saturated: olive success `#788c5d`, warm amber warning `#d97706`, muted red error `#dc3545`.
+- **Status** colors are earthy, never saturated: olive `--success` (`#5e6d49`), amber `--warning` (`#955d22`), red `--error` (`#b63939`). Each clears 4.5:1 on the page and on its own `--*-muted` fill, which is the chip's (`scripts/ci/check-token-contrast.mjs`). Status colour always sits beside its words or an icon.
 - **Neutrals** are *stone*, not gray — warm undertone. 11 steps from `#ffffff` to `#141413`. Text default is `#141413` (near-black, never `#000`).
 - **Gradients** exist but are reserved for the logo / icon mark (blue→darker-blue with gold DNA helix). Never used for backgrounds of cards, buttons, or sections.
 
 ### Type
-- **Chrome** (buttons, menus, labels, nav) — system sans (`-apple-system, Inter, …`). Deliberate: chrome disappears.
-- **Long-form reading** (chat response, editor) — serif (`Lora` in the web client, `Georgia` in ProseMirror). Brings gravitas.
-- **Mono** — `JetBrains Mono` for code, IDs, citations.
-- **Size is tiny.** `text-lg` (18px) is the *max* title size outside marketing. Body is 13px. Metadata is 10px uppercase tracking-wider. Never shout.
-- **Weight** tops at 600. 700+ is forbidden in chrome.
+- **Chrome** (buttons, menus, labels, nav) — the system sans (`--font-sans`: `system-ui, -apple-system, …`). Deliberate: chrome disappears.
+- **Long-form reading** (AnA's answers, the document, page titles) — the serif (`--font-serif`: Lora). Brings gravitas.
+- **Mono** — JetBrains Mono (`--font-mono`), only for a regulatory code the person reads (CTD §3.2.S.4.1, a sequence number), never for an internal id.
+- **The root is 14px.** `.c2c-v2` sets `font-size: var(--fs-body); line-height: 1.5` (`client/src/concept2cure/v2/styles/app-v2.css`). The `--fs-*` tokens below are declared once, in `colors_and_type.css` §3, and `app-v2.css` declares none. Every size being a token is the target, not yet the fact: 1,200 `font-size` literals of 9–11.5px remain in 29 sheets (2026-11-09), held so the count only falls (`client/src/concept2cure/v2/__tests__/foundationsReadmeClaims.test.ts`).
+
+| Token | Size / line-height | Family, weight | Use |
+|---|---|---|---|
+| `--fs-greeting` | 32px / 1.2 | Lora 400 | The Home greeting (D1). Declared; no rule reads it yet. |
+| `--fs-title` | 26px / 1.25 (22px at 640px and under) | Lora 500, −0.01em | Page title (`.ph-title`): Projects, a project, every work area |
+| `--fs-section` | 15px / 1.4 | sans 600 | Section heading (`.pj-sec-h h2`) |
+| `--fs-body` | 14px / 1.5 | sans 400 | UI body, the root of `.c2c-v2`, `p`, inputs, tabs |
+| `--fs-small` | 13px / 1.5 | sans 400–500 | Secondary lines, table cells, buttons, labels |
+| `--fs-caption` | 12px / 1.4 | sans 400–500 | Chips, timestamps, table headers. **The floor:** no new text below 12px; the remaining literals are ratcheted down |
+| `--fs-prose` | 16px / 1.65 | Lora 400 | AnA's prose (`.prose-reading`) and documents (`.doc-content`, 1.7) |
+
+- **Weight** stops at 600. 700+ is forbidden in chrome.
+- **No uppercase and no positive letter-spacing on labels.** A label is quiet by colour (`--text-300`), not by case.
+- The specimen is `preview/type-body.html`.
 
 ### Spacing, radius, borders
 - **4px grid.** Tokens: 2/4/6/8/12/16/20/24/32/40/48/64/80.
-- **Radius**: 6px (chips) / 8px (buttons, inputs) / 12px (cards) / 16px (chat composer, large panels) / 24px (dialogs) / full (avatars, pills).
-- **Borders are barely visible** — `#e8e6dc` or `#f4f3ee`. The content is the interface; frames don't compete with it.
+- **Radius**: 6px chips (`--radius-md`) / 8px buttons, inputs and tabs' focus (`--radius-lg`) / 10px the segmented track, its items 8px / 12px cards, menus and the artifact panel (`--radius-xl`) / 16px the centered dialog (`--radius-2xl`) / 20px the composer / full (avatars).
+- **Borders are barely visible** — `--border` (`#dad9d4`) for hairlines, `--border-strong` on a hover. A control's edge is `--border-control` (`#7f7d75`), which clears 3:1; the composer rests on it too (D0.md §8.4). The content is the interface; frames don't compete with it.
 
 ### Shadows & elevation
-- Warm, subtle, never dramatic. All shadows use `rgb(20 20 19 / 0.05)` max. A card lifts 1–2px on hover, never more.
+- Warm, subtle, never dramatic. Cards have none: a hairline only, and they do not lift on hover (38 `:hover` rules still declare a transform, 2026-11-09; see *Animation & motion*).
+- The composer: `0 1px 2px rgb(20 20 19 / .04), 0 6px 20px -8px rgb(20 20 19 / .10)`; in dark, `rgb(0 0 0 / .30)` and `/ .45`. Menus, dialogs and drawers: `--v2-shadow-lg` (`app-v2.css`).
 - No colored drop-shadows. No inner shadows except `inset 0 2px 4px` on form fields if at all.
-- `--shadow-glow` (terracotta 10% alpha, 20px) exists only for the primary button `:focus` and the chat composer `:focus-within`.
+- No glow. `--shadow-glow` is still declared and no v2 stylesheet uses it: focus is an edge, never a glow (see *Hover / press / focus*).
 
 ### Backgrounds
 - **Solid**, flat, warm cream. No patterns. No textures. No illustrations. No gradient meshes.
-- Sidebar is `--canvas-muted` (`#f4f3ee`); page is `--canvas` (`#faf9f5`); cards are `--canvas-elevated` (`#ffffff`). That 3-layer shift does all the work.
+- The rail and quiet fills are `--bg-100` (`#f0eee6`); the page and cards are `--bg-000` (`#faf9f5`); the composer, menus and dialogs are `--canvas-elevated` (`#ffffff`, `#30302e` in dark). That 3-layer shift does all the work.
 
 ### Animation & motion
 Per the `motion-discipline` skill: **200ms ease-out by default. No bounce. No spring. No overshoot.**
-- `transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1)` is the global default.
-- Entrances: fade + 4–8px slide-up, 200ms.
+- A transition is `var(--dur)` (200ms) with `var(--ease)` (`cubic-bezier(0, 0, 0.2, 1)`), on the properties it changes, never `all`. 110 transitions still name `var(--dur)` without `var(--ease)` (2026-11-09); the count only falls (`client/src/concept2cure/v2/__tests__/foundationsReadmeClaims.test.ts`).
+- Entrances: fade + 4–16px of slide, 200ms.
 - `prefers-reduced-motion` kills all animation to 1ms.
 - Typing dots on AnA use a 2s pulse — the only rhythmic motion in the product.
-- Buttons: no scale on hover. Avatars: no scale. Cards: 1px translateY(-1px). That is the entire motion vocabulary.
+- Nothing new moves on hover: no `transform`, no scale, no lift, on buttons, cards or avatars. A hover changes fill, edge or ink only. 38 older `:hover` rules still declare a transform (2026-11-09); the count only falls (`client/src/concept2cure/v2/__tests__/foundationsReadmeClaims.test.ts`).
 
 ### Hover / press / focus
 - **Hover**: background shifts one stone step darker (`--canvas` → `--canvas-muted`), or ink lightens one step. Never opacity-based.
 - **Press** (buttons): no visible down-state beyond `:active` darker-bg. No scale.
-- **Focus**: 2px offset outline in `--accent` for keyboards; or `box-shadow: 0 0 0 3px var(--accent-subtle)` for form fields. Never removed.
-- **Disabled**: `opacity: 0.5; pointer-events: none;`. Always.
+- **Focus**: a button takes a 2px `--accent-200` outline, offset 2px. A field shows **one** ring: its own `--border-focus` edge plus a 3px `--accent-000` halo, and the global outline steps aside. The composer shows its `--border-focus` edge alone. Never removed.
+- **Disabled**: a primary turns grey and stays opaque (`--bg-200` fill, `--text-400` ink; D0.md §8.2), so it is never read as the view's one orange action; any other button at `opacity: .5` with `cursor: not-allowed`; a field at `.6`; the composer's send button at `.4`.
+- **Touch**: on a coarse pointer, tabs, segmented items, the composer's send and a drawer's close reach 44px (D0.md §8.5).
 
 ### Iconography
 See **ICONOGRAPHY** section below.
@@ -123,16 +138,58 @@ See **ICONOGRAPHY** section below.
 - The brand icon is a blue-gradient rounded square with a gold DNA helix. It is the only piece of "art" in the product.
 
 ### Cards
-- Background `#ffffff` on a `#faf9f5` canvas. Border `1px solid #f4f3ee` (almost invisible). Radius `12px` (`--radius-lg`). Shadow `--shadow-xs` resting; `--shadow-sm` on hover, with `translateY(-1px)`. Padding `1.5rem`.
+- `.pj-card`: `--bg-000`, a 1px `--border` hairline, radius 12px (`--radius-xl`), padding 16px, no shadow and no header band (`.pj-card-h` is a title row inside the card's own padding). A clickable card's hover is `--bg-050` with a `--border-strong` edge. It does not move. The specimen is `preview/components-cards.html`.
 
 ### Layout rules
 - **Chat-first**: composer fixed at bottom when active; conversation scrolls above. Content column capped at `--content-max: 768px` — no full-bleed text.
-- **Thin icon rail** (56px collapsed, 260px expanded) is the one nav authority. No second sidebar ever.
+- **Thin icon rail** (56px collapsed, 264px expanded) is the one nav authority. No second sidebar ever.
 - **Topbar** is 48px — thin, never larger.
 - **Mobile**: panels become fixed overlays on small screens (no nested scroll).
 
 ### Density
 Professional tool, not a consumer app. Rows compact (`h-8` to `h-10` list items). Every element earns its space. No decorative whitespace padding on professional surfaces.
+
+---
+
+## Canonical classes
+
+Each primitive has one definition, in `client/src/concept2cure/v2/styles/app-v2.css` (the block headed `D0 foundations`). The `.de` drawer family and the toast are the exception: they live in `journey-v2.css`. `__tests__/foundationsOneDefinition.test.ts` holds each primitive it lists to one stylesheet. A retired name is an alias inside the canonical rule's `:is()` list, so the screens that still use it look right meanwhile. It may only lose uses: `__tests__/foundationsRetiredRatchet.test.ts` fails if a count rises. When a count reaches zero, the alias leaves the CSS in the same commit. The owner of each file and its package are in `.design/claude-convergence/D0.md` §4.7.
+
+| Canonical, use this | Retired: never add a use; owners rename theirs | Defined in |
+|---|---|---|
+| Page header: `.ph` · `.ph-eyebrow` (a quiet context line) · `.ph-title` · `.ph-sub` · `.ph-acts` | `.sp-head` / `.sp-eyebrow` / `.sp-title` / `.sp-state`, `.reg-head` / `.reg-eyebrow` / `.reg-title` / `.reg-sub`, `.cm-head` / `.cm-kicker` / `.cm-title`, `.surface-head` / `.surface-kicker`, `.pj-eyebrow`, and inline `style={{display:'flex',gap:8}}` wrappers around header actions | `app-v2.css` |
+| A dynamic context line keeps its text in `.ph-sub` (a document kind and version, an organization's name). A static category label is deleted: the breadcrumb and the rail already say where you are. | Static eyebrows such as "Workspace" and "Project — collaboration" | — |
+| Buttons: `.btn.primary` (one per view) · `.btn.ghost` · `.btn` · `.btn.small` | `.reg-cta`, `.landing-newproj`, `.btn.sm` | `app-v2.css` |
+| Tabs: `.tabs` / `.tab` (with `role="tab"` and `aria-selected`) | `.reg-tabs` / `.reg-tab`, `.sc-ws`, `.cc-tab`, `.rbm-tabs`, `.ml-tab`, `.pd-tab`, `.ra-tab`, `.rl-tab`, `.adm-tab`, `.company-tabs`, `.rpk-tab`, `.cl-tab`, `.qms-tabbar`. (`.cm-subtab` has gone.) | `app-v2.css` |
+| Segmented control: `.seg` / `.seg-b` | `.pj-seg`, `.ml-seg`, `.seg-btn`, `.qms-seg`, `.pdev-seg` | `app-v2.css` |
+| Card: `.pj-card` (with `-h`, `-h-go`, `-t`, `-m`, `-r`, `-f`) | `.reg-card`, `.rbm-card`, `.py-card`, `.dj-card`, `.cv-card`, `.lic-card`, `.ph-card` | `app-v2.css` |
+| Quiet figures: `.reg-kpis` / `.reg-kpi`. Better still, the figure in the lead sentence, or AnA's `/status`. | Stat tiles: Quality's four tiles, `.metric-card`, `.cv-kpi`, `.ra-kpi`, `.etmf-kpi`, `.ivd-stat`, `.py-stat`, `.rbm-tile`, the Projects stat strip | `app-v2.css` |
+| Chip: `.rd-chip` with `tone-ok`, `tone-warn` or `tone-err`. A chip that prints a raw value maps it to a label first. | `.status-pill`, `.sp-tag`, `.reg-pill`, `.ml-chip`, `.pg-badge`, `.rc-chip` | `app-v2.css` |
+| Drawer: `.de` (with `data-docked` for an inspector) | `.tb-detail`, the `.tt-panel` chrome, `.pdev-sheet`, `.py-sheet`, `.de-sheet`, `.ana-sheet`, `.adm-drawer`, `.risk-drawer`, RBM's AnA side panel, the editor's comments and history columns | `journey-v2.css` |
+| Toast: `C2CToast` (`.de-toast`) | `.cl-toast` | `journey-v2.css` |
+| Composer chrome: `.landing-composer`, `.pj-composer`, `.ct-composer`, with the send button `.landing-send` / `.pj-comp-send` / `.ct-comp-send` | Owners' composers join this list rather than keep their own chrome: `.rbm-ana-composer` (D7-C). `.ec-composer` has no owner yet. Only a field that talks to AnA is a composer: a search field, such as Reporting's "Find a report", is `.c2c-input` with a `btn ghost` beside it. | `app-v2.css` |
+| Guidance lives in AnA and the composer | `StageBand`'s "What to do now" and "Next step" (`.pj-stageband*`). `CmConnectBar` ("This work flows into") and `.cm-connect*` have gone. | — |
+| Composer suggestion: `.sp-starter` (keep) | — | `journey-v2.css` |
+| Page container: `.page-inner` (1120px; 16px side gutter at 640px and under) | — | `app-v2.css` |
+| Section heading: `.pj-sec-h` with `h2` and `.sec-sub`; a quiet label `.pj-seclbl` | — | `app-v2.css` |
+| Fields: `.c2c-input` inline (32px); `.de-input`, `.de-select`, `.de-textarea` in forms (36px), with `.de-label` and `.de-desc` | — | `app-v2.css` |
+| Table: `.reg-tbl` | — | `app-v2.css` |
+| Empty state: `EmptyState` (`dataConnect.tsx`, `.c2c-empty-state`): one sentence, a hint, one ghost action | — | `app-v2.css` |
+| Answer lead: `AnswerLead` (`.al-lead`), quiet. `emphasis="verdict"` is for the one screen where the answer is the screen. | — | `app-v2.css` |
+| Centered dialog: `.cl-modal` | `.rbm-modal` | `app-v2.css` |
+| Menu: `MenuButton`, `useMenu`, `MenuItem` (`client/src/concept2cure/v2/editor/DownloadMenu.tsx`). See *The one menu*, below. | — | `authoring-v2.css` (`.dlm-*`) |
+
+### The one menu
+
+There is one menu pattern. A menu is built from its parts, never beside them. The parts are in `client/src/concept2cure/v2/editor/DownloadMenu.tsx`:
+
+- **`useMenu`** handles opening and closing, a click outside, and placement. The menu opens in the browser's top layer where there is one, and is placed in fixed coordinates from its button (`placeMenu`, through `menuPlacement.ts` `fixedMenuPlacement`), so no scroll box clips it. It handles the keys: the arrows, Home and End move through the items, Escape closes and returns focus to the button, and Tab closes.
+- **`MenuItem`** is a `button[role="menuitem"]` (`.dlm-item`) with its label and an optional note. A disabled item stays reachable (`aria-disabled`), so its reason is read.
+- **`MenuButton`** (D4-2 adds it) is the trigger and the menu together: `.dlm` > `button.btn` (`aria-haspopup="menu"`, `aria-expanded`, `aria-controls`) > `.dlm-menu[role="menu"]`.
+
+**What is true today.** `useMenu` and `MenuItem` exist but are not exported, and `MenuButton` does not exist yet. The only menu built from them is `DownloadMenu`. D4-2 exports `useMenu` and `MenuItem`, adds `MenuButton` and a `compact` prop, and changes no behaviour (`.design/claude-convergence/D4.md` §D4.B). Until then, a menu needed elsewhere waits for D4-2. Nobody builds a second one.
+
+Today `.dlm-menu` is `--bg-000`, radius 6px (`--radius-md`), with its own shadow. Its items are 13px, with a 12px note. D4 brings the menu to the canonical set: `--canvas-elevated`, radius 12px, `--v2-shadow-lg`, items 32px tall (44px on a touch screen).
 
 ---
 
@@ -185,6 +242,8 @@ Per the 2026 design spec, every C2C module implements a single canonical pattern
 | **Intelligence** | Chat with AnA, tool-use, streaming | 35% of remaining | `--background` (paper) |
 | **Artifact** | Live-rendered regulatory work product | 65% of remaining | `--background`, serif |
 
+> **In the app this is the artifact panel** (`.design/claude-convergence/D0.md` §3, "Artifact panel"). The document opens beside the conversation, as `.dcv-expanded` inside `.ct-canvas-pane` (`client/src/concept2cure/v2/styles/authoring-v2.css`). The conversation column is `clamp(340px, 34%, 520px)`, and the panel takes the rest. At 1100px and under, the document takes the screen. The panel's header (`.dcv-bar`) is 48px. It holds the title at 14px/600, the version and project line at 13px `--text-300`, and 32px icon buttons (`.btn.ed-ico`). The document reads in Lora at 16px/1.7 (`--fs-prose`). D4 owns what is inside the panel.
+
 Rules:
 
 - **Asymmetric grid, not centered.** 65/35 split is the default; Focus mode collapses to 100% artifact.
@@ -200,7 +259,7 @@ Rules:
 
 ## Caveats (and what I need from you)
 
-- **Fonts not shipped.** Production uses **Lora** (serif body, Google Fonts — freely usable), plus an apparent intent to use **Styrene B** (display) and **Tiempos Text** (serif prose) — those two are commercial Klim Type Foundry families, identical to Anthropic's Claude. I fell back to **Inter** + **Source Serif Pro** + **JetBrains Mono** (all Google Fonts). **Please confirm the licensed display/serif choice** or upload the font files and I'll wire them in.
+- **Fonts are decided** (`colors_and_type.css` §3, "Type — families", 2026-07-06): the system sans for chrome, **Lora** for reading and **JetBrains Mono** for codes. Styrene B, Tiempos and Copernicus are commercial and were rejected. The app loads Lora and JetBrains Mono from Google Fonts in `client/index.html`, and the specimens in `preview/` load the same two (`preview/_base.css`).
 - **No slide template** was in the repo, so I did not invent a deck. If you have a pitch deck or board deck template, attach it and I'll produce `slides/`.
 - **Only one UI kit built** — for the primary product (`ana_ri`). There is no separate marketing website or docs site in the repo. If one exists elsewhere, link it and I'll add a `ui_kits/marketing/`.
 - **Logos are the repo's current set.** Several (PMDA, MHRA, NMPA, MFDS, TGA) are very minimal 127-byte placeholder SVGs — they read as tiny text marks, not proper agency logos. If you want polished vector wordmarks, we'll need to source them.
@@ -212,5 +271,4 @@ Rules:
 
 1. Is the **stone / terracotta / olive** palette the direction you want, or is the tokens.ts blue/purple version the future? They disagree in the repo; I picked the one that's actually used.
 2. Do we have a **marketing website** or **docs site** outside this repo? If so, attach and I'll build the second UI kit.
-3. Font licensing — confirm Styrene B / Tiempos, or pick alternatives, or let me keep Inter / Source Serif Pro.
-4. Any **slide template** (pitch, board, all-hands) you want bottled into `slides/`?
+3. Any **slide template** (pitch, board, all-hands) you want bottled into `slides/`?

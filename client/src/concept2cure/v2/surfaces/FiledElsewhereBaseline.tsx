@@ -115,8 +115,9 @@ export function DeclareFiledBaseline({ submissionId, signer, onDeclared }: Decla
   };
 
   if (!open) {
+    // The hairline secondary (the coordinating session, 2026-11-09): a bare sc-btn read as a line of text.
     return (
-      <button type="button" className="sc-btn" onClick={() => setOpen(true)}>
+      <button type="button" className="btn ghost" onClick={() => setOpen(true)}>
         Declare sequences filed before this platform
       </button>
     );
@@ -146,10 +147,12 @@ export function DeclareFiledBaseline({ submissionId, signer, onDeclared }: Decla
         </div>
         {problem && last !== '' ? <div className="scaf-note" role="status">{problem}</div> : null}
         <div className="cm-pushbar sc-mt">
-          <button type="button" className="sp-primary sc-btn" disabled={problem !== null} onClick={() => setSigning(true)}>
+          {/* While the form is open, signing it is the person's task and its one primary (D0's .btn.primary); Cancel is
+              the hairline secondary (the coordinating session, 2026-11-09). */}
+          <button type="button" className="btn primary" disabled={problem !== null} onClick={() => setSigning(true)}>
             Sign declaration
           </button>
-          <button type="button" className="sc-btn" onClick={() => setOpen(false)}>Cancel</button>
+          <button type="button" className="btn ghost" onClick={() => setOpen(false)}>Cancel</button>
         </div>
       </div>
       <EsignModal

@@ -24,12 +24,19 @@ const rowsOf = (r) => r.json?.data ?? [];
 /** The approval stamps the route commits to: effective, approver = signer, approved_at set. */
 const isEffectiveBy = (d, userId) => d?.status === 'effective' && String(d?.approver_id) === String(userId) && Boolean(d?.approved_at);
 /** meta.signature as a signed act returns it — the same shape for the approval and the retirement. */
-export const isApprovalSignature = (sig) =>
-  Boolean(sig && sig.id && sig.meaning === 'APPROVED' && APPROVE_HEX64.test(String(sig.boundPayloadDigest)) && sig.bindingBasis === BINDING_BASIS);
+export const isApprovalSignature = (sig, meaning = 'APPROVED') =>
+  Boolean(sig && sig.id && sig.meaning === meaning && APPROVE_HEX64.test(String(sig.boundPayloadDigest)) && sig.bindingBasis === BINDING_BASIS);
+/**
+ * The §11.50(a)(3) meaning a retirement is signed with since P-51 (cd95dc9e6c, 2026-10-29,
+ * QMS_DOCUMENT_RETIREMENT_MEANING in server/services/qms/document-approval-signature.ts): the signer withdraws the
+ * document from use, which is not an approval of it. Until OQ-006 v0.10 the runner signed a retirement 'APPROVED',
+ * which the route has refused 400 ESIGNATURE_COMPONENT_MISSING since that commit.
+ */
+export const RETIREMENT_MEANING = 'retirement';
 /** The electronic_signatures row GET /api/part11/signatures/by-target returns for a signed QMS document act. */
 export const isQmsSignatureRow = (row, signerId, signatureType) =>
   String(row.signer_id) === String(signerId) &&
-  row.signature_meaning === 'APPROVED' &&
+  String(row.signature_meaning).toLowerCase() === (signatureType === 'qms-document-retirement' ? RETIREMENT_MEANING : 'approved') &&
   row.signature_type === signatureType &&
   row.binding_basis === BINDING_BASIS &&
   row.is_valid === true;
@@ -37,7 +44,7 @@ export const isApprovalRow = (row, signerId) => isQmsSignatureRow(row, signerId,
 /** The stamp the signed retire writes on metadata.retired. */
 export const isRetirementStamp = (retired, sig, signerId) =>
   retired.contentDigest === sig.boundPayloadDigest && String(retired.by) === String(signerId) &&
-  retired.fromStatus === 'effective' && retired.meaning === 'APPROVED' && Boolean(retired.at);
+  retired.fromStatus === 'effective' && retired.meaning === RETIREMENT_MEANING && Boolean(retired.at);
 /** The electronic_signatures rows for a document, as GET /api/part11/signatures/by-target returns them. */
 export const signatureRowsFor = async (api, docId) =>
   rowsOf(await api('GET', `/api/part11/signatures/by-target?target=${encodeURIComponent(`qms-document:${docId}`)}`));
@@ -82,13 +89,13 @@ export async function approveSigned(ctx, docId, reason) {
  */
 export async function retireSigned(ctx, docId, reason) {
   const { expect } = ctx;
-  const r = await postSigned(ctx, `/api/mdx/qms/documents/${docId}/retire`, { reason });
+  const r = await postSigned(ctx, `/api/mdx/qms/documents/${docId}/retire`, { reason, meaning: RETIREMENT_MEANING });
   expect(r.status === 200, `signed retire expected 200, got ${r.status}`, r.json);
   const d = dataOf(r);
   const meta = r.json?.meta ?? {};
   expect(d.status === 'retired' && meta.auditTrail?.persisted === true && meta.auditTrail?.chained === true, 'not retired, or meta.auditTrail not persisted and chained', { status: d.status, auditTrail: meta.auditTrail });
   const sig = meta.signature;
-  expect(isApprovalSignature(sig), 'meta.signature lacks id / meaning APPROVED / sha256 boundPayloadDigest / bindingBasis', sig);
+  expect(isApprovalSignature(sig, RETIREMENT_MEANING), 'meta.signature lacks id / meaning retirement / sha256 boundPayloadDigest / bindingBasis', sig);
   const retired = d.metadata?.retired ?? {};
   expect(retired.contentDigest === sig.boundPayloadDigest, 'document metadata.retired.contentDigest differs from the signature digest', { retired, sig });
   return { response: r, document: d, signature: sig };

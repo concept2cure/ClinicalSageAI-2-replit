@@ -5,7 +5,7 @@
  * SOP-002, and personal acknowledgement readiness on SOP-001. A deviation register is
  * not a QMS API capability; that is recorded as a finding, not simulated.
  */
-import { must } from '../lib.mjs';
+import { must, fillQmsSections, sendQmsForReview } from '../lib.mjs';
 import { CHANGE, PROVENANCE, SOPS, T, findDemoByTitle, inDays, today } from './biotech-content.mjs';
 import { NOT_EXECUTED_NO_SIGNER, asArray } from './biotech-shared.mjs';
 
@@ -34,12 +34,18 @@ async function settleStatus(ctx, sop, doc, d) {
     } else if (!signer) {
       d.approval = NOT_EXECUTED_NO_SIGNER;
       run.note(`QMS approval of ${sop.docNumber}: ${NOT_EXECUTED_NO_SIGNER}`);
-    } else await approveAsSigner(ctx, sop, doc, d);
+    } else {
+      // A draft is approved only once it is under review, routed to its approver (lib.mjs sendQmsForReview).
+      await sendQmsForReview(api, doc, signer, { reason: 'Demo: send for approval by the second signer', approvalDueDate: inDays(14) });
+      await approveAsSigner(ctx, sop, doc, d);
+    }
   } else if (sop.target === 'in_review') {
     if (doc.status !== 'draft') tally.found('qms-status-change');
-    else {
-      const p = must(await api('PATCH', `/api/mdx/qms/documents/${doc.id}`, { status: 'in_review' }), 200, `route ${sop.docNumber} for review`);
-      d.status = p.data?.status ?? 'in_review';
+    else if (!signer) {
+      // Review names an approver who is not the author (REVIEW_ROUTE_REQUIRED, two-person rule).
+      d.status = `draft — review ${NOT_EXECUTED_NO_SIGNER}`;
+    } else {
+      d.status = await sendQmsForReview(api, doc, signer, { reason: 'Demo: send for independent review', approvalDueDate: inDays(14) });
       tally.created('qms-status-change');
     }
   }
@@ -53,15 +59,20 @@ async function ensureSop(ctx, list, sop, rec) {
   else {
     doc = must(await api('POST', '/api/mdx/qms/documents', {
       docNumber: sop.docNumber,
+      programId: ctx.programId,
+      reason: `Demo: create ${sop.docNumber} for the demonstration`,
       title: T(sop.name),
       docType: 'sop',
       category: 'quality-system',
       templateKey: 'sop',
       nextReviewDate: inDays(365),
-      metadata: { demo: 'biotech', provenance: PROVENANCE, body: sop.body },
     }), 201, `create ${sop.docNumber}`).data;
     tally.created('qms-document');
     created = true;
+  }
+  if (doc.status === 'draft') {
+    // The SOP's text goes into its editing copy before review or approval (QMS_CONTENT_REQUIRED).
+    await fillQmsSections(api, doc.id, sop.body);
   }
   const d = { key: sop.key, id: doc.id, docNumber: doc.doc_number, title: doc.title, version: doc.version, status: doc.status, created, target: sop.target };
   await settleStatus(ctx, sop, doc, d);
@@ -113,8 +124,10 @@ async function inspectTrainingAcknowledgement({ api, tally, run }, rec) {
   return note;
 }
 
-export async function ensureQms(ctx) {
+export async function ensureQms(ctx, program) {
   const { api, run } = ctx;
+  // A controlled document is created in an owned project, with a reason (QMS_CREATE_INVALID otherwise).
+  ctx = { ...ctx, programId: program?.id ?? null };
   const rec = { documents: [] };
   run.record('qms', rec);
   const list = asArray(must(await api('GET', '/api/mdx/qms/documents'), 200, 'list QMS documents'), 'data');

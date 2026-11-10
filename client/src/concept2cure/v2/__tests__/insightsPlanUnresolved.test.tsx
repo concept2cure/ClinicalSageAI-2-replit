@@ -77,7 +77,7 @@ afterEach(() => cleanup());
 
 async function renderCanvas() {
   render(<InsightsCanvas {...PROPS} />);
-  await waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
+  await waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
 }
 
 describe('Insights — a plan that could not be read', () => {
@@ -111,9 +111,11 @@ function ask(text: string) {
   fireEvent.change(field, { target: { value: text } });
   fireEvent.keyDown(field, { key: 'Enter' });
 }
-async function openLibrary(name: RegExp) {
+/** Opens a view by its tab, and waits for its panel's heading. The Catalog tab
+ *  is "Catalog"; its panel is still headed "Report catalog". */
+async function openLibrary(name: RegExp, heading: RegExp | string = name) {
   fireEvent.click(screen.getByRole('tab', { name }));
-  await screen.findByRole('heading', { name });
+  await screen.findByRole('heading', { name: heading });
 }
 
 describe('Insights — unverified plan execution', () => {
@@ -142,7 +144,7 @@ describe('Insights — unverified plan execution', () => {
 
   it('keeps packs readable but removes runnable tiles and fallback plan locks', async () => {
     await renderCanvas();
-    fireEvent.click(document.querySelector('.rc-preset-btn') as HTMLElement);
+    fireEvent.click(document.querySelector('[data-work-area="insights"] .ph-acts .btn.primary') as HTMLElement);
     await waitFor(() => expect(document.querySelector('.ro-pack-grid')).not.toBeNull());
     expect(document.querySelectorAll('button.ro-pack-card')).toHaveLength(0);
     expect(document.querySelector('.ro-pack-grid')?.textContent).toMatch(/plan could not be verified/);
@@ -151,7 +153,7 @@ describe('Insights — unverified plan execution', () => {
 
   it('makes catalog generation unavailable with a verification reason', async () => {
     await renderCanvas();
-    await openLibrary(/Report catalog/);
+    await openLibrary(/^Catalog$/, 'Report catalog');
     expect(document.querySelectorAll('button.rl-card-run:not(:disabled)')).toHaveLength(0);
     expect(document.querySelector('.rc-canvas')?.textContent).toMatch(/plan could not be verified/);
     expect(document.querySelector('.rl-card-lock')).toBeNull();
@@ -160,8 +162,8 @@ describe('Insights — unverified plan execution', () => {
   it('also withholds organization catalog generation before a lead program exists', async () => {
     leadAvailable = false;
     render(<InsightsCanvas {...PROPS} />);
-    await screen.findByRole('tab', { name: /Report catalog/ });
-    await openLibrary(/Report catalog/);
+    await screen.findByRole('tab', { name: 'Catalog' });
+    await openLibrary(/^Catalog$/, 'Report catalog');
     expect(document.querySelectorAll('button.rl-card-run:not(:disabled)')).toHaveLength(0);
     expect(document.querySelector('.rc-canvas')?.textContent).toMatch(/plan could not be verified/);
   });
@@ -181,7 +183,7 @@ describe('Insights — unverified plan read and compatibility controls', () => {
     resolved = false;
     await renderCanvas();
     await openLibrary(/Run history/);
-    fireEvent.click(await screen.findByRole('button', { name: 'Open' }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Open the / }));
     await waitFor(() => expect(document.querySelector('.ro-report')).not.toBeNull());
     expect(apiRequest.mock.calls.some(([method, url]) => method === 'GET' && url === '/api/report-os/runs/41/rendered')).toBe(true);
     expect(runCalls()).toHaveLength(0);

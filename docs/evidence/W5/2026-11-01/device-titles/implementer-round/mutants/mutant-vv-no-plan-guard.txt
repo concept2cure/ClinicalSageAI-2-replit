@@ -1,0 +1,13 @@
+applied mutant vv-no-plan-guard: "all(any(titleTokens((t) => t.some(isPlan)), titleHas('protocol')), not(" -> "all(titleHas('protocol'), not("
+ × server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a V&V plan or protocol is not V&V evidence > plans and protocols leave the slot missing 8ms
+ × server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a word that only begins with 'plan' is not a plan; a mixed-case IFU is the IFU > a V&V report on a plantar, planar or plane subject fills the V&V slot; planned changes do not 2ms
+ × server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a word that only begins with 'plan' is not a plan; a mixed-case IFU is the IFU > a plan with a file-name tail glued on ('Planv2', 'planrev3', 'plandraft') is still a plan, in the CER, PER and V&V slots 1ms
+ × server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a word that only begins with 'plan' is not a plan; a mixed-case IFU is the IFU > a Vault-built MDR set whose CER and V&V titles are glued plans is not ready 2ms
+ × server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a word that only begins with 'plan' is not a plan; a mixed-case IFU is the IFU > a plan glued to an IFU is read as a plan, as when it is spelt apart 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: Biocompatibility evaluation plan: expected true to be false // Object.is equality
+AssertionError: expected [ 'preclinical-clinical' ] to not include 'preclinical-clinical'
+AssertionError: Design_verification_Planv2: expected [ 'preclinical-clinical' ] to not include 'preclinical-clinical'
+AssertionError: expected [ 'clinical-evaluation' ] to deeply equal [ 'preclinical-clinical', …(1) ]
+AssertionError: IFUPLAN_Biocompatibility: expected [ 'manufacturer-information', …(1) ] to deeply equal [ 'manufacturer-information' ]
+      Tests  5 failed | 47 passed (52)

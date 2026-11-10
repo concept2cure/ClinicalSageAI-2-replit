@@ -13,11 +13,18 @@
  */
 
 import { pool } from '../../db';
+import { createHash } from 'node:crypto';
 import { sourceProcessingSummary } from './data-room-processing-read.js';
 import type { RequestSqlClient } from '../../db/requestDb';
-import { requireCurrentProgramAccess } from '../c2c/current-program-access';
+import { VerificationUnavailableError } from '../../lib/verification-outcome';
+import { requireCurrentProgramAccess, readCurrentProgramActor, ProgramReadAccessError } from '../c2c/current-program-access';
+import { programInOrganization } from '../c2c/program-access';
+import { canAccessReportProject } from '../report-os/project-access';
+import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership';
+import { lockDocumentDispositionProgram } from '../document-data-disposition/program-lock';
+import { findTextFacts, matchStudy } from './catalog-facts';
 import { getCurrentReadableSourceScope, requireSourceReadScopeStillCurrent, visibleSourceOrgSql, SourceReadAccessError } from './source-read-access';
-import { capturedDataEligibleSql, capturedBinaryAvailableSql, capturedDispositionChoiceSql } from '../document-data-disposition/eligibility.js';
+import { capturedDataEligibleSql, capturedBinaryAvailableSql, capturedDispositionChoiceSql, uploadedBinaryAvailableSql } from '../document-data-disposition/eligibility.js';
 import { captureActor, recordCapture, recordSupersession } from './data-room-capture-audit';
 import {
   SOURCE_TYPES, VISIBILITY_CLASSES, OUTCOME_TYPES, RELATIONSHIP_TYPES, ENTITY_TYPES,
@@ -88,31 +95,40 @@ export async function createSupersedingSource(
   orgId: number,
   p: Parameters<typeof createSource>[1],
   predecessorId: number,
+  exec?: SourceExecutor,
 ): Promise<{ source: EvidenceSource; supersededId: number }> {
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-    const retired = await client.query(
+  const supersede = async (q: SourceExecutor) => {
+    const retired = await q.query(
       `UPDATE cre_evidence_sources
           SET is_current = FALSE
         WHERE id = $1 AND organization_id = $2 AND is_current = TRUE
+          AND (NOT $3::boolean OR (source_type=$4 AND client_program_id IS NOT DISTINCT FROM $5::uuid
+            AND client_workspace_id IS NOT DISTINCT FROM $6::integer AND study_ref IS NOT DISTINCT FROM $7::integer
+            AND deleted_at IS NULL))
         RETURNING id`,
-      [predecessorId, orgId],
+      [predecessorId, orgId, p.studyRef !== undefined, p.sourceType, p.clientProgramId ?? null,
+        p.clientWorkspaceId ?? null, p.studyRef ?? null],
     );
     if (retired.rows.length === 0) {
-      await client.query('ROLLBACK');
       throw new Error(
         `createSupersedingSource: source ${predecessorId} is not a current source of org ${orgId} — ` +
         'it was already superseded, or belongs to another tenant. Refusing to fork its lineage.',
       );
     }
-    const source = await createSource(orgId, { ...p, previousVersionId: predecessorId }, client);
+    const source = await createSource(orgId, { ...p, previousVersionId: predecessorId }, q);
     // The retirement in the chain too (VR-16b), in this transaction.
     if (p.sourceType === 'client_document') {
-      await recordSupersession(client, orgId, predecessorId, source, captureActor(p.createdBy, p.provenance));
+      await recordSupersession(q, orgId, predecessorId, source, captureActor(p.createdBy, p.provenance));
     }
-    await client.query('COMMIT');
     return { source, supersededId: predecessorId };
+  };
+  if (exec) return supersede(exec);
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await supersede(client);
+    await client.query('COMMIT');
+    return result;
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     throw err;
@@ -154,12 +170,229 @@ export async function createSource(orgId: number, p: CreateSourceParams, exec?: 
   }
 }
 
+export class SourceCaptureError extends EvidenceSpineError {
+  constructor(readonly status: 403 | 404 | 409 | 503, readonly code: string, message: string,
+    readonly sourceId: number | null = null) {
+    super(message);
+    this.name = 'SourceCaptureError';
+  }
+}
+
+/** Current actor/private-project policy, evaluated again after reservation.
+ * The numeric legacy scope names projects.id; it is never a study FK. */
+async function resolveCaptureActor(q: SourceExecutor, orgId: number, p: CreateSourceParams, lock: boolean) {
+  const userId = captureActor(p.createdBy, p.provenance);
+  const access = p.clientProgramId
+    ? await requireCurrentProgramAccess(q, { organizationId: orgId, userId: userId ?? undefined,
+      programId: p.clientProgramId, forShare: lock }) : null;
+  const actor = access?.actor ?? await readCurrentProgramActor(q, { organizationId: orgId,
+    userId: userId ?? undefined, forShare: lock });
+  const projectId = access?.projectId ?? p.clientWorkspaceId;
+  if (!Number.isSafeInteger(projectId) || !projectId || projectId <= 0) {
+    throw new SourceCaptureError(409, 'SOURCE_PROJECT_UNRESOLVED', 'Select a recorded project before capturing this file.');
+  }
+  return { actor, access, projectId };
+}
+
+async function readCaptureProject(q: SourceExecutor, orgId: number, projectId: number, lock: boolean) {
+  const result = lock
+    ? await q.query(`SELECT id,status,regulatory_program_id,client_workspace_id FROM projects
+        WHERE id=$1 AND organization_id=$2 FOR SHARE`, [projectId, orgId])
+    : await q.query(`SELECT id,status,regulatory_program_id,client_workspace_id FROM projects
+        WHERE id=$1 AND organization_id=$2`, [projectId, orgId]);
+  const parent = result.rows[0];
+  if (result.rows.length !== 1 || ['archived', 'deleted'].includes(String(parent.status))) {
+    throw new SourceCaptureError(409, 'SOURCE_PROJECT_UNAVAILABLE', 'The project is no longer available for capture.');
+  }
+  return parent;
+}
+
+function assertCaptureProjectScope(parent: Record<string, unknown>,
+  access: Awaited<ReturnType<typeof requireCurrentProgramAccess>> | null, p: CreateSourceParams) {
+  if (access && (parent.regulatory_program_id !== access.programId || parent.client_workspace_id !== access.clientWorkspaceId ||
+      (p.clientWorkspaceId != null && p.clientWorkspaceId !== access.clientWorkspaceId))) {
+    throw new SourceCaptureError(409, 'SOURCE_PROJECT_SCOPE_CHANGED', 'The project association changed. Nothing was captured.');
+  }
+}
+
+async function reserveCaptureProgram(q: SourceExecutor, orgId: number, programId: string): Promise<void> {
+  const present = await programInOrganization(q, programId, orgId, { forShare: true }).catch(error => {
+    if (error instanceof VerificationUnavailableError) {
+      throw new SourceCaptureError(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Current project access could not be verified. No project data was supplied.');
+    }
+    throw error;
+  });
+  if (!present) throw new SourceCaptureError(404, 'PROJECT_NOT_FOUND', 'Project not found.');
+}
+
+async function admitSourceCapture(q: SourceExecutor, orgId: number, p: CreateSourceParams, lock: boolean) {
+  const { actor, access, projectId } = await resolveCaptureActor(q, orgId, p, lock);
+  if (!GOVERNED_WRITE_ROLES.has(actor.role)) {
+    throw new SourceCaptureError(403, 'SOURCE_WRITE_PERMISSION_DENIED', 'Your current organization role cannot capture project files.');
+  }
+  const parent = await readCaptureProject(q, orgId, projectId, lock);
+  assertCaptureProjectScope(parent, access, p);
+  if (lock) {
+    if (access) await reserveCaptureProgram(q, orgId, access.programId);
+    await q.query('SELECT project_id FROM project_visibility_settings WHERE project_id=$1 AND organization_id=$2 FOR SHARE', [projectId, orgId]);
+  }
+  if (!await canAccessReportProject(orgId, actor, projectId, q, { forWrite: lock })) {
+    throw new SourceCaptureError(403, 'SOURCE_WRITE_PERMISSION_DENIED', 'Current project permissions do not permit this capture.');
+  }
+  return { actor, projectId, programId: access?.programId ?? null };
+}
+
+function assertCaptureIdentity(p: CreateSourceParams): void {
+  if (p.sourceType !== 'client_document' || p.visibilityClass !== 'project_private' ||
+      typeof p.checksum !== 'string' || !/^[a-f0-9]{64}$/.test(p.checksum) ||
+      typeof p.provenance?.fileUploadId !== 'string' || !p.storedArtifactRef || p.previousVersionId != null) {
+    throw new SourceCaptureError(409, 'SOURCE_CAPTURE_IDENTITY_INVALID', 'A captured file requires its original upload, project and byte digest.');
+  }
+}
+
+async function reserveSourceCapture(q: SourceExecutor, orgId: number, p: CreateSourceParams) {
+  const before = await admitSourceCapture(q, orgId, p, false);
+  await lockDocumentDispositionProgram(q, orgId, before.programId ?? `legacy-project:${before.projectId}`);
+  const admitted = await admitSourceCapture(q, orgId, p, true);
+  if (admitted.projectId !== before.projectId || admitted.programId !== before.programId) {
+    throw new SourceCaptureError(409, 'SOURCE_PROJECT_SCOPE_CHANGED', 'The project association changed. Nothing was captured.');
+  }
+  // Same impact-table order as adoption: a withdrawal in another project
+  // must not race this original-upload availability check.
+  await q.query('LOCK TABLE public.cre_evidence_sources, public.file_uploads IN ROW EXCLUSIVE MODE');
+  const upload = await q.query(`SELECT f.id FROM file_uploads f
+    WHERE f.id=$1 AND f.organization_id=$2 AND f.user_id=$3 AND f.checksum_sha256=$4
+      AND f.storage_path=$5 AND ${uploadedBinaryAvailableSql('f')} FOR SHARE OF f`,
+  [p.provenance!.fileUploadId, orgId, admitted.actor.userId, p.checksum, p.storedArtifactRef]);
+  if (upload.rows.length !== 1) {
+    throw new SourceCaptureError(409, 'SOURCE_UPLOAD_UNAVAILABLE', 'The original upload is no longer available for capture.');
+  }
+  return admitted;
+}
+
+type CaptureStudy = Awaited<ReturnType<typeof matchStudy>>;
+type CaptureFacts = ReturnType<typeof findTextFacts>;
+
+async function reserveCaptureStudy(q: SourceExecutor, orgId: number, programId: string | null, facts: CaptureFacts): Promise<CaptureStudy> {
+  const study: CaptureStudy = programId ? await matchStudy(q, orgId, programId, facts) : { studyRef: null, candidates: [] };
+  if (study.candidates.length) await q.query(`SELECT id FROM cdisc_prm_studies
+    WHERE tenant_id=$1 AND program_id=$2 AND id=ANY($3::integer[]) ORDER BY id FOR SHARE`,
+  [orgId, programId, study.candidates.map(candidate => candidate.id)]);
+  return study;
+}
+
+async function findReusableCapture(q: SourceExecutor, orgId: number, p: CreateSourceParams, studyRef: number | null) {
+  // An unresolved old/new study cannot establish that retired bytes belong
+  // to a different study. A known different study remains an independent
+  // scope; a newly entered study cannot revive an unresolved old capture.
+  const retained = await q.query(`SELECT id FROM cre_evidence_sources
+    WHERE organization_id=$1 AND checksum=$2 AND source_type='client_document'
+      AND client_program_id IS NOT DISTINCT FROM $3::uuid
+      AND client_workspace_id IS NOT DISTINCT FROM $4::integer
+      AND (study_ref=$5::integer OR study_ref IS NULL OR $5::integer IS NULL)
+      AND (is_current=FALSE OR deleted_at IS NOT NULL) ORDER BY id LIMIT 1`,
+  [orgId, p.checksum, p.clientProgramId, p.clientWorkspaceId, studyRef]);
+  if (retained.rows.length) throw new SourceCaptureError(409, 'SOURCE_CAPTURE_RETIRED',
+    'These bytes already belong to a retained or superseded capture. Read its history or use the current source.', Number(retained.rows[0].id));
+  const existing = await findSourceByChecksum(orgId, p.checksum!, {
+    sourceType: 'client_document', clientProgramId: p.clientProgramId,
+    clientWorkspaceId: p.clientWorkspaceId, studyRef, forCapture: true,
+  }, q);
+  if (existing && (!existing.isCurrent || existing.dataEligible !== true || existing.originalFileAvailable !== true)) {
+    throw new SourceCaptureError(409, 'SOURCE_CAPTURE_RETIRED',
+      'These bytes already belong to a retained or superseded capture. Read its history or use the current source.', existing.id);
+  }
+  return existing;
+}
+
+async function createStudyCapture(q: SourceExecutor, orgId: number, p: CreateSourceParams, context: {
+  admitted: Awaited<ReturnType<typeof admitSourceCapture>>; study: CaptureStudy; facts: CaptureFacts;
+}): Promise<{ source: EvidenceSource; supersededId: number | null }> {
+  const { admitted, study, facts } = context;
+  const predecessor = await findSupersededCandidate(orgId, {
+    title: p.title ?? '', sourceType: 'client_document', programId: p.clientProgramId,
+    workspaceId: p.clientWorkspaceId, studyRef: study.studyRef,
+  }, q);
+  const capture: CreateSourceParams = { ...p, studyRef: study.studyRef, createdBy: admitted.actor.userId,
+    provenance: { ...p.provenance, studyMatch: { ...study, protocolNumbers: (facts.protocolNumbers ??
+      (facts.protocolNumber ? [facts.protocolNumber] : [])).map(fact => fact.value),
+      registryIds: facts.registryIds.map(fact => fact.value), decidedBy: 'catalog-facts at capture' },
+    ...(predecessor ? { supersedes: { sourceId: predecessor.id, studyRef: study.studyRef,
+      matchedOn: 'title+projectScope+sourceType+studyRef', decidedBy: 'chat_upload ingest' } } : {}) } };
+  if (predecessor) return createSupersedingSource(orgId, capture, predecessor.id, q);
+  return { source: await createSource(orgId, capture, q), supersededId: null };
+}
+
+/** Resolve and capture an uploaded file in one transaction. The existing
+ * program reservation also serializes adoption and withdrawal; source identity
+ * itself remains organization + exact project + matched study + bytes.
+ * A filename is considered only after that study has been positively matched.
+ */
+export async function captureClientSource(orgId: number, p: CreateSourceParams, input: { text: string | null }): Promise<{
+  source: EvidenceSource; reused: boolean; supersededId: number | null;
+}> {
+  assertCaptureIdentity(p);
+  const sourceParams = { ...p, clientProgramId: p.clientProgramId?.toLowerCase() ?? null,
+    clientWorkspaceId: p.clientWorkspaceId ?? null };
+  const client = await pool.connect();
+  let released = false;
+  let commitAttempted = false;
+  let pendingSourceId: number | null = null;
+  try {
+    await client.query('BEGIN');
+    const admitted = await reserveSourceCapture(client, orgId, sourceParams);
+    const facts = findTextFacts(input.text);
+    const study = await reserveCaptureStudy(client, orgId, admitted.programId, facts);
+    const existing = await findReusableCapture(client, orgId, sourceParams, study.studyRef);
+    const { source, supersededId } = existing ? { source: existing, supersededId: null }
+      : await createStudyCapture(client, orgId, sourceParams, { admitted, study, facts });
+    pendingSourceId = source.id;
+    // Permission and study edits observed while a downstream audit writer
+    // awaited cannot leave a capture based on an earlier scope decision.
+    await admitSourceCapture(client, orgId, sourceParams, true);
+    const currentStudy = admitted.programId ? await matchStudy(client, orgId, admitted.programId, facts) : study;
+    if (JSON.stringify(currentStudy) !== JSON.stringify(study)) {
+      throw new SourceCaptureError(409, 'SOURCE_STUDY_SCOPE_CHANGED', 'The study association changed. Nothing was captured.');
+    }
+    commitAttempted = true;
+    await client.query('COMMIT');
+    return { source, reused: existing !== null, supersededId };
+  } catch (error) {
+    if (commitAttempted) {
+      client.release(error instanceof Error ? error : new Error('Source capture commit unconfirmed'));
+      released = true;
+      throw new SourceCaptureError(503, 'SOURCE_CAPTURE_COMMIT_UNCONFIRMED',
+        'The capture result could not be confirmed. Check this project’s Data Room before trying again.', pendingSourceId);
+    }
+    await client.query('ROLLBACK').catch(rollbackError => {
+      client.release(rollbackError instanceof Error ? rollbackError : new Error('Source capture rollback unconfirmed'));
+      released = true;
+    });
+    if (error instanceof ProgramReadAccessError) throw new SourceCaptureError(error.status, error.code, error.message);
+    throw error;
+  } finally {
+    if (!released) client.release();
+  }
+}
+
+function assertNativeSourceText(p: { sourceType: SourceType; extractedText?: string; provenance?: Record<string, unknown> | null; storedArtifactRef?: string | null; checksum?: string | null }) {
+  if (p.extractedText === undefined) return;
+  if (p.sourceType !== 'client_document' || p.provenance?.origin !== 'native_record_snapshot'
+    || p.storedArtifactRef != null || p.provenance?.fileUploadId != null || !p.extractedText.trim()
+    || p.checksum !== createHash('sha256').update(p.extractedText, 'utf8').digest('hex')) {
+    throw new EvidenceSpineError('Native source text requires its exact recorded digest and native parent; it cannot impersonate an uploaded file.');
+  }
+}
+
 async function insertSource(orgId: number, p: {
   sourceType: SourceType; visibilityClass?: VisibilityClass; clientWorkspaceId?: number | null;
   /** regulatory_programs.id (UUID) — the project-management id-space. Set this
    *  OR clientWorkspaceId depending on which scope the caller actually has;
    *  see migrations/20260726_cre_source_program_scope.sql. */
   clientProgramId?: string | null;
+  /** Numeric cdisc_prm_studies.id, established by same-project study matching.
+   * The study design's string study_id is a different identifier. */
+  studyRef?: number | null;
   agency?: string | null; sourceRecordIdentifier?: string | null; title?: string | null;
   sponsor?: string | null; product?: string | null; indication?: string | null;
   therapeuticArea?: string | null; phase?: string | null; applicationType?: string | null;
@@ -180,12 +413,19 @@ async function insertSource(orgId: number, p: {
   /** Defaults to 'pending'. Set to 'extracted' when text was pulled at ingest;
    *  'failed' when extraction was attempted and produced nothing usable. */
   extractionStatus?: ExtractionStatus;
+  /** Native record facts, already admitted by the record's canonical reader.
+   * No fabricated upload or file-extraction receipt. */
+  extractedText?: string;
 },
 /** Runs on the caller's transaction when one is supplied. createSupersedingSource
  *  needs the insert and the predecessor's retirement to land together. */
 exec: SourceExecutor,
 ): Promise<EvidenceSource> {
   assertOneOf(p.sourceType, SOURCE_TYPES, 'sourceType');
+  if (p.studyRef != null && (!Number.isSafeInteger(p.studyRef) || p.studyRef <= 0)) {
+    throw new EvidenceSpineError('studyRef must be the numeric identity of a recorded study.');
+  }
+  assertNativeSourceText(p);
   const visibility = p.visibilityClass ?? 'tenant_private';
   assertOneOf(visibility, VISIBILITY_CLASSES, 'visibilityClass');
   const ingestionStatus = p.ingestionStatus ?? 'pending';
@@ -217,6 +457,12 @@ exec: SourceExecutor,
     `COALESCE($24::jsonb,'{}'::jsonb)`, '$25', '$26',
   ];
 
+  if (p.extractedText !== undefined) {
+    values.push(p.extractedText, p.extractedText.length);
+    columns.push('extracted_text', 'char_count');
+    placeholders.push(`$${values.length - 1}`, `$${values.length}`);
+  }
+
   // `client_program_id` is added by migrations/20260726_cre_source_program_scope.sql,
   // which is separate from the spine that creates this table. Naming the column
   // unconditionally would break every write on a database that has the spine but
@@ -229,6 +475,12 @@ exec: SourceExecutor,
   if (p.clientProgramId != null) {
     values.push(p.clientProgramId);
     columns.push('client_program_id');
+    placeholders.push(`$${values.length}`);
+  }
+
+  if (p.studyRef !== undefined) {
+    values.push(p.studyRef);
+    columns.push('study_ref');
     placeholders.push(`$${values.length}`);
   }
 
@@ -258,6 +510,13 @@ exec: SourceExecutor,
     values,
   );
   return adaptSource(rows[0]);
+}
+
+/** The sources a list's readable check covers: only those the list can return. Checked across the organization, one
+ *  project's Quality record that changed after its capture refused every other project's list, and every Vault
+ *  answered 500 (2026-11-10). Unscoped rows are outside any project, so a list that includes them checks them all. */
+function listReadScope(target: { programId: string } | null, includeUnscoped: boolean | undefined) {
+  return target && !includeUnscoped ? { programId: target.programId } : {};
 }
 
 /**
@@ -292,7 +551,8 @@ export async function listClientDocuments(q: RequestSqlClient, orgId: number, op
     // supply an authoritative parent before a workspace-only read can proceed.
     throw new SourceReadAccessError(409,'SOURCE_WORKSPACE_ACCESS_UNRESOLVED','Select the recorded project before reading this workspace source scope.');
   }
-  const readable = await getCurrentReadableSourceScope(q,{organizationId:orgId,userId:opts.userId});
+  const scopeProgram = listReadScope(target, opts.includeUnscoped);
+  const readable = await getCurrentReadableSourceScope(q,{organizationId:orgId,userId:opts.userId,...scopeProgram});
   const args: unknown[] = [orgId,readable.sourceIds];
   let where = `${visibleSourceOrgSql('s',1)} AND s.id=ANY($2::int[])
     AND s.deleted_at IS NULL AND s.source_type='client_document'`;
@@ -308,7 +568,7 @@ export async function listClientDocuments(q: RequestSqlClient, orgId: number, op
     ${capturedBinaryAvailableSql('s')} AS original_file_available,
     ${capturedDispositionChoiceSql('s')} AS disposition FROM cre_evidence_sources s
     WHERE ${where} ORDER BY s.created_at DESC,s.id DESC LIMIT $${args.length}`,args);
-  await requireSourceReadScopeStillCurrent(q,{organizationId:orgId,userId:opts.userId},readable);
+  await requireSourceReadScopeStillCurrent(q,{organizationId:orgId,userId:opts.userId,...scopeProgram},readable);
   return rows.map(adaptSource);
 }
 
@@ -415,10 +675,17 @@ export async function findSourceByChecksum(
      *  projects are two sources. Undefined = not scoped (org-wide, as before). */
     clientProgramId?: string | null;
     clientWorkspaceId?: number | null;
+    /** Exact matched numeric study, including an explicitly unresolved null. */
+    studyRef?: number | null;
+    /** A capture must see retained/withdrawn identities so it can refuse to
+     * create a new current record for their bytes. Historical readers keep
+     * the existing visibility and deleted-row behavior by default. */
+    forCapture?: boolean;
   } = {},
   exec?: SourceExecutor,
 ): Promise<EvidenceSource | null> {
   if (!checksum) return null;
+  if (opts.forCapture) return findCapturedSourceByChecksum(exec ?? pool, orgId, checksum, opts);
   const c = visibleOrgClause(orgId, 2);
   const args: unknown[] = [checksum, c.param];
   let where = `checksum = $1 AND ${c.sql} AND deleted_at IS NULL`;
@@ -434,10 +701,30 @@ export async function findSourceByChecksum(
     args.push(opts.clientWorkspaceId);
     where += ` AND client_workspace_id IS NOT DISTINCT FROM $${args.length}::integer`;
   }
+  if (opts.studyRef !== undefined) {
+    args.push(opts.studyRef);
+    where += ` AND study_ref IS NOT DISTINCT FROM $${args.length}::integer`;
+  }
   const { rows } = await (exec ?? pool).query(
     `SELECT * FROM cre_evidence_sources WHERE ${where} ORDER BY created_at ASC LIMIT 1`,
     args,
   );
+  return rows[0] ? adaptSource(rows[0]) : null;
+}
+
+async function findCapturedSourceByChecksum(q: SourceExecutor, orgId: number, checksum: string,
+  opts: NonNullable<Parameters<typeof findSourceByChecksum>[2]>): Promise<EvidenceSource | null> {
+  const { rows } = await q.query(`SELECT s.*,
+      (s.deleted_at IS NULL AND ${capturedDataEligibleSql('s')}) AS data_eligible,
+      (s.deleted_at IS NULL AND ${capturedBinaryAvailableSql('s')}) AS original_file_available
+    FROM cre_evidence_sources s WHERE checksum=$1 AND organization_id=$2
+      AND ($3::text IS NULL OR source_type=$3)
+      AND (NOT $4::boolean OR client_program_id IS NOT DISTINCT FROM $5::uuid)
+      AND (NOT $6::boolean OR client_workspace_id IS NOT DISTINCT FROM $7::integer)
+      AND (NOT $8::boolean OR study_ref IS NOT DISTINCT FROM $9::integer)
+    ORDER BY created_at ASC LIMIT 1`,
+  [checksum, orgId, opts.sourceType || null, opts.clientProgramId !== undefined, opts.clientProgramId ?? null,
+    opts.clientWorkspaceId !== undefined, opts.clientWorkspaceId ?? null, opts.studyRef !== undefined, opts.studyRef ?? null]);
   return rows[0] ? adaptSource(rows[0]) : null;
 }
 
@@ -446,9 +733,8 @@ export async function findSourceByChecksum(
  * established without guessing.
  *
  * The rule is deliberately narrow: same tenant, same project scope, same
- * source type, same title, still current, not deleted. A re-upload of
- * "Protocol.pdf" into the project that already holds "Protocol.pdf" is a
- * revision; that is the case this exists for.
+ * source type, same title, same positively identified study, still current,
+ * not deleted. Two studies' "Protocol.pdf" files are separate sources.
  *
  * It returns null when MORE THAN ONE candidate matches. Two documents sharing a
  * filename in one project is exactly where a "revision" call becomes a guess,
@@ -459,10 +745,8 @@ export async function findSourceByChecksum(
  * It also returns null when the scope is unknown. An unscoped tenant upload has
  * no project context to be a revision WITHIN, so filename alone is far too weak.
  *
- * NOTE: this reads `is_current`, added by
- * migrations/20260829_cre_source_versioning.sql. Callers reach it only from the
- * ingest path, which tolerates the column being absent by treating a failed
- * lookup as "no predecessor known" — see the call site.
+ * Missing schema or a failed lookup throws: an unavailable lineage decision
+ * must never be recorded as a successful no-predecessor decision.
  */
 export async function findSupersededCandidate(
   orgId: number,
@@ -471,27 +755,26 @@ export async function findSupersededCandidate(
     sourceType: SourceType;
     programId?: string | null;
     workspaceId?: number | null;
+    studyRef?: number | null;
   },
+  exec?: SourceExecutor,
 ): Promise<EvidenceSource | null> {
   const title = (p.title ?? '').trim();
   if (!title) return null;
   // No project scope → no context in which "same name" means "same document".
   if (p.programId == null && p.workspaceId == null) return null;
+  if (!Number.isSafeInteger(p.studyRef) || !p.studyRef || p.studyRef <= 0) return null;
 
-  const args: unknown[] = [orgId, title, p.sourceType];
-  let where = `organization_id = $1 AND title = $2 AND source_type = $3
-               AND is_current = TRUE AND deleted_at IS NULL`;
-  if (p.programId != null) {
-    args.push(p.programId);
-    where += ` AND client_program_id = $${args.length}`;
-  } else {
-    args.push(p.workspaceId);
-    where += ` AND client_workspace_id = $${args.length}`;
-  }
+  const args: unknown[] = [orgId, title, p.sourceType, p.programId ?? null, p.workspaceId ?? null, p.studyRef];
+  const where = `organization_id = $1 AND title = $2 AND source_type = $3
+               AND is_current = TRUE AND deleted_at IS NULL
+               AND client_program_id IS NOT DISTINCT FROM $4::uuid
+               AND client_workspace_id IS NOT DISTINCT FROM $5::integer AND study_ref=$6::integer
+               AND ${capturedDataEligibleSql('s')} AND ${capturedBinaryAvailableSql('s')}`;
   // LIMIT 2, not 1: one row is a decision, two rows is an ambiguity that must
   // not be resolved by ordering.
-  const { rows } = await pool.query(
-    `SELECT * FROM cre_evidence_sources WHERE ${where} ORDER BY created_at DESC LIMIT 2`,
+  const { rows } = await (exec ?? pool).query(
+    `SELECT s.* FROM cre_evidence_sources s WHERE ${where} ORDER BY created_at DESC LIMIT 2`,
     args,
   );
   if (rows.length !== 1) return null;
@@ -514,14 +797,13 @@ export async function listSources(orgId: number, opts: {
   sourceType?: SourceType; applicationNumber?: string; indication?: string; limit?: number;
 } = {}): Promise<EvidenceSource[]> {
   const c = visibleSourceOrgClause(orgId, 1);
-  const args: unknown[] = [c.param];
+  const args: unknown[] = [c.param, Math.min(Math.max(opts.limit ?? 200, 1), 500)];
   let where = `${c.sql} AND deleted_at IS NULL AND ${capturedDataEligibleSql('cre_evidence_sources')}`;
   if (opts.sourceType) { args.push(opts.sourceType); where += ` AND source_type = $${args.length}`; }
   if (opts.applicationNumber) { args.push(opts.applicationNumber); where += ` AND application_number = $${args.length}`; }
   if (opts.indication) { args.push(opts.indication); where += ` AND indication = $${args.length}`; }
-  const limit = Math.min(Math.max(opts.limit ?? 200, 1), 500);
   const { rows } = await pool.query(
-    `SELECT * FROM cre_evidence_sources WHERE ${where} ORDER BY created_at DESC LIMIT ${limit}`, args,
+    `SELECT * FROM cre_evidence_sources WHERE ${where} ORDER BY created_at DESC LIMIT $2`, args,
   );
   return rows.map(adaptSource);
 }
@@ -565,13 +847,12 @@ export async function upsertStudy(orgId: number, p: {
 
 export async function listStudies(orgId: number, opts: { indication?: string; phase?: string; limit?: number } = {}): Promise<ClinicalStudy[]> {
   const c = visibleOrgClause(orgId, 1);
-  const args: unknown[] = [c.param];
+  const args: unknown[] = [c.param, Math.min(Math.max(opts.limit ?? 200, 1), 500)];
   let where = `${c.sql} AND deleted_at IS NULL`;
   if (opts.indication) { args.push(opts.indication); where += ` AND indication = $${args.length}`; }
   if (opts.phase) { args.push(opts.phase); where += ` AND phase = $${args.length}`; }
-  const limit = Math.min(Math.max(opts.limit ?? 200, 1), 500);
   const { rows } = await pool.query(
-    `SELECT * FROM cre_clinical_studies WHERE ${where} ORDER BY created_at DESC LIMIT ${limit}`, args,
+    `SELECT * FROM cre_clinical_studies WHERE ${where} ORDER BY created_at DESC LIMIT $2`, args,
   );
   return rows.map(adaptStudy);
 }
@@ -638,14 +919,13 @@ export async function listFindings(orgId: number, opts: {
   sourceId?: number; applicationIdentifier?: string; findingDomain?: string; limit?: number;
 } = {}): Promise<RegulatoryFinding[]> {
   const c = visibleOrgClause(orgId, 1);
-  const args: unknown[] = [c.param];
+  const args: unknown[] = [c.param, Math.min(Math.max(opts.limit ?? 200, 1), 500)];
   let where = `${c.sql} AND deleted_at IS NULL`;
   if (opts.sourceId) { args.push(opts.sourceId); where += ` AND source_id = $${args.length}`; }
   if (opts.applicationIdentifier) { args.push(opts.applicationIdentifier); where += ` AND application_identifier = $${args.length}`; }
   if (opts.findingDomain) { args.push(opts.findingDomain); where += ` AND finding_domain = $${args.length}`; }
-  const limit = Math.min(Math.max(opts.limit ?? 200, 1), 500);
   const { rows } = await pool.query(
-    `SELECT * FROM cre_regulatory_findings WHERE ${where} ORDER BY created_at DESC LIMIT ${limit}`, args,
+    `SELECT * FROM cre_regulatory_findings WHERE ${where} ORDER BY created_at DESC LIMIT $2`, args,
   );
   return rows.map(adaptFinding);
 }
@@ -819,7 +1099,7 @@ export function adaptSource(r: any): EvidenceSource {
     officialUrl: r.official_url, storedArtifactRef: r.stored_artifact_ref, checksum: r.checksum,
     version: r.version, isCurrent: r.is_current !== false,
     dataEligible: r.data_eligible ?? true,
-    originalFileAvailable: r.original_file_available ?? true,
+    originalFileAvailable: j(r.provenance).origin === 'native_record_snapshot' ? false : r.original_file_available ?? true,
     disposition: r.disposition ?? null,
     provenance: j(r.provenance), ingestionStatus: r.ingestion_status,
     extractionStatus: r.extraction_status, linkedCsrReportId: r.linked_csr_report_id,

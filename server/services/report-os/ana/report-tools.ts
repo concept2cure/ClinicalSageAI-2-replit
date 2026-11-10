@@ -261,7 +261,7 @@ export function validateToolArgs(
   const flattened = parsed.error.flatten();
   const errors: string[] = [
     ...flattened.formErrors,
-    ...Object.entries(flattened.fieldErrors).flatMap(([field, messages]) =>
+    ...Object.entries(flattened.fieldErrors as Record<string, string[] | undefined>).flatMap(([field, messages]) =>
       (messages ?? []).map(message => `${field}: ${message}`),
     ),
   ];

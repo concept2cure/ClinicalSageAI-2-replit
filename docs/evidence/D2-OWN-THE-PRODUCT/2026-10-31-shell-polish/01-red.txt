@@ -1,0 +1,10 @@
+ × client/src/concept2cure/v2/__tests__/projectHomeNamesLinkedProject.test.tsx > a project opened by its link alone > is named in the shell once its page has read it 5516ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeNamesLinkedProject.test.tsx > a project opened by its link alone > keeps the name the shell already has 111ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeNamesLinkedProject.test.tsx > a project opened by its link alone > is not named from a read that answered for another project 104ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { …(2) } to match object { …(3) }
+- Expected
++ Received
+-   "code": "BX-204",
+-   "title": "BX-204 IND",
+      Tests  1 failed | 2 passed (3)

@@ -1,0 +1,10 @@
+ × document-chunking-tables.test.ts > each table is its own chunk > the running app's document: three tables, three TABLE chunks, and the text around them in TEXT chunks 10ms
+   → #/tables/0: expected 'TEXT' to be 'TABLE' // Object.is equality
+ ✓ document-chunking-tables.test.ts > each table is its own chunk > every character is still in a chunk, in order, with exact spans 1ms
+ × document-chunking-tables.test.ts > each table is its own chunk > a table is named by its caption, as the chunker already names a table chunk 6ms
+   → expected { chunkType: 'TABLE', …(2) } to match object { chunkType: 'TABLE', …(1) }
+ × document-chunking-tables.test.ts > each table is its own chunk > a table longer than a chunk is cut between rows, never inside a cell 2ms
+   → expected ' ' to be '\n' // Object.is equality
+ ✓ document-chunking-tables.test.ts > without table spans, chunking is exactly what it was > no spans, empty spans and spans outside the text give the same chunks as no option at all 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 2 passed (5)

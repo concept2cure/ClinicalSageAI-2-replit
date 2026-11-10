@@ -6,7 +6,7 @@ const sourceLogger = createScopedLogger('workflow-source-import');
 import { stableStringify } from '../../../shared/canonical-json';
 import { nctNumberOf } from '../../../shared/csr-source-input';
 import type { WorkflowImportSource, WorkflowImportOrigin, WorkflowImportAssociation, WorkflowSectionOrigin } from '../../../shared/authoring/source-import';
-import { agencyResponseImportId, studyDesignImportId } from '../../../shared/authoring/source-import';
+import { agencyResponseImportId, artifactImportId, studyDesignImportId } from '../../../shared/authoring/source-import';
 import type { Queryable } from './authoring-evidence';
 import { requireCsrJobAccess, readCsrProjectActor, CsrScopeError } from '../csr/project-scope';
 import { canAccessReportProject } from '../report-os/project-access';
@@ -58,8 +58,17 @@ function validateAgencySource(source: Extract<WorkflowImportSource, { kind: 'age
   if (!agencyResponseImportId(source.eventId, source.questionId)) fail(400, 'WORKFLOW_SOURCE_INVALID', 'Choose an exact saved agency question.');
 }
 
-function validateInput(input: WorkflowMaterializationInput): void {
+function validateArtifactSource(source: Extract<WorkflowImportSource, { kind: 'artifact' }>): void {
+  if (!artifactImportId(source.artifactId, source.version)) fail(400, 'WORKFLOW_SOURCE_INVALID', 'Choose an exact saved artifact and current version.');
+}
+
+function validateScope(input: WorkflowMaterializationInput): void {
   if (!positive(input.organizationId) || !positive(input.userId) || !positive(input.target.projectId) || !UUID.test(input.target.programId)) fail(400, 'WORKFLOW_SCOPE_INVALID', 'A verified organization actor and target project are required.');
+}
+
+function validateInput(input: WorkflowMaterializationInput): void {
+  validateScope(input);
+  if (input.source.kind === 'artifact') return validateArtifactSource(input.source);
   if (input.source.kind === 'agency-response') {
     return validateAgencySource(input.source);
   }
@@ -168,9 +177,56 @@ const CSR_CODES = new Map(CSR_CATALOG.map((section, index) => [section.number, {
 const selectedBy = (code: string, selections: readonly string[]) => selections.some(parent => code === parent || code.startsWith(`${parent}.`));
 
 function csrSelection(source: Extract<WorkflowImportSource,{kind:'csr'}>): string[] | undefined {
-  if (source.sectionNumbers === undefined) return undefined;
+  if (source.approvedOnly !== undefined && source.approvedOnly !== true) {
+    return fail(400, 'WORKFLOW_CSR_SELECTION_INVALID', 'Choose a valid CSR source approval requirement.');
+  }
+  if (source.sectionNumbers === undefined) {
+    if (source.approvedOnly) return fail(400, 'WORKFLOW_CSR_SELECTION_INVALID', 'Select the exact approved CSR sections.');
+    return undefined;
+  }
   if (!Array.isArray(source.sectionNumbers) || !source.sectionNumbers.length || source.sectionNumbers.length > 200 || !source.sectionNumbers.every(code => typeof code === 'string' && CSR_CODES.has(code))) return fail(400, 'WORKFLOW_CSR_SELECTION_INVALID', 'Choose actual ICH E3 section numbers from this saved CSR.');
   return [...new Set(source.sectionNumbers)].sort((a,b) => CSR_CODES.get(a)!.index - CSR_CODES.get(b)!.index);
+}
+
+/** A review-card import promises approved source sections. The generic
+ * working-draft import is allowed separately and does not transfer approval,
+ * signature or submission authority. Recheck every selected row on the same
+ * repeatable-read snapshot; the later governed reserve verifies the
+ * fingerprint again before committing the working document.
+ */
+async function requireApprovedCsrSelection(
+  q: Queryable,
+  input: WorkflowMaterializationInput & { source: Extract<WorkflowImportSource, {kind:'csr'}> },
+  projectId: number | null,
+  selected: string[] | undefined,
+  outputs: Record<string, unknown>[],
+): Promise<void> {
+  if (!input.source.approvedOnly) return;
+  if (!selected?.length) return fail(400, 'WORKFLOW_CSR_SELECTION_INVALID', 'Select exact approved CSR sections.');
+
+  const codes = outputs
+    .filter(row => typeof row.section_number === 'string' && selectedBy(row.section_number, selected))
+    .map(row => row.section_number as string);
+  if (!codes.length || codes.length !== new Set(codes).size) {
+    return fail(409, 'WORKFLOW_CSR_OUTPUT_MISSING', 'Approved CSR selection has missing or ambiguous saved sections.');
+  }
+  // This read intentionally includes only approval metadata. Do not expose
+  // additional clinical prose before the existing source/hash validator.
+  const approvals = await q.query(`SELECT section_number, review_status, reviewed_content_hash, content_hash
+    FROM csr_section_outputs
+    WHERE job_id = $1 AND organization_id = $2 AND project_id IS NOT DISTINCT FROM $3
+      AND section_number = ANY($4::text[])`,
+    [input.source.jobId, input.organizationId, projectId, codes]);
+  if (approvals.rows.length !== codes.length) {
+    return fail(409, 'WORKFLOW_CSR_APPROVAL_CHANGED', 'CSR section approvals changed or are unavailable. Reload the review card.');
+  }
+  for (const row of approvals.rows) {
+    if (row.review_status !== 'approved' ||
+        typeof row.content_hash !== 'string' || !HASH.test(row.content_hash) ||
+        row.reviewed_content_hash !== row.content_hash) {
+      return fail(409, 'WORKFLOW_CSR_APPROVAL_REQUIRED', 'A selected CSR section is not currently approved for this saved content hash.');
+    }
+  }
 }
 
 function csrSections(rows: Record<string, unknown>[], selection: string[] | undefined, studyInfo: unknown, narratives: NarrativeReferenceSection | null): Pick<Composition,'sections'|'sectionOrigins'> {
@@ -251,6 +307,7 @@ async function composeCsr(input: WorkflowMaterializationInput & { source: Extrac
   const output = await q.query(`SELECT id, section_number, CASE WHEN section_number = '14.3.3' THEN NULL ELSE content END AS content,
       content_hash, ai_generated, model, lineage, generated_at
     FROM csr_section_outputs WHERE job_id = $1 AND organization_id = $2 AND project_id IS NOT DISTINCT FROM $3 ORDER BY section_number, id`, [input.source.jobId,input.organizationId,job.project_id]);
+  await requireApprovedCsrSelection(q, input, job.project_id, selection, output.rows);
   const landed = output.rows.find((row: Record<string,unknown>) => row.section_number === NARRATIVES_SECTION && (!selection || selectedBy(NARRATIVES_SECTION, selection)));
   const narratives = landed ? await csrNarrativeReferenceSection(q, {organizationId:input.organizationId,jobId:job.id,row:landed,
     title:CSR_CODES.get(NARRATIVES_SECTION)!.section.title,authorship:csrAuthorship(landed),fail}) : null;
@@ -269,7 +326,9 @@ function finish(input: WorkflowMaterializationInput & { source: Extract<Workflow
   const mode = scope.level === 'organization' ? 'explicit' : 'recorded';
   const association: WorkflowImportAssociation = {mode,required:mode === 'explicit',reasonRequired:mode === 'explicit',sourceProgramId:scope.programId,sourceProjectId:scope.projectId,targetProgramId:input.target.programId};
   const source: WorkflowImportSource = input.source.kind === 'csr'
-    ? {kind:'csr',jobId:input.source.jobId,...(input.source.sectionNumbers ? {sectionNumbers:csrSelection(input.source)} : {})} : {kind:'protocol',documentId:input.source.documentId};
+    ? {kind:'csr',jobId:input.source.jobId,...(input.source.sectionNumbers ? {sectionNumbers:csrSelection(input.source)} : {}),
+        ...(input.source.approvedOnly ? {approvedOnly: true as const} : {})}
+    : {kind:'protocol',documentId:input.source.documentId};
   const fingerprint = sha(stableStringify({source,scope,mode,facts:composition.facts,sectionOrigins,sections,gaps}));
   const origin: WorkflowImportOrigin = {
     kind:input.source.kind,id:String(input.source.kind === 'csr' ? input.source.jobId : input.source.documentId),programId:input.target.programId,
@@ -290,6 +349,10 @@ function finish(input: WorkflowMaterializationInput & { source: Extract<Workflow
 export async function materializeWorkflowSource(input: WorkflowMaterializationInput, q: Queryable): Promise<MaterializedWorkflowSource> {
   validateInput(input);
   try {
+    if (input.source.kind === 'artifact') {
+      const { materializeArtifactSource } = await import('./artifact-workflow-source');
+      return await materializeArtifactSource({ ...input, source: input.source }, q);
+    }
     if (input.source.kind === 'agency-response') {
       const { materializeAgencyResponseSource } = await import('./agency-response-source');
       return await materializeAgencyResponseSource({ ...input, source: input.source }, q);

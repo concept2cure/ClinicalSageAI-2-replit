@@ -67,7 +67,35 @@ interface Reading {
 const P_LABEL = 'p_value';
 
 const P_VALUE_AT = /p\s*(?:-?\s*value)?\s*([=<])\s*(0?\.\d{1,5})/gi;
-const ARM_LEVEL = /(?:patients|subjects|participants)\s+(?:to|in|per)\b/i;
+/**
+ * Does this context state ONE ARM's count rather than the study's total?
+ *
+ * The lexicon learned the passive voice on 2026-11-01 — "496 patients were
+ * randomly assigned" — which is how a CSR states its own enrolment, and also
+ * how it states each arm's. Measured the moment it could read them:
+ *
+ *   claim  "A total of 496 patients were randomly assigned to receive
+ *           pembrolizumab, and 498 to receive placebo."
+ *   source "In total 994 patients were randomised in this study…"
+ *   →  conflict  sample_size: 496 vs 994
+ *
+ * Both numbers are right. A fabricated conflict is worse than a missed one: it
+ * sends a reviewer to reconcile two figures that already agree, and it is the
+ * class of finding this engine exists to keep out. So the marker is the
+ * destination the count was assigned TO, in each shape a study report writes
+ * it — "to receive X", "to the X group", "in the X arm", "per arm" — and not
+ * merely the old "patients to" adjacency, which the passive voice puts five
+ * words out of reach of.
+ */
+const ARM_LEVEL = new RegExp(
+  [
+    String.raw`(?:patients|subjects|participants)\s+(?:to|in|per)\b`,
+    String.raw`\bto\s+receive\b`,
+    String.raw`\b(?:to|in|into|within)\s+(?:the\s+|each\s+)?[\w-]{2,24}\s+(?:group|arm|cohort)s?\b`,
+    String.raw`\b(?:per|in\s+each|to\s+each)\s+(?:treatment\s+)?(?:group|arm|cohort)\b`,
+  ].join('|'),
+  'i',
+);
 
 /** A fact as a reading, or null when its value is not a number (a K-number, say). */
 function readingOf(fact: NumericalFact): Reading | null {

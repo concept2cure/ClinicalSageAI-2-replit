@@ -1,0 +1,7 @@
+#!/bin/bash
+# Make copy $1 of lc_base, seed it (probe 10), and with "noarm" as $2 remove the platform arm (probe 40, P-72 slice 0's transform).
+LC=/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/laneC
+$LC/copydb.sh $1 >/dev/null 2>&1
+psql "postgresql://postgres@127.0.0.1:55474/$1?sslmode=disable" -q -f $LC/probe/10-seed.sql > $LC/logs/$1-seed.txt 2>&1 || echo "seed failed"
+if [ "$2" = noarm ]; then psql "postgresql://c2c_rds_master:local-p72-pw@127.0.0.1:55474/$1?sslmode=disable" -q -f $LC/probe/40-neutralise-p-arm.sql > $LC/logs/$1-neutralise.txt 2>&1 || echo "neutralise failed"; fi
+echo "$1: $(grep -E 'vault expired|holds active' $LC/logs/$1-seed.txt | tr -s ' ' | tr '\n' ';') $( [ "$2" = noarm ] && grep -o 'policies rewritten: [0-9]*' $LC/logs/$1-neutralise.txt)"

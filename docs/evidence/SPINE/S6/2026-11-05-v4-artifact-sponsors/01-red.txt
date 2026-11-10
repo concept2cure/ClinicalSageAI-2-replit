@@ -1,0 +1,15 @@
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > lists every non-archived artifact of each open project, the legacy project with no program record included 49ms
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > never lists a project the caller cannot open, an archived row, or a row under another organization’s project 12ms
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > names each row’s project as its own organization records it, and its status in the Vault’s words 9ms
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > asks the sharing policy about this caller in this organization 6ms
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > with no project open to the caller, lists nothing and reads no registry row 4ms
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > a caller who is not a current member is refused, never shown an empty listing 3ms
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > an access check that could not run is a 503, never an empty listing 3ms
+ ✓ server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — the projects the caller can open, and only those > a full window says how many it did not list 22ms
+ × server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — a CRO's sponsors never mix in one list > names each row’s sponsor, or none when its project has none 13ms
+   → expected undefined to deeply equal { id: 100, name: 'Northwind Bio' }
+ × server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — a CRO's sponsors never mix in one list > from inside a project, lists only its sponsor's projects, and says whose 8ms
+   → expected [ 'a-legacy', 'a-open', 'a-other' ] to deeply equal [ 'a-open' ]
+ × server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts > GET /api/artifacts-center — a CRO's sponsors never mix in one list > a project the caller cannot open, or another organisation’s, is not found; a malformed one is refused 6ms
+   → 22222222-2222-4222-8222-222222222222: expected 200 to be 404 // Object.is equality
+      Tests  3 failed | 8 passed (11)

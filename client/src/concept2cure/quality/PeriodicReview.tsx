@@ -21,9 +21,9 @@
  */
 import * as React from 'react';
 import { I } from '../v2/icons';
-import { ErrorState } from '../v2/dataConnect';
+import { EmptyState, ErrorState, type FailedRead } from '../v2/dataConnect';
 import { EsignModal, type EsignSigner } from '../_shared/components/EsignModal';
-import { DialogPanel } from './ControlledDocumentDialogs';
+import { DialogPanel, DrawerField } from './ControlledDocumentDialogs';
 import { formatDate, type PeriodicReviewSummary, type ReviewDueRow } from './data';
 import { postQmsPeriodicReview, type QmsPeriodicReviewDecision } from './qmsApproval';
 
@@ -43,7 +43,8 @@ function utcMinute(iso: string): string {
 
 /** "v1.0 reviewed 2026-10-22 09:12 UTC by R. Reviewer: remains current" — the last signed review of the version in force. */
 export function lastReviewText(review: PeriodicReviewSummary): string {
-  const by = review.reviewerName ? `by ${review.reviewerName}` : `by a reviewer not recorded (signature ${review.signatureId})`;
+  // The signature id is the record's, not the reader's: it goes in the element's title, never the sentence (sop-ids-on-screen).
+  const by = review.reviewerName ? `by ${review.reviewerName}` : 'by a reviewer whose name is not on record';
   const decided = review.outcome === 'current' ? 'remains current' : 'requires revision';
   return `v${review.version} reviewed ${utcMinute(review.reviewedAt)} ${by}: ${decided}`;
 }
@@ -57,29 +58,54 @@ export function lastReviewLine(review: PeriodicReviewSummary): string {
 /** Whether a row can take a review now: only a document whose version in force is not being revised. */
 export const canRecordReview = (row: ReviewDueRow) => row.status === 'effective' && !row.underRevision;
 
-export function PeriodicReviewPanel({ rows, unread, failed, error, retry, overdueCount, canOpen, onOpen, onRecord }: {
+/** The window the review schedule is read within (GET …/review-due?within=), and the one the panel names. */
+export const REVIEW_WINDOW_DAYS = 120;
+
+/**
+ * Periodic review, as one quiet section (D7-B; the Quality sweep's C1 and C2, 2026-11-10). Its rows are the server's
+ * review schedule for the window, or nothing: until 2026-11-10 a failed schedule read was replaced by an unwindowed
+ * derivation from the register and still headed "due within 120 days", so a failure read as a list. An empty
+ * register is said as empty here too, never "0 overdue · 0 due" (finding 112).
+ */
+export function PeriodicReviewPanel({ rows, unread, failed, error, read, retry, registerEmpty, scopeName = null, canOpen, onOpen, onRecord }: {
   rows: ReviewDueRow[];
   unread: boolean;
   failed: boolean;
   error: string | null | undefined;
+  /** The failed read: a refusal is said as itself, with no retry (C4). */
+  read?: FailedRead;
   retry: () => void;
-  overdueCount: number;
+  /** The register was read and holds no documents. */
+  registerEmpty: boolean;
+  /** The open project, when the register is its documents (C14): the schedule is filtered to them and says so. */
+  scopeName?: string | null;
   canOpen: (documentId: number) => boolean;
   onOpen: (documentId: number) => void;
   onRecord: (row: ReviewDueRow, trigger: HTMLElement) => void;
 }) {
+  const overdue = rows.filter((r) => r.overdue).length;
+  const due = rows.length - overdue;
+  const figure = unread || registerEmpty || rows.length === 0 ? null
+    : [overdue ? `${overdue} overdue` : 'none overdue', due ? `${due} due within ${REVIEW_WINDOW_DAYS} days` : `none other due within ${REVIEW_WINDOW_DAYS} days`].join('; ') + '.';
   return (
-    <section className="qms-sec" data-periodic-review-panel="">
-      <div className="qms-sec-head">
+    <section className="pj-sec" aria-labelledby={PERIODIC_REVIEW_HEADING_ID} data-periodic-review-panel="">
+      <div className="pj-sec-h">
         <h2 id={PERIODIC_REVIEW_HEADING_ID} tabIndex={-1}>Periodic review</h2>
-        {!unread && <span className="meta">{overdueCount} overdue · {rows.length - overdueCount} due within 120 days</span>}
+        {figure && <span className="sec-sub" data-testid="qms-review-figure">{figure}</span>}
       </div>
-      <div className="qms-review" role="list" aria-labelledby={PERIODIC_REVIEW_HEADING_ID}>
-        {failed && <ErrorState title="Periodic review dates could not be read" message={error} retry={retry} testId="sop-review-failed" />}
-        {unread && !failed && <div className="qms-empty" role="status">Loading review dates…</div>}
-        {!unread && rows.length === 0 && <div className="qms-empty">No documents due for review.</div>}
-        {rows.map((r) => <ReviewRow key={r.id} row={r} canOpen={canOpen(r.id)} onOpen={onOpen} onRecord={onRecord} />)}
-      </div>
+      {failed && <ErrorState title="Periodic review dates could not be read" message={error} retry={retry} read={read} readWhat="the review schedule" testId="sop-review-failed" />}
+      {unread && !failed && <EmptyState title="Loading review dates…" busy />}
+      {!unread && registerEmpty && <EmptyState title={scopeName
+        ? `No controlled document was authored in ${scopeName}, so none of its documents is due for review.`
+        : 'No controlled documents yet, so none is due for review.'} />}
+      {!unread && !registerEmpty && rows.length === 0 && <EmptyState title={scopeName
+        ? `None of ${scopeName}'s documents is due for review within ${REVIEW_WINDOW_DAYS} days.`
+        : `None is due for review within ${REVIEW_WINDOW_DAYS} days.`} />}
+      {rows.length > 0 && (
+        <div className="qms-review" role="list" aria-labelledby={PERIODIC_REVIEW_HEADING_ID}>
+          {rows.map((r) => <ReviewRow key={r.id} row={r} canOpen={canOpen(r.id)} onOpen={onOpen} onRecord={onRecord} />)}
+        </div>
+      )}
     </section>
   );
 }
@@ -95,29 +121,30 @@ function ReviewRow({ row: r, canOpen, onOpen, onRecord }: {
         className="qms-review-open"
         aria-label={`Open ${r.docNumber} ${r.title} for its periodic review (${r.overdue ? `overdue since ${formatDate(r.nextReviewDate)}` : `due ${formatDate(r.nextReviewDate)}`})`}
         aria-describedby={described}
-        title="Open the document to read it."
+        title="Open the controlled document"
         disabled={!canOpen}
         onClick={() => onOpen(r.id)}
       >
         <span className="qms-review-num mono">{r.docNumber}</span>
         <span className="qms-review-title" title={r.title}>{r.title}</span>
         <span className="qms-review-when">
-          {r.overdue ? <span className="qms-flag-txt">{I.flag} Overdue</span> : formatDate(r.nextReviewDate)}
+          {r.overdue ? <span className="rd-chip tone-err">Overdue</span> : formatDate(r.nextReviewDate)}
         </span>
       </button>
       {canRecordReview(r) && (
         <button
-          className="qms-chip"
+          type="button"
+          className="btn ghost small"
           aria-label={`Record review: ${r.docNumber} ${r.title}`}
           aria-describedby={described}
           title="Record the review with your electronic signature. The document and its approval are not changed."
           onClick={(event) => onRecord(r, event.currentTarget)}
         >
-          {I.check} Record review
+          Record review
         </button>
       )}
       {described && (
-        <span className="qms-review-last" id={lastId}>
+        <span className="qms-review-last" id={lastId} title={r.lastReview && !r.lastReview.reviewerName ? `Signature ${r.lastReview.signatureId}` : undefined}>
           {r.lastReview ? lastReviewLine(r.lastReview) : null}
           {r.lastReview && r.underRevision ? ' ' : null}
           {r.underRevision ? 'Revision open. Approving the revision sets the next review date.' : null}
@@ -135,6 +162,7 @@ function ReviewDecision({ row, onClose, onContinue }: {
   const [date, setDate] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
   const dateRef = React.useRef<HTMLInputElement>(null);
+  const formId = React.useId();
   const earliest = localDay(1);
   const latest = localDay(5 * 365);
   const submit = (event: React.FormEvent) => {
@@ -144,49 +172,40 @@ function ReviewDecision({ row, onClose, onContinue }: {
     setError(date ? `Enter a next review date from ${earliest} to ${latest}.` : 'Enter the next review date.');
     dateRef.current?.focus();
   };
+  const outcomes: [QmsPeriodicReviewDecision['outcome'], string][] = [['current', 'Remains current'], ['revision-required', 'Revision required']];
+  const footer = <>
+    <button type="button" className="de-btn ghost" onClick={onClose}>Cancel</button>
+    <button type="submit" form={formId} className="de-btn primary">Continue to sign</button>
+  </>;
   return (
-    <DialogPanel title="Record periodic review" onClose={onClose} busy={false}>
-      <p>
-        {row.docNumber} {row.title}. You are reviewing v{row.version}, the version in force. You sign the review in the
-        next step. It does not change the document or its approval.
-      </p>
-      <form onSubmit={submit} noValidate>
-        <fieldset className="qms-dialog-choice">
-          <legend>Review outcome</legend>
-          <label>
-            <input type="radio" name="qms-review-outcome" value="current" checked={outcome === 'current'} onChange={() => setOutcome('current')} />
-            Remains current
-          </label>
-          <label>
-            <input type="radio" name="qms-review-outcome" value="revision-required" checked={outcome === 'revision-required'}
-              onChange={() => { setOutcome('revision-required'); setError(null); }} />
-            Revision required
-          </label>
-        </fieldset>
+    <DialogPanel title="Record periodic review" onClose={onClose} busy={false} footer={footer}
+      sub={`${row.docNumber} ${row.title}. You are reviewing v${row.version}, the version in force. You sign the review in the next step. It does not change the document or its approval.`}>
+      <form id={formId} onSubmit={submit} noValidate>
+        {/* The product's single choice (C2CForm's seg): a radiogroup, each option saying whether it is chosen. */}
+        <div className="de-field">
+          <div className="de-label" id={`${formId}-outcome`}>Review outcome</div>
+          <div className="de-seg" role="radiogroup" aria-labelledby={`${formId}-outcome`}>
+            {outcomes.map(([value, label]) => (
+              <button key={value} type="button" role="radio" aria-checked={outcome === value} className="de-seg-opt" data-on={outcome === value || undefined}
+                onClick={() => { setOutcome(value); if (value === 'revision-required') setError(null); }}>{label}</button>
+            ))}
+          </div>
+        </div>
         {outcome === 'current' ? (
-          <>
-            <label>Next periodic review
-              <input ref={dateRef} type="date" value={date} min={earliest} max={latest} required
-                aria-invalid={error ? true : undefined}
-                aria-describedby={error ? 'qms-review-date-hint qms-review-date-error' : 'qms-review-date-hint'}
-                onChange={(event) => { setDate(event.target.value); setError(null); }} />
-            </label>
-            <p className="qms-dialog-hint" id="qms-review-date-hint">
-              Enter a date after today and within five years. The register lists the document as due from this date.
-            </p>
-            {error && <div role="alert" id="qms-review-date-error">{error}</div>}
-          </>
+          <DrawerField label="Next periodic review" error={error}
+            hint="Enter a date after today and within five years. The register lists the document as due from this date.">
+            <input ref={dateRef} className="de-input" type="date" value={date} min={earliest} max={latest} required
+              onChange={(event) => { setDate(event.target.value); setError(null); }} />
+          </DrawerField>
         ) : (
-          <p className="qms-dialog-hint">
-            The document keeps the review date its approval set{row.signedReviewDate ? ` (${formatDate(row.signedReviewDate)})` : ''}.
-            Recording this does not open a revision; open one with Revise in the register. Approving the revision sets the next
-            review date.
+          <p className="de-desc">
+            {row.signedReviewDate
+              ? `The document keeps the review date its approval set (${formatDate(row.signedReviewDate)}).`
+              : 'Its approval set no periodic review date, and recording this does not set one.'}
+            {' '}Recording this does not open a revision; open one with Revise in the register. Approving the revision sets the
+            next review date.
           </p>
         )}
-        <div className="qms-dialog-actions">
-          <button type="button" className="qms-btn ghost" onClick={onClose}>Cancel</button>
-          <button type="submit" className="qms-btn primary">Continue to sign</button>
-        </div>
       </form>
     </DialogPanel>
   );

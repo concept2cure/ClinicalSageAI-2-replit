@@ -21,7 +21,8 @@ function poolOf(rows: Array<{ sequence_number: string; leaf_manifest: unknown[] 
       if (/FROM ectd_sequences\s+WHERE/i.test(sql)) {
         return { rows: rows.map((r) => ({ sequence_number: r.sequence_number, dispatch_status: 'sent' })) };
       }
-      return { rows };
+      // Compile rows, as the fold's read names them (F1 review, 2026-11-01).
+      return { rows: rows.map((r) => ({ kind: 'compile', ...r })) };
     },
   };
 }

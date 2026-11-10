@@ -199,6 +199,34 @@ describe('saved-review pre-enable workload measurement', () => {
   });
 });
 
+describe('a registered citation grounds the figure in its own sentence', () => {
+  /* 2026-11-10: the registered citation is the product's own source link, and the checker must count it. The
+     figure sentence carries the citation inside it, where the editor's Cite puts it. Before the fix this was a
+     critical grounding finding, which the independent check holds as a hard block (evaluateSavedIndependentCheck). */
+  it('grounds a figure whose own sentence carries the registered citation', async () => {
+    await seedCitation();
+    await pg.query('UPDATE authoring_sections SET content=$1 WHERE id=$2', [
+      '<p>Oral bioavailability of C2C-101 was 62% <a data-cite="101">Biopharmaceutics: Study report</a>.</p>', sectionId(1),
+    ]);
+    const { first, items } = await walkPages();
+    expect(first.coverage?.citationGaps).toBe(0);
+    const grounding = items.filter(item => item.kind === 'section-finding' && item.sectionId === sectionId(1)
+      && (item.finding as { category?: string })?.category === 'grounding');
+    expect(grounding).toEqual([]);
+  });
+
+  it('still reports the figure when its sentence carries no citation, and the citation sits in the next one', async () => {
+    await seedCitation();
+    await pg.query('UPDATE authoring_sections SET content=$1 WHERE id=$2', [
+      '<p>Oral bioavailability of C2C-101 was 62%. The study is described elsewhere <a data-cite="101">Study report</a>.</p>', sectionId(1),
+    ]);
+    const { items } = await walkPages();
+    const grounding = items.filter(item => item.kind === 'section-finding' && item.sectionId === sectionId(1)
+      && (item.finding as { category?: string })?.category === 'grounding');
+    expect(grounding).toHaveLength(1);
+  });
+});
+
 describe('saved citations resolve only through the current exact-section association and data policy', () => {
   it('resolves the registered eligible source in the current section', async () => {
     await seedCitation();

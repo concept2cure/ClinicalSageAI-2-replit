@@ -1,0 +1,4 @@
+# green: the RBM suites, the handler suite and tool-record-scope, working tree on 0d2bd8112
+ ✓ server/services/rbm/__tests__/rbm-engine.test.ts > scoreRisk / bandFromScore > computes likelihood × impact and clamps 1..5 2ms
+ Test Files  17 passed (17)
+      Tests  323 passed (323)

@@ -1,0 +1,16 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "program": "6065271c-d4b0-4936-aad1-02855423a738",
+  "startedAt": "2026-11-09T04:56:15.972Z",
+  "steps": [
+    {
+      "name": "section 2.3's Sources rail lists its citations with their states",
+      "listed": 12,
+      "superseded": 5
+    }
+  ],
+  "read": {
+    "status": 200
+  },
+  "finishedAt": "2026-11-09T04:56:30.010Z"
+}

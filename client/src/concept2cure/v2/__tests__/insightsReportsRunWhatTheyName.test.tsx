@@ -81,9 +81,9 @@ afterEach(() => {
 /* The shell passes its segment preference; for a biologic program it reads 'biopharma'. */
 const renderCanvas = () =>
   render(<InsightsCanvas surface={{ id: 'insights', label: 'Insights' } as OwnedSurfaceViewProps['surface']} segment="biopharma" onNav={onNav} />);
-const ready = () => waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
+const ready = () => waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
 function ask(text: string) {
-  const composer = document.querySelector('.rc-input textarea') as HTMLTextAreaElement;
+  const composer = document.querySelector('[data-work-area="insights"] .rc-find input') as HTMLInputElement;
   fireEvent.change(composer, { target: { value: text } });
   fireEvent.keyDown(composer, { key: 'Enter' });
 }
@@ -99,11 +99,11 @@ describe('1 — a type no engine computes', () => {
   it('a pack lists only the types an engine computes — no not-computed tile inside it', async () => {
     renderCanvas();
     await ready();
-    fireEvent.click(document.querySelector('.rc-preset-btn') as HTMLElement);
+    fireEvent.click(document.querySelector('[data-work-area="insights"] .ph-acts .btn.primary') as HTMLElement);
     await waitFor(() => expect(document.querySelector('.ro-pack-grid')).not.toBeNull());
     expect(screen.queryAllByTestId('ro-pack-not-computed')).toEqual([]);
     const grid = document.querySelector('.ro-pack-grid')!;
-    expect(grid.textContent).not.toMatch(/Evidence & Provenance Trace Report|Not computed in this release/);
+    expect(grid.textContent).not.toMatch(/Evidence & Provenance Trace Report|Not computed in this release|Reports not available/);
     // The BLA assembly pack: the digest and the FCOI register run; the trace has no engine.
     const titles = [...grid.querySelectorAll('.ro-pack-title')].map((t) => t.textContent);
     expect(titles).toEqual(['Executive Readiness Digest', 'Financial Disclosure Register (21 CFR 54)']);
@@ -112,17 +112,17 @@ describe('1 — a type no engine computes', () => {
   it('a pack button counts the reports it runs, not the ones no engine computes', async () => {
     renderCanvas();
     await ready();
-    const presets = [...document.querySelectorAll('.rc-empty-preset')].map((b) => b.textContent ?? '');
+    const presets = [...document.querySelectorAll('.rc-pack')].map((b) => b.textContent ?? '');
     // BLA assembly pack: 3 types, 2 computed. Nonclinical & CMC readiness: 2 types, 1 computed.
     expect(presets.find((t) => /BLA assembly pack/.test(t))).toMatch(/2 governed reports/);
     expect(presets.find((t) => /Nonclinical & CMC readiness/.test(t))).toMatch(/1 governed report\b/);
   });
 
-  it('engine-less types are listed once, as not computed in this release', async () => {
+  it('engine-less types are listed once, as reports not available for the project', async () => {
     renderCanvas();
     await ready();
     const list = await screen.findByTestId('ro-not-computed');
-    expect(list.textContent).toMatch(/Not computed in this release/);
+    expect(list.textContent).toMatch(/Reports not available for /);
     const notComputed = catalogForSegment('biotech').filter((t) => !t.runnable && !t.computedScopes.length).map((t) => t.label);
     expect(notComputed.length).toBeGreaterThan(0);
     for (const label of notComputed) {
@@ -173,20 +173,20 @@ describe('1b — a pack’s description names only the reports it computes', () 
   it.each(CASES)('for %s, every pack offered describes exactly the reports it holds', async (_who, segments, reportTypes, shellSegment) => {
     renderFor(segments, reportTypes, shellSegment);
     await ready();
-    const offered = document.querySelectorAll('.rc-empty-preset').length;
+    const offered = document.querySelectorAll('.rc-pack').length;
     expect(offered, 'a pack is offered').toBeGreaterThan(0);
     for (let i = 0; i < offered; i += 1) {
       cleanup();
       renderFor(segments, reportTypes, shellSegment);
       await ready();
-      await waitFor(() => expect(document.querySelectorAll('.rc-empty-preset').length).toBe(offered));
-      const listed = document.querySelectorAll('.rc-empty-preset .rc-ep-s')[i]?.textContent ?? '';
+      await waitFor(() => expect(document.querySelectorAll('.rc-pack').length).toBe(offered));
+      const listed = document.querySelectorAll('.rc-pack .pj-card-m')[i]?.textContent ?? '';
       /* A click that lands while the canvas is still settling after its first
          read can be lost: the first case of "1" above fails that way about one
          run in five, at HEAD too. So the pack is opened again until it stays
          open; what is asserted is its description, not the first click. */
       await waitFor(() => {
-        if (!document.querySelector('.ro-pack-grid')) fireEvent.click(document.querySelectorAll('.rc-empty-preset')[i] as HTMLElement);
+        if (!document.querySelector('.ro-pack-grid')) fireEvent.click(document.querySelectorAll('.rc-pack')[i] as HTMLElement);
         expect(document.querySelector('.ro-pack-grid')).not.toBeNull();
       });
       const pack = document.querySelector('.ro-rep-title')?.textContent ?? '';
@@ -251,13 +251,47 @@ describe('5 — the catalog follows the program’s product type', () => {
   it('offers a biologic program no 510(k) prompt, and runs no 510(k) report when asked', async () => {
     renderCanvas();
     await ready();
-    expect(document.querySelector('.rc-opener')?.textContent ?? '').not.toMatch(/510\(k\)/);
+    expect((document.querySelector('[data-work-area="insights"] > .ph')?.textContent ?? '') + (document.querySelector('[aria-label="Find suggestions"]')?.textContent ?? '')).not.toMatch(/510\(k\)/);
     ask('Show the 510(k) equivalence matrix');
     await screen.findByText(/any of these can be run/);
     expect(runBodies()).toEqual([]);
     // Not matched to another "matrix" on that word alone.
     expect(screen.queryByText(/Cross-Region Submission Comparison Matrix/)).toBeNull();
     expect(screen.queryByRole('button', { name: /510\(k\)/ })).toBeNull();
+  });
+});
+
+/* Seen in the running app (docs/evidence/DESIGN/D7/2026-11-02-reporting/): the
+   biotech packs were offered by segment alone, so an IND was offered "Build the
+   BLA assembly pack". A pack is offered where the project's filing fits it; one
+   that does not fit is named, with what it is for, never dropped silently. */
+describe('5b — a pack is offered for the filing it is for', () => {
+  const pack = () => document.querySelector('[data-work-area="insights"] > .ph .ph-acts .btn.primary')?.textContent ?? '';
+  const cards = () => [...document.querySelectorAll('.rc-pack .pj-card-t')].map((c) => c.textContent);
+
+  it('an IND is not offered the BLA assembly pack, and is told why', async () => {
+    answer = overview({ leadProgram: { ...LEAD, registryId: 'US_IND' } });
+    renderCanvas();
+    await ready();
+    expect(cards()).not.toContain('BLA assembly pack');
+    expect(pack()).not.toMatch(/BLA assembly pack/);
+    expect(document.querySelector('[data-testid="rc-packs-not-offered"]')?.textContent).toMatch(/Not offered for this IND: the BLA assembly pack \(for a BLA\)\./);
+  });
+
+  it('a BLA is offered it', async () => {
+    answer = overview({ leadProgram: { ...LEAD, registryId: 'US_BLA' } });
+    renderCanvas();
+    await ready();
+    expect(cards()).toContain('BLA assembly pack');
+    expect(pack()).toMatch(/Build the BLA assembly pack/);
+    expect(document.querySelector('[data-testid="rc-packs-not-offered"]')).toBeNull();
+  });
+
+  it('a project whose filing is not recorded is offered every pack, as before', async () => {
+    renderCanvas();
+    await ready();
+    expect(cards()).toContain('BLA assembly pack');
+    expect(document.querySelector('[data-testid="rc-packs-not-offered"]')).toBeNull();
   });
 });
 

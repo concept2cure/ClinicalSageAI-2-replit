@@ -8,12 +8,13 @@ import * as React from 'react';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { formatDate } from './data';
 import { CapaActions } from './CapaActions';
-import { shellProgramId } from '../v2/shellProject';
+import { shellProgramId, shellProgramName } from '../v2/shellProject';
 import { type C2CFormConfig } from '../v2/C2CForm';
 import {
   CAPA_ACTION_TYPE_LABEL, CAPA_SOURCE_LABEL, CAPA_STATE_LABEL, CAPA_TYPE_LABEL, RISK_LABEL, addCapaAction, capaMoves, createCapa, isCapaClosed, transitionCapa, type CapaRow, type CapaSourceRef, isPast,
 } from './qmsRecordData';
 import { type PillTone, type RowAction, type RegisterConfig, optionsOf, pill, Refused } from './qmsRegisterKit';
+import { CAPA_READ_CAP } from './capaSources';
 
 const CAPA_TONE: Partial<Record<CapaRow['state'], PillTone>> = {
   open: 'draft', closed_effective: 'effective', closed_not_effective: 'err', escalated: 'err',
@@ -27,6 +28,16 @@ const CAPA_FIELDS: C2CFormConfig['fields'] = [
   { key: 'targetCloseDate', label: 'Target close', type: 'date', half: true },
   { key: 'problemStatement', label: 'Problem statement', type: 'textarea', rows: 4, desc: 'What happened, where, and the evidence for it.' },
 ];
+
+/* Where the CAPA will be raised, said before the form is filled (J5-04,
+   2026-11-06). The form read "Raised in the project you have open" with none
+   open, and refused only after every field was filled. */
+const NO_PROJECT = 'No project is open. A CAPA belongs to a project: open one from Projects first; nothing here is recorded until then.';
+function capaWhere(rest: string): string {
+  if (!shellProgramId()) return NO_PROJECT;
+  const name = shellProgramName();
+  return name ? `Raised in ${name}, the project you have open, ${rest}` : `Raised in the project you have open, ${rest}`;
+}
 
 /** Raise a CAPA in the open project; with `from`, the record it was raised from. */
 async function raiseCapa(v: Record<string, string>, from?: CapaSourceRef): Promise<string> {
@@ -51,7 +62,7 @@ export function raiseCapaFrom<R>(o: {
     form: (r) => ({
       eyebrow: 'Quality',
       title: `Raise a CAPA from ${o.ref(r).label}`,
-      sub: 'Raised in the project you have open, as open, with this record as its source.',
+      sub: capaWhere('as open, with this record as its source.'),
       governed: 'Raising a CAPA writes an audit entry under your name.',
       submitLabel: 'Raise CAPA',
       fields: CAPA_FIELDS.map((f) =>
@@ -72,16 +83,19 @@ export const CAPAS: RegisterConfig<CapaRow> = {
     'the server enforces, recorded with its reason under your name. A CAPA belongs to a project.',
   noun: ['CAPA', 'CAPAs'],
   listPath: '/api/capa-mdr/capa',
-  grid: '120px minmax(0, 1fr) 150px 130px 84px 150px 104px',
+  name: (r) => r.capaCode,
+  /* GET /api/capa-mdr/capa: the 100 most recently updated (capaMdr.service.ts listCapas). */
+  readCap: { rows: CAPA_READ_CAP, order: 'most recently updated' },
+  projectKept: true,
   columns: [
     { label: 'Number', cell: (r) => <span className="mono">{r.capaCode}</span> },
-    { label: 'Title', cell: (r) => <span title={r.problemStatement ?? r.title}>{r.title}</span> },
+    { label: 'Title', text: true, cell: (r) => <span title={r.problemStatement ?? r.title}>{r.title}</span> },
     { label: 'Type', cell: (r) => CAPA_TYPE_LABEL[r.type] ?? r.type },
     {
       label: 'Source',
       cell: (r) => (
         <span title={r.sourceRefs?.map((s) => s.label).join(', ') || undefined}>
-          <span className="qms-tag">{CAPA_SOURCE_LABEL[r.source] ?? r.source}</span>
+          <span className="rd-chip">{CAPA_SOURCE_LABEL[r.source] ?? r.source}</span>
           {r.sourceRefs?.[0] ? <span className="mono"> {r.sourceRefs[0].label}</span> : null}
         </span>
       ),
@@ -95,24 +109,23 @@ export const CAPAS: RegisterConfig<CapaRow> = {
     const late = open.filter((r) => isPast(r.targetCloseDate, today)).length;
     const highRisk = open.filter((r) => r.riskLevel === 'high' || r.riskLevel === 'critical').length;
     return [
-      { label: 'Open CAPAs', val: String(open.length), sub: `${rows.length} in the register` },
-      { label: 'Past target close', val: String(late), sub: late ? 'Open after the target date' : 'None late', tone: late ? 'err' : 'ok' },
-      { label: 'High or critical risk', val: String(highRisk), sub: 'Open', tone: highRisk ? 'warn' : 'ok' },
+      { label: 'Open CAPAs', val: String(open.length), detail: `${rows.length - open.length} closed` },
+      { label: 'Past target close', val: String(late), tone: late ? 'err' : 'ok' },
+      { label: 'High or critical risk, open', val: String(highRisk), tone: highRisk ? 'warn' : 'ok' },
       {
         label: 'Closed, not effective', val: String(rows.filter((r) => r.state === 'closed_not_effective').length),
-        sub: 'The effectiveness check failed',
       },
     ];
   },
   createLabel: 'Raise CAPA',
-  createForm: {
+  createForm: () => ({
     eyebrow: 'Quality',
     title: 'Raise a CAPA',
-    sub: 'Raised in the project you have open, as open. Its number is assigned by the server.',
+    sub: capaWhere('as open. Its number is assigned by the server.'),
     governed: 'Raising a CAPA writes an audit entry under your name.',
     submitLabel: 'Raise CAPA',
     fields: CAPA_FIELDS,
-  },
+  }),
   create: (v) => raiseCapa(v),
   rowActions: [
     {

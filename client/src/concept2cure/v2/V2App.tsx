@@ -52,6 +52,7 @@ import { resolveSurfaceIdForTarget, stashNavParamsForTarget, surfaceLeaveRefusal
 import { createDriveQueue, type DriveMove } from './driveQueue';
 import { ceremonyOpen } from './ceremony';
 import { publishShellProject } from './shellProject';
+import { useClientFollowsProject } from './clientFollowsProject';
 import type { SentAttachment } from '../hooks/useChatUpload';
 import { getAuthHeaders } from '@/utils/authToken';
 import { useActiveSurfaceContext, toModuleContext } from './surfaceContext';
@@ -79,9 +80,13 @@ import { Home, KitSurfaceScaffold } from './surfaces/Surfaces';
 import { getAction, getSegment, resolveSegmentId, shellSegment,
   effortForMode,
 } from './registryModel';
-import { destinationFor, locationForSurface, surfaceSegmentFromLocation } from './routing';
+import {
+  conversationIdFromLocation, conversationSwitchRefusal, destinationFor,
+  locationForConversation, locationForSurface, surfaceSegmentFromLocation,
+} from './routing';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { OPEN_PROGRAM_EVENT, OPEN_PROGRAM_SURFACE } from './programAction';
+import { C2CToast, useToast } from './toast';
 import './styles/app-v2.css';
 // Shared surface stylesheets — the kit loads these globally (they carry the
 // cross-surface primitives: .sp*/.pj-card/.cm-pushbar in journey, and
@@ -137,7 +142,7 @@ import './styles/device-v2.css';
    GENERATED: scripts/design/generate-surface-text-ramp.mjs, drift-checked by
    ci:surface-text-ramp. See GA ledger L102. */
 import './styles/surface-text-ramp.css';
-import { readShellProject, restoreShellProject, useShellProject, useShellProjectInUrl } from './shellProject';
+import { readShellProject, reopenLastProject, restoreShellProject, useShellProject, useShellProjectInUrl } from './shellProject';
 
 const PREFS_KEY = 'c2c-v2-prefs';
 
@@ -292,11 +297,20 @@ function narrationTail(text: string): string {
   return text.length > 180 ? `…${text.slice(-180).replace(/^\S*\s/, '')}` : text;
 }
 
+/** The existing saved-thread handoff, validated by the canonical conversation URL helpers. */
+function savedConversationTarget(surfaceId: string): { id: string; path: string } | null {
+  const id = window.C2C_CONVO?.id;
+  if (surfaceId !== 'conversation-thread' || typeof id !== 'string' || id === 'new' || id === 'current') return null;
+  const path = locationForConversation(id);
+  return conversationIdFromLocation(path) ? { id, path } : null;
+}
+
 export function V2App() {
   const [location, setLocation] = useLocation();
   /* The URL names the open program (?program=), so a copied link, a bookmark
      or a new tab opens the same project — see shellProject.ts. */
   useShellProjectInUrl(location);
+  useClientFollowsProject();
   const [prefs, setPrefs] = React.useState<Prefs>(loadPrefs);
   const [cmdkOpen, setCmdkOpen] = React.useState(false);
 
@@ -325,6 +339,10 @@ export function V2App() {
      (a tab, a section, a program): part of the surface's React key, so the
      screen remounts and reads them now instead of on the next visit. */
   const [remountEpoch, setRemountEpoch] = React.useState(0);
+  /* Explicit questions and saved-thread choices use the one conversation's mount identity. */
+  const [convoEpoch, setConvoEpoch] = React.useState(0);
+  const conversationRef = React.useRef<{ threadId: string | null; isStreaming: boolean }>({ threadId: null, isStreaming: false });
+  const [navigationNotice, notifyNavigation] = useToast();
   const prefsRef = React.useRef(prefs);
   prefsRef.current = prefs;
 
@@ -343,14 +361,41 @@ export function V2App() {
      click does, never a second router. */
   const nav = React.useCallback(
     (id: string) => {
+      // A project screen chosen with no project open reopens the last project
+      // this person opened, rather than landing on Projects without a word.
+      const needsProject = !readShellProject() && destinationFor(id, false).surfaceId !== destinationFor(id, true).surfaceId;
+      if (needsProject && !reopenLastProject()) {
+        // No project was ever opened: Projects says which screen needs one.
+        stashNavParamsForTarget(OPEN_PROGRAM_SURFACE, { needsProject: getSurface(destinationFor(id, true).surfaceId)?.label ?? 'That screen' });
+      }
       const next = destinationFor(id, Boolean(readShellProject()));
       const resolved = next.applies ? resolveSurfaceAction(next.applies.actionId, next.applies.params) : null;
       // The validated bus stashes or performs first; this single canonical
       // write handles both outcomes without recursively resolving the alias.
       if (resolved?.ok) applySurfaceAction(resolved.directive, () => {});
-      setLocation(locationForSurface(next.surfaceId));
+      const saved = savedConversationTarget(next.surfaceId);
+      if (saved && surfaceSegmentFromLocation(window.location.pathname) === 'conversation-thread') {
+        if (conversationIdFromLocation(window.location.pathname) === saved.id) {
+          // Already showing it: consume the redundant choice without losing an unsent question or its address.
+          (window as unknown as { C2C_CONVO?: { id: string; seed?: string | null } }).C2C_CONVO = { id: 'current', seed: null };
+          notifyNavigation('', 'error');
+          return;
+        }
+        const refusal = conversationSwitchRefusal(
+          conversationRef.current.threadId, saved.id, conversationRef.current.isStreaming,
+        );
+        if (refusal) {
+          (window as unknown as { C2C_CONVO?: { id: string; seed?: string | null } }).C2C_CONVO = { id: 'current', seed: null };
+          notifyNavigation(refusal, 'error');
+          return;
+        }
+        // The existing conversation reads a selection at mount, including its active-answer refusal.
+        setConvoEpoch((n) => n + 1);
+      }
+      notifyNavigation('', 'error');
+      setLocation(saved?.path ?? locationForSurface(next.surfaceId));
     },
-    [setLocation]
+    [setLocation, notifyNavigation]
   );
   React.useEffect(() => {
     if (requestedId === activeId || surfaceSegmentFromLocation(window.location.pathname) !== requestedId) return;
@@ -769,6 +814,7 @@ export function V2App() {
     onDriveEvent: onShellDriveEvent,
     onArtifactSaved: followWork,
   });
+  conversationRef.current = { threadId: anaChat.threadId ?? null, isStreaming: anaChat.isStreaming };
   /* A turn ending releases the drive — reported by whichever chat was driving
      (`drive_turn_end`, see onDriveEvent), after its queued moves have landed.
      This used to watch only the SHELL chat's streaming flag, so a drive from
@@ -1066,7 +1112,6 @@ export function V2App() {
      on `window` to be consumed the next time the thread mounted — reintroducing
      the very ambush this change removes. The epoch is part of the surface's
      React key, so the seed is always read by a mount that happens now. */
-  const [convoEpoch, setConvoEpoch] = React.useState(0);
   const startShellConversation = React.useCallback(
     (seed: string, seedFiles?: SentAttachment[]) => {
       try {
@@ -1174,7 +1219,12 @@ export function V2App() {
       : null;
 
   let body: React.ReactNode;
-  if (activeId === 'home') {
+  /* An address that names neither a registry surface nor a view (a typo, a
+     stale bookmark, `/concept2cure/settings`) opens Home. It used to fall to
+     KitSurfaceScaffold over a stand-in "Home" surface, so a tester saw the
+     developer install path ("Mounted routes", "Kit — design prototype")
+     under the heading Home (J5-01, 2026-11-06). */
+  if (activeId === 'home' || (!view && !surface)) {
     body = (
       <Home
         onNav={nav}
@@ -1302,9 +1352,11 @@ export function V2App() {
         setCollapsed={(v) => set('railCollapsed', v)}
         segment={segment}
         setSegment={chooseSegment}
+        onSearch={() => setCmdkOpen(true)}
       />
       {/* Phone-width scrim: at <=640px the EXPANDED rail paints over the
-          content (app-v2.css keeps the grid at the collapsed strip), and this
+          content (app-v2.css reserves no strip there, and the collapsed rail
+          is not drawn: the top bar's "Open the sidebar" opens it), and this
           scrim sits between them — tap collapses the rail; Escape is handled
           by the shell-level listener below, which is also gated to phone
           width. Display is entirely CSS-gated (.rail-scrim), so wider
@@ -1312,7 +1364,8 @@ export function V2App() {
       {!prefs.railCollapsed && (
         <div aria-hidden="true" className="rail-scrim" onClick={() => set('railCollapsed', true)} />
       )}
-      <main className="main">
+      {/* data-surface: Home's top bar drops its rule (app-v2.css; D1.md §D1.B step 5). */}
+      <main className="main" data-surface={activeId}>
         <TopBar
           surface={activeId === 'home' ? { id: 'home', label: 'Home', navTier: 'global' } : ctxSurface}
           onPalette={() => setCmdkOpen(true)}
@@ -1320,6 +1373,9 @@ export function V2App() {
           onSegment={chooseSegment}
           onNav={nav}
           onAsk={ask}
+          /* At phone width the collapsed sidebar is not drawn; the top bar's
+             menu button opens it as the drawer (D1.md §D1.A step 5). */
+          onOpenRail={() => set('railCollapsed', false)}
         />
         <div id="c2c-page" tabIndex={-1} className={isFull ? 'page page-full' : 'page'}>
           <SurfaceBoundary resetKey={bodyKey}>
@@ -1347,6 +1403,7 @@ export function V2App() {
           setCmdkOpen(false);
         }}
       />
+      <C2CToast msg={navigationNotice} />
       <CollabLayer onNav={nav} />
       {/* Fixed strip, above every surface, while AnA is actually driving —
           who is driving, where she just went, take-over one keypress away. */}

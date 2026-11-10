@@ -60,3 +60,49 @@ describe('assessMethodValidation', () => {
     expect(assessMethodValidation(input)).toEqual(assessMethodValidation(input));
   });
 });
+
+describe('precision preserves the meaning of percent RSD', () => {
+  it.each([
+    [-1, 1], [0, 0], [3, -1, -2], [-0, -0], [Number.MIN_VALUE, 0],
+  ])('refuses zero or unrepresentable mean for %j', (...precision) => {
+    expect(() => assessMethodValidation({ precision }))
+      .toThrow(/precision.*mean.*non-zero.*RSD/i);
+  });
+
+  it.each([
+    [Number.MAX_VALUE, Number.MAX_VALUE], [1e307, 1e307],
+    [1e200, 2e200], [1e-200, 2e-200], [1, -1, Number.MIN_VALUE * 3],
+  ])('refuses unrepresentable precision arithmetic for %j', (...precision) => {
+    expect(() => assessMethodValidation({ precision })).toThrow(/precision.*must be/i);
+  });
+
+  it('does not let passing linearity, accuracy or a permissive criterion hide undefined precision', () => {
+    expect(() => assessMethodValidation({
+      linearity: [{ nominal: 0, response: 0 }, { nominal: 1, response: 2 }, { nominal: 2, response: 4 }],
+      accuracy: { LOW: 99, MID: 100, HIGH: 101 }, precision: [-1, 1], acceptance: { rsdMax: 100 },
+    })).toThrow(/precision.*mean.*non-zero.*RSD/i);
+  });
+
+  it('retains zero spread for identical nonzero replicates', () => {
+    const r = assessMethodValidation({ precision: [4, 4, 4], acceptance: { rsdMax: 0 } });
+    expect(r.precision).toEqual({ n: 3, mean: 4, sd: 0, rsdPercent: 0, pass: true });
+    expect(r.overallPass).toBe(true);
+  });
+
+  it('uses the absolute negative mean', () => {
+    const r = assessMethodValidation({ precision: [-100, -101, -99] });
+    expect(r.precision).toEqual({ n: 3, mean: -100, sd: 1, rsdPercent: 1, pass: true });
+    expect(r.overallPass).toBe(true);
+  });
+
+  it('preserves valid small finite measurements', () => {
+    const r = assessMethodValidation({ precision: [.0001, .000101, .000099] });
+    expect(r.precision).toMatchObject({ rsdPercent: 1, pass: true });
+  });
+
+  it('judges the unrounded mean even when its displayed value rounds to zero', () => {
+    const r = assessMethodValidation({ precision: [1e-8, 2e-8] });
+    expect(r.precision).toMatchObject({ mean: 0, rsdPercent: 47.1405, pass: false });
+    expect(r.overallPass).toBe(false);
+  });
+});

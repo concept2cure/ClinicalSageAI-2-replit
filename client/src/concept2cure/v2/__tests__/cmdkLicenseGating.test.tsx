@@ -34,9 +34,19 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 // is an org admin, which decides the unlock panel's next step. A plain member,
 // like the rail suite, so the tier branch under test is unambiguous — it offers
 // "Compare subscriptions" to every role.
+/* The signed-in account: an id (the navigation verdicts are read only for an account with one, navEntitlements.tsx
+   useNavigationReadOwner), and the same object on every render, as the session gives it. */
+const stableUser = vi.hoisted(() => {
+  const seen = new Map<string, Record<string, unknown>>();
+  return (u: Record<string, unknown>) => {
+    const key = JSON.stringify(u);
+    if (!seen.has(key)) seen.set(key, { id: 21, ...u });
+    return seen.get(key)!;
+  };
+});
 vi.mock('@/services/portal/authService', () => ({
   useAuth: () => ({
-    user: { firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: ['member'] },
+    user: stableUser({ firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: ['member'] }),
     logout: vi.fn(),
   }),
 }));
@@ -117,7 +127,7 @@ async function mountCmdK() {
   const onAct = vi.fn();
   const onAsk = vi.fn();
   render(<Harness onNav={onNav} onAct={onAct} onAsk={onAsk} />);
-  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', NAV_URL));
+  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', NAV_URL, undefined, undefined, expect.any(AbortSignal)));
   // The verdicts land a few microtasks after the request; flush them so an
   // assertion of ABSENCE (no lock) cannot pass merely by running too early.
   await act(async () => {
@@ -126,7 +136,7 @@ async function mountCmdK() {
   return { onNav, onAct, onAsk };
 }
 
-/** Type a query, which switches the list from "Jump to" to search results. */
+/** Type a query, which switches the list from "Go to" (D1-3; it was "Jump to") to search results. */
 function search(term: string) {
   fireEvent.change(screen.getByRole('textbox'), { target: { value: term } });
 }
@@ -308,7 +318,7 @@ describe('⌘K licence gating', () => {
     );
     const { onNav } = await mountCmdK();
 
-    // The default "Jump to" list, then a search: neither branch locks anything.
+    // The default "Go to" list, then a search: neither branch locks anything.
     expect(lockedRows()).toHaveLength(0);
     search('submission');
     expect(lockedRows()).toHaveLength(0);
@@ -319,11 +329,11 @@ describe('⌘K licence gating', () => {
 
   /* CONTRACT 7 — THE DEFAULT LIST GATES TOO, AND AN UNKNOWN ID NEVER LOCKS.
      Two rules in one mount because they need the same payload. The empty-query
-     "Jump to" list is a separate code path from a search hit and was equally
+     "Go to" list is a separate code path from a search hit and was equally
      ungated. And a destination with no catalog row (Home, which the shell
      synthesises) must read as unconditionally available: absent from the
      payload is never a lock. (Until 2026-10-26 this used Plan & features, then
-     in "Jump to"; "Jump to" lists the places now, and Plan & features is an
+     in "Jump to"; that list ("Go to" since D1-3) lists the places now, and Plan & features is an
      administrator's account-menu entry, slice 0 of the placement map.) */
   it('gates the default list without ever locking a surface the catalog has no row for', async () => {
     mockNav(async () =>
@@ -337,7 +347,7 @@ describe('⌘K licence gating', () => {
     );
     const { onNav } = await mountCmdK();
 
-    // No query typed: this is the "Jump to" branch.
+    // No query typed: this is the "Go to" branch.
     const locked = await screen.findByRole('button', {
       name: 'Projects — turned off for this workspace',
     });

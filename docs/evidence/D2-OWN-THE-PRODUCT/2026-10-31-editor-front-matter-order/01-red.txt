@@ -1,0 +1,4 @@
+ × sectionStructureIssues > leaves word-coded front and back matter where the document puts it 10ms
+ × sectionStructureIssues > still reports numbered sections out of order among themselves, front matter kept in place 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 23 passed (25)

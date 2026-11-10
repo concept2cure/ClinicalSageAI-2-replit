@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import type { CorrespondenceIssue } from '@shared/types/regulatory-correspondence';
+import type { CorrespondenceIssue, CorrespondenceEvidenceSpan, FeedbackCoding } from '@shared/types/regulatory-correspondence';
 import {
   DEVICE_ISSUE_TAXONOMY,
   devicePathwayFor,
@@ -223,6 +223,87 @@ function deviceRuleToMatch(rule: DeviceIssueRule, pathway: ReturnType<typeof dev
   };
 }
 
+/** Offsets refer to the exact stored letter, never a normalized copy or its subject. */
+function matchedEvidenceSpan(text: string, pattern?: RegExp): CorrespondenceEvidenceSpan {
+  const matched = pattern?.exec(text);
+  const at = matched?.index ?? 0;
+  const matchEnd = at + (matched?.[0].length ?? 0);
+  const lineStart = at > 0 ? text.lastIndexOf('\n', at - 1) + 1 : 0;
+  const nextLine = text.indexOf('\n', matchEnd);
+  const lineEnd = nextLine < 0 ? text.length : nextLine;
+  const start = Math.max(lineStart, at - 100);
+  const end = Math.min(lineEnd, Math.max(matchEnd, start + 280));
+  return { start, end, text: text.slice(start, end) };
+}
+
+/** Narrow, auditable proposals. A topic word alone is not an objective failure. */
+export function proposeFeedbackCoding(text: string, category: CorrespondenceIssue['category']): FeedbackCoding {
+  const coding = (register: FeedbackCoding['register'], deficiencyClass: FeedbackCoding['deficiencyClass']): FeedbackCoding =>
+    ({ register, deficiencyClass, basis: 'deterministic_proposal', humanConfirmed: false });
+  if (/\b(?:risk|benefit)[ -]?(?:framing|presentation)\b|\bfram(?:e|ing)\b.{0,30}\brisks?\b/i.test(text)) {
+    return coding('subjective', 'risk_framing_expectation');
+  }
+  if (/\bprecedent arguments?\b|\barguments?\b.{0,25}\bprecedent\b/i.test(text)) return coding('subjective', 'precedent_argument_expectation');
+  if (/\b(?:clarity|clearer|tone|navigab\w*|document organi[sz]ation|data presentation)\b/i.test(text)) {
+    return coding('subjective', 'presentation_expectation');
+  }
+  if (/\bno (?:missing|absent|unmet|failed)\b|\b(?:not missing|not absent|no deficiencies)\b/i.test(text)) return coding('unclassified', 'unclassified');
+  const failure = /\b(?:missing|absent|incomplete|unmet|failed|fails?|out.of.specification|not (?:provided|addressed|met)|does not address|must (?:provide|submit))\b/i.test(text);
+  if (!failure) return coding('unclassified', 'unclassified');
+  if (category === 'ectd_technical_formatting') return coding('objective', 'format_validation_failure');
+  if (/\bspecifications?\b/i.test(text) && /\b(?:failed|fails?|not met|unmet|out.of.specification)\b/i.test(text)) return coding('objective', 'specification_failure');
+  if (/\b(?:missing|absent|not provided|incomplete)\b/i.test(text)) return coding('objective', 'missing_required_information');
+  return coding('objective', 'unmet_explicit_requirement');
+}
+
+/** Re-check the exact evidence and supported proposal before a human can adopt it. */
+function hasExactEvidenceSpan(issue: CorrespondenceIssue, sourceText: string): boolean {
+  const span = issue.structuredExtraction?.evidenceSpan;
+  if (!span || !Number.isSafeInteger(span.start) || !Number.isSafeInteger(span.end) || span.start < 0 || span.end <= span.start
+      || span.end > sourceText.length || span.end - span.start > 280 || span.text !== sourceText.slice(span.start, span.end)
+      || issue.sourceExcerpt !== span.text) return false;
+  return true;
+}
+export function hasCurrentIssueSource(issue: CorrespondenceIssue, sourceText: string): boolean {
+  const extraction = issue.structuredExtraction;
+  if (!hasExactEvidenceSpan(issue, sourceText) || extraction?.sourceTextDigest !== crypto.createHash('sha256').update(sourceText).digest('hex')) return false;
+  if (issue.category !== 'other_unclassified' && ![...KEYWORD_TAXONOMY, ...DEVICE_ISSUE_TAXONOMY]
+      .some(rule => rule.category === issue.category && rule.pattern.test(extraction.evidenceSpan!.text))) return false;
+  const expected = proposeFeedbackCoding(extraction.evidenceSpan!.text, issue.category);
+  return extraction.feedbackCoding?.basis === expected.basis && extraction.feedbackCoding.register === expected.register
+    && extraction.feedbackCoding.deficiencyClass === expected.deficiencyClass;
+}
+
+function hasConfirmedFeedbackDisposition(issue: CorrespondenceIssue): boolean {
+  const extraction = issue.structuredExtraction;
+  const review = extraction?.humanReview;
+  return ['confirmed', 'edited'].includes(issue.humanReviewStatus) && extraction?.feedbackCoding?.humanConfirmed === true
+    && !!review && review.status === issue.humanReviewStatus && Number.isSafeInteger(review.reviewedBy) && review.reviewedBy > 0
+    && Number.isFinite(Date.parse(review.reviewedAt)) && review.sourceTextDigest === extraction.sourceTextDigest;
+}
+export function hasConfirmedObjectiveDisposition(issue: CorrespondenceIssue): boolean {
+  return issue.blocker === true && ['open', 'in_progress'].includes(issue.resolutionStatus)
+    && issue.structuredExtraction?.feedbackCoding?.register === 'objective' && hasConfirmedFeedbackDisposition(issue);
+}
+/** One live source/review authority for both derived blockers and the submission verdict. */
+export function isCurrentConfirmedFeedbackIssue(issue: CorrespondenceIssue, sourceText: string, direction: string | null): boolean {
+  return direction === 'inbound' && hasConfirmedFeedbackDisposition(issue) && hasCurrentIssueSource(issue, sourceText);
+}
+export function isCurrentConfirmedObjectiveBlocker(issue: CorrespondenceIssue, sourceText: string, direction: string | null): boolean {
+  return hasConfirmedObjectiveDisposition(issue) && isCurrentConfirmedFeedbackIssue(issue, sourceText, direction);
+}
+
+function unclassifiedIssue(text: string, sourceTextDigest: string, correspondenceId: string): CorrespondenceIssue {
+  const evidenceSpan = matchedEvidenceSpan(text);
+  return { id: crypto.randomUUID(), correspondenceId, category: 'other_unclassified', severity: 'low', blocker: false,
+    responseRequired: true, sourceExcerpt: evidenceSpan.text, confidence: 0.41, humanReviewStatus: 'pending',
+    mappedCtdSections: [], mappedArtifactIds: [], resolutionStatus: 'open',
+    structuredExtraction: { regulatorAskType: 'manual_triage_required', impactedSubmissionComponent: 'unknown', sectionCandidates: [],
+      recommendedOwnerFunction: 'regulatory_affairs', recommendedResponsePackageType: 'manual_triage_response', evidenceNeeds: ['manual issue triage'],
+      confidenceTrace: [{ signal: 'no_rule_match', score: 0.41, deterministic: true }], humanReviewRequired: true,
+      sourceTextDigest, evidenceSpan, feedbackCoding: proposeFeedbackCoding(evidenceSpan.text, 'other_unclassified') } };
+}
+
 export function runGovernedIssueParser(
   text: string,
   correspondenceId: string,
@@ -244,32 +325,8 @@ export function runGovernedIssueParser(
   const deterministicSignals = matches.map(
     m => `${m.category}:${m.regulatorAskType}:${m.impactedSubmissionComponent}`
   );
-
   const issues: CorrespondenceIssue[] = (!matches.length
-    ? [{
-        id: crypto.randomUUID(),
-        correspondenceId,
-        category: 'other_unclassified' as const,
-        severity: 'low' as const,
-        blocker: false,
-        responseRequired: true,
-        sourceExcerpt: normalized.slice(0, 280),
-        confidence: 0.41,
-        humanReviewStatus: 'pending' as const,
-        mappedCtdSections: [],
-        mappedArtifactIds: [],
-        resolutionStatus: 'open' as const,
-        structuredExtraction: {
-          regulatorAskType: 'manual_triage_required',
-          impactedSubmissionComponent: 'unknown',
-          sectionCandidates: [],
-          recommendedOwnerFunction: 'regulatory_affairs',
-          recommendedResponsePackageType: 'manual_triage_response',
-          evidenceNeeds: ['manual issue triage'],
-          confidenceTrace: [{ signal: 'no_rule_match', score: 0.41, deterministic: true }],
-          humanReviewRequired: true,
-        },
-      }]
+    ? [unclassifiedIssue(normalized, sourceTextDigest, correspondenceId)]
     : matches.map(match => {
         // `in`-narrowing across the union `taxonomy` resolves to after the
         // device/keyword ternary and `.filter` loses precision on
@@ -282,6 +339,7 @@ export function runGovernedIssueParser(
           'subcategory' in match && typeof match.subcategory === 'string'
             ? match.subcategory
             : undefined;
+        const evidenceSpan = matchedEvidenceSpan(normalized, match.pattern);
         return {
           id: crypto.randomUUID(),
           correspondenceId,
@@ -290,7 +348,7 @@ export function runGovernedIssueParser(
           severity: match.severity,
           blocker: match.blocker,
           responseRequired: true,
-          sourceExcerpt: normalized.slice(0, 280),
+          sourceExcerpt: evidenceSpan.text,
           confidence: match.blocker ? 0.78 : 0.63,
           humanReviewStatus: 'pending' as const,
           mappedCtdSections: match.sectionCandidates,
@@ -309,6 +367,9 @@ export function runGovernedIssueParser(
               { signal: `severity:${match.severity}`, score: 0.2, deterministic: true },
             ],
             humanReviewRequired: true,
+            sourceTextDigest,
+            evidenceSpan,
+            feedbackCoding: proposeFeedbackCoding(evidenceSpan.text, match.category),
           },
         };
       }));

@@ -185,6 +185,23 @@ echo "   ✅ Fresh-install overlay dependencies reachable."
 # caller discards). So a DROP of something another file in the set re-creates
 # either reverts on the next deploy or re-runs forever, and the deploy is green
 # both ways. Cheap: it reads the files, no database.
+# RULE 5 — one design, one plan (docs/design/ONE_DESIGN_PLAN.md, founder
+# decision P-78). Every pushed commit names an open package of the plan, stays
+# inside it, and adds no screen, API mount or table the plan does not approve;
+# the plan itself changes only by founder decision. No bypass: the escape hatch
+# printed in a refusal is how RULE 0 failed before.
+echo "   Checking every pushed commit is inside the one plan..."
+if ! npm run --silent ci:one-design-plan 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Work outside the one plan (CLAUDE.md RULE 5)."
+  echo "   Each commit needs a 'Plan: <ID>' trailer naming an open package of"
+  echo "   docs/design/one-design-plan.json, and must stay inside that package."
+  echo "   Read docs/design/ONE_DESIGN_PLAN.md. A plan change is the founder's decision."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Every pushed commit is inside the plan."
+
 echo "   Validating DROPs are replay-safe..."
 if ! npm run --silent ci:migration-drop-safety 2>&1; then
   echo ""
@@ -196,6 +213,18 @@ if ! npm run --silent ci:migration-drop-safety 2>&1; then
   exit 1
 fi
 echo "   ✅ Replay-safe DROPs passed."
+
+# One product (CLAUDE.md RULE 4, 2026-10-31): no new surface or rail entry. A capability a document
+# type needs goes into the one editor or the project's document start, which adds neither.
+echo "   Validating one product: no new surface or rail entry..."
+if ! npm run --silent ci:one-product 2>&1; then
+  echo ""
+  echo "🚫 ERROR: One-product check FAILED (CLAUDE.md RULE 4)."
+  echo "   One canvas, one agent, one editor, one project module. No cards, workspaces or apps."
+  echo ""
+  exit 1
+fi
+echo "   ✅ One product passed."
 
 # One vocabulary per class. The US class was enumerated at least fifteen times
 # across the repository (three with a different value set), the MDR class in two

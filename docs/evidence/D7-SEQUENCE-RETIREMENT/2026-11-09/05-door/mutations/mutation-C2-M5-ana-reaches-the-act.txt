@@ -1,0 +1,8 @@
+MUTATION C2-M5-ana-reaches-the-act in server/services/ana/AnaToolExecutor.ts (on the final code and tests, 2026-11-09T08:12:13.144086Z): replaced [import { rbmToolAdmissionRefusal } from '../rbm/rbm-access';] with [import { rbmToolAdmissionRefusal } from '../rbm/rbm-access';
+import { retireSequence } from '../submission-service/submission-service';]
+ ✓ server/services/ana/__tests__/ana-cannot-retire-sequence.test.ts > no AnA tool can retire a sequence > no tool is declared to retire a sequence 2ms
+ × server/services/ana/__tests__/ana-cannot-retire-sequence.test.ts > no AnA tool can retire a sequence > no AnA or MCP source reaches the retirement 80ms
+ ✓ server/services/ana/__tests__/ana-cannot-retire-sequence.test.ts > no AnA tool can retire a sequence > the pattern does not take the QMS document's retirement for this one 1ms
+      Tests  1 failed | 2 passed (3)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 71b508e63466738dcd8da3dfd23f3143cb92ee8e9bb10a1bcbebcd9714fc574f (expected 71b508e63466738dcd8da3dfd23f3143cb92ee8e9bb10a1bcbebcd9714fc574f)

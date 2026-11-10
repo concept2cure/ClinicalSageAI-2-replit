@@ -38,8 +38,8 @@ describe('existing Insights matrix run', () => {
       return new Response(JSON.stringify({ data }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     });
     render(<InsightsCanvas surface={getSurface('insights')!} segment="pharma" onNav={vi.fn()} />);
-    fireEvent.click(await screen.findByRole('tab', { name: 'Report catalog' }));
-    fireEvent.click(await screen.findByRole('button', { name: /^Run$/ }));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Run / }));
     expect(apiRequest).toHaveBeenCalledWith('GET', '/api/users/me/persona', undefined, { Authorization: `Bearer ${accessToken}`, 'x-organization-id': String(currentUser.organizationId) });
     expect(await screen.findByText('USPI-recorded-9')).toBeTruthy();
     const matrixSection = screen.getByRole('heading', { name: 'Recorded label matrix' }).closest('section')!;

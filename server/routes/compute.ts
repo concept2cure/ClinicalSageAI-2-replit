@@ -48,7 +48,7 @@ const createJobSchema = z.object({
   content: z.string().min(3),
   ctdSection: z.string().optional(),
   format: z.enum(['docx', 'xlsx', 'pptx', 'zip', 'html']).default('docx'),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 router.get('/projects/:projectId/jobs', async (req, res) => {
@@ -117,7 +117,7 @@ const startWorkflowSchema = z.object({
     'report_generation_verify',
     'submission_package_compile',
   ]),
-  payload: z.record(z.any()).default({}),
+  payload: z.record(z.string(), z.any()).default({}),
 });
 
 router.post('/projects/:projectId/workflows', async (req, res) => {

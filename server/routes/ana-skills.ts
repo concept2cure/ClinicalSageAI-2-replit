@@ -45,6 +45,7 @@ import { requestConnectable, requestPgClient } from '../db/requestDb';
 import { clientIpOf } from '../utils/client-ip';
 import { createScopedLogger } from '../utils/logger';
 import { requireGovernedReason } from './governed-reason';
+import { AggregateLearningRefusedError } from '../services/intelligence/ana-failure-learning';
 import {
   OrgSkillRefusal,
   createOrgSkill,
@@ -52,6 +53,7 @@ import {
   readSkillSettings,
   setLibrarySkillEnabled,
   updateOrgSkill,
+  standingRuleConflicts,
   type OrgSkillRecord,
   type SkillActor,
 } from '../services/account-skill-bundles';
@@ -104,8 +106,10 @@ function actorOf(req: Request, res: Response): SkillActor | null {
 
 /** A refusal the store stated, or a failure that says only what did not happen. */
 function failed(res: Response, err: unknown, message: string): Response {
+  if (err instanceof AggregateLearningRefusedError) return res.status(err.status).json({ error: { code: err.code, message: err.message } });
   if (err instanceof OrgSkillRefusal) {
-    return res.status(err.status).json({ error: { code: err.code, message: err.message } });
+    return res.status(err.status).json({ error: { code: err.code, message: err.message,
+      ...(err.decisionPackage ? { decisionPackage: err.decisionPackage } : {}) } });
   }
   log.error(message, { err: err instanceof Error ? err.message : String(err) });
   return res.status(500).json({ error: { code: 'INTERNAL', message } });
@@ -176,7 +180,7 @@ router.get('/organization', async (req: Request, res: Response) => {
   if (orgId === null) return;
   try {
     const skills = await listOrgSkills(requestPgClient(req), orgId, { includeArchived: req.query.archived === '1' });
-    return res.json({ skills: skills.map(orgSkillDto) });
+    return res.json({ skills: skills.map(orgSkillDto), ruleConflicts: standingRuleConflicts(skills) });
   } catch (err) {
     return failed(res, err, 'The organization\u2019s skills could not be read.');
   }
@@ -260,10 +264,11 @@ router.get('/usage', writeGuard, async (req: Request, res: Response) => {
  */
 async function projectOf(req: Request, res: Response, ref: unknown, forWrite: boolean): Promise<number | null> {
   try {
+    // The token's subject arrives as a string; admission takes numbers (as orgOf and actorOf coerce).
     const admitted = await admitAnaProjectScope(requestPgClient(req), {
       projectRef: ref,
-      organizationId: (req as any).user?.organizationId,
-      userId: (req as any).user?.id,
+      organizationId: positiveInt((req as any).user?.organizationId),
+      userId: positiveInt((req as any).user?.id),
     });
     if (admitted.projectId === null) {
       res.status(404).json({ error: { code: 'PROJECT_NOT_FOUND', message: 'Project not found.' } });
@@ -323,7 +328,7 @@ router.get('/projects/:project', async (req: Request, res: Response) => {
     if (projectId === null) return;
     const client = requestPgClient(req);
     const [orgSkills, projectSettings, canChange] = await Promise.all([
-      listOrgSkills(client, orgId, { includeArchived: true }),
+      listOrgSkills(client, orgId, { includeArchived: true, projectId }),
       readProjectSkillSettings(client, orgId, projectId),
       mayChangeProject(req, projectId),
     ]);
@@ -338,6 +343,7 @@ router.get('/projects/:project', async (req: Request, res: Response) => {
       projectId,
       settings: projectSettingsDto(projectSettings, names),
       skills: orgSkills.filter(r => r.projectId === projectId).map(orgSkillDto),
+      ruleConflicts: standingRuleConflicts(orgSkills),
       alwaysMax: PROJECT_ALWAYS_MAX,
       canChange,
     });

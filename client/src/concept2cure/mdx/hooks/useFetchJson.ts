@@ -53,6 +53,61 @@ export interface UseFetchJsonOptions {
 
 const DEFAULT_INIT: RequestInit = { credentials: 'include' };
 
+/** A UI read must finish or become retryable, including while reading its body.
+ * This bounds reads, not saves, signatures, uploads, or model-generation jobs. */
+export const JSON_READ_TIMEOUT_MS = 20_000;
+
+export class ReadInterruptedError extends Error {
+  constructor(readonly code: 'READ_TIMEOUT' | 'READ_CANCELLED') {
+    super(code === 'READ_TIMEOUT'
+      ? 'This is taking longer than expected. Try again to reload the latest data.'
+      : 'Loading was interrupted. Try again.');
+    this.name = 'ReadInterruptedError';
+  }
+}
+
+/** Shared by the existing MDX/Quality hook and v2 liveGetOrNull. The deadline
+ * covers transport AND body parsing. Settlement does not depend on the fetch
+ * implementation honoring abort; late responses cannot become current data. */
+export function withReadDeadline<T>(
+  read: (signal: AbortSignal) => Promise<T>,
+  signal?: AbortSignal,
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const controller = new AbortController();
+    let settled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const cleanup = () => {
+      if (timer !== undefined) clearTimeout(timer);
+      signal?.removeEventListener('abort', cancel);
+    };
+    const interrupt = (code: 'READ_TIMEOUT' | 'READ_CANCELLED') => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      reject(new ReadInterruptedError(code));
+      controller.abort();
+    };
+    const cancel = () => interrupt('READ_CANCELLED');
+    if (signal?.aborted) { cancel(); return; }
+    signal?.addEventListener('abort', cancel, { once: true });
+    timer = setTimeout(() => interrupt('READ_TIMEOUT'), JSON_READ_TIMEOUT_MS);
+    // An async wrapper also catches a synchronous transport/headers failure.
+    void (async () => read(controller.signal))().then(value => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve(value);
+    }, error => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      reject(error);
+    });
+  });
+}
+
+
 /**
  * Auth headers every /api call needs: the global gate accepts a Bearer JWT
  * only (server/auth.ts authMiddleware) and reads tenant scope from
@@ -260,7 +315,7 @@ export function useFetchJson<T>(
     loading: boolean;
     error: string | null;
     failure: ReadFailure | null;
-  }>({ data: null, loading: false, error: null, failure: null });
+  }>({ data: null, loading: url !== null, error: null, failure: null });
   const [tick, setTick] = useState<number>(0);
   const refresh = useCallback(() => setTick((t) => t + 1), []);
 
@@ -274,48 +329,57 @@ export function useFetchJson<T>(
     let cancelled = false;
     setState((s) => ({ ...s, loading: true, error: null, failure: null }));
 
-    // Without these headers the c2c surfaces silently fall back to fixtures
-    // and never show live data — see buildAuthHeaders.
-    const authHeaders = buildAuthHeaders();
+    const callerSignal = opts.init?.signal;
+    const cancelFromCaller = () => controller.abort();
+    if (callerSignal?.aborted) controller.abort();
+    else callerSignal?.addEventListener('abort', cancelFromCaller, { once: true });
 
-    fetch(url, {
-      ...DEFAULT_INIT,
-      ...opts.init,
-      headers: { ...authHeaders, ...(opts.init?.headers as Record<string, string> | undefined) },
-      signal: controller.signal,
-    })
-      .then(async (res) => {
-        if (!res.ok) {
-          const detail = await res.text().catch(() => '');
-          /* The code is read from the whole body; the line keeps 200 characters. */
-          throw new FetchJsonError(
-            `HTTP ${res.status}${detail ? `: ${detail.slice(0, 200)}` : ''}`,
-            res.status,
-            bodyCode(detail),
-          );
-        }
-        return (await res.json()) as T;
-      })
-      .then((data) => {
-        if (cancelled) return;
-        setState({ data, loading: false, error: null, failure: null });
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        /* AbortError is expected on cancellation — don't surface it. */
-        if (err instanceof Error && err.name === 'AbortError') return;
-        const status = err instanceof FetchJsonError ? err.status : 0;
-        const code = err instanceof FetchJsonError ? err.code : undefined;
-        setState({
-          data: null,
-          loading: false,
-          error: err instanceof Error ? err.message : 'Fetch failed',
-          failure: { kind: readFailureFor(status, code), status, ...(code ? { code } : {}) },
-        });
+    const read = async (signal: AbortSignal): Promise<T> => {
+      const authHeaders = buildAuthHeaders();
+      const res = await fetch(url, {
+        ...DEFAULT_INIT,
+        ...opts.init,
+        headers: { ...authHeaders, ...(opts.init?.headers as Record<string, string> | undefined) },
+        signal,
       });
+      if (!res.ok) {
+        const detail = await res.text().catch(() => '');
+        /* The code is read from the whole body; the line keeps 200 characters. */
+        throw new FetchJsonError(
+          `HTTP ${res.status}${detail ? `: ${detail.slice(0, 200)}` : ''}`,
+          res.status,
+          bodyCode(detail),
+        );
+      }
+      return (await res.json()) as T;
+    };
+    // Some legacy callers supply a non-GET init. Never impose a read deadline
+    // on a write: its outcome may be unknown rather than "nothing changed".
+    const pending = (opts.init?.method ?? 'GET').toUpperCase() === 'GET'
+      ? withReadDeadline(read, controller.signal)
+      : read(controller.signal);
+    pending.then((data) => {
+      if (cancelled) return;
+      setState({ data, loading: false, error: null, failure: null });
+    }).catch((err: unknown) => {
+      if (cancelled) return;
+      // Only cleanup cancellation is silent. An unexpected AbortError used to
+      // return without clearing loading, leaving the screen stuck indefinitely.
+      const interrupted = err instanceof ReadInterruptedError ? err
+        : err instanceof Error && err.name === 'AbortError' ? new ReadInterruptedError('READ_CANCELLED') : null;
+      const status = err instanceof FetchJsonError ? err.status : 0;
+      const code = err instanceof FetchJsonError ? err.code : interrupted?.code;
+      setState({
+        data: null,
+        loading: false,
+        error: interrupted?.message ?? (err instanceof Error ? err.message : 'Fetch failed'),
+        failure: { kind: readFailureFor(status, code), status, ...(code ? { code } : {}) },
+      });
+    });
 
     return () => {
       cancelled = true;
+      callerSignal?.removeEventListener('abort', cancelFromCaller);
       controller.abort();
     };
     /* opts.init is deliberately omitted from deps — passing a literal

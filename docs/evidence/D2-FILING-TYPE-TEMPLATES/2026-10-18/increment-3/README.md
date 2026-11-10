@@ -234,3 +234,164 @@ This is the same change as Rule 2 audit slice S2. Its evidence, with "What alrea
 
 **What a person sees:** a 2.4 or 2.6 request returns the record's ICH M4S outline and says no nonclinical study is recorded against the project. Studies typed in the conversation are refused and named as not used.
 
+## i. 3b Slice 3 (a): the readiness digest does not judge a document as an application
+
+**Plan:** F1 (a repair of shipped behaviour). **Completes:** `server/services/report-os/orchestrator.ts`. Slice 3's other
+two halves are RIM's, by the coordinator's routing on 2026-11-01, because RIM holds their files:
+- (b) both creators refuse a project that is not an application (`submission-service.ts`, inside RIM's F1 slice 2);
+- (c) the four eCTD doors refuse a filing class, with the client's handling of that 422, as one change
+  (`ectd-compile.ts`, `EctdCompile.tsx`, `EctdModuleReadiness.tsx`, `EctdFiledState.tsx`).
+
+RIM has their exact edits and red cases.
+
+**The defect.** The digest's one not-computed branch for a project was "no registry context". A filing document class
+project records its registry id, for example `ICH_CSR` or `US_NDA_SUPP`. So `evaluateReadiness` judged a clinical study
+report as an application:
+- a `submission_readiness` row whose blocker read "17 regulatory gaps detected (Clinical Study Report)";
+- the critical gaps as blockers;
+- a `regional_package_manifest` row;
+- `summary.regulatory` with a readiness score, which the portfolio showed as the member's readiness.
+
+### What already exists (Rule 3)
+
+- **`server/services/report-os/orchestrator.ts`.** `readinessNotComputed` and its no-registry branch. This slice adds
+  one branch beside it, in the same words.
+- **`shared/regulatory/filing-document-classes.ts`.** `filingDocumentClassForFiling` and `filingTypeInSentence`, the one
+  class vocabulary. It is read, not restated.
+- **`server/services/c2c/dossier-read.ts`.** A class document is one dossier row whose figure is the approved or
+  locked share of its counted sections. That is what the new sentence points to.
+- **`server/services/report-os/__tests__/orchestrator-readiness.test.ts`.** The pin for "one readiness verdict". It
+  is extended here; no new test file.
+- **The first half of Slice 3**, `5ab138ed3` (`document-class-not-an-application.pglite.test.ts`), refused
+  `POST /api/submissions` in a class project.
+- **Searches run:**
+  - `git grep` for `readinessNotComputed`, `filingDocumentClassForFiling`, `filingTypeInSentence`,
+    `a document rather than an application` and `approved or locked share`;
+  - every caller of `computeInitialRun`: `compute-run.ts`, `canvas/render-report.ts` and `portfolio/fetch.ts`.
+- **History:** `git log --all --diff-filter=D -S readinessNotComputed` and `-S 'a document rather than an application'`
+  find nothing.
+
+### The change
+
+When the project's registry id resolves to a filing document class, `submission_readiness` is not computed. The
+digest says why: "Submission readiness not computed: a clinical study report is a document rather than an
+application; its completion is the approved or locked share of its governed outline, on its project's dossier." No
+package manifest or regulatory summary is produced.
+
+An application (`US_IND`) is evaluated against its registry entry as before.
+
+**What a person sees:** a CSR, supplement or meeting-package project's readiness digest, and its portfolio row, say
+that readiness is not computed and why. Before, they showed an application-shaped score and gaps.
+
+**Not covered** (filed):
+- A report request whose `explicitRegistryId` names an application, for example `US_IND` on a class project, is
+  still scored as that application, because the branch keys on the resolved registry id, not on the project's
+  `program_type`.
+- An explicit `ICH_CSR` request on an IND project now reads "not computed". The sentence is worded without "this
+  project is", so it stays true there.
+
+### Proof
+
+- `3b-s3-class-not-an-application-red.txt`: on trunk `a2bad27e1` the two class cases fail. The digest's blocker reads
+  "17 regulatory gaps detected (Clinical Study Report)" and "(NDA/BLA …)". The 8 existing cases and the IND control
+  pass.
+- After the change: 11 of 11.
+- **The neighbourhood:** every test that reaches `computeInitialRun`, the portfolio or the canvas report (29 files),
+  plus `server/services/report-os/`. That is 83 files and 1,060 tests:
+  - 73 files pass.
+  - 10 files fail the same 60 cases on trunk without this change, all for one environmental reason: "Reporting PDF
+    fonts are unavailable on this deployment" (the run, bundle and pack PDF exports and the two pglite PDF reports).
+- **Gates:** typecheck 0; ESLint ratchet unchanged; `ci:one-design-plan` with `Plan: F1`.
+
+## j. 3b Slice 4: ICH / Global says why nothing is offered, and the QOS, 3.2.S and 3.2.P say where they are written
+
+**Plan:** F1 (a repair of shipped behaviour), not S5: S5's `shared/regulatory/**` and `services/regulatory/**` are
+anchored at the repository root, so neither matches `server/services/regulatory/`. **Completes:**
+`server/services/regulatory/market-support.ts`. **Decision:** P-55 row 5 (F-D, 2026-10-26): no standalone Quality
+Overall Summary, drug substance or drug product project, and "the 'not offered' reason will name where each is
+written". The client half (the New project picker reading `reasonByFiling`, `AnaVerbs.tsx`) is the coordinating
+session's, and follows this commit.
+
+**The defect.**
+- Every ICH / Global row the New project picker does not offer read "Not supported: the platform has no filing outline
+  or channel for ICH / Global". Its outline detail read "No document agency is defined for 'ICH / Global'.". Neither is
+  the reason, and both are false for the QOS, Module 3.2.S and Module 3.2.P: each is outlined in its application's
+  own pack, and AnA composes the QOS.
+- `harmonisedSupport` returned `null` for anything that is not an ICH document class, so the statement fell to
+  `unmappedSupport`.
+- None of the three rows said where it is written.
+- `POST /api/c2c/projects` sent the same sentence in its 422, at both refusal points: the check before any SQL, and
+  the `FilingNotOfferedError` after the scaffold.
+- An ICH class (the CSR) at ICH / Global said it is "placed into an application's sequence". Since `5ab138ed3` a
+  class project opens no submission, and `classNotSequencedReason` says it is filed from its application's own
+  project.
+
+### What already exists (Rule 3)
+
+- **`server/services/regulatory/market-support.ts`:**
+  - `FilingOffer` and its `appliesTo` (registry ids, read by `AnaVerbs.tsx`). `reasonByFiling` extends that per-filing
+    precedent with the same keys; it is not a second mechanism.
+  - `offerOf`, `harmonisedSupport` and `unmappedSupport`. `unmappedSupport` and `describeUnmappedClass`
+    (`c2c/document-class.ts`) are left alone: scaffolding, document binding and Add a market call them.
+- **`shared/regulatory/filing-document-classes.ts`:** the six ICH classes and `classNotSequencedReason`. QOS, drug
+  substance and drug product are deliberately not classes.
+- **`shared/regulatory/global-document-registry.ts`:** `ICH_QOS` (2.3), `ICH_M3_DS` (3.2.S), `ICH_M3_DP` (3.2.P),
+  `US_DMF` and `EU_ASMF`.
+- **`server/services/ana/cmc-quality-summary-tool.ts`:** `draft_quality_overall_summary_m2_3` composes 2.3 from the open
+  program's CMC records.
+- **`server/services/cmc/composition-scope.ts`:** P-28's scope, a small-molecule US IND.
+- **`server/routes/c2c/projects.ts`:** `sendFilingNotOffered` and its two callers.
+- **`server/routes/submissions.ts`:** `GET /market-support` passes the statement through, so `reasonByFiling` reaches
+  the picker with no route change.
+- **Searches run:**
+  - `git grep` for `reasonByFiling`, `WRITTEN_IN_THE_APPLICATION_PROJECT`, "takes no filing", "no filing outline or
+    channel", "placed into an application's sequence" and "No document agency is defined";
+  - `ICH_QOS`, `ICH_M3_DS` and `ICH_M3_DP` across shared, server, client and services;
+  - `appliesTo`;
+  - the callers of `marketSupport`, `readMarketSupport` and `marketOfferGivenOutline`.
+- **History:** `git log --all --diff-filter=D` on `*market-support*`, `*harmonis*`, `*not-offered*`, `*FilingOffer*`
+  and `*qos*` finds nothing.
+
+### The change
+
+- **ICH / Global, asked for anything that is not one of its document classes** (an NDA, an IND, a supplement), is
+  not offered: "Not offered: ICH is no jurisdiction and takes no filing, and this filing is not authored here as a
+  project of its own." Tiers and picker counts are unchanged: every such pair was already not offered.
+- **The offer carries `reasonByFiling`** for exactly three registered filings, each saying where it is written:
+  - the QOS is Module 2.3 of its application;
+  - drug substance quality is Module 3.2.S;
+  - drug product quality is Module 3.2.P.
+
+  Each sentence claims no more than P-28's scope (a small-molecule US IND). The drug substance sentence names the Drug
+  Master File and the Active Substance Master File.
+- **`POST /api/c2c/projects`** sends the filing's own reason as the 422 `message` at both refusal points. The body's
+  `marketSupport` is the verdict's offer, unchanged.
+- **The CSR at ICH / Global** reads "authored here; a harmonised document is filed in its application's sequence from
+  that application's own project", as `classNotSequencedReason` does.
+
+**What a person sees:**
+- **Today:** the New project picker's ICH / Global rows give the true reason instead of "no filing outline or
+  channel", and a project created from a stale wizard for the QOS, 3.2.S or 3.2.P is refused with the sentence saying
+  where it is written.
+- **Once the picker reads `reasonByFiling`:** the QOS, 3.2.S and 3.2.P rows say where each is written.
+
+**Not covered** (filed):
+- The ICH CTD component rows (2.4–2.7 and the tabulated summaries) get the general ICH sentence. Their own class
+  projects wait on the founder (P-55 or P-83; 3b Slices 5–7).
+- The sentences are true within P-28. A founder decision that widens P-28 must revisit them.
+- `add-project-market.ts` joins `${line} Nothing was added.` without a full stop. This is pre-existing, and now
+  applies to the ICH line too.
+
+### Proof
+
+- **`3b-s4-ich-not-offered-red.txt`:**
+  - `market-support-ich-not-offered.test.ts` fails 11 of 15 on trunk. Its 4 controls pass: no per-filing reason
+    elsewhere, the registry modules, DMF and ASMF author-only, the QOS tool in scope.
+  - The three ICH / Global cases added to `projects-create-market-offer.test.ts` fail: each 422 read "Not supported:
+    the platform has no filing outline or channel for ICH / Global".
+- **After the change:** 36 of 36 across both files.
+- **The neighbourhood:** every test that reads the market verdict, the offer or the refusal, server and client: 54
+  files, 880 tests. 879 pass. One client case fails identically on trunk without this change:
+  `submissionCenterNewFromProject.test.tsx`, "each region option carries the server's statement…", whose mocked fetch
+  sees a different call order. It is reported to its owner.
+- **Gates:** typecheck 0; ESLint ratchet unchanged; `ci:one-design-plan` with `Plan: F1`.

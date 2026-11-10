@@ -77,6 +77,16 @@ export interface AuthoringCreateExportProps {
   onExported?: (format: string) => void;
   /** Open and refresh this document’s existing export history for recovery. */
   onCheckExports?: () => void;
+  /**
+   * What this control draws. `'buttons'` (the default): New document, New section
+   * and Download. `'download'`: Download only, as the editor bar's icon; the bar's
+   * More menu opens New document and New section through `requests`
+   * (D4.md §D4.B step 4). The drawers and recovery notices stay mounted here
+   * either way, so a menu closing never unmounts them.
+   */
+  triggers?: 'buttons' | 'download';
+  /** Each increase of a count is one request to open that drawer. A refusal is toasted, never swallowed. */
+  requests?: { document: number; section: number };
 }
 
 const NONE = BLANK_DOCUMENT;
@@ -137,6 +147,25 @@ function documentCreationForm({ templates, selectedTemplate, module, globalCatal
   };
 }
 
+/**
+ * The editor bar's More menu asks for a drawer by counting (D4.md §D4.B step 4):
+ * a count that rises is one request. The counts this control mounted with are
+ * not requests, so remounting it never reopens a drawer.
+ */
+function useCreationRequests(requests: AuthoringCreateExportProps['requests'], openDocument: () => void, openSection: () => void) {
+  const documentCount = requests?.document ?? null;
+  const sectionCount = requests?.section ?? null;
+  const seen = useRef({ document: documentCount, section: sectionCount });
+  const latest = useRef({ openDocument, openSection });
+  latest.current = { openDocument, openSection };
+  useEffect(() => {
+    const before = seen.current;
+    seen.current = { document: documentCount, section: sectionCount };
+    if (documentCount !== null && before.document !== null && documentCount > before.document) latest.current.openDocument();
+    if (sectionCount !== null && before.section !== null && sectionCount > before.section) latest.current.openSection();
+  }, [documentCount, sectionCount]);
+}
+
 /** A refused command is consumed, so unrelated later work cannot reopen it. */
 function useDocumentStartCommand(start: AuthoringDocumentStart | null | undefined, dialogOpen: boolean,
   mayStart: (request: AuthoringDocumentStart) => boolean, accept: (request: AuthoringDocumentStart) => void) {
@@ -149,12 +178,13 @@ function useDocumentStartCommand(start: AuthoringDocumentStart | null | undefine
   }, [start, dialogOpen, mayStart, accept]);
 }
 
-function AuthoringRecoveryNotices({ creation, recovery }: {
+function AuthoringRecoveryNotices({ creation, recovery, openDocId }: {
   creation: ReturnType<typeof useAuthoringCreation>; recovery: ReturnType<typeof useAuthoringExport>['recovery'];
+  openDocId: string | null;
 }) {
   return <>
     <ExportRecoveryNotice {...recovery} />
-    {(['document', 'section'] as const).map(kind => <CreationRecoveryNotice key={kind} kind={kind}
+    {(['document', 'section'] as const).map(kind => <CreationRecoveryNotice key={kind} kind={kind} openDocId={openDocId}
       state={creation.state(kind)} disabled={!!creation.refusal} onCheck={() => creation.check(kind)} onOpen={() => creation.open(kind)} />)}
   </>;
 }
@@ -163,11 +193,20 @@ function useCreationFilingScope(programId: string | null | undefined, openProjec
   const session = useAuthoringReadSession(authService.getUser());
   const effectiveProgram = programId === undefined ? openProject : programId;
   const currentFiling = context?.projectId === effectiveProgram ? context : null;
-  const scope = JSON.stringify([effectiveProgram, openProject, currentFiling?.registryId, currentFiling?.filingDocumentId, session.actor, session.key]);
-  const visit = useRef({ scope, generation: 0, projectCurrent: captureShellProjectGuard() });
-  if (visit.current.scope !== scope || !visit.current.projectCurrent()) {
-    visit.current = { scope, generation: visit.current.generation + 1, projectCurrent: captureShellProjectGuard() };
+  const base = JSON.stringify([effectiveProgram, openProject, session.actor, session.key]);
+  const filing: Array<string | null> = [currentFiling?.registryId ?? null, currentFiling?.filingDocumentId ?? null];
+  const visit = useRef({ base, filing, generation: 0, projectCurrent: captureShellProjectGuard() });
+  /* A filing value that was known and is now another (or gone) is a change. One
+     that was not yet read and now is, is the same visit learning its filing:
+     New document opened as soon as the editor drew it said the project had
+     changed, and kept saying it, because the filing read landed a second later. */
+  const filingChanged = visit.current.filing.some((known, i) => known !== null && known !== filing[i]);
+  if (visit.current.base !== base || filingChanged || !visit.current.projectCurrent()) {
+    visit.current = { base, filing, generation: visit.current.generation + 1, projectCurrent: captureShellProjectGuard() };
+  } else if (visit.current.filing.some((known, i) => known !== filing[i])) {
+    visit.current.filing = filing;
   }
+  const scope = JSON.stringify([base, ...visit.current.filing]);
   const currentVisit = visit.current;
   const [formVisit, setFormVisit] = useState<object | null>(null);
   const current = () => visit.current === currentVisit && session.sameRevision() && currentVisit.projectCurrent();
@@ -183,7 +222,7 @@ function useCreationTemplateCatalog(owner: DataReadOwner) {
   return { templates: read.data?.templates ?? [], catalog };
 }
 
-export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fireToast, onDocCreated, onSectionCreated, onExported, onCheckExports, programId, programSwitchHeld = false, onCheckCreation, noticeContainer, documentStart, filingContext }: AuthoringCreateExportProps) {
+export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fireToast, onDocCreated, onSectionCreated, onExported, onCheckExports, programId, programSwitchHeld = false, onCheckCreation, noticeContainer, documentStart, filingContext, triggers, requests }: AuthoringCreateExportProps) {
   /* Sealed, or not offered. An unknown status used to count as exportable,
      which offered the controlled act on a document whose status nobody had
      read; the server would refuse it, and the working copy is the act that
@@ -204,6 +243,15 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
     }
     filingScope.capture(); setFormDocumentStart(null); setDialog('doc');
   };
+  const openSection = () => {
+    if (!docId) return;
+    if (creation.blocked('section')) {
+      fireToast(creation.refusal ?? creation.state('section')?.message ?? 'This cannot be created now.', 'error');
+      return;
+    }
+    setDialog('section');
+  };
+  useCreationRequests(requests, openDocument, openSection);
   useDocumentStartCommand(documentStart, dialog !== null, creation.canStartDocument,
     request => { filingScope.capture(); setFormDocumentStart(request); setDialog('doc'); });
   const { exportDoc, blockedReason, recovery } = useAuthoringExport({
@@ -246,23 +294,13 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
   const createSection = (values: Record<string, string>) => {
     creation.create('section', { code: values.code, title: values.title }, closeDialog);
   };
-  const notices = <AuthoringRecoveryNotices creation={creation} recovery={recovery} />;
+  const notices = <AuthoringRecoveryNotices creation={creation} recovery={recovery} openDocId={docId} />;
 
   return (
     <>
-      <button className="btn ghost" style={{ height: 30 }} onClick={openDocument}
-        disabled={creation.blocked('document')}
-        title={creation.refusal ?? creation.state('document')?.message}
-      >
-        {I.plus} New document
-      </button>
-      {creation.refusal && <span className="sp-row-s">{creation.refusal}</span>}
+      {triggers !== 'download' && <CreationButtons creation={creation} docId={docId} onDocument={openDocument} onSection={() => setDialog('section')} />}
       {docId && (
         <>
-          <button className="btn ghost" style={{ height: 30 }} disabled={creation.blocked('section')}
-            title={creation.refusal ?? creation.state('section')?.message} onClick={() => setDialog('section')}>
-            {I.plus} New section
-          </button>
           {/* One Download menu where three export buttons stood, all three
               disabled for a draft — so a document AnA had just built could
               not be pulled down at all. "Publish" was the wrong verb before
@@ -273,6 +311,7 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
             fireToast={fireToast}
             controlled={{ run: (f) => void exportDoc(f), blockedReason }}
             testId="ed-download"
+            compact={triggers === 'download'}
           />
         </>
       )}
@@ -287,10 +326,38 @@ export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fire
   );
 }
 
-function CreationRecoveryNotice({ kind, state, disabled, onCheck, onOpen }: {
-  kind: CreationKind; state?: CreationState; disabled: boolean; onCheck: () => void; onOpen: () => void;
+/** New document, its refusal, and New section: the text buttons a host draws
+ *  with `triggers="buttons"` (the default). */
+function CreationButtons({ creation, docId, onDocument, onSection }: {
+  creation: ReturnType<typeof useAuthoringCreation>; docId: string | null; onDocument: () => void; onSection: () => void;
 }) {
-  if (!state || state.phase === 'pending') return null;
+  return <>
+    <button className="btn ghost" style={{ height: 30 }} onClick={onDocument}
+      disabled={creation.blocked('document')}
+      title={creation.refusal ?? creation.state('document')?.message}
+    >
+      {I.plus} New document
+    </button>
+    {creation.refusal && <span className="sp-row-s">{creation.refusal}</span>}
+    {docId && (
+      <button className="btn ghost" style={{ height: 30 }} disabled={creation.blocked('section')}
+        title={creation.refusal ?? creation.state('section')?.message} onClick={onSection}>
+        {I.plus} New section
+      </button>
+    )}
+  </>;
+}
+
+/** Created and already open: the toast said so, and "Open created document"
+ *  above the document it names offers nothing. */
+function createdAndOpen(kind: CreationKind, state: CreationState, openDocId: string | null): boolean {
+  return kind === 'document' && state.phase === 'created' && !!openDocId && state.receipt?.id === openDocId;
+}
+
+function CreationRecoveryNotice({ kind, state, disabled, onCheck, onOpen, openDocId }: {
+  kind: CreationKind; state?: CreationState; disabled: boolean; onCheck: () => void; onOpen: () => void; openDocId: string | null;
+}) {
+  if (!state || state.phase === 'pending' || createdAndOpen(kind, state, openDocId)) return null;
   const actions = [];
   if (state.phase === 'unknown') actions.push({
     label: state.checking ? 'Checking…' : kind === 'document' ? 'Check working documents' : 'Check document sections',

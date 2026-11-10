@@ -51,6 +51,8 @@ export interface PdevBudget { params: BudgetParams; items: BudgetItem[]; }
 export interface AmendmentChange { sec: string; from: string; to: string; }
 export interface PdevAmendment {
   id: string; num: string; summary: string; status: string;
+  /** The statuses the server will accept next (its transition table). */
+  nextStatuses: string[];
   /** true = a declared consent or risk impact needs an IRB re-consent determination; null = not declared. */
   reconsent: boolean | null; path: string; changes: AmendmentChange[];
 }
@@ -58,6 +60,8 @@ export interface CapaAction { id: string; action: string; status: string; }
 export interface PdevDeviation {
   id: string; title: string; sev: string; cat: string;
   reportable: boolean; status: string; capa: CapaAction[];
+  /** Why it cannot be closed yet: the server's CAPA-closure gate. Empty when it can be. */
+  closeBlockers: string[];
 }
 export interface ReviewComment {
   id: string; sec: string; sev: string; text: string; resolved: boolean;
@@ -105,7 +109,7 @@ export type PdevSignatureFacet =
   | { state: 'none' }
   | { state: 'unavailable' };
 export interface PdevReview {
-  id: string; reviewer: string; role: string; status: string; comments: ReviewComment[];
+  id: string; reviewer: string; role: string; status: string;
   /** The disposition's signature, from the signature row. */
   signature: PdevSignatureFacet;
 }
@@ -150,6 +154,10 @@ export interface PdevDoc {
   amendments: PdevAmendment[];
   deviations: PdevDeviation[];
   reviews: PdevReview[];
+  /** The QRM engine's register summary (summarizeRiskRegister), over the scored risks. */
+  riskSummary?: { total: number; byLevel: Record<string, number>; openHighOrExtreme: number; residualExposure: number; basis: string; unscored: number };
+  /** The protocol's review comments, once each (they are keyed by document, not reviewer). */
+  reviewComments: ReviewComment[];
   consent: ConsentElement[];
   completenessFindings: SevText[];
   /** Who finalized it, from the signature row; `none` on a finalized protocol

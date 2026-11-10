@@ -110,15 +110,25 @@ export function PlaceIntoSubmission({ projectId, onPlaced }: { projectId: string
 
   return (
     <div data-testid="m3-place-into-submission">
-      <div className="cm-meta" style={{ marginBottom: 6 }}>
-        Place the approved §3.2 sections into an IND sequence — each becomes a real submission leaf the checklist,
-        package manifest and eCTD assembly read. Placing again into the same sequence updates its leaves; into a later
-        sequence, they are filed as replacements.
-      </div>
+      {/* What placing DOES, as a disclosure rather than a paragraph above the
+          control (D5 §A.4.15, §WA.4.2 rule 8). The words are unchanged and
+          one click away; a reader who already knows is not made to read them
+          again every time they file. */}
+      <details className="pj-more">
+        <summary>What placing does</summary>
+        <p>
+          Place the approved §3.2 sections into an IND sequence — each becomes a real submission leaf the checklist,
+          package manifest and eCTD assembly read. Placing again into the same sequence updates its leaves; into a later
+          sequence, they are filed as replacements.
+        </p>
+      </details>
       <FilingTargetFields target={target} idPrefix="m3-place" />
       <PlacementReasonField value={reason} onChange={setReason} idPrefix="m3-place" disabled={busy} />
+      {/* A ghost, not the view's orange: Module 3 build's one primary is
+          "Compile Module 3" (D5 §A.4.13), and a view gets one (§WA.3). */}
       <button
-        className="reg-cta"
+        type="button"
+        className="btn ghost"
         onClick={() => void place()}
         disabled={!canPlace}
         title={reasonOk ? undefined : PLACEMENT_REASON_REQUIRED}

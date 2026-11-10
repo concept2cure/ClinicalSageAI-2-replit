@@ -12,7 +12,9 @@
 
 import { useMemo } from 'react';
 import { useFetchJson } from '../mdx/hooks/useFetchJson';
+import { scopedPath, useQualityScope } from './registerContext';
 import { listOf } from './qmsList';
+import { learningReviewViewOf } from './qmsApproval';
 import type {
   ChangeControl, ChangeLink, ChangeSummary, ChangeState, ChangeType,
   Classification, RiskLevel, LinkType, Relationship,
@@ -42,6 +44,12 @@ interface ServerChange {
   risk_level: string | null;
   status: string;
   reason: string | null;
+  /** Who raised the change: the server refuses their approval (change-approval-signature.ts, the two-person rule). */
+  proposed_by?: number | null;
+  impact_assessment?: string | null;
+  implementation_plan?: string | null;
+  /** The digest of the content an approval of this change signs (computeQmsChangeContentDigest). */
+  content_digest?: string;
   target_implementation_date: string | null;
   created_at: string | null;
   updated_at: string | null;
@@ -50,6 +58,7 @@ interface ServerChange {
   implementation_overdue?: boolean;
   /** CHANGE_TRANSITIONS for this row's status, sent by the register read. */
   next_states?: unknown;
+  learning_review?: unknown;
 }
 interface ServerLink {
   id: number;
@@ -84,6 +93,11 @@ function adaptChange(r: ServerChange): ChangeControl {
     riskLevel: (r.risk_level as RiskLevel | null) ?? null,
     status: r.status as ChangeState,
     reason: r.reason,
+    proposedBy: typeof r.proposed_by === 'number' ? r.proposed_by : null,
+    impactAssessment: typeof r.impact_assessment === 'string' ? r.impact_assessment : null,
+    implementationPlan: typeof r.implementation_plan === 'string' ? r.implementation_plan : null,
+    contentDigest: typeof r.content_digest === 'string' && /^[a-f0-9]{64}$/.test(r.content_digest) ? r.content_digest : null,
+    learningReview: learningReviewViewOf(r.learning_review),
     targetImplementationDate: r.target_implementation_date,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
@@ -100,19 +114,23 @@ function adaptChange(r: ServerChange): ChangeControl {
 /** Change-control register — GET /api/mdx/qms/changes. */
 const CHANGES_PATH = '/api/mdx/qms/changes';
 export function useChangeRegister() {
-  const { data, loading, error, refresh } = useFetchJson<unknown>(CHANGES_PATH);
+  /* The open project's changes: those filed under it (C14; mdx-qms.ts GET /qms/changes). */
+  const path = scopedPath(CHANGES_PATH, useQualityScope().programId);
+  const { data, loading, error, refresh, failure } = useFetchJson<unknown>(path);
   const rows = useMemo(() => listOf<ServerChange>(data), [data]);
   const changes = useMemo<ChangeControl[] | null>(() => rows?.map(adaptChange) ?? null, [rows]);
-  const shape = data != null && rows === null ? `unexpected response shape for ${CHANGES_PATH}` : null;
-  return { changes, loading, error: error ?? shape, refresh };
+  const shape = data != null && rows === null ? `unexpected response shape for ${path}` : null;
+  return { changes, loading, error: error ?? shape, failure, refresh };
 }
 
 /** Register KPIs — GET /api/mdx/qms/changes/summary. */
 const SUMMARY_PATH = '/api/mdx/qms/changes/summary';
 export function useChangeSummary() {
-  const { data, loading, error } = useFetchJson<unknown>(SUMMARY_PATH);
+  const { data, loading, error, failure, refresh } = useFetchJson<unknown>(SUMMARY_PATH);
   const summary = useMemo<ChangeSummary | null>(() => objectOf<ChangeSummary>(data), [data]);
   const shape =
     data != null && summary === null ? `unexpected response shape for ${SUMMARY_PATH}` : null;
-  return { summary, loading, error: error ?? shape };
+  /* `refresh` so a write re-reads the figures with the log: until 2026-11-10 a raised change appeared in the log
+     while the figure line above it still counted the log as it was (walked, C3). */
+  return { summary, loading, error: error ?? shape, failure, refresh };
 }

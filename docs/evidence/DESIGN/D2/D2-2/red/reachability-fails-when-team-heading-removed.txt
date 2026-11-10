@@ -1,0 +1,60 @@
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the header and the step rail > has no eyebrow, and one sub-line that says what the three steps do
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the header and the step rail > states each step for screen readers only, and the current one with aria-current
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the header and the step rail > keeps the step-1 note as text, without AnA’s spark
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: Team members leaves the form, and the review says where people are added > step 2 has no Team members field and no empty-state box
+ ↓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: Team members leaves the form, and the review says where people are added > step 3 says, under the list, what happens on create and where to add people; the body is unchanged
+ × client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: Team members leaves the form, and the review says where people are added > the place the review names exists: the project page has a Team section that grants sharing 6039ms
+   → Unable to find role="heading" and name "Team"
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="page-inner pj"
+    >
+      <button
+        class="pj-back"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-arrow-left"
+          fill="none"
+          focusable="false"
+          height="1em"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.5"
+          viewBox="0 0 24 24"
+          width="1em"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m12 19-7-7 7-7"
+          />
+          <path
+            d="M19 12H5"
+          />
+        </svg>
+         All projects
+      </button>
+      <div
+        class="pj-top"
+      >
+        <div
+          class="pj-top-l"
+        >
+          <h1
+            class="pj-title"
+          >
+            Aurora CGM
+          </h1>
+          <div
+            class="pj-tags"
+          />
+        </div>
+        <div
+          class="pj-settings"
+        >
+          <button
+            aria-controls="_r_0_-panel"

@@ -1,0 +1,47 @@
+{
+  "mode": "narrow-only",
+  "base": "http://127.0.0.1:5000",
+  "email": "jm.smith@concept2cure.pro",
+  "startedAt": "2026-11-05T00:00:39.312Z",
+  "steps": [
+    {
+      "name": "sign in (one dev-login)",
+      "note": "jm.smith@concept2cure.pro"
+    },
+    {
+      "name": "Projects: the LMN-201 project is listed",
+      "screenshot": "screenshots/01-projects-lmn201.png"
+    },
+    {
+      "name": "Record 4710-4: the form is filled from the letter (cancelled, nothing recorded)",
+      "form": {
+        "type": "pmc",
+        "words": "Develop and validate a cell-based toxin B neutralisation potency assay for LMN-201 drug substance release and stability testing, and submit the validation report.",
+        "dueDate": "2027-12-31",
+        "basis": "FDCA 506B · 4710-4",
+        "reason": ""
+      },
+      "screenshot": "screenshots/05-record-form-filled.png"
+    },
+    {
+      "name": "390 wide: the letter's commitments",
+      "horizontalOverflowPx": 0,
+      "textColumnsPx": [
+        214,
+        214,
+        214,
+        201
+      ],
+      "finding": null,
+      "screenshot": "screenshots/09-mobile-390-commitments.png"
+    },
+    {
+      "name": "C2C-101: the information request's 3 numbered questions are proposed",
+      "screenshot": "screenshots/10-biotech-ir-questions.png"
+    }
+  ],
+  "apiErrors": [],
+  "consoleErrors": [],
+  "outcome": "passed",
+  "finishedAt": "2026-11-05T00:00:52.628Z"
+}

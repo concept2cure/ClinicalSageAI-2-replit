@@ -1,0 +1,1021 @@
+# dataConnect.tsx with ProjectBack, before the test loader stubbed ./shellProject: the new import breaks the loader (ENOENT on fixtures/project-home-data.ts)
+$ node --test tests/ops/ui-read-recovery.test.mjs
+TAP version 13
+# Subtest: v2 read stops waiting for stalled transport, keeps failure distinct from empty, and aborts its request
+not ok 1 - v2 read stops waiting for stalled transport, keeps failure distinct from empty, and aborts its request
+  ---
+  duration_ms: 441.040933
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:132:3'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:133:35)
+  ...
+# Subtest: v2 read stops waiting for stalled body, keeps failure distinct from empty, and aborts its request
+not ok 2 - v2 read stops waiting for stalled body, keeps failure distinct from empty, and aborts its request
+  ---
+  duration_ms: 211.967745
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:132:3'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:133:35)
+  ...
+# Subtest: v2 read stops waiting for stalled error-body, keeps failure distinct from empty, and aborts its request
+not ok 3 - v2 read stops waiting for stalled error-body, keeps failure distinct from empty, and aborts its request
+  ---
+  duration_ms: 120.517199
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:132:3'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:133:35)
+  ...
+# Subtest: v2 read stops waiting for stalled session-body, keeps failure distinct from empty, and aborts its request
+not ok 4 - v2 read stops waiting for stalled session-body, keeps failure distinct from empty, and aborts its request
+  ---
+  duration_ms: 169.052067
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:132:3'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:133:35)
+  ...
+# Subtest: v2 timeout remains final even when the original response ignores abort and arrives late
+not ok 5 - v2 timeout remains final even when the original response ignores abort and arrives late
+  ---
+  duration_ms: 150.178245
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:147:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:148:33)
+  ...
+# Subtest: v2 read preserves supplied headers, bearer and cancellation signal
+not ok 6 - v2 read preserves supplied headers, bearer and cancellation signal
+  ---
+  duration_ms: 92.178887
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:155:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:156:27)
+  ...
+# Subtest: an already-cancelled v2 read performs no fetch
+not ok 7 - an already-cancelled v2 read performs no fetch
+  ---
+  duration_ms: 77.947878
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:165:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:166:33)
+  ...
+# Subtest: cancelling an in-flight v2 read settles it even if the transport ignores abort
+not ok 8 - cancelling an in-flight v2 read settles it even if the transport ignores abort
+  ---
+  duration_ms: 68.288209
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:172:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:173:33)
+  ...
+# Subtest: v2 preserves status 403 and code MODULE_NOT_LICENSED instead of misclassifying a completed refusal as a timeout
+not ok 9 - v2 preserves status 403 and code MODULE_NOT_LICENSED instead of misclassifying a completed refusal as a timeout
+  ---
+  duration_ms: 54.600275
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:185:3'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:186:35)
+  ...
+# Subtest: v2 preserves status 404 and code NOT_FOUND instead of misclassifying a completed refusal as a timeout
+not ok 10 - v2 preserves status 404 and code NOT_FOUND instead of misclassifying a completed refusal as a timeout
+  ---
+  duration_ms: 66.4918
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:185:3'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:186:35)
+  ...
+# Subtest: v2 preserves status 503 and code VERIFICATION_UNAVAILABLE instead of misclassifying a completed refusal as a timeout
+not ok 11 - v2 preserves status 503 and code VERIFICATION_UNAVAILABLE instead of misclassifying a completed refusal as a timeout
+  ---
+  duration_ms: 107.418268
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:185:3'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:186:35)
+  ...
+# Subtest: v2 legitimate empty list is not a timeout or a failure
+not ok 12 - v2 legitimate empty list is not a timeout or a failure
+  ---
+  duration_ms: 74.51909
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:197:3'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:198:35)
+  ...
+# Subtest: v2 legitimate no content is not a timeout or a failure
+not ok 13 - v2 legitimate no content is not a timeout or a failure
+  ---
+  duration_ms: 61.141362
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:197:3'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:198:35)
+  ...
+# Subtest: v2 missing-store metadata survives; no fixture or false completed data is supplied
+not ok 14 - v2 missing-store metadata survives; no fixture or false completed data is supplied
+  ---
+  duration_ms: 60.258294
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:204:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:205:27)
+  ...
+# Subtest: v2 malformed JSON and shape guard refusals settle without timers left behind
+not ok 15 - v2 malformed JSON and shape guard refusals settle without timers left behind
+  ---
+  duration_ms: 80.125424
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:210:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:211:33)
+  ...
+# Subtest: v2 hook clears loading on timeout and existing retry dependency recovers the real result
+not ok 16 - v2 hook clears loading on timeout and existing retry dependency recovers the real result
+  ---
+  duration_ms: 58.524764
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:218:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:219:40)
+  ...
+# Subtest: v2 navigation always reloads a changed path even when caller deps omit it
+not ok 17 - v2 navigation always reloads a changed path even when caller deps omit it
+  ---
+  duration_ms: 70.219951
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:230:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:231:34)
+  ...
+# Subtest: v2 navigation cancels the previous transport and ignores its late data
+not ok 18 - v2 navigation cancels the previous transport and ignores its late data
+  ---
+  duration_ms: 66.507452
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:238:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:239:40)
+  ...
+# Subtest: v2 unmount cancels both the read and the deadline without updating state
+not ok 19 - v2 unmount cancels both the read and the deadline without updating state
+  ---
+  duration_ms: 49.342657
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:248:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:249:40)
+  ...
+# Subtest: v2 disabling a read stops loading even when explicit deps are unchanged
+not ok 20 - v2 disabling a read stops loading even when explicit deps are unchanged
+  ---
+  duration_ms: 52.630989
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:254:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:255:40)
+  ...
+# Subtest: expired v2 read ownership hides old data without another permanent loading state
+not ok 21 - expired v2 read ownership hides old data without another permanent loading state
+  ---
+  duration_ms: 64.731465
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:261:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:262:34)
+  ...
+# Subtest: MDX/Quality hook ends stalled transport with a retryable read failure
+not ok 22 - MDX/Quality hook ends stalled transport with a retryable read failure
+  ---
+  duration_ms: 47.283787
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:273:3'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:274:41)
+  ...
+# Subtest: MDX/Quality hook ends stalled body with a retryable read failure
+not ok 23 - MDX/Quality hook ends stalled body with a retryable read failure
+  ---
+  duration_ms: 43.540508
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:273:3'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:274:41)
+  ...
+# Subtest: MDX/Quality hook ends stalled error-body with a retryable read failure
+not ok 24 - MDX/Quality hook ends stalled error-body with a retryable read failure
+  ---
+  duration_ms: 45.206306
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:273:3'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:274:41)
+  ...
+# Subtest: MDX refresh after timeout recovers and a late old response cannot overwrite it
+not ok 25 - MDX refresh after timeout recovers and a late old response cannot overwrite it
+  ---
+  duration_ms: 68.540465
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:286:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:287:39)
+  ...
+# Subtest: an unexpected AbortError is an ended load, not a permanent spinner
+not ok 26 - an unexpected AbortError is an ended load, not a permanent spinner
+  ---
+  duration_ms: 67.526979
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:295:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:296:33)
+  ...
+# Subtest: MDX URL changes abort old work and cleanup retires the timer
+not ok 27 - MDX URL changes abort old work and cleanup retires the timer
+  ---
+  duration_ms: 55.842836
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:302:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:303:39)
+  ...
+# Subtest: MDX null URL remains idle and issues no requests
+not ok 28 - MDX null URL remains idle and issues no requests
+  ---
+  duration_ms: 59.300014
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:310:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:311:39)
+  ...
+# Subtest: MDX/Quality preserves 403/MODULE_NOT_LICENSED as not-enabled
+not ok 29 - MDX/Quality preserves 403/MODULE_NOT_LICENSED as not-enabled
+  ---
+  duration_ms: 44.029513
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:319:3'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:320:41)
+  ...
+# Subtest: MDX/Quality preserves 403/LAUNCH_SCOPE as out-of-release
+not ok 30 - MDX/Quality preserves 403/LAUNCH_SCOPE as out-of-release
+  ---
+  duration_ms: 101.094364
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:319:3'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:320:41)
+  ...
+# Subtest: MDX/Quality preserves 403/ORG_REQUIRED as no-organization
+not ok 31 - MDX/Quality preserves 403/ORG_REQUIRED as no-organization
+  ---
+  duration_ms: 93.762905
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:319:3'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:320:41)
+  ...
+# Subtest: MDX/Quality preserves 404/NOT_FOUND as not-found
+not ok 32 - MDX/Quality preserves 404/NOT_FOUND as not-found
+  ---
+  duration_ms: 117.457806
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:319:3'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:320:41)
+  ...
+# Subtest: MDX/Quality preserves 503/VERIFICATION_UNAVAILABLE as unchecked
+not ok 33 - MDX/Quality preserves 503/VERIFICATION_UNAVAILABLE as unchecked
+  ---
+  duration_ms: 119.717244
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:319:3'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:320:41)
+  ...
+# Subtest: UI read deadline does not cancel, retry or falsely complete a governed write
+not ok 34 - UI read deadline does not cancel, retry or falsely complete a governed write
+  ---
+  duration_ms: 112.115431
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:327:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:328:38)
+  ...
+# Subtest: timeout copy survives the actual error renderer and its existing retry action remains operable
+not ok 35 - timeout copy survives the actual error renderer and its existing retry action remains operable
+  ---
+  duration_ms: 66.411199
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:336:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:337:33)
+  ...
+# Subtest: busy retry stays disabled; empty, loading and failure retain their distinct accessibility states
+not ok 36 - busy retry stays disabled; empty, loading and failure retain their distinct accessibility states
+  ---
+  duration_ms: 80.132596
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:349:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:350:20)
+  ...
+# Subtest: a timed-out old 401 cannot announce the end of a newer session
+not ok 37 - a timed-out old 401 cannot announce the end of a newer session
+  ---
+  duration_ms: 66.461357
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:358:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:359:33)
+  ...
+# Subtest: a current 401 still announces the session outcome and gives actionable sign-in wording
+not ok 38 - a current 401 still announces the session outcome and gives actionable sign-in wording
+  ---
+  duration_ms: 34.803492
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:366:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:367:33)
+  ...
+# Subtest: successful v2 reads detach the caller cancellation listener
+not ok 39 - successful v2 reads detach the caller cancellation listener
+  ---
+  duration_ms: 50.319804
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:373:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:374:33)
+  ...
+# Subtest: MDX/Quality caller cancellation is honored before a request starts
+not ok 40 - MDX/Quality caller cancellation is honored before a request starts
+  ---
+  duration_ms: 50.47635
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:385:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:386:39)
+  ...
+# Subtest: MDX/Quality refresh uses the active bearer and organization, not stale headers
+not ok 41 - MDX/Quality refresh uses the active bearer and organization, not stale headers
+  ---
+  duration_ms: 51.050529
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:392:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:393:39)
+  ...
+# Subtest: the existing non-GET hook option is not timed out or retried as a read
+not ok 42 - the existing non-GET hook option is not timed out or retried as a read
+  ---
+  duration_ms: 43.695197
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:402:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:403:39)
+  ...
+# Subtest: no automatic request storm starts after a v2 read timeout
+not ok 43 - no automatic request storm starts after a v2 read timeout
+  ---
+  duration_ms: 43.642619
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:409:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:410:40)
+  ...
+# Subtest: v2 renders no previous-project payload during a new project load
+not ok 44 - v2 renders no previous-project payload during a new project load
+  ---
+  duration_ms: 32.040452
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:415:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:416:34)
+  ...
+# Subtest: a new valid ownership visit can recover after the prior owner was retired
+not ok 45 - a new valid ownership visit can recover after the prior owner was retired
+  ---
+  duration_ms: 65.367405
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:422:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:423:34)
+  ...
+# Subtest: a late transport rejection after timeout is handled and cannot reset the failure
+not ok 46 - a late transport rejection after timeout is handled and cannot reset the failure
+  ---
+  duration_ms: 61.356935
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:431:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:432:33)
+  ...
+# Subtest: a throwing response guard produces a completed error, never a stuck load
+not ok 47 - a throwing response guard produces a completed error, never a stuck load
+  ---
+  duration_ms: 50.094316
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:438:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:439:40)
+  ...
+# Subtest: audit warnings for a completed write still use the existing event path
+not ok 48 - audit warnings for a completed write still use the existing event path
+  ---
+  duration_ms: 41.00068
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:445:1'
+  failureType: 'testCodeFailure'
+  error: "ENOENT: no such file or directory, open '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/fixtures/project-home-data.ts'"
+  code: 'ENOENT'
+  stack: |-
+    Object.readFileSync (node:fs:440:20)
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:106:40)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/shellProject.ts:58:29
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    localRequire (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:115:14)
+    /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/dataConnect.tsx:43:24
+    load (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:118:5)
+    fixture (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:121:38)
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/tests/ops/ui-read-recovery.test.mjs:446:33)
+  ...
+1..48
+# tests 48
+# suites 0
+# pass 0
+# fail 48
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4319.962235
+exit 1

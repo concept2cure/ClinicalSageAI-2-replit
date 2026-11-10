@@ -12,6 +12,7 @@
  */
 
 import { formatDate } from './data';
+import type { LearningReviewView } from './qmsApproval';
 
 export type ChangeState =
   | 'proposed'
@@ -53,6 +54,15 @@ export interface ChangeControl {
   riskLevel: RiskLevel | null;
   status: ChangeState;
   reason: string | null;
+  /** Who raised it (`proposed_by`); null when the row carries none. The server refuses their approval. */
+  proposedBy?: number | null;
+  /** The impact assessment and implementation plan (`impact_assessment`, `implementation_plan`). With the title,
+   *  description, type, classification, risk, reason and target date they are what the approval signs. */
+  impactAssessment?: string | null;
+  implementationPlan?: string | null;
+  /** The digest of the content as read (`content_digest`). The approval sends it, and the server signs only that
+   *  content: a change edited since it was read is refused. Null when the row carries none; then it is not signed. */
+  contentDigest?: string | null;
   targetImplementationDate: string | null;
   createdAt: string | null;
   updatedAt: string | null;
@@ -67,6 +77,7 @@ export interface ChangeControl {
    *  signed approve route. Absent when the row carries none, and then no move
    *  is offered: the browser does not keep its own copy of the state machine. */
   nextStates?: ChangeState[];
+  learningReview?: LearningReviewView | { unavailable: true } | null;
 }
 
 export interface ChangeSummary {
@@ -78,6 +89,27 @@ export interface ChangeSummary {
   closed: number;
   overdueImplementation: number;
   byStatus: Record<string, number>;
+}
+
+/**
+ * The change log's figures from its rows, by the server's definitions (changeControl.service.ts changeControlSummary):
+ * open is every state but closed, rejected and cancelled. The summary route reads the whole organisation and takes no
+ * project, so a log scoped to a project counts its own rows (C14).
+ */
+export function summaryOfChanges(changes: ChangeControl[]): ChangeSummary {
+  const byStatus: Record<string, number> = {};
+  for (const c of changes) byStatus[c.status] = (byStatus[c.status] ?? 0) + 1;
+  const terminal = (byStatus.closed ?? 0) + (byStatus.rejected ?? 0) + (byStatus.cancelled ?? 0);
+  return {
+    total: changes.length,
+    open: changes.length - terminal,
+    awaitingApproval: byStatus.under_assessment ?? 0,
+    inImplementation: byStatus.in_implementation ?? 0,
+    awaitingVerification: byStatus.verification ?? 0,
+    closed: byStatus.closed ?? 0,
+    overdueImplementation: changes.filter((c) => c.implementationOverdue === true).length,
+    byStatus,
+  };
 }
 
 /* ─── Labels + tone maps ───────────────────────────────────────── */
@@ -93,16 +125,18 @@ export const STATE_LABEL: Record<ChangeState, string> = {
   cancelled: 'Cancelled',
 };
 
-export type StateTone = 'draft' | 'review' | 'effective' | 'muted' | 'err';
+/** D0's chip tone for a change's state (.rd-chip, C8): closed is ok, rejected err, cancelled dim, the rest neutral,
+    as the SOP register's effective, retired and in-flight states are. */
+export type StateTone = 'ok' | 'err' | 'dim' | null;
 export const STATE_TONE: Record<ChangeState, StateTone> = {
-  proposed: 'draft',
-  under_assessment: 'review',
-  approved: 'review',
-  in_implementation: 'review',
-  verification: 'review',
-  closed: 'effective',
+  proposed: null,
+  under_assessment: null,
+  approved: null,
+  in_implementation: null,
+  verification: null,
+  closed: 'ok',
   rejected: 'err',
-  cancelled: 'muted',
+  cancelled: 'dim',
 };
 
 export const CHANGE_TYPE_LABEL: Record<ChangeType, string> = {
@@ -118,13 +152,21 @@ export const CHANGE_TYPE_LABEL: Record<ChangeType, string> = {
   other: 'Other',
 };
 
+/** A change's risk level, in words (C9). */
+export const RISK_LABEL: Record<RiskLevel, string> = { low: 'Low', medium: 'Medium', high: 'High' };
+
+/** The states in which a change's assessment can be edited: the server's CHANGE_EDITABLE_STATES
+ *  (changeControl.service.ts). From approval on, it is what the approval signed. */
+export const ASSESSABLE_STATES: readonly ChangeState[] = ['proposed', 'under_assessment'];
+
 export const CLASSIFICATION_LABEL: Record<Classification, string> = {
   minor: 'Minor',
   major: 'Major',
   critical: 'Critical',
 };
-export const CLASSIFICATION_TONE: Record<Classification, 'ok' | 'warn' | 'err'> = {
-  minor: 'ok',
+/** D0's chip tone for a classification (C8): critical err, major warn. Minor is neutral: green would read as "fine". */
+export const CLASSIFICATION_TONE: Record<Classification, 'warn' | 'err' | null> = {
+  minor: null,
   major: 'warn',
   critical: 'err',
 };
@@ -138,18 +180,6 @@ export const LINK_TYPE_LABEL: Record<LinkType, string> = {
   supplier: 'Supplier',
   risk: 'Risk',
   other: 'Other',
-};
-
-/** Icon key (in ./icons `I`) used to represent each link target. */
-export const LINK_TYPE_ICON: Record<LinkType, string> = {
-  deviation: 'alertTriangle',
-  capa: 'clipboardCheck',
-  validation: 'beaker',
-  document: 'fileText',
-  sop: 'fileText',
-  supplier: 'users',
-  risk: 'shieldCheck',
-  other: 'link',
 };
 
 export const RELATIONSHIP_LABEL: Record<Relationship, string> = {

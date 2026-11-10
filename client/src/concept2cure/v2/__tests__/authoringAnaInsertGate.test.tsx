@@ -41,6 +41,11 @@ import type { Editor } from '@tiptap/core';
 import { CanonicalAuthoringFlow, setAuthoringFlowScope, clearAuthoringFlowScope, serveAuthoringStream, sendAuthoringPrefill } from './canonicalAuthoringFlow';
 
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => payload } as Response);
+/** The list as GET /api/authoring/docs answers a project read (authoring-document-read.ts): success, and each row's program_id. */
+const scopedList = (url: string, body: { success?: boolean; documents: object[] }) => {
+  const programId = new URLSearchParams(url.split('?')[1]).get('programId');
+  return programId === null ? body : { success: true, ...body, documents: body.documents.map(row => ({ program_id: programId, ...row })) };
+};
 const SHA = 'c'.repeat(64);
 const ANSWER = 'The drug substance is a humanised IgG1 monoclonal antibody.';
 const OPUS = { provider: 'anthropic', model: 'claude-opus-5-5', qualified: true, approvedForHighRisk: true, pq: 'pending' };
@@ -77,7 +82,7 @@ beforeEach(() => {
   docStatus.current = 'draft';
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
-    if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
+    if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(scopedList(url, DOCS));
     // The current read names its project (`?programId=`, authoringCurrentReadPath); the route is the path.
     if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001') return ok({ document: DOCS.documents[0] });
     if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001/sections') return ok(SECTIONS);
@@ -99,7 +104,7 @@ async function answeredWith(turnRecord: unknown, done?: Record<string, unknown>)
   serveAuthoringStream(() => anaStream(turnRecord, done));
   render(<CanonicalAuthoringFlow />);
   await screen.findAllByText('General Information');
-  fireEvent.click(screen.getByRole('button', { name: /^AnA/ }));
+  fireEvent.click(screen.getByRole('button', { name: 'Show the conversation' }));
   const pane = await sendAuthoringPrefill('Describe the drug substance.');
   const insert = (await within(pane).findByRole('button', { name: 'Insert into 3.2.S.1 as tracked suggestion' }, { timeout: 4000 })) as HTMLButtonElement;
   return { pane, insert };

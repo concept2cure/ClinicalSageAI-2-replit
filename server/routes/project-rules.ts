@@ -85,7 +85,7 @@ const createRuleSchema = z.object({
     .array(
       z.object({
         type: z.enum(actionTypes),
-        params: z.record(z.unknown()),
+        params: z.record(z.string(), z.unknown()),
       })
     )
     .min(1, 'At least one action is required'),
@@ -94,7 +94,7 @@ const createRuleSchema = z.object({
   cooldownMinutes: z.number().min(0).default(0),
   maxExecutionsPerDay: z.number().min(1).nullable().default(null),
   tags: z.array(z.string()).default([]),
-  metadata: z.record(z.unknown()).default({}),
+  metadata: z.record(z.string(), z.unknown()).default({}),
 });
 
 const updateRuleSchema = createRuleSchema.partial();
@@ -102,7 +102,7 @@ const updateRuleSchema = createRuleSchema.partial();
 const dryRunSchema = z.object({
   event: z.enum(triggerEvents),
   projectId: z.number(),
-  data: z.record(z.unknown()).default({}),
+  data: z.record(z.string(), z.unknown()).default({}),
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -192,7 +192,7 @@ router.post('/', asyncHandler(async (req: Request, res: Response) => {
     res.status(201).json(result.rows[0]);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid rule data', details: error.errors });
+      return res.status(400).json({ error: 'Invalid rule data', details: error.issues });
     }
     throw error;
   }
@@ -297,7 +297,7 @@ router.patch('/:ruleId', asyncHandler(async (req: Request, res: Response) => {
     res.json(result.rows[0]);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid rule data', details: error.errors });
+      return res.status(400).json({ error: 'Invalid rule data', details: error.issues });
     }
     throw error;
   }
@@ -380,7 +380,7 @@ router.post('/:ruleId/test', asyncHandler(async (req: Request, res: Response) =>
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid test data', details: error.errors });
+      return res.status(400).json({ error: 'Invalid test data', details: error.issues });
     }
     throw error;
   }

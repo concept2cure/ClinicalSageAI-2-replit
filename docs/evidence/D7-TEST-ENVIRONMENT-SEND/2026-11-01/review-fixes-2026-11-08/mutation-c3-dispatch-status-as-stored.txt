@@ -1,0 +1,7 @@
+MUTATION c3-dispatch-status-as-stored in client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx (on the final code and tests, 2026-11-08T21:58:40.196456Z): replaced [    ['Dispatch status', dispatchStatusWords(t.dispatchStatus)],] with [    ['Dispatch status', t.dispatchStatus ?? 'pending'],]
+ × client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a send to the agency's test environment is not a filing (F1, row D7): before anyone signs > the dispatch status is said in words: a send in flight as one, never as stored 5242ms
+      Tests  1 failed | 28 skipped (29)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/submissionCenterLifecycleQa.test.tsx > a send to the agency's test environment is not a filing (F1, row D7): before anyone signs > the dispatch status is said in words: a send in flight as one, never as stored
+AssertionError: expected 'SubmissionSubmission CenterPlan, buil…' to contain 'Dispatch statusa send is in flight an…'
+restored sha256 fb924f7eb766cd678674155711505fcc8334a3e0ad8cc46dd069996b4d197a02 (expected fb924f7eb766cd678674155711505fcc8334a3e0ad8cc46dd069996b4d197a02)

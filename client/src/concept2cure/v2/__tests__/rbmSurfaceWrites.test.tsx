@@ -175,6 +175,28 @@ describe('RBM v2 surfaces persist their writes', () => {
     });
   });
 
+  it('seeds the KRI library through the engine when the study has none (J5-03)', async () => {
+    render(<RbmKris board={board({ kris: [] })} onReload={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /Seed the standard KRI library/ }));
+    await waitFor(() => {
+      expect(writes()).toContainEqual(['POST', '/api/mdx/rbm-kris/seed', { programId: PROGRAM }]);
+    });
+  });
+
+  it('seeds the default QTLs through the engine when the study has none (J5-03)', async () => {
+    render(<RbmQtls board={board({ qtls: [] })} onReload={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: /Seed the default QTLs/ }));
+    await waitFor(() => {
+      expect(writes()).toContainEqual(['POST', '/api/mdx/rbm-qtls/seed', { programId: PROGRAM }]);
+    });
+  });
+
+  it('offers no library seed once the study has indicators or limits', () => {
+    render(<><RbmKris board={board()} onReload={vi.fn()} /><RbmQtls board={board()} onReload={vi.fn()} /></>);
+    expect(screen.queryByRole('button', { name: /Seed the standard KRI library/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Seed the default QTLs/ })).toBeNull();
+  });
+
   it('will not offer to raise an action when there is no plan to attach it to', async () => {
     render(<RbmPlan board={board({ plan: null, governingPlanId: null, actions: [] })} onReload={vi.fn()} />);
     const add = await screen.findByRole('button', { name: /Add action/ });
@@ -210,6 +232,10 @@ describe('RBM v2 surfaces persist their writes', () => {
     expect(method).toBe('PATCH');
     expect(url).toBe('/api/mdx/rbm-risk-items/21');
     expect(body).toMatchObject({ mitigation: 'Central review + KRI' });
+    // The stored ratings ride along unchanged. The route therefore keeps the seed's
+    // library-default mark unless a value differs from the stored one
+    // (rbm-assessment-integrity.test.ts, "the library-default mark").
+    expect(body).toMatchObject({ likelihood: 3, impact: 5 });
     for (const k of ['riskDescription', 'assignedTo', 'residualLikelihood', 'residualImpact']) {
       expect(body).not.toHaveProperty(k);
     }
@@ -399,6 +425,12 @@ describe('RBM RACT — versioned amendment of a signed assessment', () => {
     expect(screen.getByText(/v1 — archived — approved 2026-04-02 by Sam Okafor/)).toBeTruthy();
   });
 
+  it('does not offer Add CtQ factor when the study has no risk assessment', () => {
+    render(<RbmRact board={board({ assessment: null })} onReload={vi.fn()} />);
+    expect(screen.getByRole('button', { name: /Add CtQ factor/ })).toHaveProperty('disabled', true);
+    expect(writes()).toEqual([]);
+  });
+
   it('does not offer Amend on a draft — a draft is already editable', () => {
     render(<RbmRact board={board()} onReload={vi.fn()} />);
     expect(screen.queryByRole('button', { name: /Amend — new version/ })).toBeNull();
@@ -549,4 +581,5 @@ describe('RBM metric ingest — a duplicate load is refused, and reprocess needs
     expect(posts[0]).not.toHaveProperty('reprocess');
     expect(posts[1]).toMatchObject({ reprocess: true, reprocessReason: 'Unit mapping corrected' });
   });
+
 });

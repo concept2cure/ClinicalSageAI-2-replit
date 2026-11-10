@@ -75,6 +75,9 @@ describe('POST /api/vault/ingest — refusals are 4xx with a reason, never 500',
     ['scan.jpg', 'image/jpeg', Buffer.from([0xff, 0xd8, 0xff])],
     ['scan.jpeg', 'image/jpeg', Buffer.from([0xff, 0xd8, 0xff])],
     ['scan.gif', 'image/gif', Buffer.from('GIF89a')],
+    // P-112 (2026-11-09): a .zip, as a Mac and as Windows declare one. It is stored as one file.
+    ['sponsor-copy-0003.zip', 'application/zip', Buffer.from([0x50, 0x4b, 0x03, 0x04])],
+    ['sponsor-copy-0003.zip', 'application/x-zip-compressed', Buffer.from([0x50, 0x4b, 0x03, 0x04])],
   ])('passes %s to canonical governed ingestion with caller/program identity intact', async (filename, contentType, bytes) => {
     // This proves the real multipart gate/dispatch, not a parser or scanner run.
     ingestVaultDocument.mockResolvedValueOnce({ ok: true, document: { id: 'doc-1', programId: PROGRAM }, filing: { placementStatus: 'unfiled' } });

@@ -11,7 +11,7 @@
  */
 
 import { sql } from 'drizzle-orm';
-import { integer, pgTable, serial, text, real, timestamp, index, uniqueIndex, type AnyPgColumn } from 'drizzle-orm/pg-core';
+import { integer, jsonb, pgTable, serial, text, real, timestamp, index, uniqueIndex, type AnyPgColumn } from 'drizzle-orm/pg-core';
 import { organizations, users } from '../schema';
 import { ectdSequences } from './submissions';
 
@@ -36,6 +36,13 @@ export const shadowReviewRuns = pgTable(
     // A 'waived' row: the signature's governed sign action and the failed run.
     waiverSignatureActionId: text('waiver_signature_action_id'),
     waivedFailedRunId: integer('waived_failed_run_id').references((): AnyPgColumn => shadowReviewRuns.id),
+    // 2026-10-25 (migrations/20261025_shadow_review_run_coverage.sql). The
+    // digest of the leaves the run was given (shadow-review-coverage.ts); only
+    // a run whose digest is the sequence's current one counts as a review.
+    leafManifestDigest: text('leaf_manifest_digest'),
+    // What the reviewer was given to read, per leaf (shadow-review-input.ts
+    // ReviewInputCoverage); null on a run recorded before the text was sent.
+    inputCoverage: jsonb('input_coverage'),
     organizationId: integer('organization_id')
       .notNull()
       .references(() => organizations.id),

@@ -13,7 +13,7 @@
  * narrative is kept, and the refusal is recorded for QC. The template narrative
  * itself must pass the gate too, or the subject is refused.
  */
-import { composeSafetyNarrative, type SafetyNarrativeEvent } from '../ana/safety-narrative.js';
+import { causalityPhrase, composeSafetyNarrative, indefiniteArticle, outcomeState, type SafetyNarrativeEvent } from '../ana/safety-narrative.js';
 import type { NarrativeCategory } from './narrative-subject-selection.js';
 import type { EventFacts, SubjectFacts } from './narrative-subject-facts.js';
 import { reconcileNarrative, reconcileRewrite, undatedStatement, withdrawalStatement, WITHDRAWAL_CAUSE_NOT_RECORDED, type NarrativeIssue } from './narrative-reconciliation.js';
@@ -81,22 +81,32 @@ export { WITHDRAWAL_CAUSE_NOT_RECORDED };
 function subjectParagraph(f: SubjectFacts): string {
   const sex = f.sex ? SEX_WORD[f.sex.toUpperCase()] ?? f.sex.toLowerCase() : undefined;
   const demo = [f.age !== undefined ? `${f.age}-year-old` : '', sex ?? ''].filter(Boolean).join(' ');
-  const parts = [sentence(`Subject ${f.subjectId}${demo ? `, a ${demo} subject` : ''} randomized to the ${f.armName} arm${f.studyId ? ` in study ${f.studyId}` : ''}`)];
+  const parts = [sentence(`Subject ${f.subjectId}${demo ? `, ${indefiniteArticle(demo)} ${demo} subject` : ''} randomized to the ${f.armName} arm${f.studyId ? ` in study ${f.studyId}` : ''}`)];
   if (f.medicalHistory.length) parts.push(sentence(`Relevant medical history included ${f.medicalHistory.join(', ')}`));
   if (f.concomitantMedications.length) parts.push(sentence(`Concomitant medications included ${f.concomitantMedications.join(', ')}`));
   parts.push(sentence(`The subject received ${f.treatment}${f.firstDoseDate ? ` beginning ${f.firstDoseDate}` : ''}`));
   return parts.join(' ');
 }
 
-/** One TEAE before a subject-level withdrawal, each attribute from its row; nothing about cause. */
+/**
+ * One TEAE before a subject-level withdrawal, each attribute from its row; nothing about cause. Causality and
+ * outcome are stated in the narrative's own vocabulary (safety-narrative.ts), the investigator's category kept;
+ * a value outside it is stated as recorded.
+ */
 function candidateSentence(e: EventFacts): string {
   const when = e.onsetDay !== undefined ? `On study day ${e.onsetDay}` : `On ${e.onsetDate}`;
   const severity = e.grade !== undefined ? `grade ${e.grade}${e.severity ? ` (${e.severity})` : ''}` : e.severity ?? 'severity not recorded';
   // "not serious" is AESER = N: selection refuses a blank AESER on every ADAE row, so a blank never reaches here.
   const serious = e.serious ? `serious: ${e.seriousnessCriteria.length ? e.seriousnessCriteria.join(', ') : 'criteria not recorded'}` : 'not serious';
-  const related = e.relatedness ? `relationship to study treatment recorded as ${e.relatedness}` : 'relationship to study treatment not recorded';
-  return `${when} the subject experienced ${e.term} (${[severity, serious, related, `outcome ${e.outcome ?? 'not recorded'}`].join(', ')}).`;
+  const related = !e.relatedness ? 'relationship to study treatment not recorded'
+    : causalityPhrase(e.relatedness) ? `${causalityPhrase(e.relatedness)} to study treatment` : `relationship to study treatment recorded as ${e.relatedness}`;
+  const outcome = !e.outcome ? 'outcome not recorded' : outcomeState(e.outcome) ?? `outcome ${e.outcome}`;
+  return `${when}, the subject experienced ${e.term} (${[severity, serious, related, outcome].join(', ')}).`;
 }
+
+/** Onset order, study day first, then date; a tie keeps the rows' order. */
+const byOnset = (a: EventFacts, b: EventFacts) =>
+  (a.onsetDay ?? Number.MAX_SAFE_INTEGER) - (b.onsetDay ?? Number.MAX_SAFE_INTEGER) || (a.onsetDate ?? '').localeCompare(b.onsetDate ?? '');
 
 /**
  * A withdrawal ADSL records per subject only (D17, 2026-10-30): when, what
@@ -108,7 +118,7 @@ function withdrawalParagraph(f: SubjectFacts): string {
   if (!w) return '';
   const parts = [withdrawalStatement(w),
     `ADSL records the withdrawal per subject (${w.recordedBy}), not on an adverse event record.`];
-  if (w.events.length) parts.push('Treatment-emergent adverse events with onset on or before the withdrawal are listed below.', ...w.events.map(candidateSentence));
+  if (w.events.length) parts.push('Treatment-emergent adverse events with onset on or before the withdrawal are listed below.', ...[...w.events].sort(byOnset).map(candidateSentence));
   else parts.push('No treatment-emergent adverse event is recorded with onset on or before the withdrawal.');
   for (const e of w.undated) parts.push(undatedStatement(e.term));
   parts.push(WITHDRAWAL_CAUSE_NOT_RECORDED);

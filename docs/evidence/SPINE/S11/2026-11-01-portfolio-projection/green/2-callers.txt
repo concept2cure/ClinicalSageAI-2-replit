@@ -1,0 +1,488 @@
+# Green 2: the projection's callers (the list route, the creator's 201, the client-workspace facets) and the Projects surface tests
+# npx vitest run --config vitest.config.ts --maxWorkers=2 server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts server/routes/c2c/__tests__/projects-list.test.ts server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx client/src/concept2cure/v2/__tests__/projectsActivity.test.tsx
+# exit 1
+# The 3 failures in projects-client-workspaces.pglite.test.ts fail identically at HEAD with this change reverted:
+# see green/3-preexisting-at-HEAD.txt. They are pathway-count assertions (fixture seeds 10 'IND' rows and expects them under 'other'),
+# not the card projection.
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts
+{
+  "timestamp": "2026-11-01T20:58:22.862Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts
+{
+  "timestamp": "2026-11-01T20:58:23.076Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-01T20:58:23.077Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts
+{
+  "timestamp": "2026-11-01T20:58:23.077Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > projects the recorded client on cards and retains page count over 60 programs 227ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > supplies the recorded client separately from the retained organisation sponsor identity 78ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > filters inside current access before LIMIT/OFFSET rather than filtering a page 122ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "0" 32ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "-1" 31ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "71junk" 32ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "1.5" 35ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "2147483648" 32ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "9007199254740992" 30ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses malformed explicit workspace "" 30ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > conceals another organisation workspace and an unknown workspace 54ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > offers minimal active client options across the accessible set, outside the selected page/filter 71ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > refuses a same-program reanchor observed between card read and response 65ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > keeps accepted anchors immutable and bound to the evaluated actor and executor 31ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects client-workspace projection and filtering > bounds client options and reports further authorized active choices honestly 152ms
+ × server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway and workstream facets over the admitted portfolio > counts all 60 admitted programs while measuring only the 50 returned rows 75ms
+   → expected { count: 50, limit: 50, …(7) } to match object { count: 50, hasMore: true, …(1) }
+(7 matching properties omitted from actual)
+ × server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway and workstream facets over the admitted portfolio > filters pathways before paging and preserves independent usable facets 68ms
+   → expected { count: 7, limit: 7, offset: 7, …(6) } to match object { count: 7, hasMore: true, …(1) }
+(7 matching properties omitted from actual)
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway and workstream facets over the admitted portfolio > classifies CER and IDE from program type with no regulatory path 154ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway and workstream facets over the admitted portfolio > combines Client, workstream and pathway filters before paging and counts 65ms
+ × server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway and workstream facets over the admitted portfolio > keeps Other rows visible and countable rather than dropping unknown filing types 54ms
+   → expected [ { …(19) } ] to have a length of 11 but got 1
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway and workstream facets over the admitted portfolio > does not count private, deleted or archived rows without admission 76ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway and workstream facets over the admitted portfolio > excludes another organization from both aggregate and row reads 68ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway and workstream facets over the admitted portfolio > returns exact zero counts and empty selected results without removing facet choices 60ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway filter validation and complete-count failures > refuses invalid closed vocabulary filters ws=unknown 33ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway filter validation and complete-count failures > refuses invalid closed vocabulary filters ws=mdx 31ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway filter validation and complete-count failures > refuses invalid closed vocabulary filters ws= 31ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway filter validation and complete-count failures > refuses invalid closed vocabulary filters ws=MDX&ws=Biotech 31ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway filter validation and complete-count failures > refuses invalid closed vocabulary filters pathway=unknown 31ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway filter validation and complete-count failures > refuses invalid closed vocabulary filters pathway= 33ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway filter validation and complete-count failures > refuses invalid closed vocabulary filters pathway=pma&pathway=cer 31ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway filter validation and complete-count failures > treats explicit all as the unfiltered portfolio 63ms
+stderr | server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway filter validation and complete-count failures > fails the read if counts cannot be read (08006) instead of presenting page length as a total
+{
+  "timestamp": "2026-11-01T20:58:29.980Z",
+  "level": "error",
+  "message": "[c2c-projects] listing the projects failed",
+  "context": {
+    "err": "count read failed",
+    "correlationId": null,
+    "code": "08006"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway filter validation and complete-count failures > fails the read if counts cannot be read (42P01) instead of presenting page length as a total
+{
+  "timestamp": "2026-11-01T20:58:30.032Z",
+  "level": "error",
+  "message": "[c2c-projects] listing the projects failed",
+  "context": {
+    "err": "count read failed",
+    "correlationId": null,
+    "code": "42P01"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway filter validation and complete-count failures > fails the read if counts cannot be read (08006) instead of presenting page length as a total 51ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway filter validation and complete-count failures > fails the read if counts cannot be read (42P01) instead of presenting page length as a total 50ms
+ ✓ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway filter validation and complete-count failures > revalidates accepted anchor mappings after the count read too 70ms
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts
+{
+  "timestamp": "2026-11-01T20:58:34.825Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts
+{
+  "timestamp": "2026-11-01T20:58:35.606Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-01T20:58:35.607Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts
+{
+  "timestamp": "2026-11-01T20:58:35.608Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > returns the same client-aware card projection as GET
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > returns the same client-aware card projection as GET 132ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > 'mdr' keeps its stated class on the regional column with the anchored creation and audit record 45ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > 'ivdr' keeps its stated class on the regional column with the anchored creation and audit record 30ms
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > requires an explicit choice even when several workspaces include a marked default
+{
+  "timestamp": "2026-11-01T20:58:37.097Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "ccb4a28e-7650-4fb7-94c3-a42ca67baf2a",
+    "orgId": 3,
+    "reason": "AMBIGUOUS_CLIENT_WORKSPACE",
+    "detail": "An explicit workspace selection is required."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 999 without falling back
+{
+  "timestamp": "2026-11-01T20:58:37.198Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "73d3d0a6-c6e2-40f9-910e-2c1f4ff366ec",
+    "orgId": 3,
+    "reason": "INVALID_CLIENT_WORKSPACE",
+    "detail": "No active owned workspace matched the selection."
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — the program and its project record are one creation > a created program resolves, strict, to its own projects row with intake's values 36ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > requires an explicit choice even when several workspaces include a marked default 18ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > places the actual saved anchor and audit in the explicitly selected client instead of the default 24ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection null without falling back 8ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 0 without falling back 11ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection -1 without falling back 12ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 1.5 without falling back 10ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 4 without falling back 9ms
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 1 without falling back
+{
+  "timestamp": "2026-11-01T20:58:37.224Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "a0f29edf-7635-4829-a855-e3904af72345",
+    "orgId": 3,
+    "reason": "INVALID_CLIENT_WORKSPACE",
+    "detail": "No active owned workspace matched the selection."
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 999 without falling back 28ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 1 without falling back 26ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 2147483648 without falling back 9ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses invalid or foreign explicit selection 9007199254740991 without falling back 10ms
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > accepts each explicit sponsor and never treats a header alone as the choice
+{
+  "timestamp": "2026-11-01T20:58:37.331Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "9efcc879-249c-41a7-b973-efa4526bb5aa",
+    "orgId": 2,
+    "reason": "AMBIGUOUS_CLIENT_WORKSPACE",
+    "detail": "An explicit workspace selection is required."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses an inactive workspace and a contradictory workspace header without saving
+{
+  "timestamp": "2026-11-01T20:58:37.408Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "a46f02ee-c1d9-450f-b9ce-0fb4d3f57762",
+    "orgId": 3,
+    "reason": "INVALID_CLIENT_WORKSPACE",
+    "detail": "No active owned workspace matched the selection."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses an inactive workspace and a contradictory workspace header without saving
+{
+  "timestamp": "2026-11-01T20:58:37.426Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "5864146a-2ca8-4dc6-8dcc-be51020501bc",
+    "orgId": 3,
+    "reason": "CLIENT_WORKSPACE_MISMATCH",
+    "detail": "The supplied request claim contradicts the selected workspace."
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > accepts each explicit sponsor and never treats a header alone as the choice 87ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > omitted legacy intake uses the sole active workspace even beside an archived one 28ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses out-of-range and malformed request claims before business SQL 24ms
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > where no workspace can be chosen (several, none marked), the program is refused and nothing is left behind
+{
+  "timestamp": "2026-11-01T20:58:37.449Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "20d204e3-8936-4544-b26d-8a8027290676",
+    "orgId": 2,
+    "reason": "AMBIGUOUS_CLIENT_WORKSPACE",
+    "detail": "An explicit workspace selection is required."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > an organisation with no workspace: refused, nothing left behind
+{
+  "timestamp": "2026-11-01T20:58:37.470Z",
+  "level": "error",
+  "message": "[c2c-projects] Program refused: its project record could not be written",
+  "context": {
+    "correlationId": "ee69c347-2067-4da8-9448-5a95e89c6da8",
+    "orgId": 4,
+    "reason": "NO_CLIENT_WORKSPACE",
+    "detail": "No active owned workspace matched the selection."
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > a failure writing the project record rolls the program back with it
+{
+  "timestamp": "2026-11-01T20:58:37.491Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "p19: anchor write refused",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > rolls back program and anchor if the actual creation audit write fails
+{
+  "timestamp": "2026-11-01T20:58:37.546Z",
+  "level": "error",
+  "message": "[c2c-projects] creating the project failed",
+  "context": {
+    "err": "audit refused",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > refuses an inactive workspace and a contradictory workspace header without saving 46ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > where no workspace can be chosen (several, none marked), the program is refused and nothing is left behind 21ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — explicit active client placement > an organisation with no workspace: refused, nothing left behind 20ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > a failure writing the project record rolls the program back with it 22ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > preserves legacy default-marker ensure behavior and refuses contradictory explicit re-invocation 25ms
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > reports an uncertain commit honestly and discards its owned connection exactly once
+{
+  "timestamp": "2026-11-01T20:58:37.587Z",
+  "level": "error",
+  "message": "[c2c-projects] Project creation commit outcome unknown",
+  "context": {
+    "correlationId": "ad7f55c1-3057-42a5-984d-222b71c6d2a4",
+    "orgId": 1,
+    "err": {}
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > discards an unacknowledged rollback and does not claim nothing was saved
+{
+  "timestamp": "2026-11-01T20:58:37.604Z",
+  "level": "error",
+  "message": "[c2c-projects] Project creation commit outcome unknown",
+  "context": {
+    "correlationId": "a1525378-abdc-4b04-a46b-f86270984eb5",
+    "orgId": 1,
+    "err": {}
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > reports confirmed creation when its post-commit details cannot be read
+{
+  "timestamp": "2026-11-01T20:58:37.619Z",
+  "level": "error",
+  "message": "[c2c-projects] Project committed but details unavailable",
+  "context": {
+    "correlationId": "c0185f22-fe5c-4012-817b-222a4a1a9105",
+    "orgId": 1,
+    "err": {}
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > rolls back program and anchor if the actual creation audit write fails 31ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > reports an uncertain commit honestly and discards its owned connection exactly once 40ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > discards an unacknowledged rollback and does not claim nothing was saved 13ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > reports confirmed creation when its post-commit details cannot be read 15ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > POST /api/c2c/projects — atomicity, legacy ensure and honest outcomes > every program the route created is anchored in its own organisation 1ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > GET /api/clients?purpose=project-intake — current creator-bound active choices > supplies only active same-organization IDs and names with the current actor receipt 6ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > GET /api/clients?purpose=project-intake — current creator-bound active choices > distinguishes an honestly empty active list from unavailable options 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > GET /api/clients?purpose=project-intake — current creator-bound active choices > refuses a current viewer regardless of its stale request role 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > GET /api/clients?purpose=project-intake — current creator-bound active choices > refuses unverified stores instead of returning a fabricated empty list 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > GET /api/clients?purpose=project-intake — current creator-bound active choices > refuses inactive actors while the canonical store prevents duplicate membership 6ms
+ ✓ server/routes/c2c/__tests__/projects-create-anchor.pglite.test.ts > GET /api/clients?purpose=project-intake — current creator-bound active choices > rechecks the current creator after reading options and suppresses a revoked result 6ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > a program recorded blocked with no blocker says no cause is recorded (the NM-512 case) 143ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > reads no blocker from a list row, and a blocked status still says no cause is recorded 45ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > an active program makes no blocker claim either way 28ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > the list view says the same for the blocked program 301ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — readiness is named as the dossier readiness > labels a measured figure and an unmeasured one with the same name Project home uses 24ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — no figure draws no bar (F23) > a measured 0 draws its empty bar; no sections and an unavailable figure draw none 21ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — no figure draws no bar (F23) > an unavailable figure says so, and why, never "Not recorded" 27ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — no figure draws no bar (F23) > the list view draws the same bars 108ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — no figure draws no bar (F23) > the portfolio mean says how many programs it covers when some have no recorded measurement 20ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsActivity.test.tsx > Projects shows the last activity its record holds > on the card, and on the list row 403ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsActivity.test.tsx > Projects shows the last activity its record holds > shows none where the record holds none, in either view 132ms
+stderr | server/routes/c2c/__tests__/projects-list.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-list.test.ts
+{
+  "timestamp": "2026-11-01T20:58:43.598Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-list.test.ts
+{
+  "timestamp": "2026-11-01T20:58:43.651Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-01T20:58:43.652Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-list.test.ts
+{
+  "timestamp": "2026-11-01T20:58:43.652Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > 403 without org context 20ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > returns { data } rows shaped to the portfolio display contract 8ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > carries the target filing date as a date, so days to filing can be counted 4ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > clamps ?limit to its maximum and never issues an unbounded read 4ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > reports hasMore and trims the extra probe row off the page 5ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects > fails closed to an empty envelope when the store is not provisioned 7ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects/:id > 404s a non-uuid id instead of 500ing on the uuid cast 4ms
+ ✓ server/routes/c2c/__tests__/projects-list.test.ts > GET /api/c2c/projects/:id > selects only columns that exist on regulatory_programs 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway and workstream facets over the admitted portfolio > counts all 60 admitted programs while measuring only the 50 returned rows
+AssertionError: expected { count: 50, limit: 50, …(7) } to match object { count: 50, hasMore: true, …(1) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -4,11 +4,11 @@
+      "byPathway": {
+        "cer": 10,
+        "ide": 10,
+        "ivdr": 5,
+        "mdl": 4,
+-       "other": 11,
++       "other": 1,
+        "pma": 20,
+      },
+      "byWorkstream": {
+        "Biotech": 10,
+        "MDX": 49,
+
+ ❯ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts:234:27
+    232|     const res = await list('?limit=50');
+    233|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    234|     expect(res.body.meta).toMatchObject({ count: 50, hasMore: true, co…
+       |                           ^
+    235|       total: 60, byWorkstream: { MDX: 49, Biotech: 10, Mystery: 1 },
+    236|       byPathway: { pma: 20, cer: 10, ide: 10, ivdr: 5, mdl: 4, other: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway and workstream facets over the admitted portfolio > filters pathways before paging and preserves independent usable facets
+AssertionError: expected { count: 7, limit: 7, offset: 7, …(6) } to match object { count: 7, hasMore: true, …(1) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+@@ -4,11 +4,11 @@
+      "byPathway": {
+        "cer": 10,
+        "ide": 10,
+        "ivdr": 5,
+        "mdl": 4,
+-       "other": 11,
++       "other": 1,
+        "pma": 20,
+      },
+      "byWorkstream": {
+        "Biotech": 10,
+        "MDX": 49,
+
+ ❯ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts:252:27
+    250|     expect(res.body.data.every((row: {pathway: string}) => row.pathway…
+    251|     expect(res.body.data[0].id).toBe(program(8));
+    252|     expect(res.body.meta).toMatchObject({ count: 7, hasMore: true, cou…
+       |                           ^
+    253|       total: 20, byWorkstream: { MDX: 49, Biotech: 10, Mystery: 1 },
+    254|       byPathway: { pma: 20, cer: 10, ide: 10, ivdr: 5, mdl: 4, other: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts > Projects pathway and workstream facets over the admitted portfolio > keeps Other rows visible and countable rather than dropping unknown filing types
+AssertionError: expected [ { …(19) } ] to have a length of 11 but got 1
+
+- Expected
++ Received
+
+- 11
++ 1
+
+ ❯ server/routes/c2c/__tests__/projects-client-workspaces.pglite.test.ts:281:27
+    279|     const res = await list('?pathway=other');
+    280|     expect(res.status, JSON.stringify(res.body)).toBe(200);
+    281|     expect(res.body.data).toHaveLength(11);
+       |                           ^
+    282|     expect(res.body.data.some((row: {id: string}) => row.id===program(…
+    283|     expect(res.body.meta.counts.total).toBe(11);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  3 failed | 84 passed (87)
+   Start at  20:58:15
+   Duration  30.09s (transform 6.67s, setup 385ms, import 5.82s, tests 21.46s, environment 1.28s)
+

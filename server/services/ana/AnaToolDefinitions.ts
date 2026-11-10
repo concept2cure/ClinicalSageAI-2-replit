@@ -284,7 +284,6 @@ import {
   ADVISE_CTD_STRUCTURE,
   ADVISE_SPECIAL_DESIGNATION,
   PLAN_ORPHAN_DRUG_DESIGNATION,
-  PLAN_IND_MODULE_AUTHORING,
   ADVISE_GCP,
   REVIEW_INFORMED_CONSENT,
   ADVISE_COA_SELECTION,
@@ -912,14 +911,23 @@ export const DOCUMENT_REVIEW_TOOLS: AnaTool[] = [
 /** Generate a regulatory document from scratch or template */
 export const GENERATE_DOCUMENT: AnaTool = {
   name: 'generate_document',
-  description: 'Generate a complete regulatory document (CSR, CTD section, CER, 510(k), protocol, SAP, IB, ICSR). Produces DOCX, PDF, or XML output. Use when the user asks to create, generate, draft, or build a regulatory document.',
+  description:
+    'Generate a protocol, a statistical analysis plan or a Module 1 document as DOCX, PDF or XML, from the ' +
+    'sections or template the user gives. It does not write a document whose content comes from the project\'s records, and ' +
+    'refuses it by name: a CSR or Module 5 (get_csr_section_evidence, then draft_authoring_document), Module 2 (the ' +
+    'draft_*_m2_* composers), Module 3 (compiled in CMC / Module 3), Module 4 (the filed study reports), a CER ' +
+    '(assess_stored_cer), a 510(k) (write_kit_section, compose_510k_summary), an IB (draft_authoring_document), an eCTD ' +
+    'backbone, an ICSR, or a PMA (withheld until a PMA record path exists). Use when the user asks to generate one of ' +
+    'the documents it writes.',
   input_schema: {
     type: 'object',
     properties: {
       document_type: {
         type: 'string',
+        // Rule 2 audit S6b: the record documents left the enum, as ectd_backbone
+        // and icsr did; the handler refuses them by name if sent anyway.
         description: 'Type of document to generate',
-        enum: ['csr', 'ctd_module1', 'ctd_module2', 'ctd_module3', 'ctd_module4', 'ctd_module5', 'cer', '510k', 'pma', 'protocol', 'sap', 'ib'],
+        enum: ['ctd_module1', 'protocol', 'sap'],
       },
       title: {
         type: 'string',
@@ -1392,7 +1400,7 @@ export const TRANSMIT_SUBMISSION: AnaTool = {
 export const CHECK_SUBMISSION_STATUS: AnaTool = {
   name: 'check_submission_status',
   description:
-    "Poll the latest status for a transmitted submission. For FDA ESG, fetches the AS2 MDN / SFTP ack chain. For EMA CESP, polls /baskets/{id}. For EUDAMED, returns the most recent stored state. For PMDA Gateway, polls /receipts/{id}. Status transitions surface from the gateway's domain language (received → ack1 → ack2 → ack3 → validation_passed → review_started etc.).",
+    "Poll the latest status for a transmitted submission. For FDA ESG, returns the transmittal's stored status and its verified AS2 receipt. For EMA CESP, polls /baskets/{id}. For EUDAMED, returns the most recent stored state. For PMDA Gateway, polls /receipts/{id}. Status transitions surface from the gateway's domain language (received → ack1 → ack2 → ack3 → validation_passed → review_started etc.).",
   input_schema: {
     type: 'object',
     properties: { transmittal_id: { type: 'number' } },
@@ -1637,10 +1645,11 @@ const LIST_INTELLIGENCE_FLOWS: AnaTool = {
 const START_WAR_GAME: AnaTool = {
   name: 'start_war_game',
   description:
-    'Simulate an FDA auditor review of collected intelligence data. Pressure-tests the document ' +
-    'against regulatory requirements and produces an advisory report with findings and remediation ' +
-    'recommendations. Use this after completing an intelligence questioning flow to war-game the ' +
-    'document before submission.',
+    'Simulate an FDA auditor review of a stored interview. Pressure-tests the answers the person gave ' +
+    'in an intelligence questioning flow against regulatory requirements and produces an advisory ' +
+    'report with findings and remediation recommendations. Pass the interview\'s session_id: the ' +
+    'answers are read from the stored session, never given in the call. Use this after completing ' +
+    'an intelligence questioning flow to war-game the document before submission.',
   input_schema: {
     type: 'object',
     properties: {
@@ -1649,16 +1658,12 @@ const START_WAR_GAME: AnaTool = {
         enum: ['protocol', 'ind', 'csr', '510k', 'cer', 'sop', 'nda', 'bla', 'pma', 'cmc', 'risk_management', 'safety_narrative', 'labeling', 'briefing_book', 'stability'],
         description: 'The type of document to war-game.',
       },
-      source_flow_id: {
+      session_id: {
         type: 'string',
-        description: 'The flow ID of the completed intelligence questionnaire to audit.',
-      },
-      answers: {
-        type: 'object',
-        description: 'The collected answers from the intelligence flow.',
+        description: 'The stored interview session to war-game (start_intelligence_flow returned it). Its answers are the ones scored.',
       },
     },
-    required: ['war_game_category', 'source_flow_id', 'answers'],
+    required: ['war_game_category', 'session_id'],
   },
 };
 
@@ -1941,7 +1946,6 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   ADVISE_CTD_STRUCTURE,
   ADVISE_SPECIAL_DESIGNATION,
   PLAN_ORPHAN_DRUG_DESIGNATION,
-  PLAN_IND_MODULE_AUTHORING,
   ADVISE_ESTIMAND,
   ADVISE_PHARMACOVIGILANCE,
   ADVISE_STUDY_DESIGN,

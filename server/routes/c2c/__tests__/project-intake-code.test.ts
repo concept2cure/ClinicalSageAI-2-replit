@@ -66,6 +66,26 @@ describe('baseCodeFrom — the program code intake derives', () => {
     expect(baseCodeFrom('Helvanta-QA3', 'Investigational New Drug Application')).toBe('HELV');
   });
 
+  /* 2026-10-31: the C2C-101 demo project was coded "CAMA" and the NeuroPanel
+     510(k) "DMN5". The code's prefix may hold a digit, and a bracketed label or
+     a bare number is not part of a product's name. */
+  it('takes a code whose prefix holds a digit ("C2C-101"), not the initials around it', () => {
+    expect(baseCodeFrom('C2C-101 (anti-IL-23p19 monoclonal antibody, fictional)',
+      '[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)')).toBe('C2C-101');
+    expect(baseCodeFrom('', 'R2D-2041 — IND')).toBe('R2D-2041');
+    expect(baseCodeFrom('BX-204A', '')).toBe('BX-204A');
+  });
+
+  it('does not read a bracketed label or a bare number into the initials', () => {
+    expect(baseCodeFrom('[Demo · MDX] NeuroPanel-Dx 510(k)', '[Demo · MDX] NeuroPanel-Dx 510(k)')).toBe('NEUR');
+    expect(baseCodeFrom('Aurora Glucose Monitor 2', '')).toBe('AGM');
+  });
+
+  it('still reads no code in an alphanumeric word without the number shape', () => {
+    expect(baseCodeFrom('anti-IL-23p19 antibody', '')).toBe('AA');
+    expect(baseCodeFrom('COVID19 vaccine', '')).toBe('CV');
+  });
+
   it('falls back to PRJ only when there is nothing to derive from', () => {
     expect(baseCodeFrom('', '')).toBe('PRJ');
     expect(baseCodeFrom('—', '·')).toBe('PRJ');

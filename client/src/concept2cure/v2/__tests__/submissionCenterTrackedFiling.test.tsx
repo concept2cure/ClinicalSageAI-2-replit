@@ -82,7 +82,7 @@ describe('Submission Center exact native filing entry', () => {
   });
   it('preserves an actual new-submission form and entered title when a same-surface filing handoff arrives', async () => {
     mount();
-    const create = await screen.findByRole('button', { name: '+ New submission' });
+    const create = await screen.findByRole('button', { name: /^New submission$/ });
     await waitFor(() => expect((create as HTMLButtonElement).disabled).toBe(false));
     fireEvent.click(create);
     const title = await screen.findByLabelText(/^Title/);

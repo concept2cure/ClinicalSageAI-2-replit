@@ -32,6 +32,9 @@ import { createHash } from 'node:crypto';
 import { createScopedLogger } from '../../utils/logger';
 import { assertAnaUploadAccess } from './source-context-admission';
 import { admitAnaProjectScope } from './project-scope-admission';
+import {
+  discardUploadObject, durableOrganizationId, putUploadObject, readUploadObject, recordedUploadObject, type UploadObject,
+} from './upload-object-store';
 
 const logger = createScopedLogger('ana-uploaded-files');
 
@@ -78,7 +81,12 @@ export interface UploadedFile {
  *   UPLOAD_BYTES_MISSING     — the row exists but its bytes are gone.
  *   UPLOAD_INTEGRITY_FAILED  — the bytes no longer match the digest recorded on receipt.
  */
-export type UploadedFileErrorCode = 'UPLOAD_NOT_FOUND' | 'UPLOAD_BYTES_MISSING' | 'UPLOAD_INTEGRITY_FAILED';
+export type UploadedFileErrorCode =
+  | 'UPLOAD_NOT_FOUND'
+  | 'UPLOAD_BYTES_MISSING'
+  | 'UPLOAD_INTEGRITY_FAILED'
+  /** The byte store that holds the upload could not be read now; the bytes may well exist. */
+  | 'UPLOAD_STORE_UNAVAILABLE';
 
 export class UploadedFileError extends Error {
   readonly code: UploadedFileErrorCode;
@@ -226,6 +234,60 @@ export async function loadUploadedFileMetadata(
   }));
 }
 
+const BYTES_GONE = (fileId: string) =>
+  `upload "${fileId}" exists but its bytes are no longer available — ask the user to re-upload the file`;
+
+/**
+ * An upload's bytes: its durable copy when the row records one (LX-02,
+ * upload-object-store.ts), else the file at its local path. The caller has
+ * proved the row is this organization's, and only an organization's upload
+ * records an object.
+ */
+async function readUploadBytes(
+  row: { storage_provider?: string | null; storage_object_id?: string | null },
+  fileId: string,
+  organizationId: number | null | undefined,
+  resolved: string,
+): Promise<Buffer> {
+  const object = organizationId != null ? recordedUploadObject(row) : null;
+  if (!object) {
+    try {
+      return await fs.readFile(resolved);
+    } catch (err) {
+      throw new UploadedFileError('UPLOAD_BYTES_MISSING', BYTES_GONE(fileId), { cause: err });
+    }
+  }
+  const read = await readUploadObject(object, Number(organizationId));
+  if (read.ok) return read.bytes;
+  if (read.code === 'missing') throw new UploadedFileError('UPLOAD_BYTES_MISSING', BYTES_GONE(fileId));
+  if (read.code === 'integrity') {
+    logger.error('upload object failed the byte store integrity check', { fileId, objectId: object.objectId });
+    throw new UploadedFileError('UPLOAD_INTEGRITY_FAILED',
+      `upload "${fileId}" failed its integrity check in the byte store and will not be served. Ask the user to re-upload it.`,
+      { cause: read.cause });
+  }
+  throw new UploadedFileError('UPLOAD_STORE_UNAVAILABLE',
+    `upload "${fileId}" is kept in the "${object.provider}" byte store, which could not be read just now. Try again.`,
+    { cause: read.cause });
+}
+
+/**
+ * Remove what an uncommitted upload wrote: its working copy (when written) and
+ * its durable copy (when stored). Never after a COMMIT was attempted: an
+ * ambiguous COMMIT may already have recorded them.
+ */
+async function discardUncommittedUpload(
+  written: { workingCopy: string | null; object: UploadObject | null },
+  organizationId: number,
+  fileId: string,
+  label: string,
+): Promise<void> {
+  if (written.workingCopy) {
+    await fs.unlink(written.workingCopy).catch(cleanupError => logger.warn(label, { fileId, error: String(cleanupError) }));
+  }
+  if (written.object) await discardUploadObject(written.object, organizationId);
+}
+
 /**
  * Load an upload's metadata + bytes, enforcing tenant scoping via both the
  * organization column and the storage path prefix. Throws (with a tool-friendly
@@ -251,8 +313,14 @@ export async function loadUploadedFile(
     storage_path: string;
     organization_id: number | string | null;
     checksum_sha256: string | null;
+    storage_provider: string | null;
+    storage_object_id: string | null;
   }>(
-    `SELECT id, original_name, mime_type, file_size, storage_path, organization_id, checksum_sha256
+    // The object columns are read through to_jsonb so a database that has not
+    // yet run 20261105_file_uploads_durable_object.sql reads every row as one
+    // kept at its local path, as organization_id is tolerated below.
+    `SELECT id, original_name, mime_type, file_size, storage_path, organization_id, checksum_sha256,
+            to_jsonb(f)->>'storage_provider' AS storage_provider, to_jsonb(f)->>'storage_object_id' AS storage_object_id
        FROM file_uploads f WHERE id = $1 AND ${uploadedBinaryAvailableSql('f')}`,
     [fileId],
   );
@@ -270,16 +338,7 @@ export async function loadUploadedFile(
 
   const resolved = path.resolve(process.cwd(), storagePath);
   assertWithinUploads(resolved);
-  let buffer: Buffer;
-  try {
-    buffer = await fs.readFile(resolved);
-  } catch (err) {
-    throw new UploadedFileError(
-      'UPLOAD_BYTES_MISSING',
-      `upload "${fileId}" exists but its bytes are no longer available — ask the user to re-upload the file`,
-      { cause: err },
-    );
-  }
+  const buffer = await readUploadBytes(row, fileId, organizationId, resolved);
 
   // ── Integrity: the bytes must still be the bytes we were given ───────────
   // Until now nothing ever re-derived a digest from the stored bytes, so a file
@@ -391,27 +450,38 @@ export async function saveDerivedUpload(params: DerivedUploadParams): Promise<De
   assertWithinUploads(resolved);
   if (params.authoringImage) return saveAuthoringImageAssociation(params, fileId, storagePath, resolved);
   if (params.derivation) return saveSpreadsheetDerivation(params, fileId, storagePath, resolved);
-  await fs.mkdir(path.dirname(resolved), { recursive: true });
-  await fs.writeFile(resolved, params.buffer);
+  // The durable copy first (LX-02), then the task's working copy at storagePath.
+  const durableOrgId = durableOrganizationId(params.organizationId);
+  const object = durableOrgId != null ? await putUploadObject(durableOrgId, fileId, params.mimeType, params.buffer) : null;
+  try {
+    await fs.mkdir(path.dirname(resolved), { recursive: true });
+    await fs.writeFile(resolved, params.buffer);
 
-  const { getPool } = await import('../../db.js');
-  const pool = getPool();
-  await pool.query(
-    `INSERT INTO file_uploads (id, user_id, organization_id, original_name, mime_type, file_size, storage_path, checksum_sha256, status, created_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'uploaded', NOW())`,
-    [
-      fileId,
-      params.userId ?? null,
-      params.organizationId != null ? Number(params.organizationId) : null,
-      params.fileName,
-      params.mimeType,
-      params.buffer.length,
-      storagePath,
-      // Digest of the bytes actually written, so a later read can prove the
-      // file on disk is still this one.
-      sha256Hex(params.buffer),
-    ],
-  );
+    const { getPool } = await import('../../db.js');
+    const pool = getPool();
+    await pool.query(
+      `INSERT INTO file_uploads (id, user_id, organization_id, original_name, mime_type, file_size, storage_path, checksum_sha256, status, created_at,
+                                 storage_provider, storage_object_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'uploaded', NOW(), $9, $10)`,
+      [
+        fileId,
+        params.userId ?? null,
+        params.organizationId != null ? Number(params.organizationId) : null,
+        params.fileName,
+        params.mimeType,
+        params.buffer.length,
+        storagePath,
+        // Digest of the bytes actually written, so a later read can prove the
+        // stored file is still this one.
+        sha256Hex(params.buffer),
+        object?.provider ?? null,
+        object?.objectId ?? null,
+      ],
+    );
+  } catch (err) {
+    if (object && durableOrgId != null) await discardUploadObject(object, durableOrgId);
+    throw err;
+  }
 
   logger.info('derived upload saved', { fileId, bytes: params.buffer.length });
   return { fileId, storagePath };
@@ -431,19 +501,23 @@ async function saveAuthoringImageAssociation(params: DerivedUploadParams, fileId
   ]);
   const client = await association.pool.connect();
   let bytesWritten = false;
+  let object: UploadObject | null = null;
   let commitAttempted = false;
   try {
     await client.query('BEGIN');
     await lockDocumentDispositionProgram(client, orgId, association.programId);
     await association.authorize(client);
+    object = await putUploadObject(orgId, fileId, params.mimeType, params.buffer);
     await fs.mkdir(path.dirname(resolved), { recursive: true });
     await fs.writeFile(resolved, params.buffer);
     bytesWritten = true;
     const checksum = sha256Hex(params.buffer);
     await client.query(`INSERT INTO file_uploads
-      (id,user_id,organization_id,original_name,mime_type,file_size,storage_path,checksum_sha256,status,created_at)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'uploaded',NOW())`,
-    [fileId, userId, orgId, params.fileName, params.mimeType, params.buffer.length, storagePath, checksum]);
+      (id,user_id,organization_id,original_name,mime_type,file_size,storage_path,checksum_sha256,status,created_at,
+       storage_provider,storage_object_id)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'uploaded',NOW(),$9,$10)`,
+    [fileId, userId, orgId, params.fileName, params.mimeType, params.buffer.length, storagePath, checksum,
+      object.provider, object.objectId]);
     const captured = await createSource(orgId, { sourceType: 'client_document', visibilityClass: 'project_private',
       clientProgramId: association.programId, title: params.fileName, storedArtifactRef: storagePath, checksum, createdBy: userId,
       ingestionStatus: 'ingested', extractionStatus: 'pending', provenance: {
@@ -461,7 +535,9 @@ async function saveAuthoringImageAssociation(params: DerivedUploadParams, fileId
     return { fileId, storagePath, sourceId: captured.id, captureStatus: 'captured' };
   } catch (error) {
     await client.query('ROLLBACK').catch(() => undefined);
-    if (bytesWritten && !commitAttempted) await fs.unlink(resolved).catch(cleanupError => logger.warn('figure upload cleanup failed', { fileId, error: String(cleanupError) }));
+    if (!commitAttempted) {
+      await discardUncommittedUpload({ workingCopy: bytesWritten ? resolved : null, object }, orgId, fileId, 'figure upload cleanup failed');
+    }
     throw error;
   } finally {
     client.release();
@@ -517,6 +593,7 @@ async function saveSpreadsheetDerivation(
   ]);
   const client = await getPool().connect();
   let bytesWritten = false;
+  let object: UploadObject | null = null;
   let commitAttempted = false;
   let clientOwned = true;
   const releaseCaptureClient = () => {
@@ -554,13 +631,16 @@ async function saveSpreadsheetDerivation(
     ) : { rows: [] };
     const parentSourceIds = parents.rows.map(r => Number(r.id));
     const checksum = sha256Hex(params.buffer);
+    object = await putUploadObject(orgId, fileId, params.mimeType, params.buffer);
     await fs.mkdir(path.dirname(resolved), { recursive: true });
     await fs.writeFile(resolved, params.buffer);
     bytesWritten = true;
     await client.query(
-      `INSERT INTO file_uploads (id, user_id, organization_id, original_name, mime_type, file_size, storage_path, checksum_sha256, status, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'uploaded', NOW())`,
-      [fileId, userId, orgId, params.fileName, params.mimeType, params.buffer.length, storagePath, checksum],
+      `INSERT INTO file_uploads (id, user_id, organization_id, original_name, mime_type, file_size, storage_path, checksum_sha256, status, created_at,
+                                 storage_provider, storage_object_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'uploaded', NOW(), $9, $10)`,
+      [fileId, userId, orgId, params.fileName, params.mimeType, params.buffer.length, storagePath, checksum,
+        object.provider, object.objectId],
     );
     const captured = programId ? await createSource(orgId, {
       sourceType: 'client_document', visibilityClass: 'project_private', clientProgramId: programId,
@@ -598,8 +678,8 @@ async function saveSpreadsheetDerivation(
     await rollbackCaptureClient();
     // Only this invocation's new file is eligible for cleanup. An ambiguous
     // COMMIT must retain bytes, since a committed capture may already name them.
-    if (bytesWritten && !commitAttempted) {
-      await fs.unlink(resolved).catch(cleanupErr => logger.warn('derived upload cleanup failed', { fileId, error: String(cleanupErr) }));
+    if (!commitAttempted) {
+      await discardUncommittedUpload({ workingCopy: bytesWritten ? resolved : null, object }, orgId, fileId, 'derived upload cleanup failed');
     }
     throw err;
   } finally {

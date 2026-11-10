@@ -75,7 +75,7 @@ describe('ChangeAssessment — fixture-free', () => {
     expect(document.querySelectorAll('.chg-row')).toHaveLength(2);
 
     // org-scoped contract path was read.
-    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/change-assessment');
+    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/change-assessment', undefined, undefined, expect.any(AbortSignal));
 
     // First item's real determination shows in the detail pane.
     expect(screen.getByText('New 510(k) required')).toBeTruthy();

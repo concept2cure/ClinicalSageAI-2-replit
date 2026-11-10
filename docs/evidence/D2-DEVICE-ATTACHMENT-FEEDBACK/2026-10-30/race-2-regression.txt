@@ -1,0 +1,1269 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > exactly the places, then the work areas, in order 218ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > the work areas are a named group under their own heading 38ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > the feature catalog, Submission Center, Conversation and a second task entry are not on the rail 23ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > no two entries share an icon 24ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > keeps the client destinations reachable for a member (collapsed=false) 196ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > keeps the client destinations reachable for a member (collapsed=true) 146ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > every entry opens a screen in this release 22ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > Quality is on the rail, and opens Quality 62ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > CMC / Module 3 is on the rail beside Quality, and opens CMC 66ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > Home is explicitly labelled and opens Home 64ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > no entry carries an AnA badge, and no section lists retired or locked screens 20ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the rail lists the places, then the work areas > the mark goes to Home 77ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the conversation in progress is reached without a rail entry > ⌘K finds Conversation and opens the conversation screen 51ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Tasks is one entry: everyone’s tasks, with the board’s own filter for the person’s > opens the task board on everyone’s tasks 198ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Tasks is one entry: everyone’s tasks, with the board’s own filter for the person’s > the board’s My tasks gives the person’s own, and Tasks stays the marked entry 182ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > Tasks is one entry: everyone’s tasks, with the board’s own filter for the person’s > opens the board at its own address, not the action’s alias 55ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the governed artifacts across projects, once the Artifacts center, are reached from ⌘K as the Vault > the top bar’s search opens the palette, and the result opens the Vault, not a retired screen 94ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > offers an organization administrator Subscription & features, which opens the catalog 94ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > names each subscription entry by its surface's registry label, as the breadcrumb and ⌘K do 130ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > gives a billing administrator one entry to Licensing, Subscription & billing (P-68) 105ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > offers every client type once, the current one checked, by more than colour 51ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > choosing a client type sets it 66ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu holds Subscription & features and the client type > choosing the type already chosen changes nothing and closes the menu 53ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the button names the menu it opens, and focus moves into it 25ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > the items are one Tab stop: arrows, Home and End move between them, wrapping 36ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Escape closes it and gives focus back to the button 29ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the account menu works from the keyboard (WAI-ARIA menu pattern) > Tab closes it, from the button 30ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > .rail does not hide its overflow; the list scrolls and clips inside .rail-scroll 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > the collapsed rail does not clip its account menu > the menu opens from the collapsed rail with every item present 64ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > every client type defaults to a screen in this release 1ms
+ ✓ client/src/concept2cure/v2/__tests__/shellNav.test.tsx > each client type lands on a real screen > the four whose default was outside it now open Projects 0ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retained account and navigation admission > blocks a retained draft create after session changes 217ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retained account and navigation admission > blocks a retained draft create after browser bearer changes 37ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retained account and navigation admission > blocks a retained draft create after sign out changes 60ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retained account and navigation admission > retires a role snapshot with the same bearer and auth revision before create 35ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retained account and navigation admission > blocks stale confirmed Authoring navigation after owner replacement 73ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retained account and navigation admission > blocks stale recovery Authoring navigation after owner replacement 69ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retained account and navigation admission > blocks stale unidentified Authoring navigation after owner replacement 52ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retained account and navigation admission > rechecks ownership after the actual editor-target event before navigating 55ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retained account and navigation admission > withdraws private draft fields on the first replacement layout 31ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retired draft responses and operation locks > does not decode an old create response after account retirement 28ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retired draft responses and operation locks > does not decode an old create response after filing ABA retirement 33ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retired draft responses and operation locks > does not decode an old create response after unmount retirement 26ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retired draft responses and operation locks > discards a draft JSON body that finishes after the account changes 72ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retired draft responses and operation locks > does not unlock a newer pending draft when a prior owner’s request completes 55ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > retired draft responses and operation locks > cannot revive an earlier stationery-visit create callback after variant A to B to A 18ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > identity comparison authority and exact scope > blocks an old review save in the same frame as account replacement 27ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > identity comparison authority and exact scope > checks current review authority before a retained save 22ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > identity comparison authority and exact scope > dispatches a review once for duplicate same-frame clicks 22ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > identity comparison authority and exact scope > does not decode a comparison from an earlier profile A to B to A visit 10ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > identity comparison authority and exact scope > does not decode a comparison from an earlier variant A to B to A visit 10ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > identity comparison authority and exact scope > drops a delayed private review error body when its presentation changes 83ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > published variant and parent admission boundaries > blocks stale selection and page reads after account replacement 39ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > published variant and parent admission boundaries > does not revive an old sequence’s variant response on filing A to B to A 9ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > published variant and parent admission boundaries > blocks a retained identity retry after unadopted browser bearer drift 12ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > published variant and parent admission boundaries > withholds parent-admitted forms without losing the same filing’s unsaved draft 77ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionBoundaries.test.tsx > canonical correspondence captured account > does not dispatch a retained create click in the same frame as account replacement 21ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > opening a task on an incomplete board > keeps 'an anonymous partial read' unavailable in the UI and context when no cards were read 69ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > opening a task on an incomplete board > keeps 'named unread stores without a partial…' unavailable in the UI and context when no cards were read 16ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > opening a task on an incomplete board > warns about anonymous partial nonempty results while retaining readable cards 270ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > opening a task on an incomplete board > qualifies anonymous partial counts in the published context 116ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > opening a task on an incomplete board > does not call an unread empty board a board with no tasks 10ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > opening a task on an incomplete board > does not claim a named task is missing when another source is unread 105ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > opening a task on an incomplete board > names every unread store before refusing an incomplete empty read 8ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > opening a task on an incomplete board > can open the matching readable task without pretending other stores were read 117ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > opening a task on an incomplete board > keeps a complete empty board distinct from an incomplete read 10ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > opening a task on an incomplete board > keeps a genuine complete miss distinct from an incomplete read 83ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > opening a task on an incomplete board > preserves the detail archive reason before considering another open 114ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > project read failure and complete filter validation > treats 'a non-array container' as an unread project list without crashing the task board 107ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > project read failure and complete filter validation > treats 'a malformed name' as an unread project list without crashing the task board 123ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > project read failure and complete filter validation > treats 'a nonnumeric project identity' as an unread project list without crashing the task board 100ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > project read failure and complete filter validation > treats 'a later null row' as an unread project list without crashing the task board 107ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > project read failure and complete filter validation > reports a named-project lookup failure instead of a nonexistent project 104ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > project read failure and complete filter validation > can clear to all projects after the project-options read fails 107ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > project read failure and complete filter validation > can apply module and mine-only filters without reading project names 118ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > project read failure and complete filter validation > refuses an invalid combined module without applying its valid project or mine filter 112ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > project read failure and complete filter validation > applies a valid combined filter to the same controls together 101ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > project read failure and complete filter validation > keeps a genuine missing project refusal when its read succeeded 80ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > project read failure and complete filter validation > holds a named-project directive until the project lookup finishes 120ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > explicit independent read recovery > retries a unavailable project list once, keeps saved cards, and restores named filtering 172ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > explicit independent read recovery > retries a malformed project list once, keeps saved cards, and restores named filtering 147ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > explicit independent read recovery > allows another explicit project retry after an identical repeated read failure 229ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > explicit independent read recovery > keeps project recovery reachable when the task board is genuinely empty 23ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > explicit independent read recovery > retries an incomplete nonempty board once and leaves the project read alone 111ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > explicit independent read recovery > permits another explicit board retry after an identical incomplete result 161ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx > explicit independent read recovery > keeps a failed board retry unavailable and offers a further explicit retry 142ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx > correspondence sent operation and uncertain hold continuity > confirms one pending create after actual bearer refresh and opens its exact Authoring document 203ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx > correspondence sent operation and uncertain hold continuity > retains an unconfirmed create hold across refresh and changing stationery without sending another copy 79ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx > correspondence sent operation and uncertain hold continuity > retains an identified committed recovery handoff through refresh and a new stationery choice 49ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx > stationery intent belongs to the correspondence operation > preserves unsaved text when a new stationery choice is used for the next create 51ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx > stationery intent belongs to the correspondence operation > settles a sent receipt against its original stationery after selection changes and keeps the duplicate hold 40ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx > stationery intent belongs to the correspondence operation > does not accept another stationery identity as the confirmed receipt for the sent operation 35ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx > sequence-admitted published stationery continuity > keeps the explicit selection and loaded pages across real bearer refresh without a new read 62ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx > sequence-admitted published stationery continuity > accepts only a loaded published ID or the explicit saved-preference default 20ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx > sequence-admitted published stationery continuity > retries a current stationery failure and never turns it into an empty successful inventory 30ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx > filing identity review continuity > keeps a chosen role and review reason through real bearer refresh without rereading the comparison 19ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx > filing identity review continuity > confirms one pending review through actual bearer refresh with the exact displayed hashes and revision 28ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceSessionContinuity.test.tsx > canonical correspondence draft continuity > preserves unsaved correspondence through real bearer refresh and the same parent rerender 17ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx > the shared protocol editor survives requested navigation with pending changes > keeps every original tab and refuses a tab switch while the section has pending changes 558ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx > the shared protocol editor survives requested navigation with pending changes > refuses the suggested study-design step without unmounting the editor 205ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx > the shared protocol editor survives requested navigation with pending changes > refuses a section-outline switch without moving the open section 357ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx > the shared protocol editor survives requested navigation with pending changes > returns a refusal to AnA instead of reporting a section action as applied 176ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx > the shared protocol editor survives requested navigation with pending changes > keeps keyboard focus on the selected tab when a requested keyboard switch is refused 196ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx > the shared protocol editor survives requested navigation with pending changes > allows keyboard selection and moves focus when there are no pending section changes 167ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx > save outcomes and nested dialogs preserve the protocol work > releases the navigation guard after the save is confirmed and the current record is re-read 508ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx > save outcomes and nested dialogs preserve the protocol work > keeps the editor and navigation guard after a concurrent save is refused 347ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx > save outcomes and nested dialogs preserve the protocol work > protects an actual shared-editor content edit while its PATCH is unresolved and after refusal 454ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowNavigation.test.tsx > save outcomes and nested dialogs preserve the protocol work > keeps a nested Create a study design dialog and its inputs when AnA requests a different section 293ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > targets the existing risk panel for the same project when opening engineering work 210ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > keeps a US diagnostic on its recorded 510(k) route and adds the assay bench 1ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > gives MDR clinical evaluation and IVDR performance evaluation different leads and deliverables 1ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > shares evidence across recorded filings without converting a De Novo into a 510(k) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > hands De Novo assembly to project authoring while preserving its filing identity 66ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > does not fabricate a 510(k) for an unknown device route or an MDX workflow for a drug 0ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > opens an existing feature and uses project evidence for specialist laboratory reports 74ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > states an unreadable additional-filing list and never offers a locked feature 160ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > opens a secondary MDR evaluation from its clinical evidence without changing the primary 510(k) 58ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > uses project evidence for US assay work and only opens IVDR evidence for a recorded IVDR filing 226ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a 510(k) project names its strategy and assembly doors for the pathway, and opens its feature 52ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a PMA project names its strategy and assembly doors for the pathway, and opens its feature 57ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a MDR project names its strategy and assembly doors for the pathway, and opens its feature 76ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a IVDR project names its strategy and assembly doors for the pathway, and opens its feature 54ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > names the software, agency, post-market and clinical-studies doors for their jobs 76ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > heads a filing with no recorded route by its kind, in words a client reads 0ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > places each of the 16 project features once: opened from Plan, or listed with why it has no door 0ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > opens exactly those twelve features from a device project's Plan, over every recorded route and product type 1955ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > offers no door to device-analytics from inside the project 0ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > offers no door to device-workstream from inside the project 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > lists chosen files as rows and sends nothing until asked 310ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > sends each row's title, type, classification and the folder chosen, with its kind and section, and no version 336ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > leaves every blank field to the Vault, and the folder to its classifier 110ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > says what the Vault refused, row by row, and tries only that one again 183ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > says when a recorded file’s text is still being read (MR-08 Stage 3) 62ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the Vault uploader stages each file with its own fields (gap 7.1) > flags a second file with the same name before it is sent 63ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the staged list is usable without sight or a pointer (accessibility review, 2026-10-22) > opens with focus on the list and says what was added; a removed row hands focus on; Close returns it 171ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > the staged list is usable without sight or a pointer (accessibility review, 2026-10-22) > names each row by its file, offers only this view’s folders, and moves focus to Close once the upload settles 145ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > each row says how far its file has got (MR-08 Stage 6 step 2) > shows the share sent with a progress bar, and the rows behind it wait their turn 100ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > each row says how far its file has got (MR-08 Stage 6 step 2) > says the server is scanning and storing a file once all of it is sent, and only "Uploading…" before it knows 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > retry queue and current upload failures remain distinct > clears old refusals for a new attempt so a retry queued behind another file waits 157ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > retry queue and current upload failures remain distinct > keeps a new refusal or unknown result visible while the next file is uploading (unknown=false) 62ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadStaging.test.tsx > retry queue and current upload failures remain distinct > keeps a new refusal or unknown result visible while the next file is uploading (unknown=true) 64ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > reads lazily, renders actual fields, prevents a no-op and records only the reasoned difference 300ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > clears description and recorded target with null without inventing another change 73ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > leaves an admitted reader read-only when the fresh capability is false 34ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > does not propose trimming a legacy description that the person has not edited 32ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > pins writes to the verified GET parent when the global workspace was empty 60ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed program settings read without blank editable defaults 10ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed actor settings read without blank editable defaults 9ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed organization settings read without blank editable defaults 10ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed anchor settings read without blank editable defaults 9ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed workspace settings read without blank editable defaults 9ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed revision settings read without blank editable defaults 9ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed date settings read without blank editable defaults 9ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed priority settings read without blank editable defaults 10ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > refuses a malformed pending settings read without blank editable defaults 10ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings reads and bounded fields > bounds the governed reason before sending a write 60ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a network outcome across collapse until an explicit reload 86ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a zero outcome across collapse until an explicit reload 83ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a server outcome across collapse until an explicit reload 83ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a explicit outcome across collapse until an explicit reload 85ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a receipt outcome across collapse until an explicit reload 92ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a audit outcome across collapse until an explicit reload 81ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a scope outcome across collapse until an explicit reload 83ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a unchanged-field outcome across collapse until an explicit reload 87ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > holds a changed-fields outcome across collapse until an explicit reload 109ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > requires a fresh read after a stale row refusal and never automatically repeats PATCH 62ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > withdraws editable private values after a current access refusal 46ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings uncertain or conflicting saves > blocks duplicate saves and settings Escape/close until the pending reply settles 66ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a account change 44ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a role change 44ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a organization change 47ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a workspace change 44ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a program-roundtrip change 45ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > retires a sent save across a token change 44ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > withholds a delayed GET after a token switch without another render 6ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > blocks a stale same-frame review click before any PATCH dispatch 24ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectSettings.test.tsx > Project settings request ownership > preserves a pending save through ordinary same-account bearer refresh 53ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > a US IND’s Plan is what the filing needs, by phase > starts study and protocol design from the verified project before its filing requirements 385ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > a US IND’s Plan is what the filing needs, by phase > a new project opens on it, phases in order, with the target date 110ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > a US IND’s Plan is what the filing needs, by phase > a started deliverable opens this project’s working copy; the rest start from their template 110ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > a US IND’s Plan is what the filing needs, by phase > a failed catalogue read is a failure with a retry, never an empty plan 58ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > Assign makes a deliverable one person’s task > writes one task to the task store, scoped and linked, and reads the assignment back 143ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > Assign makes a deliverable one person’s task > is not offered to a viewer, whose task writes the server refuses 65ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > Assign makes a deliverable one person’s task > is not offered while the project’s id is unverified, so no task is written unscoped 62ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > Assign makes a deliverable one person’s task > an unreadable assignment list is said, and Assign still works 62ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > a phase opens the feature that composes it, on this project > a small-molecule US IND: Module 3 in CMC, Module 1 in the IND forms, QA on Submit 82ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > a phase opens the feature that composes it, on this project > a biologic IND is not sent to CMC, which composes small-molecule Module 3 only 62ms
+stderr | client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > other filings > an NDA is told the list is not available here and where its documents are, with no invented list
+An update to ProjectRecords inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProjectSkills inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > other filings > a device project’s Plan is its workstreams, each assignable 195ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > other filings > an NDA is told the list is not available here and where its documents are, with no invented list 90ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > the assignment model > keys tasks by this project’s deliverable; the newest wins; another project’s and cancelled tasks are ignored 0ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > the assignment model > never Number()s the program UUID: the project id is the verified numeric one 1ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > while the project record is read, Plan says so, and never that the filing has no list 75ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > does not offer project initiation for a returned record belonging to another project 67ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > a filing with no list is not told to "see every document" by the step band 30ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > the target date is the recorded day, never shifted by the viewer’s zone 41ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > a working copy titled as its template counts as started 35ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > an unconfirmed Assign reads the lists again, so they say what is there 95ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomePlan.test.tsx > what Plan says, and when (design review, pass 3) > a deliverable someone already has offers "Assign another person", and a finished task is the task’s, not the deliverable’s 50ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > Engineering reads the open project's risk file > reads it by the project, and only after its own route has admitted the project 105ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > Engineering reads the open project's risk file > reads nothing for a project its own route refused 21ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > every function of the risk register, on Engineering > draws the whole register, not four rows: every hazard on the 5x5 matrix 46ms
+stderr | client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > every function of the risk register, on Engineering > opens a hazard in the drawer, and sets the hazard as the entity in context
+An update to EngineeringSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > every function of the risk register, on Engineering > switches the matrix between the initial and the residual assessment 229ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > every function of the risk register, on Engineering > opens a hazard in the drawer, and sets the hazard as the entity in context 59ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > every function of the risk register, on Engineering > shows the metrics of the register 42ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > every function of the risk register, on Engineering > adds a hazard to the project 232ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > every function of the risk register, on Engineering > adds a risk control to the selected hazard 144ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > every function of the risk register, on Engineering > accepts residual risk only through the signature dialog (the signed act) 80ms
+stderr | client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > AnA drives the matrix on Engineering > registers under device-engineering and opens a hazard, switches the view and focuses a cell
+An update to EngineeringSurface inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > AnA drives the matrix on Engineering > registers under device-engineering and opens a hazard, switches the view and focuses a cell 49ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > AnA drives the matrix on Engineering > a hazard not in the project is refused with the hazards listed 25ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > a read that is not this project, or refused, says so > draws no hazard from an answer with the organization's scope 11ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > a read that is not this project, or refused, says so > draws no hazard from an answer with another project's scope 17ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > a read that is not this project, or refused, says so > draws no hazard from an answer with no scope at all 13ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > a read that is not this project, or refused, says so > a 404 for the project says it is not one this organization can see 18ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > a read that is not this project, or refused, says so > a 503 says the project could not be checked, and the retry reads again 40ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > a viewer is offered no write control > no New hazard, Add risk control or Accept residual, and says the register is view only 71ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.riskRegister.test.tsx > a viewer is offered no write control > an editor, and a session that does not say, are offered them 131ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > Engineering reads the open project's design inputs > reads them by the project 91ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > every function of the design-controls trace, on Engineering > draws the traceability matrix: input, output, verification, validation 48ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > every function of the design-controls trace, on Engineering > breaks down the gaps, and "Close the first gap" asks AnA about it 185ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > every function of the design-controls trace, on Engineering > shows the ISO 13485 §7.3 checklist, with the elements no store evidences 36ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > every function of the design-controls trace, on Engineering > asks AnA from a row: the hazard an input controls 48ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > every function of the design-controls trace, on Engineering > adds a design input to the project 144ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > a read that is not this project, or refused, says so > draws no input from an answer with the organization's scope 21ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > a read that is not this project, or refused, says so > draws no input from an answer with another project's scope 24ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > a read that is not this project, or refused, says so > draws no input from an answer with no scope at all 24ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > a read that is not this project, or refused, says so > a 404 for the project says it is not one this organization can see 18ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > a read that is not this project, or refused, says so > a 503 says the project could not be checked 41ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > a viewer is offered no write control > no New design input, and says the trace is view only 41ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/EngineeringSurface.designControls.test.tsx > a viewer is offered no write control > an editor is offered it 45ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device dossier attachment confirmation through the actual upload hook > does not add an attachment or activity from an affirmative response with no document receipt 213ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device dossier attachment confirmation through the actual upload hook > adds the selected file after a full producer receipt and keeps activity server-owned 61ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device dossier attachment confirmation through the actual upload hook > adds only confirmed files from a mixed batch of unique filenames 46ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index +0 when its same-name sibling has a '409 version refusal' 42ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index 1 when its same-name sibling has a '409 version refusal' 38ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index +0 when its same-name sibling has a 'malformed successful reply' 43ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index 1 when its same-name sibling has a 'malformed successful reply' 37ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index +0 when its same-name sibling has a 'explicit uncertain commit' 36ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index 1 when its same-name sibling has a 'explicit uncertain commit' 33ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index +0 when its same-name sibling has a 'lost complete-send reply' 31ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches only index 1 when its same-name sibling has a 'lost complete-send reply' 33ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > attaches neither same-name selection when one is refused and the other is unconfirmed 29ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment identity for equal filenames > keeps both confirmed selections for a valid create followed by an unchanged same-bytes receipt 30ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx > device attachment selection lifetime > uses the original sent File when a live selection is replaced before its receipt arrives 30ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > visible device attachment refusals and uncertain results > shows the actual version refusal without adding a file or a local activity event 229ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > visible device attachment refusals and uncertain results > shows check-before-retry guidance for 'malformed successful reply' and sends no automatic retry 62ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > visible device attachment refusals and uncertain results > shows check-before-retry guidance for 'explicit uncertain commit' and sends no automatic retry 52ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > visible device attachment refusals and uncertain results > shows check-before-retry guidance for 'complete-send reply loss' and sends no automatic retry 49ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > visible device attachment refusals and uncertain results > shows partial success and the refused file while listing only the confirmed attachment 45ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > visible device attachment refusals and uncertain results > keeps a mixed unknown result distinct from a known refusal 44ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > visible confirmed uploads and deliberate later selections > reports a valid 'created' receipt with its existing Vault wording 43ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > visible confirmed uploads and deliberate later selections > reports a valid 'unchanged same-bytes' receipt with its existing Vault wording 44ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > visible confirmed uploads and deliberate later selections > clears an earlier refusal when a deliberate new selection starts and publishes its own result 62ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > one active device attachment batch > shows pending status and disables selection while ignoring later input and drop gestures 77ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > one active device attachment batch > blocks overlapping input and drop calls before the pending state can repaint 27ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > keyboard selection and ordinary drawer tab changes > opens the native chooser once per keyboard activation without submitting an upload 61ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > keyboard selection and ordinary drawer tab changes > opens the existing drop-zone chooser once per pointer gesture 15ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadFeedback.test.tsx > keyboard selection and ordinary drawer tab changes > keeps pending progress and the eventual result while visiting Document and Activity tabs 62ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project selection and read admission > opens the selected empty project instead of the first roster row and does not seed data 202ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project selection and read admission > requires a choice without a shell project and carries an admitted choice to Vault and Tasks 108ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project selection and read admission > does not replace an unavailable explicit project with another project 34ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project selection and read admission > withdraws the old project while the next board is pending 111ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project selection and read admission > reports a malformed roster read as failure, with no wrong-project board 24ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project selection and read admission > reports a unavailable roster read as failure, with no wrong-project board 25ms
+stderr | client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project ownership and continuity > retires retained project selection after account replacement and project A to B to A
+An update to RbmWorkspace inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project selection and read admission > keeps relationship reconciliation distinct from a successful empty roster 20ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project ownership and continuity > retires retained project selection after account replacement and project A to B to A 102ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project ownership and continuity > retires the old selector and admits a fresh visit after a batched project A to B to A 91ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project ownership and continuity > blocks retained navigation after raw browser bearer drift or unmount 42ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project ownership and continuity > preserves the selected project across canonical bearer refresh without extra reads 36ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmProjectContext.test.tsx > RBM project ownership and continuity > keeps admitted project and conversation scope during the normal persisted-record board reload 75ms
+stderr | client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > keeps a malformed 201 file unknown and editable without opening its unverified ID or refreshing
+An update to VaultForProject inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > retains the same check-in offer and File after a malformed version receipt, then permits a deliberate retry
+An update to VaultForProject inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > keeps a malformed 201 file unknown and editable without opening its unverified ID or refreshing 376ms
+stderr | client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > opens only the confirmed saved ID in a mixed batch and keeps its second file unknown
+An update to VaultForProject inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > retains the same check-in offer and File after a malformed version receipt, then permits a deliberate retry 596ms
+stderr | client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > opens the actual 'newly saved' document from a complete producer-compatible receipt
+An update to VaultForProject inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > opens only the confirmed saved ID in a mixed batch and keeps its second file unknown 185ms
+stderr | client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > opens the actual 'already recorded' document from a complete producer-compatible receipt
+An update to VaultForProject inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > opens the actual 'newly saved' document from a complete producer-compatible receipt 157ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceiptFlow.test.tsx > opens the actual 'already recorded' document from a complete producer-compatible receipt 150ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx > connected correspondence draft > saves the actual sequence and opens only the confirmed canonical Authoring document 228ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx > connected correspondence draft > keeps a committed but unconfirmed handoff identifiable and blocks a duplicate create 50ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx > connected correspondence draft > ignores a late create receipt after changing the filing 27ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx > filing identity review > uses the selected variant and clears a previous variant’s reviewed difference 26ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx > filing identity review > shows actual differences and binds an explicit role review to both current hashes 27ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx > filing identity review > does not offer an acknowledgment for missing identity facts 6ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceWorkflow.test.tsx > company legal versions on agency communications > reads only the admitted project inventory and submits IDs and outcome without claiming a hash or approval 72ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceParentIntegration.test.tsx > real filing parent and correspondence children > preserves chosen stationery, draft text and identity review fields on real bearer refresh without rereads 338ms
+ ✓ client/src/concept2cure/v2/__tests__/companyCorrespondenceParentIntegration.test.tsx > real filing parent and correspondence children > keeps the same filing draft and sent result while an unrelated inventory search withholds parent admission 168ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowSelection.test.tsx > protocol selection shares the pending-work guard > refuses to select another protocol while the current section has pending changes 471ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowSelection.test.tsx > protocol selection shares the pending-work guard > refuses the all protocol scope while pending work belongs to the current project 213ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowSelection.test.tsx > protocol selection shares the pending-work guard > refuses the unfiled protocol scope while pending work belongs to the current project 186ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowSelection.test.tsx > protocol selection shares the pending-work guard > refuses to start another protocol while the current section has pending changes 218ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowSelection.test.tsx > protocol selection shares the pending-work guard > consumes a refused incoming handoff, preserves the editor, and waits for a fresh request after pending changes are reverted 265ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowSelection.test.tsx > protocol selection shares the pending-work guard > unregisters its leave guard on unmount so a later clean protocol can be selected 259ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowSelection.test.tsx > protocol selection shares the pending-work guard > refuses File protocol in open project while an unfiled protocol has pending section changes 184ms
+ ✓ client/src/concept2cure/v2/__tests__/riskRecordRead.test.tsx > the canonical risk register retains its project and account owner > hydrates the selected persisted controls through one scoped detail read 101ms
+ ✓ client/src/concept2cure/v2/__tests__/riskRecordRead.test.tsx > the canonical risk register retains its project and account owner > withholds a whole list containing another-project rows despite matching envelope metadata 11ms
+ ✓ client/src/concept2cure/v2/__tests__/riskRecordRead.test.tsx > the canonical risk register retains its project and account owner > withholds a whole list containing missing-project rows despite matching envelope metadata 8ms
+ ✓ client/src/concept2cure/v2/__tests__/riskRecordRead.test.tsx > the canonical risk register retains its project and account owner > refuses different-project detail without inventing an empty control chain 39ms
+ ✓ client/src/concept2cure/v2/__tests__/riskRecordRead.test.tsx > the canonical risk register retains its project and account owner > refuses different-item detail without inventing an empty control chain 33ms
+ ✓ client/src/concept2cure/v2/__tests__/riskRecordRead.test.tsx > the canonical risk register retains its project and account owner > refuses missing-program detail without inventing an empty control chain 43ms
+ ✓ client/src/concept2cure/v2/__tests__/riskRecordRead.test.tsx > the canonical risk register retains its project and account owner > distinguishes recorded no-controls from an unreadable detail 33ms
+ ✓ client/src/concept2cure/v2/__tests__/riskRecordRead.test.tsx > the canonical risk register retains its project and account owner > does not report an access refusal as an empty control chain 37ms
+ ✓ client/src/concept2cure/v2/__tests__/riskRecordRead.test.tsx > risk reads and mutations belong to one project/account visit > drops the old project rows and closes its forms synchronously on a new project 110ms
+ ✓ client/src/concept2cure/v2/__tests__/riskRecordRead.test.tsx > risk reads and mutations belong to one project/account visit > does not adopt a delayed hazard receipt after A → B → A 109ms
+ ✓ client/src/concept2cure/v2/__tests__/riskRecordRead.test.tsx > risk reads and mutations belong to one project/account visit > retires a pending list across a same-project account replacement 55ms
+ ✓ client/src/concept2cure/v2/__tests__/riskRecordRead.test.tsx > risk reads and mutations belong to one project/account visit > retires a pending control receipt on a project change 108ms
+ ✓ client/src/concept2cure/v2/__tests__/riskRecordRead.test.tsx > risk reads and mutations belong to one project/account visit > retires an earlier shell visit even when A → B → A happens before React redraws 107ms
+ ✓ client/src/concept2cure/v2/__tests__/riskRecordRead.test.tsx > risk reads and mutations belong to one project/account visit > cannot run a retained write callback after unmount 55ms
+ ✓ client/src/concept2cure/v2/__tests__/riskRecordRead.test.tsx > risk reads and mutations belong to one project/account visit > rejects a malformed or mismatched signed row without locally accepting the hazard 56ms
+ ✓ client/src/concept2cure/v2/__tests__/riskRecordRead.test.tsx > risk reads and mutations belong to one project/account visit > keeps a signed response from a retired visit out of the current risk file 107ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx > Vault uploads retain their project visit and canonical account session > retires queued dispatch, callbacks and actionable outcomes on project replacement 81ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx > Vault uploads retain their project visit and canonical account session > retires queued dispatch, callbacks and actionable outcomes on project ABA replacement 60ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx > Vault uploads retain their project visit and canonical account session > retires queued dispatch, callbacks and actionable outcomes on account replacement 56ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx > Vault uploads retain their project visit and canonical account session > retires queued dispatch, callbacks and actionable outcomes on same-account session replacement 56ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx > Vault uploads retain their project visit and canonical account session > retires queued dispatch, callbacks and actionable outcomes on organization replacement 56ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx > Vault uploads retain their project visit and canonical account session > retires queued dispatch, callbacks and actionable outcomes on logout replacement 59ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx > Vault uploads retain their project visit and canonical account session > retires queued dispatch, callbacks and actionable outcomes on session ABA replacement 57ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx > Vault uploads retain their project visit and canonical account session > retires queued dispatch, callbacks and actionable outcomes on unmount replacement 55ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx > Vault uploads retain their project visit and canonical account session > a retained project callback cannot acquire the replacement owner 4ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx > Vault uploads retain their project visit and canonical account session > a retained account callback cannot acquire the replacement owner 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx > Vault uploads retain their project visit and canonical account session > a retained unmount callback cannot acquire the replacement owner 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx > Vault upload admission and state ownership > admits one request for same-frame repeated upload calls and remains busy until it settles 56ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx > Vault upload admission and state ownership > an old project reply cannot clear the replacement project upload state or overwrite its note 111ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx > Vault upload admission and state ownership > the project replacement clears an already rendered outcome 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx > Vault upload admission and state ownership > the session replacement clears an already rendered outcome 4ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx > Vault uploads preserve valid session continuity > continues a stable owner sequentially and can admit a later batch after settlement 57ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx > Vault uploads preserve valid session continuity > continues the same session across a canonical bearer refresh using the current bearer 60ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx > Vault upload browser credential and mount boundaries > stops queued files after raw account bearer drift outside the canonical session 55ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx > Vault upload browser credential and mount boundaries > stops queued files after raw organization bearer drift outside the canonical session 53ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx > Vault upload browser credential and mount boundaries > stops queued files after raw missing bearer drift outside the canonical session 55ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx > Vault upload browser credential and mount boundaries > admits the live StrictMode effect replay mount while retiring retained callbacks after unmount 4ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx > Vault upload retained callbacks never acquire drifted browser credentials > refuses raw account drift before the first dispatch 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx > Vault upload retained callbacks never acquire drifted browser credentials > refuses raw organization drift before the first dispatch 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx > Vault upload retained callbacks never acquire drifted browser credentials > refuses raw missing drift before the first dispatch 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx > Vault upload retained callbacks never acquire drifted browser credentials > restoring the original bearer cannot revive a callback that observed raw credential drift 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx > Vault upload admission starts with the canonical account credentials > refuses premount raw account bearer drift from the canonical account 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx > Vault upload admission starts with the canonical account credentials > refuses premount raw organization bearer drift from the canonical account 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx > Vault upload admission starts with the canonical account credentials > refuses premount raw missing bearer drift from the canonical account 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultStagingSessionOwnership.test.tsx > the Vault staging body belongs to its canonical account session > withdraws chosen bytes and private metadata after account replacement without dispatch 265ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultStagingSessionOwnership.test.tsx > the Vault staging body belongs to its canonical account session > withdraws chosen bytes and private metadata after same-account session replacement without dispatch 187ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultStagingSessionOwnership.test.tsx > the Vault staging body belongs to its canonical account session > withdraws chosen bytes and private metadata after organization replacement without dispatch 148ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultStagingSessionOwnership.test.tsx > the Vault staging body belongs to its canonical account session > withdraws chosen bytes and private metadata after logout replacement without dispatch 100ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultStagingSessionOwnership.test.tsx > the Vault staging body belongs to its canonical account session > withdraws chosen bytes and private metadata after session ABA replacement without dispatch 80ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultStagingSessionOwnership.test.tsx > the Vault staging body belongs to its canonical account session > preserves the chosen File and edited fields across real same-session bearer refresh, then sends with the refreshed credential 86ms
+ ✓ client/src/concept2cure/v2/__tests__/catalogReadRecovery.test.tsx > catalog and subscription read recovery on the mounted screen > retries only the catalog, shows loading, suppresses repeat dispatch and preserves the search 253ms
+ ✓ client/src/concept2cure/v2/__tests__/catalogReadRecovery.test.tsx > catalog and subscription read recovery on the mounted screen > retries only subscription details while the catalog remains readable 78ms
+ ✓ client/src/concept2cure/v2/__tests__/catalogReadRecovery.test.tsx > catalog and subscription read recovery on the mounted screen > keeps repeated features failures recoverable without automatic rereads 81ms
+ ✓ client/src/concept2cure/v2/__tests__/catalogReadRecovery.test.tsx > catalog and subscription read recovery on the mounted screen > keeps repeated subscription failures recoverable without automatic rereads 60ms
+ ✓ client/src/concept2cure/v2/__tests__/catalogReadRecovery.test.tsx > catalog and subscription payload recovery > recovers a malformed object catalog response without calling it an empty catalog 37ms
+ ✓ client/src/concept2cure/v2/__tests__/catalogReadRecovery.test.tsx > catalog and subscription payload recovery > recovers a array envelope catalog response without calling it an empty catalog 34ms
+ ✓ client/src/concept2cure/v2/__tests__/catalogReadRecovery.test.tsx > catalog and subscription payload recovery > recovers a absent payload catalog response without calling it an empty catalog 36ms
+ ✓ client/src/concept2cure/v2/__tests__/catalogReadRecovery.test.tsx > catalog and subscription payload recovery > recovers a no content catalog response without calling it an empty catalog 36ms
+ ✓ client/src/concept2cure/v2/__tests__/catalogReadRecovery.test.tsx > catalog and subscription payload recovery > recovers malformed usage subscription details without refetching the catalog 39ms
+ ✓ client/src/concept2cure/v2/__tests__/catalogReadRecovery.test.tsx > catalog and subscription payload recovery > recovers absent payload subscription details without refetching the catalog 37ms
+ ✓ client/src/concept2cure/v2/__tests__/catalogReadRecovery.test.tsx > catalog and subscription payload recovery > recovers no content subscription details without refetching the catalog 42ms
+ ✓ client/src/concept2cure/v2/__tests__/catalogReadRecovery.test.tsx > catalog and subscription payload recovery > retains the genuine empty-catalog state after a successful empty list 20ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(pma) — tab counts > a failed read is not counted as 0 230ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(pma) — tab counts > a read in flight is not counted as 0 27ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(pma) — tab counts > positive control: a finished read is counted, zero included 39ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(pma) — tab counts > the Approvals tab does not count the organisation's queue as this project's 48ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(ivd) — tab counts > a failed read is not counted as 0 48ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(ivd) — tab counts > a read in flight is not counted as 0 15ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(ivd) — tab counts > positive control: a finished read is counted, zero included 31ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(ivd) — tab counts > the Approvals tab does not count the organisation's queue as this project's 35ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(k510) — tab counts > a failed read is not counted as 0 51ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(k510) — tab counts > a read in flight is not counted as 0 17ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(k510) — tab counts > positive control: a finished read is counted, zero included 34ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(k510) — tab counts > the Approvals tab does not count the organisation's queue as this project's 37ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(cer) — tab counts > a failed read is not counted as 0 51ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(cer) — tab counts > a read in flight is not counted as 0 16ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(cer) — tab counts > positive control: a finished read is counted, zero included 29ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PathwayPanes.tabCounts.test.tsx > PathwayPanes(cer) — tab counts > the Approvals tab does not count the organisation's queue as this project's 24ms
+ ✓ client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > an accepted hazard's acceptance signature, in words > a hazard edited after its acceptance says "Changed since it was signed", with the reason 98ms
+ ✓ client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > an accepted hazard's acceptance signature, in words > a hazard unchanged since its acceptance says "Signed content unchanged" 42ms
+ ✓ client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > an accepted hazard's acceptance signature, in words > an acceptance signed before content binding says it cannot be verified 31ms
+ ✓ client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > an accepted hazard's acceptance signature, in words > a read that failed says "Signature state could not be read", never "Not signed" 36ms
+ ✓ client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > an accepted hazard's acceptance signature, in words > an answer for another hazard is not this hazard's state 32ms
+ ✓ client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > only accepted hazards show an acceptance signature > a hazard not accepted reads its controls and shows no acceptance signature 54ms
+ ✓ client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > only accepted hazards show an acceptance signature > a hazard accepted here is read once the signature is confirmed 148ms
+ ✓ client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > AnA's context carries the acceptance signature > the selected hazard carries its state, and the summary says it 33ms
+ ✓ client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > AnA's context carries the acceptance signature > a state not read is told as not read, not as unsigned 31ms
+ ✓ client/src/concept2cure/v2/__tests__/riskSignedContentOnScreen.test.tsx > AnA's context carries the acceptance signature > a hazard not accepted carries no acceptance signature 26ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > reads one scoped profile for both cards and identifies its recorded source 87ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > distinguishes a verified absent profile from a profile with no recorded fields 26ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > bounds each recorded list with shown and total counts and escapes saved text 24ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > states loading without an absence claim and permits an unselected workspace to bind the actual saved parent 13ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but foreign program answer as unavailable 112ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but foreign actor answer as unavailable 30ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but foreign organization answer as unavailable 32ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but foreign workspace answer as unavailable 26ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but invalid anchor answer as unavailable 22ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but false success answer as unavailable 19ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but absent profile field answer as unavailable 21ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but malformed risk row answer as unavailable 19ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but invented missing confidence answer as unavailable 16ms
+stderr | client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > makes no profile request for a foreign current tenant selection
+An update to ProjectSkills inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > withdraws a loaded profile immediately when the selected workspace changes
+An update to ScopedRead inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > keeps HTTP 403 unavailable and retries the actual same scoped read 27ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > keeps HTTP 503 unavailable and retries the actual same scoped read 22ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > makes no profile request for a foreign current tenant selection 5ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after account changes 11ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after role changes 7ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after organization changes 8ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after workspace changes 9ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after program changes 12ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after program-roundtrip changes 7ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after token-only changes 6ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > withdraws a loaded profile immediately when the selected workspace changes 17ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > refuses a retained retry handler after a bearer account switch before another render 13ms
+ ✓ client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > preserves a pending profile read through canonical same-account bearer refresh 15ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.upload.test.tsx > Dossier attachment uploads report the Vault outcome > lists only the exact confirmed file when same-name files have different outcomes 216ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.upload.test.tsx > Dossier attachment uploads report the Vault outcome > shows a visible unknown receipt instead of silently leaving an empty attachment list 70ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.upload.test.tsx > Dossier attachment uploads report the Vault outcome > shows a visible refused file instead of silently leaving an empty attachment list 36ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.upload.test.tsx > Dossier attachment uploads report the Vault outcome > announces a confirmed upload and keeps its local list distinct from the recorded audit history 36ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.upload.test.tsx > Dossier attachment dispatch belongs to the open section visit > retires a partly confirmed batch on close and never associates its rows later 75ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.upload.test.tsx > Dossier attachment dispatch belongs to the open section visit > retires a partly confirmed batch on section and never associates its rows later 80ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.upload.test.tsx > Dossier attachment dispatch belongs to the open section visit > retires a partly confirmed batch on close and reopen and never associates its rows later 90ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.upload.test.tsx > Dossier attachment dispatch belongs to the open section visit > disables and guards picker and drop dispatch while the current request is busy 81ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires completion after replacing the 'section id' 208ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires completion after replacing the 'backend document' 49ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires completion after replacing the 'program' 40ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires completion after replacing the 'pathway' 32ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires a section-label A to B to A visit instead of reviving the first completion 35ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires a batched shell A to B to A visit even when drawer props return unchanged 33ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload completion cannot cross account or mounted-view lifetime > retires a replacement session, same actor=false 33ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload completion cannot cross account or mounted-view lifetime > retires a replacement session, same actor=true 32ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload completion cannot cross account or mounted-view lifetime > retires an upload across close and reopening the same section 43ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload completion cannot cross account or mounted-view lifetime > retires an upload across unmount and reopening the same section 38ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > current device upload visits retain legitimate completion > publishes a confirmed file when its original visit remains current 19ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > current device upload visits retain legitimate completion > keeps an ordinary bearer refresh current and accepts its valid unchanged receipt 22ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringReadSessionAdoption.test.tsx > the authoring read session across a pending session adoption > keeps one fenced session for the whole window, then mints exactly one for the adopted account 25ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringReadSessionAdoption.test.tsx > the authoring read session across a pending session adoption > a refused adoption leaves the account; the window session never becomes current, and one session follows 4ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringReadSessionAdoption.test.tsx > the authoring read session across a pending session adoption > an ordinary bearer refresh keeps the session; a new sign-in of the same account replaces it 3ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/authoringReadSessionAdoption.test.tsx > the workbench during a pending session adoption > holds its sections on one click, reads once, and reads again only as the adopted account 529ms
+stderr | client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > the /^New (program|project)$/ creation door opens the Projects wizard instead of asking AnA
+An update to ClientReviewZone inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > retires engineering working state when the selected project changes 39ms
+stderr | client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > the /^Create your first (program|project)$/ creation door opens the Projects wizard instead of asking AnA
+An update to ClientReviewZone inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > the /^New (program|project)$/ creation door opens the Projects wizard instead of asking AnA 236ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > the /^Create your first (program|project)$/ creation door opens the Projects wizard instead of asking AnA 62ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > says which postmarket panels are this project's, without changing the selected project 5ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > requires an explicit project selection before mounting a project feature 2ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > never substitutes another same-pathway project for an unavailable selection 2ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > software does not borrow the first project 2ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > keeps the selected project and responds when the shell switches projects 10ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > withholds the leaf on a failed context read and offers a retry 12ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > routes an IVD away from MDR CER into performance evaluation 12ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > opens the CER document type for the selected project, preserving pathway-specific authoring 12ms
+ ✓ client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx > MDX project context isolation > keeps a secondary IVDR performance section out of the primary 510(k) document 9ms
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > names the suggested folder for an auto-filed upload, as a suggestion
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > names the suggested folder for an auto-filed upload, as a suggestion
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > reports an unplaceable file as Unfiled needing review
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > reports an unplaceable file as Unfiled needing review
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > names the suggested folder for an auto-filed upload, as a suggestion 73ms
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a file the Vault already holds is reported as unchanged, never as auto-filed (VR-05)
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a file the Vault already holds is reported as unchanged, never as auto-filed (VR-05)
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a refusal is still a refusal — filing copy never masks a failed file
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a refusal is still a refusal — filing copy never masks a failed file
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > reports an unplaceable file as Unfiled needing review 56ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a file the Vault already holds is reported as unchanged, never as auto-filed (VR-05) 57ms
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the document each file was recorded as > lists valid receipt ids in order and keeps a reply naming no document unknown
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the document each file was recorded as > lists valid receipt ids in order and keeps a reply naming no document unknown
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > sends the Authorization bearer header the ingest route requires
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > sends the Authorization bearer header the ingest route requires
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > still sends the multipart body and credentials
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > still sends the multipart body and credentials
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > sends each file its own title, type, classification and filing, and never a version
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > sends each file its own title, type, classification and filing, and never a version
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > says a folder the person chose is their filing, not a suggestion awaiting confirmation
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > says a folder the person chose is their filing, not a suggestion awaiting confirmation
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > tells the caller where each file stands as it starts, as its bytes go out, and as it settles
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > tells the caller where each file stands as it starts, as its bytes go out, and as it settles
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — a re-upload whose filing was not applied (Part 11 review F3) > a file the Vault already holds, sent to another folder, says where its filing is changed (Part 11 review F3)
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — a re-upload whose filing was not applied (Part 11 review F3) > a file the Vault already holds, sent to another folder, says where its filing is changed (Part 11 review F3)
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — filing-aware outcome copy > a refusal is still a refusal — filing copy never masks a failed file 56ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the document each file was recorded as > lists valid receipt ids in order and keeps a reply naming no document unknown 8ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > sends the Authorization bearer header the ingest route requires 3ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — the request actually authenticates > still sends the multipart body and credentials 3ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > sends each file its own title, type, classification and filing, and never a version 4ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > says a folder the person chose is their filing, not a suggestion awaiting confirmation 59ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — each file carries the fields its row gave (gap 7.1) > tells the caller where each file stands as it starts, as its bytes go out, and as it settles 8ms
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — how far a file has got (MR-08 Stage 6 step 2) > tells the row once per whole percent, not once per packet
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — how far a file has got (MR-08 Stage 6 step 2) > tells the row once per whole percent, not once per packet
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — how far a file has got (MR-08 Stage 6 step 2) > a connection that drops is a refusal the person can retry, and nothing was filed
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — how far a file has got (MR-08 Stage 6 step 2) > a connection that drops is a refusal the person can retry, and nothing was filed
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — how far a file has got (MR-08 Stage 6 step 2) > a gateway reply that is not JSON leaves the recording unknown
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — how far a file has got (MR-08 Stage 6 step 2) > a gateway reply that is not JSON leaves the recording unknown
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to HookHost inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — a re-upload whose filing was not applied (Part 11 review F3) > a file the Vault already holds, sent to another folder, says where its filing is changed (Part 11 review F3) 57ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — how far a file has got (MR-08 Stage 6 step 2) > tells the row once per whole percent, not once per packet 6ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — how far a file has got (MR-08 Stage 6 step 2) > a connection that drops is a refusal the person can retry, and nothing was filed 4ms
+ ✓ client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx > useVaultUpload — how far a file has got (MR-08 Stage 6 step 2) > a gateway reply that is not JSON leaves the recording unknown 2ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx > device attachment identity through the actual drop handler > attaches only the confirmed same-name dropped file when its sibling is refused 194ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx > device attachment identity through the actual drop handler > keeps repeated references to one File independent when only the second selection is confirmed 65ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx > device attachment identity through the actual drop handler > keeps both confirmed dropped selections for a new receipt and a valid same-bytes reupload 50ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/usePathwayTabsData.auditKind.test.ts > adaptAudit — the recorded action, not a category the client invented > does not label a signature, a deletion or a modification as a read 14ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/usePathwayTabsData.auditKind.test.ts > adaptAudit — the recorded action, not a category the client invented > gives an action it has no category for the third state, not a guess 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/usePathwayTabsData.auditKind.test.ts > adaptAudit — the recorded action, not a category the client invented > carries the recorded action through so the surface can show it 2ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/usePathwayTabsData.auditKind.test.ts > adaptAudit — the recorded action, not a category the client invented > never publishes the row hash-chain link as an electronic signature 4ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/usePathwayTabsData.auditKind.test.ts > adaptAudit — the recorded action, not a category the client invented > still carries the chain link as the chain link 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/usePathwayTabsData.auditKind.test.ts > auditChipMeta — the chip says what was recorded > shows the recorded action verbatim when there is no category for it 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/usePathwayTabsData.auditKind.test.ts > auditChipMeta — the chip says what was recorded > never labels an unclassified row "Access" 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/usePathwayTabsData.auditKind.test.ts > auditChipMeta — the chip says what was recorded > says the action was not recorded rather than inventing one when it is absent 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/usePathwayTabsData.auditKind.test.ts > auditChipMeta — the chip says what was recorded > keeps the closed-enum label for a kind it really did classify 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/usePathwayTabsData.auditKind.test.ts > unclassifiedFilterCaveat — a narrow filter states what it cannot speak for > is silent when every row in the window is classified 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/usePathwayTabsData.auditKind.test.ts > unclassifiedFilterCaveat — a narrow filter states what it cannot speak for > reports the count it cannot answer for instead of implying none matched 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/usePathwayTabsData.auditKind.test.ts > the pane cannot silently answer "no e-signatures" for these rows > has a caveat to show for the window adaptAudit produces 1ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > opens the existing module for the same confirmed opted-in project 416ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > withholds the entry unless the stored choice is exactly true (false) 107ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > withholds the entry unless the stored choice is exactly true (undefined) 130ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > withholds the entry unless the stored choice is exactly true ("true") 117ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > preserves the existing availability verdict 109ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > retires a retained entry after project A to B to A 328ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > retires an old entry and admits the fresh entry after a batched project A to B to A 192ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > retires an entry on browser bearer change 121ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeRbmDoor.test.tsx > project Evidence monitoring entry > retires an entry on unmount change 120ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx > RBM in the main left rail > opens the existing RBM destination beside the other work areas (collapsed=false) 387ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx > RBM in the main left rail > opens the existing RBM destination beside the other work areas (collapsed=true) 226ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx > RBM in the main left rail > keeps the same entitled central service for the medtech client view 57ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx > RBM in the main left rail > keeps the same entitled central service for the cro client view 68ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx > RBM in the main left rail > explains the real Professional subscription lock without opening RBM 93ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmNavigation.test.tsx > RBM in the main left rail > honors a deployment verdict that still withholds RBM from the release 68ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx > existing project setup monitoring choice > reviews and persists the explicitly selected monitoring service without seeding a record 571ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx > existing project setup monitoring choice > leaves monitoring unselected unless the creator chooses it 325ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowGuide.test.tsx > one guide over the existing study/protocol workspace > suggests the five existing steps in order, with only the open step current 182ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowGuide.test.tsx > one guide over the existing study/protocol workspace > the Study design step requests its existing study-design tab 32ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowGuide.test.tsx > one guide over the existing study/protocol workspace > the Statistics step requests its existing statistics tab 17ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowGuide.test.tsx > one guide over the existing study/protocol workspace > the Write protocol step requests its existing document tab 18ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowGuide.test.tsx > one guide over the existing study/protocol workspace > the Run checks step requests its existing compliance tab 15ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowGuide.test.tsx > one guide over the existing study/protocol workspace > the Review protocol step requests its existing reviews tab 14ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowGuide.test.tsx > one guide over the existing study/protocol workspace > does not assign a current guided step to an unrelated tab 16ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowGuide.test.tsx > one guide over the existing study/protocol workspace > asks for a study design when no design is bound 7ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowGuide.test.tsx > one guide over the existing study/protocol workspace > reports an unreadable design without treating the recorded link as a successful read 7ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowGuide.test.tsx > one guide over the existing study/protocol workspace > reports the recorded blocking findings when approval is blocked 6ms
+ ✓ client/src/concept2cure/v2/__tests__/protocolWorkflowGuide.test.tsx > one guide over the existing study/protocol workspace > suggests writing and checking a resolved design without claiming approval or completion 5ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDossier.hydration.test.tsx > dossier hydration read outcomes > keeps an absent secondary report empty without fetching the primary filing outline 71ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDossier.hydration.test.tsx > dossier hydration read outcomes > hydrates exact project CER content and retains its canonical section key 56ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDossier.hydration.test.tsx > dossier hydration read outcomes > does not replace a failed content read with an apparently empty section 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDossier.hydration.test.tsx > dossier hydration read outcomes > reports an unreadable list as unavailable rather than claiming no report exists 55ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDossier.hydration.test.tsx > dossier hydration read outcomes > withholds cached sections until the current session revalidates the read 55ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps null body unconfirmed 22ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps empty body unconfirmed 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps array body unconfirmed 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps scalar body unconfirmed 4ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps missing success unconfirmed 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps false success unconfirmed 4ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps string success unconfirmed 4ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps contradictory error unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps missing document unconfirmed 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps null document unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps array document unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps missing document id unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps blank document id unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps placeholder document id unconfirmed 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps numeric document id unconfirmed 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps another project unconfirmed 4ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps missing project unconfirmed 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps another file in this project unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps invalid title unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps invalid assigned version unconfirmed 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps missing assigned version unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps blank assigned version unconfirmed 4ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps missing stored title unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps invalid extraction state unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps missing filing unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps invalid folder label unconfirmed 4ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps invalid folder id unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps blank folder id unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps missing placement unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps unfiled without needed review unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps unknown placement unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps string review flag unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps contradictory review flag unconfirmed 4ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps confirmed placement without folder unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps missing reupload on HTTP200 unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps reupload on HTTP201 unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps accepted without the route status unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps no-content status unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps invalid reupload differences unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps invalid difference row unconfirmed 6ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps unknown difference field unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps invalid recorded difference unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps string unchanged flag unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps false unchanged with no changes unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps true unchanged despite changes unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps invalid change row unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps nontext change before value unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps missing requested difference value unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps equal change values unconfirmed 4ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps equal requested and recorded values unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps duplicate change fields unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps duplicate difference fields unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > keeps an unreadable successful reply unconfirmed and sends no retry 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > does not confirm the previous version as its own replacement 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: a successful HTTP status does not confirm a write > preserves the server’s explicit uncertain-commit result without claiming nothing was recorded 4ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: valid committed responses keep their actual meaning > records the returned identity and exact filing, permitting extra response fields 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: valid committed responses keep their actual meaning > honors explicit Unfiled despite a retained old folder and accepts a legacy null title 6ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: valid committed responses keep their actual meaning > reports a valid repaired reupload without claiming nothing changed in the row or batch 35ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: valid committed responses keep their actual meaning > keeps a valid new version with its retained code and server-assigned version 6ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: valid committed responses keep their actual meaning > continues a mixed batch after a malformed receipt without counting it or retrying it 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: raw replies and batch recovery > settles an undecodable successful raw response "" without retry 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: raw replies and batch recovery > settles an undecodable successful raw response "<html>upstream response</html>" without retry 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: raw replies and batch recovery > settles an undecodable successful raw response "{\"success\":" without retry 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: raw replies and batch recovery > continues after both missing and malformed reupload receipts without another POST for either 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: compatible metadata and reupload guidance > accepts a real-shaped authenticated receipt: 'absent extraction and extra future fi…' 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: compatible metadata and reupload guidance > accepts a real-shaped authenticated receipt: 'extracted with null label and opaque …' 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: compatible metadata and reupload guidance > accepts a real-shaped authenticated receipt: 'pending with empty label' 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: compatible metadata and reupload guidance > accepts a real-shaped authenticated receipt: 'failed extraction stored unfiled' 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: compatible metadata and reupload guidance > keeps detail/filing guidance and repair flags truthful with unchanged=true 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: compatible metadata and reupload guidance > keeps detail/filing guidance and repair flags truthful with unchanged=false 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: legacy title and check-in recovery > uses generic check-in copy for a legacy stored title null without inventing a title 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: legacy title and check-in recovery > uses generic check-in copy for a legacy stored title "" without inventing a title 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: legacy title and check-in recovery > uses generic check-in copy for a legacy stored title "  " without inventing a title 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadReceipts.test.tsx > Vault upload receipts: legacy title and check-in recovery > keeps a missing-identity check-in unknown without completing its new-version outcome 2ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.history.test.tsx > DossierDrawer — Activity is the server’s section history > renders the version rows the server recorded, with author and reason 195ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.history.test.tsx > DossierDrawer — Activity is the server’s section history > says a failed history read failed, rather than showing no activity 38ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.history.test.tsx > DossierDrawer — Activity is the server’s section history > says a section with no document has no recorded history 28ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/engineeringPanelTarget.test.tsx > project work opens an existing engineering subsection > focuses the requested heading on arrival and consumes the handoff once 160ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/engineeringPanelTarget.test.tsx > project work opens an existing engineering subsection > supports repeated moves on the already mounted feature 27ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/engineeringPanelTarget.test.tsx > project work opens an existing engineering subsection > never changes the selected project or focuses another project’s panel 4ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/engineeringPanelTarget.test.tsx > project work opens an existing engineering subsection > retires a handoff across A to B to A visits and session changes 7ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/engineeringPanelTarget.test.tsx > project work opens an existing engineering subsection > refuses unknown subsection names and leaves a current dialog in control 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadFailures.test.tsx > Vault HTTP failures cannot establish that no write occurred > keeps HTTP408 without a confirmed receipt unknown 21ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadFailures.test.tsx > Vault HTTP failures cannot establish that no write occurred > keeps HTTP500 without a confirmed receipt unknown 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadFailures.test.tsx > Vault HTTP failures cannot establish that no write occurred > keeps HTTP502 without a confirmed receipt unknown 4ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadFailures.test.tsx > Vault HTTP failures cannot establish that no write occurred > keeps HTTP503 without a confirmed receipt unknown 4ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadFailures.test.tsx > Vault HTTP failures cannot establish that no write occurred > keeps HTTP504 without a confirmed receipt unknown 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadFailures.test.tsx > Vault HTTP failures cannot establish that no write occurred > preserves an explicit uncertain result even with contradictory HTTP413 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadFailures.test.tsx > Vault HTTP failures cannot establish that no write occurred > preserves an explicit uncertain result even with contradictory HTTP415 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadFailures.test.tsx > Vault HTTP failures cannot establish that no write occurred > retains a definite HTTP400 refusal 6ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadFailures.test.tsx > Vault HTTP failures cannot establish that no write occurred > retains a definite HTTP401 refusal 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadFailures.test.tsx > Vault HTTP failures cannot establish that no write occurred > retains a definite HTTP403 refusal 4ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadFailures.test.tsx > Vault HTTP failures cannot establish that no write occurred > retains a definite HTTP404 refusal 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadFailures.test.tsx > Vault HTTP failures cannot establish that no write occurred > retains a definite HTTP409 refusal 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadFailures.test.tsx > Vault HTTP failures cannot establish that no write occurred > retains a definite HTTP413 refusal 3ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadFailures.test.tsx > Vault HTTP failures cannot establish that no write occurred > retains a definite HTTP415 refusal 7ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadFailures.test.tsx > Vault HTTP failures cannot establish that no write occurred > retains a definite HTTP422 refusal 2ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultUploadFailures.test.tsx > Vault HTTP failures cannot establish that no write occurred > retains a definite HTTP429 refusal 2ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.readOnly.test.tsx > DossierDrawer — the Document tab is read-only > shows the section text with no editable surface 49ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.readOnly.test.tsx > DossierDrawer — the Document tab is read-only > "Open in editor" in the Document tab opens the authoring editor on this section 11ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.readOnly.test.tsx > DossierDrawer — the Document tab is read-only > never writes the filing section from the drawer 7ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdxPathwayIdentity.test.ts > MDx diagnostics identity > resolves legacy aliases only at the compatibility boundary 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdxPathwayIdentity.test.ts > MDx diagnostics identity > classifies IVDR/null as IVDR 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdxPathwayIdentity.test.ts > MDx diagnostics identity > classifies IVD/null as IVDR 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdxPathwayIdentity.test.ts > MDx diagnostics identity > classifies anything/ivdr as IVDR 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdxPathwayIdentity.test.ts > MDx diagnostics identity > classifies anything/ivd as IVDR 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/mdxPathwayIdentity.test.ts > MDx diagnostics identity > does not coerce unknown or 510(k) programs into IVDR 0ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmEndpointScope.test.ts > existing RBM transport within its admitted endpoints > preserves the exact nested KRI write address, body and returned reading 5ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmEndpointScope.test.ts > existing RBM transport within its admitted endpoints > preserves a monitoring action update and its receipt metadata 1ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmEndpointScope.test.ts > existing RBM transport within its admitted endpoints > refuses /risk-items/7 before the shared transport is called 2ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmEndpointScope.test.ts > existing RBM transport within its admitted endpoints > refuses /rbm-kris-other before the shared transport is called 0ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmEndpointScope.test.ts > existing RBM transport within its admitted endpoints > refuses /rbm-central-monitoring/unrelated before the shared transport is called 0ms
+ ✓ client/src/concept2cure/v2/__tests__/rbmEndpointScope.test.ts > existing RBM transport within its admitted endpoints > refuses /rbm-patient-profiles/unrelated before the shared transport is called 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDossier.scope.test.ts > dossier document identity > does not relabel the primary filing as an absent secondary CER or IVDR document 1ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDossier.scope.test.ts > dossier document identity > uses exact pathway classes rather than partial name matches 0ms
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useDossier.scope.test.ts > dossier document identity > rejects an unrelated or missing project identity even when the document type matches 0ms
+
+ Test Files  45 passed (45)
+      Tests  618 passed (618)
+   Start at  19:31:53
+   Duration  89.03s (transform 8.58s, setup 3.18s, import 18.51s, tests 41.28s, environment 19.79s)
+

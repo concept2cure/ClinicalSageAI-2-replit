@@ -1,0 +1,68 @@
+The mutation: the batch edit put back to the line that shipped.
+
+-    const updatedBatch = await updateOnConnection<{ id: number | string }>(
+-      pool,
+-      { organizationId: orgId, actor: { userId: resolveActorUserId(req) },
+-        register: 'batch_record', table: 'cmc_batch_records', reason: data.reason ?? null },
+-      async (client) => (await client.query(
+-        `SELECT * FROM cmc_batch_records
+-          WHERE id = $1 AND (tenant_id = $2 OR organization_id = $3) FOR UPDATE`,
+-        [id, ...tenantParams(orgId)],
+-      )).rows[0],
+-      async (client) => (await client.query(updateQuery, values)).rows[0],
+-    );
++    const updatedBatch = (await pool.query(updateQuery, values)).rows[0];
+
+$ npx vitest run server/api/cmc/__tests__/register-edit-is-audited.contract.test.ts
+
+ × batchRecordRoutes.ts — PUT /:id reaches an audited door 17ms
+   → batchRecordRoutes.ts PUT /:id writes a register row with no audit row on its
+     transaction, and delegates to nothing declared here: expected undefined to be truthy
+ × the batch record edit takes the pinned-connection door, as its create does 5ms
+   → expected 'import express from \'express\';\nimp…' not to contain
+     'await pool.query(updateQuery, values)'
+
+      Tests  2 failed | 20 passed (22)
+
+Reverted. 22 passed.
+
+────────────────────────────────────────────────────────────────────────────
+The first version of this test did NOT catch it
+────────────────────────────────────────────────────────────────────────────
+
+On the same mutation, only the named case failed:
+
+      Tests  1 failed | 21 passed (22)
+
+The general per-handler case passed, because the handler still contained the
+word `updateOnConnection` — in the COMMENT explaining why that is the right
+door. Prose about a door satisfied the contract.
+
+$ # the extracted handler body, before comments were stripped:
+put /:id len 4030
+   door: updateOnConnection          <- from the comment, not from code
+
+So the test now runs every source through scripts/ci/lib/strip-comments.mjs,
+the same string-aware stripper the CI gates use, before looking for anything.
+check-commonjs-require carries the other half of this lesson in its own
+header — "a gate that flags its own documentation trains people to ignore
+it" — and a gate SATISFIED by its own documentation is the worse failure: it
+is green for the wrong reason, and nothing ever tells you.
+
+────────────────────────────────────────────────────────────────────────────
+And one finding the test raised that was REFUTED
+────────────────────────────────────────────────────────────────────────────
+
+The first run also failed on:
+
+ × module3OperatingSystemRoutes.ts — PATCH /contradictions/:id/resolve reaches an audited door
+
+That one is not a defect. The handler delegates the whole write to
+`resolveContradiction` (services/cmc/contradiction-lifecycle.ts), whose own
+header says "status, provenance and audit in one transaction" and which calls
+writeChainedAuditRow on the transaction's client. My check was one level too
+shallow.
+
+Hence DELEGATES: the handler may take its door one level down, but the service
+is named AND READ, so a declared delegate that stops auditing fails here too.
+Admitting the shape without excusing the obligation.

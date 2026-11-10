@@ -61,6 +61,7 @@ import {
   getShadowReviewFindings,
 } from '../services/shadow-review/shadow-review-service';
 import { SHADOW_FINDING_DISPOSITIONS, withShadowFindingDispositions } from '../services/ectd/shadow-finding-disposition';
+import { HELD_SEND_OUTCOMES, HELD_SEND_EVIDENCE_KINDS } from '../services/submission-gateways/fda-esg-receipts';
 import { generateSection, AuthoringError } from '../services/authoring/section-generation-service';
 import { createScopedLogger } from '../utils/logger.js';
 import { requireGovernedReason } from './governed-reason';
@@ -102,6 +103,9 @@ function ctxOf(req: Request): Ctx | null {
 const CODE_STATUS: Record<string, number> = {
   ...SUBMISSION_ERROR_STATUS,
   NO_AUTHORED_CONTENT: 422,
+  // A filed copy is not the text its document holds (P-29.3): the technical
+  // file refuses before it assembles anything, and the remedy is the editor's.
+  FILING_DIVERGED: 409,
   // The guard could not keep the package's bytes, so it sent nothing.
   SENT_PACKAGE_NOT_ARCHIVED: 503,
   // The gateway's own table, not a copy: a copy missed PLACEMENT_REFUSED (a
@@ -208,7 +212,7 @@ const createSubmissionSchema = z.object({
      here the plain z.object stripped the id the Submission Center form had made
      the user pick. Tenancy is checked by createSubmission (404 for another
      organization's project), not here. */
-  programId: z.string().uuid(),
+  programId: z.string().guid(),
   title: z.string().min(1).max(500),
   productName: z.string().max(500).optional(),
   applicationType: z.string().min(1).max(64),
@@ -233,7 +237,7 @@ const upsertLeafSchema = z.object({
   documentTable: z
     .string()
     .max(64)
-    .refine(isPlaceableDocumentTable, (v) => ({ message: unplaceableDocumentTableMessage(v) }))
+    .refine(isPlaceableDocumentTable, { error: ({ input }) => unplaceableDocumentTableMessage(input as string) })
     .optional(),
   documentId: z.coerce.number().int().positive().optional(),
   /* The uuid half of the polymorphic reference, for uuid-keyed stores
@@ -243,7 +247,7 @@ const upsertLeafSchema = z.object({
      and that a leaf carries one, not both — is enforced once, in upsertLeaf,
      against the table vocabulary; duplicating that rule here is how the two
      would drift. */
-  documentUuid: z.string().uuid().optional(),
+  documentUuid: z.string().guid().optional(),
   documentType: z.string().max(64).optional(),
   parentLeafId: z.coerce.number().int().positive().optional(),
   studyId: z.string().trim().min(1).refine((value) => {
@@ -265,7 +269,7 @@ const upsertLeafSchema = z.object({
 });
 
 const AUTHOR = 'regulatory-author';
-const readSelectionSchema = z.object({ programId: z.string().uuid().optional(),
+const readSelectionSchema = z.object({ programId: z.string().guid().optional(),
   submissionId: z.string().regex(/^\d+$/).transform(Number).pipe(z.number().int().positive().safe()).optional() });
 function readSelection(req: Request) {
   const parsed = readSelectionSchema.safeParse(req.query);
@@ -955,7 +959,8 @@ router.get('/device/qms/structure', limiter, requireRole(AUTHOR), async (req, re
     res.json({ clauses: QMS_CLAUSES, fdaNote: FDA_QMSR_NOTE });
   } catch (err) { fail(res, err); }
 });
-const qmsAssessSchema = z.object({ presentClauseIds: z.array(z.string().max(64)).max(100).default([]) });
+// 2026-11-09 (S5b): an omitted list was read as "no clause in place" (ready: false, every clause missing). It is required.
+const qmsAssessSchema = z.object({ presentClauseIds: z.array(z.string().max(64)).max(100) });
 router.post('/device/qms/assess', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
@@ -964,7 +969,15 @@ router.post('/device/qms/assess', limiter, requireRole(AUTHOR), async (req, res)
   try {
     const { assessQmsReadiness } = await import('../services/market-specs/quality-system.js');
     res.json(assessQmsReadiness(parsed.data.presentClauseIds));
-  } catch (err) { fail(res, err); }
+  } catch (err) {
+    // An unknown clause id is the caller's to correct (quality-system.ts refuses it by index), not a server fault.
+    if ((err as { name?: string } | null)?.name === 'ComputationRefusal') {
+      const refusal = err as Error & { field?: string };
+      res.status(400).json({ error: { code: 'VALIDATION', message: refusal.message, field: refusal.field } });
+      return;
+    }
+    fail(res, err);
+  }
 });
 
 // Device labeling requirements (21 CFR 801 / MDR Annex I §23 / ISO 15223-1) from facts.
@@ -1049,7 +1062,7 @@ router.post('/:id/sequences', limiter, requireRole(AUTHOR), async (req, res) => 
 // where it is anchored: by the project's lead or an organization manager, with
 // a reason, on the audit chain (anchorSubmissionToProgram). The role is the
 // membership row's, never the token's or the body's.
-const anchorProgramSchema = z.object({ programId: z.string().uuid() });
+const anchorProgramSchema = z.object({ programId: z.string().guid() });
 // The projects this submission may be anchored to: its own filing type, by the
 // rule the anchor applies (listAnchorCandidates). QA 2026-10-08 (j6): the
 // control offered every programme, a device programme for an NDA among them.
@@ -1352,8 +1365,8 @@ router.get('/:id/provenance', limiter, requireRole(AUTHOR), async (req, res) => 
    in the body is never compared; the reply says it was ignored. */
 const consistencySchema = z.object({
   dimension: z.string().min(1).max(64),
-  left: z.object({ sectionId: z.string().uuid() }),
-  right: z.array(z.object({ sectionId: z.string().uuid() })).min(1),
+  left: z.object({ sectionId: z.string().guid() }),
+  right: z.array(z.object({ sectionId: z.string().guid() })).min(1),
 });
 const suppliedTextIn = (body: unknown): boolean => {
   const b = (body ?? {}) as { left?: { text?: unknown }; right?: Array<{ text?: unknown }> };
@@ -1490,6 +1503,61 @@ router.post('/sequences/:seqId/shadow-review/waive', limiter, requireRole(AUTHOR
   try {
     const { waiveShadowReview } = await import('../services/submission-service/submission-service');
     res.json(await waiveShadowReview({ sequenceId: seqId, ...parsed.data }, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// ── Retiring a sequence never filed (P-86, decided 2026-11-01; launch row D7) ─
+// Offered only while nothing keeps the sequence: it is not filed or in flight,
+// no production send is bound to it, its number was not sent as a package, no
+// IND record is filed in it, and no later sequence is in use (ask POST
+// governed-precheck { step: 'retire' }, which answers the statement to sign).
+// Sign first: POST /api/c2c/actions/sign, target "ectd-sequence:<seqId>",
+// payload { intent: 'retire', meaning: 'responsibility', notFiledElsewhere:
+// true, statement }, with the reason: the signature's reason is the
+// retirement's. Then pass its actionId here. 403 GOVERNED_REQUIRED for a
+// missing, spent, void or wrong signature; 403 FORBIDDEN for the sequence's
+// creator; 409 SEQUENCE_NOT_RETIRABLE, with what keeps it; a refused retirement
+// voids its signature. The act is retireSequence's; no AnA tool reaches this door.
+const retireSequenceSchema = z.object({ signatureActionId: z.string().min(1).max(128) });
+router.post('/sequences/:seqId/retire', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  const parsed = retireSequenceSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { retireSequence } = await import('../services/submission-service/submission-service');
+    res.json(await retireSequence({ sequenceId: seqId, signatureActionId: parsed.data.signatureActionId }, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// ── Settling a held FDA send (P-92, decided 2026-11-02; P-108 1(b)) ──────────
+// A production send to FDA that was handed to the gateway and never answered
+// holds its sequence. Ask POST governed-precheck { step: 'held-send-settlement',
+// outcome, evidenceKind, evidenceDocumentId } for the statement; sign
+// ectd-sequence:<seqId> with intent 'held-send-settlement', the meaning
+// responsibility, the outcome, the transmittal, the attempt, the evidence and
+// the statement, with the reason; then pass its actionId here. Recorded as
+// received on FDA's Ack2 or Ack3, or released on FDA's written confirmation of
+// non-receipt or the platform's own proof that nothing left. 409
+// HELD_SEND_NOT_SETTLEABLE with what keeps it; 403 GOVERNED_REQUIRED or
+// FORBIDDEN; a refused settlement voids its signature. No AnA tool reaches it.
+const settleHeldSendSchema = z.object({ signatureActionId: z.string().min(1).max(128), outcome: z.enum(HELD_SEND_OUTCOMES) });
+router.post('/sequences/:seqId/held-send/settle', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  const parsed = settleHeldSendSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { settleHeldSend } = await import('../services/submission-service/submission-service');
+    res.json(await settleHeldSend({ sequenceId: seqId, signatureActionId: parsed.data.signatureActionId, outcome: parsed.data.outcome }, ctx));
   } catch (err) {
     fail(res, err);
   }
@@ -2053,7 +2121,12 @@ const governedPrecheckSchema = z
     // the failed run it would cite, before anyone signs one.
     // 'shadow-finding-disposition' (P-35): whether the named finding may be
     // closed that way now, before anyone signs.
-    step: z.enum(['freeze', 'dispatch', 'transmit', 'shadow-waiver', 'shadow-finding-disposition']),
+    // 'retire' (P-86): whether the sequence may be retired, by this person,
+    // and the statement the signature carries; its own rule answers it.
+    // 'held-send-settlement' (P-92): whether a held FDA send may be settled,
+    // which way, on which evidence, and the statement the signature carries;
+    // its own rule answers it too.
+    step: z.enum(['freeze', 'dispatch', 'transmit', 'shadow-waiver', 'shadow-finding-disposition', 'retire', 'held-send-settlement']),
     environment: z.enum(['staging', 'production']).optional(),
     // Transmit: the number the person typed, judged against the program record
     // before anyone signs (P-23), by the rule transmit itself applies.
@@ -2061,10 +2134,22 @@ const governedPrecheckSchema = z
     // Finding disposition: the finding and how it is to be closed.
     findingId: z.number().int().positive().optional(),
     disposition: z.enum(SHADOW_FINDING_DISPOSITIONS).optional(),
+    // Held-send settlement: which way, on what (FDA's document in the project's Vault, or the platform's own proof).
+    outcome: z.enum(HELD_SEND_OUTCOMES).optional(),
+    evidenceKind: z.enum(HELD_SEND_EVIDENCE_KINDS).optional(),
+    evidenceDocumentId: z.string().uuid().optional(),
   })
   .refine((b) => b.step !== 'shadow-finding-disposition' || (b.findingId !== undefined && b.disposition !== undefined), {
     message: "A 'shadow-finding-disposition' precheck names the finding (findingId) and the disposition (accepted or fixed).",
     path: ['findingId'],
+  })
+  .refine((b) => (b.evidenceDocumentId === undefined && b.evidenceKind === undefined) || b.outcome !== undefined, {
+    message: 'A document or a kind of evidence is asked about only with an outcome.',
+    path: ['outcome'],
+  })
+  .refine((b) => b.outcome === undefined || b.evidenceKind !== undefined, {
+    message: 'An outcome is asked about with the kind of evidence it rests on.',
+    path: ['evidenceKind'],
   });
 router.post('/sequences/:seqId/governed-precheck', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
@@ -2074,7 +2159,14 @@ router.post('/sequences/:seqId/governed-precheck', limiter, requireRole(AUTHOR),
   const parsed = governedPrecheckSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
   try {
-    const { precheckGovernedStep } = await import('../services/submission-service/submission-service');
+    const { precheckGovernedStep, precheckSequenceRetirement, precheckHeldSendSettlement } = await import('../services/submission-service/submission-service');
+    if (parsed.data.step === 'retire') return res.json(await precheckSequenceRetirement(seqId, ctx));
+    if (parsed.data.step === 'held-send-settlement') {
+      const { outcome, evidenceKind, evidenceDocumentId } = parsed.data;
+      return res.json(await precheckHeldSendSettlement(seqId, ctx, {
+        ...(outcome ? { outcome } : {}), ...(evidenceKind ? { evidenceKind } : {}), ...(evidenceDocumentId ? { evidenceDocumentId } : {}),
+      }));
+    }
     res.json(
       await precheckGovernedStep(seqId, parsed.data.step, ctx, {
         environment: parsed.data.environment,

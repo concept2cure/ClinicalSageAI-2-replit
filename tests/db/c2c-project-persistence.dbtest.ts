@@ -317,7 +317,10 @@ describe('POST /api/c2c/projects — persistence against real PostgreSQL', () =>
       primaryAgency: 'FDA',
     });
     expect(res.status).toBe(400);
-    expect(String(res.body.error)).toMatch(/device submission/i);
+    // The refusal is the device intake's (deviceIntakeDecision, project-intake.ts,
+    // 06474618fb): it names the filing as a device or diagnostic one and the
+    // classes it can be recorded as. None of them is medicinal.
+    expect(String(res.body.error)).toMatch(/must match this device or diagnostic filing\. Use one of: device, ivd, cdx, samd\./i);
 
     const { rows } = await owner.query(
       `SELECT 1 FROM regulatory_programs WHERE organization_id = $1 AND name = $2`,

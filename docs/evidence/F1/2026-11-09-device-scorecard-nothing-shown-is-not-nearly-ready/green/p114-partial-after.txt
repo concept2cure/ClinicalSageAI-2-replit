@@ -1,0 +1,663 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > is 100 / ready when everything is complete 2ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > is not_ready / low when nothing is done, and surfaces gaps 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > scores partial evidence via present/total 0ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > counts a dimension nothing assessed as not assessed — not as absent 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — pure scorer > keeps an applicable evidence module nothing has assessed, as not assessed 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — from blueprint > derives the scorecard from a blueprint (CER partially authored) 2ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — from blueprint > credits a fully-authored CER 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a class the engine could not determine is not "determined" > scores an MDR classification with a missing deciding fact as not started, naming the fact 0ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a class the engine could not determine is not "determined" > scores an IVDR classification with a missing deciding fact as not started 1ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a class the engine could not determine is not "determined" > still credits a determined class 0ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a dimension with nothing shown is never nearly ready > one required module of six not started: 90, in progress, and the gap is named 0ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a dimension with nothing shown is never nearly ready > one module whose required set turns on an unstated fact: not assessed, in progress 0ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a dimension with nothing shown is never nearly ready > the risk class not determined, everything else shown: 90, in progress 0ms
+ ✓ server/services/market-specs/__tests__/device-readiness-scorecard.test.ts > readiness scorecard — a dimension with nothing shown is never nearly ready > a required set only partly present is in progress too, and 100 with no gap is ready 0ms
+stdout | server/services/ana/__tests__/submission-center-tools.test.ts
+{
+  "timestamp": "2026-11-09T18:54:50.143Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T18:54:50.145Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/submission-center-tools.test.ts
+{
+  "timestamp": "2026-11-09T18:54:50.145Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/submission-center-tools.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/submission-center-tools.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/submission-center-tools.test.ts
+{
+  "timestamp": "2026-11-09T18:54:50.563Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission-center AnA tools — registration > registers a handler for every submission-center tool 3ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission-center AnA tools — registration > exposes every submission-center tool in ALL_ANA_TOOLS with a valid schema 3ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > diffs prior vs desired and assigns operations 18ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > forwards the prior leaf ID + backbone and prior_sequence_prefix so a replace names the leaf it supersedes 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > never names a prior leaf by its file path: listed with only an href, a replace carries no pointer 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > refuses to auto-load a prior sequence without tenant context (org from ToolContext only) 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > compute_lifecycle_operations (pure) > does NOT engage auto-load when explicit prior_leaves are supplied (org not required) 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > maps v3 operations to RPS and emits one document + CoU per leaf 47ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > points relatedContextOfUse at the prior sequence for a lifecycle op 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > convert_to_rps_v4 (pure) > returns serialized RPS message XML when include_xml is set 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > produces one stf-<study-id>.xml per study, pointing at index.xml leaf IDs 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > returns a structured error when a leaf has no index.xml leaf ID 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > returns a structured error when a tagged leaf is missing its file-tag 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > check_ectd_cross_references (pure) > resolves present references and flags missing targets 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > validate_ectd_package (pure) > returns a verdict, score, and findings for a leaf set 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > plan_submission refuses without org/user context 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > plan_submission validates required inputs 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > explain_validation_findings refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > dispatch_qc_check refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > trace_provenance refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > place_into_sequence refuses without org/user context (upsertLeaf is tenant-scoped) 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > place_into_sequence validates required inputs before touching the core 8ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > check_consistency validates required inputs 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_readiness refuses without org/user context 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_readiness validates the pathway enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_pathway_manifest refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_pathway_manifest validates the pathway enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_validation_rules returns the corpus without tenant context 19ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_validation_rules validates the region enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec returns a single spec by id 24ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec filters by market without tenant context 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_market_submission_spec validates the family enum 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_document_template returns a document spine by id 124ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_document_template lists a family without tenant context 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_market_formatting enforces a spec and flags a bad name 11ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_market_formatting errors on an unknown spec 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_submission_requirements returns and assesses a type 3ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_eligibility checks all-criteria-met 16ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_pathway_eligibility errors on an unknown designation 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_post_submission_change recommends a category from flags 7ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_post_submission_change lists the catalog without flags 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_device_evidence_structure gap-checks a CER 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_device applies the MDR rules 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_device_reviewer_checklist returns the 510(k) reviewer questions 4ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > classify_device validates the framework 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_biocompatibility_endpoints returns endpoints for a permanent implant 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_device_evidence_structure now handles rmf 2ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint assembles the reverse-workflow view 5ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint validates the submission type 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_stored_cer refuses without tenant context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_stored_cer requires a report_id 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_global_device_strategy maps device evidence across regions 6ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_global_device_strategy validates the kind 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_regulatory_timeline returns the 510(k) RTA + decision goal 7ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > build_device_blueprint now includes a readiness scorecard 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > validate_udi computes the GS1 check digit 6ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_electrical_standards adds collaterals from facts 1ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_sterilization_requirements resolves the method standard 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > list_regulatory_capabilities enumerates the layer 6ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_combination_product maps PMOA to the lead center 43ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_combination_product validates components 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > assess_qms returns the clause structure and gap-checks 9ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > submission AI tasks — tenant + input guards > get_device_labeling adds sterile elements for a sterile device 13ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > classify_submission_document refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > classify_submission_document requires a numeric document_id 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > extract_submission_document refuses without org/user context 0ms
+ ✓ server/services/ana/__tests__/submission-center-tools.test.ts > ingestion tools — tenant + input guards > extract_submission_document validates required inputs 1ms
+stderr | server/routes/__tests__/report-os-run-engine.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-run-engine.test.ts
+{
+  "timestamp": "2026-11-09T18:55:03.681Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/report-os-run-engine.test.ts
+{
+  "timestamp": "2026-11-09T18:55:03.710Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T18:55:03.711Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-run-engine.test.ts
+{
+  "timestamp": "2026-11-09T18:55:03.711Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > runs without a project and stores its actual organization scope 41ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > refuses an account identity other than the authenticated organization 5ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > refuses an organization segment outside the register applicability 4ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > refuses a report disabled by the registry operator 3ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > does not store an organization register against an unverified program identity 4ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > does not store an organization register against an unverified submission identity 4ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > does not store an organization register against an unverified document identity 3ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > organization registers > does not store an organization register against an unverified study identity 3ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > a type no engine computes > is refused 422 and nothing is computed or written 5ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > private project access remains required for reporting > refuses a project run before reading its evidence or writing a snapshot 4ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > private project access remains required for reporting > refuses private run rendered before metadata or output leaves 4ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > private project access remains required for reporting > refuses private run seal before metadata or output leaves 3ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > private project access remains required for reporting > refuses private run dependencies before metadata or output leaves 2ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > private project access remains required for reporting > refuses private run export.pdf before metadata or output leaves 2ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > a register > refuses a registry choice it cannot compute and rejects invalid regional context 5ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > a register > runs from its own provider, not the readiness orchestrator 17ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > a register > is refused for a program whose product type it does not apply to 3ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the open program names the scope > resolves the program through the strict anchor resolver and runs over its project 10ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the open program names the scope > refuses a program with no project record: 409, nothing computed 2ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the open program names the scope > refuses a scope id that is not the program’s project 2ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the run names its scope > stores the project’s name for the renderer, not only its row id 10ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > saved report detail and history > reads enriched run metadata from the authenticated tenant transaction for a deep link 4ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > saved report detail and history > returns not found when the tenant-scoped query has no record and refuses malformed IDs 4ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > saved report detail and history > passes search/sort/pagination through the tenant-scoped history reader 4ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > a run computed with no blocker > renders below final until it is finalized 3ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the evidence & provenance trace > its confidence is the document's measured provenance completeness, not a count of the records present 94ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > the evidence & provenance trace > a completeness that was not measured is no confidence at all, so the run stays below final 10ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > injects the actual request actor and pinned executor for a recorded lifecycle calendar 9ms
+ ✓ server/routes/__tests__/report-os-run-engine.test.ts > rolls back a calendar whose current creator was revoked before persistence, including an empty-source computation 12ms
+stderr | server/routes/__tests__/insights-canvas-catalog.test.ts > with no program open > offers actual organization registers to institutional clients without programs
+{
+  "timestamp": "2026-11-09T18:55:07.163Z",
+  "level": "error",
+  "message": "[insights-canvas-routes] device section read failed",
+  "context": {
+    "organizationId": 7,
+    "err": "A device project could not be read"
+  }
+}
+
+stderr | server/routes/__tests__/insights-canvas-catalog.test.ts > with no program open > leads with no program — not project 1 — and lists the programs to open
+{
+  "timestamp": "2026-11-09T18:55:07.173Z",
+  "level": "error",
+  "message": "[insights-canvas-routes] device section read failed",
+  "context": {
+    "organizationId": 7,
+    "err": "A device project could not be read"
+  }
+}
+
+stderr | server/routes/__tests__/insights-canvas-catalog.test.ts > the catalog follows the open program’s product type > keeps the organization service identity without importing sibling product catalogs
+{
+  "timestamp": "2026-11-09T18:55:07.196Z",
+  "level": "error",
+  "message": "[insights-canvas-routes] device section read failed",
+  "context": {
+    "organizationId": 7,
+    "err": "A device project could not be read"
+  }
+}
+
+stderr | server/routes/__tests__/insights-canvas-catalog.test.ts > the catalog follows the open program’s product type > offers no device-only report for a biologic program
+{
+  "timestamp": "2026-11-09T18:55:07.209Z",
+  "level": "error",
+  "message": "[insights-canvas-routes] device section read failed",
+  "context": {
+    "organizationId": 7,
+    "err": "A device project could not be read"
+  }
+}
+
+stderr | server/routes/__tests__/insights-canvas-catalog.test.ts > the catalog follows the open program’s product type > offers it for a device program
+{
+  "timestamp": "2026-11-09T18:55:07.224Z",
+  "level": "error",
+  "message": "[insights-canvas-routes] device section read failed",
+  "context": {
+    "organizationId": 7,
+    "err": "A device project could not be read"
+  }
+}
+
+stderr | server/routes/__tests__/insights-canvas-catalog.test.ts > each type says whether an engine computes it over a program > withdraws Run when the deployed registry disables a report
+{
+  "timestamp": "2026-11-09T18:55:07.237Z",
+  "level": "error",
+  "message": "[insights-canvas-routes] device section read failed",
+  "context": {
+    "organizationId": 7,
+    "err": "A device project could not be read"
+  }
+}
+
+stderr | server/routes/__tests__/insights-canvas-catalog.test.ts > each type says whether an engine computes it over a program > uses the deployed scope and region declarations rather than the seed
+{
+  "timestamp": "2026-11-09T18:55:07.247Z",
+  "level": "error",
+  "message": "[insights-canvas-routes] device section read failed",
+  "context": {
+    "organizationId": 7,
+    "err": "A device project could not be read"
+  }
+}
+
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > with no program open > offers actual organization registers to institutional clients without programs 18ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > with no program open > leads with no program — not project 1 — and lists the programs to open 5ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > the catalog follows the open program’s product type > keeps the organization service identity without importing sibling product catalogs 24ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > the catalog follows the open program’s product type > offers no device-only report for a biologic program 13ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > the catalog follows the open program’s product type > offers it for a device program 17ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > each type says whether an engine computes it over a program > withdraws Run when the deployed registry disables a report 10ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > each type says whether an engine computes it over a program > uses the deployed scope and region declarations rather than the seed 11ms
+stderr | server/routes/__tests__/insights-canvas-catalog.test.ts > each type says whether an engine computes it over a program > answers a failed registry read as unavailable, never an empty successful catalog
+{
+  "timestamp": "2026-11-09T18:55:07.262Z",
+  "level": "error",
+  "message": "[insights-canvas-routes] report registry catalog read failed",
+  "context": {
+    "organizationId": 7,
+    "error": "Error: storage unavailable"
+  }
+}
+
+stderr | server/routes/__tests__/insights-canvas-catalog.test.ts > each type says whether an engine computes it over a program > marks the digest and the registers runnable, and the rest not
+{
+  "timestamp": "2026-11-09T18:55:07.274Z",
+  "level": "error",
+  "message": "[insights-canvas-routes] device section read failed",
+  "context": {
+    "organizationId": 7,
+    "err": "A device project could not be read"
+  }
+}
+
+stderr | server/routes/__tests__/insights-canvas-catalog.test.ts > canvas catalog preserves the actual recorded-plan verdict > locks every report when the real resolver returns an unread null tier without throwing
+{
+  "timestamp": "2026-11-09T18:55:07.288Z",
+  "level": "error",
+  "message": "[insights-canvas-routes] device section read failed",
+  "context": {
+    "organizationId": 7,
+    "err": "A device project could not be read"
+  }
+}
+
+stderr | server/routes/__tests__/insights-canvas-catalog.test.ts > canvas catalog preserves the actual recorded-plan verdict > locks every report when the real resolver returns an unread platinum tier without throwing
+{
+  "timestamp": "2026-11-09T18:55:07.301Z",
+  "level": "error",
+  "message": "[insights-canvas-routes] device section read failed",
+  "context": {
+    "organizationId": 7,
+    "err": "A device project could not be read"
+  }
+}
+
+stderr | server/routes/__tests__/insights-canvas-catalog.test.ts > canvas catalog preserves the actual recorded-plan verdict > retains a positively recorded free plan
+{
+  "timestamp": "2026-11-09T18:55:07.312Z",
+  "level": "error",
+  "message": "[insights-canvas-routes] device section read failed",
+  "context": {
+    "organizationId": 7,
+    "err": "A device project could not be read"
+  }
+}
+
+stderr | server/routes/__tests__/insights-canvas-catalog.test.ts > canvas catalog preserves the actual recorded-plan verdict > retains a positively recorded standard plan
+{
+  "timestamp": "2026-11-09T18:55:07.321Z",
+  "level": "error",
+  "message": "[insights-canvas-routes] device section read failed",
+  "context": {
+    "organizationId": 7,
+    "err": "A device project could not be read"
+  }
+}
+
+stderr | server/routes/__tests__/insights-canvas-catalog.test.ts > canvas catalog preserves the actual recorded-plan verdict > retains a positively recorded professional plan
+{
+  "timestamp": "2026-11-09T18:55:07.330Z",
+  "level": "error",
+  "message": "[insights-canvas-routes] device section read failed",
+  "context": {
+    "organizationId": 7,
+    "err": "A device project could not be read"
+  }
+}
+
+stderr | server/routes/__tests__/insights-canvas-catalog.test.ts > canvas catalog preserves the actual recorded-plan verdict > retains a positively recorded enterprise plan
+{
+  "timestamp": "2026-11-09T18:55:07.339Z",
+  "level": "error",
+  "message": "[insights-canvas-routes] device section read failed",
+  "context": {
+    "organizationId": 7,
+    "err": "A device project could not be read"
+  }
+}
+
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > each type says whether an engine computes it over a program > keeps discovery when the registry is empty while offering no unregistered run 11ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > each type says whether an engine computes it over a program > answers a failed registry read as unavailable, never an empty successful catalog 5ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > each type says whether an engine computes it over a program > marks the digest and the registers runnable, and the rest not 14ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > canvas catalog preserves the actual recorded-plan verdict > locks every report when the real resolver returns an unread null tier without throwing 11ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > canvas catalog preserves the actual recorded-plan verdict > locks every report when the real resolver returns an unread platinum tier without throwing 12ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > canvas catalog preserves the actual recorded-plan verdict > retains a positively recorded free plan 11ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > canvas catalog preserves the actual recorded-plan verdict > retains a positively recorded standard plan 9ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > canvas catalog preserves the actual recorded-plan verdict > retains a positively recorded professional plan 9ms
+ ✓ server/routes/__tests__/insights-canvas-catalog.test.ts > canvas catalog preserves the actual recorded-plan verdict > retains a positively recorded enterprise plan 10ms
+stderr | server/routes/__tests__/report-os-unread-plan-names-no-plan.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/report-os-unread-plan-names-no-plan.test.ts
+{
+  "timestamp": "2026-11-09T18:55:08.233Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/report-os-unread-plan-names-no-plan.test.ts
+{
+  "timestamp": "2026-11-09T18:55:08.262Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T18:55:08.262Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/report-os-unread-plan-names-no-plan.test.ts
+{
+  "timestamp": "2026-11-09T18:55:08.263Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/report-os-unread-plan-names-no-plan.test.ts > report-os plan gates on a plan that could not be read > 'GET /portfolio/org' says the plan could not be read and names no plan 15ms
+ ✓ server/routes/__tests__/report-os-unread-plan-names-no-plan.test.ts > report-os plan gates on a plan that could not be read > 'GET /portfolio' says the plan could not be read and names no plan 4ms
+ ✓ server/routes/__tests__/report-os-unread-plan-names-no-plan.test.ts > report-os plan gates on a plan that could not be read > 'POST /runs' says the plan could not be read and names no plan 10ms
+ ✓ server/routes/__tests__/report-os-unread-plan-names-no-plan.test.ts > report-os plan gates on a plan that could not be read > 'GET /runs/:id/export.pdf' says the plan could not be read and names no plan 4ms
+ ✓ server/routes/__tests__/report-os-unread-plan-names-no-plan.test.ts > report-os plan gates on a plan that could not be read > 'POST /bundles' says the plan could not be read and names no plan 5ms
+ ✓ server/routes/__tests__/report-os-unread-plan-names-no-plan.test.ts > report-os plan gates on a plan that could not be read > 'GET /portfolio/org' still names the required plan when the plan was read (control) 2ms
+ ✓ server/routes/__tests__/report-os-unread-plan-names-no-plan.test.ts > report-os plan gates on a plan that could not be read > 'GET /portfolio' still names the required plan when the plan was read (control) 3ms
+ ✓ server/routes/__tests__/report-os-unread-plan-names-no-plan.test.ts > report-os plan gates on a plan that could not be read > 'POST /runs' still names the required plan when the plan was read (control) 2ms
+ ✓ server/routes/__tests__/report-os-unread-plan-names-no-plan.test.ts > report-os plan gates on a plan that could not be read > 'GET /runs/:id/export.pdf' still names the required plan when the plan was read (control) 4ms
+ ✓ server/routes/__tests__/report-os-unread-plan-names-no-plan.test.ts > report-os plan gates on a plan that could not be read > 'POST /bundles' still names the required plan when the plan was read (control) 3ms
+stdout | server/services/ana/__tests__/device-tools-leave-unstated-facts-undetermined.test.ts
+{
+  "timestamp": "2026-11-09T18:55:10.114Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T18:55:10.115Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/device-tools-leave-unstated-facts-undetermined.test.ts
+{
+  "timestamp": "2026-11-09T18:55:10.115Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/device-tools-leave-unstated-facts-undetermined.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/device-tools-leave-unstated-facts-undetermined.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/device-tools-leave-unstated-facts-undetermined.test.ts
+{
+  "timestamp": "2026-11-09T18:55:10.198Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/device-tools-leave-unstated-facts-undetermined.test.ts > classify_device / classify_medical_device, FDA > states no pathway and no predicate finding from no facts 7ms
+ ✓ server/services/ana/__tests__/device-tools-leave-unstated-facts-undetermined.test.ts > classify_device / classify_medical_device, FDA > refuses a predicate answer it cannot read 2ms
+ ✓ server/services/ana/__tests__/device-tools-leave-unstated-facts-undetermined.test.ts > build_device_blueprint > does not read an omitted equivalence_claimed as "not claimed" 25ms
+ ✓ server/services/ana/__tests__/device-tools-leave-unstated-facts-undetermined.test.ts > build_device_blueprint > relays a stated equivalence answer 1ms
+ ✓ server/services/ana/__tests__/device-tools-leave-unstated-facts-undetermined.test.ts > build_device_blueprint > does not score software ready when no harm fact was stated 1ms
+stdout | server/services/ana/__tests__/cer-tools-leave-an-omitted-equivalence-claim-unrecorded.test.ts
+{
+  "timestamp": "2026-11-09T18:55:12.887Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T18:55:12.888Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/cer-tools-leave-an-omitted-equivalence-claim-unrecorded.test.ts
+{
+  "timestamp": "2026-11-09T18:55:12.888Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/cer-tools-leave-an-omitted-equivalence-claim-unrecorded.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/cer-tools-leave-an-omitted-equivalence-claim-unrecorded.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/cer-tools-leave-an-omitted-equivalence-claim-unrecorded.test.ts
+{
+  "timestamp": "2026-11-09T18:55:12.969Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/cer-tools-leave-an-omitted-equivalence-claim-unrecorded.test.ts > assess_device_evidence_structure, document cer > does not read an omitted equivalence_claimed as "not claimed" 4ms
+ ✓ server/services/ana/__tests__/cer-tools-leave-an-omitted-equivalence-claim-unrecorded.test.ts > assess_device_evidence_structure, document cer > relays a stated answer, and leaves a non-boolean unstated 2ms
+ ✓ server/services/ana/__tests__/cer-tools-leave-an-omitted-equivalence-claim-unrecorded.test.ts > assess_stored_cer > passes an omitted equivalence_claimed on as unstated, not false 10ms
+ ✓ server/services/ana/__tests__/cer-tools-leave-an-omitted-equivalence-claim-unrecorded.test.ts > assess_stored_cer > relays a stated answer 1ms
+stdout | server/services/ana/__tests__/build-device-blueprint-schema-names-electrical-and-sterilization.test.ts
+{
+  "timestamp": "2026-11-09T18:55:15.242Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T18:55:15.243Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/build-device-blueprint-schema-names-electrical-and-sterilization.test.ts
+{
+  "timestamp": "2026-11-09T18:55:15.243Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/build-device-blueprint-schema-names-electrical-and-sterilization.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/build-device-blueprint-schema-names-electrical-and-sterilization.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/build-device-blueprint-schema-names-electrical-and-sterilization.test.ts
+{
+  "timestamp": "2026-11-09T18:55:15.332Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/build-device-blueprint-schema-names-electrical-and-sterilization.test.ts > build_device_blueprint input schema > names each electrical fact, and the handler accepts every one of them as true/false 12ms
+ ✓ server/services/ana/__tests__/build-device-blueprint-schema-names-electrical-and-sterilization.test.ts > build_device_blueprint input schema > lists exactly the sterilization methods the handler accepts 3ms
+ ✓ server/services/report-os/__tests__/domain-provenance.test.ts > domain report evidence and client scope > retains the exact aggregate input, query criteria and source atoms 4ms
+ ✓ server/services/report-os/__tests__/domain-provenance.test.ts > domain report evidence and client scope > refuses unsupported client filtering before reading any domain rows 1ms
+ ✓ server/services/report-os/__tests__/domain-provenance.test.ts > domain report evidence and client scope > filters award children and proposals to the project for a grants report 2ms
+ ✓ server/services/report-os/__tests__/domain-provenance.test.ts > domain report evidence and client scope > keeps the scorecard source aggregates and fails when a contributing domain cannot be read 9ms
+stdout | server/services/ana/__tests__/build-device-blueprint-relays-electrical-and-sterilization-facts.test.ts
+{
+  "timestamp": "2026-11-09T18:55:17.988Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T18:55:17.989Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/build-device-blueprint-relays-electrical-and-sterilization-facts.test.ts
+{
+  "timestamp": "2026-11-09T18:55:17.989Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/build-device-blueprint-relays-electrical-and-sterilization-facts.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/build-device-blueprint-relays-electrical-and-sterilization-facts.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/build-device-blueprint-relays-electrical-and-sterilization-facts.test.ts
+{
+  "timestamp": "2026-11-09T18:55:18.074Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/build-device-blueprint-relays-electrical-and-sterilization-facts.test.ts > build_device_blueprint > relays stated electrical facts: a powered device gets the IEC 60601 module 5ms
+ ✓ server/services/ana/__tests__/build-device-blueprint-relays-electrical-and-sterilization-facts.test.ts > build_device_blueprint > relays stated sterilization facts: a sterile device gets the sterilization module 2ms
+ ✓ server/services/ana/__tests__/build-device-blueprint-relays-electrical-and-sterilization-facts.test.ts > build_device_blueprint > answers what the engine answers for the facts the route passes 2ms
+ ✓ server/services/ana/__tests__/build-device-blueprint-relays-electrical-and-sterilization-facts.test.ts > build_device_blueprint > refuses an electrical fact that is not true or false, naming it 1ms
+ ✓ server/services/ana/__tests__/build-device-blueprint-relays-electrical-and-sterilization-facts.test.ts > build_device_blueprint > refuses a sterilization method it does not know, naming it 0ms
+ ✓ server/services/market-specs/__tests__/fda-pathway-undetermined-without-deciding-facts.test.ts > recommendFdaPathway fails closed > states no pathway, and no predicate finding, from no facts 2ms
+ ✓ server/services/market-specs/__tests__/fda-pathway-undetermined-without-deciding-facts.test.ts > recommendFdaPathway fails closed > does not send a device stated to be Class I or Class II to PMA 0ms
+ ✓ server/services/market-specs/__tests__/fda-pathway-undetermined-without-deciding-facts.test.ts > recommendFdaPathway fails closed > names only the deciding fact still missing 0ms
+ ✓ server/services/market-specs/__tests__/fda-pathway-undetermined-without-deciding-facts.test.ts > recommendFdaPathway fails closed > states PMA once the facts recorded rule out 510(k) and De Novo 1ms
+ ✓ server/services/market-specs/__tests__/fda-pathway-undetermined-without-deciding-facts.test.ts > recommendFdaPathway fails closed > refuses a fact it cannot read instead of reading it by truthiness 1ms
+ ✓ server/services/market-specs/__tests__/fda-pathway-undetermined-without-deciding-facts.test.ts > recommendFdaPathway fails closed > refuses a Class III device stated to be 510(k)-exempt 0ms
+ ✓ server/services/market-specs/__tests__/fda-pathway-undetermined-without-deciding-facts.test.ts > recommendFdaPathway fails closed > refuses a Class I or II device whose other facts leave only PMA 0ms
+ ✓ server/services/market-specs/__tests__/fda-pathway-undetermined-without-deciding-facts.test.ts > recommendFdaPathway fails closed > keeps the pathways the stated facts decide 1ms
+ ✓ server/services/market-specs/__tests__/fda-pathway-undetermined-without-deciding-facts.test.ts > the readiness scorecard does not count an undetermined FDA pathway as a classification > scores the classification not started and names the facts to supply 1ms
+ ✓ server/services/market-specs/__tests__/fda-pathway-undetermined-without-deciding-facts.test.ts > the readiness scorecard does not count an undetermined FDA pathway as a classification > still credits a pathway the facts decide 0ms
+ ✓ server/services/market-specs/__tests__/software-class-undetermined-without-harm-facts.test.ts > classifySoftware states no IEC 62304 class that an unstated harm fact could change > is undetermined, naming both facts, when neither harm fact is stated 1ms
+ ✓ server/services/market-specs/__tests__/software-class-undetermined-without-harm-facts.test.ts > classifySoftware states no IEC 62304 class that an unstated harm fact could change > is undetermined (at least Class B), not Class B, when only non-serious injury is stated 0ms
+ ✓ server/services/market-specs/__tests__/software-class-undetermined-without-harm-facts.test.ts > classifySoftware states no IEC 62304 class that an unstated harm fact could change > is undetermined when one harm fact is stated false and the other is not stated 0ms
+ ✓ server/services/market-specs/__tests__/software-class-undetermined-without-harm-facts.test.ts > classifySoftware states no IEC 62304 class that an unstated harm fact could change > does not read a value that is not true or false as a stated fact 0ms
+ ✓ server/services/market-specs/__tests__/software-class-undetermined-without-harm-facts.test.ts > classifySoftware states no IEC 62304 class that an unstated harm fact could change > states Class A, B and C from stated facts 1ms
+ ✓ server/services/market-specs/__tests__/software-class-undetermined-without-harm-facts.test.ts > classifySoftware states no IEC 62304 class that an unstated harm fact could change > drops no deliverable while the class is undetermined 0ms
+ ✓ server/services/market-specs/__tests__/software-class-undetermined-without-harm-facts.test.ts > the blueprint and scorecard do not assess software whose class is undetermined > marks the software module not assessed and keeps the Class B/C deliverables listed 0ms
+ ✓ server/services/market-specs/__tests__/software-class-undetermined-without-harm-facts.test.ts > the blueprint and scorecard do not assess software whose class is undetermined > does not report the evidence ready 0ms
+ ✓ server/services/market-specs/__tests__/software-class-undetermined-without-harm-facts.test.ts > the blueprint and scorecard do not assess software whose class is undetermined > scores the software dimension not assessed, naming the facts to supply 2ms
+ ✓ server/services/market-specs/__tests__/software-class-undetermined-without-harm-facts.test.ts > the blueprint and scorecard do not assess software whose class is undetermined > still assesses and credits a class stated from facts 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint-evidence-not-ready-while-a-module-is-unassessed.test.ts > evidenceReady with an applicable evidence module nobody assessed > is not true for an mdr_td file with a complete RMF and no CER sections 2ms
+ ✓ server/services/market-specs/__tests__/device-blueprint-evidence-not-ready-while-a-module-is-unassessed.test.ts > evidenceReady with an applicable evidence module nobody assessed > names an applicable software module whose deliverables nobody listed 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint-evidence-not-ready-while-a-module-is-unassessed.test.ts > evidenceReady with an applicable evidence module nobody assessed > names applicable modules whose evidence the blueprint lists but does not assess 1ms
+ ✓ server/services/market-specs/__tests__/device-blueprint-evidence-not-ready-while-a-module-is-unassessed.test.ts > evidenceReady with an applicable evidence module nobody assessed > is null, not false, when nothing applicable was assessed 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint-evidence-not-ready-while-a-module-is-unassessed.test.ts > evidenceReady once modules are assessed > is false when an assessed module is not ready, whatever else was not assessed 0ms
+ ✓ server/services/market-specs/__tests__/device-blueprint-evidence-not-ready-while-a-module-is-unassessed.test.ts > evidenceReady once modules are assessed > is true only when every applicable module was assessed and is ready 0ms
+ ✓ server/services/market-specs/__tests__/cer-equivalence-unrecorded-is-not-addressed.test.ts > assessCerStructure with no recorded equivalence claim > does not say equivalence is addressed for an empty CER 1ms
+ ✓ server/services/market-specs/__tests__/cer-equivalence-unrecorded-is-not-addressed.test.ts > assessCerStructure with no recorded equivalence claim > is not ready without the Equivalence section, and names the fact that decides it 1ms
+ ✓ server/services/market-specs/__tests__/cer-equivalence-unrecorded-is-not-addressed.test.ts > assessCerStructure with no recorded equivalence claim > is ready with the Equivalence section present, which satisfies either answer 1ms
+ ✓ server/services/market-specs/__tests__/cer-equivalence-unrecorded-is-not-addressed.test.ts > assessCerStructure with no recorded equivalence claim > keeps the recorded answers 1ms
+ ✓ server/services/market-specs/__tests__/cer-equivalence-unrecorded-is-not-addressed.test.ts > the blueprint and scorecard with no recorded equivalence claim > do not call a CER without its Equivalence section ready 0ms
+ ✓ server/services/market-specs/__tests__/cer-equivalence-unrecorded-is-not-addressed.test.ts > the blueprint and scorecard with no recorded equivalence claim > score the clinical evaluation not assessed, naming the fact to supply 1ms
+stdout | server/routes/__tests__/submission-routes-registration.test.ts
+{
+  "timestamp": "2026-11-09T18:55:20.932Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T18:55:20.933Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/submission-routes-registration.test.ts
+{
+  "timestamp": "2026-11-09T18:55:20.934Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/submission-routes-registration.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/submission-routes-registration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/submission-routes-registration.test.ts
+{
+  "timestamp": "2026-11-09T18:55:20.994Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/submission-routes-registration.test.ts > submission routes ↔ capabilities index > mounts a non-trivial number of routes 1ms
+ ✓ server/routes/__tests__/submission-routes-registration.test.ts > submission routes ↔ capabilities index > mounts every route the capabilities index advertises 1ms
+ ✓ server/routes/__tests__/submission-routes-registration.test.ts > submission routes ↔ capabilities index > has the keystone device + market routes mounted 0ms
+
+ Test Files  15 passed (15)
+      Tests  191 passed (191)
+   Start at  18:54:46
+   Duration  36.52s (transform 9.99s, setup 258ms, import 33.24s, tests 1.11s, environment 1ms)
+

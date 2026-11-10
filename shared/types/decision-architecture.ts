@@ -216,6 +216,18 @@ export interface AuthorityBoundaryEntry {
 }
 
 /**
+ * 2026-11-01 (F1): approve and lock are electronic signatures, decided only by
+ * the signed act. Their entries below held role lists of their own, which
+ * disagreed with that act's role table (ARTIFACT_STATUS_ROLE_PERMISSIONS) for
+ * admin, ra_lead, qa_lead and submission_lead, and gated nothing; they now
+ * admit no role. The union keeps both actions as labels.
+ */
+const DECIDED_BY_THE_SIGNED_ACT =
+  'Approving or locking an artifact is an electronic signature, decided only by the signed act in ' +
+  'server/services/artifact-approval-act.ts (its role table, the review quorum, and separation of duties ' +
+  'under the P-18 signing policy). This map admits no role for it.';
+
+/**
  * The canonical authority boundary map.
  * This is the source of truth for what AnA can and cannot do.
  */
@@ -304,7 +316,8 @@ export const AUTHORITY_BOUNDARY_MAP: AuthorityBoundaryEntry[] = [
     description: 'Create workflow consequence from contradiction (human must confirm)',
   },
 
-  // ── Status transitions — requires confirmation + reviewer approval ──
+  // ── Status transitions — promote-to-review needs confirmation; approve and lock
+  //    are signed acts this map admits no role for (2026-11-01, F1) ──
   {
     action: 'promote-to-review',
     authority: {
@@ -318,24 +331,24 @@ export const AUTHORITY_BOUNDARY_MAP: AuthorityBoundaryEntry[] = [
   {
     action: 'approve-artifact',
     authority: {
-      level: 'requires-reviewer-approval',
+      level: 'forbidden',
       requiresHumanConfirmation: true,
       requiresReviewerApproval: true,
       requiresEscalation: false,
-      allowedActorRoles: ['reviewer', 'approver', 'ra_lead', 'qa_lead'],
+      blockedReason: DECIDED_BY_THE_SIGNED_ACT,
     },
-    description: 'Approve artifact (requires reviewer-role sign-off)',
+    description: 'Approve artifact (an electronic signature, decided only by the signed approval act)',
   },
   {
     action: 'lock-artifact',
     authority: {
-      level: 'requires-reviewer-approval',
+      level: 'forbidden',
       requiresHumanConfirmation: true,
       requiresReviewerApproval: true,
       requiresEscalation: false,
-      allowedActorRoles: ['approver', 'ra_lead', 'qa_lead', 'submission_lead'],
+      blockedReason: DECIDED_BY_THE_SIGNED_ACT,
     },
-    description: 'Lock artifact for submission (requires approver-role sign-off)',
+    description: 'Lock artifact for submission (an electronic signature, decided only by the signed lock act)',
   },
 
   // ── Higher-level judgments — requires escalation ──
@@ -395,12 +408,15 @@ export function getAuthorityForAction(action: GovernedActionType): AuthorityRequ
 
 /**
  * Check if an actor role satisfies the authority requirement.
+ * 2026-11-01 (F1): an authority with a blockedReason admits no role. The
+ * fallback above for an unlisted action has one and no role list, and was
+ * admitted for every role, a missing one included.
  */
 export function isActorAuthorized(
   authority: AuthorityRequirement,
   actorRole?: string
 ): { authorized: boolean; reason?: string } {
-  if (authority.level === 'forbidden') {
+  if (authority.level === 'forbidden' || authority.blockedReason) {
     return { authorized: false, reason: authority.blockedReason || 'Action is forbidden for automated execution' };
   }
   if (authority.level === 'autonomous-read') {

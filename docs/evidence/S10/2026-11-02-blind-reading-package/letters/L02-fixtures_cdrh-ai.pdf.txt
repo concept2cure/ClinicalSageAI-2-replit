@@ -1,0 +1,29 @@
+K201234
+Example Devices, Inc.
+Re: K201234
+Trade/Device Name: Example Catheter
+Dear Applicant:
+We have reviewed your Section 510(k) premarket notification. We cannot determine
+if the device is substantially equivalent based on the information you have
+provided. We have identified the following deficiencies:
+A1. Your device description does not identify the materials of the catheter shaft.
+Please provide a complete list of materials.
+A2. You have not provided biocompatibility testing for the catheter. Please provide
+testing per ISO 10993-1 for an externally communicating device with
+U.S. Food & Drug Administration
+10903 New Hampshire Avenue
+Silver Spring, MD 20993
+www.fda.gov
+
+-- 1 of 2 --
+
+K201234 - Example Devices, Inc.
+Page 2
+circulating blood contact.
+A3. Provide shelf-life testing supporting the proposed 3-year expiration date.
+A4. Provide the sterilization validation per ISO 11135.
+The deficiencies identified above represent the issues that we believe need to be
+resolved before our review of your 510(k) submission can be successfully completed.
+Sincerely yours,
+
+-- 2 of 2 --

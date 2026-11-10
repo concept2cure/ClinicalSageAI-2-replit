@@ -12,6 +12,8 @@ import { I } from './icons';
 export interface AnswerLeadAction {
   label: string;
   onClick: () => void;
+  /** None by default. An action that asks AnA (`ask()`) passes `I.sparkles`; one that changes local state
+   *  passes nothing. A spark on an action AnA does not take is a false signal (D0.md §8.1). */
   icon?: React.ReactNode;
   alt?: { label: string; onClick: () => void };
 }
@@ -24,7 +26,48 @@ export interface AnswerLeadProps {
   action?: AnswerLeadAction;
   secondary?: React.ReactNode;
   tone?: 'calm' | 'urgent' | 'good';
+  /**
+   * 'quiet' (the default) is a plain block in the page's own type. 'verdict'
+   * keeps the serif answer, for the one screen where the answer is the screen
+   * (ONE_DESIGN_PLAN §2; the caller is decided by D7).
+   */
+  emphasis?: 'quiet' | 'verdict';
   children?: React.ReactNode;
+}
+
+/**
+ * The tone's cue: its icon, and the words a screen reader says for it, because
+ * the icon is aria-hidden. Urgent and good keep theirs, so colour is never the
+ * only signal; the calm tone has neither (the spark marks the AnA action).
+ */
+function toneCue(tone: AnswerLeadProps['tone']): { icon: React.ReactNode; words: string } | null {
+  if (tone === 'urgent') return { icon: I.clock, words: 'Urgent:' };
+  if (tone === 'good') return { icon: I.check, words: 'On track:' };
+  return null;
+}
+
+type CuePlacement = { eyebrow: React.ReactNode; headline: React.ReactNode; body: React.ReactNode };
+const NO_CUE: CuePlacement = { eyebrow: null, headline: null, body: null };
+
+/**
+ * The cue sits on the lead's first line: the eyebrow, else the headline, else
+ * the body. The tinted panel used to carry the tone; since D0-4 a lead with no
+ * eyebrow showed none, and SafetyNarrative's urgent reporting clock read as
+ * calm (D0 review fix 9). The words come first, so a screen reader says
+ * "Urgent: …" before the line itself.
+ */
+function placeToneCue(tone: AnswerLeadProps['tone'], hasEyebrow: boolean, hasHeadline: boolean): CuePlacement {
+  const cue = toneCue(tone);
+  if (!cue) return NO_CUE;
+  const spoken = <span className="sr-only">{cue.words}</span>;
+  if (hasEyebrow) return { ...NO_CUE, eyebrow: <>{cue.icon}{spoken}</> };
+  const inline = (
+    <>
+      <span className="al-cue">{cue.icon}</span>
+      {spoken}{' '}
+    </>
+  );
+  return hasHeadline ? { ...NO_CUE, headline: inline } : { ...NO_CUE, body: inline };
 }
 
 export function AnswerLead({
@@ -35,17 +78,19 @@ export function AnswerLead({
   action,
   secondary,
   tone = 'calm',
+  emphasis = 'quiet',
   children,
 }: AnswerLeadProps) {
+  const cue = placeToneCue(tone, Boolean(eyebrow), Boolean(headline));
   return (
-    <div className={`al-lead al-${tone}`}>
+    <div className={`al-lead al-${tone}`} data-emphasis={emphasis}>
       {eyebrow && (
         <div className="al-k">
-          {tone === 'urgent' ? I.clock : tone === 'good' ? I.check : I.sparkles} {eyebrow}
+          {cue.eyebrow} {eyebrow}
         </div>
       )}
-      {headline && <div className="al-h">{headline}</div>}
-      {body && <div className="al-b">{body}</div>}
+      {headline && <div className="al-h">{cue.headline}{headline}</div>}
+      {body && <div className="al-b">{cue.body}{body}</div>}
       {reassure && (
         <div className="al-re">
           {I.shieldCheck} {reassure}
@@ -55,12 +100,12 @@ export function AnswerLead({
       {(action || secondary) && (
         <div className="al-act">
           {action && (
-            <button type="button" className="al-btn" onClick={action.onClick}>
-              {action.icon ?? I.sparkles} {action.label}
+            <button type="button" className="btn ghost al-btn" onClick={action.onClick}>
+              {action.icon ?? null} {action.label}
             </button>
           )}
           {action?.alt && (
-            <button type="button" className="al-btn2" onClick={action.alt.onClick}>
+            <button type="button" className="btn al-btn2" onClick={action.alt.onClick}>
               {action.alt.label}
             </button>
           )}

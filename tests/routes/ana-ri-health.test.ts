@@ -202,7 +202,10 @@ function mockCommonDeps(options: {
   vi.doMock('../../server/services/ana-ri/context-enrichment.js', () => ({
     enrichContextForChat: vi.fn(async () => ({ block: '', sources: [] })),
   }));
-  vi.doMock('../../server/services/ana-ri/chat-context-builder.js', () => ({
+  // The real module's other exports (selectAuthoringContext, …) stay real: a whole-module stand-in broke this
+  // stream each time the module gained an export.
+  vi.doMock('../../server/services/ana-ri/chat-context-builder.js', async (importOriginal) => ({
+    ...(await importOriginal<Record<string, unknown>>()),
     buildAuthoringContextBlock: vi.fn(() => ''),
     // buildRouteContextBlock and buildChatContext were added to the
     // module after this mock was originally written; the stream

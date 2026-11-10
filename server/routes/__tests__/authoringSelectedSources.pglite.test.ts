@@ -138,7 +138,8 @@ async function selected(input: Awaited<ReturnType<typeof sources>>) {
   const q = { query: (sql: string, values?: unknown[]) => db.pglite.query<Record<string, unknown>>(sql, values) };
   return readSelectedAuthoringSources(q, { organizationId: ORG, userId: Number(AUTHOR.id), programId: PROGRAM }, input.selectors, { query: 'needle_window' });
 }
-const generate = (id: string, body: Record<string, unknown>) => author(request(app).post(`/api/authoring/sections/${id}/ai/draft`)).send(body);
+// A draft names its writing region: the saved section records none (DRAFT_REGION_REQUIRED, 8013c94575).
+const generate = (id: string, body: Record<string, unknown>) => author(request(app).post(`/api/authoring/sections/${id}/ai/draft`)).send({ region: 'FDA', ...body });
 const accept = (id: string, draftId: string) => author(request(app).post(`/api/authoring/sections/${id}/ai/draft/accept`)).send({ draftId });
 const parked = async (id: string) => (await db.pglite.query('SELECT id FROM authoring_ai_draft_candidates WHERE id=$1', [id])).rows.length;
 const unchanged = async (id: string) => {

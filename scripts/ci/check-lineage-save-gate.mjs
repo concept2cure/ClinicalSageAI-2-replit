@@ -56,9 +56,11 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { stripComments } from './lib/strip-comments.mjs';
 import { PROTOCOL_REQUEST_TRANSACTION, requestScopedTransactionFindings } from './lib/lineage-request-transaction.mjs';
-import { AUTHORING_TRANSACTION, authoringTransactionFindings } from './lib/lineage-authoring-transaction.mjs';
+import { AUTHORING_TRANSACTION, authoringTransactionFindings, csrImportTransactionFindings } from './lib/lineage-authoring-transaction.mjs';
+import { contentWriteCount } from './lib/lineage-content-writers.mjs';
 
 const ROOT = process.cwd();
 
@@ -83,6 +85,15 @@ const ROOT = process.cwd();
  * looked and decided, never that nobody looked.
  */
 const NOT_PROSE = [
+  {
+    file: 'server/services/c2c/charter-objectives.ts',
+    why: 'the fixed objectives charter section is canonical JSON of project intent (objective, successCriteria and source descriptors), not filing narrative; recordOnTransaction retains the actual actor/reason, SHA-256 version chain and same-transaction append-only charter audit. The reviewed source fingerprint below is mandatory: serialization, writers, attribution, versioning or audit changes require this classification to be reviewed again. Re-reviewed 2026-11-08 at a2f9264a5: that change folds the two ambiguity refusals into singleObjectiveRow (same codes and messages) and adds readProjectObjectivesOnExecutor, a read-only reader; recordOnTransaction and every write are unchanged.',
+    reviewedSourceSha256: '5cf12cc5a9125a7f46c1247f315d1ee9fc7de4f725bf71188600e49ba553398f',
+  },
+  {
+    file: 'server/services/chat-thread-helpers.ts',
+    why: "chat_messages.content is the conversation transcript, not a governed document. Its writers append a turn (INSERT INTO chat_messages) and, since a2f9264a5, replace an owner-private message with the fixed OWNER_PRIVATE_MESSAGE_PLACEHOLDER once its sealed copy is captured (UPDATE chat_messages SET content). Text reaches a document only through the guarded apply paths (submission-chat-apply-rewrite.ts, AnaToolExecutor.ts)",
+  },
   {
     file: 'server/services/AssemblyLine.ts',
     why: 'assembly_docs is a scratch pipeline reached only through routes/test-assembly.ts, which nothing mounts; its content never reaches a governed document',
@@ -171,6 +182,11 @@ const GUARDED = [
     file: 'server/services/authoring/authoring-documents.ts',
     why: 'createSection (POST /sections) and insertDocumentTx (POST /docs template seeding, POST /docs/from-draft and the draft_authoring_document tool) create authoring_sections rows with their content — each in its own BEGIN/COMMIT with the lineage gate enlisted',
     canonicalSectionSeeds: true,
+  },
+  {
+    file: 'server/services/authoring/csr-import-into-document.ts',
+    why: 'the CSR import writes section prose through the existing editor revision path; its awaited canonical lineage helper, content UPDATE, revision, filing commit and audit share the actual SERIALIZABLE callback client',
+    csrImportTransaction: true,
   },
   {
     file: 'server/services/protocol-development/protocol-development-service.ts',
@@ -471,13 +487,17 @@ for (const target of GUARDED) {
     txFindings.push(TRANSACTION);
   }
 
-  const missing = target.canonicalSectionSeeds
+  let missing = target.canonicalSectionSeeds
     ? [...authoringTransactionFindings(Object.fromEntries(Object.entries(AUTHORING_TRANSACTION).map(([name, file]) => {
       const helperPath = path.join(ROOT, file);
       return [name, fs.existsSync(helperPath) ? fs.readFileSync(helperPath, 'utf8') : undefined];
     }))), ...(helperEnforcesGate() ? [] : ['canonical author-lineage primitive is hollowed out'])]
       .map(message => ({ id: 'authoring-transaction-lineage', message }))
     : [...txFindings, ...gateFindings(src)];
+  if (target.csrImportTransaction) {
+    missing = [...csrImportTransactionFindings(src), ...(helperEnforcesGate() ? [] : ['canonical author-lineage primitive is hollowed out'])]
+      .map(message => ({ id: 'csr-import-transaction-lineage', message }));
+  }
 
   if (missing.length === 0) {
     console.log(`[ci:lineage-save-gate] ok  ${target.file}`);
@@ -509,39 +529,9 @@ for (const target of GUARDED) {
  * exists to stop people making. Scoped to these tables the rule stays sharp: a
  * row created here IS part of a governed document.
  */
-const GOVERNED_DOC_TABLES = [
-  'concept2cure_artifacts',
-  'concept2cure_artifact_versions',
-  'artifact_versions',
-  'protocol_sections',
-  'protocol_documents',
-  'biosketch_sections',
-  'cerv2_510k_sections',
-  'dms_plan_elements',
-  'consent_form_elements',
-  'coauthor_documents',
-  'q_sub_section_bodies',
-  'labeling_pi_sections',
-];
-
-const CONTENT_WRITE = [
-  // raw SQL: UPDATE <table> SET … content = …
-  /UPDATE\s+[\w.]+\s+SET[\s\S]{0,400}?\bcontent\s*=/,
-  // Drizzle: .set({ … content: … })
-  // (same object literal only — a nested `{ content: … }` inside another
-  // field, or an unrelated `.set({ headers })`, is not a content write)
-  /\.set\(\{[^{}]*\bcontent\s*:/,
-  // raw SQL: INSERT INTO <governed document table> ( … content … )
-  //
-  // THE BLIND SPOT THIS CLOSES (ledger L177). The two rules above match only
-  // EDITS, so a path that CREATES a governed document with its text already in
-  // it was invisible to discovery. `save_document_to_vault` shipped exactly that
-  // way — artifact, immutable version, provenance and an audit row, and no span
-  // lineage at all — and no gate could see it, because it writes by INSERT.
-  // Matching inside the column list (rather than scanning forward N characters)
-  // keeps this from running past the statement into an unrelated later one.
-  new RegExp(`INSERT\\s+INTO\\s+(?:${GOVERNED_DOC_TABLES.join('|')})\\s*\\([^)]*\\bcontent\\b`, 'i'),
-];
+// The same table-scoped INSERT perimeter and direct Drizzle object census
+// live in lineage-content-writers. SQL SET targets are parsed separately from
+// WHERE/RETURNING predicates, SQL values and SQL comments.
 function* sourceFiles(dir) {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const full = path.join(dir, entry.name);
@@ -567,7 +557,7 @@ const stillWriting = new Set();
 for (const abs of sourceFiles(path.join(ROOT, 'server'))) {
   const rel = path.relative(ROOT, abs).split(path.sep).join('/');
   const src = stripComments(fs.readFileSync(abs, 'utf8'));
-  const writes = CONTENT_WRITE.some((re) => re.test(src));
+  const writes = contentWriteCount(src) > 0;
   if (writes) stillWriting.add(rel);
   if (known.has(rel) || knownGaps.has(rel)) continue;
   if (writes) unknownWriters.push(rel);
@@ -596,9 +586,13 @@ for (const rel of unknownWriters) {
   );
 }
 for (const n of NOT_PROSE) {
-  if (!fs.existsSync(path.join(ROOT, n.file))) {
+  const abs = path.join(ROOT, n.file);
+  if (!fs.existsSync(abs)) {
     failures++;
     console.error(`\n[ci:lineage-save-gate] FAIL ${n.file}\n  ✗ NOT_PROSE names a file that no longer exists — remove the entry.`);
+  } else if (n.reviewedSourceSha256 && createHash('sha256').update(fs.readFileSync(abs)).digest('hex') !== n.reviewedSourceSha256) {
+    failures++;
+    console.error(`\n[ci:lineage-save-gate] FAIL ${n.file}\n  ✗ reviewed-structured-intent: the source no longer matches its reviewed structured-content, actor, version-chain and same-transaction audit contract. Review the changed writer before renewing this classification.`);
   }
 }
 

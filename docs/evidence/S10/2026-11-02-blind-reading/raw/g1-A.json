@@ -1,0 +1,747 @@
+{
+  "reader": "A",
+  "scope": "L01-L17",
+  "package": "docs/evidence/S10/2026-11-02-blind-reading-package",
+  "questionsJsonSha256": "57964e3ab70e858e977c73fd48014369bb16cd341efdcf5acc2b2da6dcd27937",
+  "letterHashesVerified": true,
+  "conventions": "Line numbers are 1-based over the letter file split on \"\\n\". Line breaks (including the empty paragraphs of docx text) are not counted as foreign content; form feed (U+000C) and vertical tab (U+000B) are. Every letter L01-L17 was scanned for control and non-ASCII characters: only L01 offset 223 (U+000C, inside question 2), L06 offset 22 (U+000B, in a heading, outside every span) and L13 offset 235 (U+000C, inside question 44) were found.",
+  "letters": [
+    {
+      "letter": "L01",
+      "missing": [],
+      "note": "Three numbered requests (lines 3, 4-7, 8); all listed. Line 2 is the lead-in; line 9 is a page number."
+    },
+    {
+      "letter": "L02",
+      "missing": [],
+      "note": "Four deficiencies A1-A4 (lines 9-24); all listed. Lines 25-27 are the closing."
+    },
+    {
+      "letter": "L03",
+      "missing": [],
+      "note": "Four numbered requests (lines 5, 7-11, 13-17, 19); all listed. Lines 21-23 are the sign-off."
+    },
+    {
+      "letter": "L04",
+      "missing": [],
+      "note": "Four numbered requests; all listed."
+    },
+    {
+      "letter": "L05",
+      "missing": [],
+      "note": "Three numbered requests (lines 8-10, 11-14, 15); all listed. Line 16 is the closer."
+    },
+    {
+      "letter": "L06",
+      "missing": [],
+      "note": "Two items, one under each heading (lines 5, 9); both listed."
+    },
+    {
+      "letter": "L07",
+      "missing": [],
+      "note": "Two deficiencies A1-A2; both listed. Lines 17-19 are the closing."
+    },
+    {
+      "letter": "L08",
+      "missing": [],
+      "note": "Three numbered requests (lines 3, 4-6, 13); all listed."
+    },
+    {
+      "letter": "L09",
+      "missing": [],
+      "note": "Three numbered requests (lines 7-9, 10-13, 14); all listed. Line 15 is the closer."
+    },
+    {
+      "letter": "L10",
+      "missing": [],
+      "note": "Five items: Quality MO 1-2 (lines 9-10), Quality OC 1 (line 12), Clinical MO 1 (line 19), Clinical OC 1 (line 21); all listed."
+    },
+    {
+      "letter": "L11",
+      "missing": [],
+      "note": "Five items (lines 9, 13, 15, 21, 27); all listed."
+    },
+    {
+      "letter": "L12",
+      "missing": [],
+      "note": "Five items (lines 5-6, 8-9, 10, 13, 23-24); all listed."
+    },
+    {
+      "letter": "L13",
+      "missing": [],
+      "note": "Two items (lines 7-16, 17); both listed."
+    },
+    {
+      "letter": "L14",
+      "missing": [],
+      "note": "Four items (lines 5, 7-13, 17, 19); all listed."
+    },
+    {
+      "letter": "L15",
+      "missing": [],
+      "note": "Two numbered comments (lines 2, 3); both listed. Lines 8-10 are the enclosure list after the sign-off, not questions; line 4 is the closer."
+    },
+    {
+      "letter": "L16",
+      "missing": [],
+      "note": "Six numbered deficiencies across CLINICAL, PRODUCT QUALITY and FACILITIES INSPECTIONS; all listed. Line 37 is the closer."
+    },
+    {
+      "letter": "L17",
+      "missing": [],
+      "note": "Six numbered deficiencies (numbering restarts per discipline: 1-3, 1-2, 1); all listed. Line 37 is the closer."
+    }
+  ],
+  "questions": [
+    {
+      "id": 1,
+      "letter": "L01",
+      "ref": "1",
+      "lines": "3-3",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 2,
+      "letter": "L01",
+      "ref": "2",
+      "lines": "4-7",
+      "A": "yes",
+      "A_reason": null,
+      "B": "no",
+      "B_inside": "Line 6 \"Page 1\\fPage 2\": the page-1 footer page number \"Page 1\", a form-feed control character (U+000C, offset 223) and the page-2 header page number \"Page 2\". (Line 5 \"Food and Drug Administration\" is the question's own words: the sentence reads \"the guidance issued by the Food and Drug Administration in 2019 on stability testing\"; without it the sentence breaks.)"
+    },
+    {
+      "id": 3,
+      "letter": "L01",
+      "ref": "3",
+      "lines": "8-8",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 4,
+      "letter": "L02",
+      "ref": "A1",
+      "lines": "9-10",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 5,
+      "letter": "L02",
+      "ref": "A2",
+      "lines": "11-22",
+      "A": "yes",
+      "A_reason": null,
+      "B": "no",
+      "B_inside": "Lines 13-16 letterhead footer of page 1 (\"U.S. Food & Drug Administration\", \"10903 New Hampshire Avenue\", \"Silver Spring, MD 20993\", \"www.fda.gov\"); line 17 blank; line 18 page marker \"-- 1 of 2 --\"; line 19 blank; line 20 running header \"K201234 - Example Devices, Inc.\"; line 21 page number \"Page 2\". The question's words resume on line 22 \"circulating blood contact.\""
+    },
+    {
+      "id": 6,
+      "letter": "L02",
+      "ref": "A3",
+      "lines": "23-23",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 7,
+      "letter": "L02",
+      "ref": "A4",
+      "lines": "24-24",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 8,
+      "letter": "L03",
+      "ref": "1",
+      "lines": "5-5",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 9,
+      "letter": "L03",
+      "ref": "2",
+      "lines": "7-11",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "B yes: the span holds only the question's words; its lines are separated by empty paragraphs (\"\\n\\n\", lines 8 and 10), which are line breaks, not words, furniture or a control character of the kind listed."
+    },
+    {
+      "id": 10,
+      "letter": "L03",
+      "ref": "3",
+      "lines": "13-17",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "B yes: the span holds only the question's words; its lines are separated by empty paragraphs (\"\\n\\n\", lines 14 and 16). \"Your response should include...\" is the agency's own instruction under item 3, not a closer."
+    },
+    {
+      "id": 11,
+      "letter": "L03",
+      "ref": "4",
+      "lines": "19-19",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 12,
+      "letter": "L04",
+      "ref": "1",
+      "lines": "3-3",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 13,
+      "letter": "L04",
+      "ref": "2",
+      "lines": "4-6",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "\"We request that you submit data...\" (lines 5-6) is the agency's request under item 2, not a closer."
+    },
+    {
+      "id": 14,
+      "letter": "L04",
+      "ref": "3",
+      "lines": "7-9",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "\"Your response should include a justification...\" (lines 8-9) is the agency's instruction under item 3, not a closer."
+    },
+    {
+      "id": 15,
+      "letter": "L04",
+      "ref": "4",
+      "lines": "10-10",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 16,
+      "letter": "L05",
+      "ref": "1",
+      "lines": "8-10",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "\"Your response should include the certificates of analysis for each lot.\" (line 10) belongs to item 1; the closer is line 16 and is outside the span."
+    },
+    {
+      "id": 17,
+      "letter": "L05",
+      "ref": "2",
+      "lines": "11-14",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "\"We request that you submit the toxicological qualification report...\" (lines 13-14) belongs to item 2."
+    },
+    {
+      "id": 18,
+      "letter": "L05",
+      "ref": "3",
+      "lines": "15-15",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 19,
+      "letter": "L06",
+      "ref": "1",
+      "lines": "5-5",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "Under the heading \"Major\\u000bobjections\" (line 3, vertical tab inside the heading); the heading and its control character are outside the span."
+    },
+    {
+      "id": 20,
+      "letter": "L06",
+      "ref": "1",
+      "lines": "9-9",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "Under \"Other concerns\" (line 7); numbering restarts at 1 there, so the ref \"1\" repeats the ref of the question on line 5."
+    },
+    {
+      "id": 21,
+      "letter": "L07",
+      "ref": "A1",
+      "lines": "5-15",
+      "A": "yes",
+      "A_reason": null,
+      "B": "no",
+      "B_inside": "Lines 6-9 letterhead footer of page 1 (\"U.S. Food & Drug Administration\", \"10903 New Hampshire Avenue\", \"Silver Spring, MD 20993\", \"www.fda.gov\"); line 10 blank; line 11 page marker \"-- 1 of 2 --\"; line 12 blank; line 13 running header \"DEN230045 - Example Devices, Inc.\"; line 14 page number \"Page 2\". The question's words resume on line 15 \"Please provide a complete list of materials.\""
+    },
+    {
+      "id": 22,
+      "letter": "L07",
+      "ref": "A2",
+      "lines": "16-16",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 23,
+      "letter": "L08",
+      "ref": "1",
+      "lines": "3-3",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 24,
+      "letter": "L08",
+      "ref": "2",
+      "lines": "4-6",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "The DMF numbers on lines 5-6 are the list the request names (\"for these drug master files:\") and belong to the question; the span stops before line 7 \"Reference ID: 5123456\"."
+    },
+    {
+      "id": 25,
+      "letter": "L08",
+      "ref": "3",
+      "lines": "13-13",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 26,
+      "letter": "L09",
+      "ref": "1",
+      "lines": "7-9",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "The DMF numbers on lines 8-9 belong to the question."
+    },
+    {
+      "id": 27,
+      "letter": "L09",
+      "ref": "2",
+      "lines": "10-13",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "\"namely DMF 056789 and the container closure file, and confirm their current status.\" (lines 11-13) is one sentence with the request on line 10."
+    },
+    {
+      "id": 28,
+      "letter": "L09",
+      "ref": "3",
+      "lines": "14-14",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 29,
+      "letter": "L10",
+      "ref": "1",
+      "lines": "9-9",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 30,
+      "letter": "L10",
+      "ref": "2",
+      "lines": "10-10",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 31,
+      "letter": "L10",
+      "ref": "1",
+      "lines": "12-12",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 32,
+      "letter": "L10",
+      "ref": "1",
+      "lines": "19-19",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 33,
+      "letter": "L10",
+      "ref": "1",
+      "lines": "21-21",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 34,
+      "letter": "L11",
+      "ref": "1",
+      "lines": "9-9",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 35,
+      "letter": "L11",
+      "ref": "1",
+      "lines": "13-13",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 36,
+      "letter": "L11",
+      "ref": "2",
+      "lines": "15-15",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 37,
+      "letter": "L11",
+      "ref": "1",
+      "lines": "21-21",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 38,
+      "letter": "L11",
+      "ref": "1",
+      "lines": "27-27",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "One question of two sentences: the deficiency and \"The applicant should discuss the clinical relevance.\""
+    },
+    {
+      "id": 39,
+      "letter": "L12",
+      "ref": "1",
+      "lines": "5-6",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 40,
+      "letter": "L12",
+      "ref": "1",
+      "lines": "8-9",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 41,
+      "letter": "L12",
+      "ref": "2",
+      "lines": "10-10",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 42,
+      "letter": "L12",
+      "ref": "1",
+      "lines": "13-13",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 43,
+      "letter": "L12",
+      "ref": "1",
+      "lines": "23-24",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "One question of two sentences, wrapped over lines 23-24; the span stops before line 25, the agency's address footer."
+    },
+    {
+      "id": 44,
+      "letter": "L13",
+      "ref": "1",
+      "lines": "7-16",
+      "A": "yes",
+      "A_reason": null,
+      "B": "no",
+      "B_inside": "Line 9 blank; lines 10-12 page-1 running footer (\"Assessment report\", \"EMA/CHMP/123456/2026\", \"Page 1/2\"); a form-feed control character (U+000C, offset 235) on line 12; lines 12-14 page-2 running header (\"Assessment report\", \"EMA/CHMP/123456/2026\", \"Page 2/2\"); line 15 blank. Line 8 \"EMA/CHMP/ICH/279/1995\" is read as the question's own words (the guideline the sentence cites: \"in line with the guideline EMA/CHMP/ICH/279/1995\"), not furniture: it differs from the letter's own reference EMA/CHMP/123456/2026 and sits in the body before the blank line that opens the footer. The question's words resume on line 16 \"and provide the supporting stability data.\""
+    },
+    {
+      "id": 45,
+      "letter": "L13",
+      "ref": "2",
+      "lines": "17-17",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 46,
+      "letter": "L14",
+      "ref": "1",
+      "lines": "5-5",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 47,
+      "letter": "L14",
+      "ref": "2",
+      "lines": "7-13",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "The test names on lines 9, 11, 13 (\"Assay\", \"Related substances\", \"Dissolution\") are the list the question names (\"for the following tests.\") and belong to it; the empty paragraphs between them are line breaks."
+    },
+    {
+      "id": 48,
+      "letter": "L14",
+      "ref": "1",
+      "lines": "17-17",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 49,
+      "letter": "L14",
+      "ref": "2",
+      "lines": "19-19",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 50,
+      "letter": "L15",
+      "ref": "1",
+      "lines": "2-2",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 51,
+      "letter": "L15",
+      "ref": "2",
+      "lines": "3-3",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 52,
+      "letter": "L16",
+      "ref": "1",
+      "lines": "10-11",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "A stated deficiency with no explicit request; in a Complete Response letter a reader records each numbered deficiency as an item the resubmission must address."
+    },
+    {
+      "id": 53,
+      "letter": "L16",
+      "ref": "2",
+      "lines": "12-12",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 54,
+      "letter": "L16",
+      "ref": "3",
+      "lines": "20-21",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 55,
+      "letter": "L16",
+      "ref": "4",
+      "lines": "23-24",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 56,
+      "letter": "L16",
+      "ref": "5",
+      "lines": "25-33",
+      "A": "yes",
+      "A_reason": null,
+      "B": "no",
+      "B_inside": "Line 26 \"Reference ID: 4987654\" (page-2 footer); line 27 blank; line 28 page marker \"-- 2 of 3 --\"; line 29 blank; line 30 running header \"NDA 212345\"; line 31 page number \"Page 3\"; line 32 running header \"Example Pharma Inc. Examplinib tablets\". The question's words resume on line 33 \"particle size.\""
+    },
+    {
+      "id": 57,
+      "letter": "L16",
+      "ref": "6",
+      "lines": "35-36",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "Numbered 6 under \"FACILITIES INSPECTIONS\"; one item of two sentences."
+    },
+    {
+      "id": 58,
+      "letter": "L17",
+      "ref": "1",
+      "lines": "10-11",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "A stated deficiency with no explicit request; in a Complete Response letter a reader records each numbered deficiency as an item the resubmission must address."
+    },
+    {
+      "id": 59,
+      "letter": "L17",
+      "ref": "2",
+      "lines": "12-12",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 60,
+      "letter": "L17",
+      "ref": "3",
+      "lines": "20-21",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null
+    },
+    {
+      "id": 61,
+      "letter": "L17",
+      "ref": "1",
+      "lines": "23-24",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "Numbered 1 under \"PRODUCT QUALITY\" (numbering restarts per discipline in this letter)."
+    },
+    {
+      "id": 62,
+      "letter": "L17",
+      "ref": "2",
+      "lines": "25-33",
+      "A": "yes",
+      "A_reason": null,
+      "B": "no",
+      "B_inside": "Line 26 \"Reference ID: 4987654\" (page-2 footer); line 27 blank; line 28 page marker \"-- 2 of 3 --\"; line 29 blank; line 30 running header \"NDA 212345\"; line 31 page number \"Page 3\"; line 32 running header \"Example Pharma Inc. Examplinib tablets\". The question's words resume on line 33 \"particle size.\"",
+      "note": "Numbered 2 under \"PRODUCT QUALITY\"."
+    },
+    {
+      "id": 63,
+      "letter": "L17",
+      "ref": "1",
+      "lines": "35-36",
+      "A": "yes",
+      "A_reason": null,
+      "B": "yes",
+      "B_inside": null,
+      "note": "Numbered 1 under \"FACILITIES INSPECTIONS\" (numbering restarts per discipline in this letter); one item of two sentences."
+    }
+  ]
+}

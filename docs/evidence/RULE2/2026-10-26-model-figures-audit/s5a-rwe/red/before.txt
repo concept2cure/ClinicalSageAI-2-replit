@@ -1,0 +1,123 @@
+# S5a RWE red: server/services/ana/__tests__/rwe-unstated-inputs.test.ts on 2cc9340e2 (trunk 867a9b5bb plus the dose commit). 55 of 64 fail; the 9 controls pass.
+
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > all six existing RWE tools keep their explicit results > 'design_target_trial' reaches its canonical engine with a stated basis 7ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > all six existing RWE tools keep their explicit results > 'score_rwe_data_source' reaches its canonical engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > all six existing RWE tools keep their explicit results > 'design_propensity_analysis' reaches its canonical engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > all six existing RWE tools keep their explicit results > 'select_rwe_design' reaches its canonical engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > all six existing RWE tools keep their explicit results > 'assess_rwe_bias_risk' reaches its canonical engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > all six existing RWE tools keep their explicit results > 'assess_rwe_regulatory_acceptability' reaches its canonical engine with a stated basis 2ms
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > the tool definitions leave the optional facts optional and say what omission means > 'score_rwe_data_source' 9ms
+   → expected 'Score a real-world data source across…' to match /left out remains not_stated/
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > the tool definitions leave the optional facts optional and say what omission means > 'assess_rwe_bias_risk' 1ms
+   → expected 'Assess the bias risk profile of an RW…' to match /left out remains not_stated/
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > the tool definitions leave the optional facts optional and say what omission means > 'assess_rwe_regulatory_acceptability' 1ms
+   → expected 'Assess the regulatory acceptability o…' to match /left out remains not_stated/
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'score_rwe_data_source' preserves boolean answers > deathLinkage distinguishes absence, true, false and malformed input 7ms
+   → expected { overallScore: 89, …(6) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'score_rwe_data_source' preserves boolean answers > hasLabResults distinguishes absence, true, false and malformed input 2ms
+   → expected { overallScore: 92, …(6) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'score_rwe_data_source' preserves boolean answers > hasClinicalNotes distinguishes absence, true, false and malformed input 2ms
+   → expected { overallScore: 91, …(6) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'score_rwe_data_source' preserves boolean answers > hasPharmacyDispensing distinguishes absence, true, false and malformed input 2ms
+   → expected { overallScore: 87, …(6) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'score_rwe_data_source' preserves boolean answers > hasProcedures distinguishes absence, true, false and malformed input 2ms
+   → expected { overallScore: 88, …(6) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'score_rwe_data_source' preserves boolean answers > hasValidationStudy distinguishes absence, true, false and malformed input 2ms
+   → expected { overallScore: 87, …(6) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'assess_rwe_bias_risk' preserves boolean answers > selfReportedOutcome distinguishes absence, true, false and malformed input 3ms
+   → expected { biases: [ { …(6) }, …(2) ], …(5) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'assess_rwe_bias_risk' preserves boolean answers > differentialSurveillance distinguishes absence, true, false and malformed input 2ms
+   → expected { biases: [ { …(6) }, …(2) ], …(5) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'assess_rwe_bias_risk' preserves boolean answers > hasActiveComparator distinguishes absence, true, false and malformed input 2ms
+   → expected { biases: [ { …(6) }, …(3) ], …(5) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'assess_rwe_regulatory_acceptability' preserves boolean answers > preRegistered distinguishes absence, true, false and malformed input 3ms
+   → expected { …(8) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'assess_rwe_regulatory_acceptability' preserves boolean answers > validatedOutcomes distinguishes absence, true, false and malformed input 2ms
+   → expected { …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'assess_rwe_regulatory_acceptability' preserves boolean answers > existingTrialData distinguishes absence, true, false and malformed input 4ms
+   → expected { overallAcceptability: 'high', …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'design_propensity_analysis' chooses no branch from an unstated fact > rareOutcome left out is refused by name; malformed is invalid 2ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'design_propensity_analysis' chooses no branch from an unstated fact > clinicalEquipoise left out is refused by name; malformed is invalid 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'design_propensity_analysis' chooses no branch from an unstated fact > timeVaryingConfounding left out is refused by name; malformed is invalid 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'select_rwe_design' chooses no branch from an unstated fact > timeVaryingExposure left out is refused by name; malformed is invalid 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'select_rwe_design' chooses no branch from an unstated fact > rareOutcome left out is refused by name; malformed is invalid 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'select_rwe_design' chooses no branch from an unstated fact > acuteOutcome left out is refused by name; malformed is invalid 8ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'select_rwe_design' chooses no branch from an unstated fact > naturalExperiment left out is refused by name; malformed is invalid 2ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'select_rwe_design' chooses no branch from an unstated fact > withinPersonComparison left out is refused by name; malformed is invalid 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > 'select_rwe_design' chooses no branch from an unstated fact > strongConfoundingConcern left out is refused by name; malformed is invalid 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'design_target_trial' refuses an omitted 'causalContrast' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'design_target_trial' refuses an omitted 'treatmentStrategy' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'design_target_trial' refuses an omitted 'maxFollowUpMonths' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'score_rwe_data_source' refuses an omitted 'sourceType' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'score_rwe_data_source' refuses an omitted 'studyQuestion' 2ms
+   → expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'design_propensity_analysis' refuses an omitted 'targetEstimand' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'select_rwe_design' refuses an omitted 'questionType' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'assess_rwe_bias_risk' refuses an omitted 'studyDesign' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'assess_rwe_bias_risk' refuses an omitted 'nUnmeasuredConfounders' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'assess_rwe_regulatory_acceptability' refuses an omitted 'authority' 1ms
+   → expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'assess_rwe_regulatory_acceptability' refuses an omitted 'sampleSize' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'score_rwe_data_source' refuses 'geographicCoverage' = 'global' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'score_rwe_data_source' refuses 'continuousEnrollmentPct' = 140 1ms
+   → expected { status: 'needs_parameters', …(1) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'assess_rwe_regulatory_acceptability' refuses 'authority' = 'FDA' 1ms
+   → expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > context a worksheet cannot run without is refused, never read as a default > 'design_target_trial' refuses 'causalContrast' = 'itt' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > data-source scoring derives no score, gap or reliability finding from an unstated fact > deathLinkage left out: the dimensions reading it and the overall score are not assessed 1ms
+   → expected { overallScore: 89, …(6) } to match object { overallScore: null, …(1) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > data-source scoring derives no score, gap or reliability finding from an unstated fact > hasLabResults left out: the dimensions reading it and the overall score are not assessed 1ms
+   → expected { overallScore: 92, …(6) } to match object { overallScore: null, …(1) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > data-source scoring derives no score, gap or reliability finding from an unstated fact > hasClinicalNotes left out: the dimensions reading it and the overall score are not assessed 0ms
+   → expected { overallScore: 91, …(6) } to match object { overallScore: null, …(1) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > data-source scoring derives no score, gap or reliability finding from an unstated fact > hasPharmacyDispensing left out: the dimensions reading it and the overall score are not assessed 0ms
+   → expected { overallScore: 87, …(6) } to match object { overallScore: null, …(1) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > data-source scoring derives no score, gap or reliability finding from an unstated fact > hasProcedures left out: the dimensions reading it and the overall score are not assessed 0ms
+   → expected { overallScore: 88, …(6) } to match object { overallScore: null, …(1) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > data-source scoring derives no score, gap or reliability finding from an unstated fact > hasValidationStudy left out: the dimensions reading it and the overall score are not assessed 1ms
+   → expected { overallScore: 87, …(6) } to match object { overallScore: null, …(1) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > data-source scoring derives no score, gap or reliability finding from an unstated fact > does not report an unstated validation study as missing 1ms
+   → expected 'No validation study is available for …' not to match /No validation study is available/
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > data-source scoring derives no score, gap or reliability finding from an unstated fact > still scores and reports an explicit false 2ms
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > bias assessment grades no bias from an unstated fact > lists confounding by indication, ungraded, when the comparator is not stated 2ms
+   → expected [ { …(6) }, { …(6) }, { …(6) }, …(1) ] to not deep equally contain ObjectContaining{…}
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > bias assessment grades no bias from an unstated fact > keeps the bias differentialSurveillance would raise, ungraded 2ms
+   → expected [] to have a length of 1 but got +0
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > bias assessment grades no bias from an unstated fact > keeps the bias selfReportedOutcome would raise, ungraded 1ms
+   → expected [] to have a length of 1 but got +0
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > bias assessment grades no bias from an unstated fact > gives a grade the unstated facts cannot change 1ms
+   → expected { biases: [ { …(6) }, …(4) ], …(5) } to match object { overallBiasRisk: 'high', …(1) }
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > bias assessment grades no bias from an unstated fact > leaves quantitative bias analysis undetermined when an unstated fact decides the grade 2ms
+   → expected 'high' to be 'not_assessed' // Object.is equality
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > bias assessment grades no bias from an unstated fact > keeps the explicit no-comparator finding 0ms
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > regulatory acceptability grades no requirement from an unstated fact > does not grade an unstated pre-registration as not met 1ms
+   → expected 'not_met' to be 'not_assessed' // Object.is equality
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > regulatory acceptability grades no requirement from an unstated fact > does not grade unstated outcome validation as not met 1ms
+   → expected 'not_met' to be 'not_assessed' // Object.is equality
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > regulatory acceptability grades no requirement from an unstated fact > does not say no trial data exists when that was not stated 1ms
+   → expected 'Request a pre-submission meeting (Typ…' not to match /no prior randomized trial data exists/
+ × server/services/ana/__tests__/rwe-unstated-inputs.test.ts > regulatory acceptability grades no requirement from an unstated fact > gives a grade the unstated fact cannot change 1ms
+   → expected { …(8) } to match object { …(2) }
+ ✓ server/services/ana/__tests__/rwe-unstated-inputs.test.ts > regulatory acceptability grades no requirement from an unstated fact > keeps explicit answers 0ms
+ Test Files  1 failed (1)
+      Tests  55 failed | 9 passed (64)

@@ -44,12 +44,14 @@
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import { join } from 'node:path';
 import { commitmentFulfilmentDigest } from '../../server/services/ha-interactions/ha-logic';
 import { FILED_DISPATCH_STATUSES } from '../../server/services/submission-service/filed-dispatch';
+import { as2CmsFixture, receiptReport } from '../../server/services/submission-gateways/__tests__/support/as2-cms-fixture';
 import {
-  ORG, PREFIX, app, as, failedAttempts, fulfilUrl, hashes, optionsUrl, orgCommitment, owner, orgId, foreignOrgId, project,
-  program, projectBase, projectCommitment, regulatoryProgram, seq, setupFixture, signaturesOn, signedBody, stateOf, sub,
+  ORG, PREFIX, app, as, asRuntime, failedAttempts, fulfilUrl, hashes, optionsUrl, orgCommitment, owner, orgId, orgUuid, foreignOrgId, project,
+  program, projectBase, projectCommitment, rawFulfil, regulatoryProgram, seq, sequence, setupFixture, sha, signaturesOn, signedBody, stateOf, sub,
   submission, teardownFixture, users, vault,
 } from './commitment-fulfilment-fixture';
 
@@ -209,21 +211,33 @@ describe('a project PMR, signed', () => {
 });
 
 describe('a project with no program', () => {
-  /* Project admission (communication-center.ts router.param) admits only a
-     project anchored to a program, so a project with none is refused at the
-     door, before the fulfilment's own PROJECT_NOT_LINKED (which stays as the
-     service's answer if a link is gone between admission and the read). */
-  it('is refused at the project door, and nothing about the commitment changes', async () => {
+  /* Project admission (communication-center.ts router.param, project-access.ts
+     requireProjectAdmission) is about the project: who may open it, in its own
+     client workspace. It never asked for a program. This case once read 404 at
+     the door, but only because admission looked a project up in the
+     organisation's FIRST workspace, and this fixture gives each project its own;
+     0edd864728 (2026-10-31) admits a project in its own workspace. So the
+     project is opened, and the fulfilment's own answer is the one that holds:
+     the options name nothing (projectLinked false, no sequence, no Vault
+     program), and naming evidence is refused 409 PROJECT_NOT_LINKED, read-only,
+     before the password (commitment-fulfil-route.ts precheckFulfilment). */
+  it('is admitted, offers nothing to name, and refuses a fulfilment as not linked before the password; nothing changes', async () => {
     const cid = Number((await owner.query(
       `INSERT INTO regulatory_commitments (organization_id, commitment_type, description, status, created_by, project_id)
        VALUES ($1, 'pmc', 'PMC in an unlinked project', 'open', $2, $3) RETURNING id`,
       [orgId, users.signer.id, project.Z],
     )).rows[0].id);
     const opts = await request(app).get(optionsUrl(project.Z, cid)).set(as('signer'));
-    expect(opts.status, JSON.stringify(opts.body)).toBe(404);
-    const res = await request(app).post(fulfilUrl(project.Z, cid)).set(as('signer')).send(signedBody({ sequenceId: seq.ok }));
-    expect(res.status, JSON.stringify(res.body)).toBe(404);
+    expect(opts.status, JSON.stringify(opts.body)).toBe(200);
+    expect(opts.body.data).toMatchObject({ projectLinked: false, sequences: [], sequencesTruncated: false, vault: { programId: null } });
+    const before = await failedAttempts('prober');
+    const res = await request(app).post(fulfilUrl(project.Z, cid)).set(as('prober'))
+      .send(signedBody({ sequenceId: seq.ok }, { password: 'wrong-password' }));
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(res.body.error.code).toBe('PROJECT_NOT_LINKED');
+    expect(await failedAttempts('prober'), 'a refused fulfilment spent a password attempt').toBe(before);
     expect((await stateOf(cid)).status).toBe('open');
+    expect(await signaturesOn(cid)).toEqual([]);
   });
 });
 
@@ -398,5 +412,101 @@ describe('more than 200 sequences the agency received: the list keeps the most r
     expect(res.body.data.sequencesTruncated).toBe(true);
     expect(ids, 'the newest submission was cut from the list').toEqual(expect.arrayContaining(newer));
     expect(ids).not.toContain(older[0]);
+  });
+});
+
+/* F1 (row D7, 2026-11-01): a send to the agency's test environment is not a
+   filing. A sequence reaches its dispatch status here through the real code,
+   never seeded: the agency's signed MDN, uploaded through the real receipt
+   ingestion (fda-esg-receipts.ts ingestFdaAs2Receipt) as the runtime role in
+   the tenant's scope, settles each in-flight send as transmitSequence and its
+   guard left it. A receipt from the test environment leaves its sequence
+   'pending'; a production receipt files its own. Before this change the test
+   receipt filed the sequence ('sent'), so a commitment could be recorded as met
+   by a sequence FDA never received. */
+describe("a send to the agency's test environment is not evidence of a filing (F1, row D7)", () => {
+  const MIC = createHash('sha256').update('dbcf-test-send-bundle').digest('base64');
+  let fixture: ReturnType<typeof as2CmsFixture>;
+  const sent = { test: 0, filing: 0 };
+  let cid: number;
+
+  /** A sequence whose send is in flight, and that send's AS2 transmittal, as transmitSequence and its guard leave them. */
+  async function inFlight(submissionId: number, number: string, environment: 'staging' | 'production') {
+    const id = await sequence({ org: orgId, submissionId, number, status: 'dispatched', dispatchStatus: 'transmitting', actor: users.signer.id });
+    const attemptId = randomUUID();
+    const signatureActionId = `dbcf-act-${randomUUID()}`;
+    const bundleSha256 = sha(`${PREFIX} ${number} ${environment}`);
+    await owner.query('UPDATE ectd_sequences SET transmit_signature_action_id = $2, transmit_attempt_id = $3 WHERE id = $1', [id, signatureActionId, attemptId]);
+    const messageId = `<${PREFIX}-${number}@sponsor>`;
+    const t = await owner.query(
+      `INSERT INTO submission_transmittals (organization_id, program_id, region, gateway, format, transport, bundle_sha256, status, metadata)
+       VALUES ($1, $2, 'fda', 'esg', 'ectd', 'as2', $3, 'in_transit', $4::jsonb) RETURNING id`,
+      [orgId, program.P, bundleSha256, JSON.stringify({
+        environment, as2: { messageId, mic: MIC, environment },
+        dispatchBinding: { organizationId: orgId, sequenceId: id, signatureActionId, attemptId, bundleSha256 },
+      })],
+    );
+    return { id, transmittalId: Number(t.rows[0].id), messageId };
+  }
+  /** The agency's signed MDN for that send, uploaded by the signer, in the tenant's scope as the receipt route runs it. */
+  async function receipt(t: { transmittalId: number; messageId: string }) {
+    const { ingestFdaAs2Receipt } = await import('../../server/services/submission-gateways/fda-esg-receipts');
+    const { runWithTenantScope } = await import('../../server/db/tenantStore');
+    const signed = fixture.signedReceipt(receiptReport(t.messageId, MIC, 'processed'));
+    return runWithTenantScope(
+      { tenantId: String(orgId), orgUuid, role: 'admin', source: 'request', caller: 'commitment-fulfilment-evidence.dbtest' },
+      () => ingestFdaAs2Receipt({ organizationId: orgId, transmittalId: t.transmittalId, userId: users.signer.id, ...signed }),
+    );
+  }
+  const dispatchOf = async (id: number) => (await owner.query('SELECT dispatch_status FROM ectd_sequences WHERE id = $1', [id])).rows[0].dispatch_status;
+
+  beforeAll(async () => {
+    fixture = as2CmsFixture();
+    vi.stubEnv('FDA_ESG_STAGING_MDN_CERT_PATH', join(fixture.directory, 'agency.pem'));
+    vi.stubEnv('FDA_ESG_MDN_CERT_PATH', join(fixture.directory, 'agency.pem'));
+    const subT = await submission(orgId, 'IND 123456, sent to the test environment', program.P, users.signer.id);
+    const test = await inFlight(subT, '0050', 'staging');
+    const filing = await inFlight(subT, '0051', 'production');
+    expect(await receipt(test)).toMatchObject({ verified: true, recorded: true, status: 'received', sequenceResolution: 'resolved' });
+    expect(await receipt(filing)).toMatchObject({ verified: true, recorded: true, status: 'received', sequenceResolution: 'resolved' });
+    sent.test = test.id;
+    sent.filing = filing.id;
+    cid = await projectCommitment(project.X, 'pmr', 'PMR whose study report went only to the test environment');
+  }, 120_000);
+  afterAll(() => {
+    vi.unstubAllEnvs();
+    fixture?.cleanup();
+  });
+
+  it("the test environment's receipt leaves its sequence unfiled; a production receipt files its own", async () => {
+    expect(await dispatchOf(sent.test), 'a receipt from the test environment filed the sequence').toBe('pending');
+    expect(await dispatchOf(sent.filing)).toBe('sent');
+  });
+
+  it('is not offered as evidence of a filing; the production one is', async () => {
+    const res = await request(app).get(optionsUrl(project.X, cid)).set(as('signer'));
+    expect(res.status, JSON.stringify(res.body).slice(0, 300)).toBe(200);
+    const ids: number[] = res.body.data.sequences.map((s: { id: number }) => s.id);
+    expect(ids, 'a test send was offered as a sequence the agency received').not.toContain(sent.test);
+    expect(ids).toContain(sent.filing);
+  });
+
+  it('naming it is refused before the password, and nothing is recorded', async () => {
+    const before = await failedAttempts('prober');
+    const res = await request(app).post(fulfilUrl(project.X, cid)).set(as('prober'))
+      .send(signedBody({ sequenceId: sent.test }, { password: 'wrong-password' }));
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(res.body.error.code).toBe('SEQUENCE_NOT_FILED');
+    expect(await failedAttempts('prober'), 'a refused fulfilment spent a password attempt').toBe(before);
+    expect((await stateOf(cid)).status).toBe('open');
+    expect(await signaturesOn(cid)).toEqual([]);
+  });
+
+  it('the database refuses a fulfilment naming it whatever the route (the commitment-evidence trigger), and accepts the production one', async () => {
+    const meeting = await orgCommitment('meeting_commitment', 'Raw meeting commitment met only by a test send');
+    const refused = await asRuntime([rawFulfil(meeting, { seq: sent.test }, users.signer.id)]);
+    expect(refused.ok, 'the database took a test send as a sequence the agency received').toBe(false);
+    if (!refused.ok) expect(refused.message).toMatch(/COMMITMENT_EVIDENCE_INVALID/);
+    expect(await asRuntime([rawFulfil(meeting, { seq: sent.filing }, users.signer.id)])).toEqual({ ok: true });
   });
 });

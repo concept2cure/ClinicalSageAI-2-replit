@@ -375,6 +375,17 @@ describe('retire_qms_document — AnA cannot retire a controlled document', () =
    ("save_document_to_vault — the single-body form of draft_authoring_document"). */
 
 describe('update_vault_document — new regulated version is audited atomically', () => {
+  /* The artifact's project is real (F1, 2026-11-05): update_vault_document writes only to a project the person can
+     open and change, so project 77 is one, under its own program. The actor is the organization's admin, which
+     installQmsAuthoringHarness already records. Who may write is ana-vault-tools-project-scope.pglite.test.ts's; this
+     suite is the write's atomicity. */
+  const PROJECT_77_PROGRAM = '00000000-0000-4000-8000-000000000077';
+  beforeAll(async () => {
+    // The open project's sponsor is read with it (narrowToSponsorOf); project 77 has none.
+    await pglite.exec(`CREATE TABLE IF NOT EXISTS client_workspaces (id int PRIMARY KEY, organization_id int, name text)`);
+    await pglite.query(`INSERT INTO regulatory_programs VALUES ($1, 1, NULL) ON CONFLICT DO NOTHING`, [PROJECT_77_PROGRAM]);
+    await pglite.query(`INSERT INTO projects VALUES (77, 1, $1, NULL, 10, 10, '{}') ON CONFLICT DO NOTHING`, [PROJECT_77_PROGRAM]);
+  });
   /* An existing artifact row, as save_document_to_vault wrote them before
      2026-10-17. Those rows stay readable and versionable; no tool creates
      new ones. */

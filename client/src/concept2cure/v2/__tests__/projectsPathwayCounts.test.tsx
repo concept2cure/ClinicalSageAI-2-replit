@@ -27,6 +27,13 @@ const props = () => ({ surface: { id: 'projects', label: 'Projects' } as never, 
 const figure = (label: RegExp) => Array.from(document.querySelectorAll('.pj-summary-i'))
   .find(el => label.test(el.textContent ?? ''))?.querySelector('strong')?.textContent;
 function Probe({ seen }: { seen: { ctx: SurfaceContext | null } }) { seen.ctx = useActiveSurfaceContext('projects'); return null; }
+/* D2-1 (2026-11-01): the workstream, pathway and status filters are toolbar
+   selects (their counts in the option text), and the portfolio figures are the
+   list view's footing (.design/claude-convergence/D2.md §1.4 items 2, 4, 7). */
+const select = (name: string) => screen.getByRole('combobox', { name }) as HTMLSelectElement;
+const choose = (name: string, value: string) => fireEvent.change(select(name), { target: { value } });
+const optionText = (name: string) => Array.from(select(name).options).map(option => option.textContent);
+const showList = () => fireEvent.click(screen.getByRole('button', { name: 'List' }));
 beforeEach(() => {
   apiRequest.mockReset().mockImplementation(async (_method: string, path: string) => {
     const params = new URL(path, 'http://local').searchParams;
@@ -43,12 +50,13 @@ describe('Projects full-portfolio counts and server pathway filters', () => {
     const seen = { ctx: null as SurfaceContext | null };
     render(<><Projects {...props()} /><Probe seen={seen} /></>);
     await screen.findByText('Project IDE');
+    showList();
     expect(figure(/active projects/i)).toBe('60');
-    expect(figure(/filing < 60 days/i)).toBe('17');
+    expect(figure(/filing within 60 days/i)).toBe('17');
     expect(figure(/average readiness/i)).toBe('40%');
-    expect(screen.getByRole('button', { name: 'MDX 58' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'PMA 20' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Other 20' })).toBeTruthy();
+    expect(optionText('Client type')).toContain('Medical device & IVD (58)');
+    expect(optionText('Pathway')).toContain('PMA (20)');
+    expect(optionText('Pathway')).toContain('Other (20)');
     expect(screen.getByText(/Showing the first 2 projects/).textContent).toMatch(/readiness.*search.*these only/i);
     await waitFor(() => expect(seen.ctx?.facts?.totalPrograms).toBe(60));
     expect(seen.ctx?.summary).not.toMatch(/every figure.*first 2/);
@@ -58,15 +66,19 @@ describe('Projects full-portfolio counts and server pathway filters', () => {
   it('requests workstream and pathway on the server, retaining the Client filter', async () => {
     render(<Projects {...props()} />);
     fireEvent.change(await screen.findByRole('combobox', { name: 'Client' }), { target: { value: '11' } });
-    fireEvent.click(await screen.findByRole('button', { name: 'MDX 58' }));
-    await waitFor(() => expect(apiRequest).toHaveBeenLastCalledWith('GET', '/api/c2c/projects?clientWorkspaceId=11&ws=MDX'));
-    fireEvent.click(screen.getByRole('button', { name: 'PMA 20' }));
-    await waitFor(() => expect(apiRequest).toHaveBeenLastCalledWith('GET', '/api/c2c/projects?clientWorkspaceId=11&ws=MDX&pathway=pma'));
+    await screen.findByRole('option', { name: 'Medical device & IVD (58)' });
+    choose('Client type', 'MDX');
+    await waitFor(() => expect(apiRequest.mock.lastCall?.slice(0, 2)).toEqual(['GET', '/api/c2c/projects?clientWorkspaceId=11&ws=MDX']));
+    await screen.findByRole('option', { name: 'PMA (20)' });
+    choose('Pathway', 'pma');
+    await waitFor(() => expect(apiRequest.mock.lastCall?.slice(0, 2)).toEqual(['GET', '/api/c2c/projects?clientWorkspaceId=11&ws=MDX&pathway=pma']));
     expect(await screen.findByText('Project PMA')).toBeTruthy();
     expect(screen.queryByText('Project IDE')).toBeNull();
+    showList();
     expect(figure(/active projects/i)).toBe('20');
-    fireEvent.click(screen.getByRole('button', { name: 'All pathways 60' }));
-    await waitFor(() => expect(apiRequest).toHaveBeenLastCalledWith('GET', '/api/c2c/projects?clientWorkspaceId=11&ws=MDX'));
+    expect(optionText('Pathway')).toContain('All pathways (60)');
+    choose('Pathway', 'all');
+    await waitFor(() => expect(apiRequest.mock.lastCall?.slice(0, 2)).toEqual(['GET', '/api/c2c/projects?clientWorkspaceId=11&ws=MDX']));
   });
 
   it('applies the same pathway through the existing surface action and rejects unknown keys', async () => {
@@ -76,7 +88,7 @@ describe('Projects full-portfolio counts and server pathway filters', () => {
     expect(action.ok).toBe(true);
     if (!action.ok) throw new Error(action.error);
     act(() => { expect(applySurfaceAction(action.directive, vi.fn()).status).toBe('applied'); });
-    await waitFor(() => expect(apiRequest).toHaveBeenLastCalledWith('GET', '/api/c2c/projects?ws=MDX&pathway=pma'));
+    await waitFor(() => expect(apiRequest.mock.lastCall?.slice(0, 2)).toEqual(['GET', '/api/c2c/projects?ws=MDX&pathway=pma']));
     expect(resolveSurfaceAction('projects.filter', { pathway: 'made_up' }).ok).toBe(false);
   });
 
@@ -84,18 +96,19 @@ describe('Projects full-portfolio counts and server pathway filters', () => {
     render(<Projects {...props()} />);
     await screen.findByText('Project IDE');
     apiRequest.mockImplementation(async () => ({ ok: false, status: 503, json: async () => ({ error: 'Read failed' }) }));
-    fireEvent.click(screen.getByRole('button', { name: 'PMA 20' }));
+    choose('Pathway', 'pma');
     expect(await screen.findByText("Couldn't load the project portfolio")).toBeTruthy();
+    showList();
     expect(figure(/active projects/i)).toBe('—');
     expect(screen.queryByText('No projects yet')).toBeNull();
-    expect(screen.getByRole('button', { name: /^All pathways/ })).toBeTruthy();
+    expect(screen.getByRole('option', { name: /^All pathways/ })).toBeTruthy();
   });
 
   it('does not call an empty pathway result a new organization', async () => {
     render(<Projects {...props()} />);
     await screen.findByText('Project IDE');
     apiRequest.mockImplementation(async () => ok({ data: [], meta: { counts: { ...counts, total: 0 }, clients } }));
-    fireEvent.click(screen.getByRole('button', { name: 'PMA 20' }));
+    choose('Pathway', 'pma');
     expect(await screen.findByText('No projects match these filters')).toBeTruthy();
     expect(screen.queryByText('No projects yet')).toBeNull();
   });
@@ -106,10 +119,12 @@ describe('Projects full-portfolio counts and server pathway filters', () => {
       meta: { counts },
     }));
     render(<Projects {...props()} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Blocked' }));
-    fireEvent.click(screen.getByRole('button', { name: 'PMA 20' }));
+    await screen.findByRole('option', { name: 'Blocked' });
+    choose('Status', 'blocked');
+    choose('Pathway', 'pma');
     await screen.findByText('No projects match these filters');
-    fireEvent.click(screen.getByRole('button', { name: 'All' }));
+    expect(optionText('Status')).toEqual(['All statuses', 'Active', 'Blocked']);
+    choose('Status', 'all');
     expect(await screen.findByText('Project PMA')).toBeTruthy();
   });
 });

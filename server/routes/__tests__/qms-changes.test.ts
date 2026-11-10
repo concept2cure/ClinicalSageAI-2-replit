@@ -25,6 +25,7 @@ vi.mock('../../services/auditService', () => ({
 const REASON = 'Impact assessment opened by QA';
 
 import mdxQmsRouter from '../mdx-qms';
+import { computeQmsChangeContentDigest } from '../../services/qms/change-approval-signature';
 
 function appWith(org: number | null, userId = 7, role = 'member') {
   const app = express();
@@ -114,6 +115,18 @@ describe('GET /api/mdx/qms/changes', () => {
   });
 });
 
+/* The approval signs the content the approver read: the register carries its digest (2026-11-10). */
+describe('GET /api/mdx/qms/changes — the digest an approval binds', () => {
+  it('returns each change with the content digest its approval signs', async () => {
+    const row = changeRow({ status: 'under_assessment', impact_assessment: 'Assessed.', implementation_plan: 'Planned.' });
+    query.mockResolvedValueOnce({ rows: [row] }).mockResolvedValueOnce({ rows: [] });
+    const res = await request(appWith(9)).get('/api/mdx/qms/changes');
+    expect(res.status).toBe(200);
+    expect(res.body.data[0].content_digest).toBe(computeQmsChangeContentDigest(row as never));
+    expect(res.body.data[0].content_digest).not.toBe(computeQmsChangeContentDigest({ ...row, implementation_plan: 'Edited.' } as never));
+  });
+});
+
 describe('POST /api/mdx/qms/changes', () => {
   it('creates a change request and returns the row', async () => {
     query.mockResolvedValueOnce({ rows: [changeRow()] });
@@ -179,6 +192,41 @@ describe('POST /api/mdx/qms/changes/:id/transition — controlled lifecycle', ()
       expect(res.status).toBe(428);
       expect(query.mock.calls.some((c) => /UPDATE qms_change_controls/i.test(String(c[0])))).toBe(false);
     }
+  });
+});
+
+/* An approved change's content is what its approval signed (change-approval-signature.ts). Until 2026-11-10 the
+   PATCH route rewrote it in any state but closed, cancelled and rejected, and a refused edit said "not found". */
+describe('PATCH /api/mdx/qms/changes/:id — content is editable until approval', () => {
+  it('edits a change under assessment, guarded in the statement itself, and records the edit', async () => {
+    query.mockResolvedValueOnce({ rows: [changeRow({ status: 'under_assessment', impact_assessment: 'Filter qualification only.' })] });
+    const res = await request(appWith(9)).patch('/api/mdx/qms/changes/1').send({ impactAssessment: 'Filter qualification only.' });
+    expect(res.status).toBe(200);
+    expect(res.body.data.impact_assessment).toBe('Filter qualification only.');
+    expect(String(query.mock.calls[0][0])).toMatch(/status = ANY\(\$3::text\[\]\)/);
+    expect(query.mock.calls[0][1].slice(0, 3)).toEqual([1, 9, ['proposed', 'under_assessment']]);
+    expect(logAction).toHaveBeenCalledWith(expect.objectContaining({ action: 'mdx.qms.change.update' }));
+  });
+
+  it.each(['approved', 'in_implementation', 'verification', 'closed', 'rejected', 'cancelled'])('409 for a change that is %s: its content is fixed', async (status) => {
+    query
+      .mockResolvedValueOnce({ rows: [] })                          // the guarded update matches nothing
+      .mockResolvedValueOnce({ rows: [changeRow({ status })] });    // the change exists, in that state
+    const res = await request(appWith(9)).patch('/api/mdx/qms/changes/1').send({ implementationPlan: 'Rewritten after approval.' });
+    expect(res.status).toBe(409);
+    expect(res.body.details).toMatchObject({ code: 'QMS_CHANGE_CONTENT_FIXED', status });
+    // The refusal is said only after the tenant read finds the change (an absent one is 404, below).
+    expect(String(query.mock.calls[1][0])).toMatch(/FROM qms_change_controls WHERE id = \$1 AND organization_id = \$2/);
+    expect(res.body.error.includes('what its approval signed')).toBe(!['rejected', 'cancelled'].includes(status));
+    expect(res.body.error).toMatch(/Nothing was saved\. To amend it, raise a new change request\./);
+    expect(res.body.error).toContain(`This change is ${status.replace(/_/g, ' ')}`);
+    expect(logAction).not.toHaveBeenCalled();
+  });
+
+  it('404 for a change this organization does not have', async () => {
+    query.mockResolvedValueOnce({ rows: [] }).mockResolvedValueOnce({ rows: [] });
+    const res = await request(appWith(9)).patch('/api/mdx/qms/changes/1').send({ title: 'Anything' });
+    expect(res.status).toBe(404);
   });
 });
 

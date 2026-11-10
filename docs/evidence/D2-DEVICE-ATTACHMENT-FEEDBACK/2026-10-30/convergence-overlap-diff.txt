@@ -1,0 +1,202 @@
+diff --git a/client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes.tsx b/client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes.tsx
+index 4d43f2142..2057e3e64 100644
+--- a/client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes.tsx
++++ b/client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes.tsx
+@@ -19,13 +19,13 @@ import {
+   auditChipMeta,
+   unclassifiedFilterCaveat,
+ } from '../../data/pathwayTabs';
++import { useVaultUpload, VAULT_UPLOAD_ACCEPT } from '../../../v2/useVaultUpload';
+ import { EmptyState, ErrorState } from '../../../v2/dataConnect';
+ import { useSectionVersions } from '../../hooks/useSectionVersions';
+-import { useSection } from '../../store/dossierStore';
++import { DossierStore, useSection } from '../../store/dossierStore';
+ import { DataGate } from '../../components/DataGate';
+ import type { DataState } from '../../lib/dataState';
+ import { FilesTreePane } from './FilesTreePane';
+-import { DossierAttachments } from './DossierAttachments';
+ import { usePathwayTabsData } from '../../hooks/usePathwayTabsData';
+ import { useDossierHydration } from '../../hooks/useDossier';
+ import { useElectronicSignature } from '../../hooks/useElectronicSignature';
+@@ -35,6 +35,7 @@ import type {
+   Approval,
+   AuditEvent,
+   Correspondence,
++  DossierAttachment,
+   PathwayKey,
+   SectionTarget,
+ } from '../../types';
+@@ -793,6 +794,8 @@ export interface DossierDrawerProps {
+ export function DossierDrawer({ open, target, pathway, documentId = null, programId = null, onClose, onOpenEditor }: DossierDrawerProps) {
+   const safeTarget: SectionTarget = target || { id: '', label: '' };
+   const [tab, setTab] = React.useState<'document' | 'attachments' | 'activity'>('document');
++  /* Attachments are real uploads now — see onAttach below. */
++  const attachUpload = useVaultUpload(open && target ? programId : null, JSON.stringify([pathway, safeTarget.id]));
+ 
+   const { body, meta, attachments, folder } = useSection(pathway, safeTarget.id, safeTarget.label);
+ 
+@@ -817,6 +820,43 @@ export function DossierDrawer({ open, target, pathway, documentId = null, progra
+     onClose();
+   };
+ 
++  /* THE ATTACHMENT PATH, and what it used to be.
++   *
++   * This read `f.name` and `f.size` off each File and passed them to
++   * `DossierStore.attachFile`, which wrote them into an in-memory Map. The
++   * BYTES WERE NEVER TOUCHED. A reviewer attaching the interference study a
++   * notified body had asked for saw it listed with their name and a timestamp,
++   * and nothing had left the browser — gone on reload, absent from the
++   * submission, and no way to tell from the screen.
++   *
++   * `attachFile` then pushed a `kind: 'attach'` event into the same array the
++   * Part 11 activity feed renders, so the dossier also showed an audit entry
++   * for the transfer that did not happen, attributed to a hardcoded
++   * 'Reg Lead'. That push is gone (see ../../store/dossierStore.ts); the real
++   * entry comes from the server, which writes it in the same transaction as
++   * the document.
++   *
++   * The file now goes to POST /api/vault/ingest, which hashes it, stores it and
++   * records who filed it. The local list is updated only for files the server
++   * actually accepted. */
++  const onAttach = async (files: FileList) => {
++    if (!files?.length || attachUpload.uploading) return;
++    const selected = Array.from(files);
++    const accepted = new Set<number>();
++    const outcome = await attachUpload.upload(selected, {
++      onFileStatus: (index, status) => { if (status.state === 'stored') accepted.add(index); },
++    });
++    // A retired visit returns no actionable receipt, even if an earlier row
++    // settled before the drawer closed or changed section. Names are not ids:
++    // two selected files may share a name while only one was recorded.
++    if (!outcome.recorded.length) return;
++    selected.filter((_f, index) => accepted.has(index)).forEach((f) => {
++      DossierStore.attachFile(pathway, safeTarget.id, safeTarget.label, {
++        name: f.name, size: f.size, kind: DossierStore.guessKind(f.name),
++      }, { who: 'You' });
++    });
++  };
++
+   const labelByPathway = pathway === 'k510' ? '510(k) dossier' : pathway === 'pma' ? 'PMA dossier' : pathway === 'ivd' ? 'IVD dossier' : 'CER dossier';
+   const status = meta.status || 'draft';
+   const version = meta.version || 1;
+@@ -858,9 +898,7 @@ export function DossierDrawer({ open, target, pathway, documentId = null, progra
+           {/* Keyed per section: the editor owns its buffer, so a section
+               switch must remount it on the new body rather than syncing. */}
+           {tab === 'document' && <DDDocumentTab body={body} onOpenEditor={onOpenEditor ? openInEditor : undefined} />}
+-          {/* Keep upload feedback alive while another tab is shown in this drawer. */}
+-          <DossierAttachments {...{ programId, documentId, pathway, attachments }} target={safeTarget}
+-            visible={tab === 'attachments'} formatTime={fmtTime} />
++          {tab === 'attachments' && <DDAttachmentsTab attachments={attachments} onAttach={onAttach} uploading={attachUpload.uploading} note={attachUpload.note} clearNote={attachUpload.clearNote} />}
+           {tab === 'activity' && (
+             <DDActivityTab
+               events={activity}
+@@ -924,6 +962,91 @@ function DDDocumentTab({ body, onOpenEditor }: { body: string; onOpenEditor?: ()
+   );
+ }
+ 
++function kindIcon(kind: string | undefined): React.ReactNode {
++  switch (kind) {
++    case 'pdf': return I.fileText;
++    case 'doc': return I.fileText;
++    case 'xls':
++    case 'csv': return I.barChart;
++    case 'img': return I.image;
++    case 'code': return I.code;
++    default: return I.file;
++  }
++}
++
++function DDAttachmentsTab({ attachments, onAttach, uploading, note, clearNote }: {
++  attachments: DossierAttachment[]; onAttach: (files: FileList) => void;
++  uploading: boolean; note: ReturnType<typeof useVaultUpload>['note']; clearNote: () => void;
++}) {
++  const [over, setOver] = React.useState(false);
++  const inputRef = React.useRef<HTMLInputElement>(null);
++
++  const onDrop = (e: React.DragEvent<HTMLDivElement>) => {
++    e.preventDefault();
++    setOver(false);
++    if (!uploading && e.dataTransfer?.files) onAttach(e.dataTransfer.files);
++  };
++
++  return (
++    <div className="dd-att-wrap" aria-busy={uploading}>
++      <div
++        className="dd-att-drop"
++        data-over={over}
++        role="button"
++        tabIndex={uploading ? -1 : 0}
++        aria-label="Attach files"
++        aria-disabled={uploading}
++        onDragEnter={(e) => { e.preventDefault(); setOver(true); }}
++        onDragOver={(e) => { e.preventDefault(); setOver(true); }}
++        onDragLeave={() => setOver(false)}
++        onDrop={onDrop}
++        onClick={() => { if (!uploading) inputRef.current?.click(); }}
++        onKeyDown={(e) => {
++          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!uploading) inputRef.current?.click(); }
++        }}
++      >
++        {I.paperclip}
++        <span>Drop files or click to attach</span>
++        <span className="dd-att-drop-sub">PDF · DOCX · XLSX · CSV · PNG · JSON</span>
++        <input
++          ref={inputRef}
++          type="file"
++          accept={VAULT_UPLOAD_ACCEPT}
++          disabled={uploading}
++          multiple
++          style={{ display: 'none' }}
++          onChange={(e) => { if (e.target.files) onAttach(e.target.files); e.target.value = ''; }}
++        />
++      </div>
++      <p className="dd-att-drop-sub" role="status" aria-live="polite">{uploading ? 'Uploading files…' : note?.tone === 'ok' ? note.text : ''}</p>
++      {note?.tone === 'error' && <ErrorState variant="inline" title="Check the upload outcome" message={note.text} onDismiss={clearNote} />}
++      {attachments.length === 0 ? (
++        <div className="dd-att-empty">No attachments yet.</div>
++      ) : (
++        <div className="dd-att-list">
++          {attachments.map((f, i) => (
++            <div key={i} className="dd-att-row" data-live={!!f.live}>
++              <span className={`dd-att-ico kind-${f.kind || 'file'}`}>{kindIcon(f.kind)}</span>
++              <div className="dd-att-meta">
++                <div className="dd-att-name">{f.name}</div>
++                <div className="dd-att-sub">
++                  <span>{DossierStore.fmtSize(f.size) || ''}</span>
++                  <span>·</span>
++                  <span>{f.who}</span>
++                  <span>·</span>
++                  <span>{fmtTime(f.when)}</span>
++                  {f.source && <><span>·</span><span className="mono">{f.source}</span></>}
++                </div>
++              </div>
++              {f.live && <span className="dd-att-tag">new</span>}
++            </div>
++          ))}
++        </div>
++      )}
++    </div>
++  );
++}
++
+ function DDActivityTab({
+   events,
+   state,
+diff --git a/docs/work-orders/README.md b/docs/work-orders/README.md
+index 1031b8790..6ed11b194 100644
+--- a/docs/work-orders/README.md
++++ b/docs/work-orders/README.md
+@@ -18,11 +18,11 @@ to one line; edit only your own row to limit merge conflicts.
+ 
+ | Lane | Session | State |
+ |---|---|---|
+-| **W2 / D2 — complete device attachment feedback.** Reuse the existing drawer/uploader and canonical visit guards; exact outcome messages, keyboard chooser and honest busy/recovery behavior. Evidence `docs/evidence/D2-DEVICE-ATTACHMENT-FEEDBACK/2026-10-30/`; design `docs/design/DEVICE_ATTACHMENT_FEEDBACK_2026-10-30.md`. | Codex continuation + scoped contract/test/UX reviewers | **claimed** 2026-10-30 — baseline `89b67685e`; no second uploader, session engine, schema, API, dependency, entitlement or app. Durable association and eTMF ownership remain separate. |
++| **W1 / D2 — complete Vault upload ownership and failure reporting.** Fence the existing sequential upload owner across project/session retirement and duplicate calls; preserve unknown gateway outcomes. Evidence `docs/evidence/D2/2026-10-30-vault-final-review/`; current archive-access evidence `docs/evidence/D5/2026-10-30-vault-final-access/`. | Codex Vault final review | **verified** 2026-10-30 — 2,540 disjoint regression checks/232 files, 36 native archive checks, 52 browser flows and 8 mutation controls. Build and warning ratchet pass; final normal publication/compiler receipt `/workspace/shared/vault-final-review-release.json`. No deployment claim. |
+ | **W2 / D2 — correct device attachment identity.** Reuse the existing drawer and indexed Vault receipt statuses; preserve original selections across the upload await. Evidence `docs/evidence/D2-DEVICE-ATTACHMENT-IDENTITY/2026-10-30/`. | Codex continuation + independent contract/test/audit team | **source accepted** 2026-10-30 — `c0325308d`, **265 targeted tests / 20 suites**, complete build, no added lint warnings and all normal gates including TypeScript 0. Equal filenames and repeated File references keep independent outcomes. Current canonical MDX risk/design-control changes preserved; no PR or unresolved conflicts. Receipt `source-publication.json` in the packet; deployment/CI completion not claimed. |
+ | **W1 / D2 — complete Vault upload receipt validation.** Extend `useVaultUpload` and existing ingest response contracts; malformed successful replies remain unknown, never recorded. Evidence `docs/evidence/D2/2026-10-30-vault-upload-receipts/`. No server write, schema, surface or dependency change. | Codex continuation of Vault review | **verified** 2026-10-30 — 2,672 regression checks/257 files, 104 focused checks, 5 native API checks and 32 browser flows; build, zero-error TypeScript and warning ratchet pass. Normal publication receipt: `/workspace/shared/vault-upload-receipts-release.json`. No deployment claim. Additional D2/W2 canonical convergence: saved-title confirmations and actual Vault/device caller proof; **471 targeted tests/38 suites**, fresh build and every normal gate (TypeScript0), accepted source `b1455c944`. Self-contained receipt: `docs/evidence/D2-VAULT-UPLOAD-RECEIPTS/2026-10-30/source-publication.json`. |
+ | **W1 / D5 — resume the Vault archive and upload review handoff.** Restore the missing archive privacy, build admission, delivery and per-document audit fixes, plus upload uncertainty and manifest corrections. Existing folder/closing archive routes and upload controls only; resolve the lint historical-source race that stopped the push. Evidence `docs/evidence/D5/2026-10-30-vault-archive-review/`, `docs/evidence/D2/2026-10-30-vault-upload-review/`, `docs/evidence/W2/2026-10-30-eslint-ratchet-race/`. | Codex continuation of `session_01KnUGoX3g4R4FWKWGc2sTbN` | **released** 2026-10-30 — 2,620 regression tests/256 files, 28 native database tests, 19 ratchet controls, 24 component-browser checks; production build and zero-error TypeScript pass. Nine security mutations caught; normal publication receipt retained in `/workspace/shared/vault-handoff-release.json`. No deployment claim. |
+-| **W2 / D1 — complete catalog and tasking read recovery.** Extend existing Subscription & features retries and truthful AnA task/project-read refusals; contract `docs/design/CATALOG_TASKING_RECOVERY_2026-10-30.md`; evidence `docs/evidence/W2/2026-10-30-catalog-tasking-recovery/`. | Codex runtime control tower + scoped catalog/tasking owners | **claimed** 2026-10-30 — refreshed canonical `47ce1d3d9`; October 23 source/publication already present. No new surface, transport, session store or server fallback. Hosted incident verification remains open. |
++| **W2 / D1 — complete catalog and tasking read recovery.** Extend existing Subscription & features retries and truthful AnA task/project-read refusals; contract `docs/design/CATALOG_TASKING_RECOVERY_2026-10-30.md`; evidence `docs/evidence/W2/2026-10-30-catalog-tasking-recovery/`. | Codex runtime control tower + scoped catalog/tasking owners | **engineering complete** 2026-10-30 — existing catalog/subscription retries, truthful partial task/project reads and atomic filters, plus scoped phone recovery layout. Canonical development preserved through `9e6ee17ba`; latest 190/10 device and 145/6 agency cohorts overlap; real component browser checks at1440/390 and matched-stamp production builds. Final exact-tree normal gates and guarded direct publication required. Hosted incident URL and human acceptance remain open. |
+ | **D2 / P-74 item 1 — converge the two TMF stores onto one, reach the protocol-design study, and admit eTMF inside Vault.** Design `docs/design/ETMF_CONVERGENCE_2026-10-30.md` (P-75). Files: `server/routes/etmf*.ts`, `server/services/etmf/*`, `migrations/20260610_etmf.sql`, `migrations/20260615_tmf_artifact_filings.sql`, `shared/constants/domain/tmf-reference-model.ts`, `client/src/concept2cure/v2/surfaces/Etmf.tsx`, `client/src/concept2cure/v2/fixtures/etmf.ts`, the AnA TMF tools in `AnaToolExecutor.ts`, `etmf` in `shared/constants/launch-scope.ts` and the registry; catalog rows in `db/migrations/20260810_reconcile_module_catalog.sql` and `20260823_module_catalog_commercial_packaging.sql`. Evidence `docs/evidence/D2-ETMF/` | `…session_01LjrcEe8y3zUQxwX91zzTaM` | **claimed** 2026-10-30 — slices E1–E6 |
+ | **D2 — Veeva gap 4: assigned review and approval routing (`docs/design/REVIEW_ROUTING_2026-10-23.md`).** Gap 4 of `docs/design/VEEVA_GAP_2026-10-22.md`. Converges Vault and QMS send-for-review onto the existing task path (`unified_tasks`, `notifyTaskEvent`, `taskDueSweep`, `OpenWork.tsx` for the tray and Home, Review's "Awaiting my review"); the subject's own Part 11 signature closes each task, and reassignment reuses `assignTask`. Slices RR1–RR8, RR1 first: Vault send-for-review with named reviewers and a due date. Recommends NEW-4 (review quorum) for the coordinator to record. Design only so far; no code. Evidence `docs/evidence/D2-REVIEW-ROUTING/<date>/` | `…session_01DiJJAkasGVrccrxjhYyjxG` | **claimed** 2026-10-23 — landed, each red then green, evidence in `docs/evidence/D2-REVIEW-ROUTING/`:<br>• NEW-4 and D-Q decided (`9995d10e6`): Vault ≥1 reviewer and ≥1 approver; QMS ≥1 designated approver, reviewers optional; QMS approvers are a per-organization audited designation.<br>• RR1a, the server: `review_routes`, the writer guard on every task path, Vault routed signing, withdraw, return, every exit.<br>• RR1b: Vault Send for review with named reviewers and due dates, tasks and notices, every signer shown; OQ-002 v0.15.<br>• RR3: reassign and hand back; this restored RR1a's `assignTaskInTx`, which merges had dropped.<br>• RR4: QMS routes and the approver designation; OQ-006 v0.8.<br>• RR2: sequential reviewers, several approvers, adding a reviewer.<br>• RR2 records: an interim approval is its own record and no reader calls it the approval; every signer is named.<br>• RR5: Authoring request-review writes its route and tasks on one transaction; the REVIEWER e-sign closes the task. Merged onto P-59's doors through a new door, `review_route_record_authoring_signature`.<br>• RR5 acceptance passes at desktop and phone width (390×844); seven phone defects were fixed. The Review board now reads a reviewer's route signature instead of showing them as still awaiting.<br>**Open:** the Authoring OQ run on RR5; RR6 (Authoring approvers; delete `/submit` and `/docs/:id/sign`); RR7 (one inbox); RR8 (protocol reviewers); URS-VAULT-013 and URS-006 revisions through change control |
+ | **W1 / D2 — complete selected-source handoff ownership.** Extend the existing Data Room/Vault chooser and editor source channel; contract `docs/design/SELECTED_SOURCE_HANDOFF_OWNERSHIP_2026-10-26.md`; evidence `docs/evidence/D2-EDITOR-LOCAL-JOURNEYS/2026-10-26/`. | Codex control tower + scoped tests/browser owners | **delivered on canonical `2af4894ee`** 2026-10-26 — original account/project/source ownership persists through Close, private channel and receiver; scoped reads/refresh, explicit access and one-way retirement verified. 382 disjoint tests/17 suites and 44 actual-component browser cases pass; build, strict zero-warning lint, 7 editor/UI/size gates and normal push gates pass, full TypeScript 0 errors. Human guide: 106 cases Not run; local/Codespaces only. |

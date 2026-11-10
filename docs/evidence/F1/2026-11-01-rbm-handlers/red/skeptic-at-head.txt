@@ -1,0 +1,132 @@
+# Skeptic re-run, 2026-11-02T00:43:11Z. The working tree's tests against HEAD 1427862c2's AnaToolExecutor.ts, rbm-actuator.ts and rbm-assessment-seed.ts (git show HEAD:<path>), swapped in by method/vitest.swap.config.ts; the tree itself untouched.
+# F1_SWAP_DIR=<HEAD copies> F1_INCLUDE=server/services/ana/__tests__/rbm-handlers.test.ts,server/services/rbm/__tests__/rbm-actuator.test.ts,server/services/rbm/__tests__/rbm-assessment-seed.test.ts npx vitest run --maxWorkers=1 --config docs/evidence/F1/2026-11-01-rbm-handlers/method/vitest.swap.config.ts
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > commits a draft and its default factors together, with the actor and no signature 42ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > rolls back the assessment and already-written factors when a later factor fails 10ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > rechecks current write authority inside the transaction before any record is inserted 5ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > leaves a caller-owned transaction open so the caller can roll the seed back 38ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > uses an already-connected client as supplied instead of inferring ownership from its connect method 36ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > uses one explicitly owned pool lease and releases it after its atomic seed 11ms
+ ✓ server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > does not roll back a caller’s earlier work when a caller-owned seed fails 13ms
+ × server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > rolls back another RBM write through the shared owned transaction when its work fails 21ms
+   → inOwnedRbmTransaction is not a function
+ × server/services/rbm/__tests__/rbm-assessment-seed.test.ts > shared canonical assessment seed > commits another RBM write on one released pool lease 6ms
+   → inOwnedRbmTransactionFromPool is not a function
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor joins the study's open draft assessment, as POST /rbm-risk-items does > a1: attaches the factor to the study's one open draft, inside one transaction 50ms
+   → expected null to be 12 // Object.is equality
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor joins the study's open draft assessment, as POST /rbm-risk-items does > a1b: with a signed v1 and an open amendment v2, the factor joins the draft v2 2ms
+   → expected null to be 12 // Object.is equality
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor joins the study's open draft assessment, as POST /rbm-risk-items does > a2: refuses with the actuator's read-only reason, and writes nothing, when the only version is signed 2ms
+   → expected undefined to be 'This assessment and its factors are r…' // Object.is equality
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor joins the study's open draft assessment, as POST /rbm-risk-items does > a3: refuses a named signed assessment, as the route does (requireDraftAssessment) 2ms
+   → expected undefined to be 'This assessment and its factors are r…' // Object.is equality
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor joins the study's open draft assessment, as POST /rbm-risk-items does > a3b: a named draft is used even when the study has two drafts 2ms
+   → expected null to be 12 // Object.is equality
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor joins the study's open draft assessment, as POST /rbm-risk-items does > a3c: the snake_case assessment_id the admission checks is the one the factor joins 2ms
+   → expected null to be 13 // Object.is equality
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a4: refuses likelihood 7, which the route refuses with 422 (SCALE_1_5), and writes nothing 2ms
+   → .toMatch() expects to receive a string, but got undefined
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a4b: refuses a category the route does not accept 1ms
+   → .toMatch() expects to receive a string, but got undefined
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a4c: refuses an unreadable optional input instead of saving the default in its place 2ms
+   → .toMatch() expects to receive a string, but got undefined
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a5: refuses when the study has no assessment, pointing to the seed, and writes nothing 1ms
+   → .toMatch() expects to receive a string, but got undefined
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a6: refuses when the study has more than one draft, naming each 1ms
+   → .toMatch() expects to receive a string, but got undefined
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a7: rechecks write authority on the transaction before the insert, and a revoked one writes nothing 1ms
+   → expected -1 to be greater than or equal to 0
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a8: leases the canonical pool for the transaction instead of transacting through pool.query 1ms
+   → expected "vi.fn()" to be called once, but got 0 times
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (a) add_ctq_factor refuses what the route refuses, and writes as the route does > a9: transacts on a pinned request client as supplied 1ms
+   → expected -1 to be greater than or equal to 0
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (b) generate_rbm_plan proposes what POST /rbm-monitoring-plans/generate would save > b1: refuses with the route's reason when the study has no risk assessment, instead of answering "medium" 1ms
+   → expected 'medium' to be undefined
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (b) generate_rbm_plan proposes what POST /rbm-monitoring-plans/generate would save > b2: refuses with the route's reason when the only assessment is an unsigned draft 1ms
+   → expected 'high' to be undefined
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (b) generate_rbm_plan proposes what POST /rbm-monitoring-plans/generate would save > b3: derives from the approved version and its factors only, not a newer draft amendment 3ms
+   → expected undefined to match object { assessmentId: 10, …(1) }
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (b) generate_rbm_plan proposes what POST /rbm-monitoring-plans/generate would save > b4: refuses an approved assessment that records no overall risk, instead of "medium" 1ms
+   → expected 'medium' to be undefined
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (b) generate_rbm_plan proposes what POST /rbm-monitoring-plans/generate would save > b5: the proposal is the route's derivation — an issue per open critical factor, a visit per enhanced site — and nothing is written 4ms
+   → expected [ { riskItemId: 21, …(4) }, …(2) ] to deeply equal [ { actionType: 'issue', …(4) }, …(2) ]
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (b) generate_rbm_plan proposes what POST /rbm-monitoring-plans/generate would save > b6: says when a draft plan is already open, since generating would then be refused 1ms
+   → expected undefined to deeply equal { id: 4, version: 3 }
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (c) run_rbm_assessment summarizes one version; its seed is the canonical template start > c1 (guard): seed:true writes the canonical library as one unsigned draft, in one transaction 2ms
+   → expected undefined to be true // Object.is equality
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (c) run_rbm_assessment summarizes one version; its seed is the canonical template start > c2 (guard): seed:true does not write when the study already has an assessment, and says so 1ms
+   → expected undefined to be false // Object.is equality
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (c) run_rbm_assessment summarizes one version; its seed is the canonical template start > c2b: a draft summary says the draft governs nothing; an approved one carries no such note 1ms
+   → .toMatch() expects to receive a string, but got undefined
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (c) run_rbm_assessment summarizes one version; its seed is the canonical template start > c3: the summary reads the factors of the assessment it returns, not every version 1ms
+   → expected 'SELECT category, ctq_factor, likeliho…' to match /assessment_id\s*=\s*\$\d/
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (c) run_rbm_assessment summarizes one version; its seed is the canonical template start > c4: after an amendment it returns the draft v2 as a draft, with each factor once 1ms
+   → expected [ 'SAE reporting', 'SAE reporting' ] to deeply equal [ 'SAE reporting' ]
+ × server/services/ana/__tests__/rbm-handlers.test.ts > (c) run_rbm_assessment summarizes one version; its seed is the canonical template start > c5: the "No RACT yet" hint appears only when the study has no assessment 1ms
+   → expected 'No RACT yet — call again with seed=tr…' to be undefined
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor infers risk score and criticality from the band 3ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor leaves a low-risk item non-critical 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor honors an explicit isCritical override 0ms
+ × server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor refuses likelihood 7 before any write 14ms
+   → promise resolved "{ item: { id: 1 }, inferred: { …(3) } }" instead of rejecting
+ × server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor refuses impact 0 before any write 2ms
+   → promise resolved "{ item: { id: 1 }, inferred: { …(3) } }" instead of rejecting
+ × server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor refuses likelihood 2.5 before any write 1ms
+   → promise resolved "{ item: { id: 1 }, inferred: { …(3) } }" instead of rejecting
+ × server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor refuses detectability 6 before any write 1ms
+   → promise resolved "{ item: { id: 1 }, inferred: { …(3) } }" instead of rejecting
+ × server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor refuses category "quality" before any write 1ms
+   → promise resolved "{ item: { id: 1 }, inferred: { …(3) } }" instead of rejecting
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > defineKri infers amber status from value vs thresholds (higher worse) 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > setQtl infers the 75% secondary limit and approaching status 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > setQtl evaluates a lower-bound limit in its own direction and infers no upper-side secondary 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > setQtl refuses a two-sided limit without both bounds 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > inferSecondaryLimit is null without a threshold 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > recordKriReading resolves by id, computes status, and writes value + KRI update 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > recordKriReading returns unresolved when the KRI is not found 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > draftPlan infers strategy from the assessment overall risk 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > draftPlan falls back to risk_based when no assessment exists, and takes the next version 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > draftPlan reports an open draft rather than opening a second one 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > raiseSignal defaults source=manual, severity=medium and scopes to tenant 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > triageSignal reports no_fields when nothing changes 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > createAction refuses when the plan is not in-tenant 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > updateAction with no fields is a no-op 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > approveAssessment writes reason + approver and scopes to tenant 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > approveAssessment returns null when not found in tenant 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > archives the version it supersedes, so a program has one governing basis 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > does not archive anything when the assessment has no program 3ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > records that the two-person rule was enforced 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > records when there was no author to check against 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > refuses to approve an assessment it cannot attribute 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > refuses to approve a monitoring plan it cannot attribute 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > generatePlanFromAssessment — derives the plan from the RACT > derives strategy from the overall risk and seeds actions from the critical CtQs and enhanced sites 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > generatePlanFromAssessment — derives the plan from the RACT > scopes the seeded actions to the governing assessment, not the program 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > generatePlanFromAssessment — derives the plan from the RACT > generates nothing when the study has no risk assessment to derive from 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > generatePlanFromAssessment — derives the plan from the RACT > refuses to derive a plan from an unapproved RACT 0ms
+ × server/services/rbm/__tests__/rbm-actuator.test.ts > derivePlanFromAssessment — the read-only half, shared with AnA > proposes exactly the actions generatePlanFromAssessment inserts, and writes nothing 1ms
+   → derivePlanFromAssessment is not a function
+ × server/services/rbm/__tests__/rbm-actuator.test.ts > derivePlanFromAssessment — the read-only half, shared with AnA > reports an approved assessment that records no overall risk as unrecorded, not "medium" 0ms
+   → derivePlanFromAssessment is not a function
+ × server/services/rbm/__tests__/rbm-actuator.test.ts > derivePlanFromAssessment — the read-only half, shared with AnA > refuses with the actuator's reasons: no assessment, and an unapproved one 0ms
+   → derivePlanFromAssessment is not a function
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > amendAssessment — versioned revision of a signed RACT > opens the next version as a draft, copying the register forward 2ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > amendAssessment — versioned revision of a signed RACT > refuses to amend a draft — a draft is already editable 2ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > amendAssessment — versioned revision of a signed RACT > refuses a second concurrent amendment 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > amendAssessment — versioned revision of a signed RACT > reports not_found for an assessment outside the tenant 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring plan versioning — a signed plan stops being editable > nextPlanVersion counts past every version on file, including deleted ones 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring plan versioning — a signed plan stops being editable > generatePlanFromAssessment refuses while a draft version is already open 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring plan versioning — a signed plan stops being editable > amend opens the next version as an unsigned draft and copies no actions 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring plan versioning — a signed plan stops being editable > amend refuses a draft plan, and a second concurrent amendment 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring plan versioning — a signed plan stops being editable > approvePlan archives the version it supersedes in the same executor 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring plan versioning — a signed plan stops being editable > approvePlan moves the superseded version's unfinished actions to the new version, with provenance 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring plan versioning — a signed plan stops being editable > approvePlan moves nothing when no version was superseded 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring actions are execution records under the plan in force > createAction logs an action against the active (approved) plan 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring actions are execution records under the plan in force > createAction logs an action on a study's first plan while it is still a draft 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring actions are execution records under the plan in force > createAction refuses a superseded (archived) version and names the plan in force 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring actions are execution records under the plan in force > createAction refuses an open amendment draft — it governs nothing until approved 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > governingPlanId — the plan new actions are logged against > is the active plan, even while a higher draft amendment is open 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > governingPlanId — the plan new actions are logged against > is the first draft when the study has no approved plan 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > governingPlanId — the plan new actions are logged against > is null when only archived versions remain 0ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 36 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  36 failed | 54 passed (90)
+# exit 1

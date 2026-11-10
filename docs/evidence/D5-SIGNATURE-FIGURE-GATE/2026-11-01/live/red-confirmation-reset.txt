@@ -1,0 +1,7 @@
+ ✓ authoringFilingBarFigures.test.tsx > when the server refuses over figures not in their cited sources > asks about each figure by name, each starting at "go back", and sends no acknowledgement first
+ × authoringFilingBarFigures.test.tsx > when the server refuses over figures not in their cited sources > re-signs with every key only when every figure is kept
+   → Unable to find role="heading" and name "Signature applied"
+ ✓ authoringFilingBarFigures.test.tsx > when the server refuses over figures not in their cited sources > keeping one figure and correcting another sends nothing and goes back
+ ✓ authoringFilingBarFigures.test.tsx > when the server refuses over figures not in their cited sources > a freeze asks the same, and re-seals with every key once every figure is kept
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 3 passed (4)

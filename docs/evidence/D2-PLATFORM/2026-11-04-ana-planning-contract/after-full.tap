@@ -1,0 +1,70 @@
+TAP version 13
+# Subtest: product choices exactly match the existing canonical ProductClass union
+ok 1 - product choices exactly match the existing canonical ProductClass union
+  ---
+  duration_ms: 1.307633
+  type: 'test'
+  ...
+# Subtest: family choices exactly match the existing canonical ApplicationFamily union
+ok 2 - family choices exactly match the existing canonical ApplicationFamily union
+  ---
+  duration_ms: 0.28524
+  type: 'test'
+  ...
+# Subtest: all previously exposed medicine product and family choices remain available
+ok 3 - all previously exposed medicine product and family choices remain available
+  ---
+  duration_ms: 0.15203
+  type: 'test'
+  ...
+# Subtest: the existing eight-region selector and order are unchanged
+ok 4 - the existing eight-region selector and order are unchanged
+  ---
+  duration_ms: 0.231329
+  type: 'test'
+  ...
+# Subtest: tool identity, field names and omitted-argument shape remain compatible
+ok 5 - tool identity, field names and omitted-argument shape remain compatible
+  ---
+  duration_ms: 0.174493
+  type: 'test'
+  ...
+# Subtest: the tool distinguishes registry candidates from legal equivalence
+ok 6 - the tool distinguishes registry candidates from legal equivalence
+  ---
+  duration_ms: 0.660877
+  type: 'test'
+  ...
+# Subtest: the tool separates planning from readiness, entitlement, acceptance and authorization
+ok 7 - the tool separates planning from readiness, entitlement, acceptance and authorization
+  ---
+  duration_ms: 0.327304
+  type: 'test'
+  ...
+# Subtest: the tool exposes returned support limitations instead of hiding a gap
+ok 8 - the tool exposes returned support limitations instead of hiding a gap
+  ---
+  duration_ms: 0.280493
+  type: 'test'
+  ...
+# Subtest: the skill preserves specific product settings and discloses comparison defaults
+ok 9 - the skill preserves specific product settings and discloses comparison defaults
+  ---
+  duration_ms: 0.976263
+  type: 'test'
+  ...
+# Subtest: the skill agrees with the tool about candidates, support gaps and human authorization
+ok 10 - the skill agrees with the tool about candidates, support gaps and human authorization
+  ---
+  duration_ms: 0.504712
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 360.954887

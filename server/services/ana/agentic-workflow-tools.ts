@@ -16,10 +16,15 @@
 
 import type { AnaTool } from '../ai-gateway/types';
 import { capToolResultForModel } from './agentic-loop.js';
+import { MAX_AGENT_SOURCE_SPANS, MAX_AGENT_SOURCE_CHARS, MAX_AGENT_QUOTE_CHARS } from './sub-agent-limits.js';
 import type { ToolContext } from './AnaToolExecutor.js';
 import { looksLikeProgramUuid } from '../../lib/project-id.js';
 import { ProgramReadAccessError, requireCurrentProgramAccess } from '../c2c/current-program-access.js';
 import { handleUpdatePlan, UPDATE_PLAN_TOOL_NAME } from './turn-plan.js';
+import type { RunCoordinationHost, WorkerCoordinationHandle, CoordinationModel } from './run-events';
+import { z } from 'zod';
+import { stableStringify } from '../../../shared/canonical-json';
+import { coordinationSha256 } from './run-events';
 import {
   AGENT_INSTRUCTIONS_MAX,
   AGENT_OBJECTIVE_MAX,
@@ -139,11 +144,22 @@ export const RUN_AGENT: AnaTool = {
     'figure carries a citation marker (the marker is not checked against any source), whether any labelled figure ' +
     'stated more than once is stated with two different values, and, when a numbered project is open, whether any ' +
     'figure differs from the same labelled figure in the project records. No checker verifies that a citation ' +
-    'exists or supports the text, or that a quotation matches its source. For those, the agent can only find and ' +
-    'quote source passages, and its report is advisory. The verdict comes only from the checks.',
+    'exists or supports the text. Optionally provide source_spans to compare exact quotation spans against stored ' +
+    'artifacts through the available project-scoped read_vault_document tool before the agent starts. These checks ' +
+    'compare only those spans, not semantic support or source authenticity. For other citations, the agent can only find and ' +
+    'quote source passages, and its report is advisory. Optionally pass source_document_ids (existing Vault version UUIDs) ' +
+    'for an independent server read and deterministic clinical figure comparison. Recognized complete numeric/arm/explicit-zero frames can be contradicted or unsupported by those sources. ' +
+    'General prose, ambiguous frames and unrecognized comparisons or negations remain unverified. All child model calls treat the unassessed brief as T3/local-only. The verdict comes only from the checks.',
   input_schema: {
     type: 'object',
     properties: {
+      action: { type: 'string', enum: ['spawn', 'team', 'message', 'revision'], description: 'Default spawn. Existing team actions only use this live run’s server-issued workers.' },
+      intent_id: { type: 'string', maxLength: 200 },
+      recipient: { type: 'string', pattern: '^(anna|w[1-6])$' },
+      message_kind: { type: 'string', enum: ['review', 'help', 'source', 'report'] },
+      text:{type:'string',minLength:1,maxLength:2000,description:'Optional bounded peer proposal. Protected tenant-key capture is required; no text is broadcast or returned by team reads.'},
+      report_event_id: { type: 'string', format: 'uuid' },
+      report_sha256: { type: 'string', pattern: '^[a-f0-9]{64}$' },
       role: {
         type: 'string',
         enum: ['research', 'verify'],
@@ -162,10 +178,88 @@ export const RUN_AGENT: AnaTool = {
         type: 'string',
         description: `verify only: the exact text to check, as written (at most ${AGENT_TEXT_TO_CHECK_MAX} characters).`,
       },
+      source_spans: {
+        type: 'array', minItems: 1, maxItems: MAX_AGENT_SOURCE_SPANS,
+        description: `verify only: optional exact quotation references (up to ${MAX_AGENT_SOURCE_SPANS}). UTF-16 character offsets, end exclusive; source and draft spans must have equal length (1–${MAX_AGENT_QUOTE_CHARS} characters). Source end must be at most ${MAX_AGENT_SOURCE_CHARS}. No source text is accepted as evidence: the server reads each stored artifact.`,
+        items: {
+          type: 'object',
+          properties: {
+            artifact_id: { type: 'string', description: 'Existing artifact id returned by a project-scoped document read.' },
+            source_start: { type: 'integer', minimum: 0 },
+            source_end: { type: 'integer', minimum: 1 },
+            draft_start: { type: 'integer', minimum: 0 },
+            draft_end: { type: 'integer', minimum: 1 },
+          },
+          required: ['artifact_id', 'source_start', 'source_end', 'draft_start', 'draft_end'],
+          additionalProperties: false,
+        },
+      },
+      source_document_ids: { type: 'array', minItems: 1, maxItems: 8, uniqueItems: true,
+        items: { type: 'string', format: 'uuid' },
+        description: 'verify only: 1–8 current Vault document-version UUIDs in the open project. The server independently loads their current source text and hashes. No caller source text, success flag, classification or scientific qualification is accepted.' },
     },
-    required: ['role', 'objective', 'instructions'],
+    required: [],
   },
 };
+
+/** Same existing tool name, with no spawning operation, for privately bound children. */
+export const CHILD_COORDINATION_TOOL: AnaTool & {input_schema:AnaTool['input_schema']&{additionalProperties:false}} = { name: RUN_AGENT_TOOL,
+  description: 'Read this run’s scoped team or send a bounded request or proposal. Optional text requires encrypted owner capture and is delivered only at the authorized model boundary. Reports remain proposals; only AnA can assess them. No new agents.',
+  input_schema: { type: 'object', properties: { action: { type: 'string', enum: ['team','message','revision'] },
+    intent_id: { type: 'string', maxLength: 200 }, recipient: { type: 'string', pattern: '^(anna|w[1-6])$' },
+    message_kind: { type: 'string', enum: ['review','help','source','report'] }, report_event_id: { type: 'string', format: 'uuid' },
+    text:{type:'string',minLength:1,maxLength:2000},
+    report_sha256: { type: 'string', pattern: '^[a-f0-9]{64}$' } }, required: ['action'], additionalProperties: false } };
+type CoordinationBinding = { host: RunCoordinationHost; handle?: WorkerCoordinationHandle };
+const coordinationBindings = new WeakMap<ToolContext, CoordinationBinding>();
+export function bindWorkerCoordination(ctx: ToolContext, host: RunCoordinationHost, handle: WorkerCoordinationHandle): void { coordinationBindings.set(ctx, { host, handle }); }
+export function bindParentCoordination(ctx: ToolContext, host: RunCoordinationHost): void { coordinationBindings.set(ctx, { host }); }
+export function inheritCoordinationBinding(from: ToolContext | undefined, to: ToolContext): ToolContext {
+  const binding = from && coordinationBindings.get(from);
+  if (binding) coordinationBindings.set(to, binding);
+  return to;
+}
+export function isWorkerCoordinationAction(ctx: ToolContext | undefined, name: string, input: Record<string, unknown>): boolean {
+  return !!ctx && !!coordinationBindings.get(ctx)?.handle && name === RUN_AGENT_TOOL && ['team','message','revision'].includes(String(input.action));
+}
+export function isBoundCoordinationAction(ctx:ToolContext|undefined,name:string,input:Record<string,unknown>):boolean{
+  const binding=ctx&&coordinationBindings.get(ctx);if(!binding)return false;
+  if(binding.handle)return isWorkerCoordinationAction(ctx,name,input);
+  if(name===RUN_AGENT_TOOL)return input.action===undefined||['spawn','team','message','revision'].includes(String(input.action));
+  return name===UPDATE_PLAN_TOOL_NAME&&Array.isArray(input.worker_dispositions)&&Object.keys(input).every(key=>key==='worker_dispositions');
+}
+export async function recordBoundCoordinationRefusal(ctx:ToolContext|undefined,toolName:string,input:Record<string,unknown>,code:string,
+  options:{toolNameSha256?:string}={}):Promise<void>{
+  const binding=ctx&&coordinationBindings.get(ctx);if(!binding)throw new Error('COORDINATION_CAPABILITY_REQUIRED');
+  if(options.toolNameSha256!==undefined&&!/^[a-f0-9]{64}$/.test(options.toolNameSha256))throw new Error('COORDINATION_INPUT_INVALID');
+  const argsSha256=coordinationSha256(stableStringify(input)),model=coordinationModel(ctx);
+  const basis:import('./run-events').CoordinationBasis[]=[];
+  if(options.toolNameSha256)basis.push({kind:'event',ref:'untrusted_tool_name',sha256:options.toolNameSha256});
+  if(toolName==='execute_platform_command'&&input.command==='freeze_document')basis.push({kind:'event',ref:'command:freeze_document'});
+  await binding.host.refuse(binding.handle??null,{intentId:`refused:${model?.requestId??'unrecorded_model'}:${toolName}:${argsSha256}:${code}:${options.toolNameSha256??''}`,
+    toolName,argsSha256,code,model,basis});
+}
+function coordinationModel(ctx: ToolContext | undefined): CoordinationModel | null {
+  return ctx?.servingModel ? { provider: ctx.servingModel.provider ?? null, model: ctx.servingModel.model ?? null, requestId: ctx.servingModel.requestId ?? null } : null;
+}
+async function handleCoordinationAction(input: Record<string, unknown>, ctx: ToolContext | undefined): Promise<string> {
+  const binding = ctx && coordinationBindings.get(ctx);
+  if (!binding) return JSON.stringify({ error: 'COORDINATION_CAPABILITY_REQUIRED' });
+  const model = coordinationModel(ctx);
+  if (input.action === 'team') {
+    if (Object.keys(input).some(key => key !== 'action')) return JSON.stringify({ error: 'COORDINATION_INPUT_INVALID' });
+    const board = await binding.host.snapshot(binding.handle);
+    return JSON.stringify({ workers: board.workers, messages: board.messages.map(({ text: _text, ...message }) => message) });
+  }
+  if (input.action === 'message') {
+    const parsed = z.object({ action: z.literal('message'), intent_id: z.string().min(1).max(200), recipient: z.string().regex(/^(anna|w[1-6])$/), message_kind: z.enum(['review','help','source','report']),text:z.string().min(1).max(2000).optional() }).strict().parse(input);
+    return JSON.stringify(await binding.host.message(binding.handle ?? null, { intentId: parsed.intent_id, recipient: parsed.recipient, messageKind: parsed.message_kind,text:parsed.text, model }));
+  }
+  const parsed = z.object({ action: z.literal('revision'), intent_id: z.string().min(1).max(200), report_event_id: z.string().uuid(), report_sha256: z.string().regex(/^[a-f0-9]{64}$/) }).strict().parse(input);
+  if (!binding.handle) return JSON.stringify({ error: 'COORDINATION_WORKER_REQUIRED' });
+  return JSON.stringify(await binding.host.revise(binding.handle, { intentId: parsed.intent_id, reportSha256: parsed.report_sha256,
+    basis: [{ kind: 'report', ref: parsed.report_event_id, sha256: parsed.report_sha256 }], model }));
+}
 
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -207,6 +301,7 @@ export function registerAgenticWorkflowHandlers(register: RegisterFn): void {
   // (governed-reason-not-invented.test.ts). It is RUN_AGENT_TOOL's value,
   // which sub-agent-toolset.test.ts pins.
   register('run_agent', async (input, ctx) => {
+    if (input.action !== undefined && input.action !== 'spawn') return handleCoordinationAction(input, ctx);
     const { runSubAgent } = await import('./sub-agent.js');
     return runSubAgent(input, ctx ?? {}, ctx?.subAgentHost);
   });
@@ -443,5 +538,8 @@ export function registerAgenticWorkflowHandlers(register: RegisterFn): void {
 
 // AnA's declared plan for the turn (turn-plan.ts). Pure validation, no side
 // effect: the stream route turns the normalised result into a `plan` event.
-  register(UPDATE_PLAN_TOOL_NAME, async (input) => handleUpdatePlan(input));
+  register(UPDATE_PLAN_TOOL_NAME, async (input, ctx) => {
+    const binding = ctx && coordinationBindings.get(ctx);
+    return handleUpdatePlan(input, binding?.handle ? undefined : binding?.host, coordinationModel(ctx));
+  });
 }

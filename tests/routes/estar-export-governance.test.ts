@@ -9,7 +9,16 @@ const {
   mockLogAction,
   mockLoadAuthoredSections,
   mockLoadContentLeaves,
+  mockFilingAgreement,
 } = vi.hoisted(() => ({
+  /* P-29.3: whether the program's filing holds its editing documents' text.
+     Default: not applicable (nothing bound), which is every case below that
+     does not say otherwise. The question itself runs against PostgreSQL in
+     server/services/pathway-engines/estar/__tests__/estar-exits-ask-the-filing.pglite.test.ts. */
+  mockFilingAgreement: vi.fn(async () => ({
+    documentId: 'doc-k510', bound: [] as string[], diverged: [] as unknown[], rewritten: [] as unknown[], unfiled: [] as string[],
+    reason: 'No document in the editor is bound to this filing, so there is no editing text to compare.',
+  })),
   mockRender510k: vi.fn(async () => ({
     coverLetter: Buffer.from('cover'),
     summary: Buffer.from('summary'),
@@ -95,6 +104,7 @@ vi.mock('../../server/services/auditService', () => ({
 vi.mock('../../server/services/pathway-engines/estar/estar-content-leaves', () => ({
   loadDeviceContentLeaves: mockLoadContentLeaves,
   loadAuthoredDeviceSections: mockLoadAuthoredSections,
+  governedDeviceFilingAgreement: mockFilingAgreement,
   // The scope resolver is data-driven in production (governed content present?);
   // here a programId is taken as governed so the routing of the scope is what
   // the tests observe.
@@ -565,5 +575,86 @@ describe('an unplaced export whose audit row does not persist', () => {
     const body = res.json.mock.calls[0][0];
     expect(body).not.toHaveProperty('downloadable_output_ref');
     expect(JSON.stringify(body)).not.toContain('base64');
+  });
+});
+
+/* P-29.3 (docs/EXIT_ATTESTATION_DECISION_2026-10-18.md): the device exits read
+   the filing (c2c_document_sections), and until 2026-11-02 none of them asked
+   whether it still held the text of the document the author edits and signs. */
+describe('the device exits ask whether the filing holds the document\'s text', () => {
+  const E1 = { key: 'E1', filed: 'different', section: { id: 's-e1', code: 'E1' }, authoringDocId: 'ed-1' };
+  const REWRITTEN_E1 = { documentId: 'doc-k510', bound: ['ed-1'], unfiled: [] as string[], diverged: [E1], rewritten: [E1] };
+  const governedBuild = () => makeReq({
+    body: { meta: { id: 'BX-204', ident: PROGRAM_UUID, title: 'BX-204 draft package' }, useProjectContent: true },
+  });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Reset, not clear: a queued once-value from an earlier case must not
+    // decide which anchor these resolve. The program, then its C1 anchor, so a
+    // build reaches the governed (registry-placed) consequence.
+    mockResolveRows.mockReset()
+      .mockReturnValueOnce([{ id: PROGRAM_UUID, name: 'BX-204 CGM' }])
+      .mockReturnValueOnce([{ id: 4242 }])
+      .mockReturnValue([]);
+    mockLoadAuthoredSections.mockReset()
+      .mockResolvedValue([{ title: 'Device Description', content: 'A continuous glucose monitor.', sectionCode: 'B1' }]);
+  });
+
+  it('/build refuses a package whose filed copy was rewritten, and builds nothing', async () => {
+    mockFilingAgreement.mockResolvedValueOnce(REWRITTEN_E1 as never);
+    const res = createMockResponse() as any;
+    await getHandler('/build')(governedBuild(), res);
+
+    expect(mockFilingAgreement).toHaveBeenCalledWith(2, PROGRAM_UUID, expect.anything());
+    expect(res.status, 'a package with a rewritten filed copy was built').toHaveBeenCalledWith(409);
+    const payload = res.json.mock.calls[0][0];
+    expect(payload).toMatchObject({ error: 'FILING_DIVERGED', diverged: ['E1'], deviceContentSource: 'governed_program' });
+    expect(payload.message).toMatch(/^Nothing was built\. The filed copy of section E1 is not the document's text\./);
+    expect(payload.message).toMatch(/Re-file saved text/);
+    expect(mockRender510k).not.toHaveBeenCalled();
+    expect(mockGovernedConsequence).not.toHaveBeenCalled();
+  });
+
+  it('/build records what it compared, and which authored sections are not yet filed', async () => {
+    mockFilingAgreement.mockResolvedValueOnce({ documentId: 'doc-k510', bound: ['ed-1'], diverged: [], rewritten: [], unfiled: ['D2'] } as never);
+    const res = createMockResponse() as any;
+    await getHandler('/build')(governedBuild(), res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    const recorded = { compared: true, documentId: 'doc-k510', unfiled: ['D2'] };
+    expect((mockGovernedConsequence.mock.calls[0][0] as any).metadata.filingAgreement).toEqual(recorded);
+    expect(res.json.mock.calls[0][0].filingAgreement).toEqual(recorded);
+  });
+
+  it('/build says it compared nothing, and why, when no editing document is bound', async () => {
+    const res = createMockResponse() as any;
+    await getHandler('/build')(governedBuild(), res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json.mock.calls[0][0].filingAgreement).toEqual({
+      compared: false, documentId: 'doc-k510', unfiled: [],
+      reason: 'No document in the editor is bound to this filing, so there is no editing text to compare.',
+    });
+  });
+
+  it('/build asks nothing of a legacy package, which reads no filing', async () => {
+    mockResolveRows.mockReset().mockReturnValue([{ id: 33, deviceName: 'Test Device' }]);
+    const res = createMockResponse() as any;
+    await getHandler('/build')(makeReq({ body: { meta: { id: 'k123', projectId: 33 }, useProjectContent: true } }), res);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(mockFilingAgreement).not.toHaveBeenCalled();
+  });
+
+  it('/assemble reports nothing producible, and why, for a program whose filed copy was rewritten', async () => {
+    mockFilingAgreement.mockResolvedValueOnce(REWRITTEN_E1 as never);
+    mockLoadContentLeaves.mockResolvedValueOnce([{ sectionCode: 'B1', title: 'Device Description', documentType: 'device_description' }]);
+    const res = createMockResponse() as any;
+    await getHandler('/assemble')(makeReq({ body: { pathway: '510k', variant: 'device', programId: PROGRAM_UUID } }), res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    const payload = res.json.mock.calls[0][0];
+    expect(payload.artifactKind, 'a rewritten filed copy read as an assemblable draft').toBe('none');
+    expect(payload.filedCopyDiverged).toEqual(['E1']);
+    expect(payload.blockers.some((b: string) => /^Nothing can be assembled yet\. The filed copy of section E1/.test(b))).toBe(true);
   });
 });

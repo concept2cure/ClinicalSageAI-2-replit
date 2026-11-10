@@ -55,10 +55,12 @@ import {
   type TechnicalFileUnmappedLeaf,
 } from './technical-file-packager';
 import {
+  governedDeviceFilingAgreement,
   loadGovernedDeviceSections,
   governedSectionIsAuthored,
   type GovernedDeviceSectionRow,
 } from '../estar/estar-content-leaves';
+import { filedCopyDivergedSentence } from '../../c2c/filing-section-target';
 import { recordAuditRow, type AuditRowOutcome } from '../../audit/audit-write-outcome';
 import { createScopedLogger } from '../../../utils/logger';
 import { companyLegalSubmissionContext, readCompanyLegalSubmissionContext } from '../../ectd/company-legal-context';
@@ -140,6 +142,19 @@ export class NoAuthoredTechnicalFileContentError extends Error {
         'in this organization — there is nothing to package. Author and save at least one Annex II/III section first.',
     );
     this.name = 'NoAuthoredTechnicalFileContentError';
+  }
+}
+
+/**
+ * The technical file was not assembled because a filed copy is not the text
+ * its document holds (P-29.3, docs/EXIT_ATTESTATION_DECISION_2026-10-18.md).
+ * Thrown before anything is staged or audited; the route maps the code to 409.
+ */
+export class TechnicalFileFilingDivergedError extends Error {
+  readonly code = 'FILING_DIVERGED';
+  constructor(sentence: string) {
+    super(`The technical file was not assembled. ${sentence}`);
+    this.name = 'TechnicalFileFilingDivergedError';
   }
 }
 
@@ -455,6 +470,13 @@ export async function assembleTechnicalFileFromProgram(
   const coreLeaves = governedSectionsToCoreLeaves(rows);
   if (coreLeaves.length === 0) {
     throw new NoAuthoredTechnicalFileContentError(regulation, programId);
+  }
+  // 1b. Is that filing still the text its editing documents hold? Asked of the
+  //     same document, by the same class (P-29.3); a rewritten filed copy
+  //     refuses before anything is staged, and a failed read throws.
+  const agreement = await governedDeviceFilingAgreement(organizationId, programId, { client: pool, docTypes: [regulation] });
+  if (agreement.rewritten.length > 0) {
+    throw new TechnicalFileFilingDivergedError(filedCopyDivergedSentence(agreement.rewritten));
   }
 
   const applicationId = params.applicationId ?? `PROG-${programId.replace(/[^a-z0-9]/gi, '').slice(0, 8).toUpperCase()}`;

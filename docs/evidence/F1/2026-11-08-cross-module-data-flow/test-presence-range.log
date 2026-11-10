@@ -1,0 +1,27 @@
+(node:8) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Warning: modified files without companion tests (non-blocking):
+ - client/src/concept2cure/v2/authoringHandoffRecovery.ts
+ - client/src/concept2cure/v2/editor/DocumentWorkbench.tsx
+ - client/src/concept2cure/v2/surfaces/Biostatistics.tsx
+ - client/src/concept2cure/v2/surfaces/CsrRunBuilds.tsx
+ - server/api/cmc/batchRecordRoutes.ts
+ - server/routes/authoring.router.ts
+ - server/routes/c2c/project-intake.ts
+ - server/routes/chat/upload.ts
+ - server/routes/mdx-rbm.ts
+ - server/services/ana-biostats/workflow-integrator.ts
+ - server/services/ana/csr-saved-evidence.ts
+ - server/services/authoring/authoring-from-draft.ts
+ - server/services/authoring/csr-scientific-review-core.ts
+ - server/services/c2c/add-project-market.ts
+ - server/services/capa-mdr/capaMdr.service.ts
+ - server/services/capa-mdr/stateMachine.ts
+ - server/services/clinical-regulatory-evidence/evidence-spine.service.ts
+ - server/services/csr/csr-efficacy-table.ts
+ - server/services/qms/changeControl.service.ts
+ - shared/authoring/csr-scientific-review.ts
+Missing corresponding tests for:
+ - client/src/concept2cure/v2/__tests__/_statistical-handoff-fixture.ts
+VERIFY_TESTS_STRICT is not enabled; continuing with warning-only mode.
+Companion-file scan complete. This scan does not execute or qualify tests.

@@ -47,13 +47,13 @@ afterEach(() => cleanup());
 async function renderCanvas(seg: string) {
   segment = seg;
   render(<InsightsCanvas surface={{ id: 'insights', label: 'Insights' } as OwnedSurfaceViewProps['surface']} segment={seg} onNav={() => {}} />);
-  await waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
+  await waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
 }
 
 describe('Insights — reports run over the lead project', () => {
   it('sends the project scope and id the overview names', async () => {
     await renderCanvas('pharma');
-    const composer = document.querySelector('.rc-input textarea') as HTMLTextAreaElement;
+    const composer = document.querySelector('[data-work-area="insights"] .rc-find input') as HTMLInputElement;
     fireEvent.change(composer, { target: { value: 'Generate the Executive Readiness Digest for ABC-101' } });
     fireEvent.keyDown(composer, { key: 'Enter' });
     await waitFor(() => expect(apiRequest.mock.calls.some(([m, u]) => m === 'POST' && u === '/api/report-os/runs')).toBe(true));
@@ -63,7 +63,7 @@ describe('Insights — reports run over the lead project', () => {
 
   it('a pack tile whose type does not run over a project says so and offers no run', async () => {
     await renderCanvas('academic');
-    fireEvent.click(document.querySelector('.rc-preset-btn') as HTMLElement);
+    fireEvent.click(document.querySelector('[data-work-area="insights"] .ph-acts .btn.primary') as HTMLElement);
     await waitFor(() => expect(document.querySelector('.ro-pack-grid')).not.toBeNull());
     expect(screen.getByText(/Runs over project group or account, not a single project\./)).toBeTruthy();
     const runnable = [...document.querySelectorAll('button.ro-pack-card')].map((b) => b.textContent ?? '');

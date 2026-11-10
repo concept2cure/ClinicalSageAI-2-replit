@@ -1,0 +1,5 @@
+{
+  "success": false,
+  "error": "TEMPLATE_MODULE_MISMATCH",
+  "message": "This template belongs to a different document module or whole-document scope. Open a document with the matching scope. Nothing was changed."
+}

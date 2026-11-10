@@ -1,0 +1,5 @@
+MUTATION M10 in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T11:35:08Z): the sentence naming retirement dropped from createSequence's duplicate refusal
+ × tests/db/sequence-number-once.dbtest.ts > a sequence number is used once in a submission (F1 repair A) > a second live 0000 is refused, by name 12403ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 3 skipped (4)
+restored sha256 c181f73fc67b752a4b89be87365668aec37fd22d8efc1e2f6d3deed64d3c4f64 (expected c181f73fc67b752a4b89be87365668aec37fd22d8efc1e2f6d3deed64d3c4f64)

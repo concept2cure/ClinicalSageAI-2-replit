@@ -116,7 +116,8 @@ describe('Vault — the project’s governed artifacts', () => {
   it('the header names governed artifacts beside authored documents', async () => {
     mockVaultApi(apiRequest, () => ok(payload()));
     render(<Vault {...props()} />);
-    await waitFor(() => expect(document.querySelector('.vd-sub-x')?.textContent ?? '').toMatch(/3 governed artifacts/));
+    // D6-3: the header line is D0's `.ph-sub` (D6 §C.4 step 2).
+    await waitFor(() => expect(document.querySelector('.ph-sub')?.textContent ?? '').toMatch(/3 governed artifacts/));
   });
 
   it('opens an artifact on its governance: kind, format, origin, model, author, signature, review, sources, hash', async () => {
@@ -166,6 +167,8 @@ describe('Vault — honest states of the governed artifacts', () => {
     );
     render(<Vault {...props()} />);
     const l = await lane();
+    // D6-3: the lane is a section of the Governed artifacts view (D6 §C.4 step 5); its alert is read there.
+    fireEvent.click(screen.getByRole('tab', { name: 'Governed artifacts' }));
     const alert = within(l).getByRole('alert');
     expect(alert.textContent).toMatch(/could not be read/);
     expect(alert.textContent).toMatch(/not provisioned in this environment/);

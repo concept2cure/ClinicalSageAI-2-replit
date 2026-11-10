@@ -114,13 +114,13 @@ afterEach(() => {
    canvas offers this segment's packs: the "Portfolio oversight pack". */
 const renderCanvas = () =>
   render(<InsightsCanvas surface={{ id: 'insights', label: 'Insights' } as OwnedSurfaceViewProps['surface']} segment="health" onNav={vi.fn()} />);
-const ready = () => waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
+const ready = () => waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
 async function openPack() {
   renderCanvas();
   await ready();
-  // "Where to start": the segment's first pack, offered for the open project.
+  // The header's primary: the segment's first pack, offered for the open project.
   const opener = await waitFor(() => {
-    const button = document.querySelector<HTMLElement>('.rc-opener .rc-preset-btn');
+    const button = document.querySelector<HTMLElement>('[data-work-area="insights"] .ph-acts .btn.primary');
     expect(button?.textContent).toMatch(/Build the Portfolio oversight pack/);
     return button!;
   });
@@ -166,9 +166,9 @@ describe('report scope line — what the counts cover', () => {
     rendered = calendarDoc;
     renderCanvas();
     await ready();
-    fireEvent.click(await screen.findByRole('tab', { name: 'Report catalog' }));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
     const card = (await screen.findByText('Lifecycle Obligation Calendar')).closest('.rl-card') as HTMLElement;
-    fireEvent.click(within(card).getByRole('button', { name: /^Run$/ }));
+    fireEvent.click(within(card).getByRole('button', { name: /^Run / }));
     expect((await screen.findByTestId('ro-scope')).textContent).toBe(PROJECT);
     expect(within(head()).getByText(NOT_NARROWED)).toBeTruthy();
     const obligations = screen.getByRole('heading', { name: 'Recorded obligation calendar' }).closest('section')!;

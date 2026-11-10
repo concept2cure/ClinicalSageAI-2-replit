@@ -1,0 +1,82 @@
+{
+  "observedAt": "2026-11-06T21:44:58.972408+00:00",
+  "reviewerTask": "/root/editor_context_security_review",
+  "package": "F1",
+  "baselineMerge": "4b7798ea1f1a1eb3423f73e2b40d6e02171db14c",
+  "coordinationHeadAtReview": "4b7798ea1f1a1eb3423f73e2b40d6e02171db14c",
+  "reviewedRepairState": "Owner-frozen source/test bytes recorded below; coordination HEAD alone does not identify the then-uncommitted repair.",
+  "status": "passed_scoped_source_review_native_stream_checkpoint_gap_resolved",
+  "closesReview": "incoming-f612-security-review.json",
+  "method": "Independent read-only diff/caller/test inspection, verified four owner source/test pins, both unchanged SDK guard pins and four retained log manifests. Only review documentation written. No source/test edits or tests/compiler/browser/provider calls/git mutations by reviewer.",
+  "findings": [
+    "The guard copies authenticated organization/user/program scalars and exact originally returned native context IDs plus stable string fingerprints. It does not reread mutable request body or caller context objects.",
+    "Every dispatch rereads exactly those admitted native IDs through canonical current parent/object/facts/disposition admission and compares the exact native set. Missing/superseded/new valid snapshots and failed verification refuse.",
+    "The same callback is passed to first and follow-up gateway requests. Existing SDK checkpoint code remains byte-identical to f429 and wraps callback failures safely and terminally after capacity/credential waits.",
+    "Stable identity includes original and supplied-text digests, text, representation identity and flags, without retrieval timestamps. The reader budgets native contexts before retained contexts, so rereading the returned native IDs preserves mixed-selection and bounded UTF-8 prefix behavior.",
+    "Zero-native/legacy-only context returns no callback and performs no new reread. No unrelated legacy source-resolution or tool-context behavior was changed.",
+    "Other reviewed Quality report/native/registry policies from the incoming review remain intact; this repair does not confer scientific qualification, native approval or an artifact-registry transfer."
+  ],
+  "ownerVerification": {
+    "performedBy": "/root/risk_project_ui",
+    "receipt": "../server/native-quality-dispatch-receipt.json",
+    "reviewerReranTests": false,
+    "reviewerInspectedRawLogSummaries": true,
+    "red": {
+      "failedSuites": 2,
+      "failedTests": 14,
+      "passedTests": 8
+    },
+    "green": {
+      "passedSuites": 2,
+      "passedTests": 22,
+      "serviceCases": 18,
+      "actualHttpStreamCases": 4,
+      "durationSeconds": 24.0
+    },
+    "lint": {
+      "errors": 0,
+      "existingWarnings": 25,
+      "newWarningSites": 0
+    },
+    "verifiedRetainedLogManifests": 4
+  },
+  "sourceFiles": [
+    {
+      "path": "server/services/clinical-regulatory-evidence/retained-source-context.ts",
+      "sha256": "331beee77add448d370ca847ac1f5f806b6cdef6765743f73702b42a5d53d061",
+      "bytes": 9364
+    },
+    {
+      "path": "server/routes/ana-ri/stream.ts",
+      "sha256": "c110b04b96dbbc723d608dd47d9dac1989e18f545abf73b20250609955c4547e",
+      "bytes": 235298
+    },
+    {
+      "path": "server/services/clinical-regulatory-evidence/__tests__/native-selected-context.test.ts",
+      "sha256": "492b3c19bca7ba52aef011b2f6fdd6023c983a7b4f8276df04d7149010018cd1",
+      "bytes": 9533
+    },
+    {
+      "path": "server/routes/ana-ri/__tests__/stream-native-quality-context.test.ts",
+      "sha256": "851b20e4386b9a64c5065258920a8e4ef4fb78b1b3969aa1bd44738a781f5ea2",
+      "bytes": 7576
+    },
+    {
+      "path": "server/services/ai-gateway/gateway.ts",
+      "sha256": "09d187427e7dece2beec0b5a6d2e39391f94152909f291ca5c7a59a881427ff7",
+      "bytes": 239345
+    },
+    {
+      "path": "server/services/ai-gateway/providers/clients.ts",
+      "sha256": "0e3a3b26808709947a182c0fb4a96abb6fc2b02437ed54e0cf3fce4987227eb2",
+      "bytes": 9895
+    }
+  ],
+  "canonicalPinManifestSha256": "bafe972e7b447842ff28ad310ada2411ec05d130fb5588cf00dd3f50505c8254",
+  "limits": [
+    "Service cases use mocked canonical database/access/disposition seams. HTTP cases execute the actual stream and loop with scripted gateway/source-admission seams; neither is live-model or native-PostgreSQL concurrency qualification.",
+    "Existing unchanged SDK-boundary qualification is composed with the new route/helper proof; this reviewer did not rerun it.",
+    "Catalogue companions and final combined compiler/build/publication remain with the lead and their owners.",
+    "Prior full gates and browser45/native25 receipts keep their exact checkpoints and transitive exclusions; this review does not claim complete MDX client acceptance or deployment."
+  ]
+}

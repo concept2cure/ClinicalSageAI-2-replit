@@ -101,8 +101,16 @@ async function extractFrom(organizationId: number, doc: PendingRow): Promise<Pen
     import('../services/ocr/index.js'), import('../services/conversion-slots.js'),
   ]);
   const extracted = await withConversionSlot('vault-ocr', () =>
-    extractDocumentText(read.bytes, doc.mime_type ?? undefined, doc.file_name ?? '', { pdfOcrBudget: AUTOMATIC_PDF_OCR_BUDGET }));
+    extractDocumentText(read.bytes, doc.mime_type ?? undefined, doc.file_name ?? '', { pdfOcrBudget: AUTOMATIC_PDF_OCR_BUDGET, layout: true }));
   return { extracted };
+}
+
+/** What the extraction's audit row says of the layout reader (P-90): what it read, or why it was not used. */
+function layoutDetails(extracted: import('../services/ocr/index.js').ExtractedDocumentText): Record<string, unknown> {
+  if (extracted.layout) {
+    return { layout: { reader: extracted.layout.reader, sections: extracted.layout.sections, tables: extracted.layout.tables.length } };
+  }
+  return extracted.layoutNotUsed ? { layoutNotUsed: extracted.layoutNotUsed } : {};
 }
 
 /** What a read comes to: the text to store (none when empty), the catalog outcome, and the page count. */
@@ -178,6 +186,7 @@ async function readAndRecord(client: import('pg').PoolClient, organizationId: nu
         charCount: outcome.charCount, pageCount, error: outcome.error,
         ...filing,
         ...('extracted' in read && read.extracted.coverage ? { coverage: read.extracted.coverage } : {}),
+        ...('extracted' in read ? layoutDetails(read.extracted) : {}),
       },
     });
     await client.query('COMMIT');
@@ -187,7 +196,7 @@ async function readAndRecord(client: import('pg').PoolClient, organizationId: nu
   }
   if (text && 'extracted' in read) {
     const { isVaultChunkingEnabled, chunkDocumentForIngest } = await import('../services/vault/document-chunking.service.js');
-    await chunkDocumentForIngest(doc.id, organizationId, text, read.extracted.pageSpans, { embed: await isVaultChunkingEnabled(organizationId) });
+    await chunkDocumentForIngest(doc.id, organizationId, text, read.extracted.pageSpans, { embed: await isVaultChunkingEnabled(organizationId), tableSpans: read.extracted.layout?.tables });
   }
   return outcome.status === 'extracted' ? 'extracted' : 'failed';
 }

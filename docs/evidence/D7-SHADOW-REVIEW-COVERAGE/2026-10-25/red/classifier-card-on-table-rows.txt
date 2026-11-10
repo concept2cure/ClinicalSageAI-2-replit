@@ -1,0 +1,30 @@
+ FAIL  server/services/ai-governance/classification/__tests__/heuristic-classifier.test.ts > HeuristicContentClassifier > does not read a row of a numeric table as a card number
+AssertionError: Placebo 12 34 56 78 90 11 12 13: expected [ 'credit_card' ] to not include 'credit_card'
+ ❯ server/services/ai-governance/classification/__tests__/heuristic-classifier.test.ts:56:55
+     54|     for (const row of rows) {
+     55|       const r = await clf.classify(row);
+     56|       expect(r.matches.map(m => m.detector), row).not.toContain('credi…
+       |                                                       ^
+     57|       expect(r.pii, row).toBe(false);
+     58|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/ai-governance/classification/__tests__/heuristic-classifier.test.ts > HeuristicContentClassifier > still detects a card number written as one, and only one that passes the Luhn check
+AssertionError: expected [ 'credit_card' ] to not include 'credit_card'
+ ❯ server/services/ai-governance/classification/__tests__/heuristic-classifier.test.ts:68:54
+     66|     }
+     67|     const notLuhn = await clf.classify('Lot 4111 1111 1111 1112 releas…
+     68|     expect(notLuhn.matches.map(m => m.detector)).not.toContain('credit…
+       |                                                      ^
+     69|   });
+     70|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+   Start at  21:20:45
+   Duration  421ms (transform 99ms, setup 98ms, import 29ms, tests 18ms, environment 0ms)
+

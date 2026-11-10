@@ -1,0 +1,51 @@
+# Mutation 2: fold-drops-attempt-match
+# 2026-11-01T21:55:00Z
+# What it removes: The fold drops the transmit_attempt_id match, so it reads any transmittal bound to the sequence.
+# File: server/services/ectd/prior-sequence-loader.ts
+# Replaced:
+#   -           AND lower(t.metadata -> 'dispatchBinding' ->> 'attemptId') = f.transmit_attempt_id::text
+# With:
+#   + (nothing)
+# Test run: npx vitest run server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts  (exit 1)
+# Expected to fail on its own assertion: ['rejected, then resent']
+# Failed as expected: {'rejected, then resent': True}
+# Failed on an assertion (no build or syntax error): True
+# File restored byte for byte: True (sha256 before 001a307b619d2c956c183aa15adcde7999d343d6a1580f8a5feb2a996e4c0ad1, after 001a307b619d2c956c183aa15adcde7999d343d6a1580f8a5feb2a996e4c0ad1)
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a leaf only an earlier preview compile carried is not on file (the phantom leaf) 19ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a sequence sent with no compile on record is filed, and the next sequence binds against it 9ms
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > rejected, then resent: only the attempt the sequence is bound to is read 18ms
+   → promise rejected "Error: Sequence 0000 is bound to more tha…" instead of resolving
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent before the guard kept a record is read from its compiles, and labelled so > a bound transmittal with no leaf manifest, or no transmit attempt at all, keeps the compile read 7ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent before the guard kept a record is read from its compiles, and labelled so > another organisation’s transmittal binding the same attempt is never read 5ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a record that cannot say what was sent is an error, never a partial view > two transmittals binding one attempt of one sequence: the read throws, naming the sequence 8ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its transmittal, then one read from its compiles 8ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its compiles, then one read from its transmittal 8ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  21:54:57
+   Duration  3.27s (transform 154ms, setup 126ms, import 85ms, tests 2.73s, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > rejected, then resent: only the attempt the sequence is bound to is read
+AssertionError: promise rejected "Error: Sequence 0000 is bound to more tha…" instead of resolving
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:139:104
+    137|     await transmittal({ attemptId: attempt(31), sequenceId: id }, [lea…
+    138|     await transmittal({ attemptId: attempt(32), sequenceId: id }, [lea…
+    139|     await expect(filedState(3).then((s) => ({ leaves: names(s.leaves),…
+       |                                                                                                        ^
+    140|       .resolves.toEqual({ leaves: ['resend.pdf'], basis: 'transmit' });
+    141|   });
+
+Caused by: Error: Sequence 0000 is bound to more than one transmittal of what it sent (3, 4); what is on file cannot be read, so none of it was.
+ ❯ readFiledManifestRows server/services/ectd/prior-sequence-loader.ts:295:13
+ ❯ loadFiledStateBySubmission server/services/ectd/prior-sequence-loader.ts:336:16
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:139:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

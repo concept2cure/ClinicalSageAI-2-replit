@@ -57,6 +57,7 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
 import { CanonicalAuthoringFlow, sendAuthoringPrefill, sentAuthoringTurns, clearAuthoringFlowScope } from './canonicalAuthoringFlow';
+import { openEditorControl } from '../editor/__tests__/workbenchAssemblyBuild.testSupport';
 
 const PID = '11111111-1111-4111-8111-111111111111';
 const DOC = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
@@ -115,8 +116,9 @@ function mockApi(routes: Routes = {}) {
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (url.startsWith('/api/authoring/docs?')) {
       return ok({
+        success: true,
         documents: [
-          { id: DOC, title: 'CTD 3.2.P', module: 'M3', product_code: null, status: 'draft', updated_at: null, section_count: 1 },
+          { id: DOC, title: 'CTD 3.2.P', module: 'M3', product_code: null, status: 'draft', updated_at: null, section_count: 1, program_id: PID },
         ],
       });
     }
@@ -147,7 +149,8 @@ async function openSourcesRail() {
   render(<DocumentAuthoring {...props()} />);
   // The section title appears in both the tree and the masthead.
   await screen.findAllByText('Composition');
-  fireEvent.click(await screen.findByRole('button', { name: /Sources/ }));
+  await screen.findByTestId('ed-more');
+  fireEvent.click(openEditorControl(/^Sources/));
   return screen.findByText('Drafted from');
 }
 
@@ -184,7 +187,8 @@ describe('DocumentAuthoring — the Sources rail', () => {
     mockApi({ sections: () => ok({ sources: [citation({ state: 'changed' })] }) });
     render(<CanonicalAuthoringFlow segment="biopharma" />);
     await screen.findAllByText('Composition');
-    fireEvent.click(await screen.findByRole('button', { name: /Sources/ }));
+    await screen.findByTestId('ed-more');
+    fireEvent.click(openEditorControl(/^Sources/));
     fireEvent.click(await screen.findByText(/Ask what changed/));
     const composer = await screen.findByRole('textbox', { name: 'Reply to AnA' }) as HTMLTextAreaElement;
     expect(composer.value).toMatch(/no longer matches/);
@@ -212,6 +216,18 @@ describe('DocumentAuthoring — the Sources rail', () => {
     await openSourcesRail();
     expect(await screen.findByText('Source unavailable with current access')).toBeTruthy();
     expect(screen.queryByText(/may have been deleted/)).toBeNull();
+  });
+
+  it('lists a native source that could not be verified, with its reason, beside the sources that could (S12)', async () => {
+    mockApi({ sections: () => ok({ sources: [
+      citation({ state: 'unverifiable', reasonCode: 'NATIVE_SOURCE_ACCESS_UNAVAILABLE', source: null }),
+      citation({ citationId: 'c-plain', state: 'current' }),
+    ] }) });
+    await openSourcesRail();
+    const label = await screen.findByText('Source could not be verified');
+    expect(label.getAttribute('title')).toMatch(/\(NATIVE_SOURCE_ACCESS_UNAVAILABLE\), so it is not used for drafting or citing/);
+    expect(screen.getByText('Matches the source record as stored')).toBeTruthy();
+    expect(screen.queryByText(/Couldn’t load this section’s sources/)).toBeNull();
   });
 
   it('distinguishes a failed read from a section that cites nothing', async () => {
@@ -295,7 +311,7 @@ describe('DocumentAuthoring — recording a source', () => {
     });
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (url.startsWith('/api/authoring/docs?')) {
-        return ok({ documents: [{ id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', section_count: 1, product_code: null, updated_at: null }] });
+        return ok({ success: true, documents: [{ id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', section_count: 1, product_code: null, updated_at: null, program_id: PID }] });
       }
     if (url === `/api/authoring/docs/${DOC}/citations`) return ok([]);
       if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ document: { id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', program_id: PID } });
@@ -326,7 +342,7 @@ describe('DocumentAuthoring — re-reading a source', () => {
     mockApi({ sections: () => ok({ sources: [citation({ state: 'changed' })] }) });
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (url.startsWith('/api/authoring/docs?')) {
-        return ok({ documents: [{ id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', section_count: 1, product_code: null, updated_at: null }] });
+        return ok({ success: true, documents: [{ id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', section_count: 1, product_code: null, updated_at: null, program_id: PID }] });
       }
     if (url === `/api/authoring/docs/${DOC}/citations`) return ok([]);
       if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ document: { id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', program_id: PID } });
@@ -352,7 +368,7 @@ describe('DocumentAuthoring — re-reading a source', () => {
     mockApi({ sections: () => ok({ sources: [citation()] }) });
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (url.startsWith('/api/authoring/docs?')) {
-        return ok({ documents: [{ id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', section_count: 1, product_code: null, updated_at: null }] });
+        return ok({ success: true, documents: [{ id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', section_count: 1, product_code: null, updated_at: null, program_id: PID }] });
       }
     if (url === `/api/authoring/docs/${DOC}/citations`) return ok([]);
       if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ document: { id: DOC, title: 'CTD 3.2.P', module: 'M3', status: 'draft', program_id: PID } });

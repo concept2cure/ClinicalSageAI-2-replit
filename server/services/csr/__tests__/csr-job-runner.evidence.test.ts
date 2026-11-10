@@ -62,7 +62,10 @@ function makeFakeDb(job: Record<string, any>) {
       return Promise.resolve();
     } }) }),
   };
-  return { db, persisted, job };
+  const transactional = Object.assign(db, {
+    transaction: async <T>(fn: (tx: typeof db) => Promise<T>): Promise<T> => fn(db),
+  });
+  return { db: transactional, persisted, job };
 }
 let fake: ReturnType<typeof makeFakeDb>;
 vi.mock('../../../db', () => ({ get db() { return fake.db; }, pool: { query: vi.fn() } }));
@@ -292,6 +295,33 @@ describe('current retained sources on CSR resume and explicit recovery', () => {
     expect(fake.persisted).toEqual(before);
     expect(chatMock).not.toHaveBeenCalled();
     expect(continueMock).not.toHaveBeenCalled();
+  });
+
+  // Walked 2026-11-10: a build stopped, the narratives were built on it, and resuming it was refused with
+  // CSR_EVIDENCE_SAVED_LINEAGE_MISMATCH. The narrative run writes §12.3.2 from the ADaM rows and records its own
+  // composer and the study data it read; the resume read that row as a builder result with no evidence lineage.
+  const narrativeRow = (runId: string): Row => {
+    const content = 'Narratives of deaths and other serious adverse events are presented in Section 14.3.3.';
+    return { sectionNumber: '12.3.2', content, contentHash: createHash('sha256').update(content).digest('hex'),
+      lineage: { source: 'template', composer: 'csr-narrative-job', runId, subjects: 3 } };
+  };
+  it('resumes a build on which the narratives were built: the narrative run\'s §12.3.2 is not a builder result', async () => {
+    fake = makeFakeDb({ ...makeJob(), sectionsToGenerate: ['12.3.2', '13'], status: 'failed' });
+    fake.persisted.push(narrativeRow(RUN), savedDiscussion());
+    const before = globalThis.structuredClone(fake.persisted);
+    await runCSRBuildJob(42);
+    expect(fake.job).toMatchObject({ status: 'complete', progress: 100 });
+    expect(fake.persisted).toEqual(before);
+    expect(chatMock).not.toHaveBeenCalled();
+  });
+
+  it('still refuses a narrative row composed over other study data, and a row that only claims the composer\'s name', async () => {
+    for (const lineage of [narrativeRow('99999999-9999-4999-8999-999999999999').lineage, { composer: 'csr-narrative-job' }]) {
+      fake = makeFakeDb({ ...makeJob(), sectionsToGenerate: ['12.3.2', '13'], status: 'failed' });
+      fake.persisted.push({ ...narrativeRow(RUN), lineage }, savedDiscussion());
+      await runCSRBuildJob(42);
+      expect(fake.job).toMatchObject({ status: 'failed', error: { code: 'CSR_EVIDENCE_SAVED_LINEAGE_MISMATCH' } });
+    }
   });
 
   it('revalidates a fully populated resume and completes without another model call when provenance still matches', async () => {

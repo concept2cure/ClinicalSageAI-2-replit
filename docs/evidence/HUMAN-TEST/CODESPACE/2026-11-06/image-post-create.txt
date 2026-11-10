@@ -1,0 +1,55 @@
+C2C Codespace setup (Node.js 22, PostgreSQL 16 + pgvector, local database)
+
+> concept2cure-riai@1.0.0 prepare
+> [ -n "$CI" ] || husky || true
+
+
+added 2421 packages, and audited 2422 packages in 1m
+
+361 packages are looking for funding
+  run `npm fund` for details
+
+81 vulnerabilities (9 low, 62 moderate, 9 high, 1 critical)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues possible (including breaking changes), run:
+  npm audit fix --force
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+npm notice
+npm notice New major version of npm available! 10.9.2 -> 12.2.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.2
+npm notice To update run: npm install -g npm@12.2.2
+npm notice
+
+> concept2cure-riai@1.0.0 codespaces:doctor:test
+> node --test scripts/ops/codespaces-doctor.test.mjs scripts/ops/codespaces-startup.test.mjs scripts/ops/codespaces-neon-policy.test.mjs
+
+TAP version 13
+1..39
+# tests 39
+# suites 0
+# pass 39
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 107.674651
+[c2c-codespace] Installing PostgreSQL 16 + pgvector.
+[c2c-codespace] BLOCKED: apt-get update failed: the distribution's package mirror is unreachable (see the lines above).
+exit=1
+E: The repository 'http://deb.debian.org/debian bookworm InRelease' is not signed.
+E: Failed to fetch http://deb.debian.org/debian/dists/bookworm/InRelease  405  Method Not Allowed [IP: 127.0.0.1 42291]
+E: Failed to fetch http://deb.debian.org/debian/dists/bookworm-updates/InRelease  405  Method Not Allowed [IP: 127.0.0.1 42291]
+E: The repository 'http://deb.debian.org/debian bookworm-updates InRelease' is not signed.
+E: Failed to fetch http://deb.debian.org/debian-security/dists/bookworm-security/InRelease  405  Method Not Allowed [IP: 127.0.0.1 42291]
+E: The repository 'http://deb.debian.org/debian-security bookworm-security InRelease' is not signed.
+
+real	1m28.565s
+user	1m24.812s
+sys	0m38.342s

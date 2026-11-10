@@ -1,0 +1,29 @@
+# same as above, with client/src/concept2cure/v2/dataConnect.tsx replaced by its 1d789b516 version (EmptyState no longer emits tone-idle); restored afterwards
+# tree: git archive of f2385372 + dataConnect.tsx@1d789b516, extracted to a scratch directory (node_modules symlinked to the main tree)
+# run: 2026-11-01, by the D0 verdict pass
+
+## capture
+ FAIL  scripts/visual-qa/dump-insert-gate.spec.tsx > capture: the conversation’s insert offers > writes one admitted offer and every refusal the gate can print
+Error: [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 111 passed (112)
+
+## contrast
+[visual-qa:contrast] capture is current (newer than every source file).
+[visual-qa:contrast] self-check OK — black on white measures 21:1.
+
+[visual-qa:contrast] 108 surfaces × 2 themes · 5762 text elements measured · 0 below WCAG 2.2 AA (0.0%).
+
+    light    2881 measured ·     0 below AA (0.0%)
+    dark     2881 measured ·     0 below AA (0.0%)
+
+  (0 additional low-contrast elements were lone separator glyphs — excluded as decorative per WCAG 1.4.3.
+   0 were text inside a disabled control — excluded as an inactive user interface component, same clause.)
+
+  No text below AA on any measured surface.
+
+[visual-qa:contrast] Scope: SC 1.4.3 contrast only, on static captured markup. Keyboard
+[visual-qa:contrast] operability, focus order and screen-reader semantics are NOT covered —
+[visual-qa:contrast] React handlers do not survive serialization. This is evidence toward a
+[visual-qa:contrast] VPAT, not a conformance claim.
+contrast exit 0

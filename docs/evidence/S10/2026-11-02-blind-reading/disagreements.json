@@ -1,0 +1,134 @@
+{
+  "count": 10,
+  "byKind": {
+    "B": 1,
+    "C-start": 7,
+    "C-location": 2
+  },
+  "kinds": {
+    "A": "the readers differed on (A)",
+    "B": "the readers differed on (B)",
+    "C-start": "both readers listed the same missing item on the same obligation, starting at different words or lines",
+    "C-location": "both readers listed the same obligation as missing, but chose different text for it"
+  },
+  "perGroup": {
+    "g1": 0,
+    "g2": 1,
+    "g3": 9
+  },
+  "disagreements": [
+    {
+      "id": "Q76",
+      "letter": "L22",
+      "ref": "2",
+      "readerA": {
+        "A": "yes",
+        "B": "no",
+        "B_inside": "The span ends mid-sentence at \"for the\" (line 9), so it does not hold the question's full words. The only text that can finish the sentence is \"Drug Product\" (line 16, top of page 2); reaching it puts page furniture inside the span: line 10 Reference ID line \"Reference ID: 5123456\", line 11 blank, line 12 page marker \"-- 1 of 2 --\", line 13 blank, line 14 running header \"IND 123456\", line 15 running header \"Page 2\". If line 16 is instead a heading (title case, no period, directly before item 3), the stored text holds no completion of question 2 and the question is truncated as stored. Either way no contiguous span holds exactly and completely the agency's words of question 2; a response preparer must check the source PDF."
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes",
+        "B_inside": null,
+        "note": "The question is incomplete as stored: it ends \"for the\" (line 9) with no object. Page 2 opens with \"Drug Product\" (line 16) after the page furniture (lines 10-15). I read line 16 as a section heading for question 3 (own line, capitalised, where these letters write \"drug product\"/\"drug substance\" in lower case in body text), so the span holds all of question 2's stored words and nothing else. If line 16 were instead read as the end of question 2 (\"for the Drug Product\"), B would be no: lines 10-15 (Reference ID, page marker, \"IND 123456\" running header, \"Page 2\") would lie inside. A response preparer would flag question 2 as truncated."
+      },
+      "settled": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "reason": "Line 16 \"Drug Product\" is a section heading, not the tail of question 2: own line, title case where body text writes \"drug substance\" in lower case (line 8), no terminal period where every question in the letter ends with one, directly above the drug-product item 3, and the package names the source fixture heading-opens-page; so question 2's stored words end at \"for the\" (line 9) and span [253,319) holds all of them with nothing foreign. The question is truncated in the letter as stored, which a response preparer flags, but (B) asks about the stored text and no other words of question 2 exist in it. Reader A's \"no\" rests on words the stored text does not contain.",
+      "kind": "B",
+      "group": "g2"
+    },
+    {
+      "id": "C:L45:55",
+      "kind": "C-start",
+      "letter": "L45",
+      "readerA": "line 55, 'However, include a test for residual solvents'",
+      "readerB": "line 55, 'FDA Response to Question 1: We generally agree. However, include...'",
+      "settled": "line 55, 'We generally agree. However, include a test for residual solvents'",
+      "reason": "Same item on the same line; Reader A quoted from the request, Reader B from the response label. Settled: start after the label (a heading, which the README excludes) and keep the agency's answer, which the request depends on.",
+      "group": "g3"
+    },
+    {
+      "id": "C:L45:59",
+      "kind": "C-start",
+      "letter": "L45",
+      "readerA": "line 59, 'Provide the following in the IND:'",
+      "readerB": "line 59, 'FDA Response to Question 2: Yes, your proposal appears reasonable. Provide the following in the'",
+      "settled": "line 59, 'Yes, your proposal appears reasonable. Provide the following in the IND:'",
+      "reason": "Same item on the same line; Reader A quoted from the request, Reader B from the response label. Settled: start after the label (a heading, which the README excludes) and keep the agency's answer, which the request depends on.",
+      "group": "g3"
+    },
+    {
+      "id": "C:L45:73",
+      "kind": "C-start",
+      "letter": "L45",
+      "readerA": "line 74, 'Provide a starting dose rationale based on the STD10 in rats'",
+      "readerB": "line 73, 'FDA Response to Question 3: No. The rationale for the starting dose based on the HNSTD in dogs is'",
+      "settled": "line 73, 'No. The rationale for the starting dose based on the HNSTD in dogs is not adequate' (span lines 73-75)",
+      "reason": "Same item; the agency's response begins on line 73 with the finding that the request on 74-75 cures, and an item keeps its finding with its request (as CRL deficiency plus Recommendation does in n147). Label excluded.",
+      "group": "g3"
+    },
+    {
+      "id": "C:L47:30",
+      "kind": "C-start",
+      "letter": "L47",
+      "readerA": "line 30, 'However, include a test for residual solvents'",
+      "readerB": "line 30, 'FDA Response to Question 1: We generally agree. However, include...'",
+      "settled": "line 30, 'We generally agree. However, include a test for residual solvents'",
+      "reason": "Same item on the same line; Reader A quoted from the request, Reader B from the response label. Settled: start after the label (a heading, which the README excludes) and keep the agency's answer, which the request depends on.",
+      "group": "g3"
+    },
+    {
+      "id": "C:L47:41",
+      "kind": "C-start",
+      "letter": "L47",
+      "readerA": "line 41, 'Provide the following in the IND:'",
+      "readerB": "line 41, 'FDA Response to Question 2: Yes, your proposal appears reasonable. Provide the following in the'",
+      "settled": "line 41, 'Yes, your proposal appears reasonable. Provide the following in the IND:'",
+      "reason": "Same item on the same line; Reader A quoted from the request, Reader B from the response label. Settled: start after the label (a heading, which the README excludes) and keep the agency's answer, which the request depends on.",
+      "group": "g3"
+    },
+    {
+      "id": "C:L47:Q3",
+      "kind": "C-location",
+      "letter": "L47",
+      "readerA": "line 65, action item '1. Brightwave will submit the revised starting dose rationale in the IND.' (and not line 51)",
+      "readerB": "line 51, 'FDA Response to Question 3: No. The rationale for the starting dose based on the HNSTD in dogs is' (and not line 65)",
+      "settled": "line 51 is missing (span lines 51-52); line 65 is not a separate question",
+      "reason": "One obligation (revise the starting dose rationale). Its agency words are the line 51-52 deficiency; action item 1 restates it as the sponsor's commitment, just as both readers treat action item 2 (line 66) as a restatement of the line 41 request rather than a question.",
+      "group": "g3"
+    },
+    {
+      "id": "C:L49:30",
+      "kind": "C-start",
+      "letter": "L49",
+      "readerA": "line 30, 'However, include a test for residual solvents'",
+      "readerB": "line 30, 'CBER Response: We generally agree. However, include...'",
+      "settled": "line 30, 'We generally agree. However, include a test for residual solvents'",
+      "reason": "Same item on the same line; Reader A quoted from the request, Reader B from the response label. Settled: start after the label (a heading, which the README excludes) and keep the agency's answer, which the request depends on.",
+      "group": "g3"
+    },
+    {
+      "id": "C:L49:41",
+      "kind": "C-start",
+      "letter": "L49",
+      "readerA": "line 41, 'Provide the following in the IND:'",
+      "readerB": "line 41, 'CBER Response: Yes, your proposal appears reasonable. Provide the following in the'",
+      "settled": "line 41, 'Yes, your proposal appears reasonable. Provide the following in the IND:'",
+      "reason": "Same item on the same line; Reader A quoted from the request, Reader B from the response label. Settled: start after the label (a heading, which the README excludes) and keep the agency's answer, which the request depends on.",
+      "group": "g3"
+    },
+    {
+      "id": "C:L49:Q3",
+      "kind": "C-location",
+      "letter": "L49",
+      "readerA": "line 65, action item '1. Brightwave will submit the revised starting dose rationale in the IND.' (and not line 51)",
+      "readerB": "line 51, 'CBER Response: No. The rationale for the starting dose based on the HNSTD in dogs is' (and not line 65)",
+      "settled": "line 51 is missing (span lines 51-52); line 65 is not a separate question",
+      "reason": "Same as L47: the agency's words for the Q3 obligation are the line 51-52 deficiency; action item 1 is the sponsor's commitment restating it, treated like action item 2 (line 66).",
+      "group": "g3"
+    }
+  ]
+}

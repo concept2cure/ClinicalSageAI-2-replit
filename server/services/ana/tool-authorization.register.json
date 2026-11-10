@@ -60,7 +60,12 @@
   "add_ctq_factor": {
    "class": "confirm",
    "writes": "INSERT rbm_risk_items",
-   "site": "rbm/rbm-actuator.ts addCtqFactor"
+   "site": "rbm/rbm-actuator.ts addCtqFactor",
+   "present": {
+    "verb": "add",
+    "object": "a critical-to-quality factor for the study",
+    "source": "project"
+   }
   },
   "add_disclosure_interest": {
    "class": "confirm",
@@ -573,14 +578,24 @@
    "writes": "none; the handler already refuses (signed route)",
    "site": "AnaToolExecutor.ts registerToolHandler('approve_rbm_assessment')",
    "refusedBy": "handler",
-   "why": "An approval is an e-signed act: the person does it with the Approve button, which asks for their password and second factor."
+   "why": "An approval is an e-signed act: the person does it with the Approve button, which asks for their password and second factor.",
+   "present": {
+    "verb": "explain",
+    "object": "how to approve the risk assessment",
+    "source": "project"
+   }
   },
   "approve_rbm_plan": {
    "class": "refuse",
    "writes": "none; the handler already refuses (signed route)",
    "site": "AnaToolExecutor.ts registerToolHandler('approve_rbm_plan')",
    "refusedBy": "handler",
-   "why": "An approval is an e-signed act: the person does it with the Approve button, which asks for their password and second factor."
+   "why": "An approval is an e-signed act: the person does it with the Approve button, which asks for their password and second factor.",
+   "present": {
+    "verb": "explain",
+    "object": "how to approve the monitoring plan",
+    "source": "project"
+   }
   },
   "assemble_briefing_book": {
    "class": "conditional",
@@ -708,16 +723,6 @@
    "present": {
     "verb": "check",
     "object": "whether batches can be pooled",
-    "source": "engine"
-   }
-  },
-  "assess_benefit_risk": {
-   "class": "read",
-   "writes": "none",
-   "site": "AnaToolExecutor.ts registerToolHandler('assess_benefit_risk')",
-   "present": {
-    "verb": "compute",
-    "object": "the benefit-risk score",
     "source": "engine"
    }
   },
@@ -1537,7 +1542,12 @@
   "assess_site_risk": {
    "class": "confirm",
    "writes": "deletes and re-inserts the program's rbm_site_risk_scores snapshot (also when no snapshot exists, without persist)",
-   "site": "rbm/site-risk-engine.ts recomputeSiteRisk"
+   "site": "rbm/site-risk-engine.ts recomputeSiteRisk",
+   "present": {
+    "verb": "assess",
+    "object": "site risk and monitoring tiers",
+    "source": "project"
+   }
   },
   "assess_small_population_design": {
    "class": "read",
@@ -2591,7 +2601,12 @@
   "create_monitoring_action": {
    "class": "confirm",
    "writes": "INSERT rbm_monitoring_actions",
-   "site": "AnaToolExecutor.ts registerToolHandler('create_monitoring_action')"
+   "site": "AnaToolExecutor.ts registerToolHandler('create_monitoring_action')",
+   "present": {
+    "verb": "add",
+    "object": "an action to the monitoring plan",
+    "source": "project"
+   }
   },
   "create_nonclinical_study": {
    "class": "confirm",
@@ -2760,7 +2775,12 @@
   "define_kri": {
    "class": "confirm",
    "writes": "INSERT rbm_kris",
-   "site": "rbm/rbm-actuator.ts defineKri"
+   "site": "rbm/rbm-actuator.ts defineKri",
+   "present": {
+    "verb": "add",
+    "object": "a key risk indicator",
+    "source": "project"
+   }
   },
   "derive_ctq_factors": {
    "class": "read",
@@ -3368,7 +3388,15 @@
   "draft_monitoring_plan": {
    "class": "confirm",
    "writes": "INSERT rbm_monitoring_plans (draft)",
-   "site": "rbm/rbm-actuator.ts draftPlan"
+   "site": "rbm/rbm-actuator.ts draftPlan",
+   "present": {
+    "verb": "create",
+    "object": "a draft monitoring plan",
+    "source": "project",
+    "preview": [
+     "title"
+    ]
+   }
   },
   "draft_nonclinical_overview_m2_4": {
    "class": "read",
@@ -3458,7 +3486,12 @@
   "evaluate_kris_qtls": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts registerToolHandler('evaluate_kris_qtls')"
+   "site": "AnaToolExecutor.ts registerToolHandler('evaluate_kris_qtls')",
+   "present": {
+    "verb": "check",
+    "object": "the recorded KRI and QTL statuses",
+    "source": "project"
+   }
   },
   "evaluate_pbpk_model": {
    "class": "read",
@@ -3824,12 +3857,22 @@
   "generate_rbm_plan": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts registerToolHandler('generate_rbm_plan')"
+   "site": "AnaToolExecutor.ts registerToolHandler('generate_rbm_plan')",
+   "present": {
+    "verb": "derive",
+    "object": "a proposed monitoring plan",
+    "source": "engine"
+   }
   },
   "generate_rbm_report": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts registerToolHandler('generate_rbm_report')"
+   "site": "AnaToolExecutor.ts registerToolHandler('generate_rbm_report')",
+   "present": {
+    "verb": "assemble",
+    "object": "the risk review report",
+    "source": "engine"
+   }
   },
   "generate_report": {
    "class": "read",
@@ -4123,7 +4166,12 @@
   "get_rbm_attention": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts registerToolHandler('get_rbm_attention')"
+   "site": "AnaToolExecutor.ts registerToolHandler('get_rbm_attention')",
+   "present": {
+    "verb": "list",
+    "object": "what needs monitoring attention",
+    "source": "engine"
+   }
   },
   "get_regulatory_timeline": {
    "class": "read",
@@ -5218,16 +5266,6 @@
     "source": "knowledge"
    }
   },
-  "plan_ind_module_authoring": {
-   "class": "read",
-   "writes": "none",
-   "site": "AnaToolExecutor.ts registerToolHandler('plan_ind_module_authoring')",
-   "present": {
-    "verb": "plan",
-    "object": "the IND module",
-    "source": "authoring"
-   }
-  },
   "plan_labeling_authoring": {
    "class": "read",
    "writes": "none",
@@ -5351,7 +5389,12 @@
   "prioritize_monitoring_queries": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts registerToolHandler('prioritize_monitoring_queries')"
+   "site": "AnaToolExecutor.ts registerToolHandler('prioritize_monitoring_queries')",
+   "present": {
+    "verb": "list",
+    "object": "the monitoring worklist by urgency",
+    "source": "project"
+   }
   },
   "project_csr_evidence": {
    "class": "confirm",
@@ -5446,7 +5489,15 @@
   "raise_monitoring_signal": {
    "class": "confirm",
    "writes": "INSERT rbm_signals",
-   "site": "rbm/rbm-actuator.ts raiseSignal"
+   "site": "rbm/rbm-actuator.ts raiseSignal",
+   "present": {
+    "verb": "record",
+    "object": "a monitoring signal for triage",
+    "source": "project",
+    "preview": [
+     "title"
+    ]
+   }
   },
   "rasterize_page": {
    "class": "self",
@@ -5640,7 +5691,12 @@
   "record_kri_reading": {
    "class": "confirm",
    "writes": "INSERT rbm_kri_values + KRI status",
-   "site": "AnaToolExecutor.ts registerToolHandler('record_kri_reading')"
+   "site": "AnaToolExecutor.ts registerToolHandler('record_kri_reading')",
+   "present": {
+    "verb": "record",
+    "object": "a key risk indicator reading",
+    "source": "project"
+   }
   },
   "record_literature": {
    "class": "confirm",
@@ -6290,7 +6346,12 @@
   "run_central_monitoring": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts registerToolHandler('run_central_monitoring')"
+   "site": "AnaToolExecutor.ts registerToolHandler('run_central_monitoring')",
+   "present": {
+    "verb": "screen",
+    "object": "the sites for statistical outliers",
+    "source": "engine"
+   }
   },
   "run_compliance_checklist": {
    "class": "read",
@@ -6346,7 +6407,12 @@
    "class": "conditional",
    "writes": "seeds rbm_risk_assessments + items",
    "site": "AnaToolExecutor.ts registerToolHandler('run_rbm_assessment')",
-   "rule": "input.seed === true -> confirm; else read"
+   "rule": "input.seed === true -> confirm; else read",
+   "present": {
+    "verb": "summarize",
+    "object": "the study risk assessment",
+    "source": "project"
+   }
   },
   "run_shadow_review": {
    "class": "confirm",
@@ -6418,7 +6484,12 @@
   "scan_patient_profiles": {
    "class": "read",
    "writes": "none",
-   "site": "AnaToolExecutor.ts registerToolHandler('scan_patient_profiles')"
+   "site": "AnaToolExecutor.ts registerToolHandler('scan_patient_profiles')",
+   "present": {
+    "verb": "scan",
+    "object": "the patient profiles for anomalies",
+    "source": "engine"
+   }
   },
   "scan_project_risks": {
    "class": "read",
@@ -7027,7 +7098,12 @@
   "set_qtl": {
    "class": "confirm",
    "writes": "INSERT rbm_qtls",
-   "site": "rbm/rbm-actuator.ts setQtl"
+   "site": "rbm/rbm-actuator.ts setQtl",
+   "present": {
+    "verb": "add",
+    "object": "a quality tolerance limit",
+    "source": "project"
+   }
   },
   "set_registration_status": {
    "class": "conditional",
@@ -7273,7 +7349,12 @@
   "triage_signal": {
    "class": "confirm",
    "writes": "UPDATE rbm_signals status/severity",
-   "site": "rbm/rbm-actuator.ts triageSignal"
+   "site": "rbm/rbm-actuator.ts triageSignal",
+   "present": {
+    "verb": "update",
+    "object": "the triage of a monitoring signal",
+    "source": "project"
+   }
   },
   "update_biosketch_section": {
    "class": "confirm",
@@ -7314,7 +7395,12 @@
   "update_monitoring_action": {
    "class": "confirm",
    "writes": "UPDATE rbm_monitoring_actions",
-   "site": "AnaToolExecutor.ts registerToolHandler('update_monitoring_action')"
+   "site": "AnaToolExecutor.ts registerToolHandler('update_monitoring_action')",
+   "present": {
+    "verb": "update",
+    "object": "a monitoring action",
+    "source": "project"
+   }
   },
   "update_plan": {
    "class": "read",

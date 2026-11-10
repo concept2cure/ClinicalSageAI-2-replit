@@ -1,0 +1,19 @@
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (a) anchored program: hands the ZIP bytes to the governed export consequence 6ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (b) unanchored program: audited-unplaced delivery with the sha256, bytes still returned 1ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (c) no authored content: 422 NO_AUTHORED_CONTENT, no consequence, no export audit 2ms
+ × tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (c2) a filed copy that is not the document's text: 409 FILING_DIVERGED, nothing delivered (P-29.3) 7ms
+   → res.getHeader is not a function
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (d) program from another organization: 404 and the assembler is never invoked 1ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /programs/:programId/technical-file/export > (e) size cap: the consequence refusing the bytes is an honest 413, never a 200 with empty data 1ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > technical-file assembly and final audit outcomes > a successful governed delivery retains the actual failed assembly-audit outcome 1ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > technical-file assembly and final audit outcomes > a refused final audit does not deliver bytes or report the assembly as completed delivery 2ms
+ ✓ tests/routes/technical-file-export-governance.test.ts > POST /sequences/:seqId/technical-file/assemble > (f) reads the bundle bytes before cleanup and delivers them through the export path 8ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-asks-the-filing.pglite.test.ts > the EU technical file asks whether the filing holds the document's text > assembles from a filing that holds its editing copy 129ms
+ × server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-asks-the-filing.pglite.test.ts > the EU technical file asks whether the filing holds the document's text > refuses a filed copy that was rewritten, naming it and the remedy, and assembles nothing 65ms
+   → a technical file was assembled over a rewritten filed copy: expected null not to be null
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/technical-file-asks-the-filing.pglite.test.ts > the EU technical file asks whether the filing holds the document's text > a filing no editing document is bound to is not applicable, and assembles 49ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+TypeError: res.getHeader is not a function
+AssertionError: a technical file was assembled over a rewritten filed copy: expected null not to be null
+ Test Files  2 failed (2)
+      Tests  2 failed | 10 passed (12)

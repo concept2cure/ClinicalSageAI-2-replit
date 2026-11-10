@@ -486,60 +486,6 @@ export const PLAN_ORPHAN_DRUG_DESIGNATION: AnaTool = {
   },
 };
 
-// IND narrative-module planning (E11). A supplied-string scaffold with a
-// plan-text self-check, without authored-file or independent source verification.
-export const PLAN_IND_MODULE_AUTHORING: AnaTool = {
-  name: 'plan_ind_module_authoring',
-  description:
-    'Plan an IND transcription scaffold (CTD Module 2.5 Clinical Overview or 2.7 Clinical Summary) from ' +
-    'unverified caller/model-supplied structured facts. Returns the author_docx_native title + markdown ' +
-    'content with supported template headers and required_strings for later transcription checks. ' +
-    'The returned verification is plan-text self-consistency only: this tool does not author a file or ' +
-    'independently verify an artifact, underlying study, source qualification, or provenance. The planning ' +
-    'receipt is always non-sealable, even with provenance live and verification.ok true. Verify the actual ' +
-    'governed artifact and its qualified source evidence separately before sealing. Supply facts in `facts`.',
-  input_schema: {
-    type: 'object',
-    properties: {
-      module: {
-        type: 'string',
-        enum: ['2.5', '2.7'],
-        description: 'Supported CTD Module 2 template to plan: 2.5 (Clinical Overview) or 2.7 (Clinical Summary).',
-      },
-      product_name: { type: 'string', description: 'Product / compound name for the title + running header.' },
-      indication: { type: 'string', description: 'Proposed indication.' },
-      facts: {
-        type: 'array',
-        description:
-          'Unverified caller/model-supplied facts/figures to transcribe verbatim. Each value becomes a ' +
-          'required_strings entry for plan-text self-consistency; this does not qualify the underlying source.',
-        items: {
-          type: 'object',
-          properties: {
-            section_id: {
-              type: 'string',
-              description: 'Which template section the fact belongs in: its CTD code (e.g. 2.5.4, 2.7.4) or a code below one (e.g. 2.7.4.2.1.2 goes in 2.7.4). The earlier ids (e.g. overview_efficacy, summary_clinical_safety) are still accepted. A fact that names no section is reported in honesty.unplacedFacts, not planned.',
-            },
-            label: { type: 'string', description: 'Human label for the fact (e.g. "Primary endpoint response rate").' },
-            value: {
-              type: 'string',
-              description: 'The supplied figure/string to transcribe and self-check (e.g. "42.3%", "200 mg", "24 months").',
-            },
-            source: { type: 'string', description: 'Optional supplied source pointer (table/dataset id), not resolved or verified.' },
-          },
-          required: ['section_id', 'label', 'value'],
-        },
-      },
-      provenance: {
-        type: 'string',
-        enum: ['live', 'sample', 'not_assessed'],
-        description: 'Caller-declared provenance label; it does not establish source qualification or sealability. All planning receipts are non-sealable.',
-      },
-    },
-    required: ['module', 'product_name', 'indication'],
-  },
-};
-
 export const ADVISE_GCP: AnaTool = {
   name: 'advise_gcp',
   description:
@@ -607,8 +553,10 @@ export const RUN_RBM_ASSESSMENT: AnaTool = {
   name: 'run_rbm_assessment',
   description:
     'Risk-Based Monitoring (ICH E6(R3)/E8(R1)) advisor: seeds a DRAFT or summarizes a study Risk Assessment ' +
-    '(RACT) for a program — Critical-to-Quality (CtQ) factors with likelihood × impact scores, the ' +
-    'critical factors, and the rolled-up overall risk level. Use when scoping risk-based quality ' +
+    '(RACT) for a program. The summary is the study\'s latest assessment version (the one the RACT screen ' +
+    'shows) with its status and version, and that version\'s own Critical-to-Quality (CtQ) factors with ' +
+    'likelihood × impact scores, the critical factors, and the rolled-up overall risk level. A version with ' +
+    'status "draft" is unsigned and governs nothing. Use when scoping risk-based quality ' +
     'management for a study. A seeded draft needs review and signed approval on the assessment before activation. Reads/writes the program\'s RBM risk assessment.',
   input_schema: {
     type: 'object',
@@ -654,9 +602,12 @@ export const EVALUATE_KRIS_QTLS: AnaTool = {
 export const GENERATE_RBM_PLAN: AnaTool = {
   name: 'generate_rbm_plan',
   description:
-    'Drafts an integrated risk-based monitoring plan for a program: recommends a monitoring strategy ' +
-    '(centralized / risk-based / hybrid) from the assessment\'s overall risk and proposes monitoring actions ' +
-    'from the critical CtQ factors. Advisory — must be reviewed and approved.',
+    'Proposes the risk-based monitoring plan a program\'s APPROVED risk assessment (RACT) derives, and saves ' +
+    'nothing: the monitoring strategy (centralized / risk-based / hybrid) from the overall risk that assessment ' +
+    'records, one action per open critical CtQ factor of that assessment, and one oversight visit per ' +
+    'enhanced-tier site — exactly what generating the plan would save as a draft. Refuses when the study has no ' +
+    'assessment, when it is not approved, or when the approved one records no overall risk. Also says when a ' +
+    'draft plan is already open.',
   input_schema: {
     type: 'object',
     properties: {
@@ -751,14 +702,19 @@ export const GET_RBM_ATTENTION: AnaTool = {
 export const ADD_CTQ_FACTOR: AnaTool = {
   name: 'add_ctq_factor',
   description:
-    'Adds a Critical-to-Quality (CtQ) factor to a program\'s risk assessment (RACT). Ask the user for the ' +
+    'Adds a Critical-to-Quality (CtQ) factor to a program\'s risk assessment (RACT): the draft assessment named ' +
+    'by assessmentId, or else the study\'s one open draft. Ask the user for the ' +
     'factor and its likelihood (1–5) and impact (1–5); infer the risk score (likelihood×impact) and, unless ' +
     'told otherwise, mark it critical when the score falls in the high band. Optionally capture category, a ' +
-    'risk description and the planned mitigation. Use when the user describes a new risk to the study.',
+    'risk description and the planned mitigation. Use when the user describes a new risk to the study. ' +
+    'Refuses, saving nothing, when the assessment is signed (an amendment must be opened), when the study ' +
+    'has no assessment (start one with run_rbm_assessment seed: true), when it has several drafts and none ' +
+    'is named, or when a rating is not a whole number from 1 to 5.',
   input_schema: {
     type: 'object',
     properties: {
       programId: { type: 'string', description: 'Program (project) UUID.' },
+      assessmentId: { type: 'number', description: 'The draft risk assessment to add the factor to, if known. Default: the study\'s one open draft.' },
       ctqFactor: { type: 'string', description: 'The critical-to-quality factor / risk name.' },
       likelihood: { type: 'number', description: 'Likelihood 1 (rare) – 5 (almost certain).' },
       impact: { type: 'number', description: 'Impact 1 (negligible) – 5 (critical).' },

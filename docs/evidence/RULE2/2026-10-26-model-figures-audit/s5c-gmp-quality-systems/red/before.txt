@@ -1,0 +1,170 @@
+# S5c GMP quality systems red: server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts on trunk bda1d5aed. 77 of 89 fail; the 12 controls pass.
+
+ ✓ server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > the six GMP quality-systems tools compute from stated facts > 'assess_data_integrity' reaches its engine with a stated basis 7ms
+ ✓ server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > the six GMP quality-systems tools compute from stated facts > 'design_capa' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > the six GMP quality-systems tools compute from stated facts > 'classify_gmp_deviation' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > the six GMP quality-systems tools compute from stated facts > 'assess_api_gmp' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > the six GMP quality-systems tools compute from stated facts > 'design_sterile_controls' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > the six GMP quality-systems tools compute from stated facts > 'assess_computer_system_validation' reaches its engine with a stated basis 2ms
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > 'assess_data_integrity' keeps each boolean answer as stated > impactsBatchRelease reads not_stated when omitted or null, and is refused when malformed 24ms
+   → expected { …(14) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > 'assess_data_integrity' keeps each boolean answer as stated > impactsPatientSafety reads not_stated when omitted or null, and is refused when malformed 7ms
+   → expected { …(14) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > 'design_capa' keeps each boolean answer as stated > recurring reads not_stated when omitted or null, and is refused when malformed 4ms
+   → expected { …(15) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > 'design_capa' keeps each boolean answer as stated > systemic reads not_stated when omitted or null, and is refused when malformed 4ms
+   → expected { …(15) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > 'design_capa' keeps each boolean answer as stated > productImpact reads not_stated when omitted or null, and is refused when malformed 3ms
+   → expected { …(15) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > 'classify_gmp_deviation' keeps each boolean answer as stated > batchDistributed reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { …(13) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > 'classify_gmp_deviation' keeps each boolean answer as stated > sterileProduct reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { …(13) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > 'classify_gmp_deviation' keeps each boolean answer as stated > outOfSpecConfirmed reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { …(13) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > 'classify_gmp_deviation' keeps each boolean answer as stated > patientSafetyImpact reads not_stated when omitted or null, and is refused when malformed 3ms
+   → expected { …(13) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > 'classify_gmp_deviation' keeps each boolean answer as stated > recurring reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { …(13) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > 'classify_gmp_deviation' keeps each boolean answer as stated > usMarketed reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { …(13) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > 'assess_api_gmp' keeps each boolean answer as stated > isCriticalStep reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { …(9) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > 'assess_api_gmp' keeps each boolean answer as stated > sterileApi reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { …(9) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > 'assess_api_gmp' keeps each boolean answer as stated > changeIsSignificant reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > 'design_sterile_controls' keeps each boolean answer as stated > heatStable reads not_stated when omitted or null, and is refused when malformed 3ms
+   → expected { …(12) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > 'design_sterile_controls' keeps each boolean answer as stated > filterable reads not_stated when omitted or null, and is refused when malformed 10ms
+   → expected { …(12) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > 'design_sterile_controls' keeps each boolean answer as stated > lyophilised reads not_stated when omitted or null, and is refused when malformed 8ms
+   → expected { …(12) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > 'assess_computer_system_validation' keeps each boolean answer as stated > electronicRecords reads not_stated when omitted or null, and is refused when malformed 5ms
+   → expected { systemDescription: 'LIMS', …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > 'assess_computer_system_validation' keeps each boolean answer as stated > electronicSignatures reads not_stated when omitted or null, and is refused when malformed 4ms
+   → expected { systemDescription: 'LIMS', …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > 'assess_computer_system_validation' keeps each boolean answer as stated > directImpact reads not_stated when omitted or null, and is refused when malformed 4ms
+   → expected { systemDescription: 'LIMS', …(8) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > 'assess_computer_system_validation' keeps each boolean answer as stated > supplierAssessed reads not_stated when omitted or null, and is refused when malformed 4ms
+   → expected { systemDescription: 'LIMS', …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > assess_data_integrity keeps each ALCOA+ and audit-trail control as stated > controls.uniqueUserAttribution reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { …(14) } to match object { inputStates: { …(1) }, …(1) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > assess_data_integrity keeps each ALCOA+ and audit-trail control as stated > controls.legibleAndPermanent reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { …(14) } to match object { inputStates: { …(1) }, …(1) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > assess_data_integrity keeps each ALCOA+ and audit-trail control as stated > controls.contemporaneousEntry reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { …(14) } to match object { inputStates: { …(1) }, …(1) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > assess_data_integrity keeps each ALCOA+ and audit-trail control as stated > controls.originalOrTrueCopyRetained reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { …(14) } to match object { inputStates: { …(1) }, …(1) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > assess_data_integrity keeps each ALCOA+ and audit-trail control as stated > controls.accuracyControls reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { …(14) } to match object { inputStates: { …(1) }, …(1) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > assess_data_integrity keeps each ALCOA+ and audit-trail control as stated > controls.completeWithMetadata reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { …(14) } to match object { inputStates: { …(1) }, …(1) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > assess_data_integrity keeps each ALCOA+ and audit-trail control as stated > controls.consistentAndSequenced reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { …(14) } to match object { inputStates: { …(1) }, …(1) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > assess_data_integrity keeps each ALCOA+ and audit-trail control as stated > controls.enduringMedia reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { …(14) } to match object { inputStates: { …(1) }, …(1) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > assess_data_integrity keeps each ALCOA+ and audit-trail control as stated > controls.readilyAvailable reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { …(14) } to match object { inputStates: { …(1) }, …(1) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > assess_data_integrity keeps each ALCOA+ and audit-trail control as stated > controls.auditTrailEnabled reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { …(14) } to match object { inputStates: { …(1) }, …(1) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > assess_data_integrity keeps each ALCOA+ and audit-trail control as stated > controls.auditTrailReviewed reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { …(14) } to match object { inputStates: { …(1) }, …(1) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > the six definitions say what an omitted fact means > 'assess_data_integrity' describes each flag when omitted, and claims no default 1ms
+   → impactsBatchRelease: expected 'Whether the data directly supports a …' to match /omitted/i
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > the six definitions say what an omitted fact means > 'design_capa' describes each flag when omitted, and claims no default 1ms
+   → recurring: expected 'Whether the issue is recurring. Recur…' to match /omitted/i
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > the six definitions say what an omitted fact means > 'classify_gmp_deviation' describes each flag when omitted, and claims no default 0ms
+   → batchDistributed: expected 'Whether the affected batch has alread…' to match /omitted/i
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > the six definitions say what an omitted fact means > 'assess_api_gmp' describes each flag when omitted, and claims no default 0ms
+   → isCriticalStep: expected 'Whether the step is identified as a c…' to match /omitted/i
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > the six definitions say what an omitted fact means > 'design_sterile_controls' describes each flag when omitted, and claims no default 1ms
+   → heatStable: expected 'Whether the product and container can…' to match /omitted/i
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > the six definitions say what an omitted fact means > 'assess_computer_system_validation' describes each flag when omitted, and claims no default 1ms
+   → electronicRecords: expected 'Whether the system creates/maintains …' not to match /\(default|defaults to/i
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > the six definitions say what an omitted fact means > says an omitted ALCOA+ control is never assumed satisfied, and names the inputs that are not read 1ms
+   → expected 'Control state per ALCOA+ attribute an…' to match /omitted or null field is "unknown"/
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > a required or malformed input is refused by name, never defaulted > 'assess_data_integrity' refuses 'dataDescription' = undefined 2ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > a required or malformed input is refused by name, never defaulted > 'assess_data_integrity' refuses 'recordFormat' = 'Electronic' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > a required or malformed input is refused by name, never defaulted > 'assess_data_integrity' refuses 'recordType' = 'Dynamic' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > a required or malformed input is refused by name, never defaulted > 'assess_data_integrity' refuses 'lifecycleStages' = [ 'Generation' ] 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > a required or malformed input is refused by name, never defaulted > 'assess_data_integrity' refuses 'lifecycleStages' = 'review' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > a required or malformed input is refused by name, never defaulted > 'assess_data_integrity' refuses 'controls' = 'all in place' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > a required or malformed input is refused by name, never defaulted > 'design_capa' refuses 'problemDescription' = '  ' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > a required or malformed input is refused by name, never defaulted > 'design_capa' refuses 'source' = undefined 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > a required or malformed input is refused by name, never defaulted > 'design_capa' refuses 'severity' = 'High' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > a required or malformed input is refused by name, never defaulted > 'design_capa' refuses 'preferredRootCauseMethod' = 'FMEA' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > a required or malformed input is refused by name, never defaulted > 'design_capa' refuses 'contributingFactorCount' = '3' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > a required or malformed input is refused by name, never defaulted > 'design_capa' refuses 'contributingFactorCount' = 2.5 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > a required or malformed input is refused by name, never defaulted > 'classify_gmp_deviation' refuses 'description' = undefined 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > a required or malformed input is refused by name, never defaulted > 'assess_api_gmp' refuses 'step' = undefined 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > a required or malformed input is refused by name, never defaulted > 'assess_api_gmp' refuses 'step' = 'final' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > a required or malformed input is refused by name, never defaulted > 'design_sterile_controls' refuses 'productDescription' = undefined 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > a required or malformed input is refused by name, never defaulted > 'design_sterile_controls' refuses 'barrier' = 'Isolator' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > a required or malformed input is refused by name, never defaulted > 'assess_computer_system_validation' refuses 'systemDescription' = undefined 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > a required or malformed input is refused by name, never defaulted > 'assess_computer_system_validation' refuses 'gxpImpact' = 'High' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > assess_data_integrity rates nothing an unstated fact could change > leaves criticality, review frequency and the overall risk not assessed when no impact is stated 1ms
+   → expected { …(14) } to match object { …(3) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > assess_data_integrity rates nothing an unstated fact could change > keeps what a stated fact settles alone 2ms
+   → expected 'high' to be 'not_assessed' // Object.is equality
+ ✓ server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > assess_data_integrity rates nothing an unstated fact could change > rates stated facts as before 0ms
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > assess_data_integrity rates nothing an unstated fact could change > does not count an unstated control as satisfied in the overall risk 1ms
+   → expected { …(14) } to match object { …(2) }
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > assess_data_integrity rates nothing an unstated fact could change > asks about an audit-trail review nobody stated instead of advising remediation 1ms
+   → expected 'Enable and routinely review the audit…' to match /Confirm whether the audit trail is en…/
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > assess_data_integrity rates nothing an unstated fact could change > does not assume an electronic record is dynamic 1ms
+   → expected 'dynamic' to be 'not_stated' // Object.is equality
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > design_capa picks no method or timeline from an omitted fact > leaves the method undetermined when an omitted fact could change it 1ms
+   → systemic: expected { method: '5-whys', …(4) } to match object { method: 'undetermined', steps: [] }
+ ✓ server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > design_capa picks no method or timeline from an omitted fact > keeps a method the omitted facts cannot change, and the stated ones 0ms
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > design_capa picks no method or timeline from an omitted fact > says in the problem statement when recurrence is not stated 1ms
+   → expected 'Problem: Balance calibration overdue …' to match /; recurrence not stated/
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > design_capa picks no method or timeline from an omitted fact > sets no target timeline from a severity only inferred from product impact 1ms
+   → expected 45 to be null
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > design_capa picks no method or timeline from an omitted fact > keeps the cross-area check, marked conditional, while systemic or recurring is unstated 1ms
+   → expected undefined to deeply equal StringMatching{…}
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > classify_gmp_deviation does not read an omitted usMarketed as true > leaves the field-alert evaluation undetermined for a distributed OOS batch 1ms
+   → expected true to be 'undetermined' // Object.is equality
+ ✓ server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > classify_gmp_deviation does not read an omitted usMarketed as true > keeps the stated answer 0ms
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > assess_api_gmp assesses no step, level or change classification from an omitted fact > does not assess an omitted step as starting-material production 2ms
+   → expected [Function] to throw an error
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > assess_api_gmp assesses no step, level or change classification from an omitted fact > leaves the level not assessed, and marks the controls a critical step adds, when isCriticalStep is omitted 1ms
+   → expected { …(6) } to match object { gmpStringency: 'not_assessed', …(1) }
+ ✓ server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > assess_api_gmp assesses no step, level or change classification from an omitted fact > keeps what a final step or a stated fact settles 1ms
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > assess_api_gmp assesses no step, level or change classification from an omitted fact > does not classify a change as minor when changeIsSignificant is omitted 1ms
+   → expected 'minor' to be 'not_assessed' // Object.is equality
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > design_sterile_controls chooses no sterilisation route from an omitted fact > leaves the approach and barrier not assessed when heatStable is omitted 1ms
+   → expected 'sterile_filtration_aseptic' to be 'not_assessed' // Object.is equality
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > design_sterile_controls chooses no sterilisation route from an omitted fact > leaves the approach not assessed, but the barrier set, when a product that is not heat-stable has no stated filterability 5ms
+   → expected 'aseptic_processing' to be 'not_assessed' // Object.is equality
+ ✓ server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > design_sterile_controls chooses no sterilisation route from an omitted fact > keeps the stated route 1ms
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > design_sterile_controls chooses no sterilisation route from an omitted fact > says the lyophilisation question is open when lyophilised is omitted 1ms
+   → expected null to deeply equal StringMatching /^Not assessed/
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > assess_computer_system_validation does not read an omitted electronicRecords as true > leaves the record controls undetermined 1ms
+   → expected [ true, true, true ] to deeply equal [ Array(3) ]
+ ✓ server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > assess_computer_system_validation does not read an omitted electronicRecords as true > keeps the stated answer 1ms
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > assess_computer_system_validation does not read an omitted electronicRecords as true > picks no assurance approach from a GxP impact only inferred from direct impact 1ms
+   → expected 'csa_risk_based_scripted' to be 'undetermined' // Object.is equality
+ × server/services/ana/__tests__/gmp-quality-systems-unstated-inputs.test.ts > assess_computer_system_validation does not read an omitted electronicRecords as true > does not write an omitted supplier assessment as absent 1ms
+   → expected 'Recommended to enable leveraging of s…' to match /^Not stated whether one exists/
+ Test Files  1 failed (1)
+      Tests  77 failed | 12 passed (89)

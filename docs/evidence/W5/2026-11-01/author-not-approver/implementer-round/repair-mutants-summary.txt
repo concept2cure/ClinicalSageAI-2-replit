@@ -1,0 +1,111 @@
+=== registry (exit 1)
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > no re-authentication: refused 401, and the artifact, the signatures and the ledger are untouched 59ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > a wrong password: refused 401, and the artifact, the signatures and the ledger are untouched 11ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > re-authenticated: approved at the version, one signature naming the verified signer and how, and its ledger row 15ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > enrolled in TOTP: signed with password and a verified code; without the code, refused 8ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > no stored row for the version: the act records it from the content and signs that — never approved unsigned 6ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > a provenance event that cannot be written takes the whole act back 10ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > a signature that cannot be written takes the approval back with it 8ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > locking an approved artifact is an electronic signature > without re-authentication: refused 401, not locked, no snapshot 12ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > locking an approved artifact is an electronic signature > re-authenticated with the meaning release: locked at the version, with its snapshot, signature and ledger row 7ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the signed act commits only from the state the signer was shown > review → approved by the author: not signed, nothing written 15ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the signed act commits only from the state the signer was shown > approved → locked by the author: not signed, nothing written 9ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the column set the signed act accepts > the harness metadata the route republishes is written by the act, through the route 7ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact > approving what you wrote, no reviewer assigned: refused 403 SEPARATION_OF_DUTIES before the password is verified, nothing written 7ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact > releasing (locking) what you wrote, no reviewer assigned: refused 403 SEPARATION_OF_DUTIES before the password is verified, nothing written 6ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact > becoming an author after the preflight (a version written while signing): refused 403 on the signing transaction, nothing written 7ms
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > AnA approving an artifact is an electronic signature > signed with the meaning approval: approved at the version, one signature, its ledger row 19ms
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > the status is read the one way, by the tier and by the handler > signed "Approved": approved at the version, recorded as approved 7ms
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > the status is read the one way, by the tier and by the handler > the ledger row names the door the act was taken through, and the signature the moment the signer was verified 8ms
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > what the status route checks before a signed act, AnA checks too > an approval with an assigned reviewer still pending: refused, nothing written 8ms
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > the review quorum decides on the version that would be approved > a decision recorded against an earlier version: refused, nothing written 8ms
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > the review quorum decides on the v
+=== creator-reader (exit 1)
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > no stored row for the version: the act records it from the content and signs that — never approved unsigned 18ms
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > approved: the creator signing, no reviewer assigned, is refused 403 SEPARATION_OF_DUTIES 7ms
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > locked: the creator signing, no reviewer assigned, is refused 403 SEPARATION_OF_DUTIES 4ms
+ × server/services/governance/__tests__/separation-of-duties.test.ts > authorship is a set from the record’s history, not one mutable column > a Concept2Cure artifact: its creator and every version author, by external id, org-scoped 9ms
+ Test Files  3 failed | 2 passed (5)
+      Tests  4 failed | 188 passed (192)
+=== version-reader (exit 1)
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact > becoming an author after the preflight (a version written while signing): refused 403 on the signing transaction, nothing written 33ms
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > approved: the creator signing, no reviewer assigned, is refused 403 SEPARATION_OF_DUTIES 7ms
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > locked: the creator signing, no reviewer assigned, is refused 403 SEPARATION_OF_DUTIES 5ms
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > anyone who wrote a version is an author too, not only the creator 6ms
+ × server/services/governance/__tests__/separation-of-duties.test.ts > authorship is a set from the record’s history, not one mutable column > a Concept2Cure artifact: its creator and every version author, by external id, org-scoped 9ms
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact through AnA > a user who wrote a later version is an author too: refused, nothing written 29ms
+ Test Files  4 failed | 1 passed (5)
+      Tests  6 failed | 186 passed (192)
+=== version-org-scope (exit 1)
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > a version written in another organization is not read as authorship of this one 9ms
+ × server/services/governance/__tests__/separation-of-duties.test.ts > authorship is a set from the record’s history, not one mutable column > a Concept2Cure artifact: its creator and every version author, by external id, org-scoped 6ms
+ Test Files  2 failed | 3 passed (5)
+      Tests  2 failed | 190 passed (192)
+=== preflight (exit 1)
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > approved: the creator signing, no reviewer assigned, is refused 403 SEPARATION_OF_DUTIES 7ms
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > locked: the creator signing, no reviewer assigned, is refused 403 SEPARATION_OF_DUTIES 2ms
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > anyone who wrote a version is an author too, not only the creator 2ms
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > the author is told so before the quorum: not that a review is still open 5ms
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > an artifact with no recorded author is refused 409: independence cannot be shown 2ms
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > an authorship read that fails is refused 503 and names no cause, and the quorum is not read 2ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact > approving what you wrote, no reviewer assigned: refused 403 SEPARATION_OF_DUTIES before the password is verified, nothing written 20ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact > releasing (locking) what you wrote, no reviewer assigned: refused 403 SEPARATION_OF_DUTIES before the password is verified, nothing written 14ms
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact through AnA > the author, with a reviewer still pending: told they are the author, before the open review 23ms
+ Test Files  3 failed | 2 passed (5)
+      Tests  9 failed | 183 passed (192)
+=== lock-command (exit 0)
+ Test Files  5 passed (5)
+      Tests  192 passed (192)
+=== in-transaction (exit 1)
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the signed act commits only from the state the signer was shown > review → approved by the author: not signed, nothing written 26ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the signed act commits only from the state the signer was shown > approved → locked by the author: not signed, nothing written 18ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact > becoming an author after the preflight (a version written while signing): refused 403 on the signing transaction, nothing written 26ms
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact through AnA > the signer became an author after the preflight passed: refused on the signing transaction, nothing written 23ms
+ Test Files  2 failed | 3 passed (5)
+      Tests  4 failed | 188 passed (192)
+=== route-mapping (exit 1)
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact > becoming an author after the preflight (a version written while signing): refused 403 on the signing transaction, nothing written 23ms
+ Test Files  1 failed | 4 passed (5)
+      Tests  1 failed | 191 passed (192)
+=== route-answer (exit 1)
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact > becoming an author after the preflight (a version written while signing): refused 403 on the signing transaction, nothing written 21ms
+ Test Files  1 failed | 4 passed (5)
+      Tests  1 failed | 191 passed (192)
+=== route-signer (exit 1)
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact > approving what you wrote, no reviewer assigned: refused 403 SEPARATION_OF_DUTIES before the password is verified, nothing written 23ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact > releasing (locking) what you wrote, no reviewer assigned: refused 403 SEPARATION_OF_DUTIES before the password is verified, nothing written 15ms
+ Test Files  1 failed | 4 passed (5)
+      Tests  2 failed | 190 passed (192)
+=== ana-mapping (exit 1)
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact through AnA > the signer became an author after the preflight passed: refused on the signing transaction, nothing written 18ms
+ Test Files  1 failed | 4 passed (5)
+      Tests  1 failed | 191 passed (192)
+=== ana-signer (exit 1)
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact through AnA > the author, with a reviewer still pending: told they are the author, before the open review 16ms
+ Test Files  1 failed | 4 passed (5)
+      Tests  1 failed | 191 passed (192)
+=== blocked-reason-clause (exit 1)
+ × server/services/__tests__/contradiction-engine.test.ts > Authority Boundary Map > an action the map does not list is refused for every role 10ms
+ Test Files  1 failed | 4 passed (5)
+      Tests  1 failed | 150 passed (151)
+=== stale-approve-entry (exit 1)
+ × server/services/__tests__/contradiction-engine.test.ts > Authority Boundary Map > approve-artifact admits no role through this map 11ms
+ × tests/unit/decision-architecture.test.ts > Authority requirement mapping > approve-artifact admits no role through this map 8ms
+ × tests/resolution/governed-promotion-pipeline.test.ts > Promotion Authority Chain > approve-artifact is not decided by this map 9ms
+ × tests/resolution/promotion-lifecycle.test.ts > Full Promotion Lifecycle > authority requirements escalate through the lifecycle 9ms
+ × tests/resolution/promotion-lifecycle.test.ts > Approve Artifact (review → approved) > is not decided by this map 2ms
+ × tests/resolution/promotion-lifecycle.test.ts > Approve Artifact (review → approved) > reviewer role is not authorized through this map 2ms
+ × tests/resolution/promotion-lifecycle.test.ts > Approve Artifact (review → approved) > approver role is not authorized through this map 1ms
+ × tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 7b: review → approved (approve-artifact) is not decided by this map 6ms
+ Test Files  5 failed (5)
+      Tests  8 failed | 143 passed (151)
+=== stale-lock-entry (exit 1)
+ × server/services/__tests__/contradiction-engine.test.ts > Authority Boundary Map > lock-artifact admits no role through this map 12ms
+ × tests/resolution/promotion-lifecycle.test.ts > Full Promotion Lifecycle > authority requirements escalate through the lifecycle 8ms
+ × tests/resolution/promotion-lifecycle.test.ts > Lock Artifact (approved → locked) > is not decided by this map 1ms
+ × tests/unit/decision-architecture.test.ts > Authority requirement mapping > lock-artifact admits no role through this map 9ms
+ × tests/resolution/governed-promotion-pipeline.test.ts > Promotion Authority Chain > lock-artifact is not decided by this map 6ms
+ × tests/resolution/e2e-authoring-workflow.test.ts > E2E: Full Governed Authoring Workflow > Step 7c: approved → locked (lock-artifact) is not decided by this map 7ms
+ Test Files  5 failed (5)
+      Tests  6 failed | 145 passed (151)
+runner exit 0

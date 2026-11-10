@@ -34,7 +34,7 @@
  */
 
 import { QC_SAMPLE_TYPES as SHARED_QC_SAMPLE_TYPES } from '@shared/cmc/qc-sample-types';
-import type { C2CFormConfig } from '../C2CForm';
+import type { C2CFormConfig, C2CFormFieldOption } from '../C2CForm';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 /* The scope vocabulary is the composer's, not the form's: shared/cmc/material-scope.ts. */
 import { CMC_MATERIAL_SCOPES } from '@shared/cmc/material-scope';
@@ -146,24 +146,34 @@ export function methodForm(row?: Partial<AnalyticalMethodBody> | null): C2CFormC
       { key: 'analyte', label: 'Analyte', type: 'text', required: true, half: true, default: row?.analyte ?? '', placeholder: 'What is measured, e.g. Acidic variants' },
       { key: 'matrix', label: 'Matrix', type: 'select', options: METHOD_MATRICES, required: true, half: true, default: row?.matrix ?? 'Drug substance' },
       { key: 'purpose', label: 'Purpose', type: 'select', options: METHOD_PURPOSES, required: true, half: true, default: row?.purpose ?? '' },
-      /* 'validated' is NOT a status a save may choose: it is the ICH Q2
-         conclusion, recorded with a signature on the Validate action
-         (POST /api/cmc/analytical-methods/:id/validate). A method already
-         validated keeps the word through an edit, which is what
-         statusOptionsFor is for — offering only the ungoverned statuses would
-         send 'development' on every Save and strand validated_by and
+      /* Neither 'validated' nor 'phase-appropriate' is a status a save may
+         choose: both are ICH Q2 conclusions, recorded with a signature on the
+         Validate action (POST /api/cmc/analytical-methods/:id/validate). A
+         method already signed as either keeps that word through an edit, which
+         is what statusOptionsFor is for — offering only the ungoverned statuses
+         would send 'development' on every Save and strand validated_by and
          validation_date on a record that no longer claimed them. */
-      { key: 'status', label: 'Status', type: 'select', options: statusOptionsFor(METHOD_STATUSES, row?.status, 'validated'), required: true, half: true, default: statusDefaultFor(METHOD_STATUSES, row?.status, 'validated'), desc: 'Validated is recorded with a signature, on the Validate action' },
+      { key: 'status', label: 'Status', type: 'select', options: statusOptionsFor(METHOD_STATUSES, row?.status, METHOD_SIGNED_STATES), required: true, half: true, default: statusDefaultFor(METHOD_STATUSES, row?.status, METHOD_SIGNED_STATES), desc: 'Validated, or suitable for its phase, is recorded with a signature on the Validate action' },
       { key: 'characteristics', label: 'ICH Q2 characteristics evaluated', type: 'text', default: (row?.ichQ2Parameters?.characteristics ?? []).join(', '), placeholder: ICH_Q2_CHARACTERISTICS.slice(0, 4).join(', ') },
       { key: 'summary', label: 'Validation summary', type: 'textarea', default: row?.ichQ2Parameters?.summary ?? '', placeholder: 'Outcome against the acceptance criteria for each characteristic…' },
     ],
   };
 }
 
-/** The statuses an ordinary save may set. 'validated' is reached only by the
- *  signature, so it is absent here and re-offered by statusOptionsFor to a
- *  record that already holds it. */
+/** The statuses an ordinary save may set. Neither signed state is reached by a
+ *  save, so both are absent here and re-offered by statusOptionsFor to a record
+ *  that already holds one. */
 export const METHOD_STATUSES = ['development', 'validation', 'retired'];
+
+/**
+ * The two states the method signature writes (P-110), as the register stores
+ * them. The Validate drawer offers the same pair with its labels
+ * (METHOD_VALIDATION_OUTCOMES); this is the plain list the edit drawer needs to
+ * recognise a signed record. The server's own list is
+ * `SIGNED_REGISTERS.analyticalMethods` (signedValue + signedOutcomes), and
+ * `server/services/cmc/__tests__/signed-outcome.test.ts` holds them together.
+ */
+export const METHOD_SIGNED_STATES: readonly string[] = ['validated', 'phase-appropriate'];
 
 export function methodBody(v: Record<string, string>, projectId?: string): AnalyticalMethodBody {
   const body: AnalyticalMethodBody = {
@@ -953,36 +963,53 @@ export const CONTAINER_COMPONENT_TYPES = ['primary', 'secondary', 'administratio
  * ungoverned statuses sent 'draft' on every Update, which reverted the
  * signature while leaving qualified_by and qualification_date populated.
  */
+/**
+ * Which of a register's signed states `current` holds, in the register's own
+ * casing, or null.
+ *
+ * Both sides lowercased: the stability vocabulary is upper-case (DRAFT, ACTIVE,
+ * PAUSED, COMPLETED) while every other register's is lower-case, and a raw
+ * comparison left a closed-out study's drawer opening on 'draft'.
+ *
+ * A LIST, not a word, because a register can sign more than one outcome.
+ * P-110 gave analytical methods two — `validated` and `phase-appropriate` —
+ * and a single word meant a method signed phase-appropriate opened its drawer
+ * on 'development', which the server then refused with 409: the exact shape of
+ * the validated-process defect the parameter was added to fix, one register
+ * over. `signedStateOf` on the server is the same function.
+ */
+function signedStateHeld(current: string | null | undefined, signedValues: string | readonly string[]): string | null {
+  const v = String(current ?? '').trim().toLowerCase();
+  if (!v) return null;
+  const all = typeof signedValues === 'string' ? [signedValues] : signedValues;
+  return all.find((s) => s.toLowerCase() === v) ?? null;
+}
+
 export function statusOptionsFor(
   statuses: string[],
   current?: string | null,
-  /* The signed value differs by register: a reference standard is `qualified`,
-     a manufacturing process is `validated`. The server generalised its guard on
-     the same axis; hard-coding the word here meant a VALIDATED process opened
-     its drawer on a status the server then refused, so the record was
-     permanently uneditable through the product — no step could ever be added to
-     a validated process. */
-  signedValue = 'qualified',
+  /* The signed states differ by register: a reference standard is `qualified`,
+     a manufacturing process is `validated`, an analytical method is `validated`
+     OR `phase-appropriate`. The server generalised its guard on the same axis;
+     hard-coding the word here meant a VALIDATED process opened its drawer on a
+     status the server then refused, so the record was permanently uneditable
+     through the product — no step could ever be added to a validated process. */
+  signedValues: string | readonly string[] = 'qualified',
 ): string[] {
-  /* Both sides lowercased, and the register's own casing returned: the
-     stability vocabulary is upper-case (DRAFT, ACTIVE, PAUSED, COMPLETED) while
-     every other register's is lower-case, and a raw comparison would have left
-     a closed-out study's drawer opening on 'draft' — the same shape as the
-     validated-process defect this parameter exists to fix. */
-  const v = String(current ?? '').trim().toLowerCase();
-  const signed = signedValue.toLowerCase();
+  const signed = signedStateHeld(current, signedValues);
+  if (!signed) return statuses;
   const base = statuses[0] ?? 'draft';
-  return v === signed ? [signedValue, ...statuses.filter((s) => s.toLowerCase() !== base.toLowerCase())] : statuses;
+  return [signed, ...statuses.filter((s) => s.toLowerCase() !== base.toLowerCase())];
 }
 
 /** The status an edit drawer opens on: the stored one where it is offerable. */
 export function statusDefaultFor(
   statuses: string[],
   current?: string | null,
-  signedValue = 'qualified',
+  signedValues: string | readonly string[] = 'qualified',
 ): string {
-  const v = String(current ?? '').trim().toLowerCase();
-  if (v === signedValue.toLowerCase()) return signedValue;
+  const signed = signedStateHeld(current, signedValues);
+  if (signed) return signed;
   return current && statuses.includes(current) ? current : (statuses[0] ?? 'draft');
 }
 
@@ -1346,7 +1373,32 @@ export interface QualifyBody {
   reason: string;
   meaning: string;
   reauth: { password?: string; totp?: string };
+  /** Which outcome the signer attests, where the act records more than one. */
+  outcome?: string;
+  /** The development phase that outcome covers, where it needs one. */
+  phase?: string;
 }
+
+/**
+ * The outcomes the analytical-method register's one signed act records
+ * (P-110 item 1, 2026-11-09, docs/LAUNCH_DEFINITION_OF_DONE.md).
+ *
+ * The server's `SIGNED_REGISTERS.analyticalMethods.signedOutcomes`
+ * (`server/services/cmc/signed-record.ts`) is the authority; these are the
+ * same two said in the person's language, as `SIGNED_ACTS` above is for the
+ * verb. The values must match the server's `outcome` words exactly, which
+ * `cmcRegisterForms.test.ts` pins.
+ *
+ * Why two: FDA asks at phase 1 for procedures that are scientifically sound
+ * and fit for their use, with full validation by the pivotal phase (21 CFR
+ * 312.23(a)(7); ICH Q2(R2) and Q14). Before this, the only word the act wrote
+ * was `validated`, so a phase-1 programme had to claim full validation or
+ * leave every specification unapprovable.
+ */
+export const METHOD_VALIDATION_OUTCOMES: C2CFormFieldOption[] = [
+  { value: 'validated', label: 'Validated in full (ICH Q2(R2))' },
+  { value: 'phase-appropriate', label: 'Suitable for its phase, short of full validation' },
+];
 
 /**
  * Qualifying a container closure system or a reference standard is a Part 11
@@ -1374,7 +1426,23 @@ export const SIGNED_ACTS = {
 
 export type SignedAct = (typeof SIGNED_ACTS)[keyof typeof SIGNED_ACTS];
 
-export function qualifyForm(subject: string, name: string, act: SignedAct = SIGNED_ACTS.qualify): C2CFormConfig {
+/**
+ * The signature dialog for a governed register act.
+ *
+ * `outcomes` is given only where the act records more than one — the
+ * analytical-method register (P-110 item 1). The phase is NOT conditionally
+ * hidden, because this form is declarative and has no conditional field: it is
+ * offered, described as belonging to the suitability outcome, and the server
+ * refuses a suitability signature with no phase in its own sentence, which the
+ * register surfaces. Showing a field that is sometimes not needed is a smaller
+ * fault than hiding one that is.
+ */
+export function qualifyForm(
+  subject: string,
+  name: string,
+  act: SignedAct = SIGNED_ACTS.qualify,
+  outcomes?: C2CFormFieldOption[],
+): C2CFormConfig {
   return {
     eyebrow: `${act.noun} — 21 CFR Part 11 signature`,
     title: `${act.verb} ${subject}`,
@@ -1384,6 +1452,26 @@ export function qualifyForm(subject: string, name: string, act: SignedAct = SIGN
       'Your name, the time and the reason below are recorded against this record. ' +
       `${act.noun} cannot be undone by an ordinary edit.`,
     fields: [
+      ...(outcomes
+        ? [
+            {
+              key: 'outcome',
+              label: 'What you are attesting',
+              type: 'select' as const,
+              options: outcomes,
+              default: outcomes[0].value,
+              required: true,
+            },
+            {
+              key: 'phase',
+              label: 'Phase this covers',
+              type: 'text' as const,
+              placeholder: 'Phase 1',
+              half: true,
+              desc: 'Required when you attest suitability for a phase: a procedure is suitable for something.',
+            },
+          ]
+        : []),
       { key: 'meaning', label: 'Meaning of signature', type: 'select', options: ['approval', 'review', 'responsibility', 'authorship'], default: 'approval', required: true, half: true },
       { key: 'reason', label: 'Reason', type: 'textarea', required: true, placeholder: 'What qualifies this record — the protocol executed, the report accepted, the data reviewed…' },
       { key: 'password', label: 'Password', type: 'password', placeholder: 'Re-enter your password', required: true, half: true },
@@ -1397,6 +1485,11 @@ export function qualifyBody(v: Record<string, string>): QualifyBody {
     reason: req(v.reason),
     meaning: req(v.meaning) || 'approval',
     reauth: { password: v.password || undefined, totp: v.totp || undefined },
+    /* Sent only when the dialog offered them. An act that records one outcome
+       is refused a named outcome by the server, so a form that always sent one
+       would break every other register's signature. */
+    ...(v.outcome ? { outcome: req(v.outcome) } : {}),
+    ...(v.phase && req(v.phase) ? { phase: req(v.phase) } : {}),
   };
 }
 

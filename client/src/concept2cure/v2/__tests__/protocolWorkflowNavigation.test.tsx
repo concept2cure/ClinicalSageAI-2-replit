@@ -31,7 +31,7 @@ const DOC = {
   objectives: [], eligibility: { inclusion: [], exclusion: [] },
   soa: { visits: [], assessments: [], cells: {}, issues: [] }, risks: [], milestones: [],
   budget: { params: null, items: [], summary: null }, amendments: [], deviations: [],
-  reviews: [], consent: [], completenessFindings: [], studyDesign: null,
+  reviews: [], reviewComments: [], consent: [], completenessFindings: [], studyDesign: null,
 };
 const ok = (value: unknown) => ({ ok: true, status: 200, json: async () => value }) as Response;
 const conflict = () => ({ ok: false, status: 409, json: async () => ({ error: {

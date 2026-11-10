@@ -80,7 +80,7 @@ describe('the server configuration fires it on import', () => {
       AUDIT_EXPORT_SIGNING_KEY: 'probe-audit-export-signing-key-min-32-chars',
       AI_SENSITIVE_DATA_POLICY_MODE: 'enforce',
       AI_PROVIDER_PLACEMENT_APPROVALS:
-        '{"private-deployment":{"region":"us","zeroRetentionApproved":true,"approvedDataClasses":[],"approvedIntendedUses":[]}}',
+        '{"private-deployment":{"region":"us","zeroRetentionApproved":false,"approvedDataClasses":[],"approvedIntendedUses":[]}}',
       ...extra,
     };
     return execFileSync(

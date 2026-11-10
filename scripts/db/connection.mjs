@@ -62,9 +62,41 @@ export function resolveDatabaseUrl(names = INSTALL_URL_VARS) {
  * rds-ca-bundle.pem` rather than turning verification off.
  */
 export function sslFor(url) {
-  const u = String(url).toLowerCase();
-  if (u.includes('sslmode=disable') || u.includes('@localhost') || u.includes('@127.0.0.1')) {
-    return false;
+  const value = String(url);
+  let uri;
+  try { uri = new URL(value); } catch { throw new Error('Invalid PostgreSQL URL for TLS verification'); }
+  if (!['postgres:', 'postgresql:'].includes(uri.protocol)) {
+    throw new Error('Invalid PostgreSQL scheme for TLS verification');
   }
-  return { rejectUnauthorized: true };
+  const host = uri.hostname.toLowerCase();
+  const local = ['localhost', '127.0.0.1', '::1', '[::1]'].includes(host);
+  const mode = uri.searchParams.get('sslmode');
+  if (!local && ['disable', 'prefer', 'allow', 'no-verify'].includes(mode)) {
+    throw new Error('Verified TLS required for a remote PostgreSQL connection');
+  }
+  if (local && (mode === 'disable' || mode === null)) return false;
+  return { rejectUnauthorized: !local };
+}
+
+/**
+ * For a read-only runtime connection (e.g. Codespaces diagnosis), ensure
+ * node-postgres's URI parser requests full hostname and CA verification.
+ * Its connectionString sslmode overrides a separately passed SSL object.
+ * Do not apply this helper to local disposable development databases.
+ */
+export function verifiedPgConnectionString(url) {
+  let parsed;
+  try { parsed = new URL(url); } catch { return url; }
+  if (!['postgres:', 'postgresql:'].includes(parsed.protocol)) return url;
+  const host = parsed.hostname.toLowerCase();
+  if (['localhost', '127.0.0.1', '::1', '[::1]'].includes(host)) return url;
+  const mode = parsed.searchParams.get('sslmode');
+  if (['disable', 'no-verify', 'prefer', 'allow'].includes(mode)) {
+    throw new Error('Remote PostgreSQL requires verified TLS; insecure sslmode is refused.');
+  }
+  if (mode === 'require' || mode === 'verify-ca') {
+    parsed.searchParams.set('sslmode', 'verify-full');
+    return parsed.toString();
+  }
+  return url;
 }

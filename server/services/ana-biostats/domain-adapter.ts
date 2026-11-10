@@ -17,6 +17,11 @@ import type {
   DomainAdaptation,
   ClientTrack,
 } from './types';
+import { phaseOf } from './input-normalizer';
+
+/* Phase rules read `phaseOf(input)` (input-normalizer.ts), the one reading of a
+   phase as written. They compared `input.phase === 'III'` until 2026-10-31,
+   which no caller sends ("Phase III", "Phase 3", "3"), so none ever fired. */
 
 export class DomainAdapter {
 
@@ -53,7 +58,7 @@ export class DomainAdapter {
     if (input.endpointType === 'time_to_event') {
       methodSuggestions.push('Consider stratified log-rank test for key prognostic factors');
       methodSuggestions.push('Cox PH model with pre-specified covariates for sensitivity analysis');
-      if (input.phase === 'III') {
+      if (phaseOf(input) === 'III') {
         methodSuggestions.push('Consider RMST as supportive analysis per recent FDA guidance');
       }
     }
@@ -67,12 +72,13 @@ export class DomainAdapter {
     designConsiderations.push('Define estimand framework per ICH E9(R1): population, variable, intercurrent events, summary measure');
     designConsiderations.push('Pre-specify handling of intercurrent events (treatment policy, hypothetical, composite, principal stratum, while-on-treatment)');
 
-    if (input.phase === 'III') {
+    const phase = phaseOf(input);
+    if (phase === 'III') {
       designConsiderations.push('Confirmatory Phase III — consider multiplicity strategy for co-primary or hierarchical endpoints');
       designConsiderations.push('Pre-specify sensitivity analyses for primary endpoint');
     }
 
-    if (input.phase === 'II') {
+    if (phase === 'II') {
       designConsiderations.push('Phase II — consider adaptive design elements for dose selection or futility');
     }
 
@@ -111,7 +117,7 @@ export class DomainAdapter {
       templateModifiers,
       trackSpecificFields: {
         estimandRequired: true,
-        multiplicityHandling: input.phase === 'III' ? 'required' : 'recommended',
+        multiplicityHandling: phase === 'III' ? 'required' : 'recommended',
         missingDataStrategy: 'required',
         interimAnalysisPlanned: (input.interimAnalyses ?? 0) > 0,
       },

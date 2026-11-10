@@ -1,0 +1,90 @@
+# Skeptic's run: every test file that imports a surface rendering an urgent or good AnswerLead
+# (DesignControlsTrace Review SafetyNarrative TaskBoard HumanFactors NdaCockpit Labeling CommunicationCenter
+#  BiopharmaSpecialty CrlLibrary SourceTracer IndLifecycle Etmf PrecedentEngine RiskRegister), with this change in
+# the tree. These are the screens whose eyebrow line now also carries the hidden "Urgent:" / "On track:".
+# Found with: grep -rlE "(surfaces/|/)<Name>['\"]" client/src tests --include=*.test.*  (77 vitest files under client/src;
+# tests/ui/filing-path-reachability.test.ts ran with the readers set). Two runs of npx vitest run --maxWorkers=1.
+# Per file: result, cases.
+pass  client/src/concept2cure/v2/__tests__/anaDrivesWave2.test.tsx  8 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/anaSeesScreens.test.tsx  14 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/biopharmaSpecialtyNoFixtures.test.tsx  18 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/commitmentFulfilment.test.tsx  23 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/communicationCommitmentsDoors.test.tsx  6 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/communicationDraftCarriesLetter.test.tsx  1 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/communicationLogLinksLetter.test.tsx  7 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/communicationOpensLetter.test.tsx  6 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/crlLibrary.test.tsx  11 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/crlLibrarySurfaceContext.test.tsx  1 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/etmfHonesty.test.tsx  6 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/etmfReadinessNotDeterminedIsNotNotReady.test.tsx  4 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/foldDeviceTasks.test.ts  5 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/humanFactorsHonesty.test.tsx  8 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/humanFactorsProjectKeyed.test.tsx  9 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/humanFactorsReadsOpenProject.test.tsx  12 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/humanFactorsRefusalNotFailedRead.test.tsx  9 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/humanFactorsSummativeGate.test.tsx  7 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/indChecklistFormAttestation.test.tsx  6 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/indLifecycleAnnualReportFilesOnlyAcknowledgedGaps.test.tsx  4 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/indLifecycleAssessedDate.test.tsx  6 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/indLifecycleClockBasis.test.tsx  2 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/indLifecycleCoverLetterTypeNotAssumed.test.tsx  3 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/indLifecycleCsrInformationAmendment.test.tsx  5 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/indLifecycleDeliverables.test.tsx  21 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/indLifecycleEctdFormat.test.tsx  1 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/indLifecycleProgramScope.test.tsx  9 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/indLifecycleScopeAndAffordances.test.tsx  5 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/indLifecycleStatedParticulars.test.tsx  4 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/indLifecycleTargetDate.test.tsx  14 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/labelingAddTranslation.test.tsx  3 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/labelingCoverageHonesty.test.tsx  2 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/labelingMapping.test.ts  9 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/labelingReadsOpenProject.test.tsx  4 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/labelingRecordsNotProjectKeyed.test.tsx  6 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx  11 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/labelingSignedContentOnScreen.test.tsx  29 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/labelingTranslationApprovalSigned.test.tsx  11 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/labelingViewerHidesWrites.test.tsx  4 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/labelingWarningsNotAvailable.test.tsx  4 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/microWireups.test.tsx  5 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/ndaCockpitNoFixtures.test.tsx  13 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/ndaCockpitRequiredSectionCompleteness.test.tsx  7 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/ndaCockpitSurfaceContext.test.tsx  5 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/precedentEngineHonesty.test.tsx  16 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/reviewBoard.test.tsx  19 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx  13 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/reviewHonesty.test.tsx  5 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/reviewOpensDocument.test.tsx  5 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/reviewVaultQueue.test.tsx  3 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/reviewWritesReachTheServer.test.tsx  11 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/riskMapping.test.ts  12 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/riskRecordRead.test.tsx  16 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/saeReportabilityNotDetermined.test.tsx  9 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/safetyNarrativeSaveRecovery.test.tsx  7 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/shellNav.test.tsx  33 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/sourceTracerRecordedLineage.test.tsx  13 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/taskBoardAnalyticsScope.test.tsx  8 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/taskBoardBlocking.test.tsx  4 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/taskBoardClientReadable.test.tsx  9 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/taskBoardCriticalPathHonesty.test.tsx  1 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/taskBoardEveryStore.test.tsx  5 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/taskBoardInstructions.test.tsx  2 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/taskBoardModalA11y.test.tsx  2 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/taskBoardNamedAssignment.test.tsx  1 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/taskBoardOpenProject.test.tsx  6 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx  29 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/taskBoardRecovery.test.tsx  21 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/taskBoardRefusalHonesty.test.tsx  14 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/taskBoardResponseShape.test.tsx  6 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/taskBoardSharedSignOff.test.tsx  3 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/taskBoardSignature.test.tsx  1 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/taskBoardTarget.test.tsx  41 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/taskBoardTrackedFiling.test.tsx  9 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/taskBoardViewOnly.test.tsx  3 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/taskBoardWorkloadHonesty.test.tsx  3 passed, 0 failed
+pass  client/src/concept2cure/v2/__tests__/zeroStateNarrative.test.tsx  15 passed, 0 failed
+
+# Summary lines (run 1: 40 files, run 2: 37 files)
+ Test Files  40 passed (40)
+      Tests  318 passed (318)
+ Test Files  37 passed (37)
+      Tests  375 passed (375)

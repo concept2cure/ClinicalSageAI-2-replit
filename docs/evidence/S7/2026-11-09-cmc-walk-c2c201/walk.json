@@ -1,0 +1,60 @@
+[
+ {
+  "label": "1440",
+  "step": "overview",
+  "pageScrolls": false,
+  "tabs": [
+   "Overview",
+   "Quality by design",
+   "Module 3 build",
+   "Approvals & audit"
+  ],
+  "head": "C2C-201›CMC / Module 36 [Demo · Biotech] C2C-201 oral JAK1 inhibitor — atopic dermatitis (IND)CMC / Module 3Module 3 for this filing, and the quality records kept while the study runs.Is my CMC package ready for its submission?Run the ICH compliance check and show every gapGenerate the drug-substance control strategyModule 3Study recordsOverviewQuality by designModule 3 buildApprovals & auditModule 3 overview1 submission — no preparedness index computed yet0Module 3 questions overdue on this projectSection approvalsgoverned, 21 CFR Part 11Advance the next sectionOpen the Module 3 build boardSectionPathCompletenessStateAction3.13.1100%Draft Approve section3.2.A.13.2.A.150%missing: containerDe"
+ },
+ {
+  "label": "1440",
+  "step": "build",
+  "pageScrolls": false,
+  "head": "C2C-201›CMC / Module 36 [Demo · Biotech] C2C-201 oral JAK1 inhibitor — atopic dermatitis (IND)CMC / Module 3Module 3 for this filing, and the quality records kept while the study runs.What do I do on Module 3 build?Which §3.2 sections are blocking my export and why?Draft the narrative for the section with the lowest completenessModule 3Study recordsOverviewQuality by designModule 3 buildApprovals & auditModule 3 buildCompile CTD §3.2 from the study records, resolve what blocks it, and clear the export gate Run contradiction sweep Compile Module 321 sections in CTD §3.2 · 0 of 21 approved · 18 ready to compile · 0 stale · 0 blockedExport readinessfail-closed — 21 CFR §11 / governed decision fabric Check export gatenot export ready0 of 21 sections approved · 3 sections with no recorded source lineage3 section(s) have no recorded source lineage, so the audit trail required for export is incompleteContradictionsNot swept yet — no count is claimedNot swept yetNo contradiction sweep has run for this project, so no finding is recorded and none is claimed absent. Run the sweep after recording CMC data. The export gate refuses a critical finding in the records whether or not a sweep recorded it.§3.2 build state21 subsections — source coverage, completeness and approvalSectionTitleSourcesCompleteMissing inputsStateApprovalAction3.2.S.1General Information1 canonical100%--draft in editordraft Build History Evidence3.2.S.2Manufacture (Drug Substance)1 canonical50%processControls, manufacturingProcessCompletedraft in editordraft Build History Evidence3.2.S.3Characterisation1 canonical0%s"
+ },
+ {
+  "label": "1440",
+  "step": "specifications",
+  "pageScrolls": false,
+  "head": "C2C-201›CMC / Module 36 [Demo · Biotech] C2C-201 oral JAK1 inhibitor — atopic dermatitis (IND)CMC / Module 3Module 3 for this filing, and the quality records kept while the study runs.What do I do on Specifications?Justify the release and shelf-life limits for aggregationFlag any specification without a validated methodModule 3Study recordsSubstance & productSpecificationsStabilityBatch recordsChange controlSpecificationsRelease and shelf-life limits — drug substance and drug product New specificationSpecification table6 attributesAttributeMaterialMethodReleaseShelf lifeICHStatusActionC2C-201 tablets — dissolutionDrug productDissolution (USP <711>, apparatus 2)NLT 80 % (Q) released at 30 minutesNLT 80 % (Q) released at 30 minutesICH Q6ADraft Edit Approve HistoryC2C-201 tablets — assayDrug productHPLC-UV assay and related substances95.0 - 105.0 % of label claim93.0 - 107.0 % of label claimICH Q6ADraft Edit Approve HistoryC2C-201 — solid formDrug substanceXRPD identity and polymorph formConforms to the Form I reference diffractogramConforms to the Form I reference diffractogramICH Q6ADraft Edit Approve HistoryC2C-201 — water contentDrug substanceKarl Fischer water determinationNMT 0.5 % w/wNMT 0.5 % w/wICH Q6ADraft Edit Approve HistoryC2C-201 — specified and total impuritiesDrug substanceHPLC-UV assay and related substancesAny specified impurity NMT 0.20 %; any unspecified NMT 0.10 %; total NMT 0.5 %Any specified impurity NMT 0.20 %; any unspecified NMT 0.10 %; total NMT 0.5 %ICH Q3ADraft Edit Approve HistoryC2C-201 — assayDrug substanceHPLC-UV assay and related substances98."
+ },
+ {
+  "label": "1440",
+  "step": "console",
+  "errors": []
+ },
+ {
+  "label": "390",
+  "step": "overview",
+  "pageScrolls": false,
+  "tabs": [
+   "Overview",
+   "Quality by design",
+   "Module 3 build",
+   "Approvals & audit"
+  ],
+  "head": "C2C-201›CMC / Module 36 [Demo · Biotech] C2C-201 oral JAK1 inhibitor — atopic dermatitis (IND)CMC / Module 3Module 3 for this filing, and the quality records kept while the study runs.Is my CMC package ready for its submission?Run the ICH compliance check and show every gapGenerate the drug-substance control strategyModule 3Study recordsOverviewQuality by designModule 3 buildApprovals & auditModule 3 overview1 submission — no preparedness index computed yet0Module 3 questions overdue on this projectSection approvalsgoverned, 21 CFR Part 11Advance the next sectionOpen the Module 3 build boardSectionPathCompletenessStateAction3.13.1100%Draft Approve section3.2.A.13.2.A.150%missing: containerDe"
+ },
+ {
+  "label": "390",
+  "step": "build",
+  "pageScrolls": false,
+  "head": "C2C-201›CMC / Module 36 [Demo · Biotech] C2C-201 oral JAK1 inhibitor — atopic dermatitis (IND)CMC / Module 3Module 3 for this filing, and the quality records kept while the study runs.What do I do on Module 3 build?Which §3.2 sections are blocking my export and why?Draft the narrative for the section with the lowest completenessModule 3Study recordsOverviewQuality by designModule 3 buildApprovals & auditModule 3 buildCompile CTD §3.2 from the study records, resolve what blocks it, and clear the export gate Run contradiction sweep Compile Module 321 sections in CTD §3.2 · 0 of 21 approved · 18 ready to compile · 0 stale · 0 blockedExport readinessfail-closed — 21 CFR §11 / governed decision fabric Check export gatenot export ready0 of 21 sections approved · 3 sections with no recorded source lineage3 section(s) have no recorded source lineage, so the audit trail required for export is incompleteContradictionsNot swept yet — no count is claimedNot swept yetNo contradiction sweep has run for this project, so no finding is recorded and none is claimed absent. Run the sweep after recording CMC data. The export gate refuses a critical finding in the records whether or not a sweep recorded it.§3.2 build state21 subsections — source coverage, completeness and approvalSectionTitleSourcesCompleteMissing inputsStateApprovalAction3.2.S.1General Information1 canonical100%--draft in editordraft Build History Evidence3.2.S.2Manufacture (Drug Substance)1 canonical50%processControls, manufacturingProcessCompletedraft in editordraft Build History Evidence3.2.S.3Characterisation1 canonical0%s"
+ },
+ {
+  "label": "390",
+  "step": "specifications",
+  "pageScrolls": false,
+  "head": "C2C-201›CMC / Module 36 [Demo · Biotech] C2C-201 oral JAK1 inhibitor — atopic dermatitis (IND)CMC / Module 3Module 3 for this filing, and the quality records kept while the study runs.What do I do on Specifications?Justify the release and shelf-life limits for aggregationFlag any specification without a validated methodModule 3Study recordsSubstance & productSpecificationsStabilityBatch recordsChange controlSpecificationsRelease and shelf-life limits — drug substance and drug product New specificationSpecification table6 attributesAttributeMaterialMethodReleaseShelf lifeICHStatusActionC2C-201 tablets — dissolutionDrug productDissolution (USP <711>, apparatus 2)NLT 80 % (Q) released at 30 minutesNLT 80 % (Q) released at 30 minutesICH Q6ADraft Edit Approve HistoryC2C-201 tablets — assayDrug productHPLC-UV assay and related substances95.0 - 105.0 % of label claim93.0 - 107.0 % of label claimICH Q6ADraft Edit Approve HistoryC2C-201 — solid formDrug substanceXRPD identity and polymorph formConforms to the Form I reference diffractogramConforms to the Form I reference diffractogramICH Q6ADraft Edit Approve HistoryC2C-201 — water contentDrug substanceKarl Fischer water determinationNMT 0.5 % w/wNMT 0.5 % w/wICH Q6ADraft Edit Approve HistoryC2C-201 — specified and total impuritiesDrug substanceHPLC-UV assay and related substancesAny specified impurity NMT 0.20 %; any unspecified NMT 0.10 %; total NMT 0.5 %Any specified impurity NMT 0.20 %; any unspecified NMT 0.10 %; total NMT 0.5 %ICH Q3ADraft Edit Approve HistoryC2C-201 — assayDrug substanceHPLC-UV assay and related substances98."
+ },
+ {
+  "label": "390",
+  "step": "console",
+  "errors": []
+ }
+]

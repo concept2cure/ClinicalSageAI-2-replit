@@ -10,16 +10,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SealedTurnRecord, TurnOutcome } from '../../../services/ana/turn-record.js';
 
 const io = vi.hoisted(() => ({
-  query: vi.fn(), execute: vi.fn(), record: vi.fn(), kernel: vi.fn(),
+  query: vi.fn(), execute: vi.fn(), record: vi.fn(), kernel: vi.fn(), boundary: vi.fn(), save: vi.fn(),
   sealed: null as SealedTurnRecord | null,
   outcome: null as TurnOutcome | null,
 }));
 vi.mock('../../../db.js', () => ({ pool: { query: io.query }, getPool: () => ({ query: io.query }), db: {} }));
 vi.mock('../../../db/currentTenant.js', () => ({ currentTenantOrgUuid: async () => '77777777-2222-4333-8444-555555555555' }));
 vi.mock('../../../services/ana/AnaToolExecutor.js', () => ({ executeAgenticLoop: io.execute }));
-vi.mock('../../../services/chat-thread-helpers.js', () => ({
+vi.mock('../../../services/chat-thread-helpers.js', async importOriginal => ({
+  OwnerPrivateChatError: (await importOriginal<typeof import('../../../services/chat-thread-helpers.js')>()).OwnerPrivateChatError,
+  threadHasOwnerPrivateBoundary: io.boundary,
   getOrCreateThread: async () => 'fixture-thread', getThreadMessages: async () => [],
-  saveChatMessage: async () => 1, ThreadAccessError: class extends Error {},
+  saveChatMessage: io.save, ThreadAccessError: class extends Error {},
 }));
 vi.mock('../../../services/enhancedEmbeddingService.js', () => ({ getEmbeddingService: () => ({ searchHybrid: async () => [] }) }));
 vi.mock('../shared.js', () => ({ ensureGateway: () => ({ getEnabledProviders: () => ['fixture'], getModels: () => [] }), normalizeBody: () => {} }));
@@ -106,12 +108,35 @@ function assertRawTool(): void {
   expect.soft(ref ? sealed.blobs.get(ref.sha256) : null).toBe(RAW_TOOL);
 }
 beforeEach(() => {
+  io.boundary.mockReset().mockResolvedValue(false);
+  io.save.mockReset().mockResolvedValue(1);
   io.query.mockReset().mockResolvedValue({ rows: [{ id: 'fixture-retrieval' }] });
   io.record.mockReset();
   io.kernel.mockReset().mockResolvedValue(undefined);
   io.execute.mockReset();
   io.sealed = null;
   io.outcome = null;
+});
+
+describe('mounted classic chat protects owner-private continuations', () => {
+  it('refuses an owner-private conversation before any model, message, turn, or artifact execution', async () => {
+    io.boundary.mockResolvedValue(true);
+    const result = await send();
+    expect(result.status).toBe(409);
+    expect(result.body).toEqual({ code: 'OWNER_PRIVATE_CONTEXT_UNAVAILABLE', error: 'Continue this private conversation through AnA’s protected conversation.' });
+    expect(io.boundary).toHaveBeenCalledWith('fixture-thread');
+    expect(io.execute).not.toHaveBeenCalled(); expect(io.save).not.toHaveBeenCalled(); expect(io.record).not.toHaveBeenCalled();
+    expect(io.sealed).toBeNull();
+  });
+
+  it('fails closed when private-boundary classification is unreadable', async () => {
+    io.boundary.mockRejectedValue(new Error('PRIVATE_BOUNDARY_CANARY'));
+    const result = await send();
+    expect(result.status).toBe(409);
+    expect(result.body.code).toBe('OWNER_PRIVATE_CONTEXT_UNAVAILABLE');
+    expect(io.execute).not.toHaveBeenCalled(); expect(io.save).not.toHaveBeenCalled(); expect(io.record).not.toHaveBeenCalled();
+    expect(JSON.stringify(result.body)).not.toContain('PRIVATE_BOUNDARY_CANARY');
+  });
 });
 
 describe('mounted classic chat records every returned model call', () => {

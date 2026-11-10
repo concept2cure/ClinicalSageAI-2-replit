@@ -1,0 +1,39 @@
+ × server/routes/__tests__/authoring-signature-figure-gate.test.ts > an approval names each unverified figure and signs nothing until each is acknowledged > refuses with 409 FIGURES_UNVERIFIED before the credential, naming the figure, and writes nothing
+   → {"success":true,"signatureId":"959f0d73-b90d-4e4a-a35b-f78e61757faf","documentHash":"87b50a0950df7232b7e3cdfd3cedd180f08907bf6bc9b0640c6d012b940109d1","digest":"4a5ae1a9e965ed52aac0c609ae1e49aab934132beb8b842ef50bfd009c714c42","covers":{"version":"approved","contentHash":"8a009f492ac74e5e991c86bbe43dd474c9efb4fa44a067866f6958663da1292e"},"workflowSourceAdoption":null,"signedAt":"2026-11-01T
+ × server/routes/__tests__/authoring-signature-figure-gate.test.ts > an approval names each unverified figure and signs nothing until each is acknowledged > an acknowledgement that leaves a figure out, or names another, is refused the same way
+   → []: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/authoring-signature-figure-gate.test.ts > an approval names each unverified figure and signs nothing until each is acknowledged > approves when each figure is acknowledged, and records each one on the approval's own transaction
+   → the acknowledgement trail row: expected undefined to be truthy
+ × server/routes/__tests__/authoring-signature-figure-gate.test.ts > an approval names each unverified figure and signs nothing until each is acknowledged > a cited source that no longer verifies leaves every figure of its section unchecked, and says so
+   → expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/authoring-signature-figure-gate.test.ts > an approval names each unverified figure and signs nothing until each is acknowledged > a saved source record that cannot be read at all refuses the approval, naming that
+ ✓ server/routes/__tests__/authoring-signature-figure-gate.test.ts > an approval names each unverified figure and signs nothing until each is acknowledged > a document whose figures are all in their sources approves as before, with nothing recorded (control)
+ ✓ server/routes/__tests__/authoring-signature-figure-gate.test.ts > an approval names each unverified figure and signs nothing until each is acknowledged > a review signature is not an approval and is not asked (control)
+ × server/routes/__tests__/authoring-signature-figure-gate.test.ts > a seal asks the same question > a freeze over an unverified figure is refused before the credential, and seals nothing
+   → {"success":true,"contentHash":"6d28cd1f224597e54728554724fc6234590090b051f32d58d35f2a544696140e","version":"v1.0.frozen","signatureId":"263ec0bd-e537-4b6e-ba4b-1e8b228af593","documentHash":"87b50a0950df7232b7e3cdfd3cedd180f08907bf6bc9b0640c6d012b940109d1","frozenAt":"2026-11-01T21:41:32.007Z"}: expected 200 to be 409 // Object.is equality
+ × server/routes/__tests__/authoring-signature-figure-gate.test.ts > a seal asks the same question > seals once each figure is acknowledged, and the freeze's chained row names it
+   → expected undefined to be truthy
+ × server/routes/__tests__/authoring-signature-figure-gate.test.ts > /sign as APPROVER, which approves and freezes at the last step, asks it too > refuses an APPROVER signature over an unverified figure, and signs nothing
+   → {"success":true,"message":"Document signed successfully","signatureId":"6975e172-9c33-4dff-a9c5-478cc977661e","workflowSourceAdoption":null,"digest":"c8294f978b3be33698786ebdddc6992bcb3237f7e97340e82132ae49ead72b36","filingApproval":{"approved":[],"notApproved":[],"documentId":null,"reason":"The governed document store is not provisioned here, so there is no filing to approve."}}: expected 
+ × server/routes/__tests__/authoring-signature-figure-gate.test.ts > /sign as APPROVER, which approves and freezes at the last step, asks it too > signs once it is acknowledged, and a REVIEWER signature is not asked (control)
+   → expected { …(5) } to match object { figuresAcknowledged: { count: 1 } }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/__tests__/authoring-signature-figure-gate.test.ts > an approval names each unverified figure and signs nothing until each is acknowledged > refuses with 409 FIGURES_UNVERIFIED before the credential, naming the figure, and writes nothing
+AssertionError: {"success":true,"signatureId":"959f0d73-b90d-4e4a-a35b-f78e61757faf","documentHash":"87b50a0950df7232b7e3cdfd3cedd180f08907bf6bc9b0640c6d012b940109d1","digest":"4a5ae1a9e965ed52aac0c609ae1e49aab934132beb8b842ef50bfd009c714c42","covers":{"version":"approved","contentHash":"8a009f492ac74e5e991c86bbe43dd474c9efb4fa44a067866f6958663da1292e"},"workflowSourceAdoption":null,"signedAt":"20
+ FAIL  server/routes/__tests__/authoring-signature-figure-gate.test.ts > an approval names each unverified figure and signs nothing until each is acknowledged > an acknowledgement that leaves a figure out, or names another, is refused the same way
+AssertionError: []: expected 200 to be 409 // Object.is equality
+ FAIL  server/routes/__tests__/authoring-signature-figure-gate.test.ts > an approval names each unverified figure and signs nothing until each is acknowledged > approves when each figure is acknowledged, and records each one on the approval's own transaction
+AssertionError: the acknowledgement trail row: expected undefined to be truthy
+ FAIL  server/routes/__tests__/authoring-signature-figure-gate.test.ts > an approval names each unverified figure and signs nothing until each is acknowledged > a cited source that no longer verifies leaves every figure of its section unchecked, and says so
+AssertionError: expected 200 to be 409 // Object.is equality
+ FAIL  server/routes/__tests__/authoring-signature-figure-gate.test.ts > an approval names each unverified figure and signs nothing until each is acknowledged > a saved source record that cannot be read at all refuses the approval, naming that
+ FAIL  server/routes/__tests__/authoring-signature-figure-gate.test.ts > a seal asks the same question > a freeze over an unverified figure is refused before the credential, and seals nothing
+AssertionError: {"success":true,"contentHash":"6d28cd1f224597e54728554724fc6234590090b051f32d58d35f2a544696140e","version":"v1.0.frozen","signatureId":"263ec0bd-e537-4b6e-ba4b-1e8b228af593","documentHash":"87b50a0950df7232b7e3cdfd3cedd180f08907bf6bc9b0640c6d012b940109d1","frozenAt":"2026-11-01T21:41:32.007Z"}: expected 200 to be 409 // Object.is equality
+ FAIL  server/routes/__tests__/authoring-signature-figure-gate.test.ts > a seal asks the same question > seals once each figure is acknowledged, and the freeze's chained row names it
+AssertionError: expected undefined to be truthy
+ FAIL  server/routes/__tests__/authoring-signature-figure-gate.test.ts > /sign as APPROVER, which approves and freezes at the last step, asks it too > refuses an APPROVER signature over an unverified figure, and signs nothing
+AssertionError: {"success":true,"message":"Document signed successfully","signatureId":"6975e172-9c33-4dff-a9c5-478cc977661e","workflowSourceAdoption":null,"digest":"c8294f978b3be33698786ebdddc6992bcb3237f7e97340e82132ae49ead72b36","filingApproval":{"approved":[],"notApproved":[],"documentId":null,"reason":"The governed document store is not provisioned here, so there is no filing to approve."}}: 
+ FAIL  server/routes/__tests__/authoring-signature-figure-gate.test.ts > /sign as APPROVER, which approves and freezes at the last step, asks it too > signs once it is acknowledged, and a REVIEWER signature is not asked (control)
+AssertionError: expected { …(5) } to match object { figuresAcknowledged: { count: 1 } }
+ Test Files  1 failed (1)
+      Tests  9 failed | 2 passed (11)

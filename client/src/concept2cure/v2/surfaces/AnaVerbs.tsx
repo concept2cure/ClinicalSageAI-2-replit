@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
-import { hasKeys, liveGetOrNull } from '../dataConnect';
+import { hasKeys, liveGetOrNull, type DataResult, type ShapeGuard } from '../dataConnect';
 import { marketBuildText, marketSupportPath, type MarketSupportView } from '../MarketSupportLine';
 import { filingAskPrompt, FILING_CATEGORY_METADATA } from '@shared/regulatory/filing-catalog';
 import { filingLifecycleReferenceFor, filingReferenceFactsFor } from '@shared/regulatory/filing-lifecycle-reference';
@@ -27,6 +27,9 @@ interface FilingOfferView {
   tier: 'build_and_sequence' | 'author_only' | 'not_offered'; label: string; reason: string;
   /** Registry ids the tier is stated for; null when it holds for every filing of the type. */
   appliesTo?: string[] | null;
+  /** A refusal stated for one filing, keyed by registry id, where it differs from `reason` (ICH / Global's
+   *  QOS and Module 3 sections are written inside their application). Absent means `reason` holds for all. */
+  reasonByFiling?: Readonly<Record<string, string>>;
 }
 /** What the picker says about one offered filing: the server's offer, or, for a
  *  filing that creates the application type without being that application (a
@@ -52,6 +55,26 @@ type Pair = { type: string; agency: string };
  *  did not name ('EU / Notified Body', 'ICH / Global'), asked for that market,
  *  so every filing's offer or refusal is the server's. A failed or malformed
  *  read fails the whole set. */
+/* One read per path, shared. The catalog asks about some sixty application types, and the picker asked again on every
+   mount: New project opened three times in a minute was ~520 requests, and the person's API allowance (600 a minute,
+   server/config/platform-limits.ts) refused the project page that followed with 429 (human test J1, 2026-11-06). What
+   the platform offers is reference data from the rule packs, so a read that answered is kept for a few minutes and a
+   read in flight is joined, never repeated; a read that failed is not kept, and Retry always reads afresh. */
+const OFFER_TTL_MS = 5 * 60_000;
+const offerReads = new Map<string, { at: number; read: Promise<DataResult<MarketSupportRead>> }>();
+function readOffer(path: string, guard: ShapeGuard<MarketSupportRead>, fresh: boolean): Promise<DataResult<MarketSupportRead>> {
+  const held = offerReads.get(path);
+  if (!fresh && held && Date.now() - held.at < OFFER_TTL_MS) return held.read;
+  const read = liveGetOrNull<MarketSupportRead>(path, guard).then((r) => {
+    if (r.error || !r.data) offerReads.delete(path);
+    return r;
+  });
+  offerReads.set(path, { at: Date.now(), read });
+  return read;
+}
+/** Tests only: forget every shared read. */
+export function __resetFilingOfferReads() { offerReads.clear(); }
+
 function useFilingOffers(pairs: Pair[]) {
   const key = pairs.map((p) => `${p.type}|${p.agency}`).join(';');
   const [bump, setBump] = useState(0);
@@ -70,11 +93,12 @@ function useFilingOffers(pairs: Pair[]) {
       !!r.error || !r.data || !Array.isArray(r.data.markets) || r.data.markets.some((m) => !m?.offer);
     const types = [...new Set(pairs.map((p) => p.type))];
     (async () => {
-      const first = await Promise.all(types.map((t) => liveGetOrNull<MarketSupportRead>(marketSupportPath(t), guard)));
+      const fresh = bump > 0;
+      const first = await Promise.all(types.map((t) => readOffer(marketSupportPath(t), guard, fresh)));
       if (first.some(bad)) return { error: true, byType: new Map<string, MarketRow[]>() };
       const byType = new Map<string, MarketRow[]>(types.map((t, i) => [t, [...first[i].data!.markets]]));
       const unnamed = pairs.filter((p) => !rowFor(byType.get(p.type), p.agency));
-      const second = await Promise.all(unnamed.map((p) => liveGetOrNull<MarketSupportRead>(marketSupportPath(p.type, p.agency), guard)));
+      const second = await Promise.all(unnamed.map((p) => readOffer(marketSupportPath(p.type, p.agency), guard, fresh)));
       if (second.some(bad)) return { error: true, byType: new Map<string, MarketRow[]>() };
       unnamed.forEach((p, i) => byType.get(p.type)!.push(...second[i].data!.markets));
       return { error: false, byType };
@@ -166,7 +190,12 @@ export function RegistryPicker({ value, onChange, applicationTypeOf, initialSegm
       const row = rowFor(offers.byType.get(type), e.agency);
       // Every pair was read, so a missing row is a defect in the read, stated as such.
       if (!row?.offer) { refused.push({ entry: e, reason: 'The server stated no offer for this filing\'s market.' }); continue; }
-      if (row.offer.tier === 'not_offered') { refused.push({ entry: e, reason: row.offer.reason }); continue; }
+      if (row.offer.tier === 'not_offered') {
+        /* The filing's own refusal when the server states one, matched as `appliesTo` is (lowercase ids). */
+        const own = Object.entries(row.offer.reasonByFiling ?? {}).find(([id]) => id.toLowerCase() === e.id.toLowerCase())?.[1];
+        refused.push({ entry: e, reason: own ?? row.offer.reason });
+        continue;
+      }
       const scope = row.offer.appliesTo;
       if (Array.isArray(scope) && !scope.some((id) => id.toLowerCase() === e.id.toLowerCase())) {
         const names = scope.map((id) => nameOf.get(id.toLowerCase()) ?? id);

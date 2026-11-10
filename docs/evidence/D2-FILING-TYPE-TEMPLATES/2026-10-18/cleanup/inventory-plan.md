@@ -1,5 +1,10 @@
 # CTD authoring cleanup: execution plan C5–C6 (D2 / W1)
 
+> **Status 2026-11-01** (one design plan, RULE 5/6): S01–S07 and C4 are done. The convergences go under the package
+> that owns their files. The deletions of unreached code are R1 retirements for the founder; a served route that
+> fabricates is first made to refuse, under F1. Slice by slice: `../../2026-11-01-plan-alignment/README.md`.
+
+
 This plan has 60 ordered slices. Slices S01 and S02 are expected to clear two gates that are already red on trunk, but I could not run either gate, so their red state is inferred from the gate code. About 30 slices are server-only and touch nothing owned by the client-journey session. Five slices wait on founder decisions, and twelve client retirements are handed to the client-journey session because they need edits in its files.
 
 All paths are relative to `/home/user/ClinicalSageAI-2-replit`. Evidence for every slice goes in `/home/user/ClinicalSageAI-2-replit/docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-10-18/cleanup/README.md`, with a red file named `sNN-red.txt` beside it.

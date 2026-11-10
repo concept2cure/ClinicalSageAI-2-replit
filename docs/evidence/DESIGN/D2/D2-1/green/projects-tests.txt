@@ -1,0 +1,70 @@
+# Green: every Projects test (client/src/concept2cure/v2/__tests__/projects*.test.tsx) after D2-1, working tree on 14dce5e38, 2026-11-01
+# DEBUG_PRINT_LIMIT=0 npx vitest run --maxWorkers=1 client/src/concept2cure/v2/__tests__/projects*.test.tsx
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > uses server totals beyond the page and keeps readiness and search page bounded 324ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > requests workstream and pathway on the server, retaining the Client filter 234ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > applies the same pathway through the existing surface action and rejects unknown keys 29ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > keeps a failed filtered read distinct from an empty portfolio and allows clearing 78ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > does not call an empty pathway result a new organization 38ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > keeps a selected page status clearable when a server filter returns different statuses 83ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > WS_LABEL names each workstream code as a client type > is exported, in sentence case, with the rail’s device name 3ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > reads the stated description first 73ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > falls back to the filing in words when no description is stated 27ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > falls back to the stage and lead for a payload without the four fields 23ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > never fills a value the record does not hold 20ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > ends with the code and when it was updated, and the target date only when one is set 25ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > carries no readiness bar, no chip and no readiness line 16ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the Projects header holds the title and one primary action > has no eyebrow, no sub-line and no Ask AnA button, and one New project 273ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the Projects header holds the title and one primary action > states the count the search covers in its placeholder, and none while loading 19ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the list view holds what the cards dropped, as text > names the client type in words and puts the portfolio figures after the table 202ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > a program recorded blocked with no blocker says no cause is recorded (the NM-512 case) 79ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > reads no blocker from a list row, and a blocked status still says no cause is recorded 22ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > an active program makes no blocker claim either way 23ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > the list view says the same for the blocked program 268ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects list — readiness is named as the dossier readiness > labels a measured figure and an unmeasured one with the same name Project home uses 90ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects — no bar anywhere; the figure is text with its reason (F23, D2-1) > no card draws a bar or states a readiness figure 19ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects — no bar anywhere; the figure is text with its reason (F23, D2-1) > the list view states each figure as text, with no bar 73ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects — no bar anywhere; the figure is text with its reason (F23, D2-1) > an unavailable figure says so, and why, never "Not recorded" 65ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects — no bar anywhere; the figure is text with its reason (F23, D2-1) > the portfolio mean says how many programs it covers when some have no recorded measurement 102ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > no card claims "No open blockers" when no blocker was looked for 80ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > shows no "Blocked" figure, since nothing writes that status 307ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > counts the programs whose target filing date is within the next 60 days 106ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > says one active project in the singular, and several in the plural 127ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > offers no status filter that can only show an empty list 21ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — the summary line stays honest when the read fails > renders no percentage at all over a FAILED portfolio read 272ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — the summary line stays honest when the read fails > renders no percentage while the read is still in flight 63ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — the summary line stays honest when the read fails > does render the real figures once the read succeeds 74ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — search > matches on title and hides the rest 27ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — search > matches on the program code 19ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — search > does NOT match the lead field, which can hold an email address 21ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — search > names the query in the empty state instead of blaming the filters 19ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — summary over a successful empty read > states no mean readiness over zero programs 257ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — a mixed portfolio still has a mean > averages readiness over every program shown 112ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — a program with nothing measurable has no readiness figure > keeps failed dossier measurements unavailable in the mean 48ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — a program with nothing measurable has no readiness figure > says "Not recorded" on its list row, never "0% ready" 48ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — a program with nothing measurable has no readiness figure > averages only the programs that were measured 45ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioTruncation.test.tsx > Projects — a truncated portfolio read > says the list is the first page, and the count is a floor 329ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioTruncation.test.tsx > Projects — a truncated portfolio read > a complete read says nothing extra 70ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsNewProjectAction.test.tsx > projects.new-project reaches the canonical wizard without writing > opens the real wizard using a validated action, and never submits intake 327ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsNewProjectAction.test.tsx > projects.new-project reaches the canonical wizard without writing > preserves a chosen filing and typed input when opened again 241ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsNewProjectAction.test.tsx > projects.new-project reaches the canonical wizard without writing > stashes across navigation and mount and consumes the opener once 52ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsNewProjectAction.test.tsx > projects.new-project reaches the canonical wizard without writing > keeps other portfolio actions guarded while the person is in intake 89ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsNewProjectAction.test.tsx > projects.new-project reaches the canonical wizard without writing > does not advertise an AnA cancellation action while the wizard owns the screen 95ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsNewProjectAction.test.tsx > projects.new-project reaches the canonical wizard without writing > can open intake even when the portfolio read failed 42ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsClientFilter.test.tsx > Projects client filter uses the authorized server projection > filters on the server before paging and can clear the selection 321ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsClientFilter.test.tsx > Projects client filter uses the authorized server projection > offers no redundant selector for one active accessible client 33ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsClientFilter.test.tsx > Projects client filter uses the authorized server projection > keeps a way to clear the filter after a failed read and reports the failure 103ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsClientFilter.test.tsx > Projects client filter uses the authorized server projection > does not describe an empty filtered read as an organization with no projects 58ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsClientFilter.test.tsx > Projects client filter uses the authorized server projection > performs the same client filter through the existing surface action 49ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsClientFilter.test.tsx > Projects client filter uses the authorized server projection > refuses an action for a client outside the authorized choices 32ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsActivity.test.tsx > Projects shows the last activity its record holds > on the card, and on the list row 307ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsActivity.test.tsx > Projects shows the last activity its record holds > shows none where the record holds none, in either view 100ms
+
+ Test Files  10 passed (10)
+      Tests  58 passed (58)
+   Start at  22:20:24
+   Duration  18.30s (transform 1.36s, setup 886ms, import 4.23s, tests 6.15s, environment 5.47s)
+

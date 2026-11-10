@@ -109,10 +109,12 @@ async function walkRail(page: Page, visits: Visit[]) {
   }
 }
 
-/** The top bar's search button, as a person opens it; ⌘K is the same toggle. */
+/** The sidebar's Search, as a person opens it; ⌘K is the same toggle. The top bar's
+ *  search box went in D1-2 (.design/claude-convergence/D1.md §D1.B step 4). Collapsed,
+ *  the button is named by its title ("Search (⌘K)"). */
 async function openPalette(page: Page) {
   if (await page.locator('.cmdk-list').isVisible().catch(() => false)) return;
-  await page.getByRole('button', { name: 'Search, jump, or run a command' }).first().click();
+  await page.locator('nav[aria-label="Primary"]').getByRole('button', { name: /^Search/ }).first().click();
   await expect(page.locator('.cmdk-list')).toBeVisible({ timeout: 10_000 });
 }
 
@@ -136,7 +138,8 @@ async function walkPalette(page: Page, visits: Visit[], term: string) {
     const row = page.locator('.cmdk-list button').nth(i);
     if (!(await row.isVisible().catch(() => false))) { await page.keyboard.press('Escape'); continue; }
     await row.click();
-    visits.push(await observe(page, term ? `⌘K "${term}"` : '⌘K Jump to', rows[i]));
+    // D1-3 (D1.md §D1.F step 1): the empty list's places are "Go to", which was "Jump to".
+    visits.push(await observe(page, term ? `⌘K "${term}"` : '⌘K Go to', rows[i]));
     await page.keyboard.press('Escape').catch(() => undefined);
   }
 }
@@ -203,7 +206,7 @@ for (const mode of ['biotech', 'medtech'] as const) {
     const visits: Visit[] = [];
 
     await test.step('every rail entry', () => walkRail(page, visits));
-    await test.step('⌘K: Jump to, then each search', async () => {
+    await test.step('⌘K: Go to, then each search', async () => {
       await page.goto('/concept2cure');
       await settle(page);
       await walkPalette(page, visits, '');

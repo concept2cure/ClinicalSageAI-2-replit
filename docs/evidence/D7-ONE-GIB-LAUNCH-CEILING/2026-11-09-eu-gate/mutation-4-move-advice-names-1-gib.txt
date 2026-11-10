@@ -1,0 +1,10 @@
+MUTATION 4-move-advice-names-1-gib in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T03:55:44.613572Z): replaced [${sized.ceiling ?? 'within that limit'} or less] with [1 GiB or less]
+ × server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > a route whose gateway limit is sourced is refused over it before signing (P-93, question 1(a)) > an EU national filing over 600 MiB is refused at freeze, while its leaves can still change 256ms
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: freeze and dispatch refuse it too, before their signatures (the package gate, site a) > a validated FDA sequence over 1 GiB is refused at freeze while its leaves can still change, with what to do 159ms
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: freeze and dispatch refuse it too, before their signatures (the package gate, site a) > a frozen FDA sequence over 1 GiB is refused at dispatch, saying its leaves are locked 139ms
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: freeze and dispatch refuse it too, before their signatures (the package gate, site a) > a dispatched FDA sequence over 1 GiB is refused at dispatch, saying its leaves are locked 93ms
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: freeze and dispatch refuse it too, before their signatures (the package gate, site a) > a sequence for another region over 1 GiB is not refused on size at freeze 103ms
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: freeze and dispatch refuse it too, before their signatures (the package gate, site a) > at exactly 1 GiB freeze is not refused on size 104ms
+      Tests  1 failed | 5 passed | 11 skipped (17)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 b89af39ac03f42da2500a91e251094696295544136b39b53ac6d1e442b7adc66 (expected b89af39ac03f42da2500a91e251094696295544136b39b53ac6d1e442b7adc66)

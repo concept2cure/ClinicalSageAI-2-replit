@@ -1,0 +1,899 @@
+diff --git a/server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts b/server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts
+--- a/server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts
++++ b/server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts
+@@ -18,6 +18,11 @@
+  * Only the re-authentication dependencies and services unrelated to the act are
+  * stubbed. The review quorum, the signer lookup, the ledger writer and every
+  * table the act writes are the production code over one PGlite connection.
++ *
++ * 2026-11-01 (F1, decision P-18): the seeded artifact names its author (AUTHOR,
++ * a second user), so the signer is not its author unless a case says so.
++ * Before this it named none, and nothing compared the signer with the author;
++ * the separation-of-duties cases are at the end.
+  */
+ import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
+ import fs from 'node:fs';
+@@ -34,6 +39,8 @@
+   pg: null as unknown as import('@electric-sql/pglite').PGlite,
+   /** Whether the signer is enrolled in TOTP; '123456' is their current code. */
+   mfa: false,
++  /** Runs while the signer re-authenticates: after the route's preflight, before the signing transaction. */
++  duringReauth: null as null | (() => Promise<unknown>),
+ }));
+ const PASSWORD = 'correct-horse-battery';
+ 
+@@ -49,7 +56,10 @@
+ vi.mock('../../../services/part11/reverify-signer-deps', () => ({
+   signerReverificationDeps: () => ({
+     loadPasswordHash: async () => 'stored-hash',
+-    comparePassword: async (plain: string, hash: string) => plain === PASSWORD && hash === 'stored-hash',
++    comparePassword: async (plain: string, hash: string) => {
++      await holder.duringReauth?.();
++      return plain === PASSWORD && hash === 'stored-hash';
++    },
+     isMfaEnabled: async () => holder.mfa,
+     verifyMfaToken: async (_userId: number, token: string) => token === '123456',
+     isAccountActive: async () => true,
+@@ -137,6 +147,8 @@
+ 
+ const ORG = 99;
+ const USER = 777;
++/** Who wrote the seeded artifact and its version: not the signer. */
++const AUTHOR = 778;
+ const PROJECT = 3;
+ const ARTIFACT = 'artifact_abc';
+ 
+@@ -183,17 +195,17 @@
+   (await run(`SELECT id, version, content_hash, change_description FROM concept2cure_artifact_versions`)).rows;
+ const snapshots = async () => (await run(`SELECT version_id FROM concept2cure_submission_snapshots`)).rows;
+ 
+-async function seed(status: 'review' | 'approved', opts: { versionRow?: boolean } = {}) {
++async function seed(status: 'review' | 'approved', opts: { versionRow?: boolean; author?: number } = {}) {
+   await run(
+     `INSERT INTO concept2cure_artifacts
+-       (artifact_id, organization_id, project_id, type, category, title, content, content_hash, version, status, approved_version_id)
+-     VALUES ($1, $2, $3, 'document', 'document', 'Clinical overview', 'body', '230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5', 2, $4, $5)`,
+-    [ARTIFACT, ORG, PROJECT, status, status === 'approved' ? 2 : null],
++       (artifact_id, organization_id, project_id, type, category, title, content, content_hash, version, status, approved_version_id, created_by_id)
++     VALUES ($1, $2, $3, 'document', 'document', 'Clinical overview', 'body', '230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5', 2, $4, $5, $6)`,
++    [ARTIFACT, ORG, PROJECT, status, status === 'approved' ? 2 : null, opts.author ?? AUTHOR],
+   );
+   if (opts.versionRow !== false) {
+     await run(
+-      `INSERT INTO concept2cure_artifact_versions (artifact_id, organization_id, version, content, content_hash)
+-       SELECT id, organization_id, 2, 'body', '230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5' FROM concept2cure_artifacts WHERE artifact_id = $1`,
++      `INSERT INTO concept2cure_artifact_versions (artifact_id, organization_id, version, content, content_hash, created_by_id)
++       SELECT id, organization_id, 2, 'body', '230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5', created_by_id FROM concept2cure_artifacts WHERE artifact_id = $1`,
+       [ARTIFACT],
+     );
+   }
+@@ -206,7 +218,8 @@
+   await holder.pg.exec(GOVERNED_ACTION_LEDGER_PGLITE_DDL);
+   await holder.pg.exec(`INSERT INTO organizations (id, name) VALUES (${ORG}, 'Sponsor')`);
+   await holder.pg.exec(
+-    `INSERT INTO users (id, email, name, password_hash) VALUES (${USER}, 'signer@example.com', 'Dana Reviewer', 'x')`,
++    `INSERT INTO users (id, email, name, password_hash) VALUES (${USER}, 'signer@example.com', 'Dana Reviewer', 'x'),
++       (${AUTHOR}, 'author@example.com', 'Ari Author', 'x')`,
+   );
+   await holder.pg.exec(
+     `INSERT INTO organization_users (organization_id, user_id, role) VALUES (${ORG}, ${USER}, 'admin')`,
+@@ -217,6 +230,7 @@
+ });
+ beforeEach(async () => {
+   holder.mfa = false;
++  holder.duringReauth = null;
+   await holder.pg.exec(`
+     DELETE FROM concept2cure_signatures; DELETE FROM concept2cure_submission_snapshots;
+     DELETE FROM concept2cure_provenance_events; DELETE FROM concept2cure_artifact_versions;
+@@ -454,6 +468,15 @@
+     expect(await ledger()).toEqual([]);
+     expect(await snapshots()).toEqual([]);
+   });
++
++  // 2026-11-01 (F1, decision P-18): the act itself refuses the author, whatever its caller checked first.
++  it.each([['review', 'approved'], ['approved', 'locked']] as const)('%s → %s by the author: not signed, nothing written', async (from, to) => {
++    await seed(from, { author: USER });
++    await expect(commitAs(to, from, await readArtifact(), await readVersion())).rejects.toMatchObject({ code: 'SEPARATION_OF_DUTIES' });
++    expect(await signatures()).toEqual([]);
++    expect(await ledger()).toEqual([]);
++    expect(await snapshots()).toEqual([]);
++  });
+ });
+ 
+ /**
+@@ -528,3 +551,54 @@
+     expect(await ledger()).toEqual([]);
+   });
+ });
++
++/**
++ * 2026-11-01 (F1, decision P-18): "An author still cannot approve their own
++ * document." A user with signing authority wrote an artifact, sent it to review
++ * with no reviewer assigned (so the quorum was met), and approved it with their
++ * own password: nothing compared the signer with the author. The check is the
++ * platform's one separation-of-duties check, asked by the preflight both doors
++ * share and again on the signing transaction (pinned for the act itself above,
++ * with the other states the act refuses). Every other case in this file signs
++ * as USER over an artifact AUTHOR wrote, so a non-author still signs.
++ */
++describe('P-18: the author cannot approve or release their own artifact', () => {
++  it.each([
++    ['approving', 'review', APPROVE, { status: 'review', approved_version_id: null }],
++    ['releasing (locking)', 'approved', LOCK, { status: 'approved', published_version_id: null }],
++  ] as const)('%s what you wrote, no reviewer assigned: refused 403 SEPARATION_OF_DUTIES before the password is verified, nothing written', async (_label, from, body, unchanged) => {
++    await seed(from, { author: USER });
++    let reauthAsked = false;
++    holder.duringReauth = async () => { reauthAsked = true; };
++    const res = await putStatus(body);
++
++    expect(res.status, JSON.stringify(res.body)).toBe(403);
++    expect(JSON.stringify(res.body)).toContain('SEPARATION_OF_DUTIES');
++    expect(JSON.stringify(res.body)).toMatch(/you are an author of this record/);
++    expect(reauthAsked, 'the password was verified for an act that cannot be signed').toBe(false);
++    expect(await artifactRow()).toMatchObject(unchanged);
++    expect(await signatures()).toEqual([]);
++    expect(await ledger()).toEqual([]);
++    expect(await provenance()).toEqual([]);
++    expect(await snapshots()).toEqual([]);
++  });
++
++  it('becoming an author after the preflight (a version written while signing): refused 403 on the signing transaction, nothing written', async () => {
++    await seed('review');
++    holder.duringReauth = () =>
++      run(
++        `INSERT INTO concept2cure_artifact_versions (artifact_id, organization_id, version, content, content_hash, created_by_id)
++         SELECT id, organization_id, 1, 'draft', 'h1', $2 FROM concept2cure_artifacts WHERE artifact_id = $1`,
++        [ARTIFACT, USER],
++      );
++    const res = await putStatus(APPROVE);
++
++    expect(res.status, JSON.stringify(res.body)).toBe(403);
++    expect(JSON.stringify(res.body)).toContain('SEPARATION_OF_DUTIES');
++    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
++    expect(await signatures()).toEqual([]);
++    expect(await ledger()).toEqual([]);
++    expect(await auditHalf()).toEqual([]);
++  });
++
++});
+diff --git a/server/routes/c2c/artifacts.ts b/server/routes/c2c/artifacts.ts
+--- a/server/routes/c2c/artifacts.ts
++++ b/server/routes/c2c/artifacts.ts
+@@ -61,6 +61,7 @@
+ import { projectAdmissionMiddleware, ProjectAdmissionRefusal, requireCurrentProjectActor } from './project-access';
+ import { getAccessibleReportProjectIds } from '../../services/report-os/project-access';
+ import { verifyReauth } from './actions';
++import { separationOfDutiesRefusal } from '../../services/governance/separation-of-duties';
+ import { checkSigningAuthority } from '../../services/part11/signing-authority-gate';
+ import { isSigningAuthorized } from '../../services/part11/signing-authority';
+ import { clientIpKey } from '../../utils/client-ip';
+@@ -2558,19 +2559,22 @@
+       }
+ 
+       // ── Before a signed act: a lock covers the approval, no blocking
+-      // contradiction, the review quorum ───────────────────────────────
++      // contradiction, the signer is not an author, the review quorum ───
+       // 2026-09-23 (W5/D7): a lock is lockable only when filable as approved
+       // (artifactApproval, the one filing rule); the P12 quorum blocks
+       // review → approved while assigned reviewers have not approved, and a
+       // quorum that cannot be read throws (the catch below answers 500 before
+       // anything is written). Since 2026-10-01 these live in
+       // server/services/artifact-approval-act.ts (refuseSignedArtifactAct),
+-      // applied here and by AnA's signed approve and lock.
++      // applied here and by AnA's signed approve and lock. 2026-11-01 (F1,
++      // P-18): the author refusal is answered 403/409/503 by the one
++      // separation-of-duties mapping, before the password is verified.
+       if (status === 'approved' || status === 'locked') {
+         const signedActRefusal = await refuseSignedArtifactAct({
+           q: pool,
+           organizationId,
+           projectId,
++          signerId: userId,
+           artifact,
+           previousStatus,
+           status,
+@@ -2769,8 +2773,15 @@
+             ) {
+               return err;
+             }
++            // 2026-11-01 (F1, P-18): an author found on the signing transaction
++            // is answered as the preflight answers one, not as a 500.
++            const authorRefusal = separationOfDutiesRefusal(err, 'c2c/artifacts/status');
++            if (authorRefusal) return authorRefusal;
+             throw err;
+           });
++        if ('body' in signed) {
++          return sendError(res, signed.status, signed.body.detail, undefined, signed.body.error);
++        }
+         if (signed instanceof ArtifactActContractError) {
+           /* Ours, not the signer's: the detail stays in the log (this router
+              forwards its results to a tenant client — ci:server-error-leaks)
+diff --git a/server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts b/server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts
+--- a/server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts
++++ b/server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts
+@@ -4,6 +4,12 @@
+  * available. Minimal tables deliberately allow corrupt relationships, so the
+  * reader's refusals can be tested; this is not a deployed-schema/RLS test.
+  * The fingerprint rule and contradiction engine are explicit dependency doubles.
++ *
++ * 2026-11-01 (F1, decision P-18): "An author still cannot approve their own
++ * document." The artifact and version tables are here too (their authorship
++ * columns only), so the shared preflight's separation-of-duties check reads
++ * real SQL. Unless a case says otherwise the artifact was written by AUTHOR and
++ * is signed by SIGNER, a different user.
+  */
+ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+ import { PGlite } from '@electric-sql/pglite';
+@@ -37,6 +43,9 @@
+ const cases = casesJson as unknown as QuorumCase[];
+ const clear = { blocked: false, blockingFindings: [], warningFindings: [] };
+ const finding = { id: 7, title: 'Conflicting endpoint', severity: 'major', contradictionType: 'protocol_sap', authorityState: 'blocking' };
++const AUTHOR = 501;
++const SIGNER = 777;
++const EXTERNAL_ID = 'artifact_review';
+ let pg: PGlite;
+ 
+ beforeAll(async () => {
+@@ -51,6 +60,13 @@
+       organization_id integer NOT NULL, reviewer_id integer NOT NULL, review_round integer NOT NULL,
+       decision text NOT NULL, version_reviewed integer
+     );
++    CREATE TABLE concept2cure_artifacts (
++      id integer PRIMARY KEY, artifact_id text NOT NULL UNIQUE, organization_id integer NOT NULL, created_by_id integer
++    );
++    CREATE TABLE concept2cure_artifact_versions (
++      id serial PRIMARY KEY, artifact_id integer NOT NULL, organization_id integer NOT NULL,
++      version integer NOT NULL, created_by_id integer
++    );
+   `);
+ }, 30_000);
+ afterAll(async () => { await pg?.close(); });
+@@ -58,7 +74,10 @@
+   vi.clearAllMocks();
+   boundary.check.mockResolvedValue(clear);
+   boundary.approval.mockReturnValue({ filable: true });
+-  await pg.exec('DELETE FROM concept2cure_review_decisions; DELETE FROM concept2cure_review_assignments;');
++  await pg.exec(`DELETE FROM concept2cure_review_decisions; DELETE FROM concept2cure_review_assignments;
++    DELETE FROM concept2cure_artifact_versions; DELETE FROM concept2cure_artifacts;
++    INSERT INTO concept2cure_artifacts (id, artifact_id, organization_id, created_by_id) VALUES (4242, '${EXTERNAL_ID}', 99, ${AUTHOR});
++    INSERT INTO concept2cure_artifact_versions (artifact_id, organization_id, version, created_by_id) VALUES (4242, 99, 3, ${AUTHOR});`);
+ });
+ 
+ async function seed(c: QuorumCase) {
+@@ -89,10 +108,10 @@
+     return pg.query(sql, params);
+   } };
+ }
+-function signedInput(q: ApprovalActQueryable, status: 'approved' | 'locked' = 'approved') {
++function signedInput(q: ApprovalActQueryable, status: 'approved' | 'locked' = 'approved', signerId = SIGNER) {
+   return {
+-    q, organizationId: 99, projectId: 3,
+-    artifact: { id: 4242, version: 3, approvedVersionId: status === 'locked' ? 3 : null, publishedVersionId: null },
++    q, organizationId: 99, projectId: 3, signerId,
++    artifact: { id: 4242, artifactId: EXTERNAL_ID, version: 3, approvedVersionId: status === 'locked' ? 3 : null, publishedVersionId: null },
+     previousStatus: status === 'locked' ? 'approved' : 'review', status,
+   };
+ }
+@@ -168,3 +187,56 @@
+   expect(refuseArtifactTransition('review', 'approved', 'author')).toMatchObject({ httpStatus: 403 });
+   expect(refuseArtifactTransition('approved', 'locked', 'reviewer')).toMatchObject({ httpStatus: 403 });
+ });
++
++/**
++ * 2026-11-01 (F1, decision P-18). Both signed-act doors (the status route and
++ * AnA's update_artifact_status) ask this preflight before anyone signs, and a
++ * user with signing authority could approve or release an artifact they wrote:
++ * with no reviewer assigned the quorum is met, and nothing compared the signer
++ * with the author. Authorship is the platform's one separation-of-duties check
++ * (governance/separation-of-duties.ts, target `artifact:<artifact_id>`).
++ */
++describe('P-18: an author cannot approve or release their own artifact', () => {
++  for (const status of ['approved', 'locked'] as const) {
++    it(`${status}: the creator signing, no reviewer assigned, is refused 403 SEPARATION_OF_DUTIES`, async () => {
++      const result = await refuseSignedArtifactAct(signedInput(queryable(), status, AUTHOR));
++      expect(result).toMatchObject({ httpStatus: 403, code: 'SEPARATION_OF_DUTIES' });
++      expect(result?.message).toMatch(/you are an author of this record \(artifact creator, artifact version ledger\)/);
++    });
++  }
++  it('anyone who wrote a version is an author too, not only the creator', async () => {
++    await pg.exec(`INSERT INTO concept2cure_artifact_versions (artifact_id, organization_id, version, created_by_id) VALUES (4242, 99, 2, ${SIGNER})`);
++    expect(await refuseSignedArtifactAct(signedInput(queryable()))).toMatchObject({ httpStatus: 403, code: 'SEPARATION_OF_DUTIES' });
++  });
++  it('a version written in another organization is not read as authorship of this one', async () => {
++    await pg.exec(`INSERT INTO concept2cure_artifact_versions (artifact_id, organization_id, version, created_by_id) VALUES (4242, 98, 2, ${SIGNER})`);
++    expect(await refuseSignedArtifactAct(signedInput(queryable()))).toBeNull();
++  });
++  for (const status of ['approved', 'locked'] as const) {
++    it(`${status}: a different user signing, no reviewer assigned, still passes`, async () => {
++      expect(await refuseSignedArtifactAct(signedInput(queryable(), status))).toBeNull();
++    });
++  }
++  it('the author is told so before the quorum: not that a review is still open', async () => {
++    await seed({ name: 'pending', assignments: [{ id: 1, artifact_id: 4242, organization_id: 99, reviewer_id: 701, review_round: 1, status: 'pending' }], decisions: [], met: false });
++    expect(await refuseSignedArtifactAct(signedInput(queryable(), 'approved', AUTHOR))).toMatchObject({ code: 'SEPARATION_OF_DUTIES' });
++  });
++  it('an artifact with no recorded author is refused 409: independence cannot be shown', async () => {
++    await pg.exec('UPDATE concept2cure_artifacts SET created_by_id = NULL; UPDATE concept2cure_artifact_versions SET created_by_id = NULL;');
++    expect(await refuseSignedArtifactAct(signedInput(queryable()))).toMatchObject({
++      httpStatus: 409, code: 'SEPARATION_OF_DUTIES_AUTHOR_UNRESOLVED',
++    });
++  });
++  it('an authorship read that fails is refused 503 and names no cause, and the quorum is not read', async () => {
++    const reads: string[] = [];
++    const q: ApprovalActQueryable = { query: async (sql, params = []) => {
++      reads.push(sql);
++      if (sql.includes('concept2cure_artifacts')) throw new Error('fixture private authorship failure');
++      return pg.query(sql, params);
++    } };
++    const result = await refuseSignedArtifactAct(signedInput(q));
++    expect(result).toMatchObject({ httpStatus: 503, code: 'SEPARATION_OF_DUTIES_UNVERIFIED' });
++    expect(result?.message).not.toContain('private authorship failure');
++    expect(reads.some(sql => sql.includes('concept2cure_review_assignments'))).toBe(false);
++  });
++});
+diff --git a/server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts b/server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts
+--- a/server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts
++++ b/server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts
+@@ -17,6 +17,11 @@
+  * route's own checks and commits through commitSignedArtifactAct, the act the
+  * status route commits through. These cases drive the handler with the
+  * sign-off that route produces, and judge it by what the act writes.
++ *
++ * 2026-11-01 (F1, decision P-18): the seeded artifact names its author
++ * (AUTHOR, a second user), so the signer is not its author unless a case says
++ * so. Before this it named none, and nothing compared the signer with the
++ * author: the separation-of-duties cases are at the end.
+  */
+ import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
+ import fs from 'node:fs';
+@@ -40,6 +45,18 @@
+     packagesAffected: 0, bundlesInvalidated: 0, failed: false, ledgerWriteFailed: false,
+   })),
+ }));
++/* The shared preflight, passed through unchanged. One case (P-18, at the end)
++   stands in for a preflight that passed before the signer became an author,
++   so what the signing transaction itself decides can be seen. */
++const preflight = vi.hoisted(() => ({ passed: false }));
++vi.mock('../../artifact-approval-act', async importOriginal => {
++  const actual = await importOriginal<typeof import('../../artifact-approval-act')>();
++  return {
++    ...actual,
++    refuseSignedArtifactAct: (input: Parameters<typeof actual.refuseSignedArtifactAct>[0]) =>
++      preflight.passed ? Promise.resolve(null) : actual.refuseSignedArtifactAct(input),
++  };
++});
+ vi.mock('../../contradiction-engine-service', () => ({
+   contradictionEngineService: {
+     checkPromotionBlocked: vi.fn(async () => ({ blocked: false, blockingFindings: [], warningFindings: [] })),
+@@ -68,6 +85,8 @@
+ 
+ const ORG = 99;
+ const USER = 777;
++/** Who wrote the seeded artifact and its version: not the signer. */
++const AUTHOR = 778;
+ const PROJECT = 3;
+ const ARTIFACT = 'artifact_abc';
+ 
+@@ -110,16 +129,16 @@
+ const snapshots = async () => (await run(`SELECT version_id, signature_meaning FROM concept2cure_submission_snapshots`)).rows;
+ const versions = async () => (await run(`SELECT version FROM concept2cure_artifact_versions`)).rows;
+ 
+-async function seed(status: 'review' | 'approved') {
++async function seed(status: 'review' | 'approved', author: number = AUTHOR) {
+   await run(
+     `INSERT INTO concept2cure_artifacts
+-       (artifact_id, organization_id, project_id, type, category, title, content, content_hash, version, status, approved_version_id)
+-     VALUES ($1, $2, $3, 'document', 'document', 'Clinical overview', 'body', '230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5', 2, $4, $5)`,
+-    [ARTIFACT, ORG, PROJECT, status, status === 'approved' ? 2 : null],
++       (artifact_id, organization_id, project_id, type, category, title, content, content_hash, version, status, approved_version_id, created_by_id)
++     VALUES ($1, $2, $3, 'document', 'document', 'Clinical overview', 'body', '230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5', 2, $4, $5, $6)`,
++    [ARTIFACT, ORG, PROJECT, status, status === 'approved' ? 2 : null, author],
+   );
+   await run(
+-    `INSERT INTO concept2cure_artifact_versions (artifact_id, organization_id, version, content, content_hash)
+-     SELECT id, organization_id, 2, 'body', '230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5' FROM concept2cure_artifacts WHERE artifact_id = $1`,
++    `INSERT INTO concept2cure_artifact_versions (artifact_id, organization_id, version, content, content_hash, created_by_id)
++     SELECT id, organization_id, 2, 'body', '230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5', created_by_id FROM concept2cure_artifacts WHERE artifact_id = $1`,
+     [ARTIFACT],
+   );
+ }
+@@ -133,7 +152,8 @@
+   await holder.pg.exec(GOVERNED_ACTION_LEDGER_PGLITE_DDL);
+   await holder.pg.exec(`INSERT INTO organizations (id, name) VALUES (${ORG}, 'Sponsor')`);
+   await holder.pg.exec(
+-    `INSERT INTO users (id, email, name, password_hash) VALUES (${USER}, 'signer@example.com', 'Dana Reviewer', 'x')`,
++    `INSERT INTO users (id, email, name, password_hash) VALUES (${USER}, 'signer@example.com', 'Dana Reviewer', 'x'),
++       (${AUTHOR}, 'author@example.com', 'Ari Author', 'x')`,
+   );
+   await holder.pg.exec(`INSERT INTO organization_users (organization_id, user_id, role) VALUES (${ORG}, ${USER}, 'admin')`);
+ }, 60_000);
+@@ -141,6 +161,7 @@
+   await holder.pg?.close();
+ });
+ beforeEach(async () => {
++  preflight.passed = false;
+   await setRole('admin');
+   await holder.pg.exec(`
+     DELETE FROM concept2cure_signatures; DELETE FROM concept2cure_submission_snapshots;
+@@ -383,3 +404,88 @@
+     expect(await signatures()).toEqual([]);
+   });
+ });
++
++/**
++ * 2026-11-01 (F1, decision P-18): "An author still cannot approve their own
++ * document." A user with signing authority drafted an artifact through AnA
++ * (AnA records the user it drafts for as the artifact's and the version's
++ * creator, ana/artifactVersionStore.ts), sent it to review with no reviewer
++ * assigned, and approved it with their own password: the quorum was met by
++ * having no assignments, and nothing compared the signer with the author.
++ */
++describe('P-18: the author cannot approve or release their own artifact through AnA', () => {
++  it.each([['approver'], ['admin']])('a %s who drafted it, no reviewer assigned: refused SEPARATION_OF_DUTIES, nothing written', async role => {
++    await seed('review', USER);
++    await setRole(role);
++    const result = await updateArtifactStatus(signed('approval'), params('approved'));
++
++    expect(result.success, result.message).toBe(false);
++    expect(result.data).toMatchObject({ code: 'SEPARATION_OF_DUTIES' });
++    expect(result.message).toMatch(/you are an author of this record/);
++    expect(result.message).toMatch(/Nothing was signed\.$/);
++    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
++    expect(await signatures()).toEqual([]);
++    expect(await ledger()).toEqual([]);
++  });
++
++  it('the author, with a reviewer still pending: told they are the author, before the open review', async () => {
++    await seed('review', USER);
++    await run(
++      `INSERT INTO concept2cure_review_assignments (assignment_id, artifact_id, organization_id, reviewer_id, assigned_by_id, status)
++       SELECT 'asg_1', id, organization_id, $2, $2, 'pending' FROM concept2cure_artifacts WHERE artifact_id = $1`,
++      [ARTIFACT, AUTHOR],
++    );
++    const result = await updateArtifactStatus(signed('approval'), params('approved'));
++
++    expect(result.success, result.message).toBe(false);
++    expect(result.data).toMatchObject({ code: 'SEPARATION_OF_DUTIES' });
++    expect(result.message).not.toMatch(/have not yet submitted/);
++    expect(await signatures()).toEqual([]);
++  });
++
++  it('a user who wrote a later version is an author too: refused, nothing written', async () => {
++    await seed('review');
++    await run(`UPDATE concept2cure_artifact_versions SET created_by_id = $1`, [USER]);
++    const result = await updateArtifactStatus(signed('approval'), params('approved'));
++
++    expect(result.success, result.message).toBe(false);
++    expect(result.data).toMatchObject({ code: 'SEPARATION_OF_DUTIES' });
++    expect(await signatures()).toEqual([]);
++  });
++
++  it('the author locking (release) their approved artifact: refused, not locked, no snapshot', async () => {
++    await seed('approved', USER);
++    const result = await updateArtifactStatus(signed('release'), params('locked'));
++
++    expect(result.success, result.message).toBe(false);
++    expect(result.data).toMatchObject({ code: 'SEPARATION_OF_DUTIES' });
++    expect(await artifactRow()).toMatchObject({ status: 'approved', published_version_id: null });
++    expect(await snapshots()).toEqual([]);
++    expect(await signatures()).toEqual([]);
++  });
++
++  it('the signer became an author after the preflight passed: refused on the signing transaction, nothing written', async () => {
++    await seed('review', USER);
++    preflight.passed = true;
++    const result = await updateArtifactStatus(signed('approval'), params('approved'));
++
++    expect(result.success, result.message).toBe(false);
++    expect(result.data).toMatchObject({ code: 'SEPARATION_OF_DUTIES' });
++    expect(result.message).toMatch(/you are an author of this record/);
++    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
++    expect(await signatures()).toEqual([]);
++    expect(await ledger()).toEqual([]);
++  });
++
++  it('an artifact that names no author: refused as unresolved, never signed on the assumption', async () => {
++    await seed('review');
++    await run(`UPDATE concept2cure_artifacts SET created_by_id = NULL`);
++    await run(`UPDATE concept2cure_artifact_versions SET created_by_id = NULL`);
++    const result = await updateArtifactStatus(signed('approval'), params('approved'));
++
++    expect(result.success, result.message).toBe(false);
++    expect(result.data).toMatchObject({ code: 'SEPARATION_OF_DUTIES_AUTHOR_UNRESOLVED' });
++    expect(result.message.match(/nothing was signed/gi), 'said once, not twice').toHaveLength(1);
++    expect(await signatures()).toEqual([]);
++  });
++});
+diff --git a/server/services/ana-ri/ana-signed-artifact-act.ts b/server/services/ana-ri/ana-signed-artifact-act.ts
+--- a/server/services/ana-ri/ana-signed-artifact-act.ts
++++ b/server/services/ana-ri/ana-signed-artifact-act.ts
+@@ -35,6 +35,7 @@
+   refuseSignedArtifactAct,
+ } from '../artifact-approval-act';
+ import { ArtifactActConflictError, commitSignedArtifactAct, type SignedArtifactAct } from '../artifact-signed-act';
++import { separationOfDutiesRefusal } from '../governance/separation-of-duties';
+ import { SignerNotAttributableError } from '../part11/resolve-signer-identity';
+ import { buildSignatureRequiredResult, validateSignoff } from './part11-governance';
+ import type { CommandContext, CommandResult } from './command-executor';
+@@ -51,6 +52,11 @@
+   return { success: false, action: ACTION, message, error: message, ...(data && { data }) };
+ }
+ 
++/** A refusal that says nothing was signed, once: the separation-of-duties sentences can say it already. */
++function nothingSigned(message: string): string {
++  return /nothing was signed/i.test(message) ? message : `${message} Nothing was signed.`;
++}
++
+ /** The signer's membership role in this organisation, as the status route reads it from the session. */
+ async function membershipRole(ctx: CommandContext): Promise<string | null> {
+   const { rows } = await pool.query(
+@@ -94,24 +100,22 @@
+ 
+   const transition = refuseArtifactTransition(previousStatus, status, userRole);
+   if (transition) return refused(`${transition.message}. Nothing was signed.`);
++  // 2026-11-01 (F1, P-18): this now refuses an author too. Like every refusal
++  // here it follows the verified sign-off above; only the status route answers
++  // it before the password is verified.
+   const before = await refuseSignedArtifactAct({
+     q: pool,
+     organizationId: ctx.organizationId,
+     projectId: Number(params.projectId),
++    signerId: ctx.userId,
+     artifact,
+     previousStatus,
+     status,
+   });
+-  if (before) return refused(`${before.message} Nothing was signed.`, { code: before.code, ...before.details });
++  if (before) return refused(nothingSigned(before.message), { code: before.code, ...before.details });
+ 
+   const signed = await commitAct(ctx, { artifact, previousStatus, status, userRole });
+-  if (signed instanceof ArtifactActConflictError) return refused(signed.message, { code: signed.code });
+-  if (signed instanceof SignerNotAttributableError) {
+-    return refused(
+-      'Your account has no name or membership this signature can print, so it cannot sign here. Nothing was signed.',
+-      { code: signed.code },
+-    );
+-  }
++  if (!('signature' in signed)) return notSigned(signed);
+   return {
+     success: true,
+     action: ACTION,
+@@ -131,6 +135,24 @@
+   };
+ }
+ 
++type CommitOutcome = Awaited<ReturnType<typeof commitAct>>;
++
++/**
++ * Why the signing transaction signed nothing, as this command's answer. Moved
++ * out of signArtifactStatusByAna on 2026-11-01 (F1, P-18), when an author
++ * found on that transaction became a third answer.
++ */
++function notSigned(outcome: Exclude<CommitOutcome, SignedArtifactAct>): CommandResult {
++  if (outcome instanceof ArtifactActConflictError) return refused(outcome.message, { code: outcome.code });
++  if (outcome instanceof SignerNotAttributableError) {
++    return refused(
++      'Your account has no name or membership this signature can print, so it cannot sign here. Nothing was signed.',
++      { code: outcome.code },
++    );
++  }
++  return refused(nothingSigned(outcome.body.detail), { code: outcome.body.error });
++}
++
+ async function commitAct(
+   ctx: CommandContext,
+   input: {
+@@ -139,7 +161,12 @@
+     status: 'approved' | 'locked';
+     userRole: string;
+   },
+-): Promise<SignedArtifactAct | ArtifactActConflictError | SignerNotAttributableError> {
++): Promise<
++  | SignedArtifactAct
++  | ArtifactActConflictError
++  | SignerNotAttributableError
++  | NonNullable<ReturnType<typeof separationOfDutiesRefusal>>
++> {
+   const { artifact, previousStatus, status, userRole } = input;
+   const [storedVersion] = await db
+     .select()
+@@ -201,9 +228,11 @@
+       return signed;
+     })
+     .catch((err: unknown) => {
+-      // A stale read and an unnamed signer are answered as such; anything else
+-      // propagates. Nothing was written in any of them.
++      // A stale read, an unnamed signer and an author (P-18, 2026-11-01) are
++      // answered as such; anything else propagates. Nothing was written in any of them.
+       if (err instanceof ArtifactActConflictError || err instanceof SignerNotAttributableError) return err;
++      const authorRefusal = separationOfDutiesRefusal(err, ACTION);
++      if (authorRefusal) return authorRefusal;
+       throw err;
+     });
+ }
+diff --git a/server/services/artifact-approval-act.ts b/server/services/artifact-approval-act.ts
+--- a/server/services/artifact-approval-act.ts
++++ b/server/services/artifact-approval-act.ts
+@@ -44,6 +44,7 @@
+ 
+ import type { GovernedSignMeaning } from './part11/signature-meanings';
+ import { artifactApproval } from './ectd/package-content-fingerprint';
++import { assertSignerIsNotAuthor, separationOfDutiesRefusal } from './governance/separation-of-duties';
+ 
+ /**
+  * The meaning each signed act of the status route is signed with (§11.50(a)(3)).
+@@ -264,22 +265,58 @@
+ /** The artifact as these checks read it. */
+ export interface ArtifactActSubject {
+   id: number;
++  /** The external artifact_id: the target its authorship and its ledger row are named by. */
++  artifactId: string;
+   version: number;
+   approvedVersionId: number | null;
+   publishedVersionId: number | null;
+ }
+ 
+ /**
++ * P-18 (2026-11-01, F1): "An author still cannot approve their own document."
++ * The signer of an approval or a release must not be an author of the artifact
++ * (its creator, or anyone who wrote a version of it), by the platform's one
++ * separation-of-duties check (services/governance/separation-of-duties.ts,
++ * target `artifact:<artifact_id>`). Both meanings these acts sign with require
++ * independence there (requiresIndependence), and a lock always does. With no
++ * reviewer assigned the quorum below is met, so before this an approver could
++ * draft an artifact, route it to review and approve it with their own password.
++ * Throws that check's own errors; read through `q`, so the signing transaction
++ * re-reads it on its own client (services/artifact-signed-act.ts).
++ */
++export async function assertArtifactSignerIndependent(
++  q: ApprovalActQueryable,
++  act: { organizationId: number; signerId: number; artifactId: string; status: 'approved' | 'locked' },
++): Promise<void> {
++  await assertSignerIsNotAuthor(`artifact:${act.artifactId}`, act.organizationId, act.signerId, {
++    command: act.status === 'locked' ? 'lock' : 'sign',
++    meaning: ARTIFACT_ACT_MEANING[act.status],
++    client: q,
++  });
++}
++
++/**
+  * What a signed act needs before anyone is asked to sign it, in the status
+  * route's order: a lock covers the approval (the filing rule's verdict,
+- * imported); no unresolved contradiction blocks promotion; an approval meets
+- * the review quorum. A quorum that cannot be read throws: an unread quorum is
+- * not met, and the caller answers it as its own failure.
++ * imported); no unresolved contradiction blocks promotion; the signer is not an
++ * author (P-18, answered in the separation-of-duties mapping's own status and
++ * code); an approval meets the review quorum. A quorum that cannot be read
++ * throws: an unread quorum is not met, and the caller answers it as its own
++ * failure.
++ *
++ * 2026-11-01 (F1, P-18): "before anyone is asked to sign" holds on the status
++ * route, which asks this before it verifies the password sent with the
++ * request. AnA's update_artifact_status asks it after the sign-off is verified
++ * (that command's validateSignoff, and the executor's Part 11 gate where the
++ * tenant enforces Part 11, demand the signature first, by design), and before
++ * the signing transaction. On both, a refusal here means nothing was signed.
+  */
+ export async function refuseSignedArtifactAct(input: {
+   q: ApprovalActQueryable;
+   organizationId: number;
+   projectId: number;
++  /** Who would sign: the session's user on the status route, the dispatch's on AnA. */
++  signerId: number;
+   artifact: ArtifactActSubject;
+   previousStatus: string;
+   status: 'approved' | 'locked';
+@@ -305,6 +342,9 @@
+   const contradictions = await blockingContradictions(organizationId, projectId, artifact.id);
+   if (contradictions) return contradictions;
+ 
++  const author = await authorRefusal(input);
++  if (author) return author;
++
+   if (previousStatus === 'review' && status === 'approved') {
+     const quorum = await reviewQuorumVerdict(input.q, artifact.id, organizationId, artifact.version);
+     if (!quorum.met) return { httpStatus: 400, message: quorum.message };
+@@ -312,6 +352,23 @@
+   return null;
+ }
+ 
++/** The P-18 refusal, in the one separation-of-duties mapping's status, code and words; null when independent. */
++async function authorRefusal(input: Parameters<typeof refuseSignedArtifactAct>[0]): Promise<ArtifactActRefusal | null> {
++  try {
++    await assertArtifactSignerIndependent(input.q, {
++      organizationId: input.organizationId,
++      signerId: input.signerId,
++      artifactId: input.artifact.artifactId,
++      status: input.status,
++    });
++    return null;
++  } catch (err) {
++    const refusal = separationOfDutiesRefusal(err, 'artifact-signed-act');
++    if (!refusal) throw err;
++    return { httpStatus: refusal.status, code: refusal.body.error, message: refusal.body.detail };
++  }
++}
++
+ /** Promotion is blocked by an unresolved contradiction finding with that authority. */
+ async function blockingContradictions(
+   organizationId: number,
+diff --git a/server/services/artifact-signed-act.ts b/server/services/artifact-signed-act.ts
+--- a/server/services/artifact-signed-act.ts
++++ b/server/services/artifact-signed-act.ts
+@@ -40,7 +40,12 @@
+ import { queryableFromDrizzle } from '../db/drizzle-queryable';
+ import { recordGovernedAction } from '../routes/c2c/actions';
+ import { resolveSignerIdentity, type SignerIdentity } from './part11/resolve-signer-identity';
+-import { ARTIFACT_ACT_MEANING, artifactStatusUpdate, reviewQuorumVerdict } from './artifact-approval-act';
++import {
++  ARTIFACT_ACT_MEANING,
++  artifactStatusUpdate,
++  assertArtifactSignerIndependent,
++  reviewQuorumVerdict,
++} from './artifact-approval-act';
+ 
+ export type ArtifactTx = Parameters<Parameters<(typeof db)['transaction']>[0]>[0];
+ type ArtifactRow = typeof concept2cureArtifacts.$inferSelect;
+@@ -137,8 +142,11 @@
+ /**
+  * Commit the act on `tx`. The caller has already refused a wrong meaning and
+  * re-authenticated the signer. Throws ArtifactActConflictError when the
+- * artifact is no longer in the state the caller read, and
+- * ArtifactActContractError when the caller's column set is not the canonical one.
++ * artifact is no longer in the state the caller read,
++ * ArtifactActContractError when the caller's column set is not the canonical
++ * one, and the separation-of-duties errors (services/governance/
++ * separation-of-duties.ts) when the signer is an author or that cannot be
++ * shown; the caller answers those through separationOfDutiesRefusal.
+  */
+ export async function commitSignedArtifactAct(
+   tx: ArtifactTx,
+@@ -150,6 +158,15 @@
+   const artifact = await lockCurrentSignedTarget(tx, input);
+   const storedVersion = await lockCurrentSignedVersion(tx, input, artifact);
+   const q = queryableFromDrizzle(tx);
++  // 2026-11-01 (F1, P-18): the signer is not an author, re-read on this
++  // transaction under the row lock, as the quorum is below. The preflight both
++  // doors share asked first; this refuses an authorship it could not see.
++  await assertArtifactSignerIndependent(q, {
++    organizationId: input.organizationId,
++    signerId: input.userId,
++    artifactId: artifact.artifactId,
++    status: input.status,
++  });
+   if (input.status === 'approved') {
+     const quorum = await reviewQuorumVerdict(q, artifact.id, input.organizationId, artifact.version);
+     if (!quorum.met) throw new ArtifactActConflictError(`${quorum.message} Nothing was signed.`);
+diff --git a/server/services/governance/__tests__/separation-of-duties.test.ts b/server/services/governance/__tests__/separation-of-duties.test.ts
+--- a/server/services/governance/__tests__/separation-of-duties.test.ts
++++ b/server/services/governance/__tests__/separation-of-duties.test.ts
+@@ -104,6 +104,24 @@
+     expect(h.calls[0].sql).toContain('organization_id = $2');
+   });
+ 
++  // 2026-11-01 (F1, decision P-18): a Concept2Cure artifact was not modelled,
++  // so nothing could ask whether its signer wrote it.
++  it('a Concept2Cure artifact: its creator and every version author, by external id, org-scoped', async () => {
++    given({
++      'SELECT created_by_id FROM concept2cure_artifacts': [{ created_by_id: 21 }],
++      'FROM concept2cure_artifact_versions': [{ created_by_id: 22 }],
++    });
++    await expect(resolveTargetAuthors('artifact:artifact_abc', 7)).resolves.toEqual({
++      modelled: true,
++      authors: [21, 22],
++      sources: ['artifact creator', 'artifact version ledger'],
++    });
++    for (const c of h.calls) expect(c.params).toEqual(['artifact_abc', 7]);
++    expect(h.calls[1].sql).toMatch(/v\.organization_id = \$2/);
++    await expect(assertSignerIsNotAuthor('artifact:artifact_abc', 7, 22, { meaning: 'approval' })).rejects.toBeInstanceOf(SeparationOfDutiesError);
++    await expect(assertSignerIsNotAuthor('artifact:artifact_abc', 7, 23, { command: 'lock' })).resolves.toMatchObject({ checked: true });
++  });
++
+   it('blocker authorship uses the real org column (org_id, not organization_id)', async () => {
+     given({ 'FROM c2c_blockers': [{ owner_user_id: 13 }] });
+     await resolveTargetAuthors('blocker:BLK-1', 2);
+diff --git a/server/services/governance/separation-of-duties.ts b/server/services/governance/separation-of-duties.ts
+--- a/server/services/governance/separation-of-duties.ts
++++ b/server/services/governance/separation-of-duties.ts
+@@ -336,6 +336,37 @@
+ }
+ 
+ /**
++ * artifact:<artifact_id> (2026-11-01, F1, decision P-18): a Concept2Cure
++ * artifact, whose approved copy is the released, filable one (DP-35). Its
++ * authors are its recorded creator (`concept2cure_artifacts.created_by_id`;
++ * for an AnA draft, the user AnA drafted it for: ana/artifactVersionStore.ts
++ * records that user on the artifact and on every version it appends) and
++ * everyone who wrote a version of its content
++ * (`concept2cure_artifact_versions.created_by_id`). Keyed by the external
++ * artifact_id, the target the signed act's ledger row names
++ * (services/artifact-signed-act.ts). The version that act records for an
++ * unstored version is attributed to the creator, never to the signer.
++ */
++async function concept2cureArtifactAuthors(db: AuthorshipReader, artifactId: string, orgId: number): Promise<TargetAuthorship> {
++  const set = new AuthorSet();
++  const artifact = await db.query(
++    `SELECT created_by_id FROM concept2cure_artifacts WHERE artifact_id = $1 AND organization_id = $2 LIMIT 1`,
++    [artifactId, orgId],
++  );
++  set.add(artifact.rows, 'created_by_id', 'artifact creator');
++  const versions = await db.query(
++    `SELECT DISTINCT v.created_by_id
++       FROM concept2cure_artifact_versions v
++       JOIN concept2cure_artifacts a ON a.id = v.artifact_id
++      WHERE a.artifact_id = $1 AND a.organization_id = $2 AND v.organization_id = $2
++        AND v.created_by_id IS NOT NULL`,
++    [artifactId, orgId],
++  );
++  set.add(versions.rows, 'created_by_id', 'artifact version ledger');
++  return set.result();
++}
++
++/**
+  * A protocol's authors: everyone who wrote its content. That is its creator, the
+  * creator of every live content row (sections, objectives, eligibility, visits,
+  * schedule-of-assessments rows and cells, team, version snapshots), and everyone
+@@ -541,6 +572,7 @@
+  */
+ /** The record types whose authorship is read from more than one source, each by its own reader. */
+ const COMPOSITE_AUTHORS: Record<string, (db: AuthorshipReader, rest: string, orgId: number) => Promise<TargetAuthorship>> = {
++  artifact: concept2cureArtifactAuthors,
+   'authoring-document': authoringDocumentAuthors,
+   document: (db, rest, orgId) => documentAuthors(db, rest, orgId, null),
+   section: documentSectionAuthors,
+diff --git a/tests/artifact-status-lock-covers-approval.test.ts b/tests/artifact-status-lock-covers-approval.test.ts
+--- a/tests/artifact-status-lock-covers-approval.test.ts
++++ b/tests/artifact-status-lock-covers-approval.test.ts
+@@ -209,13 +209,23 @@
+ const VERSION_ROW = { id: 31, artifactId: 4242, organizationId: 99, version: 2, content: 'content', contentHash: 'ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73' };
+ const SIG_ROW = { signatureId: 'sig_1', signatureType: 'publish', signatureMeaning: 'release', signerName: 'A Signer', signerRole: 'admin', signedAt: new Date(), signatureHash: 'x', authenticationMethod: 'password' };
+ const statusWrite = (status: string) => st.sets.find((v) => v && v.status === status);
++/**
++ * 2026-11-01 (F1, decision P-18): approve and lock refuse an author of the
++ * artifact, and refuse one that names no author. These cases are not about
++ * authorship, so the artifact's recorded author (its creator and version
++ * writer, read by services/governance/separation-of-duties.ts) is user 778,
++ * not the signer (777). Self-approval is pinned on a real engine in
++ * server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts.
++ */
++const authorRows = (text: string) =>
++  /created_by_id/.test(text) && /concept2cure_artifact/.test(text) ? [{ created_by_id: 778 }] : [];
+ 
+ beforeEach(() => {
+   st.queue = [];
+   st.sets = [];
+   st.inserts = [];
+   vi.clearAllMocks();
+-  (pool.query as any).mockImplementation(async () => ({ rows: [] }));
++  (pool.query as any).mockImplementation(async (text: string) => ({ rows: authorRows(text) }));
+   signerRole.mockResolvedValue('admin');
+ });
+ 
+@@ -277,7 +287,7 @@
+         ? assignments
+         : /concept2cure_review_decisions/.test(text)
+           ? decisions
+-          : [],
++          : authorRows(text),
+     }));
+ 
+   it('a reviewer still pending refuses the approval (400) and records no approved version', async () => {
+@@ -304,7 +314,7 @@
+   it('a quorum that cannot be read is not met: the approval is refused and records no approved version', async () => {
+     (pool.query as any).mockImplementation(async (text: string) => {
+       if (/concept2cure_review_(assignments|decisions)/.test(text)) throw new Error('relation unavailable');
+-      return { rows: [] };
++      return { rows: authorRows(text) };
+     });
+     st.queue = [[{ ...ARTIFACT, status: 'review', version: 3, approvedVersionId: null }]];
+     const res = await putStatus('approved', { attestation: ATTEST('approved') });
+@@ -317,7 +327,7 @@
+     (pool.query as any).mockImplementation(async (text: string) => {
+       if (/concept2cure_review_assignments/.test(text)) return { rows: [{ review_round: 1, status: 'completed' }] };
+       if (/concept2cure_review_decisions/.test(text)) throw new Error('relation unavailable');
+-      return { rows: [] };
++      return { rows: authorRows(text) };
+     });
+     st.queue = [[{ ...ARTIFACT, status: 'review', version: 3, approvedVersionId: null }]];
+     const res = await putStatus('approved', { attestation: ATTEST('approved') });

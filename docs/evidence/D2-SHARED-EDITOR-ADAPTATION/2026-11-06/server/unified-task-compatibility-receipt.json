@@ -1,0 +1,78 @@
+{
+  "observedAt": "2026-11-06T20:13:06.485474+00:00",
+  "sourceCommit": "5283da69cb953d7c4c8970d80fd14f8fe81879ce",
+  "sourceCommitAfterRun": "5283da69cb953d7c4c8970d80fd14f8fe81879ce",
+  "branch": "concept2cure-v2",
+  "scope": "Bounded incoming b86 unified-task project admission and source-intake fixture compatibility",
+  "validation": {
+    "suites": 5,
+    "tests": 164,
+    "passed": 164,
+    "failed": 0,
+    "exitCode": 0,
+    "durationSeconds": 42.48,
+    "fixtureEditsRequired": false
+  },
+  "command": "NODE_OPTIONS=--max-old-space-size=4096 PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH npx --no-install vitest run --config vitest.config.ts --maxWorkers=1 --fileParallelism=false server/routes/__tests__/unifiedTasks.routes.test.ts server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts server/services/tasking/__tests__/task-project-admission.test.ts server/services/authoring/__tests__/authoring-source-import.test.ts --reporter=dot",
+  "inputsBeforeRun": {
+    "observedAt": "2026-11-06T20:11:47.307908+00:00",
+    "sourceCommit": "5283da69cb953d7c4c8970d80fd14f8fe81879ce",
+    "files": {
+      "server/routes/unifiedTasks.routes.ts": "d619caa363a0fce59c001f6a5aa2a3ebfecffa497ea86b82c0bace50902eecd1",
+      "server/services/tasking/task-project.ts": "0dc2b50d3fcf9085c9511629dc36402229af98e9097feccb7fa50fd76ebd29ea",
+      "server/services/tasking/create-task.ts": "3eb7998674894f300c47d1b52667b28c5e7fdc10867e9fefbed8025a9aedda3b",
+      "server/services/authoring/authoring-source-import.ts": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+      "server/services/authoring/authoring-program-access.ts": "d9542298789769b00890a169e300eae51544fb857eea97338bec18b3650e92d5",
+      "server/services/c2c/current-program-access.ts": "3be8312ccf10d2a1d3a260c039caf24c3385ff506f50c9ae60eafbc6c6771a4c",
+      "server/services/report-os/project-access.ts": "2ab8271c11689b6f037bbb41b1b6109aefa084816107003ab25f69630f523364",
+      "server/routes/__tests__/unifiedTasks.routes.test.ts": "34ffb5cb249d01a813f24f54a6c2549f7ac61c8a6fe91bb4f7708177b8d0418f",
+      "server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts": "7e630e21ecdb6cf8a4f053f59e43db52e9d192e321286aba2e1a5b88771caacb",
+      "server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts": "a27a0714cd1ce43d1a4d91def468309083d003e5d9674d30a374e3f432213acd",
+      "server/services/tasking/__tests__/task-project-admission.test.ts": "b00eee0c1d38830e8c20fe7c683c309ba9cefc4dd6a24766d34b113f9b7519b5",
+      "server/services/authoring/__tests__/authoring-source-import.test.ts": "79ac15c6720971525b09e04c7114386d2699d1e5d1409c79990453e454fd8124",
+      "server/routes/__tests__/_unified-tasks-pglite-harness.ts": "ec162c04219d6827eeed43ea8da12cd1ff1fe583c76da3896ec1192451a94834"
+    }
+  },
+  "sourceFingerprintsAfterRun": {
+    "server/routes/unifiedTasks.routes.ts": "d619caa363a0fce59c001f6a5aa2a3ebfecffa497ea86b82c0bace50902eecd1",
+    "server/services/tasking/task-project.ts": "0dc2b50d3fcf9085c9511629dc36402229af98e9097feccb7fa50fd76ebd29ea",
+    "server/services/tasking/create-task.ts": "3eb7998674894f300c47d1b52667b28c5e7fdc10867e9fefbed8025a9aedda3b",
+    "server/services/authoring/authoring-source-import.ts": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+    "server/services/authoring/authoring-program-access.ts": "d9542298789769b00890a169e300eae51544fb857eea97338bec18b3650e92d5",
+    "server/services/c2c/current-program-access.ts": "3be8312ccf10d2a1d3a260c039caf24c3385ff506f50c9ae60eafbc6c6771a4c",
+    "server/services/report-os/project-access.ts": "2ab8271c11689b6f037bbb41b1b6109aefa084816107003ab25f69630f523364",
+    "server/routes/__tests__/unifiedTasks.routes.test.ts": "34ffb5cb249d01a813f24f54a6c2549f7ac61c8a6fe91bb4f7708177b8d0418f",
+    "server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts": "7e630e21ecdb6cf8a4f053f59e43db52e9d192e321286aba2e1a5b88771caacb",
+    "server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts": "a27a0714cd1ce43d1a4d91def468309083d003e5d9674d30a374e3f432213acd",
+    "server/services/tasking/__tests__/task-project-admission.test.ts": "b00eee0c1d38830e8c20fe7c683c309ba9cefc4dd6a24766d34b113f9b7519b5",
+    "server/services/authoring/__tests__/authoring-source-import.test.ts": "79ac15c6720971525b09e04c7114386d2699d1e5d1409c79990453e454fd8124",
+    "server/routes/__tests__/_unified-tasks-pglite-harness.ts": "ec162c04219d6827eeed43ea8da12cd1ff1fe583c76da3896ec1192451a94834"
+  },
+  "inputsUnchanged": true,
+  "changedPinnedPathsSincePrior637Source": [
+    "server/routes/__tests__/_unified-tasks-pglite-harness.ts",
+    "server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts",
+    "server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts",
+    "server/routes/__tests__/unifiedTasks.routes.test.ts",
+    "server/routes/unifiedTasks.routes.ts",
+    "server/services/authoring/__tests__/authoring-source-import.test.ts",
+    "server/services/tasking/__tests__/task-project-admission.test.ts",
+    "server/services/tasking/task-project.ts"
+  ],
+  "log": {
+    "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/server/shared-editor-unified-task-compatibility.txt",
+    "rawBytes": 11864,
+    "rawLines": 297,
+    "rawSha256": "639e6dac87a3546b5ff35c9ba846418674220e193e320f3e77b720ff98ed85aa"
+  },
+  "proof": [
+    "Existing unifiedTasks route unit and governed PGlite cases remain compatible with current project/actor admission and canonical task/audit transaction behavior.",
+    "The existing unified review-route guard retains protected write constraints.",
+    "Current task-project admission and authoring source-intake unit fixtures pass unchanged, including upstream explicit edit-grant assumptions."
+  ],
+  "limits": [
+    "Focused standard-config unit/HTTP/PGlite checks with synthetic fixture identity; no native database suite, production RLS/concurrency, deployment or live-auth qualification.",
+    "No source/test edit, assertion weakening, full typecheck/build, commit or deployment in this scope.",
+    "Earlier source-import, artifact, ACL and ordinary-task receipts retain their original source snapshots and counts."
+  ]
+}

@@ -6,10 +6,14 @@
  * The surface ignored it: an organisation with 80 programs read "50 active
  * programs", the portfolio mean covered 50, search could not find the 51st, and
  * AnA was told the 50 were the portfolio. Found by the 2026-09-24 re-baseline.
+ *
+ * D2-1 (2026-11-01): the portfolio figures are the list view's footing
+ * (.design/claude-convergence/D2.md §1.4 items 2 and 7), and the search states
+ * the count it covers, so a paged read says "the first n" there too.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -55,6 +59,9 @@ describe('Projects — a truncated portfolio read', () => {
     render(<><Projects {...props()} /><Probe onCtx={(c) => { seen.ctx = c; }} /></>);
     const note = await screen.findByText(/Showing the first 2 projects/);
     expect(note.textContent).toMatch(/cover these only/);
+    // The search covers the loaded page only, and says so.
+    expect((screen.getByLabelText(/Search projects/i) as HTMLInputElement).placeholder).toBe('Search the first 2 projects');
+    fireEvent.click(screen.getByRole('button', { name: 'List' }));
     expect(document.querySelector('.pj-summary')?.textContent).toContain('2+ active projects');
     await waitFor(() => expect(seen.ctx?.summary).toMatch(/first 2 .*more exist/));
     expect((seen.ctx?.facts as { portfolioTruncated?: unknown }).portfolioTruncated).toBe(true);
@@ -65,6 +72,8 @@ describe('Projects — a truncated portfolio read', () => {
     render(<Projects {...props()} />);
     await screen.findAllByText('Program 1');
     expect(screen.queryByText(/Showing the first/)).toBeNull();
+    expect((screen.getByLabelText(/Search projects/i) as HTMLInputElement).placeholder).toBe('Search 2 projects');
+    fireEvent.click(screen.getByRole('button', { name: 'List' }));
     expect(document.querySelector('.pj-summary')?.textContent).toContain('2 active projects');
     expect(document.querySelector('.pj-summary')?.textContent).not.toContain('2+');
   });

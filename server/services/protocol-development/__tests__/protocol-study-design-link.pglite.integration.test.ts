@@ -42,8 +42,8 @@ CREATE TABLE protocol_objectives (id serial PRIMARY KEY, organization_id int, pr
 CREATE TABLE protocol_eligibility_criteria (id serial PRIMARY KEY, organization_id int, protocol_document_id int, kind text, criterion text, order_index int, deleted_at timestamptz);
 CREATE TABLE protocol_schedule_visits (id serial PRIMARY KEY, organization_id int, protocol_document_id int, visit_name text, timepoint text, order_index int, deleted_at timestamptz);
 CREATE TABLE protocol_risks (id serial PRIMARY KEY, organization_id int, protocol_document_id int, category text, description text, likelihood text, impact text, mitigation text, residual_likelihood text, residual_impact text, status text, deleted_at timestamptz, owner text);
-CREATE TABLE protocol_milestones (id serial PRIMARY KEY, organization_id int, protocol_document_id int, name text, milestone_type text, target_date date, actual_date date, deleted_at timestamptz);
-CREATE TABLE protocol_amendments (id serial PRIMARY KEY, organization_id int, protocol_document_id int, amendment_number text, title text, affects_consent boolean, submitted_date date, decided_date date, deleted_at timestamptz);
+CREATE TABLE protocol_milestones (id serial PRIMARY KEY, organization_id int, protocol_document_id int, name text, milestone_type text, target_date date, actual_date date, status text, deleted_at timestamptz);
+CREATE TABLE protocol_amendments (id serial PRIMARY KEY, organization_id int, protocol_document_id int, amendment_number text, title text, affects_consent boolean, affects_risk boolean, status text, submitted_date date, decided_date date, deleted_at timestamptz);
 CREATE TABLE protocol_amendment_changes (id serial PRIMARY KEY, amendment_id int, section_ref text, change_description text, previous_text text, proposed_text text);
 CREATE TABLE protocol_deviations (id serial PRIMARY KEY, organization_id int, protocol_document_id int, deviation_number text, description text, category text, severity text, is_reportable boolean, affects_safety boolean, status text, deleted_at timestamptz);
 CREATE TABLE protocol_capa_actions (id serial PRIMARY KEY, deviation_id int, action text, status text);

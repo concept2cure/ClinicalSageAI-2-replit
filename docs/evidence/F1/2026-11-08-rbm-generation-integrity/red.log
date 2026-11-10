@@ -1,0 +1,334 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor infers risk score and criticality from the band 3ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor leaves a low-risk item non-critical 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor honors an explicit isCritical override 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor refuses likelihood 7 before any write 6ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor refuses impact 0 before any write 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor refuses likelihood 2.5 before any write 4ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor refuses detectability 6 before any write 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > addCtqFactor refuses category "quality" before any write 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > defineKri infers amber status from value vs thresholds (higher worse) 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > setQtl infers the 75% secondary limit and approaching status 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > setQtl evaluates a lower-bound limit in its own direction and infers no upper-side secondary 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > setQtl refuses a two-sided limit without both bounds 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > inferSecondaryLimit is null without a threshold 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > recordKriReading resolves by id, computes status, and writes value + KRI update 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > recordKriReading returns unresolved when the KRI is not found 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > draftPlan infers strategy from the assessment overall risk 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > draftPlan falls back to risk_based when no assessment exists, and takes the next version 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > draftPlan reports an open draft rather than opening a second one 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > raiseSignal defaults source=manual, severity=medium and scopes to tenant 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > triageSignal reports no_fields when nothing changes 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > createAction refuses when the plan is not in-tenant 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > updateAction with no fields is a no-op 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > approveAssessment writes reason + approver and scopes to tenant 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > approveAssessment returns null when not found in tenant 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > archives the version it supersedes, so a program has one governing basis 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > does not archive anything when the assessment has no program 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > records that the two-person rule was enforced 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > records when there was no author to check against 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > refuses to approve an assessment it cannot attribute 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > rbm-actuator — inference > refuses to approve a monitoring plan it cannot attribute 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > generatePlanFromAssessment — derives the plan from the RACT > derives strategy from the overall risk and seeds actions from the critical CtQs and enhanced sites 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > generatePlanFromAssessment — derives the plan from the RACT > scopes the seeded actions to the governing assessment, not the program 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > generatePlanFromAssessment — derives the plan from the RACT > generates nothing when the study has no risk assessment to derive from 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > generatePlanFromAssessment — derives the plan from the RACT > refuses to derive a plan from an unapproved RACT 0ms
+ × server/services/rbm/__tests__/rbm-actuator.test.ts > generated plans retain an actor and a recorded risk basis > refuses unrecorded overall risk null before persisting a plan or actions 9ms
+   → expected { generated: true, …(3) } to deeply equal { generated: false, …(1) }
+ × server/services/rbm/__tests__/rbm-actuator.test.ts > generated plans retain an actor and a recorded risk basis > refuses unrecorded overall risk undefined before persisting a plan or actions 1ms
+   → expected { generated: true, …(3) } to deeply equal { generated: false, …(1) }
+ × server/services/rbm/__tests__/rbm-actuator.test.ts > generated plans retain an actor and a recorded risk basis > refuses unrecorded overall risk  before persisting a plan or actions 1ms
+   → expected { generated: true, …(3) } to deeply equal { generated: false, …(1) }
+ × server/services/rbm/__tests__/rbm-actuator.test.ts > generated plans retain an actor and a recorded risk basis > refuses unrecorded overall risk unknown before persisting a plan or actions 1ms
+   → expected { generated: true, …(3) } to deeply equal { generated: false, …(1) }
+ × server/services/rbm/__tests__/rbm-actuator.test.ts > generated plans retain an actor and a recorded risk basis > refuses an unverified generating actor undefined before reading or writing 1ms
+   → promise resolved "{ generated: false, …(1) }" instead of rejecting
+ × server/services/rbm/__tests__/rbm-actuator.test.ts > generated plans retain an actor and a recorded risk basis > refuses an unverified generating actor null before reading or writing 0ms
+   → promise resolved "{ generated: false, …(1) }" instead of rejecting
+ × server/services/rbm/__tests__/rbm-actuator.test.ts > generated plans retain an actor and a recorded risk basis > refuses an unverified generating actor 0 before reading or writing 0ms
+   → promise resolved "{ generated: false, …(1) }" instead of rejecting
+ × server/services/rbm/__tests__/rbm-actuator.test.ts > generated plans retain an actor and a recorded risk basis > refuses an unverified generating actor -1 before reading or writing 0ms
+   → promise resolved "{ generated: false, …(1) }" instead of rejecting
+ × server/services/rbm/__tests__/rbm-actuator.test.ts > generated plans retain an actor and a recorded risk basis > refuses an unverified generating actor 1.5 before reading or writing 1ms
+   → promise resolved "{ generated: false, …(1) }" instead of rejecting
+ × server/services/rbm/__tests__/rbm-actuator.test.ts > generated plans retain an actor and a recorded risk basis > refuses an unverified generating actor NaN before reading or writing 1ms
+   → promise resolved "{ generated: false, …(1) }" instead of rejecting
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > derivePlanFromAssessment — the read-only half, shared with AnA > proposes exactly the actions generatePlanFromAssessment inserts, and writes nothing 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > derivePlanFromAssessment — the read-only half, shared with AnA > reports an approved assessment that records no overall risk as unrecorded, not "medium" 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > derivePlanFromAssessment — the read-only half, shared with AnA > refuses with the actuator's reasons: no assessment, and an unapproved one 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > amendAssessment — versioned revision of a signed RACT > opens the next version as a draft, copying the register forward 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > amendAssessment — versioned revision of a signed RACT > refuses to amend a draft — a draft is already editable 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > amendAssessment — versioned revision of a signed RACT > refuses a second concurrent amendment 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > amendAssessment — versioned revision of a signed RACT > reports not_found for an assessment outside the tenant 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring plan versioning — a signed plan stops being editable > nextPlanVersion counts past every version on file, including deleted ones 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring plan versioning — a signed plan stops being editable > generatePlanFromAssessment refuses while a draft version is already open 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring plan versioning — a signed plan stops being editable > amend opens the next version as an unsigned draft and copies no actions 1ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring plan versioning — a signed plan stops being editable > amend refuses a draft plan, and a second concurrent amendment 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring plan versioning — a signed plan stops being editable > approvePlan archives the version it supersedes in the same executor 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring plan versioning — a signed plan stops being editable > approvePlan moves the superseded version's unfinished actions to the new version, with provenance 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring plan versioning — a signed plan stops being editable > approvePlan moves nothing when no version was superseded 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring actions are execution records under the plan in force > createAction logs an action against the active (approved) plan 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring actions are execution records under the plan in force > createAction logs an action on a study's first plan while it is still a draft 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring actions are execution records under the plan in force > createAction refuses a superseded (archived) version and names the plan in force 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > monitoring actions are execution records under the plan in force > createAction refuses an open amendment draft — it governs nothing until approved 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > governingPlanId — the plan new actions are logged against > is the active plan, even while a higher draft amendment is open 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > governingPlanId — the plan new actions are logged against > is the first draft when the study has no approved plan 0ms
+ ✓ server/services/rbm/__tests__/rbm-actuator.test.ts > governingPlanId — the plan new actions are logged against > is null when only archived versions remain 0ms
+(node:38) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > mounted RBM approvals persist their electronic signature > 'assessment' activation and signature commit together 68ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > mounted RBM approvals persist their electronic signature > 'plan' activation and signature commit together 30ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > mounted RBM approvals persist their electronic signature > 'assessment' never escapes the request-pinned client 24ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > mounted RBM approvals persist their electronic signature > 'plan' never escapes the request-pinned client 26ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > mounted RBM approvals persist their electronic signature > records MFA only when returned as verified by the server 26ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > mounted RBM approvals persist their electronic signature > 'assessment' retains honest attribution when the legacy author was never recorded 24ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > mounted RBM approvals persist their electronic signature > 'plan' retains honest attribution when the legacy author was never recorded 23ms
+ × server/routes/__tests__/rbm-approval-signature.pglite.test.ts > generated monitoring plans keep their actual author and risk basis > retains the authenticated generator and ignores a body-supplied author 28ms
+   → expected { id: 1, organization_id: 7, …(14) } to match object { Object (created_by, status, ...) }
+(18 matching properties omitted from actual)
+ × server/routes/__tests__/rbm-approval-signature.pglite.test.ts > generated monitoring plans keep their actual author and risk basis > refuses the generator as approver, then permits an independent signed approval 38ms
+   → expected 200 to be 403 // Object.is equality
+ × server/routes/__tests__/rbm-approval-signature.pglite.test.ts > generated monitoring plans keep their actual author and risk basis > uses the request-pinned connection throughout generation 21ms
+   → expected 500 to be 201 // Object.is equality
+stderr | server/routes/__tests__/rbm-approval-signature.pglite.test.ts > a failed signature rolls back the whole approval > 'assessment' approval, archival and ledger all roll back
+{
+  "timestamp": "2026-11-08T16:52:34.638Z",
+  "level": "error",
+  "message": "[mdx-rbm] approve-assessment failed",
+  "context": {
+    "err": "fixture signature storage unavailable",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+stderr | server/routes/__tests__/rbm-approval-signature.pglite.test.ts > a failed signature rolls back the whole approval > 'plan' approval, archival and ledger all roll back
+{
+  "timestamp": "2026-11-08T16:52:34.667Z",
+  "level": "error",
+  "message": "[mdx-rbm] approve-plan failed",
+  "context": {
+    "err": "fixture signature storage unavailable",
+    "correlationId": null,
+    "code": "P0001"
+  }
+}
+
+stderr | server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'assessment' refuses an unverified non-null author instead of treating it as a legacy record
+{
+  "timestamp": "2026-11-08T16:52:34.684Z",
+  "level": "error",
+  "message": "[mdx-rbm] approve-assessment failed",
+  "context": {
+    "err": "The recorded RBM author identity could not be verified.",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'plan' refuses an unverified non-null author instead of treating it as a legacy record
+{
+  "timestamp": "2026-11-08T16:52:34.702Z",
+  "level": "error",
+  "message": "[mdx-rbm] approve-plan failed",
+  "context": {
+    "err": "The recorded RBM author identity could not be verified.",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ × server/routes/__tests__/rbm-approval-signature.pglite.test.ts > generated monitoring plans keep their actual author and risk basis > refuses an approved assessment with no overall risk without persisting anything 23ms
+   → expected 201 to be 409 // Object.is equality
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > a failed signature rolls back the whole approval > 'assessment' approval, archival and ledger all roll back 30ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > a failed signature rolls back the whole approval > 'plan' approval, archival and ledger all roll back 26ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'assessment' refuses an unverified non-null author instead of treating it as a legacy record 16ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'plan' refuses an unverified non-null author instead of treating it as a legacy record 18ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'assessment' requires signing authority before checking credentials 14ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'plan' requires signing authority before checking credentials 15ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'assessment' refuses failed reauthentication without domain or ledger changes 16ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'plan' refuses failed reauthentication without domain or ledger changes 15ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'assessment' refuses the recorded author 16ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'plan' refuses the recorded author 15ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'assessment' refuses a private project before credentials 15ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'plan' refuses a private project before credentials 14ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'assessment' rejects an explicit conflicting signature meaning 14ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'plan' rejects an explicit conflicting signature meaning 14ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'assessment' cannot approve an already activated version again 15ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > approval refusals sign nothing > 'plan' cannot approve an already activated version again 16ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > the canonical binding re-derives the signed monitoring version > 'assessment' re-derives exactly after activation and later archival 24ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > the canonical binding re-derives the signed monitoring version > 'plan' re-derives exactly after activation and later archival 25ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > the canonical binding re-derives the signed monitoring version > assessment CtQ content changes its binding 15ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > the canonical binding re-derives the signed monitoring version > plan execution changes preserve its binding and plan content changes do not 15ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > the canonical binding re-derives the signed monitoring version > 'assessment' version identity is part of its binding 15ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > the canonical binding re-derives the signed monitoring version > 'plan' version identity is part of its binding 12ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > the canonical binding re-derives the signed monitoring version > 'assessment' refuses re-derivation using an unknown recipe 10ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > the canonical binding re-derives the signed monitoring version > 'plan' refuses re-derivation using an unknown recipe 11ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > incoherent monitoring relationships cannot acquire a signature > refuses a same-tenant CtQ linked to a different or absent project (22222222-2222-4222-8222-222222222222) 20ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > incoherent monitoring relationships cannot acquire a signature > refuses a same-tenant CtQ linked to a different or absent project (null) 19ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > incoherent monitoring relationships cannot acquire a signature > does not bind a foreign-tenant CtQ retained under an assessment id 25ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > incoherent monitoring relationships cannot acquire a signature > refuses a plan whose retained assessment belongs to another project 19ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > a plan approved after an editor read stays immutable > updates draft title, strategy and status with the bound retirement flag before field values 17ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > a plan approved after an editor read stays immutable > refuses a stale draft edit when activation wins before the content UPDATE 15ms
+ ✓ server/routes/__tests__/rbm-approval-signature.pglite.test.ts > a plan approved after an editor read stays immutable > continues to allow status-only retirement of an active plan 15ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/rbm-approval-signature.pglite.test.ts > generated monitoring plans keep their actual author and risk basis > retains the authenticated generator and ignores a body-supplied author
+AssertionError: expected { id: 1, organization_id: 7, …(14) } to match object { Object (created_by, status, ...) }
+(18 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+    "assessment_id": 10,
+-   "created_by": 3,
++   "created_by": null,
+    "status": "draft",
+  }
+
+ ❯ server/routes/__tests__/rbm-approval-signature.pglite.test.ts:183:27
+    181|     const out = await generate();
+    182|     expect(out.status).toBe(201);
+    183|     expect(out.body.data).toMatchObject({ created_by: 3, status: 'draf…
+       |                           ^
+    184|     expect((await rows('SELECT created_by FROM rbm_monitoring_plans WH…
+    185|       .toEqual({ created_by: 3 });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+ FAIL  server/routes/__tests__/rbm-approval-signature.pglite.test.ts > generated monitoring plans keep their actual author and risk basis > refuses the generator as approver, then permits an independent signed approval
+AssertionError: expected 200 to be 403 // Object.is equality
+
+- Expected
++ Received
+
+- 403
++ 200
+
+ ❯ server/routes/__tests__/rbm-approval-signature.pglite.test.ts:193:28
+    191|     const item = { ...KINDS[1], id: Number(out.body.data.id) };
+    192|     const refused = await approve(item);
+    193|     expect(refused.status).toBe(403);
+       |                            ^
+    194|     expect(refused.body.details?.code).toBe('RBM_SELF_APPROVAL');
+    195|     expect(await rows('SELECT * FROM electronic_signatures')).toHaveLe…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+ FAIL  server/routes/__tests__/rbm-approval-signature.pglite.test.ts > generated monitoring plans keep their actual author and risk basis > uses the request-pinned connection throughout generation
+AssertionError: expected 500 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 500
+
+ ❯ server/routes/__tests__/rbm-approval-signature.pglite.test.ts:204:24
+    202|     h.poolForbidden = true;
+    203|     const out = await generate();
+    204|     expect(out.status).toBe(201);
+       |                        ^
+    205|   });
+    206|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+
+ FAIL  server/routes/__tests__/rbm-approval-signature.pglite.test.ts > generated monitoring plans keep their actual author and risk basis > refuses an approved assessment with no overall risk without persisting anything
+AssertionError: expected 201 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 201
+
+ ❯ server/routes/__tests__/rbm-approval-signature.pglite.test.ts:210:24
+    208|     await db.query('UPDATE rbm_risk_assessments SET overall_risk=NULL …
+    209|     const out = await generate();
+    210|     expect(out.status).toBe(409);
+       |                        ^
+    211|     expect(out.body.error).toMatch(/overall risk/i);
+    212|     expect(out.body.error).not.toMatch(/No risk assessment exists/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+
+ FAIL  server/services/rbm/__tests__/rbm-actuator.test.ts > generated plans retain an actor and a recorded risk basis > refuses unrecorded overall risk null before persisting a plan or actions
+ FAIL  server/services/rbm/__tests__/rbm-actuator.test.ts > generated plans retain an actor and a recorded risk basis > refuses unrecorded overall risk undefined before persisting a plan or actions
+ FAIL  server/services/rbm/__tests__/rbm-actuator.test.ts > generated plans retain an actor and a recorded risk basis > refuses unrecorded overall risk  before persisting a plan or actions
+ FAIL  server/services/rbm/__tests__/rbm-actuator.test.ts > generated plans retain an actor and a recorded risk basis > refuses unrecorded overall risk unknown before persisting a plan or actions
+AssertionError: expected { generated: true, …(3) } to deeply equal { generated: false, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "generated": false,
+-   "reason": "overall_risk_not_recorded",
++   "actions": [],
++   "derivedFrom": {
++     "assessmentId": 7,
++     "criticalFactors": 0,
++     "enhancedSites": 0,
++     "overallRisk": "medium",
++   },
++   "generated": true,
++   "plan": {
++     "id": 3,
++   },
+  }
+
+ ❯ server/services/rbm/__tests__/rbm-actuator.test.ts:349:8
+    347|     ]);
+    348|     expect(await generatePlanFromAssessment(exec, ORG, { programId: 'p…
+    349|       .toEqual({ generated: false, reason: 'overall_risk_not_recorded'…
+       |        ^
+    350|     expect(calls.some(c => /^\s*(INSERT|UPDATE|DELETE)/.test(c.sql))).…
+    351|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+
+ FAIL  server/services/rbm/__tests__/rbm-actuator.test.ts > generated plans retain an actor and a recorded risk basis > refuses an unverified generating actor undefined before reading or writing
+ FAIL  server/services/rbm/__tests__/rbm-actuator.test.ts > generated plans retain an actor and a recorded risk basis > refuses an unverified generating actor null before reading or writing
+ FAIL  server/services/rbm/__tests__/rbm-actuator.test.ts > generated plans retain an actor and a recorded risk basis > refuses an unverified generating actor 0 before reading or writing
+ FAIL  server/services/rbm/__tests__/rbm-actuator.test.ts > generated plans retain an actor and a recorded risk basis > refuses an unverified generating actor -1 before reading or writing
+ FAIL  server/services/rbm/__tests__/rbm-actuator.test.ts > generated plans retain an actor and a recorded risk basis > refuses an unverified generating actor 1.5 before reading or writing
+ FAIL  server/services/rbm/__tests__/rbm-actuator.test.ts > generated plans retain an actor and a recorded risk basis > refuses an unverified generating actor NaN before reading or writing
+AssertionError: promise resolved "{ generated: false, …(1) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "generated": false,
++   "reason": "no_assessment",
+  }
+
+ ❯ server/services/rbm/__tests__/rbm-actuator.test.ts:355:107
+    353|   it.each([undefined, null, 0, -1, 1.5, NaN])('refuses an unverified g…
+    354|     const { exec, calls } = mockExec([[]]);
+    355|     await expect(generatePlanFromAssessment(exec, ORG, { programId: 'p…
+       |                                                                                                           ^
+    356|       .rejects.toMatchObject({ status: 403, code: 'RBM_ACTOR_REQUIRED'…
+    357|     expect(calls).toHaveLength(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  14 failed | 93 passed (107)
+   Start at  08:52:30
+   Duration  4.69s (transform 926ms, setup 105ms, import 1.61s, tests 2.55s, environment 0ms)
+

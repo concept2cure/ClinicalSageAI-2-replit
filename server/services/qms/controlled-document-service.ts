@@ -17,6 +17,14 @@ import { parseRouteRequest } from '../review/review-route';
 import type { TaskEventNotice } from '../tasking/task-side-effects';
 import { QMS_ROUTE_RULES, routeOpenEditRefusal, sendQmsRoute } from './qms-review-route';
 import { dayOrNull, isPendingEffective } from './in-force-release';
+import { assertCurrentLearningCurator, learningPromotionOf, type LearningPromotion } from './change-approval-signature';
+import { AggregateLearningRefusedError, learningClassOf } from '../intelligence/ana-failure-learning';
+import { plainTextToHtml } from '../../../shared/authoring/plain-text-html';
+import { runWithSystemTenantScope } from '../../db/tenantStore';
+import { withTenantConnection } from '../../db/withTenantConnection';
+import { resolveInForceRelease } from './in-force-release';
+import { readCurrentQmsReleaseApproval } from './current-release-approval';
+import { sha256CanonicalJson } from '../part11/signature-persistence';
 
 /**
  * D6 (MR-12 Stage 4, P-49): a version approved for a later day cannot be
@@ -33,7 +41,7 @@ type QmsReadContext = Pick<CreateContext, 'tenantId' | 'actor'> & { pool: Reques
 
 export const controlledQmsCreateSchema = z.object({
   title: z.string().trim().min(1).max(300), docType: z.enum(['sop', 'wi', 'form', 'spec', 'policy', 'manual', 'protocol', 'curriculum']),
-  programId: z.string().uuid(), docNumber: z.string().trim().min(1).max(60).optional(),
+  programId: z.string().guid(), docNumber: z.string().trim().min(1).max(60).optional(),
   templateKey: z.string().max(80).optional(), category: z.string().max(60).nullable().optional(),
   nextReviewDate: z.string().date().nullable().optional(), reason: z.string().trim().min(8).max(2000),
 }).strict();
@@ -92,13 +100,17 @@ async function grantControlledOwnership(ctx: CreateContext, docId: string, clien
 }
 
 /** The QMS INSERT and canonical document/sections/audit land in the same existing Authoring transaction. */
-export async function createControlledQmsDocument(ctx: CreateContext, raw: unknown): Promise<Record<string, any>> {
+export async function createControlledQmsDocument(ctx: CreateContext, raw: unknown, learning?: LearningPromotion): Promise<Record<string, any>> {
   const input = parseCreate(raw);
+  if (learning) {
+    learningPromotionOf({ learningPromotion: learning });
+    await assertCurrentLearningCurator(ctx.pool, Number(ctx.actor.id));
+  }
   const docId = randomUUID();
   let registered: Record<string, any> | undefined;
   const template = input.templateKey ? getSopTemplate(input.templateKey) : undefined;
   await insertDocumentTx(ctx, { docId, title: input.title, module: null, productCode: null, locale: 'en-US', templateId: null,
-    clientProgramId: input.programId, binding: { documentId: null, reason: 'An organization controlled procedure is not a regulatory filing.' } }, seedsFor(input), async (client) => {
+    clientProgramId: input.programId, binding: { documentId: null, reason: 'An organization controlled procedure is not a regulatory filing.' } }, learning ? learningSeeds(learning, input.reason) : seedsFor(input), async (client) => {
     await setTenantContextTx(client, ctx.tenantId);
     await ownedProgram({ ...ctx, pool: client },input.programId);
     await client.query('SELECT pg_advisory_xact_lock($1, $2)', [ctx.tenantId, 143]);
@@ -113,17 +125,131 @@ export async function createControlledQmsDocument(ctx: CreateContext, raw: unkno
       next_review_date, author_id, authoring_document_id, metadata)
       VALUES ($1,$2,$3,$4,$5,'1.0','draft',$6,$7,$8,$9::jsonb) RETURNING *`,
       [ctx.tenantId, number, input.title, template?.docType ?? input.docType, input.category ?? template?.category ?? null,
-        input.nextReviewDate ?? null, Number(ctx.actor.id), docId, JSON.stringify({ programId: input.programId, templateKey: input.templateKey ?? null, sections: template?.sections ?? STANDARD_SECTIONS })]);
+        input.nextReviewDate ?? null, Number(ctx.actor.id), docId, JSON.stringify({ programId: input.programId, templateKey: input.templateKey ?? null, sections: template?.sections ?? STANDARD_SECTIONS,
+          ...(learning ? { learningPromotion: learning } : {}) })]);
     registered = result.rows[0];
+    if (learning) await registerLearningChange(client, ctx, registered!, learning, input);
     await recordGovernedAction(client, { orgId: ctx.tenantId, userId: Number(ctx.actor.id), command: 'transition', target: `qms-document:${registered!.id}`,
       reason: input.reason, payload: { kind: 'create', docNumber: number, authoringDocumentId: docId, programId: input.programId }, domain: 'qms', surface: 'quality' });
   }, (client) => grantControlledOwnership(ctx,docId,client));
   return registered!;
 }
 
+function learningSeeds(learning: LearningPromotion, reason: string): SectionSeed[] {
+  const entry = learningClassOf(learning.artifact.classKey);
+  return [{ code: 'learning-guidance', title: entry.label, content: plainTextToHtml(entry.instruction), orderIndex: 1,
+    changeReason: reason, metadata: { learningArtifactSha256: learning.artifactSha256 } }];
+}
+async function registerLearningChange(client: RequestSqlClient, ctx: CreateContext, document: Record<string, any>,
+  learning: LearningPromotion, input: ControlledQmsCreate): Promise<void> {
+  await assertCurrentLearningCurator(client, Number(ctx.actor.id));
+  const { createChange } = await import('./changeControl.service');
+  const change = await createChange(ctx.tenantId, { changeNumber: `AGL-${learning.artifact.libraryVersionId}`, title: input.title,
+    changeType: 'computer_system', classification: 'major', reason: input.reason, proposedBy: Number(ctx.actor.id),
+    description: 'Review the exact generic artifact, its cohort snapshot and the no-client-content invariant before promotion.',
+    impactAssessment: 'No shared pattern, skill, template or default may encode a client fact, identity or strategy.',
+    qmsDocumentId: Number(document.id), programId: input.programId, metadata: { learningPromotion: learning } }, client);
+  await client.query("UPDATE qms_documents SET metadata=metadata||jsonb_build_object('learningChangeId',$3::int) WHERE id=$1 AND organization_id=$2",
+    [document.id, ctx.tenantId, change.id]);
+  document.learningChangeId = change.id;
+  await recordGovernedAction(client, { orgId: ctx.tenantId, userId: Number(ctx.actor.id), command: 'transition',
+    target: `qms-change:${change.id}`, reason: input.reason, payload: { kind: 'prepare-learning-candidate', artifactSha256: learning.artifactSha256 }, domain: 'qms', surface: 'quality' });
+}
+
+/** Preparation creates an unsigned controlled document and linked change, never an approval. */
+export async function prepareReviewedLearningCandidate(ctx: CreateContext, raw: unknown) {
+  const parsed = z.object({ classKey: z.string(), agency: z.string(), documentType: z.string(),
+    programId: z.string().guid(), reasonForChange: z.string().trim().min(8).max(2000) }).strict().safeParse(raw);
+  if (!parsed.success) throw new AggregateLearningRefusedError(400);
+  await assertCurrentLearningCurator(ctx.pool, Number(ctx.actor.id));
+  const { readLearningCohort } = await import('./changeControl.service');
+  const entry = learningClassOf(parsed.data.classKey), bins = { classKey: entry.key,
+    agency: parsed.data.agency as import('../intelligence/ana-failure-learning').Agency,
+    documentType: parsed.data.documentType as import('../intelligence/ana-failure-learning').DocumentType };
+  const cohort = await readLearningCohort(bins);
+  const artifact = { kind: 'aggregate_learning_v1' as const, libraryVersionId: randomUUID(), ...bins, ...cohort };
+  const { sha256CanonicalJson } = await import('../part11/signature-persistence');
+  const learning = { artifact, artifactSha256: sha256CanonicalJson(artifact) };
+  const document = await createControlledQmsDocument(ctx, { title: `Reviewed learning: ${entry.label}`, docType: 'sop', category: 'aggregate_learning',
+    programId: parsed.data.programId, reason: parsed.data.reasonForChange }, learning);
+  return { documentId: Number(document.id), changeId: Number(document.learningChangeId), ...learning };
+}
+
+export interface ReviewedLearningLibraryReceipt {
+  schemaVersion: 1; libraryVersionId: string; artifactSha256: string; signatureHash: string;
+}
+function assertFixedLearningContent(snapshot: QmsDocumentRow, sections: unknown, entry: ReturnType<typeof learningClassOf>): void {
+  const captured = (snapshot.metadata as Record<string, any>)?.authoringContent?.sections;
+  if (!Array.isArray(sections) || sections.length !== 1 || sections[0].code !== 'learning-guidance' ||
+      sections[0].title !== entry.label || sections[0].content !== plainTextToHtml(entry.instruction) ||
+      sha256CanonicalJson(sections) !== sha256CanonicalJson(captured) ||
+      snapshot.title !== `Reviewed learning: ${entry.label}` || snapshot.category !== 'aggregate_learning') throw new AggregateLearningRefusedError();
+}
+async function retainedLearningRelease(q: RequestSqlClient, libraryVersionId: string) {
+  const found = await q.query(`SELECT organization_id,document_id,version,controlled_document,sections,content_digest,signature_id
+    FROM qms_document_versions WHERE record_kind='signed'
+      AND controlled_document->'metadata'->'learningPromotion'->'artifact'->>'libraryVersionId'=$1`, [libraryVersionId]);
+  if (found.rows.length !== 1) throw new AggregateLearningRefusedError();
+  const retained = found.rows[0], snapshot = retained.controlled_document as QmsDocumentRow;
+  const promotion = learningPromotionOf(snapshot?.metadata);
+  if (!promotion || promotion.artifact.libraryVersionId !== libraryVersionId || snapshot.id !== retained.document_id ||
+      snapshot.organization_id !== retained.organization_id || snapshot.version !== retained.version ||
+      computeQmsDocumentContentDigest(snapshot) !== retained.content_digest) throw new AggregateLearningRefusedError();
+  const entry = learningClassOf(promotion.artifact.classKey);
+  assertFixedLearningContent(snapshot, retained.sections, entry);
+  return { retained, snapshot, promotion, entry };
+}
+async function verifiedLearningRelease(q: RequestSqlClient, selected: Awaited<ReturnType<typeof retainedLearningRelease>>) {
+  const { retained, snapshot } = selected;
+  const live = await q.query('SELECT * FROM qms_documents WHERE id=$1 AND organization_id=$2 AND deleted_at IS NULL FOR SHARE',
+    [snapshot.id, snapshot.organization_id]);
+  if (live.rows.length !== 1) throw new AggregateLearningRefusedError();
+  const inForce = await resolveInForceRelease(q, live.rows[0] as QmsDocumentRow);
+  if (!inForce || inForce.release.version !== retained.version ||
+      computeQmsDocumentContentDigest(inForce.release) !== retained.content_digest) throw new AggregateLearningRefusedError();
+  const approval = await readCurrentQmsReleaseApproval(q, snapshot, { lock: true });
+  if (approval.state !== 'valid' || approval.signatureId !== Number(retained.signature_id)) throw new AggregateLearningRefusedError();
+  const signature = await q.query('SELECT signature_hash FROM electronic_signatures WHERE id=$1 AND organization_id=$2',
+    [approval.signatureId, snapshot.organization_id]);
+  if (signature.rows.length !== 1 || typeof signature.rows[0].signature_hash !== 'string') throw new AggregateLearningRefusedError();
+  return signature.rows[0].signature_hash;
+}
+
+/** Only a verified, regenerated public artifact leaves this fixed privileged reader. */
+export async function loadReviewedLearningLibraryArtifact(libraryVersionId: string) {
+  if (!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(libraryVersionId)) throw new AggregateLearningRefusedError(400);
+  return runWithSystemTenantScope('aggregate-learning:receipt', () => withTenantConnection({
+    tenantId: '0', role: 'app_super_admin', source: 'job', caller: 'aggregate-learning:receipt',
+  }, async q => {
+    await q.query('BEGIN');
+    try {
+      const selected = await retainedLearningRelease(q, libraryVersionId), documentSignatureHash = await verifiedLearningRelease(q, selected);
+      const changeId = (selected.snapshot.metadata as Record<string, unknown>)?.learningChangeId;
+      if (!Number.isSafeInteger(changeId)) throw new AggregateLearningRefusedError();
+      const change = await q.query('SELECT * FROM qms_change_controls WHERE id=$1 AND organization_id=$2 AND deleted_at IS NULL FOR SHARE',
+        [changeId, selected.snapshot.organization_id]);
+      if (change.rows.length !== 1 || change.rows[0].qms_document_id !== selected.snapshot.id) throw new AggregateLearningRefusedError();
+      const { readReviewedLearningChangeApproval } = await import('./change-approval-signature');
+      const approved = await readReviewedLearningChangeApproval(q, change.rows[0] as never, selected.promotion);
+      const { readLearningCohort } = await import('./changeControl.service');
+      await readLearningCohort(selected.promotion.artifact, q);
+      const receipt: ReviewedLearningLibraryReceipt = { schemaVersion: 1, libraryVersionId,
+        artifactSha256: selected.promotion.artifactSha256,
+        signatureHash: sha256CanonicalJson({ change: approved.signatureHash, document: documentSignatureHash }) };
+      await q.query('COMMIT');
+      return { receipt, name: `Reviewed learning: ${selected.entry.label}`, description: 'Human-reviewed generic workflow guidance. Independent review and approval remain separate.',
+        instructions: selected.entry.instruction, documentTypes: [selected.promotion.artifact.documentType], regions: [] as string[] };
+    } catch (error) {
+      await q.query('ROLLBACK').catch(() => undefined);
+      if (error instanceof AggregateLearningRefusedError) throw error;
+      throw new AggregateLearningRefusedError(503);
+    }
+  }));
+}
+
 /** Bind an existing draft without assigning invented text to a legacy signed record. */
 export async function bindControlledQmsDocument(ctx: CreateContext, id: number, raw: unknown): Promise<Record<string, any>> {
-  const body = z.object({ programId: z.string().uuid(), templateKey: z.string().optional(), reason: z.string().trim().min(8) }).safeParse(raw);
+  const body = z.object({ programId: z.string().guid(), templateKey: z.string().optional(), reason: z.string().trim().min(8) }).safeParse(raw);
   if (!body.success) throw new QmsContentRefusedError(400, 'QMS_BIND_INVALID', 'Choose an owned project and state the reason for binding this draft.');
   const current = await ctx.pool.query(`SELECT * FROM qms_documents WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [id, ctx.tenantId]);
   const row = current.rows[0];

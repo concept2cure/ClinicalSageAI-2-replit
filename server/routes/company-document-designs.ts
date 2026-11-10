@@ -10,7 +10,7 @@ import { isUnauditedExportRefusal, sendAuditedDownload } from '../services/expor
 import { SubmissionReadError } from '../services/submission-service/submission-request-read';
 
 const router = Router();
-const idOf = (req: Request) => parseCompanyInput(z.string().uuid(), req.params.id);
+const idOf = (req: Request) => parseCompanyInput(z.string().guid(), req.params.id);
 const handle = (work: (req: Request, res: Response) => Promise<unknown>) => async (req: Request, res: Response) => {
   try { await work(req, res); }
   catch (error) {

@@ -1,0 +1,138 @@
+# tests that mock ./shellProject (dataConnect now imports it), plus the tests that pin the four copies' screens
+$ npx vitest run --config vitest.config.ts --maxWorkers=1 client/src/concept2cure/v2/__tests__/taskBoardTrackedFiling.test.tsx client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx client/src/concept2cure/v2/__tests__/taskBoardEveryStore.test.tsx client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > reporting context integrity > allows organization reports and saved history before a product program exists 366ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > reporting context integrity > discards a completed request from a program that was replaced while it ran 141ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > reporting context integrity > does not draw a forecast trajectory from a single anchor value 139ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > reporting context integrity > opens a notification deep link from the stored run scope even without a selected program 26ms
+stderr | client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > reporting context integrity > shows portfolio risk and blockers and opens the matching program
+An update to ReportingCanvasForSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > reporting context integrity > shows portfolio risk and blockers and opens the matching program 160ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > reactive saved report links > responds to a report notification while the reporting screen is already open 62ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > catalog applicability and local cadence > runs a lineage report for the chosen owned document instead of the program id 72ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > catalog applicability and local cadence > keeps a disabled document trace unavailable even when its engine supports document scope 16ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > catalog applicability and local cadence > filters regional reports by reporting role and discloses organization data scope 67ms
+ ✓ client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx > catalog applicability and local cadence > creates a platform schedule using the chosen IANA timezone 100ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the Vault is one work area, the library first (D6 §C.3) > has the back link, one header with one primary, three starters and five views, Library first 781ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the Vault is one work area, the library first (D6 §C.3) > moves between views with the arrow keys, Home and End, one tab stop 268ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > AnA's hands reach the view they act on (D6 §C.6 3) > vault.search from the Seals & fixity view shows the Library with the query in the box 266ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > AnA's hands reach the view they act on (D6 §C.6 3) > vault.focus-document from the Uploads view opens that document on its record 202ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the upload flow (D6 §C.4 steps 2, 5, 6; §C.6 4) > "Add files" shows the Uploads view and opens the picker 139ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the upload flow (D6 §C.4 steps 2, 5, 6; §C.6 4) > a file dropped anywhere on the page is staged in the Uploads view 162ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the upload flow (D6 §C.4 steps 2, 5, 6; §C.6 4) > when the Vault cannot be read, files added are still staged on screen, not lost behind the views 70ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the upload flow (D6 §C.4 steps 2, 5, 6; §C.6 4) > a viewer is offered no upload: no drop zone, no picker, no import ask 227ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the record is D0's inspector (D6 §C.4 step 9; §C.6 5) > docks beside the list at 1280px and wider, each part a disclosure with the first open 77ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the record is D0's inspector (D6 §C.4 step 9; §C.6 5) > below 1280px a row opens it as a drawer; Escape closes it and focus returns to the row 127ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the record is D0's inspector (D6 §C.4 step 9; §C.6 5) > below 1280px, Place into filing opened from the record keeps the keyboard: Tab stays in it, Escape closes it alone 162ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the record is D0's inspector (D6 §C.4 step 9; §C.6 5) > below 1024px the structure is a drawer opened from the list 160ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the seals and the fixity check keep their acts (D6 §C.4 steps 10–11; §C.6 6) > "Seal this Vault…" and "Check stored files" are quiet acts in their sections of the Seals & fixity view 145ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTrackedFiling.test.tsx > task board exact native filing handoff > verifies the native row before publishing its actual UUID owner and exact filing target 335ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTrackedFiling.test.tsx > task board exact native filing handoff > opens an unbound native row without changing the currently open programme 103ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTrackedFiling.test.tsx > task board exact native filing handoff > keeps the task and programme unchanged after HTTP403, then permits exact-record retry 212ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTrackedFiling.test.tsx > task board exact native filing handoff > keeps the task and programme unchanged after HTTP404, then permits exact-record retry 91ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTrackedFiling.test.tsx > task board exact native filing handoff > keeps the task and programme unchanged after HTTP503, then permits exact-record retry 95ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTrackedFiling.test.tsx > task board exact native filing handoff > refuses a malformed successful row rather than adopting another filing identity 90ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTrackedFiling.test.tsx > task board exact native filing handoff > ignores a late authorization response after the original task detail closes 80ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTrackedFiling.test.tsx > task board exact native filing handoff > does not let an older request navigate after the same task was closed and reopened 112ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardTrackedFiling.test.tsx > task board exact native filing handoff > never publishes a filing programme or target after the bearer changes during its read 80ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardEveryStore.test.tsx > TaskBoard — every store's work > labels another store's card with its store and offers no move; the board's own card keeps its controls 391ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardEveryStore.test.tsx > TaskBoard — every store's work > counts work blocked in another store in the Blocked column 80ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardEveryStore.test.tsx > TaskBoard — every store's work > opening it says where it lives and opens that screen on its project, with no board edit control 126ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardEveryStore.test.tsx > TaskBoard — every store's work > requires an authorized exact native filing read before opening Submission Center 132ms
+ ✓ client/src/concept2cure/v2/__tests__/taskBoardEveryStore.test.tsx > TaskBoard — every store's work > names a store it could not read, and says nothing when every store was read 113ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > every CMC destination says what it is and what to do on it > declares all nine, with both sentences 4ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > every CMC destination says what it is and what to do on it > splits the nine into the two halves the founder named 1ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > every CMC destination says what it is and what to do on it > keeps no band above the title 2ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > every CMC destination says what it is and what to do on it > would notice a band put back, or a parser that reads nothing 4ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > every CMC destination says what it is and what to do on it > gives guidance about the destination and never a claim about the program 1ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > every CMC destination says what it is and what to do on it > tells a client where to start 0ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > the three engines that had no screen now have one > assesses a stability study for drift from the Stability register 1ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > the three engines that had no screen now have one > shows process capability where the batches are 0ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > the three engines that had no screen now have one > reads a specification’s recorded changes through the one history panel 1ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > the three engines that had no screen now have one > says which store a history came from, because the two attest differently 0ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > a client told to open a project is given a way to open one > offers the door on every CMC empty state that asks for a project 5ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > a client told to open a project is given a way to open one > would notice a doorless one 0ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > a CMC capability we built is reachable from the product > has a client caller, or a named door that serves the same purpose 438ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > a CMC capability we built is reachable from the product > measures enough routes to be measuring anything 111ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > a CMC capability we built is reachable from the product > every route listed as retired really does refuse 1ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > a CMC capability we built is reachable from the product > still names the caller for every route the sweep cannot see 143ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > a CMC capability we built is reachable from the product > would notice a route nothing calls 114ms
+ ✓ client/src/concept2cure/v2/__tests__/cmcWorkAreaReach.test.ts > a CMC capability we built is reachable from the product > does not count a collection call as reaching the route for one record 0ms
+stderr | client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > the conversation thread renders AnA’s actions as controls > a navigate chip in a thread turn is a button that navigates
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > AnaActionChip — navigate > is a button that stashes the params and navigates to the target 247ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > AnaActionChip — navigate > opens the program the chip names BEFORE navigating to its screen 19ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > AnaActionChip — navigate > without the shell navigation it is an inert record, not a dead button 7ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > AnaActionChip — surface_action > is a button that re-validates against the registry, then hands the registry copy to the bus 22ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > AnaActionChip — surface_action > performs nothing when the registry refuses the payload (fail closed) 13ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > AnaActionChip — start_demo > is a button only when a demo starter is provided, and starts that demo 12ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > AnaActionChip — start_demo > falls back to the chip label when the script title is absent 8ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > AnaActionChip — start_demo > without a demo starter it stays inert 4ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > AnaActionChips — anything else is a record > renders a governed/executed action as an inert span with its error state 6ms
+stderr | client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > the conversation thread renders AnA’s actions as controls > a start_demo chip in an ordinary thread turn is a button that starts the demo
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ConversationThread inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > the conversation thread renders AnA’s actions as controls > a navigate chip in a thread turn is a button that navigates 83ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > the conversation thread renders AnA’s actions as controls > a start_demo chip in an ordinary thread turn is a button that starts the demo 55ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > every chat that shows AnA’s actions uses the one renderer > ConversationThread.tsx imports and renders AnaActionChips/AnaActionChip 2ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > every chat that shows AnA’s actions uses the one renderer > EctdCoauthor.tsx imports and renders AnaActionChips/AnaActionChip 1ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > every chat that shows AnA’s actions uses the one renderer > RbmSurfaces.tsx imports and renders AnaActionChips/AnaActionChip 0ms
+ ✓ client/src/concept2cure/v2/__tests__/anaActionChips.test.tsx > every chat that shows AnA’s actions uses the one renderer > DocumentWorkbench runs no chat of its own: its asks go to the one conversation 3ms
+
+ Test Files  6 passed (6)
+      Tests  70 passed (70)
+   Start at  02:45:30
+   Duration  20.80s (transform 6.18s, setup 623ms, import 8.69s, tests 7.32s, environment 3.06s)
+
+exit 0

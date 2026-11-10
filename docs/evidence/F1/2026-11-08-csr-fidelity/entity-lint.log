@@ -1,0 +1,17 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+/workspace/scratch/3002d574f952/concept2cure-v2/server/services/authoring/csr-scientific-review-core.ts
+   70:8   warning  Function 'parseScientificReviewSubmission' has a complexity of 47. Maximum allowed is 15  complexity
+  118:87  warning  Arrow function has a complexity of 19. Maximum allowed is 15                              complexity
+  161:8   warning  Function 'prepareScientificReviewReceipt' has a complexity of 35. Maximum allowed is 15   complexity
+
+/workspace/scratch/3002d574f952/concept2cure-v2/server/services/csr/unsupplied-statistics.ts
+  251:8  warning  Function 'unsupportedCsrDeathCounts' has a complexity of 19. Maximum allowed is 15  complexity
+
+/workspace/scratch/3002d574f952/concept2cure-v2/shared/authoring/csr-scientific-review.ts
+  153:8  warning  Function 'numericalText' has a complexity of 17. Maximum allowed is 15  complexity
+
+✖ 5 problems (0 errors, 5 warnings)
+
+ESLint found too many warnings (maximum: 0).

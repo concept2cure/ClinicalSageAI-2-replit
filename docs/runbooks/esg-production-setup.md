@@ -8,10 +8,9 @@ Touched code: `server/services/ESGSubmissionService.ts`, `server/services/fdaInt
 
 Today both `ESGSubmissionService.transmitToESG` and `ESGSubmissionService.downloadAcknowledgment` (and the sibling `fdaIntegrationService.sendToESG`) return mocks in non-test environments. There is **no real transport client** that talks to the FDA Electronic Submissions Gateway.
 
-To go live we need either:
+To go live we need **AS2 over HTTPS** (FDA's documented path). It requires an AS2 client library, mTLS certificates issued/cross-signed for the FDA ESG endpoint, MDN handling, and signed/encrypted payloads (S/MIME).
 
-1. **AS2 over HTTPS** (FDA's preferred path). Requires an AS2 client library, mTLS certificates issued/cross-signed for the FDA ESG endpoint, MDN handling, and signed/encrypted payloads (S/MIME).
-2. **SFTP gateway** (lower-throughput fallback). Requires an SSH key registered with FDA and credentialled SFTP login.
+There is no SFTP path. The SFTP branch was retired on 2026-11-09 (founder decision P-93): no FDA source on file documents one, and an FDA sequence over 1 GiB is out of scope for launch, refused before anyone signs (`docs/runbooks/fda-esg-production-uat.md` §8).
 
 Acks (`ack1` receipt-of-transmission, `ack2` received-by-CDER, `ack3` final accept/reject) are delivered back through the same transport — pulled by tracking number once available.
 
@@ -21,7 +20,6 @@ Acks (`ack1` receipt-of-transmission, `ack2` received-by-CDER, `ack3` final acce
 | --- | --- |
 | `FDA_ESG_URL` | Production gateway URL (e.g. `https://esg.fda.gov/gateway`) |
 | `FDA_ESG_USERNAME` | Production account username issued by FDA |
-| `FDA_ESG_PASSWORD` | Password (SFTP fallback path only) |
 | `FDA_ESG_CERT_PATH` | Filesystem path to the production mTLS / S/MIME certificate |
 | `FDA_ESG_KEY_PATH` | Filesystem path to the matching private key |
 
@@ -41,7 +39,7 @@ Acks (`ack1` receipt-of-transmission, `ack2` received-by-CDER, `ack3` final acce
 
 ## Definition of done
 
-- Real AS2 (or SFTP) client wired into `transmitToESG` and `downloadAcknowledgment`.
+- Real AS2 client wired into `transmitToESG` and `downloadAcknowledgment`.
 - Production env vars provisioned and documented in the secrets manager.
 - End-to-end test against FDA's pre-production / WebTrader test environment passes.
 - This runbook updated: status flips to `READY`, owners filled in, vendor links resolved.

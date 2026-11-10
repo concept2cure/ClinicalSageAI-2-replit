@@ -1,0 +1,52 @@
+waiting for server to start.... done
+server started
+(node:16) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:16) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:37) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"level":30,"time":"2026-11-08T17:27:38.766Z","pid":37,"hostname":"8e30f1e3f944","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-08T17:27:38.767Z","pid":37,"hostname":"8e30f1e3f944","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-08T17:27:38.767Z","pid":37,"hostname":"8e30f1e3f944","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/biostat-authoring-basis.dbtest.ts > native statistical basis retained by the canonical editor > writes actual project/study/input basis with one section, revision and chained CREATE audit
+[database] Database connection successful
+
+{"level":30,"time":"2026-11-08T17:27:43.069Z","pid":37,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 106a8ca2-1b87-4559-b121-7ceb0b198f28 by unknown"}
+{"level":30,"time":"2026-11-08T17:27:43.193Z","pid":37,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 690e67b6-f62f-48bb-8003-c40f91142dc3 by unknown"}
+ × tests/db/biostat-authoring-basis.dbtest.ts > native statistical basis retained by the canonical editor > writes actual project/study/input basis with one section, revision and chained CREATE audit 3969ms
+   → column a.details does not exist
+ ✓ tests/db/biostat-authoring-basis.dbtest.ts > native statistical basis retained by the canonical editor > retains a verified saved run as distinct context when workbench inputs changed 118ms
+ ✓ tests/db/biostat-authoring-basis.dbtest.ts > native statistical basis retained by the canonical editor > refuses a named study from another project without creating a document 43ms
+ ✓ tests/db/biostat-authoring-basis.dbtest.ts > native statistical basis retained by the canonical editor > does not expose a private study to an active unshared organization member 21ms
+{"level":30,"time":"2026-11-08T17:27:43.358Z","pid":37,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 2c4237cc-614f-44ce-a4df-7c7332f44fe9 by unknown"}
+ ✓ tests/db/biostat-authoring-basis.dbtest.ts > native statistical basis retained by the canonical editor > records illustrative examples without a study or saved-run claim 98ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/biostat-authoring-basis.dbtest.ts > native statistical basis retained by the canonical editor > writes actual project/study/input basis with one section, revision and chained CREATE audit
+error: column a.details does not exist
+ ❯ node_modules/pg-pool/index.js:45:11
+ ❯ tests/db/biostat-authoring-basis.dbtest.ts:85:23
+     83|     expect(origin).toMatchObject({ organizationId: actor.organizationI…
+     84|       design: { studyId: design.id, studyRef, calculationInputs: 'matc…
+     85|     const evidence = (await owner.query(`SELECT d.provenance,
+       |                       ^
+     86|       (SELECT count(*)::int FROM authoring_sections s WHERE s.doc_id=d…
+     87|       (SELECT count(*)::int FROM doc_revisions r JOIN authoring_sectio…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 108, severity: 'ERROR', code: '42703', detail: undefined, hint: undefined, position: '321', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_relation.c', routine: 'errorMissingColumn' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  09:27:37
+   Duration  6.21s (transform 3.55s, setup 60ms, import 1.55s, tests 4.32s, environment 0ms)
+
+waiting for server to shut down.... done
+server stopped

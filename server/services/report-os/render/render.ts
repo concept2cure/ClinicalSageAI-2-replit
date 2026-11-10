@@ -11,6 +11,8 @@ import type { ReportBlock, ReportSection, RenderedReport } from './types';
 import type { InsightAtomRef } from '../providers/types';
 import { labelCurrencyMatrixOf, renderLabelCurrencyMatrix } from './label-currency-matrix';
 import { lifecycleCalendarOf, renderLifecycleCalendar } from './lifecycle-calendar';
+import { readinessSentence } from '../../../../shared/regulatory/readiness-statement';
+import { isNativeQualityReport, qualityEvidenceSections } from './quality-evidence';
 
 /**
  * Inputs to {@link renderReport}. Mirrors the shape produced by the
@@ -340,6 +342,8 @@ function domainSection(domain: Record<string, unknown>, providers: RenderInput['
 }
 
 function renderedDomainSections(domain: Record<string, unknown>, providers: RenderInput['providers'], computedScope: string): ReportSection[] {
+  const quality = qualityEvidenceSections(domain.qualityEvidence, computedScope);
+  if (quality) return quality;
   const calendar = lifecycleCalendarOf(domain);
   if (calendar) return renderLifecycleCalendar(calendar, providers.flatMap(provider => provider.atoms ?? []), computedScope === 'organization' ? ORGANIZATION_COUNTS : null);
   const labelMatrix = labelCurrencyMatrixOf(domain);
@@ -457,25 +461,45 @@ function marketSection(module1: Record<string, unknown> | null): ReportSection {
   };
 }
 
+/** Critical gaps in the run's own gap list, or null when the run stored none
+ *  (older runs): absent is not zero (shared/regulatory/readiness-statement). */
+function criticalGapCountOf(regulatory: Record<string, unknown>): number | null {
+  if (!Array.isArray(regulatory.gaps)) return null;
+  return regulatory.gaps.filter((gap) => asRecord(gap)?.severity === 'critical').length;
+}
+
 /**
  * The run's one readiness statement: the evaluated readiness when
  * evaluateReadiness ran, otherwise that it was not computed and why — the same
- * answer the portfolio board and the canvas opener give for the program.
+ * answer the portfolio board and the canvas give for the program.
+ *
+ * It is spoken through shared/regulatory/readiness-statement, the one place
+ * "ready" is decided, so it reads as the canvas does. The evaluator's level
+ * (`not_ready` … `ready`) is not printed. It is a bucket of the score shown
+ * beside it, in a second vocabulary beside that module's ("nearly ready" for
+ * 85% with nothing open, where the module says "is 85% ready"). The digest
+ * printed it raw, "not_ready", seen in the running app on 2026-11-02. Today's
+ * evaluator returns `not_ready` whenever a critical gap is open
+ * (readinessEvaluator.ts:178), but this renderer reads a stored summary, so it
+ * decides from the stored gaps, not from the stored level: a summary whose
+ * level disagrees with its gaps still cannot be called ready. The critical-gap
+ * count is the fact that decides, so it is the second tile.
  */
 function readinessBlocks(input: RenderInput): ReportBlock[] {
   const regulatory = asRecord(input.summary.regulatory);
   const score = regulatory?.readinessScore;
   const provenance = input.providers.find((p) => p.provider === 'submission_readiness')?.atoms ?? [];
   if (regulatory && typeof score === 'number') {
-    const level = typeof regulatory.readinessLevel === 'string' ? regulatory.readinessLevel : null;
     const against = typeof regulatory.applicationDisplayName === 'string' ? regulatory.applicationDisplayName : null;
+    const critical = criticalGapCountOf(regulatory);
+    const label = typeof input.summary.scopeLabel === 'string' && input.summary.scopeLabel.trim() ? input.summary.scopeLabel.trim() : `This ${input.scopeType}`;
     return [
       {
         kind: 'summary',
-        text: `Submission readiness ${score}%${level ? ` (${level.replace(/_/g, ' ')})` : ''}${against ? `, evaluated against ${against}` : ''}.`,
+        text: `${readinessSentence(label, { readiness: score, criticalBlockerCount: critical })}${against ? ` Evaluated against ${against}.` : ''}`,
       },
       { kind: 'metric', label: 'Submission readiness', value: score, unit: '%', ...(provenance.length ? { provenance } : {}) },
-      ...(level ? [{ kind: 'metric' as const, label: 'Readiness level', value: level }] : []),
+      ...(critical != null ? [{ kind: 'metric' as const, label: 'Critical gaps', value: critical }] : []),
     ];
   }
   const why = input.providers.find((p) => p.provider === 'submission_readiness' && p.status === 'missing')?.blocker;
@@ -495,19 +519,21 @@ function computationMetadata(summary: Record<string, unknown>, scopeType: string
   const computedScope = typeof summary.computedScope === 'string' ? summary.computedScope
     : typeof summary.domainScope === 'string' ? summary.domainScope : scopeType;
   const provenance = asRecord(summary.provenance);
-  return { computedScope, ...(provenance ? { provenance } : {}) };
+  // Native receipts remain in the sealed run; normal views and PDFs show business facts.
+  const nativeQuality = isNativeQualityReport(summary);
+  return { computedScope, ...(!nativeQuality && provenance ? { provenance } : {}) };
 }
 
-function providerReadinessSection(providers: RenderInput['providers']): ReportSection {
+function providerReadinessSection(providers: RenderInput['providers'], nativeQuality = false): ReportSection {
   const providerRows: Array<Array<string | number | null>> = providers.map(p => [
-    p.provider,
+    nativeQuality ? (p.provider === 'quality_project_evidence' ? 'Quality evidence' : humanize(p.provider)) : p.provider,
     p.status,
     p.blocker ?? '—',
   ]);
   return {
     id: 'provider-readiness',
     title: 'Provider readiness',
-    blocks: [{ kind: 'table', columns: ['Provider', 'Status', 'Note'], rows: providerRows, ...(providers.some((p) => p.atoms?.length) ? { provenance: providers.flatMap((p) => p.atoms ?? []) } : {}) }],
+    blocks: [{ kind: 'table', columns: ['Provider', 'Status', 'Note'], rows: providerRows, ...(!nativeQuality && providers.some((p) => p.atoms?.length) ? { provenance: providers.flatMap((p) => p.atoms ?? []) } : {}) }],
   };
 
 }
@@ -551,7 +577,7 @@ export function renderReport(input: RenderInput): RenderedReport {
   if (market) sections.push(marketSection(module1 ?? null));
 
   // 2. Provider readiness.
-  sections.push(providerReadinessSection(input.providers));
+  sections.push(providerReadinessSection(input.providers, isNativeQualityReport(input.summary)));
 
   // 3. Blockers (only when present).
   if (input.blockers.length) {

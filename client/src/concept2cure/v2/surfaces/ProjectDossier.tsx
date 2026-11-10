@@ -18,7 +18,6 @@ import React from 'react';
 import { I } from '../icons';
 import { EmptyState, hasKeys, useLiveData, type DataState, type ShapeGuard } from '../dataConnect';
 import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessAsOf, dossierReadinessValue } from '../dossierReadiness';
-import { Ring } from '../fixtures/project-home-data';
 import type { BuiltDocument } from '../editor/CanvasDocumentList';
 import type { EditingCopy } from '../editor/editingCopy';
 import type { ArtifactReadiness } from '@shared/types/dossier-artifact-readiness';
@@ -135,7 +134,7 @@ function MarketCopy({ name, forMarket, copy, onOpen }: {
   if (copy.kind !== 'one') return <div data-testid={testId}>{noCopyWords(forMarket, copy)}</div>;
   return (
     <div data-testid={testId}>
-      <button type="button" className="btn ghost pj-mkt-btn" onClick={() => onOpen(copy.doc, null)}
+      <button type="button" className="btn small" onClick={() => onOpen(copy.doc, null)}
         aria-label={`Open ${copy.doc.title}, the editing copy for ${name}`}>Open {copy.doc.title}</button>
     </div>
   );
@@ -152,11 +151,11 @@ function HomeCopy({ documents, copyFor, onOpen }: {
   return <div data-testid="pj-dossier-home-copy">This figure counts {documents.length} home documents, so none is opened from here.</div>;
 }
 
-/** The aside card: the home filing's figure, and each added market's line.
- *  Each line opens the editing copy of the filing it measures, as that
- *  filing's rows in Module completion do: a market's line its
- *  `DossierMarket.documentId`, the home line the one home document. Both were
- *  words only until 2026-10-29. */
+/** Module completion's lead (D3-4, D3.md §4.7 Author item 2): the home filing's figure line, and each added market's
+ *  line. Each line opens the editing copy of the filing it measures, as that filing's rows in Module completion do: a
+ *  market's line its `DossierMarket.documentId`, the home line the one home document. Both were words only until
+ *  2026-10-29. The drawn ring is gone (the figure is the Filing card's first row, on every step), and what the figure
+ *  means, with its as-of time, is a closed "How this is measured". */
 export function DossierReadinessCard({ read, copyFor, onOpen }: {
   read: DossierState;
   /** The editing copy of a filing, the lookup Module completion's rows use. */
@@ -170,7 +169,7 @@ export function DossierReadinessCard({ read, copyFor, onOpen }: {
     body = (
       <div role="alert">
         <p className="pj-card-note">Dossier readiness could not be read.</p>
-        <button type="button" className="btn ghost pj-mkt-btn" onClick={retry}>Retry</button>
+        <button type="button" className="btn small" onClick={retry}>Retry</button>
       </div>
     );
   } else if (!d) {
@@ -187,11 +186,6 @@ export function DossierReadinessCard({ read, copyFor, onOpen }: {
     );
     body = (
       <>
-        {d.home.state === 'measured' && (
-          <div className="pj-map" title={DOSSIER_READINESS_MEANS}>
-            <div className="pj-map-ring"><Ring value={d.home.pct} size={104} stroke={9} /><div className="pj-map-ring-l">Dossier<br />readiness</div></div>
-          </div>
-        )}
         <div data-testid="pj-dossier-home">
           <p className="pj-card-note">{figureLine(d.home)}</p>
           <HomeCopy documents={[...new Set(homeRows.map((r) => r.documentId))]} copyFor={copyFor} onOpen={onOpen} />
@@ -213,19 +207,22 @@ export function DossierReadinessCard({ read, copyFor, onOpen }: {
             ))}
           </ul>
         )}
-        <p className="pj-card-note">{DOSSIER_READINESS_MEANS}</p>
-        {d.home.state === 'measured' && dossierReadinessAsOf(d.measuredAt) && <p className="pj-card-note">{dossierReadinessAsOf(d.measuredAt)}</p>}
+        <details className="pj-more">
+          <summary>How this is measured</summary>
+          <p className="pj-card-note">{DOSSIER_READINESS_MEANS}</p>
+          {d.home.state === 'measured' && dossierReadinessAsOf(d.measuredAt) && <p className="pj-card-note">{dossierReadinessAsOf(d.measuredAt)}</p>}
+        </details>
       </>
     );
   }
   return (
-    <section className="pj-card" aria-labelledby="pj-dossier-h">
-      <div className="pj-card-h">
+    <div className="pj-dossier-lead" role="group" aria-labelledby="pj-dossier-h" data-testid="pj-dossier">
+      <div className="pj-dossier-k">
         <h3 id="pj-dossier-h">{DOSSIER_READINESS_LABEL}</h3>
         <span className="sec-sub" data-testid="pj-dossier-value">{state.error ? 'could not be read' : d ? figureValue(d.home) : 'reading'}</span>
       </div>
       {body}
-    </section>
+    </div>
   );
 }
 
@@ -298,8 +295,10 @@ function ModuleRow({ r, copy, onOpen }: {
 }
 
 /** The Author tab's module rows, from the same read as the card. */
-export function ModuleCompletion({ read, copyFor, onOpen, onAsk }: {
+export function ModuleCompletion({ read, copyFor, onOpen, onAsk, lead }: {
   read: DossierState;
+  /** What leads the section: the dossier's figure line and markets (DossierReadinessCard, D3-4). */
+  lead?: React.ReactNode;
   /** The editing copy of the filing (`DossierRow.documentId`) a row measures. */
   copyFor: (filingId: string) => RowCopy;
   onOpen: (doc: BuiltDocument, within: string | null) => void;
@@ -327,11 +326,16 @@ export function ModuleCompletion({ read, copyFor, onOpen, onAsk }: {
     );
   }
   return (
-    <><section className="pj-sec">
-      <div className="pj-sec-h"><h2>Module completion</h2><span className="sec-sub">sections approved or locked, by module</span></div>
-      {onAsk && <button type="button" className="btn ghost" onClick={() => onAsk('What is the critical path to filing?')}>Ask AnA: critical path to filing</button>}
+    <section className="pj-sec" aria-labelledby="pj-modules-h">
+      <div className="pj-sec-h"><h2 id="pj-modules-h">Module completion</h2><span className="sec-sub">sections approved or locked, by module</span>
+        {onAsk && <span className="pj-sec-acts"><button type="button" className="btn small" onClick={() => onAsk('What is the critical path to filing?')}>Ask AnA: critical path to filing</button></span>}
+      </div>
+      {lead}
       {body}
-    </section><ArtifactSectionStatus read={read} /><SectionTracking read={read} /></>
+      {/* The two supporting measures, each a closed disclosure under the modules (D3-4, D3.md §4.7 Author item 2). */}
+      <ArtifactSectionStatus read={read} />
+      <SectionTracking read={read} />
+    </section>
   );
 }
 

@@ -1,0 +1,25 @@
+# S6b green: the same test after the change, PMA included (P-55, R-7). The 26-file neighbourhood (287 tests) also passes.
+
+ ✓ server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > csr with sections: refused, its record path named, nothing built 16ms
+ ✓ server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > ctd_module5 with sections: refused, its record path named, nothing built 2ms
+ ✓ server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > ctd_module3 with sections: refused, its record path named, nothing built 1ms
+ ✓ server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > ctd_module2 with sections: refused, its record path named, nothing built 1ms
+ ✓ server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > ctd_module4 with sections: refused, its record path named, nothing built 1ms
+ ✓ server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > cer with sections: refused, its record path named, nothing built 1ms
+ ✓ server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > 510k with sections: refused, its record path named, nothing built 1ms
+ ✓ server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > ib with sections: refused, its record path named, nothing built 0ms
+ ✓ server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > pma with sections: refused, its record path named, nothing built 1ms
+ ✓ server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > ectd_backbone with sections: refused, its record path named, nothing built 1ms
+ ✓ server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > icsr with sections: refused, its record path named, nothing built 1ms
+ ✓ server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > refuses template mode for those types too: the replacements are model-written as well 1ms
+ ✓ server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > asks for the document type instead of building a CSR when none is given 1ms
+ ✓ server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > still builds a protocol, whose content is design rather than results 2ms
+ ✓ server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > generate_document refuses a regulated document written in the call > still builds a sap, whose content is design rather than results 1ms
+ ✓ server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > the definition says which documents it does not write > does not claim to generate a CSR, CER, 510(k) or ICSR, and names where they are made 1ms
+ ✓ server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > the intelligence flows offer the record path, not generate_document > csr_report suggests get_csr_section_evidence and no generate_document 4ms
+ ✓ server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > the intelligence flows offer the record path, not generate_document > device_510k suggests write_kit_section and no generate_document 3ms
+ ✓ server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > the intelligence flows offer the record path, not generate_document > cer_report suggests assess_stored_cer and no generate_document 1ms
+ ✓ server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > the intelligence flows offer the record path, not generate_document > cmc_specification suggests navigate_to and no generate_document 3ms
+ ✓ server/services/ana/__tests__/generate-document-refuses-record-documents.test.ts > the intelligence flows offer the record path, not generate_document > device_pma suggests write_kit_section and no generate_document 3ms
+ Test Files  1 passed (1)
+      Tests  21 passed (21)

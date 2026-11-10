@@ -27,6 +27,28 @@ const logger = createScopedLogger('coauthor');
 
 const router = Router();
 
+/**
+ * The filing-copy store is not on this deployment: Postgres answered
+ * undefined_table (42P01), directly or as the cause drizzle wraps it in.
+ * `coauthor_documents` is created only by the drizzle baseline
+ * (migrations/0000_sweet_joseph.sql), which the deploy migration set does not
+ * apply, so a database built from that set has no such table (2026-10-31: the
+ * Builder's leaf picker answered a bare 500, "Couldn't load the Co-Author
+ * documents"). That is a missing store, said as one, never a failed read.
+ */
+function filingCopyStoreAbsent(error: unknown): boolean {
+  let current: unknown = error;
+  for (let depth = 0; current && typeof current === 'object' && depth < 4; depth += 1) {
+    if ((current as { code?: unknown }).code === '42P01') return true;
+    current = (current as { cause?: unknown }).cause;
+  }
+  return false;
+}
+const FILING_COPY_STORE_ABSENT = {
+  error: 'FILING_COPY_STORE_UNAVAILABLE',
+  message: 'Filing copies are not available on this deployment: their store has not been set up. Nothing was read or changed.',
+};
+
 const resolveOrganizationId = (req: any): number | null => {
   const tenantOrg = req.tenantContext?.organizationId;
   const userOrg = req.user?.organizationId || req.tenantId;
@@ -144,6 +166,7 @@ router.get('/documents', authMiddleware, async (req: any, res: Response) => {
     });
   } catch (error: any) {
     logger.error('List documents error', { err: error instanceof Error ? error.message : String(error) });
+    if (filingCopyStoreAbsent(error)) return res.status(503).json(FILING_COPY_STORE_ABSENT);
     return res.status(500).json({ error: 'Failed to fetch documents', message: 'An unexpected error occurred' });
   }
 });
@@ -324,6 +347,7 @@ router.post('/documents', authMiddleware, requireAuthorForFilingCopy, async (req
       });
     }
     logger.error('Create document error', { err: error instanceof Error ? error.message : String(error) });
+    if (filingCopyStoreAbsent(error)) return res.status(503).json(FILING_COPY_STORE_ABSENT);
     return res.status(500).json({ error: 'Failed to create document', message: 'An unexpected error occurred' });
   }
 });

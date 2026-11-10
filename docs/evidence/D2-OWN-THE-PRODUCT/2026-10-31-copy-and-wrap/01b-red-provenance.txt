@@ -1,0 +1,3 @@
+ × shared/__tests__/rule-pack-provenance.test.ts > describeRulePackProvenance — tone follows review, not comfort > says "not reviewed" once when the pack's own note already says it 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 37 passed (38)

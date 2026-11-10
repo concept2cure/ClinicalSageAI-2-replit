@@ -73,7 +73,7 @@ describe('Project home — the Evidence stage holds the project\'s files', () =>
     fireEvent.click(await screen.findByText('BX-301 Protocol v3.pdf'));
     expect(screen.getByRole('button', { name: 'Open' })).toBeTruthy();
     expect(screen.queryByText(/Open an editable section/)).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Close project files' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Close the Vault' })).toBeNull();
   });
 
   it('a failed read is a failure with a retry, not an empty vault', async () => {
@@ -99,7 +99,7 @@ describe('ProjectFilesPanel beside the editor is unchanged', () => {
       />,
     );
     fireEvent.click(await screen.findByText('BX-301 Protocol v3.pdf'));
-    expect(screen.getByRole('button', { name: 'Close project files' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Close the Vault' })).toBeTruthy();
     await waitFor(() => expect(screen.getByText(/Open an editable section to cite/)).toBeTruthy());
   });
 });

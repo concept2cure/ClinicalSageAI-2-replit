@@ -27,14 +27,26 @@ const { fetchMock, searchConnectedRepositories, logError } = vi.hoisted(() => ({
   searchConnectedRepositories: vi.fn(),
   logError: vi.fn(),
 }));
+const connector = vi.hoisted(() => ({
+  user: { id: 1, organizationId: 7, role: 'editor' } as { id?: number; userId?: number; organizationId: number; role: string },
+  capture: vi.fn(), current: vi.fn(), authenticate: vi.fn(), upload: vi.fn(),
+}));
 
 vi.mock('../../middleware/auth.js', () => ({
   authenticateToken: (req: any, _res: any, next: any) => {
-    req.user = { id: 1, organizationId: 7, role: 'editor' };
+    req.user = connector.user;
     next();
   },
 }));
 vi.mock('../../services/integrations/connector-search.js', () => ({ searchConnectedRepositories }));
+vi.mock('../../services/connectors/connector-registry.js', () => ({
+  captureCredentialForUse: connector.capture, assertCredentialUseCurrent: connector.current,
+}));
+vi.mock('../../services/connectors/veeva-vault.js', () => ({ VeevaVaultConnector: class { authenticate = connector.authenticate; upload = connector.upload; } }));
+vi.mock('../../services/connectors/sharepoint.js', () => ({ SharePointConnector: class { authenticate = connector.authenticate; upload = connector.upload; } }));
+vi.mock('../../services/connectors/onedrive.js', () => ({ OneDriveConnector: class { authenticate = connector.authenticate; upload = connector.upload; } }));
+vi.mock('../../services/connectors/google-drive.js', () => ({ GoogleDriveConnector: class { authenticate = connector.authenticate; upload = connector.upload; } }));
+vi.mock('../../services/connectors/box.js', () => ({ BoxConnector: class { authenticate = connector.authenticate; upload = connector.upload; } }));
 vi.mock('../../utils/logger', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../utils/logger')>();
   return {
@@ -49,6 +61,7 @@ import router from '../knowledge-base';
 
 function app() {
   const a = express();
+  a.use(express.json());
   a.use('/api/knowledge-base', router);
   return a;
 }
@@ -66,6 +79,59 @@ beforeEach(() => {
   vi.spyOn(console, 'error').mockImplementation(() => {});
   fetchMock.mockRejectedValue(new Error(SENTINEL));
   searchConnectedRepositories.mockRejectedValue(new Error(SENTINEL));
+  connector.user = { id: 1, organizationId: 7, role: 'editor' };
+  connector.capture.mockReset().mockResolvedValue({ credentials: Object.freeze({ apiKey: 'CANARY-CONNECTOR-SECRET' }) });
+  connector.current.mockReset().mockResolvedValue(undefined);
+  connector.authenticate.mockReset().mockResolvedValue(undefined);
+  connector.upload.mockReset().mockResolvedValue({ id: 'file-1', url: 'https://fixture.invalid/file-1' });
+});
+
+describe('connector upload credential authority', () => {
+  const save = (connectorId = 'veeva_vault') => request(app()).post('/api/knowledge-base/save-to-connector')
+    .set('X-User-Id', '999').send({ connectorId, title: 'Fixture export', content: '<p>Fixture content</p>', format: 'pdf', userId: 999, organizationId: 99 });
+
+  it.each(['veeva_vault', 'sharepoint', 'onedrive', 'google_drive', 'box'])('carries the authenticated principal through both %s grant checks', async connectorId => {
+    connector.user = { userId: 42, organizationId: 7, role: 'editor' }; // canonical actor supports userId as well as id
+    const response = await save(connectorId);
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    const captured = await connector.capture.mock.results[0].value;
+    expect(connector.capture).toHaveBeenCalledWith(7, connectorId, 'connector_upload');
+    expect(connector.current.mock.calls).toEqual([[captured, 42], [captured, 42, false]]);
+    expect(connector.authenticate).toHaveBeenCalledWith(captured.credentials);
+    expect(connector.current.mock.invocationCallOrder[0]).toBeLessThan(connector.authenticate.mock.invocationCallOrder[0]);
+    expect(connector.authenticate.mock.invocationCallOrder[0]).toBeLessThan(connector.current.mock.invocationCallOrder[1]);
+    expect(connector.current.mock.invocationCallOrder[1]).toBeLessThan(connector.upload.mock.invocationCallOrder[0]);
+    expect(connector.upload).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(response.body)).not.toContain('CANARY');
+  });
+
+  it('blocks upload when the captured grant is revoked after authentication and contains the failure', async () => {
+    connector.current.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error('CANARY-REVOKED-GRANT'));
+    const response = await save();
+    expect(response.status).toBe(500);
+    expect(connector.authenticate).toHaveBeenCalledTimes(1);
+    expect(connector.upload).not.toHaveBeenCalled();
+    expect(connector.current.mock.calls.map(([, actor]) => actor)).toEqual([1, 1]);
+    expect(JSON.stringify([response.body, logError.mock.calls])).not.toContain('CANARY');
+  });
+
+  it('refuses before authentication when the credential use cannot be authorized', async () => {
+    connector.current.mockRejectedValue(new Error('CANARY-PREAUTH-REFUSAL'));
+    const response = await save();
+    expect(response.status).toBe(500);
+    expect(connector.authenticate).not.toHaveBeenCalled();
+    expect(connector.upload).not.toHaveBeenCalled();
+    expect(JSON.stringify([response.body, logError.mock.calls])).not.toContain('CANARY');
+  });
+
+  it('refuses a missing authenticated actor instead of adopting body or header identity', async () => {
+    connector.user = { organizationId: 7, role: 'editor' };
+    const response = await save();
+    expect(response.status).toBe(403);
+    expect(connector.capture).not.toHaveBeenCalled();
+    expect(connector.authenticate).not.toHaveBeenCalled();
+    expect(connector.upload).not.toHaveBeenCalled();
+  });
 });
 
 describe('knowledge-base 502s: the status and sentence stay, the upstream text goes to the log', () => {

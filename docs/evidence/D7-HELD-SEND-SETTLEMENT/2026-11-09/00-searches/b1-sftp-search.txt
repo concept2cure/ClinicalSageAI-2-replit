@@ -1,0 +1,25 @@
+# B1 (a), re-run for P-92 C1 at 2026-11-09T13:31:07Z: ssh2-sftp-client in any package manifest or lockfile
+# origin/concept2cure-v2 824590d899, shallow=false, commits=19252, tags=v1.0.0 
+# the same commands as docs/evidence/RIM/2026-11-08-designs/p92-settle-held-fda-send.b1-sftp-search-2026-11-09.txt
+
+$ git log --oneline -S'ssh2-sftp-client' origin/concept2cure-v2 --tags -- (manifests and lockfiles)
+(end: 0 commits)
+$ git log --oneline -S'ssh2-sftp' origin/concept2cure-v2 --tags -- (same)
+(end: 0 commits)
+$ git log --oneline -S'"ssh2"' origin/concept2cure-v2 --tags -- (same)
+(end: 0 commits)
+
+# Positive control: the same search finds a dependency that is in the lockfile
+$ git log --oneline -S'"node_modules/express"' origin/concept2cure-v2 -- package-lock.json | tail -3
+6ae924aa62 fix: merge PRs #277 + #268, harden conversation-os context resolution and remove hardcoded IDs
+4f769a0b01 Cherry-pick needed work from PRs #83 and #103 into concept2cure-v2
+447277f1a8 Fix CI failures - add missing package-lock.json
+
+# No Dockerfile, CI or deploy script ever installed it some other way
+$ git log --oneline -S'ssh2' origin/concept2cure-v2 --tags -- (Dockerfiles, .github, scripts/deploy*, *.sh)
+(end: 0 commits)
+
+# The working tree today
+$ grep -c ssh2 package.json package-lock.json
+package.json:0
+package-lock.json:0

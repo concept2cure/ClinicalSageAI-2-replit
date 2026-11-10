@@ -1,0 +1,22 @@
+# Red at fafd71d6d (before the change): P-108 3(b) tests
+# npx vitest run server/services/submission-service/__tests__/upload-placement-retired.pglite.test.ts server/services/submission-service/__tests__/upload-placement-retired-doors.test.ts
+ ✓ server/services/submission-service/__tests__/upload-placement-retired.pglite.test.ts > P-108 3(b): an upload already filed can still be withdrawn > places the withdrawal of the filed upload (lifecycle operation delete) 41ms
+ × server/services/submission-service/__tests__/upload-placement-retired.pglite.test.ts > P-108 3(b): new content from the upload store is refused at upsertLeaf > refuses an upload placed with lifecycle operation (none given), and writes nothing 28ms
+   → promise resolved "{ id: 4, sequenceId: 2, …(21) }" instead of rejecting
+ × server/services/submission-service/__tests__/upload-placement-retired.pglite.test.ts > P-108 3(b): new content from the upload store is refused at upsertLeaf > refuses an upload placed with lifecycle operation new, and writes nothing 15ms
+   → promise resolved "{ id: 5, sequenceId: 2, …(21) }" instead of rejecting
+ × server/services/submission-service/__tests__/upload-placement-retired.pglite.test.ts > P-108 3(b): new content from the upload store is refused at upsertLeaf > refuses an upload placed with lifecycle operation replace, and writes nothing 21ms
+   → promise resolved "{ id: 6, sequenceId: 2, …(21) }" instead of rejecting
+ × server/services/submission-service/__tests__/upload-placement-retired.pglite.test.ts > P-108 3(b): new content from the upload store is refused at upsertLeaf > refuses an upload placed with lifecycle operation append, and writes nothing 13ms
+   → promise resolved "{ id: 7, sequenceId: 2, …(21) }" instead of rejecting
+ × server/services/submission-service/__tests__/upload-placement-retired.pglite.test.ts > P-108 3(b): new content from the upload store is refused at upsertLeaf > refuses re-writing an upload leaf placed before this change, and leaves it as it was 15ms
+   → promise resolved "{ id: 2, sequenceId: 2, …(21) }" instead of rejecting
+ × server/services/submission-service/__tests__/upload-placement-retired-doors.test.ts > P-108 3(b): each door hands back the one refusal and places nothing > REST PUT /api/submissions/sequences/:seqId/leaves answers 400 with the refusal 52ms
+   → expected 200 to be 400 // Object.is equality
+ × server/services/submission-service/__tests__/upload-placement-retired-doors.test.ts > P-108 3(b): each door hands back the one refusal and places nothing > AnA place_into_sequence returns the refusal verbatim 17ms
+   → expected { ok: true, leaf: { id: 99, …(6) } } to deeply equal { …(2) }
+ × server/services/submission-service/__tests__/upload-placement-retired-doors.test.ts > P-108 3(b): each door hands back the one refusal and places nothing > MCP c2c_file_draft_for_review is refused with the same sentence 4ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+ ✓ server/services/submission-service/__tests__/upload-placement-retired-doors.test.ts > P-108 3(b): AnA keeps the upload store for a withdrawal > places a withdrawal (lifecycle operation delete) of an upload through place_into_sequence 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  8 failed | 2 passed (10)

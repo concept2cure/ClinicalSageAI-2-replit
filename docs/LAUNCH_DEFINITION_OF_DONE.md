@@ -1398,3 +1398,1603 @@ whole MDX namespace or merge clinical-ops/study/deviation stores.
 Contract `docs/design/RBM_NAVIGATION_PROJECT_SETUP_2026-10-30.md`; engineering
 and publication evidence `docs/evidence/D2-RBM-NAVIGATION/2026-10-30/`.
 Hosted deployment, clinical validation and agency acceptance need their own proof.
+
+### P-77 — Biostatistics is a work area on the rail
+
+*Amended 2026-11-01 (P-79, commit "Biostatistics is reached from the project"): Biostatistics is in the catalog and
+reached from the project's "Start work in this project" (`ProjectCoreWork.tsx`) and ⌘K, not from a rail entry.
+RULE 4's gate refuses a rail entry outside its baseline, and P-36 named none. The rest of this record stands.*
+
+Founder, 2026-10-31, after a client demo: "My cmc, biostatistics, tasking, projects is
+all gone or utter trash now." Both biostatistics screens existed — `biostatistics`
+(the project's study designs, sized by the deterministic engine, and the governed
+statistical documents it writes) and `biostat-workbench` (29 design calculators and
+the reviewer-risk assessment) — and neither was on the rail or in the catalog, so a
+person could reach them only through ⌘K. The founder's model already named
+Biostatistics a work area to join the rail once in the catalog (the rail decision
+above). It is the ninth launch app: surfaces only (`modules: []`), so the
+professional-tier band and explicit grants keep deciding who holds it, as for CMC
+(P-28) and risk-based monitoring (P-76). The rail's *Work areas* are now CMC /
+Module 3, Risk-based monitoring, Biostatistics, Quality, Reporting & analytics; the
+entry opens `biostatistics`, which loads the open project's own study design and
+links to the calculators. The workbench declares the CLSI engines it calls
+(`/api/diagnostics-performance`), and AnA's `assess_defensibility` is in scope.
+Evidence `docs/evidence/DEMO-RECOVERY/2026-10-31-work-areas/`.
+
+### P-78 — One design, one plan: Concept2Cure is Claude for life sciences
+
+Founder, 2026-10-31: "This platform should look like Anthropic built this. It should match how Claude is designed
+entirely, from projects to the canvas to the editor to the details. This is basically Claude for life sciences." And:
+"everyone must work from the same design and goals and never breach your plans. Never build anything outside of the
+plans and to bring the code base beneath the UI fully to life inside this new UI framework."
+
+The plan is `docs/design/ONE_DESIGN_PLAN.md`, with its ledger `docs/design/one-design-plan.json`. It sets the goal,
+the binding design (§2: Claude's patterns for the sidebar, home, projects, the project, the conversation, the
+canvas, the editor and the work areas, plus the retired patterns), the work packages and their order, and the rules
+of engagement. It binds every developer and every agent from any tool: `CLAUDE.md` RULE 5, `AGENTS.md` and the
+Copilot instructions. `npm run ci:one-design-plan` in `.husky/pre-push` enforces it with no bypass. Every pushed
+commit names an open package, stays inside it, and adds no unapproved screen, mount or table. The plan changes only
+by founder decision. The selftest shows each refusal. The design system's own "Claude-clone look" rejection is
+reversed for layout and character. Its typeface decision stands for licensing reasons.
+
+### P-79 — The product spine: the project, its data room, the protocol's question, AnA's narrative, the filing
+
+Founder, 2026-11-01, on what the one plan (P-78) is a plan *for*:
+
+> "The system should be obviously centered around document building, ECTD, filing, formatting it correctly, like
+> ECTD 4.0 is an example. That's kind of our center product, what we are, with the Viva parity tools, you know, our
+> DMS, and Anna's ability to do all of this, just like Claude." "A project is where everything starts. You gotta have
+> a project. Okay, what's your project and what's the goal of the project?" "Inside the project, there's gonna be a
+> ton of historical records, AKA the data room, where we catalog everything. So we need to have a very sophisticated
+> data catalog." "Make sure that that data in that catalog is immutable and has a whole history. It might change, it
+> might get amended and updated, but the data lineage of everything that goes into that must be continually captured
+> in perpetuity." "The project needs a protocol. The data room needs to understand the protocol, and then the goal,
+> and then the data." "The statistics, the biostatistics, the safety profile, all that needs to then be written and
+> narrated from the greatest medical writer there is, Anna." "A client needs to be able to see what Anna's written
+> and choose to edit it … and direct Anna to enhance something or strengthen something, or Anna needs to push back
+> and say that, no, this isn't a good idea, or your data doesn't support this, but it may support this." "We also
+> have a risk-based monitoring module that should be profiled. Our CMC module needs to be centered and profiled …
+> the CMC module is complete module 3 in the IND, but we built a data capture environment to be used in the study
+> conduct for chemical manufacturing and controls." "Vault needs to compete with actually Viva." "Our three clients
+> are going to be medical device and diagnostics, and biotech and big pharma. Located in Japan, Australia, Canada,
+> Europe, and the United States. And potentially, we may go to China someday … but that's not now."
+
+What this decides:
+
+- **The centre of the product is the document and its filing.** That means building it, formatting it correctly
+  and filing it in eCTD (3.2.2 and 4.0), with Vault as the document management system and AnA doing the work in
+  conversation. Every work package serves that path.
+- **The spine runs in this order:**
+  1. project and goal;
+  2. data room (catalog, immutability, lineage);
+  3. protocol (hypothesis, endpoints);
+  4. evidence (biostatistics, safety), computed by deterministic engines;
+  5. AnA's narrative, which a person reads, edits, directs or is pushed back on;
+  6. the one editor (review, sign);
+  7. eCTD assembly, validation and filing;
+  8. Vault throughout.
+
+  CMC and risk-based monitoring are the two work areas the spine features. Biostatistics lives inside the project's
+  evidence.
+- **AnA may refuse a claim.** When the data do not support what a person asks it to write, AnA says so, names what
+  the data do support, and cites the engine result or source behind its answer. The figures come from the engines;
+  AnA narrates (RULE 2).
+- **Clients and regions.**
+  - Clients: medical device and diagnostics, biotech, and big pharma. Each is a document-type catalog, not an app
+    (RULE 4).
+  - Regions: the United States, Europe, Japan, Canada and Australia.
+  - China is not now. The NMPA code that exists stays as it is and is not extended.
+- **CMC is two things.** One is Module 3 composition. The other is a data-capture environment used during study
+  conduct. Both stay one CMC work area.
+- **Not decided here** (each needs the founder):
+  1. whether CMC is licensed separately (today it is a professional-tier band, 2026-08-24);
+  2. whether the CMC composition boundary (P-28: small-molecule Module 3 for a US IND) widens to the five regions,
+     biologics or marketing applications;
+  3. whether the clinical-dataset readers deferred on 2026-10-08 (`.xpt`, `.sas7bdat`, Dataset-JSON) come back, so
+     that EDC and ePRO data can enter the catalog as data.
+
+Recorded in `docs/design/ONE_DESIGN_PLAN.md` §1a. That section lists, by path, what already exists for each step
+of the spine and what does not. Its work packages S1–S8 are in the ledger, `docs/design/one-design-plan.json`.
+
+### P-80 — RULE 6: nothing new. Finish what exists, in the Claude UI
+
+Founder, 2026-11-01:
+
+> "There's another hard, absolute rule that no agent is allowed to build anything new. However, they're allowed to
+> continue and finish and conclude with brilliant working UI everything that's in place." "It all exists. Everything
+> is already in existence, mostly. But in a project, I don't think that you have the ability to set what the ultimate
+> objective of the study was. But you can add that. Otherwise, it's just the UI that needs to match that." "That's
+> another problem I have with Claude Code, is you just jump in and do things and make assumptions without seeing if
+> it's been already done before." "If you had Veeva, Weave Bio, Artos, and you merged them all together and had
+> that built by Anthropic as life sciences for Claude, that would be who you are, who I'm building." "Veeva -
+> www.weave.bio - Artos - centara - all merged as one and than build by anthropic Claud for life sciences: that is
+> what you must build and never break from the Claud type UI."
+
+What this decides:
+
+- **RULE 6, absolute, for every developer and agent.** Nothing new is built. Work continues, finishes and concludes
+  what is in place, and brings it to life in the Claude UI (P-78).
+- **Every commit names what it finishes.** It carries a `Completes: <path>` trailer naming a file or folder that
+  existed before it. `ci:one-design-plan` refuses a commit without one, or one naming nothing that existed.
+- **These count as new, and need a founder decision in `approvedAdditions`:**
+  - a route file, a service (a new folder, or a new file directly under `server/services/` or `services/`) and an
+    AnA tool, which `ci:one-design-plan` now refuses;
+  - a screen, a mount and a table, which it already refused.
+- **The one addition the founder named.** The project states its ultimate objective. This completes the objective
+  record that exists (`ana_client_objectives`, its API in `server/routes/client-intelligence.ts`, and AnA's context
+  in `server/services/ana-context-router.ts`). It reaches that record from the project.
+- **The vision.** Concept2Cure is what Veeva, Weave Bio, Artos and Certara would be if merged into one and built by
+  Anthropic as Claude for life sciences. The founder wrote "centara", read here as Certara. Each brings:
+  - **Veeva:** the regulated content and submission platform, which is our Vault, Submission Center and Quality;
+  - **Weave Bio:** AI-native IND and submission authoring, which is AnA and the one editor;
+  - **Artos:** document drafting from the study's own data, which is the data room to AnA's narrative;
+  - **Certara:** biostatistics, modelling, data standards and regulatory writing, which are the evidence engines,
+    CDISC conformance and the medical writer.
+
+  Nothing in that list is built new. Each is the existing code of a spine package, finished. The UI never breaks
+  from Claude's.
+- **The UI work starts now.** The design packages D1–D7 open without waiting for D0. The UI is what has not yet
+  brought the code to life.
+
+### P-81 — The significance of a project: AnA grows with it, its team works in it, and it runs to the agency and back
+
+Founder, 2026-11-01:
+
+> "Anna must retain complete knowledge and understanding of every project she works on for any customer and grow with
+> that project. She needs to grow in understanding more about the human that's using her, and remember things and
+> have friendly conversation and ask all the right questions. She needs to be an expert at asking questions to get to
+> the right answers, to get information that may be missing that she needs. She needs to be a critical thinker." "It's
+> her job to bring their science to life, to reality, and to get approved and to be used. We are a major bridge from
+> concept to the idea to cure." "In a project, you might have multiple team members, which would require other
+> licenses to work in a project at any given time, simultaneously or collaboratively. And those team members need to
+> be able to see tasking in the project too. Okay, what's due? What is required of me by this date?" "When we dump
+> information into the project documents, extracting all the commitments is a major part of it … Extract commitments,
+> I think, needs to be even a feature." "Over the life of a project, you need to be able to map it out and schedule it
+> and have goals and be able to see visually how you're doing against those goals." "A project needs to go all the way
+> through to document assembly and publishing electronically, and then submission to a government agency with
+> communications that then come back from the agency in the form of sometimes letters or more. And then that needs to
+> come into a communications, messaging, submission center, all of that in that flow."
+
+What this decides:
+
+- **AnA's character.** AnA holds every project it works on and grows with it. It remembers the person it works with.
+  It is friendly. It asks the questions that find what is missing, and it thinks critically, including pushing back
+  (P-79). The memory and project-intelligence code that exists is finished for this. Package S4 widens to it.
+- **The team.** A project is worked by its team at once, each person on a licensed seat. Each person sees the
+  project's tasks: what is due, and what is required of them by when.
+- **Extract commitments is a feature.** It finishes the `/extract-commitments` capability that is registered with no
+  handler (`server/services/ana-capability-registry.ts`). AnA proposes each commitment found in an agency document.
+  A person confirms it; the risk tier is high and it requires review (`server/services/ai-governance/risk-tiers.ts`).
+  The commitment lands in the existing regulatory commitments store with its source location, owner and due date. It
+  then shows in the project's tasks as what is due.
+- **The plan.** Over its life a project is mapped, scheduled and given goals. Progress against those goals is
+  visible.
+- **The flow runs to the agency and back.** Document assembly, electronic publishing, submission, then the agency's
+  letters coming back into Communication and Submission Center, and their commitments into tasks.
+
+Packages: S4 widens to AnA's memory and questioning. S9 (team, tasks, commitments and schedule) and S10 (the
+agency's communications back into the project) join the ledger. `docs/design/ONE_DESIGN_PLAN.md` §1b says by path
+what already exists for each. Nothing new is built (P-80).
+
+### P-82 — The project is the program: a filing run as a program manager runs it
+
+Founder, 2026-11-01:
+
+> "Study what a professional project manager or program manager would do if assigned the build of a major regulatory
+> filing for a phase three successful study after billions of dollars. How would they define that? How would they
+> design the project? How would they assign tasks to what niche industry specialists? … How is the project broken
+> into miniature projects based off of area of assignment … the full IND pyramid. How are those projects managed?
+> We need to be that. A global project perspective." And: "The study objective is always in, starts with the study
+> protocol, but it's always in all the publicly available information relative to the study … all that needs to be
+> cataloged and categorized inside the project … The user interface is really the last mile."
+
+The study is `docs/design/THE_PROGRAM_2026-11-01.md`. What this decides:
+
+- **A project runs as a program.** It has:
+  - a charter: the objective, target label, pathway and region order, gating agency interactions, scope and
+    governance;
+  - a work breakdown: the CTD modules crossed with the functions that write them;
+  - workstreams, each with a lead, tasks, documents and a status;
+  - an integrated schedule, built backwards from the target submission date, with its critical path and gates;
+  - a RACI per deliverable;
+  - a content plan per leaf;
+  - risk, issue, decision and action logs;
+  - the agency's review cycle.
+
+  A global schedule and a portfolio sit across projects.
+- **It is finished from what exists** (RULE 6):
+  - the submission pyramid engine, already one work breakdown per application type, with roles, dependencies,
+    critical path and CTD bindings (`services/regulatory/SubmissionPyramidEngine.ts`, `pyramids/`);
+  - the project charter (`migrations/0012_project_charter_timeline.sql`, `server/routes/charters.ts`);
+  - the project hierarchy;
+  - tasking;
+  - the team and seats;
+  - the timelines;
+  - Submission Center's leaves.
+
+  The pyramid's progress becomes per project, its tasks get owners and back-scheduled due dates, and the result is
+  shown in the project's Plan step.
+- **Workstreams are sections of the one project**, so the filing keeps one data room, lineage, team and dossier. The
+  project hierarchy stays for the portfolio. This is a session recommendation the founder may overrule.
+- **The objective is catalogued with its source.** AnA reads it from the protocol and from the public record (trial
+  registries, the sponsor's releases and publications) with the abilities it already has. A person confirms it.
+
+Package S11 (the program plan) joins the ledger. The study's §9 gives the order.
+
+### P-83 — Work projects and their downstream deliverables
+
+Founder, 2026-11-01: "There's a couple non-document build projects that then are producing documents downstream. There
+might be a CMC project. There might be a biostatistics project. There might be a risk-based monitoring project. And
+all those projects have deliverables downstream. And that needs to be thought about and mapped."
+
+This amends P-82 item 1. What it decides:
+- **Two kinds of project under one product program.**
+  - Work projects produce evidence and data: CMC, a study's biostatistics, risk-based monitoring and data
+    management, clinical pharmacology, nonclinical.
+  - Filing projects build and file documents.
+
+  One work project can feed several filings. The writing workstreams stay sections of the filing project.
+- **Every deliverable is mapped downstream.** Each work project's deliverable has a version with lineage, an owner,
+  a due date, and the downstream documents and CTD sections it feeds. A section records the version it was written
+  from. A new version flags the sections that used the old one.
+- **The map is in `docs/design/THE_PROGRAM_2026-11-01.md` §7a.** It covers CMC, biostatistics, risk-based
+  monitoring, data management, safety, clinical pharmacology, nonclinical and clinical operations, each to its
+  documents and CTD places.
+- **It is finished from what exists** (RULE 6):
+  - the project hierarchy and the rollup service (Program → Project → Study → Sub-project);
+  - CMC's Module 3 composition;
+  - Biostatistics' governed documents;
+  - the RBM risk review;
+  - the editor's build from the study's data;
+  - the pyramid's "feeds into" dependencies;
+  - change propagation.
+
+Package S12 joins the ledger.
+
+### P-84 — Two package paths, approved by the founder
+
+The founder, 2026-11-01, answering the session's question. A session had added a path to S1 itself, and the gate was
+right to refuse the same move for S10: under RULE 5 only the founder changes the plan. The founder chose "Approve
+both":
+
+- **S1** (the project's objective) names `server/services/c2c/charter-objectives.ts`. This is where the charter's
+  objectives section is read and recorded (fef3d80f84). This decision ratifies the ledger change in `e2d63319a7`,
+  which had cited P-80.
+- **S10** (the agency's communications back into the project) names:
+  - `server/services/agency-responses/**`, the letter's data-room read;
+  - `shared/agency/**`, the deterministic letter splitters;
+  - `client/src/concept2cure/v2/surfaces/AgencyResponses*.tsx` and `LetterQuestion*.tsx`, the agency questions and
+    proposals screens.
+
+  Extract commitments (P-81) is finished on these: the existing G3 path that proposes a letter's questions also
+  proposes the commitments the letter imposes, and a person records each one.
+
+Nothing else in the plan changes.
+
+### P-85 — Home, the dock and Quality join their design packages
+
+The founder, 2026-11-01, answering the coordinating session's question. The merged build order
+(`.design/claude-convergence/BUILD_ORDER.md` §0) listed two ledger fixes that the D1 and D7 specs request, and only
+the founder changes the plan. The founder chose "Approve both":
+
+- **D1** (the shell, Home and the conversation) names:
+  - `client/src/concept2cure/v2/surfaces/Surfaces.tsx`, where `Home` is defined: the greeting, the composer row and
+    the starters (`D1.md` §0.2, §D1.C);
+  - `client/src/concept2cure/v2/workDock.ts`, so that the progress dock opens on request, not by default (§D1.E);
+  - `client/src/concept2cure/v2/surfaceViews.ts`, for the lazy fallback's wording. D1 adds no view.
+- **D7** (Submission Center, Quality, risk-based monitoring, and Reporting & analytics) names
+  `client/src/concept2cure/quality/**`, the Quality work area (`D7.md` §D7-B).
+
+Nothing new is built: these files exist, and the packages only gain the paths to finish them. Nothing else in the
+plan changes.
+
+### P-86 — A sequence that was never filed may be retired, by signature
+
+The founder, 2026-11-01, answering the RIM session's question, put to the founder by the coordinating session. RIM
+recommended yes, and the founder chose "Yes".
+
+The problem it answers: a dispatched eCTD sequence whose test-environment send found a content defect could be
+neither changed nor replaced, because its number stayed taken.
+
+Such a sequence may be retired by a signed, audited act, which frees its number, only while:
+- no production send is bound to it; and
+- it is not filed.
+
+The act reuses the filed-elsewhere baseline's existing removal of drafts. It goes under launch row D7 (`Plan: L1`).
+Nothing new is built beyond that act.
+
+### P-87 — The unreached IND diff and manifest routes are retired (R1)
+
+The founder, 2026-11-01, on the RIM session's question. These have no caller in any screen, in AnA or in any test:
+- `GET /sequence/:currentId/diff` and `/diff/pdf`;
+- `GET /sequence/:seqId/manifest` and `/manifest/pdf`;
+- the manifest embedded in `POST /sequence/:seqId/dispatch-gate`.
+
+They read the mutable `submission_leaves` table. They are retired with their two services,
+`ind-sequence-diff.ts` and `ind-package-manifest.ts`. Their outcome is delivered today by:
+- "On file at the agency" (`client/src/concept2cure/v2/surfaces/EctdFiledState.tsx`);
+- the compile's lifecycle view (`EctdCompile.tsx`).
+
+The deletion commit names the `git log --all --diff-filter=D` search and those replacements by path (the working
+agreement). This was checked with the R1 inventory first. CLAUDE.md RULE 3 cites these routes as an example of "reach,
+don't rebuild". This decision closes that example by retirement, because their outcome is now reached through the
+filed-state and compile views.
+
+### P-88 — The commitments re-cut, confirmed under RULES 5 and 6
+
+The founder, 2026-11-01, on the RIM session's question, confirming all four points:
+1. A fulfilment signed in error is corrected by set-once correction columns on the successor `regulatory_commitments`
+   row. No new table.
+2. No purge role or `SECURITY DEFINER` function is added. The DELETE gap stays owed (P-41).
+3. A milestone's "missed" is derived from its dates and never stored.
+4. The signed PMR, PMC and REMS milestone acts and the correction go under launch rows D2 and D5 (`Plan: L1`), not
+   under new S9 paths.
+
+The unsigned milestone work for meeting commitments (listing, adding, met and withdrawn) is S9 and needed no decision.
+
+Nothing else in the plan changes.
+
+### P-89 — An unverified figure blocks an approval or a seal unless the signer acknowledges each one
+
+The founder, 2026-11-01. The AI architecture session asked: "Two decisions are still open for you: should an
+unchecked figure block a signature unless the signer acknowledges it, and should the self-hosted Docling layout
+reader be enabled?" (`docs/design/AI_PLATFORM_BLUEPRINT_GAP_2026-10-25.md`, decisions 1 and 2). The founder answered:
+"Yes to all". This is the first of the two; P-90 is the second.
+
+- **What it covers.** An approval, meaning `/e-sign` or `/sign` as APPROVER, and a seal (`/freeze`) of an Authoring
+  document. Each is refused while the text being signed states a figure that its section's cited project sources do
+  not hold. It may go ahead only when the signer acknowledges every such figure, one by one.
+  - Review and authorship signatures are not approvals and are not asked.
+- **What "unverified" means.** It means what the existing figure check says (`draft-figure-check.ts`): a figure in a
+  section that cites saved project sources, and that those sources do not state.
+  - The check runs again at signing, inside the signing transaction, on the text being signed. The save's record goes
+    stale on the first edit, so it is not used.
+  - When a cited source no longer verifies, its section's figures are listed as unchecked.
+  - A figure in a section that cites no sources is never compared with anything, so the checker has no "unverified"
+    to report for it. Such figures are outside this decision. Widening the gate to cover them is a further founder
+    decision.
+- **The record.** The acknowledgement is written on the act's own transaction as a chained trail row,
+  `UNVERIFIED_FIGURES_ACKNOWLEDGED`, naming each figure. The act's chained row names its digest. An acknowledgement
+  of an earlier text does not cover a changed figure.
+- **RULE 2 holds.** The engine says whether a number is in its source. It never supplies one.
+
+Nothing new is built. The figure check, the signing routes and the signing dialog exist; the gate is added to them,
+under `Plan: L1` (row D5, Part 11 evidence).
+Evidence: `docs/evidence/D5-SIGNATURE-FIGURE-GATE/2026-11-01/`.
+
+### P-90 — The self-hosted Docling layout reader is admitted
+
+The founder, 2026-11-01, in the same answer as P-89. The AI architecture session asked "… and should the
+self-hosted Docling layout reader be enabled?", and the founder answered: "Yes to all". This is the second of the
+two.
+
+- **What is admitted.** The Docling layout reader (docling-serve), run by the deployment on its own infrastructure.
+  - It is reached only through the existing client (`server/integrations/docling/`), behind the existing flag
+    `oss.ingestion.docling_primary`.
+  - It gives table-cell structure that the current text extractors do not.
+- **Where it sits under RULE 2.** It is inside RULE 2's gateway and connector scope, as a self-hosted document
+  reader on the deployment's own network. It is not a model and drafts nothing. No document text leaves the
+  deployment through it.
+- **The one addition.** The reader's service definition: the `docling` service in `docker-compose.yml`, profile
+  `ingestion`. It is listed in `docs/design/one-design-plan.json` `approvedAdditions` under L1.
+  - Everything else exists, and is reached (RULE 6): the client, the flag, the one text extractor and Vault's two
+    ingestion reads.
+- **What is not admitted.**
+  - **Hosted parsing.** A hosted parsing service (LlamaParse or similar) would send dossier text to a third party.
+    It stays rejected.
+  - **A second way out.** The reader adds no second path for document text to leave the deployment. When it is off
+    or unreachable, ingestion uses the existing extractors and says so.
+  - **Hosted production.** Running the reader in the hosted Terraform stack is D1's to decide.
+- **Default.** The flag stays off until a deployment turns it on, after showing its reader running.
+
+The work, under `Plan: L1` (row D2): the client speaks the reader's real interface, and Vault ingestion reaches it.
+Evidence: `docs/evidence/D2-LAYOUT-READER/2026-11-01/`.
+
+### P-91 — The report-pack register gets its own tables
+
+The founder, 2026-11-01: "And I give you founder approval based on the questions you asked and the suggestion you
+offered. Proceed". The reporting session had said that the open `report_bundles` table (coverage review C-3)
+"now needs a **founder `approvedAdditions` entry** under RULE 6 before anyone can build it … it isn't a session's
+decision". The question and the shape it proposes are in
+`docs/evidence/reviews/2026-10-11-reporting-coverage/C3-BUNDLE-REGISTER.md`, "Still open: the table".
+
+- **Why.** A report pack is stored today as one `project_memory_entries` row per covered project, titled
+  `bundle:<uuid>`, with its run ids inside a JSON string.
+  - The record is duplicated once per project and reconciled in JavaScript (`dedupeByLatest`). Two copies that
+    disagree look like one.
+  - "List the packs" is `count(distinct title)` over a free-text column, not a count of packs.
+  - "Which packs contain this run?" is a scan.
+- **What is admitted.** Three tables, listed in `docs/design/one-design-plan.json` `approvedAdditions` under L1:
+  - `public.report_bundles`: one row per pack;
+  - `public.report_bundle_runs`: the runs a pack contains, one row each;
+  - `public.report_bundle_projects`: the projects a pack covers, in place of the row-per-project copies.
+- **The terms.**
+  - Each table is in `public` with `organization_id INTEGER NOT NULL`, so the tenant sweep gives it a policy.
+  - The migration goes into `C2C_MIGRATION_FILES` before the final sweep pair. It is `IF NOT EXISTS`-guarded and
+    replays on every deploy (RULE 1).
+  - The existing packs are backfilled with `INSERT … ON CONFLICT DO NOTHING`, with a row-count assertion. No DROP:
+    the old `project_memory_entries` rows stay where they are.
+  - **Replace, not add.** The `project_memory_entries` `bundle:<uuid>` path is moved onto the tables and its code is
+    deleted in the same change. No second register is left beside the first.
+- **What is not admitted.** No new screen, route file or mount. The register is read and written by the routes and
+  the panel that exist.
+- **The same answer confirms one design point, which is not a plan change.** In D7-D, "Find a report" is a plain
+  search field. It never takes the composer's look, because nothing but the conversation may look like talking to
+  AnA (`docs/design/FILING_SPINE.md` §7.2 F6).
+
+The work, under `Plan: L1` (row D2, the launch catalog's Reporting & analytics): the register moves onto its own
+tables. Evidence: `docs/evidence/reviews/2026-10-11-reporting-coverage/` (C-3).
+
+### P-92 — A held FDA send can be settled by a signed act, either way
+
+The founder, 2026-11-02, answering the coordinating session's question "An FDA ESG submission is stuck 'held': it was
+sent, but no signed MDN (delivery receipt) came back. Today nothing can settle it, because the rollback was removed on
+10-17 as it contradicted what FDA held. May a signed act, with re-authentication and the agency's document kept in
+Vault, settle it?": **"Allow both."** The question was raised by the D7-record session (`015weq…`,
+`docs/evidence/W5/2026-11-01/README.md`, "For the founder" 1, item A5).
+
+- **What is decided.** A held send may be settled by one of two signed acts, each with re-authentication and the
+  agency's document retained in Vault and linked to the act:
+  - **recorded as received**, on Ack2 or Ack3 evidence from FDA;
+  - **released as not received**, only on FDA's written confirmation of non-receipt. The act states the
+    duplicate-filing risk to the signer before they sign.
+- **What is not decided.** No settlement without the agency document; no settlement by an unsigned action; the
+  removed rollback route stays removed.
+- **Owner.** RIM (`011e42…`), under F1, in the files it holds (`submission-service.ts`, `fda-esg-receipts.ts`).
+
+### P-93 — FDA sequences over 1 GiB are out of scope for launch
+
+The founder, 2026-11-02, answering "FDA sequences larger than 1 GiB: the only code path is an SFTP transmit, and
+nothing in the repository documents FDA accepting SFTP. Are they in scope for launch?": **"Out of scope."** Raised by
+the D7-record session (`docs/evidence/W5/2026-11-01/README.md`, "For the founder" 2).
+
+- **What is decided.** A sequence over the size the documented channel takes is refused **before signing**, with a
+  plain message, from `sequenceTransmitReadiness`. The undocumented SFTP transmit (`transmitViaSftp`,
+  `ssh2-sftp-client`) is retired: removed, its reachable replacement being that refusal, named by path in the
+  removing commit (working agreement).
+- **Owner.** RIM, under F1.
+
+### P-94 — An onboarding upload is approved before it can be filed
+
+The founder, 2026-11-02, answering "A PDF uploaded during onboarding (`ctd_onboarding_documents`) has no approval
+state, so it can be filed without anyone approving it. Must an onboarding upload be approved before it can be
+filed?": **"Yes, approve first."** Raised by the D7-record session ("For the founder" 4).
+
+- **What is decided.** An uploaded leaf goes through the same approval as an authored one before it can be placed in
+  a sequence. Readiness and transmit both refuse an unapproved upload, as they do an unapproved authored leaf.
+- **Owner.** RIM for readiness and transmit (F1); the approval itself uses the existing approval act, nothing new.
+
+### P-95 — Review is mandatory before a regulated document is approved
+
+The founder, 2026-11-02, answering "A Concept2Cure document can be approved with no reviewer assigned, by design, and
+no screen assigns reviewers today. Should review be mandatory before approval?": **"Mandatory for regulated docs."**
+Raised by the D7-record session ("For the founder" 5; `artifact-approval-act.ts`).
+
+- **What is decided.** A regulated document cannot be approved until at least one assigned reviewer has completed
+  review. The existing reviewer-assignment route is reached from the one editor's Review panel (D4, the inspector),
+  not from a new screen.
+- **Owner.** The server refusal under F1 (the D7-record session, which found it, with the file list cleared by the
+  coordinator); the reach under D4 (the coordinator's editor lane).
+- **Still to settle, not by a session:** which document types count as regulated is read from the document-type
+  catalog's existing classification; where the catalog does not say, the document is treated as regulated (fail
+  closed).
+
+*Clarification, 2026-11-09 (the coordinating session, `01JbQU…`, under the founder's delegation of 2026-11-08, P-107).*
+The record assumed the one editor could reach the artifact reviewer routes. It cannot, because the editor and the
+approval act work on two different records:
+- **The editor's document.** The editor opens an authoring document. Its approval is the APPROVER e-signature,
+  `POST /api/authoring/docs/:docId/e-sign` in `server/routes/authoring.router.ts`.
+- **The conversation artifact.** The approval act and its reviewer routes govern AnA's conversation artifact:
+  `server/services/artifact-approval-act.ts`, and `POST …/artifacts/:artifactId/reviewers` in
+  `server/routes/c2c/artifacts.ts`.
+- **No link.** No editor document holds an artifact id. The projection between the two records was retired on
+  2026-10-17 (`server/services/ana/authoring-canonical-bridge.ts`) and stays retired.
+
+Both records file: `server/services/ectd/leaf-source-resolver.ts` admits an approved authoring document and an approved
+or locked artifact. So:
+- **Every door that makes a document fileable applies P-95, each with its own record's review.** This answers open
+  question 3 of `docs/evidence/W5/2026-11-01/p95/README.md`. Neither record is bound to the other to borrow its review.
+- **The editor's document.** The APPROVER e-signature is refused with `REVIEW_REQUIRED`, before the credential, unless
+  the document's review route is complete over the content being approved. Complete means every named reviewer has
+  signed as REVIEWER on the current sections digest (`authoringStanding`,
+  `server/services/authoring/authoring-review-route.ts`, RR5).
+  - **What does not count:** a review requested before RR5 (`legacy`), a withdrawn or returned route, and a complete
+    route over older content. The remedy for each is to send the document for review again.
+  - **The reach already exists:** "Send for review" in the editor's Review tasks rail and on the canvas card
+    (`editor/SendForReviewDialog.tsx`). D4 makes the refusal and its remedy legible where Approve is offered.
+  - **Owner:** the coordinating session, the server refusal under F1 and the reach under D4.
+- **The conversation artifact.** The planned refusal (changes 1 to 6 of the evidence) stays held until the artifact's
+  own reach exists. Today AnA's signed `update_artifact_status` is the artifact's only approval in the product, so the
+  refusal alone would refuse every artifact.
+  - **Its reach is the conversation's artifact panel** (`client/src/concept2cure/v2/surfaces/ConversationThread.tsx`),
+    which already sends an artifact to review. That send names the reviewers through `POST …/reviewers`, and a named
+    reviewer decides there through `POST …/reviews/submit`. It is the canvas beside the conversation
+    (`docs/design/ONE_ANA_ONE_CANVAS.md`), not a new screen.
+  - **Owners:** the reach, S4's holder of that file (the Anna runtime epic, `01KZK3…`); the refusal, the D7-record
+    session as before, landing after the reach.
+- **What counts as a review (open question 1).** The reviewer is neither the approving signer nor an author, read as
+  P-18 reads authors. An approver who signed as a reviewer on the same route or round cannot approve that version.
+  This applies on both doors.
+- **How many reviewers (open question 2).** Where the document's contract names `regulated_dual_review`
+  (`shared/types/document-contract.ts`), at least two named reviewers must complete review. That is the type raising
+  the floor through data, as NEW-4 allows (`docs/design/REVIEW_ROUTING_2026-10-23.md` §4). It lands as its own slice
+  after the one-reviewer refusal.
+- **Unchanged:** nothing is retroactive, an approval before P-95 stays approved, and no file, route, table, screen or
+  tool is added (RULE 6).
+
+### P-96 — An acknowledgement recorded as FDA's before DP-81 is marked in the product
+
+The founder, 2026-11-02, answering "Before the DP-81 fix, some acknowledgement downloads were recorded as coming from
+FDA ('agency') without being verified. The records are corrected going forward. Do sponsors who already have such a
+record need to be told?": **"Mark it in the product."** Raised by the D7-record session
+(`docs/evidence/W5/2026-11-01/README.md`, "For the founder" 3; DP-81 fixed in `8d5bbef3b`).
+
+- **What is decided.** Each acknowledgement recorded as the agency's before the DP-81 fix, and not verified as FDA's,
+  gets an audit-trailed correction and a visible note on its submission: this acknowledgement was not verified as
+  FDA's. No outbound email or notice.
+- **How it reaches a deployed database (RULE 1).** The correction is data, so it lands only through a file in
+  `C2C_MIGRATION_FILES`, guarded to run once per row (it marks; it never deletes or rewrites the original record),
+  with a row-count assertion and its audit row in the same statement set.
+- **Owner.** RIM (`011e42…`), which holds `fda-esg-receipts.ts`, with the D7-record session's DP-81 evidence; under F1.
+
+### P-97 — A project that already filed keeps its filed state when eCTD compile is refused
+
+The founder, 2026-11-02, answering "RIM is about to refuse eCTD compile for document-class and regional device
+projects. A project of that kind that already has a dispatched sequence would lose its filed-state view. Nobody here
+can query the deployed database to check whether any exist. How should RIM proceed?": **"Keep filed state
+regardless."**
+
+- **What is decided.** Filing types' 3b slice 3(c) refuses compile, status and validate for a filing-class or regional
+  device project with 422 `ECTD_NOT_APPLICABLE`, **except** that a project with any dispatched sequence keeps its
+  filed-state view (read-only). The deployed-row query is no longer a precondition: nothing filed is hidden either way.
+- **Owner.** RIM, under F1, with the client's 422 handling in the same change.
+
+### P-98 — Numbered comments inside an FDA response in meeting minutes are not offered as questions
+
+The founder, 2026-11-02, answering "When FDA meeting minutes contain an FDA response with its own numbered comments,
+should those comments be offered as questions for the sponsor to answer?": **"Not offered."** Raised by RIM's S10
+design (item 4).
+
+- **What is decided.** They are FDA's responses, not open questions. The letter splitter does not offer them, and the
+  letter shows a note saying they were not offered as questions.
+- **Owner.** RIM, in S10.
+
+### P-99 — An unrecorded sent sequence is re-derived from its bytes, or restored by a signed statement
+
+The founder, 2026-11-02, answering "RIM's slice 1 found that a sequence could be marked sent or acknowledged with no
+record of what was transmitted. The next sequence of such a submission is now refused, and the screen names the gap.
+How should a sequence like that be put back on record?": **"Re-derive, else signed statement."** Raised by RIM's F1
+slice 1 (`090f62af1`, its evidence README, "Owed, not built here").
+
+- **What is decided.** Where the exact sent bytes were kept (sends since `3cab286e1`, 2026-10-29), the transmit record
+  is re-derived from them deterministically, with its derivation recorded. For an older send, the record is restored by
+  a signed statement of what the sequence carried, with re-authentication and the agency's acknowledgement kept in
+  Vault and linked to the act. Neither path invents a leaf the bytes or the statement do not name.
+- **What is not decided.** A re-filing is not required. Nothing restores a sequence silently.
+- **Owner.** RIM, under F1, after slice 2.
+
+### P-100 — While the coordinator is unavailable, each session records its own progress in the plan
+
+The founder, 2026-11-05: **"The coordinator is out of tokens so you need to be proactive and update the plan with your
+work achievements."**
+
+- **What is decided.** A session records what it delivered under its package in the plan's progress log
+  (`docs/design/ONE_DESIGN_PLAN.md` §3a), in a `Plan: PLAN` commit carrying `Founder-Decision: P-100`. An entry states
+  facts only:
+  - the commits, by SHA;
+  - the evidence, by path;
+  - what was found;
+  - what is next.
+- **What is not decided.** A progress entry changes no package's scope, paths, status or ownership. It adds no screen,
+  mount or table. Closing a package is still the founder's or the lead's act (§3, step 5). Any other change to the plan
+  still needs its own founder decision.
+- **Owner.** Each session, for its own package.
+
+### P-101 — The statistical analysis plan is written in the one editor; the second SAP system converges into it
+
+The founder, 2026-11-05, answering "the SAP is a document type in the one editor, and a separate SAP system also exists
+on the server (biostatPlatform.ts …) with no screen. Which is the SAP?": **"Converge into editor."** The question was
+raised by R1 (`docs/evidence/DESIGN/R1/2026-11-05-handoffs-and-decisions/README.md`, Decision A).
+
+- **What is decided.** The SAP is written in the one editor, as every document type is (Rule 4), as
+  `statistical_analysis_plan`. The useful engines of `server/routes/biostatPlatform.ts`'s statistics thread are
+  reached as that document's functions in the editor:
+  - analysis specifications;
+  - TLF shells;
+  - the CSR-section generator.
+
+  Its own SAP store (section edit, comments and their resolution, amendments, lock, versions) is retired. It is
+  migrated and deleted in the same change that reaches its replacement (working agreement: zero duplication; name
+  the replacement by path).
+- **What is not decided.** The order of the work, and whether any statistics-thread engine is itself retired. That
+  is for the owner after a "what already exists" review.
+- **Owner.** The one editor's holder (D4), with S3 for the engines' behaviour. It waits for the CSR demo, as D4-3
+  does.
+
+### P-102 — Informed consent is one record: the 21 CFR 50.25 checklist becomes the document type's checks in the one editor
+
+The founder, 2026-11-05, answering "should the /api/protocol-consent checklist and approval become the consent
+document's checks inside the one editor, as one record?": **"Yes, one record."** The question was raised by R1
+(`docs/evidence/DESIGN/R1/2026-11-05-handoffs-and-decisions/README.md`, Decision B).
+
+- **What is decided.** The `informed_consent` document type carries the 21 CFR 50.25 required-element checklist and
+  its completeness as the editor's checks for that type. Its approval runs through the editor's one signing. The
+  structured record behind `/api/protocol-consent` converges into that one record, not beside it. The protocol
+  workspace's Consent tab stays read-only until then.
+- **Owner.** The one editor's holder (D4), after the CSR demo. It was handed to them on 2026-11-05
+  (`COORDINATION.md`).
+
+### P-103 — The submission-ops package path is retired; the sequence is the one filing path
+
+The founder, 2026-11-05, answering "retire the six /api/submission-ops/packages/* routes? They are a second filing
+store that the sequence replaced on 17 Oct (FILING_SPINE F12)": **"Retire them."** The question was raised by R1
+(`docs/evidence/DESIGN/R1/2026-11-05-handoffs-and-decisions/README.md`, Decision C).
+
+- **What is decided.** The routes are unmounted, or excluded from the launch scope (`LAUNCH_EXCLUDED_API`, with the
+  F12 reason):
+  - `GET/POST …/packages/:id/milestones`;
+  - `POST …/packages/:id/preflight`;
+  - `POST …/packages/:id/publish`;
+  - `GET …/packages/:id/readiness-history`;
+  - `PUT …/packages/:id/regulatory-identifiers`.
+
+  The replacement is the sequence: Submission Center → sequence → Validation, Dispatch, sign, transmit
+  (`SubmissionSeqWorkspaces.tsx`; `POST /api/submissions/sequences/:id/transmit`). No package can be locked for
+  export outside it.
+- **What is not decided.** Whether other `/api/submission-ops/*` routes that a screen still calls are kept. Each is
+  judged on its own.
+- **Owner.** RIM, which holds S5.
+
+
+### P-104 — Extend the existing Anna runtime from the multi-agent architecture specification v0.5
+
+The founder, 2026-11-06, supplied **MULTI-AGENT-ARCHITECTURE-SPEC-20261106-v0.5.pdf** and directed:
+
+> "Study the attached document, align to the current roadmap, and add the attached plan to the current roadmap,
+> and you own this end to end. This is your assignment to build all of this in a very sophisticated way, not by
+> building new files, but extending what we already have done. Extend and bring to life. Build this out."
+
+- **What is decided.** Add one Anna-runtime epic to the canonical plan (§1d), mapped onto existing open packages
+  S1–S12 and D4, then extend the implementation in those existing homes. The supplied §15 plan-only handoff is
+  superseded by this explicit build instruction. Native in-product orchestration is the target; workers propose,
+  Anna disposes within runtime gates, humans sign/approve consequential actions. Parallel agents use distinct files
+  under one lead, on `concept2cure-v2`.
+- **Build order and evidence.** Preserve §11 phases 0–8 with the §14.4 spike expanded by §§19/23/26. Each downstream
+  phase waits for its fixture gate. §29 shared learning and §32 clean-file feedback follow the isolation/custody/
+  routing walls; no local test or code audit is represented as production qualification.
+- **Account direction reconciled.** The 2026-10-01 platform-or-client option in
+  `server/services/submission-gateways/gateway-accounts.ts` is the existing behavior. The supplied §17.2 now sets
+  the target for client filings to client-owned authority accounts with scoped revocable grants, exact-content
+  approval and no house-account fallback. Existing account rows and historical sender identities are not rewritten
+  by this decision; S5 must implement and prove the transition explicitly. Other authorities remain record-only
+  until their transport and verified onboarding are supported.
+- **Existing path scope.** S4 also covers the existing AI gateway, connectors, working/session memory and Vault
+  classification readers; S10 covers the existing orchestration route and pre-submission verdict. These additions
+  to package paths approve completion of current files only.
+- **What is not admitted.** No new file, screen, route, mount, service, table, tool, dependency or model. Extend the
+  existing code and records; a requirement needing an addition is recorded as a precise unresolved dependency.
+  Preserve the one editor, one sequence filing path, current client/jurisdiction/composition scope, independent
+  read-only workers, approved-model/PQ controls and human signing. No agency account creation, transmission,
+  provider enablement, certification claim or deployment is implied by roadmap status.
+- **Owner.** The lead owns end-to-end integration and acceptance; existing package owners keep their file holds.
+  The current roadmap is `docs/design/ONE_DESIGN_PLAN.md` and `docs/design/one-design-plan.json`, not the historical
+  CER-only or January vision roadmaps. Progress must name actual commits, checks and remaining dependencies.
+
+### P-105 — Spec v0.5 is the current Anna-runtime specification (v0.4 superseded), and one session owns the epic alone
+
+The founder, 2026-11-08, first supplied **MULTI-AGENT-ARCHITECTURE-SPEC-20261105.md** (v0.4, §§1–15) and directed:
+
+> "Stay perfectly aligned to the new roadmap and rules. But you must add the attached plan to the main new roadmap
+> and you own all of the attached alone."
+
+Then, the same day, a correction, supplying **MULTI-AGENT-ARCHITECTURE-SPEC-20261106-v0.5.pdf**:
+
+> "Correction — there's a newer version than the one I just sent. v0.5, from November 6 (105 KB, 32 sections),
+> supersedes v0.4. … this is the current plan."
+
+- **What is decided.**
+  1. **v0.5 is the current specification, and v0.4 is superseded.**
+     - v0.5 is the version P-104 placed at `docs/design/ONE_DESIGN_PLAN.md` §1d.
+     - Its source of record is now in the repository: `docs/design/MULTI-AGENT-ARCHITECTURE-SPEC-20261106-v0.5.pdf`,
+       sha256 `4564aff5d1da81520ed187abf5d5f20be11f74c7d407244bba33d685229b36c4`.
+     - Its change note says §§1–15 are unchanged from v0.4. §1d maps every one of its 32 sections onto the epic.
+     - v0.4 §15's "consider and plan, do not build yet" stays superseded by P-104's build instruction.
+     - It is one epic, not a second backlog.
+  2. **The Anna-runtime epic has one owner:** the Claude Code session `session_01KZK3jgtmQBgNepqLjXjS3k`. The epic is
+     `architectureEpics` `anna-runtime` in `docs/design/one-design-plan.json`.
+     - It replaces the Anna architecture lead (Codex, 2026-11-06) as the epic's lead, for sequencing, integration,
+       acceptance and the epic's progress log.
+     - No other session takes an epic slice.
+- **What is not decided.**
+  - Other packages' scope is unchanged, and so are their holders' file holds for their own work (plan §4.6, one
+    session per file). When an epic slice needs a file someone else holds, the owner asks for it in
+    `.design/claude-convergence/COORDINATION.md`.
+  - §14.5's open questions stay open, because P-104 does not decide them:
+    1. Is Anna customer-facing first, or internal-only?
+    2. What is the model cost and latency budget per document type?
+    3. Do Anna's internal dispositions need the same IQ/OQ validation package as user-facing approvals? That is to
+       be scoped with the first design partner.
+  - No new file, screen, route, mount, service, table, tool, dependency, integration or model is approved (RULE 6).
+    §13.2's vendors are suggestions, not admissions. Committing the specification PDF as the source of record is a
+    document, not a capability.
+  - P-104's account target, its gates and its phase order are unchanged.
+- **Owner.** `session_01KZK3jgtmQBgNepqLjXjS3k`.
+
+### P-106 — The ten IND lifecycle routes with no caller are retired; a sequence's verdict is read per project only
+
+The founder, 2026-11-08, confirming in the RIM session (`011e42…`) the decision the coordinating session relayed on
+2026-11-02. Its record commit (`9bb710e98`) never reached origin, and the number it carried was used for P-100. P-105 was taken the same day by the Anna-runtime decision above. The
+question was raised by the RIM session's caller check against the corrected R1 inventory (`d8f559377`). The answer:
+**"Yes, record and retire."**
+
+- **What is decided.** Ten IND lifecycle routes are retired:
+  - `POST /api/ind-lifecycle/sequence/:seqId/dispatch-gate`;
+  - `POST /api/ind-lifecycle/sequence/:seqId/dispatch-gate/snapshot`;
+  - `GET /api/ind-lifecycle/sequence/:seqId/snapshots`;
+  - `GET /api/ind-lifecycle/sequence/:seqId/validate`;
+  - `POST /api/ind-lifecycle/submission/:id/cockpit`;
+  - `POST /api/ind-lifecycle/submission/:id/drift`;
+  - `GET /api/ind-lifecycle/portfolio/drift`;
+  - `GET /api/ind-lifecycle/portfolio/drift/csv`;
+  - `POST /api/ind-lifecycle/submission/:id/dashboard`;
+  - `GET /api/ind-lifecycle/submission/:id/overview`.
+
+  Nothing in the client, AnA, MCP or scripts calls them. Each reads the one assessor (`annotatedGatesForSubmission`)
+  and writes nothing, except the snapshot route, the only writer of `ind_dispatch_snapshots`.
+- **Also decided: no organisation-wide verdict list.** A sequence's verdict is read per project only.
+- **The replacement, named by path in the removing commit:** `GET /api/submissions/sequences/:seqId/dispatch-readiness`,
+  shown in `client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx` (Validation, Dispatch) and in
+  `ProjectMarkets.tsx` / `DispatchReadiness.tsx` (Submit). A Validated stage that no longer holds is shown through
+  `validatedStage`.
+- **Services.** A service only these routes use is deleted with them. A service another caller still reads is kept,
+  each checked by import, not by name.
+- **Superseded.** P-33's sentence "The IND routes keep their paths". Its one-assessor rule stands.
+- **What is not decided.** Nothing is dropped. `ind_dispatch_snapshots` stays (RULE 1). Its migration,
+  `20260610_ind_dispatch_snapshots.sql`, is in the install-fresh baseline only, not in `C2C_MIGRATION_FILES`.
+- **Proof the removing commit carries:**
+  - the dispatch-readiness route is shown still reached;
+  - the R1 inventory is run again, showing the ten are gone and no other route lost its caller;
+  - the history search (`git log --all --diff-filter=D`);
+  - the plain-text segment searches.
+- **Owner.** RIM, under `Plan: R1`, after F1 slice 2, together with P-87's deletion of the IND diff and manifest
+  routes.
+
+### P-107 — Decided under the founder's delegation: the rail, Anna's first audience and budgets, Vault parity, and R1's next area
+
+The founder, 2026-11-08. The coordinating session offered to put open questions to the founder: whether Biostatistics
+belongs on the rail; Anna's three §14.5 questions; Vault parity's questions; R1's next area and its 171 retirement
+candidates; `011Dpx…`'s progress entry; and the unassigned D3-4 and S12. The founder answered: **"No you decide as the
+global sme."** The coordinating session decided as follows, as P-28 was decided under the founder's delegation of
+2026-10-07. The founder may overrule any item by a later decision.
+
+- **What is decided.**
+  1. **Biostatistics stays on the rail.** This confirms `scripts/ci/one-product-baseline.json`
+     `founderDecisions["rail:biostatistics"]`, which `5144702d21` wrote from the founder's words of 2026-11-06 without a
+     decision number. Its basis: those words name biostatistics among the core modules, and the rail as their
+     navigation point. It is a work area over the project's data, not an app. Its documents (the SAP, the TLFs) are
+     written in the one editor (P-101). RULE 4's 2026-10-31 list of Core work workspaces to converge is superseded for
+     Biostatistics' rail entry only.
+  2. **Anna (P-104/P-105 §14.5).**
+     - **Internal first.** Today's AnA serves customers under human signing, unchanged.
+       - Anna's multi-agent dispositions (workers that propose, a lead that disposes) run internally and for a design
+         partner by opt-in.
+       - Each disposition reaches customers one capability at a time, after that capability's §11 phase gate passes and
+         its model is PQ-passed. Today none of the 16 PQ entries has passed.
+       - "Show team" stays off by default.
+     - **Cost and latency are budgeted from measurement, per document type.**
+       - The §14.4 spike measures each type on its fixtures. The cap is twice the measured p95.
+       - At a cap the existing run control stops and asks a person; it never truncates silently, and it never answers
+         with a partial result labelled complete.
+       - Until a type is measured: an interactive answer has 60 seconds, a background build has 30 minutes, and no run
+         starts without a cap.
+       - Budgets are recorded beside the approved-models entry, with their measurement.
+     - **Internal dispositions are inside the validation package, by risk (GAMP 5 / CSA).**
+       - A disposition that can change governed content, a figure, a gate's verdict or a filing gets OQ scripts with
+         fixtures in the D4 package.
+       - A disposition that only orders, routes or summarises for a person is covered by the risk assessment.
+       - Human signing of consequential acts is unchanged.
+  3. **Vault parity (`01KnUG…`'s questions; the Vault plan's FD3; MR-08 Stage 6 step 4).**
+     - **No cross-sponsor library view for a CRO.** With no project open, the Vault first asks which sponsor; every
+       view is inside one sponsor. Search never spans sponsors.
+     - **Device coverage follows the eSTAR mapper's per-device slots**, the filing's own structure. The rule pack's
+       mandatory flags converge onto the mapper, so one rule remains. The D4 and D6 disagreement is a defect,
+       repaired red first.
+     - **A seal says when its version has been superseded** ("superseded by version n on date"), read from the version
+       chain. What was sealed, and whether it is intact, is unchanged.
+     - **Retention is FD3 (c).** No version is destroyed during a tenant's life; retention may only tombstone, and the
+       refusal of VR-07 stands. S3 Object Lock in governance mode and noncurrent-version retention go to the D1 lane
+       with the AWS account. A destruction policy needs a later decision with a written schedule.
+     - **Renditions:** each version gets a PDF rendition through the existing converter (`pdf-converter.ts`), bound to
+       the source version's SHA-256 and shown in the viewer. A rendition is never filed in place of its source.
+     - **Binders** are views over folders and version links. A project's editors may edit them, each edit is audited,
+       and a binder never alters a document.
+  4. **R1's next area is CMC / Module 3, then RBM**, the featured work areas (P-79). CMC's approve route not checking
+     method validation (plan §3a, D5/S7) shows its reach is not proven.
+  5. **The 171 route files with no caller.** A route is retired by the lane that owns it, under R1, when both hold:
+     - it has no caller in any history;
+     - it duplicates a capability that is reachable.
+
+     The rest of the procedure:
+     - The commit names the replacement by path and re-runs the R1 inventory.
+     - Retirements go in batches of up to 20.
+     - Nothing is dropped from the database (RULE 1).
+     - A route whose capability exists nowhere else comes back as a reach proposal, not a retirement.
+  6. **`011Dpx…`'s progress entry** may be committed. Recording a session's own progress is what P-100 is for, and it
+     is not a plan amendment.
+  7. **D3-4 (the step bodies), then S12 (work projects),** go to one project-page session, started by the coordinating
+     session. It holds `Project*.tsx` in COORDINATION first.
+- **What is not decided.** These stay with the founder:
+  - the founder's own actions: rotating the Neon owner passwords and the Hugging Face token; a model key; the Codespace
+    image's Debian and PostgreSQL hosts; the AWS account for D1;
+  - every other open question in the plan, unless named above.
+
+  No new file, route, table, screen, tool or model is approved (RULE 6). Every item above extends existing code.
+- **Owner.** The coordinating session records and routes:
+  - item 1: done here;
+  - item 2: the Anna-runtime owner `01KZK3…`;
+  - item 3: the Vault parity lane `01KnUG…`, or S6's holder;
+  - items 4 and 5: R1's session;
+  - item 7: the new project-page session.
+
+### P-108 — Held FDA sends, retiring and size, onboarding uploads, and restoring an unrecorded send: RIM's recommendations accepted
+
+The founder, 2026-11-08, answered four questions put in the coordinating session (`01JbQU…`). They were RIM's open
+questions from its designs for P-86, P-92, P-93, P-94 and P-99 (`docs/evidence/RIM/2026-11-08-designs/`), each put with
+RIM's recommendation. The founder accepted every recommendation.
+
+1. **Held FDA sends (P-92).** Asked: "(a) Once an Ack3 has arrived, 'received' needs the Ack3 to accept; a failed Ack3
+   after an Ack2 is recorded as a technical rejection. (b) Where the platform's own record proves nothing left (no
+   message formed, refused before the wire), a narrow signed release may cite that proof instead of a letter from FDA,
+   since FDA can't confirm a send it never got. (c) If FDA's verified answer later contradicts a signed settlement,
+   FDA's answer wins, through a second signed act that re-opens it; both records are kept, and resends are refused
+   meanwhile." Answer: **"Accept all three."**
+   - **(b) amends P-92:** for a send the platform's own record proves never left, a signed release cites that proof,
+     not FDA's written confirmation of non-receipt.
+   - (a) means completing `filed-sequence-rejection.ts` for the sequence spine, under F1.
+2. **Retiring sequences and the size limit (P-86, P-93).** Asked: "(a) A production attempt that records nothing
+   reached FDA (released as not received on FDA's written confirmation, or refused before any connection) is not a
+   'bound production send', so the sequence can be retired by P-86's signed act. (b) The 1 GiB limit has no FDA source:
+   FDA's documented maximum is 10 GB (Form 5640 v2.0). Build at 1 GiB anyway, since that fails closed, and never call
+   1 GiB FDA's limit. (c) Build no settlement path for a legacy hold older than the per-attempt binding of 2026-10-14;
+   the runbook escalates if one is ever found (expected zero)." Answer: **"Accept all three."**
+3. **Onboarding uploads (P-94).** Asked: "(a) An upload counts as approved when the same bytes, matched by content hash,
+   are already approved by the Vault's existing act in the same project, with no new act. The alternative is
+   requiring every upload to be replaced by a Vault version. (b) Retire ctd_onboarding_documents as a source of
+   placeable leaves; it has no upload caller in any history and no deploy applier. Its replacement is
+   VaultPlaceIntoSubmission.tsx." Answer: **"Accept both."** The coordinating session's ruling of the same day reads
+   "placed" in P-94 as "filed".
+4. **Restoring an unrecorded sent sequence (P-99).** Asked: "(a) If a sequence was sent with no compile and no kept
+   bytes, accept the sponsor's own copy of the package when its SHA-256 matches the one recorded for that send;
+   otherwise it needs a re-filing. This depends on MR-08's open question about admitting .zip files to Vault. (b) A
+   sequence known only from its compiles counts as unrecorded: re-derived from bytes it becomes 'transmit', and a
+   statement restores it only as 'statement'. (c) A kept package that can no longer be read is an integrity incident,
+   never covered by a statement. (d) A signed statement cannot be superseded for now; a correction is a later
+   sequence." Answer: **"Accept all four."**
+
+- **What is not decided.**
+  - MR-08's question about admitting `.zip` files to Vault stays open; 4(a) depends on it.
+  - Raising the 1 GiB limit stays with the founder, when a larger channel is documented.
+  - The coordinating session's rulings on RIM's coordinator questions are coordination, not founder decisions. RIM
+    appends them to its designs.
+- **Owner.** RIM (`011e42…`), under F1 and S5, in the order recorded in COORDINATION.md.
+
+### P-109 — S12's work projects live inside their filing project; a deliverable is a Vault version family
+
+Decided 2026-11-08 by the coordinating session (`01JbQU…`) under the founder's delegation of that day ("No you decide as
+the global sme", P-107). The project-page session (`01FTWcmX…`) asked four questions after inventorying S12
+(`docs/evidence/SPINE/S12/2026-11-08-what-already-exists/README.md`).
+
+- **What is decided.**
+  1. **A work project is a child of its filing project.** It hangs off the filing project's anchored integer `projects`
+     row (`parent_project_id`, depth 2 or 3) and is anchored to the same `regulatory_programs` row. It is reached through
+     the existing `server/routes/project-hierarchy.ts`. A work project gets no new `program_type`, and `projects.ts` and
+     `project-intake.ts` do not change.
+  2. **No cross-project exception.** Because a work project sits inside its filing project's program, its deliverable
+     feeding that filing is a citation within one program. `citation-ends.ts`'s isolation rule is unchanged.
+     - Reusing a deliverable across different programs, such as an IND's CMC work feeding the NDA, stays refused until
+       a later decision.
+     - If `citation-ends.ts` checks the integer project id rather than the program, the session reports that before
+       changing anything.
+  3. **A deliverable is a Vault document's version family**, the governed record.
+     - Only an approved version feeds a filing section.
+     - `c2c_artifact_section_map` is the link from a Vault family to the section it feeds, with its owner and due date.
+       It is not a second deliverable store.
+     - Data-room sources stay inputs, with their lineage.
+     - Vault changes go through S6's holder.
+  4. **S12's ledger paths gain `server/services/c2c/program-project-anchor.ts`**, so the anchor accepts a parent.
+     Nothing else is added.
+- **What is not decided.** Feeds across programs. Whether a work project may outlive or move between filing projects.
+  No new file, route, table, screen or tool is approved (RULE 6).
+- **Owner.** The project-page session (`01FTWcmX…`), which holds D3's files for S12.
+
+*Clarification, 2026-11-09 (the coordinating session, under the same delegation).* Item 1's wording, "anchored to the
+same `regulatory_programs` row", would break PF-08: `migrations/20261001b_projects_one_anchor_per_program.sql` allows one
+anchor row per program, and every anchor reader assumes it. The project-page session found this before writing code.
+So:
+- **The work project's row.** It has `regulatory_program_id` NULL and `parent_project_id` set to the filing project's
+  anchor row (depth 2 or 3), with its path from `recomputePaths`.
+- **Its program.** It is the root ancestor's program, read through the existing ancestor query.
+- **What stays under the anchor.** Governed artifacts, exports and the Vault stay filed under the program's one anchor
+  row.
+- **Its kind.** It is `projects.metadata.workKind`, one of `cmc`, `biostatistics`, `rbm`, `data_management`,
+  `clin_pharm` or `nonclinical` (P-83). `projects.type` stays `'regulatory'`, and its domain is not widened.
+- **The create door.** It is one POST on the existing `server/routes/project-hierarchy.ts` router.
+  - It requires the editor role, the same organisation and the program's admission.
+  - The parent must be the anchor or one of its descendants.
+  - It writes through a new writer in `program-project-anchor.ts`, in a transaction with an audit row. That writer never
+    sets `regulatory_program_id`.
+  - It is an endpoint in an existing route file, not a new file or mount.
+
+Items 2 to 4 are unchanged. `citation-ends.ts` compares program UUIDs, so a citation from a work project to its filing
+project is within one program.
+
+*Second clarification, 2026-11-09 (the coordinating session, under the same delegation).* The first clarification put
+the create door on `server/routes/project-hierarchy.ts`. That door, "hierarchy child create", was retired on
+2026-10-26 by A2.9, which left canonical intake as the one HTTP creator of projects
+(`docs/evidence/D2-CLIENT-JOURNEY/2026-10-26/slice-A2/A2.9/README.md`; `ci:project-creation-owners`). The coordinating
+session approved it without that history, and the gate refused the slice. Corrected:
+- **The one door.** A work project is created through canonical intake, `POST /api/c2c/projects`, with an optional
+  `{ parentProjectId, workKind }`.
+  - **The work-project branch** checks the editor role, the admission of the parent's program, a parent within that
+    program's anchor tree, and `workKind` from P-83's six. It skips the program, quota, pathway and scaffold steps that
+    do not apply.
+  - **Without those fields,** intake is unchanged.
+- **The one writer.** The child row is written by the anchor file's one existing `projects` writer, extended to take an
+  optional parent (`regulatory_program_id` NULL when it has one). `ci:project-creation-owners` keeps `count: 1`, and no
+  gate is widened.
+- **The retired door stays retired.** The hierarchy `POST` is dropped; the governed children read stays.
+- **S12's ledger paths gain `server/routes/c2c/projects.ts`.**
+
+*Third clarification, 2026-11-09 (the coordinating session, under the same delegation).* Item 3 named
+`c2c_artifact_section_map` as the link from a Vault family to the section it feeds. It is not one. The project-page
+session (`01FTWcmX…`) found this before writing code. The table (`migrations/0002_phase15_submission_ops.sql:41-52`)
+links a conversation artifact (`concept2cure_artifacts`) to a Submission Ops package section
+(`c2c_package_sections`). It has no key for a Vault document or family, none for an editor section, and no due date.
+Using it would have made a second deliverable store, which item 3 forbids. Corrected:
+- **The link is the one that exists.** A section is fed by the Vault version it was drafted from. That is
+  `document_span_lineage` with provenance `vault_document`, the Vault version's id and content hash:
+  - written by `server/services/clinical-regulatory-evidence/span-lineage-vault.ts`;
+  - read by `server/services/vault/vault-where-used.ts`;
+  - retired by the lineage gate.
+  `c2c_artifact_section_map` stays as Submission Ops' own, and no second link is made.
+- **"Only an approved version feeds a filing section."** The section is flagged as changed when a live `vault_document`
+  span cites version V and a later version in V's family (`vault-version-family.ts`) is at a STEADY stage
+  (`vault-lifecycle.ts`). The flag shows in the project's changes list, in Evidence and in the editor rail ("replaced
+  since cited"). It is built on S12's existing source-usage reads. A later version that is not yet approved does not flag
+  the section, and neither does a retired span.
+- **No Vault file is edited.** The Vault's rules are imported read-only, with no new table, route or column. A
+  deliverable's owner and due date come from its work project (`projects.owner_id`) and that project's existing tasks.
+
+### P-110 — CMC: suitability is a signed act, and an under-described substance is not composed as a small molecule
+
+Decided 2026-11-09 by the coordinating session (`01JbQU…`) under the founder's delegation of 2026-11-08 ("No you decide
+as the global sme", P-107). The CMC session (`01GJidg5…`) raised both questions in `4b9af67aa0`
+(`.design/claude-convergence/COORDINATION.md`), with options in its evidence.
+
+1. **An analytical method is recorded as suitable only by a signed act, never by an edit.**
+   - **The finding.** The specification approval gate admits a validated or a suitable method (`METHOD_SUITABLE`,
+     which `q2Expectation` in `services/cmc/ich-compliance-q2.ts` relies on before phase 3). But no form can record
+     suitability, so in practice every limit needs a fully validated method
+     (`docs/evidence/S7/2026-11-09-demo-cmc-methods/`).
+   - **Decided: option (b), by extending the existing act.** The signed validation act
+     (`POST /api/cmc/analytical-methods/:id/validate`, `server/api/cmc/routes.ts`) takes an outcome:
+     - `validated`, as today;
+     - or suitable for its phase, with the signer's reason and the phase.
+     It is the same ceremony, the same audit and the same route; there is no second endpoint. This follows what FDA asks
+     at phase 1: procedures that are scientifically sound and fit for their use, with full validation by the
+     pivotal phase (21 CFR 312.23(a)(7); ICH Q2(R2) and Q14).
+   - **Option (a), the unsigned `qualified` status, is refused, including as an interim.** A word typed into a GxP
+     register must not unlock an approval that validation reaches only by signature. Until the act takes its new
+     outcome, today's stricter behaviour stands: only a validated method supports an approved limit.
+   - **Owner.** The CMC session (S7). Tests are red first, and `METHOD_SUITABLE`'s words are read only from the signed
+     outcome.
+2. **The composition boundary fails closed when the modality is inferred rather than recorded.**
+   - **The finding.** `classifySubstanceModality` (`server/services/cmc/substance-modality.ts`) reads "a recorded
+     chemical process, and nothing suggesting biology" as a small molecule. So a terse route admitted a monoclonal
+     antibody into small-molecule Module 3 composition (`docs/evidence/S7/2026-11-09-demo-cmc-materials/`, mutation 5).
+   - **Decided: option (a).**
+     - `compositionRefusal` (`server/services/cmc/composition-scope.ts`) accepts a small molecule only when the
+       modality is stated. An inferred verdict is refused as `CMC_MODALITY_NOT_ESTABLISHED`, and the refusal asks for
+       the modality to be recorded.
+     - §3.2.A.2 keeps its current reading.
+     - Existing substance rows are not rewritten. Each is refused at composition until its modality is recorded.
+   - **Why.** This narrows P-28's boundary, it does not widen it. A boundary that decides what a filing may say rests
+     on a recorded fact, not on the absence of words in a free-text field.
+   - **Owner.** The CMC session (S7, or F1 for the boundary). The test includes mutation 5's antibody.
+- **Unchanged.** No new file, route, table, screen or tool (RULE 6). The CMC composition scope of P-28 is otherwise as
+  decided.
+
+### P-111 — A CMC or Quality work project manages its own smaller tasks, inside its own work area
+
+Decided 2026-11-09 by the founder, in the reporting session (`011HLkYC…`): "the CMC module should have its own child
+project management module dedicated to all the smaller CMC related tasks", and "Same with QS QA". Asked where it
+lives, the founder chose **inside each work area**, not a separate screen, and asked that it be **routed to S12**.
+
+- **What exists today** (inventoried 2026-11-09, by path):
+  - A CMC work project is a child `projects` row (`program-project-anchor.ts` `ensureWorkProjectUnderAnchor`, P-109).
+    It carries one owner and one due date: a single `unified_tasks` row, "Deliver: <name>"
+    (`ProjectCoreWork.tsx` `ProjectWorkProjects`), filed on the **filing** project.
+  - It has no page or task list of its own. Its door opens the CMC area on the program, unbound to the work project
+    (`docs/evidence/SPINE/S12/2026-11-09-work-project-opens-its-area/README.md`).
+  - CMC's smaller work becomes ordinary `unified_tasks` rows, all filed on the filing project:
+    - the per-register "Task" push (`CmcModule.tsx` `cmcTask`);
+    - Module 3 contradictions (`services/cmc/contradiction-tasks.ts`).
+    Change controls, stability, batches and specifications carry no owner or due date.
+  - Quality's tasks are source-linked `unified_tasks` rows (`qms-record-tasks.ts`, `periodic-review-task.ts`,
+    `training-task.ts`, and `capa-tasks.ts` with one task per CAPA action item), placed on the program's anchor or the
+    organisation. **Quality is not a work-project kind** (`WORK_KINDS`, `program-project-anchor.ts:491`).
+  - `unified_tasks` has no parent task. Only the legacy `project_tasks` WBS has `parent_task_id`, and no client calls it.
+  - The project's work panel (`unified-work-view.ts`) and Tasks (`TaskBoard.tsx`) match the exact project. Neither
+    rolls a child up.
+- **What is decided.**
+  1. **A work project manages its own smaller tasks.** Opening a CMC or Quality work project opens its existing work
+     area **bound to that work project** (THE_PROGRAM §7a: "a work project opens on its work area … bound to it"). The
+     area shows the work project's **Tasks**: each with an owner, due date and status, and **one level of subtasks**.
+  2. **The tasks are `unified_tasks` rows filed on the work project itself** (`project_id` = the child; task admission,
+     `tasking/task-project.ts`, already accepts it).
+     - The existing producers file there when they act within a work project: the CMC "Task" push, contradictions,
+       Quality's record, CAPA-action, periodic-review and training tasks.
+     - Each producer keeps its source identity and reconciliation (QUALITY_CORE_WORKFLOW's contract).
+  3. **They roll up.** A work project's tasks show in its filing project's work panel and in each person's Tasks. They
+     are never a second list beside them.
+  4. **Subtasks live in the canonical store, `unified_tasks`**, never in the legacy `project_tasks` WBS (zero
+     duplication). Whether that means a parent column or the existing `linked_tasks`/`dependencies` is S12's design to
+     show, with its "What already exists" section first (RULE 3). A column is added by an additive, re-runnable
+     migration (RULE 1).
+  5. **Quality becomes a work-project kind** (`quality` in `WORK_KINDS`). It gets a door among the project's work areas
+     (`ProjectCoreWork.tsx`) that opens the Quality area bound to it.
+- **Owner.** S12, the project-page session (`01FTWcmX…`). The CMC session holds the CMC area's screens and the Quality
+  lane holds Quality's; S12 coordinates with each through `.design/claude-convergence/COORDINATION.md`. S12's ledger
+  paths widen to the Quality and tasking files this needs.
+- **Unchanged.**
+  - No new screen, rail entry, card, workspace, route file, service or table (RULES 4 and 6). The task list is part of
+    the existing CMC and Quality areas.
+  - Module 3 remains a document type that converges into the project's document start and the one editor (RULE 4).
+    This decision is about the work area's tasks, not the Module 3 document.
+  - The CMC composition boundary (P-28, P-110) is unchanged.
+
+### P-112 — The Vault admits a .zip; making zips, compressing PDFs and combining PDFs are the Vault's
+
+Decided 2026-11-09 by the founder, in the market-readiness session (`01Gx2fiw…`), answering MR-08's open question
+(`docs/work-orders/MR-08-vault-upload-safety-and-document-control.md`, "NEW: Vault admission limits": "Also decide
+whether `.zip` is admitted. The recommendation is no for the pilot"). P-108 4(a) and MR-10 stage 9 waited on it. The
+answer, verbatim: "Yes vaul accepts zips and also generates zips and also can compress PDF’s and combine PDF’s".
+
+1. **The Vault admits a `.zip`.** This reverses MR-08's recommendation.
+   - **Today it is refused.** `.zip` is `vault: false` in `shared/constants/document-intake-formats.ts`. The Vault's
+     list (`VAULT_UPLOAD_EXTENSIONS`), its ingest route (`server/routes/vault-ingest.ts`, 400 `FILE_TYPE_NOT_ALLOWED`),
+     its picker and `VaultUploadStaging.tsx` all follow that flag. No test pins the Vault's refusal.
+   - **MR-08's rules for an admitted archive stand; the answer does not change them.** The archive is one Vault
+     version, stored and hashed as it came, and never expanded into Vault documents (MR-08 Stage 3 step 3). Before it is
+     stored it is bounded by the one archive helper, `server/services/archive/safeZip.ts`, through `assertUploadSafe`.
+   - **The Data Room is unchanged.** It still opens a zip in the browser and uploads each file inside on its own
+     (`client/src/concept2cure/hooks/archive-intake.ts`).
+   - **It unblocks:**
+     - P-108 4(a): a sponsor's own copy of a sent package, accepted when its SHA-256 matches the send;
+     - MR-10 stage 9's entry point: a prior filing's archive held in the Vault and read by
+       `server/services/legacy-importer/filed-sequence-reader.ts`.
+2. **Making zips exists and is reachable.**
+   - `server/services/vault/vault-archive-builder.ts` writes the originals, `manifest.json`, `INDEX.txt` and
+     `SHA256SUMS`, checking each file against its recorded hash. It serves two downloads:
+     - a folder's export (`GET /api/c2c/project-vault/:id/folders/:folderId/export`, `VaultFolderExport.tsx`);
+     - a seal's closing archive (`GET …/seals/:sealId/archive`, `VaultSeals.tsx`).
+   - **Missing:** an export of documents a person picks (MR-08 Stage 6 step 3). It uses the same builder.
+3. **Compressing PDFs exists, but the Vault cannot reach it.**
+   - `server/services/pdf-compression-service.ts` runs Ghostscript `pdfwrite` with settings from `/screen` to
+     `/prepress`. It is reached through:
+     - `/api/pdf-tasks/compress*` (`server/routes/pdf-task-routes.ts`), which no client calls;
+     - five assistant tools in `server/services/tools/index.ts`.
+   - It reads files on the server's disk under `PDF_COMPRESSION_ALLOWED_ROOTS`, not Vault versions. The work is to reach
+     it from a Vault document, not to write a second compressor.
+4. **Combining PDFs does not exist anywhere.**
+   - **What was searched.** `copyPages`, `embedPdf`, `embedPage`, `pdfunite`, merge, combine and concat (PDF), and
+     Python's `PdfMerger` and `PdfFileMerger`, across the server, client, shared and scripts, and in the Vault's code.
+   - **What looks like it but is not.**
+     - `renderCombinedPdf` (`server/export/renderers.ts`) renders one PDF from structured content.
+     - CSR assembly writes separate eCTD leaves.
+   - **What can be used.** `pdf-lib`, already a dependency, can do it.
+   - **How it is built.** The answer names combining as a Vault capability. Under RULE 6 it is built inside existing
+     files. A new route file, service, table or screen for it needs an `approvedAdditions` entry from the founder.
+- **What is not decided.**
+  - The largest file the Vault admits (MR-08 recommends 500 MB) stays open.
+  - For a compressed or combined PDF:
+    - whether the result is a new version of the same document or a new document;
+    - who may make one;
+    - whether it needs a signature.
+
+    The Vault's owner proposes; the founder decides. A Vault version's bytes are never rewritten either way: the Vault
+    is an immutable catalog (RULE 5).
+  - MR-10 stage 9's other two questions stay open:
+    - where an imported prior filing is recorded;
+    - whether the ICH and regional DTDs are vendored.
+- **Owner.**
+  - **Admission:** the market-readiness session, which needs it for stage 9, with a hold row before its first edit.
+  - **The picked-document export, compression and combining:** the Vault parity lane (S6), in the order the
+    coordinating session sets in `.design/claude-convergence/COORDINATION.md`.
+
+### P-113 — All of CMC in the CMC module: the record gaps, the AI layer, and the CMC work project's own plan
+
+Decided 2026-11-09 by the founder, in the CMC session (`01GJidg5…`): *"All possible CMC data and tests and studies
+and needs and more across all of chemical, manufacturing and controls; must be part of this special module. Using
+all types of AI and machine learn and testing and I want you to study what all advanced current market offerings
+are doing in this exact space and add that to their roadmap for cmc — study external. And I think there should be a
+sub-project management feature dedicated just for cmc but connected to the parent project management module."*
+
+The study this rests on is `docs/evidence/S7/2026-11-09-cmc-scope-market-and-roadmap/`: the inventory of the 57 CMC
+services, 19 canonical record kinds and 9 signed registers that exist; the external study of QbDVision, Weave Bio,
+DDi, Veeva, the CPV platforms, the Rockwell-led Digital CMC Consortium and the published ML work; and the gap list
+below. Its sources are named there, and almost all vendor material is marketing — the two findings that are not
+are FDA's PQ/CMC data standards and the ICH M4Q(R2) draft.
+
+**1. The record gaps are approved as work, in three tiers.**
+
+- **Tier A — extend an existing register. No addition, no decision needed beyond this one.** Nitrosamine risk
+  assessment, ICH Q3D elemental impurities, ICH Q3C residual solvents, photostability (Q1B), in-use and
+  reconstitution stability, post-approval stability commitments, method transfer and co-validation studies,
+  extractables and leachables as studies, cleaning and shipping validation as validation kinds, supplier
+  qualification on the material-spec register, batch genealogy on the batch register, and the OOS/OOT investigation
+  lifecycle on the existing contradiction-lifecycle pattern.
+- **Tier B — compose what is already judged.** **3.2.A.1** (facilities and equipment), **3.2.A.2** (adventitious
+  agents, from `substance-modality.ts`), **3.2.A.3** (novel excipients, from `materialSpec.novelExcipient`) and
+  **3.2.R** (US regional, from `us-ind-regional.ts`). The judgements exist; no section is composed from them.
+- **Tier C — three new records, approved here as `approvedAdditions` entries when each is designed.** Each needs
+  its own design with a "What already exists" section first (RULE 3) and an additive, re-runnable migration
+  (RULE 1):
+  1. **Manufacturing sites and equipment.** Every 3.2.S.2.1 and 3.2.P.3.1 names manufacturers and today that is a
+     free-text `manufacturingSite`. The record holds the site, its licence, its GMP status and its inspection
+     history, and 3.2.A.1 composes from it.
+  2. **QTPP, CQA and CPP as records.** `qbd-analyzer.ts` derives `CqaItem` / `CppItem` at read time and QTPP exists
+     nowhere. A derived attribute cannot be versioned, owned, risk-assessed or signed, so the control strategy has
+     no governed object at its centre. The analyzer reads these records instead of deriving them, and keeps
+     deriving where none is recorded.
+  3. **Established conditions and the post-approval change management protocol (ICH Q12).** `supac-classifier.ts`
+     classifies a change; nothing records what was filed as an established condition, which is what decides
+     whether a change is reportable at all.
+
+**2. The AI and machine-learning layer is approved within RULE 2, which is unchanged.** Numbers, verdicts and
+governed content come from the deterministic engines; the model narrates, proposes and flags. A tool that asks a
+model for a figure stays a defect. Five approved candidates, each named with the engine it defers to:
+
+1. **Document and instrument intake into the registers** — a CoA, an executed batch record, a stability table or a
+   validation report read in as *proposed* records a person confirms. The registers' existing refusals decide. This
+   is the founder's "data entry points", and the largest practical win.
+2. **"What a reviewer will ask"** — a ranking layer over the deterministic contradiction sweep, trained on real
+   deficiency letters, that shows its basis and its corpus and never states a verdict.
+3. **Early degradation and out-of-trend signal** — advisory beside `stability-trending.ts`, which stays the sole
+   authority on shelf life.
+4. **Specification-setting proposals** — limits proposed from batch history with the distribution and batch count
+   shown; `process-capability.ts` keeps the arithmetic; a proposed limit is never a recorded one.
+5. **Narrative drafting** — exists, and stays bound by `module3-narrative-governance-refusal.ts`.
+
+**3. FDA PQ/CMC alignment is approved as the strategic item.** FDA's Phase 1 domains — drug product, drug
+substance, quality specification, batch analysis and stability — are this module's five strongest registers, which
+already hold that data as records with lineage. The work is a mapping to the HL7 FHIR Implementation Guide, not a
+data project. It is **not** an operational requirement yet, so it is built as an export beside the existing
+composition rather than in place of it.
+
+**4. ICH M4Q(R2) is designed for and not built against.** It is a January 2026 FDA draft, Level 1, not for
+implementation, with sources disagreeing on a 2027 adoption date. Two consequences to design for: a second,
+Description–Manufacture–Control–Storage-shaped projection beside the composer's section-per-CTD-node shape, and
+QTPP/CQA-as-records becoming a filing requirement rather than an improvement (Tier C item 2 above).
+
+**5. The CMC work project's own plan.** The sub-project management the founder asks for is **P-111**, decided
+earlier today and routed to S12: a CMC work project is a child `projects` row, opening it opens the CMC area bound
+to it, and the area shows its own tasks with owner, due date, status and one level of subtasks, filed on the work
+project and rolling up into the filing project and each person's Tasks. **No new decision is needed for it.** This
+decision adds the part P-111 does not cover and §7a of `THE_PROGRAM_2026-11-01.md` asks for: **a CMC deliverable's
+owner, due date and dependencies**, which today have nowhere to live, because a CMC deliverable is not a row but
+the set of records of one source type in one project
+(`docs/evidence/S12/2026-11-09-deliverable-feeds/`). That is approved as a Tier C record under S12, designed with
+S12, and it is what makes the critical path to a filing date answerable.
+
+- **Owners.** S7 for the registers, the composed sections, the engines and the AI layer. S12 for the work project's
+  plan and its deliverable dates, with the CMC session holding the CMC area's screens, as P-111 already says. The
+  two coordinate through `.design/claude-convergence/COORDINATION.md`.
+- **Unchanged.** No new screen, rail entry, card, workspace or second editor (RULES 4 and 5): every item lands in
+  the existing CMC work area, the one editor, or an existing register. RULE 2's engine/narration line is unchanged.
+  The P-28 / P-110 composition boundary is unchanged — none of this widens it to a biologic, a marketing
+  application or a non-US clinical-trial application. RULE 6 still applies to each Tier C record: it is built only
+  under an `approvedAdditions` entry naming it.
+- **Not approved.** Formulation or molecular ML (ZoomLab, Schrödinger, digital twins): outside P-28 and outside the
+  spine. Matching the AI-authoring vendors feature for feature: they draft prose into documents, and this module's
+  advantage is that Module 3 composes from governed records with lineage, which is the direction FDA's own
+  programme is moving.
+
+### P-114 — Decided under the founder's delegation: the device and diagnostics lane's open regulatory questions
+
+The founder, 2026-11-09, answering the MDX journey session's question (whether "nearly ready" may be said while a
+required set is only partly present) and its list of questions waiting on the founder: **"you are to be the SME to make
+those choices."** The MDX journey session (`01P6GW…`) decided as follows, as P-107 was decided under the delegation of
+2026-11-08. The founder may overrule any item by a later decision. The questions are in
+`.design/client-journey/MDX_JOURNEY_2026-11-01.md` ("For the founder", M3, M6(a), M7, M13, M16).
+
+- **What is decided.**
+  1. **"Nearly ready" is never said while a required item is missing.** That covers an item not started, not
+     assessed, or only partly present. Basis:
+     - FDA's technical screening of an eSTAR holds a submission whose required content is absent. A Notified Body's
+       completeness check does the same for EU technical documentation.
+     - The platform's regulatory evaluator (`server/services/regulatory/readinessEvaluator.ts`) answers
+       `nearly_ready` only when no gap is critical, and a missing required item is critical there.
+
+     In the device readiness scorecard (`server/services/market-specs/device-readiness-scorecard.ts`), any applicable
+     dimension short of ready caps the level at `in_progress`. `ready` is 100 with no gap. The score, the share shown,
+     is unchanged. The scorecard has no non-critical gap, so it does not say `nearly_ready`.
+  2. **The design and development file holds design records, not filing paperwork** (M16). Under the QMSR (21 CFR
+     820, in force 2026-02-02, incorporating ISO 13485:2016 §7.3.10), that file holds design inputs and outputs,
+     verification, validation, reviews, transfer, changes and risk records. These are filing content, not design
+     records, and Engineering's design-file list does not tag them as such:
+     - the cover letter;
+     - the FDA forms (3514, 3881, 3654, 3674);
+     - the truthful and accurate statement;
+     - the financial certification;
+     - the 510(k) summary or statement.
+
+     A zero count of open risks with no risk file recorded is said as "no risks recorded", neither red nor green.
+     P-60 stands: the panel reads the project's own sections.
+  3. **EU technical documentation is assembled per project, not per eCTD sequence** (M3). MDR and IVDR Annex II and
+     III documentation is reviewed by a Notified Body; it is not an eCTD sequence. The EU screen's "Assemble technical
+     file" reaches the existing assembler (`pathway-engines/mdr-ivdr/assemble-technical-file-from-core.ts`) for the
+     project's own governed MDR or IVDR document. A project whose only market is the EU is not offered the FDA eSTAR.
+     Any route path the reach needs is checked against `approvedAdditions` before it is built.
+  4. **De Novo gets its doors** (M7): a pathway door, and a Submit assembly door to the De Novo eSTAR the 510(k)
+     screen already produces.
+  5. **An IVD 510(k) gets its own governed outline** (M6(a)), matched section by section to the vendored IVD eSTAR,
+     analytical performance included. It is seeded by migration, `INSERT … ON CONFLICT DO NOTHING` with a row-count
+     assertion (RULE 1), and checked against the vendored template before it serves a project. This admits the
+     outline as content data. It adds no table.
+  6. **No CDRH Portal adapter** (M13; study question 3). The CDRH Portal is a web upload, and FDA publishes no
+     sponsor-side submission API for it. An adapter would drive a website on the sponsor's behalf, which is not a
+     controlled transmission. The platform produces, retains and signs the eSTAR. A person uploads it and records
+     FDA's acknowledgement (number and date) on the filing record. Agency letters enter through Respond.
+  7. **F-10 is superseded** (study question 2). P-103 retired the submission-ops package path. A device filing's
+     official artifact is the eSTAR PDF, and nothing labels an eCTD-style ZIP as an eSTAR.
+- **Order.**
+  - Item 1 lands on 2026-11-09.
+  - Items 2–5 follow under F1 and R1, after the founder's client demo of 2026-11-09, each red first.
+  - Items 6 and 7 need no code.
+- **Not decided here.**
+  - Which design package takes the device screens (study question 1) is a plan matter.
+  - The retirement of unreached device capability (question 4) is R1's.
+
+### P-115 — Decided under the founder's delegation: how a model-drafted CSR reaches a filed sequence
+
+The founder, 2026-11-10, after the CSR path was walked with a model provider present for the first time
+(`docs/evidence/D2-CSR/2026-11-10-build-provider-refusals/README.md`) and three stops were put to them: **"I want you
+to make the most educated, best decision for me getting this product to market and providing the best product I can
+to this institutional buyer in a highly regulated market."** The walking session (`01QoxbLZ…`) decided as follows, as
+P-107 and P-114 were decided under delegation. The founder may overrule any item by a later decision.
+
+The principle behind every item: the sponsor answers for each word of a submission whoever drafted it, and an
+institutional buyer's quality unit audits two things, that the system is validated for its intended use (21 CFR
+11.10(a)) and that a named person reviewed and signed the record. So the product files model-drafted text only with
+both, and says plainly when it has neither.
+
+- **What is decided.**
+  1. **Model-drafted text is released only as qualified text that a named person has adopted. It is never released
+     otherwise, and there is no bypass.** Today `assertWorkflowImportRelease`
+     (`server/services/authoring/workflow-import-governance.ts`) refuses a CSR whose imported text a model wrote, for
+     any model, for ever, until a person rewrites it. That makes drafting worthless for a filing. The ordinary AnA
+     draft already has the right rule (`ordinaryMachineGenesisMayRelease`, `governed-machine-claims.ts`): machine text
+     is released when retained evidence shows a qualified generation wrote those exact words. The CSR import path
+     takes the same rule. Imported text is releasable when all four hold:
+     - the build retained which model and pinned version wrote the section, and that model's approved-models entry
+       has `pq.status: 'passed'` for document drafting, with its executed record;
+     - every figure in it is a claimed cell of the retained engine tables (the build's claim receipts; RULE 2);
+     - the assigned reviewer's CSR scientific review and REVIEWER e-signature adopt that exact text;
+     - the approver signs under separation of duties.
+
+     Text from a model with no passed PQ stays unreleasable until a person replaces it, as today.
+  2. **Performance qualification of the drafting model is the first launch task, ahead of any further CSR feature.**
+     Every `pq.status` in `approved-models.ts` is `pending`, so item 1 releases nothing until one passes. PQ-DRAFT-001
+     (`server/eval/pq/pq-protocol.json`) is executed on the primary drafting model (`claude-opus-5-5`) with the
+     founder's key, and its result is recorded whether it passes or fails. If it fails, the fallback rung is run. If
+     none passes by launch, the product is sold as drafting assistance whose text a person rewrites before filing,
+     and it says so. A model's status changes only through its executed record; the registry test already refuses a
+     pass with nothing to point at.
+  3. **One CSR is filed: the signed document in the one editor. The assembly is bound to it** (RULE 4). The filing
+     artifact is the assembly (the body with its bookmarks and checked links, §14, the narratives, the §16 files and
+     their study-tagging roles). It is rendered from the approved, signed Authoring CSR's exact sections, not from
+     the build job's outputs, and it records that document's sections digest. `renderedLeafNotTransmittable`
+     (`server/services/ectd/leaf-release-verdicts.ts`) then releases an assembled file only while that digest matches
+     an approval signature that stands. Its unconditional refusal stays until the binding lands (P-22;
+     `docs/evidence/D5/2026-10-30-assembled-csr-not-released/`).
+     **Until then the launch path is the one that exists:** "Place into filing" of the approved, signed CSR at
+     5.3.5.1 with its study id and study-tagging role, and each appendix as an approved Vault PDF.
+  4. **A CSR goes to an open IND in an amendment sequence**, with Form 1571 and the cover letter, not in sequence
+     0000. The gates already admit this (`ind-sequence-validation.ts`); the preparation and demo walks follow it. No
+     gate changes.
+  5. **Every heading holds text. "Not applicable" is a person's statement with a reason, never a default.** The
+     signed record must be complete, so no heading is skipped by a flag. ICH E3 is guidance on structure, and a
+     heading that does not apply is said not to apply. The editor offers, on a CSR heading, the "Not applicable
+     because …" act the assembly already has for §16 (`CsrAssemblyControl.tsx`, `csr-assembly-body.ts`). It writes
+     that sentence with the person's reason as their own text, audited. For §14 and §16 the import writes what the
+     engines and the assembly already hold (the table or listing, the supplied appendix, the recorded declaration),
+     labelled as engine content. Any route path the reach needs is checked against `approvedAdditions` first.
+  6. **Subject-level data never goes to a model, and the study's source keeps its classification.** This is so
+     today: the narratives are composed by the engine, and the builder sends aggregate tables screened for
+     identifiers. When source-tier propagation reaches the builder's calls, it carries the aggregate evidence as a
+     governed derivative under the organization's placement policy. It does not reclassify the CONFIDENTIAL source,
+     and it does not stop the build. The provider lane is the buyer's election in its Order Form: first-party
+     Anthropic under a zero-retention agreement, or the buyer's private cloud lane. The S4 owner chooses the
+     mechanism among the gateway's existing ones.
+  7. **"Submitted" means transmitted through the agency's gateway and acknowledged.** The product records
+     `ECTD_TRANSMIT_SKIPPED` when it has no gateway credentials and never records a filing it did not send. Before
+     the buyer's first filing, a sequence is sent through FDA ESG's test environment with the buyer's credentials.
+- **Order.**
+  1. The founder's Anthropic key works in the Codespace (the check landed 2026-11-10), and one whole-report build
+     is run with it. Its record states how many drafts the figure checks accepted and how long it took. No real
+     model request has been made on this path yet.
+  2. Item 2, the PQ run.
+  3. Item 1 on the import path, red first (S4, L1).
+  4. Item 5 (D4, L1).
+  5. The walk, as people: review, adoption, approval, Place into filing, the amendment sequence, compile, Shadow
+     Review, freeze and dispatch (items 3 and 4's launch path).
+  6. Item 3's binding (S5, L1).
+  7. Item 7's test transmission, once the founder holds ESG test credentials.
+- **Not decided here.**
+  - Which provider lane this buyer elects, and its commercial terms.
+  - Any widening beyond a US IND (P-28, P-110 stand).
+  - Whether a failed build is resumed from the screen; that is a repair (F1), not a decision.
+
+*Clarification, 2026-11-10 (the walking session, `01QoxbLZ…`, under the same delegation): item 2 needs more than a key.*
+`npx tsx server/eval/pq/run-pq.ts --preflight` was run on trunk and answers **blocked, not ready to evaluate**, with
+seven blockers. The qualification run was put first in the order above as if a working key were its only condition.
+It is not.
+
+| Blocker | What it means | Who clears it |
+|---|---|---|
+| `PROTOCOL_NOT_APPROVED` | `server/eval/pq/pq-protocol.json` is a draft with no approver. A run against unapproved acceptance criteria cannot pass | The founder, as the responsible owner. No session records that approval for them |
+| `RAG_SAMPLE_SHORTFALL` | The retrieval test bank holds 18 positive items; the protocol requires 30 | A regulatory reviewer writes 12 more |
+| `RAG_GOLD_EVIDENCE_MISSING`, `RAG_GOLD_OPEN_CHECKS` | None of the 18 items names its reviewed source, section and quotation; 5 have open checks against the official text | A regulatory reviewer, against the official texts |
+| `SOURCE_REVIEW_INCOMPLETE`, `RAG_KEYS_PROVISIONAL` | 0 of 18 required source versions are verified (version, hash, provenance) | The same reviewer |
+| `PUBLISHER_TERMS_UNVERIFIED` | Reuse terms are unverified for 4 of 4 required publishers | The founder or counsel |
+
+The drafting and extraction components are ready: 60 tasks each. Only the retrieval component is short.
+
+- **Decided.** The CSR build retrieves nothing: it drafts from the study's retained tables and the platform's ICH E3
+  record. Its qualification is therefore scoped to that use. A model is qualified for evidence-bound CSR drafting
+  on the drafting and extraction components plus a run over the CSR builder's own prompts, and that qualification
+  releases CSR text only. The retrieval component stays required for every use that retrieves (AnA's answers from
+  the knowledge base, a section drafted from selected sources), and nothing in this decision qualifies a model for
+  those. The registry already records which uses a record measured (`pq.intendedUses`) and the gateway refuses a
+  use it did not (`model-governance.ts`, `use-mismatch`); the S4 owner carries the narrower use through that
+  check. Completing the retrieval bank is not waived. It is taken off the CSR's critical path.
+- **Not decided, and not done.** The protocol is not approved here. Approving it, with this scoping written into
+  it, is the founder's act.
+- **The order above changes in one place.** Step 2 becomes: the founder approves the protocol; the CSR drafting
+  component is added to it; then the run. Steps 3 to 7 do not wait for it, except that step 5's approval stays
+  refused for model-drafted text until a model has passed.
+
+### P-116 — One reviewer is enough, and a one-person organisation may approve its own document, on the record
+
+The founder, 2026-11-10, on learning that a placed artifact needs two independent reviewers: **"Doesn't need two. What
+if a client is a single consultant."** Asked how a one-person organisation approves a regulated document, the founder
+chose: **self-approve, on record.**
+
+- **One reviewer is enough.** P-95's clarification of 2026-11-09 (Q2, ruled under delegation) raised the floor to two
+  for a placed artifact or a dossier section. That is overruled. `reviewFloor` (`server/services/artifact-approval-act.ts`)
+  answers one for every artifact. The editor's document door never asked for two.
+- **Review stays mandatory (P-95), and stays independent (P-18), wherever a second person exists.** A reviewer is still
+  neither the approving signer nor an author, and an approval with no completed review is still refused.
+- **A one-person organisation.** When the signer is the organisation's only active member, there is nobody to be
+  independent of. That person may then approve, lock or sign their own record without a reviewer.
+  - **On the record.** The audit trail records, on that act, that the signer was the organisation's sole member and
+    that no independent review took place. The act is never recorded as an independent review or approval.
+  - **A setting, by P-117 (below).** As first decided this was not a setting. The founder changed that the same day:
+    the organisation's administrator switches it on or off. Whatever the setting says, it applies only while the
+    organisation has one member. From the moment a second member exists, independent review is required again, for
+    every act from then on. Nothing earlier is reopened.
+  - **Scope, door by door.** The rule is one function (`isSoleMember`, `server/services/governance/separation-of-duties.ts`).
+    A door admits a sole member only once it also writes the record above, so no door admits one silently.
+    - Built: the conversation artifact's approval and lock (`artifact-approval-act.ts`, `artifact-signed-act.ts`), on
+      both its doors (the status route and AnA's signed act).
+    - Built 2026-11-10 (P-120): the editor's APPROVER signature, by E-sign and by the workflow sign
+      (`approverIndependenceRefused`, `server/routes/authoring.router.ts`). Freeze needed nothing: an author already
+      freezes their own document with the meaning AUTHOR.
+    - Not yet, each its own slice with its own record: QMS documents, Module 3 sections, labeling approvals, the
+      document lifecycle, and a sequence's freeze and dispatch. Until then those doors refuse a sole member as before.
+  - **Membership is counted strictly.** Every membership row counts, whatever the account's status, so disabling a
+    colleague does not make someone the sole member; removing a member is an audited act.
+- **Basis.** 21 CFR Part 11 does not require the signer to differ from the author (11.50(a)(3) lists authorship among a
+  signature's meanings); the second-person rule is this platform's adopted policy from predicate rules
+  (`separation-of-duties.ts`, module note). A sole practitioner's records are theirs to sign. What a sponsor or an
+  agency requires of such a record is the sponsor's quality agreement to state, and the audit trail shows them exactly
+  what happened.
+- **Not decided here.** Whether a GMP batch-record or quality-unit act (21 CFR 211.22, 211.192) may ever be signed by
+  a sole member: those acts are outside the launch catalog today. A QMS document's approver designation (D-Q) is
+  unchanged.
+
+### P-117 — The review rules are each organisation's own, set by its administrator in the security settings
+
+The founder, 2026-11-10, on P-116's two rules being fixed in code: **"Those rules should be set by the client super
+admin in client security user settings."**
+
+- **What the administrator sets.** Two values in the organisation's settings, under `security`:
+  - `independentReviewersRequired`: how many independent reviewers must approve a version before it can be approved.
+    A whole number from 1 to 5. Unset, it is 1 (P-116).
+  - `soleMemberSelfApproval`: whether the organisation's only member may approve, lock or sign their own record with
+    no reviewer. On or off. Unset, it is on (P-116: "self-approve, on record").
+- **What is not a setting.** Review stays mandatory (P-95): the count cannot be set below 1. A reviewer is still
+  neither an author nor the approving signer (P-18). A sole member's act is still recorded as having no independent
+  review; no setting removes that record. Self-approval still applies only while the organisation has one member.
+- **Who sets them.** The organisation's administrator or owner, in Administration's settings ("Review and approval",
+  beside "Session policy"). No other role can.
+- **How a change is made.** Through the one governed settings writer (`PATCH /api/organizations/:id/settings`,
+  `server/services/tenant/tenant-settings-writer.ts`), with a reason. The audit row carries both values before and
+  after. A value outside the bounds is refused, not stored and clamped.
+- **When a change applies.** To every approval from then on. The approval act reads the rules on the signing
+  transaction (`organizationReviewPolicy`, `server/services/governance/separation-of-duties.ts`). Approvals already
+  recorded stand. If the rules cannot be read, the approval is refused.
+- **Scope.** The same doors as P-116: the conversation artifact's approval and lock today. Each later door (the
+  editor's APPROVER e-signature and Freeze, then the others P-116 lists) reads the same two values when it is built.
+- **A consequence to know.** An administrator who is also the organisation's only member sets their own rule. That is
+  what a one-person organisation is. The settings change is itself an audited act with a reason.
+- **Evidence.** `docs/evidence/W5/2026-11-10-review-rules-settings/`.
+
+### P-118 — The founder approves the qualification protocol; the retrieval test bank is completed without a regulatory reviewer, and says so
+
+The founder, 2026-11-10, answering the three things P-115's clarification left with them (a working key, the
+protocol's approval with the CSR scoping written into it, and a regulatory reviewer for the retrieval test bank):
+**"I can try to again load a new Anthropic api key tomorrow and yes I approve"**, and on the reviewer:
+**"impossible right not to get a human reviewer so figure out alternatives."**
+
+- **What the founder approved.** `server/eval/pq/pq-protocol.json` (PQ-DRAFT-001), with P-115's scoping written into
+  it, as **version 1.0.0, approved 2026-11-10** by the founder as system owner. The file records it.
+- **What approval does.** It fixes the acceptance criteria before any model has been run against them. P-31: "a PQ
+  against acceptance criteria nobody has approved is not a PQ."
+- **What approval does not do.** It qualifies no model and changes nothing a model may do. Every `pq.status` in
+  `approved-models.ts` is still `pending`, and production still refuses to store model-authored text in a governed
+  record. On the approved protocol a run that is perfect on drafting, extraction and retrieval is still INCOMPLETE
+  (`pq-verdict-rag.test.ts`, "approval alone qualifies nothing").
+- **P-31's sixth condition, a product provider key, is not yet met.** The founder approved ahead of it. A key is a
+  condition for running the protocol, not for fixing what it measures, and criteria fixed before the first run are
+  the stronger record.
+- **How it changes from here.** A change to the approved protocol is a new version and a new approval by the
+  founder. A change after a model has passed invalidates that pass (P-31).
+
+**Written into the protocol by the walking session (`01QoxbLZ…`) under P-115's delegation. The founder may overrule
+any of it before the first run.**
+
+- **The scope** (the file's `scope` block). A qualification is for a named use, on the components that use needs:
+  - evidence-bound CSR drafting: drafting, extraction and the CSR drafting run. It releases CSR text only;
+  - every use that retrieves: drafting, extraction and retrieval.
+- **A CSR drafting component** (`csrDrafting`): the pinned model drafts every ICH E3 narrative heading of one public
+  study through the CSR builder's own request and its own checks. Its criteria:
+
+  | Criterion | Value | Where the value comes from |
+  |---|---|---|
+  | Figures in accepted text that are not a claimed cell of the retained tables | 0 | RULE 2 and P-115 item 1 |
+  | Forbidden or overclaiming phrases | 0 | the drafting component's own criterion |
+  | Share of narrative headings the pinned model verifiably drafted | all | as every other component requires of its tasks |
+  | Share of headings whose first draft passed every check | at least 85% | **no earlier document.** Set here, at the drafting component's coverage floor |
+
+- **That component is required and cannot be executed yet**: the run is not written (ledger package S4). So no run
+  can pass today, for any use. This is stricter than the scope above, on purpose. The test bank holds 510(k), CER,
+  IND, Module 2 and Module 3 tasks and no CSR. Without this, a model that passed on that bank would be admitted to
+  draft a CSR it was never measured on, the failure P-31's fourth condition names.
+
+**The retrieval test bank without a regulatory reviewer.** Decided under the same delegation.
+
+What the record check asks of the bank is facts, not a credential (`verify-pq-record.ts`, `reviewedSource` and
+`reviewedGold`): each source's official URL, version, date and SHA-256, the publisher's reuse terms quoted with
+their URL, and for each test item the section and a verbatim quotation that states its answer. The corpus
+manifest's own procedure asks "what was done and by whom" (`guidance-corpus-manifest.json`, `verifyProcedure` step
+6). So the work is split by kind.
+
+1. **The CSR does not wait for any of this.** The CSR build retrieves nothing (P-115's clarification stands).
+2. **Mechanical steps: the founder, from the Codespace.** The official URL, the download, its SHA-256 and size, and
+   the title, revision and date on the cover, for the 18 required sources. The publishers' sites are refused from
+   the sessions' containers, so a session prepares the commands and the founder runs them. Each entry's
+   `verification` names who ran it and when.
+3. **Reuse terms: the founder reads each of the four publishers' posted terms.** The operative sentence is quoted
+   with its URL and the date read. Recording what a publisher posts needs no counsel. Whether those terms permit
+   this product's use is the founder's call as the owner of the business; a session does not make it. A publisher
+   whose terms are unclear has its texts left out, and the items that rely on them are replaced.
+4. **Judgement steps: replaced by a check anyone can re-run.** The five open checks and the twelve further items
+   are worked by a session from the downloaded official text. Every item carries its section and a verbatim
+   quotation that states the answer. The quotation is checked, character for character, against the file whose hash
+   is pinned, and the check's output is retained. The founder reads each item's quotation beside its answer and
+   confirms it. An item whose quotation does not state its answer plainly is dropped, not argued for.
+5. **The bank says what it is.** Its record, and every qualification record that uses it, states: *sources verified
+   by download and hash, answers verified by verbatim quotation, confirmed by the system owner; no regulatory
+   professional reviewed this bank.* Nothing calls it independently reviewed.
+6. **Two ways to a reviewer's name later; neither changes a criterion.**
+   - The buyer's own regulatory staff review the bank as part of accepting the system. A regulated company
+     qualifies a system for its own intended use, on the supplier's protocol and evidence, as a matter of course.
+   - A contract regulatory writer, for about a day.
+7. **Until the bank is complete,** every use that retrieves stays as it is today: the model assists, and its text
+   is not stored in a governed record as the model's.
+
+- **The order in P-115 changes in one place.** Step 2 is now: the CSR drafting run and a verdict that reads the use
+  (S4); then the run with the founder's key.
+- **Not decided here.**
+  - Whether the buyer is offered the review in item 6.
+  - Whether any publisher's terms are acceptable (item 3).
+  - Any value in the table above, if the founder wants another.
+- **Evidence.** `docs/evidence/D4/2026-11-10-pq-protocol-approved/`.
+
+### P-119 — User roles by client type: a standard catalog of job roles, beside the six access levels
+
+The founder, 2026-11-10: **"Add user roles per biotech, pharma, CRO, cmc - and so on to align to the many use cases of
+the entire platform."**
+
+- **What a role is here.** A person in an organisation has two things, and they stay two things:
+  - an **access level**, which decides what the person may do. There are six, and they do not change: administrator,
+    approver, manager, reviewer, member and viewer (`shared/constants/org-roles.ts`, P-18). The signing policy, the
+    governed-write gate and the audit readers are built on them, and the validation package tests them;
+  - one or more **job roles**, which say what the person's function is: regulatory affairs lead, medical writer, CMC
+    lead, QA lead, biostatistician. A job role is the organisation's own record (`qms_job_roles`, P-49). It grants
+    nothing by itself.
+- **What is added.** A standard catalog of job roles for each client type: biotech, pharma, CRO, medical device,
+  diagnostics, academic, regulatory consultancy and medical writing. The roles are grouped by function: regulatory,
+  clinical, data and statistics, safety, nonclinical, CMC, quality, device and diagnostics, and program. Each role
+  carries one sentence on what it is accountable for, the access level it usually takes, and the work areas it uses.
+  The catalog is data (`shared/regulatory/`), as a document type is data (RULE 4).
+- **CMC.** CMC is a function group in the catalog (CMC regulatory lead, analytical development, quality control,
+  manufacturing, supply chain). It is offered to every drug and biologic client type. A CMC-only organisation, such as
+  a contract manufacturer, uses it under the client type it signed up with. Whether such an organisation becomes a
+  client type of its own is not decided here.
+- **How an organisation takes it.** Its administrator adopts the standard roles for its client type, all or some,
+  into the organisation's job roles, and may rename, add or remove any of them. Each change is a governed write with
+  a reason, through the existing writer (`server/services/qms/training-assignment.ts`). Nothing is created for an
+  organisation until its administrator adopts it.
+- **Where it shows.** In Administration, with the members. The member list's "Groups" column, which was always
+  empty, becomes the member's job roles. The administrator gives and removes a member's job roles from the member's
+  detail. The roles tab lists the organisation's job roles beside the access levels.
+- **What a job role suggests.** When the administrator invites a person or changes an access level, the job role's
+  usual access level is offered as a suggestion, with its reason. The administrator decides. No job role raises or
+  lowers anyone's access.
+- **Why not more access levels.** A permission role per function and per client type would be dozens of roles. Each
+  would need its own entry in the signing policy and its own validation. An auditor reading the access review (21
+  CFR 11.10(d)) would have to learn each one. Six levels, project sharing, the QMS approver designation and job roles
+  already express least privilege and separation of duties. A client need that no access level can express returns
+  to the founder.
+- **One vocabulary.** The program plan's task roles (`services/regulatory/pyramids/`, 24 keys such as `ra_lead` and
+  `cmc_lead`) map onto the catalog, so a task's role and a person's job role are the same thing. A test holds the
+  mapping complete.
+- **What uses it next** (each in its own package, not decided here): the program plan proposes a task's owner from
+  the people holding its job role (S11); AnA reads the person's job role in its context (S4); training is assigned by
+  job role, as today (P-49).
+- **What it does not add.** No screen, route, service, table or AnA tool (RULE 6). It completes the job-role store
+  and reaches it from Administration.
+- **Design.** `docs/design/CLIENT_TYPE_JOB_ROLES_2026-11-10.md`.
+
+### P-120 — Decided under the founder's delegation: the open questions on a one-person organisation
+
+The founder, 2026-11-10: **"Study this online thoroughly and decide as an SME would across all open questions and
+then proceed."** Decided by session `…01QoxbLaF` from the sources below. Each is reversible by the founder.
+
+1. **A sole consultant may dispatch a sequence to FDA alone.** Nothing in the regulations asks for a second person at
+   filing.
+   - 21 CFR 312.3 defines a sponsor-investigator as an individual who both initiates and conducts an investigation.
+   - 21 CFR 312.23(a)(1)(ix) asks for one signature on Form FDA 1571: the sponsor's, or the sponsor's authorized
+     representative's.
+   - FDA's ESG NextGen registration lets an individual hold an account under an individual letter of non-repudiation,
+     and lets a consultant, CRO or US agent file for clients under one account with each client's Letter of
+     Authorization.
+   - **Conditions.** The same setting governs it (`soleMemberSelfApproval`, P-117). The dispatch is recorded as having
+     no independent review. A consultant who files for a client still files under that client's authorization: the
+     gateway account setting is unchanged. The dispatch door admits a sole member only when it is built to write that
+     record (P-116's rule for every door).
+2. **Self-approval stays on by default.** 21 CFR Part 11 does not require the approver to differ from the author:
+   11.50(a)(3) lists authorship, review and approval as meanings one person's signature may carry. The second-person
+   rule is this platform's policy. A one-person organisation cannot work with it off, the setting has no effect once a
+   second member exists, and every such act is recorded. An administrator who wants it off switches it off.
+3. **QMS controlled documents follow the same setting**, when that door is built. FDA's guidance "Quality Systems
+   Approach to Pharmaceutical CGMP Regulations" (2006) accepts one person in both production and quality functions only
+   in very limited circumstances, and recommends a periodic review by another qualified person who is not involved.
+   The platform records the act; arranging that periodic review is the organisation's duty, and its quality manual
+   says how.
+4. **GMP batch disposition is never admitted by this setting** (21 CFR 211.22, 211.192). It is outside the launch
+   catalog. If it ever enters, it needs its own founder decision.
+5. **A reviewer is still never the approver** (P-95 question 1) and never an author (P-18), in every organisation with
+   more than one member.
+6. **The reviewer count stays 1 to 5.** No source sets a number; ICH E6(R3) asks for review proportionate to risk.
+7. **Order of the remaining doors:** sequence freeze and dispatch, then QMS controlled documents, Module 3 sections,
+   labeling approvals and the document lifecycle. Each is its own slice.
+
+Sources read 2026-11-10: 21 CFR 11.50, 312.3 and 312.23 (eCFR); FDA, "Letters of Non-Repudiation Agreement" and
+"Steps for CROs, US Agents and Consultants to Create an ESG NextGen Account" (fda.gov); FDA, "Quality Systems Approach
+to Pharmaceutical CGMP Regulations" (2006); 21 CFR 211.22; ICH E6(R3). The regulation and guidance texts were read
+through search summaries and secondary quotations, not line by line: counsel or QA should confirm item 1 and item 3
+against the primary texts before the first real filing by a one-person client.

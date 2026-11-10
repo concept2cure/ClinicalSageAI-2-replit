@@ -1,0 +1,64 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.packageName.test.ts > a device package is named after its project > the draft package sends the project name, and the project id to resolve it by 18ms
+   → expected { id: 'Class II · 510k', …(2) } to match object { id: 'NeuroPanel-Dx', …(2) }
+ × client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.packageName.test.ts > a device package is named after its project > the official eSTAR does the same 4ms
+   → expected { id: 'Class II · 510k', …(2) } to match object { id: 'NeuroPanel-Dx', …(1) }
+(1 matching property omitted from actual)
+ ✓ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.packageName.test.ts > a device package is named after its project > with no name it falls back to the code, then the id 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.packageName.test.ts > a device package is named after its project > the draft package sends the project name, and the project id to resolve it by
+AssertionError: expected { id: 'Class II · 510k', …(2) } to match object { id: 'NeuroPanel-Dx', …(2) }
+
+- Expected
++ Received
+
+  {
+-   "id": "NeuroPanel-Dx",
++   "id": "Class II · 510k",
+    "ident": "a2b4c6d8-0000-0000-0000-000000000009",
+    "title": "NeuroPanel-Dx",
+  }
+
+ ❯ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.packageName.test.ts:33:24
+     31|     const { result } = renderHook(() => useEstarExport());
+     32|     await act(async () => { await result.current.exportDraftPackage(PR…
+     33|     expect(sentMeta()).toMatchObject({ id: 'NeuroPanel-Dx', ident: PRO…
+       |                        ^
+     34|   });
+     35|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.packageName.test.ts > a device package is named after its project > the official eSTAR does the same
+AssertionError: expected { id: 'Class II · 510k', …(2) } to match object { id: 'NeuroPanel-Dx', …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "id": "NeuroPanel-Dx",
++   "id": "Class II · 510k",
+    "ident": "a2b4c6d8-0000-0000-0000-000000000009",
+  }
+
+ ❯ client/src/concept2cure/mdx/hooks/__tests__/useEstarExport.packageName.test.ts:39:24
+     37|     const { result } = renderHook(() => useEstarExport());
+     38|     await act(async () => { await result.current.exportOfficialEstar(P…
+     39|     expect(sentMeta()).toMatchObject({ id: 'NeuroPanel-Dx', ident: PRO…
+       |                        ^
+     40|   });
+     41|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  18:56:54
+   Duration  1.37s (transform 195ms, setup 145ms, import 215ms, tests 28ms, environment 872ms)
+

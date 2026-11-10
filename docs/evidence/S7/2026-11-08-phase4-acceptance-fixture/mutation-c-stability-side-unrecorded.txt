@@ -1,0 +1,10 @@
+ × server/services/cmc/__tests__/phase4-acceptance-fixture-tables.test.ts > the stability tables match expected cells > §3.2.S.7 files all three substance pull points, the last OUTSIDE 6ms
+   → expected { …(3) } to deeply equal { …(3) }
+ × server/services/cmc/__tests__/phase4-acceptance-fixture-tables.test.ts > the stability tables match expected cells > §3.2.P.8 files both product pull points, the second OUTSIDE 1ms
+   → expected { …(3) } to deeply equal { …(3) }
+ × server/services/cmc/__tests__/phase4-acceptance-fixture-tables.test.ts > the stability tables match expected cells > files each study under its own side only 1ms
+   → expected [ 'DP-2602-A', '25C/60%RH', …(33) ] to not include 'DP-2602-A'
+ × server/services/cmc/__tests__/phase4-acceptance-fixture-tables.test.ts > OOS is explicitly flagged, in the prose as well as the table > a stability point outside its criterion withholds the stability conclusion, naming the point 8ms
+   → 3.2.S.7: expected 'Stability studies for the drug substa…' to contain '1 of the 3 recorded result(s) compare…'
+ × server/services/cmc/__tests__/phase4-acceptance-fixture-tables.test.ts > OOS is explicitly flagged, in the prose as well as the table > the product shelf-life claim is stated as unsigned, not as accepted 2ms
+   → expected 'Stability studies for the drug produc…' to contain 'A shelf life of 24 months is proposed…'

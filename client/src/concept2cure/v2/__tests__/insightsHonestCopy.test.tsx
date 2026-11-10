@@ -16,7 +16,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -59,11 +59,11 @@ afterEach(() => cleanup());
 
 async function renderCanvas() {
   render(<InsightsCanvas surface={{ id: 'insights', label: 'Insights' } as OwnedSurfaceViewProps['surface']} segment="biotech" onNav={() => {}} />);
-  await waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
+  await waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
 }
 
 function ask(text: string) {
-  const composer = document.querySelector('.rc-input textarea') as HTMLTextAreaElement;
+  const composer = document.querySelector('[data-work-area="insights"] .rc-find input') as HTMLInputElement;
   fireEvent.change(composer, { target: { value: text } });
   fireEvent.keyDown(composer, { key: 'Enter' });
 }
@@ -92,9 +92,14 @@ describe('Insights — the canvas says what is true about itself', () => {
   it('a preview says it is one, names the real plan, and does not answer as if the org had it', async () => {
     await renderCanvas();
     expect(screen.queryByTestId('rc-tier-preview')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Enterprise' }));
+    // The preview is chosen in the Catalog's filters (D7 §D.4 step 6) ...
+    fireEvent.click(screen.getByRole('tab', { name: 'Catalog' }));
+    const plans = screen.getByRole('group', { name: 'Preview plan' });
+    fireEvent.click(within(plans).getByRole('button', { name: 'Enterprise' }));
+    expect(within(plans).getByRole('button', { name: 'Enterprise' }).getAttribute('aria-pressed')).toBe('true');
+    // ... and says so on every view, the Reports view included.
+    fireEvent.click(screen.getByRole('tab', { name: 'Reports' }));
     expect(screen.getByTestId('rc-tier-preview').textContent).toMatch(/Previewing Enterprise\. Your organization's plan is Standard\./);
-    expect(screen.getByRole('button', { name: 'Enterprise' }).getAttribute('aria-pressed')).toBe('true');
 
     ask('Compare readiness across all my projects');
     await screen.findByText(/"Portfolio readiness rollup" needs the Enterprise plan/);

@@ -1,0 +1,374 @@
+
+ RUN  v4.1.7 <repo>
+
+stderr | server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-02T04:29:13.721Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-02T04:29:16.341Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-02T04:29:16.342Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-02T04:29:16.342Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > re-authenticated: approved at the version, one signature naming the verified signer and how, and its ledger row
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > no re-authentication: refused 401, and the artifact, the signatures and the ledger are untouched 50ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > a wrong password: refused 401, and the artifact, the signatures and the ledger are untouched 16ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > no meaning: refused 400 before the password is checked, nothing written 8ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > free text: refused 400 before the password is checked, nothing written 8ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > another act’s meaning: refused 400 before the password is checked, nothing written 9ms
+stderr | server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > a provenance event that cannot be written takes the whole act back
+{
+  "timestamp": "2026-11-02T04:29:19.076Z",
+  "level": "error",
+  "message": "[concept2cure-api] Concept2Cure update artifact status failed",
+  "context": {
+    "error": "Failed query: insert into \"concept2cure_provenance_events\" (\"id\", \"event_id\", \"artifact_id\", \"artifact_version_id\", \"organization_id\", \"event_type\", \"event_action\", \"actor_id\", \"actor_name\", \"actor_email\", \"details\", \"source_artifact_id\", \"source_description\", \"backend_route\", \"backend_service\", \"ip_address\", \"created_at\") values (default, $1, $2, default, $3, $4, $5, $6, $7, $8, $9, default, $10, $11, $12, $13, default)\nparams: evt_1793593759074_efa1ba5e23c2,9,99,approval,status_approved,777,Dana Reviewer,s***@example.com,{\"previousStatus\":\"review\",\"newStatus\":\"approved\",\"reason\":\"Reviewed against the protocol; approved for filing.\",\"attestation\":{\"meaning\":\"approval\",\"attestationText\":\"I approve this document as reviewed.\",\"signerName\":\"Dana Reviewer\",\"signerRole\":\"admin\"},\"signatureId\":\"sig_1793593759069_2979805bec08\",\"snapshotId\":null},Status changed from review to approved (approval),/projects/3/artifacts/artifact_abc/status,concept2cure-api,127.0.0.xxx",
+    "operation": "update artifact status",
+    "artifactId": "artifact_abc"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving an artifact is an electronic signature > re-authenticated: approved at the version, one signature naming the verified signer and how, and its ledger row 50ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > enrolled in TOTP: signed with password and a verified code; without the code, refused 40ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > no stored row for the version: the act records it from the content and signs that — never approved unsigned 32ms
+stderr | server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > a signature that cannot be written takes the approval back with it
+{
+  "timestamp": "2026-11-02T04:29:19.107Z",
+  "level": "error",
+  "message": "[concept2cure-api] Concept2Cure update artifact status failed",
+  "context": {
+    "error": "Failed query: insert into \"concept2cure_signatures\" (\"id\", \"signature_id\", \"artifact_id\", \"artifact_version_id\", \"organization_id\", \"signature_type\", \"signature_purpose\", \"signature_meaning\", \"signer_id\", \"signer_name\", \"signer_email\", \"signer_role\", \"authentication_method\", \"authentication_timestamp\", \"second_factor_verified\", \"signature_hash\", \"signature_manifest\", \"ip_address\", \"device_info\", \"status\", \"signed_at\", \"created_at\", \"updated_at\") values (default, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, default, default) returning \"id\", \"signature_id\", \"artifact_id\", \"artifact_version_id\", \"organization_id\", \"signature_type\", \"signature_purpose\", \"signature_meaning\", \"signer_id\", \"signer_name\", \"signer_email\", \"signer_role\", \"authentication_method\", \"authentication_timestamp\", \"second_factor_verified\", \"signature_hash\", \"signature_manifest\", \"ip_address\", \"device_info\", \"status\", \"signed_at\", \"created_at\", \"updated_at\"\nparams: sig_1793593759102_1521283bc460,10,10,99,approval,approval_attestation,approval,777,Dana Reviewer,s***@example.com,admin,password,2026-11-02T04:29:19.102Z,false,fcb03021acac6d2ecc185afedd4bfdb1ce79281279126dfbc6839f9e7a980a91,{\"part\":\"21 CFR Part 11 §11.50\",\"meaning\":\"approval\",\"printedName\":\"Dana Reviewer\",\"attestationText\":\"I approve this document as reviewed.\",\"reason\":\"Reviewed against the protocol; approved for filing.\",\"previousStatus\":\"review\",\"newStatus\":\"approved\",\"contentHash\":\"230d8358dc8e8890b4c58deeb62912ee2f20357ae92a5cc861b98e68fe31acb5\",\"actionId\":\"act_c051249966694e0fb06cf804ce574cb3\",\"auditId\":\"cf31f2a1-a494-4d79-ade8-153e2e6069df\",\"auditSha256Chain\":\"1b0c9bd8d6bcf7f9a96fac61e33eca84a6c5227626d6aed4dd342d8ab6655f7b\"},127.0.0.xxx,,active,2026-11-02T04:29:19.102Z",
+    "operation": "update artifact status",
+    "artifactId": "artifact_abc"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a status change that is not a signature commits with its provenance event > review → draft: a provenance event that cannot be written takes the change back
+{
+  "timestamp": "2026-11-02T04:29:19.145Z",
+  "level": "error",
+  "message": "[concept2cure-api] Concept2Cure update artifact status failed",
+  "context": {
+    "error": "Failed query: insert into \"concept2cure_provenance_events\" (\"id\", \"event_id\", \"artifact_id\", \"artifact_version_id\", \"organization_id\", \"event_type\", \"event_action\", \"actor_id\", \"actor_name\", \"actor_email\", \"details\", \"source_artifact_id\", \"source_description\", \"backend_route\", \"backend_service\", \"ip_address\", \"created_at\") values (default, $1, $2, default, $3, $4, $5, $6, $7, $8, $9, default, $10, $11, $12, $13, default)\nparams: evt_1793593759144_15be958c6aee,13,99,status_change,status_draft,777,s***@example.com,s***@example.com,{\"previousStatus\":\"review\",\"newStatus\":\"draft\",\"reason\":\"Returned for rework of section 2.\",\"attestation\":null,\"signatureId\":null,\"snapshotId\":null},Status changed from review to draft,/projects/3/artifacts/artifact_abc/status,concept2cure-api,127.0.0.xxx",
+    "operation": "update artifact status",
+    "artifactId": "artifact_abc"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a status change that is not a signature commits with its provenance event > approved → review: a provenance event that cannot be written takes the change back
+{
+  "timestamp": "2026-11-02T04:29:19.159Z",
+  "level": "error",
+  "message": "[concept2cure-api] Concept2Cure update artifact status failed",
+  "context": {
+    "error": "Failed query: insert into \"concept2cure_provenance_events\" (\"id\", \"event_id\", \"artifact_id\", \"artifact_version_id\", \"organization_id\", \"event_type\", \"event_action\", \"actor_id\", \"actor_name\", \"actor_email\", \"details\", \"source_artifact_id\", \"source_description\", \"backend_route\", \"backend_service\", \"ip_address\", \"created_at\") values (default, $1, $2, default, $3, $4, $5, $6, $7, $8, $9, default, $10, $11, $12, $13, default)\nparams: evt_1793593759158_5ab1f7c0d6fa,14,99,status_change,status_review,777,s***@example.com,s***@example.com,{\"previousStatus\":\"approved\",\"newStatus\":\"review\",\"reason\":\"Returned for rework of section 2.\",\"attestation\":null,\"signatureId\":null,\"snapshotId\":null},Status changed from approved to review,/projects/3/artifacts/artifact_abc/status,concept2cure-api,127.0.0.xxx",
+    "operation": "update artifact status",
+    "artifactId": "artifact_abc"
+  }
+}
+
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > a provenance event that cannot be written takes the whole act back 33ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > approving: what the signature binds, and what goes back with it > a signature that cannot be written takes the approval back with it 27ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a status change that is not a signature commits with its provenance event > review → draft: changed, with one provenance event naming it 13ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a status change that is not a signature commits with its provenance event > approved → review: changed, with one provenance event naming it 12ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a status change that is not a signature commits with its provenance event > review → draft: a provenance event that cannot be written takes the change back 13ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > a status change that is not a signature commits with its provenance event > approved → review: a provenance event that cannot be written takes the change back 15ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > locking an approved artifact is an electronic signature > without re-authentication: refused 401, not locked, no snapshot 13ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > locking an approved artifact is an electronic signature > re-authenticated with the meaning release: locked at the version, with its snapshot, signature and ledger row 40ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the signed act commits only from the state the signer was shown > approved in between (a second approval racing the first): not signed, nothing written 13ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the signed act commits only from the state the signer was shown > edited in between (a new version): not signed, nothing written 10ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the signed act commits only from the state the signer was shown > re-approved in between with no version recorded (the lock would cover nothing): not signed, nothing written 11ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the signed act commits only from the state the signer was shown > review → approved by the author: not signed, nothing written 15ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the signed act commits only from the state the signer was shown > approved → locked by the author: not signed, nothing written 13ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the column set the signed act accepts > the harness metadata the route republishes is written by the act, through the route 35ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the column set the signed act accepts > an extra column is a contract error, never "the document changed", and nothing is written 9ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > the column set the signed act accepts > a column it must write, removed is a contract error, never "the document changed", and nothing is written 7ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact > approving what you wrote, no reviewer assigned: refused 403 SEPARATION_OF_DUTIES before the password is verified, nothing written 13ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact > releasing (locking) what you wrote, no reviewer assigned: refused 403 SEPARATION_OF_DUTIES before the password is verified, nothing written 13ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-18: the author cannot approve or release their own artifact > becoming an author after the preflight (a version written while signing): refused 403 on the signing transaction, nothing written 22ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: the latest review round is closed, so routing the document again opens the next round > Ada asked for changes; routed to Ada again: round 2 opens, her approval of the new version meets the quorum, and the document is approved 86ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: the latest review round is closed, so routing the document again opens the next round > Ada rejected; routed to Ada again: round 2 opens, her approval of the new version meets the quorum, and the document is approved 81ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: the latest review round is closed, so routing the document again opens the next round > Ada approved, and the document was edited after; routed to Ada again: round 2 opens, her approval of the new version meets the quorum, and the document is approved 89ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: the latest review round is closed, so routing the document again opens the next round > Ada asked for changes twice: the third routing opens round 3 after round 2, and her approval of version 4 meets the quorum 94ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: the latest review round is closed, so routing the document again opens the next round > every reviewer was withdrawn: the round is closed, and the same reviewer is assigned again in round 2 42ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: the latest review round is closed, so routing the document again opens the next round > the round is chosen from the rows the quorum reads: another organization’s pending row on the artifact does not hold a closed round open 33ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: a new round holds only the reviewers assigned to it > Ada asked for changes to version 2: with the document unchanged, assigning Ben does not open round 2 (409), and nothing is written 36ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: a new round holds only the reviewers assigned to it > a co-reviewer who approved cannot assign themselves into a new round over Ada’s request for changes (409) 46ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: a new round holds only the reviewers assigned to it > Ada asked for changes; the document is edited; Ben is assigned (round 2) and withdrawn: the quorum refuses an all-withdrawn round, and the approval is refused 62ms
+   → expected { met: true } to match object { met: false, …(1) }
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: a new round holds only the reviewers assigned to it > round 1 closed with an approval (quorum met): assigning Ben opens round 2, and the quorum then waits for Ben alone 74ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: the latest review round is open, so an assignment joins it and the round is not split > Ada is pending: Ben joins round 1, and the quorum waits for both 68ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: the latest review round is open, so an assignment joins it and the round is not split > Ada is in progress: Ben joins round 1, and the quorum waits for both 60ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: the latest review round is open, so an assignment joins it and the round is not split > round 2 is open (Ada pending in it): Ben joins round 2, and no round is opened 45ms
+ ✓ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: the latest review round is open, so an assignment joins it and the round is not split > the round stays open while any reviewer has not decided: Ada asked for changes, Ben is pending, and Cam joins round 1 30ms
+stdout | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts
+{
+  "timestamp": "2026-11-02T04:29:21.204Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-02T04:29:21.205Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts
+{
+  "timestamp": "2026-11-02T04:29:21.205Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts
+{
+  "timestamp": "2026-11-02T04:29:21.246Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'no assignments preserves the existing…' 16ms
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'all latest-round assignments withdraw…' 17ms
+   → expected true to be false // Object.is equality
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'one complete assigned approval for th…' 10ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'two separate completed reviewer appro…' 10ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'pending assignment refuses even with …' 7ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'in-progress assignment refuses' 6ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'a completed assignment with no decisi…' 8ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'one of two completed assignments with…' 11ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'duplicate approvals cannot cover an u…' 12ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'duplicate approvals on a single assig…' 9ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'approval attributed to another review…' 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'approval pointing to an unknown assig…' 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'a legitimate approval plus an orphan …' 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'crossed reviewer identities do not co…' 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'one mismatched duplicate cannot hide …' 10ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'a rejection from an active reviewer s…' 9ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'a request for changes still refuses' 8ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'stale decision for an active assignme…' 12ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'future decision version refuses' 9ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'null reviewed version refuses' 9ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'withdrawn reviewer rejection does not…' 11ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'withdrawn reviewer stale approval doe…' 10ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'withdrawn approvals do not fill missi…' 9ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'withdrawn duplicates do not fill miss…' 10ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'old round approval cannot fill a new-…' 9ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'older rejected round does not block v…' 10ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'old pending round does not block vali…' 10ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'another tenant decision cannot fill a…' 8ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'another artifact decision cannot fill…' 9ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'same tenant but wrong round decision …' 7ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'other tenant assignments and decision…' 9ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'other artifact newer round does not c…' 10ms
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses service failures without exposing the failure detail or reading quorum
+Contradiction check unavailable: fixture private storage failure
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses missing verdict
+Contradiction check unavailable: Cannot destructure property 'blocked' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses null verdict
+Contradiction check unavailable: Cannot destructure property 'blocked' of '(intermediate value)' as it is null.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses missing fields
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses string false
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses numeric zero
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses missing finding arrays
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses null blocking array
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses null warning array
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses blocking finding despite clearance
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses blocked with no findings
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses service failures without exposing the failure detail or reading quorum
+Contradiction check unavailable: fixture private storage failure
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses missing verdict
+Contradiction check unavailable: Cannot destructure property 'blocked' of '(intermediate value)' as it is undefined.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses null verdict
+Contradiction check unavailable: Cannot destructure property 'blocked' of '(intermediate value)' as it is null.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses missing fields
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses string false
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'historical departed reviewer identity…' 9ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'zero requested version never receives…' 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'negative requested version never rece…' 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'null requested version never receives…' 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'fractional requested version never re…' 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'out-of-range requested version never …' 6ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'zero organizationId never receives a …' 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'zero artifactPk never receives a no-r…' 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'assignment query failure propagates' 10ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'decision query failure propagates' 8ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses service failures without exposing the failure detail or reading quorum 7ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses missing verdict 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses null verdict 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses missing fields 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses string false 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses numeric zero 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses missing finding arrays 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses null blocking array 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses null warning array 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses blocking finding despite clearance 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > refuses blocked with no findings 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > preserves a real blocking finding and its 409 refusal 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > preserves the explicit-clear/no-review policy 7ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > approved: contradiction preflight > does not elevate warnings into blocking findings 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses service failures without exposing the failure detail or reading quorum 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses missing verdict 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses null verdict 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses missing fields 2ms
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses numeric zero
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses missing finding arrays
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses null blocking array
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses null warning array
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses blocking finding despite clearance
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses blocked with no findings
+Contradiction check unavailable: Contradiction check returned an invalid verdict.
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > an authorship read that fails is refused 503 and names no cause, and the quorum is not read
+[governance/SoD] authorship lookup failed for "artifact:artifact_review"; refusing to sign: fixture private authorship failure
+
+stderr | server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > an authorship read that fails is refused 503 and names no cause, and the quorum is not read
+[artifact-signed-act] Separation of duties could not be verified for "artifact:artifact_review" (owner lookup failed). Nothing was signed. Retry; if this persists, the owner lookup for this record type is failing.
+
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses string false 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses numeric zero 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses missing finding arrays 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses null blocking array 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses null warning array 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses blocking finding despite clearance 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > refuses blocked with no findings 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > preserves a real blocking finding and its 409 refusal 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > preserves the explicit-clear/no-review policy 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > locked: contradiction preflight > does not elevate warnings into blocking findings 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > shared signed-approval preflight refuses missing decisions 5ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > an uncovered lock remains refused before contradiction lookup 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > does not change ordinary draft-to-review or signing role permissions 1ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > approved: the creator signing, no reviewer assigned, is refused 403 SEPARATION_OF_DUTIES 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > locked: the creator signing, no reviewer assigned, is refused 403 SEPARATION_OF_DUTIES 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > anyone who wrote a version is an author too, not only the creator 4ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > a version written in another organization is not read as authorship of this one 3ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > approved: a different user signing, no reviewer assigned, still passes 3ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > locked: a different user signing, no reviewer assigned, still passes 2ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > the author is told so before the quorum: not that a review is still open 3ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > an artifact with no recorded author is refused 409: independence cannot be shown 3ms
+ ✓ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > P-18: an author cannot approve or release their own artifact > an authorship read that fails is refused 503 and names no cause, and the quorum is not read 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'all latest-round assignments withdraw…'
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts:130:26
+    128|     } else {
+    129|       const result = await invoke();
+    130|       expect(result.met).toBe(c.met);
+       |                          ^
+    131|       if (c.message && !result.met) expect(result.message).toContain(c…
+    132|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > F1: a new round holds only the reviewers assigned to it > Ada asked for changes; the document is edited; Ben is assigned (round 2) and withdrawn: the quorum refuses an all-withdrawn round, and the approval is refused
+AssertionError: expected { met: true } to match object { met: false, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "message": StringMatching /every reviewer in the latest review round was withdrawn/,
+-   "met": false,
++   "met": true,
+  }
+
+ ❯ server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts:827:29
+    825|     ok(await withdraw(ben.assignmentId));
+    826|
+    827|     expect(await quorum(3)).toMatchObject({ met: false, message: expec…
+       |                             ^
+    828|     const signed = await putStatus(APPROVE);
+    829|     expect(signed.status, 'approved with no approval on record').not.t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 121 passed (123)
+   Start at  04:29:11
+   Duration  12.12s (transform 2.48s, setup 116ms, import 5.28s, tests 6.29s, environment 0ms)
+

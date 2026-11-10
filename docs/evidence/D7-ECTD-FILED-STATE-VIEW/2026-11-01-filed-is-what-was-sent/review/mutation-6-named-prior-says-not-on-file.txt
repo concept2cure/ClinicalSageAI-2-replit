@@ -1,0 +1,54 @@
+# Mutation 6 (finding: AnA's named-prior refusal says 'not on file'). The refusal sentence is put back as it was.
+# File: server/services/ectd/prior-sequence-loader.ts
+# Replaced (exactly once):
+#   -       `${named} could not be found by its number: that lookup goes through a compile of the sequence made for ` +
+#   -         'filing, and none of this organization was sent or acknowledged (a preview or rehearsal compile is not ' +
+#   -         'filed). Nothing was loaded. If it was sent with no compile, it can still be on file; read the prior state ' +
+#   -         'from the submission it belongs to instead.',
+# With:
+#   +       `${named} is not on file for this organization: no compile of it with a leaf manifest was sent or ` +
+#   +         'acknowledged (a preview or rehearsal compile is not filed).',
+# Command: npx vitest run server/services/ectd/__tests__/named-prior-sequence-is-the-filed-state.pglite.test.ts
+# Exit code: 1 (non-zero = the test caught the mutation)
+# Restored byte for byte: sha256 f214ee5702bad5be0647c66242fbff65796080847994d473e192fa1bfa4e4845 before and after
+# Run: 2026-11-02T01:25:39.256430Z
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/named-prior-sequence-is-the-filed-state.pglite.test.ts > a named prior sequence is the filed state through it > folds every filed sequence up to the named one, each leaf pointing at the sequence that holds it 10ms
+ ✓ server/services/ectd/__tests__/named-prior-sequence-is-the-filed-state.pglite.test.ts > a named prior sequence is the filed state through it > never reads another organisation’s filings of the same application number 3ms
+ ✓ server/services/ectd/__tests__/named-prior-sequence-is-the-filed-state.pglite.test.ts > a named prior sequence that is not on file is an error, never an empty prior > refuses a sequence that was compiled but never sent 2ms
+ ✓ server/services/ectd/__tests__/named-prior-sequence-is-the-filed-state.pglite.test.ts > a named prior sequence that is not on file is an error, never an empty prior > refuses a sent sequence whose only compile on record is a rehearsal 1ms
+ ✓ server/services/ectd/__tests__/named-prior-sequence-is-the-filed-state.pglite.test.ts > a named prior sequence that is not on file is an error, never an empty prior > refuses a sequence with no compile at all 1ms
+ ✓ server/services/ectd/__tests__/named-prior-sequence-is-the-filed-state.pglite.test.ts > a named prior sequence that is not on file is an error, never an empty prior > refuses when the application number is missing, without reading 1ms
+ × server/services/ectd/__tests__/named-prior-sequence-is-the-filed-state.pglite.test.ts > a named sequence sent with no compile: the refusal says what the lookup found, never that it is off file (F1 review) > the current view reads it from its send; the named lookup cannot, and says only that 11ms
+   → expected 'PRIOR_SEQUENCE_NOT_FOUND: sequence 00…' to match /^PRIOR_SEQUENCE_NOT_FOUND: sequence 0…/
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  01:25:36
+   Duration  2.73s (transform 178ms, setup 85ms, import 141ms, tests 2.19s, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/named-prior-sequence-is-the-filed-state.pglite.test.ts > a named sequence sent with no compile: the refusal says what the lookup found, never that it is off file (F1 review) > the current view reads it from its send; the named lookup cannot, and says only that
+AssertionError: expected 'PRIOR_SEQUENCE_NOT_FOUND: sequence 00…' to match /^PRIOR_SEQUENCE_NOT_FOUND: sequence 0…/
+
+- Expected:
+/^PRIOR_SEQUENCE_NOT_FOUND: sequence 0000 of application IND-654321 could not be found by its number: /
+
++ Received:
+"PRIOR_SEQUENCE_NOT_FOUND: sequence 0000 of application IND-654321 is not on file for this organization: no compile of it with a leaf manifest was sent or acknowledged (a preview or rehearsal compile is not filed)."
+
+ ❯ server/services/ectd/__tests__/named-prior-sequence-is-the-filed-state.pglite.test.ts:135:25
+    133|
+    134|     const err = await load('0000', 'IND-654321').then(() => { throw ne…
+    135|     expect(err.message).toMatch(/^PRIOR_SEQUENCE_NOT_FOUND: sequence 0…
+       |                         ^
+    136|     // AnA relays this sentence word for word, beside a card that list…
+    137|     expect(err.message).not.toMatch(/not on file/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

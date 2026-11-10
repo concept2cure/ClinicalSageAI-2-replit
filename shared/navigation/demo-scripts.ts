@@ -82,7 +82,7 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
     audience: 'A new subscriber team learning to run their regulatory work here.',
     minutes: 8,
     description:
-      'The complete working tour of the launch catalog: the Projects portfolio and a real project, the Vault, Authoring and the protocol workspace, CMC / Module 3, the Submission Center, Submission Readiness, QMS controlled documents, Reporting & analytics with its audit and compliance reports, and the audit trail — each stop showing what the team actually does there.',
+      'The complete working tour of the launch catalog: the Projects portfolio and a real project, the Vault, Authoring and the protocol workspace, Biostatistics, CMC / Module 3, Risk-based monitoring, the Submission Center, Submission Readiness, QMS controlled documents, Reporting & analytics with its audit and compliance reports, and the audit trail — each stop showing what the team actually does there.',
     steps: [
       {
         say: 'Welcome them to their workspace and set the frame: this is a working tour of their own tenant, on their real data, through the work areas in this release, and they can interrupt with a question at any moment.',
@@ -112,8 +112,16 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         navigate: { target: 'protocol-dev' },
       },
       {
+        say: 'Biostatistics is the project’s evidence, opened from the project: the study’s designs read against the protocol’s endpoints, with sample size, power and the analysis computed by deterministic engines, never estimated by AnA, and each result placed where the application files it.',
+        navigate: { target: 'biostatistics' },
+      },
+      {
         say: 'CMC / Module 3 is where the chemistry, manufacturing and controls record is kept and the quality module is built: the substance, product, method, specification, batch and stability registers feed one deterministic compile, a contradiction sweep names what disagrees, and a fail-closed export gate holds the module until every section is approved under Part 11. What it composes is small-molecule Module 3 for a US IND; a biologic or a marketing application is refused by name and authored in the editor instead.',
         navigate: { target: 'cmc' },
+      },
+      {
+        say: 'Risk-based monitoring runs over the project’s study data, as ICH E6(R3) asks: the risk assessment, key risk indicators and quality tolerance limits, central monitoring and each site’s risk, and the monitoring plan. Every score is computed by a deterministic engine, and approving the assessment or the plan is a signature a person gives.',
+        navigate: { target: 'rbm' },
       },
       {
         say: 'The Submission Center is the operations cockpit: from planning a submission through its sequences, build and validation, up to dispatch — everything from one place, and freezing or dispatching stays a person’s signature. The approved Module 3 reaches a sequence from the CMC module, as placed leaves — never retyped here.',
@@ -278,14 +286,15 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
       'A device or diagnostics team learning to run their 510(k), PMA, De Novo, or EU MDR/IVDR work here.',
     minutes: 8,
     description:
-      'The complete device working tour: the portfolio, Tasks, the 510(k) pathway, the ISO 14971 risk file worked hands-on, design controls and V&V, the significant-change worklist, EU MDR clinical evaluation, and the submission packages — each stop showing what the team actually does there.',
+      'The complete device working tour: Projects filtered to their device projects, Tasks, the 510(k) pathway, the ISO 14971 risk file worked hands-on, design controls and V&V, the significant-change worklist, EU MDR clinical evaluation, and the submission packages — each stop showing what the team actually does there.',
     steps: [
       {
         say: 'Welcome them to their workspace and set the frame: this is a working tour of their own device projects, on their real data, and they can interrupt with a question at any moment.',
       },
       {
-        say: 'The device portfolio is the front door: every device project with its pathway — 510(k), PMA, De Novo, MDR — its stage and its readiness in one place.',
-        navigate: { target: 'device-workstream' },
+        // 2026-10-30 (D2, fold F6): the device portfolio folded into Projects with its MDX filter.
+        say: 'Projects, filtered to their device projects, is the front door: every device project with its pathway — 510(k), PMA, De Novo, MDR — its stage, its readiness and its last activity, each read from the project\'s own records.',
+        navigate: { target: 'mdx' },
       },
       {
         say: 'Tasks is where the day starts: every open item across their projects, from the board, the schedule, agency correspondence and tracked filings, each labelled with where it lives and with the work another store records as blocking marked, so nothing waits on a shared drive or an email thread.',
@@ -357,8 +366,9 @@ export const DEMO_SCRIPTS: readonly DemoScript[] = [
         say: 'Open with the thesis for device teams: one platform where the 510(k), PMA, De Novo and EU MDR work is done, not tracked — AnA works the screens with the team, and every governed determination stays a human sign-off.',
       },
       {
-        say: 'Start at the device portfolio: every device project, its pathway and its readiness, in one place instead of a spreadsheet and a shared drive.',
-        navigate: { target: 'device-workstream' },
+        // 2026-10-30 (D2, fold F6): the device portfolio folded into Projects with its MDX filter.
+        say: 'Start at Projects, filtered to their device projects: every device project, its pathway and its readiness, in one place instead of a spreadsheet and a shared drive.',
+        navigate: { target: 'mdx' },
       },
       {
         say: 'The 510(k) pathway: predicate intelligence, the substantial-equivalence matrix, and the eSTAR sections — the submission built as you go, not assembled at the end.',

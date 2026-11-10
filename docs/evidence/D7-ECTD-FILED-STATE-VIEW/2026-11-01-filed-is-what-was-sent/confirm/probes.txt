@@ -1,0 +1,146 @@
+# SUMMARY (verifier)
+# - At HEAD 609ef94c7 (section 0, below): both defects reproduce with the probes unchanged.
+# - On the tree, UNCHANGED (1, 2): both stop on 'column s.transmit_attempt_id does not exist' (exit 1) before reporting.
+#   Their hand-made schema predates migrations/20261014_ectd_transmit_attempt_binding.sql, which is in C2C_MIGRATION_FILES (scripts/db/migration-set.mjs:3339), so every database deploy-migrate applies
+#   has the column (deploy-migrate.once.txt; dbtest-ectd-filed-state-view.txt reads it on real PostgreSQL). So the probes, as written, do NOT print "not reproduced".
+# - SCHEMA ONLY (3, 4), the probes' own scenario, i.e. a send made BEFORE this change with no record of what it carried:
+#   phantom leaf STILL REPRODUCED (by design: such a sequence is read from its compiles, labelled basis 'compiles');
+#   sent-without-compile now REFUSED with the sentence, never bound against an empty prior.
+# - AMENDED (5, 6), a send made AFTER this change (the guard's bound transmittal): both "not reproduced".
+
+## 0. HEAD 609ef94c7 (clean export), probes unchanged but for their import path
+# The orchestrator's two probes, unchanged except their import path pointed at a clean export of HEAD 609ef94c7 (sed of the absolute path only). 2026-11-02T02:31:13Z
+
+## phantom-leaf at HEAD 609ef94c7
+# diff against the original:
+#   9c9
+#   < import { loadFiledStateBySubmission, type PoolLike } from '/home/user/ClinicalSageAI-2-replit/server/services/ectd/prior-sequence-loader';
+#   ---
+#   > import { loadFiledStateBySubmission, type PoolLike } from '/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/5d0b158e-991f-5354-8b6b-8cf5f02b467a/scratchpad/f1-confirm/head-export/server/services/ectd/prior-sequence-loader';
+on file per the fold: ["draft-only.pdf","general.pdf"]
+DEFECT REPRODUCED: draft-only.pdf, carried only by an earlier preview of the sent sequence, is reported as on file at the agency.
+exit=0
+
+## sent-without-compile at HEAD 609ef94c7
+# diff against the original:
+#   12c12
+#   < import { loadFiledStateBySubmission, loadLatestPriorManifestBySubmission, type PoolLike } from '/home/user/ClinicalSageAI-2-replit/server/services/ectd/prior-sequence-loader';
+#   ---
+#   > import { loadFiledStateBySubmission, loadLatestPriorManifestBySubmission, type PoolLike } from '/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/5d0b158e-991f-5354-8b6b-8cf5f02b467a/scratchpad/f1-confirm/head-export/server/services/ectd/prior-sequence-loader';
+case 1 (0000 sent, no compile row):
+  view leaves: []  sequences: [{"sequenceNumber":"0000","dispatchStatus":"sent","filed":false},{"sequenceNumber":"0001","dispatchStatus":null,"filed":false}]
+  prior state 0001 binds against: {"priorSequenceNumber":"","leaves":[]}
+  DEFECT (b) REPRODUCED: a sent sequence with no compile row is absent from the prior state; 0001 would file every leaf as new with no modified-file.
+case 2 (one compile before the send):
+  view leaves: [{"f":"general.pdf","md5":"aaaa"}]
+  the md5 is the compile's; transmit re-assembles and records no manifest, so nothing on record says what was sent.
+exit=0
+
+
+# ===== the tree =====
+# The orchestrator's two probes, re-run by the verifier, 2026-11-02T02:21:55Z, tree = HEAD 609ef94c7 + this build (uncommitted), from the repo root with npx tsx.
+# sha256 of each probe file as run:
+a1343134a8868e3071f3cbb9173e1294947c6f9db39cabb621dce0dd8927aec5  scratchpad/ectd-probe/phantom-leaf.probe.mts
+cee0d77cb0d3e6665dc88d2343e16c2e71dc7bbf9a29965c711e0f2516c04ca3  scratchpad/ectd-probe/sent-without-compile.probe.mts
+0b7250f286fe923a7aaeb1b9f7d5bd9a3986f35581ffd7caed9278f8446c6b4a  1-server/probes/phantom-leaf.after-change.probe.mts
+763b4140cd413597e51b6e48ae274e1bc688b359968d3488fb0ff3cafafd73a0  1-server/probes/phantom-leaf.legacy-schema.probe.mts
+60de6eb20fa4ffca1ff4eb17f3cc04106217f522442fb2a8bf342df62d94a617  1-server/probes/sent-without-compile.after-change.probe.mts
+f4c55be4b52a05dd3a557297c56e3071f4ad6a4bc9741a318c1cce53141d08a4  1-server/probes/sent-without-compile.legacy-schema.probe.mts
+
+## 1. UNCHANGED: scratchpad/ectd-probe/phantom-leaf.probe.mts
+$ npx tsx <that file>
+error: column s.transmit_attempt_id does not exist
+    at pe.Le (/home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pg-protocol/src/parser.ts:432:11)
+    at pe.Xe (/home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pg-protocol/src/parser.ts:210:16)
+    at pe.parse (/home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pg-protocol/src/parser.ts:102:25)
+    at O.qe (/home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at <anonymous> (/home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155)
+    at wasm://wasm/0267bdc2:wasm-function[10927]:0x5a5d5f
+    at wasm://wasm/0267bdc2:wasm-function[3585]:0x27ed4d
+    at wasm://wasm/0267bdc2:wasm-function[3627]:0x286c33
+    at wasm://wasm/0267bdc2:wasm-function[3637]:0x286e8f
+    at wasm://wasm/0267bdc2:wasm-function[9914]:0x54ffac {
+  length: 119,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '66',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3827',
+  routine: 'errorMissingColumn',
+  query: 'WITH filed AS (\n' +
+    '       SELECT s.id, s.sequence_number, s.region, s.transmit_attempt_id, s.transmit_signature_action_id\n' +
+exit=1
+
+## 2. UNCHANGED: scratchpad/ectd-probe/sent-without-compile.probe.mts
+$ npx tsx <that file>
+error: column s.transmit_attempt_id does not exist
+    at pe.Le (/home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pg-protocol/src/parser.ts:432:11)
+    at pe.Xe (/home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pg-protocol/src/parser.ts:210:16)
+    at pe.parse (/home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pg-protocol/src/parser.ts:102:25)
+    at O.qe (/home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1762)
+    at <anonymous> (/home/user/ClinicalSageAI-2-replit/node_modules/@electric-sql/pglite/dist/index.js:5:1155)
+    at wasm://wasm/0267bdc2:wasm-function[10927]:0x5a5d5f
+    at wasm://wasm/0267bdc2:wasm-function[3585]:0x27ed4d
+    at wasm://wasm/0267bdc2:wasm-function[3627]:0x286c33
+    at wasm://wasm/0267bdc2:wasm-function[3637]:0x286e8f
+    at wasm://wasm/0267bdc2:wasm-function[9914]:0x54ffac {
+  length: 119,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '66',
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: undefined,
+  table: undefined,
+  column: undefined,
+  dataType: undefined,
+  constraint: undefined,
+  file: 'parse_relation.c',
+  line: '3827',
+  routine: 'errorMissingColumn',
+  query: 'WITH filed AS (\n' +
+    '       SELECT s.id, s.sequence_number, s.region, s.transmit_attempt_id, s.transmit_signature_action_id\n' +
+exit=1
+
+## 3. SCHEMA ONLY (the probe's own scenario: a send made before this change, no transmittal): 1-server/probes/phantom-leaf.legacy-schema.probe.mts
+$ npx tsx <that file>
+on file per the fold: ["draft-only.pdf","general.pdf"]
+DEFECT REPRODUCED: draft-only.pdf, carried only by an earlier preview of the sent sequence, is reported as on file at the agency.
+exit=0
+
+## 4. SCHEMA ONLY: 1-server/probes/sent-without-compile.legacy-schema.probe.mts
+$ npx tsx <that file>
+Error: Sequence 0000 was sent to the agency, but nothing on record says what it carried: no record of the send, and no compile. What is on file cannot be read, so nothing was bound against it.
+    at loadLatestPriorManifestBySubmission (/home/user/ClinicalSageAI-2-replit/server/services/ectd/prior-sequence-loader.ts:228:36)
+    at async main (/home/user/ClinicalSageAI-2-replit/docs/evidence/D7-ECTD-FILED-STATE-VIEW/2026-11-01-filed-is-what-was-sent/1-server/probes/sent-without-compile.legacy-schema.probe.mts:36:14)
+exit=1
+
+## 5. AMENDED (a send made after this change: a bound transmittal carrying what was sent): 1-server/probes/phantom-leaf.after-change.probe.mts
+$ npx tsx <that file>
+on file per the fold: ["general.pdf"]  sequences: [{"sequenceNumber":"0000","dispatchStatus":"sent","filed":true,"basis":"transmit"}]
+not reproduced: the fold reports only what the transmit recorded it sent.
+exit=0
+
+## 6. AMENDED: 1-server/probes/sent-without-compile.after-change.probe.mts
+$ npx tsx <that file>
+case 1 (0000 sent, no compile row, the transmit recorded what it sent):
+  view leaves: ["general.pdf"]  sequences: [{"sequenceNumber":"0000","dispatchStatus":"sent","filed":true,"basis":"transmit"},{"sequenceNumber":"0001","dispatchStatus":null,"filed":false,"basis":null}]
+  prior state 0001 binds against: [{"f":"general.pdf","seq":"0000","md5":"cccc"}] through "0000"
+  not reproduced: 0000 is filed (basis transmit), and 0001 binds against 1 leaf/leaves on file from 0000.
+case 2 (a compile of 0000 with md5 a is also on record):
+  view leaves: [{"f":"general.pdf","md5":"cccc"}]  basis: "transmit"
+  the md5 is what the transmit recorded it sent (cccc), not the compile's.
+exit=0

@@ -104,12 +104,22 @@ describe('D17: the composed narrative', () => {
     expect(text).toContain('Subject SYN-D17-1, a 71-year-old female subject randomized to the Drug X arm in study SYN-D17.');
     expect(text).toContain('The subject was withdrawn for an adverse event on 2030-01-20 (study day 20).');
     expect(text).toContain('ADSL records the withdrawal per subject (DSRAEFL = Y), not on an adverse event record.');
-    expect(text).toContain('On study day 3 the subject experienced Headache (mild, not serious, relationship to study treatment recorded as possible, outcome recovered/resolved).');
-    expect(text).toContain('On study day 20 the subject experienced Syncope (severe, serious: hospitalization or prolonged hospitalization');
+    // The list states each TEAE in the narrative's own vocabulary (2026-10-30), its category kept: "possible" is "possibly related".
+    expect(text).toContain('On study day 3, the subject experienced Headache (mild, not serious, possibly related to study treatment, resolved).');
+    expect(text).toContain('On study day 20, the subject experienced Syncope (severe, serious: hospitalization or prolonged hospitalization');
     expect(text).toContain(NO_CAUSE);
     expect(text).not.toMatch(/Nausea|Back pain/);
     expect(text).not.toMatch(/due to|because|led to (?!withdrawal\.)|caused/i);
     expect(reconcileNarrative(text, f)).toEqual({ ok: true, issues: [] });
+  });
+
+  it('lists the preceding TEAEs in onset order, whatever order the rows hold', async () => {
+    const f = facts(1);
+    f.withdrawal!.events.reverse();
+    const composed = await composeSubjectNarrative(f);
+    const text = composed.status === 'composed' ? composed.text : '';
+    expect(text.indexOf('Headache')).toBeGreaterThan(-1);
+    expect(text.indexOf('experienced Headache')).toBeLessThan(text.indexOf('experienced Syncope'));
   });
 
   it('says so, as a QC item, when no TEAE precedes the withdrawal; still composed', async () => {
@@ -127,7 +137,7 @@ describe('D17: the composed narrative', () => {
     const f = facts(4);
     const composed = await composeSubjectNarrative(f);
     const text = composed.status === 'composed' ? composed.text : '';
-    expect(text).toContain('On study day 11 the subject experienced Dizziness');
+    expect(text).toContain('On study day 11, the subject experienced Dizziness');
     expect(text).toContain('The onset of Fatigue is not recorded, so its timing relative to the withdrawal is unknown.');
     expect(composed.status === 'composed' && composed.missingFields).toContain('withdrawalEvents.Fatigue.onset (ASTDT and ASTDY blank)');
   });
@@ -161,7 +171,7 @@ describe('D17: the fact gate refuses an invented cause', () => {
 
   it('refuses a rewrite that drops a candidate event, states an event after withdrawal, or moves the withdrawal day', () => {
     const { f, text } = template();
-    expect(codes(text.replace(/On study day 3 the subject experienced Headache[^.]*\./, ''), f)).toContain('NARRATIVE_EVENT_MISSING');
+    expect(codes(text.replace(/On study day 3, the subject experienced Headache[^.]*\./, ''), f)).toContain('NARRATIVE_EVENT_MISSING');
     expect(codes(`${text} On study day 25 the subject experienced Nausea.`, f)).toContain('NARRATIVE_DAY_UNSOURCED');
     expect(codes(text.replace('(study day 20)', '(study day 21)'), f)).toContain('NARRATIVE_DAY_UNSOURCED');
     expect(codes(text.replace('Syncope (severe', 'Syncope (mild'), f)).toContain('NARRATIVE_SEVERITY_MISMATCH');
@@ -204,7 +214,7 @@ describe('D17 review: no implied cause, nothing guessed, blank is not N', () => 
     const datasets = { ADSL: adsl(), ADAE: read(datasetJson('ADAE', AE_COLUMNS, rows)) };
     const composed = await composeSubjectNarrative(facts(2, d17Bundle(), datasets));
     expect(composed).toMatchObject({ status: 'composed' });
-    expect(composed.status === 'composed' && composed.text).toContain('On study day 4 the subject experienced Drug withdrawal syndrome');
+    expect(composed.status === 'composed' && composed.text).toContain('On study day 4, the subject experienced Drug withdrawal syndrome');
   });
 
   it('never guesses the withdrawal date: an undeclared ADSL EOSDT is not used, and the subject is refused by name', async () => {

@@ -32,6 +32,11 @@ export interface PqStatus {
   status: 'pending' | 'passed' | 'failed';
   /** Path to the executed PQ record. Null until a run exists. */
   reference: string | null;
+  /** Strict pins require a reviewed immutable artifact and the exact executed record bytes. */
+  pinKind?: 'provider_snapshot' | 'weights_sha256';
+  recordSha256?: string;
+  /** Uses measured by that record. Absent legacy metadata grants no strict qualified pin. */
+  intendedUses?: readonly TaskType[];
 }
 
 export interface ApprovedModel {
@@ -82,7 +87,7 @@ export const APPROVED_MODELS: ApprovedModel[] = [
     provider: 'anthropic',
     role: 'primary',
     rationale: 'Flagship reasoning + regulatory drafting model; primary for high-risk authoring and review tasks. Bumped Opus 5 → Opus 5.5 on the founder\'s direction (2026-09-25). Why this model for this product: in Anthropic\'s testing it is much less likely than Opus 5 to state a figure or cite a source the inputs do not support, and catches detail errors in large inputs without more false flags — the failure modes that matter most in a regulatory record — at a lower price ($4 / $20 against $5 / $25 per MTok). What changed on the surface: thinking can no longer be disabled (the gateway never disables it on an adaptive entry); forced tool_choice any/tool is rejected (no caller uses it); the API effort default is medium, one level below Opus 5, so the entry declares medium rather than inheriting it; and its safety classifiers add biology to cyber, so a decline is raised and re-run on Opus 5 rather than returned as an empty answer. This is a capability change, not a patch: re-validation is owed against the PQ targets below, and until it executes the accuracy claim rests on the vendor\'s evaluation and the same harness as Opus 5, not on measurement of this version. Opus 5 is retained directly beneath it, so a tenant whose account cannot reach Opus 5.5 keeps the reviewed behaviour rather than falling to Sonnet.',
-    evalReference: 'server/eval/pq/pq-protocol.json (PQ-DRAFT-001, draft; PENDING EXECUTION for this version — see pq below). Vendor evaluation and the surface differences: docs/evidence/MODEL-GOVERNANCE/2026-09-25-opus-5-5/README.md. Corrected 2026-09-23: this field cited docs/validation/PQ-CORTEX-001 PQ-007/008, which measure pathway-prediction accuracy and "regulatory intuition" for a different product, not drafting.',
+    evalReference: 'server/eval/pq/pq-protocol.json (PQ-DRAFT-001 version 1.0.0, approved by the founder as system owner on 2026-11-10, decision P-118; PENDING EXECUTION for this version — see pq below). Vendor evaluation and the surface differences: docs/evidence/MODEL-GOVERNANCE/2026-09-25-opus-5-5/README.md. Corrected 2026-09-23: this field cited docs/validation/PQ-CORTEX-001 PQ-007/008, which measure pathway-prediction accuracy and "regulatory intuition" for a different product, not drafting.',
     lastReviewed: '2026-09-25',
     approvedForHighRisk: true,
     highRiskBasis: 'This entry: "primary for high-risk authoring and review tasks".',
@@ -286,6 +291,7 @@ export const APPROVED_MODELS: ApprovedModel[] = [
  * attempts one outside the tests.
  */
 for (const entry of APPROVED_MODELS) {
+  if (entry.pq.intendedUses) Object.freeze(entry.pq.intendedUses);
   Object.freeze(entry.pq);
   Object.freeze(entry);
 }

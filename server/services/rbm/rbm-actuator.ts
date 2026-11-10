@@ -38,7 +38,10 @@ export interface Exec {
   query(sql: string, args: unknown[]): Promise<{ rows: any[] }>;
 }
 
-const CTQ_CATEGORY = ['safety', 'efficacy', 'data_integrity', 'compliance', 'operational'] as const;
+/** The CtQ categories and factor statuses. POST /rbm-risk-items validates its body with these
+ *  same lists, so the route and addCtqFactor hold one copy of each. */
+export const CTQ_CATEGORY = ['safety', 'efficacy', 'data_integrity', 'compliance', 'operational'] as const;
+export const CTQ_ITEM_STATUS = ['open', 'mitigating', 'accepted', 'closed'] as const;
 const SIGNAL_SOURCE = ['central_stat', 'kri', 'qtl', 'site_score', 'manual'] as const;
 const SEVERITY = ['low', 'medium', 'high', 'critical'] as const;
 const SIGNAL_STATUS = ['new', 'triaged', 'investigating', 'resolved', 'dismissed'] as const;
@@ -47,6 +50,7 @@ const PRIORITY = ['low', 'medium', 'high'] as const;
 const ACTION_STATUS = ['open', 'in_progress', 'done'] as const;
 
 export type CtqCategory = (typeof CTQ_CATEGORY)[number];
+export type CtqItemStatus = (typeof CTQ_ITEM_STATUS)[number];
 export type SignalSeverity = (typeof SEVERITY)[number];
 
 function num(v: unknown): number | null {
@@ -61,9 +65,13 @@ export function inferSecondaryLimit(threshold: number | null | undefined): numbe
   return Math.round(threshold * 0.75 * 10000) / 10000;
 }
 
-/** The existing amendment rule: a signed version and its factors are immutable. */
+/**
+ * An assessment edit the actuator refuses: the amendment rule (a signed version
+ * and its factors are immutable), an assessment that cannot be found or chosen,
+ * or a factor the route's input rules refuse (422). Nothing was written.
+ */
 export class RbmAssessmentEditError extends Error {
-  constructor(readonly status: 404 | 409, readonly code: string, message: string) { super(message); this.name = 'RbmAssessmentEditError'; }
+  constructor(readonly status: 404 | 409 | 422, readonly code: string, message: string) { super(message); this.name = 'RbmAssessmentEditError'; }
 }
 export async function requireDraftAssessment(exec: Exec, organizationId: number, assessmentId: number, programId?: string, lock: 'share' | 'update' = 'share') {
   const statement = lock === 'update'
@@ -90,24 +98,60 @@ export interface AddCtqInput {
   detectability?: number | null;
   isCritical?: boolean;
   mitigation?: string | null;
+  refCode?: string | null;
+  status?: CtqItemStatus;
+  assignedTo?: number | null;
 }
 
-/** Create a CtQ risk item. Infers risk_score from likelihood×impact and, when
- *  `isCritical` is omitted, infers criticality from the score band (high ⇒ true). */
+const onScale1to5 = (v: unknown): boolean => Number.isInteger(v) && (v as number) >= 1 && (v as number) <= 5;
+
+/** A value outside the list it must come from, as a refusal sentence; null when it is in it. */
+function notOneOf(field: string, list: readonly string[], value: unknown): string | null {
+  if (value == null || list.includes(value as string)) return null;
+  return `The ${field} must be one of ${list.join(', ')}; ${JSON.stringify(value)} was given. Nothing was saved.`;
+}
+
+/** The input rules for a factor, the same as the route's schema (mdx-rbm.ts
+ *  createItemBody: SCALE_1_5, CTQ_CATEGORY, CTQ_ITEM_STATUS). rbm_risk_items has
+ *  no CHECK, so an out-of-range rating would be stored beside a score computed
+ *  from the clamped value. */
+function ctqInputRefusal(input: AddCtqInput): string | null {
+  const scaled: Array<[string, unknown]> = [['likelihood', input.likelihood], ['impact', input.impact]];
+  if (input.detectability != null) scaled.push(['detectability', input.detectability]);
+  for (const [field, value] of scaled) {
+    if (!onScale1to5(value)) return `The ${field} must be a whole number from 1 to 5; ${JSON.stringify(value)} was given. Nothing was saved.`;
+  }
+  return notOneOf('category', CTQ_CATEGORY, input.category) ?? notOneOf('status', CTQ_ITEM_STATUS, input.status);
+}
+
+/** The bound values of addCtqFactor's insert. organization_id is $1 and assessment_id $2. */
+function ctqRowValues(organizationId: number, input: AddCtqInput, score: number, isCritical: boolean): unknown[] {
+  return [
+    organizationId, input.assessmentId ?? null, input.programId ?? null, input.refCode ?? null,
+    input.category ?? 'operational', input.ctqFactor, input.riskDescription ?? null,
+    input.likelihood, input.impact, input.detectability ?? null, score, isCritical,
+    input.mitigation ?? null, input.status ?? 'open', input.assignedTo ?? null,
+  ];
+}
+
+/** Create a CtQ risk item: the one insert behind POST /api/mdx/rbm-risk-items
+ *  and AnA's add_ctq_factor. Infers risk_score from likelihood×impact and, when
+ *  `isCritical` is omitted, infers criticality from the score band (high ⇒ true).
+ *  Refuses (RbmAssessmentEditError 422) what the route's schema refuses, before
+ *  any write. Which assessment it joins, and that it is a draft, is the caller's
+ *  check (requireDraftAssessment), on the same transaction. */
 export async function addCtqFactor(exec: Exec, organizationId: number, input: AddCtqInput) {
+  const refusal = ctqInputRefusal(input);
+  if (refusal) throw new RbmAssessmentEditError(422, 'RBM_INVALID_FACTOR', refusal);
   const { score, band } = scoreRisk(input.likelihood, input.impact);
   const isCritical = input.isCritical ?? band === 'high';
   const { rows } = await exec.query(
     `INSERT INTO rbm_risk_items (
-       organization_id, assessment_id, program_id, category, ctq_factor, risk_description,
-       likelihood, impact, detectability, risk_score, is_critical, mitigation, status
-     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'open') RETURNING *`,
-    [
-      organizationId, input.assessmentId ?? null, input.programId ?? null,
-      input.category ?? 'operational', input.ctqFactor, input.riskDescription ?? null,
-      input.likelihood, input.impact, input.detectability ?? null, score, isCritical,
-      input.mitigation ?? null,
-    ],
+       organization_id, assessment_id, program_id, ref_code, category, ctq_factor,
+       risk_description, likelihood, impact, detectability, risk_score, is_critical,
+       mitigation, status, assigned_to
+     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
+    ctqRowValues(organizationId, input, score, isCritical),
   );
   return { item: rows[0], inferred: { riskScore: score, band, isCritical } };
 }
@@ -306,24 +350,65 @@ export interface DraftPlanInput {
   strategy?: 'centralized' | 'risk_based' | 'on_site' | 'hybrid';
 }
 
-/** Create a monitoring plan. When the strategy is omitted, infer it from the
- *  program's latest assessment overall risk (defaultPlanStrategy). */
-export async function draftPlan(exec: Exec, organizationId: number, input: DraftPlanInput) {
-  let strategy = input.strategy;
-  let overall: string | null = null;
-  if (!strategy && input.programId) {
-    const a = (await exec.query(
-      `SELECT overall_risk FROM rbm_risk_assessments
-        WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
-        ORDER BY updated_at DESC LIMIT 1`,
-      [organizationId, input.programId],
-    )).rows[0];
-    overall = a?.overall_risk ?? null;
-    if (overall === 'low' || overall === 'medium' || overall === 'high') {
-      strategy = defaultPlanStrategy(overall);
-    }
+type PlanStrategy = NonNullable<DraftPlanInput['strategy']>;
+
+/** Why draftPlan saved nothing: generatePlanFromAssessment's reasons, or a named
+ *  assessment that is not the one the inferred strategy came from. */
+export type DraftPlanRefusal = GeneratePlanRefusal | 'assessment_not_governing';
+
+interface DraftPlanInferred {
+  strategy: PlanStrategy | null;
+  fromOverallRisk: 'low' | 'medium' | 'high' | null;
+  /** The approved assessment the strategy came from; null when the caller gave the strategy. */
+  fromAssessment: { id: number; version: number | null } | null;
+}
+
+type DraftPlanBasis =
+  | { refused: DraftPlanRefusal; message: string }
+  | { refused?: undefined; strategy: PlanStrategy; assessmentId: number | null; inferred: DraftPlanInferred };
+
+/** The strategy and the assessment a drafted plan rests on, or why there is none.
+ *  An inferred strategy comes only from the governing (approved) assessment, read
+ *  by governingPlanBasis as generatePlanFromAssessment reads it. */
+async function draftPlanBasis(exec: Exec, organizationId: number, input: DraftPlanInput): Promise<DraftPlanBasis> {
+  if (input.strategy || !input.programId) {
+    const strategy = input.strategy ?? 'risk_based';
+    return { strategy, assessmentId: input.assessmentId ?? null, inferred: { strategy, fromOverallRisk: null, fromAssessment: null } };
   }
-  strategy = strategy ?? 'risk_based';
+  const basis = await governingPlanBasis(exec, organizationId, input.programId);
+  if (!basis.governing) return { refused: basis.reason, message: RBM_PLAN_REFUSAL[basis.reason] };
+  const { assessment, recordedOverallRisk } = basis;
+  if (!recordedOverallRisk) return { refused: 'overall_risk_not_recorded', message: RBM_PLAN_REFUSAL.overall_risk_not_recorded };
+  const version = assessment.version ?? null;
+  if (input.assessmentId != null && Number(input.assessmentId) !== Number(assessment.id)) {
+    return {
+      refused: 'assessment_not_governing',
+      message: `The monitoring strategy comes from the study's approved risk assessment, version ${version} (id ${assessment.id}), ` +
+        `so the plan cannot be bound to assessment ${input.assessmentId}. Leave the assessment out, or name that version. Nothing was saved.`,
+    };
+  }
+  const strategy = defaultPlanStrategy(recordedOverallRisk);
+  return {
+    strategy,
+    assessmentId: assessment.id,
+    inferred: { strategy, fromOverallRisk: recordedOverallRisk, fromAssessment: { id: assessment.id, version } },
+  };
+}
+
+/**
+ * Create a monitoring plan shell (AnA's draft_monitoring_plan). When the
+ * strategy is omitted it is inferred from the study's APPROVED risk assessment
+ * (defaultPlanStrategy of its recorded overall risk), and the plan is bound to
+ * that assessment. With no approved assessment, or one that records no overall
+ * risk, nothing is saved and the refusal says why, in generatePlanFromAssessment's
+ * words: a strategy taken from an unsigned draft, or guessed, would read as derived.
+ */
+export async function draftPlan(exec: Exec, organizationId: number, input: DraftPlanInput) {
+  const basis = await draftPlanBasis(exec, organizationId, input);
+  if (basis.refused) {
+    return { plan: null, refused: basis.refused, message: basis.message, inferred: { strategy: null, fromOverallRisk: null, fromAssessment: null } };
+  }
+  const { strategy, inferred } = basis;
   const title = input.title ?? 'Risk-based monitoring plan';
   // A new plan is a new VERSION in the study's chain. Two drafts off one study
   // have no defined merge, so an open draft is reported, not duplicated.
@@ -334,16 +419,16 @@ export async function draftPlan(exec: Exec, organizationId: number, input: Draft
       plan: null,
       refused: 'draft_already_open' as const,
       message: `A draft monitoring plan (v${open.version}, id ${open.id}) is already open for this study — edit or approve it instead of drafting another.`,
-      inferred: { strategy, fromOverallRisk: overall },
+      inferred,
     };
   }
   const version = await nextPlanVersion(exec, organizationId, programId);
   const { rows } = await exec.query(
     `INSERT INTO rbm_monitoring_plans (organization_id, program_id, assessment_id, title, strategy, status, version)
      VALUES ($1,$2,$3,$4,$5,'draft',$6) RETURNING *`,
-    [organizationId, programId, input.assessmentId ?? null, title, strategy, version],
+    [organizationId, programId, basis.assessmentId, title, strategy, version],
   );
-  return { plan: rows[0], inferred: { strategy, fromOverallRisk: overall } };
+  return { plan: rows[0], inferred };
 }
 
 export interface AmendAssessmentResult {
@@ -427,16 +512,18 @@ export async function amendAssessment(
 
   // Copy the register forward so the amendment starts from the approved content
   // rather than a blank sheet. residual_score is recomputed by the engine on
-  // edit; it is copied as-is here because nothing has changed yet.
+  // edit; it is copied as-is here because nothing has changed yet. metadata is
+  // copied too, so a library rating nobody re-rated (defaultCtqSeedMark) is not
+  // laundered into a tailored one by the copy.
   const items = (await exec.query(
     `INSERT INTO rbm_risk_items (
        organization_id, assessment_id, program_id, ref_code, category, ctq_factor,
        risk_description, likelihood, impact, detectability, risk_score, is_critical,
-       mitigation, residual_likelihood, residual_impact, residual_score, status, assigned_to
+       mitigation, residual_likelihood, residual_impact, residual_score, status, assigned_to, metadata
      )
      SELECT organization_id, $1, program_id, ref_code, category, ctq_factor,
             risk_description, likelihood, impact, detectability, risk_score, is_critical,
-            mitigation, residual_likelihood, residual_impact, residual_score, status, assigned_to
+            mitigation, residual_likelihood, residual_impact, residual_score, status, assigned_to, metadata
        FROM rbm_risk_items
       WHERE organization_id = $2 AND assessment_id = $3 AND program_id = $4 AND deleted_at IS NULL
      RETURNING *`,
@@ -446,13 +533,163 @@ export async function amendAssessment(
   return { amended: true, assessment: draft, items, supersedes: current.version };
 }
 
+/** Why generatePlanFromAssessment saved nothing. */
+export type GeneratePlanRefusal =
+  'no_assessment' | 'assessment_not_approved' | 'overall_risk_not_recorded' | 'draft_already_open' | 'actor_required';
+
+/**
+ * The one sentence for each refusal. POST /api/mdx/rbm-monitoring-plans/generate
+ * answers with it, and AnA's generate_rbm_plan relays it, so the two never word
+ * the same refusal differently.
+ */
+export const RBM_PLAN_REFUSAL: Readonly<Record<GeneratePlanRefusal, string>> = {
+  no_assessment: 'No risk assessment exists for this study — run the risk assessment (RACT) before generating a monitoring plan',
+  assessment_not_approved: 'This study\'s risk assessment has not been approved. A monitoring plan must derive from a signed RACT — approve the assessment first.',
+  overall_risk_not_recorded: 'The approved risk assessment records no overall risk. Record the overall risk in an amendment and approve it before generating a monitoring plan.',
+  draft_already_open: 'A draft monitoring plan version is already open for this study — approve or archive it before generating another.',
+  actor_required: 'A verified generating user is required.',
+};
+
 export interface GeneratePlanResult {
   generated: boolean;
   /** Why nothing was generated, when `generated` is false. */
-  reason?: 'no_assessment' | 'assessment_not_approved' | 'draft_already_open';
+  reason?: GeneratePlanRefusal;
   plan?: any;
   actions?: any[];
   derivedFrom?: { assessmentId: number; overallRisk: string; criticalFactors: number; enhancedSites: number };
+}
+
+/** One opening action of a derived plan, exactly as generatePlanFromAssessment inserts it. */
+export interface DerivedPlanAction {
+  actionType: 'issue' | 'site_visit';
+  /** The CtQ factor the action came from; null for an enhanced-tier site visit. */
+  riskItemId: number | null;
+  description: string;
+  priority: 'low' | 'medium' | 'high';
+  dueInDays: 14 | 30;
+}
+
+/** What the governing risk assessment derives, before anything is written. */
+export type PlanDerivation =
+  | { derived: false; reason: 'no_assessment' | 'assessment_not_approved' }
+  | {
+      derived: true;
+      assessment: { id: number; title: string; overall_risk: string | null; status: string; version?: number };
+      /** The overall risk the approved assessment records; null when it records none (or an unknown value). */
+      recordedOverallRisk: 'low' | 'medium' | 'high' | null;
+      /** defaultPlanStrategy of the recorded overall risk; null when none is recorded. */
+      strategy: ReturnType<typeof defaultPlanStrategy> | null;
+      criticalFactors: number;
+      enhancedSites: number;
+      actions: DerivedPlanAction[];
+    };
+
+/** The governing assessment a monitoring plan rests on, or why there is none. */
+export type PlanBasis =
+  | { governing: false; reason: 'no_assessment' | 'assessment_not_approved' }
+  | {
+      governing: true;
+      assessment: { id: number; title: string; overall_risk: string | null; status: string; version?: number };
+      /** The overall risk the approved assessment records; null when it records none (or an unknown value). */
+      recordedOverallRisk: 'low' | 'medium' | 'high' | null;
+    };
+
+/**
+ * The one way a plan's basis is chosen: the study's approved (active) assessment,
+ * ahead of any newer draft, so an amendment in progress does not unseat the signed
+ * version. Approval stamps the approved and the archived version with one
+ * updated_at, and the active-first order also breaks that tie. A study with no
+ * approved assessment at all has no basis: 'assessment_not_approved' when it has
+ * only drafts or archived versions, 'no_assessment' when it has none.
+ * derivePlanFromAssessment and draftPlan both read it.
+ */
+export async function governingPlanBasis(exec: Exec, organizationId: number, programId: string): Promise<PlanBasis> {
+  const assessment = (await exec.query(
+    `SELECT id, title, overall_risk, status, version FROM rbm_risk_assessments
+      WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
+      ORDER BY (status = 'active') DESC, updated_at DESC LIMIT 1`,
+    [organizationId, programId],
+  )).rows[0];
+  if (!assessment) return { governing: false, reason: 'no_assessment' };
+  // Only an approved RACT may govern a plan — see generatePlanFromAssessment.
+  if (assessment.status !== 'active') return { governing: false, reason: 'assessment_not_approved' };
+  const recordedOverallRisk = (['low', 'medium', 'high'] as const).find(r => r === assessment.overall_risk) ?? null;
+  return { governing: true, assessment, recordedOverallRisk };
+}
+
+/**
+ * The read-only half of generatePlanFromAssessment: which assessment governs,
+ * and the strategy and opening actions it derives. Nothing is written, so AnA
+ * can propose exactly what POST /api/mdx/rbm-monitoring-plans/generate would
+ * save (generate_rbm_plan) by running the same code.
+ *
+ * Requires an APPROVED (active) assessment — see generatePlanFromAssessment.
+ * An overall risk the assessment does not record is reported as null, never
+ * guessed: the caller decides what an unrecorded basis means.
+ */
+export async function derivePlanFromAssessment(
+  exec: Exec,
+  organizationId: number,
+  programId: string,
+): Promise<PlanDerivation> {
+  const basis = await governingPlanBasis(exec, organizationId, programId);
+  if (!basis.governing) return { derived: false, reason: basis.reason };
+  const { assessment, recordedOverallRisk } = basis;
+
+  // Scoped to THIS assessment's factors, not the program's. A program can hold
+  // several assessment versions; gathering program-wide would let the plan
+  // claim derivation from the governing RACT while seeding its actions from a
+  // superseded or draft one.
+  const critical = (await exec.query(
+    `SELECT id, ctq_factor, risk_score FROM rbm_risk_items
+      WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
+        AND assessment_id = $3
+        AND is_critical = true AND status IN ('open','mitigating')
+      ORDER BY risk_score DESC NULLS LAST, id`,
+    [organizationId, programId, assessment.id],
+  )).rows;
+  const enhanced = (await exec.query(
+    `SELECT site_number, site_name FROM rbm_site_risk_scores
+      WHERE organization_id = $1 AND program_id = $2 AND monitoring_tier = 'enhanced'
+      ORDER BY composite_risk DESC NULLS LAST`,
+    [organizationId, programId],
+  )).rows;
+
+  const actions: DerivedPlanAction[] = [];
+  // One action per open critical CtQ factor, linked to the risk item so the
+  // plan board can show where each action came from. Priority follows the
+  // engine's own banding of the factor's score.
+  for (const it of critical) {
+    const band = bandFromScore(num(it.risk_score) ?? 0);
+    actions.push({
+      actionType: 'issue',
+      riskItemId: it.id,
+      description: `Confirm the monitoring control for: ${it.ctq_factor}`,
+      priority: band === 'high' ? 'high' : band === 'medium' ? 'medium' : 'low',
+      dueInDays: 14,
+    });
+  }
+  // One oversight visit per enhanced-tier site — the tier is what drives visit
+  // cadence under a risk-proportionate plan.
+  for (const s of enhanced) {
+    actions.push({
+      actionType: 'site_visit',
+      riskItemId: null,
+      description: `Enhanced-tier oversight visit — site ${s.site_number ?? '—'}${s.site_name ? ` (${s.site_name})` : ''}`,
+      priority: 'high',
+      dueInDays: 30,
+    });
+  }
+
+  return {
+    derived: true,
+    assessment,
+    recordedOverallRisk,
+    strategy: recordedOverallRisk ? defaultPlanStrategy(recordedOverallRisk) : null,
+    criticalFactors: critical.length,
+    enhancedSites: enhanced.length,
+    actions,
+  };
 }
 
 /**
@@ -476,49 +713,25 @@ export interface GeneratePlanResult {
  * only through the governed, re-authenticated approval path.
  *
  * Unlike draftPlan() — which creates the plan shell alone — this is the full
- * derivation, and it is the single implementation behind both
- * POST /api/mdx/rbm-monitoring-plans/generate and the AnA plan tools.
+ * derivation. Its read half is derivePlanFromAssessment, which AnA's
+ * generate_rbm_plan runs to propose this plan without saving it; this writes
+ * it, behind POST /api/mdx/rbm-monitoring-plans/generate.
  *
  * The caller owns the transaction: pass a pooled client inside BEGIN/COMMIT.
  */
 export async function generatePlanFromAssessment(
   exec: Exec,
   organizationId: number,
-  input: { programId: string; title?: string; createdBy?: number | null },
+  input: { programId: string; title?: string; createdBy: number },
 ): Promise<GeneratePlanResult> {
-  const anyAssessment = (await exec.query(
-    `SELECT id, title, overall_risk, status FROM rbm_risk_assessments
-      WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
-      ORDER BY (status = 'active') DESC, updated_at DESC LIMIT 1`,
-    [organizationId, input.programId],
-  )).rows[0];
-  if (!anyAssessment) return { generated: false, reason: 'no_assessment' };
-  // Only an approved RACT may govern a plan — see the note above.
-  if (anyAssessment.status !== 'active') return { generated: false, reason: 'assessment_not_approved' };
-  const assessment = anyAssessment;
+  if (!Number.isSafeInteger(input.createdBy) || input.createdBy <= 0) return { generated: false, reason: 'actor_required' };
+  const derivation = await derivePlanFromAssessment(exec, organizationId, input.programId);
+  if (!derivation.derived) return { generated: false, reason: derivation.reason };
+  const { assessment } = derivation;
 
-  // Scoped to THIS assessment's factors, not the program's. A program can hold
-  // several assessment versions; gathering program-wide would let the plan
-  // claim derivation from the governing RACT while seeding its actions from a
-  // superseded or draft one.
-  const critical = (await exec.query(
-    `SELECT id, ctq_factor, risk_score FROM rbm_risk_items
-      WHERE organization_id = $1 AND program_id = $2 AND deleted_at IS NULL
-        AND assessment_id = $3
-        AND is_critical = true AND status IN ('open','mitigating')
-      ORDER BY risk_score DESC NULLS LAST, id`,
-    [organizationId, input.programId, anyAssessment.id],
-  )).rows;
-  const enhanced = (await exec.query(
-    `SELECT site_number, site_name FROM rbm_site_risk_scores
-      WHERE organization_id = $1 AND program_id = $2 AND monitoring_tier = 'enhanced'
-      ORDER BY composite_risk DESC NULLS LAST`,
-    [organizationId, input.programId],
-  )).rows;
-
-  const overall = (assessment.overall_risk === 'low' || assessment.overall_risk === 'high')
-    ? assessment.overall_risk
-    : 'medium';
+  // A missing risk basis cannot become a persisted monitoring strategy.
+  if (derivation.recordedOverallRisk === null) return { generated: false, reason: 'overall_risk_not_recorded' };
+  const overall = derivation.recordedOverallRisk;
   const strategy = defaultPlanStrategy(overall);
 
   // Generating lands a new plan VERSION, so it cannot silently sit alongside an
@@ -539,33 +752,24 @@ export async function generatePlanFromAssessment(
         generatedFrom: 'rbm_risk_assessment',
         assessmentId: assessment.id,
         overallRisk: overall,
-        criticalFactors: critical.length,
-        enhancedSites: enhanced.length,
+        criticalFactors: derivation.criticalFactors,
+        enhancedSites: derivation.enhancedSites,
       }),
-      input.createdBy ?? null,
+      input.createdBy,
     ],
   )).rows[0];
 
   const actions: any[] = [];
-  // One action per open critical CtQ factor, linked to the risk item so the
-  // plan board can show where each action came from. Priority follows the
-  // engine's own banding of the factor's score.
-  for (const it of critical) {
-    const band = bandFromScore(num(it.risk_score) ?? 0);
-    const priority = band === 'high' ? 'high' : band === 'medium' ? 'medium' : 'low';
+  for (const a of derivation.actions) {
     actions.push((await exec.query(
-      `INSERT INTO rbm_monitoring_actions (organization_id, plan_id, risk_item_id, action_type, description, priority, due_date, status)
-       VALUES ($1,$2,$3,'issue',$4,$5, CURRENT_DATE + INTERVAL '14 days','open') RETURNING *`,
-      [organizationId, plan.id, it.id, `Confirm the monitoring control for: ${it.ctq_factor}`, priority],
-    )).rows[0]);
-  }
-  // One oversight visit per enhanced-tier site — the tier is what drives visit
-  // cadence under a risk-proportionate plan.
-  for (const s of enhanced) {
-    actions.push((await exec.query(
-      `INSERT INTO rbm_monitoring_actions (organization_id, plan_id, action_type, description, priority, due_date, status)
+      a.actionType === 'issue'
+        ? `INSERT INTO rbm_monitoring_actions (organization_id, plan_id, risk_item_id, action_type, description, priority, due_date, status)
+       VALUES ($1,$2,$3,'issue',$4,$5, CURRENT_DATE + INTERVAL '14 days','open') RETURNING *`
+        : `INSERT INTO rbm_monitoring_actions (organization_id, plan_id, action_type, description, priority, due_date, status)
        VALUES ($1,$2,'site_visit',$3,'high', CURRENT_DATE + INTERVAL '30 days','open') RETURNING *`,
-      [organizationId, plan.id, `Enhanced-tier oversight visit — site ${s.site_number ?? '—'}${s.site_name ? ` (${s.site_name})` : ''}`],
+      a.actionType === 'issue'
+        ? [organizationId, plan.id, a.riskItemId, a.description, a.priority]
+        : [organizationId, plan.id, a.description],
     )).rows[0]);
   }
 
@@ -576,8 +780,8 @@ export async function generatePlanFromAssessment(
     derivedFrom: {
       assessmentId: assessment.id,
       overallRisk: overall,
-      criticalFactors: critical.length,
-      enhancedSites: enhanced.length,
+      criticalFactors: derivation.criticalFactors,
+      enhancedSites: derivation.enhancedSites,
     },
   };
 }
@@ -601,8 +805,8 @@ export async function nextPlanVersion(
   return Number(rows[0]?.v ?? 0) + 1;
 }
 
-/** An open (draft) plan version for the study, if any. */
-async function openDraftPlan(exec: Exec, organizationId: number, programId: string | null) {
+/** An open (draft) plan version for the study, if any. Generating is refused while one is open. */
+export async function openDraftPlan(exec: Exec, organizationId: number, programId: string | null) {
   const { rows } = await exec.query(
     `SELECT id, version FROM rbm_monitoring_plans
       WHERE organization_id = $1 AND program_id IS NOT DISTINCT FROM $2

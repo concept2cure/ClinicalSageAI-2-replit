@@ -1,0 +1,19 @@
+import { ESLint } from '/workspace/ClinicalSageAI-2-replit/node_modules/eslint/lib/api.js';
+import { execFileSync } from 'node:child_process';
+import { writeFileSync } from 'node:fs';
+const files=execFileSync('git',['diff','--cached','--name-only','--diff-filter=ACMR'],{encoding:'utf8'}).trim().split('\n').filter(p=>/\.[cm]?[jt]sx?$/.test(p));
+const eslint=new ESLint();
+const current=await eslint.lintFiles(files);
+const comparisons=[];
+for (const result of current) {
+ const path=result.filePath.replace(process.cwd()+'/', '');
+ let before=[];
+ try { const content=execFileSync('git',['show','HEAD:'+path],{encoding:'utf8',stdio:['ignore','pipe','ignore']}); before=await eslint.lintText(content,{filePath:path}); } catch {}
+ const prior=before[0]??{errorCount:0,warningCount:0};
+ comparisons.push({path,errors:result.errorCount,warnings:result.warningCount,baselineErrors:prior.errorCount,baselineWarnings:prior.warningCount,messages:result.messages});
+}
+const summary={files:comparisons,errorCount:comparisons.reduce((n,x)=>n+x.errors,0),warningDelta:comparisons.reduce((n,x)=>n+x.warnings-x.baselineWarnings,0)};
+writeFileSync('/tmp/ectd-integrity-lint.json',JSON.stringify(summary,null,2)+'\n');
+console.log(JSON.stringify({files:comparisons.length,errors:summary.errorCount,warningDelta:summary.warningDelta}));
+for(const f of comparisons)if(f.errors||f.warnings>f.baselineWarnings)console.log(JSON.stringify(f));
+process.exitCode=summary.errorCount||summary.warningDelta>0?1:0;

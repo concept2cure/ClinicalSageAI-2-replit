@@ -209,13 +209,41 @@ const putStatus = (status: string, extra: Record<string, unknown> = {}) =>
 const VERSION_ROW = { id: 31, artifactId: 4242, organizationId: 99, version: 2, content: 'content', contentHash: 'ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73' };
 const SIG_ROW = { signatureId: 'sig_1', signatureType: 'publish', signatureMeaning: 'release', signerName: 'A Signer', signerRole: 'admin', signedAt: new Date(), signatureHash: 'x', authenticationMethod: 'password' };
 const statusWrite = (status: string) => st.sets.find((v) => v && v.status === status);
+/**
+ * 2026-11-01 (F1, decision P-18): approve and lock refuse an author of the
+ * artifact, and refuse one that names no author. These cases are not about
+ * authorship, so the artifact's recorded author (its creator and version
+ * writer, read by services/governance/separation-of-duties.ts) is user 778,
+ * not the signer (777). Self-approval is pinned on a real engine in
+ * server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts.
+ */
+const authorRows = (text: string) =>
+  /created_by_id/.test(text) && /concept2cure_artifact/.test(text) ? [{ created_by_id: 778 }] : [];
+
+/**
+ * P-95 (2026-11-09): an artifact is approved only after its review. The pool
+ * answers a completed review approving `version` by user 701, who is neither
+ * the signer (777) nor the author (778): the signer's own-decision read (P-95
+ * Q1, `AND reviewer_id = $3`) finds nothing, and the artifact read that resolves
+ * its authors finds the artifact.
+ */
+const reviewedAt = (version: number) =>
+  (pool.query as any).mockImplementation(async (text: string) => ({
+    rows: /FROM concept2cure_review_assignments/.test(text)
+      ? [{ id: 1, reviewer_id: 701, review_round: 1, status: 'completed' }]
+      : /FROM concept2cure_review_decisions/.test(text)
+        ? (/AND reviewer_id = \$3/.test(text) ? [] : [{ assignment_id: 1, reviewer_id: 701, decision: 'approve', version_reviewed: version }])
+        : /SELECT artifact_id, type, ctd_section FROM concept2cure_artifacts/.test(text)
+          ? [{ artifact_id: 'artifact_abc', type: 'document', ctd_section: null }]
+          : authorRows(text),
+  }));
 
 beforeEach(() => {
   st.queue = [];
   st.sets = [];
   st.inserts = [];
   vi.clearAllMocks();
-  (pool.query as any).mockImplementation(async () => ({ rows: [] }));
+  (pool.query as any).mockImplementation(async (text: string) => ({ rows: authorRows(text) }));
   signerRole.mockResolvedValue('admin');
 });
 
@@ -249,6 +277,7 @@ describe('PUT …/status: a lock must cover the approval', () => {
 
   it('review v3 → approved records approved_version_id = 3; an edit to v4 afterwards is not filable', async () => {
     const reviewed = { ...ARTIFACT, status: 'review', version: 3, approvedVersionId: 2 };
+    reviewedAt(3);
     st.queue = [[reviewed], [{ ...VERSION_ROW, version: 3 }], [reviewed], [{ ...VERSION_ROW, version: 3 }], [{ ...reviewed, status: 'approved' }], [{ ...SIG_ROW, signatureType: 'approval' }]];
     await putStatus('approved', { attestation: ATTEST('approved') });
     const write = statusWrite('approved');
@@ -277,8 +306,17 @@ describe('PUT …/status review → approved applies the canonical P12 review qu
         ? assignments
         : /concept2cure_review_decisions/.test(text)
           ? decisions
-          : [],
+          : authorRows(text),
     }));
+
+  it('no reviewer named refuses the approval 409 REVIEW_REQUIRED (P-95) and records no approved version', async () => {
+    quorumRows([]);
+    st.queue = [[{ ...ARTIFACT, status: 'review', version: 3, approvedVersionId: 2 }]];
+    const res = await putStatus('approved', { attestation: ATTEST('approved') });
+    expect(res.status).toBe(409);
+    expect(JSON.stringify(res.body)).toContain('REVIEW_REQUIRED');
+    expect(statusWrite('approved')).toBeUndefined();
+  });
 
   it('a reviewer still pending refuses the approval (400) and records no approved version', async () => {
     quorumRows([
@@ -304,7 +342,7 @@ describe('PUT …/status review → approved applies the canonical P12 review qu
   it('a quorum that cannot be read is not met: the approval is refused and records no approved version', async () => {
     (pool.query as any).mockImplementation(async (text: string) => {
       if (/concept2cure_review_(assignments|decisions)/.test(text)) throw new Error('relation unavailable');
-      return { rows: [] };
+      return { rows: authorRows(text) };
     });
     st.queue = [[{ ...ARTIFACT, status: 'review', version: 3, approvedVersionId: null }]];
     const res = await putStatus('approved', { attestation: ATTEST('approved') });
@@ -317,7 +355,7 @@ describe('PUT …/status review → approved applies the canonical P12 review qu
     (pool.query as any).mockImplementation(async (text: string) => {
       if (/concept2cure_review_assignments/.test(text)) return { rows: [{ review_round: 1, status: 'completed' }] };
       if (/concept2cure_review_decisions/.test(text)) throw new Error('relation unavailable');
-      return { rows: [] };
+      return { rows: authorRows(text) };
     });
     st.queue = [[{ ...ARTIFACT, status: 'review', version: 3, approvedVersionId: null }]];
     const res = await putStatus('approved', { attestation: ATTEST('approved') });
@@ -386,6 +424,7 @@ describe('PUT …/status: signing authority before the password', () => {
   ])('%s by a %s on the membership row is refused 403 ESIGNATURE_NO_AUTHORITY, no password compared, nothing written', async (status, role) => {
     const { verifyReauth } = await import('../server/routes/c2c/actions');
     signerRole.mockResolvedValue(role);
+    reviewedAt(3);
     const current = status === 'locked' ? ARTIFACT : { ...ARTIFACT, status: 'review', version: 3 };
     st.queue = [[current], [VERSION_ROW]];
     const res = await putStatus(status);

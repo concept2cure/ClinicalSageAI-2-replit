@@ -5,27 +5,21 @@
    Scoped under .c2c-v2
    ════════════════════════════════════════════════════════════════════ */
 .c2c-v2 {
-.rc{ height:100%; display:grid; grid-template-columns:390px 1fr; background:var(--bg-000); overflow:hidden; }
+/* One column (D7 §D.4 step 1): `.page-inner` gives the width and gutters. The
+   surface is `full` (surfaceViews.ts), so this is the flex child of
+   `.page-full`; it claims the row and keeps its content height, and `.page`
+   scrolls. It was a 390px | 1fr grid of two scroll boxes. */
+.rc{ flex:1 1 auto; min-width:0; align-self:flex-start; }
 
-/* ── Left: AnA intelligence ── */
-.rc-ana{ display:flex; flex-direction:column; min-height:0; background:var(--bg-050); border-right:1px solid var(--border); }
-.rc-ana-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; padding:13px 16px; border-bottom:1px solid var(--border); }
-.rc-ana-id{ display:flex; align-items:center; gap:10px; }
+/* The find block. It was the left column's framed pane; the frame went with
+   the column. `display:flex` is also what the visual-qa harness's self-check
+   reads (scripts/visual-qa/check-surface-styling.mjs). */
+.rc-ana{ display:flex; flex-direction:column; }
 .rc-ana-mark{ color:var(--ai,#6a9bcc); font-size:17px; line-height:1; }
 .rc-ana-mark.sm{ font-size:14px; flex-shrink:0; margin-top:2px; }
-.rc-ana-id .nm{ font-size:13px; font-weight:600; color:var(--text-100); }
-.rc-ana-id .sub{ font-size:11px; color:var(--text-400); margin-top:1px; }
-.rc-ana-scroll{ flex:1; min-height:0; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:12px; }
+.rc-ana-scroll{ display:flex; flex-direction:column; gap:12px; }
 
-.rc-opener{ background:var(--bg-000); border:1px solid var(--border); border-radius:var(--radius-md,12px); padding:14px; }
-.rc-op-head{ display:flex; align-items:center; gap:7px; font-size:10.5px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--ai,#6a9bcc); margin-bottom:8px; }
-.rc-op-headline{ font-size:14.5px; font-weight:600; color:var(--text-100); line-height:1.4; margin-bottom:6px; }
 .rc-op-body{ font-size:12.5px; color:var(--text-300); line-height:1.55; margin-bottom:11px; }
-.rc-preset-btn{ display:inline-flex; align-items:center; gap:7px; width:100%; justify-content:center; background:var(--accent-strong); color:var(--accent-on-strong); border:none; border-radius:9px; padding:9px 12px; font-size:12.5px; font-weight:600; cursor:pointer; transition:background var(--dur) var(--ease); }
-.rc-preset-btn:hover{box-shadow:var(--shadow-sm);transform:translateY(-1px);}
-.rc-preset-btn svg{ width:14px; height:14px; }
-.rc-op-why{ font-size:11.5px; color:var(--text-400); line-height:1.5; margin-top:8px; }
-.rc-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
 .rc-chip{ background:var(--bg-000); border:1px solid var(--border); color:var(--text-200); font-size:12px; padding:6px 11px; border-radius:999px; cursor:pointer; text-align:left; transition:background var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease); }
 .rc-chip:hover{ border-color:var(--accent-200); color:var(--accent-200); background:var(--accent-000); }
 
@@ -47,22 +41,24 @@
 .rc-typing span{ width:6px; height:6px; border-radius:50%; background:var(--ai,#6a9bcc); opacity:.5; animation:rcpulse 1.4s ease-in-out infinite; }
 .rc-typing span:nth-child(2){ animation-delay:.2s; } .rc-typing span:nth-child(3){ animation-delay:.4s; }
 
-.rc-composer{ border-top:1px solid var(--border); padding:11px 14px 13px; background:var(--bg-050); }
-.rc-tier{ display:flex; align-items:center; gap:5px; margin-bottom:9px; }
-.rc-tier-lbl{ font-size:10.5px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--text-400); margin-right:3px; }
-.rc-tier-b{ background:var(--bg-000); border:1px solid var(--border); color:var(--text-300); font-size:11px; font-weight:600; padding:4px 9px; border-radius:7px; cursor:pointer; }
-.rc-tier-b.on{ background:var(--accent-strong); color:var(--accent-on-strong); border-color:var(--accent-strong); }
-.rc-input{ display:flex; align-items:flex-end; gap:8px; background:var(--bg-000); border:1px solid var(--border-control); border-radius:13px; padding:8px 8px 8px 12px; transition:box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease); }
-.rc-input:focus-within{ border-color:var(--accent-200); box-shadow:0 0 0 3px var(--accent-000); }
-.rc-input textarea{ flex:1; border:none; outline:none; resize:none; background:transparent; font:inherit; font-size:13px; color:var(--text-100); line-height:1.5; max-height:120px; padding:3px 0; }
+/* Find a report (D7 §D.4 step 3): label, field and Find on one line. The
+   field is D0's `.c2c-input`; nothing here restyles it. */
+.rc-find{ display:flex; align-items:center; gap:8px; margin:0 0 16px; }
+.rc-find-l{ flex:0 0 auto; font-size:var(--fs-small); color:var(--text-300); }
+/* `.c2c-input` is width:100%, which in a wrapping row takes a whole line and
+   pushed Find under the field at 390. Here the field takes what Find leaves. */
+.rc-find .rc-find-i{ flex:1 1 0; width:auto; min-width:0; }
+@media (max-width:640px){ .rc-find{ flex-wrap:wrap; } .rc-find-l{ flex-basis:100%; } }
+/* The last search's result (step 5): quiet text, replaced by the next find. */
+.rc-result .rc-op-body{ font-size:var(--fs-small); color:var(--text-200); }
+.rc-result .sp-starters{ justify-content:flex-start; margin:0 0 8px; }
 .rc-send{ flex-shrink:0; width:30px; height:30px; border:none; border-radius:var(--radius-lg); background:var(--accent-strong); color:var(--accent-on-strong); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; }
 .rc-send:disabled{ opacity:.5; cursor:default; }
 .rc-send svg{ width:15px; height:15px; }
-.rc-guardrail{ display:flex; align-items:flex-start; gap:6px; font-size:10.5px; color:var(--text-400); line-height:1.45; margin-top:8px; }
-.rc-guardrail svg{ width:12px; height:12px; flex-shrink:0; margin-top:1px; }
+.rc-guardrail{ margin:0; max-width:68ch; }
 
 /* ── Right: artifact canvas ── */
-.rc-canvas{ min-height:0; overflow-y:auto; padding:26px 30px 40px; }
+.rc-canvas{ min-width:0; }
 .rc-empty{ max-width:640px; margin:6vh auto 0; text-align:center; }
 .rc-empty-mark{ font-size:34px; color:var(--ai,#6a9bcc); margin-bottom:14px; }
 .rc-empty-h{ font-size:20px; font-weight:600; color:var(--text-100); margin:0 0 8px; }
@@ -73,16 +69,24 @@
 .rc-ep-h{ display:flex; align-items:center; gap:8px; font-size:14px; font-weight:600; color:var(--text-100); }
 .rc-ep-h svg{ width:15px; height:15px; color:var(--accent-200); }
 .rc-ep-s{ font-size:12.5px; color:var(--text-300); line-height:1.55; margin:6px 0 8px; }
-.rc-ep-types{ font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--text-400); }
+/* The Reports view's standard packs (D7 §D.4 step 8): D0's `.pj-card`, two to
+   a row, one at 640px and below. */
+.rc-packs{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.rc-pack{ display:flex; flex-direction:column; align-items:flex-start; gap:2px; width:100%; text-align:left; }
+.rc-pack .pj-card-foot{ margin-top:10px; }
+.rc-packs-none{ margin:0; font-size:var(--fs-small); color:var(--text-300); }
+.rc-packs + .rc-packs-none{ margin-top:12px; }
+.rc-nc-list{ margin:6px 0 0; padding-left:18px; }
+@media (max-width:640px){ .rc-packs{ grid-template-columns:1fr; } }
 
 /* ── Governed report artifact ── */
 .ro-report{ max-width:760px; }
 .ro-rep-head{ margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid var(--border); }
-.ro-rep-eyebrow{ display:flex; align-items:center; gap:8px; font-size:10.5px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--text-400); margin-bottom:7px; }
+.ro-rep-eyebrow{ display:flex; align-items:center; gap:8px; font-size:var(--fs-caption); font-weight:600; color:var(--text-400); margin-bottom:7px; }
 .ro-region{ background:var(--bg-100); color:var(--text-300); padding:1px 6px; border-radius:5px; font-size:10px; letter-spacing:.03em; }
 .ro-rep-title{ font-size:22px; font-weight:600; color:var(--text-100); margin:0 0 9px; line-height:1.25; }
 .ro-rep-meta{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-size:12px; color:var(--text-400); }
-.ro-status{ font-size:10.5px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; padding:2px 9px; border-radius:999px; }
+.ro-status{ font-size:var(--fs-caption); font-weight:600; padding:2px 9px; border-radius:999px; }
 /* Reporting review 2026-10-01 (DESIGN-1, DESIGN-2): these mixed a status hue
    toward #000, which sinks the dark theme's tokens to 2.6-3.6:1, and the
    critical tag was a fixed #8a3a3a (1.98:1 on dark). They now use the design
@@ -94,14 +98,14 @@
 .ro-truth{ display:flex; align-items:flex-start; gap:7px; font-size:11.5px; color:var(--text-300); line-height:1.5; margin-top:11px; padding:9px 11px; background:var(--bg-050); border-radius:var(--radius-lg); }
 .ro-truth svg{ width:13px; height:13px; flex-shrink:0; margin-top:1px; color:var(--text-400); }
 .ro-sec{ margin-bottom:22px; }
-.ro-sec-h{ font-size:11px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--text-400); margin:0 0 12px; }
+.ro-sec-h{ font-size:var(--fs-caption); font-weight:600; color:var(--text-400); margin:0 0 12px; }
 .ro-sec-body{ display:flex; flex-wrap:wrap; gap:0 14px; }
 .ro-sec-body > *{ width:100%; }
 
 .ro-summary{ font-size:13.5px; color:var(--text-200); line-height:1.6; margin:0 0 12px; max-width:680px; }
 .ro-narr{ margin:0 0 12px; max-width:680px; }
 .ro-narr-body{ font-family:var(--font-serif,Georgia,serif); font-size:14px; color:var(--text-100); line-height:1.65; margin:0; }
-.ro-narr-tag{ font-size:10px; letter-spacing:.05em; text-transform:uppercase; color:var(--text-400); font-weight:600; margin:6px 0 0; }
+.ro-narr-tag{ font-size:var(--fs-caption); color:var(--text-400); font-weight:600; margin:6px 0 0; }
 .ro-metric{ width:auto !important; min-width:150px; background:var(--bg-000); border:1px solid var(--border); border-radius:10px; padding:11px 13px; margin:0 12px 12px 0; }
 .ro-m-lbl{ font-size:11px; color:var(--text-400); margin-bottom:5px; }
 .ro-m-val{ font-size:23px; font-weight:600; color:var(--text-100); line-height:1; }
@@ -130,16 +134,20 @@
 .ro-list{ list-style:none; margin:0 0 12px; padding:0; width:100%; max-width:680px; }
 .ro-li{ display:flex; align-items:baseline; gap:9px; padding:7px 0; border-top:1px dashed var(--border); font-size:12.5px; }
 .ro-li:first-child{ border-top:none; }
-.ro-sev{ font-size:10px; letter-spacing:.05em; text-transform:uppercase; font-weight:600; flex:0 0 62px; }
+.ro-sev{ font-size:var(--fs-caption); font-weight:600; flex:0 0 62px; }
 .ro-sev.sev-critical{ color:var(--error); font-weight:700; } .ro-sev.sev-high{ color:var(--error); } .ro-sev.sev-medium{ color:var(--warning); } .ro-sev.sev-low{ color:var(--text-400); }
 .ro-li-b{ color:var(--text-100); flex:1; min-width:0; }
+/* The device section's 24-month submission pace (fold F4): one month per cell, the count beside it. */
+.ro-pace{ display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:0 14px; }
+.ro-pace .ro-li{ border-top:none; padding:3px 0; }
 .ro-li-msg{ display:block; font-size:11px; color:var(--text-400); margin-top:2px; }
 .ro-disc{ margin:0 0 12px; padding:12px 14px; border-left:3px solid var(--warning); background:color-mix(in srgb,var(--warning) 6%,transparent); border-radius:var(--radius-lg); max-width:680px; }
-.ro-disc-h{ font-size:10px; letter-spacing:.06em; text-transform:uppercase; font-weight:600; color:var(--text-400); margin-bottom:4px; }
+.ro-disc-h{ font-size:var(--fs-caption); font-weight:600; color:var(--text-400); margin-bottom:4px; }
 .ro-disc-m{ font-size:12.5px; color:var(--text-100); margin-bottom:4px; }
 .ro-disc-s{ font-size:11.5px; color:var(--text-400); }
 .ro-disc-n{ font-size:11.5px; color:var(--text-400); margin-top:4px; font-style:italic; }
 .ro-rep-actions{ display:flex; gap:9px; flex-wrap:wrap; margin-top:8px; padding-top:16px; border-top:1px solid var(--border); }
+.ro-rep-held{ align-self:center; font-size:var(--fs-caption); color:var(--text-300); }
 
 /* ── Dashboard / portfolio / compare ── */
 .ro-dash{ max-width:900px; }
@@ -148,13 +156,13 @@
 .ro-dash-note{ display:flex; align-items:flex-start; gap:7px; font-size:11.5px; color:var(--text-400); line-height:1.5; margin-top:16px; }
 .ro-dash-note svg{ width:13px; height:13px; flex-shrink:0; margin-top:1px; }
 .rc-ana-scroll > .ro-dash-note{ margin-top:0; }
-.rc-composer > .ro-dash-note{ margin:0 0 9px; }
+.rc-canvas > .ro-dash-note:first-child{ margin:0 0 12px; }
 .ro-pack-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; }
 .ro-pack-card{ text-align:left; background:var(--bg-000); border:1px solid var(--border); border-radius:12px; padding:14px; cursor:pointer; transition:border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease); display:flex; flex-direction:column; gap:8px; }
 .ro-pack-card:hover{ border-color:var(--accent-200); transform:translateY(-1px); box-shadow:var(--shadow-sm,0 2px 8px rgba(20,20,19,.05)); }
 .ro-pack-card.is-locked{ cursor:default; opacity:.9; background:var(--bg-050); }
 .ro-pack-card.is-locked:hover{ transform:none; box-shadow:none; border-color:var(--border); }
-.ro-pack-fam{ display:flex; align-items:center; gap:6px; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--text-400); }
+.ro-pack-fam{ display:flex; align-items:center; gap:6px; font-size:var(--fs-caption); font-weight:600; color:var(--text-400); }
 .ro-pack-title{ font-size:13.5px; font-weight:600; color:var(--text-100); line-height:1.35; }
 .ro-pack-kpi{ display:flex; align-items:baseline; gap:6px; margin-top:auto; }
 .ro-pack-kpi .v{ font-size:20px; font-weight:600; color:var(--text-100); }
@@ -174,14 +182,9 @@
 /* ── Reporting library: catalog / run history / schedules / bundles ──
    The screens for the routes the 2026-10-01 reporting review left with no
    caller (ui-surface-registry.ui-v2.ts, the `insights` row). They live in the
-   artifact pane, so they inherit .rc-canvas padding and scrolling. All colour
+   views' column (`.rc-canvas`), under the page's own gutters. All colour
    comes from tokens so both themes and the contrast floor hold. */
-.rl-tabs{ display:flex; gap:6px; flex-wrap:wrap; border-bottom:1px solid var(--border); margin:0 0 18px; padding-bottom:12px; }
-.rl-tab{ display:inline-flex; align-items:center; gap:6px; background:var(--bg-000); border:1px solid var(--border); color:var(--text-300); font-size:12px; font-weight:600; padding:6px 12px; border-radius:999px; cursor:pointer; transition:background var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease); }
-.rl-tab:hover{ border-color:var(--accent-200); color:var(--accent-200); }
-.rl-tab.on{ background:var(--accent-strong); border-color:var(--accent-strong); color:var(--accent-on-strong); }
-.rl-tab svg{ width:13px; height:13px; }
-.rl-tab:focus-visible, .ro-port-open:focus-visible{ outline:2px solid var(--accent-200); outline-offset:2px; }
+.ro-port-open:focus-visible{ outline:2px solid var(--accent-200); outline-offset:2px; }
 .ro-port-open{ text-align:left; font:inherit; cursor:pointer; }
 .ro-port-open:hover{ border-color:var(--accent-200); }
 .rl-pagination{ display:flex; gap:12px; align-items:center; margin-top:16px; font-size:12px; color:var(--text-300); }
@@ -203,8 +206,9 @@
 .rl-card{ display:flex; flex-direction:column; gap:7px; background:var(--bg-000); border:1px solid var(--border); border-radius:12px; padding:13px; }
 .rl-card-h{ font-size:13.5px; font-weight:600; color:var(--text-100); line-height:1.4; }
 .rl-card-meta{ font-size:11px; color:var(--text-400); line-height:1.45; }
-.rl-card-run{ align-self:flex-start; display:inline-flex; align-items:center; gap:5px; margin-top:auto; background:var(--accent-strong); color:var(--accent-on-strong); border:none; border-radius:8px; padding:6px 11px; font-size:11.5px; font-weight:600; cursor:pointer; }
-.rl-card-run:disabled{ opacity:.5; cursor:default; }
+/* A card's Run is D0's `btn ghost`: eighteen cards were eighteen orange fills
+   under a header that already has the page's one primary. Placement only here. */
+.rl-card-run{ align-self:flex-start; margin-top:auto; }
 .rl-card-run svg{ width:12px; height:12px; }
 .rl-card-lock{ display:inline-flex; align-items:center; gap:5px; margin-top:auto; font-size:11px; font-weight:600; color:var(--warning); background:var(--warning-muted); padding:4px 9px; border-radius:999px; align-self:flex-start; }
 .rl-card-lock svg{ width:12px; height:12px; }
@@ -213,9 +217,14 @@
 .rl-nc-item{ display:flex; align-items:center; gap:7px; font-size:12px; color:var(--text-300); line-height:1.45; }
 
 .rl-table{ width:100%; border-collapse:collapse; background:var(--bg-000); }
+/* A wide register scrolls inside its own region, never the page (Reporting use walk, 2026-11-09: Run history and
+   Schedules pushed a 390px page sideways by 138px and 133px). Focusable, so a keyboard can scroll it. */
+.rl-table-scroll{ max-width:100%; overflow-x:auto; margin:0 0 12px; border-radius:10px; }
+.rl-table-scroll > .ro-table{ margin:0; }
+.rl-table-scroll:focus-visible{ outline:2px solid var(--accent-200); outline-offset:2px; }
 .rl-cap{ caption-side:top; text-align:left; font-size:11px; color:var(--text-400); padding:0 0 7px; }
 .rl-table th, .rl-table td{ text-align:left; font-size:12px; padding:9px 11px; border-bottom:1px solid var(--border); vertical-align:top; }
-.rl-table th{ font-weight:600; color:var(--text-400); font-size:10.5px; letter-spacing:.04em; text-transform:uppercase; background:var(--bg-050); }
+.rl-table th{ font-weight:600; color:var(--text-400); font-size:var(--fs-caption); background:var(--bg-050); }
 .rl-table td{ color:var(--text-200); }
 .rl-table tr:last-child td{ border-bottom:none; }
 .rl-pick-h{ width:62px; }
@@ -228,6 +237,13 @@
 .rl-tag[data-status="partial"], .rl-tag[data-status="draft"]{ color:var(--warning); background:var(--warning-muted); border-color:color-mix(in srgb,var(--warning) 32%,var(--border)); }
 
 .rl-form{ background:var(--bg-050); border:1px solid var(--border); border-radius:12px; padding:14px; margin:0 0 16px; }
+/* The legal-companion chooser at 390 scrolled the page sideways by 10px (Reporting re-walk,
+   2026-11-09). Its Download button's label ("Download reports and N selected legal
+   originals (ZIP)") is one nowrap line, wider than the column, and the fieldsets around it
+   take min-content by default. The fieldsets may shrink, and the button may wrap and grow
+   taller (D0's 32px stays its minimum); D0's .btn elsewhere is unchanged. */
+.rl-form fieldset{ min-width:0; }
+.rl-form fieldset > .btn{ height:auto; min-height:32px; padding-top:7px; padding-bottom:7px; white-space:normal; line-height:1.3; max-width:100%; text-align:left; }
 
 /* ── A run's Part 11 evidence: the seal read back, and what the run read ──
    A disclosure, not a hover: an inspector reads this, and a hover cannot be
@@ -256,7 +272,7 @@
 .rl-ev-dl dd{ color:var(--text-200); margin:0; }
 .rl-ev-hash{ font-family:var(--font-mono); font-size:11px; word-break:break-all; }
 
-@media (max-width:1000px){ .rc{ grid-template-columns:340px 1fr; } .rl-head{ flex-direction:column; } }
+@media (max-width:1000px){ .rl-head{ flex-direction:column; } }
 }
 
 @keyframes rcpulse{ 0%,60%,100%{ opacity:.3; } 30%{ opacity:1; } }

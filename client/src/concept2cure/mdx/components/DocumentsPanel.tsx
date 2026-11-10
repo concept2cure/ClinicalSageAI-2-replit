@@ -92,11 +92,21 @@ export interface DocumentsPanelProps {
   /** Optional filter row across frameworks. Hidden when fewer than two. */
   frameworks?: KitDocFramework[];
   /** Open the document in the appropriate editor. */
-  onOpenEditor?: (docId: string) => void;
+  /** Opens the row's record, given its id and the row. When omitted a row is
+   *  text, not a button: a control that opens nothing is a dead end (MDX
+   *  journey M1, 2026-11-01). */
+  onOpenEditor?: (docId: string, doc: KitDocument) => void;
   /** AnA handoff. When omitted, the "draft next section" chip hides. */
   onAskAna?: (text: string) => void;
   /** Density modifier — `compact` reduces row padding for high-volume surfaces. */
   density?: 'comfortable' | 'compact';
+}
+
+/** The row's main area: a button when it opens something, otherwise plain content. */
+function RowMain({ onOpen, children }: { onOpen?: () => void; children: React.ReactNode }) {
+  return onOpen
+    ? <button className="docs-row-main" onClick={onOpen} type="button">{children}</button>
+    : <div className="docs-row-main">{children}</div>;
 }
 
 export function DocumentsPanel({
@@ -178,11 +188,7 @@ export function DocumentsPanel({
                   which is invalid HTML and gives unpredictable keyboard/AT
                   behaviour. The main click now lives on this inner button and
                   the chip below is its own button. */}
-              <button
-                className="docs-row-main"
-                onClick={() => onOpenEditor?.(d.id)}
-                type="button"
-              >
+              <RowMain onOpen={onOpenEditor ? () => onOpenEditor(d.id, d) : undefined}>
               <div className="docs-rail" />
               <div className="docs-body">
                 <div className="docs-head">
@@ -268,7 +274,7 @@ export function DocumentsPanel({
                   </div>
                 )}
               </div>
-              </button>
+              </RowMain>
               <div className="docs-actions">
                 {onAskAna && (
                   <button
@@ -281,7 +287,7 @@ export function DocumentsPanel({
                     {I.sparkles}
                   </button>
                 )}
-                <span className="docs-open" aria-hidden="true">{I.arrowRight}</span>
+                {onOpenEditor && <span className="docs-open" aria-hidden="true">{I.arrowRight}</span>}
               </div>
             </div>
           );

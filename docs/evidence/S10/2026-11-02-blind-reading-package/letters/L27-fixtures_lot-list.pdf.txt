@@ -1,0 +1,16 @@
+DEPARTMENT OF HEALTH AND HUMAN SERVICES
+Food and Drug Administration
+IND 123456
+INFORMATION REQUEST
+Dear Dr. Example:
+We have the following requests for information:
+1. Provide the release results for the clinical lots listed below:
+(1) Lot 21-001 (Phase 1 supply)
+(2) Lot 21-002 (Phase 2 supply)
+2. Provide the stability protocol.
+3. Provide the batch formula.
+Sincerely,
+Jane Reviewer
+Reference ID: 5123456
+
+-- 1 of 1 --

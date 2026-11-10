@@ -64,7 +64,8 @@ import { renderStructuredLeafPdf } from '../../ectd/leaf-pdf-renderer';
 import { assessLeafPdfSecurity } from '../../ectd/leaf-pdf-security';
 import { isPdfLeaf } from '../../ectd/pdfa-detect';
 import { readXfaDatasetsValues } from '../../forms/fill-official-pdf';
-import { loadAuthoredDeviceSections, type DeviceContentClient } from './estar-content-leaves';
+import { governedDeviceFilingAgreement, loadAuthoredDeviceSections, type DeviceContentClient } from './estar-content-leaves';
+import { filedCopyDivergedSentence, type FilingAgreementForFiling } from '../../c2c/filing-section-target';
 import {
   ATTACHMENT_PATH_MAX_LENGTH,
   attachmentDataObjectName,
@@ -519,8 +520,17 @@ export function createDeviceAttachmentResolver(
   input: DeviceAttachmentResolverInput,
 ): EstarAttachmentResolver & { assertCurrent(): Promise<void> } {
   let sections: Awaited<ReturnType<typeof loadAuthoredDeviceSections>> | null = null;
+  let agreement: FilingAgreementForFiling | null = null;
   const resolvedVault = new Map<string,string>();
   const resolvedSections = new Map<string,unknown>();
+  /* P-29.3: the filing this resolver renders from must hold the text its
+     document holds. Asked of the SAME governed document the section load reads
+     (same programId, same docTypes, same client), once per resolver like the
+     load itself, and asked again at delivery by assertCurrent. */
+  const filingAgreement = () => governedDeviceFilingAgreement(input.organizationId, input.programUuid!, {
+    docTypes: input.docTypes,
+    client: input.client,
+  });
 
   const resolve: EstarAttachmentResolver = async (source) => {
     try {
@@ -558,6 +568,18 @@ export function createDeviceAttachmentResolver(
             'attachment slot.',
         };
       }
+      /* A FINALIZED SECTION IS NOT YET A FILED ONE. `substantive` reads the
+         filing's own status and text; whether that text is still the text of
+         the document the author edits and signs is a different question, and
+         a named CDRH attachment slot is where the answer is filed with FDA. */
+      agreement ??= await filingAgreement();
+      const rewritten = agreement.rewritten.filter((d) => d.key === source.sectionCode);
+      if (rewritten.length > 0) {
+        return {
+          ok: false,
+          reason: `Section "${source.sectionCode}" (${section.title}) was not attached. ${filedCopyDivergedSentence(rewritten)}`,
+        };
+      }
       resolvedSections.set(source.sectionCode,section);
       const bytes = await renderStructuredLeafPdf(
         [{ heading: section.title, body: section.content, sectionCode: section.sectionCode }],
@@ -589,6 +611,13 @@ export function createDeviceAttachmentResolver(
       const current=await loadAuthoredDeviceSections(input.organizationId,{programId:input.programUuid!,docTypes:input.docTypes,client:input.client});
       for (const [code,section] of resolvedSections) if (!isDeepStrictEqual(current.find(s=>s.sectionCode===code),section)) {
         throw new ProgramReadAccessError(409,'ESTAR_ATTACHMENT_SOURCE_CHANGED','An authored attachment changed while the export was being prepared.');
+      }
+      /* The filed rows are unchanged, but the document's text may not be: an
+         editor save whose re-filing did not land leaves the rendered PDF
+         holding the filing's text and not the document's. */
+      const moved = (await filingAgreement()).rewritten.filter((d) => resolvedSections.has(d.key));
+      if (moved.length > 0) {
+        throw new ProgramReadAccessError(409,'FILING_DIVERGED',`The eSTAR was not delivered. ${filedCopyDivergedSentence(moved)}`);
       }
     }
     await assertDeviceAttachmentAccess(input,true);

@@ -68,8 +68,14 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { Biostatistics } from '../surfaces/Biostatistics';
+import { isStatisticalSave, statisticalSaveReceipt } from './_statistical-handoff-fixture';
 
-const ATTACH = /File it to the dossier/i;
+/* 2026-10-31: the control was "File it to the dossier" and filed nothing — it
+   saved a working document, as "Open in document editor" does. It now says
+   what it does; filing is the editor's "Place into filing". With no study
+   design loaded the page is on a worked example, so the control says it saves
+   the EXAMPLE. */
+const ATTACH = /Save (the example )?as a working document/i;
 
 /* The deterministic statistical engine. POST /api/ana-biostats/compute sizes
    and judges the design; POST /api/ana-biostats/document generates the governed
@@ -118,11 +124,24 @@ const blank = () => ({ ok: true, status: 200, json: async () => ({ success: true
 
 /** Serve the engine, plus whatever the case under test wants to override. */
 function serve(over: (m: string, u: string) => any = () => null) {
+  const saved = new Map<string, ReturnType<typeof statisticalSaveReceipt>>();
   apiRequest.mockImplementation(async (..._a: unknown[]) => {
     const m = String(_a[0]);
     const u = String(_a[1]);
     const o = over(m, u);
     if (o) return o;
+    if (m === 'POST' && isStatisticalSave(u, _a[2])) {
+      const receipt = statisticalSaveReceipt(_a[2], `D-9-${_a[2].documentType}`);
+      saved.set(receipt.data.doc.id, receipt);
+      return { ok: true, status: 201, json: async () => receipt };
+    }
+    if (m === 'GET' && u.startsWith('/api/authoring/docs/D-9-')) {
+      const [, id, sections] = /\/docs\/([^/]+)(\/sections)?$/.exec(u) ?? [];
+      const receipt = saved.get(id);
+      return { ok: !!receipt, status: receipt ? 200 : 404, json: async () => receipt
+        ? sections ? { success: true, sections: receipt.data.sections } : { success: true, document: receipt.data.doc }
+        : { success: false } };
+    }
     if (m === 'POST' && u === '/api/ana-biostats/compute') return { ok: true, status: 200, json: async () => ENGINE_COMPUTE };
     if (m === 'POST' && u === '/api/ana-biostats/document') return { ok: true, status: 200, json: async () => ENGINE_DOCUMENT };
     return blank();
@@ -168,9 +187,40 @@ describe('Biostatistics — the attach control reports only what the server conf
     await settle();
 
     // The binding write, not a sentence into the conversation — in the project.
-    const create = apiRequest.mock.calls.find((c: unknown[]) => String(c[1]).includes('/api/authoring/docs'));
+    const create = apiRequest.mock.calls.find((c: unknown[]) => isStatisticalSave(c[1], c[2]));
     expect(create).toBeDefined();
-    expect(create?.[2]).toMatchObject({ client_program_id: PROGRAM });
+    expect(create?.[2]).toMatchObject({ programId: PROGRAM, basis: { kind: 'worked_example' } });
+  });
+
+  /* 2026-10-31 audit: clicks minted another working document. The same
+     document, unchanged, for the same project, source and type is saved once —
+     including after saving another document type in between, which the
+     hand-off's one lane (it remembers only its last payload) did not catch. */
+  it('saves the same document once, and says so instead of writing a second copy', async () => {
+    serve();
+    const creates = () => apiRequest.mock.calls.filter((c: unknown[]) => c[0] === 'POST' && isStatisticalSave(c[1], c[2]));
+    mount();
+    await docOnScreen();
+    fireEvent.click(screen.getByRole('button', { name: ATTACH }));
+    await waitFor(() => expect(document.querySelector('.de-toast')?.textContent ?? '').toMatch(/saved/i));
+    expect(creates()).toHaveLength(1);
+    // The example is saved as an example, never as the project's own document.
+    expect(creates()[0][2]).toMatchObject({ basis: { kind: 'worked_example' } });
+    expect(document.querySelector('.de-toast')?.textContent ?? '').not.toMatch(/filed to the dossier/i);
+
+    // Another document type in between: a second, different document.
+    fireEvent.click(screen.getByRole('button', { name: 'DSMB / DMC Charter' }));
+    await docOnScreen();
+    fireEvent.click(screen.getByRole('button', { name: ATTACH }));
+    await waitFor(() => expect(creates()).toHaveLength(2));
+
+    // Back to the rationale, unchanged: reused, nothing written.
+    fireEvent.click(screen.getByRole('button', { name: 'Sample Size Rationale' }));
+    await docOnScreen();
+    await waitFor(() => expect(screen.getByRole('button', { name: ATTACH })).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: ATTACH }));
+    await waitFor(() => expect(document.querySelector('.de-toast')?.textContent ?? '').toMatch(/Already saved/));
+    expect(creates()).toHaveLength(2);
   });
 
   it('with no project open, files nothing, reports no filing, and says why (PF-07)', async () => {
@@ -182,6 +232,7 @@ describe('Biostatistics — the attach control reports only what the server conf
 
     const urls = apiRequest.mock.calls.map((c: unknown[]) => String(c[1]));
     expect(urls.some((u) => u.includes('/api/authoring/docs'))).toBe(false);
+    expect(apiRequest.mock.calls.some(c => isStatisticalSave(c[1], c[2]))).toBe(false);
     const body = document.body.textContent ?? '';
     expect(/filed to the dossier/i.test(body)).toBe(false);
     expect(body).toMatch(/open a project first/i);
@@ -189,7 +240,7 @@ describe('Biostatistics — the attach control reports only what the server conf
 
   it('does not report a filing when the server refuses it', async () => {
     serve((_m, u) =>
-      u.includes('/api/authoring/docs')
+      isStatisticalSave(u, apiRequest.mock.calls.at(-1)?.[2])
         ? { ok: false, status: 403, json: async () => ({ error: 'FORBIDDEN', message: 'Not permitted.' }) }
         : null,
     );
@@ -210,7 +261,7 @@ describe('Biostatistics — the attach control reports only what the server conf
     // which is a different failure and would pass this assertion for the wrong
     // reason.
     serve((_m, u) => {
-      if (u.includes('/api/authoring/docs')) throw new Error('transport down');
+      if (isStatisticalSave(u, apiRequest.mock.calls.at(-1)?.[2])) throw new Error('transport down');
       return null;
     });
     mount();

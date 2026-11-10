@@ -1,0 +1,155 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > atomically saves the statistical document and its source basis, then navigates 540ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > never writes the retired localStorage note 328ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > scopes the document to the open project, like every project-aware surface 318ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > a double click creates ONE document, not two 319ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > hands off the document the user actually chose 369ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor: every way it can fail > does NOT navigate when the document create fails — and saves no section 305ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor: every way it can fail > says so, and stays put, when the session is not authenticated 291ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor: every way it can fail > does NOT navigate when the atomic receipt omits the saved section 284ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor: every way it can fail > does NOT navigate when the request throws 293ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > ReportEngine — Open in editor > creates the document and section from the AnswerLead action, then navigates 75ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > ReportEngine — Open in editor > the document-bar button runs the same handoff 51ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > ReportEngine — Open in editor > does NOT navigate when the document create fails 55ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > ReportEngine — Open in editor > does NOT navigate when the section create fails 50ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > CmcModule change simulator — Open in editor > creates the document and section carrying the assessment, then navigates 162ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > CmcModule change simulator — Open in editor > does NOT navigate when the document create fails — the assessment stays on screen 158ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > CmcModule change simulator — Open in editor > does NOT navigate when the section create fails 149ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Open in editor with no project open — nothing is created (PF-07) > Biostatistics posts nothing, stays put, and says to open a project 276ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Open in editor with no project open — nothing is created (PF-07) > a legacy numeric workspace id is not a project — Biostatistics still posts nothing 287ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Open in editor with no project open — nothing is created (PF-07) > ReportEngine posts nothing, stays put, and says to open a project 52ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Open in editor with no project open — nothing is created (PF-07) > CmcModule change simulator posts nothing, stays put, and says to open a project 134ms
+(node:51) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > lists the program's persisted designs with their statistical readiness 419ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > with a project open, its first design loads on arrival, seeded from the server adapter, not from a preset 296ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > loads the design handed over on the navigation channel 78ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > a design the server could not size shows its blocking gap and disables the write-back 312ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > summarises the engine's figures in the section heading, once 190ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > says "Not sized" in that heading for a design the engine could not size 181ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > files the document under the module the placement catalog names, and says where 505ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > applying the sample size requires a reason and reports only what the server confirmed 399ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > a refused write-back is shown as the refusal, never as success 399ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > raising tasks posts exactly the chosen keys and skips what is already on the board 279ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > renders the statistical review as a risk table with the verdict and each row's finding 222ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > traces each finding to its gates in the row's title, and prints no gate code on screen 191ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — the loaded design, where and when it shows > renders the assessment and the review full width, not in the 300px design column 72ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — the loaded design, where and when it shows > with a project open, never sizes a worked example before the project's design arrives 1060ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — the ask row is named for a screen reader > exposes the starters as a group with an accessible name 35ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge, cross-links > cross-links open the protocol workspace, the task board and the submission center 329ms
+(node:59) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ client/src/concept2cure/v2/__tests__/biostatServerEngine.test.tsx > Biostatistics — a preset is a worked example, not the person's study > says so until a design is loaded — an edited example is still an example 542ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatServerEngine.test.tsx > Biostatistics — the statistics come from the server engine > exports no in-browser statistics engine at all 1ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatServerEngine.test.tsx > Biostatistics — the statistics come from the server engine > posts the design to the engine in its StatisticalInput shape 222ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatServerEngine.test.tsx > Biostatistics — the statistics come from the server engine > renders the engine’s figures and none the browser could have produced 237ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatServerEngine.test.tsx > Biostatistics — the statistics come from the server engine > renders the engine’s verdict, not a second judgment written in the browser 220ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatServerEngine.test.tsx > Biostatistics — the statistics come from the server engine > re-asks the engine when a design input changes, and never answers locally 430ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatServerEngine.test.tsx > Biostatistics — the statistics come from the server engine > takes the governed document from the engine, built on the engine’s own result 219ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatServerEngine.test.tsx > Biostatistics — the statistics come from the server engine > hands the engine’s document — not a browser draft — to the authoring store 305ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatServerEngine.test.tsx > Biostatistics — an engine refusal is shown as the engine’s own sentence > shows a 422 refusal verbatim, with no result and no document beside it 235ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatServerEngine.test.tsx > Biostatistics — an engine refusal is shown as the engine’s own sentence > shows the normalizer’s own errors when the engine returns no computation 239ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatServerEngine.test.tsx > Biostatistics — an engine refusal is shown as the engine’s own sentence > says the session is not signed in rather than showing an empty design 228ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatServerEngine.test.tsx > Biostatistics — an engine refusal is shown as the engine’s own sentence > an in-flight compute is a stated wait, not an empty result 235ms
+(node:67) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > specialist document identity through the existing editor channel > Reporting publishes the exact confirmed document, project and section before navigation 318ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > specialist document identity through the existing editor channel > double clicking the real open control starts one two-request writer 89ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > a real token refresh of the same authenticated account preserves the pending handoff 127ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > same-project metadata updates retain the pending handoff and its exact identity 137ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > project change suppresses navigation after a committed section response 157ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > project-away-and-back change suppresses navigation after a committed section response 148ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > account change suppresses navigation after a committed section response 139ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > organization change suppresses navigation after a committed section response 140ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > a new project never receives the older request’s refusal status 120ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > unmounting the specialist prevents its old success from navigating another host 110ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > Biostatistics distinguishes saved working documents from filed documents > binding false cannot become a dossier-filed claim 299ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > Biostatistics distinguishes saved working documents from filed documents > binding null cannot become a dossier-filed claim 289ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > other existing specialist controls use the exact editor target > CMC change refuses deferred assessment when launch scope is true 18ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > other existing specialist controls use the exact editor target > CMC change refuses deferred assessment when launch scope is null 23ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > other existing specialist controls use the exact editor target > CMC change retains doc, project and code at actual navigation 72ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > other existing specialist controls use the exact editor target > CMC quality retains doc, project and code at actual navigation 60ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > other existing specialist controls use the exact editor target > Biostatistics Open passes its saved document rather than depending on list order 283ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > non-navigating specialist insertions retain their current host status > calculator does not toast an old write into a new project 266ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > non-navigating specialist insertions retain their current host status > PV does not toast an old write into a new project 166ms
+(node:75) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > independent actual caller recovery admission > Biostatistics Open and Attach share one synchronous creation lane 551ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > independent actual caller recovery admission > Reporting retains an unknown document attempt and prevents repeat creation 134ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > independent actual caller recovery admission > Reporting retains a known document after a lost section response 90ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > the five existing modules retain uncertain writes beside their real controls > Biostatistics cannot create a second document while the first identity is unknown 357ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > the five existing modules retain uncertain writes beside their real controls > calculator cannot create a second document while the first identity is unknown 313ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > the five existing modules retain uncertain writes beside their real controls > PV cannot create a second document while the first identity is unknown 207ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > the five existing modules retain uncertain writes beside their real controls > CMC change cannot create a second document while the first identity is unknown 87ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > the five existing modules retain uncertain writes beside their real controls > CMC quality cannot create a second document while the first identity is unknown 83ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > read-only recovery and deliberate saved-text continuation > checks a known parent and resumes only the original section payload after the source result changes 165ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > read-only recovery and deliberate saved-text continuation > preserves a matching section code with different text and opens that exact row only on inspection 108ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > read-only recovery and deliberate saved-text continuation > a scoped inventory check never guesses which unknown document response belonged to this request 104ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > read-only recovery and deliberate saved-text continuation > repeated explicit open reuses the exact confirmed receipt without another document or section write 79ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > late explicit recovery cannot publish across account or project visits > project-away-and-back suppresses a late inventory check 107ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > late explicit recovery cannot publish across account or project visits > account suppresses a late inventory check 78ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > late explicit recovery cannot publish across account or project visits > organization suppresses a late inventory check 77ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > late explicit recovery cannot publish across account or project visits > unmount suppresses a late inventory check 73ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > late explicit recovery cannot publish across account or project visits > an older check finalizer cannot release a newer project save 96ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > late explicit recovery cannot publish across account or project visits > an older continuation finalizer cannot release a newer project save 120ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > fresh verification preserves intervening saved work > a section saved after Check prevents section-only continuation from overwriting it 120ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > fresh verification preserves intervening saved work > the confirmed empty document opens without inventing a section target 93ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > fresh verification preserves intervening saved work > an empty section list cannot establish a parent missing from the scoped inventory 98ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > fresh verification preserves intervening saved work > a repeated completed action stays held after missing-section instead of creating another copy 88ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > fresh verification preserves intervening saved work > a repeated completed action stays held after refused-read instead of creating another copy 89ms
+(node:83) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ client/src/concept2cure/v2/__tests__/biostatAttachHonesty.test.tsx > Biostatistics — the attach control reports only what the server confirmed > files the document through the real authoring path 480ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatAttachHonesty.test.tsx > Biostatistics — the attach control reports only what the server confirmed > saves the same document once, and says so instead of writing a second copy 626ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatAttachHonesty.test.tsx > Biostatistics — the attach control reports only what the server confirmed > with no project open, files nothing, reports no filing, and says why (PF-07) 267ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatAttachHonesty.test.tsx > Biostatistics — the attach control reports only what the server confirmed > does not report a filing when the server refuses it 279ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatAttachHonesty.test.tsx > Biostatistics — the attach control reports only what the server confirmed > does not report a filing when the transport throws 282ms
+(node:91) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ client/src/concept2cure/v2/__tests__/biostatGovernedDocRows.test.tsx > Biostatistics — governed document rows > opens the generator for a row that HAS a recorded statistical type 103ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatGovernedDocRows.test.tsx > Biostatistics — governed document rows > renders the untyped row as DISABLED rather than as a button that declines 30ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatGovernedDocRows.test.tsx > Biostatistics — governed document rows > says on the row why it cannot be opened 28ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatGovernedDocRows.test.tsx > Biostatistics — governed document rows > leaves the generator alone when the untyped row is clicked 34ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatGovernedDocRows.test.tsx > Biostatistics — governed document rows > does not describe an untyped artifact as a document type it does not have 30ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatGovernedDocRows.test.tsx > Biostatistics — governed document rows > keeps the artifact id reachable on the row, and off its face 32ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatGovernedDocRows.test.tsx > Biostatistics — governed document rows > says a stored status as a word, never as the token the store holds 27ms
+(node:99) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > returns the exact document, project and section code with its binding outcome 3ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 0 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 1 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 2 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 3 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 4 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 0 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 1 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 2 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 3 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 4 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not claim nothing was saved after a lost document response 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains confirmed document identity after a lost section response 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a project change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a project-round-trip change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a account change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a organization change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a session change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > rechecks scope after reading the response body 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > allows same-project metadata updates for the unchanged account 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > opens the exact saved target and refuses a later project or account change 1ms
+
+ Test Files  8 passed (8)
+      Tests  123 passed (123)
+   Start at  09:28:50
+   Duration  28.97s (transform 1.61s, setup 563ms, import 3.33s, tests 21.12s, environment 3.01s)
+

@@ -1138,7 +1138,7 @@ describe('Enhanced: SAP Document Content', () => {
     );
 
     expect(doc.content).toContain('Estimand Framework');
-    expect(doc.content).toContain('treatment_policy');
+    expect(doc.content).toContain('Treatment policy');
     expect(doc.content).toContain('ICH E9(R1)');
   });
 });

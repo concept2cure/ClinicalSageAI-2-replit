@@ -1,0 +1,35 @@
+Each guard in server/services/legacy-importer/filed-sequence-reader.ts was removed
+in turn and the reader's two test files run against the mutated reader
+(filed-sequence-reader-refuses.test.ts, filed-sequence-reader-round-trip.test.ts;
+40 tests). The reader was restored byte-for-byte after each (cmp). 2026-11-01, on
+concept2cure-v2 at 8b8c6bc1 plus this change, against the reader as committed.
+
+== mutation: checksum compare removed
+ x filed-sequence-reader-refuses.test.ts > the reader refuses, naming the leaf > a leaf whose bytes are not the ones its backbone checksums
+      Tests  1 failed | 39 passed (40)
+== mutation: archive limits not applied
+ x filed-sequence-reader-refuses.test.ts > the reader refuses a backbone or a sequence, naming it > an archive over the upload limits, before inflating it (SEC-17)
+      Tests  1 failed | 39 passed (40)
+== mutation: unknown wrapper element accepted
+ x filed-sequence-reader-refuses.test.ts > the reader refuses, naming the leaf > a leaf under a heading this tree does not know and whose name encodes no section, rather than guessing its section
+      Tests  1 failed | 39 passed (40)
+== mutation: entity pre-check removed
+ x filed-sequence-reader-refuses.test.ts > the reader refuses a backbone or a sequence, naming it > a backbone that declares entities or an internal subset, before parsing it
+      Tests  1 failed | 39 passed (40)
+== mutation: href containment removed
+ x filed-sequence-reader-refuses.test.ts > the reader refuses, naming the leaf > a href out of the sequence, without reading it
+      Tests  1 failed | 39 passed (40)
+== mutation: pointer binding skipped
+ x filed-sequence-reader-refuses.test.ts > pointers between sequences in one archive > binds a replace to the leaf it names, and refuses one that names no leaf there
+ x filed-sequence-reader-refuses.test.ts > pointers between sequences in one archive > leaves a pointer to a sequence the archive does not hold for the filed state to bind, and says so
+ x filed-sequence-reader-refuses.test.ts > pointers between sequences in one archive > refuses a pointer into the archive that names no sequence's backbone
+ x filed-sequence-reader-refuses.test.ts > pointers between sequences in one archive > refuses a pointer at a later sequence
+ x filed-sequence-reader-round-trip.test.ts > a filed sequence reads back as the manifest its filing recorded > sequence 0002: every leaf, with its section, file, href, md5, act, pointer, title and backbone ID
+ x filed-sequence-reader-round-trip.test.ts > a filed sequence reads back as the manifest its filing recorded > folds into the same filed state as the sequences the platform filed itself
+      Tests  6 failed | 34 passed (40)
+== mutation: index-md5 compare removed
+ x filed-sequence-reader-refuses.test.ts > the reader refuses a backbone or a sequence, naming it > an index.xml whose index-md5.txt does not hold its MD5, or is absent
+      Tests  1 failed | 39 passed (40)
+== mutation: pointer form check removed
+ x filed-sequence-reader-refuses.test.ts > pointers between sequences in one archive > refuses a pointer at a sequence outside the archive that names no leaf ID, rather than leaving it to be bound
+      Tests  1 failed | 39 passed (40)

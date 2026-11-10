@@ -1,0 +1,99 @@
+# S5a pharmacovigilance red: server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts on trunk ffdfed428. 39 of 56 fail; the 17 controls pass.
+
+ ✓ server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > the six pharmacovigilance tools compute from stated facts > 'classify_expedited_reporting' reaches its engine with a stated basis 8ms
+ ✓ server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > the six pharmacovigilance tools compute from stated facts > 'assess_pv_causality' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > the six pharmacovigilance tools compute from stated facts > 'plan_aggregate_safety_report' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > the six pharmacovigilance tools compute from stated facts > 'detect_safety_signal' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > the six pharmacovigilance tools compute from stated facts > 'assess_signal_priority' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > the six pharmacovigilance tools compute from stated facts > 'design_pv_system' reaches its engine with a stated basis 1ms
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > 'classify_expedited_reporting' keeps each boolean answer as stated > fromInterventionalStudy reads not_stated when omitted or null, and is refused when malformed 19ms
+   → expected { …(11) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > 'classify_expedited_reporting' keeps each boolean answer as stated > occurredInEU reads not_stated when omitted or null, and is refused when malformed 5ms
+   → expected { …(11) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > 'assess_pv_causality' keeps each boolean answer as stated > informationSufficient reads not_stated when omitted or null, and is refused when malformed 4ms
+   → expected { naranjoScore: 6, …(10) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > 'plan_aggregate_safety_report' keeps each boolean answer as stated > marketed reads not_stated when omitted or null, and is refused when malformed 3ms
+   → expected { …(4) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > 'plan_aggregate_safety_report' keeps each boolean answer as stated > inDevelopment reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { …(4) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > 'plan_aggregate_safety_report' keeps each boolean answer as stated > onEURDList reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { …(4) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > 'plan_aggregate_safety_report' keeps each boolean answer as stated > withinFirstThreeYearsUS reads not_stated when omitted or null, and is refused when malformed 3ms
+   → expected { …(4) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > 'detect_safety_signal' keeps each boolean answer as stated > designatedMedicalEvent reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { table: { a: 2, b: 98, …(2) }, …(6) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > 'assess_signal_priority' keeps each boolean answer as stated > vulnerablePopulation reads not_stated when omitted or null, and is refused when malformed 4ms
+   → expected { priorityTier: 'medium', …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > 'assess_signal_priority' keeps each boolean answer as stated > designatedMedicalEvent reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { priorityTier: 'medium', …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > 'design_pv_system' keeps each boolean answer as stated > newActiveSubstance reads not_stated when omitted or null, and is refused when malformed 3ms
+   → expected { Object (components, qppvRequired, ...) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > 'design_pv_system' keeps each boolean answer as stated > hasImportantRisks reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { Object (components, qppvRequired, ...) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > 'design_pv_system' keeps each boolean answer as stated > euMarketingAuthorization reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { Object (components, qppvRequired, ...) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > the six definitions say what an omitted flag means > 'classify_expedited_reporting' describes each flag when omitted, and claims no default 2ms
+   → fromInterventionalStudy: expected 'Whether the case arises from an inter…' to match /omitted|Required when/
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > the six definitions say what an omitted flag means > 'assess_pv_causality' describes each flag when omitted, and claims no default 1ms
+   → informationSufficient: expected 'Whether the available information is …' to match /omitted|Required when/
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > the six definitions say what an omitted flag means > 'plan_aggregate_safety_report' describes each flag when omitted, and claims no default 1ms
+   → marketed: expected 'Whether the product is marketed somew…' to match /omitted|Required when/
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > the six definitions say what an omitted flag means > 'detect_safety_signal' describes each flag when omitted, and claims no default 1ms
+   → designatedMedicalEvent: expected 'Whether the event is a Designated/Imp…' to match /omitted|Required when/
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > the six definitions say what an omitted flag means > 'assess_signal_priority' describes each flag when omitted, and claims no default 1ms
+   → vulnerablePopulation: expected 'Whether a vulnerable population (paed…' to match /omitted|Required when/
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > the six definitions say what an omitted flag means > 'design_pv_system' describes each flag when omitted, and claims no default 1ms
+   → newActiveSubstance: expected 'Whether the product is a new active s…' to match /omitted|Required when/
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > a required fact is refused by name, never defaulted > 'classify_expedited_reporting' refuses without 'serious' 2ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > a required fact is refused by name, never defaulted > 'classify_expedited_reporting' refuses without 'region' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > a required fact is refused by name, never defaulted > 'classify_expedited_reporting' refuses without 'stage' 2ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > a required fact is refused by name, never defaulted > 'plan_aggregate_safety_report' refuses without 'region' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > a required fact is refused by name, never defaulted > 'detect_safety_signal' refuses without 'd' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > a required fact is refused by name, never defaulted > 'assess_signal_priority' refuses without 'strengthOfEvidence' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > a required fact is refused by name, never defaulted > 'design_pv_system' refuses without 'region' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > classify_expedited_reporting chooses no clock or rule set from an omitted fact > gives an expedited development case no 7- or 15-day clock when seriousnessCriteria is 'omitted' 1ms
+   → expected undefined to be 'not_stated' // Object.is equality
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > classify_expedited_reporting chooses no clock or rule set from an omitted fact > gives an expedited development case no 7- or 15-day clock when seriousnessCriteria is 'empty for a serious case' 1ms
+   → expected undefined to be 'not_stated' // Object.is equality
+ ✓ server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > classify_expedited_reporting chooses no clock or rule set from an omitted fact > keeps the clock the stated [ 'death' ] choose: 7 days 1ms
+ ✓ server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > classify_expedited_reporting chooses no clock or rule set from an omitted fact > keeps the clock the stated [ 'life_threatening' ] choose: 7 days 0ms
+ ✓ server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > classify_expedited_reporting chooses no clock or rule set from an omitted fact > keeps the clock the stated [ 'hospitalization' ] choose: 15 days 0ms
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > classify_expedited_reporting chooses no clock or rule set from an omitted fact > refuses seriousnessCriteria that is not a list of the ICH E2A criteria 2ms
+   → expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > classify_expedited_reporting chooses no clock or rule set from an omitted fact > asks which rules apply when stage is "both" and fromInterventionalStudy is omitted 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > classify_expedited_reporting chooses no clock or rule set from an omitted fact > does not read an omitted occurredInEU as non-EEA for a non-serious postmarketing case 10ms
+   → expected { region: 'eu', …(6) } to match object { reportable: null, clock: null }
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > assess_pv_causality assigns no WHO-UMC category without a stated sufficiency > keeps the Naranjo score and withholds the WHO-UMC category and its agreement 2ms
+   → expected { naranjoScore: 6, …(10) } to match object { naranjoScore: 6, …(3) }
+ ✓ server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > assess_pv_causality assigns no WHO-UMC category without a stated sufficiency > keeps the stated answer: true gives 'probable' 1ms
+ ✓ server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > assess_pv_causality assigns no WHO-UMC category without a stated sufficiency > keeps the stated answer: false gives 'unassessable' 0ms
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > plan_aggregate_safety_report schedules no cadence from an omitted fact > does not default the PADER to quarterly when withinFirstThreeYearsUS is omitted 1ms
+   → expected 'Quarterly for the first 3 years after…' to match /^Not assessed/
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > plan_aggregate_safety_report schedules no cadence from an omitted fact > does not bypass the EURD list when onEURDList is omitted 1ms
+   → expected 'Every 6 months (first 2 years after a…' to match /^Not assessed/
+ ✓ server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > plan_aggregate_safety_report schedules no cadence from an omitted fact > keeps the stated schedule 1ms
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > detect_safety_signal applies no case-count threshold from an omitted DME status > leaves 1-2 cases undetermined when designatedMedicalEvent is omitted 1ms
+   → expected false to be null
+ ✓ server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > detect_safety_signal applies no case-count threshold from an omitted DME status > keeps the stated DME answer true 1ms
+ ✓ server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > detect_safety_signal applies no case-count threshold from an omitted DME status > keeps the stated DME answer false 0ms
+ ✓ server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > detect_safety_signal applies no case-count threshold from an omitted DME status > decides without DME status when the count criterion holds either way 0ms
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > assess_signal_priority gives a tier only when the unstated modifiers cannot move it > withholds the tier when an omitted modifier could cross a boundary 1ms
+   → expected { priorityTier: 'medium', …(8) } to match object { priorityTier: 'not_assessed', …(2) }
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > assess_signal_priority gives a tier only when the unstated modifiers cannot move it > keeps a tier the omitted modifiers cannot change 1ms
+   → expected { priorityTier: 'high', …(8) } to match object { priorityTier: 'high', …(2) }
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > assess_signal_priority gives a tier only when the unstated modifiers cannot move it > scores the stated modifiers 1ms
+   → expected { priorityTier: 'medium', …(8) } to match object { priorityTier: 'medium', …(2) }
+ × server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > design_pv_system leaves an obligation open when the fact that decides it is omitted > does not assume an EU authorisation or the absence of risks 1ms
+   → expected { Object (components, qppvRequired, ...) } to match object { qppvRequired: null, …(2) }
+ ✓ server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > design_pv_system leaves an obligation open when the fact that decides it is omitted > decides from a stated fact that settles it alone 0ms
+ ✓ server/services/ana/__tests__/pharmacovigilance-unstated-inputs.test.ts > design_pv_system leaves an obligation open when the fact that decides it is omitted > keeps the stated answers 1ms
+ Test Files  1 failed (1)
+      Tests  39 failed | 17 passed (56)

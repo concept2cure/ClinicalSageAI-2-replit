@@ -180,7 +180,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
-    notes: 'Entry to everything. Partially built in ui_kits/home and ui_kits/mdx.',
+    notes: 'Entry to everything: every project the organization can open, found by search, and New project, where each project starts with its goal.',
   },
   {
     id: 'apps',
@@ -216,7 +216,20 @@ export const UI_SURFACES: UiSurface[] = [
     // 2026-09-29: '/api/rim' removed: ProjectHome does not call it; it is the
     // hidden Registrations app's API.
     // 2026-09-29: '/api/programs' removed for the same reason as on Projects.
-    apiPrefixes: ['/api/projects', '/api/concept2cure/projects'],
+    // 2026-10-30 (D2, fold F6): '/api/mdx/client-review' moved here from the
+    // retired device-workstream: the Client Review Room is drawn on the device
+    // project's Review step (ProjectClientReview), for that project, and the
+    // route admits the project before anything is read (P-61 item 5).
+    // 2026-11-04 (R1): the project's own reads under other namespaces, each project-admitted, claimed narrowly so
+    // the rest of the namespace stays unclaimed. '/api/charters/by-project': the objective of record
+    // (useProjectObjective, S1); nothing claimed it, so production refused it as unmapped. '/api/v1/pyramids/by-project':
+    // the program plan in the Plan step (PyramidProject.tsx, S11); longest prefix wins over the out-of-catalog
+    // 'pyramid' surface's '/api/v1/pyramids'.
+    // 2026-11-09 (S12, P-83/P-109): '/api/project-hierarchy': the project's work projects (ProjectCoreWork.tsx
+    // ProjectWorkProjects, GET /:anchor/children?programId=), program-checked and project-admitted before anything is
+    // read; project home is the only client caller of the namespace.
+    apiPrefixes: ['/api/projects', '/api/concept2cure/projects', '/api/mdx/client-review', '/api/charters/by-project', '/api/v1/pyramids/by-project',
+      '/api/project-hierarchy'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -251,6 +264,14 @@ export const UI_SURFACES: UiSurface[] = [
       '/api/tasks/my-work',
       '/api/tasks/tasks',
       '/api/tasks/templates',
+      // A clinical study report's study data, in its editor (RULE 4, 2026-10-31; editor/StudyDataSource.tsx):
+      // the project's clinical sources, their preview and format, and the data frozen for the document.
+      // Exactly these endpoints; the runs, the CSR jobs and the pivotal declarations are attributed on
+      // submission-center, whose screens call them too.
+      '/api/submission-orchestrator/csr/sources',
+      '/api/submission-orchestrator/csr/source-preview',
+      '/api/submission-orchestrator/csr/source-contract',
+      '/api/submission-orchestrator/csr/study-data',
     ],
     anaToolFamilies: ['get_csr_template', 'get_nonclinical_template', 'draft_clinical_overview_m2_5'],
     sharedContract: '@shared/types/document-contract',
@@ -328,7 +349,9 @@ export const UI_SURFACES: UiSurface[] = [
     uiKit: 'mdx',
     // Launch-scope API (2026-09-25, ci:launch-scope-api): Review reads its board, queue, threads and tasks.
     // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
-    apiPrefixes: ['/api/part11', '/api/review', '/api/concept2cure/review-tasks', '/api/concept2cure/review-threads', '/api/concept2cure/reviews/my-queue'],
+    // reviews/pending: the AnA artifact reviews you were named for (P-95), read by ReviewRequests.tsx here and
+    // by Your open work (OpenWork.tsx), which opens this screen.
+    apiPrefixes: ['/api/part11', '/api/review', '/api/concept2cure/review-tasks', '/api/concept2cure/review-threads', '/api/concept2cure/reviews/my-queue', '/api/concept2cure/reviews/pending'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -453,12 +476,13 @@ export const UI_SURFACES: UiSurface[] = [
        REQUEST BODY. Narrowed to the segment the screens read, so the rest are
        unmapped and production refuses them 403 LAUNCH_SCOPE (GA plan item 1,
        decision 2026-10-05; /m2/qos, the CMC one, is deleted outright). */
-    // The package screen reads source readiness, selects Vault supporting JSON
+    // The package screen reads source readiness. The study's clinical source (list, preview, format) moved to
+    // the CSR document's editor on 2026-10-31 (RULE 4) and is attributed there (document-authoring).
+    // Formerly: it selected Vault supporting JSON
     // and previews deterministic tables. Attribute only these exact endpoints;
     // standalone CSR/Module 2 content builders retain their launch fences.
     // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
     apiPrefixes: ['/api/ectd-compile', '/api/ectd/export', '/api/ectd/validate', '/api/submission-orchestrator/runs', '/api/submission-orchestrator/csr/readiness',
-      '/api/submission-orchestrator/csr/sources', '/api/submission-orchestrator/csr/source-preview', '/api/submission-orchestrator/csr/source-contract',
       // The CSR card's build control and its board (2026-10-29, CSR slices 3 and 7): start a
       // build bound to the run, read its sections, triage them, build narratives. Exactly the
       // jobs router, not the /api/csr builder prefix.
@@ -504,7 +528,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'eSTAR section tree · content editor · predicate/SE intelligence panel. In progress.',
+    notes: 'Predicate table, substantial-equivalence matrix and eSTAR section list, with filing readiness, the draft content package and the official eSTAR. Sections open in the one editor.',
   },
   {
     id: 'device-cer',
@@ -524,7 +548,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Annex XIV structure, FAERS, literature, GSPR checklist, export. Dashboard only today.',
+    notes: 'Annex XIV clinical evaluation: safety signals, literature, GSPR checklist, equivalence and PMS/PMCF, with a generator whose sections open in the one editor and whose CER leaves through the governed export.',
   },
   {
     id: 'cmc',
@@ -726,7 +750,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE, 'motion-discipline'],
-    notes: 'Org-scoped unifiedTasks board (@shared/schema unifiedTasks · taskDependencies) + critical-path DAG, channels, messages, activity feed, presence, mentions, due dates. See ui_kits/tasking + ui_kits/task-tray.',
+    notes: 'The organization\'s tasks: each with its owner, due date and dependencies, the critical path, channels, messages, the activity feed, presence and mentions.',
   },
 
   {
@@ -838,29 +862,19 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'sigma',
     group: 'clinical',
     uiKit: null,
-    apiPrefixes: ['/api/biostat', '/api/ana-biostats', '/api/biostat-bridge'],
+    // The existing design assessment now also reaches stored-run reproduction, shared with protocol statistics.
+    // Claim those two namespaces, not the bridge root: filing-placements and unrelated children remain excluded
+    // by the launch re-proof (launch-reproof-narrowing.test.ts).
+    /* Gained '/api/statistical-defensibility' and '/api/diagnostics-performance'
+       on 2026-11-09, when the `biostat-workbench` surface was retired into this
+       one and its two capabilities became sections here. */
+    apiPrefixes: ['/api/biostat', '/api/ana-biostats', '/api/biostat-bridge/designs', '/api/biostat-bridge/computation-runs', '/api/statistical-defensibility', '/api/diagnostics-performance'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
     notes: 'SAP authoring, power analysis, TLF shells, adaptive trial plans, IDMC. Loads the program\'s persisted study designs through the biostatistics bridge: gaps, filing placement per application type, governed sample-size write-back and task raising.',
-  },
-  {
-    id: 'biostat-workbench',
-    label: 'Biostat workbench',
-    navTier: 'specialist',
-    layoutMode: 'biostatistics',
-    icon: 'sigma',
-    group: 'clinical',
-    uiKit: null,
-    apiPrefixes: ['/api/statistical-defensibility', '/api/biostat'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [A11Y, TONE],
-    notes: 'Real statistical engine: reviewer-risk defensibility assessment + design calculators (assurance), replacing the client-side normal approximation.',
   },
   // 'rbm-operations' is retired. It was a second, thinner RBM destination
   // holding the write/compute layer (KRI value capture, site-risk recompute,
@@ -940,7 +954,7 @@ export const UI_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Classification, performance testing, risk analysis, IVDR, CLIA, CDx, LDT. See ui_kits/risk + ui_kits/labeling.',
+    notes: 'Classification, performance testing, risk analysis, IVDR, CLIA, CDx, LDT, with the device\'s risk file and labeling.',
   },
   {
     id: 'labeling',

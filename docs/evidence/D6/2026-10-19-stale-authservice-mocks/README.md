@@ -1,4 +1,10 @@
-# 39 client suites crashed on a stale `authService` mock — and were hiding a second regression
+# 39 client suites crashed on a stale `authService` mock — and were hiding five loose test queries
+
+> **Corrected 2026-11-02.** This README first said the crash was hiding "a second regression"
+> in the authoring editor, and it named the wrong commit as the cause. Both were wrong; see
+> "What the crash was hiding" and "The cause" below, each marked where it changed. The
+> 39-suite repair itself is unaffected. Corrections from the coordinating session
+> (`session_01JbQU…`), each verified here before it was accepted.
 
 Found while trying to reproduce coverage-review C-13 (one intermittently failing
 suite). The full client batch does not have one flaky file. It had **39
@@ -14,7 +20,9 @@ and CI runs the whole config (`.github/workflows/ci.yml:1343`,
 const actor = (): string => { const user = authService.getUser(); return `${user?.organizationId ?? ''}:${user?.id ?? ''}`; };
 ```
 
-introduced by `3cae08d23` ("Reuse saved document assembly source references").
+introduced by `ad372567d2` ("Build documents and sections inside the existing editor",
+2026-10-17). *(Corrected 2026-11-02: this said `3cae08d23`. `git blame` on the line and
+`git log -S"authService.getUser()"` on the file both give `ad372567d2`.)*
 It sits on the `DocumentWorkbench` render path, and **113 client suites mock
 `@/services/portal/authService` with only `useAuth`**. Every suite that reaches
 it dies inside `renderWithHooks`:
@@ -90,12 +98,24 @@ reason — the suites never reached these assertions because they crashed first:
 So the duplicate-`Save` and missing-`section-check` failures predate this fix
 and were invisible behind the crash.
 
-That is the more important finding of the two: **a broken mock was concealing a
-real regression in the authoring editor's UI.** A second `Save` button on a
-governed save, and a section-check panel whose testid no longer resolves, are
-questions for whoever owns that surface — is the second Save intended? — and are
-deliberately **not** guessed at here. They are now visible and named, which is
-the point.
+**Corrected 2026-11-02: these were loose test queries, not a product regression.**
+This section first called them "a real regression in the authoring editor's UI" — a
+second `Save` button on a governed save. There was no second Save button.
+
+- `Found multiple elements … name /Save/i` matched the governed **Save** button *and*
+  **"Check saved sources"** (`editor/SavedAssemblySourcesNotice.tsx:16`), a button
+  `3cae08d23` added by design. `/Save/i.test("Check saved sources")` is `true`. The
+  `section-check` failures were the same kind of over-broad query.
+- At HEAD the five suites pass **34 of 34**: `c24db62ac` and `67d96c060` anchored the
+  queries. Evidence: `a25485dae`, `docs/evidence/D4/2026-11-01-editor-masked-regression/`.
+- The one genuine failure that investigation found is a different one,
+  `savedAssemblySourcesFlow.test.tsx:281` (the draft pane), taken by its owner (L2).
+
+**What was right and what was not.** The proof above stands: the crash *did* hide these
+assertions. The error was the next step — reading "the test now fails on X" as "the
+product has defect X" without checking what the query matched. A failure message names
+what a test looked for, not what is on the screen. That check takes one line, and it was
+not run.
 
 ## Why C-13 is not what it looked like
 

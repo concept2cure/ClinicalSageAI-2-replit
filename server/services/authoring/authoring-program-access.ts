@@ -1,5 +1,6 @@
 /** Fresh actor and project authorization for canonical authoring reads/writes. */
 import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership';
+import { logger } from '../../utils/logger';
 import { programInOrganization } from '../c2c/program-access';
 import { readProgramAnchorRow } from '../c2c/program-project-anchor';
 import { canAccessReportProject } from '../report-os/project-access';
@@ -28,11 +29,20 @@ function verifiedActorId(actor: AuthoringActor, principal?: AuthoringPrincipal):
   return Number(id);
 }
 
-async function currentRole(q: Queryable, userId: number, tenantId: number, forWrite: boolean): Promise<string> {
-  const membership = await q.query(`SELECT ou.role FROM organization_users ou
+/**
+ * The member's current role. A write holds the membership, user and organization rows it decided on until
+ * commit (FOR SHARE), so a concurrent revocation waits for it. A read takes no locks: it runs inside READ ONLY
+ * transactions (the editor's Sources rail), where Postgres refuses any row lock (25006), and a read has
+ * nothing to hold. Gated as the Vault's catalogue admission gates its own (document-catalog-admission.ts, hold).
+ */
+const CURRENT_ROLE_SQL = `SELECT ou.role FROM organization_users ou
     JOIN users u ON u.id = ou.user_id JOIN organizations o ON o.id = ou.organization_id
-    WHERE ou.user_id = $1 AND ou.organization_id = $2 AND u.status = 'active' AND o.status = 'active'
-    FOR SHARE OF ou, u, o`, [userId, tenantId]);
+    WHERE ou.user_id = $1 AND ou.organization_id = $2 AND u.status = 'active' AND o.status = 'active'`;
+const CURRENT_ROLE_HELD_SQL = `${CURRENT_ROLE_SQL}
+    FOR SHARE OF ou, u, o`;
+
+async function currentRole(q: Queryable, userId: number, tenantId: number, forWrite: boolean): Promise<string> {
+  const membership = await q.query(forWrite ? CURRENT_ROLE_HELD_SQL : CURRENT_ROLE_SQL, [userId, tenantId]);
   const role = membership.rows.length === 1 && typeof membership.rows[0].role === 'string' ? membership.rows[0].role.trim().toLowerCase() : null;
   if (!role || (forWrite && !GOVERNED_WRITE_ROLES.has(role))) throw new AuthoringProgramAccessError(403, 'IMPORT_WRITE_PERMISSION_DENIED', 'Your current organization role cannot create or adopt a working copy.');
   return role;
@@ -49,12 +59,18 @@ export async function authorizeAuthoringProgram(q: Queryable, input: {
     const role = await currentRole(q, userId, tenantId, input.forWrite !== false);
     const anchor = await readProgramAnchorRow(q, { programId, orgId: tenantId, context: 'authoring-program-access', requireUnique: true });
     if (!anchor) throw new AuthoringProgramAccessError(409, 'PROJECT_ANCHOR_UNRESOLVED', 'This project needs one verified tracking record before authoring.');
-    if (!await canAccessReportProject(tenantId, { userId, role }, anchor.id, q)) {
+    if (!await canAccessReportProject(tenantId, { userId, role }, anchor.id, q, { forWrite: input.forWrite !== false })) {
       throw new AuthoringProgramAccessError(403, 'PROJECT_PERMISSION_DENIED', 'You cannot author this project with your current access.');
     }
     return { principal: { id, email: principal?.email ?? actor.email, roles: [role.toUpperCase()] }, role, projectId: anchor.id, programId };
   } catch (error) {
     if (error instanceof AuthoringProgramAccessError) throw error;
+    // The person is told only that access could not be verified; the cause is logged, so a database refusal
+    // (as the read-only lock was) is seen in the log and not found by luck.
+    logger.error('Authoring project access could not be verified', {
+      programId, tenantId, forWrite: input.forWrite !== false,
+      code: (error as { code?: unknown } | null)?.code ?? null, message: error instanceof Error ? error.message : String(error),
+    });
     throw new AuthoringProgramAccessError(503, 'PROJECT_ACCESS_UNAVAILABLE', 'Current project access could not be verified. Nothing was changed.');
   }
 }

@@ -16,6 +16,7 @@ import {
   sectionInsertSlot,
   duplicateSectionCodes,
   sectionStructureIssues,
+  sectionNumberLabel,
 } from '../section-code';
 
 const sorted = (codes: string[]) => [...codes].sort(compareSectionCode);
@@ -172,6 +173,39 @@ describe('sectionStructureIssues', () => {
     const r = sectionStructureIssues(['1.1', '1.2', '1.5']);
     expect(r.outOfOrder).toBe(false);
     expect(r.duplicateCodes).toEqual([]);
+  });
+
+  /* UI walk, 2026-10-31: a document just created from the Investigator's
+     Brochure template said its sections were "stored in an order that differs
+     from their section codes". Its front matter has word codes, and words sort
+     after numbers, so every template that opens with a title page tripped it. */
+  it('leaves word-coded front and back matter where the document puts it', () => {
+    const ib = ['title_page', 'confidentiality_statement', 'table_of_contents', '1', '2', '3', '4', '4.1', '4.2', '4.3', '5', '5.1', '5.2', '5.3', '6', 'references'];
+    const r = sectionStructureIssues(ib);
+    expect(r.outOfOrder).toBe(false);
+    expect(r.suggestedOrder).toEqual(ib);
+  });
+
+  /* J3 human test, 2026-11-06: a new SOP from the Quality library (codes
+     qms-purpose … qms-approval) said its sections were "stored in an order
+     that differs from their section codes". Hyphenated name codes are named
+     matter too. */
+  it('treats hyphenated name codes (a controlled SOP) as named matter, in the order stored', () => {
+    const sop = ['qms-purpose', 'qms-scope', 'qms-responsibilities', 'qms-definitions', 'qms-procedure', 'qms-references', 'qms-attachments', 'qms-revision_history', 'qms-approval'];
+    const r = sectionStructureIssues(sop);
+    expect(r.outOfOrder).toBe(false);
+    expect(r.suggestedOrder).toEqual(sop);
+  });
+
+  it('shows a reader no number for a name code, and the outline code otherwise', () => {
+    expect(['title_page', 'qms-purpose', 'qms-revision_history', 'references'].map(sectionNumberLabel)).toEqual(['', '', '', '']);
+    expect(['1', '4.1', '2.7.3', '3.2.S.4.1', ' 6 '].map(sectionNumberLabel)).toEqual(['1', '4.1', '2.7.3', '3.2.S.4.1', '6']);
+  });
+
+  it('still reports numbered sections out of order among themselves, front matter kept in place', () => {
+    const r = sectionStructureIssues(['title_page', '2', '1', 'references']);
+    expect(r.outOfOrder).toBe(true);
+    expect(r.suggestedOrder).toEqual(['title_page', '1', '2', 'references']);
   });
 
   it('reads the order it is given, not a sorted copy of it', () => {

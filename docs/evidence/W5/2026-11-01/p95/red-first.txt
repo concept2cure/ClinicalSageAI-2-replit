@@ -1,0 +1,12 @@
+# This change's tests against HEAD 8dc4a34dec's artifact-approval-act.ts (the only source file changed)
+# npx vitest run <ceremony> <quorum integrity> <AnA signed act> <lock coverage>
+
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95: an artifact is approved only after its review > no reviewer named: refused 409 REVIEW_REQUIRED before the password is verified, nothing written 30ms
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95: an artifact is approved only after its review > the review is gone by the time it is signed: refused on the signing transaction, nothing written 25ms
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > P-95: AnA approves an artifact only after its review > no reviewer named: refused REVIEW_REQUIRED, saying where to name one, nothing signed 26ms
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'no assignments: no one reviewed it, r…' 16ms
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > shared signed-approval preflight: no reviewer named is 409 REVIEW_REQUIRED 5ms
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > shared signed-approval preflight: every reviewer withdrawn is 409 REVIEW_REQUIRED 5ms
+ × tests/artifact-status-lock-covers-approval.test.ts > PUT …/status review → approved applies the canonical P12 review quorum > no reviewer named refuses the approval 409 REVIEW_REQUIRED (P-95) and records no approved version 12ms
+ Test Files  4 failed (4)
+      Tests  7 failed | 184 passed (191)

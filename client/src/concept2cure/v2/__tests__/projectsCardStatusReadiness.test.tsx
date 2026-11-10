@@ -19,6 +19,11 @@
  *    "not measured": the bar said 0 while the words said nothing was counted.
  *    And a figure the server could not read was "not measured" too. Now no
  *    figure draws no bar, and an unavailable figure says so, with the reason.
+ * 4. (D2-1, 2026-11-01) The card is Claude's quiet card: no readiness bar, no
+ *    readiness line, no chip (ONE_DESIGN_PLAN §2: "There are no readiness bars
+ *    and no stat strip"). The figure, its name and its reason moved to the list
+ *    view's "Dossier readiness" column, as text; the portfolio figures moved to
+ *    the list's footing (.design/claude-convergence/D2.md §1.4 items 2, 5–7).
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -81,12 +86,16 @@ describe('Projects card — a blocked status carries its cause, or says none is 
     expect(c.textContent).not.toMatch(/No open blockers/);
   });
 
-  it('a program with a recorded blocker shows that blocker, not the no-cause line', async () => {
+  /* 2026-10-31: the portfolio projection carries no blocker (it was a literal
+     NULL, server/services/c2c/project-portfolio.ts), so the card reads none,
+     even from a row that carries one, and a blocked status says no cause is
+     recorded here. A project's blockers are on its project home. */
+  it('reads no blocker from a list row, and a blocked status still says no cause is recorded', async () => {
     render(<Projects {...props()} />);
     await waitFor(() => expect(screen.getByText('Program ivd')).toBeTruthy());
     const c = card('Program ivd');
-    expect(c.textContent).toContain('FAERS signal adjudication pending');
-    expect(c.textContent).not.toMatch(/no cause recorded/i);
+    expect(c.textContent).not.toContain('FAERS signal adjudication pending');
+    expect(c.textContent).toMatch(/no cause recorded/i);
   });
 
   it('an active program makes no blocker claim either way', async () => {
@@ -102,21 +111,33 @@ describe('Projects card — a blocked status carries its cause, or says none is 
     await waitFor(() => expect(listRow('Program nm512')).toBeTruthy());
     expect(listRow('Program nm512').textContent).toMatch(/no cause recorded/i);
     expect(listRow('Program bx256').textContent).not.toMatch(/cause recorded/i);
+    // A Status column, where a Blocker column read "—" on every row (2026-10-31).
+    const head = document.querySelector('.ct-head')?.textContent ?? '';
+    // D2-1: the workstream column names the client type (WS_LABEL), not the code.
+    expect(head).toContain('Client type');
+    expect(head).toContain('Status');
+    expect(head).not.toMatch(/Blocker|\bWS\b/);
+    expect(listRow('Program bx256').textContent).toContain('Active');
   });
 });
 
-describe('Projects card — readiness is named as the dossier readiness', () => {
+describe('Projects list — readiness is named as the dossier readiness', () => {
+  /* D2-1: the figure left the card for the list's column, which carries the
+     name Project home uses; each row prints the figure under it. */
   it('labels a measured figure and an unmeasured one with the same name Project home uses', async () => {
     render(<Projects {...props()} />);
     await waitFor(() => expect(screen.getByText('Program hlv')).toBeTruthy());
-    expect(card('Program hlv').textContent).toContain('Dossier readiness 0%');
-    expect(card('Program bx256').textContent).toContain('Dossier readiness Not recorded');
+    fireEvent.click(screen.getByRole('button', { name: 'List' }));
+    await waitFor(() => expect(listRow('Program hlv')).toBeTruthy());
+    expect(document.querySelector('.ct-head')?.textContent).toContain('Dossier readiness');
+    expect(listRow('Program hlv').textContent).toContain('0%');
+    expect(listRow('Program bx256').textContent).toContain('Not recorded');
     // Never a bare, unlabelled "N% ready".
-    expect(card('Program hlv').textContent).not.toMatch(/\d+% ready/);
+    expect(listRow('Program hlv').textContent).not.toMatch(/\d+% ready/);
   });
 });
 
-describe('Projects card — no figure draws no bar (F23)', () => {
+describe('Projects — no bar anywhere; the figure is text with its reason (F23, D2-1)', () => {
   const stated = (id: string, readiness: number | null, readinessState: string, readinessReason?: string) =>
     ({ ...row(id, 'active', readiness), readinessState, ...(readinessReason ? { readinessReason } : {}) });
   const READ_FAILED = 'The governed sections could not be read.';
@@ -129,39 +150,48 @@ describe('Projects card — no figure draws no bar (F23)', () => {
   });
   const bar = (el: HTMLElement) => el.querySelector('.ph-bar-track');
 
-  it('a measured 0 draws its empty bar; no sections and an unavailable figure draw none', async () => {
+  /* Was "a measured 0 draws its empty bar": D2-1 takes the bar off the card
+     (plan §2, no readiness bars); the card states no readiness at all. */
+  it('no card draws a bar or states a readiness figure', async () => {
     render(<Projects {...props()} />);
     await waitFor(() => expect(screen.getByText('Program zero')).toBeTruthy());
-    expect(bar(card('Program zero'))).not.toBeNull();
-    expect(bar(card('Program half'))).not.toBeNull();
-    expect(bar(card('Program none'))).toBeNull();
-    expect(bar(card('Program down'))).toBeNull();
+    for (const id of ['zero', 'half', 'none', 'down']) {
+      expect(bar(card(`Program ${id}`))).toBeNull();
+      expect(card(`Program ${id}`).textContent).not.toMatch(/readiness|\d+%|unavailable/i);
+    }
+  });
+
+  /* Was "the list view draws the same bars": the list states the figure as
+     text, under its name, with the server's reason as the tooltip. */
+  it('the list view states each figure as text, with no bar', async () => {
+    render(<Projects {...props()} />);
+    await waitFor(() => expect(screen.getByText('Program zero')).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: 'List' }));
+    await waitFor(() => expect(listRow('Program zero')).toBeTruthy());
+    for (const id of ['zero', 'half', 'none', 'down']) expect(bar(listRow(`Program ${id}`))).toBeNull();
+    expect(listRow('Program zero').textContent).toContain('0%');
+    expect(listRow('Program half').textContent).toContain('50%');
+    expect(listRow('Program none').textContent).toContain('Not recorded');
   });
 
   it('an unavailable figure says so, and why, never "Not recorded"', async () => {
     render(<Projects {...props()} />);
     await waitFor(() => expect(screen.getByText('Program down')).toBeTruthy());
-    const c = card('Program down');
-    expect(c.textContent).toContain('Dossier readiness unavailable');
-    expect(c.querySelector(`[title="${READ_FAILED}"]`)).not.toBeNull();
-    expect(card('Program none').textContent).toContain('Dossier readiness Not recorded');
-  });
-
-  it('the list view draws the same bars', async () => {
-    render(<Projects {...props()} />);
-    await waitFor(() => expect(screen.getByText('Program zero')).toBeTruthy());
     fireEvent.click(screen.getByRole('button', { name: 'List' }));
-    await waitFor(() => expect(listRow('Program zero')).toBeTruthy());
-    expect(bar(listRow('Program zero'))).not.toBeNull();
-    expect(bar(listRow('Program none'))).toBeNull();
-    expect(bar(listRow('Program down'))).toBeNull();
-    expect(listRow('Program down').textContent).toContain('Dossier readiness unavailable');
+    await waitFor(() => expect(listRow('Program down')).toBeTruthy());
+    const r = listRow('Program down');
+    expect(r.textContent).toContain('unavailable');
+    expect(r.textContent).not.toContain('Not recorded');
+    expect(r.querySelector(`[title="${READ_FAILED}"]`)?.textContent).toBe('unavailable');
   });
 
   it('the portfolio mean says how many programs it covers when some have no recorded measurement', async () => {
     render(<Projects {...props()} />);
     await waitFor(() => expect(screen.getByText('Program zero')).toBeTruthy());
+    // D2-1: the portfolio figures are the list's footing, not the grid's chrome.
+    expect(document.querySelector('.pj-summary')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'List' }));
     // (0 + 50) / 2, over the two measured of four.
-    expect(document.querySelector('.pj-summary')?.textContent).toContain('25% average readiness, 2 of 4 measured');
+    await waitFor(() => expect(document.querySelector('.pj-summary')?.textContent).toContain('25% average readiness, 2 of 4 measured'));
   });
 });

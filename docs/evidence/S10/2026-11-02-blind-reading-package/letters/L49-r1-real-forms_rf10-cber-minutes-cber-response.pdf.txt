@@ -1,0 +1,71 @@
+FOOD AND DRUG ADMINISTRATION
+CENTER FOR BIOLOGICS EVALUATION AND RESEARCH
+MEMORANDUM OF MEETING MINUTES
+Meeting Type: Type B
+Meeting Category: Pre-IND
+Meeting Date and Time: Thursday, October 29, 2026, 1:00 PM - 2:00 PM (ET)
+Meeting Location: Teleconference
+Application Number: PIND 160123
+Product Name: BWT-417
+Indication: Treatment of adult patients with relapsed or refractory solid tumors
+Sponsor Name: Brightwave Therapeutics, Inc.
+Regulatory Pathway: 505(b)(1) of the Federal Food, Drug, and Cosmetic Act
+Meeting Chair: Thomas Green, MD
+Meeting Recorder: Karen White, PharmD
+FDA ATTENDEES
+Thomas Green, MD, Director, Division of Oncology 3
+Linda Brooks, MD, Clinical Team Leader, Division of Oncology 3
+Karen White, PharmD, Regulatory Project Manager, Division of Oncology 3
+SPONSOR ATTENDEES
+Daniel Ortiz, PhD, Head of Regulatory Affairs
+Maria Santos, MD, Chief Medical Officer
+1.0 BACKGROUND
+Brightwave Therapeutics requested a Type B Pre-IND meeting on August 4, 2026, to obtain the
+Agency's advice on the adequacy of the nonclinical and CMC programs to support initiation of the
+first-in-human study of BWT-417. FDA sent Preliminary Comments to Brightwave on October 26, 2026.
+2.0 DISCUSSION
+2.1. Chemistry, Manufacturing, and Controls
+Question 1: Does the Agency agree that the proposed drug substance specification is adequate to
+support the Phase 1 study?
+CBER Response: We generally agree. However, include a test for residual solvents
+with acceptance criteria consistent with ICH Q3C(R8) and a test for bacterial endotoxins.
+Discussion: There was no discussion.
+Question 2: Does the Agency agree that the proposed stability program for the drug product is
+adequate to support the Phase 1 clinical study?
+Page 1
+
+-- 1 of 2 --
+
+PIND 160123
+Page 2
+CBER Response: Yes, your proposal appears reasonable. Provide the following in the
+IND:
+1. the stability protocol, including tests, acceptance criteria and time points;
+2. the available stability data for the clinical batch.
+Discussion: The Sponsor asked whether data from the engineering batch could be used. FDA agreed,
+provided the batch is representative of the clinical batch.
+2.2. Nonclinical
+Question 3: Does the Agency agree that the completed GLP 28-day repeat-dose toxicology studies in
+rats and dogs are adequate to support the proposed starting dose and dose escalation in the
+first-in-human study?
+CBER Response: No. The rationale for the starting dose based on the HNSTD in dogs is
+not adequate for a molecule with this mechanism.
+Discussion: The Sponsor agreed to revise the starting dose rationale and submit it in the IND.
+Question 4: Does the Agency agree that a separate embryo-fetal development study is not required
+prior to initiation of the Phase 1 study in patients with advanced cancer?
+CBER Response: We agree, consistent with ICH S9.
+Discussion: There was no discussion.
+3.0 ADDITIONAL INFORMATION
+DATA STANDARDS FOR STUDIES
+Under section 745A(a) of the FD&C Act, electronic submissions "shall be submitted in such
+electronic format as specified by [FDA]."
+4.0 ISSUES REQUIRING FURTHER DISCUSSION
+There were no issues requiring further discussion.
+5.0 ACTION ITEMS
+1. Brightwave will submit the revised starting dose rationale in the IND.
+2. Brightwave will submit the stability protocol in the IND.
+6.0 ATTACHMENTS AND HANDOUTS
+There were no attachments or handouts for the meeting minutes.
+Page 2
+
+-- 2 of 2 --

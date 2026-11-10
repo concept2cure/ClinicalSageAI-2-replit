@@ -1,0 +1,61 @@
+# Mutation 3: fold-drops-org-filter
+# 2026-11-01T21:55:04Z
+# What it removes: The fold drops the transmittal's organization filter.
+# File: server/services/ectd/prior-sequence-loader.ts
+# Replaced:
+#   -            ON t.organization_id = $1
+#   -           AND lower(
+# With:
+#   +            ON TRUE
+#   +           AND lower(
+# Test run: npx vitest run server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts  (exit 1)
+# Expected to fail on its own assertion: ['another organisation']
+# Failed as expected: {'another organisation': True}
+# Failed on an assertion (no build or syntax error): True
+# File restored byte for byte: True (sha256 before 001a307b619d2c956c183aa15adcde7999d343d6a1580f8a5feb2a996e4c0ad1, after 001a307b619d2c956c183aa15adcde7999d343d6a1580f8a5feb2a996e4c0ad1)
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a leaf only an earlier preview compile carried is not on file (the phantom leaf) 24ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a sequence sent with no compile on record is filed, and the next sequence binds against it 9ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > rejected, then resent: only the attempt the sequence is bound to is read 7ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent before the guard kept a record is read from its compiles, and labelled so > a bound transmittal with no leaf manifest, or no transmit attempt at all, keeps the compile read 8ms
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent before the guard kept a record is read from its compiles, and labelled so > another organisation’s transmittal binding the same attempt is never read 17ms
+   → expected { leaves: [ 'foreign.pdf' ], …(1) } to deeply equal { leaves: [ 'mine.pdf' ], …(1) }
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a record that cannot say what was sent is an error, never a partial view > two transmittals binding one attempt of one sequence: the read throws, naming the sequence 10ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its transmittal, then one read from its compiles 7ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its compiles, then one read from its transmittal 7ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  21:55:01
+   Duration  2.93s (transform 146ms, setup 104ms, import 87ms, tests 2.41s, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent before the guard kept a record is read from its compiles, and labelled so > another organisation’s transmittal binding the same attempt is never read
+AssertionError: expected { leaves: [ 'foreign.pdf' ], …(1) } to deeply equal { leaves: [ 'mine.pdf' ], …(1) }
+
+- Expected
++ Received
+
+  {
+-   "basis": "compiles",
++   "basis": "transmit",
+    "leaves": [
+-     "mine.pdf",
++     "foreign.pdf",
+    ],
+  }
+
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:164:79
+    162|     await transmittal({ attemptId: attempt(6), sequenceId: id }, [leaf…
+    163|     const state = await filedState(6);
+    164|     expect({ leaves: names(state.leaves), basis: state.sequences[0]?.b…
+       |                                                                               ^
+    165|   });
+    166| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

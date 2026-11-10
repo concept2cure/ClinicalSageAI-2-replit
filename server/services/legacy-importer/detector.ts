@@ -17,7 +17,9 @@
  *   3. Filename heuristics (cover letter, IFU, SE, etc.) for raw folders.
  *
  * Mapping basis (`mappingSource`, and the `reviewStatus` it is stored with):
- *   backbone_xml       — the archive's regional backbone declares the leaf → 'mapped'
+ *   backbone_xml       — the sequence's backbones declare the leaf (index.xml, and
+ *                        the regional backbone it points at), read and verified by
+ *                        filed-sequence-reader → 'mapped'
  *   structure_path     — the backbone XML itself, an index, a DTD or stylesheet,
  *                        recognized by its fixed path → 'skipped'
  *   filename_heuristic — a filename/path pattern (named by `mappingRuleId`)
@@ -28,6 +30,16 @@
  * per filename regex, 0.30 fallback — and the import route stored every leaf at
  * >= 0.5 as 'mapped', so protocol_deviation_log.xlsx was imported as CTD 5.3.5.1
  * "at 0.80". Those figures were rule weights nobody measured.
+ *
+ * 2026-11-01 (MR-10 Stage 9 / CAT2-07): the backbone was read here by a regex
+ * (`parseBackboneLeaves`) over the regional backbone alone, comparing each href
+ * with the zip path as written. A regional backbone's hrefs are relative to its
+ * own folder, so no Module 1 leaf of a real sequence matched (and each was
+ * reported missing), and index.xml was never read, so every Module 2-5 leaf was
+ * placed by filename. Leaves are now read by filed-sequence-reader, the one
+ * reader of a filed sequence: both backbones, every checksum verified, the
+ * section read from the heading that holds the leaf. A leaf it refuses is not
+ * mapped, and the refusal is an error finding naming it.
  */
 
 import { promises as fs } from 'fs';
@@ -35,6 +47,10 @@ import { createHash } from 'crypto';
 import * as path from 'path';
 import JSZip from 'jszip';
 import { ArchiveLimitError, assertZipWithinLimits } from '../archive/safeZip';
+import { readFiledSequences, type FiledArchive, type FiledSequenceLeaf } from './filed-sequence-reader';
+
+/** A regional Module 1 backbone, any region: what the reader reads and what is stored as structure. */
+const REGIONAL_BACKBONE = /(^|\/)m1\/[a-z]{2}\/[a-z]{2}-regional\.xml$/i;
 
 export type DetectedFormat =
   | 'fda_ectd' | 'ema_ectd' | 'pmda_ectd'
@@ -146,41 +162,6 @@ function applyHeuristic(relPath: string, fileName: string): HeuristicRule | null
   return null;
 }
 
-/* ─── Backbone-XML leaf extractor ────────────────────────────────────── */
-
-interface BackboneLeaf {
-  href:    string;        // 'm1/us/1-1/cover-letter.pdf'
-  section: string;        // '1-1' (mapped to '1.1')
-  title:   string | null;
-  operation: string | null;
-}
-
-function parseBackboneLeaves(xml: string): BackboneLeaf[] {
-  /* Light-weight regex parse — works for us-regional.xml, eu-regional.xml,
-     and jp-regional.xml (all share the <leaf xlink:href=... ID=...>
-     structure). For pathological XML we just return [] and the caller
-     falls back to filename heuristics. */
-  const leaves: BackboneLeaf[] = [];
-  const re = /<leaf\s+([^>]*?)\/?>([\s\S]*?)<\/leaf>|<leaf\s+([^>]*?)\/>/g;
-  let m;
-  while ((m = re.exec(xml)) !== null) {
-    const attrBlob = (m[1] ?? m[3] ?? '');
-    const hrefMatch = attrBlob.match(/xlink:href\s*=\s*"([^"]+)"/);
-    const opMatch   = attrBlob.match(/operation\s*=\s*"([^"]+)"/);
-    if (!hrefMatch) continue;
-    const href = hrefMatch[1];
-    const sectionMatch = href.match(/(?:m1\/(?:us|eu|jp)\/)?([0-9-]+)\//);
-    const titleMatch = (m[2] ?? '').match(/<title>([\s\S]*?)<\/title>/);
-    leaves.push({
-      href,
-      section: (sectionMatch?.[1] ?? '').replace(/-/g, '.'),
-      title:   titleMatch?.[1].trim() ?? null,
-      operation: opMatch?.[1] ?? null,
-    });
-  }
-  return leaves;
-}
-
 /* ─── Top-level detector ─────────────────────────────────────────────── */
 
 export async function detectArchive(archivePath: string): Promise<DetectedArchive> {
@@ -227,39 +208,30 @@ export async function detectArchive(archivePath: string): Promise<DetectedArchiv
 
   let format: DetectedFormat = 'unknown';
   let region: DetectedRegion = null;
-  let backboneXml: string | null = null;
-  let backbonePath = '';
-  if (hasUs)        { format = 'fda_ectd'; region = 'fda';
-    const ent = entries.find((e) => /m1\/us\/us-regional\.xml$/i.test(e.name))!;
-    backboneXml = await ent.async('text'); backbonePath = ent.name;
-  } else if (hasEu) { format = 'ema_ectd'; region = 'ema';
-    const ent = entries.find((e) => /m1\/eu\/eu-regional\.xml$/i.test(e.name))!;
-    backboneXml = await ent.async('text'); backbonePath = ent.name;
-  } else if (hasJp) { format = 'pmda_ectd'; region = 'pmda';
-    const ent = entries.find((e) => /m1\/jp\/jp-regional\.xml$/i.test(e.name))!;
-    backboneXml = await ent.async('text'); backbonePath = ent.name;
-  } else if (hasEstar) {
-    format = 'fda_estar'; region = 'fda';
-  } else {
+  if (hasUs)        { format = 'fda_ectd'; region = 'fda'; }
+  else if (hasEu)   { format = 'ema_ectd'; region = 'ema'; }
+  else if (hasJp)   { format = 'pmda_ectd'; region = 'pmda'; }
+  else if (hasEstar) { format = 'fda_estar'; region = 'fda'; }
+  else {
     /* No backbone — fall back to shape detection. */
     const hasModules = entries.some((e) => /^m[1-5]\//i.test(e.name));
     if (hasModules) format = 'mixed';
     else format = 'fda_510k_folder';
   }
 
-  /* Parse backbone for explicit leaf list when available. */
-  const backboneLeaves = backboneXml ? parseBackboneLeaves(backboneXml) : [];
-  const byHref = new Map(backboneLeaves.map((l) => [l.href, l]));
-
-  /* Extract sponsor / application id from backbone where possible. */
-  let applicationId: string | null = null;
-  let sequence: string | null = null;
-  let sponsor: string | null = null;
-  if (backboneXml) {
-    applicationId = backboneXml.match(/<(?:application|procedure)-number>\s*([^<\s]+)\s*</)?.[1] ?? null;
-    sequence      = backboneXml.match(/<(?:submission|sequence)(?:-id)?(?:-number)?>\s*([^<\s]+)\s*</)?.[1] ?? null;
-    sponsor       = backboneXml.match(/<(?:applicant|sponsor)[^>]*>\s*[\s\S]*?<name>\s*([^<]+?)\s*<\/name>/)?.[1] ?? null;
+  /* Every eCTD sequence in the archive, read from its backbones. */
+  const read = await readFiledSequences(zip);
+  const declared = new Map<string, FiledSequenceLeaf>();
+  for (const seq of read.sequences) {
+    // Ascending: a file reused by a later sequence keeps the section the sequence that filed it gave it.
+    for (const leaf of seq.leaves) if (leaf.archivePath && !declared.has(leaf.archivePath)) declared.set(leaf.archivePath, leaf);
   }
+  findings.push(...readerFindings(read, entries.map((e) => e.name)));
+  /* A file whose leaf the reader refused is not placed by its name: what the
+     archive says about it is defective, and the error finding names it. */
+  const refusedFiles = new Set(read.sequences.flatMap((s) =>
+    s.refusals.filter((r) => r.code.startsWith('leaf_') && r.path).map((r) => path.posix.normalize(`${s.root}${r.path}`))));
+  const { applicationId, sequence, sponsor } = applicationOfArchive(read);
 
   /* Build per-file mapping. */
   const files: DetectedFile[] = [];
@@ -269,11 +241,11 @@ export async function detectArchive(archivePath: string): Promise<DetectedArchiv
     /* Backbone + util files are not "leaves" — they're structure, recognized by
        path. 2026-10-15: their source was 'backbone_xml', so each was stored as
        declared by the backbone at mapping_confidence 1; nothing declares them. */
-    if (ent.name === backbonePath) {
+    if (REGIONAL_BACKBONE.test(ent.name)) {
       files.push(await fileEntry(ent, 'backbone_xml', null, null, null, 'structure_path'));
       continue;
     }
-    if (/(^|\/)util\/index-md5\.txt$/i.test(ent.name)) {
+    if (/(^|\/)index-md5\.txt$/i.test(ent.name)) {
       files.push(await fileEntry(ent, 'index', null, null, 'md5_index', 'structure_path'));
       continue;
     }
@@ -287,13 +259,18 @@ export async function detectArchive(archivePath: string): Promise<DetectedArchiv
     }
 
     /* First: see if this leaf is in the backbone. */
-    const inBackbone = byHref.get(ent.name);
+    const inBackbone = declared.get(ent.name);
     if (inBackbone) {
       files.push(await fileEntry(ent, 'leaf',
-        inBackbone.section || null,
+        inBackbone.ctdSection,
         null, inBackbone.title ? guessArtifactKind(inBackbone.title) : null,
         'backbone_xml',
       ));
+      continue;
+    }
+
+    if (refusedFiles.has(ent.name)) {
+      files.push(await fileEntry(ent, 'attachment', null, null, 'attachment', 'fallback'));
       continue;
     }
 
@@ -326,28 +303,54 @@ export async function detectArchive(archivePath: string): Promise<DetectedArchiv
     });
   }
 
-  /* Backbone vs. file-count consistency check. */
-  if (backboneLeaves.length > 0) {
-    const referenced = new Set(backboneLeaves.map((l) => l.href));
-    const missing = backboneLeaves.filter((l) => !entries.some((e) => e.name === l.href));
-    for (const m of missing) {
-      findings.push({
-        severity: 'error', code: 'missing_required_leaf',
-        message: `Backbone references "${m.href}" but the file is missing from the archive.`,
-        filePath: m.href,
-      });
-    }
-    /* Extras in archive not referenced by backbone — info only. */
-    const extras = entries.filter((e) => !referenced.has(e.name) && !/(util|index\.xml|us-regional|eu-regional|jp-regional)/i.test(e.name));
-    if (extras.length > 0) {
-      findings.push({
-        severity: 'info', code: 'extra_files_not_in_backbone',
-        message: `${extras.length} file(s) are in the archive but not referenced by the regional backbone XML.`,
-      });
-    }
+  /* Files a sequence holds that neither of its backbones references — info only.
+     A leaf the backbone references and the archive lacks is the reader's
+     leaf_file_missing, above. */
+  const extras = read.sequences.reduce((n, seq) => n + seq.unreferenced.length, 0);
+  if (extras > 0) {
+    findings.push({
+      severity: 'info', code: 'extra_files_not_in_backbone',
+      message: `${extras} file(s) are in a sequence but referenced by neither its index.xml nor its regional backbone.`,
+    });
   }
 
   return { format, region, applicationId, sequence, sponsor, files, findings };
+}
+
+/**
+ * What the filed-sequence reader refused, as findings naming the file; and each
+ * regional backbone no sequence was read for, named, with the reason.
+ */
+function readerFindings(read: FiledArchive, names: string[]): DetectedFinding[] {
+  const out: DetectedFinding[] = read.refusals.map((r) => ({ severity: 'error', code: r.code, message: r.message }));
+  for (const seq of read.sequences) {
+    const where = `Sequence ${seq.sequence ?? (seq.root || '(unnumbered)')}`;
+    for (const r of seq.refusals) {
+      out.push({ severity: 'error', code: r.code, message: `${where}: ${r.message}`, ...(r.path ? { filePath: path.posix.normalize(`${seq.root}${r.path}`) } : {}) });
+    }
+  }
+  const readRoots = new Set(read.sequences.map((s) => s.root));
+  for (const backbone of names.filter((n) => REGIONAL_BACKBONE.test(n))) {
+    const root = backbone.slice(0, backbone.search(/m1\/[a-z]{2}\/[a-z]{2}-regional\.xml$/i));
+    if (readRoots.has(root)) continue;
+    out.push({
+      severity: 'error', code: 'ich_backbone_missing', filePath: backbone,
+      message: names.includes(`${root}index.xml`)
+        ? `${root}index.xml is in a folder that is not the archive root, not named with four digits, and holds no index-md5.txt, so it was not read as a sequence; no leaf is mapped from ${backbone}.`
+        : `${backbone} has no index.xml beside its m1/ folder. An eCTD sequence declares its leaves in index.xml and the regional backbone it points at, so no leaf is mapped from it.`,
+    });
+  }
+  return out;
+}
+
+/** The application and applicant from the latest sequence that names them; the sequence is the latest read. */
+function applicationOfArchive(read: FiledArchive): Pick<DetectedArchive, 'applicationId' | 'sequence' | 'sponsor'> {
+  const named = [...read.sequences].reverse().find((s) => s.application.number || s.application.applicant);
+  return {
+    applicationId: named?.application.number ?? null,
+    sponsor: named?.application.applicant ?? null,
+    sequence: read.sequences.length ? read.sequences[read.sequences.length - 1].sequence : null,
+  };
 }
 
 /** 'mapped' only where the archive declares a leaf's placement; a pattern match is a suggestion. */

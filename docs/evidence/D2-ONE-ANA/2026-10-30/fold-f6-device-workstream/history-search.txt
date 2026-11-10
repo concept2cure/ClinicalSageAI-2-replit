@@ -1,0 +1,16 @@
+# History search (working agreement), 2026-10-30 at 55d58630b; shallow clone, 1879 commits reachable.
+
+$ git log --all --diff-filter=D --name-only --format= | grep -i "Overview" | sort -u
+server/services/ana/clinical-overview-outline.ts
+
+$ git log --all --diff-filter=D --name-only --format= | grep -i "ClientReview" | sort -u
+
+$ git log --all --diff-filter=D --name-only --format= | grep -i "Workstream" | sort -u
+
+$ git log --all --diff-filter=D --name-only --format= | grep -i "DevicePortfolio\|devicePortfolio" | sort -u
+
+$ git log --all --diff-filter=D --name-only --format= | grep -i "ProjectClientReview\|ClientReviewRoom" | sort -u
+
+$ git log --all --diff-filter=D --name-only --format= | grep -i "Analytics" | sort -u
+
+$ git log --all --diff-filter=D --format='%h %ad %s' --date=short -- 'client/**/*Overview*' 'client/**/*Portfolio*' 'client/**/*Workstream*' 'client/**/*ClientReview*'

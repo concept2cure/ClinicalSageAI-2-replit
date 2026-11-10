@@ -11,7 +11,7 @@
 
 import { skill, type LibrarySkillSource } from '../types.js';
 
-const E6R3_RECORD = { kind: 'record', id: 'shared/regulatory/ich-e6r3.ts', label: 'ICH E6(R3) structure and E6(R2) crosswalk' } as const;
+const E6R3_RECORD = { kind: 'record', id: 'shared/regulatory/ich-e6r3.ts', label: 'ICH E6(R3) structure and its crosswalk from the superseded E6(R2)' } as const;
 const M11_RECORD = { kind: 'record', id: 'shared/regulatory/protocol-m11.ts', label: 'ICH M11 protocol headings (levels 1 and 2)' } as const;
 const CONSENT_RECORD = {
   kind: 'record',
@@ -405,6 +405,11 @@ Selecting a primary or secondary endpoint, deciding how a concept should be meas
       'check_dossier_consistency',
       'build_abbreviation_list',
       'medical_writing_review',
+      // Where the report is written (step 12): the canvas and the editor. Pinned
+      // here because a method naming a tool the relevance cap dropped cannot be
+      // followed (turn-skills.ts toolPins).
+      'list_authoring_outline',
+      'draft_authoring_document',
     ],
     references: [
       { kind: 'ich', id: 'E3' },
@@ -428,6 +433,7 @@ Drafting, structuring or checking a clinical study report for an interventional 
 9. Causality wording attributes the judgement to its assessor: "assessed by the investigator as related", "considered by the sponsor as not related". Never state causality as fact.
 10. Subgroups: present results by age, sex and race where the SAP or E3 calls for it; for a US NDA the integrated summaries present effectiveness and safety by these subgroups (21 CFR 314.50(d)(5)).
 11. Before release: \`check_numerical_integrity\` on the draft, \`reconcile_dossier_numbers\` across protocol, SAP, CSR and Module 2, \`check_dossier_consistency\` against the project, \`build_abbreviation_list\`, and \`medical_writing_review\` (document type csr) for heading coverage. Heading coverage is not completeness.
+12. Write it where the person works on it. A report or sections drafted in the conversation are saved with \`draft_authoring_document\` as a CSR document of the open project (document type ICH_CSR, module M5, one section per E3 heading with its E3 number as the code): the person sees it as a canvas, opens it in the editor, and changes it there, where every change you propose is accepted or refused by a person. First call \`list_authoring_outline\`: when the project already has a CSR document, do not make a second; say which it is and that its sections are drafted in the editor, where "Build from the study's data" fills the results sections from the frozen study data. Saving a draft is not approving it.
 
 ## Pitfalls reviewers raise
 - Figures in the text that differ from the tables.
@@ -477,7 +483,7 @@ Drafting, structuring or checking a clinical study report for an interventional 
       'code_meddra',
       'check_dossier_consistency',
       'medical_writing_review',
-      'generate_document',
+      'draft_authoring_document',
       'lookup_ich_guideline',
     ],
     references: [
@@ -502,7 +508,7 @@ Writing a first Investigator's Brochure (IB), updating one for new nonclinical, 
    - The DSUR uses the IB edition in effect at the start of its reporting period as its reference (ICH E2F); record which edition that was.
 6. Revision: review the IB on the cycle the sponsor's procedures set (at least annually is the long-standing GCP expectation) and revise it when significant new information arises. Significant new safety information reaches investigators promptly, not at the next edition (in the US, 21 CFR 312.55). The IND annual report describes IB revisions and includes the revised IB (21 CFR 312.33).
 7. Check consistency with \`check_dossier_consistency\` against the protocol, the nonclinical summaries and the latest DSUR (doses, exposure margins, risks), and heading coverage with \`medical_writing_review\` (document type ib). Coverage is not completeness.
-8. Produce the formatted document with \`generate_document\` (document type ib) from approved section content; producing it is not approving it.
+8. Draft each section in the project's IB document with \`draft_authoring_document\`, from the sources found in step 1; the formatted IB is exported from that document in the editor once it is approved. Producing it is not approving it.
 
 ## Pitfalls reviewers raise
 - An RSI that is out of date, not clearly identified, or lists reactions without a basis.
@@ -513,7 +519,7 @@ Writing a first Investigator's Brochure (IB), updating one for new nonclinical, 
 ## Before answering
 - The edition, the edition superseded and the data cut-off are stated.
 - Every safety statement traces to a source document; expectedness is the sponsor's documented judgement.
-- E6(R3) is cited by its own numbering (Appendix A), never by E6(R2) section 7.
+- E6(R3) is cited by its own numbering (Appendix A), never by superseded E6(R2) section 7.
 
 ## Not AnA's to decide
 - What is expected, and the release of each edition, are the sponsor's decisions by its medically qualified reviewers; authorisation of an EU RSI change is the member states'.
@@ -572,7 +578,7 @@ Designing the consent process for a trial, drafting or revising a consent form, 
 
 ## Method
 1. Establish the regime: FDA-regulated (21 CFR 50, drugs, biologics and devices alike), the Common Rule (45 CFR 46) for HHS-conducted or -supported research, or both; the EU Clinical Trials Regulation; ICH E6(R3) (Principle 2 and Annex 1 §2.8). Establish whether the trial is an applicable clinical trial; when unknown, that is a question to ask, not a missing element. Establish the population: adults who can consent, children, adults unable to consent, emergency settings.
-2. Take the element set from the platform record of consent elements, never from memory: the 21 CFR 50.25(a) basic elements on every form, the 50.25(b) additional elements when appropriate, the 50.25(c) ClinicalTrials.gov statement for an applicable clinical trial, and the Common Rule-only elements (key information first, future use, commercial profit, return of results, genome sequencing) when the Common Rule applies. \`design_informed_consent\` returns the framework for the study's features.
+2. Take the element set from the platform record of consent elements, never from memory: the 21 CFR 50.25(a) basic elements on every form, the 50.25(b) additional elements when appropriate, the 50.25(c) ClinicalTrials.gov statement for an applicable clinical trial, and the Common Rule-only elements (key information first, future use, commercial profit, return of results, genome sequencing) when the Common Rule applies. \`design_informed_consent\` returns the framework for the study's features; a feature left out leaves the elements it decides, and the consent method, not assessed, so ask for it.
 3. Draft in the platform: \`create_consent_form\` seeds the element rows from the record, and \`update_consent_element\` writes each element's content with its source. Use language the participant can understand and no exculpatory language (21 CFR 50.20). Risks, procedures, visits and duration match the current protocol and IB.
 4. Review in two passes: \`review_consent_completeness\` for the form's element rows, and \`review_informed_consent\` for the wording of a draft against 50.25 and E6(R3) Annex 1 §2.8. Its matching is cue-based: "not found" means the wording was not found, not that the form is deficient.
 5. Readability: score the text with \`assess_readability\` for a patient audience. No regulation fixes a grade level; the IRB/IEC's target applies.
@@ -592,7 +598,7 @@ Designing the consent process for a trial, drafting or revising a consent form, 
 ## Before answering
 - Each element is cited by its paragraph from the record, and the regime it comes from is named.
 - Tool findings are reported as found or not found, not as compliant or deficient.
-- E6(R3) consent content is cited as Annex 1 §2.8, never by an E6(R2) number.
+- E6(R3) consent content is cited as Annex 1 §2.8, never by a superseded E6(R2) number.
 
 ## Not AnA's to decide
 - The IRB/IEC approves the form and decides on re-consent, waivers and the readability target; the investigator obtains consent.
@@ -664,13 +670,13 @@ Questions about conducting a trial under GCP: who is responsible for what, how q
 
 ## Method
 1. Establish the role asking (sponsor, CRO, investigator site, IRB/IEC), the trial's phase and design, the regions, and what is wanted: a plan, an assessment, a deviation decision or inspection preparation.
-2. ICH E6(R3) is in force and supersedes E6(R2). Cite it by the numbering in the E6(R3) record (11 Principles; Annex 1 §1 IRB/IEC, §2 investigator, §3 sponsor, §4 data governance; Appendix C essential records), never by E6(R2) numbers. Annex 2 adds considerations for decentralised, pragmatic and real-world-data elements, and its effective dates differ by region. Check any cited guideline's currency with \`check_guidance_freshness\` rather than from memory.
+2. ICH E6(R3) is in force and supersedes E6(R2). Cite it by the numbering in the E6(R3) record (11 Principles; Annex 1 §1 IRB/IEC, §2 investigator, §3 sponsor, §4 data governance; Appendix C essential records), never by superseded E6(R2) numbers. Annex 2 adds considerations for decentralised, pragmatic and real-world-data elements, and its effective dates differ by region. Check any cited guideline's currency with \`check_guidance_freshness\` rather than from memory.
 3. Obligations by role: \`advise_gcp\` returns the principles or one domain (sponsor, investigator, IRB/IEC) with citations. Delegation of tasks to service providers leaves responsibility with the sponsor (Annex 1 §3.9 sponsor oversight, §3.6 agreements).
 4. Quality management: identify what is critical to quality and the risks to it (Annex 1 §3.10, §3.10.1), and keep controls proportionate to those risks (Principle 7). \`design_monitoring_plan\` returns a monitoring mix, key risk indicators and visit guidance from the trial's design factors; a factor left out is not scored. Monitoring is Annex 1 §3.11.4.
 5. Essential records: \`plan_essential_documents\` returns the trial master file and investigator site file plan by trial stage, with retention guidance (Appendix C; in the US, 21 CFR 312.57 and 312.62).
 6. Deviations: classify with \`classify_protocol_deviation\` (important or not, reportability); a fact left out is not read as false. Record with \`report_protocol_deviation\`, passing severity and safety impact only when a person has stated them. Trend with \`review_deviation_trends\` and report its signals and null shares as returned. Investigator compliance is Annex 1 §2.5 and sponsor handling of non-compliance §3.12. In the EU a serious breach has its own notification duty under the Clinical Trials Regulation; the clock applies only when a person has determined the breach is serious.
 7. Data governance: computerised systems fit for purpose and validated, audit trails reviewed, blinding protected in data flows (Annex 1 §4, including §4.1 on blinding and §4.3 on computerised systems).
-8. Compliance assessment: \`assess_gcp_compliance\` grades each principle; what is unverified stays unverified.
+8. Compliance assessment: \`assess_gcp_compliance\` grades each principle; what is unverified stays unverified. A fact left out raises no gap or strength, and the overall status is not_assessed unless no answer could change it; ask for the facts in notAssessed.
 9. Inspection readiness: \`assess_inspection_readiness\` for the target (sponsor, CRO, investigator, IRB) returns prioritized gaps, common Form FDA 483 observations for that target and the traceability checks to run.
 10. Confirm specific E6(R3) content with \`lookup_ich_guideline\` before quoting it.
 
@@ -679,7 +685,7 @@ Questions about conducting a trial under GCP: who is responsible for what, how q
 - A monitoring plan that is not traceable to the identified risks.
 - Deviations logged but not assessed for impact, not trended, or closed without effective CAPA.
 - Oversight of service providers asserted but not documented.
-- E6(R2) section numbers cited as the guideline in force.
+- Superseded E6(R2) section numbers cited as the guideline in force.
 
 ## Before answering
 - Every E6(R3) citation names a section that exists in the record.
@@ -747,8 +753,8 @@ An oncology program choosing its dosage: designing dose escalation, deciding wha
 4. Exposure-response for both efficacy and safety: \`assess_dose_exposure_response\` characterizes the relationships and the therapeutic window; \`select_exposure_response_dose\` recommends the lowest dose reaching the efficacy plateau within the safety bound and contrasts it with the MTD. Never estimate an optimized dose by hand (ICH E4).
 5. Randomized comparison: \`design_randomized_dose_comparison\` designs a comparison of two or more doses (arms, allocation, activity and tolerability endpoints, timing relative to registration).
 6. Tolerability over time counts, not only first-cycle dose-limiting toxicity: dose modifications, interruptions and discontinuations over several cycles, low-grade chronic toxicities and patient-reported tolerability.
-7. Dose for phase 2: \`select_rp2d\` integrates MTD, exposure, target engagement, longitudinal tolerability and activity across levels, without defaulting to the MTD.
-8. Program check: \`assess_project_optimus_alignment\` returns gaps against the expectations, given the program's stage and setting.
+7. Dose for phase 2: \`select_rp2d\` integrates MTD, exposure, target engagement, longitudinal tolerability and activity across levels, without defaulting to the MTD. A dose that is not too toxic or sub-therapeutic on its stated evidence, and lacks stated toxicity (or an MTD it does not exceed) or stated longitudinal tolerability, is \`insufficient_data\`, and no RP2D is chosen without stated exposure, engagement or activity evidence; say so and ask for it.
+8. Program check: \`assess_project_optimus_alignment\` returns gaps against the expectations, given the program's stage and setting. An unanswered pillar is \`not_stated\` and leaves the score \`null\` and the tier \`not_assessed\`; ask for it rather than reporting a score.
 9. FDA's guidance on optimizing the dosage of oncology drugs is the reference. Name it by topic and confirm it with \`lookup_fda_guidance\`; several engines cite an earlier draft, so confirm the current version before citing it as draft or final. Raise the dosage plan at a milestone meeting with the agency before the registrational trial.
 
 ## Pitfalls reviewers raise
@@ -1120,10 +1126,10 @@ A program proposing to use real-world data (claims, electronic health records, r
 ## Method
 1. Establish the regulatory question and purpose first: what decision the evidence is meant to support, in which region, and what a randomized trial answering the same question would look like. Acceptability depends on the purpose.
 2. Design: \`advise_rwe_design\` explains the options and guardrails; \`select_rwe_design\` recommends a design for the causal question and data features; \`design_target_trial\` writes the target trial emulation protocol (eligibility, treatment strategies, assignment, time zero, follow-up, outcome, causal contrast, analysis) and flags design-level biases.
-3. Data source: \`score_rwe_data_source\` scores relevance and reliability for the question. Outcome and exposure definitions need validation in that source.
+3. Data source: \`score_rwe_data_source\` scores relevance and reliability for the question from the stated facts. A capture or validation fact left out stays \`not_stated\`: the dimensions that read it and the overall score are null and fitness is \`not_assessed\`. Ask for the fact rather than reading it as absent. The strengths and limitations it returns are typical of the source type, not findings about this source. Outcome and exposure definitions need validation in that source.
 4. Confounding: \`design_propensity_analysis\` selects the estimation and application method and its diagnostics for the target estimand; \`assess_rwe_bias_risk\` inventories selection, information and confounding biases with mitigations and a sensitivity plan.
 5. Pre-specification: protocol and analysis plan are final, and ideally registered, before outcome data are analysed; the analytic dataset's provenance is documented, and patient-level data can be made available to the agency.
-6. Acceptability: \`assess_rwe_regulatory_acceptability\` grades the plan against evidence requirements for the stated purpose and authority. FDA's framework and guidances on real-world data and evidence are named by topic and confirmed with \`lookup_fda_guidance\`.
+6. Acceptability: \`assess_rwe_regulatory_acceptability\` grades the plan against evidence requirements for the stated purpose and authority. A registration, validation or sensitivity-analysis fact left out leaves its requirement \`not_assessed\`, and the overall grade too unless no answer could change it; \`assess_rwe_bias_risk\` lists a bias whose deciding fact was left out without grading it. Report those states as returned. FDA's framework and guidances on real-world data and evidence are named by topic and confirmed with \`lookup_fda_guidance\`.
 7. ICH context: E8(R1) treats real-world data as one design option chosen for the question; ICH E6(R3) Annex 2 covers real-world data within interventional trials; ICH M14 covers pharmacoepidemiological safety studies using real-world data. Confirm their status before citing.
 
 ## Pitfalls reviewers raise

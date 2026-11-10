@@ -1,0 +1,60 @@
+October 1, 2026
+Vascuflow Medical, Inc.
+Jane Doe
+Regulatory Affairs Manager
+1200 Innovation Way
+Minneapolis, MN 55447
+Re: K261234
+Trade/Device Name: Vascuflow PTA Balloon Catheter
+Regulation Number: 21 CFR 870.1250
+Regulation Name: Percutaneous catheter
+Regulatory Class: Class II
+Product Code: LIT
+Dated: August 15, 2026
+Received: August 15, 2026
+Dear Jane Doe:
+We are reviewing your Section 510(k) premarket notification of intent to market the device
+referenced above, and we have determined that additional information is necessary. To complete
+the review of your submission, we request the following information:
+1. Your device description does not identify all patient-contacting materials. Please provide a
+complete list of the materials of construction for each patient-contacting component, including
+any colorants, coatings, and adhesives, and identify the supplier for each material.
+2. You have not provided adequate biocompatibility information for the balloon coating. Your
+biocompatibility evaluation should follow the FDA guidance document "Use of International
+Standard ISO 10993-1, Biological evaluation of medical devices - Part 1: Evaluation and testing
+within a risk management process." Please provide the following:
+U.S. Food & Drug Administration
+10903 New Hampshire Avenue
+Silver Spring, MD 20993
+www.fda.gov
+
+-- 1 of 2 --
+
+K261234 - Jane Doe
+Page 2
+a. a biological risk assessment of the coated balloon;
+b. cytotoxicity, sensitization, and irritation test reports; and
+c. hemocompatibility test reports, including thrombogenicity.
+3. Your sterilization validation summary states that the device is sterilized by ethylene oxide
+(EO), but you have not provided the EO residuals data. Please provide the EO and ethylene
+chlorohydrin (ECH) residual levels in accordance with ISO 10993-7.
+4. Your shelf-life testing did not include the balloon rated burst pressure test after accelerated
+aging. Please provide rated burst pressure test results for devices aged to the proposed 3-year
+shelf life, or justify why this testing is not needed.
+The deficiencies identified above represent the issues that we believe need to be resolved before
+our review of your 510(k) submission can be successfully completed. In developing the
+deficiencies, we carefully considered the statutory criteria as defined in Section 513(i) of the
+FD&C Act for determining substantial equivalence of your device.
+If you have any questions, please contact Mark Lee at 301-796-0000 or mark.lee@fda.hhs.gov.
+Sincerely,
+Robert Smith -S
+Digitally signed by Robert Smith -S
+Date: 2026.10.01 14:22:10 -04'00'
+Robert Smith, PhD
+Assistant Director
+DHT2C: Division of Coronary and Peripheral Intervention Devices
+OHT2: Office of Cardiovascular Devices
+Office of Product Evaluation and Quality
+Center for Devices and Radiological Health
+
+-- 2 of 2 --

@@ -178,19 +178,20 @@ describe('Authority requirement mapping', () => {
     expect(auth.requiresHumanConfirmation).toBe(true);
   });
 
-  it('approve-artifact requires reviewer approval', () => {
+  // 2026-11-01 (F1): approve and lock are decided only by the signed act (server/services/artifact-approval-act.ts); the map's entries admit no role.
+  it('approve-artifact admits no role through this map', () => {
     const auth = getAuthorityForAction('approve-artifact');
-    expect(auth.level).toBe('requires-reviewer-approval');
+    expect(auth.level).toBe('forbidden');
     expect(auth.requiresReviewerApproval).toBe(true);
-    expect(auth.allowedActorRoles).toContain('reviewer');
-    expect(auth.allowedActorRoles).toContain('approver');
+    expect(auth.allowedActorRoles).toBeUndefined();
+    expect(auth.blockedReason).toContain('artifact-approval-act.ts');
   });
 
-  it('lock-artifact requires reviewer approval with restricted roles', () => {
+  it('lock-artifact admits no role through this map', () => {
     const auth = getAuthorityForAction('lock-artifact');
-    expect(auth.level).toBe('requires-reviewer-approval');
-    expect(auth.allowedActorRoles).toContain('approver');
-    expect(auth.allowedActorRoles).toContain('submission_lead');
+    expect(auth.level).toBe('forbidden');
+    expect(auth.allowedActorRoles).toBeUndefined();
+    expect(auth.blockedReason).toContain('artifact-approval-act.ts');
   });
 
   it('judge-module-ready requires escalation', () => {
@@ -246,7 +247,8 @@ describe('Actor authorization', () => {
   });
 
   it('actor role unknown returns blocked with reason', () => {
-    const auth = getAuthorityForAction('approve-artifact');
+    // A role-listed action (approve-artifact lists none since 2026-11-01, F1).
+    const auth = getAuthorityForAction('judge-dossier-ready');
     const result = isActorAuthorized(auth);
     expect(result.authorized).toBe(false);
     expect(result.reason).toContain('Requires one of');

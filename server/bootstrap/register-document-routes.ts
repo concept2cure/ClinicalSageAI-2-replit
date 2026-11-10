@@ -413,7 +413,7 @@ export async function registerDocumentRoutes({
   try {
     const ctdOnboardingModule = await import('../routes/ctd-onboarding.js');
     app.use('/api/ctd', ctdOnboardingModule.default);
-    console.log('✅ CTD Onboarding Pipeline routes mounted (projects, upload, validation, gaps)');
+    console.log('✅ CTD Onboarding Pipeline routes mounted (project reads, validation, section detection)');
   } catch (error) {
     console.error('❌ Failed to mount CTD Onboarding routes:', error);
   }

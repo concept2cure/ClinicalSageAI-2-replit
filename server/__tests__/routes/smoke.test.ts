@@ -305,7 +305,11 @@ describe('Stage 4: Backend beta contract smoke net', () => {
     expect(shared).toContain('export const sendSuccess = <T>');
     expect(shared).toContain('export const sendError = (');
     expect(content).toContain("router.get('/projects/:id'");
-    expect(content).toContain("router.post('/projects'");
+    // Project creation was retired here onto the one canonical intake (fb73f05f81): the Projects wizard
+    // posts to /api/c2c/projects (server/routes/c2c/projects.ts). A second creator must not return.
+    expect(content).not.toContain("router.post('/projects'");
+    const intake = fs.readFileSync(path.join(repoRoot, 'server/routes/c2c/projects.ts'), 'utf8');
+    expect(intake).toContain("router.post('/', async (req: Request, res: Response)");
   });
 
   it('keeps ana-ri core endpoints reachable via mount* functions', () => {

@@ -14,7 +14,9 @@ export interface CsrJobEvidenceScope {
 }
 export interface CsrJobRetainedSource { programId: string; runId: string; studyId: string }
 
-const RECOVERY_MESSAGES = {
+/** The fixed sentences a failed build records for these refusals (csr-job-runner.ts safeCsrJobFailure): what
+ * happened, that saved work was kept, and what to do next. Authored here, never copied from an error. */
+export const RECOVERY_MESSAGES = {
   CSR_EVIDENCE_CHANGED: 'The retained evidence changed while this CSR section was drafted. No late section was saved. Existing outputs were retained. Verify the current study sources and start a new CSR build.',
   CSR_EVIDENCE_SAVED_LINEAGE_MISMATCH: 'Saved CSR results do not identify the same readable source evidence. Existing outputs were retained. Verify the current study sources and start a new CSR build.',
   CSR_EVIDENCE_RESULTS_UNAVAILABLE: 'The retained evidence contains no usable result tables for this CSR section. Existing outputs were retained. Verify or supply the needed study results and start a new CSR build.',

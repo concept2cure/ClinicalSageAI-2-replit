@@ -239,7 +239,8 @@ describe('F18 end to end: the act lands on the Builder at the section', () => {
       if (url === '/api/submissions') return json([IND, MAA]);
       if (url === '/api/submissions/61/sequences') return json([{ id: 905, sequenceNumber: '0000', type: 'original', status: 'draft', region: 'fda', validationStatus: null }]);
       if (url === '/api/submissions/sequences/905/leaves') return json([]);
-      if (url === '/api/coauthor/documents') return json({ documents: [{ id: 7, title: 'Form FDA 1571', moduleNumber: null, status: 'approved' }], total: 1 });
+      // The Builder offers the project's documents (2026-10-31), not the Co-Author list.
+      if (url === '/api/authoring/docs') return json({ success: true, documents: [{ id: 'f1571000-0000-4000-8000-000000001571', title: 'Form FDA 1571', module: 'M1', status: 'approved' }] });
       return json([]);
     });
     render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);

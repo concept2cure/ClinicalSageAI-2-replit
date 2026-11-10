@@ -35,6 +35,8 @@ it('cold-imports the actual production-built Authoring release graph without wai
     DATABASE_URL: 'postgresql://synthetic:synthetic@127.0.0.1:1/cold_import',
     APP_DATABASE_URL: 'postgresql://synthetic:synthetic@127.0.0.1:1/cold_import',
     SKIP_DB_STARTUP_TEST: 'true', JWT_SECRET: 'synthetic-cold-import-only',
+    // Since e6a7c391cc the graph reaches connector-registry (providers/clients.ts), whose cipher refuses to load in production without its own key, as every deploy supplies.
+    CONNECTOR_ENCRYPTION_KEY: 'synthetic-cold-import-only-connector-key',
   };
   delete env.NODE_OPTIONS;
   const script = `const m=await import(${JSON.stringify(OUT)});const [render,governance]=await m.coldWorkflowGraph();` +

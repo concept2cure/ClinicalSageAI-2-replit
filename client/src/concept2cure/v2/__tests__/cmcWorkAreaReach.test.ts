@@ -41,20 +41,60 @@ const CLIENT_SRC = join(__dirname, '..', '..', '..');
 const REPO = join(__dirname, '..', '..', '..', '..', '..');
 const read = (...p: string[]) => readFileSync(join(...p), 'utf8');
 const CMC_MODULE = read(V2, 'surfaces', 'CmcModule.tsx');
+/**
+ * The same file with its comments removed.
+ *
+ * A name written in prose is not code. The first run of the retired-band case
+ * below failed on the comment that RECORDS CmConnectBar's deletion and says
+ * where each of its six destinations went — the rule reading its own
+ * documentation as a violation. This file already strips comments for the route
+ * sweep, for the same reason and after the same mistake; the assertions about
+ * what the module no longer renders read this instead.
+ */
+const CMC_CODE = CMC_MODULE.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 
-/** The destinations, as the module declares them. */
-function destinations(): Array<{ id: string; label: string; blurb: string; now: string }> {
+/**
+ * The destinations, as the module declares them.
+ *
+ * The matcher is per-FIELD rather than one expression over the whole entry: the
+ * first version was a single regex that required `id`, `label`, `icon`, `blurb`
+ * and `now` in that order on consecutive lines, so adding `half` to the first
+ * line (D5 §A.4.1) made it match nothing at all — and a parser that returns
+ * zero destinations makes every case over it vacuously pass. Splitting the
+ * entry first and reading each field out of it cannot fail that way, and the
+ * count is asserted below.
+ */
+interface CmcDestination { id: string; label: string; blurb: string; now: string; half: string }
+function destinations(): CmcDestination[] {
   const block = /const CMC_NAV: CmcNavItem\[\] = \[([\s\S]*?)\n\];/.exec(CMC_MODULE);
   if (!block) return [];
-  return [...block[1].matchAll(/id: '([a-z0-9-]+)', label: '([^']*)', icon: '[A-Za-z]+',\s*\n\s*blurb: '((?:[^'\\]|\\.)*)',\s*\n\s*now: '((?:[^'\\]|\\.)*)',/g)]
-    .map((m) => ({ id: m[1], label: m[2], blurb: m[3], now: m[4] }));
+  const out: CmcDestination[] = [];
+  /* Each entry runs from its `id:` to the next one (or the array's end). A
+     comment above an `id:` therefore belongs to the entry before it, which is
+     harmless: no field is read out of a comment. */
+  const starts = [...block[1].matchAll(/\n\s*id: '/g)].map((m) => m.index!);
+  for (let i = 0; i < starts.length; i += 1) {
+    const entry = block[1].slice(starts[i], i + 1 < starts.length ? starts[i + 1] : undefined);
+    const field = (name: string): string => {
+      const m = new RegExp(`\\b${name}: '((?:[^'\\\\]|\\\\.)*)'`).exec(entry);
+      return m ? m[1] : '';
+    };
+    out.push({
+      id: field('id'), label: field('label'), blurb: field('blurb'),
+      now: field('now'), half: field('half'),
+    });
+  }
+  return out;
 }
 
 describe('every CMC destination says what it is and what to do on it', () => {
   it('declares all nine, with both sentences', () => {
     const d = destinations();
+    /* The order is the two halves, Module 3 first (D5 §A.4.1). The IDS are
+       unchanged from the flat nine-tab row, because `cmc.open-tab`,
+       `__cmSetTab` and the cases below address a destination by id. */
     expect(d.map((x) => x.id)).toEqual([
-      'overview', 'materials', 'specs', 'stability', 'batch', 'change', 'quality', 'build', 'pathway',
+      'overview', 'quality', 'build', 'pathway', 'materials', 'specs', 'stability', 'batch', 'change',
     ]);
     for (const x of d) {
       expect(x.blurb.length, `${x.id} blurb`).toBeGreaterThan(10);
@@ -64,14 +104,64 @@ describe('every CMC destination says what it is and what to do on it', () => {
     }
   });
 
-  it('keeps the shape the project steps carry, so one band renders both', () => {
-    /* `StageBand` takes the project lifecycle's element type. CMC's
-       destinations are rendered by that same component rather than a second
-       band, so they must satisfy the fields it reads. */
-    const fields = ['id', 'label', 'icon', 'blurb', 'now'] as const;
-    for (const f of fields) expect(Object.keys(PJ_LIFECYCLE[0])).toContain(f);
-    expect(CMC_MODULE).toContain("import { StageBand } from './ProjectStages'");
-    expect(CMC_MODULE).toMatch(/<StageBand stage=\{tab\} lifecycle=\{CMC_NAV\}/);
+  it('splits the nine into the two halves the founder named', () => {
+    /* Was: "keeps the shape the project steps carry, so one band renders
+       both" — the nine destinations were rendered by the project's `StageBand`
+       as a "What to do now / NEXT STEP" box above the title. That box is a
+       retired pattern (ONE_DESIGN_PLAN §2; D5 §A.4.3): its `blurb` is each
+       tab's tooltip and its lead's meta, and its `now` is published to AnA as
+       `facts.whatToDoHere`, which the page's first starter asks for. So this
+       case now pins the arrangement that replaced it. */
+    const d = destinations();
+    const byHalf = (h: string) => d.filter((x) => x.half === h).map((x) => x.id);
+    expect(byHalf('module3')).toEqual(['overview', 'quality', 'build', 'pathway']);
+    expect(byHalf('records')).toEqual(['materials', 'specs', 'stability', 'batch', 'change']);
+    /* Every destination is in exactly one half — a typo'd value would leave a
+       tab reachable by id and on no tab row. */
+    expect(d.filter((x) => x.half !== 'module3' && x.half !== 'records')).toEqual([]);
+  });
+
+  it('keeps no band above the title', () => {
+    /* The three bands that filled CMC's first screen. Each is asserted by the
+       thing that rendered it, not by its words, so a re-spelling cannot slip
+       one back in. */
+    expect(CMC_CODE).not.toContain("from './ProjectStages'");
+    expect(CMC_CODE).not.toMatch(/<StageBand\b/);
+    expect(CMC_CODE).not.toMatch(/\bCmConnectBar\b/);
+    expect(CMC_CODE).not.toMatch(/className="cm-sub"/);
+    /* And what the page opens with instead: one h1, then the ask row, then the
+       halves — the tabs are BELOW the header, never above it. */
+    const page = /<div className="page-inner" data-work-area="cmc">([\s\S]*?)<Surf /.exec(CMC_CODE);
+    expect(page, 'the work-area root is not where this case can read it').not.toBeNull();
+    const order = ['<ProjectBack', '<h1 className="ph-title">', '<CmStarters', '<CmHalves'];
+    let at = -1;
+    for (const piece of order) {
+      const next = page![1].indexOf(piece);
+      expect(next, `${piece} is missing or out of order`).toBeGreaterThan(at);
+      at = next;
+    }
+    /* `CmcModule` still publishes the retired band's sentence to AnA, so the
+       guidance moved rather than went. */
+    expect(CMC_CODE).toMatch(/whatToDoHere: CMC_NAV\.find\(\(n\) => n\.id === tab\)\?\.now/);
+  });
+
+  it('would notice a band put back, or a parser that reads nothing', () => {
+    /* Verified by making the checks fail, over the real helpers. */
+    expect(destinations().length, 'the field parser matched nothing').toBe(9);
+    /* The comment strip is doing its job: the module DOES name CmConnectBar,
+       in the comment that records its removal, and the code does not. */
+    expect(CMC_MODULE).toMatch(/\bCmConnectBar\b/);
+    expect(CMC_CODE).not.toMatch(/\bCmConnectBar\b/);
+    /* The retired-band assertions, applied to the markup D5 replaced. */
+    const before = '<div className="cm-sub">…</div>\n<StageBand stage={tab} lifecycle={CMC_NAV} onStage={setTab} sequenced />\n<CmConnectBar nav={onNav} />';
+    expect(before).toMatch(/<StageBand\b/);
+    expect(before).toMatch(/\bCmConnectBar\b/);
+    expect(before).toMatch(/className="cm-sub"/);
+    /* And the project steps' own band is untouched: it still carries the
+       fields it always did, for the screens that are a lifecycle. */
+    for (const f of ['id', 'label', 'icon', 'blurb', 'now'] as const) {
+      expect(Object.keys(PJ_LIFECYCLE[0])).toContain(f);
+    }
   });
 
   it('gives guidance about the destination and never a claim about the program', () => {

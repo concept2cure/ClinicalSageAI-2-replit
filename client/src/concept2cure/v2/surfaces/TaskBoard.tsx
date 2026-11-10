@@ -8,6 +8,8 @@ import { readTaskNavigationTarget, taskActorScope, type TaskActorScope } from '.
 import { registerSurfaceLeaveGuard, surfaceLeaveRefusal } from '../navParams';
 import type { ListState } from '../dataConnect';
 import { I } from '../icons';
+import { setEditorTarget } from '../editorTarget';
+import { openNotificationRecord } from '../notificationNavigation';
 import { useDialog } from '../useDialog';
 import { useLiveRows, useLiveData, hasKeys, isRowsWith, EmptyState, ErrorState } from '../dataConnect';
 import { taskAnalyticsScope } from './taskBoardAnalyticsScope';
@@ -20,7 +22,8 @@ import { describeSignatureMethod } from '@shared/part11/signature-method';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
-import { publishShellProject } from '../shellProject';
+import { publishShellProject, useShellProject } from '../shellProject';
+import { taskProjectFor, TASK_SAVED_EVENT, dateInputValue, dueDateIso } from './CollabLauncher';
 import { getSurfaceMeta } from '../registryModel';
 import { consumeNavParams, NAV_PARAMS_EVENT, stashNavParamsForTarget } from '../navParams';
 import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
@@ -106,6 +109,14 @@ interface TaskItem {
   comments: number;
   attachments: number;
   source: string;
+  /** Exact UUID of an authoring document linked by the task's persisted source. */
+  sourceDocumentId?: string;
+  /** A review-route member's task: where the route is acted on (taskBoard.routes.ts
+   *  reviewRoute). The board does not move such a task; the route completes it. */
+  reviewRoute?: { kind: 'vault'; documentId: string; programId: string | null } | { kind: 'quality'; qmsDocumentId: string; programId?: string | null } | { kind: 'unresolved' };
+  sourceEntityType?: string | null;
+  sourceEntityId?: string | null;
+  qualitySource?: QualitySource;
   /** Humanised label for display only — never parsed for overdue state. */
   due: string;
   /**
@@ -144,6 +155,15 @@ interface TaskItem {
   description?: string | null;
 }
 
+type QualitySource = { kind: 'quality'; qmsTab: 'sop' | 'capa' | 'deviations' | 'suppliers' | 'audits'; qmsDocumentId?: string; qmsIntent?: 'read'; programId: string | null }
+  | { kind: 'unresolved' };
+function qualitySourceLabel(source: Extract<QualitySource, { kind: 'quality' }>): string {
+  if (source.qmsDocumentId) return source.qmsIntent === 'read' ? 'Read and acknowledge' : 'Open the controlled document';
+  const labels = { sop: 'Open controlled document register', capa: 'Open CAPA register', deviations: 'Open deviation register',
+    suppliers: 'Open supplier register', audits: 'Open internal audit register' };
+  return labels[source.qmsTab];
+}
+
 /** The screen that owns another store's work, as a person reads it. A project's
  *  page is named by its project (section 9 of
  *  .design/client-journey/INFORMATION_ARCHITECTURE.md), so `project-home` has no
@@ -167,7 +187,8 @@ const BLOCKING_FLAG = 'Blocking the submission';
 
 /** Initials for an already-resolved display name. '?' when there is no name. */
 function tbAvatar(name: string): string {
-  return (name || '?').split(' ').filter(Boolean).map(s => s[0]).join('').slice(0, 2) || '?';
+  if (!name || name === UNNAMED) return '?';
+  return name.split(' ').filter(Boolean).map(s => s[0]).join('').slice(0, 2) || '?';
 }
 
 /**
@@ -196,6 +217,21 @@ function sessionExpired(notDone: string): string {
 function refusalText(e: unknown, fallback: string): string {
   return e instanceof ApiRequestError && e.message ? e.message : fallback;
 }
+/** A refused create. A 400 carrying the server's sentence shows it; one carrying
+ *  only field codes says what did not happen, not "Couldn't complete that
+ *  request. Try again." (the generic line for a status with no sentence). */
+function createRefusalText(e: unknown): string {
+  if (e instanceof ApiRequestError && e.status === 400 && !serverMessage(e.payload)) {
+    return 'The task was not created: its details were not accepted. Check them and try again.';
+  }
+  return refusalText(e, 'Network error while creating the task.');
+}
+/** The empty choice of a project picker: what to do, or why there is nothing to choose. */
+function projectChoice(read: { rows: readonly unknown[]; loading: boolean; error?: string | null }): string {
+  if (read.rows.length) return 'Choose a project';
+  if (read.loading) return 'Loading projects…';
+  return read.error ? 'Couldn’t load your projects' : 'No projects available';
+}
 
 /**
  * Resolve a task's assignee id to a display name, from the org's real roster.
@@ -212,15 +248,18 @@ function refusalText(e: unknown, fallback: string): string {
  * The endpoint was already being read one component below, by TaskCreate's
  * picker, and is org-scoped exactly like getOptimalAssignee.
  *
- * Unresolvable ids retain their account reference rather than blank, because "assigned to
- * someone this client cannot name" and "not assigned to anyone" are different
- * facts. Neither ever falls back to a fixture name.
+ * An unresolvable id is said to be someone the board cannot name rather than
+ * blank, because "assigned to someone this client cannot name" and "not
+ * assigned to anyone" are different facts. Neither ever falls back to a fixture
+ * name, and neither shows the account number (it read "Account #42" on a card,
+ * 2026-10-31 client demo).
  */
+const UNNAMED = 'Name not available';
 function makeNameOf(rows: AssigneeOpt[]): (id: string | null | undefined) => string {
   const byId = new Map(rows.map(r => [String(r.id), r.name]));
   return (id) => {
     if (id === null || id === undefined || id === '') return '';
-    return byId.get(String(id)) ?? `Account #${id}`;
+    return byId.get(String(id)) ?? UNNAMED;
   };
 }
 
@@ -250,12 +289,19 @@ interface RuleRow {
   is_active: boolean;
 }
 
-/** The action types a rule fires, from its stored jsonb. Never inferred. */
+/** A stored rule vocabulary token ("task_overdue") as words ("Task overdue"). */
+function ruleWords(token: string): string {
+  const words = token.replace(/[_-]+/g, ' ').trim().toLowerCase();
+  return words ? words[0].toUpperCase() + words.slice(1) : '';
+}
+
+/** The action types a rule fires, from its stored jsonb, in words. Never inferred. */
 function ruleActions(r: RuleRow): string {
   const types = (Array.isArray(r.actions) ? r.actions : [])
-    .map(a => (a && typeof a.type === 'string' ? a.type : ''))
+    .map(a => (a && typeof a.type === 'string' ? ruleWords(a.type).toLowerCase() : ''))
     .filter(Boolean);
-  return types.length ? types.join(' + ') : '—';
+  // A rule with no action configured says so as configuration ("none set"), not as a clearance.
+  return types.length ? types.join(' and ') : 'none set';
 }
 
 function AutomationCard() {
@@ -286,13 +332,12 @@ function AutomationCard() {
       ) : (
         <>
           <div className="tb-an-auto">
-            <b>{rows.length}</b> active rule{rows.length === 1 ? '' : 's'} in{' '}
-            <code>project-rules</code>.
+            <b>{rows.length}</b> active rule{rows.length === 1 ? '' : 's'}.
           </div>
           <div className="tb-an-auto-rules">
             {rows.slice(0, 8).map(r => (
               <span key={r.rule_id} title={r.description || r.name}>
-                {r.trigger_event} -&gt; {ruleActions(r)}
+                {ruleWords(r.trigger_event)} → {ruleActions(r)}
               </span>
             ))}
           </div>
@@ -305,8 +350,7 @@ function AutomationCard() {
           project-rules routes (create / dry-run). No event source in the server
           dispatches to it, so a stored rule does not fire on its own. */}
       <div className="tb-an-foot" data-warn="true">
-        {I.alertTriangle} Rules are stored; the background executor is not yet wired, so
-        nothing here fires on its own.
+        {I.alertTriangle} Rules are saved, but they do not run automatically yet.
       </div>
     </div>
   );
@@ -340,13 +384,13 @@ function targetTask(read: ListState<TaskItem>, taskId: string): TaskItem | strin
   if (read.error) return 'The task board could not be read. Retry from Your work.';
   if (read.meta?.pendingStore === true ||
       (Array.isArray(read.meta?.unreadSources) && read.meta.unreadSources.includes('unified_tasks'))) {
-    return 'The unified task store is unavailable. Retry from Your work when it can be read.';
+    return "The board's own tasks could not be read. Retry from Your work.";
   }
   const matches = read.rows.filter(row => row.taskId === taskId);
   if (matches.length !== 1) return 'This task is no longer available on the current board. Reopen Your work to refresh it.';
   const task = matches[0];
   if (task.readOnly || !['unified', 'section', 'module', 'template', 'wbs', 'pyramid'].includes(task.source)) {
-    return 'This task belongs to another store. Open it from its owning store instead of unified-task controls.';
+    return 'This task is managed outside the board, so it is not available here. Open it from its project.';
   }
   if (task.status === 'cancelled') return 'This task was archived and is no longer open. Reopen Your work to refresh it.';
   return task;
@@ -474,6 +518,13 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
     boardRetrying.current = true;
     setReloadKey(key => key + 1);
   };
+  /* A task saved from the header's Task form (CollabLauncher) is re-read here,
+     so it appears on the board without a reload. */
+  useEffect(() => {
+    const reread = () => setReloadKey(key => key + 1);
+    window.addEventListener(TASK_SAVED_EVENT, reread);
+    return () => window.removeEventListener(TASK_SAVED_EVENT, reread);
+  }, []);
   const tasks: TaskItem[] = liveTasks.rows;
   /* Which stores the board could not read. The board reads every task store
      (its own, the schedule's, correspondence's, filings'); one it could not
@@ -507,10 +558,20 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
         typeof project.name === 'string' && typeof project.id === 'number' &&
         Number.isSafeInteger(project.id) && project.id > 0),
   );
-  useEffect(() => { if (!projectOpts.loading) projectRetrying.current = false; }, [projectOpts.loading]);
+  /* The failure stays on screen, busy, while its retry is in flight: the read
+     clears its error as soon as it reloads (dataConnect), which swapped the
+     panel for a bare "Loading project choices…" and dropped the Retrying state
+     the person had just asked for. */
+  const [projectRetryShown, setProjectRetryShown] = useState(false);
+  useEffect(() => {
+    if (projectOpts.loading) return;
+    projectRetrying.current = false;
+    setProjectRetryShown(false);
+  }, [projectOpts.loading]);
   const retryProjects = () => {
     if (projectOpts.loading || projectRetrying.current) return;
     projectRetrying.current = true;
+    setProjectRetryShown(true);
     setProjectReloadKey(key => key + 1);
   };
 
@@ -530,12 +591,39 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
   const canWrite = canGovernedWrite(user);
 
   const [view, setView] = useState('board');
-  const [proj, setProj] = useState<string>(() => {
-    try { return (window as any).C2C_TASK_FILTER || 'all'; } catch { return 'all'; }
-  });
+  /* The project filter starts on the open project. It read
+     `window.C2C_TASK_FILTER`, which nothing in the product sets, so Tasks opened
+     from a project showed every project's work (2026-10-31 client demo). The
+     shell names the open project by its regulatory_programs UUID; the board's
+     rows carry the numeric projects.id, so it is mapped through the project list
+     (taskProjectFor) once that list has been read. No project open, no match, or
+     an unread list: "All projects", never a guess. A choice made before the list
+     settles — the person's, AnA's, or a task link's — is never overwritten. */
+  const [proj, setProjState] = useState<string>('all');
+  const projChosen = useRef(false);
+  const setProj = useCallback((value: string) => { projChosen.current = true; setProjState(value); }, []);
+  const shellProject = useShellProject();
+  const openProject = useMemo(
+    () => taskProjectFor(projectOpts.rows.map(p => ({ id: p.id, programId: p.regulatoryProgramId })), shellProject?.id),
+    [projectOpts.rows, shellProject],
+  );
+  useEffect(() => {
+    if (projChosen.current || projectOpts.loading || !openProject) return;
+    projChosen.current = true;
+    setProjState(openProject);
+  }, [openProject, projectOpts.loading]);
+  /* New task and Start workflow open on the filtered project, else the open
+     one, else on "Choose a project". */
+  const defaultProject = proj !== 'all' ? proj : openProject;
   const [mine, setMine] = useState(false);
   const [mod, setMod] = useState('all');
   const [sel, setSel] = useState<TaskItem | null>(null);
+  // A task detail must close before the registered surface-leave guard will
+  // allow navigation. Keep the verified project+document target for that next
+  // render, not a free-floating docId that opens against the previous project.
+  const pendingEditorNav = useRef<{ docId: string; programId: string; programTitle: string } | null>(null);
+  /** A review-route task's record, opened once its drawer has closed (the leave guard refuses while it is open). */
+  const pendingRouteNav = useRef<Parameters<typeof openNotificationRecord>[0] | null>(null);
   const selectedTask = useRef(sel);
   selectedTask.current = sel;
   const mounted = useRef(true);
@@ -547,6 +635,8 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
   const [wf, setWf] = useState(false);
   /** State-machine / archive failures the server reported, surfaced in a banner. */
   const [actionErr, setActionErr] = useState('');
+  /** A completed action, said in place (a workflow's created tasks). */
+  const [notice, setNotice] = useState('');
   /** A completion the server answered 428 ESIGN_REQUIRED for — the pending
    *  21 CFR 11 §11.50 signature ceremony for an approval-gated task. */
   const [signReq, setSignReq] = useState<{ t: TaskItem; status: string; progress: number } | null>(null);
@@ -595,6 +685,29 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
   const leaveGuard = useRef<() => string | null>(() => null);
   leaveGuard.current = () => boardBusyGuard()?.reason ?? (sel ? 'A task detail is open — close it first.' : null);
   useEffect(() => registerSurfaceLeaveGuard(() => leaveGuard.current()), []);
+  useEffect(() => {
+    const target = pendingRouteNav.current;
+    if (!target || sel !== null) return;
+    pendingRouteNav.current = null;
+    if (!currentTaskActor(taskActorScope(user), isCurrent)) return;
+    try { openNotificationRecord(target, onNav); } catch (e) {
+      setActionErr(e instanceof Error ? e.message : 'The document could not be opened.');
+    }
+  }, [sel, user, isCurrent, onNav]);
+  useEffect(() => {
+    const pending = pendingEditorNav.current;
+    if (!pending || sel !== null) return;
+    pendingEditorNav.current = null;
+    if (!currentTaskActor(taskActorScope(user), isCurrent)) return;
+    // The drawer is now gone. Reuse the normal leave guard so an open
+    // signature or unsaved form can still veto the transition.
+    const refusal = surfaceLeaveRefusal();
+    if (refusal) { setActionErr(refusal); return; }
+    publishShellProject({ id: pending.programId, title: pending.programTitle });
+    setEditorTarget({ docType: null, docId: pending.docId,
+      programId: pending.programId, programTitle: pending.programTitle });
+    onNav('document-authoring');
+  }, [sel, user, isCurrent, onNav]);
   const targetMessage = useTaskTarget({
     scope: taskActorScope(user), isCurrent, read: liveTasks, reloadKey,
     reload: () => setReloadKey(key => key + 1),
@@ -840,7 +953,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
     } catch (e) {
       // A viewer's 403 or an unrecorded create (500 AUDIT_WRITE_FAILED) throws
       // here; calling either a "network error" misstated why nothing was made.
-      return { ok: false, error: refusalText(e, 'Network error while creating the task.') };
+      return { ok: false, error: createRefusalText(e) };
     }
   };
 
@@ -999,13 +1112,33 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
      look the id up in TB_PROJECTS, whose invented slugs (bx204/or902/iv415) can
      never match a real numeric projects.id — so it always fell through to
      rendering the bare id. */
-  const projLabel = (id: string) =>
-    projectOpts.rows.find(p => String(p.id) === String(id))?.name ?? id;
+  const projName = (id: string): string | null =>
+    projectOpts.rows.find(p => String(p.id) === String(id))?.name ?? null;
+  /* A project id the list does not hold is said so, never shown as the bare
+     number it is (it read "12" in the detail panel). */
+  const projLabel = (id: string): string =>
+    !id ? 'No project' : projName(id) ?? (projectOpts.loading ? 'Loading…' : 'A project not in your list');
+  /* The project a card or table row names. Cards and the table never said which
+     project a task belonged to (2026-10-31 client demo), which on an
+     all-projects board is the first thing a reader needs. Another store's work
+     carries its own project's title. */
+  const taskProject = (t: TaskItem): string =>
+    (t.project ? projName(t.project) : null) ?? t.home?.programTitle
+      ?? (t.project ? (projectOpts.loading ? '' : 'A project not in your list') : 'No project');
 
   /* Answer-first lead -- computed from live task state */
   const overdue = list.filter(isOverdue);
-  const workload = Object.entries(stats.byAsg || {}).map(([k, v]) => ({ k, open: v.open })).sort((a, b) => b.open - a.open);
+  /* Who carries the most open work, among people: unassigned work ('') and
+     another store's cards (no assignee) are not a person. */
+  const workload = Object.entries(stats.byAsg || {}).filter(([k]) => k !== '')
+    .map(([k, v]) => ({ k, open: v.open })).sort((a, b) => b.open - a.open);
   const heaviest = workload[0];
+  /* Busiest, balanced and rebalance are claims about a team. With one member
+     on the roster they are meaningless ("JM Smith is the busiest at 11 open
+     tasks — workload-balanced auto-assign can spread the next batch", over a
+     roster of one, 2026-10-31 client demo), and with an unread roster they are
+     unknown, so they are made only over more than one person. */
+  const team = roster.rows.length > 1;
   const critOpen = critChain.filter(t => t.status !== 'completed');
   const critBlocked = critChain.find(t => t.blocked);
   /* Has anything actually been DESIGNATED critical-path?
@@ -1029,7 +1162,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
         <div>
           <div className="ph-eyebrow">Project — collaboration</div>
           <h1 className="ph-title">{getSurfaceMeta('tasks').label}</h1>
-          <div className="ph-sub">The organisation's tasks from every store: the board's own, and the schedule's, agency correspondence's and tracked filings' work, each labelled with where it lives. Filter to a project below. Work from another store opens where it lives to be changed.</div>
+          <div className="ph-sub">Every task across your projects: the work planned here, and the work that comes from the project schedule, agency correspondence and tracked filings, each labelled with where it came from. Filter to a project below.</div>
         </div>
         {canWrite ? (
           <div style={{ display: 'flex', gap: 8 }}>
@@ -1054,13 +1187,19 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
           <button onClick={() => setActionErr('')} aria-label="Dismiss error">{I.close}</button>
         </div>
       )}
-      {projectOpts.error ? (
+      {notice && (
+        <div className="tb-notice" role="status" data-testid="tb-notice">
+          {I.check} <span>{notice}</span>
+          <button onClick={() => setNotice('')} aria-label="Dismiss">{I.close}</button>
+        </div>
+      )}
+      {projectOpts.error || projectRetryShown ? (
         <ErrorState
           title="Couldn't load the project list"
           message="Retry to restore the project choices. Tasks already shown remain available."
           retry={retryProjects}
           retryLabel="Retry project list"
-          busy={projectOpts.loading}
+          busy={projectOpts.loading || projectRetryShown}
           testId="tb-project-read-error"
         />
       ) : projectOpts.loading && !liveTasks.loading ? (
@@ -1076,14 +1215,14 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
           title="Couldn't load the task board"
           retry={retryBoard}
           hint={liveTasks.error
-            ? "The org-wide task board didn't respond. These are the organization's tasks — sign in and retry, or check that the task service is reachable."
+            ? "Your organization's tasks could not be loaded. Sign in again if your session has ended, then retry."
             : `The board is incomplete: ${unreadReason}. Retry to load the missing work.`}
         />
       ) : liveTasks.empty ? (
         <EmptyState
           icon={I.checkSquare}
           title="No tasks on the board yet"
-          hint="This is the org-wide unified task board. Create a task or start a workflow from a template and it appears here once it is persisted, with its origin store labelled."
+          hint="Create a task or start a workflow and it appears here once it is saved, labelled with where it came from."
         />
       ) : (
       <>
@@ -1098,15 +1237,15 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
               ? <>The critical path is clear — nothing open is blocking the milestone right now.</>
               : <>No task on this board is marked critical-path, so there is no path to report on yet.</>}
         body={critBlocked
-          ? <>{critBlocked.blockedReason || 'It is blocked'} — nothing downstream on the path can move until it clears. {heaviest && heaviest.open > 3 ? <>{nameOf(heaviest.k)} is also carrying {heaviest.open} open tasks; auto-assign can rebalance.</> : null}</>
+          ? <>{critBlocked.blockedReason || 'It is blocked'} — nothing downstream on the path can move until it clears. {team && heaviest && heaviest.open > 3 ? <>{nameOf(heaviest.k)} is also carrying {heaviest.open} open tasks; auto-assign can give new work to whoever has the fewest.</> : null}</>
           : <>{overdue.length ? <>Clear the overdue work first, then the path flows. </> : null}{/* "Workload is balanced across the team." used to fire whenever `heaviest`
     was undefined — i.e. the filter matched zero tasks. Absence of workload
     data was presented as a measured balance. Balance is claimed only when
-    there is assigned open work to be balanced. */}
-{heaviest && heaviest.open >= 3 ? <>{nameOf(heaviest.k)} is the busiest at {heaviest.open} open tasks — workload-balanced auto-assign can spread the next batch.</> : heaviest && heaviest.open > 0 ? <>Workload is balanced across the team.</> : <>No open work is assigned on this board, so there is no workload to balance.</>} {stats.appr ? <>{stats.appr} approval{stats.appr > 1 ? 's' : ''} pending an e-signature.</> : null}</>}
+    there is assigned open work to be balanced, across more than one person. */}
+{!team ? null : heaviest && heaviest.open >= 3 ? <>{nameOf(heaviest.k)} has the most open work, {heaviest.open} tasks; auto-assign gives new work to whoever has the fewest.</> : heaviest && heaviest.open > 0 ? <>Workload is balanced across the team.</> : <>No open work is assigned on this board, so there is no workload to balance.</>} {stats.appr ? <>{stats.appr} approval{stats.appr > 1 ? 's' : ''} pending an e-signature.</> : null}</>}
         reassure={
           critBlocked || overdue.length
-            ? 'I will help you unblock the path and rebalance the team, one step at a time.'
+            ? (team ? 'I will help you unblock the path and rebalance the team, one step at a time.' : 'I will help you unblock the path, one step at a time.')
             : critDesignated
               ? 'I will flag the moment anything threatens the milestone.'
               /* No "You are on track" over an undesignated board, and no promise
@@ -1131,25 +1270,23 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
         </div>
       )}
 
-      {/* Provenance strip -- the 7-table fragmentation made visible (Gap 1) */}
-      <div className="tb-src">
-        <span className="tb-src-h">Task sources</span>
-        {Object.keys(TB_SRC).map(k => {
-          const n = list.filter(t => t.source === k).length;
-          return (
+      {/* Where the tasks on the board come from: only the places that hold one. */}
+      {list.length > 0 && (
+        <div className="tb-src">
+          <span className="tb-src-h">Where these tasks come from</span>
+          {Object.keys(TB_SRC).filter(k => list.some(t => t.source === k)).map(k => (
             <span key={k} className="tb-src-chip" data-src={k} title={TB_SRC[k].t}>
-              <b>{TB_SRC[k].l}</b> {n}<em>{TB_SRC[k].t}</em>
+              <b>{TB_SRC[k].t}</b> {list.filter(t => t.source === k).length}
             </span>
-          );
-        })}
-        <span className="tb-src-note">other stores read through the cross-store work view; their cards open where they live</span>
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Filters + views */}
       <div className="tb-bar">
         <div className="tb-filters">
           <select id="tb-filter-project" aria-label="Filter by project" className="tb-sel" value={proj} onChange={e => setProj(e.target.value)}>
-            <option value="all">All projects (org-scoped)</option>
+            <option value="all">All projects</option>
             {projectOpts.rows.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>)}
           </select>
           <select id="tb-filter-module" aria-label="Filter by module" className="tb-sel" value={mod} onChange={e => setMod(e.target.value)}>
@@ -1200,25 +1337,31 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
                       <div className="tb-card-top">
                         {t.moduleType && <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span>}
                         {t.criticalPath && <span className="tb-flag crit" title="On critical path">{I.zap}</span>}
-                        {t.regulatoryImpact && <span className="tb-flag reg" title="Regulatory impact">{I.shieldCheck}</span>}
+                        {/* tb-flag-reg, not `reg`: the page-level `.c2c-v2 .reg` (the
+                            regulatory screen's scroll container, app-v2.css) matched
+                            it too and padded every such card with a ~97px blank band. */}
+                        {t.regulatoryImpact && <span className="tb-flag tb-flag-reg" title="Regulatory impact">{I.shieldCheck}</span>}
                         {t.blocking && !t.blocked && <span className="tb-flag blk" title={BLOCKING_FLAG}>{I.alertTriangle}</span>}
                       </div>
                       <div className="tb-card-title">{t.title}</div>
                       {t.blocked && <div className="tb-blocked">{I.alertTriangle} {t.blockedReason || 'Blocked'}</div>}
                       <div className="tb-card-meta">
-                        <span className="tb-type" data-t={t.taskType}>{TB_TYPE[t.taskType]}</span>
+                        {/* Only a type the board can name: a workflow's tasks carry
+                            none, and drew an empty grey pill. */}
+                        {TB_TYPE[t.taskType] && <span className="tb-type" data-t={t.taskType}>{TB_TYPE[t.taskType]}</span>}
                         {t.priority && <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span>}
                         {t.approvalRequired && <span className="tb-appr" data-s={t.approvalStatus}>{t.approvalStatus === 'approved' ? 'approved' : t.approvalStatus === 'pending' ? 'approval — pending' : 'needs approval'}</span>}
                       </div>
                       {t.progress > 0 && t.progress < 100 && <div className="tb-prog"><span style={{ width: t.progress + '%' }} /></div>}
                       <div className="tb-card-foot">
+                        {taskProject(t) && <span className="tb-card-proj" title={taskProject(t)}>{taskProject(t)}</span>}
                         <span className="tb-src-tag" data-src={t.source} title={SRC(t.source).t}>{SRC(t.source).l}</span>
-                        {(t.dependsOn.length > 0 || t.blocks.length > 0) && <span className="tb-deps" title={t.dependsOn.length + ' upstream — ' + t.blocks.length + ' downstream'}>{I.gitCompare}{t.dependsOn.length + t.blocks.length}</span>}
+                        {(t.dependsOn.length > 0 || t.blocks.length > 0) && <span className="tb-deps" title={'Waits on ' + t.dependsOn.length + ', holds up ' + t.blocks.length}>{I.gitCompare}{t.dependsOn.length + t.blocks.length}</span>}
                         {t.comments > 0 && <span className="tb-cmt">{t.comments}</span>}
                         <span className="tb-due" data-over={isOverdue(t) || undefined}>{t.due}</span>
                         {!t.readOnly && <span className="tb-av" title={nameOf(t.assignee)}>{tbAvatar(nameOf(t.assignee))}</span>}
                       </div>
-                      {canWrite && !t.readOnly && (
+                      {canWrite && !t.readOnly && !t.reviewRoute && (
                         <div className="tb-move" onClick={e => e.stopPropagation()}>
                           <button disabled={t.status === 'pending'} onClick={() => move(t, -1)} title="Move back" aria-label="Move back">{I.left}</button>
                           <button disabled={t.status === 'completed'} onClick={() => move(t, 1)} title="Advance" aria-label="Advance">{I.chevRight}</button>
@@ -1259,12 +1402,12 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
               <div className="tb-path-card">
                 <div className="tb-path-t">{t.title}<span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span></div>
                 <div className="tb-path-m">
-                  <span>{t.phase || '—'}</span><span className="tb-dot">--</span><span>{nameOf(t.assignee)}</span><span className="tb-dot">--</span>
-                  <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span><span className="tb-dot">--</span><span>impact {t.impactScore ?? '—'}/10</span>
+                  <span>{t.phase || '—'}</span><span className="tb-dot">·</span><span>{nameOf(t.assignee) || 'Unassigned'}</span><span className="tb-dot">·</span>
+                  <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span><span className="tb-dot">·</span><span>{t.impactScore != null ? `impact ${t.impactScore}/10` : 'impact not scored'}</span>
                   {t.blocked && <span className="tb-path-blk">{I.alertTriangle} blocked</span>}
-                  <span className="sp" /><span className="tb-due" data-over={isOverdue(t) || undefined}>{t.due}</span>
+                  <span className="tb-grow" /><span className="tb-due" data-over={isOverdue(t) || undefined}>{t.due}</span>
                 </div>
-                {t.dependsOn.length > 0 && <div className="tb-path-dep">depends on {t.dependsOn.map(d => (byId(d) || { title: d }).title || d).join(' — ')}</div>}
+                {t.dependsOn.length > 0 && <div className="tb-path-dep">depends on {t.dependsOn.map(d => byId(d)?.title || 'a task not on this board').join(' — ')}</div>}
               </div>
             </div>
           ))}
@@ -1300,7 +1443,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
               {Object.keys(stats.byAsg).map(k => (
                 <div key={k} className="tb-an-row"><span className="tb-an-k"><span className="tb-av sm">{tbAvatar(nameOf(k))}</span>{nameOf(k)}</span><div className="tb-an-split"><span className="tb-an-open">{stats.byAsg[k].open} open</span><span className="tb-an-done">{stats.byAsg[k].done} done</span></div></div>
               ))}
-              <div className="tb-an-foot">Auto-assign on a saved task balances workload server-side via <code>getOptimalAssignee()</code>; the per-module default shown here does not.</div>
+              <div className="tb-an-foot">Auto-assign on a saved task gives it to the member with the fewest open tasks; the per-module default shown here does not.</div>
             </div>
             <AutomationCard />
           </div>
@@ -1309,10 +1452,12 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
 
       {view === 'table' && (
         <div className="ctable tb-table">
-          <div className="ct-head" style={{ gridTemplateColumns: '130px 1.7fr 120px 96px 90px 90px 84px' }}><div>Task ID</div><div>Title</div><div>Module</div><div>Status</div><div>Priority</div><div>Owner</div><div>Due</div></div>
+          {/* Project, not Task ID: the server's id ("TASK-1761…-3f2a") told a
+              reader nothing, and which project a row is for told them most. */}
+          <div className="ct-head" style={{ gridTemplateColumns: '160px 1.7fr 120px 96px 90px 90px 84px' }}><div>Project</div><div>Title</div><div>Module</div><div>Status</div><div>Priority</div><div>Owner</div><div>Due</div></div>
           {list.map(t => (
-            <button key={t.taskId} className="ct-row" style={{ gridTemplateColumns: '130px 1.7fr 120px 96px 90px 90px 84px' }} onClick={() => setSel(t)}>
-              <div className="ct-strong mono" style={{ fontSize: 10.5 }}>{t.taskId}</div>
+            <button key={t.taskId} className="ct-row" style={{ gridTemplateColumns: '160px 1.7fr 120px 96px 90px 90px 84px' }} onClick={() => setSel(t)}>
+              <div className="ct-strong" style={{ fontSize: 11 }}>{taskProject(t)}</div>
               <div style={{ fontSize: 11.5 }}>{t.title}{t.criticalPath && <span className="tb-flag crit inline">{I.zap}</span>}{t.blocked && <span className="tb-flag blk inline">{I.alertTriangle}</span>}{t.blocking && !t.blocked && <span className="tb-flag blk inline" title={BLOCKING_FLAG}>{I.alertTriangle}</span>}</div>
               <div><span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span></div>
               <div style={{ fontSize: 11 }}>{(TB_COLS.find(c => c.id === t.status) || { label: t.status }).label}</div>
@@ -1350,40 +1495,49 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
           the identifiers are not. */}
       <details className="tb-gaps">
         <summary>What is enforced, and what is not yet</summary>
+        {/* Rewritten 2026-10-31 for the person relying on it: it named routers,
+            a state machine, a mirror and a dispatcher. The claims are the same
+            claims, each still true of the server. */}
         <ul>
-          <li><b>One canonical record.</b> Schedule-of-events tasks keep their own lifecycle and mirror forward into the canonical record with a deterministic id; the unified work view excludes those mirrored rows so nothing is counted twice. Origin is shown per card.</li>
-          <li><b>Audit:</b> every task create, transition, link and archive writes a hash-chained 21 CFR Part 11 audit pair, on <i>both</i> task routers and on the AnA mirror. Approval-gated completion additionally carries a verified §11.50 signature manifestation.</li>
-          <li><b>Notifications:</b> real. Assignment, blocked, completion and the unblock cascade are all delivered; an hourly sweep adds due-soon (48h) and overdue, once each per task.</li>
-          <li><b>Both task routers gate identically:</b> the org-wide board and the regulatory task list share the status state machine, the e-signature ceremony and the org-scoped unblock cascade, so governance is a property of the record rather than of the route it was reached through.</li>
-          <li><b>Automation:</b> rules are stored and can be dry-run, but no event source dispatches to the rules engine, so a stored rule never fires on its own.</li>
+          <li><b>Each task is counted once.</b> Work from the project schedule keeps its own history there and appears here once. Every card says where it came from.</li>
+          <li><b>Audit:</b> creating, moving, linking and archiving a task is recorded in the tamper-evident 21 CFR Part 11 audit trail, wherever it is done. Completing a task that needs approval also records a verified electronic signature (§11.50).</li>
+          <li><b>Notifications:</b> assignment, blocking, completion and unblocking are notified in the app. A task due within 48 hours, and an overdue task, is notified once each.</li>
+          <li><b>The same rules everywhere:</b> a task follows the same status steps, needs the same signature for approval and unblocks the same work wherever it is changed.</li>
+          <li><b>Automation:</b> rules can be saved and tested, but they do not run on their own yet.</li>
         </ul>
       </details>
       </>
       )}
 
-      {creating && <TaskCreate proj={proj} tasks={tasks} onClose={() => setCreating(false)} onCreate={create} />}
+      {creating && <TaskCreate proj={defaultProject} tasks={tasks} onClose={() => setCreating(false)} onCreate={create} />}
       {/* The tasks are already persisted by the time this fires, so the board is
           RELOADED rather than handed client-built rows through window.C2C.addTask
-          — a runtime channel that only ever updated local state. */}
+          — a runtime channel that only ever updated local state.
+          It also asked AnA "Created N tasks from the workflow template.", which
+          left the board for an empty conversation the moment the work landed
+          (2026-10-31 client demo). It stays here: the board view, re-read, with
+          the count and the project said in place, and the filter on that
+          project when another one was chosen. */}
       {wf && (
         <WorkflowStart
-          proj={proj}
+          proj={defaultProject}
           actorHeaders={() => taskActorHeaders(taskActorScope(user), isCurrent)}
           onClose={() => setWf(false)}
-          onInstantiate={(createdCount, warning) => {
+          onInstantiate={(createdCount, projectId, warning) => {
             setWf(false);
             setReloadKey((k) => k + 1);
-            setView('path');
+            setView('board');
+            if (proj !== 'all' && proj !== projectId) setProj(projectId);
+            setNotice(`${createdCount} ${createdCount === 1 ? 'task was' : 'tasks were'} created for ${projName(projectId) ?? 'the chosen project'} from the workflow.`);
             // The dialog is gone, so a partial outcome must outlive it.
             if (warning) setActionErr(warning);
-            onAsk && onAsk('Created ' + createdCount + ' task' + (createdCount === 1 ? '' : 's') + ' from the workflow template.');
           }}
         />
       )}
       {sel && sel.readOnly && (
         <OtherStoreTaskDetail
           t={sel}
-          projLabel={projLabel}
+          projName={projName}
           opening={openingFiling === sel.taskId}
           error={filingHomeError}
           onClose={() => { filingOpenSerial.current += 1; selectedTask.current = null; setSel(null); setOpeningFiling(null); setFilingHomeError(''); }}
@@ -1417,7 +1571,7 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
               return;
             }
             if (!t.home.programId) return;
-            publishNativeTaskHome(t, projLabel);
+            publishNativeTaskHome(t, projName);
             setSel(null);
             onNav(t.home.surface);
           }}
@@ -1429,6 +1583,46 @@ function TaskBoardSession({ onAsk, onNav, user, isCurrent }: BoardSessionProps) 
           byId={byId}
           projLabel={projLabel}
           onClose={() => setSel(null)}
+          onOpenDocument={(documentId) => {
+            if (!currentTaskActor(taskActorScope(user), isCurrent)) return;
+            const task = tasks.find(t => t.taskId === sel.taskId);
+            const project = projectOpts.rows.filter(p => String(p.id) === String(task?.project));
+            const programId = project.length === 1 ? project[0].regulatoryProgramId : null;
+            if (liveTasks.error || liveTasks.loading || boardIncomplete ||
+                projectOpts.error || projectOpts.loading ||
+                task?.sourceDocumentId !== documentId ||
+                !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(documentId) ||
+                typeof programId !== 'string' ||
+                !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(programId)) {
+              setActionErr('The task’s exact document and project could not be verified from the current Tasking and Projects records. Refresh both lists before opening the editor.');
+              return;
+            }
+            setActionErr('');
+            pendingEditorNav.current = { docId: documentId, programId, programTitle: project[0].name };
+            setSel(null);
+          }}
+          onOpenRoute={(task) => {
+            const route = task.reviewRoute;
+            if (!route || route.kind === 'unresolved' || !currentTaskActor(taskActorScope(user), isCurrent)) return 'The document could not be opened. Reopen the task.';
+            if (route.kind === 'vault' && !route.programId) return 'This version is in no project. Open it from the Vault.';
+            pendingRouteNav.current = route.kind === 'vault'
+              ? { surface: 'vault', label: 'Open the version in the Vault', params: { documentId: route.documentId }, programId: route.programId }
+              : { surface: 'quality', label: 'Open the controlled document', params: { qmsDocumentId: route.qmsDocumentId }, programId: route.programId ?? null };
+            setSel(null);
+            return null;
+          }}
+          onOpenQuality={(task) => {
+            const current = tasks.find(item => item.taskId === task.taskId), source = current?.qualitySource;
+            if (!currentTaskActor(taskActorScope(user), isCurrent) || liveTasks.loading || liveTasks.error || boardIncomplete || !source || source.kind !== 'quality') {
+              return 'The Quality record could not be verified. Reopen the task.';
+            }
+            const params: Record<string, string> = { qmsTab: source.qmsTab };
+            if (source.qmsDocumentId) params.qmsDocumentId = source.qmsDocumentId;
+            if (source.qmsIntent === 'read') params.qmsIntent = source.qmsIntent;
+            pendingRouteNav.current = { surface: 'quality', label: qualitySourceLabel(source), params, programId: source.programId };
+            setSel(null);
+            return null;
+          }}
           onAsk={onAsk}
           onMove={move}
           nameOf={nameOf}
@@ -1466,6 +1660,10 @@ interface TaskDetailProps {
   byId: (id: string) => TaskItem | undefined;
   projLabel: (id: string) => string;
   onClose: () => void;
+  onOpenDocument?: (documentId: string) => void;
+  /** Opens where a review-route task is acted on; returns a refusal to show, or null. */
+  onOpenRoute?: (t: TaskItem) => string | null;
+  onOpenQuality?: (t: TaskItem) => string | null;
   onAsk: (text: string) => void;
   onMove: (t: TaskItem, dir: number) => void;
   onAssign: (meta: TaskAssignmentMeta, headers: () => Record<string, string> | null) => Promise<AutomaticAssignmentAnswer>;
@@ -1498,14 +1696,14 @@ function homeLabel(home: TaskItem['home'], project: string | null): string | nul
 
 /** Where another store's work lives, in one sentence. */
 function whereItLives(home: string | null, project: string | null): React.ReactNode {
-  if (!home) return 'This work lives in another store. The board shows it and does not edit it.';
+  if (!home) return 'This work is managed outside the board. The board shows it and does not change it.';
   const forProject = project && project !== home ? ` for ${project}` : '';
   return `This work lives in ${home}${forProject}. It is changed there; the board shows it and does not edit it.`;
 }
 
-function OtherStoreTaskDetail({ t, projLabel, onClose, onOpenHome, opening, error }: {
+function OtherStoreTaskDetail({ t, projName, onClose, onOpenHome, opening, error }: {
   t: TaskItem;
-  projLabel: (id: string) => string;
+  projName: (id: string) => string | null;
   onClose: () => void;
   onOpenHome: (t: TaskItem) => void | Promise<void>;
   opening: boolean;
@@ -1513,14 +1711,14 @@ function OtherStoreTaskDetail({ t, projLabel, onClose, onOpenHome, opening, erro
 }) {
   const src = TB_SRC[t.source] || TB_SRC.unified;
   const status = (TB_COLS.find(c => c.id === t.status) || { label: t.status }).label;
-  const project = t.project ? projLabel(t.project) : null;
+  const project = (t.project ? projName(t.project) : null) ?? t.home?.programTitle ?? null;
   const home = homeLabel(t.home, project);
   const dialogRef = useDialog(onClose);
   return (
     <div className="tb-detail-bd" onClick={onClose}>
       <div className="tb-detail" role="dialog" aria-modal="true" aria-label="Task detail" tabIndex={-1} ref={dialogRef} onClick={e => e.stopPropagation()}>
         <div className="tb-detail-h">
-          <div><span className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>{t.taskId}</span><h3>{t.title}</h3></div>
+          <div><h3>{t.title}</h3></div>
           <button className="tb-detail-x" onClick={onClose} aria-label="Close">{I.close}</button>
         </div>
         {t.blocked && <div className="tb-blocked lg">{I.alertTriangle} {t.detail || 'Blocked'}</div>}
@@ -1537,11 +1735,44 @@ function OtherStoreTaskDetail({ t, projLabel, onClose, onOpenHome, opening, erro
   );
 }
 
-function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, onAssign, nameOf, onArchived, canWrite, pendingNotification,
+/** A review-route task's place (J5 human test, J2's D4, 2026-11-06): the board
+ *  cannot move it (the server answers 409), so the drawer opens where it is signed. */
+function RouteTaskSection({ t, onOpenRoute }: { t: TaskItem; onOpenRoute?: (t: TaskItem) => string | null }) {
+  const [err, setErr] = useState('');
+  const route = t.reviewRoute;
+  if (!route) return null;
+  const label = route.kind === 'vault' ? 'Open the version in the Vault' : route.kind === 'quality' ? 'Open the controlled document' : null;
+  return (
+    <div className="tb-detail-sec">
+      <div className="tb-detail-note">
+        This task is a step on a review route. It is reviewed and signed on the document, and the route completes it; it is not moved on the board.
+      </div>
+      {label && onOpenRoute
+        ? <button type="button" className="btn primary" onClick={() => setErr(onOpenRoute(t) ?? '')}>{I.fileText} {label}</button>
+        : <div role="status" className="tb-detail-note">The document this route is on could not be read. Open it from the Vault or Quality.</div>}
+      {err && <div role="alert" className="tb-detail-note">{err}</div>}
+    </div>
+  );
+}
+
+function QualityTaskSection({ t, onOpen }: { t: TaskItem; onOpen?: (task: TaskItem) => string | null }) {
+  const [error, setError] = useState('');
+  if (!t.qualitySource || t.reviewRoute) return null;
+  const source = t.qualitySource;
+  return <div className="tb-detail-sec">
+    {source.kind === 'quality' && onOpen
+      ? <button type="button" className="btn ghost" onClick={() => setError(onOpen(t) ?? '')}>{qualitySourceLabel(source)}</button>
+      : <div role="status" className="tb-detail-note">The Quality record could not be read. Reopen the task after checking access in Quality.</div>}
+    {error && <div role="alert" className="tb-detail-note">{error}</div>}
+  </div>;
+}
+
+function TaskDetail({ t, byId, projLabel, onClose, onOpenDocument, onOpenRoute, onOpenQuality, onAsk, onMove, onAssign, nameOf, onArchived, canWrite, pendingNotification,
   actorScope, isCurrent, onAssignmentSaved }: TaskDetailProps) {
   const src = TB_SRC[t.source] || TB_SRC.unified;
   const owner = nameOf(t.assignee) || 'Unassigned';
-  const dep = (id: string) => { const d = byId(id); return d ? d.title : id; };
+  // A dependency the board did not read is said so, never shown as its id.
+  const dep = (id: string) => byId(id)?.title ?? 'a task not on this board';
 
   // Two-step archive (soft delete). This is the ONLY removal verb: the server
   // stamps deleted_at/deleted_by (DELETE /api/tasks/tasks/:taskId, backed by the
@@ -1602,15 +1833,15 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, onAssign, name
     <div className="tb-detail-bd" onClick={onClose}>
       <div className="tb-detail" role="dialog" aria-modal="true" aria-label="Task detail" tabIndex={-1} ref={dialogRef} onClick={e => e.stopPropagation()}>
         <div className="tb-detail-h">
-          <div><span className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>{t.taskId}</span><h3>{t.title}</h3></div>
+          <div><h3>{t.title}</h3></div>
           <button className="tb-detail-x" onClick={onClose} aria-label="Close">{I.close}</button>
         </div>
         <div className="tb-detail-chips">
           <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span>
-          <span className="tb-type" data-t={t.taskType}>{TB_TYPE[t.taskType]}</span>
-          <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span>
+          {TB_TYPE[t.taskType] && <span className="tb-type" data-t={t.taskType}>{TB_TYPE[t.taskType]}</span>}
+          {t.priority && <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span>}
           {t.criticalPath && <span className="tb-flag crit lg">{I.zap} critical path</span>}
-          {t.regulatoryImpact && <span className="tb-flag reg lg">{I.shieldCheck} regulatory</span>}
+          {t.regulatoryImpact && <span className="tb-flag tb-flag-reg lg">{I.shieldCheck} regulatory</span>}
         </div>
         {t.blocked && <div className="tb-blocked lg">{I.alertTriangle} {t.blockedReason || 'Blocked'}</div>}
         {pendingNotification && <div role="status" className="tb-detail-note">{pendingNotification}</div>}
@@ -1626,12 +1857,21 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, onAssign, name
           <div><label>Project</label><span>{projLabel(t.project)}</span></div>
           <div><label>Phase</label><span>{t.phase || '—'}</span></div>
           <div><label>Assignee</label><span>{owner}</span></div>
-          <div><label>Assigned by</label><span>{nameOf(t.assignedBy) || '--'}</span></div>
-          <div><label>Impact score</label><span>{t.impactScore ?? '—'}/10</span></div>
+          <div><label>Assigned by</label><span>{nameOf(t.assignedBy) || '—'}</span></div>
+          <div><label>Impact score</label><span>{t.impactScore != null ? `${t.impactScore}/10` : 'Not scored'}</span></div>
           <div><label>Due</label><span style={{ color: isOverdue(t) ? 'var(--error)' : 'inherit' }}>{t.due}</span></div>
-          <div><label>Origin store</label><span>{src.l} — <em style={{ color: 'var(--text-400)' }}>{src.t}</em></span></div>
+          <div><label>Came from</label><span>{src.t}</span></div>
           <div><label>Progress</label><span>{t.progress}%</span></div>
         </div>
+        {t.sourceDocumentId && onOpenDocument && (
+          <div className="tb-detail-sec">
+            <button type="button" className="btn primary" onClick={() => onOpenDocument(t.sourceDocumentId!)}>
+              {I.fileText} Open linked document in editor
+            </button>
+          </div>
+        )}
+        <RouteTaskSection t={t} onOpenRoute={onOpenRoute} />
+        <QualityTaskSection t={t} onOpen={onOpenQuality} />
         {canWrite && <TaskAssignmentControls key={t.taskId} taskId={t.taskId} status={t.status}
           projectId={/^[1-9]\d*$/.test(t.project) ? Number(t.project) : null} actorScope={actorScope} isCurrent={isCurrent}
           disabled={confirmArchive || archiving} onAutomatic={onAssign} onSaved={onAssignmentSaved} onBlockedChange={setAssignmentBlocked} />}
@@ -1652,7 +1892,7 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, onAssign, name
                       {I.shieldCheck}
                       <b>{s.signedByName}</b>
                       <span className="tb-sig-meaning">{s.meaning.toLowerCase()}</span>
-                      <span className="sp" />
+                      <span className="tb-grow" />
                       <time dateTime={s.signedAt}>{fmtSigned(s.signedAt)}</time>
                     </div>
                     {s.reason && <div className="tb-sig-reason">{s.reason}</div>}
@@ -1684,7 +1924,7 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, onAssign, name
         )}
         {(t.dependsOn.length > 0 || t.blocks.length > 0) && (
           <div className="tb-detail-sec">
-            <div className="tb-detail-sec-h">Dependencies <code>taskDependencies</code></div>
+            <div className="tb-detail-sec-h">Dependencies</div>
             {t.dependsOn.map(d => <div key={d} className="tb-dep-row up">{I.arrowUp} depends on <b>{dep(d)}</b></div>)}
             {t.blocks.map(d => <div key={d} className="tb-dep-row dn">{I.arrowRight} blocks <b>{dep(d)}</b></div>)}
           </div>
@@ -1720,7 +1960,7 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, onAssign, name
                 aria-describedby={archiveReasonTooLong ? 'tb-archive-reason-len' : undefined}
                 value={archiveReason}
                 onChange={(e) => setArchiveReason(e.target.value)}
-                placeholder="e.g. Superseded by TASK-1043 after the content-lock plan changed."
+                placeholder="e.g. Superseded after the content-lock plan changed."
               />
             </div>
             {archiveReasonTooLong && (
@@ -1730,7 +1970,7 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, onAssign, name
           </div>
         )}
         <div className="tb-detail-f">
-          <button className="btn ghost" onClick={() => { onAsk && onAsk('Draft a status update for ' + t.taskId + ': ' + t.title); onClose(); }}>{I.sparkles} Ask AnA</button>
+          <button className="btn ghost" onClick={() => { onAsk && onAsk('Draft a status update for the task "' + t.title + '"'); onClose(); }}>{I.sparkles} Ask AnA</button>
           {canWrite && confirmArchive && (
             <button className="btn ghost" onClick={() => { setConfirmArchive(false); setArchiveReason(''); setArchiveErr(''); }}>Cancel</button>
           )}
@@ -1744,8 +1984,11 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, onAssign, name
               aria-label={confirmArchive ? `Confirm archiving "${t.title}"` : `Archive "${t.title}"`}
             >{archiving ? 'Archiving…' : confirmArchive ? 'Confirm archive' : 'Archive'}</button>
           )}
-          <span className="sp" />
-          {canWrite && (
+          {/* tb-grow, not `sp`: the page-level `.c2c-v2 .sp` (the specialty
+              screens' scroll container, journey-v2.css) gave this spacer a
+              height and padding and pushed Advance onto its own row. */}
+          <span className="tb-grow" />
+          {canWrite && !t.reviewRoute && (
             <>
               <button className="btn ghost" disabled={assignmentBlocked || t.status === 'pending'} onClick={() => { onMove(t, -1); onClose(); }}>Move back</button>
               <button className="btn primary" disabled={assignmentBlocked || t.status === 'completed'} onClick={() => { onMove(t, 1); onClose(); }}>{I.chevRight} Advance</button>
@@ -1762,6 +2005,7 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, onAssign, name
 /** POST body for the real create — mirrors server createTaskSchema. */
 interface TaskCreateBody {
   title: string;
+  description?: string;
   moduleType: string;
   taskType: string;
   status: string;
@@ -1775,7 +2019,11 @@ interface TaskCreateBody {
   approvalRequired: boolean;
 }
 /** Real org project (from GET /api/projects — a bare row array). */
-interface ProjectOpt { id: number; name: string }
+interface ProjectOpt {
+  id: number; name: string; code?: string | null;
+  /** projects.regulatory_program_id: the open project's UUID, when anchored. */
+  regulatoryProgramId?: string | null;
+}
 /** Real assignable org member (from GET /api/task-management/assignees). */
 interface AssigneeOpt { id: string; name: string; label?: string }
 
@@ -1800,10 +2048,18 @@ interface CreateForm {
   criticalPath: boolean;
   regulatoryImpact: boolean;
   approvalRequired: boolean;
-  dueDays: number;
+  /** A date input's `yyyy-mm-dd`; '' for no due date. */
+  due: string;
+  description: string;
   phase: string;
   dependsOn: string[];
 }
+
+/* The statuses a task may be created in: the server's CREATABLE_TASK_STATUSES
+   (server/services/tasking/task-state-machine.ts). The picker offered every
+   board column, "Done" included, and the server refuses that with a 400: a task
+   created complete would skip the signature its approval needs. */
+const CREATABLE_STATUSES: readonly string[] = ['pending', 'in-progress', 'blocked', 'review'];
 
 function TaskCreate({ onClose, onCreate, proj, tasks }: TaskCreateProps) {
   // Real org projects + assignable members for the pickers (never fixtures).
@@ -1814,41 +2070,38 @@ function TaskCreate({ onClose, onCreate, proj, tasks }: TaskCreateProps) {
     title: '', project: proj && proj !== 'all' ? proj : '', moduleType: 'Clinical', taskType: 'deliverable',
     status: 'pending', priority: 'high', assignee: 'auto', impactScore: 6,
     criticalPath: false, regulatoryImpact: true, approvalRequired: false,
-    dueDays: 7, phase: '', dependsOn: [],
+    due: dateInputValue(7), description: '', phase: '', dependsOn: [],
   });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const set = <K extends keyof CreateForm>(k: K, v: CreateForm[K]) => setF(p => ({ ...p, [k]: v }));
 
-  // Default the project picker to the first real project once the list loads,
-  // and never leave it on a stale non-matching id (e.g. a legacy filter slug).
+  // Opens on the board's project, else on "Choose a project" — never the first row (it filed tasks there).
   useEffect(() => {
-    if (!projects.rows.length) return;
-    const ids = projects.rows.map((p) => String(p.id));
-    if (!f.project || !ids.includes(f.project)) set('project', String(projects.rows[0].id));
+    if (!projects.rows.length || !f.project) return;
+    if (!projects.rows.some((p) => String(p.id) === f.project)) set('project', '');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projects.rows]);
 
-  const allTasks = tasks;
   const toggleDep = (id: string) => set('dependsOn', f.dependsOn.includes(id) ? f.dependsOn.filter(x => x !== id) : [...f.dependsOn, id]);
 
   // Build the real create body and hand it to the parent, which POSTs it and
   // links the selected predecessors. No fabricated id — the server assigns it.
   const doCreate = async () => {
     if (!f.title.trim() || busy) return;
-    setBusy(true);
-    setErr('');
-    const due = new Date();
-    due.setDate(due.getDate() + (Number.isFinite(f.dueDays) ? f.dueDays : 0));
+    // With projects to choose from and none chosen, nothing is sent: it would be stored under none.
+    if (projects.rows.length > 0 && !projects.rows.some((p) => String(p.id) === f.project)) { setErr('Choose the project this task belongs to.'); return; }
+    setBusy(true); setErr('');
     const body: TaskCreateBody = {
       title: f.title.trim(),
+      ...(f.description.trim() ? { description: f.description.trim() } : {}),
       moduleType: f.moduleType,
       taskType: f.taskType,
       status: f.status,
       priority: f.priority,
       projectId: Number.isFinite(Number(f.project)) && Number(f.project) > 0 ? Number(f.project) : undefined,
       assigneeId: f.assignee && f.assignee !== 'auto' && Number.isFinite(Number(f.assignee)) ? Number(f.assignee) : undefined,
-      dueDate: due.toISOString(),
+      dueDate: dueDateIso(f.due),
       impactScore: f.impactScore,
       criticalPath: f.criticalPath,
       regulatoryImpact: f.regulatoryImpact,
@@ -1868,13 +2121,14 @@ function TaskCreate({ onClose, onCreate, proj, tasks }: TaskCreateProps) {
     <div className="tb-detail-bd tb-create-bd" onClick={onClose}>
       <div className="tb-detail tb-create" role="dialog" aria-modal="true" aria-label="New task" tabIndex={-1} ref={dialogRef} onClick={e => e.stopPropagation()}>
         <div className="tb-detail-h">
-          <div><span className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>unifiedTasks — new</span><h3>New task</h3></div>
+          <div><h3>New task</h3></div>
           <button className="tb-detail-x" onClick={onClose} aria-label="Close">{I.close}</button>
         </div>
         <div className="tb-form">
           <div className="tb-field full"><label htmlFor="tb-title">Title<i>*</i></label><input id="tb-title" type="text" autoFocus value={f.title} onChange={e => set('title', e.target.value)} placeholder="e.g. Reconcile 2.5.4 efficacy claim with CSR-201 dataset" /></div>
+          <div className="tb-field full"><label htmlFor="tb-description">Description</label><textarea id="tb-description" rows={3} value={f.description} onChange={e => set('description', e.target.value)} placeholder="What needs to be done, and what done looks like." /></div>
           <div className="tb-frow">
-            <div className="tb-field"><label htmlFor="tb-project">Project</label><select id="tb-project" value={f.project} onChange={e => set('project', e.target.value)}>{projects.rows.length ? projects.rows.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>) : <option value="">No projects available</option>}</select></div>
+            <div className="tb-field"><label htmlFor="tb-project">Project</label><select id="tb-project" value={f.project} onChange={e => set('project', e.target.value)}><option value="">{projectChoice(projects)}</option>{projects.rows.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>)}</select></div>
             <div className="tb-field"><label htmlFor="tb-module">Module</label><select id="tb-module" value={f.moduleType} onChange={e => set('moduleType', e.target.value)}>{Object.keys(TB_MOD).map(m => <option key={m} value={m}>{m}</option>)}</select></div>
           </div>
           <div className="tb-frow">
@@ -1887,12 +2141,12 @@ function TaskCreate({ onClose, onCreate, proj, tasks }: TaskCreateProps) {
             <div className="tb-field"><label htmlFor="tb-priority">Priority</label><select id="tb-priority" value={f.priority} onChange={e => set('priority', e.target.value)}>{['low', 'medium', 'high', 'critical'].map(p => <option key={p} value={p}>{p}</option>)}</select></div>
           </div>
           <div className="tb-frow">
-            <div className="tb-field"><label htmlFor="tb-status">Status</label><select id="tb-status" value={f.status} onChange={e => set('status', e.target.value)}>{TB_COLS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</select></div>
-            <div className="tb-field"><label htmlFor="tb-assignee">Assignee</label><select id="tb-assignee" value={f.assignee} onChange={e => set('assignee', e.target.value)}><option value="auto">Auto — optimal assignee</option>{assignees.rows.map(a => <option key={a.id} value={a.id}>{a.label ?? a.name}</option>)}</select></div>
+            <div className="tb-field"><label htmlFor="tb-status">Status</label><select id="tb-status" value={f.status} onChange={e => set('status', e.target.value)}>{TB_COLS.filter(c => CREATABLE_STATUSES.includes(c.id)).map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</select></div>
+            <div className="tb-field"><label htmlFor="tb-assignee">Assignee</label><select id="tb-assignee" value={f.assignee} onChange={e => set('assignee', e.target.value)}><option value="auto">Auto — fewest open tasks</option>{assignees.rows.map(a => <option key={a.id} value={a.id}>{a.label ?? a.name}</option>)}</select></div>
           </div>
           <div className="tb-frow">
             <div className="tb-field"><label htmlFor="tb-impact-score-10">Impact score — {f.impactScore}/10</label><input id="tb-impact-score-10" type="range" min="0" max="10" value={f.impactScore} onChange={e => set('impactScore', +e.target.value)} /></div>
-            <div className="tb-field"><label htmlFor="tb-due-in-days">Due in (days)</label><input id="tb-due-in-days" type="number" min="0" max="120" value={f.dueDays} onChange={e => set('dueDays', +e.target.value)} /></div>
+            <div className="tb-field"><label htmlFor="tb-due">Due date</label><input id="tb-due" type="date" min={dateInputValue(0)} value={f.due} onChange={e => set('due', e.target.value)} /></div>
           </div>
           <div className="tb-field full"><label>Flags</label>
             <div className="tb-toggles">
@@ -1901,22 +2155,22 @@ function TaskCreate({ onClose, onCreate, proj, tasks }: TaskCreateProps) {
               <button type="button" className={`tb-tog${f.approvalRequired ? ' on' : ''}`} onClick={() => set('approvalRequired', !f.approvalRequired)}><span className="ico">{I.checkSquare}</span>Approval required</button>
             </div>
           </div>
-          <div className="tb-field full"><label>Depends on <span style={{ color: 'var(--text-400)', fontWeight: 400 }}>-- taskDependencies DAG</span></label>
+          <div className="tb-field full"><label>Depends on <span style={{ color: 'var(--text-400)', fontWeight: 400 }}>— tasks in this project that must finish first</span></label>
             <div className="tb-dep-pick">
-              {allTasks.filter(t => t.project === f.project).slice(0, 6).map(t => (
+              {tasks.filter(t => t.project === f.project).slice(0, 6).map(t => (
                 <button type="button" key={t.taskId} className={`tb-dep-opt${f.dependsOn.includes(t.taskId) ? ' on' : ''}`} onClick={() => toggleDep(t.taskId)} title={t.title}>
                   {f.dependsOn.includes(t.taskId) ? I.check : I.plus}<span>{t.title}</span>
                 </button>
               ))}
             </div>
           </div>
-          {f.assignee === 'auto' && <div className="tb-auto-note"><span className="ico">{I.sparkles}</span><span>Auto-assign picks the lowest-workload member of this organization for <b>{f.moduleType}</b> — balanced server-side via <code>getOptimalAssignee()</code>.</span></div>}
+          {f.assignee === 'auto' && <div className="tb-auto-note"><span className="ico">{I.sparkles}</span><span>Auto-assign gives this <b>{f.moduleType}</b> task to the member of your organization with the fewest open tasks.</span></div>}
           {err && <div className="tb-auto-note" data-warn="true" role="alert"><span className="ico">{I.alertTriangle}</span><span>{err}</span></div>}
         </div>
         <div className="tb-detail-f">
-          
+          <span className="tb-grow" />
           <button className="btn ghost" onClick={onClose}>Cancel</button>
-          <button className="btn primary" disabled={!f.title.trim() || busy} onClick={doCreate}>{I.plus} {busy ? 'Creating...' : 'Create task'}</button>
+          <button className="btn primary" disabled={!f.title.trim() || busy} onClick={doCreate}>{I.plus} {busy ? 'Creating…' : 'Create task'}</button>
         </div>
       </div>
     </div>
@@ -1933,9 +2187,10 @@ interface WorkflowStartProps {
   /** Called with the COUNT the server actually created — the tasks themselves
    *  are already persisted, so the board reloads rather than being handed
    *  client-built rows. */
-  /** `warning` names a follow-up step that did not happen (auto-assign), so
-   *  the board can keep saying so after this dialog closes. */
-  onInstantiate: (createdCount: number, warning?: string) => void;
+  /** `projectId` is the project the tasks were created in. `warning` names a
+   *  follow-up step that did not happen (auto-assign), so the board can keep
+   *  saying so after this dialog closes. */
+  onInstantiate: (createdCount: number, projectId: string, warning?: string) => void;
 }
 
 /**
@@ -2088,7 +2343,7 @@ function WorkflowStart({ proj, onClose, onInstantiate, actorHeaders }: WorkflowS
       const assignmentAttempted = autoAssign && ids.length > 0;
       const warning = assignmentAttempted ? await autoAssignCreated(ids, created, actorHeaders) : undefined;
       if (!actorHeaders()) { setErr(workflowActorChanged(created, assignmentAttempted)); return; }
-      onInstantiate(created, warning);
+      onInstantiate(created, project, warning);
     } catch (e) {
       // `e instanceof Error` also matched a browser-native fetch rejection, so a
       // dropped connection surfaced as "Failed to fetch" / "Load failed" in the
@@ -2106,7 +2361,7 @@ function WorkflowStart({ proj, onClose, onInstantiate, actorHeaders }: WorkflowS
     <div className="tb-detail-bd" onClick={onClose}>
       <div className="tb-detail tb-create" role="dialog" aria-modal="true" aria-label="Start workflow from template" tabIndex={-1} ref={dialogRef} onClick={e => e.stopPropagation()}>
         <div className="tb-detail-h">
-          <div><span className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>taskTemplates — from-template</span><h3>Start a workflow</h3></div>
+          <div><h3>Start a workflow</h3></div>
           <button className="tb-detail-x" onClick={onClose} aria-label="Close">{I.close}</button>
         </div>
 
@@ -2133,25 +2388,25 @@ function WorkflowStart({ proj, onClose, onInstantiate, actorHeaders }: WorkflowS
         <div className="tb-form">
           <div className="tb-frow">
             <div className="tb-field"><label htmlFor="tb-workflow-template">Workflow template</label><select id="tb-workflow-template" value={tid} onChange={e => setTid(e.target.value)}>{templates.rows.map(t => <option key={t.templateId} value={t.templateId}>{t.name}</option>)}</select></div>
-            <div className="tb-field"><label htmlFor="tb-project-2">Project</label><select id="tb-project-2" value={project} onChange={e => setProject(e.target.value)}><option value="">Select a project…</option>{projects.rows.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>)}</select></div>
+            <div className="tb-field"><label htmlFor="tb-project-2">Project</label><select id="tb-project-2" value={project} onChange={e => setProject(e.target.value)}><option value="">{projectChoice(projects)}</option>{projects.rows.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>)}</select></div>
           </div>
           {tpl && (
             <>
               <div className="wf-meta">
-                <span><b>{tpl.taskCount}</b> tasks</span><span className="tb-dot">--</span>
-                <span><b>{tpl.spanDays}</b>-day span</span><span className="tb-dot">--</span>
-                <span><b>{tpl.estimatedHours}</b>h effort</span><span className="tb-dot">--</span>
+                <span><b>{tpl.taskCount}</b> tasks</span><span className="tb-dot">·</span>
+                <span><b>{tpl.spanDays}</b>-day span</span><span className="tb-dot">·</span>
+                <span><b>{tpl.estimatedHours}</b>h effort</span><span className="tb-dot">·</span>
                 <span><b>{tpl.dependencyCount}</b> dependencies</span>
               </div>
               {tpl.description && <div className="scaf-note" style={{ padding: '2px 0 6px' }}>{tpl.description}</div>}
-              <div className="tb-field full"><label>Tasks this creates <span style={{ color: 'var(--text-400)', fontWeight: 400 }}>-- dependency-linked, date-offset</span></label>
+              <div className="tb-field full"><label>Tasks this creates <span style={{ color: 'var(--text-400)', fontWeight: 400 }}>— in order, each dated from today</span></label>
                 <div className="wf-tasks">
                   {tpl.tasks.map((t, i) => (
                     <div key={t.id || i} className="wf-task">
                       <span className="wf-task-n">{i + 1}</span>
                       <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || MODULE_COLOR_UNKNOWN } as React.CSSProperties}>{t.moduleType}</span>
                       <span className="wf-task-t">{t.title}</span>
-                      <span className="wf-task-d">day +{t.dayOffset} — {t.duration}d</span>
+                      <span className="wf-task-d">day {t.dayOffset + 1}, {t.duration} {t.duration === 1 ? 'day' : 'days'}</span>
                       <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span>
                     </div>
                   ))}
@@ -2162,13 +2417,13 @@ function WorkflowStart({ proj, onClose, onInstantiate, actorHeaders }: WorkflowS
               </div>
             </>
           )}
-          <button type="button" className={`tb-tog${autoAssign ? ' on' : ''}`} onClick={() => setAutoAssign(a => !a)}><span className="ico">{I.sparkles}</span>Workload-balanced auto-assign (a separate step, after the tasks are created)</button>
+          <button type="button" className={`tb-tog${autoAssign ? ' on' : ''}`} aria-pressed={autoAssign} onClick={() => setAutoAssign(a => !a)}><span className="ico">{I.sparkles}</span>Auto-assign each task to the member with the fewest open tasks, once they are created</button>
           {err && <div className="scaf-note" role="alert" style={{ color: 'var(--error)' }}>{err}</div>}
         </div>
         )}
 
         <div className="tb-detail-f">
-          <div className="tb-endpoint"><b>POST</b> /tasks/from-template/{tid || '…'}</div>
+          <span className="tb-grow" />
           <button className="btn ghost" disabled={busy} onClick={onClose}>Cancel</button>
           <button className="btn primary" disabled={!tpl || !project || busy} onClick={() => { void instantiate(); }}>
             {I.plus} {busy ? 'Creating…' : tpl ? 'Create ' + tpl.taskCount + ' tasks' : 'Create tasks'}
@@ -2196,11 +2451,12 @@ function filingHomeErrorText(error: unknown): string {
   if (status === 404) return 'This tracked filing or its project is no longer available. The current project has not changed.';
   return 'This exact tracked filing could not be verified. Retry; the current project has not changed.';
 }
-function publishNativeTaskHome(t: TaskItem, projLabel: (id: string) => string): void {
+function publishNativeTaskHome(t: TaskItem, projName: (id: string) => string | null): void {
   if (!t.home?.programId) return;
-            publishShellProject({ id: t.home.programId, title: t.home.programTitle || projLabel(String(t.home.projectId)) });
+            publishShellProject({ id: t.home.programId, title: t.home.programTitle || (t.home.projectId != null ? projName(String(t.home.projectId)) : null) || 'Project' });
+            // The project page lists tasks and approvals on Plan (D3-4, 2026-11-08).
             stashNavParamsForTarget(t.home.surface, {
-              stage: 'review', workId: t.taskId,
+              stage: 'plan', workId: t.taskId,
               workSource: t.home.source || t.source, workNativeId: t.home.nativeId || '',
             });
  }
@@ -2211,7 +2467,7 @@ function OtherStoreTaskFields({ t, project, status, src }: {
           <div><label>Project</label><span>{project ?? '—'}</span></div>
           <div><label>Status</label><span>{status}</span></div>
           <div><label>Due</label><span style={{ color: isOverdue(t) ? 'var(--error)' : 'inherit' }}>{t.due || '—'}</span></div>
-          <div><label>Store</label><span>{src.l} — <em style={{ color: 'var(--text-400)' }}>{src.t}</em></span></div>
+          <div><label>Came from</label><span>{src.t}</span></div>
           {t.priority && <div><label>Priority</label><span>{t.priority}</span></div>}
           {t.detail && !t.blocked && <div><label>Note</label><span>{t.detail}</span></div>}
         </div>

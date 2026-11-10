@@ -189,3 +189,56 @@ describe('PMA submission-type metadata', () => {
     });
   });
 });
+
+/* MDX journey M19 (`.design/client-journey/MDX_JOURNEY_2026-11-01.md`), found
+   walking the PMA journey in the running app, 2026-11-02: B.2, the SSED's
+   "Device description summary", was listed under module 2 as well as module 7.
+   The governed pma:fda pack places each leaf by its 21 CFR 814.20 letter, and
+   the SSED (B) summarises the other modules: B.1 indications, B.2 the device,
+   B.5 the nonclinical studies, B.6 the clinical investigations. The title
+   matchers, written for legacy leaves with no such key, also fired on those
+   summaries, so an approved SSED counted modules 2, 4 and 5 present with
+   nothing written under C, F or G. */
+describe('a governed leaf is placed by its 814.20 key, never by its title', () => {
+  const ssed: PmaInputLeaf[] = [
+    { sectionCode: 'B.1', title: 'Indications for use', substantive: true },
+    { sectionCode: 'B.2', title: 'Device description summary', substantive: true },
+    { sectionCode: 'B.5', title: 'Summary of nonclinical laboratory studies', substantive: true },
+    { sectionCode: 'B.6', title: 'Summary of clinical investigations', substantive: true },
+  ];
+  const at = (leaves: PmaInputLeaf[], id: string) => mapToPma({ leaves }).sections.find((s) => s.id === id)!;
+
+  it('an approved SSED is module 7 only', () => {
+    expect(at(ssed, 'ssed-summary')).toMatchObject({ present: true, sources: ['B.1', 'B.2', 'B.5', 'B.6'] });
+    for (const id of ['device-description', 'nonclinical', 'clinical']) {
+      expect(at(ssed, id), id).toMatchObject({ present: false, sources: [] });
+    }
+    expect(mapToPma({ leaves: ssed }).summary.missingRequired).toEqual(
+      expect.arrayContaining(['device-description', 'nonclinical', 'clinical']),
+    );
+  });
+
+  it('the modules those summaries describe are present from their own letters', () => {
+    const own: PmaInputLeaf[] = [
+      { sectionCode: 'C.1', title: 'Functional components, properties and principles of operation', substantive: true },
+      { sectionCode: 'F.1', title: 'Biocompatibility — ISO 10993 series', substantive: true },
+      { sectionCode: 'G.1', title: 'Study protocols and amendments', substantive: true },
+    ];
+    for (const id of ['device-description', 'nonclinical', 'clinical']) expect(at(own, id).present, id).toBe(true);
+  });
+
+  it('G.5 is the clinical module and the statistics module, as the pack places it', () => {
+    const g5: PmaInputLeaf[] = [{ sectionCode: 'G.5', title: 'Statistical analysis plan and results', substantive: true }];
+    expect(at(g5, 'statistical-analysis').present).toBe(true);
+    expect(at(g5, 'clinical').present).toBe(true);
+  });
+
+  it('a legacy leaf, with no 814.20 key, is still placed by its title and type', () => {
+    const legacy: PmaInputLeaf[] = [
+      { sectionCode: '2', title: 'Device description and indications for use', substantive: true },
+      { sectionCode: 'b', title: 'untitled', documentType: 'clinical_study', substantive: true },
+    ];
+    expect(at(legacy, 'device-description').present).toBe(true);
+    expect(at(legacy, 'clinical').present).toBe(true);
+  });
+});

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import * as React from 'react';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 const H = vi.hoisted(() => ({
   apiRequest: vi.fn(), refresh: vi.fn(), trainRefresh: vi.fn(), onAsk: vi.fn(),
@@ -9,13 +9,14 @@ const H = vi.hoisted(() => ({
   trainingRows: [] as Array<{ documentId: number; doc: string; current: number | null; of: number | null; lastCycle: string; eligible?: boolean; unavailableReason?: string; documentVersion?: string;
     assignment?: 'assigned' | 'not_assigned' | 'no_active_assignees'; me?: { assigned: boolean; countsNow: boolean } | null }>,
   summary: null as null | Record<string, unknown>,
+  docOverride: null as null | Record<string, unknown>,
 }));
 const documentRow = {
   id: 6, docNumber: 'SOP-015', title: 'Supplier controls', docType: 'sop', category: null,
   version: '1.0', status: 'effective', effectiveDate: '2026-09-01', nextReviewDate: null, updatedAt: null,
 };
 vi.mock('../hooks', () => ({
-  useSopRegister: () => ({ docs: [documentRow], loading: false, error: null, refresh: H.refresh }),
+  useSopRegister: () => ({ docs: [H.docOverride ?? documentRow], loading: false, error: null, refresh: H.refresh }),
   useSopTemplates: () => ({ templates: [], loading: false, error: null }),
   useReviewDue: () => ({ rows: [], loading: false, error: null, refresh: vi.fn() }),
   useTrainingCompliance: () => ({
@@ -42,6 +43,7 @@ const response = (body: unknown) => ({ status: 200, ok: true, json: async () => 
 const mount = () => render(<SopRegister onAsk={H.onAsk} filter="all" onFilterChange={() => {}} />);
 beforeEach(() => {
   H.apiRequest.mockReset(); H.onAsk.mockReset(); H.trainRefresh.mockReset(); H.refresh.mockReset();
+  H.docOverride = null;
   H.user = { id: '7', organizationId: '12', name: 'Current reader', role: 'viewer' };
   H.trainingRows = [{ documentId: 6, doc: 'SOP-015 Supplier controls', assignment: 'assigned', current: 0, of: 2, lastCycle: '—' }];
   H.summary = { documents: 1, assigned: 1, notAssigned: 0, noActiveAssignees: 0, unavailable: 0, averageCurrentPct: 0 };
@@ -72,9 +74,8 @@ describe('the existing Quality register personal training handoff', () => {
     H.trainingRows = [{ ...H.trainingRows[0], eligible: false, documentVersion: '1.0', unavailableReason: 'Verified approved text is unavailable.' }];
     H.summary = { documents: 1, assigned: 1, notAssigned: 0, noActiveAssignees: 0, unavailable: 1, averageCurrentPct: null };
     const { container } = mount();
-    const coverage = screen.getByText('Acknowledgement coverage').closest('.qms-kpi');
-    expect(coverage?.querySelector('.val')?.textContent).toBe('—');
-    expect(coverage?.querySelector('.sub')?.textContent).toBe('Verified released text is unavailable');
+    // D7-B: the coverage tile became the training section's figure, with the same words.
+    expect(screen.getByTestId('qms-coverage-figure').textContent).toBe('Verified released text is unavailable.');
     expect(screen.getByText('Verified approved text is unavailable.')).toBeTruthy();
     expect(container.querySelector('.qms-train-pct')).toBeNull();
   });
@@ -84,9 +85,8 @@ describe('the existing Quality register personal training handoff', () => {
     H.trainingRows = [{ ...H.trainingRows[0], assignment: 'no_active_assignees', current: null, of: null }];
     H.summary = { documents: 1, assigned: 0, notAssigned: 0, noActiveAssignees: 1, unavailable: 0, averageCurrentPct: null };
     const { container } = mount();
-    const coverage = screen.getByText('Acknowledgement coverage').closest('.qms-kpi');
-    expect(coverage?.querySelector('.val')?.textContent).toBe('—');
-    expect(coverage?.querySelector('.sub')?.textContent).toBe('No one assigned is an active member');
+    // D7-B: the coverage tile became the training section's figure, with the same words.
+    expect(screen.getByTestId('qms-coverage-figure').textContent).toBe('No one assigned is an active member.');
     expect(screen.getByText('No active assignees')).toBeTruthy();
     expect(container.querySelector('.qms-train-pct'), 'no figure, not 0/0').toBeNull();
   });
@@ -100,9 +100,8 @@ describe('the existing Quality register personal training handoff', () => {
     expect(container.querySelector('.qms-train-pct')).toBeNull();
     expect(container.querySelector('.qms-train-bar')).toBeNull();
     expect(container.textContent).not.toMatch(/\b0\//);
-    const coverage = screen.getByText('Acknowledgement coverage').closest('.qms-kpi');
-    expect(coverage?.querySelector('.val')?.textContent).toBe('—');
-    expect(coverage?.querySelector('.sub')?.textContent).toBe('No document is assigned yet');
+    // D7-B: the coverage tile became the training section's figure, with the same words.
+    expect(screen.getByTestId('qms-coverage-figure').textContent).toBe('No document is assigned yet.');
   });
 
   it('an assigned document shows how many of the people assigned are current, and the reader\'s own line; the KPI is the server\'s average', () => {
@@ -110,12 +109,13 @@ describe('the existing Quality register personal training handoff', () => {
     H.summary = { documents: 1, assigned: 1, notAssigned: 0, noActiveAssignees: 0, unavailable: 0, averageCurrentPct: 67 };
     const { container } = mount();
     const pct = container.querySelector('.qms-train-pct');
-    expect(pct?.textContent).toBe('2/3');
+    // C1: the figure in words, not a bar coloured by thresholds the client invented.
+    expect(pct?.textContent).toBe('2 of 3 acknowledged');
+    expect(container.querySelector('.qms-train-bar, .qms-train-fill')).toBeNull();
     expect(pct?.getAttribute('title')).toBe('2 of 3 assigned have acknowledged the version in force');
     expect(screen.getByTestId('qms-train-me').textContent).toBe('You are assigned and have not acknowledged the version in force.');
-    const coverage = screen.getByText('Acknowledgement coverage').closest('.qms-kpi');
-    expect(coverage?.querySelector('.val')?.textContent).toBe('67%');
-    expect(coverage?.querySelector('.sub')?.textContent).toBe('Average of assigned people, version in force');
+    // D7-B: the coverage tile became the training section's figure, with the same words.
+    expect(screen.getByTestId('qms-coverage-figure').textContent).toBe('Coverage 67%: average of assigned people, version in force.');
   });
 
   it('a reader who is not assigned has no line of their own; one who is current is told so', () => {
@@ -131,9 +131,22 @@ describe('the existing Quality register personal training handoff', () => {
   it('rows without a summary from the server show no figure, and say so', () => {
     H.summary = null;
     mount();
-    const coverage = screen.getByText('Acknowledgement coverage').closest('.qms-kpi');
-    expect(coverage?.querySelector('.val')?.textContent).toBe('—');
-    expect(coverage?.querySelector('.sub')?.textContent).toBe('The coverage summary could not be read');
+    // D7-B: the coverage tile became the training section's figure, with the same words.
+    expect(screen.getByTestId('qms-coverage-figure').textContent).toBe('The coverage summary could not be read.');
+  });
+
+  // C5: "Open" is the one editor on every row; "Read and acknowledge" only where the server takes an acknowledgement.
+  it('offers no acknowledgement on a document type that carries no read-and-understood training; Open opens it', async () => {
+    H.docOverride = { ...documentRow, docType: 'form', docNumber: 'FORM-002', title: 'Change request form', authoringDocumentId: 'f00d' };
+    H.apiRequest.mockResolvedValue(response({ data: null }));
+    mount();
+    expect(screen.queryByRole('button', { name: 'Read and acknowledge' })).toBeNull();
+    const row = screen.getByText('Change request form', { selector: '.qms-title' }).closest('tbody') as HTMLElement;
+    expect(within(row).getAllByRole('button').map((b) => b.textContent)).toEqual(['FORM-002', 'Open', 'More']);
+    // A bound document's Open reads its editing copy for the one editor, not the training reader.
+    fireEvent.click(within(row).getByRole('button', { name: 'Open' }));
+    await waitFor(() => expect(H.apiRequest).toHaveBeenCalledWith('GET', '/api/mdx/qms/documents/6/editor'));
+    expect(screen.queryByRole('dialog', { name: 'Read and acknowledge' })).toBeNull();
   });
 
   it('closes the selected reader immediately when the authenticated organization changes', async () => {

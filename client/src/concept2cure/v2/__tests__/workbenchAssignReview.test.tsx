@@ -64,12 +64,18 @@ import { SendForReviewDialog } from '../editor/SendForReviewDialog';
 
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
 import { tasksForDocument } from '../editor/ReviewTasksPanel';
+import { openEditorControl } from '../editor/__tests__/workbenchAssemblyBuild.testSupport';
 
 const PID = '5ac45b38-a1d8-4a41-9488-fac39a57b852';
 const DOC = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
 const SEC = 'ssssssss-ssss-4sss-8sss-ssssssssssss';
 const REASON = 'Ready for medical review before the pre-IND package.';
 const ok = (payload: unknown, status = 200) => ({ ok: status < 400, status, json: async () => payload }) as Response;
+/** The list as GET /api/authoring/docs answers a project read (authoring-document-read.ts): success, and each row's program_id. */
+const scopedList = (url: string, body: { success?: boolean; documents: object[] }) => {
+  const programId = new URLSearchParams(url.split('?')[1]).get('programId');
+  return programId === null ? body : { success: true, ...body, documents: body.documents.map(row => ({ program_id: programId, ...row })) };
+};
 
 /** The task ledger as the mock server holds it. */
 let ledger: Array<Record<string, unknown>> = [];
@@ -79,7 +85,7 @@ function mockApi() {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string, body?: Record<string, unknown>) => {
     if (url.startsWith('/api/authoring/docs?')) {
-      return ok({ documents: [{ id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', product_code: null, status: 'draft', updated_at: null, section_count: 1 }] });
+      return ok(scopedList(url, { documents: [{ id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', product_code: null, status: 'draft', updated_at: null, section_count: 1 }] }));
     }
     if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ success: true, document: { id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', status: 'draft', provenance: null } });
     if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) {
@@ -162,7 +168,7 @@ describe('DocumentWorkbench — review tasks', () => {
     // The workbench's Tasks rail lists the task the ledger now holds.
     render(<DocumentAuthoring {...props()} />);
     await screen.findAllByText('Rationale');
-    fireEvent.click(screen.getByTestId('tasks-rail-open'));
+    fireEvent.click(openEditorControl('Review tasks'));
     const rail = await screen.findByRole('complementary', { name: 'Review tasks' });
     const row = await within(rail).findByTestId('rt-row');
     expect(row.textContent).toContain('Review: Module 2.5 Clinical Overview');
@@ -178,7 +184,7 @@ describe('DocumentWorkbench — review tasks', () => {
     ledger = [{ id: 1, taskId: 'TASK-1', title: 'Review: Module 2.5 Clinical Overview', status: 'pending', priority: 'medium', assigneeName: 'OQ Signer', assigneeId: 42, dueDate: null, description: null, sourceEntityType: 'authoring_document', sourceEntityId: DOC, approvalRequired: false, approvalStatus: null, createdAt: null }];
     render(<DocumentAuthoring {...props()} />);
     await screen.findAllByText('Rationale');
-    fireEvent.click(screen.getByTestId('tasks-rail-open'));
+    fireEvent.click(openEditorControl('Review tasks'));
     const rail = await screen.findByRole('complementary', { name: 'Review tasks' });
     fireEvent.click(await within(rail).findByRole('button', { name: /Start/ }));
     await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('PATCH', '/api/tasks/tasks/TASK-1', { status: 'in-progress' }));
@@ -198,7 +204,7 @@ describe('DocumentWorkbench — review tasks', () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
     render(<QueryClientProvider client={client}><DocumentAuthoring {...p} /></QueryClientProvider>);
     await screen.findAllByText('Rationale');
-    fireEvent.click(screen.getByTestId('tasks-rail-open'));
+    fireEvent.click(openEditorControl('Review tasks'));
     const rail = await screen.findByRole('complementary', { name: 'Review tasks' });
     expect((await within(rail).findByTestId('rt-row')).textContent).toContain('needs e-signature to complete');
     fireEvent.click(within(rail).getByTestId('rt-complete'));
@@ -218,7 +224,7 @@ describe('DocumentWorkbench — review tasks', () => {
       if (method === 'GET' && url === '/api/tasks/tasks/by-module/Authoring') return ok({ success: false, error: 'Failed to fetch tasks by module' }, 500);
       return ok({ success: true, sources: [], revisions: [], comments: [] });
     });
-    fireEvent.click(screen.getByTestId('tasks-rail-open'));
+    fireEvent.click(openEditorControl('Review tasks'));
     const rail = await screen.findByRole('complementary', { name: 'Review tasks' });
     expect(await within(rail).findByTestId('rt-error')).toBeTruthy();
     expect(within(rail).queryByTestId('rt-empty')).toBeNull();
@@ -246,7 +252,7 @@ describe('DocumentWorkbench — Review tasks, an outcome the server could not co
     };
     render(<DocumentAuthoring {...props()} />);
     await screen.findAllByText('Rationale');
-    fireEvent.click(screen.getByTestId('tasks-rail-open'));
+    fireEvent.click(openEditorControl('Review tasks'));
     const rail = await screen.findByRole('complementary', { name: 'Review tasks' });
     await within(rail).findByTestId('rt-row');
     const reads = () => apiRequest.mock.calls.filter((c) => c[0] === 'GET' && c[1] === '/api/tasks/tasks/by-module/Authoring').length;
@@ -262,7 +268,7 @@ describe('DocumentWorkbench — Review tasks, an outcome the server could not co
     patch = () => { throw new ApiRequestError('Bad gateway', 502); };
     render(<DocumentAuthoring {...props()} />);
     await screen.findAllByText('Rationale');
-    fireEvent.click(screen.getByTestId('tasks-rail-open'));
+    fireEvent.click(openEditorControl('Review tasks'));
     const rail = await screen.findByRole('complementary', { name: 'Review tasks' });
     await within(rail).findByTestId('rt-row');
     fireEvent.click(within(rail).getByTestId('rt-complete'));
@@ -357,7 +363,7 @@ describe('workbench reconciles an unconfirmed review assignment', () => {
       return result;
     });
     render(<DocumentAuthoring {...props()} />); await screen.findAllByText('Rationale');
-    fireEvent.click(screen.getByTestId('send-for-review-open'));
+    fireEvent.click(openEditorControl('Send for review…'));
     fireEvent.click(await screen.findByTestId('sfr-reviewer-42'));
     fireEvent.change(screen.getByTestId('sfr-reason'), { target: { value: 'Ready for medical review.' } });
     fireEvent.change(screen.getByTestId('sfr-due'), { target: { value: '2099-10-05' } });

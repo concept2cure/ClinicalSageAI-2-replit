@@ -37,7 +37,10 @@ import path from 'node:path';
 import { extractNumericalFacts, numericValueOf, compareDecimalsFor } from '../cross-artifact-consistency';
 import { reconcileMinedFigures } from '../../reconciliation/mined-figure-reconciler';
 
-const CANONICAL = 'server/services/intelligence/cross-artifact-consistency.ts';
+/* The lexicon moved into its own module on 2026-11-01 (see its header).
+   `cross-artifact-consistency.ts` re-exports every name, so this guard follows
+   the TABLE, not the import surface. */
+const CANONICAL = 'server/services/intelligence/labelled-figures.ts';
 const ROOT = path.resolve(__dirname, '../../../..');
 
 const factsFor = (label: string, text: string) => extractNumericalFacts(text).filter((f) => f.label === label);
@@ -60,8 +63,12 @@ describe('one lexicon, in the canonical module', () => {
              lexicon whose captures are not numeric is a different thing altogether —
              translation/glossary.ts pairs labels with regexes for CFR citations, eCTD
              module tokens and slash commands, and is not a figure extractor. */
+          /* Two shapes now. The lexicon builds some of its rows with a
+             helper rather than an inline literal (`pattern: anchored(…)`), so
+             a copy written that way would have walked straight past a
+             detector that only knew regex literals. */
           const rows = [...text.matchAll(
-            /\blabel:\s*'[a-z_]+'[\s\S]{0,120}?(?:regex|pattern):\s*\/[^\n]*?\([^\n]*?(?:\\d|\[0-9\])/g,
+            /\blabel:\s*'[a-z_]+'[\s\S]{0,120}?(?:regex|pattern):\s*(?:\/[^\n]*?\([^\n]*?(?:\\d|\[0-9\])|[A-Za-z_$][\w$]*\([^\n]*?(?:\\d|\[0-9\]))/g,
           )];
           if (rows.length >= 3) offenders.push(`${rel} (${rows.length} rows)`);
         }
@@ -230,6 +237,8 @@ describe('cross-document reconciliation, on the deleted module\u2019s own cases'
 describe('the claim/source comparator reads the canonical extractor', () => {
   it('figure-consistency.ts imports it, and no longer imports the deleted module', () => {
     const src = readFileSync(path.join(ROOT, 'server/services/truth-engine/figure-consistency.ts'), 'utf8');
+    /* Through `cross-artifact-consistency`, which re-exports the lexicon —
+       one definition, reached by the name every caller already used. */
     expect(src).toContain("from '../intelligence/cross-artifact-consistency'");
     expect(src).not.toMatch(/from\s+'[^']*dossierReconciliation'/);
   });
@@ -238,5 +247,23 @@ describe('the claim/source comparator reads the canonical extractor', () => {
     const src = readFileSync(path.join(ROOT, 'server/services/ana/terminology-consistency.ts'), 'utf8');
     expect(src).toContain("from './figure-arithmetic'");
     expect(src).not.toMatch(/from\s+'[^']*dossierReconciliation'/);
+  });
+});
+
+describe('the split kept one definition, not two', () => {
+  it('cross-artifact-consistency holds no table of its own, and re-exports the lexicon', () => {
+    const src = readFileSync(path.join(ROOT, 'server/services/intelligence/cross-artifact-consistency.ts'), 'utf8');
+    expect(src).not.toContain('LABELLED_NUMERIC_PATTERNS');
+    expect(src).toContain("from './labelled-figures'");
+  });
+
+  it('every name a caller imported still resolves through the old module', async () => {
+    /* The split must be invisible to the seven services that read through it.
+       Imported by the old path, on purpose. */
+    const old = await import('../cross-artifact-consistency');
+    for (const name of ['extractNumericalFacts', 'numericValueOf', 'compareDecimalsFor', 'roundToCompare']) {
+      expect(typeof (old as Record<string, unknown>)[name], name).toBe('function');
+    }
+    expect(old.extractNumericalFacts('The study randomized 240 patients across 30 sites.').length).toBeGreaterThan(0);
   });
 });

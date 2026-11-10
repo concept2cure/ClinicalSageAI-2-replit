@@ -33,9 +33,9 @@ describe('reporting context integrity', () => {
       return ok({ data: [] });
     });
     render(<InsightsCanvas {...props} />);
-    fireEvent.click(await screen.findByRole('tab', { name: 'Report catalog' }));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
     expect(await screen.findByText('Organization-wide records')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: /^Run$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Run / }));
     await screen.findByText('Organization saved evidence');
     expect(apiRequest.mock.calls.find(([method, url]) => method === 'POST' && url === '/api/report-os/runs')?.[2]).toMatchObject({ scopeType: 'account', scopeId: '1' });
     fireEvent.click(screen.getByRole('tab', { name: 'Run history' }));
@@ -52,8 +52,8 @@ describe('reporting context integrity', () => {
     });
     publishShellProject({ id: A, code: 'A-101' });
     render(<InsightsCanvas {...props} />);
-    fireEvent.click(await screen.findByRole('tab', { name: 'Report catalog' }));
-    fireEvent.click(await screen.findByRole('button', { name: /^Run$/ }));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Run / }));
     await waitFor(() => expect(finish).toBeDefined());
     act(() => publishShellProject({ id: B, code: 'B-202' }));
     await waitFor(() => expect(document.body.textContent).toContain('B-202'));
@@ -69,8 +69,8 @@ describe('reporting context integrity', () => {
       return ok({ data: { ...rendered.data, sections: [{ id: 'forecast', title: 'Forecast', blocks: [{ kind: 'chart', chartType: 'forecast_band', spec: { anchor: 80 } }] }] } });
     });
     render(<InsightsCanvas {...props} />);
-    fireEvent.click(await screen.findByRole('tab', { name: 'Report catalog' }));
-    fireEvent.click(await screen.findByRole('button', { name: /^Run$/ }));
+    fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Run / }));
     expect(await screen.findByText(/no measured forecast series is recorded/)).toBeTruthy();
     expect(document.querySelector('.ro-svgwrap polyline')).toBeNull();
   });
@@ -132,7 +132,10 @@ describe('catalog applicability and local cadence', () => {
     fireEvent.change(await screen.findByLabelText('Document'), { target: { value: 'artifact-owned' } });
     fireEvent.click(screen.getByRole('button', { name: 'Run document trace' }));
     expect(onRun).toHaveBeenCalledWith(expect.objectContaining({ runScopeType: 'document', runScopeId: 'artifact-owned' }));
-    expect(apiRequest).toHaveBeenCalledWith('GET', '/api/concept2cure/projects/11/artifacts');
+    // The read is the project's own artifacts. useLiveData also passes an
+    // AbortSignal (c3794c8fef: stalled reads recover); the method and URL are
+    // what this test pins.
+    expect(apiRequest.mock.calls.map(c => c.slice(0, 2))).toContainEqual(['GET', '/api/concept2cure/projects/11/artifacts']);
   });
   it('keeps a disabled document trace unavailable even when its engine supports document scope', () => {
     render(<CatalogPanel types={[{ typeId: 'provenance.evidence_trace_report', label: 'Document evidence trace', family: 'evidence_provenance', scopes: ['document'], computedScopes: ['document'], segments: [], runnable: false, availabilityState: 'disabled', availabilityReason: 'This report is disabled in the organization registry.' }]} projectId={11} programLabel="A-101" canRun onRun={vi.fn()} />);

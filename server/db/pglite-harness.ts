@@ -45,6 +45,18 @@ const REVIEW_ROUTES = new URL('../../migrations/20261023_review_routes.sql', imp
 // The real declaration of sequences filed outside the platform: createSequence
 // and the FDA identity read it for every sequence of the submission core.
 const SUBMISSION_FILED_BASELINES = new URL('../../migrations/20261029g_submission_filed_baselines.sql', import.meta.url);
+const SEQUENCE_REMOVAL_GUARD = new URL('../../migrations/20261109_ectd_sequence_removal_guard.sql', import.meta.url);
+
+/**
+ * The sequence-removal guard (P-86), applied from disk: a removal stands at
+ * COMMIT only with its signed record, and a removed or filed row is never
+ * changed. Opt-in, after the caller's signature and audit tables exist (the
+ * migration refuses a database without the columns it reads), because the
+ * suites that lay a removed sequence by bare SQL predate it.
+ */
+export async function applySequenceRemovalGuard(pglite: { exec: (sql: string) => Promise<unknown> }): Promise<void> {
+  await pglite.exec(readFileSync(SEQUENCE_REMOVAL_GUARD, 'utf8'));
+}
 const PROGRAM_APPLICANT_SPONSOR = new URL('../../migrations/20261021_regulatory_programs_applicant_sponsor.sql', import.meta.url);
 /** CREATE TABLE statements for the IND tables (mirrors the migrations). */
 export const IND_PGLITE_DDL = `
@@ -738,7 +750,8 @@ CREATE TABLE IF NOT EXISTS shadow_review_runs (
   model TEXT, prompt_version TEXT, status TEXT NOT NULL DEFAULT 'running', rtf_risk_score REAL, crl_risk_score REAL, summary TEXT,
   organization_id INTEGER NOT NULL, created_by INTEGER, created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now(),
   deleted_at TIMESTAMPTZ,
-  failure_code TEXT, waiver_signature_action_id TEXT, waived_failed_run_id INTEGER
+  failure_code TEXT, waiver_signature_action_id TEXT, waived_failed_run_id INTEGER,
+  leaf_manifest_digest TEXT, input_coverage JSONB
 );
 CREATE TABLE IF NOT EXISTS shadow_review_findings (
   id SERIAL PRIMARY KEY, run_id INTEGER NOT NULL, dimension TEXT NOT NULL, severity TEXT NOT NULL, title TEXT NOT NULL, detail TEXT,

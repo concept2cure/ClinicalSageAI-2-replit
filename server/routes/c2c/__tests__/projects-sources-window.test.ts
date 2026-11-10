@@ -19,12 +19,16 @@ import { PGlite } from '@electric-sql/pglite';
 
 const queryMock = vi.fn();
 vi.mock('../../../db', () => ({ pool: { query: (...a: unknown[]) => queryMock(...a) } }));
-const { listClientDocuments, searchDataRoom } = vi.hoisted(() => ({ listClientDocuments: vi.fn(), searchDataRoom: vi.fn() }));
+const { listClientDocuments, searchDataRoom, catalogProgramIds, gradeSources } = vi.hoisted(() => ({
+  listClientDocuments: vi.fn(), searchDataRoom: vi.fn(), catalogProgramIds: vi.fn(), gradeSources: vi.fn(),
+}));
 vi.mock('../../../services/clinical-regulatory-evidence/evidence-spine.service.js', () => ({ listClientDocuments }));
 vi.mock('../../../services/clinical-regulatory-evidence/data-room-search.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../services/clinical-regulatory-evidence/data-room-search.js')>()),
   searchDataRoom,
+  catalogProgramIds,
 }));
+vi.mock('../../../services/clinical-regulatory-evidence/data-room-grade.js', () => ({ gradeSources }));
 vi.mock('../../../services/clinical-regulatory-evidence/source-usage.service.js', () => ({
   summarizeSourceUsage: async () => new Map(),
 }));
@@ -81,6 +85,48 @@ beforeEach(async () => {
   queryMock.mockImplementation((sql: string, params?: unknown[]) => authorityDb.query(sql, params));
   listClientDocuments.mockReset();
   searchDataRoom.mockReset();
+  catalogProgramIds.mockReset();
+  gradeSources.mockReset();
+  gradeSources.mockResolvedValue(new Map());
+});
+
+describe('GET /:id/sources: the catalog and its grades (S2, 2026-11-06)', () => {
+  const OTHER = '22222222-2222-4222-8222-222222222222';
+  const grade = { grade: 'B', score: 80, basis: [], cap: null, engine: 'data-room-grade v1', gradedAt: '2026-11-06T00:00:00.000Z' };
+
+  it('carries each row\'s grade from the engine', async () => {
+    searchDataRoom.mockResolvedValue({ total: 1, sources: [src(1)] });
+    gradeSources.mockResolvedValue(new Map([[1, grade]]));
+    const res = await request(app()).get(`/api/c2c/projects/${P}/sources`);
+    expect(res.status).toBe(200);
+    expect(res.body.sources[0].grade).toEqual(grade);
+    expect(res.body.gradesUnavailable).toBeUndefined();
+  });
+
+  it('keeps the room readable when grading fails, and says the grades are unavailable', async () => {
+    searchDataRoom.mockResolvedValue({ total: 1, sources: [src(1)] });
+    gradeSources.mockRejectedValue(new Error('down'));
+    const res = await request(app()).get(`/api/c2c/projects/${P}/sources`);
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ gradesUnavailable: true, sources: [{ id: 1, grade: null }] });
+  });
+
+  it('reads the catalog over the projects the server resolves, never ones the request names', async () => {
+    catalogProgramIds.mockResolvedValue([P, OTHER]);
+    searchDataRoom.mockResolvedValue({ total: 0, sources: [], facets: { project: [], study: [], kind: [], ctd: [], folder: [] } });
+    const res = await request(app()).get(`/api/c2c/projects/${P}/sources?scope=catalog&programIds=${OTHER}`);
+    expect(res.status).toBe(200);
+    expect(catalogProgramIds).toHaveBeenCalledWith({ organizationId: 7, userId: 3 }, P);
+    expect(searchDataRoom.mock.calls[0][1]).toMatchObject({ programIds: [P, OTHER] });
+    expect(res.body).toMatchObject({ scope: 'catalog', catalogProjects: 2 });
+  });
+
+  it('refuses a catalog narrowing to a project outside the person\'s set', async () => {
+    catalogProgramIds.mockResolvedValue([P]);
+    const res = await request(app()).get(`/api/c2c/projects/${P}/sources?scope=catalog&project=${OTHER}`);
+    expect(res.status).toBe(404);
+    expect(searchDataRoom).not.toHaveBeenCalled();
+  });
 });
 
 describe('GET /:id/sources', () => {

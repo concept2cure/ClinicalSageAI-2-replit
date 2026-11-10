@@ -1,0 +1,21 @@
+B6 green.
+
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences: study design is not a result (B6) > offers no trial phase, scheduled week or instrument item count 1ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences: study design is not a result (B6) > still offers every result: counts, a percentage, a difference and a p-value, including a count after an arm name 1ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/csrEvidenceMap.test.ts > figureOccurrences: study design is not a result (B6) > reads only the word before the number: a count in brackets after an arm or a population is a result 1ms
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a design number is not a reported result (B6) > refuses the "2" of "Phase 2" and the "12" of "Week 12", and verifies the "36" reported after them 1ms
+ ✓ server/services/authoring/__tests__/csr-claim-in-context.test.ts > a design number is not a reported result (B6) > still verifies a real result beside them (control) 0ms
+ Test Files  2 passed (2)
+      Tests  20 passed (20)
+
+Every suite importing the shared rule, csrEvidenceMap or CsrEvidenceReview:
+ Test Files  9 passed (9)
+      Tests  85 passed (85)
+ Test Files  3 passed (3)
+      Tests  48 passed (48)
+
+The server's verifier (csr-scientific-review-core.ts) does not scan saved text for figures; it verifies each submitted
+claim with reportedDisplayAt, and coverage is the reviewer's attestation (allQuantitativeResultsMapped). So the
+screen and the server agree by construction: a design number is neither offered nor accepted as a claim, and every
+check on a mapped result is unchanged (at least one mapped result, exact cell, exact span, whole-section boundaries).
+Lint: shared/authoring/csr-scientific-review.ts and both test files 0 warnings, as on HEAD.

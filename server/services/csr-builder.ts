@@ -19,6 +19,8 @@ import { CSR_EVIDENCE_DRAFTING_RULES, csrSectionTableKeys, splitCsrClaims, type 
 import { buildCsrClaimReceipts } from './csr/csr-claim-receipts.js';
 import { resolveCsrBuildContext } from './csr/project-scope';
 import { hasUnresolvedPlaceholders } from './csr/csr-placeholders.js';
+import { isTruncated } from '../../shared/ai/finish-reason.js';
+import { callDraftingModel, streamInto, CSR_SECTION_MAX_TOKENS, type CsrLiveDraft } from './csr/csr-draft-refusal.js';
 import { csrWritingBrief, csrWritingGuidance } from './ana/medical-writing-csr.js';
 
 // Load the canonical gateway client only when an async drafting operation
@@ -273,11 +275,10 @@ export async function launchCSRBuildAsync(
   // runCSRBuildJob's own catch block; we still attach a .catch handler
   // here as a safety net so an unhandled rejection can't crash the process.
   setImmediate(() => {
-    runCSRBuildJob(enqueued.jobId).catch(err => {
-      console.error(
-        `[CSR Builder] runCSRBuildJob(${enqueued.jobId}) threw outside its own error handler:`,
-        err
-      );
+    runCSRBuildJob(enqueued.jobId).catch(() => {
+      // The job stores its own typed refusal; raw worker exceptions may carry
+      // uploaded study values or provider response details. Never echo them.
+      console.error(`[CSR Builder] runCSRBuildJob(${enqueued.jobId}) failed outside its own handler.`);
     });
   });
 
@@ -294,6 +295,8 @@ export interface CSRAIContext {
   organizationId?: number;
   projectId?: number;
   userId?: number;
+  /** Where the running build shows the heading being written (csr-job-runner.ts). */
+  live?: CsrLiveDraft;
 }
 
 /**
@@ -372,6 +375,10 @@ interface SectionReply {
   model?: string;
   resolvedModel?: string;
   usage?: { totalTokens?: number };
+  /** The gateway's fixed reply when no provider serves (demo mode, model 'demo-mode'): never a draft. */
+  deterministic?: boolean;
+  /** Why generation ended, as the gateway reports it ('max_tokens' when the reply was cut off). */
+  finishReason?: string;
 }
 
 /** Whether a retained evidence pack actually carries tables for this section. */
@@ -419,11 +426,19 @@ function acceptsConductClaims(content: string, lineage?: Record<string, unknown>
 }
 
 /**
+ * Why no model can be said to have written a reply: nobody is named as serving it, or no provider served
+ * it. The gateway's fixed demo-mode reply was saved as an AI draft on 30 headings (CDISC pilot demo walk,
+ * 2026-11-02); it is refused as the MCP drafting tool refuses it (server/mcp/tools/drafting.ts).
+ */
+const unservedReply = (reply: SectionReply, model: string): 'model_unattributed' | 'no_model_provider' | null =>
+  !model ? 'model_unattributed' : reply.deterministic === true || model === 'demo-mode' ? 'no_model_provider' : null;
+
+/**
  * Accept a model reply as the section, or record on `lineage` why not.
  * Rule 2: an evidence-bound results section states only figures that
  * reconcile, cell by cell, to the retained engine tables; any other section
  * states no figure the study information does not carry. The model id is the
- * one the gateway reports serving — a reply nobody can attribute is refused.
+ * one the gateway reports serving — a reply nobody can attribute, or no provider served, is refused.
  */
 function acceptSectionReply(
   number: string, reply: SectionReply, info: CSRBuildRequest['studyInfo'],
@@ -431,10 +446,11 @@ function acceptSectionReply(
 ): { content: string; model: string; tokenCost: number } | null {
   const model = (reply.resolvedModel || reply.model || '').trim();
   if (!reply.content?.trim()) return null;
-  if (!model) {
-    lineage.rejectedModelDraft = { reason: 'model_unattributed' };
-    return null;
-  }
+  const unserved = unservedReply(reply, model);
+  if (unserved) { lineage.rejectedModelDraft = { reason: unserved }; return null; }
+  // A reply cut off at the token ceiling is not a section: it ends mid-sentence, and an evidence-bound one has lost
+  // the claims block every figure is checked against (shared/ai/finish-reason.ts).
+  if (isTruncated(reply.finishReason)) { lineage.rejectedModelDraft = { reason: 'draft_truncated' }; return null; }
   if (!acceptsConductClaims(reply.content, lineage)) return null;
   let content = reply.content;
   if (usableEvidence(evidence)) {
@@ -490,20 +506,26 @@ export async function draftCSRSectionWithProvenance(
 
   const ai = await loadCSRClient();
   if (ai) {
-    try {
-      const reply = await ai.chat(sectionMessages(section, info, evidence), {
-        taskType: 'document_drafting',
-        maxTokens: 4096,
-        temperature: 0.3,
-        callerModule: 'csr-builder/section-draft',
-        organizationId: aiContext?.organizationId ?? request.organizationId,
-        projectId: aiContext?.projectId ?? request.projectId,
-        userId: aiContext?.userId ?? request.userId,
-      });
-      const accepted = acceptSectionReply(section.number, reply, info, lineage, evidence);
+    // A limit or an overload is waited out; a refusal waiting cannot change stops the build (csr-draft-refusal.ts).
+    const outcome = await callDraftingModel(section.number, () => ai.chat(sectionMessages(section, info, evidence), {
+      taskType: 'document_drafting',
+      maxTokens: CSR_SECTION_MAX_TOKENS,
+      temperature: 0.3,
+      callerModule: 'csr-builder/section-draft',
+      organizationId: aiContext?.organizationId ?? request.organizationId,
+      projectId: aiContext?.projectId ?? request.projectId,
+      userId: aiContext?.userId ?? request.userId,
+      // Streamed: the gateway ends a non-streamed call at 120 s, while a stream is watched for silence (30 s while
+      // writing, 5 min while the model reasons). The prose goes to the build's live view as it arrives; the saved
+      // text is the complete reply, after its figures are checked.
+      onStream: streamInto(aiContext?.live),
+    }), aiContext?.live);
+    if ('reply' in outcome) {
+      const accepted = acceptSectionReply(section.number, outcome.reply, info, lineage, evidence);
       if (accepted) return done(accepted.content, 'ai', accepted.model, accepted.tokenCost);
-    } catch (err) {
-      console.warn(`[CSR Builder] AI drafting failed for section ${section.number}, using template:`, err);
+    } else if (outcome.refused) {
+      // The source-grounded template below explicitly marks missing data.
+      lineage.rejectedModelDraft = { reason: outcome.refused };
     }
   }
   // Template fallback. ai_generated MUST be false for this row.
@@ -634,8 +656,8 @@ async function generateSectionWithAI(
       return template();
     }
     return { content, isAI: Boolean(content?.trim()) };
-  } catch (err) {
-    console.warn(`[CSR Builder] AI drafting failed for section ${section.number}, using template:`, err);
+  } catch {
+    console.warn(`[CSR Builder] AI drafting failed for section ${section.number}; using needs-data template.`);
     return template();
   }
 }
@@ -723,8 +745,8 @@ export async function compareWithExistingCSRs(
       outcome: 'Unknown',
       similarity: indication.toLowerCase() === String(row.indication || '').toLowerCase() ? 0.95 : 0.6,
     }));
-  } catch (err) {
-    console.warn('[CSR Builder] Cross-study comparison query failed:', err);
+  } catch {
+    console.warn('[CSR Builder] Cross-study comparison query failed; no external rows returned.');
     return [];
   }
 }
@@ -736,8 +758,16 @@ export async function compareWithExistingCSRs(
 
 /** The registration line a title page or synopsis prints, when the source states one. */
 function registryLine(info: CSRBuildRequest['studyInfo']): string {
-  return info.nctNumber ? `ClinicalTrials.gov Identifier: ${info.nctNumber}\n` : '';
+  return info.nctNumber ? `ClinicalTrials.gov Identifier: ${info.nctNumber}${FIELD_BREAK}` : '';
 }
+
+/**
+ * Between two labelled fields of a title page or synopsis: a blank line. Both readers of this text treat a single
+ * newline as a soft wrap, the editor's import (Markdown, `workflow-copy-content.ts`) and the assembled report
+ * (`csr/csr-assembly-body.ts`), so fields one newline apart printed as one run-on line, "Protocol Number: X Phase:
+ * Phase 2 Indication: …" (2026-11-06, the CDISCPILOT01 working-copy PDF). Each field is its own paragraph.
+ */
+const FIELD_BREAK = '\n\n';
 
 /**
  * Template-based section generation (fallback when AI unavailable).
@@ -747,10 +777,10 @@ function generateSectionTemplate(
   info: CSRBuildRequest['studyInfo']
 ): string {
   const templates: Record<string, string> = {
-    '1': `CLINICAL STUDY REPORT\n\n${info.title}\n\nProtocol Number: ${info.protocolNumber}\n${registryLine(info)}Phase: ${info.phase}\nIndication: ${info.indication}\nSponsor: ${info.sponsor}\nInvestigational Product: ${info.investigationalProduct}\n${info.comparator ? `Comparator: ${info.comparator}\n` : ''}`,
+    '1': `CLINICAL STUDY REPORT\n\n${info.title}\n\nProtocol Number: ${info.protocolNumber}${FIELD_BREAK}${registryLine(info)}Phase: ${info.phase}${FIELD_BREAK}Indication: ${info.indication}${FIELD_BREAK}Sponsor: ${info.sponsor}${FIELD_BREAK}Investigational Product: ${info.investigationalProduct}\n${info.comparator ? `\nComparator: ${info.comparator}\n` : ''}`,
 
     // E3 does not number synopsis fields; the synopsis is one heading.
-    '2': `Study Title: ${info.title}\nProtocol Number: ${info.protocolNumber}\n${registryLine(info)}Study Phase: ${info.phase}\nIndication: ${info.indication}\nSponsor: ${info.sponsor}\n\nPrimary Objective: To evaluate ${info.primaryEndpoint} of ${info.investigationalProduct} in patients with ${info.indication}.\n${info.secondaryEndpoints?.length ? `\nSecondary Objectives:\n${info.secondaryEndpoints.map((e, i) => `${i + 1}. ${e}`).join('\n')}\n` : ''}\nRecorded plan: ${info.studyDesign}; investigational product: ${info.investigationalProduct}${info.comparator ? `; comparator: ${info.comparator}` : ''}.${info.sampleSize ? ` Approximately ${info.sampleSize} subjects were planned for enrollment.` : ''}${info.treatmentDuration ? ` Planned treatment duration: ${info.treatmentDuration}.` : ''}\n\nActual conduct, analysis populations, results and conclusions: [DATA TO BE INSERTED FROM SOURCE RECORDS]`,
+    '2': `Study Title: ${info.title}${FIELD_BREAK}Protocol Number: ${info.protocolNumber}${FIELD_BREAK}${registryLine(info)}Study Phase: ${info.phase}${FIELD_BREAK}Indication: ${info.indication}${FIELD_BREAK}Sponsor: ${info.sponsor}\n\nPrimary Objective: To evaluate ${info.primaryEndpoint} of ${info.investigationalProduct} in patients with ${info.indication}.\n${info.secondaryEndpoints?.length ? `\nSecondary Objectives:\n${info.secondaryEndpoints.map((e, i) => `${i + 1}. ${e}`).join('\n')}\n` : ''}\nRecorded plan: ${info.studyDesign}; investigational product: ${info.investigationalProduct}${info.comparator ? `; comparator: ${info.comparator}` : ''}.${info.sampleSize ? ` Approximately ${info.sampleSize} subjects were planned for enrollment.` : ''}${info.treatmentDuration ? ` Planned treatment duration: ${info.treatmentDuration}.` : ''}\n\nActual conduct, analysis populations, results and conclusions: [DATA TO BE INSERTED FROM SOURCE RECORDS]`,
 
     // Study metadata alone does not establish ethics approval, informed
     // consent or compliance; each E3 §5 heading says what its records must show.

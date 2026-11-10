@@ -1,0 +1,77 @@
+{
+  "runId": 3,
+  "programId": "6c89e2c1-2d76-4356-80cb-001821956b5a",
+  "scopeLabel": "F1 Recent conversation verification",
+  "api": {
+    "saved": 200,
+    "/rendered": 200,
+    "/dependencies": 200,
+    "/export.pdf": 200
+  },
+  "historyStatus": 200,
+  "snapshotCount": 3,
+  "reportStatus": "partial",
+  "ui": {
+    "desktop": {
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "businessFacts": true,
+      "scopeExplicit": true,
+      "rawJsonAbsent": true
+    },
+    "mobile": {
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "businessFacts": true,
+      "scopeExplicit": true,
+      "rawJsonAbsent": true
+    }
+  },
+  "pageErrors": [],
+  "browserModelRequests": [],
+  "checks": [
+    "Report creation returned 201",
+    "Saved read JSON returned 200",
+    "Saved read /rendered returned 200",
+    "Saved read /dependencies returned 200",
+    "Saved read /export.pdf returned 200",
+    "Saved JSON retains the three fictional Quality snapshots",
+    "Saved JSON retains full parseable native texts",
+    "Saved JSON retains CAPA native identity",
+    "Saved JSON retains complete original provenance snapshots",
+    "Rendered main tables contain business numbers and description",
+    "Rendered main tables omit technical keys and raw JSON",
+    "Rendered model omits machine provenance appendix",
+    "Report remains partial",
+    "Ownership and unassessed scope remain explicit",
+    "PDF contains business numbers and readable description",
+    "PDF preserves human project and ownership scope",
+    "PDF omits machine keys and raw JSON appendix",
+    "PDF keeps partial and assessment limits",
+    "History returned 200",
+    "desktop UI contains business numbers and readable description",
+    "desktop UI omits machine keys and raw JSON",
+    "desktop UI retains project and ownership scope",
+    "mobile UI contains business numbers and readable description",
+    "mobile UI omits machine keys and raw JSON",
+    "mobile UI retains project and ownership scope",
+    "Browser has no uncaught page errors",
+    "No browser model-stream requests were made"
+  ],
+  "fixture": "Fictional local records; deterministic Quality projection; no model drafting/provider calls requested.",
+  "visualInspection": {
+    "desktop1440": "Readable business titles/facts and scope; no raw native JSON visible.",
+    "mobile390": "Header, record title and fact-cell captures inspected. Existing shared report table scrolls horizontally; no new layout introduced.",
+    "screenshots": [
+      "desktop-reporting-quality.png",
+      "mobile-reporting-quality.png",
+      "mobile-reporting-quality-records.png",
+      "mobile-reporting-quality-facts.png"
+    ]
+  },
+  "pdfExtractionNote": "Both Poppler and canonical pdf-parse text are saved; Poppler omits rotated watermark, canonical extractor includes it. See harness-correction.json."
+}

@@ -1,0 +1,23 @@
+const { c, openDoc } = require('./lib.cjs');
+(async () => {
+  const b = await c.chromium.launch();
+  const p = await c.signIn(b, 'author');
+  await openDoc(p, "C2C-101 Investigator's Brochure (J3 walk)", /Summary/);
+  await p.getByRole('button', { name: 'More document actions' }).click(); await p.waitForTimeout(600);
+  await p.getByRole('menuitem', { name: /Send for review/ }).click(); await p.waitForTimeout(1500);
+  const d = p.getByRole('dialog').last();
+  await d.getByText('Rhea Reviewer').click();
+  await d.getByLabel(/Reason for the request/).fill('J3 walk: scientific review of the IB summary');
+  await d.getByLabel(/Instructions/).fill('Check the summary against the nonclinical reports.').catch(()=>{});
+  const due = d.getByLabel(/Review due/);
+  await due.fill('2026-11-20').catch(async e => console.info('due', e.message.slice(0,100)));
+  await p.waitForTimeout(500);
+  await c.shot(p, 'x-24-send-review-filled.png');
+  console.info('hint:', (await d.innerText()).split('\n').slice(-4));
+  await d.getByRole('button', { name: 'Send for review' }).click();
+  await p.waitForTimeout(4000);
+  await c.shot(p, 'x-25-sent.png');
+  console.info('after:', (await p.locator('body').innerText()).match(/[^\n]*(Review requested|review|Review)[^\n]*/g)?.slice(0, 12));
+  console.info(c.apiErrors);
+  await b.close();
+})();

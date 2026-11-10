@@ -55,6 +55,10 @@ const H = vi.hoisted(() => ({
   persistSignature: vi.fn(),
 }));
 
+// Training tasks are planned after COMMIT in their own read-only transaction (services/qms/training-task.ts,
+// tests/db/qms-training-tasks.dbtest.ts); here, only that the route asks once the act has committed.
+const T = vi.hoisted(() => ({ tasks: vi.fn(async (..._args: unknown[]) => undefined) }));
+vi.mock('../../services/qms/training-task', () => ({ reconcileTrainingTasks: (...args: unknown[]) => T.tasks(...args) }));
 vi.mock('../../db', () => ({
   pool: {
     query: (...a: unknown[]) => H.query(...a),
@@ -155,6 +159,7 @@ const txStatements = () => H.txQuery.mock.calls.map((c) => String(c[0]).trim().s
 
 beforeEach(() => {
   for (const f of [H.query, H.txQuery, H.release, H.compare, H.failures, H.role, H.recordGoverned, H.persistSignature]) f.mockReset();
+  T.tasks.mockClear();
   H.account = { mfa: false, locked: false, active: true };
   // The pool answers the way the OLD route's autocommitted UPDATE needed it to,
   // so a regression to that write is seen as a 200 here, not as a crash.
@@ -287,6 +292,7 @@ describe('POST /api/mdx/qms/documents/:id/retire — the signed write path', () 
     // Read under lock, update, ledger pair, signature, commit — on the transaction client, never the pool.
     expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'UPDATE', 'COMMIT']);
     expect(H.query).not.toHaveBeenCalled();
+    expect(T.tasks, 'the open training tasks are withdrawn after the commit').toHaveBeenCalledExactlyOnceWith(expect.anything(), ORG, { documentIds: [5] }, SIGNER);
     const update = H.txQuery.mock.calls.find((c) => /^\s*UPDATE/.test(String(c[0]))) as [string, unknown[]];
     expect(update[0]).toMatch(/SET status = 'retired'/);
     expect(update[0]).toMatch(/status <> 'retired'/);
@@ -345,6 +351,7 @@ describe('POST /api/mdx/qms/documents/:id/retire — the signed write path', () 
     const res = await retire('member', VALID_BODY);
     expect(res.status).toBe(500);
     expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'UPDATE', 'ROLLBACK']);
+    expect(T.tasks, 'a rolled-back retirement moves no task').not.toHaveBeenCalled();
     expect(JSON.stringify(res.body)).not.toMatch(/insert failed/);
     expect(H.release).not.toHaveBeenCalled(); // Response completion owns release.
   });

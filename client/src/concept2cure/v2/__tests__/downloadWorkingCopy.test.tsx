@@ -301,8 +301,8 @@ describe('The menu opens outside the toolbar that scrolls', () => {
 });
 
 /* RR5 phone acceptance, 2026-10-30. The menu's live region is `.sr-only`, an
-   absolutely placed 1 px box. The toolbar that scrolls (`.ed-doc-actions` at
-   phone width) was not its containing block, so it did not clip it: the box
+   absolutely placed 1 px box. The toolbar that scrolled (`.ed-doc-actions` at
+   phone width, the bar's acts since D4-2) was not its containing block, so it did not clip it: the box
    sat at its place in the unscrolled row, 484 px from the left of a 390 px
    screen, and made the whole page 485 px wide. A phone browser then laid
    every fixed layer out on a 485 x 1048 viewport, and Send for review's
@@ -325,10 +325,14 @@ describe('The toolbar that scrolls holds what it scrolls', () => {
     expect(rules('app-v2.css', '.c2c-v2 .sr-only').some(b => declares(b, 'position', 'absolute'))).toBe(true);
   });
 
-  it('where the toolbar scrolls sideways it is the containing block, so it clips that box', () => {
-    const scrollers = rules('authoring-v2.css', '.ed-doc-actions').filter(b => declares(b, 'overflow-x', 'auto'));
-    expect(scrollers.length).toBeGreaterThan(0);
-    for (const body of scrollers) expect(declares(body, 'position', 'relative'), body).toBe(true);
+  /* D4-2: the editor's bar replaced that toolbar (D4.md §D4.B). At phone width
+     its acts wrap rather than scroll, and the row stays the containing block of
+     what it holds. */
+  it('where the bar\u2019s acts sit at phone width they are the containing block, and never a sideways scroller', () => {
+    const acts = rules('authoring-v2.css', '.ed-bar-acts');
+    expect(acts.length).toBeGreaterThan(0);
+    expect(acts.some(b => declares(b, 'position', 'relative'))).toBe(true);
+    for (const body of acts) expect(declares(body, 'overflow-x', 'auto'), body).toBe(false);
   });
 
   it('the menu itself stays fixed, so the toolbar does not cut it off', () => {

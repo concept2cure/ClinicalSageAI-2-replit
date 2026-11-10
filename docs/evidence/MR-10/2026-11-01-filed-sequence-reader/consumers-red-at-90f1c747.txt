@@ -1,0 +1,11 @@
+ ✓ server/services/ana/__tests__/start-legacy-import-filename-suggestion-not-mapped.pglite.test.ts > start_legacy_import — what a detected file is stored as > stores a filename-pattern placement as an unconfirmed suggestion with no confidence figure, and says how many need confirming
+ × server/services/ana/__tests__/start-legacy-import-filename-suggestion-not-mapped.pglite.test.ts > start_legacy_import — what a detected file is stored as > maps only the leaves the backbone declares, and records the skipped files on the job
+ ✓ server/services/ana/__tests__/start-legacy-import-filename-suggestion-not-mapped.pglite.test.ts > start_legacy_import — what a detected file is stored as > stores the same file rows and job counts as POST /api/mdx/imports for the same archive
+ ✓ server/services/ana/__tests__/start-legacy-import-filename-suggestion-not-mapped.pglite.test.ts > legacy-import tool definitions > send the model to confirm or correct each 'suggested' row, not to look for low-confidence rows
+ ✓ server/services/ana/__tests__/start-legacy-import-filename-suggestion-not-mapped.pglite.test.ts > legacy-import tool definitions > override_import_mapping's description names the mapping_source its handler stores
+ ✓ server/routes/__tests__/mdx-imports-filename-suggestion-not-mapped.pglite.test.ts > POST /api/mdx/imports — what a detected file is stored as > stores a filename-pattern placement as an unconfirmed suggestion with no confidence figure
+ × server/routes/__tests__/mdx-imports-filename-suggestion-not-mapped.pglite.test.ts > POST /api/mdx/imports — what a detected file is stored as > maps only the leaves the backbone declares, and counts only those as mapped
+ × server/routes/__tests__/mdx-onboarding-aggregate-counts-only-confirmed-mappings.pglite.test.ts > GET /api/mdx/onboarding/:tenantId — what the aggregate says about mappings > reports no confidence for an unmeasured placement and counts only declared, confirmed or imported files as mapped
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  3 failed | 5 passed (8)

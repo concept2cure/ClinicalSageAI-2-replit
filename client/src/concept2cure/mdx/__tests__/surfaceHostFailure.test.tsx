@@ -1,6 +1,12 @@
 // @vitest-environment jsdom
 /**
- * The MDX lane's entry surface, when the portfolio fetch fails.
+ * The MDX host, when its programs fetch fails.
+ *
+ * This was the portfolio's failure branch. The kit portfolio folded into
+ * Projects (D2, fold F6, 2026-10-30), so the host's one programs read is the
+ * one that verifies the open project's MDX context before any device feature
+ * mounts; it fails through the same `<ErrorState>`, and the same two leaks and
+ * the same dead end are asserted against it here, on a device feature.
  *
  * ── What it used to render ───────────────────────────────────────────────────
  *     <div role="alert">Device program data is unavailable. {liveProgramsResult.error}</div>
@@ -34,7 +40,7 @@ import type { SurfaceViewProps } from '../../v2/surfaceViews';
 afterEach(cleanup);
 
 const props = {
-  surface: { id: 'device-workstream' },
+  surface: { id: 'device-510k' },
   onAsk: () => {},
   onNav: () => {},
   segment: 'medtech',
@@ -44,7 +50,7 @@ function renderHost() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <MdxSurfaceHost {...props} nav={'device-workstream' as never} />
+      <MdxSurfaceHost {...props} nav="device-510k" />
     </QueryClientProvider>,
   );
 }
@@ -55,7 +61,7 @@ const LEAKS = [
   { label: 'a driver error', status: 503, body: 'ECONNREFUSED' },
 ];
 
-describe('MDX portfolio — a failed load discloses nothing and offers a way out', () => {
+describe('MDX host — a failed programs load discloses nothing and offers a way out', () => {
   beforeEach(() => {
     vi.unstubAllGlobals();
   });
@@ -73,7 +79,7 @@ describe('MDX portfolio — a failed load discloses nothing and offers a way out
     const alert = await waitFor(() => screen.getByRole('alert'));
     const shown = alert.textContent ?? '';
 
-    expect(shown).toContain("Couldn't load your device projects");
+    expect(shown).toContain("Couldn't verify this project's MDX context");
     /* Nothing recognisably internal survives, in any form: no API route, no
        HTTP-with-path string, no driver code, no relation name. */
     expect(shown).not.toMatch(/\/api\//);

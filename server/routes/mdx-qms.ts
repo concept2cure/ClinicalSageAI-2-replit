@@ -94,14 +94,15 @@ import {
 } from '../services/qms/document-approval-signature';
 import { SOP_TEMPLATES } from '../services/qms/sopTemplates';
 import {
-  createChange, listChanges, getChange, updateChange, transitionChange, deleteChange,
+  createChange, listChanges, getChange, updateChange, changeEditRefusal, transitionChange, deleteChange,
   listLinks, listLinksForChanges, nextStatesOf, addLink, removeLink, changeControlSummary, ChangeLinkRefusedError,
   CHANGE_TYPES, CHANGE_CLASSIFICATIONS, CHANGE_RISK_LEVELS, CHANGE_STATES,
   LINK_TYPES, LINK_RELATIONSHIPS,
   InvalidChangeTransitionError, ChangeApprovalRequiresSignatureError,
   type ChangeState,
 } from '../services/qms/changeControl.service';
-import { approveQmsChangeSigned } from '../services/qms/change-approval-signature';
+import { approveQmsChangeSigned, computeQmsChangeContentDigest, type QmsChangeRow } from '../services/qms/change-approval-signature';
+import { AggregateLearningRefusedError } from '../services/intelligence/ana-failure-learning';
 import { clientIpOf } from '../utils/client-ip';
 import { requireEditorAccess } from '../middleware/orgMembership';
 import { governedReason } from './governed-reason';
@@ -126,12 +127,13 @@ import {
 } from '../services/qms/periodic-review';
 import { signedActAttempts, signGovernedAct } from './governed-signed-act';
 import { schedulePeriodicReviewTask } from '../services/qms/periodic-review-task';
+import { reconcileTrainingTasks } from '../services/qms/training-task';
 import { REVIEW_ACT_MEANINGS } from '../services/part11/signature-meanings';
 import { mountQmsReviewRoute, qmsRouteRefusal } from './mdx-qms-review-route';
 import { qmsApprovalPrecheck, qmsApprovalRoute, qmsRetirementRoute } from '../services/qms/qms-review-route';
 import { readRouteRounds, type RouteRound } from '../services/review/review-route-standing';
 import { notifyTaskEvent, type TaskEventNotice } from '../services/tasking/task-side-effects';
-import { getOrgId, getUserId, qmsClient, admitBodyProject, admittedProject } from './mdx-qms-context';
+import { getOrgId, getUserId, qmsClient, admitBodyProject, admittedProject, queryProject } from './mdx-qms-context';
 import qmsRecordsRouter from './mdx-qms-records';
 import qmsDeviationsRouter from './mdx-qms-deviations';
 import qmsControlledCopyRouter from './mdx-qms-controlled-copy';
@@ -165,6 +167,7 @@ const docListQuery = z.object({
   doc_type: z.enum(DOC_TYPE).optional(),
   status:   z.enum(DOC_STATUS).optional(),
   category: z.string().max(60).optional(),
+  program_id: z.string().optional(), // admitted by queryProject
 });
 /* ─── GET /api/mdx/qms/readiness ──────────────────────────────────────
    One compact quality-system readiness block for the MDX device shell.
@@ -359,6 +362,9 @@ router.get('/qms/documents', async (req: Request, res: Response) => {
   if (doc_type) { args.push(doc_type); filters.push(`doc_type = $${args.length}`); }
   if (status)   { args.push(status);   filters.push(`status = $${args.length}`); }
   if (category) { args.push(category); filters.push(`category = $${args.length}`); }
+  const project = await queryProject(req, res); if (project === false) return res;
+  // A project's documents are those whose authored copy was created in it; an inline register entry has none.
+  if (project) { args.push(project); filters.push(`authoring_document_id IN (SELECT id FROM authoring_documents WHERE tenant_id = $1 AND client_program_id = $${args.length}::uuid)`); }
   try {
     const client = qmsClient(req);
     const { rows } = await client.query(`SELECT * FROM qms_documents WHERE ${filters.join(' AND ')}
@@ -633,11 +639,20 @@ const approveBody = z.object({
   password: z.string().min(1, 'Password re-authentication is required (21 CFR Part 11 §11.200)'),
   mfaToken: z.string().optional(),
   meaning: z.literal(QMS_DOCUMENT_APPROVAL_MEANING, {
-    errorMap: () => ({ message: `Signature meaning must be '${QMS_DOCUMENT_APPROVAL_MEANING}' (21 CFR Part 11 §11.50)` }),
+    error: () => ({ message: `Signature meaning must be '${QMS_DOCUMENT_APPROVAL_MEANING}' (21 CFR Part 11 §11.50)` }),
   }),
   reason: z.string().trim().min(3, 'A reason for change of at least 3 characters is required').max(2000),
   effectiveDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'effectiveDate must be YYYY-MM-DD').optional(),
 });
+const changeApproveBody = approveBody.extend({ expectedContentDigest: z.string().regex(/^[a-f0-9]{64}$/), learningReview: z.object({
+  expectedArtifactSha256: z.string().regex(/^[a-f0-9]{64}$/), invariantAccepted: z.literal(true),
+}).strict().optional() });
+const learningReviewOption = (body: z.infer<typeof changeApproveBody>) => body.learningReview ? { learningReview: body.learningReview } : {};
+function learningApprovalFailure(res: Response, error: AggregateLearningRefusedError) {
+  const message = 'Reviewed learning approval could not be verified. Re-read its current status before retrying.';
+  if (error.status === 503) return res.status(503).json({ error: message, details: { code: error.code } });
+  return clientError(res, error.status, message, { code: error.code });
+}
 
 /* Retirement = the same electronic signature (P1-29 / DP-32, security review
    2026-09-24): the approve body without effectiveDate, which a retirement does
@@ -647,7 +662,7 @@ const approveBody = z.object({
    meaning is retirement's own (P-51): 'APPROVED' is refused here. */
 const retireBody = approveBody.omit({ effectiveDate: true }).extend({
   meaning: z.literal(QMS_DOCUMENT_RETIREMENT_MEANING, {
-    errorMap: () => ({ message: `Signature meaning must be '${QMS_DOCUMENT_RETIREMENT_MEANING}' (21 CFR Part 11 §11.50)` }),
+    error: () => ({ message: `Signature meaning must be '${QMS_DOCUMENT_RETIREMENT_MEANING}' (21 CFR Part 11 §11.50)` }),
   }),
   reason: governedReason,
 });
@@ -720,7 +735,7 @@ function approvalRefusal(res: Response, err: QmsApprovalRefusedError, what: 'Doc
   // Its own code: the remedy is to re-file the section, not to change the document's state.
   if (err.code === 'FILING_DIVERGED') return clientError(res, 409, err.message, { code: 'FILING_DIVERGED' });
   if (err.code === 'EFFECTIVE_DATE_BACKDATED') return clientError(res, 422, err.message, { code: 'QMS_EFFECTIVE_DATE_BACKDATED' });
-  return clientError(res, 409, err.message, { code: 'QMS_INVALID_STATE' });
+  return clientError(res, 409, err.message, { code: err.code === 'CHANGED_SINCE_READ' ? 'QMS_CHANGED_SINCE_READ' : 'QMS_INVALID_STATE' });
 }
 
 function signedQmsFailure(res: Response, error: unknown, operation: string, what: 'Document' | 'Change' = 'Document'): Response {
@@ -753,13 +768,16 @@ async function verifyRoutedApprovalSigner(
 
 /**
  * The version now in force is due on the date its approval signed; the
- * previous version's task, if any, ends with it. Best effort, after commit. An
+ * previous version's task, if any, ends with it; and the people assigned get
+ * their training tasks. Best effort, after commit and before the answer. An
  * approval that leaves other named approvers to sign (RR2) puts nothing in force.
  */
-async function scheduleInForceReview(orgId: number, userId: number, result: ApproveQmsDocumentSignedResult): Promise<void> {
+async function scheduleInForceReview(client: RequestSqlClient, orgId: number, userId: number, result: ApproveQmsDocumentSignedResult): Promise<void> {
   if (!result.approvalComplete) return;
   await schedulePeriodicReviewTask({ organizationId: orgId, document: result.document, createdById: userId,
     kind: 'review', closeAs: 'completed', due: reviewDay(result.document.next_review_date) });
+  // The people assigned get the version to train on (P-49; services/qms/training-task.ts).
+  await reconcileTrainingTasks(client, orgId, { documentIds: [Number(result.document.id)] }, userId);
 }
 
 router.post('/qms/documents/:id/approve', async (req: Request, res: Response) => {
@@ -797,7 +815,7 @@ router.post('/qms/documents/:id/approve', async (req: Request, res: Response) =>
     commitAttempted = true;
     await client.query('COMMIT');
     for (const n of notices) notifyTaskEvent(n);
-    await scheduleInForceReview(orgId, userId, result);
+    await scheduleInForceReview(client, orgId, userId, result);
     return ok(res, result.document, {
       auditTrail: { persisted: true, chained: true },
       signature: result.signature,
@@ -889,6 +907,8 @@ router.post('/qms/documents/:id/retire', requireEditorAccess, async (req: Reques
     // A retired document has no next review: its open task is withdrawn with it.
     await schedulePeriodicReviewTask({ organizationId: orgId, document: result.document, createdById: userId,
       kind: 'review', closeAs: 'cancelled', due: null });
+    // ...and so are the open training tasks on it.
+    await reconcileTrainingTasks(client, orgId, { documentIds: [id] }, userId);
     return ok(res, result.document, {
       auditTrail: { persisted: true, chained: true },
       signature: result.signature,
@@ -922,6 +942,8 @@ router.post('/qms/documents/:id/training-ack', async (req: Request, res: Respons
       organizationId: orgId, userId, documentId: id, input: parsed.data,
       ipAddress: clientIpOf(req) ?? undefined, userAgent: req.get('user-agent'),
     });
+    // A receipt of the version they train on completes their task (training-task.ts); best effort.
+    await reconcileTrainingTasks(requestPgClient(req), orgId, { documentIds: [id], userIds: [userId] }, userId);
     if (result.alreadyAcknowledged) return ok(res, result.acknowledgement, { alreadyAcknowledged: true });
     return created(res, result.acknowledgement, { auditTrail: { persisted: true, chained: true } });
   } catch (err) {
@@ -944,8 +966,8 @@ const mrCreate = z.object({
   reviewDate:        z.string().date(),
   period:            z.string().min(1).max(40),
   attendees:         z.array(z.number().int().positive()).optional().nullable(),
-  inputs:            z.record(z.unknown()).optional().nullable(),
-  outputs:           z.record(z.unknown()).optional().nullable(),
+  inputs:            z.record(z.string(), z.unknown()).optional().nullable(),
+  outputs:           z.record(z.string(), z.unknown()).optional().nullable(),
   minutesArtifactId: z.number().int().positive().optional().nullable(),
 });
 
@@ -1106,7 +1128,7 @@ const changeCreate = z.object({
   implementationPlan:       z.string().max(8000).optional().nullable(),
   targetImplementationDate: z.string().date().optional().nullable(),
   qmsDocumentId:            z.number().int().positive().optional().nullable(),
-  metadata:                 z.record(z.unknown()).optional().nullable(),
+  metadata:                 z.record(z.string(), z.unknown()).optional().nullable(),
 });
 const changePatch = z.object({
   title:                    z.string().min(1).max(300).optional(),
@@ -1131,6 +1153,7 @@ const changeTransition = z.object({
 const changeListQuery = z.object({
   status:      z.enum(CHANGE_STATES).optional(),
   change_type: z.enum(CHANGE_TYPES).optional(),
+  program_id:  z.string().optional(), // admitted by queryProject
 });
 const linkCreate = z.object({
   linkType:     z.enum(LINK_TYPES),
@@ -1152,10 +1175,12 @@ router.get('/qms/changes', async (req: Request, res: Response) => {
   if (orgId === null) return orgRequired(res);
   const parsed = changeListQuery.safeParse(req.query);
   if (!parsed.success) return clientError(res, 422, 'Invalid query', parsed.error.flatten().fieldErrors);
+  const programId = await queryProject(req, res); if (programId === false) return res;
   try {
     const rows = await listChanges(orgId, {
       status: parsed.data.status,
       changeType: parsed.data.change_type,
+      programId,
     }, requestPgClient(req));
     /* Each change carries its cross-references (one org-scoped read for the
        whole register) and the lifecycle moves its state allows — the surface
@@ -1166,7 +1191,7 @@ router.get('/qms/changes', async (req: Request, res: Response) => {
     const register = rows.map((r) => ({
       ...r,
       links: links.get(Number(r.id)) ?? [],
-      next_states: nextStatesOf(r.status),
+      next_states: nextStatesOf(r.status), content_digest: computeQmsChangeContentDigest(r as unknown as QmsChangeRow),
     }));
     return ok(res, register, { count: register.length });
   } catch (err) {
@@ -1237,7 +1262,7 @@ router.get('/qms/changes/:id', async (req: Request, res: Response) => {
   } catch (err) { return serverError(res, log, 'change-get', err); }
 });
 
-// Partial update (draft edits; not a lifecycle move — use /transition for that).
+// Partial update while proposed or under assessment; 409 after (changeEditRefusal). Not a move: that is /transition.
 router.patch('/qms/changes/:id', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
@@ -1247,7 +1272,8 @@ router.patch('/qms/changes/:id', requireEditorAccess, async (req: Request, res: 
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   try {
     const row = await updateChange(orgId, id, { ...parsed.data, assessedBy: getUserId(req) }, requestPgClient(req));
-    if (!row) return notFoundInTenant(res, 'Change');
+    const refused = row ? null : await changeEditRefusal(orgId, id, requestPgClient(req));
+    if (!row) return refused ? clientError(res, 409, refused.message, refused.details) : notFoundInTenant(res, 'Change');
     /* WO-16C #133. Was `void auditService.logAction({…})`. `updateChange` has
        committed the edit and returned the row, so the edit is not undone here;
        `meta.auditTrail` reports whether the §11.10(e) record of it exists. */
@@ -1327,7 +1353,7 @@ router.post('/qms/changes/:id/approve', async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) return clientError(res, 422, 'id must be numeric');
 
-  const parsed = approveBody.safeParse(req.body ?? {});
+  const parsed = changeApproveBody.safeParse(req.body ?? {});
   if (!parsed.success) return esignatureComponentMissing(res, 'Approval', parsed.error.flatten().fieldErrors);
   const body = parsed.data;
 
@@ -1350,6 +1376,7 @@ router.post('/qms/changes/:id/approve', async (req: Request, res: Response) => {
       authenticationMethod: verified.secondFactorVerified ? 'password+totp' : 'password',
       secondFactorVerified: verified.secondFactorVerified,
       ipAddress: resolveIpAddress(req),
+      ...learningReviewOption(body), expectedContentDigest: body.expectedContentDigest,
     });
     commitAttempted = true;
     await client.query('COMMIT');
@@ -1366,6 +1393,7 @@ router.post('/qms/changes/:id/approve', async (req: Request, res: Response) => {
       });
     }
     await client?.query('ROLLBACK').catch(() => undefined);
+    if (err instanceof AggregateLearningRefusedError) return learningApprovalFailure(res, err);
     return signedQmsFailure(res, err, 'change-approve', 'Change');
   } finally {
     client?.release(discardReason);

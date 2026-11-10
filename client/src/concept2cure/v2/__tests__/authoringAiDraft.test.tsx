@@ -55,6 +55,8 @@ import {
   describeGrounding,
   type PendingAiDraft,
 } from '../surfaces/AuthoringAiDraft';
+import { openEditorControl } from '../editor/__tests__/workbenchAssemblyBuild.testSupport';
+import { ParagraphChoice } from '../editor/DraftAlternatives';
 
 const res = (status: number, payload: unknown) =>
   ({ ok: status >= 200 && status < 300, status, json: async () => payload }) as Response;
@@ -205,10 +207,78 @@ describe('describeAcceptFailure', () => {
     expect(describeAcceptFailure(401, null, null).text).toMatch(/isn’t authenticated/i);
   });
 
+  it('a figure the engine did not produce is said once, as the server names it, and the draft is kept to correct (CSR slice 2)', () => {
+    const named = 'Not accepted: 17/305 in §11.4.1 is not a figure the study’s engine produced for this section. No claimed table cell of the section holds it. Correct or remove it, then accept again. Nothing was saved.';
+    const f = describeAcceptFailure(422, 'CSR_FIGURE_NOT_FROM_ENGINE', named);
+    expect(f.text).toBe(named);
+    expect(f.clearDraft).toBe(false);
+  });
+
   it('falls back to the server’s sentence, never to a bare code', () => {
     const f = describeAcceptFailure(503, null, 'Upstream unavailable');
     expect(f.text).toContain('Upstream unavailable');
     expect(f.clearDraft).toBe(false);
+  });
+});
+
+/* ── CSR slice 2: the engine figure gate in the panel ──────────────────── */
+describe('the CSR engine figure gate in the panel (slice 2)', () => {
+  const csrDraft = (content: string, csrFigures: unknown) =>
+    MODEL_DRAFT({ draft: { ...MODEL_DRAFT().draft, content, csrFigures } });
+  const acceptButton = () => screen.getByTestId('ai-draft-accept') as HTMLButtonElement;
+
+  it('names a figure the engine did not produce, holds the accept while it stands, and lets the person correct it', async () => {
+    apiRequest.mockResolvedValue(res(200, csrDraft('Responders were 17/305 (5.6%).',
+      { status: 'checked', basis: 'csr_claim_receipts', results: true, figures: [{ figure: '17/305', blocking: true }] })));
+    mount();
+    await generate();
+    const note = screen.getByTestId('ai-draft-csr-figures');
+    expect(note.textContent).toBe('17/305 is not a figure the study’s engine produced for this section. Correct or remove it to accept.');
+    expect(note.getAttribute('data-blocking')).toBe('true');
+    expect(acceptButton().disabled).toBe(true);
+    expect(acceptButton().getAttribute('aria-describedby')).toBe(note.id);
+
+    fireEvent.change(screen.getByTestId('ai-draft-body'), { target: { value: 'Responders were 16/305 (5.2%).' } });
+    expect(acceptButton().disabled).toBe(false);
+    expect(screen.getByTestId('ai-draft-csr-figures').getAttribute('data-blocking')).toBe('false');
+  });
+
+  it('reports a figure outside the results sections without holding the accept', async () => {
+    apiRequest.mockResolvedValue(res(200, csrDraft('Planned enrolment was 300.',
+      { status: 'checked', basis: 'csr_claim_receipts', results: false, figures: [{ figure: '300', blocking: false }] })));
+    mount();
+    await generate();
+    expect(screen.getByTestId('ai-draft-csr-figures').textContent).toMatch(/^300 is not among the engine’s claimed figures/);
+    expect(acceptButton().disabled).toBe(false);
+  });
+
+  it('says a results section with no receipts was not checked against the engine, never that it passed', async () => {
+    apiRequest.mockResolvedValue(res(200, csrDraft('Responders were 17/305.', { status: 'not_checked', reason: 'no_csr_receipts', results: true })));
+    mount();
+    await generate();
+    expect(screen.getByTestId('ai-draft-csr-figures').textContent).toMatch(/not checked against the study’s engine output/);
+    expect(screen.getByTestId('ai-draft-csr-figures').textContent).not.toMatch(/every figure|passed/i);
+    expect(acceptButton().disabled).toBe(false);
+  });
+
+  it('holds back a chosen paragraph that carries a blocking figure, and offers the others', () => {
+    const d: PendingAiDraft = { sectionId: 'S1', generated: 'Responders were 17/305.\n\nAll randomized participants were analysed.',
+      draftId: 'DC-1', metadata: {}, check: null,
+      csrFigures: { status: 'checked', results: true, figures: [{ figure: '17/305', blocking: true }] } };
+    render(<ParagraphChoice draft={d} label="the draft" edited={false} savedContent="" savedUpdatedAt={null} busy={false} />);
+    const first = screen.getByRole('checkbox', { name: 'Use paragraph 1' }) as HTMLInputElement;
+    const second = screen.getByRole('checkbox', { name: 'Use paragraph 2' }) as HTMLInputElement;
+    expect(first.disabled).toBe(true);
+    expect(screen.getByTestId('ai-draft-paragraph-held').textContent).toMatch(/^Not offered: 17\/305 is not a figure the study’s engine produced/);
+    expect(first.getAttribute('aria-describedby')).toBe(screen.getByTestId('ai-draft-paragraph-held').id);
+    expect(second.disabled).toBe(false);
+  });
+
+  it('shows nothing of the gate on a document it does not cover', async () => {
+    apiRequest.mockResolvedValue(res(200, MODEL_DRAFT()));
+    mount();
+    await generate();
+    expect(screen.queryByTestId('ai-draft-csr-figures')).toBeNull();
   });
 });
 
@@ -247,6 +317,30 @@ describe('AuthoringAiDraft', () => {
     answer(res(200, MODEL_DRAFT()));
     await screen.findByTestId('ai-draft-body');
     expect(container.querySelector('.ana-activity-phase')).toBeNull();
+  });
+
+  it('returns focus to the control pressed once a draft request ends, as the revise and passage controls do (walk, 2026-11-06)', async () => {
+    apiRequest.mockImplementation(rejects(503, 'GATEWAY_UNAVAILABLE', NO_PROVIDER_MESSAGE));
+    mount();
+    const generateButton = screen.getByTestId('ai-draft-generate');
+    generateButton.focus();
+    fireEvent.click(generateButton);
+    // A browser drops focus from a control disabled while AnA drafts (jsdom keeps it, so the drop is made here).
+    const transient = document.body.appendChild(document.createElement('input'));
+    transient.focus();
+    transient.remove();
+    expect(document.activeElement).toBe(document.body);
+    await screen.findByTestId('ai-draft-refusal');
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId('ai-draft-generate')));
+  });
+
+  it('names a section by its outline code, and never by an internal id (walk, 2026-11-06)', () => {
+    mount({ sectionCode: 'qms-purpose', sectionTitle: 'Purpose' });
+    expect(screen.getByText(/from Data Room sources/).textContent).toContain('Draft Purpose from Data Room sources');
+    expect(document.body.textContent).not.toContain('qms-purpose');
+    cleanup();
+    mount({ sectionCode: '11.4.1', sectionTitle: 'Efficacy results' });
+    expect(screen.getByText(/from Data Room sources/).textContent).toContain('Draft 11.4.1 from Data Room sources');
   });
 
   it('a deployment with no AI provider is refused on the panel: no draft body, no accept, a refusal that stays', async () => {
@@ -462,13 +556,15 @@ describe('DocumentAuthoring — the drafting panel is reachable', () => {
   it('opens the panel from the editor toolbar, and drafts nothing until asked', async () => {
     render(<DocumentAuthoring {...surfaceProps()} />);
 
-    const open = (await screen.findByTestId('ai-draft-open')) as HTMLButtonElement;
+    /* D4-2: "Draft from sources" is an item of the bar's AnA (✻) menu (D4.md §D4.G),
+       read here before any section read has answered. */
+    const open = () => openEditorControl('Draft from sources', 'ana');
     expect(screen.queryByTestId('ai-draft-panel')).toBeNull();
     // Disabled until a section is actually open — there is no section to draft
     // before then, and the endpoint is addressed by section id.
-    expect(open.disabled).toBe(true);
-    await waitFor(() => expect(open.disabled).toBe(false));
-    fireEvent.click(open);
+    expect(open().getAttribute('aria-disabled')).toBe('true');
+    await waitFor(() => expect(open().getAttribute('aria-disabled')).toBeNull());
+    fireEvent.click(open());
 
     const panel = await screen.findByTestId('ai-draft-panel');
     expect(panel.textContent).toMatch(/Draft 3\.2\.S\.1 from Data Room sources/);

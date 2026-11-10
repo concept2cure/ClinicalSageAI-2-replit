@@ -29,6 +29,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
+/* ProjectSettings (in Project home's header) reads the tenant; these tests mount no TenantProvider. */
+vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => ({ currentOrganization: null, currentClientWorkspace: null }) }));
 vi.mock('@/services/portal/authService', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/services/portal/authService')>();
   return { ...actual, useAuth: () => ({ user: actual.authService.getUser() }),

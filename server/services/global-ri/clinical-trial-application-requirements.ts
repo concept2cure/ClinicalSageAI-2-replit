@@ -11,9 +11,10 @@
  *
  * Markets: FDA (US IND), EMA (EU CTA via CTIS), PMDA (JP CTN / 治験届),
  * HEALTH_CANADA (CA CTA, Division 5), MHRA (UK CTA, Combined Review).
- * The component lists capture the major mandatory pieces; sponsor SOPs and
- * agency checklists remain the authority for edge cases (this is a readiness
- * aid, honest-by-construction).
+ * Other market component-presence checks retain their existing behavior. The
+ * MHRA list projects the shared UK preparation outline, including permitted
+ * alternatives; labels alone cannot resolve its date or document applicability.
+ * This assessment is not authority to start a trial.
  *
  * Pure / deterministic — no DB, no IO.
  *
@@ -25,6 +26,13 @@
  * @module server/services/global-ri/clinical-trial-application-requirements
  */
 
+import {
+  sectionBlueprint as ukCtaSections,
+  outlineBasis as ukCtaBasis,
+  outlineLimitations as ukCtaLimitations,
+} from '../../../shared/regulatory/uk-cta-authoring.js';
+import type { RegulatoryBasis } from '../../../shared/regulatory/regulatory-basis.js';
+
 export type CtaMarket = 'FDA' | 'EMA' | 'PMDA' | 'HEALTH_CANADA' | 'MHRA';
 
 export interface CtaComponent {
@@ -32,6 +40,8 @@ export interface CtaComponent {
   code: string;
   /** Human label. */
   label: string;
+  /** Preparation guidance, including alternatives and unresolved conditions. */
+  guidance?: string;
 }
 
 /** Required clinical-trial-application components for an initial CTA/IND, by market. */
@@ -71,21 +81,16 @@ export const CTA_REQUIREMENTS: Record<CtaMarket, CtaComponent[]> = {
     { code: 'ca_cta_cmc', label: 'Chemistry and manufacturing information (QOS-CE)' },
     { code: 'ca_cta_psear', label: 'Protocol Safety and Efficacy Assessment' },
   ],
-  MHRA: [
-    { code: 'uk_cta_cover_letter', label: 'Cover letter' },
-    { code: 'uk_cta_application_form', label: 'Application form' },
-    { code: 'uk_cta_protocol', label: 'Protocol' },
-    { code: 'uk_cta_ib', label: "Investigator's Brochure" },
-    { code: 'uk_cta_impd', label: 'Investigational Medicinal Product Dossier (IMPD)' },
-    { code: 'uk_cta_gmp', label: 'GMP documentation' },
-  ],
+  MHRA: ukCtaSections.sections.filter((section) => section.required).map((section) => ({
+    code: section.code, label: section.title, guidance: section.guidance,
+  })),
 };
 
 export type CtaFindingSeverity = 'error' | 'warning';
 
 export interface CtaFinding {
   severity: CtaFindingSeverity;
-  /** MISSING_COMPONENT / UNKNOWN_MARKET / EXTRA_COMPONENT. */
+  /** MISSING_COMPONENT / UNKNOWN_MARKET / EXTRA_COMPONENT / MHRA_APPLICABILITY_UNASSESSED. */
   code: string;
   message: string;
   /** The component code the finding concerns, when applicable. */
@@ -101,6 +106,8 @@ export interface CtaReadinessResult {
   missing: string[];
   findings: CtaFinding[];
   counts: { errors: number; warnings: number };
+  /** A labels-only UK assessment has no initial date or product/alternative facts. */
+  applicability?: { state: 'unassessed'; basis: RegulatoryBasis; limitations: readonly string[] };
 }
 
 export interface CtaReadinessInput {
@@ -113,7 +120,9 @@ export interface CtaReadinessInput {
  * Assess a sponsor's clinical-trial-application components against the market's
  * required set. A missing required component is a blocking error; an
  * unrecognized provided code is an informational warning; an unknown market is
- * a blocking error. ready ⇔ no errors.
+ * a blocking error. UK labels cannot determine initial-date transition,
+ * product scope or conditional alternatives, so MHRA always remains unassessed.
+ * ready ⇔ no errors; this is package preparation, not approval to start a trial.
  * Pure / deterministic; findings ordered by component code then severity.
  */
 export function assessCtaReadiness(input: CtaReadinessInput): CtaReadinessResult {
@@ -131,22 +140,32 @@ export function assessCtaReadiness(input: CtaReadinessInput): CtaReadinessResult
   }
 
   const provided = new Set((input.providedComponents ?? []).map((c) => String(c)));
-  const requiredCodes = new Set(required.map((r) => r.code));
+  const recognized = input.market === 'MHRA' ? ukCtaSections.sections : required;
+  const recognizedCodes = new Set(recognized.map((row) => row.code));
   const findings: CtaFinding[] = [];
 
   const missing: string[] = [];
   for (const comp of required) {
     if (!provided.has(comp.code)) {
       missing.push(comp.code);
-      findings.push({ severity: 'error', code: 'MISSING_COMPONENT', message: `Missing required CTA/IND component: ${comp.label}.`, component: comp.code });
+      const prefix = input.market === 'MHRA' ? 'Missing baseline UK CTA preparation row' : 'Missing required CTA/IND component';
+      findings.push({ severity: 'error', code: 'MISSING_COMPONENT', message: `${prefix}: ${comp.label}.`, component: comp.code });
     }
   }
 
   for (const code of provided) {
-    if (!requiredCodes.has(code)) {
+    if (!recognizedCodes.has(code)) {
       findings.push({ severity: 'warning', code: 'EXTRA_COMPONENT', message: `Provided component "${code}" is not in the ${input.market} required CTA/IND set; confirm relevance.`, component: code });
     }
   }
+
+  const applicability = input.market === 'MHRA' ? {
+    state: 'unassessed' as const, basis: ukCtaBasis, limitations: ukCtaLimitations,
+  } : undefined;
+  if (applicability) findings.push({
+    severity: 'error', code: 'MHRA_APPLICABILITY_UNASSESSED',
+    message: 'UK CTA preparation remains unassessed: confirm the initial application submission date and old/new-rule transition, medicinal-product scope, conditional documents and permitted alternatives. Component labels alone cannot establish package readiness. This assessment does not authorise a trial to start; verify joint MHRA and REC approval separately.',
+  });
 
   findings.sort((a, b) => {
     const ca = a.component ?? '';
@@ -164,6 +183,7 @@ export function assessCtaReadiness(input: CtaReadinessInput): CtaReadinessResult
     missing,
     findings,
     counts: { errors, warnings: findings.length - errors },
+    ...(applicability ? { applicability } : {}),
   };
 }
 

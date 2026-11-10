@@ -1,0 +1,12 @@
+FAIL (11):
+  - duplicate ids: ['m3-velpatasvir-forced-degradation-generate']
+  - ids already in gold-tasks.json: ['510k-se-summary-generate']
+  - m3-itraconazole-stress-mass-balance-generate: forbidden pattern 'proven' is a single word shorter than 8
+  - m3-velpatasvir-forced-degradation-generate: forbidden pattern 'basic hydrolysis' occurs in its own input
+  - m3-velpatasvir-forced-degradation-generate: licence 'All rights reserved' not in allowed list
+  - 510k-se-summary-generate: id pattern
+  - 510k-se-summary-generate: input length 250 outside 300-1800
+  - m3-cisatracurium-shelf-life-generate: gap between slices is not a call-out remnant: '6.3 months, this is consistent with our other results. To the best of our knowledge, the p' (input continues '8.')
+  - m3-levothyroxine-accelerated-stability-generate: carries a captured candidate
+  - m3-meropenem-in-use-stability-generate: gap between slices is not a call-out remnant: 'able for up to 7 days under refrigeration conditions. 4. Discussion The HPLC method for me' (input continues 'eri')
+  - m3-itraconazole-hplc-conditions-extract.flow_rate: expected value '0.8 mL/min' not in input

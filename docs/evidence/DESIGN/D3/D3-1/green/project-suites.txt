@@ -1,0 +1,34 @@
+$ npx vitest run <the 80 project-page suites in client/src/concept2cure/v2/__tests__: Project*, project*, foundationsRetiredRatchet>
+      Tests  1 failed | 872 passed (873)
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeStageCss.test.tsx > the filing spine’s project-page classes > defines no class another v2 stylesheet already defines
+ Test Files  1 failed | 79 passed (80)
+
+The one failure is projectHomeStageCss's class-clash case, which fails on trunk too. Its clash list:
++   ".btn (also admin-access.css)",
++   ".rpk-tabs (also app-v2.css)",
++   ".pj (also app-v2.css)",
++   ".pj-sec-h (also app-v2.css)",
++   ".btn (also app-v2.css)",
++   ".btn (also authoring-v2.css)",
++   ".btn (also coverage-v2.css)",
++   ".pj (also journey-v2.css)",
++   ".btn (also journey-v2.css)",
++   ".btn (also misc-surfaces-v2.css)",
++   ".btn (also review-decision.css)",
++   ".btn (also surfaces-v2.css)",
+
+On trunk's stylesheets (git stash of styles/) the same list plus ".pj (also project-settings.css)", which D3-1 removes:
++   ".btn (also admin-access.css)",
++   ".rpk-tabs (also app-v2.css)",
++   ".pj (also app-v2.css)",
++   ".pj-sec-h (also app-v2.css)",
++   ".btn (also app-v2.css)",
++   ".btn (also authoring-v2.css)",
++   ".btn (also coverage-v2.css)",
++   ".pj (also journey-v2.css)",
++   ".btn (also journey-v2.css)",
++   ".btn (also misc-surfaces-v2.css)",
++   ".pj (also project-settings.css)",
++   ".btn (also review-decision.css)",
++   ".btn (also surfaces-v2.css)",
+      Tests  1 failed | 1 passed (2)

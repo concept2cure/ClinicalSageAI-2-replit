@@ -1,0 +1,6 @@
+# F10, build card, before the fix
+   × says why a failed build stopped, as the list states it, and refuses a list whose reason is not text 5117ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > says why a failed build stopped, as the list states it, and refuses a list whose reason is not text
+TestingLibraryElementError: Unable to find an element with the text: Not complete: §9.8 still holds a data placeholder (“[…]”) where the study’s data is missing.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+      Tests  1 failed | 9 skipped (10)

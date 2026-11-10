@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /** The pure half of slice 4 (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md): the passage as the proposal door takes it. */
 import { describe, expect, it } from 'vitest';
-import { passageProposal, passageRefusal, samePassage, PASSAGE_CONTEXT_CHARS } from '../draftPassage';
+import { passageFigureHold, passageProposal, passageRefusal, samePassage, PASSAGE_CONTEXT_CHARS } from '../draftPassage';
 
 const PASSAGE = { quote: 'was met', prefix: 'The primary endpoint ', suffix: ' in the treatment group.' };
 
@@ -44,4 +44,20 @@ describe('why a replacement did not land, in this panel’s terms', () => {
       expect(text).toMatch(wording);
     });
   }
+});
+
+describe('a passage alternative carrying a figure the engine did not produce (CSR slice 2)', () => {
+  const alt = (generated: string, csrFigures?: unknown) => ({ sectionId: 'S1', generated, draftId: null, metadata: {}, check: null,
+    ...(csrFigures ? { csrFigures } : {}) }) as Parameters<typeof passageFigureHold>[0];
+
+  it('is held, and names the figure', () => {
+    expect(passageFigureHold(alt('Responders were 17/305.', { status: 'checked', results: true, figures: [{ figure: '17/305', blocking: true }] })))
+      .toBe('Not offered: 17/305 is not a figure the study’s engine produced for this section. Ask AnA for the alternatives again, or edit the passage in the editor.');
+  });
+
+  it('is not held for a reported figure, a section with no receipts, or a document the gate does not cover', () => {
+    expect(passageFigureHold(alt('Planned 300.', { status: 'checked', results: false, figures: [{ figure: '300', blocking: false }] }))).toBeNull();
+    expect(passageFigureHold(alt('Responders were 17/305.', { status: 'not_checked' }))).toBeNull();
+    expect(passageFigureHold(alt('Responders were 17/305.'))).toBeNull();
+  });
 });

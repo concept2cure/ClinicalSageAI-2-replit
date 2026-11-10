@@ -1,0 +1,30 @@
+# Skeptic re-run of taskTrayQuiet.test.tsx against HEAD's sources, without touching the shared tree
+# HEAD f5c46642a (no v2 file differs from 95dbf007c): git archive HEAD client/src/concept2cure | tar -x -C <scratch>/red;
+# the new test copied into <scratch>/red/.../__tests__/; vitest run with the repo's vitest.config.ts, include narrowed to that one file.
+# exit code: 1
+
+ × TRIAGE_ASK: one source for the tray, Home and the task board (D1 §D1.C step 5, §D1.G step 2) > is exported with the words the tray has always asked
+   → expected undefined to be 'Triage everything assigned to me acro…' // Object.is equality
+ × TRIAGE_ASK: one source for the tray, Home and the task board (D1 §D1.C step 5, §D1.G step 2) > the triage row asks exactly it, as a quiet ghost button led by the ✻
+   → expected [ 'tt-triage' ] to deeply equal ArrayContaining{…}
+ × the header (D1 §D1.G step 1) > says "none overdue" rather than counting zero, and closes with a D0 button
+   → expected '2 assigned · 0 overdue' to be '2 assigned · none overdue' // Object.is equality
+ ✓ the header (D1 §D1.G step 1) > still gives the number when something is late
+ × rows: colour only where something is late or blocked (D1 §D1.G step 3) > a row due in 14 days keeps its dot’s place but shows none; late and blocked rows keep theirs
+   → expected false to be true // Object.is equality
+ × messages and alerts (D1 §D1.G step 4) > shows a severity dot only for a warning or a critical notice
+   → expected false to be true // Object.is equality
+ × messages and alerts (D1 §D1.G step 4) > draws Mark read, the open button and the preferences button with D0’s buttons
+   → expected [ 'tt-read' ] to deeply equal ArrayContaining ["btn", "small"]
+ ✓ the tray's rules (app-v2.css, D1 §D1.G step 5) > finds the tray block
+ × the tray's rules (app-v2.css, D1 §D1.G step 5) > uses orange only for the ✻
+   → expected [ '.c2c-v2 .tt-triage', …(4) ] to deeply equal []
+ × the tray's rules (app-v2.css, D1 §D1.G step 5) > sets no text under the 12px floor
+   → expected [ …(4) ] to deeply equal []
+ × the tray's rules (app-v2.css, D1 §D1.G step 5) > keeps the group heads in sentence case and hides a quiet dot
+   → expected [] to deeply equal [ 'none' ]
+ × the tray's rules (app-v2.css, D1 §D1.G step 5) > gives the panel title 16px and the counts line 13px
+   → expected [ '14px' ] to deeply equal [ '16px' ]
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  10 failed | 2 passed (12)

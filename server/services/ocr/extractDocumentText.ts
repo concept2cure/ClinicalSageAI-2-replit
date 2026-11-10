@@ -6,7 +6,9 @@
  * documents are no longer opaque:
  *   • text/*, JSON/XML (.txt/.md/.csv/.tsv/.json/.xml/.log) → raw utf8
  *   • images           → WASM Tesseract OCR
- *   • PDFs             → born-digital text (pdf-parse), OCR fallback when scanned
+ *   • PDFs             → born-digital text (pdf-parse), OCR fallback when scanned;
+ *                        for Vault ingestion, the self-hosted layout reader first
+ *                        when the deployment turned it on (P-90)
  *   • .docx            → mammoth raw text
  *   • .xlsx            → exceljs, all sheets rendered as text
  *
@@ -19,6 +21,8 @@ import { alignPageSpans, type PageSpan } from './page-offsets';
 import { createScopedLogger } from '../../utils/logger';
 import { RAW_TEXT_SOURCE_EXTENSIONS } from '../../../shared/constants/document-intake-formats';
 import type { ExtractionCoverage } from '../../../shared/data-room-processing-status';
+import { DoclingClient, type LayoutTable } from '../../integrations/docling/client';
+import { resolveParserFeatureFlags } from '../ingestion/parserFeatureFlags';
 
 export type { ExtractionCoverage };
 
@@ -27,6 +31,8 @@ const logger = createScopedLogger('document-text');
 export type ExtractionMethod =
   | 'utf8'
   | 'pdf-text'
+  /** Read by the self-hosted layout reader (P-90): reading order, headings, tables cell by cell. */
+  | 'pdf-layout'
   | 'pdf-ocr'
   | 'image-ocr'
   | 'docx'
@@ -58,6 +64,19 @@ export interface ExtractedDocumentText {
    * PDF, or an image. Its text is then still to be read (MR-08 Stage 3).
    */
   ocrDeferred?: true;
+  /**
+   * Set when the self-hosted layout reader read this PDF (P-90): each table's
+   * cells, with where its rendering stands in `text`, and how many sections it
+   * found. Its rows are in `text` as tab-separated lines, which the Vault
+   * chunker reads as a table.
+   */
+  layout?: { reader: 'docling'; sections: number; tables: LayoutTable[] };
+  /**
+   * Why the layout reader, asked for and turned on, did not supply this
+   * reading: unreachable, refused, or too little text. The reading is then
+   * the platform's own, and this says so.
+   */
+  layoutNotUsed?: string;
 }
 
 /** What a caller lets automatic PDF OCR spend. Without it, OCR reads every page. */
@@ -65,6 +84,12 @@ export interface ExtractDocumentTextOptions {
   pdfOcrBudget?: { maxPages: number; maxDurationMs: number };
   /** False reads a text layer only and never runs OCR; what needs OCR comes back `ocrDeferred`. */
   ocr?: boolean;
+  /**
+   * Read a PDF with the self-hosted layout reader first, when the deployment
+   * turned it on (`oss.ingestion.docling_primary`, P-90). Vault ingestion asks
+   * for it; nothing else does, so a chat upload or a review is not slowed by it.
+   */
+  layout?: boolean;
 }
 
 const DOCX_MIME = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
@@ -128,6 +153,34 @@ async function extractPdfText(buffer: Buffer, budget?: ExtractDocumentTextOption
   return text
     ? { text, method: 'pdf-text', pageSpans: alignPageSpans(text, pages) ?? undefined, coverage }
     : { text: '', method: 'none', coverage };
+}
+
+/**
+ * A PDF for Vault ingestion (P-90): the self-hosted layout reader's reading,
+ * when the deployment turned it on and it read the file, and the platform's own
+ * otherwise. When the reader was on and not used, the result says why
+ * (`layoutNotUsed`): an unreachable reader is never a silent downgrade.
+ */
+async function extractPdfWithLayout(buffer: Buffer, filename: string, options: ExtractDocumentTextOptions): Promise<ExtractedDocumentText> {
+  const own = () => extractPdfText(buffer, options.pdfOcrBudget, options.ocr !== false);
+  if (!resolveParserFeatureFlags().doclingEnabled) return own();
+  let notUsed: string;
+  try {
+    const reading = await new DoclingClient().read(buffer, filename, 'application/pdf');
+    if (reading.text.length >= PDF_TEXT_MIN) {
+      return {
+        text: reading.text,
+        method: 'pdf-layout',
+        pageSpans: alignPageSpans(reading.text, reading.pages) ?? undefined,
+        layout: { reader: 'docling', sections: reading.sections.length, tables: reading.tables },
+      };
+    }
+    notUsed = `The layout reader returned ${reading.text.length} characters, too few to be the document's text.`;
+  } catch (error) {
+    notUsed = error instanceof Error ? error.message : String(error);
+  }
+  logger.warn('layout reader not used; the PDF was read by the platform extractor', { filename, reason: notUsed });
+  return { ...(await own()), layoutNotUsed: `${notUsed} The PDF was read by the platform's own extractor.` };
 }
 
 /**
@@ -266,7 +319,7 @@ async function extractByFormat(
     case 'image':
       return options.ocr === false ? { text: '', method: 'none', ocrDeferred: true } : extractImageText(buffer);
     case 'pdf':
-      return extractPdfText(buffer, options.pdfOcrBudget, options.ocr !== false);
+      return options.layout ? extractPdfWithLayout(buffer, filename, options) : extractPdfText(buffer, options.pdfOcrBudget, options.ocr !== false);
     case 'docx':
       return extractDocxText(buffer);
     case 'xpt':

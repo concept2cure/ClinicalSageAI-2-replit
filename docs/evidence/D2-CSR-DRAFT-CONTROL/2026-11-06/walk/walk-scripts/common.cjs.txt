@@ -1,0 +1,170 @@
+/**
+ * Lane W (F1) running-app walk helpers. Run from the repository:
+ *   node <scratch>/laneW/walk/<script>.cjs http://127.0.0.1:5210
+ * Screenshots go to docs/evidence/D2-CSR-DRAFT-CONTROL/2026-11-06/walk/shots/.
+ * Every 4xx/5xx on /api/ and every console error / page error is recorded per step.
+ * The emailed sign-in code and reset link are read from the development server's log
+ * (server/services/emailService.ts logs them at debug when no SMTP is configured).
+ */
+const { chromium } = require('playwright');
+const fs = require('fs');
+const path = require('path');
+
+const BASE = (process.argv[2] || 'http://127.0.0.1:5210').replace(/\/$/, '');
+const REPO = '/home/user/ClinicalSageAI-2-replit';
+const SHOTS = path.join(REPO, 'docs/evidence/D2-CSR-DRAFT-CONTROL/2026-11-06/walk/shots');
+const SCRATCH = '/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/laneW';
+const SERVER_LOG = path.join(SCRATCH, 'server.log');
+fs.mkdirSync(SHOTS, { recursive: true });
+
+const VIEWPORTS = { desktop: { width: 1440, height: 900 }, phone: { width: 390, height: 844 } };
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+const log = { base: BASE, startedAt: new Date().toISOString(), steps: [] };
+let current = null;
+
+function attach(page, who) {
+  page.on('response', (r) => {
+    if (r.status() >= 400 && r.url().includes('/api/')) {
+      const line = `${who} ${r.status()} ${r.request().method()} ${r.url().replace(BASE, '')}`;
+      (current ? current.http : log.unscoped || (log.unscoped = [])).push(line);
+    }
+  });
+  page.on('console', (m) => {
+    if (m.type() === 'error') (current ? current.console : (log.unscopedConsole ||= [])).push(`${who} ${m.text().slice(0, 300)}`);
+  });
+  page.on('pageerror', (e) => { (current ? current.console : (log.unscopedConsole ||= [])).push(`${who} pageerror ${String(e.message).slice(0, 300)}`); });
+}
+
+async function step(name, fn) {
+  current = { name, http: [], console: [], notes: [], shots: [] };
+  const t0 = Date.now();
+  try {
+    const out = (await fn(current)) || {};
+    Object.assign(current, { outcome: out.outcome || 'pass', ...out });
+  } catch (err) {
+    current.outcome = 'fail';
+    current.error = String(err.message).split('\n')[0];
+  }
+  current.ms = Date.now() - t0;
+  log.steps.push(current);
+  console.info(`${current.outcome.padEnd(6)} ${name}${current.error ? ' :: ' + current.error : ''}`);
+  const done = current;
+  current = null;
+  return done;
+}
+
+async function newPage(browser, { viewport = VIEWPORTS.desktop, dark = false, who = 'anon' } = {}) {
+  const context = await browser.newContext({ viewport, colorScheme: dark ? 'dark' : 'light' });
+  const page = await context.newPage();
+  attach(page, who);
+  return { context, page };
+}
+
+/** Set the v2 shell's own theme preference (V2App.tsx PREFS_KEY 'c2c-v2-prefs'). */
+async function setTheme(page, dark) {
+  await page.evaluate((d) => {
+    let p = {};
+    try { p = JSON.parse(localStorage.getItem('c2c-v2-prefs') || '{}'); } catch { p = {}; }
+    p.dark = d;
+    localStorage.setItem('c2c-v2-prefs', JSON.stringify(p));
+  }, dark);
+}
+
+const PASSWORDS = {
+  'jm.smith@concept2cure.pro': process.env.JM_PASSWORD,
+  'rhea.reviewer@concept2cure.pro': process.env.WALK_SIGNER_PASSWORD,
+  'ava.approver@concept2cure.pro': process.env.WALK_SIGNER_PASSWORD,
+  'nadia.empty@harbor-lane.example': process.env.WALK_SIGNER_PASSWORD,
+};
+
+/** Sign in as a person does: email and password on the sign-in page, then the emailed six-digit code
+ *  (read from the development server's log, where emailService.ts writes it when no SMTP is configured). */
+async function signIn(page, email, password = PASSWORDS[email], { shotPrefix = null } = {}) {
+  await page.goto(BASE + '/concept2cure/login', { waitUntil: 'networkidle' });
+  await page.fill('#login-email', email);
+  await page.fill('#login-password', password);
+  const since = Date.now() - 2000;
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await page.getByLabel('Digit 1').waitFor({ timeout: 20000 });
+  if (shotPrefix) await shot(page, `${shotPrefix}-code-screen.png`);
+  const code = await otpFor(email, since);
+  for (let i = 0; i < 6; i += 1) await page.getByLabel(`Digit ${i + 1}`).fill(code[i]);
+  await sleep(300);
+  if (/\/login/.test(new URL(page.url()).pathname)) {
+    const verify = page.getByRole('button', { name: 'Verify', exact: true });
+    if (await verify.isEnabled().catch(() => false)) await verify.click().catch(() => {});
+  }
+  await page.waitForURL((u) => !u.pathname.endsWith('/login'), { timeout: 20000 });
+  await page.waitForLoadState('networkidle');
+  await sleep(800);
+}
+
+function api(page, method, url, body) {
+  return page.evaluate(async ([m, u, b]) => {
+    const r = await fetch(u, { method: m, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('trialsage_access_token')}` },
+      body: b === undefined ? undefined : JSON.stringify(b) });
+    const t = await r.text();
+    try { return { status: r.status, body: JSON.parse(t) }; } catch { return { status: r.status, body: t.slice(0, 400) }; }
+  }, [method, url, body]);
+}
+
+async function shot(page, name, opts = {}) {
+  const file = path.join(SHOTS, name);
+  await page.screenshot({ path: file, ...opts });
+  if (current) current.shots.push(`shots/${name}`);
+  return `shots/${name}`;
+}
+
+/** The server log lines (pino JSON) whose msg matches, newest last. */
+function serverLogEntries(match) {
+  const out = [];
+  for (const line of fs.readFileSync(SERVER_LOG, 'utf8').split('\n')) {
+    if (!line.startsWith('{') || !line.includes(match)) continue;
+    try { out.push(JSON.parse(line)); } catch { /* not JSON */ }
+  }
+  return out;
+}
+
+/** The newest dev OTP code logged for `email` after `since` (ms). */
+async function otpFor(email, since) {
+  for (let i = 0; i < 40; i += 1) {
+    const hit = serverLogEntries('Dev OTP code').filter((e) => Date.parse(e.time) >= since)
+      .filter((e) => { const j = JSON.stringify(e); const [u, d] = email.split('@'); return j.includes(email) || j.includes(`${u[0]}***@${d}`); }).pop();
+    if (hit) {
+      const code = hit.code ?? hit.context?.code ?? JSON.stringify(hit).match(/"code":"(\d{6})"/)?.[1];
+      if (code) return String(code);
+    }
+    await sleep(250);
+  }
+  throw new Error(`no OTP logged for ${email}`);
+}
+
+async function resetLinkFor(email, since) {
+  for (let i = 0; i < 40; i += 1) {
+    const hit = serverLogEntries('Dev reset link').filter((e) => Date.parse(e.time) >= since)
+      .filter((e) => JSON.stringify(e).includes(email)).pop();
+    if (hit) {
+      const url = hit.url ?? hit.context?.url ?? JSON.stringify(hit).match(/"url":"([^"]+)"/)?.[1];
+      if (url) return String(url);
+    }
+    await sleep(250);
+  }
+  throw new Error(`no reset link logged for ${email}`);
+}
+
+/** Visible text of a region, compacted, for the walk log. */
+const textOf = (page, sel = 'main') => page.locator(sel).first().innerText({ timeout: 5000 }).then((t) => t.replace(/\n{2,}/g, '\n').slice(0, 3000)).catch(() => '');
+
+/** Horizontal page overflow in px (0 = none). */
+const overflowX = (page) => page.evaluate(() => Math.max(0, document.documentElement.scrollWidth - window.innerWidth));
+
+function save(name) {
+  log.finishedAt = new Date().toISOString();
+  const file = path.join(SCRATCH, `walk-${name}.json`);
+  fs.writeFileSync(file, JSON.stringify(log, null, 2));
+  return file;
+}
+
+module.exports = { chromium, fs, path, BASE, REPO, SHOTS, SCRATCH, VIEWPORTS, sleep, log, step, newPage, setTheme, signIn, PASSWORDS, api, shot,
+  otpFor, resetLinkFor, textOf, overflowX, save, serverLogEntries };

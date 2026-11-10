@@ -1,0 +1,43 @@
+{
+  "rejected_candidate": "a844806165d4880722a3cd649f22bb2ef14dfa96",
+  "normal_gates_passed": true,
+  "typescript_errors": 0,
+  "push_result": "rejected concurrent ref compare-and-swap, exit1; no source accepted",
+  "push_log": "source-push-race-7.txt",
+  "canonical_base": "86b0fa6f70bc1a0bb85a45c0e178e8a99843acf0",
+  "incoming_commits": 4,
+  "incoming_paths": [
+    "client/src/concept2cure/v2/__tests__/engineChoices.test.tsx",
+    "docs/evidence/D2-OWN-THE-PRODUCT/2026-10-30/README.md",
+    "server/__tests__/routes/smoke.test.ts",
+    "server/db/__tests__/provision-app-role-append-only.test.ts",
+    "server/routes/__tests__/governed-signed-act.request-context.test.ts",
+    "server/services/__tests__/ana-ri.test.ts",
+    "server/services/ana/__tests__/notification-category-schema.test.ts",
+    "server/services/audit/__tests__/verify-audit-chain-production-bundle.test.ts",
+    "server/services/c2c/__tests__/_filing-write-harness.ts",
+    "server/services/connectors/__tests__/connector-results-carry-a-source-rank-not-a-relevance-score.test.ts",
+    "server/services/regulatory/registry/__tests__/coverage-report-verdict.test.ts",
+    "tests/routes/ana-ri-health.test.ts"
+  ],
+  "production_changes": [],
+  "incoming_test_repairs": "retained as canonical work; not claimed as newly executed here; repaired filing-write fixture is not used by our seven server suites",
+  "clean_merge": true,
+  "retained_qualification": {
+    "disjoint_tests": 707,
+    "suites": 52,
+    "client_tests": 618,
+    "server_checks": 89,
+    "browser_flows": 8,
+    "browser_inputs": 36,
+    "selected_publication_inputs": 162,
+    "input_mismatches": [],
+    "builds_passed": true
+  },
+  "independent_prior_readiness_review": {
+    "reviewer": "device_feedback_contract",
+    "source_at_review": "a844806165d4880722a3cd649f22bb2ef14dfa96",
+    "verdict": "approved; all162publication/36browserpins current and all342canonicaltablelines preserved; appropriate nativeDB and runner attribution"
+  },
+  "next_push": "pending all normal gates"
+}

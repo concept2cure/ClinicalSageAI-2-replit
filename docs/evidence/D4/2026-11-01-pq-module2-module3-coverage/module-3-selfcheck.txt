@@ -1,0 +1,6 @@
+tasks: 24 (generation 12, extraction 12)
+distinct articles: 11; distinct drug substances: 12
+licences: {'CC BY 4.0': 24}
+verbatim segments per input (1 = one contiguous slice; >1 = slices joined where a call-out was dropped):
+  itraconazole-stress-mass-balance-generate=2, latanoprost-forced-degradation-generate=2, ritlecitinib-validation-generate=1, ritlecitinib-forced-degradation-generate=1, velpatasvir-forced-degradation-generate=1, miglitol-forced-degradation-generate=2, ramipril-degradation-impurities-generate=2, cisatracurium-shelf-life-generate=1, levothyroxine-accelerated-stability-generate=1, meropenem-in-use-stability-generate=1, amiodarone-dissolution-accuracy-generate=1, bupropion-naltrexone-release-generate=1, itraconazole-hplc-conditions-extract=2, latanoprost-lod-loq-criteria-extract=2, velpatasvir-stress-conditions-extract=1, cisatracurium-acceptance-criteria-extract=1, ramipril-specificity-limits-extract=2, levothyroxine-storage-conditions-extract=1, levothyroxine-system-suitability-extract=1, meropenem-validation-results-extract=1, miglitol-related-substances-conditions-extract=1, amiodarone-dissolution-procedure-extract=1, amiodarone-dissolution-linearity-extract=1, bupropion-naltrexone-dissolution-media-extract=1
+PASS: all checks

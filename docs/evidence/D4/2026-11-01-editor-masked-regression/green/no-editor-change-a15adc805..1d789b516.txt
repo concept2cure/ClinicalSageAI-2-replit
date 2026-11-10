@@ -1,0 +1,5 @@
+$ git log --format='%h %s' a15adc805..1d789b516 -- <editor sources, editor tests, Authoring*.tsx, DocumentAuthoring.tsx, the five suites>
+(no output above this line = no such file changed)
+
+$ git status --short -- client/src/concept2cure/v2/editor client/src/concept2cure/v2/surfaces/Authoring*.tsx client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx client/src/concept2cure/v2/__tests__/{the five}
+(no output above this line = working tree matches HEAD for these paths)

@@ -1,0 +1,10 @@
+# Chromium. The project read (GET /api/c2c/projects/:id) and the filing reads (GET /api/c2c/documents?…) are held back 4 s,
+# New document is clicked as soon as it is drawn, and the dialog is read every second for 10 s.
+# R = "The project or filing changed, or your signed-in session changed. Close this form and open New document again…"
+# u = the form is usable.
+## before (trunk's AuthoringCreateExport.tsx)
+reads held 4 s; opened at 4.5s -> uuuRRRRRRR
+reads held 4 s; opened at 4.7s -> uuuRRRRRRR
+## after
+reads held 4 s; opened at 4.9s -> uuuuuuuuuu
+reads held 4 s; opened at 4.0s -> uuuuuuuuuu

@@ -35,6 +35,7 @@ import {
   refuseSignedArtifactAct,
 } from '../artifact-approval-act';
 import { ArtifactActConflictError, commitSignedArtifactAct, type SignedArtifactAct } from '../artifact-signed-act';
+import { separationOfDutiesRefusal } from '../governance/separation-of-duties';
 import { SignerNotAttributableError } from '../part11/resolve-signer-identity';
 import { buildSignatureRequiredResult, validateSignoff } from './part11-governance';
 import type { CommandContext, CommandResult } from './command-executor';
@@ -49,6 +50,11 @@ export interface SignedStatusParams {
 
 function refused(message: string, data?: Record<string, unknown>): CommandResult {
   return { success: false, action: ACTION, message, error: message, ...(data && { data }) };
+}
+
+/** A refusal that says nothing was signed, once: the separation-of-duties sentences can say it already. */
+function nothingSigned(message: string): string {
+  return /nothing was signed/i.test(message) ? message : `${message} Nothing was signed.`;
 }
 
 /** The signer's membership role in this organisation, as the status route reads it from the session. */
@@ -94,24 +100,22 @@ export async function signArtifactStatusByAna(ctx: CommandContext, params: Signe
 
   const transition = refuseArtifactTransition(previousStatus, status, userRole);
   if (transition) return refused(`${transition.message}. Nothing was signed.`);
+  // 2026-11-01 (F1, P-18): this now refuses an author too. Like every refusal
+  // here it follows the verified sign-off above; only the status route answers
+  // it before the password is verified.
   const before = await refuseSignedArtifactAct({
     q: pool,
     organizationId: ctx.organizationId,
     projectId: Number(params.projectId),
+    signerId: ctx.userId,
     artifact,
     previousStatus,
     status,
   });
-  if (before) return refused(`${before.message} Nothing was signed.`, { code: before.code, ...before.details });
+  if (before) return refused(nothingSigned(before.message), { code: before.code, ...before.details });
 
   const signed = await commitAct(ctx, { artifact, previousStatus, status, userRole });
-  if (signed instanceof ArtifactActConflictError) return refused(signed.message, { code: signed.code });
-  if (signed instanceof SignerNotAttributableError) {
-    return refused(
-      'Your account has no name or membership this signature can print, so it cannot sign here. Nothing was signed.',
-      { code: signed.code },
-    );
-  }
+  if (!('signature' in signed)) return notSigned(signed);
   return {
     success: true,
     action: ACTION,
@@ -131,6 +135,24 @@ export async function signArtifactStatusByAna(ctx: CommandContext, params: Signe
   };
 }
 
+type CommitOutcome = Awaited<ReturnType<typeof commitAct>>;
+
+/**
+ * Why the signing transaction signed nothing, as this command's answer. Moved
+ * out of signArtifactStatusByAna on 2026-11-01 (F1, P-18), when an author
+ * found on that transaction became a third answer.
+ */
+function notSigned(outcome: Exclude<CommitOutcome, SignedArtifactAct>): CommandResult {
+  if (outcome instanceof ArtifactActConflictError) return refused(outcome.message, { code: outcome.code });
+  if (outcome instanceof SignerNotAttributableError) {
+    return refused(
+      'Your account has no name or membership this signature can print, so it cannot sign here. Nothing was signed.',
+      { code: outcome.code },
+    );
+  }
+  return refused(nothingSigned(outcome.body.detail), { code: outcome.body.error });
+}
+
 async function commitAct(
   ctx: CommandContext,
   input: {
@@ -139,7 +161,12 @@ async function commitAct(
     status: 'approved' | 'locked';
     userRole: string;
   },
-): Promise<SignedArtifactAct | ArtifactActConflictError | SignerNotAttributableError> {
+): Promise<
+  | SignedArtifactAct
+  | ArtifactActConflictError
+  | SignerNotAttributableError
+  | NonNullable<ReturnType<typeof separationOfDutiesRefusal>>
+> {
   const { artifact, previousStatus, status, userRole } = input;
   const [storedVersion] = await db
     .select()
@@ -201,9 +228,11 @@ async function commitAct(
       return signed;
     })
     .catch((err: unknown) => {
-      // A stale read and an unnamed signer are answered as such; anything else
-      // propagates. Nothing was written in any of them.
+      // A stale read, an unnamed signer and an author (P-18, 2026-11-01) are
+      // answered as such; anything else propagates. Nothing was written in any of them.
       if (err instanceof ArtifactActConflictError || err instanceof SignerNotAttributableError) return err;
+      const authorRefusal = separationOfDutiesRefusal(err, ACTION);
+      if (authorRefusal) return authorRefusal;
       throw err;
     });
 }

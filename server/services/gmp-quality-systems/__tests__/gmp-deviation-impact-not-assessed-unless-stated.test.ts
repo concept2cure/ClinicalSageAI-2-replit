@@ -56,7 +56,8 @@ describe('classifyGMPDeviation: unstated facts are not assessed', () => {
     expect(r.productImpact.potentiallyImpacted).toBe(false);
     expect(r.productImpact.dispositionGuidance).toMatch(/Batch may proceed/);
     expect(r.requiresCapa).toBe(false);
-    expect(r.notAssessed).toEqual([]);
+    // usMarketed is left out: since 2026-11-02 it is listed, not read as true.
+    expect(r.notAssessed).toEqual(['usMarketed']);
   });
 
   it('classifies a deviation the unstated facts cannot change', () => {

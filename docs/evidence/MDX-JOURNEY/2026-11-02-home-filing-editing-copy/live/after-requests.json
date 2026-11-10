@@ -1,0 +1,19 @@
+{
+ "offered": 1,
+ "api": [
+  {
+   "m": "POST",
+   "u": "/api/authoring/docs",
+   "s": 201,
+   "sent": "{\"title\":\"Aurora pump — 510(k) × FDA · eSTAR (nIVD/IVD v7.0) · 21 CFR Part 807\",\"module\":null,\"client_program_id\":\"57ea2bb6-6e6b-4ace-9e09-ba12e60f5abd\",\"c2c_document_id\":\"doc_8672da1da35f4a088c89d44328dba424\"}",
+   "got": "{\"success\":true,\"document\":{\"id\":\"d6005c76-f699-4d1f-a459-07bc83e84fcc\",\"title\":\"Aurora pump — 510(k) × FDA · eSTAR (nIVD/IVD v7.0) · 21 CFR Part 807\",\"module\":null,\"product_code\":null,\"locale\":\"en-US\",\"status\":\"draft\",\"created_by\":\"1\",\"template_id\":null,\"submitted_at\":null,\"current_workflow_id\":null,\"approved_at\":null,\"frozen_at\":null,\"locked_at\":null,\"locked_by\":null,\"version\":null,\"tenant_id\":2"
+  },
+  {
+   "m": "POST",
+   "u": "/api/authoring/sections",
+   "s": 201,
+   "sent": "{\"doc_id\":\"d6005c76-f699-4d1f-a459-07bc83e84fcc\",\"code\":\"B1\",\"title\":\"Device description and principles of operation\",\"content\":\"\"}",
+   "got": "{\"success\":true,\"section\":{\"id\":\"f60e5d62-ac8d-4bbb-9f2c-b5585e9caa1e\",\"doc_id\":\"d6005c76-f699-4d1f-a459-07bc83e84fcc\",\"code\":\"B1\",\"title\":\"Device description and principles of operation\",\"content\":\"\",\"order_index\":0,\"track_changes\":false,\"tenant_id\":2,\"created_at\":\"2026-11-02T03:41:59.442Z\",\"updated_at\":\"2026-11-02T03:41:59.442Z\"},\"message\":\"Section created successfully\"}"
+  }
+ ]
+}

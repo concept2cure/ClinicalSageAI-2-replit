@@ -12,7 +12,7 @@
  *             project, model, version, the signature on the current version
  *             (four states), cited sources and human review;
  *   download  the governed DOCX (the leaf's export, recorded before delivery);
- *   editor    authoring.open-document by title;
+ *   editor    exact saved source through working-copy intake;
  *   manifest  the shared CSV builder (artifactManifest.ts), same columns;
  *   AnA       the view's state in context, and vault.focus-document, which
  *             now also takes an artifact id: the Live Drive hand-off rides it.
@@ -39,8 +39,7 @@ vi.mock('../download', async (importOriginal) => ({
 import { ApiRequestError } from '@/lib/queryClient';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { Vault } from '../surfaces/Vault';
-import { __resetSurfaceActionBus, applySurfaceAction, registerSurfaceActionHandlers, registeredSurfaceId } from '../surfaceActions';
-import { resolveSurfaceIdForTarget } from '../navParams';
+import { __resetSurfaceActionBus, applySurfaceAction, registeredSurfaceId } from '../surfaceActions';
 import { useActiveSurfaceContext, type SurfaceContext } from '../surfaceContext';
 import { PID, ok, props } from './_vault-surface-fixtures';
 
@@ -79,6 +78,8 @@ function mockApi(extra: Route = () => undefined) {
       if (hit instanceof Error) throw hit;
       return hit;
     }
+    // The projects the person can open (P-107 item 3): none here, so there is no sponsor to ask about.
+    if (method === 'GET' && url === '/api/c2c/projects?limit=200') return ok({ success: true, data: [] });
     if (method === 'GET' && url === ORG) return ok(orgBody());
     if (method === 'GET' && url.startsWith('/api/artifacts-center/')) {
       return { ok: true, status: 200, headers: new Headers({ 'Content-Disposition': 'attachment; filename="IND_cover_letter.docx"' }), blob: async () => new Blob(['docx']) } as unknown as Response;
@@ -135,7 +136,8 @@ describe('with no project open, the Vault lists the governed artifacts of the pr
   it('says the signature on the current version in words, four states', async () => {
     mockApi(() => undefined);
     apiRequest.mockImplementation(async (_m: string, url: string) =>
-      url === ORG ? ok(orgBody([...ORG_ROWS(), orgRow({ id: 'artifact_12', name: 'Unknown cover', sigVersion: null, sigStale: null })])) : ok({}));
+      url === ORG ? ok(orgBody([...ORG_ROWS(), orgRow({ id: 'artifact_12', name: 'Unknown cover', sigVersion: null, sigStale: null })]))
+        : url === '/api/c2c/projects?limit=200' ? ok({ success: true, data: [] }) : ok({}));
     render(<Vault {...props()} />);
     const panel = await orgPanel();
     await within(panel).findByText('IND cover letter');
@@ -235,18 +237,15 @@ describe('a person acts on a row of the organization view as on the gallery', ()
     await screen.findByText(/Clinical overview was not downloaded — there is no recorded human review or signature on its current version/);
   });
 
-  it('opens a row in the editor through authoring.open-document, by title', async () => {
+  it('requires an open target project before copying a governed artifact', async () => {
     mockApi();
-    const p = props();
-    render(<Vault {...p} />);
+    const p = props(); render(<Vault {...p} />);
     const panel = await orgPanel();
     await within(panel).findByText('IND cover letter');
-    fireEvent.click(within(within(panel).getByTestId('vault-org-artifact-artifact_9')).getByRole('button', { name: /Open in editor/ }));
-    expect(p.onNav).toHaveBeenCalledWith('authoring');
-    const open = vi.fn(() => ({ ok: true as const, detail: 'Opened' }));
-    cleanup();
-    registerSurfaceActionHandlers(resolveSurfaceIdForTarget('authoring'), { 'authoring.open-document': open });
-    expect((open.mock.calls[0] as unknown[])[0]).toEqual({ title: 'IND cover letter' });
+    fireEvent.click(within(within(panel).getByTestId('vault-org-artifact-artifact_9')).getByRole('button', { name: /Work on document/ }));
+    expect(p.onNav).not.toHaveBeenCalled();
+    expect(await screen.findByText(/Open the artifact’s project/)).toBeTruthy();
+    expect(apiRequest.mock.calls.filter(([method]) => method === 'POST')).toHaveLength(0);
   });
 
   it('asks AnA about a row by name, project and version', async () => {
@@ -284,13 +283,18 @@ describe('AnA reads the organization view', () => {
 describe('with a project open, the organization view is one click away and reads nothing until opened', () => {
   it('reads the listing only when asked', async () => {
     (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-301' };
-    mockApi((m, url) => (m === 'GET' && url === `/api/c2c/project-vault/${PID}` ? ok({ success: true, data: { program: 'BX-301', tree: [], documentCount: 0, unfiledCount: 0 } }) : undefined));
+    /* Inside a project the listing is that project's sponsor's projects' (F1, S6 V4). */
+    const within_ = `${ORG}?sameClientAs=${PID}`;
+    mockApi((m, url) => (m === 'GET' && url === `/api/c2c/project-vault/${PID}` ? ok({ success: true, data: { program: 'BX-301', tree: [], documentCount: 0, unfiledCount: 0 } })
+      : m === 'GET' && url === within_ ? ok(orgBody()) : undefined));
     render(<Vault {...props()} />);
     const panel = await orgPanel();
-    expect(urls()).not.toContain(ORG);
+    expect(urls().some((u) => u.startsWith(ORG))).toBe(false);
+    // D6-3: with a project open, the listing is a section of the Governed artifacts view (D6 §C.4 step 5).
+    fireEvent.click(screen.getByRole('tab', { name: 'Governed artifacts' }));
     fireEvent.click(within(panel).getByRole('button', { name: /Show governed artifacts across your projects/ }));
     await within(panel).findByText('IND cover letter');
-    expect(urls()).toContain(ORG);
+    expect(urls()).toContain(within_);
   });
 });
 
@@ -398,5 +402,85 @@ describe('vault.focus-document selects an artifact by its id', () => {
     render(<Vault {...props()} />);
     await waitFor(() => expect(registeredSurfaceId()).toBe('vault'));
     expect(run({})).toEqual({ status: 'failed', reason: 'No document named.' });
+  });
+});
+
+/* F1, S6 V4 (2026-11-05): a CRO's sponsors never mix. Inside a project, the governed artifacts across your projects
+   are that project's sponsor's projects', and the heading says whose; with no project open, each row names its
+   sponsor. The server half: server/routes/__tests__/artifacts-center-accessible-projects.pglite.test.ts. */
+describe("a CRO's sponsors never mix in the governed artifacts listing", () => {
+  const NORTHWIND = { id: 7, name: 'Northwind Bio' };
+  const CONTOSO = { id: 9, name: 'Contoso Pharma' };
+  const WITHIN = `${ORG}?sameClientAs=${PID}`;
+
+  it("inside a project, reads its sponsor's projects only, and the heading names the sponsor once", async () => {
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-204' };
+    mockApi((_m, url) => (url === WITHIN ? ok(orgBody([orgRow({ client: NORTHWIND })], { client: NORTHWIND })) : undefined));
+    render(<Vault {...props()} />);
+    fireEvent.click(await screen.findByRole('tab', { name: /Governed artifacts/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /Show governed artifacts across your projects/ }));
+    const panel = await orgPanel();
+    await within(panel).findByText('IND cover letter');
+    expect(urls()).toContain(WITHIN);
+    expect(urls()).not.toContain(ORG);
+    expect(panel.textContent).toMatch(/1 governed artifact in the Northwind Bio projects you can open/);
+    expect(within(panel).getByTestId('vault-org-artifact-artifact_9').textContent).not.toMatch(/Northwind/);
+  });
+
+  it('with no project open, each row says whose project it is', async () => {
+    mockApi((_m, url) => (url === ORG
+      ? ok(orgBody([orgRow({ client: NORTHWIND }), orgRow({ id: 'artifact_10', name: 'Clinical overview', prog: 'BX-301', client: CONTOSO })]))
+      : undefined));
+    render(<Vault {...props()} />);
+    const panel = await orgPanel();
+    await within(panel).findByText('IND cover letter');
+    expect(panel.textContent).toMatch(/2 governed artifacts in the projects you can open/);
+    expect(within(panel).getByTestId('vault-org-artifact-artifact_9').textContent).toMatch(/BX-204 · Northwind Bio/);
+    expect(within(panel).getByTestId('vault-org-artifact-artifact_10').textContent).toMatch(/BX-301 · Contoso Pharma/);
+  });
+});
+
+
+/* P-107 item 3 (2026-11-08): "With no project open, the Vault first asks which sponsor; every view is inside one
+   sponsor." */
+describe('with no project open and several sponsors, the Vault asks which sponsor first', () => {
+  const PROJECTS = [
+    { id: 'p-lumen-1', title: 'LMN-201', ws: 'Biotech', client_workspace_id: 3, client_name: 'Lumen' },
+    { id: 'p-acme-1', title: 'ACM-7', ws: 'Biotech', client_workspace_id: 9, client_name: 'Acme' },
+    { id: 'p-lumen-2', title: 'LMN-301', ws: 'Biotech', client_workspace_id: 3, client_name: 'Lumen' },
+  ];
+  const sponsored: Route = (method, url) => {
+    if (method !== 'GET') return undefined;
+    if (url === '/api/c2c/projects?limit=200') return ok({ success: true, data: PROJECTS });
+    if (url.startsWith(`${ORG}?sameClientAs=`)) return ok(orgBody([orgRow({ prog: 'LMN-201' })]));
+    return undefined;
+  };
+
+  it('lists the sponsors, and reads and shows nothing of any sponsor until one is chosen', async () => {
+    mockApi(sponsored);
+    render(<Vault {...props()} />);
+    const choice = await screen.findByTestId('vault-sponsor-choice');
+    expect(within(choice).getByText(/Acme/)).toBeTruthy();
+    expect(within(choice).getByText(/Lumen/)).toBeTruthy();
+    expect(screen.queryByTestId('vault-project-list')).toBeNull();
+    expect(screen.queryByTestId('vault-org-artifacts')).toBeNull();
+    expect(urls().some((u) => u.startsWith(ORG))).toBe(false);
+  });
+
+  it('once chosen, lists that sponsor\'s projects only and reads its artifacts by one of its projects', async () => {
+    mockApi(sponsored);
+    render(<Vault {...props()} />);
+    const choice = await screen.findByTestId('vault-sponsor-choice');
+    fireEvent.click(within(choice).getByRole('button', { name: 'Show the Vaults of Lumen' }));
+    const list = await screen.findByTestId('vault-project-list');
+    expect(within(list).getByText('LMN-201')).toBeTruthy();
+    expect(within(list).getByText('LMN-301')).toBeTruthy();
+    expect(within(list).queryByText('ACM-7')).toBeNull();
+    await orgPanel();
+    await waitFor(() => expect(urls()).toContain(`${ORG}?sameClientAs=p-lumen-1`));
+    expect(urls()).not.toContain(ORG);
+    fireEvent.click(screen.getByTestId('vault-sponsor-change'));
+    expect(await screen.findByTestId('vault-sponsor-choice')).toBeTruthy();
+    expect(screen.queryByTestId('vault-org-artifacts')).toBeNull();
   });
 });

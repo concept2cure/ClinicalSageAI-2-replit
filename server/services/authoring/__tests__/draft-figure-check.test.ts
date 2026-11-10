@@ -5,7 +5,10 @@
  * number or a date does not count.
  */
 import { describe, expect, it } from 'vitest';
-import { checkSectionFigures, figureSpansInContent, FINDINGS_KEPT } from '../draft-figure-check';
+import {
+  checkSectionFigures, figureSpansInContent, FINDINGS_KEPT,
+  unverifiedFiguresAtSigning, figureAcknowledgementDigest, figureAcknowledgementVerdict,
+} from '../draft-figure-check';
 
 const CSR = [
   'CLINICAL STUDY REPORT BX-301-02 (data cut-off 2024-12-31).',
@@ -86,5 +89,89 @@ describe('figureSpansInContent (S5c)', () => {
 
   it('a found figure with no confirmed offset names the document and no position', () => {
     expect(figureSpansInContent('<p>47%</p>', check([found('47%', null)]))[0].sourceLocator).toBeNull();
+  });
+});
+
+/**
+ * P-89 (2026-11-01): an approval or a seal checks the text being signed, so
+ * what the signer acknowledges is the current text's unverified figures, each
+ * by its own key, and nothing else stands in for it.
+ */
+describe('unverifiedFiguresAtSigning', () => {
+  const section = (text: string, code = '2.5.4') => ({ id: 's-1', code, title: 'Overview of efficacy', text });
+
+  it('lists each figure the signed text states and its cited source does not, by section', () => {
+    const items = unverifiedFiguresAtSigning(
+      [section('The response rate was 52% in 212 patients.')],
+      [{ sectionCode: '2.5.4', excerpts: [SOURCE] }],
+    );
+    expect(items).toEqual([{
+      key: 's-1#1:52%', sectionId: 's-1', sectionCode: '2.5.4', sectionTitle: 'Overview of efficacy',
+      text: '52%', kind: 'percent', reason: 'not_in_cited_source',
+    }]);
+  });
+
+  it('a figure corrected after the save is no longer listed: the check reads the text as it is now', () => {
+    expect(unverifiedFiguresAtSigning(
+      [section('The response rate was 47% in 212 patients.')],
+      [{ sectionCode: '2.5.4', excerpts: [SOURCE] }],
+    )).toEqual([]);
+  });
+
+  it('when a cited source no longer verifies, every figure of its section is listed as unchecked', () => {
+    const items = unverifiedFiguresAtSigning(
+      [section('The response rate was 47% in 212 patients.')],
+      [{ sectionCode: '2.5.4', excerpts: null }],
+    );
+    expect(items.map((i) => [i.text, i.reason])).toEqual([
+      ['47%', 'source_unavailable'], ['212 patients', 'source_unavailable'],
+    ]);
+  });
+
+  it('a section that cites no saved sources is outside the check (P-89 scope)', () => {
+    expect(unverifiedFiguresAtSigning([section('The response rate was 52%.', '2.7.3')], [{ sectionCode: '2.5.4', excerpts: [SOURCE] }])).toEqual([]);
+  });
+
+  it('a section named by two saved groups is checked once', () => {
+    const items = unverifiedFiguresAtSigning([section('The response rate was 52%.')], [
+      { sectionCode: '2.5.4', excerpts: [SOURCE] }, { sectionCode: '2.5.4', excerpts: null },
+    ]);
+    expect(items.map((i) => i.reason)).toEqual(['not_in_cited_source']);
+  });
+});
+
+describe('figureAcknowledgementVerdict', () => {
+  const items = unverifiedFiguresAtSigning(
+    [{ id: 's-1', code: '2.5.4', title: 'Overview of efficacy', text: 'The response rate was 52%; HR 0.71.' }],
+    [{ sectionCode: '2.5.4', excerpts: [SOURCE] }],
+  );
+  const keys = items.map((i) => i.key);
+
+  it('nothing to acknowledge is clear', () => {
+    expect(figureAcknowledgementVerdict([], undefined)).toBe('clear');
+  });
+
+  it('acknowledged only when every listed key is sent back and nothing else', () => {
+    expect(keys).toHaveLength(2);
+    expect(figureAcknowledgementVerdict(items, [...keys].reverse())).toBe('acknowledged');
+    expect(figureAcknowledgementVerdict(items, undefined)).toBe('refused');
+    expect(figureAcknowledgementVerdict(items, true)).toBe('refused');
+    expect(figureAcknowledgementVerdict(items, keys.slice(0, 1))).toBe('refused');
+    expect(figureAcknowledgementVerdict(items, [...keys, 's-1#1:99%'])).toBe('refused');
+    expect(figureAcknowledgementVerdict(items, [keys[0], keys[0]])).toBe('refused');
+  });
+
+  it('an acknowledgement of an earlier text does not stand for a changed figure', () => {
+    const edited = unverifiedFiguresAtSigning(
+      [{ id: 's-1', code: '2.5.4', title: 'Overview of efficacy', text: 'The response rate was 53%; HR 0.71.' }],
+      [{ sectionCode: '2.5.4', excerpts: [SOURCE] }],
+    );
+    expect(figureAcknowledgementVerdict(edited, keys)).toBe('refused');
+    expect(figureAcknowledgementDigest(edited)).not.toBe(figureAcknowledgementDigest(items));
+  });
+
+  it('the digest does not depend on the order the figures were listed in', () => {
+    expect(figureAcknowledgementDigest([...items].reverse())).toBe(figureAcknowledgementDigest(items));
+    expect(figureAcknowledgementDigest(items)).toMatch(/^[0-9a-f]{64}$/);
   });
 });

@@ -1,0 +1,22 @@
+ ✓ server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > exists, with one section for each meaning 1ms
+ × server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > ^Device description files under B1 3ms
+ × server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > ^Predicate device identification files under C1 1ms
+ × server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > ^Substantial equivalence comparison files under C2 1ms
+ × server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > ^Bench testing files under E5 1ms
+ × server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > ^Biocompatibility files under E1 1ms
+ × server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > ^Software documentation files under E2 0ms
+ × server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > ^Labeling files under D2 0ms
+ × server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > ^Clinical performance files under E7 1ms
+ × server/services/intelligence/__tests__/template-510k-files-under-its-own-heading.test.ts > the seeded 510(k) template files under the eSTAR outline it is scaffolded against > no two sections file under the same heading 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: "Device description and intended use" (D1) files under "Design and manufacturing information": expected 'Design and manufacturing information' to match /^Device description and principles of…/
+AssertionError: "Predicate device identification" (SE1) reaches no outline node: expected null not to be null
+AssertionError: "Substantial equivalence comparison matrix" (SE2) reaches no outline node: expected null not to be null
+AssertionError: "Bench testing" (B1) files under "Device description and principles of operation": expected 'Device description and principles of …' to match /^Bench performance testing/
+AssertionError: "Biocompatibility (ISO 10993)" (B2) files under "Indications for use statement": expected 'Indications for use statement' to match /^Biocompatibility/
+AssertionError: "Software documentation (if SaMD)" (S1) reaches no outline node: expected null not to be null
+AssertionError: "Labeling (IFU, package insert)" (L1) reaches no outline node: expected null not to be null
+AssertionError: "Clinical performance (if applicable)" (C1) files under "Predicate and reference devices": expected 'Predicate and reference devices' to match /^Clinical performance testing/
+AssertionError: expected 5 to be 8 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  9 failed | 1 passed (10)

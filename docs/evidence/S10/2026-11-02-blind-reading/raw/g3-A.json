@@ -1,0 +1,834 @@
+{
+ "reader": "A",
+ "group": "g3",
+ "range": "L34-L49",
+ "questionsJsonSha256": "57964e3ab70e858e977c73fd48014369bb16cd341efdcf5acc2b2da6dcd27937",
+ "letters": [
+  {
+   "letter": "L34",
+   "missing": []
+  },
+  {
+   "letter": "L35",
+   "missing": []
+  },
+  {
+   "letter": "L36",
+   "missing": []
+  },
+  {
+   "letter": "L37",
+   "missing": []
+  },
+  {
+   "letter": "L38",
+   "missing": []
+  },
+  {
+   "letter": "L39",
+   "missing": []
+  },
+  {
+   "letter": "L40",
+   "missing": []
+  },
+  {
+   "letter": "L41",
+   "missing": []
+  },
+  {
+   "letter": "L42",
+   "missing": []
+  },
+  {
+   "letter": "L43",
+   "missing": [
+    {
+     "line": 59,
+     "firstWords": "When you respond to the above deficiencies, include a safety update",
+     "why": "Unnumbered SAFETY UPDATE request (lines 59-61): the resubmission must include a safety update per 21 CFR 314.50(d)(5)(vi)(b); a reader preparing the CRL response tracks it as a required item. Standard CRL wording, so an adjudicator may class it as boilerplate rather than a question."
+    }
+   ]
+  },
+  {
+   "letter": "L44",
+   "missing": [
+    {
+     "line": 59,
+     "firstWords": "When you respond to the above deficiencies, include a safety update",
+     "why": "Unnumbered SAFETY UPDATE request (lines 59-61): the resubmission must include a safety update per 21 CFR 314.50(d)(5)(vi)(b); a reader preparing the CRL response tracks it as a required item. Standard CRL wording, so an adjudicator may class it as boilerplate rather than a question."
+    }
+   ]
+  },
+  {
+   "letter": "L45",
+   "missing": [
+    {
+     "line": 55,
+     "firstWords": "However, include a test for residual solvents",
+     "why": "Agency request inside \"FDA Response to Question 1\" (lines 55-56). Not on the list as its own item and not inside any listed span (the listed Question spans hold only the sponsor's question). If the meeting question number is taken as the unit, these are the agency words that item should carry."
+    },
+    {
+     "line": 59,
+     "firstWords": "Provide the following in the IND:",
+     "why": "Agency request inside \"FDA Response to Question 2\" (lines 59-62, with sub-items 1. and 2. at lines 61-62). Not on the list as its own item and not inside any listed span (the listed Question spans hold only the sponsor's question). If the meeting question number is taken as the unit, these are the agency words that item should carry."
+    },
+    {
+     "line": 74,
+     "firstWords": "Provide a starting dose rationale based on the STD10 in rats",
+     "why": "Agency request inside \"FDA Response to Question 3\" (lines 74-75). Not on the list as its own item and not inside any listed span (the listed Question spans hold only the sponsor's question). If the meeting question number is taken as the unit, these are the agency words that item should carry."
+    }
+   ]
+  },
+  {
+   "letter": "L46",
+   "missing": []
+  },
+  {
+   "letter": "L47",
+   "missing": [
+    {
+     "line": 30,
+     "firstWords": "However, include a test for residual solvents",
+     "why": "Agency request inside \"FDA Response to Question 1\" (lines 30-31). Not on the list as its own item and not inside any listed span (the listed Question spans hold only the sponsor's question). If the meeting question number is taken as the unit, these are the agency words that item should carry."
+    },
+    {
+     "line": 41,
+     "firstWords": "Provide the following in the IND:",
+     "why": "Agency request inside \"FDA Response to Question 2\" (lines 41-44, sub-items at lines 43-44); restated as Action Item 2 (line 66). Not on the list as its own item and not inside any listed span (the listed Question spans hold only the sponsor's question). If the meeting question number is taken as the unit, these are the agency words that item should carry."
+    },
+    {
+     "line": 65,
+     "firstWords": "1. Brightwave will submit the revised starting dose rationale in the IND.",
+     "why": "Action item recorded in the minutes (from the Discussion at line 53 after FDA's \"No\" to Question 3); the only place the revised-rationale obligation is stated. A sponsor commitment rather than an agency question, so an adjudicator may exclude it."
+    }
+   ]
+  },
+  {
+   "letter": "L48",
+   "missing": []
+  },
+  {
+   "letter": "L49",
+   "missing": [
+    {
+     "line": 30,
+     "firstWords": "However, include a test for residual solvents",
+     "why": "Agency request inside \"CBER Response\" to Question 1 (lines 30-31). Not on the list as its own item and not inside any listed span (the listed Question spans hold only the sponsor's question). If the meeting question number is taken as the unit, these are the agency words that item should carry."
+    },
+    {
+     "line": 41,
+     "firstWords": "Provide the following in the IND:",
+     "why": "Agency request inside \"CBER Response\" to Question 2 (lines 41-44, sub-items at lines 43-44); restated as Action Item 2 (line 66). Not on the list as its own item and not inside any listed span (the listed Question spans hold only the sponsor's question). If the meeting question number is taken as the unit, these are the agency words that item should carry."
+    },
+    {
+     "line": 65,
+     "firstWords": "1. Brightwave will submit the revised starting dose rationale in the IND.",
+     "why": "Action item recorded in the minutes (from the Discussion at line 53 after CBER's \"No\" to Question 3); the only place the revised-rationale obligation is stated. A sponsor commitment rather than an agency question, so an adjudicator may exclude it."
+    }
+   ]
+  }
+ ],
+ "questions": [
+  {
+   "id": 108,
+   "letter": "L34",
+   "ref": "1",
+   "lines": "3-3",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 109,
+   "letter": "L34",
+   "ref": "2",
+   "lines": "4-9",
+   "A": "yes",
+   "A_reason": "",
+   "B": "no",
+   "B_inside": "Line 5 blank, line 6 page marker \"-- 1 of 2 --\", line 7 blank, line 8 running header \"CONFIDENTIAL\" (unmarked page header), between \"the stopping\" (line 4) and \"boundaries for efficacy.\" (line 9)."
+  },
+  {
+   "id": 110,
+   "letter": "L34",
+   "ref": "3",
+   "lines": "10-10",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 111,
+   "letter": "L35",
+   "ref": "1",
+   "lines": "3-3",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 112,
+   "letter": "L35",
+   "ref": "2",
+   "lines": "5-7",
+   "A": "yes",
+   "A_reason": "Numbered agency item stating a deficiency; note its lead-in \"provide the following:\" is followed by no list in the letter (item 3 is a sibling numbered item), so a reader would record item 2 as written and may need to ask the division what \"the following\" is.",
+   "B": "yes",
+   "B_inside": "Only whitespace beyond the words: the blank line 6 is a paragraph break inside the wrapped sentence (\"concern,\" / \"provide the following:\"); no foreign words."
+  },
+  {
+   "id": 113,
+   "letter": "L35",
+   "ref": "3",
+   "lines": "9-9",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 114,
+   "letter": "L36",
+   "ref": "1",
+   "lines": "3-3",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 115,
+   "letter": "L36",
+   "ref": "2",
+   "lines": "4-6",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": "Sub-items a. and b. (lines 5-6) belong to question 2."
+  },
+  {
+   "id": 116,
+   "letter": "L36",
+   "ref": "3",
+   "lines": "7-7",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 117,
+   "letter": "L37",
+   "ref": "1",
+   "lines": "3-3",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 118,
+   "letter": "L37",
+   "ref": "2",
+   "lines": "4-6",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": "Sub-items a. and b. (lines 5-6) belong to question 2."
+  },
+  {
+   "id": 119,
+   "letter": "L37",
+   "ref": "3",
+   "lines": "7-7",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 120,
+   "letter": "L38",
+   "ref": "1",
+   "lines": "21-23",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 121,
+   "letter": "L38",
+   "ref": "2",
+   "lines": "24-26",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 122,
+   "letter": "L38",
+   "ref": "3",
+   "lines": "27-35",
+   "A": "yes",
+   "A_reason": "",
+   "B": "no",
+   "B_inside": "Line 29 \"Reference ID: 5498765\", line 30 blank, line 31 page marker \"-- 1 of 3 --\", line 32 blank, line 33 running header \"IND 145678\", line 34 running header \"Page 2\", between \"For each impurity\" (line 28) and \"classified as Class 1, 2, or 3\" (line 35)."
+  },
+  {
+   "id": 123,
+   "letter": "L38",
+   "ref": "4",
+   "lines": "37-38",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 124,
+   "letter": "L38",
+   "ref": "5",
+   "lines": "39-41",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 125,
+   "letter": "L38",
+   "ref": "6",
+   "lines": "42-46",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": "Sub-items a.-c. (lines 44-46) belong to question 6."
+  },
+  {
+   "id": 126,
+   "letter": "L38",
+   "ref": "7",
+   "lines": "47-48",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 127,
+   "letter": "L39",
+   "ref": "1",
+   "lines": "29-31",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": "Only whitespace beyond the words: blank line 30 (docx paragraph break inside the wrapped sentence)."
+  },
+  {
+   "id": 128,
+   "letter": "L39",
+   "ref": "2",
+   "lines": "33-35",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": "Only whitespace beyond the words: blank line 34 (docx paragraph break inside the wrapped sentence)."
+  },
+  {
+   "id": 129,
+   "letter": "L39",
+   "ref": "3",
+   "lines": "41-43",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": "Only whitespace beyond the words: blank line 42 (docx paragraph break inside the wrapped sentence)."
+  },
+  {
+   "id": 130,
+   "letter": "L39",
+   "ref": "4",
+   "lines": "47-49",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": "Only whitespace beyond the words: blank line 48 (docx paragraph break inside the wrapped sentence)."
+  },
+  {
+   "id": 131,
+   "letter": "L39",
+   "ref": "5",
+   "lines": "53-53",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 132,
+   "letter": "L40",
+   "ref": "1",
+   "lines": "19-20",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 133,
+   "letter": "L40",
+   "ref": "2",
+   "lines": "21-22",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 134,
+   "letter": "L40",
+   "ref": "3",
+   "lines": "25-26",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 135,
+   "letter": "L40",
+   "ref": "4",
+   "lines": "28-29",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 136,
+   "letter": "L40",
+   "ref": "5",
+   "lines": "31-31",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 137,
+   "letter": "L41",
+   "ref": "1",
+   "lines": "19-20",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 138,
+   "letter": "L41",
+   "ref": "2",
+   "lines": "21-22",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 139,
+   "letter": "L41",
+   "ref": "3",
+   "lines": "25-26",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 140,
+   "letter": "L41",
+   "ref": "4",
+   "lines": "28-29",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 141,
+   "letter": "L41",
+   "ref": "5",
+   "lines": "31-31",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 142,
+   "letter": "L42",
+   "ref": "1",
+   "lines": "25-35",
+   "A": "yes",
+   "A_reason": "",
+   "B": "no",
+   "B_inside": "Line 28 \"Reference ID: 5512345\", line 29 blank, line 30 page marker \"-- 1 of 2 --\", line 31 blank, line 32 running header \"IND 152233\", line 33 running header \"Page 2\", between \"occurred at all dose levels.\" (line 27) and \"To resolve this deficiency, provide...\" (line 34), which is still deficiency 1."
+  },
+  {
+   "id": 143,
+   "letter": "L42",
+   "ref": "2",
+   "lines": "36-39",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 144,
+   "letter": "L42",
+   "ref": "3",
+   "lines": "40-42",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 145,
+   "letter": "L42",
+   "ref": "1",
+   "lines": "46-46",
+   "A": "yes",
+   "A_reason": "Non-hold comment 1; the letter recommends addressing it in the complete response. Its ref \"1\" repeats the clinical hold deficiency numbering; a reader would label it \"Non-hold comment 1\".",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 146,
+   "letter": "L42",
+   "ref": "2",
+   "lines": "47-47",
+   "A": "yes",
+   "A_reason": "Non-hold comment 2; ref \"2\" repeats the hold-deficiency numbering; a reader would label it \"Non-hold comment 2\".",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 147,
+   "letter": "L43",
+   "ref": "1",
+   "lines": "20-24",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": "The \"Recommendation:\" paragraph (lines 23-24) is the agency's own text of deficiency 1."
+  },
+  {
+   "id": 148,
+   "letter": "L43",
+   "ref": "2",
+   "lines": "25-35",
+   "A": "yes",
+   "A_reason": "",
+   "B": "no",
+   "B_inside": "Line 28 \"Reference ID: 5623456\", line 29 blank, line 30 page marker \"-- 1 of 3 --\", line 31 blank, line 32 running header \"NDA 219876\", line 33 running header \"Page 2\", between \"50 mg dose.\" (line 27) and \"Recommendation: Conduct a thorough QT study...\" (line 34), which is still deficiency 2."
+  },
+  {
+   "id": 149,
+   "letter": "L43",
+   "ref": "3",
+   "lines": "38-40",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 150,
+   "letter": "L43",
+   "ref": "4",
+   "lines": "41-42",
+   "A": "yes",
+   "A_reason": "Numbered CRL deficiency with no explicit request; the resubmission must answer it (accept 24-month dating or supply data).",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 151,
+   "letter": "L43",
+   "ref": "5",
+   "lines": "44-47",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 152,
+   "letter": "L44",
+   "ref": "1",
+   "lines": "20-24",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": "The \"Recommendation:\" paragraph (lines 23-24) is the agency's own text of deficiency 1."
+  },
+  {
+   "id": 153,
+   "letter": "L44",
+   "ref": "2",
+   "lines": "25-29",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": "Ends at line 29; the Reference ID (line 30) and page furniture (lines 31-35) follow outside the span."
+  },
+  {
+   "id": 154,
+   "letter": "L44",
+   "ref": "3",
+   "lines": "38-40",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 155,
+   "letter": "L44",
+   "ref": "4",
+   "lines": "41-42",
+   "A": "yes",
+   "A_reason": "Numbered CRL deficiency with no explicit request; the resubmission must answer it (accept 24-month dating or supply data).",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 156,
+   "letter": "L44",
+   "ref": "5",
+   "lines": "44-47",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 157,
+   "letter": "L45",
+   "ref": "1",
+   "lines": "53-54",
+   "A": "unsure",
+   "A_reason": "The span is the sponsor's own meeting question, which the agency reproduces; it asks nothing of the sponsor. A reader records the meeting question number as the item, but the agency's words for it are the response that follows (\"FDA Response to Question 1\", lines 55-56, which carries the request: \"include a test for residual solvents ... and a test for bacterial endotoxins\").",
+   "B": "no",
+   "B_inside": "The whole span (lines 53-54) is the sponsor's text: its meeting question as reproduced. None of it is the agency's words; the agency's words for this item (lines 55-56, after the label \"FDA Response to Question 1:\") are outside the span. No page furniture inside."
+  },
+  {
+   "id": 158,
+   "letter": "L45",
+   "ref": "2",
+   "lines": "57-58",
+   "A": "unsure",
+   "A_reason": "The span is the sponsor's own meeting question, which the agency reproduces; it asks nothing of the sponsor. A reader records the meeting question number as the item, but the agency's words for it are the response that follows (\"FDA Response to Question 2\", lines 59-62: \"Provide the following in the IND: 1. ... 2. ...\").",
+   "B": "no",
+   "B_inside": "The whole span (lines 57-58) is the sponsor's text: its meeting question as reproduced. The agency's words (lines 59-62) are outside the span. No page furniture inside."
+  },
+  {
+   "id": 159,
+   "letter": "L45",
+   "ref": "3",
+   "lines": "70-72",
+   "A": "unsure",
+   "A_reason": "The span is the sponsor's own meeting question, which the agency reproduces; it asks nothing of the sponsor. A reader records the meeting question number as the item, but the agency's words for it are the response that follows (\"FDA Response to Question 3\", lines 73-75: \"No. ... Provide a starting dose rationale based on the STD10 in rats and one-sixth of the HNSTD in dogs, whichever is lower.\").",
+   "B": "no",
+   "B_inside": "The whole span (lines 70-72) is the sponsor's text: its meeting question as reproduced. The agency's words (lines 73-75) are outside the span. The page furniture at lines 63-68 lies before the span, not in it."
+  },
+  {
+   "id": 160,
+   "letter": "L45",
+   "ref": "4",
+   "lines": "76-77",
+   "A": "unsure",
+   "A_reason": "The span is the sponsor's own meeting question; the agency's answer (line 78, \"We agree, consistent with ICH S9.\") asks nothing, so there is nothing for the sponsor to answer beyond acknowledging agreement. A reader records the meeting question number, not an agency question.",
+   "B": "no",
+   "B_inside": "The whole span (lines 76-77) is the sponsor's text: its meeting question as reproduced. The agency's words (line 78) are outside the span."
+  },
+  {
+   "id": 161,
+   "letter": "L46",
+   "ref": "1",
+   "lines": "21-23",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 162,
+   "letter": "L46",
+   "ref": "2",
+   "lines": "24-26",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 163,
+   "letter": "L46",
+   "ref": "3",
+   "lines": "28-29",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 164,
+   "letter": "L46",
+   "ref": "4",
+   "lines": "30-31",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 165,
+   "letter": "L46",
+   "ref": "5",
+   "lines": "33-34",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 166,
+   "letter": "L47",
+   "ref": "1",
+   "lines": "28-29",
+   "A": "unsure",
+   "A_reason": "The span is the sponsor's own meeting question, which the agency reproduces; it asks nothing of the sponsor. A reader records the meeting question number as the item, but the agency's words for it are the response that follows (\"FDA Response to Question 1\", lines 30-31: \"However, include a test for residual solvents ... and a test for bacterial endotoxins\").",
+   "B": "no",
+   "B_inside": "The whole span (lines 28-29) is the sponsor's text: its meeting question as reproduced in the minutes. The agency's words (lines 30-31) and the Discussion (line 32) are outside the span. No page furniture inside."
+  },
+  {
+   "id": 167,
+   "letter": "L47",
+   "ref": "2",
+   "lines": "33-34",
+   "A": "unsure",
+   "A_reason": "The span is the sponsor's own meeting question, which the agency reproduces; it asks nothing of the sponsor. A reader records the meeting question number as the item, but the agency's words for it are the response that follows (\"FDA Response to Question 2\", lines 41-44, after the page break: \"Provide the following in the IND: 1. ... 2. ...\"; Discussion lines 45-46).",
+   "B": "no",
+   "B_inside": "The whole span (lines 33-34) is the sponsor's text: its meeting question as reproduced. The span correctly stops before the footer \"Page 1\" (line 35), page marker (line 37) and running header \"PIND 160123\"/\"Page 2\" (lines 39-40); the agency's words (lines 41-44) are outside it."
+  },
+  {
+   "id": 168,
+   "letter": "L47",
+   "ref": "3",
+   "lines": "48-50",
+   "A": "unsure",
+   "A_reason": "The span is the sponsor's own meeting question, which the agency reproduces; it asks nothing of the sponsor. A reader records the meeting question number as the item, but the agency's words for it are the response that follows (\"FDA Response to Question 3\", lines 51-52: \"No. The rationale for the starting dose ... is not adequate\"; the resulting obligation is in the Discussion (line 53) and Action Item 1 (line 65)).",
+   "B": "no",
+   "B_inside": "The whole span (lines 48-50) is the sponsor's text: its meeting question as reproduced. The agency's words (lines 51-52) are outside the span."
+  },
+  {
+   "id": 169,
+   "letter": "L47",
+   "ref": "4",
+   "lines": "54-55",
+   "A": "unsure",
+   "A_reason": "The span is the sponsor's own meeting question; the agency's answer (line 56, \"We agree, consistent with ICH S9.\") asks nothing and there was no discussion. A reader records the meeting question number, not an agency question.",
+   "B": "no",
+   "B_inside": "The whole span (lines 54-55) is the sponsor's text: its meeting question as reproduced. The agency's words (line 56) are outside the span."
+  },
+  {
+   "id": 170,
+   "letter": "L48",
+   "ref": "1",
+   "lines": "19-21",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 171,
+   "letter": "L48",
+   "ref": "2",
+   "lines": "22-37",
+   "A": "yes",
+   "A_reason": "",
+   "B": "no",
+   "B_inside": "Line 26 letterhead footer \"U.S. Food & Drug Administration\", line 27 \"10903 New Hampshire Avenue\", line 28 \"Silver Spring, MD 20993\", line 29 \"www.fda.gov\", line 30 blank, line 31 page marker \"-- 1 of 2 --\", line 32 blank, line 33 running header \"K261234 - Jane Doe\", line 34 running header \"Page 2\", between \"Please provide the following:\" (line 25) and sub-item \"a.\" (line 35), which is still question 2."
+  },
+  {
+   "id": 172,
+   "letter": "L48",
+   "ref": "3",
+   "lines": "38-40",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 173,
+   "letter": "L48",
+   "ref": "4",
+   "lines": "41-43",
+   "A": "yes",
+   "A_reason": "",
+   "B": "yes",
+   "B_inside": ""
+  },
+  {
+   "id": 174,
+   "letter": "L49",
+   "ref": "1",
+   "lines": "28-29",
+   "A": "unsure",
+   "A_reason": "The span is the sponsor's own meeting question, which the agency reproduces; it asks nothing of the sponsor. A reader records the meeting question number as the item, but the agency's words for it are the response that follows (\"CBER Response\", lines 30-31: \"However, include a test for residual solvents ... and a test for bacterial endotoxins\").",
+   "B": "no",
+   "B_inside": "The whole span (lines 28-29) is the sponsor's text: its meeting question as reproduced in the minutes. The agency's words (lines 30-31, after the label \"CBER Response:\") are outside the span. No page furniture inside."
+  },
+  {
+   "id": 175,
+   "letter": "L49",
+   "ref": "2",
+   "lines": "33-34",
+   "A": "unsure",
+   "A_reason": "The span is the sponsor's own meeting question, which the agency reproduces; it asks nothing of the sponsor. A reader records the meeting question number as the item, but the agency's words for it are the response that follows (\"CBER Response\", lines 41-44, after the page break: \"Provide the following in the IND: 1. ... 2. ...\"; Discussion lines 45-46).",
+   "B": "no",
+   "B_inside": "The whole span (lines 33-34) is the sponsor's text: its meeting question as reproduced. The span correctly stops before the footer \"Page 1\" (line 35), page marker (line 37) and running header \"PIND 160123\"/\"Page 2\" (lines 39-40); the agency's words (lines 41-44) are outside it."
+  },
+  {
+   "id": 176,
+   "letter": "L49",
+   "ref": "3",
+   "lines": "48-50",
+   "A": "unsure",
+   "A_reason": "The span is the sponsor's own meeting question, which the agency reproduces; it asks nothing of the sponsor. A reader records the meeting question number as the item, but the agency's words for it are the response that follows (\"CBER Response\", lines 51-52: \"No. The rationale for the starting dose ... is not adequate\"; the resulting obligation is in the Discussion (line 53) and Action Item 1 (line 65)).",
+   "B": "no",
+   "B_inside": "The whole span (lines 48-50) is the sponsor's text: its meeting question as reproduced. The agency's words (lines 51-52) are outside the span."
+  },
+  {
+   "id": 177,
+   "letter": "L49",
+   "ref": "4",
+   "lines": "54-55",
+   "A": "unsure",
+   "A_reason": "The span is the sponsor's own meeting question; the agency's answer (line 56, \"CBER Response: We agree, consistent with ICH S9.\") asks nothing and there was no discussion. A reader records the meeting question number, not an agency question.",
+   "B": "no",
+   "B_inside": "The whole span (lines 54-55) is the sponsor's text: its meeting question as reproduced. The agency's words (line 56) are outside the span."
+  }
+ ]
+}

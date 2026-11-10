@@ -1,0 +1,24 @@
+# Green: the same suite on the changed source.
+# Command: npx vitest run server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts
+
+ ✓ server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > the shared search takes a required project scope > searchHybrid ranks only the scope projects' atoms 18ms
+ ✓ server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > the shared search takes a required project scope > an empty scope ranks nothing and does not embed; no scope is refused 6ms
+ ✓ server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > the shared search takes a required project scope > searchSimilar ranks only the scope projects' atoms 8ms
+ ✓ server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/evidence/ask > with no project: every project the person can open, never a private one 45ms
+ ✓ server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/evidence/ask > a named project the person can open: that project only 14ms
+ ✓ server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/evidence/ask > a named private project is answered as a missing one, before any search 15ms
+ ✓ server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/evidence/ask > an access check that cannot run is an error, not an empty search 5ms
+ ✓ server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/cortex/query: search and graph > search: every project the person can open, never a private one 12ms
+ ✓ server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/cortex/query: search and graph > search: context.projectId is honoured when the person can open it 8ms
+ ✓ server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/cortex/query: search and graph > graph: neither a node nor an edge names an atom of a private project 15ms
+ ✓ server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/cortex/query: search and graph > search: a named private project is answered as a missing one 16ms
+ ✓ server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/cortex/query: search and graph > graph: a named private project is answered as a missing one 15ms
+ ✓ server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/cortex/query: search and graph > search: an access check that cannot run is an error 4ms
+ ✓ server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/cortex/query: search and graph > graph: an access check that cannot run is an error 4ms
+ ✓ server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/cortex/query: generate and advisory read the Vault of the person's programs > generate binds the open projects' programs, and a named project its own 18ms
+ ✓ server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/cortex/query: generate and advisory read the Vault of the person's programs > advisory binds them too, and a private project is refused before the Vault is read 15ms
+ ✓ server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/deep-research/document/generate > grounds sections only in the projects the person can open 33ms
+ ✓ server/routes/__tests__/evidence-retrieval-project-scope.pglite.test.ts > POST /api/deep-research/document/generate > an access check that cannot run is an error, and nothing is generated 24ms
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+exit 0

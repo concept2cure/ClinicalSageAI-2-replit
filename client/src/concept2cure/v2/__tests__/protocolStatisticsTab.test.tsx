@@ -41,7 +41,7 @@ const DOC = {
   content: {}, objectives: [], eligibility: { inclusion: [], exclusion: [] },
   soa: { visits: [], rows: [] }, risks: [], milestones: [],
   budget: { total: 0, categories: [], spent: 0 }, amendments: [], deviations: [],
-  reviews: [], consent: [], completenessFindings: [],
+  reviews: [], reviewComments: [], consent: [], completenessFindings: [],
 };
 
 /* The protocol names ITS design; the tab resolves that one by id. It used to
@@ -67,6 +67,8 @@ const ASSESSMENT = {
     ],
     plannedSampleSize: 400, power: 0.9, alpha: 0.05, primaryEndpoint: 'HbA1c change',
   },
+  // The stored run behind the planned N (bridge-service sizingRunFor).
+  sizingRun: { state: 'found', runId: 12, recordedAt: '2026-11-06T09:30:00.000Z', plannedSampleSize: 400 },
 };
 
 function route(opts: { bound?: boolean; assessment?: 'ok' | 'error' } = {}) {
@@ -135,6 +137,26 @@ describe('protocol-dev — Statistics tab', () => {
     expect(await screen.findByText(/No study design is bound to this protocol/)).toBeTruthy();
     expect(screen.queryByRole('button', { name: /Open in Biostatistics/ })).toBeNull();
     expect(apiRequest.mock.calls.some((c) => String(c[1]).startsWith('/api/biostat-bridge/designs'))).toBe(false);
+  });
+
+  it('names the stored run behind the planned N, and asks the server to reproduce it (R1, 2026-11-06)', async () => {
+    route();
+    await openStatistics();
+    expect(await screen.findByText(/Stored run #12, 2026-11-06, computed/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Check it reproduces' }));
+    expect(apiRequest.mock.calls.some((c) => c[0] === 'GET' && c[1] === '/api/biostat-bridge/computation-runs/12/reproduce')).toBe(true);
+  });
+
+  it('gives the shell’s .page-full row one root, the selection bar above the protocol (R1, 2026-11-06)', async () => {
+    // .page-full is a flex row. With two roots the bar and the protocol sat side by side, the protocol at 325 px.
+    route();
+    const { container } = render(<Providers><ProtocolWorkspace {...props()} /></Providers>);
+    await screen.findByRole('tab', { name: /Statistics/ });
+    expect(container.children).toHaveLength(1);
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.className).toBe('pde-shell');
+    expect(root.querySelector(':scope > .pde-note')).toBeTruthy();
+    expect(root.querySelector(':scope > .pd-wrap')).toBeTruthy();
   });
 
   it('renders a failed read as a failure, not as "no design"', async () => {

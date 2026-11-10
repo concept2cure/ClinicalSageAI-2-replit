@@ -73,8 +73,9 @@ describe('Vault coverage', () => {
       return ok({ success: true, filing: { folderId: 'module-2', folderLabel: 'Module 2', placementStatus: 'confirmed' } });
     });
     render(<Vault {...props()} />);
-    fireEvent.click(await screen.findByText('Show sections'));
-    const row = screen.getByTestId('vault-coverage-missing-2.5');
+    // D6-3: the Required documents view lists the sections open, so there is no "Show sections" to press (D6 §C.4 step 5).
+    fireEvent.click(await screen.findByRole('tab', { name: 'Required documents' }));
+    const row = await screen.findByTestId('vault-coverage-missing-2.5');
     expect(row.textContent).toContain('Upload');
     fireEvent.change(screen.getByLabelText('Document to file at 2.5'), { target: { value: DOC_ID } });
     fireEvent.click(row.querySelector('button:last-of-type') as HTMLButtonElement);
@@ -94,5 +95,18 @@ describe('Vault coverage', () => {
       expect(block.textContent).not.toMatch(/Required sections|\d+ of \d+/);
       cleanup();
     }
+  });
+
+  /* S6 (2026-11-05): a device filing's required sections are its own outline, marked in the Library. */
+  it("a device filing's coverage opens its outline in the Library", async () => {
+    const coverage = { state: 'not_applicable', outlineInLibrary: true,
+      reason: 'This project’s filing (510(k) · 21 CFR 807) has its own outline, not CTD sections. Its required sections are marked Required in the Library.' };
+    mockVaultApi(apiRequest, () => ok(vaultPayload({ coverage })));
+    render(<Vault {...props()} />);
+    fireEvent.click(await screen.findByRole('tab', { name: /Required documents/ }));
+    const block = await screen.findByTestId('vault-coverage');
+    expect(block.textContent).toContain('has its own outline');
+    fireEvent.click(screen.getByRole('button', { name: 'Show the outline in the Library' }));
+    await waitFor(() => expect(screen.getByRole('tab', { name: /Library/ }).getAttribute('aria-selected')).toBe('true'));
   });
 });

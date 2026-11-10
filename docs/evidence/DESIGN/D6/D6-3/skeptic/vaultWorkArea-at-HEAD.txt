@@ -1,0 +1,57 @@
+ × client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the Vault is one work area, the library first (D6 §C.3) > has the back link, one header with one primary, three starters and five views, Library first 5429ms
+   → Unable to find role="tablist" and name "Vault views"
+ × client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the Vault is one work area, the library first (D6 §C.3) > moves between views with the arrow keys, Home and End, one tab stop 5116ms
+   → Unable to find role="tablist" and name "Vault views"
+ × client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > AnA's hands reach the view they act on (D6 §C.6 3) > vault.search from the Seals & fixity view shows the Library with the query in the box 5080ms
+   → Unable to find role="tablist" and name "Vault views"
+ × client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > AnA's hands reach the view they act on (D6 §C.6 3) > vault.focus-document from the Uploads view opens that document on its record 5077ms
+   → Unable to find role="tablist" and name "Vault views"
+ × client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the upload flow (D6 §C.4 steps 2, 5, 6; §C.6 4) > "Add files" shows the Uploads view and opens the picker 5106ms
+   → Unable to find role="tablist" and name "Vault views"
+ × client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the upload flow (D6 §C.4 steps 2, 5, 6; §C.6 4) > a file dropped anywhere on the page is staged in the Uploads view 5169ms
+   → Unable to find role="tablist" and name "Vault views"
+ × client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the upload flow (D6 §C.4 steps 2, 5, 6; §C.6 4) > a viewer is offered no upload: no drop zone, no picker, no import ask 5063ms
+   → Unable to find role="tablist" and name "Vault views"
+ × client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the record is D0's inspector (D6 §C.4 step 9; §C.6 5) > docks beside the list at 1280px and wider, each part a disclosure with the first open 153ms
+ × client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the record is D0's inspector (D6 §C.4 step 9; §C.6 5) > below 1280px a row opens it as a drawer; Escape closes it and focus returns to the row 5076ms
+   → Unable to find role="tablist" and name "Vault views"
+ × client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the record is D0's inspector (D6 §C.4 step 9; §C.6 5) > below 1024px the structure is a drawer opened from the list 5073ms
+   → Unable to find role="tablist" and name "Vault views"
+ × client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the seals and the fixity check keep their acts (D6 §C.4 steps 10–11; §C.6 6) > "Seal this Vault…" and "Check stored files" are quiet acts in their sections of the Seals & fixity view 5139m
+   → Unable to find role="tablist" and name "Vault views"
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the Vault is one work area, the library first (D6 §C.3) > has the back link, one header with one primary, three starters and five views, Library first
+TestingLibraryElementError: Unable to find role="tablist" and name "Vault views"
+ ❯ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx:81:18
+ FAIL  client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the Vault is one work area, the library first (D6 §C.3) > moves between views with the arrow keys, Home and End, one tab stop
+TestingLibraryElementError: Unable to find role="tablist" and name "Vault views"
+ ❯ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx:130:31
+ FAIL  client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > AnA's hands reach the view they act on (D6 §C.6 3) > vault.search from the Seals & fixity view shows the Library with the query in the box
+TestingLibraryElementError: Unable to find role="tablist" and name "Vault views"
+ ❯ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx:151:18
+ FAIL  client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > AnA's hands reach the view they act on (D6 §C.6 3) > vault.focus-document from the Uploads view opens that document on its record
+TestingLibraryElementError: Unable to find role="tablist" and name "Vault views"
+ ❯ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx:165:18
+ FAIL  client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the upload flow (D6 §C.4 steps 2, 5, 6; §C.6 4) > "Add files" shows the Uploads view and opens the picker
+TestingLibraryElementError: Unable to find role="tablist" and name "Vault views"
+ ❯ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx:178:20
+ FAIL  client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the upload flow (D6 §C.4 steps 2, 5, 6; §C.6 4) > a file dropped anywhere on the page is staged in the Uploads view
+TestingLibraryElementError: Unable to find role="tablist" and name "Vault views"
+ ❯ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx:192:18
+ FAIL  client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the upload flow (D6 §C.4 steps 2, 5, 6; §C.6 4) > a viewer is offered no upload: no drop zone, no picker, no import ask
+TestingLibraryElementError: Unable to find role="tablist" and name "Vault views"
+ ❯ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx:213:20
+ FAIL  client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the record is D0's inspector (D6 §C.4 step 9; §C.6 5) > docks beside the list at 1280px and wider, each part a disclosure with the first open
+AssertionError: expected false to be true // Object.is equality
+ ❯ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx:233:45
+ FAIL  client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the record is D0's inspector (D6 §C.4 step 9; §C.6 5) > below 1280px a row opens it as a drawer; Escape closes it and focus returns to the row
+TestingLibraryElementError: Unable to find role="tablist" and name "Vault views"
+ ❯ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx:251:18
+ FAIL  client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the record is D0's inspector (D6 §C.4 step 9; §C.6 5) > below 1024px the structure is a drawer opened from the list
+TestingLibraryElementError: Unable to find role="tablist" and name "Vault views"
+ ❯ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx:268:18
+ FAIL  client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the seals and the fixity check keep their acts (D6 §C.4 steps 10–11; §C.6 6) > "Seal this Vault…" and "Check stored files" are quiet acts in their sections of the Seals & fixity view
+TestingLibraryElementError: Unable to find role="tablist" and name "Vault views"
+ ❯ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx:279:18
+ Test Files  1 failed (1)
+      Tests  11 failed (11)

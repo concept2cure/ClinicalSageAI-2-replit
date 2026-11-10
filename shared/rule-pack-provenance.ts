@@ -271,7 +271,9 @@ export function describeRulePackProvenance(p: RulePackProvenance): RulePackProve
       `This outline was reviewed by ${who}${when}, but its sections have changed since. ` +
         'That sign-off does not cover what you are looking at.',
     );
-  } else {
+  } else if (!/not reviewed by a regulatory professional/i.test(p.uncertainties ?? '')) {
+    // A pack's own note often says this already ("…; confirm against current
+    // guidance before filing"): said twice in a row, it reads as a defect.
     parts.push('Not reviewed by a regulatory professional.');
   }
 

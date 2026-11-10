@@ -18,27 +18,35 @@
 
 /* ─── Pathway / program type ───────────────────────────────────────── */
 
+/* The portfolio's pathways: device and IVD routes, then the drug and biologic
+   applications. Device-only until 2026-10-31, so the Projects pathway filter
+   filed every IND and NDA under "Other", and a De Novo request under 510(k)
+   (it is its own route, 21 CFR 860 subpart D). One vocabulary: the client's
+   chips, the server's filter and pathwaySqlCase all read this list. */
 export const REGULATORY_PATHWAYS = [
-  'k510', 'pma', 'cer', 'ivdr', 'ide', 'device', 'hde', 'mdl',
-  'ivd_licence', 'shonin', 'ninsho', 'todokede', 'ivd_approval', 'jp_cdx', 'other',
+  'k510', 'de_novo', 'pma', 'cer', 'ivdr', 'ide', 'device', 'hde', 'mdl',
+  'ivd_licence', 'shonin', 'ninsho', 'todokede', 'ivd_approval', 'jp_cdx',
+  'ind', 'nda', 'bla', 'anda', 'cta', 'maa', 'other',
 ] as const;
 export type RegulatoryPathway = typeof REGULATORY_PATHWAYS[number];
 
 /** A portfolio classification, not admission to a pathway authoring feature. */
 export const PATHWAY_LABEL: Record<RegulatoryPathway, string> = {
-  k510: '510(k)', pma: 'PMA', cer: 'CER', ivdr: 'IVDR', ide: 'IDE',
+  k510: '510(k)', de_novo: 'De Novo', pma: 'PMA', cer: 'CER', ivdr: 'IVDR', ide: 'IDE',
   device: 'Device', hde: 'HDE', mdl: 'MDL', ivd_licence: 'IVD licence',
   shonin: 'Shonin', ninsho: 'Ninsho', todokede: 'Todokede',
-  ivd_approval: 'IVD approval', jp_cdx: 'Japan CDx', other: 'Other',
+  ivd_approval: 'IVD approval', jp_cdx: 'Japan CDx',
+  ind: 'IND', nda: 'NDA', bla: 'BLA', anda: 'ANDA', cta: 'CTA', maa: 'MAA', other: 'Other',
 };
 
 /** Backend regulatory_path aliases. Unknown values are retained as Other. */
 export const REGULATORY_PATH_TO_PATHWAY: Readonly<Record<string, RegulatoryPathway>> = {
-  '510k': 'k510', '510(k)': 'k510', k510: 'k510', de_novo: 'k510',
+  '510k': 'k510', '510(k)': 'k510', k510: 'k510', de_novo: 'de_novo', denovo: 'de_novo',
   pma: 'pma', cer: 'cer', mdr: 'cer', mdr_td: 'cer', eu_mdr: 'cer',
   ivd: 'ivdr', ivdr: 'ivdr', ivdr_td: 'ivdr', ide: 'ide', device: 'device',
   hde: 'hde', mdl: 'mdl', ivd_licence: 'ivd_licence', shonin: 'shonin',
   ninsho: 'ninsho', todokede: 'todokede', ivd_approval: 'ivd_approval', jp_cdx: 'jp_cdx',
+  ind: 'ind', nda: 'nda', bla: 'bla', anda: 'anda', cta: 'cta', maa: 'maa',
 };
 
 /** Exact evaluation/regional filing identity wins over a separately recorded
@@ -50,10 +58,9 @@ export const PATHWAY_IDENTITY_PROGRAM_TYPES = [
 
 /** Compatibility program-type lookup, derived from the canonical aliases. */
 export const PROGRAM_TYPE_TO_PATHWAY: Readonly<Record<string, RegulatoryPathway | null>> =
-  Object.freeze(Object.fromEntries([
-    ...Object.entries(REGULATORY_PATH_TO_PATHWAY).map(([key, value]) => [key.toUpperCase(), value]),
-    ['IND', null], ['NDA', null], ['BLA', null],
-  ]));
+  Object.freeze(Object.fromEntries(
+    Object.entries(REGULATORY_PATH_TO_PATHWAY).map(([key, value]) => [key.toUpperCase(), value]),
+  ));
 
 export function pathwayKey(value: string | null | undefined): string {
   return String(value ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_');

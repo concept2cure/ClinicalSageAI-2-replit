@@ -28,8 +28,11 @@
  *   - for an NDA or BLA, a pointer to plan_submission_from_database_lock for the
  *     order and where the project stands — the order is not restated here;
  *   - the drafting route: get_document_section_requirements, then
- *     draft_authoring_document (batch_draft_sections for several sections,
- *     plan_ind_module_authoring for IND Module 2.5 / 2.7).
+ *     draft_authoring_document (batch_draft_sections for several sections);
+ *     for an IND's Module 2.5 / 2.7, the record-composed
+ *     draft_clinical_overview_m2_5 / draft_clinical_summary_m2_7 (Rule 2 audit
+ *     S6, 2026-11-01: plan_ind_module_authoring, named here before, planned
+ *     them from figures the model supplied).
  *
  * ── Fail closed ──────────────────────────────────────────────────────────────
  * Only a DECLARED US application gets a block: the submission type the client
@@ -105,8 +108,10 @@ function draftingRoute(app: UsApplication): string {
   ];
   if (app === 'IND') {
     lines.push(
-      '3. For Module 2.5 or 2.7 from structured source facts, `plan_ind_module_authoring` returns the headers and ' +
-        'the figures the draft must carry verbatim.',
+      '3. Module 2.5 and 2.7 are composed from the program\'s completed clinical study reports by ' +
+        '`draft_clinical_overview_m2_5` and `draft_clinical_summary_m2_7`. Do not pass results, counts or rates ' +
+        'to them. With no completed CSR, 2.5 returns its outline and 2.7 composes nothing; ' +
+        '`get_document_template` with template_id clinical_summary gives the 2.7 outline.',
       '',
       'There is no tool that reports which IND sections this project has completed; do not state progress you ' +
         'have not read.',

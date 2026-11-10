@@ -10,7 +10,6 @@ vi.mock('../surfaces/PlanAssign', () => ({
   AssignmentLine: () => null, AssignAction: () => null,
 }));
 vi.mock('../surfaces/ProjectMdxWorkflow', () => ({ mdxProjectPlan: () => null, ProjectMdxWorkflow: () => null }));
-vi.mock('../surfaces/ProjectComingLater', () => ({ ComingLater: () => null }));
 
 import { ProjectPlan } from '../surfaces/ProjectPlan';
 
@@ -23,13 +22,13 @@ function mount(overrides: Partial<Projection> = {}) {
   return render(<ProjectPlan pid={PID} prog={prog} usInd={prog.program_type === 'ind' && prog.primary_agency === 'FDA'}
     cmcComposes={false} deviceFiling={false} otherFilings={[]} marketsState="ready" projectId={42}
     available={() => false} onNav={vi.fn()} onStage={vi.fn()} onAsk={vi.fn()} onOpenDocument={vi.fn()}
-    team={<p>Existing project team</p>} tasks={<p>Existing project tasks</p>} />);
+    tasks={<p>Existing project tasks</p>} />);
 }
 afterEach(cleanup);
 const reference = () => screen.getByRole('region', { name: 'Filing lifecycle reference' });
 
 describe('the selected project filing reference is reached on Plan', () => {
-  it('reaches the existing US IND guide while preserving the actual filing plan, team and tasks', () => {
+  it('reaches the existing US IND guide while preserving the actual filing plan and tasks (the team left Plan for its card and drawer, D3-3)', () => {
     mount();
     const region = reference();
     expect(within(region).getByText(/Authored filing-family guidance/)).toBeTruthy();
@@ -45,7 +44,6 @@ describe('the selected project filing reference is reached on Plan', () => {
     expect(region.textContent).toMatch(/30.day/);
     expect(within(region).queryByRole('progressbar')).toBeNull();
     expect(screen.getByTestId('existing-ind-plan')).toBeTruthy();
-    expect(screen.getByText('Existing project team')).toBeTruthy();
     expect(screen.getByText('Existing project tasks')).toBeTruthy();
     expect(screen.getByText(/Target submission/)).toBeTruthy();
   });
@@ -64,7 +62,6 @@ describe('the selected project filing reference is reached on Plan', () => {
     expect(region.textContent).toContain('No filing lifecycle guide is available for this recorded filing.');
     expect(region.textContent).not.toMatch(/Pre-IND meeting|Clinical Hold|30.day/);
     expect(screen.getByTestId('pj-plan')).toBeTruthy();
-    expect(screen.getByText('Existing project team')).toBeTruthy();
     expect(screen.getByText('Existing project tasks')).toBeTruthy();
   });
 });

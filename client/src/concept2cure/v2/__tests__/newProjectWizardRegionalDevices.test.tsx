@@ -8,6 +8,8 @@ const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (original) => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest: (...args: unknown[]) => intakeFixtureRequest(apiRequest, args) }));
 vi.mock('@/utils/authToken', async (original) => ({ ...(await original<typeof import('@/utils/authToken')>()), getAuthToken: () => 'synthetic-test-session' }));
 import { NewProjectWizard } from '../surfaces/Projects';
+import { PRODUCT_TYPES } from '@shared/constants/domain/product-types';
+const labelOf = (value: string) => PRODUCT_TYPES.find(t => t.value === value)!.label;
 import { getSubmissionTypeContext } from '../surfaces/RegistryBridge';
 
 const ids = ['us_hde', 'ca_mdl', 'ca_ivd_licence', 'jp_shonin', 'jp_nintei', 'jp_todokede', 'jp_ivd_approval', 'jp_cdx', 'us_cdx_pma', 'us_cdx_510k', 'eu_cdx_ivdr_d', 'us_510k', 'eu_mdr_techdoc'];
@@ -49,7 +51,8 @@ describe('a person records the device subtype that the project retains', () => {
     expect(screen.queryByRole('combobox', { name: /product type/i })).toBeNull();
     const body = await submit();
     expect(body.productType).toBe('cdx');
-    expect(document.querySelector('.npw-review')?.textContent ?? document.body.textContent).toContain('cdx');
+    // The review names the product type by its label (2026-10-31), the create sends its value.
+    expect(document.querySelector('.npw-review')?.textContent ?? document.body.textContent).toContain(labelOf('cdx'));
   });
   it.each([
     ['us_510k', 'samd'], ['ca_mdl', 'samd'], ['ca_ivd_licence', 'cdx'], ['jp_ivd_approval', 'cdx'],
@@ -61,7 +64,7 @@ describe('a person records the device subtype that the project retains', () => {
     if (id === 'ca_ivd_licence') expect(Array.from(select.options).map(o => o.value)).toEqual(['ivd', 'cdx']);
     fireEvent.change(select, { target: { value: product } });
     expect((await submit()).productType).toBe(product);
-    expect(document.body.textContent).toContain(product);
+    expect(document.body.textContent).toContain(labelOf(product));
   });
   it('retires a previous subtype when the person changes filing', async () => {
     render(<NewProjectWizard segment="medtech" onClose={() => {}} onNav={() => {}} />);

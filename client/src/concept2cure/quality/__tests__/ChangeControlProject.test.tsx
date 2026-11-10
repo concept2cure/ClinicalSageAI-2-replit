@@ -29,8 +29,13 @@ vi.mock('../changeHooks', async () => {
   const { CHANGE_SUMMARY } = await import('./changeRows');
   return { useChangeSummary: () => ({ summary: CHANGE_SUMMARY, loading: false, error: null }) };
 });
+/* a2f9264a5d gave Change control a reviewed-learning step that reads through the editor's session owner
+   (`editor/authoringCurrentRead.ts`), which asks `authService` for the account and its session guard. The same
+   account object is returned each time, as the real service does, so the guard stays current. */
+const ACCOUNT = { id: 9, organizationId: 3, name: 'Q. Author', role: 'editor' };
 vi.mock('@/services/portal/authService', () => ({
-  useAuthUser: () => ({ id: 9, organizationId: 3, name: 'Q. Author', role: 'editor' }),
+  useAuthUser: () => ACCOUNT,
+  authService: { getUser: () => ACCOUNT, captureSessionReadGuard: () => ({ sameRevision: () => true }), on: () => () => {} },
 }));
 vi.mock('@/lib/queryClient', () => ({
   apiRequest: (...a: unknown[]) => H.apiRequest(...a),
@@ -103,5 +108,34 @@ describe('Raise change request — the project a change belongs to', () => {
     fireEvent.click(within(d).getByRole('button', { name: /Raise change/ }));
     await waitFor(() => expect(posted()).toBeDefined());
     expect(posted()).not.toHaveProperty('programId');
+  });
+});
+
+/* C14 (QP3): the summary route reads the whole organisation and takes no project, so a log scoped to the open
+   project counts its own rows, by the server's definitions. */
+describe('a change log scoped to the open project', () => {
+  it('counts its own rows, not the organisation summary', () => {
+    H.shell = { id: PROGRAM, title: 'Current program' };
+    render(
+      <ChangeControl onAsk={() => {}} stage="all" onStageChange={() => {}} openId={null} onOpenIdChange={() => {}}
+        changes={CHANGE_ROWS.slice(0, 2)} loading={false} onRetry={() => {}} />,
+    );
+    expect(screen.getByTestId('change-figures').textContent).toMatch(/^2 open of 2 in the log; 1 awaiting approval; 1 in implementation/);
+    // C18a: the sentence is the line under the head.
+    const line = screen.getByTestId('change-figures');
+    expect(line.tagName, 'the sentence is its own line').toBe('P');
+    expect(line.previousElementSibling?.classList.contains('pj-sec-h'), 'directly under the section head').toBe(true);
+    H.shell = null;
+  });
+
+  it('says the project has no change, not that the log is empty', () => {
+    H.shell = { id: PROGRAM, title: 'Current program' };
+    render(
+      <ChangeControl onAsk={() => {}} stage="all" onStageChange={() => {}} openId={null} onOpenIdChange={() => {}}
+        changes={[]} loading={false} onRetry={() => {}} />,
+    );
+    expect(screen.getByText('No change is filed under Current program.')).toBeTruthy();
+    expect(screen.queryByText('No changes in the log yet.')).toBeNull();
+    H.shell = null;
   });
 });

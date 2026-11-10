@@ -14,6 +14,7 @@ import React from 'react';
 import { getAuthToken, getJwtOrgId } from '@/utils/authToken';
 import { I } from '../icons';
 import { useLiveData, type ShapeGuard } from '../dataConnect';
+import { describeReadFailure, readRefusalOf } from '../../mdx/hooks/useFetchJson';
 import type { VaultDoc } from '../fixtures/vault-data';
 import { vaultIngestTypeLabel } from '@shared/constants/domain/vault-taxonomy';
 import '../styles/vault-picker.css';
@@ -27,9 +28,14 @@ export interface LibraryHit {
   current: boolean;
   snippet: string | null;
   program: { id: string; name: string | null };
+  /** The project's sponsor (client workspace), or null when it has none (F1, S6 V2). */
+  client?: LibrarySponsor | null;
   /** The version's recorded sha256, as vault.documents holds it. */
   contentHash?: string | null;
 }
+
+/** A sponsor as the library names it: a CRO's client, one client workspace of the organisation. */
+export interface LibrarySponsor { id: number; name: string }
 
 export interface LibraryShape {
   scope: 'verified-accessible-programs'; query: string; total: number; limit: number; results: LibraryHit[];
@@ -37,21 +43,26 @@ export interface LibraryShape {
   mode?: 'search' | 'browse';
   /** Set by the reader, not the server: whether the find view's filters were sent. */
   filtered?: boolean;
+  /** Present when asked from inside a project: the sponsor whose projects were searched, null when it has none. */
+  client?: LibrarySponsor | null;
 }
 
 const nullableText = (v: unknown): v is string | null => v === null || typeof v === 'string';
+const isSponsor = (v: unknown): boolean => v === undefined || v === null ||
+  (!!v && typeof v === 'object' && Number.isSafeInteger((v as LibrarySponsor).id) && typeof (v as LibrarySponsor).name === 'string');
 function isLibraryHit(v: unknown): v is LibraryHit {
   if (!v || typeof v !== 'object') return false;
   const h = v as LibraryHit;
   return typeof h.id === 'string' && h.id.length > 0 && typeof h.title === 'string' &&
     nullableText(h.version) && typeof h.current === 'boolean' && nullableText(h.snippet) &&
-    !!h.program && typeof h.program.id === 'string' && h.program.id.length > 0 && nullableText(h.program.name);
+    !!h.program && typeof h.program.id === 'string' && h.program.id.length > 0 && nullableText(h.program.name) &&
+    isSponsor(h.client);
 }
 export const isLibraryShape: ShapeGuard<LibraryShape> = (v): v is LibraryShape => {
   if (!v || typeof v !== 'object') return false;
   const d = v as LibraryShape;
   return d.scope === 'verified-accessible-programs' && typeof d.query === 'string' && Number.isSafeInteger(d.total) && d.total >= 0 &&
-    Array.isArray(d.results) && d.results.every(isLibraryHit) && d.total >= d.results.length;
+    Array.isArray(d.results) && d.results.every(isLibraryHit) && d.total >= d.results.length && isSponsor(d.client);
 };
 
 export const LIBRARY_PAGE = 50;
@@ -159,8 +170,11 @@ export function libraryHeadline(d: LibraryShape): string {
   const browse = !d.query;
   const shown = d.total > d.results.length
     ? (browse ? ` Showing the newest ${d.results.length}.` : ` Showing the ${d.results.length} best matches.`) : '';
-  const what = browse ? 'match the filters' : d.filtered ? `match “${d.query}” and the filters` : `match “${d.query}”`;
-  return `${n} in projects you can access ${what}.${shown}`;
+  const verb = d.total === 1 ? 'matches' : 'match';
+  const what = browse ? `${verb} the filters` : d.filtered ? `${verb} “${d.query}” and the filters` : `${verb} “${d.query}”`;
+  /* Searched inside one sponsor's projects (F1, S6 V2): the headline says whose, since the list is not every project. */
+  const where = d.client ? `${d.client.name} projects you can access` : 'projects you can access';
+  return `${n} in ${where} ${what}.${shown}`;
 }
 
 export function VaultLibraryResults({
@@ -176,17 +190,26 @@ export function VaultLibraryResults({
 }) {
   const q = query.trim();
   const path = q || filterParams
-    ? `/api/c2c/project-vault/search?q=${encodeURIComponent(q)}&limit=${LIBRARY_PAGE}${includeEarlier ? '&includeSuperseded=true' : ''}${filterParams}`
+    /* From inside a project, the library is that project's sponsor's projects (F1, S6 V2): a CRO's sponsors never mix
+       in one list. The server reads the sponsor from the project's own record, never from this request. */
+    ? `/api/c2c/project-vault/search?q=${encodeURIComponent(q)}&limit=${LIBRARY_PAGE}${includeEarlier ? '&includeSuperseded=true' : ''}${filterParams}${currentProjectId ? `&sameClientAs=${encodeURIComponent(currentProjectId)}` : ''}`
     : null;
   const raw = useLiveData<LibraryShape>(path, [path], isLibraryShape);
   const st = { ...raw, data: raw.data ? { ...raw.data, filtered: filterParams !== '' } : raw.data };
   if (!path) return null;
   if (st.loading) return <div className="vd-lib" data-testid="vault-library-results"><div className="scaf-note" role="status">Searching projects you can access…</div></div>;
   if (st.error || !st.data) {
+    /* A refusal (the plan does not include the Vault, not in this release, the
+       person's role) is said as itself through the one read classifier (S6 V1);
+       only a failure to answer is an unverified result. */
+    const refusal = st.error ? readRefusalOf(st) : null;
     return (
       <div className="vd-lib" data-testid="vault-library-results">
         <div className="vd-dr-err" role="alert">
-          {I.alertTriangle} The library search could not be verified. This is not a result of zero matches.
+          {I.alertTriangle}{' '}
+          {refusal
+            ? describeReadFailure(refusal, 'the library').message
+            : 'The library search could not be verified. This is not a result of zero matches.'}
         </div>
       </div>
     );
@@ -204,10 +227,13 @@ export function VaultLibraryResults({
           </span>
           <span className="vd-lib-proj">
             {h.program.name ?? 'Untitled project'}{h.program.id === currentProjectId ? ' (this project)' : ''}
+            {/* Across sponsors, each row says whose project it is; inside one sponsor, the headline does. */}
+            {!d.client && h.client ? ` · ${h.client.name}` : ''}
           </span>
           {h.snippet ? <span className="vd-lib-snip">{h.snippet.replace(/<\/?b>/g, '')}</span> : null}
           <button
-            className="sp-ask"
+            type="button"
+            className="btn ghost small"
             disabled={downloadingId === h.id}
             onClick={() => onDownload(h.id, h.title, h.program.id)}
             aria-label={`Download ${h.title} from ${h.program.name ?? 'its project'}`}

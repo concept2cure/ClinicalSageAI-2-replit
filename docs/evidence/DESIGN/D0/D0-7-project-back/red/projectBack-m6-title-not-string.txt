@@ -1,0 +1,44 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > renders nothing while no project is open 31ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > is a .pj-back button named by the open project, its arrow hidden from screen readers 330ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > says "Project" when the title is missing, so the button always has a name 29ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > says "Project" when the title is empty, so the button always has a name 25ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > says "Project" when the title is blank, so the button always has a name 33ms
+ × client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > names a title that is not a string, as the copies did, and does not throw 17ms
+   → project.title?.trim is not a function
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > goes to the project home on click 65ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > works from the keyboard: Tab reaches it, and Enter and Space each go back 88ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > follows the shell channel: it appears when a project opens after mount and goes when it closes 31ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > does nothing, and throws nothing, when the screen gives it no onNav 28ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > names a title that is not a string, as the copies did, and does not throw
+TypeError: project.title?.trim is not a function
+ ❯ ProjectBack client/src/concept2cure/v2/dataConnect.tsx:779:32
+    777|   return (
+    778|     <button type="button" className="pj-back" onClick={() => onNav?.('…
+    779|       {I.left} {project.title?.trim() || 'Project'}
+       |                                ^
+    780|     </button>
+    781|   );
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+ ❯ performWorkOnRoot node_modules/react-dom/cjs/react-dom-client.development.js:16583:35
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+   Start at  02:53:01
+   Duration  3.50s (transform 505ms, setup 370ms, import 780ms, tests 702ms, environment 1.18s)
+

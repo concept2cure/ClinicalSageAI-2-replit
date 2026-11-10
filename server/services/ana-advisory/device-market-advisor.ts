@@ -18,6 +18,7 @@
  */
 
 import { assembleDeviceSubmission } from '../pathway-engines/device-assembly/assemble-device-submission';
+import { filedCopyDivergedSentence } from '../c2c/filing-section-target';
 import { bandForScore } from '../global-markets/market-readiness';
 import { assessMarketReadiness } from '../global-markets/market-readiness';
 import {
@@ -62,7 +63,11 @@ export function adviseDeviceReadiness(
     availableArtifacts: input.availableArtifacts,
     environment: input.environment,
     requireTemplate: input.requireTemplate,
+    filedCopyDiverged: input.filedCopyDiverged,
   });
+  /* P-29.3: a filed copy that is not the document's text makes the verdict
+     'none' for a reason that is not missing content, and the advice says which. */
+  const diverged = assembly.filedCopyDiverged.length > 0 ? filedCopyDivergedSentence(input.filedCopyDiverged ?? []) : null;
 
   const sections = assembly.estar.sections;
   const requiredSections = sections.filter((s) => s.required);
@@ -96,7 +101,7 @@ export function adviseDeviceReadiness(
   findings.push({
     key: 'artifact-kind',
     label: 'Producible artifact',
-    detail: describeArtifactKind(assembly.artifactKind),
+    detail: diverged ? `Nothing can be produced until the filed copy is re-filed. ${diverged}` : describeArtifactKind(assembly.artifactKind),
   });
 
   if (missingRequiredSections.length > 0) {
@@ -162,6 +167,8 @@ export function adviseDeviceReadiness(
   let headline: string;
   if (submittable) {
     headline = `Ready: an official, submittable FDA eSTAR ${pathwayLabel} (${variantLabel}) can be produced — you submit it to FDA.`;
+  } else if (diverged) {
+    headline = `Not yet assemblable for this ${pathwayLabel} (${variantLabel}). ${diverged}`;
   } else if (assembly.artifactKind === 'content-package-draft') {
     headline = `Not yet submittable: only a draft content package can be produced for this ${pathwayLabel} (${variantLabel}). ${summariseTopBlockers(assembly.blockers)}`;
   } else {

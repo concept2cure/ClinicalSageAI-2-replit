@@ -1,0 +1,17 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveProtocolLeaveGuard.test.tsx > actions use the mounted owner rather than bypassing the pending-work guard > refuses a cross-owner action before the action bus can navigate or stash it 705ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveProtocolLeaveGuard.test.tsx > actions use the mounted owner rather than bypassing the pending-work guard > still hands a same-owner action to its handler even when the owner is nested inside another route 296ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveProtocolLeaveGuard.test.tsx > actions use the mounted owner rather than bypassing the pending-work guard > resolves a declared action-owner alias before comparing it with the registered canonical owner 248ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveProtocolLeaveGuard.test.tsx > saved-artifact follow-through preserves pending protocol work > consumes blocked artifact focus without replaying it after the guard clears, and allows a fresh artifact 300ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveProtocolLeaveGuard.test.tsx > AnA navigation honors the protocol workspace leave refusal > preserves surface, project identity, handoff and pane and reports the actual reason to the driving run once 713ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveProtocolLeaveGuard.test.tsx > AnA navigation honors the protocol workspace leave refusal > refuses a validated same-surface parameter handoff before it can remount pending work 284ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveProtocolLeaveGuard.test.tsx > queued navigation rechecks current work without replaying a refused move > refuses a previously queued move when section status becomes pending, and requires a fresh request after it is reverted 1034ms
+ ✓ client/src/concept2cure/v2/__tests__/liveDriveProtocolLeaveGuard.test.tsx > queued navigation rechecks current work without replaying a refused move > fails closed when a registered guard cannot determine whether leaving is safe 278ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  19:19:13
+   Duration  9.12s (transform 4.47s, setup 131ms, import 4.38s, tests 3.86s, environment 501ms)
+

@@ -45,8 +45,10 @@ describe('getJwtSecret', () => {
     process.env.AI_PROVIDER_PLACEMENT_APPROVALS = JSON.stringify({
       anthropic: {
         region: 'us',
-        zeroRetentionApproved: true,
-        approvedDataClasses: ['pii'],
+        // The fail-closed interim value: no zero-retention agreement exists
+        // (D6), so no zero retention and no sensitive data classes.
+        zeroRetentionApproved: false,
+        approvedDataClasses: [],
         approvedIntendedUses: ['drafting'],
       },
     });
@@ -138,8 +140,10 @@ describe('getRefreshTokenSecret', () => {
     process.env.AI_PROVIDER_PLACEMENT_APPROVALS = JSON.stringify({
       anthropic: {
         region: 'us',
-        zeroRetentionApproved: true,
-        approvedDataClasses: ['pii'],
+        // The fail-closed interim value: no zero-retention agreement exists
+        // (D6), so no zero retention and no sensitive data classes.
+        zeroRetentionApproved: false,
+        approvedDataClasses: [],
         approvedIntendedUses: ['drafting'],
       },
     });
@@ -250,8 +254,10 @@ describe('assertMfaKeyPosture', () => {
     process.env.AI_PROVIDER_PLACEMENT_APPROVALS = JSON.stringify({
       anthropic: {
         region: 'us',
-        zeroRetentionApproved: true,
-        approvedDataClasses: ['pii'],
+        // The fail-closed interim value: no zero-retention agreement exists
+        // (D6), so no zero retention and no sensitive data classes.
+        zeroRetentionApproved: false,
+        approvedDataClasses: [],
         approvedIntendedUses: ['drafting'],
       },
     });
@@ -334,8 +340,10 @@ describe('getCurrentEnvironment', () => {
     process.env.AI_PROVIDER_PLACEMENT_APPROVALS = JSON.stringify({
       anthropic: {
         region: 'us',
-        zeroRetentionApproved: true,
-        approvedDataClasses: ['pii'],
+        // The fail-closed interim value: no zero-retention agreement exists
+        // (D6), so no zero retention and no sensitive data classes.
+        zeroRetentionApproved: false,
+        approvedDataClasses: [],
         approvedIntendedUses: ['drafting'],
       },
     });
@@ -418,8 +426,10 @@ describe('production RLS enforcement posture (fires on config import)', () => {
     process.env.AI_PROVIDER_PLACEMENT_APPROVALS = JSON.stringify({
       anthropic: {
         region: 'us',
-        zeroRetentionApproved: true,
-        approvedDataClasses: ['pii'],
+        // The fail-closed interim value: no zero-retention agreement exists
+        // (D6), so no zero retention and no sensitive data classes.
+        zeroRetentionApproved: false,
+        approvedDataClasses: [],
         approvedIntendedUses: ['drafting'],
       },
     });
@@ -510,8 +520,10 @@ describe('production audit-seal posture (fires on config import)', () => {
     process.env.AI_PROVIDER_PLACEMENT_APPROVALS = JSON.stringify({
       anthropic: {
         region: 'us',
-        zeroRetentionApproved: true,
-        approvedDataClasses: ['pii'],
+        // The fail-closed interim value: no zero-retention agreement exists
+        // (D6), so no zero retention and no sensitive data classes.
+        zeroRetentionApproved: false,
+        approvedDataClasses: [],
         approvedIntendedUses: ['drafting'],
       },
     });
@@ -620,7 +632,7 @@ describe('assertDeterministicModePostureForProduction (wired into config load)',
     process.env.STORAGE_PROVIDER = 's3';
     process.env.AWS_S3_BUCKET = 'c2c-vault-test';
     process.env.AI_PROVIDER_PLACEMENT_APPROVALS = JSON.stringify({
-      anthropic: { region: 'us', zeroRetentionApproved: true, approvedDataClasses: ['pii'], approvedIntendedUses: ['drafting'] },
+      anthropic: { region: 'us', zeroRetentionApproved: false, approvedDataClasses: [], approvedIntendedUses: ['drafting'] },
     });
     process.env.MFA_ENCRYPTION_KEY = 'm'.repeat(32);
     process.env.AUDIT_HMAC_SECRET = 's'.repeat(32);

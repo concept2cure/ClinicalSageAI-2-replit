@@ -138,3 +138,20 @@ export async function requireApprover({ deviation, expect }, baseUrl, excludedEm
   }
   return { ...cred, session };
 }
+
+/**
+ * A session for one of the run's named identities without signing duties (OQ-008 §1: `OQ_MEMBER_*`, a member with
+ * no signing authority and no regulatory-author role; `OQ_VIEWER_*`, a read-only member), opened with its password
+ * and, when it has an authenticator enrolled, a fresh code. A deviation when the credential is not supplied, so a
+ * step that names the identity never acts with the run session instead (VSR-001 §21: OQ-CMC-02, -12 and -20 did).
+ */
+export async function requireIdentity({ deviation, expect }, baseUrl, prefix, why) {
+  const cred = credentialFromEnv(prefix);
+  if (!cred) deviation(`not executed — ${prefix}_EMAIL / _PASSWORD not supplied; ${why}`);
+  try {
+    return { ...cred, session: await passwordLogin(baseUrl, cred) };
+  } catch (e) {
+    expect(false, `${prefix} identity ${cred.email} could not open a session: ${e.message}`);
+  }
+  return null;
+}

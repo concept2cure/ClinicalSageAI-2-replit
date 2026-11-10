@@ -40,7 +40,9 @@ beforeAll(async () => {
     CREATE TABLE users (id integer PRIMARY KEY, name text, email text);
     CREATE FUNCTION public.actor_name(integer) RETURNS TABLE(name text, email text)
       LANGUAGE sql STABLE AS 'SELECT name, email FROM users WHERE id = $1';
-    CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer NOT NULL, code text, name text, regulatory_program_id uuid);
+    -- The project's sponsor (client_workspace_id, client_workspaces), which the read names since F1, S6 V4 (2026-11-05).
+    CREATE TABLE client_workspaces (id integer PRIMARY KEY, organization_id integer NOT NULL, name text);
+    CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer NOT NULL, code text, name text, regulatory_program_id uuid, client_workspace_id integer);
     CREATE TABLE concept2cure_artifacts (
       id serial PRIMARY KEY, artifact_id text, title text, metadata json, type text, category text,
       version integer, updated_at timestamp DEFAULT now(), project_id integer, content text, organization_id integer,
@@ -49,7 +51,7 @@ beforeAll(async () => {
     CREATE TABLE concept2cure_signatures (id serial PRIMARY KEY, artifact_id integer, organization_id integer, status text, artifact_version_id integer);
     CREATE TABLE concept2cure_review_decisions (artifact_id integer, organization_id integer, decision text, version_reviewed integer);
     CREATE TABLE concept2cure_artifact_versions (id serial PRIMARY KEY, version integer);
-    INSERT INTO projects VALUES (10, 1, 'OWN-1', 'Own project', NULL), (20, 2, 'THEIRS-9', 'Their secret program', NULL);
+    INSERT INTO projects VALUES (10, 1, 'OWN-1', 'Own project', NULL, NULL), (20, 2, 'THEIRS-9', 'Their secret program', NULL, NULL);
     INSERT INTO concept2cure_artifacts (artifact_id, title, metadata, type, category, version, project_id, content, organization_id) VALUES
       ('a-own', 'Own doc', '{}', 'document', 'document', 1, 10, 'x', 1),
       ('a-foreign', 'Filed under their id', '{}', 'document', 'document', 1, 20, 'x', 1);

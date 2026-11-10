@@ -75,6 +75,7 @@ const TERMINAL = new Set(['approved', 'frozen', 'locked', 'signed']);
 
 interface DocRow {
   id: string;
+  client_program_id: string | null;
   title: string | null;
   module: string | null;
   product_code: string | null;
@@ -104,7 +105,7 @@ type StageRow = Record<string, unknown> & { id: string; done: boolean; active: b
 export async function assembleOrgDocJourney(orgId: number): Promise<Record<string, unknown>[]> {
   // The org's current document = the most-recently-touched authoring_documents row.
   const docRes = await pool.query(
-    `SELECT d.id, d.title, d.module, d.product_code, d.status, d.version,
+    `SELECT d.id, d.client_program_id, d.title, d.module, d.product_code, d.status, d.version,
             d.created_by, d.created_at, d.updated_at, d.submitted_at, d.approved_at, d.frozen_at,
             u.name AS creator_name, u.email AS creator_email
        FROM authoring_documents d
@@ -380,8 +381,15 @@ export async function assembleOrgDocJourney(orgId: number): Promise<Record<strin
      d.product_code, d.version) and was never sent. It travels on each row
      rather than in a separate envelope key because the surface renders one
      stage at a time and already has the row in hand. Absent fields stay absent;
-     the masthead renders what exists and nothing else. */
+     the masthead renders what exists and nothing else.
+
+     It also carries the document's id and its project (2026-11-09). The
+     screen's "Open in editor" had nothing to open and went to the editor's
+     document list; with these it opens this document, in its project. A
+     document filed under no project says so (null). */
   const identity = {
+    id: docId,
+    programId: str(doc.client_program_id).trim() || null,
     title: str(doc.title).trim() || null,
     module: str(doc.module).trim() || null,
     productCode: str(doc.product_code).trim() || null,

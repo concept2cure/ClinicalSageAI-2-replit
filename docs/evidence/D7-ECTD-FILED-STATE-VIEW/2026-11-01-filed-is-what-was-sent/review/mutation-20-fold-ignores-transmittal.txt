@@ -1,0 +1,190 @@
+# Mutation 20 (1-server mutation 1, re-run on the final fold). The fold ignores the transmittal and reads compiles only.
+# File: server/services/ectd/prior-sequence-loader.ts
+# Replaced (exactly once):
+#   -     const record = read.sent[0]?.leaf_manifest;
+# With:
+#   +     const record = null;
+# Command: npx vitest run server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts
+# Exit code: 1 (non-zero = the test caught the mutation)
+# Restored byte for byte: sha256 f214ee5702bad5be0647c66242fbff65796080847994d473e192fa1bfa4e4845 before and after
+# Run: 2026-11-02T02:06:03.474393Z
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a leaf only an earlier preview compile carried is not on file (the phantom leaf) 29ms
+   → expected [ 'draft-only.pdf', 'general.pdf' ] to deeply equal [ 'general.pdf' ]
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a sequence sent with no compile on record is filed, and the next sequence binds against it 7ms
+   → expected [] to deeply equal [ 'csr.pdf', 'general.pdf' ]
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > rejected, then resent: only the attempt the sequence is bound to is read 8ms
+   → expected { leaves: [], basis: null } to deeply equal { leaves: [ 'resend.pdf' ], …(1) }
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent before the guard kept a record is read from its compiles, and labelled so > a bound transmittal with no leaf manifest, or no transmit attempt at all, keeps the compile read 8ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent before the guard kept a record is read from its compiles, and labelled so > another organisation’s transmittal binding the same attempt is never read 7ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sent sequence with no record of what it carried: listed by the view, never bound against (F1 review) > sent before the guard kept the record and never compiled: the next sequence is refused, the view names it 11ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sent sequence with no record of what it carried: listed by the view, never bound against (F1 review) > bound to its attempt, but the transmittal predates the record and there is no compile: the same refusal 6ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > another agency’s row carrying a binding to an FDA sequence is not read 6ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > a row binding the attempt and sequence under another signature is not read 4ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > a row binding the attempt under another sequence’s id is not read 4ms
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > two rows of its own agency bind the attempt, one with no manifest: the read throws, never reads either 4ms
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > an EU sequence is read from the EMA gateway’s row: the region is compared as one agency, not as text 5ms
+   → expected { leaves: [], basis: null } to deeply equal { leaves: [ 'sent-to-ema.pdf' ], …(1) }
+ ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a record that cannot say what was sent is an error, never a partial view > two transmittals binding one attempt of one sequence: the read throws, naming the sequence 6ms
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its transmittal, then one read from its compiles 8ms
+   → expected [ [ '0001', 'replace' ] ] to deeply equal [ [ '0000', 'new' ], …(1) ]
+ × server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its compiles, then one read from its transmittal 5ms
+   → expected [ [ 'general.pdf', '0000', 'a' ] ] to deeply equal [ [ 'general.pdf', '0001', 'b' ] ]
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 9 passed (15)
+   Start at  02:06:00
+   Duration  2.76s (transform 136ms, setup 85ms, import 106ms, tests 2.32s, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a leaf only an earlier preview compile carried is not on file (the phantom leaf)
+AssertionError: expected [ 'draft-only.pdf', 'general.pdf' ] to deeply equal [ 'general.pdf' ]
+
+- Expected
++ Received
+
+  [
++   "draft-only.pdf",
+    "general.pdf",
+  ]
+
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:125:33
+    123|     await transmittal({ attemptId: attempt(1), sequenceId: id }, [leaf…
+    124|     const state = await filedState(1);
+    125|     expect(names(state.leaves)).toEqual(['general.pdf']);
+       |                                 ^
+    126|     expect(state.sequences).toEqual([{ sequenceNumber: '0000', dispatc…
+    127|     expect(names((await priorFor(1, '0001')).leaves)).toEqual(['genera…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > a sequence sent with no compile on record is filed, and the next sequence binds against it
+AssertionError: expected [] to deeply equal [ 'csr.pdf', 'general.pdf' ]
+
+- Expected
++ Received
+
+- [
+-   "csr.pdf",
+-   "general.pdf",
+- ]
++ []
+
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:135:33
+    133|     await transmittal({ attemptId: attempt(2), sequenceId: id }, [leaf…
+    134|     const state = await filedState(2);
+    135|     expect(names(state.leaves)).toEqual(['csr.pdf', 'general.pdf']);
+       |                                 ^
+    136|     expect(state.throughSequence).toBe('0000');
+    137|     expect(state.sequences).toEqual([
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > a sequence sent with a record of what it carried is read from that record > rejected, then resent: only the attempt the sequence is bound to is read
+AssertionError: expected { leaves: [], basis: null } to deeply equal { leaves: [ 'resend.pdf' ], …(1) }
+
+- Expected
++ Received
+
+  {
+-   "basis": "transmit",
+-   "leaves": [
+-     "resend.pdf",
+-   ],
++   "basis": null,
++   "leaves": [],
+  }
+
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:150:104
+    148|     await transmittal({ attemptId: attempt(31), sequenceId: id }, [lea…
+    149|     await transmittal({ attemptId: attempt(32), sequenceId: id }, [lea…
+    150|     await expect(filedState(3).then((s) => ({ leaves: names(s.leaves),…
+       |                                                                                                        ^
+    151|       .resolves.toEqual({ leaves: ['resend.pdf'], basis: 'transmit' });
+    152|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > only the sequence’s own send is read (F1 review: rows written before the guard stamped the keys) > an EU sequence is read from the EMA gateway’s row: the region is compared as one agency, not as text
+AssertionError: expected { leaves: [], basis: null } to deeply equal { leaves: [ 'sent-to-ema.pdf' ], …(1) }
+
+- Expected
++ Received
+
+  {
+-   "basis": "transmit",
+-   "leaves": [
+-     "sent-to-ema.pdf",
+-   ],
++   "basis": null,
++   "leaves": [],
+  }
+
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:257:79
+    255|       { region: 'ema', gateway: 'cesp' });
+    256|     const state = await filedState(15);
+    257|     expect({ leaves: names(state.leaves), basis: state.sequences[0]?.b…
+       |                                                                               ^
+    258|   });
+    259| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its transmittal, then one read from its compiles
+AssertionError: expected [ [ '0001', 'replace' ] ] to deeply equal [ [ '0000', 'new' ], …(1) ]
+
+- Expected
++ Received
+
+  [
+    [
+-     "0000",
+-     "new",
+-   ],
+-   [
+      "0001",
+      "replace",
+    ],
+  ]
+
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:285:81
+    283|     const state = await filedState(7);
+    284|     expect(state.leaves.map((l) => [l.fileName, l.sequenceNumber, l.md…
+    285|     expect(state.leaves[0].history.map((a) => [a.sequenceNumber, a.ope…
+       |                                                                                 ^
+    286|     expect(state.sequences.map((s) => s.basis)).toEqual(['transmit', '…
+    287|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts > the acts behind each document hold across both kinds of record (cd5fd2281) > a sequence read from its compiles, then one read from its transmittal
+AssertionError: expected [ [ 'general.pdf', '0000', 'a' ] ] to deeply equal [ [ 'general.pdf', '0001', 'b' ] ]
+
+- Expected
++ Received
+
+  [
+    [
+      "general.pdf",
+-     "0001",
+-     "b",
++     "0000",
++     "a",
+    ],
+  ]
+
+ ❯ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts:295:79
+    293|     await transmittal({ attemptId: attempt(8), sequenceId: id }, gener…
+    294|     const state = await filedState(8);
+    295|     expect(state.leaves.map((l) => [l.fileName, l.sequenceNumber, l.md…
+       |                                                                               ^
+    296|     expect(state.leaves[0].history.map((a) => [a.sequenceNumber, a.ope…
+    297|     expect(state.sequences.map((s) => s.basis)).toEqual(['compiles', '…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+

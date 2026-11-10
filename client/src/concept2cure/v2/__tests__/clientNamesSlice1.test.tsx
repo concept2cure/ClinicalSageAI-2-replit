@@ -15,7 +15,7 @@
  *     constant per job (client/src/concept2cure/v2/projectDoors.ts: STEP_DOORS, DEVICE_DOORS),
  *     compared with section 9's Door names table, rendered for each device pathway, and no
  *     longer written inline anywhere else (one job, one name);
- *   - PJ_LIFECYCLE's `later` and `laterDevice`, the steps' Coming later lines (sections 3, 5.4);
+ *   - PJ_LIFECYCLE's steps, which carry no Coming later line since 2026-10-31;
  *   - the IND catalogue's phase names, as Plan reads them (buildIndDocumentCatalogSource);
  *   - the subscription's own words: the account menu, the lock copy (one source for the rail,
  *     ⌘K, Subscription & features and the unlock panel), Subscription & features' heading,
@@ -43,11 +43,14 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 /* `permissions` as the session carries them (server sessionPermissions): an
    administrator's include billing:admin, a member's do not (P-68). */
 const auth = vi.hoisted(() => ({ roles: ['admin', 'user'] as string[], permissions: ['governed:write', 'billing:admin'] as string[] }));
+/* One signed-in account, the same object on every render, as the session provides it. The navigation verdicts are
+   read only for an account with an id, once per account visit (navEntitlements.tsx useNavigationReadOwner). */
+const authUser = vi.hoisted(() => ({
+  id: 11, organizationId: 7, firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe',
+  get roles() { return auth.roles; }, get permissions() { return auth.permissions; },
+}));
 vi.mock('@/services/portal/authService', () => ({
-  useAuth: () => ({
-    user: { firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: auth.roles, permissions: auth.permissions },
-    logout: vi.fn(),
-  }),
+  useAuth: () => ({ user: authUser, logout: vi.fn() }),
 }));
 vi.mock('@/contexts/TenantContext', () => ({
   useTenant: () => ({ tenant: null, organizationId: 7, currentOrganization: null }),
@@ -280,11 +283,17 @@ describe('A.1 · the registry labels a client reads (breadcrumb, page title, ⌘
     expect(offending(NAVIGATION_TARGETS.filter((t) => reachable(t.id)).map((t) => [`NAVIGATION_TARGETS ${t.id}`, t.label] as const))).toEqual([]);
   });
 
-  it('the project-home breadcrumb names the open project, as the project chip does', async () => {
+  it('the project-home breadcrumb names the open project, once, as the current page', async () => {
     publishShellProject({ id: '7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d', code: 'BX-301', title: 'Brexolimab IND' });
     render(<TopBar surface={getSurfaceMeta('project-home') as UiSurface} onPalette={() => {}} segment="biopharma" onSegment={() => {}} />);
     await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
-    expect(document.querySelector('.crumbs .here')?.textContent).toBe('BX-301');
+    // D1-2 (D1.md §D1.B step 1): the project crumb names the page, so no `here` repeats it,
+    // and the root crumb ("Concept2Cure.RI") went to the sidebar's wordmark.
+    const crumb = document.querySelector('.crumbs .crumb-proj');
+    expect(crumb?.textContent).toBe('BX-301');
+    expect(crumb?.getAttribute('aria-current')).toBe('page');
+    expect(document.querySelector('.crumbs .here')).toBeNull();
+    expect(document.querySelector('.crumbs')?.textContent).toBe('BX-301');
   });
 
   it("section 9's own names pass this file's word and fold checks (so the guard can be met)", () => {
@@ -420,48 +429,21 @@ describe('A.1 · doors: one job, one name (section 9, Door names)', () => {
 
 /* ── Coming later ─────────────────────────────────────────────────────────── */
 
-describe("A.1 · each step's Coming later line (sections 3 and 5.4)", () => {
-  const lines = PJ_LIFECYCLE.flatMap((step) => [
-    [`${step.id}.later`, step.later] as const,
-    [`${step.id}.laterDevice`, step.laterDevice] as const,
-  ]);
-
-  it('Plan, Evidence, Author, Review, Submit and Respond each have one', () => {
+/* Slice A.1 gave each step a "Coming later" line (sections 3 and 5.4), and this block held each to
+   client copy. The lines were removed on 2026-10-31: a client demo read them as the product
+   apologising for itself, and Evidence's named risk-based monitoring as still to come while it works.
+   What this block holds now is that none comes back. */
+describe("A.1 · no step carries a Coming later line (removed 2026-10-31)", () => {
+  it('Plan, Evidence, Author, Review, Submit and Respond carry no roadmap field', () => {
     expect(PJ_LIFECYCLE.map((step) => step.id)).toEqual(['plan', 'evidence', 'author', 'review', 'submit', 'respond']);
-    expect(PJ_LIFECYCLE.filter((step) => !step.later?.trim()).map((step) => `${step.id} has no Coming later line`)).toEqual([]);
+    const roadmap = PJ_LIFECYCLE.filter((step) => 'later' in step || 'laterDevice' in step).map((step) => step.id);
+    expect(roadmap).toEqual([]);
   });
 
-  it('no line uses a word from "Not in client copy"', () => {
+  it('each step still says what to do on it, in client copy', () => {
+    const lines = PJ_LIFECYCLE.flatMap((step) => [[`${step.id}.now`, step.now] as const, [`${step.id}.nowDevice`, step.nowDevice] as const]);
+    expect(PJ_LIFECYCLE.filter((step) => !step.now?.trim()).map((step) => step.id)).toEqual([]);
     expect(offending(lines)).toEqual([]);
-  });
-
-  it('no line names a folded feature as a thing still to come', () => {
-    expect(namesFolded(lines)).toEqual([]);
-  });
-
-  it("Submit's lines name only Submit's rows not yet shown", () => {
-    /* Each of these is live or homed elsewhere: IND annual reports are assembled and filed in IND
-       forms (section 5.4 Submit, ind-checklist); the variation classifier and regulatory
-       intelligence run as AnA (sections 5.4 lifecycle-mgmt, 5.6 global-ri); precedent is a Plan and
-       Respond row (precedent-intelligence); market access and pharmacovigilance are document-build
-       rows (section 5.5). */
-    const NOT_SUBMIT: ReadonlyArray<[string, RegExp]> = [
-      ['IND annual-report tracking', /annual[- ]report/i],
-      ['the variation classifier', /variation classifier/i],
-      ['precedent', /precedent/i],
-      ['market access', /market access/i],
-      ['pharmacovigilance', /pharmacovigilance/i],
-    ];
-    const submit = PJ_LIFECYCLE.find((step) => step.id === 'submit');
-    const wrong = [['later', submit?.later], ['laterDevice', submit?.laterDevice]].flatMap(([field, text]) =>
-      NOT_SUBMIT.filter(([, re]) => re.test(text ?? '')).map(([what]) => `submit.${field} names ${what}: "${text}"`));
-    expect(wrong).toEqual([]);
-  });
-
-  it("Respond's line names precedent responses and FDA's Pre-Sub feedback", () => {
-    const respond = PJ_LIFECYCLE.find((step) => step.id === 'respond')?.later ?? '';
-    expect(respond).toMatch(/precedent/i);
-    expect(respond).toMatch(/Pre-Sub/i);
   });
 });
 
@@ -495,7 +477,8 @@ describe('A.1 · /concept2cure/features (section 12)', () => {
     expect(surfaceIdFromLocation(locationForSurface('apps'))).toBe('apps');
     expect(surfaceIdFromLocation(`${UI_V2_BASE}/apps`)).toBe('apps');
     // V2App navigates by writing locationForSurface(id), so every door, menu item and AnA move writes it.
-    expect(readFileSync(path.join(V2, 'V2App.tsx'), 'utf8')).toMatch(/setLocation\(locationForSurface\(/);
+    // A saved conversation may supply its own path first (931e287429); the surface's address is the fallback.
+    expect(readFileSync(path.join(V2, 'V2App.tsx'), 'utf8')).toMatch(/setLocation\((?:[\w?.]+\s*\?\?\s*)?locationForSurface\(/);
   });
 
   it('no address a client can reach has "app" in it', () => {
@@ -517,7 +500,7 @@ async function accountMenu(platformAdmin: boolean) {
       <Rail activeId="projects" onNav={onNav} collapsed={false} setCollapsed={() => {}} segment="biotech" setSegment={() => {}} />
     </NavEntitlementsProvider>,
   );
-  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', NAV_URL));
+  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', NAV_URL, undefined, undefined, expect.any(AbortSignal)));
   await act(async () => { await new Promise((r) => setTimeout(r, 0)); });
   fireEvent.click(screen.getByTitle('Ada Rowe'));
   return { onNav, items: screen.getAllByRole('menuitem').map((b) => norm(b.textContent ?? '')) };

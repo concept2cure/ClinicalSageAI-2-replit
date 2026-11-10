@@ -37,7 +37,8 @@ import { DocumentsPanel } from '../../client/src/concept2cure/mdx/components/Doc
 import { EngineeringSurface } from '../../client/src/concept2cure/mdx/surfaces/EngineeringSurface';
 import { UdiSurface } from '../../client/src/concept2cure/mdx/surfaces/UdiSurface';
 import { PostmarketSurface } from '../../client/src/concept2cure/mdx/surfaces/PostmarketSurface';
-import { AnalyticsSurface } from '../../client/src/concept2cure/mdx/surfaces/AnalyticsSurface';
+// No AnalyticsSurface: device analytics joined Reporting & analytics (D2, fold F4, 2026-10-30);
+// its device section is pinned by client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx.
 
 import type { Program } from '../../client/src/concept2cure/mdx/data/programs';
 
@@ -176,11 +177,6 @@ describe('design-system surface smoke tests', () => {
     assertNoReactErrors();
   });
 
-  it('AnalyticsSurface renders', () => {
-    const { getByText } = render(<AnalyticsSurface onAskAna={askAna} />);
-    expect(getByText('Analytics')).toBeTruthy();
-    assertNoReactErrors();
-  });
 
 
 });

@@ -1,0 +1,222 @@
+# F1 view copy: copy gates and the retired-pattern review. 2026-11-01T23:31:18Z
+# Tree: HEAD 609ef94c7 + parts 1 and 2 (uncommitted).
+
+## $ npm run -s check:catalog-copy
+[ci:catalog-copy] OK — 105 catalog description(s) across 3 migration(s) read as product copy.
+(exit 0)
+
+## $ npm run -s ci:internals-in-copy
+
+❌ Internal identifiers in user-visible copy.
+
+   client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:745  [table name]
+     coauthor_documents
+
+   The reader of these surfaces is a regulatory director. A route name tells
+   them nothing they can act on, and the internal shape of a governed system is
+   an information-disclosure finding in a regulated product, not a cosmetic one.
+   (BIOPHARMA_WORK_ORDER.md guardrail 3; BP-W0-5.)
+
+   Name the CAPABILITY, not the endpoint:
+     "GET /api/cmc/stability-studies didn't respond."
+     → "The stability register didn't respond."
+
+(exit 1)
+
+## $ npm run -s ci:one-product
+ci:one-product: 102 surfaces, 10 rail entries, none new.
+(exit 0)
+
+## ci:internals-in-copy on the clean HEAD export (/tmp/claude-0/-home-user-ClinicalSageAI-2-replit/5d0b158e-991f-5354-8b6b-8cf5f02b467a/scratchpad/f1-view-head-export, git archive 609ef94c7; file list from the repo index, read only)
+
+❌ Internal identifiers in user-visible copy.
+
+   client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:745  [table name]
+     coauthor_documents
+
+   The reader of these surfaces is a regulatory director. A route name tells
+   them nothing they can act on, and the internal shape of a governed system is
+   an information-disclosure finding in a regulated product, not a cosmetic one.
+   (BIOPHARMA_WORK_ORDER.md guardrail 3; BP-W0-5.)
+
+   Name the CAPABILITY, not the endpoint:
+     "GET /api/cmc/stability-studies didn't respond."
+     → "The stability register didn't respond."
+
+(exit 1)
+# The same single finding, in SubmissionSeqWorkspaces.tsx (identical to HEAD in the tree; not this build's file):
+#   git diff --quiet HEAD -- SubmissionSeqWorkspaces.tsx internals-in-copy-baseline.json: clean
+## ci:internals-in-copy --list, hits in the files this part touched:
+#   0 (EctdFiledState.tsx, CommitmentRow.tsx)
+
+## $ npx vitest run client/src/concept2cure/v2/__tests__/clientCopyNoProgram.test.ts client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx client/src/concept2cure/v2/__tests__/clientNamesSlice1Features.test.tsx
+ × client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > no surface a client can reach is named with a word from "Not in client copy" 12ms
+ × client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > the names AnA and the @ menu give a reachable screen (NAVIGATION_TARGETS) use none of the words 3ms
+ × client/src/concept2cure/v2/__tests__/clientCopyNoProgram.test.ts > shared copy a client reads says "project", not "program" > screen actions 8ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/clientCopyNoProgram.test.ts > shared copy a client reads says "project", not "program" > screen actions
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > no surface a client can reach is named with a word from "Not in client copy"
+ FAIL  client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx > A.1 · the registry labels a client reads (breadcrumb, page title, ⌘K) > the names AnA and the @ menu give a reachable screen (NAVIGATION_TARGETS) use none of the words
+ Test Files  2 failed | 1 passed (3)
+      Tests  3 failed | 33 passed (36)
+
+# These 3 failures are pre-existing and are not this card's copy. They scan shared constants (the surface registry,
+# NAVIGATION_TARGETS, SURFACE_ACTIONS), and all three fail identically on the clean HEAD export (green.txt §3).
+# What they flag, in full:
+#   AssertionError: expected [ Array(1) ] to deeply equal []
+#   - Expected
+#   + Received
+#   - []
+#   + [
+#   +   "biostatistics.load-design.description: Seed the designer from one of the program's persisted study designs (resolved against the live list by id or title; honest misses and ambiguity refusals). A read — the engine recomputes on screen; writing the sample size back to the design and raising tasks stay governed human acts.",
+#   + ]
+#   AssertionError: expected [ Array(1) ] to deeply equal []
+#   - Expected
+#   + Received
+#   - []
+#   + [
+#   +   "biostat-workbench: \"Biostat workbench\" (workbench)",
+#   + ]
+#   AssertionError: expected [ Array(1) ] to deeply equal []
+#   - Expected
+#   + Received
+#   - []
+#   + [
+#   +   "NAVIGATION_TARGETS biostat-workbench: \"Biostatistics workbench\" (workbench)",
+
+## Section 9's 'Not in client copy' words (clientNamesSlice1.shared.ts notInClientCopy) over every sentence the lead can say
+# Scratch test, kept out of the repo tree (scratchpad/f1-view/copy-words.test.tsx, run with a scratch vitest config
+# that reuses the repo's aliases and setup). It builds every (status x basis x filed) sequence, every lead, every
+# summary and compiles note, and asserts no section-9 word and no stored status or basis value on screen.
+$ npx vitest run --config scratchpad/f1-view/vitest.scratch.config.ts
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+# The check can fail: with one forbidden sentence added (COPY_PROBE_FAIL=1, 'The filing engine read 0000 (sent).'):
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
++   "engine: The filing engine read 0000 (sent).",
+      Tests  1 failed (1)
+# The scratch test:
+#   // @vitest-environment jsdom
+#   // Scratch (never in the repo tree): every sentence the card's lead can produce, through
+#   // clientNamesSlice1.shared.ts's notInClientCopy and the plan's §2 "no enum values on screen".
+#   import { describe, expect, it } from 'vitest';
+#   import { writeFileSync } from 'node:fs';
+#   import { notInClientCopy } from '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/clientNamesSlice1.shared';
+#   import { compilesLine, sequencesLine, type FiledSequenceState } from '/home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/surfaces/EctdFiledState';
+#   
+#   const STATUSES = ['sent', 'acknowledged', 'rejected', 'pending', 'transmitting', 'failed', null];
+#   const BASES = ['transmit', 'compiles', null, undefined] as const;
+#   const seqs: FiledSequenceState[] = [];
+#   let n = 0;
+#   for (const d of STATUSES) for (const b of BASES) for (const filed of [true, false]) {
+#     seqs.push({ sequenceNumber: String(n++).padStart(4, '0'), dispatchStatus: d, filed, ...(b === undefined ? {} : { basis: b }) });
+#   }
+#   const leads = [
+#     'Nothing is on file: every document the included sequences filed has been withdrawn.',
+#     'Nothing is on file: no sequence of this submission has been sent or acknowledged with a record of what it carried.',
+#     '1 document is on file, read from what each sequence sent.', '2 documents are on file.',
+#   ];
+#   describe('every sentence the lead can say', () => {
+#     it('passes the client-copy words and shows no stored status', () => {
+#       const lines = [
+#         ...leads,
+#         sequencesLine(seqs),
+#         ...seqs.map((s) => sequencesLine([s])),
+#         compilesLine(seqs) ?? '',
+#         compilesLine([{ sequenceNumber: '0000', dispatchStatus: 'sent', filed: true, basis: 'compiles' }]) ?? '',
+#         compilesLine([{ sequenceNumber: '0000', dispatchStatus: 'sent', filed: true, basis: 'compiles' }, { sequenceNumber: '0001', dispatchStatus: 'sent', filed: true, basis: 'transmit' }]) ?? '',
+#       ];
+#       writeFileSync(process.env.COPY_OUT ?? '/dev/null', lines.join('\n') + '\n');
+#       if (process.env.COPY_PROBE_FAIL) lines.push('The filing engine read 0000 (sent).');
+#       expect(lines.flatMap((l) => notInClientCopy(l).map((w) => `${w}: ${l}`))).toEqual([]);
+#       for (const l of lines) expect(l).not.toMatch(/\((?:sent|acknowledged|pending|rejected|transmitting|failed|null|undefined)[,)]|\b(?:transmit|null|undefined)\b|_/);
+#     });
+#   });
+# The distinct sentences it checked (the cross product includes impossible rows, e.g. a filed 'pending'
+# sequence: the server marks a sequence filed only when it was sent or acknowledged):
+    1 document is on file, read from what each sequence sent.
+    2 documents are on file.
+    Includes 0000 (sent to the agency).
+    Includes 0002 (sent to the agency).
+    Includes 0004 (sent to the agency).
+    Includes 0006 (sent to the agency).
+    Includes 0008 (acknowledged by the agency).
+    Includes 0010 (acknowledged by the agency).
+    Includes 0012 (acknowledged by the agency).
+    Includes 0014 (acknowledged by the agency).
+    Includes 0016 (rejected by the agency).
+    Includes 0018 (rejected by the agency).
+    Includes 0020 (rejected by the agency).
+    Includes 0022 (rejected by the agency).
+    Includes 0024 (not on file at the agency).
+    Includes 0026 (not on file at the agency).
+    Includes 0028 (not on file at the agency).
+    Includes 0030 (not on file at the agency).
+    Includes 0032 (not on file at the agency).
+    Includes 0034 (not on file at the agency).
+    Includes 0036 (not on file at the agency).
+    Includes 0038 (not on file at the agency).
+    Includes 0040 (not on file at the agency).
+    Includes 0042 (not on file at the agency).
+    Includes 0044 (not on file at the agency).
+    Includes 0046 (not on file at the agency).
+    Includes 0048 (not on file at the agency).
+    Includes 0050 (not on file at the agency).
+    Includes 0052 (not on file at the agency).
+    Includes 0054 (not on file at the agency).
+    Not included: 0001 (sent to the agency, but nothing on record says what it carried).
+    Not included: 0003 (sent to the agency, but nothing on record says what it carried).
+    Not included: 0005 (sent to the agency, but nothing on record says what it carried).
+    Not included: 0007 (sent to the agency, but nothing on record says what it carried).
+    Not included: 0009 (acknowledged by the agency, but nothing on record says what it carried).
+    Not included: 0011 (acknowledged by the agency, but nothing on record says what it carried).
+    Not included: 0013 (acknowledged by the agency, but nothing on record says what it carried).
+    Not included: 0015 (acknowledged by the agency, but nothing on record says what it carried).
+    Not included: 0017 (rejected by the agency).
+    Not included: 0019 (rejected by the agency).
+    Not included: 0021 (rejected by the agency).
+    Not included: 0023 (rejected by the agency).
+    Not included: 0025 (not on file at the agency).
+    Not included: 0027 (not on file at the agency).
+    Not included: 0029 (not on file at the agency).
+    Not included: 0031 (not on file at the agency).
+    Not included: 0033 (not on file at the agency).
+    Not included: 0035 (not on file at the agency).
+    Not included: 0037 (not on file at the agency).
+    Not included: 0039 (not on file at the agency).
+    Not included: 0041 (not on file at the agency).
+    Not included: 0043 (not on file at the agency).
+    Not included: 0045 (not on file at the agency).
+    Not included: 0047 (not on file at the agency).
+    Not included: 0049 (not on file at the agency).
+    Not included: 0051 (not on file at the agency).
+    Not included: 0053 (not on file at the agency).
+    Not included: 0055 (not on file at the agency).
+    Nothing is on file: every document the included sequences filed has been withdrawn.
+    Nothing is on file: no sequence of this submission has been sent or acknowledged with a record of what it carried.
+    Sequence 0000 is read from its compiles instead, recorded before the platform kept what each send carried, so a document listed for it may not have been sent.
+    Sequence 0000 is read from its compiles, recorded before the platform kept what each send carried, so a document listed for it may not have been sent.
+    Sequences 0002, 0004, 0006, 0010, 0012, 0014, 0018, 0020, 0022, 0026, 0028, 0030, 0034, 0036, 0038, 0042, 0044, 0046, 0050, 0052 and 0054 are read from their compiles instead, recorded before the platform kept what each send carried, so a document listed for them may not have been sent.
+    (plus one summary of all 56 sequences together, and the compiles note naming every filed non-transmit sequence)
+
+## ONE_DESIGN_PLAN.md §2, retired patterns, against EctdFiledState.tsx after the change
+- Uppercase coloured eyebrow labels: none added. The card header "On file at the agency" is unchanged.
+- "What to do now / NEXT STEP" guidance boxes: none. The new words are sentences in the existing lead paragraph.
+- "THIS WORK FLOWS INTO" chip rows: none.
+- A large serif answer banner: none.
+- Stat tiles and percentages as chrome: none. The count is in a sentence, as before.
+- Ids, enum values, table or function names, snake_case on screen: removed rather than added.
+  - The summary printed stored dispatch statuses ("(acknowledged)", "(pending, not filed)"). It now uses
+    dispatchWords ("acknowledged by the agency", "not on file at the agency").
+  - "Folds", the fold's name, is now "Includes".
+  - The basis values ('transmit', 'compiles') are never printed. "its compiles" is an English sentence, and the
+    scratch check above refuses a bare "transmit".
+  - Sequence numbers (0000) are the eCTD's own user-facing numbers and were already shown.
+- "Coming later" roadmap text: none.
+- A per-document-type card or a second editor or canvas: none. Same card, same markup.
+- Copy is calm and plain. One true uncertainty is stated once ("may not have been sent"): for a sequence read from
+  its compiles, nothing on record says which compile was sent.
+- No className, element or style changed: `git diff HEAD -- EctdFiledState.tsx` has no added or removed line with a
+  tag, className or style (checked with grep, below).
+$ git diff HEAD -- client/src/concept2cure/v2/surfaces/EctdFiledState.tsx | grep -E '^[-+]' | grep -iE 'className|<[a-zA-Z/]|style=' | wc -l
+0

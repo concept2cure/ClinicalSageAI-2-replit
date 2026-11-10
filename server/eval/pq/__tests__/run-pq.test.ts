@@ -11,12 +11,49 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import type * as NodeFs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { runPq, type RunPqOptions } from '../run-pq';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { runPq as runScopedPq, type RunPqOptions } from '../run-pq';
+import { getTenantScope } from '../../../db/tenantStore';
+import type { EvaluationScope } from '../../rag/qualification-corpus';
+import { buildExtractionPrompt, buildGenerationPrompt, type GoldDocTask } from '../../doc-quality/doc-quality-metrics';
 import goldBank from '../../doc-quality/gold-tasks.json';
 import protocolJson from '../pq-protocol.json';
 import { APPROVED_MODELS } from '../../../services/ai-governance/approved-models';
 import type { GatewayResponse } from '../../../services/ai-gateway/types';
+import { AIGateway } from '../../../services/ai-gateway/gateway';
+import * as providerClients from '../../../services/ai-gateway/providers/clients';
+import { setOrgPlacementResolver, resetOrgPlacementResolver } from '../../../services/ai-gateway/providers/org-placement';
+
+const admission = vi.hoisted(() => ({ organizationUuid: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  programId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', otherOrganizationUuid: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+  otherProgramId: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd', resolve: vi.fn(), verify: vi.fn() }));
+const preflightFixture = vi.hoisted(() => ({ useActual: false }));
+// Network-free harness cases inject ready prerequisites so the real measured verdict remains testable.
+// This test seam changes neither the canonical protocol nor its ability to establish a PASS.
+vi.mock('../verify-pq-record', async importOriginal => {
+  const real = await importOriginal<typeof import('../verify-pq-record')>();
+  return { ...real, qualificationPreflight: () => {
+    const actual = real.qualificationPreflight();
+    return preflightFixture.useActual ? actual : { ...actual, readyToEvaluate: true, status: 'ready_to_evaluate', blockers: [] };
+  } };
+});
+vi.mock('../rag-phase', async importOriginal => ({ ...await importOriginal<typeof import('../rag-phase')>(),
+  defaultRagDependencies: async (evaluateModel: unknown) => ({ evaluateModel, resolveOrganizationId: admission.resolve,
+    verifyScope: admission.verify, readDocument: vi.fn(), retrieve: vi.fn() }) }));
+beforeEach(() => {
+  preflightFixture.useActual = false;
+  admission.resolve.mockReset().mockImplementation(async uuid => {
+    if (uuid === admission.organizationUuid) return 7;
+    if (uuid === admission.otherOrganizationUuid) return 8;
+    throw new Error('Unverified evaluation organization');
+  });
+  admission.verify.mockReset().mockImplementation(async (scope: EvaluationScope) => {
+    if ((scope.organizationId === 7 && scope.organizationUuid === admission.organizationUuid && scope.programId === admission.programId) ||
+      (scope.organizationId === 8 && scope.organizationUuid === admission.otherOrganizationUuid && scope.programId === admission.otherProgramId)) return;
+    throw new Error('Unverified organization/programme binding');
+  });
+});
+const runPq = (options: RunPqOptions) => runScopedPq({ organizationUuid: admission.organizationUuid, programId: admission.programId, ...options });
 
 /**
  * The version the model under qualification is pinned to, read from the same
@@ -56,11 +93,21 @@ const extractionTasks = allTasks.filter((t) => t.taskType === 'extraction' && t.
  * generation assertions while quietly measuring a model that cannot extract.
  */
 function coveringDraft(prompt: string): string {
-  const gen = generationTasks.find((t) => t.input && prompt.includes(t.input));
-  if (gen) return (gen.requiredSections ?? []).map((s) => `## ${s}\nContent drawn from the source material.`).join('\n\n');
-  const ext = extractionTasks.find((t) => t.input && prompt.includes(t.input));
+  const ext = extractionTaskOf(prompt);
   if (ext) return JSON.stringify(ext.expectedFields);
+  const gen = generationTasks.find((t) => prompt === buildGenerationPrompt(t as unknown as GoldDocTask));
+  if (gen) return (gen.requiredSections ?? []).map((s) => `## ${s}\nContent drawn from the source material.`).join('\n\n');
   return '';
+}
+
+/**
+ * The extraction task a prompt asks, by the exact prompt run-pq builds. Since
+ * 2026-11-01 one real source passage can serve both a drafting task and an
+ * extraction task (module-2-clinical, module-3-quality), so a prompt is told
+ * apart by what it asks, never by the passage it contains.
+ */
+function extractionTaskOf(prompt: string): Task | undefined {
+  return extractionTasks.find((t) => prompt === buildExtractionPrompt(t as unknown as GoldDocTask));
 }
 
 function stub(served: string | ((i: number) => string | undefined), content: (prompt: string) => string = coveringDraft) {
@@ -118,6 +165,74 @@ afterEach(() => {
   for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true });
 });
 
+describe('qualification tenant admission', () => {
+  it('reports canonical prerequisite blockers before any tenant bootstrap or provider call', async () => {
+    preflightFixture.useActual = true;
+    const s = stub(PINNED);
+    const result = await runPq({ modelId: MODEL_ID, gateway: s.gateway });
+    expect(result).toMatchObject({ verdict: 'INCOMPLETE', generation: [], extraction: [], recordPath: null,
+      preflight: { readyToEvaluate: false, qualifiesModel: false } });
+    // The protocol is approved (P-118). What blocks the run now is what it measures: a required component that cannot
+    // be executed yet, and the retrieval bank.
+    const codes = result.preflight?.blockers.map(blocker => blocker.code);
+    expect(codes).toEqual(expect.arrayContaining(['REQUIRED_COMPONENT_UNAVAILABLE', 'RAG_SAMPLE_SHORTFALL', 'SOURCE_REVIEW_INCOMPLETE']));
+    expect(codes).not.toContain('PROTOCOL_NOT_APPROVED');
+    expect(s.calls).toEqual([]);
+    expect(admission.resolve).not.toHaveBeenCalled();
+  });
+  it('refuses missing identity or an invalid live project binding before any provider call', async () => {
+    const s = stub(PINNED);
+    await expect(runScopedPq({ modelId: MODEL_ID, gateway: s.gateway })).rejects.toThrow(/organization UUID and programme/);
+    expect(admission.resolve).not.toHaveBeenCalled();
+    admission.verify.mockRejectedValueOnce(new Error('PRIVATE_DATABASE_SCOPE_ERROR'));
+    const error = await runPq({ modelId: MODEL_ID, gateway: s.gateway }).catch(e => e);
+    expect(error.message).toContain('QUALIFICATION_SCOPE_UNAVAILABLE');
+    expect(error.message).not.toContain('PRIVATE_DATABASE_SCOPE_ERROR');
+    expect(s.calls).toEqual([]);
+  });
+
+  it('uses the same verified identity in RAG and records it alongside generation and extraction', async () => {
+    const out = mkdtempSync(path.join(os.tmpdir(), 'pq-scoped-record-'));
+    dirs.push(out);
+    const result = await runPq({ modelId: MODEL_ID, gateway: stub(PINNED).gateway, judgeModelId: 'gpt-4o', record: true, outDir: out });
+    const expected = { organizationId: 7, organizationUuid: admission.organizationUuid, programId: admission.programId };
+    expect(result.rag.scope).toEqual(expected);
+    expect(result.rag.scopeVerified).toBe(true);
+    expect(JSON.parse(readFileSync(result.recordPath!, 'utf8')).evaluationScope).toEqual(expected);
+    expect(admission.resolve).toHaveBeenCalledOnce();
+  });
+
+  it('isolates two tenants through the real evaluation gateway, credential factory and placement path', async () => {
+    const calls: Array<{ credentialOrg: number; tenant: string | undefined; uuid: string | null | undefined }> = [];
+    const placementOrgs: number[] = [];
+    vi.spyOn(providerClients, 'resolveTenantModelCredentialAvailability').mockResolvedValue({ mode: 'customer_owned', providers: ['anthropic'] });
+    vi.spyOn(providerClients, 'createTenantProviderClient').mockImplementation(async (_provider, organizationId) => {
+      calls.push({ credentialOrg: organizationId, tenant: getTenantScope()?.tenantId, uuid: getTenantScope()?.orgUuid });
+      return { messages: { create: async (params: { model: string; messages: Array<{ content: string }> }) => ({
+        model: params.model, content: [{ type: 'text', text: coveringDraft(params.messages[0].content) }],
+        stop_reason: 'end_turn', usage: { input_tokens: 1, output_tokens: 1 },
+      }) } };
+    });
+    setOrgPlacementResolver({ resolve: async organizationId => {
+      placementOrgs.push(Number(organizationId)); return { allowedProviders: ['anthropic'] };
+    } });
+    const gateway = new AIGateway({ providers: [], auditEnabled: false, deterministicMode: false,
+      policy: { maxTokensPerRequest: 16000, maxRequestsPerMinutePerOrg: 10000, maxRequestsPerMinutePerUser: 10000,
+        blockedPatterns: [], contentFilters: false, piiDetection: false } });
+    try {
+      const results = await Promise.all([
+        runPq({ modelId: MODEL_ID, gateway }),
+        runScopedPq({ modelId: MODEL_ID, gateway, organizationUuid: admission.otherOrganizationUuid, programId: admission.otherProgramId }),
+      ]);
+      expect(results.every(result => result.generation.every(row => row.servedModelVerified) && result.extraction.every(row => row.servedModelVerified))).toBe(true);
+      expect(new Set(placementOrgs)).toEqual(new Set([7, 8]));
+      expect(calls).toHaveLength(2 * (generationTasks.length + extractionTasks.length));
+      expect(calls.every(call => call.tenant === String(call.credentialOrg) &&
+        call.uuid === (call.credentialOrg === 7 ? admission.organizationUuid : admission.otherOrganizationUuid))).toBe(true);
+    } finally { resetOrgPlacementResolver(); vi.restoreAllMocks(); }
+  });
+});
+
 describe('run-pq live path', () => {
   it.each(['max_tokens', 'tool_use', 'unknown', 'aborted'])('generation and extraction never score a partial provider output: %s', async finishReason => {
     const s = stub(PINNED);
@@ -168,14 +283,14 @@ describe('run-pq live path', () => {
     expect(r.generation.every((g) => !g.servedModelVerified)).toBe(true);
   });
 
-  it('on the current draft protocol, a perfect model is INCOMPLETE — and the reasons say why', async () => {
+  it('on the current protocol, approved (P-118), a perfect model is INCOMPLETE — and the reasons say why', async () => {
     const r = await runPq({ modelId: MODEL_ID, gateway: stub(PINNED).gateway });
     expect(r.verdict).toBe('INCOMPLETE');
     const why = r.reasons.join(' ');
-    // What still blocks a PASS: rag cannot execute (pq-protocol.json records
-    // why, and run-pq has no rag phase), and the protocol is a draft nobody has
-    // approved.
+    // What still blocks a PASS: rag was not run here, and the CSR drafting
+    // component the approved protocol requires cannot be executed yet.
     expect(why).toMatch(/rag/);
+    expect(why).toMatch(/required component "csrDrafting" cannot be executed yet/);
     // Extraction used to be named here too, as a component that could not be
     // executed. It executes now and a perfect model passes it, so its absence
     // from the reasons is the evidence — the same shape as the sample-floor
@@ -215,7 +330,7 @@ describe('run-pq live path', () => {
     // model that answers with an empty object must score zero on them.
     const r = await runPq({
       modelId: MODEL_ID,
-      gateway: stub(PINNED, (p) => (extractionTasks.some((t) => t.input && p.includes(t.input)) ? '{}' : coveringDraft(p))).gateway,
+      gateway: stub(PINNED, (p) => (extractionTaskOf(p) ? '{}' : coveringDraft(p))).gateway,
     });
     for (const e of r.extraction) expect(e.f1, e.taskId).toBe(0);
     expect(r.verdict).toBe('FAIL');
@@ -242,7 +357,7 @@ describe('run-pq live path', () => {
     // failure while the first is a harness problem.
     const r = await runPq({
       modelId: MODEL_ID,
-      gateway: stub(PINNED, (p) => (extractionTasks.some((t) => t.input && p.includes(t.input)) ? 'I cannot help with that.' : coveringDraft(p))).gateway,
+      gateway: stub(PINNED, (p) => (extractionTaskOf(p) ? 'I cannot help with that.' : coveringDraft(p))).gateway,
     });
     expect(r.extraction.every((e) => e.f1 === null && e.error)).toBe(true);
     expect(r.verdict).not.toBe('PASS');
@@ -253,7 +368,7 @@ describe('run-pq live path', () => {
     const r = await runPq({
       modelId: MODEL_ID,
       gateway: stub(PINNED, (p) => {
-        const t = extractionTasks.find((x) => x.input && p.includes(x.input));
+        const t = extractionTaskOf(p);
         return t ? `Here are the fields:\n\n\u0060\u0060\u0060json\n${JSON.stringify(t.expectedFields)}\n\u0060\u0060\u0060\n` : coveringDraft(p);
       }).gateway,
     });
@@ -283,7 +398,7 @@ describe('run-pq live path', () => {
     expect(rec).toMatchObject({
       kind: 'pq-record',
       protocolId: 'PQ-DRAFT-001',
-      protocolStatus: 'draft',
+      protocolStatus: 'approved',
       modelId: MODEL_ID,
       pinnedVersion: PINNED,
       verdict: 'INCOMPLETE',
@@ -319,6 +434,8 @@ describe('run-pq rag component', () => {
     p.status = 'approved';
     (p as { approvedBy: string | null }).approvedBy = 'System owner (test copy)';
     (p as { approvedOn: string | null }).approvedOn = '2026-09-28';
+    // The CSR drafting component (P-118) cannot be executed yet; these cases are about rag.
+    delete (p.components as Partial<typeof p.components>).csrDrafting;
     mutate(p);
     return `${JSON.stringify(p, null, 2)}\n`;
   }
@@ -336,8 +453,8 @@ describe('run-pq rag component', () => {
   });
 
   it('control — the redirect works: an approved copy with rag not required lets a perfect model PASS', async () => {
-    // The real protocol is a draft and cannot PASS, so a PASS here proves the
-    // copy was what run-pq read — and that the stub is otherwise passing, so the
+    // The real protocol requires a component that cannot be executed yet and so
+    // cannot PASS, so a PASS here proves the copy was what run-pq read — and that the stub is otherwise passing, so the
     // E6 case below is INCOMPLETE because of rag and nothing else.
     fsRedirect.protocolText = approvedCopy((p) => {
       p.components.rag.required = false;
@@ -379,7 +496,8 @@ describe('run-pq rag component', () => {
     } as RunPqOptions);
     expect(r.verdict).not.toBe('PASS');
     const rec = JSON.parse(readFileSync(r.recordPath as string, 'utf8'));
-    expect(rec.protocolStatus).toBe('draft');
+    // The copy handed in would PASS (see the control above). The real file cannot, and the record is of the real file.
+    expect(r.reasons.join(' ')).toMatch(/required component "csrDrafting" cannot be executed yet/);
     expect(rec.protocolSha256).toBe(sha256(readFileSync(REAL_PROTOCOL_PATH, 'utf8')));
   });
 });

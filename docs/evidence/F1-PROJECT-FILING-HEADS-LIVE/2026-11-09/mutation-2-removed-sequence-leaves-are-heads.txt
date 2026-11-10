@@ -1,0 +1,8 @@
+MUTATION 2-removed-sequence-leaves-are-heads in server/services/projects/schedule-of-events/service.ts (on the final code and tests, 2026-11-09T02:50:11.361774Z): replaced [s.organization_id=l.organization_id AND s.deleted_at IS NULL] with [s.organization_id=l.organization_id]
+ ✓ server/services/projects/schedule-of-events/__tests__/admission.test.ts > canonical gate observation adapters > a project whose only sequence was removed has no filing target, and nothing is assessed from it 3249ms
+ × server/services/projects/schedule-of-events/__tests__/admission.test.ts > canonical gate observation adapters > a removed sequence’s leaves are not filing heads either: changing one leaves the monitor’s input heads as they were 183ms
+      Tests  1 failed | 1 passed | 78 skipped (80)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/projects/schedule-of-events/__tests__/admission.test.ts > canonical gate observation adapters > a removed sequence’s leaves are not filing heads either: changing one leaves the monitor’s input heads as they were
+AssertionError: expected '1f85263236df198bc89df3fe4b5c0b822a0f6…' to be '35a5528ccee5291f3ac0ebac21d517d964cdc…' // Object.is equality
+restored sha256 150d64fd387948aee8c3bd06590bc146f7ac2bc7b7168dea2b5541563f81e3ef (expected 150d64fd387948aee8c3bd06590bc146f7ac2bc7b7168dea2b5541563f81e3ef)

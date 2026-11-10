@@ -77,6 +77,7 @@
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { requestPgClient } from '../db/requestDb';
+import { isPlatformScopeRole } from '../db/tenantStore';
 import { serverError } from '../lib/api-response';
 import type { RequestDbClient } from '../middleware/lazyRequestDbClient';
 import { signingAttemptLimiter } from '../middleware/signing-attempt-limiter';
@@ -146,7 +147,12 @@ export interface SignedAct {
    * no binder.
    */
   contentBasis?: BindingBasis;
-  /** Set as app.current_user_role on the signing transaction, where the route's other writes set it. */
+  /**
+   * Set as app.current_user_role on the signing transaction, where the route's
+   * other writes set it. The platform role ('app_super_admin', however cased or
+   * padded) is refused with 403 PLATFORM_SCOPE_ROLE_REFUSED before anything is
+   * asked, and setTenantContextTx refuses it again (P-72 slice 1b).
+   */
   tenantRole?: string;
   /**
    * The organisation statuses a signer may sign from; active when absent. Only
@@ -204,8 +210,13 @@ function refusal(res: Response, status: number, code: string, message: string, e
   return null;
 }
 
-/** Steps 1-3: who is signing, and whether every component arrived. Writes the refusal and returns null otherwise. */
-function signatureComponents(req: Request, res: Response, meanings: readonly GovernedSignMeaning[]): SignatureComponents | null {
+/**
+ * Steps 1-3: who is signing, whether every component arrived, and whether the
+ * act's tenant role can carry a signing transaction. Writes the refusal and
+ * returns null otherwise.
+ */
+function signatureComponents(req: Request, res: Response, act: Pick<SignedAct, 'meanings' | 'tenantRole' | 'domain'>): SignatureComponents | null {
+  const meanings = act.meanings;
   const userId = resolveUserId(req);
   const orgId = resolveOrgId(req);
   if (!userId || !orgId) return refusal(res, 401, 'AUTH_REQUIRED', 'Authentication required.');
@@ -229,6 +240,14 @@ function signatureComponents(req: Request, res: Response, meanings: readonly Gov
   // The refusal the other ceremony gives (services/part11/governed-signature-ceremony.ts).
   if (!meanings.includes(meaning)) {
     return refusal(res, 400, 'MEANING_NOT_ALLOWED', `This signature can mean ${meanings.join(', ')}; "${meaning}" is not one of them. Nothing was signed.`);
+  }
+  // A signing transaction acts for one organisation: a tenant role that is the
+  // platform role would open every tenant's rows on it (P-72 slice 1b). Refused
+  // as the request scope refuses it, before the act, the authority or the
+  // credential is asked, so it spends no password guess.
+  if (isPlatformScopeRole(act.tenantRole)) {
+    log.warn('Refused a signed act whose tenant role is the platform role', { domain: act.domain, orgId, userId });
+    return refusal(res, 403, 'PLATFORM_SCOPE_ROLE_REFUSED', "This account's role in the organization cannot open a session. An administrator must correct the role. Nothing was signed.");
   }
   return { orgId, userId, ...parsed.data, meaning };
 }
@@ -257,7 +276,7 @@ function answerFailure(res: Response, routeCodeStatus: Readonly<Record<string, n
  * the act's body, the ledger ids and the signature id, or the refusal.
  */
 export async function signGovernedAct(req: Request, res: Response, act: SignedAct): Promise<void> {
-  const parts = signatureComponents(req, res, act.meanings);
+  const parts = signatureComponents(req, res, act);
   if (!parts) return;
   const { orgId, userId, reason, meaning } = parts;
 

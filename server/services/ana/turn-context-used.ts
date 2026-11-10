@@ -55,6 +55,9 @@ export function memoryStatusOf(result: MemoryContextAssemblerResult | MemoryFall
   const read = 'read' in result && Array.isArray(result.read) ? result.read : [];
   if (read.length > 0) return 'read';
   if (!result.diagnostics) return 'unavailable';
+  // Successful retrieval is not an empty match when the prompt budget could
+  // not admit a complete record.
+  if (result.diagnostics.trimmed) return 'unavailable';
   const outcomes = result.diagnostics.layerOutcomes;
   if (outcomes && Object.values(outcomes).some((o) => o === 'error' || o === 'timeout')) return 'unavailable';
   return 'none';

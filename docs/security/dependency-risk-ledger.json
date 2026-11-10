@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-20T22:04:04.509Z",
+  "generatedAt": "2026-11-10T07:02:49.076Z",
   "scanner": {
     "name": "npm audit",
     "npmVersion": "10.9.9",
@@ -9,108 +9,44 @@
     "resultArtifact": "dependency-audit-results.json"
   },
   "lockfileVersion": 3,
-  "lockfileSha256": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+  "lockfileSha256": "0e35530cd24d00d92ccfbc74362cb63d89ecf0e96eb8e9751148d53c749e42bd",
   "rootPackageVersion": "1.0.0",
   "findings": [
     {
-      "advisory": "GHSA-w3rx-r6r6-pgpr",
-      "advisoryUrl": "https://github.com/advisories/GHSA-w3rx-r6r6-pgpr",
-      "package": "image-size",
+      "advisory": "GHSA-mrhx-c7xc-m3w5",
+      "advisoryUrl": "https://github.com/advisories/GHSA-mrhx-c7xc-m3w5",
+      "package": "zod",
       "severity": "high",
-      "affectedRange": "<=2.0.2",
-      "installedVersion": "1.2.1",
-      "fixedVersion": null,
-      "dependencyType": "transitive",
+      "affectedRange": "<4.6.6",
+      "installedVersion": "4.6.7",
+      "fixedVersion": "4.6.6",
+      "dependencyType": "direct",
       "disposition": "unreachable",
       "evidence": {
         "packagePaths": [
-          "concept2cure-riai > pptxgenjs@4.0.1 > image-size@1.2.1"
+          "concept2cure-riai > @figma/code-connect@1.5.3 > zod@3.25.58 (devDependency; the only copy below 4.6.6)"
         ],
         "entryPoints": [
-          "POST /api/concept2cure/artifacts/export-pptx -> generatePptxBuffer"
+          "None. Every production and application path is fixed: the root zod, which every server, shared and client import resolves to, is 4.6.7, and `npm ls zod --omit=dev --all` lists only zod@4.6.7. The one remaining copy is nested under @figma/code-connect, a design-time CLI (`figma connect`) that no npm script, CI workflow or Dockerfile stage runs; the repository has no *.figma.tsx mapping file and client/figma.config.json still carries placeholder team and file ids."
         ],
         "runtimeProof": [
-          "The package is present in the lockfile but the resolved pptxgenjs Node runtime bundle does not import image-size.",
-          "The production generator invokes addText/addShape only and the reachability guard fails if an image-capable API is introduced.",
-          "The production-path regression test generates and validates a text-only PPTX archive, then proves image-size was not loaded into the Node module cache."
+          "The advisory (CVE-2023-54404, CWE-770) is memory exhaustion in array validation: zod accumulates one issue per failing element with no cap. Measured on zod 3.25.76 before this change: a 2 MB JSON body (the /api limit) of 1,000,000 elements against z.array(z.string()).max(10) produced 1,000,001 issues and 276 MB of heap in one synchronous parse. That path was reachable from request validation in 244 server files, so it was FIXED (zod 4.6.7), not reviewed away.",
+          "The gate checks installedVersion against the hoisted node_modules/zod, which is the fixed 4.6.7; the vulnerable copy is node_modules/@figma/code-connect/node_modules/zod@3.25.58, flagged by npm audit only through @figma/code-connect. dependencyType is `direct` because zod is a direct dependency; the vulnerable copy itself is transitive.",
+          "No parent release carries the fix: @figma/code-connect 2.1.0 (latest) pins zod 3.25.76 exactly. An override to zod 4 would break the CLI's zod 3 API use, and the CLI never parses a request: its input is this repository's config and Figma's API responses on a developer's machine.",
+          "`npm ci --legacy-peer-deps --omit=dev` (the Dockerfile runtime stage) does not install @figma/code-connect, so the runtime image has no zod below 4.6.6."
         ],
         "commands": [
-          "npm ls pptxgenjs image-size --all",
-          "npm run ci:pptx-image-reachability",
-          "npx vitest run --config vitest.config.ts server/services/__tests__/pptxGenerator.security.test.ts"
+          "npm ls zod --omit=dev --all",
+          "npm ls zod --all",
+          "npm view @figma/code-connect@latest dependencies.zod",
+          "git grep -nE \"figma connect|code-connect\" -- .github scripts Dockerfile package.json",
+          "git ls-files '*.figma.tsx'"
         ]
       },
-      "action": "Keep image-size absent from the resolved PPTX runtime bundle and fail CI if image-capable generation is introduced.",
+      "action": "Keep @figma/code-connect out of every script, workflow and runtime stage while it pins zod 3. Drop the row when @figma/code-connect ships on zod >=4.6.6 (then bump it) or the dependency is removed; re-review if anything starts invoking the CLI.",
       "owner": "Security Engineering (human owner required if disposition changes to exception)",
-      "reviewDate": "2026-08-25",
-      "expiresAt": "2026-11-25T00:00:00.000Z"
-    },
-    {
-      "advisory": "GHSA-5p2g-fcmc-qvqq",
-      "advisoryUrl": "https://github.com/advisories/GHSA-5p2g-fcmc-qvqq",
-      "package": "image-size",
-      "severity": "high",
-      "affectedRange": "<=2.0.2",
-      "installedVersion": "1.2.1",
-      "fixedVersion": null,
-      "dependencyType": "transitive",
-      "disposition": "unreachable",
-      "evidence": {
-        "packagePaths": [
-          "concept2cure-riai > pptxgenjs@4.0.1 > image-size@1.2.1"
-        ],
-        "entryPoints": [
-          "POST /api/concept2cure/artifacts/export-pptx -> generatePptxBuffer"
-        ],
-        "runtimeProof": [
-          "The resolved pptxgenjs Node runtime bundle contains no image-size import, so its JXL/HEIF parsers are not loaded.",
-          "No request title/content or separately returned Nano Banana cover image is passed to a pptxgenjs image API.",
-          "CI checks the lockfile versions, resolved bundle, generator API usage, Nano Banana call shape, and live Node module cache after generation."
-        ],
-        "commands": [
-          "npm ls pptxgenjs image-size --all",
-          "npm run ci:pptx-image-reachability",
-          "npx vitest run --config vitest.config.ts server/services/__tests__/pptxGenerator.security.test.ts"
-        ]
-      },
-      "action": "Keep the vulnerable parser outside the runtime module graph; reassess on any PPTX dependency or image-path change.",
-      "owner": "Security Engineering (human owner required if disposition changes to exception)",
-      "reviewDate": "2026-08-25",
-      "expiresAt": "2026-11-25T00:00:00.000Z"
-    },
-    {
-      "advisory": "GHSA-vfj7-8cjw-p6xm",
-      "advisoryUrl": "https://github.com/advisories/GHSA-vfj7-8cjw-p6xm",
-      "package": "braces",
-      "severity": "high",
-      "affectedRange": "<=3.0.3",
-      "installedVersion": "3.0.3",
-      "fixedVersion": null,
-      "dependencyType": "transitive",
-      "disposition": "unreachable",
-      "evidence": {
-        "packagePaths": [
-          "concept2cure-riai > jest@29.7.0 > @jest/core@29.7.0 > micromatch@4.0.8 > braces@3.0.3 (devDependency)",
-          "concept2cure-riai > danger@13.0.10 > micromatch@4.0.8 > braces@3.0.3 (devDependency)"
-        ],
-        "entryPoints": [
-          "None in production. `npm ls braces --omit=dev --all` is empty: the only production path was http-proxy-middleware, a declared dependency nothing imported, removed in the same change. braces runs only inside the jest test runner and the danger PR bot, which expand glob patterns written in this repository's config, never a request value."
-        ],
-        "runtimeProof": [
-          "The advisory is a stack-exhaustion DoS when braces expands a deeply nested PATTERN (CVE-2026-93687, CWE-674). An attacker must control the pattern string.",
-          "After removing http-proxy-middleware, `npm ls braces --omit=dev --all` prints `(empty)`: the production install (npm ci --omit=dev, the Dockerfile's runtime stage) does not contain braces or micromatch.",
-          "In dev, the patterns come from jest.config / vitest-adjacent config and danger's dangerfile, all committed in this repository; neither tool takes a pattern from an HTTP request, a document or a user."
-        ],
-        "commands": [
-          "npm ls braces --omit=dev --all",
-          "npm ls braces --all",
-          "git grep -nE \"http-proxy-middleware|micromatch|braces\" -- server shared client scripts"
-        ]
-      },
-      "action": "Keep braces out of the production tree: a new runtime dependency that pulls micromatch/braces must re-review this row. Drop the row when braces ships a release above 3.0.3.",
-      "owner": "Security Engineering (human owner required if disposition changes to exception)",
-      "reviewDate": "2026-10-05",
-      "expiresAt": "2026-11-05T00:00:00.000Z"
+      "reviewDate": "2026-11-06",
+      "expiresAt": "2026-12-06T00:00:00.000Z"
     }
   ]
 }

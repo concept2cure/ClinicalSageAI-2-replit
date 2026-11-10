@@ -1,0 +1,85 @@
+# The tree after the F1 review fixes: runs, 2026-11-02T02:03:58Z. HEAD 609ef94c7; clean export of HEAD for comparison at
+# scratchpad/f1-fix/head-export (git archive HEAD, node_modules symlinked).
+
+## 1. The slice's own files (fold, named prior, guard, receipts, fixtures the read widened, AnA's named prior, the card)
+$ npx vitest run <23 files below>
+     29  ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx
+     10  ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx
+      4  ✓ server/services/ana/__tests__/compute-lifecycle-description-names-the-filed-state.test.ts
+      2  ✓ server/services/ana/__tests__/compute-lifecycle-named-prior-not-on-file.test.ts
+      5  ✓ server/services/ectd/__tests__/filed-state-history.test.ts
+     15  ✓ server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts
+      6  ✓ server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts
+      1  ✓ server/services/ectd/__tests__/lifecycle-from-core.test.ts
+      1  ✓ server/services/ectd/__tests__/lifecycle-parent-leaf-binding.test.ts
+      8  ✓ server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts
+      7  ✓ server/services/ectd/__tests__/named-prior-sequence-is-the-filed-state.pglite.test.ts
+     11  ✓ server/services/ectd/__tests__/prior-sequence-fold.test.ts
+      6  ✓ server/services/ectd/__tests__/prior-sequence-loader.test.ts
+      5  ✓ server/services/ectd/__tests__/prior-sequence-transmitted-only.test.ts
+      7  ✓ server/services/ectd/__tests__/sequence-spine-fda-submission-id.pglite.test.ts
+     11  ✓ server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts
+     16  ✓ server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts
+     12  ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts
+      6  ✓ server/services/submission-gateways/__tests__/sent-package-kept.test.ts
+      5  ✓ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts
+      9  ✓ server/services/submission-service/__tests__/filed-baseline-effects.pglite.test.ts
+     13  ✓ server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts
+     21  ✓ server/services/submission-service/__tests__/transmit-recorded-identity.test.ts
+ Test Files  23 passed (23)
+      Tests  210 passed (210)
+
+## 2. Real PostgreSQL under RLS as app_service: tests/db/ectd-filed-state-view.dbtest.ts
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > folds every filed sequence: the untouched leaf from 0000, the replacement from 0001, nothing never sent 3593ms
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > lists every sequence and says which it did not fold 13ms
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > never reads another organisation’s filings, and answers empty for a program with no submission 14ms
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > what the agency holds is what was sent (F1) > a leaf only an earlier preview of the sent sequence carried is not on file 10ms
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > what the agency holds is what was sent (F1) > a sequence sent with no compile on record is filed, read from what its transmit recorded 8ms
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+
+## 3. Every unit, PGlite and client test that can reach the fold (assembly, transmit, the compile and export routes, AnA)
+# Selected by: grep -rlE 'prior-sequence-loader|assemble-from-core|package-from-core|ectd-compile|submission-service|transmitSequence|compute_lifecycle|loadPriorSequenceManifest|ectd-export'
+# over server, tests and client/src test files: 180 files (dbtests in section 4).
+ Test Files  7 failed | 172 passed | 1 skipped (180)
+      Tests  14 failed | 2287 passed | 2 skipped (2303)
+# Failing cases on the tree:
+ FAIL  server/routes/__tests__/submissions-request-current-access.pglite.test.ts > retained scope and evaluation remain current through completion > refuses a committed transfer to a different accessible unique anchor at the final parent check
+ FAIL  server/services/ana/__tests__/submission-center-tools.test.ts > generate_stf (pure) > produces one stf-<study-id>.xml per study, pointing at index.xml leaf IDs
+ FAIL  server/services/pathway-engines/mdr-ivdr/__tests__/assemble-technical-file-vault-uuid.pglite.test.ts > assembleTechnicalFileFromCore — a vault leaf by document_uuid > puts the vault CER in the technical-file ZIP instead of skipping it
+ FAIL  server/services/submission-service/__tests__/gateway-selection.test.ts > transmitSequence — an e-signed EU MAA sequence is refused before any gateway is resolved > positive control: a DCP submission is routed on to ema:cesp
+ FAIL  server/services/submission-service/__tests__/gateway-selection.test.ts > transmitSequence — an e-signed EU MAA sequence is refused before any gateway is resolved > throws VALIDATION naming the eSubmission Gateway; getGateway is never called
+ FAIL  server/services/submission-service/__tests__/submission-program-anchor.pglite.test.ts > anchoring a submission that records no project > a manager anchors it, with the reason on a chained audit row; the project’s documents are then placed
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held every table and column the code asked for
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal
+ FAIL  tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > projects complete index, regional and STF proof and persists it in the existing findings record
+ FAIL  tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > projects the typed proof and preserves the separate imported agency report
+# The same 7 files on the clean HEAD export:
+ Test Files  7 failed (7)
+      Tests  14 failed | 139 passed (153)
+# diff of the failing case names, tree vs HEAD export: identical (14 = 14)
+# None of the 7 files is changed by this build; none imports the card.
+
+## 4. The dbtests the same selection names, under RLS
+ FAIL  tests/db/submission-required-deliverables.dbtest.ts [ tests/db/submission-required-deliverables.dbtest.ts ]
+Error: This fixture requires the explicitly reviewed QA target or canonical disposable CI database.
+ FAIL  tests/db/vault-where-used.dbtest.ts [ tests/db/vault-where-used.dbtest.ts ]
+Error: Vault fixture proof requires the recorded disposable database; retained QA is refused.
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project with no program > is refused at the project door, and nothing about the commitment changes
+AssertionError: {"success":true,"data":{"commitment":{"id":1110,"commitmentType":"pmc","status":"open","submission":null},"rule":{"signatureRequired":true,"evidenceRequired":true,"dateRequired":true,"meanings":["approval
+ Test Files  3 failed | 1 passed (4)
+      Tests  1 failed | 35 passed | 46 skipped (82)
+# The same failing cases on the clean HEAD export: identical.
+# Two refuse this database by their own guard (they run only on the canonical disposable CI database); the commitment case
+# (a project with no program) does not touch the fold.
+
+## 5. Typecheck
+$ npm run -s typecheck
+exit=0
+# 'error TS' lines: 0
+
+## 6. Gates, ESLint, the row-lock comparison: gates.txt, eslint.txt, row-lock-tree-and-head.txt beside this file.

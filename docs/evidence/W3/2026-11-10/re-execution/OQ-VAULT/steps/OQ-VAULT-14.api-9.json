@@ -1,0 +1,35 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/regulatory/documents/81aa9369-3646-4cb1-9810-5b2bcf0a6322/sign",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": {
+      "meaning": "reviewed",
+      "reason": "OQ-002 step 14: reviewed for validation",
+      "password": "[REDACTED]",
+      "mfaToken": "[REDACTED]"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 365,
+    "rateLimitRetries": 0,
+    "body": {
+      "ok": true,
+      "signature": {
+        "actor": "2",
+        "role": "approver",
+        "signatureRef": "esig:26",
+        "signedAt": "2026-11-10T03:11:00.650Z",
+        "meaning": "reviewed",
+        "boundContentHash": "7a8e97a5a380b03f3a2f40aa31665ace994fbb1908526abe0bd80bbeb48afa30",
+        "bindingBasis": "vault-document-version-sha256"
+      },
+      "routeId": "543e9711-a3b4-4903-b626-f4e3ebf4e186",
+      "reviewComplete": true,
+      "stage": "in_review"
+    }
+  }
+}

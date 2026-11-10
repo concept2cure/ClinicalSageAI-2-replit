@@ -542,34 +542,37 @@ describe('Retired risk, design-controls and ivd-completeness', () => {
   });
 });
 
-/* Fold F5 item 2 (D2, 2026-10-29; decision P-61 item 2;
-   docs/evidence/D2-ONE-ANA/2026-10-29/fold-f5-device-filing/). The
-   organization-wide blocker list (device-validation) retired: a blocker belongs
-   to a filing, from that filing's deterministic readiness. Its writers were
-   amended in place (CLAUDE.md Rule 1): 20260810's keep-list and upsert, and
-   20260823's packaging row. A fresh database never holds the row; a deployed one
-   keeps it, deprecated, with its tier and its subscriptions, which carry to
-   Submission Center (decision P-61 item 4). */
-describe('Retired organization-wide blocker list', () => {
-  const read = (f: string) => fs.readFileSync(path.join(REPO_ROOT, f), 'utf8');
-  const WRITERS = [
-    'db/migrations/20260810_reconcile_module_catalog.sql',
-    'db/migrations/20260823_module_catalog_commercial_packaging.sql',
-  ];
-  const meta = async (db: PGlite, id: string) =>
-    (await db.query<{ metadata: Record<string, unknown> }>('SELECT metadata FROM available_modules WHERE module_id = $1', [id])).rows;
+/* A module retired by a fold whose catalogue writers were amended in place
+   (CLAUDE.md Rule 1): 20260810's keep-list and upsert, and 20260823's packaging
+   row. A fresh database never holds the row; a deployed one keeps it, deprecated,
+   with its tier and its subscriptions, which carry to the fold's target
+   (decision P-61 item 4, server/services/entitlements/folded-module-successors.ts).
+   One pair of cases per fold, below. */
+interface RetiredByFold {
+  id: string; name: string; category: string; tier: string;
+  target: string; targetLabel: string; targetTier: string;
+  orgId: number; fk: string;
+}
+const FOLD_WRITERS = [
+  'db/migrations/20260810_reconcile_module_catalog.sql',
+  'db/migrations/20260823_module_catalog_commercial_packaging.sql',
+];
+const readRepo = (f: string) => fs.readFileSync(path.join(REPO_ROOT, f), 'utf8');
+const moduleMeta = async (db: PGlite, id: string) =>
+  (await db.query<{ metadata: Record<string, unknown> }>('SELECT metadata FROM available_modules WHERE module_id = $1', [id])).rows;
 
-  it('a fresh database replaying the whole catalogue set twice never holds device-validation, and Submission Center stays offered at standard', async () => {
-    expect(WRITERS.every((f) => CATALOG_MIGRATIONS.includes(f))).toBe(true);
+function retiredByFoldCases(m: RetiredByFold) {
+  it(`a fresh database replaying the whole catalogue set twice never holds ${m.id}, and ${m.targetLabel} stays offered at ${m.targetTier}`, async () => {
+    expect(FOLD_WRITERS.every((f) => CATALOG_MIGRATIONS.includes(f))).toBe(true);
     const fresh = new PGlite();
     try {
       for (const ddl of baseDdl()) await fresh.exec(ddl);
       for (let replay = 0; replay < 2; replay += 1) {
-        for (const file of CATALOG_MIGRATIONS) await fresh.exec(read(file));
-        expect(await meta(fresh, 'device-validation'), `replay ${replay}`).toEqual([]);
-        const [row] = await meta(fresh, 'submission-center');
+        for (const file of CATALOG_MIGRATIONS) await fresh.exec(readRepo(file));
+        expect(await moduleMeta(fresh, m.id), `replay ${replay}`).toEqual([]);
+        const [row] = await moduleMeta(fresh, m.target);
         expect(row?.metadata.deprecated ?? false).toBe(false);
-        expect(row?.metadata.tiers).toEqual(['standard']);
+        expect(row?.metadata.tiers).toEqual([m.targetTier]);
       }
     } finally {
       await fresh.close();
@@ -577,87 +580,79 @@ describe('Retired organization-wide blocker list', () => {
   }, 120_000);
 
   it('keeps a deployed row, its tier and its subscription, deprecated, across replay of every writer', async () => {
-    await pg.exec(`INSERT INTO organizations (id, name, slug) VALUES (291037, 'Historical subscriber device-validation', 'historical-device-validation');`);
-    // As a deployed database holds it today: live, packaged at standard.
+    await pg.query('INSERT INTO organizations (id, name, slug) VALUES ($1, $2, $3)',
+      [m.orgId, `Historical subscriber ${m.id}`, `historical-${m.id}`]);
+    // As a deployed database holds it today: live, packaged at its tier.
     await pg.query(
       `INSERT INTO available_modules (module_id, name, description, category, metadata)
-       VALUES ('device-validation', 'Submission blockers', '', 'Submit & file', '{"legacyMarker":"kept","tiers":["standard"],"industries":[]}'::json)
+       VALUES ($1, $2, '', $3, $4::json)
        ON CONFLICT (module_id) DO UPDATE SET metadata = EXCLUDED.metadata`,
+      [m.id, m.name, m.category, JSON.stringify({ legacyMarker: 'kept', tiers: [m.tier], industries: [] })],
     );
     await pg.query(
-      `INSERT INTO module_subscriptions (organization_id, module_id, enabled, metadata) VALUES (291037, 'device-validation', true, '{"historicalSubscription":"kept"}')`,
+      `INSERT INTO module_subscriptions (organization_id, module_id, enabled, metadata) VALUES ($1, $2, true, '{"historicalSubscription":"kept"}')`,
+      [m.orgId, m.id],
     );
-    await pg.exec(`ALTER TABLE module_subscriptions ADD CONSTRAINT f5_validation_subscription_retirement_fk
+    await pg.exec(`ALTER TABLE module_subscriptions ADD CONSTRAINT ${m.fk}
       FOREIGN KEY (module_id) REFERENCES available_modules(module_id) ON DELETE CASCADE;`);
-    const subs = () => pg.query('SELECT organization_id, module_id, enabled, metadata FROM module_subscriptions WHERE organization_id = 291037');
+    const subs = () => pg.query('SELECT organization_id, module_id, enabled, metadata FROM module_subscriptions WHERE organization_id = $1', [m.orgId]);
     const before = await subs();
     expect(before.rows).toHaveLength(1);
     for (let replay = 0; replay < 2; replay += 1) {
-      for (const file of WRITERS) await pg.exec(read(file));
-      expect(await meta(pg, 'device-validation'), `replay ${replay}`).toEqual([
-        { metadata: { deprecated: true, legacyMarker: 'kept', tiers: ['standard'], industries: [] } },
+      for (const file of FOLD_WRITERS) await pg.exec(readRepo(file));
+      expect(await moduleMeta(pg, m.id), `replay ${replay}`).toEqual([
+        { metadata: { deprecated: true, legacyMarker: 'kept', tiers: [m.tier], industries: [] } },
       ]);
     }
     expect((await subs()).rows).toEqual(before.rows);
+  });
+}
+
+/* Fold F5 item 2 (D2, 2026-10-29; decision P-61 item 2;
+   docs/evidence/D2-ONE-ANA/2026-10-29/fold-f5-device-filing/). The
+   organization-wide blocker list (device-validation) retired: a blocker belongs
+   to a filing, from that filing's deterministic readiness. */
+describe('Retired organization-wide blocker list', () => {
+  retiredByFoldCases({
+    id: 'device-validation', name: 'Submission blockers', category: 'Submit & file', tier: 'standard',
+    target: 'submission-center', targetLabel: 'Submission Center', targetTier: 'standard',
+    orgId: 291037, fk: 'f5_validation_subscription_retirement_fk',
   });
 });
 
 /* Fold F5 item 1 (D2, 2026-10-30; decision P-61 item 1;
    docs/evidence/D2-ONE-ANA/2026-10-29/fold-f5-device-filing/). The device
    submission-packages screen (device-submission) folded into Submission
-   Center's device filings, over the one device-filing store, estar_submissions.
-   Its writers were amended in place (CLAUDE.md Rule 1): 20260810's keep-list and
-   upsert, and 20260823's packaging row. A fresh database never holds the row; a
-   deployed one keeps it, deprecated, with its tier and its subscriptions, which
-   carry to Submission Center (decision P-61 item 4). */
+   Center's device filings, over the one device-filing store, estar_submissions. */
 describe('Retired device submission packages', () => {
-  const read = (f: string) => fs.readFileSync(path.join(REPO_ROOT, f), 'utf8');
-  const WRITERS = [
-    'db/migrations/20260810_reconcile_module_catalog.sql',
-    'db/migrations/20260823_module_catalog_commercial_packaging.sql',
-  ];
-  const meta = async (db: PGlite, id: string) =>
-    (await db.query<{ metadata: Record<string, unknown> }>('SELECT metadata FROM available_modules WHERE module_id = $1', [id])).rows;
+  retiredByFoldCases({
+    id: 'device-submission', name: 'Device submission packages', category: 'Submit & file', tier: 'standard',
+    target: 'submission-center', targetLabel: 'Submission Center', targetTier: 'standard',
+    orgId: 291038, fk: 'f5_submission_subscription_retirement_fk',
+  });
+});
 
-  it('a fresh database replaying the whole catalogue set twice never holds device-submission, and Submission Center stays offered at standard', async () => {
-    expect(WRITERS.every((f) => CATALOG_MIGRATIONS.includes(f))).toBe(true);
-    const fresh = new PGlite();
-    try {
-      for (const ddl of baseDdl()) await fresh.exec(ddl);
-      for (let replay = 0; replay < 2; replay += 1) {
-        for (const file of CATALOG_MIGRATIONS) await fresh.exec(read(file));
-        expect(await meta(fresh, 'device-submission'), `replay ${replay}`).toEqual([]);
-        const [row] = await meta(fresh, 'submission-center');
-        expect(row?.metadata.deprecated ?? false).toBe(false);
-        expect(row?.metadata.tiers).toEqual(['standard']);
-      }
-    } finally {
-      await fresh.close();
-    }
-  }, 120_000);
+/* Fold F4 (D2, 2026-10-30; decision P-61 item 3;
+   docs/evidence/D2-ONE-ANA/2026-10-30/fold-f4-device-analytics/). Device pathway
+   analytics (device-analytics) joined Reporting & analytics at its tier, over
+   the projects the reader can open. A deployed row keeps its tier,
+   'professional'; insights is offered at standard. */
+describe('Retired device analytics', () => {
+  retiredByFoldCases({
+    id: 'device-analytics', name: 'Device pathway analytics', category: 'Intelligence & risk', tier: 'professional',
+    target: 'insights', targetLabel: 'Reporting & analytics', targetTier: 'standard',
+    orgId: 291039, fk: 'f4_analytics_subscription_retirement_fk',
+  });
+});
 
-  it('keeps a deployed row, its tier and its subscription, deprecated, across replay of every writer', async () => {
-    await pg.exec(`INSERT INTO organizations (id, name, slug) VALUES (291038, 'Historical subscriber device-submission', 'historical-device-submission');`);
-    // As a deployed database holds it today: live, packaged at standard.
-    await pg.query(
-      `INSERT INTO available_modules (module_id, name, description, category, metadata)
-       VALUES ('device-submission', 'Device submission packages', '', 'Submit & file', '{"legacyMarker":"kept","tiers":["standard"],"industries":[]}'::json)
-       ON CONFLICT (module_id) DO UPDATE SET metadata = EXCLUDED.metadata`,
-    );
-    await pg.query(
-      `INSERT INTO module_subscriptions (organization_id, module_id, enabled, metadata) VALUES (291038, 'device-submission', true, '{"historicalSubscription":"kept"}')`,
-    );
-    await pg.exec(`ALTER TABLE module_subscriptions ADD CONSTRAINT f5_submission_subscription_retirement_fk
-      FOREIGN KEY (module_id) REFERENCES available_modules(module_id) ON DELETE CASCADE;`);
-    const subs = () => pg.query('SELECT organization_id, module_id, enabled, metadata FROM module_subscriptions WHERE organization_id = 291038');
-    const before = await subs();
-    expect(before.rows).toHaveLength(1);
-    for (let replay = 0; replay < 2; replay += 1) {
-      for (const file of WRITERS) await pg.exec(read(file));
-      expect(await meta(pg, 'device-submission'), `replay ${replay}`).toEqual([
-        { metadata: { deprecated: true, legacyMarker: 'kept', tiers: ['standard'], industries: [] } },
-      ]);
-    }
-    expect((await subs()).rows).toEqual(before.rows);
+/* Fold F6 (D2, 2026-10-30; decision P-61 item 5;
+   docs/evidence/D2-ONE-ANA/2026-10-30/fold-f6-device-workstream/). The kit
+   portfolio (device-workstream) folded into Projects with its MDX filter. A
+   deployed row keeps its tier, 'standard'; projects is offered at free. */
+describe('Retired device workstream', () => {
+  retiredByFoldCases({
+    id: 'device-workstream', name: 'Medical Device & IVD', category: 'Author & assemble', tier: 'standard',
+    target: 'projects', targetLabel: 'Projects', targetTier: 'free',
+    orgId: 291040, fk: 'f6_workstream_subscription_retirement_fk',
   });
 });

@@ -140,7 +140,7 @@ export function SequenceAssembleTestPackage({ seq }: { seq: { id: number; sequen
 
   return (
     <div className="sc-mt">
-      <div className="tl-spec-k sc-mb">Test package</div>
+      <div className="pj-sec-h"><h3 className="sec-title">Test package</h3></div>
       <div className="scaf-note sc-mb">
         Assembles sequence {seq.sequenceNumber}&#39;s leaves into an eCTD package on the server, reports what in those
         leaves would stop it being transmitted, and discards it. Nothing is sent. The test package carries no agency

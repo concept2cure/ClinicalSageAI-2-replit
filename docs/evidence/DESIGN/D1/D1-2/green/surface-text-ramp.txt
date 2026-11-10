@@ -1,0 +1,31 @@
+# ci:surface-text-ramp for D1-2, in a scratch repo of HEAD (2e4a9fe67)'s tracked client/src CSS plus the generator, 2026-11-02T00:16Z
+# (the shared tree also holds other sessions' uncommitted sheets, e.g. authoring-v2.css, so it is not regenerated there)
+
+## 1. HEAD's sheets, HEAD's committed ramp: already stale (the Vault share, Rh -> R0, is not D1-2's; coordinator task 42)
+[ci:surface-text-ramp] FAIL — generated ramp sheet(s) do not match the stylesheets:
+    client/src/concept2cure/v2/styles/surface-text-ramp.css — stale
+  A stylesheet gained or lost a tinted-surface rule, so the re-based
+  text ramp no longer covers what the sources imply. Regenerate:
+    node scripts/design/generate-surface-text-ramp.mjs
+exit 1
+
+## 2. HEAD's sheets, the ramp regenerated from them (R0): green
+[ci:surface-text-ramp] OK — 3 generated ramp sheet(s) match the stylesheets.
+exit 0
+
+## 3. + D1-2's app-v2.css, ramp R0: red (D1-2 moved .tb-cmdk, .tb-btn:hover, .crumb-proj:hover)
+[ci:surface-text-ramp] FAIL — generated ramp sheet(s) do not match the stylesheets:
+    client/src/concept2cure/v2/styles/surface-text-ramp.css — stale
+  A stylesheet gained or lost a tinted-surface rule, so the re-based
+  text ramp no longer covers what the sources imply. Regenerate:
+    node scripts/design/generate-surface-text-ramp.mjs
+exit 1
+
+## 4. + green/surface-text-ramp.d1-2.patch (R0 -> R1): green
+[ci:surface-text-ramp] OK — 3 generated ramp sheet(s) match the stylesheets.
+exit 0
+
+## 5. git apply --check of the patch on HEAD's committed (stale) ramp: it does not apply until the Vault share is in
+error: patch failed: client/src/concept2cure/v2/styles/surface-text-ramp.css:56
+error: client/src/concept2cure/v2/styles/surface-text-ramp.css: patch does not apply
+exit 1

@@ -1,0 +1,61 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/vault-family-in-program.pglite.test.ts
+{
+  "timestamp": "2026-11-09T07:26:22.763Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T07:26:22.764Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/vault-family-in-program.pglite.test.ts
+{
+  "timestamp": "2026-11-09T07:26:22.765Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/clinical-regulatory-evidence/__tests__/vault-family-in-program.pglite.test.ts
+[database] Database connection successful
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/vault-family-in-program.pglite.test.ts > a work project's assigned Vault family is in this program (S12 gap 5, slice 2) > names the family's current version, not a superseded one 10ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/vault-family-in-program.pglite.test.ts > a work project's assigned Vault family is in this program (S12 gap 5, slice 2) > says the same nothing for an unknown family, another program's, and another organisation's 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/vault-family-in-program.pglite.test.ts > a work project's assigned Vault family is in this program (S12 gap 5, slice 2) > says nothing for a family whose versions are all deleted, or whose current version's data was withdrawn 14ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/vault-family-in-program.pglite.test.ts > a work project's assigned Vault family is in this program (S12 gap 5, slice 2) > refuses a malformed program or code without reading 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/vault-family-in-program.pglite.test.ts > a work project's assigned Vault family is in this program (S12 gap 5, slice 2) > where a task assigns the family: the program is the task's own work project's, never the body's (POST /api/tasks/tasks) 17ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/vault-family-in-program.pglite.test.ts > a work project's assigned Vault family is in this program (S12 gap 5, slice 2) > lists the program's families by their current live version, the same rule, and says when the list was cut 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/vault-family-in-program.pglite.test.ts > a work project's assigned Vault family is in this program (S12 gap 5, slice 2) > offers exactly what the check admits: each listed family passes it at the same version, and a deleted, withdrawn or superseded one is in neither 13ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/vault-citation-changes.pglite.integration.test.ts > a section drafted from a Vault version, once a later version is approved (S12) > is listed, naming the cited version and the approved one; a later draft alone does not list it 61ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/vault-citation-changes.pglite.integration.test.ts > a section drafted from a Vault version, once a later version is approved (S12) > names the latest approved version across several, and a section citing it is not listed 36ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/vault-citation-changes.pglite.integration.test.ts > a section drafted from a Vault version, once a later version is approved (S12) > is not listed once its span is retired, nor through a link the family rule refuses 45ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/vault-citation-changes.pglite.integration.test.ts > a section drafted from a Vault version, once a later version is approved (S12) > reads only its own organization's sections and versions 60ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/vault-citation-changes.pglite.integration.test.ts > a section drafted from a Vault version, once a later version is approved (S12) > the program map lists every Vault-fed section with its standing, current or replaced (S12 gap 5) 95ms
+stderr | server/routes/__tests__/task-management-vault-family.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/task-management-vault-family.test.ts
+{
+  "timestamp": "2026-11-09T07:26:29.746Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/task-management-vault-family.test.ts > POST /tasks — a work project assigned to produce a Vault family (S12 gap 5) > asks the shared check on the request's transaction, with the admitted project and the body's moduleData 52ms
+ ✓ server/routes/__tests__/task-management-vault-family.test.ts > POST /tasks — a work project assigned to produce a Vault family (S12 gap 5) > refuses a family that is not in the project's program: 409 in its own words, nothing written 19ms
+
+ Test Files  3 passed (3)
+      Tests  14 passed (14)
+   Start at  07:26:21
+   Duration  8.85s (transform 1.45s, setup 90ms, import 3.60s, tests 4.77s, environment 0ms)
+

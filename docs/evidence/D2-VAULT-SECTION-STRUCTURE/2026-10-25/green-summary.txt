@@ -1,0 +1,122 @@
+D2-VAULT-SECTION-STRUCTURE — green, 2026-10-25
+
+## New tests (NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts --reporter=verbose <3 files>)
+ ✓ server/services/__tests__/rag-vault-section-citation.pglite.integration.test.ts > a Vault passage is cited by its section and its page > the passage quoting the statistic carries its section title, and the locator keeps the page
+ ✓ server/services/__tests__/rag-vault-section-citation.pglite.integration.test.ts > a Vault passage is cited by its section and its page > a passage before the first heading has no section, and its locator is the page alone
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 2.7.3 Summary of Clinical Efficacy is a section heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 3.2.S.4.2 Analytical Procedures is a section heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 3.2.P.5.1 Specifications is a section heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 3.2.P Drug Product is a section heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 11.4.1 Efficacy Results is a section heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 11.4.1.1 Analysis of efficacy is a section heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 1. Introduction is a section heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 9 INVESTIGATIONAL PLAN is a section heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 2.7.3. Summary of Clinical Efficacy is a section heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > reads the tab pdf-parse writes between a number and its title as a separator
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > Table 14.2.1 Summary of Primary Efficacy Endpoint is a caption
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > Table 11-3: Proportion of Responders at Week 24 is a caption
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > TABLE 2 DEMOGRAPHIC CHARACTERISTICS is a caption
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > Figure 3 Kaplan-Meier Plot of Time to Progression is a caption
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > Figure 14.2.1.1 - Mean Change From Baseline is a caption
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > Table 14.2.1 is a caption
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > Table 14.2.1 (Continued) is a caption
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 1. Patients aged 18 years or older is not a heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 2) Signed informed consent is not a heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 1) Introduction is not a heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 2.1 The study was conducted in accordance with GCP. is not a heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 4.2 Patients were excluded if any of the following applied: is not a heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 12 is not a heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 2.7.3 is not a heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 3.2.S.4.2 is not a heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 1	Placebo	45	(23.1%) is not a heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 2.1	Examplinib 20 mg	212	102 (48.2%) is not a heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 1 Placebo 45 (23.1%) is not a heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 3.1	Screening Visit	Day -28	Informed Consent is not a heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 1	Adverse Event	Serious	Related is not a heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 12.5 mg/kg was administered once daily is not a heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 2016 Revision of the Standard is not a heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 12.10.2026 Screening Visit is not a heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 2.7.3 Summary of Clinical Efficacy ........................ 45 is not a heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > 2.7.3 Summary of Clinical Efficacy . . . . . . 45 is not a heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > Table 3 shows the demographic profile of the randomised population is not a heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > Table 3. Demographics were balanced across arms. is not a heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > Table of Contents is not a heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > Tables 3 and 4 Summarise the Results is not a heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > Figure shows the mean is not a heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > a long line is not a heading, however it starts
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectHeadingLine — what is a heading > a one-segment number needs a title-cased title; a dotted one only a capital
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectDocumentHeadings — headings in place > finds only line-initial headings, never a numbered item inside a paragraph
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectDocumentHeadings — headings in place > records the exact span and the page of each heading
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectDocumentHeadings — headings in place > gives no page when the page spans were not verified
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectDocumentHeadings — headings in place > a run of contents entries is not structure
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectDocumentHeadings — headings in place > page numbers on their own lines do not break a contents run
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectDocumentHeadings — headings in place > a list of tables is not a set of captions
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectDocumentHeadings — headings in place > a section opening straight into its subsections is structure
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > detectDocumentHeadings — headings in place > two headings in a row are kept
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > chunkTypeOf — TABLE only for a demonstrably tabular block > tab-separated rows are a table, including a spreadsheet rendering
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > chunkTypeOf — TABLE only for a demonstrably tabular block > prose with a caption, or with a stray tab, is text
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > chunkTypeOf — TABLE only for a demonstrably tabular block > a table that is less than half the chunk is text
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > chunkTypeOf — TABLE only for a demonstrably tabular block > one row is not a table, and a heading with a tab is not a row
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > sectionsForChunks — the path at each chunk's first character > builds the path by numbering, and pops back up for a sibling
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > sectionsForChunks — the path at each chunk's first character > files a section only under the sections its number names
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > sectionsForChunks — the path at each chunk's first character > a chunk at the heading itself is in that section
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > sectionsForChunks — the path at each chunk's first character > a chunk before the first heading has no section, and says so with NULL
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > sectionsForChunks — the path at each chunk's first character > a document with no detectable heading leaves every chunk NULL
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > sectionsForChunks — the path at each chunk's first character > a statistic in a table stays mapped to its narrative block > a table chunk is named by its caption, with its section as the path above it
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > sectionsForChunks — the path at each chunk's first character > a statistic in a table stays mapped to its narrative block > narrative after the table stays under the section: where a table ends is not in the text
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > sectionsForChunks — the path at each chunk's first character > a statistic in a table stays mapped to its narrative block > a figure caption names nothing, and ends the reach of the table caption before it
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > sectionsForChunks — the path at each chunk's first character > a statistic in a table stays mapped to its narrative block > the next numbered section ends the table and pops its sibling
+ ✓ server/services/vault/__tests__/document-section-structure.test.ts > sectionsForChunks — the path at each chunk's first character > is deterministic
+ ✓ server/services/vault/__tests__/document-chunking-sections.pglite.test.ts > the chunk writer stores the section each passage sits in > writes section_title, section_hierarchy and chunk_type, by where each chunk starts
+ ✓ server/services/vault/__tests__/document-chunking-sections.pglite.test.ts > the chunk writer stores the section each passage sits in > the chunk that quotes the statistic is a TABLE filed under its caption and its section
+ ✓ server/services/vault/__tests__/document-chunking-sections.pglite.test.ts > the chunk writer stores the section each passage sits in > keeps the page number beside the section
+ ✓ server/services/vault/__tests__/document-chunking-sections.pglite.test.ts > the chunk writer stores the section each passage sits in > a document with no detectable heading stores NULL sections and the TEXT default
+ Test Files  3 passed (3)
+      Tests  70 passed (70)
+
+## Neighbouring suites that exercise the chunk writer, the vault reader, the locator or parseHeading
+## (same command, default reporter): per-file passing test counts. The document-chunking glob also matches
+## the new document-chunking-sections.pglite.test.ts (4), so this is 19 existing suites (204) plus that file.
+      5  ✓ server/__tests__/services/anaKnowledgeSearchMerge.test.ts
+     10  ✓ server/import/__tests__/docx-to-authoring.test.ts
+     10  ✓ server/services/__tests__/rag-context-expansion-span.test.ts
+     18  ✓ server/services/__tests__/rag-vault-freshness-mapping.test.ts
+     14  ✓ server/services/__tests__/rag-vault-freshness.pglite.integration.test.ts
+     10  ✓ server/services/__tests__/rag-vault-span.pglite.integration.test.ts
+     17  ✓ server/services/ana/__tests__/document-passage-tools.test.ts
+      2  ✓ server/services/ana/__tests__/rag-provenance.test.ts
+      9  ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.pglite.integration.test.ts
+     12  ✓ server/services/vault/__tests__/document-chunking-backfill-source-basis.test.ts
+      6  ✓ server/services/vault/__tests__/document-chunking-backfill-source-boundaries.test.ts
+      8  ✓ server/services/vault/__tests__/document-chunking-backfill.service.test.ts
+      4  ✓ server/services/vault/__tests__/document-chunking-sections.pglite.test.ts
+      1  ✓ server/services/vault/__tests__/document-chunking-unicode-properties.test.ts
+      8  ✓ server/services/vault/__tests__/document-chunking-unicode-storage.test.ts
+     24  ✓ server/services/vault/__tests__/document-chunking-unicode.test.ts
+      7  ✓ server/services/vault/__tests__/document-chunking.service.test.ts
+      6  ✓ server/services/vault/__tests__/document-chunking.tenancy.test.ts
+      5  ✓ server/services/vault/__tests__/document-passage-search-context.test.ts
+     32  ✓ server/services/vault/__tests__/passage-context-span.test.ts
+ Test Files  20 passed (20)
+      Tests  208 passed (208)
+
+## eslint (npx eslint <the 8 changed or new files>)
+
+✖ 10 problems (0 errors, 10 warnings)
+
+0 errors. The 10 warnings are the same 10 that HEAD's versions of advancedRAGPipeline.ts (9) and
+document-chunking.service.ts (1, chunkAndEmbedDocument complexity 20) carry: each file was linted
+from 'git show HEAD:<file> | npx eslint --stdin --stdin-filename <file>' and the lists match.
+The three new test files and document-section-structure.ts have no warnings.
+
+## tsc (scratch tsconfig extending tsconfig.json, files = the new module, the chunk writer, the 3 new tests)
+No error in any changed file. The run reports 15 errors, all in server/middleware/orgMembership.ts and
+server/services/authoring/authoring-permissions.ts (req.user / req.identity): the Express Request
+augmentation is a global declaration a files-only program does not load. Not run: the full npm run typecheck.
+
+## Static CI gates, run read-only against the shared working tree
+ci:column-reachability   exit 0
+ci:unreferenced-modules  exit 0 (78, baseline 78: the new module is referenced)
+ci:insert-columns-declared / ci:tenant-isolation:no-regression / ci:duplicate-exported-types exit 1, and
+none of their findings names a file this change touches (projects.submission_type ratchet; vault-search.ts,
+task-assignment.ts and two route test harnesses; ana-ri, agency-responses, gspr, truth-engine type names).

@@ -7,69 +7,28 @@
  * @module server/services/ana/intelligence-questions/war-game/types
  */
 
-import type { IssueSeverity } from '../../../../../shared/types/intelligence-questions.js';
+/*
+ * The WIRE shape — what the engine returns and the AnA stream carries — is
+ * defined once, in `shared/types/intelligence-questions.ts`, and re-exported
+ * here so every caller importing from this module is unchanged. 2026-11-01
+ * (F1): it was written out three times by hand, and the shared copy had already
+ * lost the coverage fields the engine writes; see the note there.
+ *
+ * `AuditRule` and `WarGameAuditor` stay here and are not shared: a rule carries
+ * a `check` function, which is the engine's, not the wire's.
+ */
+export type {
+  AuditDimension,
+  WarGameCategory,
+  WarGameFinding,
+  WarGameReport,
+} from '../../../../../shared/types/intelligence-questions.js';
 
-export type WarGameCategory =
-  | 'protocol'
-  | 'ind'
-  | 'csr'
-  | '510k'
-  | 'cer'
-  | 'sop'
-  | 'nda'
-  | 'bla'
-  | 'pma'
-  | 'cmc'
-  | 'risk_management'
-  | 'safety_narrative'
-  | 'labeling'
-  | 'briefing_book'
-  | 'stability';
-
-export type AuditDimension =
-  | 'completeness'
-  | 'consistency'
-  | 'regulatory_alignment'
-  | 'scientific_rigor'
-  | 'practical_feasibility'
-  | 'documentation'
-  | 'risk_identification';
-
-export interface WarGameFinding {
-  id: string;
-  dimension: AuditDimension;
-  severity: IssueSeverity;
-  title: string;
-  question: string;
-  observation: string;
-  requirement: string;
-  reference: string;
-  recommendation: string;
-  relatedFields: string[];
-}
-
-export interface WarGameReport {
-  id: string;
-  category: WarGameCategory;
-  sourceFlowId: string;
-  timestamp: string;
-  overallScore: number;
-  overallAssessment: 'audit_ready' | 'needs_work' | 'significant_gaps' | 'not_ready';
-  findings: WarGameFinding[];
-  dimensionScores: Record<AuditDimension, { score: number; findingCount: number }>;
-  executiveSummary: string;
-  topPriorities: string[];
-  regulatoryRiskLevel: 'low' | 'moderate' | 'high' | 'critical';
-  /** Rules in the auditor. */
-  rulesTotal: number;
-  /** Rules whose every read is a field the source interview asks. */
-  rulesAssessed: number;
-  /**
-   * Rules that read a field the source interview does not ask. They produce
-   * no finding and no score: "missing" there means "never asked".
-   */
-  notAssessed: Array<{ ruleId: string; title: string; unaskedFields: string[] }>;
-}
+import type {
+  AuditDimension,
+  WarGameCategory,
+  WarGameFinding,
+} from '../../../../../shared/types/intelligence-questions.js';
 
 export interface AuditRule {
   id: string;

@@ -99,7 +99,7 @@ import {
   type Queryable,
 } from '../../services/agency-responses/response-service';
 import { createScopedLogger } from '../../utils/logger';
-import { readLetterQuestionProposals } from '../../services/agency-responses/letter-question-proposals';
+import { readLetterCommitmentProposals, readLetterQuestionProposals } from '../../services/agency-responses/letter-question-proposals';
 import { governedReason } from '../governed-reason';
 import { signGovernedAct, signedActAttempts } from '../governed-signed-act';
 import {
@@ -142,7 +142,7 @@ const questionBody = z.object({
 
 const responseBody = z.object({
   responseText: z.string().max(100000).optional(),
-  editorSource: z.object({ documentId: z.string().uuid(), sectionId: z.string().uuid(),
+  editorSource: z.object({ documentId: z.string().guid(), sectionId: z.string().guid(),
     expectedSha256: z.string().regex(/^[a-f0-9]{64}$/), expectedUpdatedAt: z.string().datetime({ offset: true }) }).strict().optional(),
   expectedRevision: z.number().int().min(0).max(MAX_INT),
   reason: governedReason,
@@ -400,6 +400,52 @@ export function registerAgencyResponseRoutes(router: Router, canView: Visibility
     } catch (err) {
       return refusal(res, err, 'reading the questions in an agency letter');
     }
+  });
+
+  /* Extract commitments (P-81, P-84): the commitments the letter's own text
+     imposes (an approval letter's PMRs and PMCs), proposed for a person to
+     record through POST .../commitments with a reason. A read: it writes
+     nothing and makes no model call (shared/agency/letter-commitments.ts). */
+  router.get(`${BASE}/commitment-proposals`, async (req, res) => {
+    const scope = scopeOf(req, res);
+    if (!scope) return;
+    try {
+      const client = requestPgClient(req) as unknown as Queryable;
+      await visibleLetter(client, scope, req, canView);
+      return sendSuccess(res, await readLetterCommitmentProposals(client, scope));
+    } catch (err) {
+      return refusal(res, err, 'reading the commitments in an agency letter');
+    }
+  });
+
+  /* A commitment the letter itself imposes, recorded into the canonical
+     register (C2C-03) with this project and this letter as its source. The
+     letter is read under its visibility tier; the source is that row, never
+     the body. One answering a question is recorded from the question instead. */
+  router.post(`${BASE}/commitments`, async (req, res) => {
+    const scope = scopeOf(req, res);
+    if (!scope) return;
+    const parsed = commitmentBody.safeParse(req.body ?? {});
+    if (!parsed.success) return validation(res, parsed.error);
+    const input = parsed.data;
+    await governedWrite(req, res, { scope, command: 'create', reason: input.reason, domain: 'ha' }, async (client) => {
+      const letter = await visibleLetter(client, scope, req, canView);
+      const { id, provenanceLinkIds } = await createCommitmentTx(client, scope.orgId, scope.userId, {
+        commitmentType: input.commitmentType,
+        description: input.description,
+        dueDate: input.dueDate ?? null,
+        regulatoryBasis: input.regulatoryBasis ?? null,
+        projectId: scope.projectId,
+        sourceCommunicationEventId: letter.eventId,
+        sourceQuestionId: null,
+      });
+      recordHaCommitmentCreated(input.commitmentType);
+      return {
+        target: `regulatory-commitment:${id}`,
+        payload: { type: input.commitmentType, communicationEventId: letter.eventId, provenanceLinkIds },
+        body: { id, commitmentType: input.commitmentType, status: 'open' },
+      };
+    });
   });
 
   router.post(`${BASE}/questions`, async (req, res) => {

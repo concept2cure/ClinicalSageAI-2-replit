@@ -1,0 +1,134 @@
+# HEAD bf798a2376b149e1ce09651c34b4daf02866df07, before the change
+# npx vitest run --config vitest.config.ts --maxWorkers=2 server/db/__tests__/requestDb.test.ts server/lib/__tests__/api-response-500-containment.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > answers a missing-relation error without naming the relation 10ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > rejects the other driver-error shapes, not just the one that was reported 4ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > still gives the operator everything needed to find the real error 5ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > sends a code the client will not display and a sentence it will 6ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > omits the reference rather than inventing one when no request id was set 2ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > is falsifiable: the pre-fix behaviour would fail these assertions 0ms
+ × server/lib/__tests__/api-response-500-containment.test.ts > serverError on a request that ended before its database work ran > notes it, logs no failure and writes nothing to the ended response 12ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "doc-list failed",
+      Object {
+        "code": "REQUEST_ENDED",
+        "correlationId": "req-1",
+        "err": "The request ended before its database work ran",
+        "programId": "p-1",
+      },
+    ]
+
+
+Number of calls: 1
+
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError on a request that ended before its database work ran > still logs a request with no database context as a failure, with a 500 1ms
+ ✓ server/db/__tests__/requestDb.test.ts > requestDb > returns a Drizzle wrapper bound to req.dbClient when one is set 31ms
+ ✓ server/db/__tests__/requestDb.test.ts > requestDb > fails closed with a typed error when dbClient is missing 2ms
+ ✓ server/db/__tests__/requestDb.test.ts > requestDb > fails closed when dbClient does not implement query 0ms
+ ✓ server/db/__tests__/requestDb.test.ts > requestDb > caches the wrapper on the request to avoid rebuilding per call 13ms
+ ✓ server/db/__tests__/requestDb.test.ts > requestPgClient (raw-SQL sibling for tables without a Drizzle schema) > hands back the request-scoped client itself 0ms
+ ✓ server/db/__tests__/requestDb.test.ts > requestPgClient (raw-SQL sibling for tables without a Drizzle schema) > fails closed with the same typed error when context is missing 1ms
+ ✓ server/db/__tests__/requestDb.test.ts > requestConnectable transaction ownership > keeps a healthy borrowed connection pinned but propagates uncertain completion to its actual owner 2ms
+ × server/db/__tests__/requestDb.test.ts > a request whose client was released because its response ended > is refused as REQUEST_ENDED by requestPgClient, requestDb and requestConnectable, still failing closed as a missing context 9ms
+   → expected MissingRequestDbContextError: Request-sco… { …(2) } to match object { name: 'RequestEndedError', …(1) }
+(1 matching property omitted from actual)
+ ✓ server/db/__tests__/requestDb.test.ts > a request whose client was released because its response ended > leaves REQUEST_DB_CONTEXT_REQUIRED to a request that never had a client 1ms
+ × server/db/__tests__/requestDb.test.ts > a request whose client was released because its response ended > serves a client retained past the response, and refuses it once its holder lets go 3ms
+   → expected error to match asymmetric matcher
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/db/__tests__/requestDb.test.ts > a request whose client was released because its response ended > is refused as REQUEST_ENDED by requestPgClient, requestDb and requestConnectable, still failing closed as a missing context
+AssertionError: expected MissingRequestDbContextError: Request-sco… { …(2) } to match object { name: 'RequestEndedError', …(1) }
+(1 matching property omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "REQUEST_ENDED",
+-   "name": "RequestEndedError",
++ MissingRequestDbContextError {
++   "code": "REQUEST_DB_CONTEXT_REQUIRED",
++   "name": "MissingRequestDbContextError",
+  }
+
+ ❯ server/db/__tests__/requestDb.test.ts:100:22
+     98|       try { await ask(); } catch (error) { caught = error; }
+     99|       expect(caught, 'every caller that fails closed on a missing cont…
+    100|       expect(caught).toMatchObject({ name: 'RequestEndedError', code: …
+       |                      ^
+    101|     }
+    102|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  server/db/__tests__/requestDb.test.ts > a request whose client was released because its response ended > serves a client retained past the response, and refuses it once its holder lets go
+AssertionError: expected error to match asymmetric matcher
+
+- Expected
++ Received
+
+- ObjectContaining {
+-   "code": "REQUEST_ENDED",
++ MissingRequestDbContextError {
++   "message": "Request-scoped database context is required",
++   "code": "REQUEST_DB_CONTEXT_REQUIRED",
++   "statusCode": 500,
++   "name": "MissingRequestDbContextError",
+  }
+
+ ❯ server/db/__tests__/requestDb.test.ts:122:40
+    120|     expect(requestPgClient(req)).toBe(client);
+    121|     await letGo();
+    122|     expect(() => requestPgClient(req)).toThrow(expect.objectContaining…
+       |                                        ^
+    123|   });
+    124| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  server/lib/__tests__/api-response-500-containment.test.ts > serverError on a request that ended before its database work ran > notes it, logs no failure and writes nothing to the ended response
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "doc-list failed",
+      Object {
+        "code": "REQUEST_ENDED",
+        "correlationId": "req-1",
+        "err": "The request ended before its database work ran",
+        "programId": "p-1",
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ server/lib/__tests__/api-response-500-containment.test.ts:134:27
+    132|     const log = { error: vi.fn(), info: vi.fn() };
+    133|     serverError(res, log, 'doc-list', ended(), { programId: 'p-1' });
+    134|     expect(log.error).not.toHaveBeenCalled();
+       |                           ^
+    135|     expect(log.info).toHaveBeenCalledWith('doc-list stopped: the reque…
+    136|       { programId: 'p-1', correlationId: 'req-1', code: 'REQUEST_ENDED…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 15 passed (18)
+   Start at  21:19:35
+   Duration  5.02s (transform 1.97s, setup 204ms, import 3.71s, tests 114ms, environment 0ms)
+

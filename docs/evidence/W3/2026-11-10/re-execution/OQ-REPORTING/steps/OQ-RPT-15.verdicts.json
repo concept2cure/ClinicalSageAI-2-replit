@@ -1,0 +1,37 @@
+{
+  "chain": {
+    "ok": null,
+    "scope": "integrity-checks",
+    "rowsChecked": 1045,
+    "reason": "2 of 3 checks could not verify.",
+    "checks": {
+      "total": 3,
+      "intact": 1,
+      "broken": 0,
+      "notVerified": 2
+    }
+  },
+  "verdicts": [
+    {
+      "check": "audit_logs hash chain",
+      "store": "audit_logs",
+      "rows_checked": 1045,
+      "verdict": "intact",
+      "detail": "Every chained row re-derives from its predecessor; head not verified against the anchor: no anchor store is configured on this deployment, so this verdict is the chain walk only."
+    },
+    {
+      "check": "audit_events linkage",
+      "store": "audit_events",
+      "rows_checked": 0,
+      "verdict": "not verified",
+      "detail": "Nothing could be verified: no entries: there is no chain to verify."
+    },
+    {
+      "check": "audit_logs HMAC seals",
+      "store": "audit_logs",
+      "verdict": "not verified",
+      "rows_checked": null,
+      "detail": "The seal key is not configured on this server, so no seal was checked."
+    }
+  ]
+}

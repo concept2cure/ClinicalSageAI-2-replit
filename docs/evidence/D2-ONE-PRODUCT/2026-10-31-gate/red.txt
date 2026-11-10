@@ -1,0 +1,2 @@
+ci:one-product FAILED (CLAUDE.md RULE 4: one canvas, one editor, one project module; no cards, workspaces or apps).
+  new surface:csr-card: put what it does into the one editor or the project's document start instead.

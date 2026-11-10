@@ -1,0 +1,81 @@
+=== seed: biotech ===
+  • Projects: program C2C-101 (IND) … ok — found 42d5dcc0-65c1-4581-9e28-dd3c30469312 (CAMA)
+  • Vault: Investigator's Brochure C2C-101 v3.0 … ok — found 4e487967-04f7-4b87-ae52-85524e1b9687 → module-1 (2 pages, 7296 bytes)
+  • Vault: Protocol C2C-101-201 v1.0 — Phase 2, randomized, placebo-controlled … ok — found 6b38a98e-1267-4055-b5b0-d91030991a35 → module-5 (2 pages, 9196 bytes)
+  • Vault: Statistical Analysis Plan C2C-101-201 v1.0 … ok — found ad0180d3-f29b-47e6-b687-a5baea2bb0a0 → module-5 (2 pages, 6891 bytes)
+  • Vault: CMC Quality Summary (3.2.S / 3.2.P overview) — C2C-101 … ok — found 3f10e963-c594-4ee5-ba1f-2c19e6c548b7 → module-2 (2 pages, 6467 bytes)
+  • Vault: Nonclinical Toxicology Summary — C2C-101 … ok — found 411fc6ac-6dbc-4149-be0f-aaf9fb9fb8ab → module-2 (2 pages, 5781 bytes)
+  • Vault: Pre-IND Meeting Minutes — C2C-101 (Type B) … ok — found 8b3c3864-865f-47ba-9c36-504309770fac → module-1 (2 pages, 5599 bytes)
+  • Vault: read model lists the filed documents … ok — documentCount=7, unfiled=0, standard=biotech
+  • Authoring: Protocol Synopsis C2C-101-201 … ok — found 29010e77-6dff-4eb1-a84f-a11af15cfc04; sections 6 (0 added)
+  • Authoring: comments on Protocol Synopsis C2C-101-201 … ok — 3c49916e:resolved, cc9753ea:resolved
+  • Authoring: review request on Protocol Synopsis C2C-101-201 … ok — review not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)
+  • Authoring: freeze Protocol Synopsis C2C-101-201 v1.0 … ok — not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)
+  • Authoring: e-signature by the second signer on Protocol Synopsis C2C-101-201 … ok — not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)
+  • Authoring: Module 2.5 Clinical Overview — C2C-101 … ok — found e263ee50-dc0a-4064-864f-2f71b03b2a2b; sections 6 (0 added)
+  • Authoring: review request on Module 2.5 Clinical Overview — C2C-101 … ok — review not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)
+  • Authoring: IB Summary of Data and Guidance for the Investigator — C2C-101 … ok — found 894b440a-6553-4ea2-9b70-cbff987452c8; sections 4 (0 added)
+  • Authoring: comments on IB Summary of Data and Guidance for the Investigator — C2C-101 … ok — 7448dd48:open
+  • Protocol development: C2C-101-201 document … ok — found #1
+  • Protocol development: section content … ok — 10 sections (0 written)
+  • Protocol development: objectives, eligibility, visits, team … ok — added objectives 0, criteria 0, visits 0, team 0
+  • Protocol development: schedule of assessments matrix … ok — 10 assessments × 9 visits, 51 cells (0 rows, 0 cells added)
+  • Protocol development: risk register … ok — 6 risks (0 added)
+  • Protocol development: milestones … ok — 5 milestones (0 added)
+  • Protocol development: amendment 1 … ok — #1 Amendment 1 — add Week 2 PK sampling and align stratification wording
+  • Protocol development: version snapshot … ok — found 1 version(s)
+  • Protocol development: GET /api/protocol-dev returns it … ok — #1: objectives 6, risks 6, milestones 5, amendments 1
+  • Submission Center: the program's canonical submission (IND) … ok — #5 "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)" (ind/fda)
+  • Submission Center: sequence 0000 (original) … ok — #2 status assembling
+  • Submission Center: place the vault documents as eCTD leaves … ok — 6 leaves (0 placed)
+  • Submission Center: sequence moves draft → assembling … ok — already assembling
+  • Submission Readiness: deterministic structural validation (GET dispatch-readiness) … ok — gate.cleared=false; validationErrors=8; shadowCriticals=0; blockers=4
+  • Submission Center: sequence moves assembling → validated when the structural check is clean … ok — left assembling (8 validation errors)
+  • Submission Readiness: Shadow Review (agency-lens readiness assessment) … ok — not executed — 1 prior run(s), none completed (failed)
+  • Submission Readiness: dispatch QC (deterministic verdict; narrative only from a provider) … ok — clearedToDispatch=false (assess-dispatch-readiness); blockers 4; narrative null (PROVIDER_UNAVAILABLE)
+  • Submission Readiness: readiness review orchestration (deterministic template) … ok — not executed — the orchestration engine reads the integer project spine; this program is keyed by a uuid — Orchestration is not in the launch catalog
+  • QMS: SOP-001 Document Control … ok — found #1 C2C-SOP-001 → draft
+  • QMS: SOP-002 Change Control … ok — found #2 C2C-SOP-002 → draft
+  • QMS: SOP-003 Deviation Management … ok — found #3 C2C-SOP-003 → draft — review not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)
+  • QMS: SOP-004 Training … ok — found #8 C2C-SOP-004 → draft
+  • QMS: change-control record C2C-CC-001 … ok — #1 C2C-CC-001 (proposed)
+  • QMS: deviation record … ok — not supported by the QMS API (recorded as a finding)
+  • QMS: inspect personal acknowledgement readiness on SOP-001 … ok — Only an effective controlled document can be acknowledged.
+  • Audit trail: ledger after the run … ok — 0 chained entries written this run (window 340); meta.chain.ok=true
+manifest → docs/evidence/DEMO/biotech/manifest.json
+=== seed: mdx ===
+  • Projects: program NeuroPanel-Dx 510(k) … ok — c51b3d33-66e5-42f2-bfb5-99077bd26592 (existing)
+  • Vault: read the program data room (folders offered) … ok — standard=ivd; 10 cabinet folders: cab-unfiled, cab-k510, cab-pma, cab-cer, cab-eng, cab-udi, cab-pv, cab-qms, cab-corresp, cab-shared
+  • Vault: Device Description and Principles of Operation … ok — dd56c61c-c971-426c-bdb4-299c6be32f0a → k510 (existing, already filed, 6346 bytes)
+  • Vault: Software Description and Level of Concern … ok — 4e068c41-2925-49f0-8e33-866cc4276905 → eng (existing, already filed, 4654 bytes)
+  • Vault: Analytical Performance Study Report … ok — 82a1a843-c976-4638-a8c9-e08ea5abb273 → k510 (existing, already filed, 6247 bytes)
+  • Vault: Clinical Performance Study Report … ok — 563916bc-710a-454a-8692-d4e8e5f26887 → cer (existing, already filed, 5659 bytes)
+  • Vault: Risk Management File Summary (ISO 14971) … ok — 99a22d52-d588-4091-b04b-69f2dad33dc5 → eng (existing, already filed, 4407 bytes)
+  • Vault: Labeling and Instructions for Use (Draft) … ok — de86da10-c01d-451e-8257-15e8373d0ae3 → udi (existing, already filed, 6254 bytes)
+  • Vault: data room after filing … ok — documentCount=7; cab-k510:2 cab-cer:1 cab-eng:2 cab-udi:1
+  • Authoring: 510(k) Summary (sections per 21 CFR 807.92) … ok — 6765187b-109e-49ba-b272-c928d83e769c (existing, 9 sections)
+  • Authoring: reviewer comment on the 510(k) Summary, resolved … ok — comment 7f79bb93-9df4-4802-8bb1-1a20a967c305 resolved
+  • Authoring: request review, submit to workflow, freeze v1.0 … ok — review and freeze not executed — not executed — signer credential not supplied (set OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD to a second identity that holds signing authority)
+  • Authoring: e-sign the frozen 510(k) Summary as the second signer (APPROVER) … ok — not executed — signer credential not supplied (set OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD to a second identity that holds signing authority)
+  • Authoring: Substantial Equivalence Discussion (draft with an open comment) … ok — c9b45bdc-6c8c-43bb-91f5-cd41ba966f51 draft, open comment 8116129f-470c-40ff-974f-9fdd46376e5d
+  • Authoring: Cybersecurity and Interoperability Summary (review requested) … ok — 1709e7fe-3a5a-4fc0-aac2-7867bb47f372 (6 sections), review not executed — signer credential not supplied (set OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD to a second identity that holds signing authority)
+  • Authoring: does the Review board list the requested reviews? (probe) … ok — queue 0, 0 for the pack
+  • Submission Center: 510(k) submission for the program … ok — 6 (existing, 510k/ivd)
+  • Submission Center: original sequence 0000 … ok — 3 status assembling (existing)
+  • Submission Center: eSTAR section codes on the leaf route (probe) … ok — HTTP 200: the leaf route now takes the eSTAR section code; the CTD placements below stay as well
+  • Submission Center: file the six vault documents as leaves at CTD codes … ok — 7 leaves (0 placed this run)
+  • Submission Center: sequence draft → assembling … ok — already assembling
+  • Submission Center: eSTAR 510(k) pathway readiness (deterministic, read-only) … ok — ready=false; present 0; missingRequired 15
+  • Submission Readiness: validation + dispatch-readiness assessment of sequence 0000 … ok — gate.cleared=false validationErrors=0 (0 UNRESOLVED_DOCUMENT) blockers=2
+  • Submission Readiness: dispatch QC (deterministic verdict; narration needs a provider) … ok — clearedToDispatch=false (assess-dispatch-readiness); narrative unavailable: PROVIDER_UNAVAILABLE
+  • Submission Readiness: readiness review orchestration (probe) … ok — HTTP 400
+  • QMS: SOP-101 Design Controls (21 CFR 820.30) … ok — 4 MDX-SOP-101 draft v1.0 (existing)
+  • QMS: SOP-102 Corrective and Preventive Action … ok — 5 MDX-SOP-102 draft v1.0 (existing)
+  • QMS: SOP-104 Software Change Control … ok — 7 MDX-SOP-104 draft v1.0 (existing)
+  • QMS: approve MDX-SOP-101 as the second signer (e-signature) … ok — not executed — signer credential not supplied (set OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD to a second identity that holds signing authority)
+  • QMS: approve MDX-SOP-102 as the second signer (e-signature) … ok — not executed — signer credential not supplied (set OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD to a second identity that holds signing authority)
+  • QMS: SOP-103 into review; SOP-104 stays draft … ok — SOP-103 draft — review not executed — signer credential not supplied (set OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD to a second identity that holds signing authority); SOP-104 draft
+  • QMS: inspect personal acknowledgement readiness of SOP-101 … ok — Only an effective controlled document can be acknowledged.
+  • QMS: change-control record for the NP-100 software release … ok — 2 MDX-CC-2026-001 under_assessment (existing, 3 links)
+  • Audit trail: organisation ledger and chain verdict … ok — window 341; 73 entries reference pack records (1 since run start); chain.ok=true; verify-chain ok=true
+manifest → docs/evidence/DEMO/mdx/manifest.json

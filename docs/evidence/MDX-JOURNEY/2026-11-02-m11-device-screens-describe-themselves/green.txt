@@ -1,0 +1,15 @@
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > covers the device screens 1ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-510k says nothing that reads as unfinished 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-cer says nothing that reads as unfinished 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-diagnostics says nothing that reads as unfinished 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-pma says nothing that reads as unfinished 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-clinical-studies says nothing that reads as unfinished 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-software says nothing that reads as unfinished 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-engineering says nothing that reads as unfinished 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-udi says nothing that reads as unfinished 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-postmarket says nothing that reads as unfinished 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-presub says nothing that reads as unfinished 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the device screens' registry notes describe what the screens do > device-cer names the one editor and the governed export its Generator reaches 0ms
+ ✓ client/src/concept2cure/mdx/__tests__/deviceScreensDescribeThemselvesTruly.test.ts > the CER screen describes no sample mode > its header names no sample-mode guard 0ms
+ Test Files  1 passed (1)
+      Tests  13 passed (13)

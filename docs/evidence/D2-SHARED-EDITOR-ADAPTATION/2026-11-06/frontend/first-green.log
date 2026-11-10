@@ -1,0 +1,102 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > reads the organization listing and shows each artifact’s governance 142ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > says the signature on the current version in words, four states 83ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > carries the gallery’s cited-source and review line, verbatim 68ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > says whose projects it covers, and when the window is full, that it is 83ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > none in the projects the caller can open is said as that 30ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > a failed read is an error, never an empty registry, and can be tried again 236ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with no project open, the Vault lists the governed artifacts of the projects the caller can open > a refusal says what it is, with no retry a retry cannot change 107ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > a person acts on a row of the organization view as on the gallery > exports the listing through the one manifest builder, with the same columns 120ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > a person acts on a row of the organization view as on the gallery > downloads a row’s governed DOCX, and says a refusal in words 745ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > a person acts on a row of the organization view as on the gallery > requires an open target project before copying a governed artifact 73ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > a person acts on a row of the organization view as on the gallery > asks AnA about a row by name, project and version 67ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > AnA reads the organization view > tells AnA what the view shows, and that a failed read is not zero 141ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > with a project open, the organization view is one click away and reads nothing until opened > reads the listing only when asked 131ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > vault.focus-document selects an artifact by its id > is in the registry with an artifact id and no title 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > vault.focus-document selects an artifact by its id > with a project open, selects the leaf whose artifact id it is, the state a person’s click drives 110ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > vault.focus-document selects an artifact by its id > an artifact saved after the tree was read is found on one re-read, then selected 157ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > vault.focus-document selects an artifact by its id > one that is not in this project’s Vault after the re-read is an honest miss, never a guess 154ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > vault.focus-document selects an artifact by its id > with no project open, focuses the row in the organization view, by id or by name 146ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > vault.focus-document selects an artifact by its id > with neither a title nor an id, refuses 31ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > a CRO's sponsors never mix in the governed artifacts listing > inside a project, reads its sponsor's projects only, and the heading names the sponsor once 208ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > a CRO's sponsors never mix in the governed artifacts listing > with no project open, each row says whose project it is 74ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > pulls an uploaded document through verified intake and opens the exact saved working copy 1638ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault governed section navigation > publishes the selected section on the editor deep-link channel before navigating 158ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault governed section navigation > retains the recorded IND family on the common editor channel 147ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault governed section navigation > leaves no stale target behind for the next, unrelated visit to the editor 159ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault exact governed filing identity > retains the recorded IND family 161ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault exact governed filing identity > retains the recorded NDA family 136ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault exact governed filing identity > retains the recorded BLA family 138ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault exact governed filing identity > retains the recorded MAA family 118ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault exact governed filing identity > retains the recorded CER family 107ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault exact governed filing identity > retains the recorded IVDR family 90ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault exact governed filing identity > uses explicit filing identity independent of folder id vaultdoc-display-only 96ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault exact governed filing identity > uses explicit filing identity independent of folder id presentation-folder 98ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault exact governed filing identity > refuses an explicit invalid filing identity null 108ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault exact governed filing identity > refuses an explicit invalid filing identity 12 154ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault exact governed filing identity > refuses an explicit invalid filing identity  117ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault exact governed filing identity > refuses an explicit invalid filing identity ../invalid-filing 133ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault whole document and exact section intents > carries whole-filing intent without a presentation code or title 85ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault whole document and exact section intents > uses the recorded section key instead of its display number 105ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault whole document and exact section intents > refuses whole-filing intent without exact filing identity 94ms
+stderr | client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault whole document and exact section intents > does not dispatch a retained button after the selected project changed
+An update to VaultForProject inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault whole document and exact section intents > refuses an explicit malformed section claim 92ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault whole document and exact section intents > does not dispatch a retained button after the selected project changed 108ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault governed artifacts use the existing verified source intake > opens the exact version as a source-linked working copy 595ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault governed artifacts use the existing verified source intake > refuses missing or malformed numeric artifact version undefined 246ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault governed artifacts use the existing verified source intake > refuses missing or malformed numeric artifact version 3 408ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault governed artifacts use the existing verified source intake > refuses missing or malformed numeric artifact version 0 480ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault governed artifacts use the existing verified source intake > refuses missing or malformed numeric artifact version 1.5 678ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault governed artifacts use the existing verified source intake > refuses a preview for another recorded version 586ms
+stderr | client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault governed handoff retains the current account owner > refuses a retained editor action during an account transition
+An update to VaultForProject inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault governed handoff retains the current account owner > refuses a retained editor action during an account transition 455ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault governed handoff retains the current account owner > does not hydrate a previous account’s delayed project tree 180ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault organization artifacts retain their numeric source version > uses sourceVersion from the row rather than its displayed v999 label 1109ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > lists every version, newest first, with who, when, what changed and its hash, under the project 952ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > a failed versions read is an error, never an empty history 691ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > a refused versions read says what the refusal is 610ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its versions > under module enforcement the versions read is refused as not enabled, never as an outage or an empty history 545ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > is read only when a person asks, and says the read is recorded 426ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > a broken hash chain is said, with the server’s reason 431ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — its audit report > a failed audit read is an error, never an empty trail 368ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > downloads the governed export of this artifact 714ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > a refusal for want of review says why 495ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > a refusal by the module gate says the feature is not enabled, not that the read failed 555ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the governed DOCX download > an export that could not be recorded says nothing was sent 959ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > the governed-artifact manifest — one builder for the Vault’s project and organization views > the Vault exports the branch’s rows as CSV, with their governance 206ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the editor, and Ask AnA > opens the exact artifact source intake while retaining its original 713ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > an artifact leaf — the editor, and Ask AnA > asks AnA about this artifact by name, section, version and governance 378ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > is in the registry, on the vault 0ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > selects the named artifact and opens its folder, the state a person’s click drives 123ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > an ambiguous or unknown name is an honest miss 59ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx > vault.focus-document — AnA selects a document by name > AnA is told she can focus a document, download an artifact and read its versions 53ms
+
+ Test Files  3 passed (3)
+      Tests  69 passed (69)
+   Start at  18:14:45
+   Duration  32.01s (transform 4.17s, setup 605ms, import 7.06s, tests 19.99s, environment 3.03s)
+

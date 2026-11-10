@@ -28,8 +28,72 @@
  *   - EMA. "DARWIN EU: Data Analysis and Real World Interrogation Network." 2022.
  *   - Japan PMDA. "Basic Principles on Utilization of Registry Data for Drug Applications." March 2021.
  *
+ * Stated inputs (2026-11-01, Rule 2 S5a): a required enum, number or text that is left out or
+ * malformed is refused through the canonical refusal boundary. The true/false facts the data-source,
+ * bias and acceptability worksheets read stay not_stated when left out, and no score, gap, bias grade or
+ * requirement status is derived from the omission. The two selection worksheets (propensity method and
+ * study design) return one choice that any of their facts can decide, so they refuse an unstated fact.
+ *
  * @module server/services/rwe/rwe-methodology-knowledge
  */
+
+import { refuseUnlessStated } from '../ana-biostats/computation-engine';
+import { booleanInputStates, statedBoolean } from '../immunogenicity/immunogenicity-reference';
+
+/** A true/false fact as stated, or not_stated when it was left out. */
+type BooleanState = boolean | 'not_stated';
+
+const TREATMENT_STRATEGIES: readonly TreatmentStrategy[] = ['point_intervention', 'sustained_use', 'treatment_strategy_comparison', 'dynamic_regime'];
+const CAUSAL_CONTRASTS: readonly CausalContrast[] = ['intention_to_treat', 'per_protocol', 'as_treated'];
+const DATA_SOURCE_TYPES: readonly DataSourceType[] = ['claims', 'ehr', 'registry', 'biobank', 'linked_claims_ehr', 'integrated_delivery_network'];
+const STUDY_QUESTIONS: readonly StudyQuestionType[] = ['effectiveness', 'safety', 'natural_history', 'treatment_patterns', 'burden_of_illness', 'label_expansion'];
+const GEOGRAPHIC_COVERAGES: readonly DataSourceParams['geographicCoverage'][] = ['national', 'regional', 'single_site'];
+const TARGET_ESTIMANDS: readonly PropensityAnalysisParams['targetEstimand'][] = ['att', 'ate', 'ato'];
+const QUESTION_TYPES: readonly RWEDesignParams['questionType'][] = ['treatment_effect', 'safety_signal', 'policy_impact', 'dose_response'];
+const EXPOSURE_TYPES: readonly ExposureType[] = ['drug', 'vaccine', 'procedure', 'device', 'policy'];
+const REGULATORY_PURPOSES: readonly RegulatoryPurpose[] = ['label_expansion', 'new_indication', 'post_marketing_safety',
+  'post_marketing_effectiveness', 'comparative_effectiveness', 'formulary_coverage', 'pediatric_extrapolation',
+  'accelerated_approval_confirmation'];
+const REGULATORY_AUTHORITIES: readonly RegulatoryAuthority[] = ['fda', 'ema', 'pmda', 'health_canada', 'multiple'];
+
+/** The true/false facts each scoring or assessment worksheet keeps as not_stated when left out. */
+const DATA_SOURCE_FLAGS = ['deathLinkage', 'hasLabResults', 'hasClinicalNotes', 'hasPharmacyDispensing', 'hasProcedures', 'hasValidationStudy'] as const;
+const BIAS_FLAGS = ['selfReportedOutcome', 'differentialSurveillance', 'hasActiveComparator'] as const;
+const ACCEPTABILITY_FLAGS = ['preRegistered', 'validatedOutcomes', 'existingTrialData', 'sensitivityAnalysesPlanned'] as const;
+
+interface RWEContext {
+  /** Each must be one of its vocabulary. */
+  enums?: Record<string, readonly string[]>;
+  /** Each must be a finite number that satisfies its rule. */
+  numbers?: Record<string, readonly [rule: string, ok: (n: number) => boolean]>;
+  /** Each must be non-empty text. */
+  text?: readonly string[];
+  /** Each must be true or false: only for the selection worksheets, whose one answer those facts decide. */
+  booleans?: readonly string[];
+}
+
+/** Refuse, naming every one, the context a worksheet cannot run without. Nothing stands in for it. */
+function requireRWEContext(fn: string, params: object, { enums = {}, numbers = {}, text = [], booleans = [] }: RWEContext): void {
+  const values = params as Record<string, unknown>;
+  refuseUnlessStated(fn, [
+    ...text.map(field => {
+      const value = values[field];
+      return { field, value, ok: typeof value === 'string' && value.trim().length > 0, expected: 'non-empty text' };
+    }),
+    ...Object.entries(enums).map(([field, allowed]) => {
+      const value = values[field];
+      return { field, value, ok: typeof value === 'string' && allowed.includes(value), expected: `one of ${allowed.join(', ')}` };
+    }),
+    ...Object.entries(numbers).map(([field, [rule, ok]]) => {
+      const value = values[field];
+      return { field, value, ok: typeof value === 'number' && Number.isFinite(value) && ok(value), expected: rule };
+    }),
+    ...booleans.map(field => {
+      const value = values[field];
+      return { field, value, ok: typeof value === 'boolean', expected: 'true or false' };
+    }),
+  ], 'assessed');
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared Types
@@ -153,6 +217,7 @@ export interface TargetTrialParams {
   primaryOutcome: string;
   causalContrast: CausalContrast;
   maxFollowUpMonths: number;
+  /** Not read: it does not change the protocol. */
   therapeuticArea?: TherapeuticArea;
 }
 
@@ -191,10 +256,13 @@ export function designTargetTrial(params: TargetTrialParams): TargetTrialResult 
     maxFollowUpMonths,
   } = params;
 
-  if (!indication) throw new Error('indication is required');
-  if (!comparator) throw new Error('comparator is required');
-  if (!primaryOutcome) throw new Error('primaryOutcome is required');
-  if (maxFollowUpMonths <= 0) throw new Error('maxFollowUpMonths must be > 0');
+  // 2026-11-01: an omitted contrast was written up as as-treated, an omitted strategy mapped to nothing
+  // and an omitted follow-up read "up to undefined months". All of them are refused until stated.
+  requireRWEContext('designTargetTrial', params, {
+    text: ['indication', 'comparator', 'primaryOutcome'],
+    enums: { treatmentStrategy: TREATMENT_STRATEGIES, causalContrast: CAUSAL_CONTRASTS },
+    numbers: { maxFollowUpMonths: ['a finite number of months > 0', n => n > 0] },
+  });
 
   // Build protocol components with observational mapping
   const eligibilityMapping = treatmentStrategy === 'sustained_use'
@@ -431,18 +499,19 @@ export interface DataSourceParams {
   estimatedSampleSize: number;
   /** Years of longitudinal data available. */
   longitudinalYears: number;
+  // The six capture and validation facts below: left out or null, each stays not_stated.
   /** Whether death data is linked (e.g., NDI, state death records). */
-  deathLinkage: boolean;
+  deathLinkage?: boolean | null;
   /** Whether the source captures lab results. */
-  hasLabResults: boolean;
+  hasLabResults?: boolean | null;
   /** Whether the source captures clinical notes / unstructured data. */
-  hasClinicalNotes: boolean;
+  hasClinicalNotes?: boolean | null;
   /** Whether the source captures medications dispensed (pharmacy fills). */
-  hasPharmacyDispensing: boolean;
+  hasPharmacyDispensing?: boolean | null;
   /** Whether the source captures procedures. */
-  hasProcedures: boolean;
+  hasProcedures?: boolean | null;
   /** Validation study available for key variables (outcome, exposure). */
-  hasValidationStudy: boolean;
+  hasValidationStudy?: boolean | null;
   /** Percentage of patients with continuous enrollment ≥ 12 months (0-100). */
   continuousEnrollmentPct: number;
   /** Geographic coverage (e.g., national, regional, single-site). */
@@ -451,25 +520,32 @@ export interface DataSourceParams {
 
 interface DimensionScore {
   dimension: string;
-  score: number; // 0-100
+  /** 0-100, or null when the dimension reads a fact that was not stated. */
+  score: number | null;
   weight: number;
   rationale: string;
   gaps: string[];
   recommendations: string[];
+  /** The facts this dimension reads that were not stated. */
+  notStated: string[];
 }
 
 export interface DataSourceResult {
-  overallScore: number; // 0-100
-  fitnessForPurpose: 'high' | 'moderate' | 'low' | 'inadequate';
+  /** 0-100, or null while any dimension is not assessed. */
+  overallScore: number | null;
+  fitnessForPurpose: 'high' | 'moderate' | 'low' | 'inadequate' | 'not_assessed';
   dimensions: DimensionScore[];
+  inputStates: Record<string, BooleanState>;
   regulatoryAcceptability: {
     fdaRelevance: string;
     fdaReliability: string;
     dataGovernanceReqs: string[];
   };
+  /** Typical of the source type, not established for the stated source: see its note. */
   strengthsAndLimitations: {
     strengths: string[];
     limitations: string[];
+    note: string;
   };
   citations: Citation[];
   notes: string[];
@@ -481,21 +557,29 @@ export function scoreDataSource(params: DataSourceParams): DataSourceResult {
     studyQuestion,
     estimatedSampleSize,
     longitudinalYears,
-    deathLinkage,
-    hasLabResults,
-    hasClinicalNotes,
-    hasPharmacyDispensing,
-    hasProcedures,
-    hasValidationStudy,
     continuousEnrollmentPct,
     geographicCoverage,
   } = params;
 
-  if (estimatedSampleSize < 0) throw new Error('estimatedSampleSize must be ≥ 0');
-  if (longitudinalYears < 0) throw new Error('longitudinalYears must be ≥ 0');
-  if (continuousEnrollmentPct < 0 || continuousEnrollmentPct > 100) {
-    throw new Error('continuousEnrollmentPct must be in [0, 100]');
-  }
+  // 2026-11-01: an omitted capture or validation fact was scored as absent and reported as a gap
+  // ("No validation study", "No death linkage"). It now stays not_stated, and each dimension that reads
+  // it, and the overall score, is not assessed. The enums and numbers are refused unless stated.
+  requireRWEContext('scoreDataSource', params, {
+    enums: { sourceType: DATA_SOURCE_TYPES, studyQuestion: STUDY_QUESTIONS, geographicCoverage: GEOGRAPHIC_COVERAGES },
+    numbers: {
+      estimatedSampleSize: ['a finite number ≥ 0', n => n >= 0],
+      longitudinalYears: ['a finite number of years ≥ 0', n => n >= 0],
+      continuousEnrollmentPct: ['a finite percentage from 0 to 100', n => n >= 0 && n <= 100],
+    },
+  });
+  const inputStates = booleanInputStates(params, DATA_SOURCE_FLAGS);
+  const deathLinkage = statedBoolean('deathLinkage', params.deathLinkage);
+  const hasLabResults = statedBoolean('hasLabResults', params.hasLabResults);
+  const hasClinicalNotes = statedBoolean('hasClinicalNotes', params.hasClinicalNotes);
+  const hasPharmacyDispensing = statedBoolean('hasPharmacyDispensing', params.hasPharmacyDispensing);
+  const hasProcedures = statedBoolean('hasProcedures', params.hasProcedures);
+  const hasValidationStudy = statedBoolean('hasValidationStudy', params.hasValidationStudy);
+  const unstated = (fields: readonly string[]) => fields.filter(field => inputStates[field] === 'not_stated');
 
   // Data quality dimension weights vary by study question
   const questionWeights: Record<StudyQuestionType, Record<string, number>> = {
@@ -518,7 +602,7 @@ export function scoreDataSource(params: DataSourceParams): DataSourceResult {
   const completenessRaw = completenessFactors.reduce((a, b) => a + b, 0) / completenessFactors.length * 100;
   const completenessGaps: string[] = [];
   const completenessRecs: string[] = [];
-  if (!hasPharmacyDispensing) {
+  if (hasPharmacyDispensing === false) {
     completenessGaps.push('Pharmacy dispensing data not available — medication exposure cannot be reliably determined from EHR orders alone');
     completenessRecs.push('Link to pharmacy benefit manager (PBM) or dispensing data');
   }
@@ -536,7 +620,7 @@ export function scoreDataSource(params: DataSourceParams): DataSourceResult {
   accuracyScore = Math.min(accuracyScore, 100);
   const accuracyGaps: string[] = [];
   const accuracyRecs: string[] = [];
-  if (!hasValidationStudy) {
+  if (hasValidationStudy === false) {
     accuracyGaps.push('No validation study for key variable definitions (exposure, outcome)');
     accuracyRecs.push('Conduct or cite a validation study for the primary exposure and outcome algorithms; FDA Draft Guidance on RWD (2021) emphasizes the need for validated variable definitions');
   }
@@ -550,7 +634,7 @@ export function scoreDataSource(params: DataSourceParams): DataSourceResult {
   linkageScore = Math.min(linkageScore, 100);
   const linkageGaps: string[] = [];
   const linkageRecs: string[] = [];
-  if (!deathLinkage) {
+  if (deathLinkage === false) {
     linkageGaps.push('No death linkage — mortality outcomes may be incomplete, and informative censoring from death cannot be identified');
     linkageRecs.push('Link to National Death Index (NDI) or state death records');
   }
@@ -590,12 +674,12 @@ export function scoreDataSource(params: DataSourceParams): DataSourceResult {
   const captureScore = (captureFactors.reduce((a, b) => a + b, 0) / captureFactors.length) * 100;
   const captureGaps: string[] = [];
   const captureRecs: string[] = [];
-  if (!hasLabResults && (studyQuestion === 'effectiveness' || studyQuestion === 'safety')) {
+  if (hasLabResults === false && (studyQuestion === 'effectiveness' || studyQuestion === 'safety')) {
     captureGaps.push('Lab results not captured — cannot ascertain lab-based outcomes or biomarker-based eligibility criteria');
     captureRecs.push('Link to laboratory data or use an EHR-based source with lab integration');
   }
 
-  const dimensions: DimensionScore[] = [
+  const scoredDimensions: (Omit<DimensionScore, 'score' | 'notStated'> & { score: number })[] = [
     { dimension: 'Completeness', score: Math.round(completenessRaw), weight: weights.completeness, rationale: 'Measures capture of pharmacy dispensing, procedures, and patient retention.', gaps: completenessGaps, recommendations: completenessRecs },
     { dimension: 'Accuracy', score: accuracyScore, weight: weights.accuracy, rationale: 'Based on validation studies, source type characteristics, and availability of unstructured data for adjudication.', gaps: accuracyGaps, recommendations: accuracyRecs },
     { dimension: 'Linkage', score: linkageScore, weight: weights.linkage, rationale: 'Ability to link across data domains (claims+EHR, death records, registries) for complete patient journey.', gaps: linkageGaps, recommendations: linkageRecs },
@@ -604,17 +688,33 @@ export function scoreDataSource(params: DataSourceParams): DataSourceResult {
     { dimension: 'Data Capture Breadth', score: Math.round(captureScore), weight: weights.dataCapture, rationale: 'Breadth of data domains: labs, notes, pharmacy, procedures, death.', gaps: captureGaps, recommendations: captureRecs },
   ];
 
-  // Weighted overall score
-  const overallScore = Math.round(
-    dimensions.reduce((acc, d) => acc + d.score * d.weight, 0),
-  );
+  // A dimension that reads an unstated fact is not assessed: no score is derived from the omission.
+  const dimensionFacts: Record<string, readonly string[]> = {
+    Completeness: ['hasPharmacyDispensing', 'hasProcedures'],
+    Accuracy: ['hasValidationStudy', 'hasClinicalNotes'],
+    Linkage: ['deathLinkage'],
+    Longitudinality: [],
+    'Sample Size': [],
+    'Data Capture Breadth': ['hasLabResults', 'hasClinicalNotes', 'hasPharmacyDispensing', 'hasProcedures', 'deathLinkage'],
+  };
+  const dimensions: DimensionScore[] = scoredDimensions.map(d => {
+    const facts = unstated(dimensionFacts[d.dimension]);
+    return { ...d, score: facts.length ? null : d.score, notStated: facts };
+  });
+  const notStated = unstated(DATA_SOURCE_FLAGS);
 
-  const fitnessForPurpose: 'high' | 'moderate' | 'low' | 'inadequate' =
+  // Weighted overall score — none while any dimension is not assessed.
+  const weightedScore = dimensions.reduce<number | null>(
+    (acc, d) => (acc === null || d.score === null ? null : acc + d.score * d.weight), 0);
+  const overallScore = weightedScore === null ? null : Math.round(weightedScore);
+
+  const fitnessForPurpose: DataSourceResult['fitnessForPurpose'] =
+    overallScore === null ? 'not_assessed' :
     overallScore >= 75 ? 'high' :
     overallScore >= 55 ? 'moderate' :
     overallScore >= 35 ? 'low' : 'inadequate';
 
-  // Source-type-specific strengths/limitations
+  // Strengths and limitations typical of each source type: a reference profile, not derived from the inputs.
   const sourceTraits: Record<DataSourceType, { strengths: string[]; limitations: string[] }> = {
     claims: {
       strengths: ['Large, representative populations', 'Longitudinal enrollment tracking', 'Complete pharmacy dispensing capture', 'Standardized coding (ICD/CPT/NDC)'],
@@ -642,14 +742,37 @@ export function scoreDataSource(params: DataSourceParams): DataSourceResult {
     },
   };
 
-  const traits = sourceTraits[sourceType];
+  // 2026-11-02: the profile was returned whatever the flags said, so a claims source stated to lack pharmacy
+  // dispensing still listed "Complete pharmacy dispensing capture". A trait that asserts lab, clinical-notes or
+  // pharmacy capture is now left out when a stated flag says otherwise, and the note says the profile is typical.
+  // Biomarkers count as lab results and unstructured data as clinical notes, as the tool definitions describe them.
+  const traitFacts: Record<string, Partial<Record<(typeof DATA_SOURCE_FLAGS)[number], boolean>>> = {
+    'Complete pharmacy dispensing capture': { hasPharmacyDispensing: true },
+    'No lab results or clinical notes': { hasLabResults: false, hasClinicalNotes: false },
+    'Rich clinical detail (labs, vitals, notes)': { hasLabResults: true, hasClinicalNotes: true },
+    'Treatment response data (biomarkers)': { hasLabResults: true },
+    'Pharmacy fills may be incomplete without PBM linkage': { hasPharmacyDispensing: false },
+    'Unstructured data requires NLP extraction': { hasClinicalNotes: true },
+    'Genomic/biomarker data linked to clinical records': { hasLabResults: true },
+    'Pharmacy dispensing from claims + lab values from EHR': { hasPharmacyDispensing: true, hasLabResults: true },
+    'Linked pharmacy, lab, imaging, and clinical data': { hasPharmacyDispensing: true, hasLabResults: true },
+  };
+  const fitsStatedFacts = (trait: string) => Object.entries(traitFacts[trait] ?? {})
+    .every(([field, asserted]) => inputStates[field] === 'not_stated' || inputStates[field] === asserted);
+  const traits = {
+    strengths: sourceTraits[sourceType].strengths.filter(fitsStatedFacts),
+    limitations: sourceTraits[sourceType].limitations.filter(fitsStatedFacts),
+    note: `Typical of ${sourceType} sources, not established for the stated source. A trait asserting lab, clinical-notes or pharmacy capture is left out when a stated flag contradicts it; the stated capture facts are in inputStates and dimensions.`,
+  };
 
   // FDA regulatory acceptability assessment
   const fdaRelevance = studyQuestion === 'label_expansion'
     ? 'For label expansion, FDA requires that the RWD source captures the relevant patient population, treatment exposure, and clinical outcomes with sufficient fidelity to answer the specific regulatory question. The data must be relevant to the US population and clinical practice (FDA RWE Framework, 2018).'
     : `For ${studyQuestion} studies, the data source must demonstrate relevance to the specific study question — the population captured must be representative of the patients who would use the product, and key variables (exposure, outcome, covariates) must be available.`;
 
-  const fdaReliability = hasValidationStudy
+  const fdaReliability = hasValidationStudy === undefined
+    ? 'Whether a validation study exists for the key variable definitions was not stated, so their reliability is not assessed. FDA Draft Guidance on RWD (2021) requires evidence that the data are reliable; validation of key variable definitions is strongly recommended.'
+    : hasValidationStudy
     ? 'The availability of a validation study strengthens the reliability assessment. FDA Draft Guidance on RWD (2021) emphasizes that data reliability requires: (1) data accrual processes ensure completeness and accuracy, (2) data management processes maintain data integrity, (3) validation of key variable definitions against a gold standard.'
     : 'No validation study is available for key variables. FDA Draft Guidance on RWD (2021) requires evidence that the data are reliable — validation of key variable definitions is strongly recommended. Without it, the regulatory acceptability is reduced.';
 
@@ -666,6 +789,7 @@ export function scoreDataSource(params: DataSourceParams): DataSourceResult {
     overallScore,
     fitnessForPurpose,
     dimensions,
+    inputStates,
     regulatoryAcceptability: {
       fdaRelevance,
       fdaReliability,
@@ -675,7 +799,9 @@ export function scoreDataSource(params: DataSourceParams): DataSourceResult {
     citations: cite('FDA_RWE_FRAMEWORK_2018', 'FDA_EHR_CLAIMS_2021', 'ISPE_ISPOR_2017'),
     notes: [
       `Data source type: ${sourceType}. Study question: ${studyQuestion}.`,
-      `Overall fitness-for-purpose: ${fitnessForPurpose} (score ${overallScore}/100).`,
+      overallScore === null
+        ? `Overall fitness-for-purpose: not_assessed (not stated: ${notStated.join(', ')}).`
+        : `Overall fitness-for-purpose: ${fitnessForPurpose} (score ${overallScore}/100).`,
       'Scores are weighted by study question type. Adequacy thresholds: high ≥ 75, moderate ≥ 55, low ≥ 35, inadequate < 35.',
       'FDA RWE Framework (2018) requires both data relevance and data reliability to be demonstrated.',
       'Deterministic: identical inputs always produce identical output. No LLM, no network.',
@@ -742,9 +868,18 @@ export function designPropensityAnalysis(params: PropensityAnalysisParams): Prop
     timeVaryingConfounding,
   } = params;
 
-  if (sampleSize <= 0) throw new Error('sampleSize must be > 0');
-  if (nConfounders <= 0) throw new Error('nConfounders must be > 0');
-  if (treatmentPrevalence <= 0 || treatmentPrevalence >= 1) throw new Error('treatmentPrevalence must be in (0, 1)');
+  // 2026-11-01: an omitted time-varying-confounding, equipoise or rare-outcome fact, or an omitted estimand,
+  // chose matching or weighting as if it were false or ATT. Each can decide the method, so each is refused
+  // unless stated.
+  requireRWEContext('designPropensityAnalysis', params, {
+    enums: { targetEstimand: TARGET_ESTIMANDS },
+    numbers: {
+      sampleSize: ['a finite number > 0', n => n > 0],
+      nConfounders: ['a finite number > 0', n => n > 0],
+      treatmentPrevalence: ['a proportion strictly between 0 and 1', n => n > 0 && n < 1],
+    },
+    booleans: ['rareOutcome', 'clinicalEquipoise', 'timeVaryingConfounding'],
+  });
 
   // Choose estimation method
   let estimationMethod: PSEstimationMethod;
@@ -1191,6 +1326,14 @@ export function selectRWEDesign(params: RWEDesignParams): RWEDesignResult {
     strongConfoundingConcern,
   } = params;
 
+  // 2026-11-01: every omitted fact read as false, so the decision fell through to the new-user
+  // active-comparator default (and an omitted time-varying exposure opened the IV branch). Each fact
+  // decides a branch, so the selection is refused until all are stated.
+  requireRWEContext('selectRWEDesign', params, {
+    enums: { questionType: QUESTION_TYPES },
+    booleans: ['timeVaryingExposure', 'rareOutcome', 'acuteOutcome', 'naturalExperiment', 'withinPersonComparison', 'strongConfoundingConcern'],
+  });
+
   let primaryDesignType: RWEDesignType;
   const alternativeDesignTypes: RWEDesignType[] = [];
   let selectionRationale: string;
@@ -1323,14 +1466,14 @@ export interface BiasAssessmentParams {
   studyDesign: RWEDesignType;
   exposureType: ExposureType;
   dataSource: DataSourceType;
-  /** Whether the outcome is self-reported or objectively measured. */
-  selfReportedOutcome: boolean;
-  /** Whether there is likely differential surveillance between groups. */
-  differentialSurveillance: boolean;
+  /** Whether the outcome is self-reported or objectively measured. Left out or null: not_stated. */
+  selfReportedOutcome?: boolean | null;
+  /** Whether there is likely differential surveillance between groups. Left out or null: not_stated. */
+  differentialSurveillance?: boolean | null;
   /** Estimated number of unmeasured confounders of moderate or strong influence. */
   nUnmeasuredConfounders: number;
-  /** Whether an active comparator is used. */
-  hasActiveComparator: boolean;
+  /** Whether an active comparator is used. Left out or null: not_stated. */
+  hasActiveComparator?: boolean | null;
   /** Observed hazard ratio or risk ratio (point estimate). */
   observedEffectEstimate?: number;
   /** Lower bound of 95% CI for the effect estimate. */
@@ -1340,7 +1483,8 @@ export interface BiasAssessmentParams {
 interface BiasEntry {
   category: 'selection_bias' | 'information_bias' | 'confounding';
   specificBias: string;
-  riskLevel: 'high' | 'moderate' | 'low';
+  /** not_assessed when the fact that decides whether the bias applies was not stated. */
+  riskLevel: 'high' | 'moderate' | 'low' | 'not_assessed';
   direction: 'toward_null' | 'away_from_null' | 'unpredictable';
   explanation: string;
   mitigationStrategy: string;
@@ -1350,13 +1494,15 @@ interface SensitivityAnalysis {
   analysis: string;
   description: string;
   interpretation: string;
-  required: boolean;
+  /** not_assessed when an unstated fact decides whether the analysis is required. */
+  required: boolean | 'not_assessed';
 }
 
 export interface BiasAssessmentResult {
   biases: BiasEntry[];
-  overallBiasRisk: 'high' | 'moderate' | 'low';
+  overallBiasRisk: 'high' | 'moderate' | 'low' | 'not_assessed';
   sensitivityAnalyses: SensitivityAnalysis[];
+  inputStates: Record<string, BooleanState>;
   eValueNote: string | null;
   citations: Citation[];
   notes: string[];
@@ -1367,13 +1513,22 @@ export function assessBiasRisk(params: BiasAssessmentParams): BiasAssessmentResu
     studyDesign,
     exposureType,
     dataSource,
-    selfReportedOutcome,
-    differentialSurveillance,
     nUnmeasuredConfounders,
-    hasActiveComparator,
     observedEffectEstimate,
     observedCILower,
   } = params;
+
+  // 2026-11-01: an omitted comparator was reported as "no active comparator" (a high risk), and an
+  // omitted surveillance or self-report fact silently dropped its bias. Each now stays not_stated with
+  // its bias listed as not_assessed. The enums and the confounder count are refused unless stated.
+  requireRWEContext('assessBiasRisk', params, {
+    enums: { studyDesign: Object.keys(DESIGN_CATALOG), exposureType: EXPOSURE_TYPES, dataSource: DATA_SOURCE_TYPES },
+    numbers: { nUnmeasuredConfounders: ['a finite number ≥ 0', n => n >= 0] },
+  });
+  const inputStates = booleanInputStates(params, BIAS_FLAGS);
+  const selfReportedOutcome = statedBoolean('selfReportedOutcome', params.selfReportedOutcome);
+  const differentialSurveillance = statedBoolean('differentialSurveillance', params.differentialSurveillance);
+  const hasActiveComparator = statedBoolean('hasActiveComparator', params.hasActiveComparator);
 
   const biases: BiasEntry[] = [];
 
@@ -1389,7 +1544,35 @@ export function assessBiasRisk(params: BiasAssessmentParams): BiasAssessmentResu
     });
   }
 
-  if (!hasActiveComparator) {
+  // A bias whose deciding fact was not stated stays in the inventory, ungraded: it names the fact to ask
+  // for and the grade it carries if it applies.
+  const unstatedBiases: { fact: boolean | undefined; ifApplies: 'high' | 'moderate'; entry: Omit<BiasEntry, 'riskLevel'> }[] = [
+    { fact: hasActiveComparator, ifApplies: 'high', entry: {
+      category: 'selection_bias',
+      specificBias: 'Confounding by indication (comparator not stated)',
+      direction: 'unpredictable',
+      explanation: 'hasActiveComparator was not stated. Without an active comparator, treated patients are compared to untreated patients and this is a high risk; it is not graded until the comparator is stated.',
+      mitigationStrategy: 'State the comparator. Use an active comparator new-user design where one exists.',
+    } },
+    { fact: differentialSurveillance, ifApplies: 'moderate', entry: {
+      category: 'selection_bias',
+      specificBias: 'Surveillance / detection bias (not stated)',
+      direction: 'away_from_null',
+      explanation: 'differentialSurveillance was not stated. If one group is monitored more closely, outcome detection is inflated in that group and this is a moderate risk; it is not graded until it is stated.',
+      mitigationStrategy: 'Measure and compare healthcare utilization between groups, then state whether surveillance differs.',
+    } },
+    { fact: selfReportedOutcome, ifApplies: 'moderate', entry: {
+      category: 'information_bias',
+      specificBias: 'Reporting / recall bias (not stated)',
+      direction: 'unpredictable',
+      explanation: 'selfReportedOutcome was not stated. A self-reported outcome carries recall and social desirability bias, a moderate risk; it is not graded until it is stated.',
+      mitigationStrategy: 'State how the primary outcome is measured. For patient-reported outcomes, use validated instruments.',
+    } },
+  ];
+  const notGraded = unstatedBiases.filter(u => u.fact === undefined);
+  biases.push(...notGraded.map(u => ({ ...u.entry, riskLevel: 'not_assessed' as const })));
+
+  if (hasActiveComparator === false) {
     biases.push({
       category: 'selection_bias',
       specificBias: 'Confounding by indication (no active comparator)',
@@ -1467,12 +1650,19 @@ export function assessBiasRisk(params: BiasAssessmentParams): BiasAssessmentResu
     mitigationStrategy: 'Use target trial emulation with strict time-zero alignment. Ensure eligibility, treatment assignment, and follow-up start coincide. Use the new-user design.',
   });
 
-  // Overall risk
+  // Overall risk — graded only when the unstated facts cannot change it: the grade with every
+  // ungraded bias absent must equal the grade with each present at the level it would carry.
   const highCount = biases.filter(b => b.riskLevel === 'high').length;
   const moderateCount = biases.filter(b => b.riskLevel === 'moderate').length;
-  const overallBiasRisk: 'high' | 'moderate' | 'low' =
-    highCount >= 2 ? 'high' :
-    highCount >= 1 || moderateCount >= 3 ? 'moderate' : 'low';
+  const gradeOf = (high: number, moderate: number): 'high' | 'moderate' | 'low' =>
+    high >= 2 ? 'high' :
+    high >= 1 || moderate >= 3 ? 'moderate' : 'low';
+  const lowestRisk = gradeOf(highCount, moderateCount);
+  const highestRisk = gradeOf(
+    highCount + notGraded.filter(u => u.ifApplies === 'high').length,
+    moderateCount + notGraded.filter(u => u.ifApplies === 'moderate').length,
+  );
+  const overallBiasRisk: BiasAssessmentResult['overallBiasRisk'] = lowestRisk === highestRisk ? lowestRisk : 'not_assessed';
 
   // Sensitivity analyses
   const sensitivityAnalyses: SensitivityAnalysis[] = [
@@ -1498,7 +1688,7 @@ export function assessBiasRisk(params: BiasAssessmentParams): BiasAssessmentResu
       analysis: 'Probabilistic / quantitative bias analysis',
       description: 'Formal statistical method that models the bias parameters (e.g., confounder prevalence, confounder-outcome association) as probability distributions and propagates them through the analysis to produce bias-adjusted effect estimates with uncertainty intervals that incorporate both random error and systematic error (Lash et al., 2009).',
       interpretation: 'The bias-adjusted estimate and 95% simulation interval represent the plausible range of the true effect after accounting for the specified bias.',
-      required: overallBiasRisk === 'high',
+      required: lowestRisk === 'high' ? true : highestRisk === 'high' ? 'not_assessed' : false,
     },
     {
       analysis: 'Multiple PS methods sensitivity',
@@ -1537,11 +1727,12 @@ export function assessBiasRisk(params: BiasAssessmentParams): BiasAssessmentResu
     biases,
     overallBiasRisk,
     sensitivityAnalyses,
+    inputStates,
     eValueNote,
     citations: cite('VANDERWEELE_DING_2017', 'LASH_FOX_FINK_2009', 'SCHUEMIE_2020', 'SCHNEEWEISS_2006', 'SUISSA_2008'),
     notes: [
       `Study design: ${studyDesign}. Exposure type: ${exposureType}. Data source: ${dataSource}.`,
-      `Overall bias risk: ${overallBiasRisk} (${highCount} high-risk, ${moderateCount} moderate-risk biases identified).`,
+      `Overall bias risk: ${overallBiasRisk} (${highCount} high-risk, ${moderateCount} moderate-risk biases identified${notGraded.length ? `, ${notGraded.length} not graded because a fact was not stated` : ''}).`,
       'This assessment covers selection bias, information bias, and confounding. Additional study-specific biases should be considered based on the clinical context.',
       'Deterministic: identical inputs always produce identical output. No LLM, no network.',
     ],
@@ -1569,12 +1760,14 @@ export interface RegulatoryAcceptabilityParams {
   authority: RegulatoryAuthority;
   studyDesign: RWEDesignType;
   dataSource: DataSourceType;
-  /** Whether the study is pre-registered (e.g., on ClinicalTrials.gov or EU PAS Register). */
-  preRegistered: boolean;
-  /** Whether validated outcome definitions are used. */
-  validatedOutcomes: boolean;
-  /** Whether there is a concurrent randomized trial or existing trial data for the same question. */
-  existingTrialData: boolean;
+  /** Whether the study is pre-registered (e.g., on ClinicalTrials.gov or EU PAS Register). Left out or null: not_stated. */
+  preRegistered?: boolean | null;
+  /** Whether validated outcome definitions are used. Left out or null: not_stated. */
+  validatedOutcomes?: boolean | null;
+  /** Whether there is a concurrent randomized trial or existing trial data for the same question. Left out or null: not_stated. */
+  existingTrialData?: boolean | null;
+  /** Whether sensitivity analyses for unmeasured confounding are planned and pre-specified. Left out or null: not_stated. */
+  sensitivityAnalysesPlanned?: boolean | null;
   /** Sample size. */
   sampleSize: number;
 }
@@ -1587,15 +1780,22 @@ interface RegulatoryPrecedent {
   relevance: string;
 }
 
+type CreditedStatus = 'met' | 'partially_met' | 'not_met';
+
+/** The credit each graded status earns toward the overall acceptability score. */
+const REQUIREMENT_CREDIT: Record<CreditedStatus, number> = { met: 1, partially_met: 0.5, not_met: 0 };
+
 interface EvidenceRequirement {
   requirement: string;
-  status: 'met' | 'partially_met' | 'not_met';
+  /** not_assessed when the fact the requirement reads was not stated. */
+  status: CreditedStatus | 'not_assessed';
   recommendation: string;
 }
 
 export interface RegulatoryAcceptabilityResult {
-  overallAcceptability: 'high' | 'moderate' | 'low' | 'insufficient';
+  overallAcceptability: 'high' | 'moderate' | 'low' | 'insufficient' | 'not_assessed';
   regulatoryPathway: string;
+  inputStates: Record<string, BooleanState>;
   evidenceRequirements: EvidenceRequirement[];
   precedents: RegulatoryPrecedent[];
   keyGuidances: { title: string; year: number; relevance: string }[];
@@ -1610,25 +1810,49 @@ export function assessRegulatoryAcceptability(params: RegulatoryAcceptabilityPar
     authority,
     studyDesign,
     dataSource,
-    preRegistered,
-    validatedOutcomes,
-    existingTrialData,
     sampleSize,
   } = params;
+
+  // 2026-11-01: an omitted registration or validation fact was graded not_met, lowering the overall grade,
+  // and an omitted trial-data fact produced "no prior randomized trial data exists". Each now stays
+  // not_stated: the requirement reading it is not_assessed, and the overall grade is given only when the
+  // unstated facts cannot change it. The enums and the sample size are refused unless stated.
+  requireRWEContext('assessRegulatoryAcceptability', params, {
+    enums: { purpose: REGULATORY_PURPOSES, authority: REGULATORY_AUTHORITIES, studyDesign: Object.keys(DESIGN_CATALOG), dataSource: DATA_SOURCE_TYPES },
+    numbers: { sampleSize: ['a finite number > 0', n => n > 0] },
+  });
+  const inputStates = booleanInputStates(params, ACCEPTABILITY_FLAGS);
+  const preRegistered = statedBoolean('preRegistered', params.preRegistered);
+  const validatedOutcomes = statedBoolean('validatedOutcomes', params.validatedOutcomes);
+  const existingTrialData = statedBoolean('existingTrialData', params.existingTrialData);
+  const sensitivityAnalysesPlanned = statedBoolean('sensitivityAnalysesPlanned', params.sensitivityAnalysesPlanned);
+  /** [credit if false, credit if true] for each requirement whose fact was not stated. */
+  const unresolved: [number, number][] = [];
+  const statusFrom = (fact: boolean | undefined, ifTrue: CreditedStatus, ifFalse: CreditedStatus): EvidenceRequirement['status'] => {
+    if (fact === undefined) {
+      unresolved.push([REQUIREMENT_CREDIT[ifFalse], REQUIREMENT_CREDIT[ifTrue]]);
+      return 'not_assessed';
+    }
+    return fact ? ifTrue : ifFalse;
+  };
 
   // Evidence requirements assessment
   const evidenceRequirements: EvidenceRequirement[] = [
     {
       requirement: 'Study pre-registration with complete protocol before data access',
-      status: preRegistered ? 'met' : 'not_met',
-      recommendation: preRegistered
+      status: statusFrom(preRegistered, 'met', 'not_met'),
+      recommendation: preRegistered === undefined
+        ? 'Whether the protocol is pre-registered was not stated, so this requirement is not assessed. FDA strongly recommends protocol registration before data access.'
+        : preRegistered
         ? 'Protocol pre-registration documented. Ensure the registry entry includes the full statistical analysis plan.'
         : 'Pre-register the study protocol on ClinicalTrials.gov, EU PAS Register, or ENCEPP. FDA strongly recommends protocol registration before data access to reduce investigator degrees of freedom.',
     },
     {
       requirement: 'Validated outcome and exposure definitions',
-      status: validatedOutcomes ? 'met' : 'not_met',
-      recommendation: validatedOutcomes
+      status: statusFrom(validatedOutcomes, 'met', 'not_met'),
+      recommendation: validatedOutcomes === undefined
+        ? 'Whether the outcome and exposure algorithms are validated was not stated, so this requirement is not assessed. FDA Draft Guidance (2021) emphasizes the need for variable validation.'
+        : validatedOutcomes
         ? 'Validated outcome algorithms in use. Document the validation study reference, PPV, sensitivity, and specificity.'
         : 'Validate the primary outcome and exposure algorithms against chart review or a gold standard. FDA Draft Guidance (2021) emphasizes the need for variable validation.',
     },
@@ -1653,12 +1877,18 @@ export function assessRegulatoryAcceptability(params: RegulatoryAcceptabilityPar
     },
     {
       requirement: 'Sensitivity analyses for unmeasured confounding',
-      status: 'partially_met',
-      recommendation: 'Include E-value analysis, negative control outcomes/exposures, and quantitative bias analysis. Multiple analytic approaches (PS matching, IPTW, doubly robust) should produce consistent results.',
+      // 2026-11-02: fixed at partially_met until now, with no input behind it, and its half credit could decide the
+      // grade. It now reads the stated plan through statusFrom, as pre-registration and validation do.
+      status: statusFrom(sensitivityAnalysesPlanned, 'met', 'not_met'),
+      recommendation: sensitivityAnalysesPlanned === undefined
+        ? 'Whether sensitivity analyses for unmeasured confounding are planned was not stated, so this requirement is not assessed. It asks whether an E-value or quantitative bias analysis, negative controls and multiple analytic approaches are pre-specified.'
+        : sensitivityAnalysesPlanned
+        ? 'Sensitivity analyses for unmeasured confounding are planned and pre-specified. Report whether the analytic approaches (PS matching, IPTW, doubly robust) give consistent results.'
+        : 'Include E-value analysis, negative control outcomes/exposures, and quantitative bias analysis. Multiple analytic approaches (PS matching, IPTW, doubly robust) should produce consistent results.',
     },
     {
       requirement: 'Transparency and reproducibility',
-      status: preRegistered ? 'met' : 'partially_met',
+      status: statusFrom(preRegistered, 'met', 'partially_met'),
       recommendation: 'Provide full study protocol, statistical analysis plan, programming code (SAS/R/Python), data dictionary, and an analytic dataset specification. Follow RECORD-PE reporting guidelines.',
     },
   ];
@@ -1741,29 +1971,40 @@ export function assessRegulatoryAcceptability(params: RegulatoryAcceptabilityPar
         authorityGuidances[authority].some(keyword => g.title.includes(keyword)),
       );
 
-  // Overall acceptability scoring
+  // Overall acceptability scoring — graded only when the unstated facts cannot change the grade: every
+  // unresolved requirement at its lower credit must give the same grade as every one at its higher.
   const metCount = evidenceRequirements.filter(r => r.status === 'met').length;
   const partialCount = evidenceRequirements.filter(r => r.status === 'partially_met').length;
   const totalRequirements = evidenceRequirements.length;
 
-  const acceptabilityScore = (metCount * 1.0 + partialCount * 0.5) / totalRequirements;
-  const overallAcceptability: 'high' | 'moderate' | 'low' | 'insufficient' =
-    acceptabilityScore >= 0.8 ? 'high' :
-    acceptabilityScore >= 0.6 ? 'moderate' :
-    acceptabilityScore >= 0.4 ? 'low' : 'insufficient';
+  const gradeOf = (credit: number): 'high' | 'moderate' | 'low' | 'insufficient' => {
+    const acceptabilityScore = credit / totalRequirements;
+    return acceptabilityScore >= 0.8 ? 'high' :
+      acceptabilityScore >= 0.6 ? 'moderate' :
+      acceptabilityScore >= 0.4 ? 'low' : 'insufficient';
+  };
+  const statedCredit = metCount * REQUIREMENT_CREDIT.met + partialCount * REQUIREMENT_CREDIT.partially_met;
+  const lowestAcceptability = gradeOf(unresolved.reduce((credit, [ifFalse]) => credit + ifFalse, statedCredit));
+  const highestAcceptability = gradeOf(unresolved.reduce((credit, [, ifTrue]) => credit + ifTrue, statedCredit));
+  const overallAcceptability: RegulatoryAcceptabilityResult['overallAcceptability'] =
+    lowestAcceptability === highestAcceptability ? lowestAcceptability : 'not_assessed';
 
   // Recommendations
   const recommendations: string[] = [];
-  if (!preRegistered) {
+  const notStated = ACCEPTABILITY_FLAGS.filter(field => inputStates[field] === 'not_stated');
+  if (notStated.length) {
+    recommendations.push(`State ${notStated.join(', ')}: the requirements and recommendations that depend on ${notStated.length > 1 ? 'them' : 'it'} are not assessed.`);
+  }
+  if (preRegistered === false) {
     recommendations.push('Pre-register the study protocol before any data access or analysis. This is increasingly expected by regulators and essential for credibility.');
   }
-  if (!validatedOutcomes) {
+  if (validatedOutcomes === false) {
     recommendations.push('Validate the primary outcome and exposure algorithms. Cite published validation studies or conduct a de novo validation against chart review.');
   }
   if (purpose === 'label_expansion' || purpose === 'new_indication') {
     recommendations.push('Request a pre-submission meeting (Type B) with the relevant FDA review division to discuss the RWE strategy before conducting the study.');
   }
-  if (!existingTrialData && purpose !== 'post_marketing_safety') {
+  if (existingTrialData === false && purpose !== 'post_marketing_safety') {
     recommendations.push('When no prior randomized trial data exists, the evidentiary bar for RWE is higher. Consider whether a hybrid design (single-arm trial + external RWD control) may be more acceptable.');
   }
   if (studyDesign !== 'new_user_active_comparator' && purpose === 'label_expansion') {
@@ -1775,6 +2016,7 @@ export function assessRegulatoryAcceptability(params: RegulatoryAcceptabilityPar
   return {
     overallAcceptability,
     regulatoryPathway: pathwayGuidance[purpose],
+    inputStates,
     evidenceRequirements,
     precedents,
     keyGuidances: relevantGuidances,
@@ -1791,7 +2033,7 @@ export function assessRegulatoryAcceptability(params: RegulatoryAcceptabilityPar
     ),
     notes: [
       `Regulatory purpose: ${purpose}. Authority: ${authority}. Study design: ${studyDesign}.`,
-      `Overall acceptability: ${overallAcceptability} (${metCount}/${totalRequirements} requirements met, ${partialCount} partially met).`,
+      `Overall acceptability: ${overallAcceptability} (${metCount}/${totalRequirements} requirements met, ${partialCount} partially met${unresolved.length ? `, ${unresolved.length} not assessed` : ''}).`,
       'Regulatory acceptability is context-dependent — a pre-submission meeting with the relevant agency is recommended for any novel RWE application.',
       'The FDA RWE Framework (2018) is the foundational document; subsequent draft guidances provide specific operational requirements.',
       'Deterministic: identical inputs always produce identical output. No LLM, no network.',

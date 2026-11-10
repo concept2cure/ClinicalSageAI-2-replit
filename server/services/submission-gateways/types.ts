@@ -47,7 +47,7 @@ export type Region =
   | 'sg';   // Singapore — HSA / PRISM
 
 export type GatewayName =
-  | 'esg'                   // FDA Electronic Submissions Gateway (AS2 + SFTP)
+  | 'esg'                   // FDA Electronic Submissions Gateway (AS2)
   | 'cesp'                  // EMA Common European Submission Portal
   | 'eudamed'               // EU EUDAMED (device registration + vigilance)
   | 'pmda_gateway'          // PMDA Gateway secure file transfer
@@ -105,11 +105,13 @@ export interface SubmissionBundle {
   /**
    * Per-sequence leaf manifest: each SHIPPED leaf's CTD section + final package
    * href + md5 (+ optional op/title). The exporter/compiler persists this as the
-   * sequence's immutable `leaf_manifest`; the NEXT sequence loads it
-   * (loadPriorSequenceManifest) and diffs to derive replace/append/delete
-   * lifecycle operations. Raw shape (fed through buildLeafManifest before
-   * persisting) so the packager needs no ectd/ import. Optional: a bundle may be
-   * constructed outside the packager (integrity checks) without one.
+   * sequence's immutable `leaf_manifest`, and the transmit guard records it on
+   * a sequence transmit's transmittal row (`metadata.leafManifest`, F1
+   * 2026-11-01); the NEXT sequence loads it (loadPriorSequenceManifest) and
+   * diffs to derive replace/append/delete lifecycle operations. Raw shape (fed
+   * through buildLeafManifest before persisting) so the packager needs no ectd/
+   * import. Optional: a bundle may be constructed outside the packager
+   * (integrity checks) without one; a sequence transmit without one is refused.
    */
   leafManifest?: Array<{
     ctdSection: string;
@@ -286,7 +288,9 @@ export interface GatewayTransmitRequest {
   environment: 'staging' | 'production';
   /** Submission type tag stored on the transmittal row. */
   submissionType?: string;
-  /** Free-form metadata stored on the transmittal row. */
+  /** Free-form metadata stored on the transmittal row. The transmit guard
+   *  (index.ts) overwrites `gatewayAccount`, `sentPackage`, `dispatchBinding`
+   *  and `leafManifest`, so a caller can supply none of them. */
   metadata?: Record<string, unknown>;
   /** Internal server binding; public transmit routes do not accept this field. */
   dispatchBinding?: {

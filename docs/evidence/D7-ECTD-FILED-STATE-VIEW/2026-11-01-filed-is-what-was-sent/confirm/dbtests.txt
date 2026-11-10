@@ -1,0 +1,532 @@
+# DB tests on real PostgreSQL 16, app connecting as app_service (NOSUPERUSER, NOBYPASSRLS), RLS_ENFORCE=on. Result lines and failures only.
+## 1. tree
+date: 2026-11-02T02:18:23Z
+files (18): every tests/db dbtest within two imports of a changed source file, plus every dbtest that names ectd_sequences, submission_transmittals, transmitSequence, the fold or the guard
+tests/db/ai-gateway-audit-log.dbtest.ts
+tests/db/ana-vault-search-no-key.dbtest.ts
+tests/db/commitment-fulfilment-evidence.dbtest.ts
+tests/db/csr-vault-source-input.dbtest.ts
+tests/db/document-catalog-governed.dbtest.ts
+tests/db/document-catalog-role.dbtest.ts
+tests/db/ectd-filed-state-view.dbtest.ts
+tests/db/estar-audit-admission.dbtest.ts
+tests/db/gateway-accounts.dbtest.ts
+tests/db/ind-audit-outcomes.dbtest.ts
+tests/db/project-vault-secondary-access.dbtest.ts
+tests/db/retrieval-floor.dbtest.ts
+tests/db/submission-required-deliverables.dbtest.ts
+tests/db/vault-chunking-off.dbtest.ts
+tests/db/vault-passage-search-keyless.dbtest.ts
+tests/db/vault-passage-search.dbtest.ts
+tests/db/vault-placement.dbtest.ts
+tests/db/vault-where-used.dbtest.ts
+$ AUDIT_HMAC_KEY=*** CI=true NODE_ENV=test RLS_ENFORCE=on DATABASE_URL=postgresql://postgres@127.0.0.1:55432/c2c_test TEST_DATABASE_URL=... APP_DATABASE_URL=postgresql://app_service:***@127.0.0.1:55432/c2c_test npx vitest run --config vitest.db.config.ts <files>
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > actual source identity and current creator boundaries > uses a real non-owner runtime with tenant RLS
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > actual source identity and current creator boundaries > preserves actual NULL-org global_public and withholds NULL-org private sources
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > actual source identity and current creator boundaries > enumerates genuinely unbound chat captures only for the original uploader
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > actual source identity and current creator boundaries > does not authorize an unknown workspace by a matching accessible numeric project
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > actual source identity and current creator boundaries > preserves legacy numeric chat access only through its exact artifact/file parent
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > actual source identity and current creator boundaries > does not make a captured artifact appear to be an unbound conversation upload
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > source usage requires both current parent and canonical object ACL > counts only currently permitted citing documents even inside one accessible program
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > source usage requires both current parent and canonical object ACL > counts an explicit section grant without promoting it to whole-document authority
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > source usage requires both current parent and canonical object ACL > rechecks a revoked current section grant
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > source usage requires both current parent and canonical object ACL > refuses an explicitly selected private source before returning change metadata
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > source usage requires both current parent and canonical object ACL > preserves an unresolved recorded citation without enriching private source facts
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > source usage requires both current parent and canonical object ACL > returns unavailable verification rather than fabricated usage zeros
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > native bibliography admission uses the current original uploader > resolves a recorded unbound source citation for its original uploader
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > native bibliography admission uses the current original uploader > withholds that source metadata from a different permitted document reader without changing the citation or hash
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > native bibliography admission uses the current original uploader > runs bibliography and Sources HTTP reads through actual JWT, object ACL and instrumented app_service tenant transactions
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > current related-parent scope before where-used projection > withholds private and unparented submissions while keeping readable placements
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > current related-parent scope before where-used projection > withholds a private eSTAR export or a private retained counterpart
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > current related-parent scope before where-used projection > keeps permitted CMC evidence without leaking a private compiled section key
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the record a fulfilment is made on > runs as a role RLS applies to (not the owner, not BYPASSRLS) 5ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the record a fulfilment is made on > the filed rule is the platform one: sent and acknowledged 0ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > offers only this project's sequences the agency received, and this project's Vault 49ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a viewer reads the options as unable to write or sign 44ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a PMR that names nothing is refused before the password, which is never checked 42ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a PMR with no date is refused before the password: the server never chooses the signed date 28ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > evidence but no password is a missing signature component 25ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a sequence still pending transmit, before the password, and records nothing 26ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a sequence the agency rejected, before the password, and records nothing 42ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a frozen sequence never dispatched, before the password, and records nothing 22ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another project's sequence, before the password, and records nothing 19ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another organisation's sequence, before the password, and records nothing 30ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another project's Vault version, before the password, and records nothing 58ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another organisation's Vault version, before the password, and records nothing 29ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a version that does not exist, before the password, and records nothing 29ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a version whose data was withdrawn, before the password, and records nothing 47ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a viewer cannot fulfil it at either door 30ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR, signed > signs: the row names the sequence and the version with its sha256, and the signature binds them 80ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR, signed > the list names what met it, who signed, and that the signature matches the record 37ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR, signed > a second fulfilment is refused 17ms
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project with no program > is refused at the project door, and nothing about the commitment changes 48ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a meeting commitment is a governed write with a reason > fulfils unsigned, naming a sequence, with a resolve ledger row 55ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a meeting commitment is a governed write with a reason > refuses a password: it takes none 22ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > offers a member only the sequences of programs they can open; the signer, who can open Q, is offered its sequence too 61ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > a commitment made under a submission is offered only that submission's sequences, and names it to a reader who can open it 453ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > a member who cannot open program Q cannot name its sequence: 404, nothing about it said 17ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > the signer, who can open it, signs; the member's list says only that it is in a project they cannot open 333ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > tenant isolation > another organisation's admin reaches neither the options nor the fulfilment 378ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > tenant isolation > under RLS, the runtime role in another tenant scope reads none of these rows 2ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > more than 200 sequences the agency received: the list keeps the most recent > on a project's door: the newer submission's sequences are offered, newest first, and the oldest are the ones cut 106ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > more than 200 sequences the agency received: the list keeps the most recent > on the organisation's door, with no submission: the same, across every program the person can open 34ms
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current sharing and metadata > admits a genuine owner positive control on current canonical sharing
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current sharing and metadata > admits a genuine member positive control on current canonical sharing
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current sharing and metadata > admits a genuine unassigned positive control on current canonical sharing
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current sharing and metadata > lists only accessible records, and the scoped list returns no withheld-row oracle
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current sharing and metadata > refuses an unassigned private submission read before placement or source SQL
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current sharing and metadata > refuses an unassigned private sequences read before placement or source SQL
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current sharing and metadata > refuses an unassigned private leaves read before placement or source SQL
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current sharing and metadata > refuses an unassigned private manifest read before placement or source SQL
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current sharing and metadata > keeps the current-manager unanchored metadata remedy reachable without admitting sources
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current actor, parent and selected scope > refuses a signed token without an actual organization membership
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current actor, parent and selected scope > refuses a formerly capable role after actual persisted demotion
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current actor, parent and selected scope > refuses an actual disabled account at the JWT boundary
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current actor, parent and selected scope > fails safely when the real authenticated request executor is removed
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current actor, parent and selected scope > refuses the actual foreign submission and sequence identities
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current actor, parent and selected scope > refuses an existing sequence when its actual parent is soft-deleted
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current actor, parent and selected scope > refuses a conflicting selected program identity before leaves
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current actor, parent and selected scope > refuses a conflicting selected submission identity before leaves
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables recorded filing frameworks > uses the actual filing framework, not the amendment lifecycle type or requested friendlier pathway
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables recorded filing frameworks > requires an explicit compatible choice when no live framework is recorded
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables recorded filing frameworks > refuses a recorded incompatible framework instead of selecting the requested compatible one
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables recorded filing frameworks > refuses a recorded sequence-region conflict
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables recorded filing frameworks > keeps actual unsupported IND coverage unavailable in both list metadata and direct assessment
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables recorded filing frameworks > returns current retained technical-file coverage for the actual MDR filing only
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > keeps the actual 'draft' source content qualification honest
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > keeps the actual 'unpinned' source content qualification honest
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > keeps the actual 'changed-pin' source content qualification honest
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > keeps the actual 'empty' source content qualification honest
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > keeps the actual 'placeholder' source content qualification honest
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > keeps the actual 'unknown-pointer' source content qualification honest
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > refuses a same-org source that was moved to a sibling programme before its body query
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > withholds the combined pane after a real committed source-content change and retains its attributed old version
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > withholds already-read content after actual current project membership withdrawal
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > withholds the pane after actual late leaf-pin binding facts change
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > withholds the pane after actual late programme-type binding facts change
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > withholds the pane after actual late framework binding facts change
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > binds native sequence/source admission to the exact held actual executor, even for equivalent current actors
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual repaired anchor and Vault-tenant read boundaries > withholds the pane after the same programme moves to another actual unique integer anchor
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual repaired anchor and Vault-tenant read boundaries > refuses an actual NULL-tenant genesis Vault placement before metadata or local provider reads
+ ↓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label
+ ↓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > left an audit row naming the location it came from and the one it went to
+ ↓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > the filing row records the evidence kind before and after (VR-05)
+ ↓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > honours an explicit unfile — the Unfiled queue is a real answer
+ ↓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses a folder from another modality's taxonomy
+ ↓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses to confirm a suggestion that does not exist
+ ↓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses a call that names no destination at all
+ ↓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > confirms an existing suggestion in place, keeping the CTD section
+ ↓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > will not let another organization move the document
+ ↓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > records AnA's folder as a suggestion a person must confirm, not as a person's filing
+ ↓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > refuses to confirm a suggestion — a person confirms filing in the Vault
+ ↓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > the service itself refuses an agent's confirm, so no other agent caller can record one either
+ ↓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > unfiles with the same attribution — the Unfiled queue is where a person decides
+ ↓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > leaves a person's filing through the Vault a confirmed decision with no agent marker
+ ↓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses a viewer, and writes nothing
+ ↓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses an actor with no current membership or cached request role
+ ↓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > uses the active administrator membership when the cached request role is absent
+ ↓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses AnA acting for a viewer — the path that had no check
+ ↓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > lets a member file — the role SSO provisioning assigns
+ ↓ tests/db/vault-passage-search.dbtest.ts > the chunk corpus is written by ingest > chunked and embedded both uploads, and the catalog ledger says so
+ ↓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > returns the passage that answers the question, from the right document
+ ↓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > answers a tox question from the tox document
+ ↓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > never returns another organization's document, even for identical text
+ ↓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > states the coverage it searched, read from the chunking ledger
+ ↓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > REFUSES without an organization identity rather than reporting no matches
+ ↓ tests/db/vault-passage-search.dbtest.ts > a retrieved passage can be cited > carries a real page number, derived from the PDF and not from arithmetic
+ ↓ tests/db/vault-passage-search.dbtest.ts > with a project open, only that project's passages (PF-10 S7) > with no project open, the organization: both projects' studies are found
+ ↓ tests/db/vault-passage-search.dbtest.ts > with a project open, only that project's passages (PF-10 S7) > the open project's study, never the other project's
+ ↓ tests/db/vault-passage-search.dbtest.ts > with a project open, only that project's passages (PF-10 S7) > and the other way round, with the coverage of the open project alone
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND audit outcome native qualification > uses genuine membership, ALS, LazyRequestDbClient, configured transport and FORCE RLS as app_service 129ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND draft and filing audit outcomes > safety returns its real draft and filed record for none, without a false 500 584ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND draft and filing audit outcomes > safety returns its real draft and filed record for audit-refusal, without a false 500 138ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND draft and filing audit outcomes > safety returns its real draft and filed record for audit-thrown, without a false 500 112ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND draft and filing audit outcomes > annual returns its real draft and filed record for none, without a false 500 135ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND draft and filing audit outcomes > annual returns its real draft and filed record for audit-refusal, without a false 500 111ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND draft and filing audit outcomes > annual returns its real draft and filed record for audit-thrown, without a false 500 107ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND draft and filing audit outcomes > amendment returns its real draft and filed record for none, without a false 500 92ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND draft and filing audit outcomes > amendment returns its real draft and filed record for audit-refusal, without a false 500 78ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND draft and filing audit outcomes > amendment returns its real draft and filed record for audit-thrown, without a false 500 67ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND snapshots and admission > returns the saved blocked snapshot and root outcome for none 140ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND snapshots and admission > returns the saved blocked snapshot and root outcome for audit-refusal 48ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND snapshots and admission > returns the saved blocked snapshot and root outcome for audit-thrown 56ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND snapshots and admission > denies anonymous, viewer and forged membership before a register write 45ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND snapshots and admission > reports an actual PostgreSQL business refusal without an audit or a saved row, then recovers 34ms
+ ✓ tests/db/estar-audit-admission.dbtest.ts > native eSTAR audit outcomes and current project admission > executes on genuine authenticated TLS app_service with ALS and FORCE RLS 52ms
+ ✓ tests/db/estar-audit-admission.dbtest.ts > native eSTAR audit outcomes and current project admission > reads only current admitted projects, retains unbound records and refuses malformed scopes 305ms
+ ✓ tests/db/estar-audit-admission.dbtest.ts > native eSTAR audit outcomes and current project admission > refuses private/foreign project writes and preserves the business refusal without an audit warning 97ms
+ ✓ tests/db/estar-audit-admission.dbtest.ts > native eSTAR audit outcomes and current project admission > registration create/update and tracker creation return real chained audit rows 180ms
+ ✓ tests/db/estar-audit-admission.dbtest.ts > native eSTAR audit outcomes and current project admission > a audit-refusal preserves a completed tracker write and exposes only the bounded actual outcome 91ms
+ ✓ tests/db/estar-audit-admission.dbtest.ts > native eSTAR audit outcomes and current project admission > a audit-throw preserves a completed tracker write and exposes only the bounded actual outcome 62ms
+ ✓ tests/db/estar-audit-admission.dbtest.ts > native eSTAR audit outcomes and current project admission > rechecks viewer after genuine admission before writing 14ms
+ ✓ tests/db/estar-audit-admission.dbtest.ts > native eSTAR audit outcomes and current project admission > rechecks remove-member after genuine admission before writing 16ms
+ ✓ tests/db/estar-audit-admission.dbtest.ts > native eSTAR audit outcomes and current project admission > rechecks inactive after genuine admission before writing 13ms
+ ✓ tests/db/estar-audit-admission.dbtest.ts > native eSTAR audit outcomes and current project admission > keeps unsigned filing refused before any filing state or signature is recorded 17ms
+ × tests/db/estar-audit-admission.dbtest.ts > native tracked-filing concurrency > serializes two actual concurrent nonsigned transitions with one audit and one stale-state refusal 73ms
+ ✓ tests/db/estar-audit-admission.dbtest.ts > native technical-file assembly audit and final delivery gate > delivers actual native technical-file bytes and exposes a failed assembly audit after the final export is audited 167ms
+ ✓ tests/db/estar-audit-admission.dbtest.ts > native technical-file assembly audit and final delivery gate > refuses native delivery when its final export audit is unavailable and recovers without relaxing that gate 88ms
+ ↓ tests/db/vault-where-used.dbtest.ts > the server's transmit verdict and the dispatch status (VR-14) > each version says why it would not be transmitted, in the refusal's own words
+ ↓ tests/db/vault-where-used.dbtest.ts > the server's transmit verdict and the dispatch status (VR-14) > each placement carries its sequence's dispatch status
+ ↓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > each version lists the live leaves that name it
+ ↓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > a removed leaf is not a placement
+ ↓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > another organisation's leaf naming this version is not listed, and another organisation reads nothing
+ ↓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > the read's own organisation filter holds without row security
+ ↓ tests/db/vault-where-used.dbtest.ts > official eSTAR exports that attached a version (VR-14c) > lists each export whose record names the version, from either store
+ ↓ tests/db/vault-where-used.dbtest.ts > official eSTAR exports that attached a version (VR-14c) > a record that names no source is not inferred, and another organisation's is not listed
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > folds every filed sequence: the untouched leaf from 0000, the replacement from 0001, nothing never sent 1374ms
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > lists every sequence and says which it did not fold 13ms
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > never reads another organisation’s filings, and answers empty for a program with no submission 18ms
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > what the agency holds is what was sent (F1) > a leaf only an earlier preview of the sent sequence carried is not on file 12ms
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > what the agency holds is what was sent (F1) > a sequence sent with no compile on record is filed, read from what its transmit recorded 11ms
+ ✓ tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > uses actual auth tenant binding and verified original bytes for aggregate preview 801ms
+ ✓ tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > freezes the actual selected observations and receipt as the CSR document’s study data 106ms
+ ✓ tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > reports a completed preview with failed audit truthfully, then recovers on an actual retry 47ms
+ ✓ tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > permits an authorized read-only share and refuses private/foreign source probes and writes 125ms
+ ✓ tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > allows an honest draft preview but refuses its inclusion before any run record is created 40ms
+ ✓ tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > serializes check-in and withdrawal writers against the source guard until commit, then refuses the old version 246ms
+ ✓ tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > honors explicit remove_data while keeping authorized historical data after keep_data 121ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > AnA's catalog write is a suggestion that names who wrote it > is stored as suggested, with the agent, model, thread and turn 7325ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > AnA's catalog write is a suggestion that names who wrote it > has a chained audit row naming the agent, model and turn 6ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > AnA's catalog write is a suggestion that names who wrote it > the Vault read shows it as a suggestion by AnA and its model 351ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > AnA's catalog write is a suggestion that names who wrote it > session recall labels it as her unconfirmed suggestion 30ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > the kind is the Vault vocabulary > refuses a kind outside it and writes nothing 54ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > a person confirms > a viewer cannot, and the record is untouched 48ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > a person confirms > a confirmation of a record that changed after it was shown is refused 239ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > a person confirms > a decision that names no revision is refused 30ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > a person confirms > a member confirms it as written, audited with the proposer 53ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > a person confirms > only once 46ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > a person confirms > AnA cannot replace a record a person confirmed 67ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > a person confirms > recall says a person confirmed it 0ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > a person corrects, with a reason > without a reason, nothing changes 33ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > a person corrects, with a reason > a kind outside the vocabulary is refused 24ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > a person corrects, with a reason > with a reason, the correction is recorded and audited with it 56ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > a person corrects, with a reason > the database refuses a 'corrected' record without a reason 2ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > a person corrects, with a reason > new bytes clear the description and its decision 11ms
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > the migration creates the table the writer INSERTs into 2ms
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > carries every column the writer binds, including resolved_model 4ms
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > persists a row through the real writer 8ms
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > round-trips every provenance column, at the longest values the gateway writes (D6) 6ms
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > upgrades a table in the pre-2026-09-26 shape: columns added, region widened, rows kept (Rule 1) 27ms
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > stores NULL rather than inventing a resolution the provider never gave 5ms
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > records the EFFECTIVE temperature: NULL means no sampling parameter was sent 4ms
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > initialize() throws — naming the role — when the store is not writable 2ms
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > initialize() throws when the table is absent, and says which migration creates it 1ms
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > initialize() passes against the provisioned table 3ms
+ ↓ tests/db/vault-passage-search-keyless.dbtest.ts > the passage index is written with no key and no flag > both uploads are chunked, with no vector on any chunk, and the ledger says chunked
+ ↓ tests/db/vault-passage-search-keyless.dbtest.ts > the passage index is written with no key and no flag > with passage embedding on but no provider, a new upload is still chunked, all or none embedded
+ ↓ tests/db/vault-passage-search-keyless.dbtest.ts > search_document_passages answers by text, and says so > returns the passage that answers the question, from the right document
+ ↓ tests/db/vault-passage-search-keyless.dbtest.ts > search_document_passages answers by text, and says so > answers a tox question from the tox document
+ ↓ tests/db/vault-passage-search-keyless.dbtest.ts > search_document_passages answers by text, and says so > never returns another organization's document, even for identical text
+ ↓ tests/db/vault-passage-search-keyless.dbtest.ts > search_document_passages answers by text, and says so > a word in no document matches nothing, honestly
+ ↓ tests/db/vault-chunking-off.dbtest.ts > the catalog half works on its own > records the extraction tier even with the passage index off
+ ↓ tests/db/vault-chunking-off.dbtest.ts > the catalog half works on its own > still lists and reads the document through the tools
+ ↓ tests/db/vault-chunking-off.dbtest.ts > with passage embedding off, the passages are indexed for text and nothing is embedded > wrote the chunks with no vector, and the ledger says chunked
+ ↓ tests/db/vault-chunking-off.dbtest.ts > with passage embedding off, the passages are indexed for text and nothing is embedded > search_document_passages finds the passage by text, and says it ranked by text
+ ✓ tests/db/gateway-accounts.dbtest.ts > agency gateway accounts (D7) > lists every gateway × environment, the platform account by default 129ms
+ ✓ tests/db/gateway-accounts.dbtest.ts > agency gateway accounts (D7) > a viewer cannot change it 29ms
+ ✓ tests/db/gateway-accounts.dbtest.ts > agency gateway accounts (D7) > an admin cannot change it without confirming their password, and nothing is written 36ms
+ ✓ tests/db/gateway-accounts.dbtest.ts > agency gateway accounts (D7) > an admin chooses their own FDA account: stored encrypted, never returned, audited by field name 125ms
+ ✓ tests/db/gateway-accounts.dbtest.ts > agency gateway accounts (D7) > another organisation never sees the choice and keeps the platform account 32ms
+ ✓ tests/db/gateway-accounts.dbtest.ts > agency gateway accounts (D7) > choosing the platform account again clears every secret held 27ms
+ ✓ tests/db/gateway-accounts.dbtest.ts > agency gateway accounts (D7) > the table carries the tenant policy the sweep attaches 2ms
+ ↓ tests/db/ana-vault-search-no-key.dbtest.ts > AnA reaches the Vault with no key and the catalog off (D2) > the catalog really is off for these organisations
+ ↓ tests/db/ana-vault-search-no-key.dbtest.ts > AnA reaches the Vault with no key and the catalog off (D2) > a question in plain English finds the current version by its text
+ ↓ tests/db/ana-vault-search-no-key.dbtest.ts > AnA reaches the Vault with no key and the catalog off (D2) > another organisation's document is never a hit, from either side
+ ↓ tests/db/ana-vault-search-no-key.dbtest.ts > AnA reaches the Vault with no key and the catalog off (D2) > lists and reads the document, with no refusal naming a setting
+ ↓ tests/db/ana-vault-search-no-key.dbtest.ts > AnA reaches the Vault with no key and the catalog off (D2) > a question no document answers is nothing found, not unavailable
+ ✓ tests/db/retrieval-floor.dbtest.ts > searchHybrid applies a floor only when asked for one > the floor is what excludes the weak atom: without one it is returned, with one it is not 566ms
+ ✓ tests/db/retrieval-floor.dbtest.ts > evidence-ask applies its similarity floor, and records only the floor it applied > an atom below the default floor (0.6) is not admissible evidence 98ms
+ ✓ tests/db/retrieval-floor.dbtest.ts > evidence-ask applies its similarity floor, and records only the floor it applied > a question nothing clears is refused, and the model is never called 52ms
+ ✓ tests/db/retrieval-floor.dbtest.ts > evidence-ask applies its similarity floor, and records only the floor it applied > every chunk recorded under a run clears the threshold that run records 73ms
+ ✓ tests/db/document-catalog-role.dbtest.ts > catalog_project_document — the comprehension record is a write > refuses a viewer, and the record is untouched 3175ms
+ ✓ tests/db/document-catalog-role.dbtest.ts > catalog_project_document — the comprehension record is a write > accepts a member — the positive control: nothing else stood in the way 190ms
+ FAIL  tests/db/ana-vault-search-no-key.dbtest.ts [ tests/db/ana-vault-search-no-key.dbtest.ts ]
+Error: Vault fixture proof requires the recorded disposable database; retained QA is refused.
+ FAIL  tests/db/project-vault-secondary-access.dbtest.ts [ tests/db/project-vault-secondary-access.dbtest.ts ]
+Error: Use matching declared isolated QA connections and the restricted application role.
+ FAIL  tests/db/submission-required-deliverables.dbtest.ts [ tests/db/submission-required-deliverables.dbtest.ts ]
+Error: This fixture requires the explicitly reviewed QA target or canonical disposable CI database.
+ FAIL  tests/db/vault-chunking-off.dbtest.ts [ tests/db/vault-chunking-off.dbtest.ts ]
+Error: Vault fixture proof requires the recorded disposable database; retained QA is refused.
+ FAIL  tests/db/vault-passage-search-keyless.dbtest.ts [ tests/db/vault-passage-search-keyless.dbtest.ts ]
+Error: Vault fixture proof requires the recorded disposable database; retained QA is refused.
+ FAIL  tests/db/vault-passage-search.dbtest.ts [ tests/db/vault-passage-search.dbtest.ts ]
+Error: Vault fixture proof requires the recorded disposable database; retained QA is refused.
+ FAIL  tests/db/vault-placement.dbtest.ts [ tests/db/vault-placement.dbtest.ts ]
+Error: Vault fixture proof requires the recorded disposable database; retained QA is refused.
+ FAIL  tests/db/vault-where-used.dbtest.ts [ tests/db/vault-where-used.dbtest.ts ]
+Error: Vault fixture proof requires the recorded disposable database; retained QA is refused.
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project with no program > is refused at the project door, and nothing about the commitment changes
+AssertionError: {"success":true,"data":{"commitment":{"id":1130,"commitmentType":"pmc","status":"open","submission":null},"rule":{"signatureRequired":true,"evidenceRequired":true,"dateRequired":true,"meanings":["approval","responsibility"]},"projectLinked":false,"sequences":[],"sequencesTruncated":false,"vault":{"programId":null},"viewer":{"canWrite":true,"writeRefusal":null,"canSign":true,"signAuthorityRefusal":null}}}: expected 200 to be 404 // Object.is equality
+- Expected
++ Received
+- 404
++ 200
+ FAIL  tests/db/estar-audit-admission.dbtest.ts > native tracked-filing concurrency > serializes two actual concurrent nonsigned transitions with one audit and one stale-state refusal
+AssertionError: expected +0 to be 2 // Object.is equality
+- Expected
++ Received
+- 2
++ 0
+ Test Files  10 failed | 8 passed (18)
+      Tests  2 failed | 109 passed | 108 skipped (219)
+exit=1
+
+## 2. clean HEAD export, same database and env
+date: 2026-11-02T02:19:57Z
+clean export of HEAD 609ef94c7 (git archive), node_modules symlinked; same database, same env
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the record a fulfilment is made on > runs as a role RLS applies to (not the owner, not BYPASSRLS) 5ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the record a fulfilment is made on > the filed rule is the platform one: sent and acknowledged 0ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > offers only this project's sequences the agency received, and this project's Vault 46ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a viewer reads the options as unable to write or sign 33ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a PMR that names nothing is refused before the password, which is never checked 31ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a PMR with no date is refused before the password: the server never chooses the signed date 27ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > evidence but no password is a missing signature component 24ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a sequence still pending transmit, before the password, and records nothing 35ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a sequence the agency rejected, before the password, and records nothing 36ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a frozen sequence never dispatched, before the password, and records nothing 20ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another project's sequence, before the password, and records nothing 20ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another organisation's sequence, before the password, and records nothing 29ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another project's Vault version, before the password, and records nothing 82ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another organisation's Vault version, before the password, and records nothing 33ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a version that does not exist, before the password, and records nothing 23ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a version whose data was withdrawn, before the password, and records nothing 39ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a viewer cannot fulfil it at either door 34ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR, signed > signs: the row names the sequence and the version with its sha256, and the signature binds them 92ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR, signed > the list names what met it, who signed, and that the signature matches the record 28ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR, signed > a second fulfilment is refused 16ms
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project with no program > is refused at the project door, and nothing about the commitment changes 35ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a meeting commitment is a governed write with a reason > fulfils unsigned, naming a sequence, with a resolve ledger row 55ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a meeting commitment is a governed write with a reason > refuses a password: it takes none 24ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > offers a member only the sequences of programs they can open; the signer, who can open Q, is offered its sequence too 40ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > a commitment made under a submission is offered only that submission's sequences, and names it to a reader who can open it 79ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > a member who cannot open program Q cannot name its sequence: 404, nothing about it said 13ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > the signer, who can open it, signs; the member's list says only that it is in a project they cannot open 82ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > tenant isolation > another organisation's admin reaches neither the options nor the fulfilment 46ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > tenant isolation > under RLS, the runtime role in another tenant scope reads none of these rows 2ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > more than 200 sequences the agency received: the list keeps the most recent > on a project's door: the newer submission's sequences are offered, newest first, and the oldest are the ones cut 111ms
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > more than 200 sequences the agency received: the list keeps the most recent > on the organisation's door, with no submission: the same, across every program the person can open 39ms
+ ✓ tests/db/estar-audit-admission.dbtest.ts > native eSTAR audit outcomes and current project admission > executes on genuine authenticated TLS app_service with ALS and FORCE RLS 69ms
+ ✓ tests/db/estar-audit-admission.dbtest.ts > native eSTAR audit outcomes and current project admission > reads only current admitted projects, retains unbound records and refuses malformed scopes 358ms
+ ✓ tests/db/estar-audit-admission.dbtest.ts > native eSTAR audit outcomes and current project admission > refuses private/foreign project writes and preserves the business refusal without an audit warning 119ms
+ ✓ tests/db/estar-audit-admission.dbtest.ts > native eSTAR audit outcomes and current project admission > registration create/update and tracker creation return real chained audit rows 163ms
+ ✓ tests/db/estar-audit-admission.dbtest.ts > native eSTAR audit outcomes and current project admission > a audit-refusal preserves a completed tracker write and exposes only the bounded actual outcome 96ms
+ ✓ tests/db/estar-audit-admission.dbtest.ts > native eSTAR audit outcomes and current project admission > a audit-throw preserves a completed tracker write and exposes only the bounded actual outcome 66ms
+ ✓ tests/db/estar-audit-admission.dbtest.ts > native eSTAR audit outcomes and current project admission > rechecks viewer after genuine admission before writing 23ms
+ ✓ tests/db/estar-audit-admission.dbtest.ts > native eSTAR audit outcomes and current project admission > rechecks remove-member after genuine admission before writing 23ms
+ ✓ tests/db/estar-audit-admission.dbtest.ts > native eSTAR audit outcomes and current project admission > rechecks inactive after genuine admission before writing 18ms
+ ✓ tests/db/estar-audit-admission.dbtest.ts > native eSTAR audit outcomes and current project admission > keeps unsigned filing refused before any filing state or signature is recorded 20ms
+ × tests/db/estar-audit-admission.dbtest.ts > native tracked-filing concurrency > serializes two actual concurrent nonsigned transitions with one audit and one stale-state refusal 93ms
+ ✓ tests/db/estar-audit-admission.dbtest.ts > native technical-file assembly audit and final delivery gate > delivers actual native technical-file bytes and exposes a failed assembly audit after the final export is audited 175ms
+ ✓ tests/db/estar-audit-admission.dbtest.ts > native technical-file assembly audit and final delivery gate > refuses native delivery when its final export audit is unavailable and recovers without relaxing that gate 107ms
+ ↓ tests/db/vault-where-used.dbtest.ts > the server's transmit verdict and the dispatch status (VR-14) > each version says why it would not be transmitted, in the refusal's own words
+ ↓ tests/db/vault-where-used.dbtest.ts > the server's transmit verdict and the dispatch status (VR-14) > each placement carries its sequence's dispatch status
+ ↓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > each version lists the live leaves that name it
+ ↓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > a removed leaf is not a placement
+ ↓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > another organisation's leaf naming this version is not listed, and another organisation reads nothing
+ ↓ tests/db/vault-where-used.dbtest.ts > where a Vault version is placed (VR-14a) > the read's own organisation filter holds without row security
+ ↓ tests/db/vault-where-used.dbtest.ts > official eSTAR exports that attached a version (VR-14c) > lists each export whose record names the version, from either store
+ ↓ tests/db/vault-where-used.dbtest.ts > official eSTAR exports that attached a version (VR-14c) > a record that names no source is not inferred, and another organisation's is not listed
+ ↓ tests/db/vault-passage-search.dbtest.ts > the chunk corpus is written by ingest > chunked and embedded both uploads, and the catalog ledger says so
+ ↓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > returns the passage that answers the question, from the right document
+ ↓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > answers a tox question from the tox document
+ ↓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > never returns another organization's document, even for identical text
+ ↓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > states the coverage it searched, read from the chunking ledger
+ ↓ tests/db/vault-passage-search.dbtest.ts > search_document_passages reaches it > REFUSES without an organization identity rather than reporting no matches
+ ↓ tests/db/vault-passage-search.dbtest.ts > a retrieved passage can be cited > carries a real page number, derived from the PDF and not from arithmetic
+ ↓ tests/db/vault-passage-search.dbtest.ts > with a project open, only that project's passages (PF-10 S7) > with no project open, the organization: both projects' studies are found
+ ↓ tests/db/vault-passage-search.dbtest.ts > with a project open, only that project's passages (PF-10 S7) > the open project's study, never the other project's
+ ↓ tests/db/vault-passage-search.dbtest.ts > with a project open, only that project's passages (PF-10 S7) > and the other way round, with the coverage of the open project alone
+ ↓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > files it, records who placed it, and reports the folder label
+ ↓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > left an audit row naming the location it came from and the one it went to
+ ↓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > the filing row records the evidence kind before and after (VR-05)
+ ↓ tests/db/vault-placement.dbtest.ts > filing a document where its own taxonomy allows > honours an explicit unfile — the Unfiled queue is a real answer
+ ↓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses a folder from another modality's taxonomy
+ ↓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses to confirm a suggestion that does not exist
+ ↓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > refuses a call that names no destination at all
+ ↓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > confirms an existing suggestion in place, keeping the CTD section
+ ↓ tests/db/vault-placement.dbtest.ts > what it refuses, writing nothing > will not let another organization move the document
+ ↓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > records AnA's folder as a suggestion a person must confirm, not as a person's filing
+ ↓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > refuses to confirm a suggestion — a person confirms filing in the Vault
+ ↓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > the service itself refuses an agent's confirm, so no other agent caller can record one either
+ ↓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > unfiles with the same attribution — the Unfiled queue is where a person decides
+ ↓ tests/db/vault-placement.dbtest.ts > a placement AnA makes is a suggestion, attributed to her (D5) > leaves a person's filing through the Vault a confirmed decision with no agent marker
+ ↓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses a viewer, and writes nothing
+ ↓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses an actor with no current membership or cached request role
+ ↓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > uses the active administrator membership when the cached request role is absent
+ ↓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > refuses AnA acting for a viewer — the path that had no check
+ ↓ tests/db/vault-placement.dbtest.ts > only a role that may write files into the Vault (D3) > lets a member file — the role SSO provisioning assigns
+ ↓ tests/db/ana-vault-search-no-key.dbtest.ts > AnA reaches the Vault with no key and the catalog off (D2) > the catalog really is off for these organisations
+ ↓ tests/db/ana-vault-search-no-key.dbtest.ts > AnA reaches the Vault with no key and the catalog off (D2) > a question in plain English finds the current version by its text
+ ↓ tests/db/ana-vault-search-no-key.dbtest.ts > AnA reaches the Vault with no key and the catalog off (D2) > another organisation's document is never a hit, from either side
+ ↓ tests/db/ana-vault-search-no-key.dbtest.ts > AnA reaches the Vault with no key and the catalog off (D2) > lists and reads the document, with no refusal naming a setting
+ ↓ tests/db/ana-vault-search-no-key.dbtest.ts > AnA reaches the Vault with no key and the catalog off (D2) > a question no document answers is nothing found, not unavailable
+ ↓ tests/db/vault-chunking-off.dbtest.ts > the catalog half works on its own > records the extraction tier even with the passage index off
+ ↓ tests/db/vault-chunking-off.dbtest.ts > the catalog half works on its own > still lists and reads the document through the tools
+ ↓ tests/db/vault-chunking-off.dbtest.ts > with passage embedding off, the passages are indexed for text and nothing is embedded > wrote the chunks with no vector, and the ledger says chunked
+ ↓ tests/db/vault-chunking-off.dbtest.ts > with passage embedding off, the passages are indexed for text and nothing is embedded > search_document_passages finds the passage by text, and says it ranked by text
+ ↓ tests/db/vault-passage-search-keyless.dbtest.ts > the passage index is written with no key and no flag > both uploads are chunked, with no vector on any chunk, and the ledger says chunked
+ ↓ tests/db/vault-passage-search-keyless.dbtest.ts > the passage index is written with no key and no flag > with passage embedding on but no provider, a new upload is still chunked, all or none embedded
+ ↓ tests/db/vault-passage-search-keyless.dbtest.ts > search_document_passages answers by text, and says so > returns the passage that answers the question, from the right document
+ ↓ tests/db/vault-passage-search-keyless.dbtest.ts > search_document_passages answers by text, and says so > answers a tox question from the tox document
+ ↓ tests/db/vault-passage-search-keyless.dbtest.ts > search_document_passages answers by text, and says so > never returns another organization's document, even for identical text
+ ↓ tests/db/vault-passage-search-keyless.dbtest.ts > search_document_passages answers by text, and says so > a word in no document matches nothing, honestly
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > actual source identity and current creator boundaries > uses a real non-owner runtime with tenant RLS
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > actual source identity and current creator boundaries > preserves actual NULL-org global_public and withholds NULL-org private sources
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > actual source identity and current creator boundaries > enumerates genuinely unbound chat captures only for the original uploader
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > actual source identity and current creator boundaries > does not authorize an unknown workspace by a matching accessible numeric project
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > actual source identity and current creator boundaries > preserves legacy numeric chat access only through its exact artifact/file parent
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > actual source identity and current creator boundaries > does not make a captured artifact appear to be an unbound conversation upload
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > source usage requires both current parent and canonical object ACL > counts only currently permitted citing documents even inside one accessible program
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > source usage requires both current parent and canonical object ACL > counts an explicit section grant without promoting it to whole-document authority
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > source usage requires both current parent and canonical object ACL > rechecks a revoked current section grant
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > source usage requires both current parent and canonical object ACL > refuses an explicitly selected private source before returning change metadata
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > source usage requires both current parent and canonical object ACL > preserves an unresolved recorded citation without enriching private source facts
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > source usage requires both current parent and canonical object ACL > returns unavailable verification rather than fabricated usage zeros
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > native bibliography admission uses the current original uploader > resolves a recorded unbound source citation for its original uploader
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > native bibliography admission uses the current original uploader > withholds that source metadata from a different permitted document reader without changing the citation or hash
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > native bibliography admission uses the current original uploader > runs bibliography and Sources HTTP reads through actual JWT, object ACL and instrumented app_service tenant transactions
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > current related-parent scope before where-used projection > withholds private and unparented submissions while keeping readable placements
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > current related-parent scope before where-used projection > withholds a private eSTAR export or a private retained counterpart
+ ↓ tests/db/project-vault-secondary-access.dbtest.ts > current related-parent scope before where-used projection > keeps permitted CMC evidence without leaking a private compiled section key
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current sharing and metadata > admits a genuine owner positive control on current canonical sharing
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current sharing and metadata > admits a genuine member positive control on current canonical sharing
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current sharing and metadata > admits a genuine unassigned positive control on current canonical sharing
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current sharing and metadata > lists only accessible records, and the scoped list returns no withheld-row oracle
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current sharing and metadata > refuses an unassigned private submission read before placement or source SQL
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current sharing and metadata > refuses an unassigned private sequences read before placement or source SQL
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current sharing and metadata > refuses an unassigned private leaves read before placement or source SQL
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current sharing and metadata > refuses an unassigned private manifest read before placement or source SQL
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current sharing and metadata > keeps the current-manager unanchored metadata remedy reachable without admitting sources
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current actor, parent and selected scope > refuses a signed token without an actual organization membership
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current actor, parent and selected scope > refuses a formerly capable role after actual persisted demotion
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current actor, parent and selected scope > refuses an actual disabled account at the JWT boundary
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current actor, parent and selected scope > fails safely when the real authenticated request executor is removed
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current actor, parent and selected scope > refuses the actual foreign submission and sequence identities
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current actor, parent and selected scope > refuses an existing sequence when its actual parent is soft-deleted
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current actor, parent and selected scope > refuses a conflicting selected program identity before leaves
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables current actor, parent and selected scope > refuses a conflicting selected submission identity before leaves
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables recorded filing frameworks > uses the actual filing framework, not the amendment lifecycle type or requested friendlier pathway
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables recorded filing frameworks > requires an explicit compatible choice when no live framework is recorded
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables recorded filing frameworks > refuses a recorded incompatible framework instead of selecting the requested compatible one
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables recorded filing frameworks > refuses a recorded sequence-region conflict
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables recorded filing frameworks > keeps actual unsupported IND coverage unavailable in both list metadata and direct assessment
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables recorded filing frameworks > returns current retained technical-file coverage for the actual MDR filing only
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > keeps the actual 'draft' source content qualification honest
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > keeps the actual 'unpinned' source content qualification honest
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > keeps the actual 'changed-pin' source content qualification honest
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > keeps the actual 'empty' source content qualification honest
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > keeps the actual 'placeholder' source content qualification honest
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > keeps the actual 'unknown-pointer' source content qualification honest
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > refuses a same-org source that was moved to a sibling programme before its body query
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > withholds the combined pane after a real committed source-content change and retains its attributed old version
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > withholds already-read content after actual current project membership withdrawal
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > withholds the pane after actual late leaf-pin binding facts change
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > withholds the pane after actual late programme-type binding facts change
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > withholds the pane after actual late framework binding facts change
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual required-deliverables retained source evidence and late changes > binds native sequence/source admission to the exact held actual executor, even for equivalent current actors
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual repaired anchor and Vault-tenant read boundaries > withholds the pane after the same programme moves to another actual unique integer anchor
+ ↓ tests/db/submission-required-deliverables.dbtest.ts > actual repaired anchor and Vault-tenant read boundaries > refuses an actual NULL-tenant genesis Vault placement before metadata or local provider reads
+ ✓ tests/db/document-catalog-governed.dbtest.ts > AnA's catalog write is a suggestion that names who wrote it > is stored as suggested, with the agent, model, thread and turn 8129ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > AnA's catalog write is a suggestion that names who wrote it > has a chained audit row naming the agent, model and turn 4ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > AnA's catalog write is a suggestion that names who wrote it > the Vault read shows it as a suggestion by AnA and its model 232ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > AnA's catalog write is a suggestion that names who wrote it > session recall labels it as her unconfirmed suggestion 37ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > the kind is the Vault vocabulary > refuses a kind outside it and writes nothing 371ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > a person confirms > a viewer cannot, and the record is untouched 43ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > a person confirms > a confirmation of a record that changed after it was shown is refused 280ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > a person confirms > a decision that names no revision is refused 37ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > a person confirms > a member confirms it as written, audited with the proposer 74ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > a person confirms > only once 46ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > a person confirms > AnA cannot replace a record a person confirmed 86ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > a person confirms > recall says a person confirmed it 1ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > a person corrects, with a reason > without a reason, nothing changes 31ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > a person corrects, with a reason > a kind outside the vocabulary is refused 29ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > a person corrects, with a reason > with a reason, the correction is recorded and audited with it 64ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > a person corrects, with a reason > the database refuses a 'corrected' record without a reason 2ms
+ ✓ tests/db/document-catalog-governed.dbtest.ts > a person corrects, with a reason > new bytes clear the description and its decision 22ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND audit outcome native qualification > uses genuine membership, ALS, LazyRequestDbClient, configured transport and FORCE RLS as app_service 88ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND draft and filing audit outcomes > safety returns its real draft and filed record for none, without a false 500 272ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND draft and filing audit outcomes > safety returns its real draft and filed record for audit-refusal, without a false 500 171ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND draft and filing audit outcomes > safety returns its real draft and filed record for audit-thrown, without a false 500 127ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND draft and filing audit outcomes > annual returns its real draft and filed record for none, without a false 500 144ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND draft and filing audit outcomes > annual returns its real draft and filed record for audit-refusal, without a false 500 119ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND draft and filing audit outcomes > annual returns its real draft and filed record for audit-thrown, without a false 500 108ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND draft and filing audit outcomes > amendment returns its real draft and filed record for none, without a false 500 96ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND draft and filing audit outcomes > amendment returns its real draft and filed record for audit-refusal, without a false 500 81ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND draft and filing audit outcomes > amendment returns its real draft and filed record for audit-thrown, without a false 500 75ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND snapshots and admission > returns the saved blocked snapshot and root outcome for none 87ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND snapshots and admission > returns the saved blocked snapshot and root outcome for audit-refusal 57ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND snapshots and admission > returns the saved blocked snapshot and root outcome for audit-thrown 77ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND snapshots and admission > denies anonymous, viewer and forged membership before a register write 43ms
+ ✓ tests/db/ind-audit-outcomes.dbtest.ts > IND snapshots and admission > reports an actual PostgreSQL business refusal without an audit or a saved row, then recovers 28ms
+ ✓ tests/db/retrieval-floor.dbtest.ts > searchHybrid applies a floor only when asked for one > the floor is what excludes the weak atom: without one it is returned, with one it is not 131ms
+ ✓ tests/db/retrieval-floor.dbtest.ts > evidence-ask applies its similarity floor, and records only the floor it applied > an atom below the default floor (0.6) is not admissible evidence 78ms
+ ✓ tests/db/retrieval-floor.dbtest.ts > evidence-ask applies its similarity floor, and records only the floor it applied > a question nothing clears is refused, and the model is never called 54ms
+ ✓ tests/db/retrieval-floor.dbtest.ts > evidence-ask applies its similarity floor, and records only the floor it applied > every chunk recorded under a run clears the threshold that run records 68ms
+ ✓ tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > uses actual auth tenant binding and verified original bytes for aggregate preview 364ms
+ ✓ tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > freezes the actual selected observations and receipt as the CSR document’s study data 91ms
+ ✓ tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > reports a completed preview with failed audit truthfully, then recovers on an actual retry 45ms
+ ✓ tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > permits an authorized read-only share and refuses private/foreign source probes and writes 87ms
+ ✓ tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > allows an honest draft preview but refuses its inclusion before any run record is created 41ms
+ ✓ tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > serializes check-in and withdrawal writers against the source guard until commit, then refuses the old version 241ms
+ ✓ tests/db/csr-vault-source-input.dbtest.ts > native canonical clinical supporting source integration > honors explicit remove_data while keeping authorized historical data after keep_data 88ms
+ ✓ tests/db/document-catalog-role.dbtest.ts > catalog_project_document — the comprehension record is a write > refuses a viewer, and the record is untouched 3190ms
+ ✓ tests/db/document-catalog-role.dbtest.ts > catalog_project_document — the comprehension record is a write > accepts a member — the positive control: nothing else stood in the way 202ms
+ ✓ tests/db/gateway-accounts.dbtest.ts > agency gateway accounts (D7) > lists every gateway × environment, the platform account by default 110ms
+ ✓ tests/db/gateway-accounts.dbtest.ts > agency gateway accounts (D7) > a viewer cannot change it 33ms
+ ✓ tests/db/gateway-accounts.dbtest.ts > agency gateway accounts (D7) > an admin cannot change it without confirming their password, and nothing is written 40ms
+ ✓ tests/db/gateway-accounts.dbtest.ts > agency gateway accounts (D7) > an admin chooses their own FDA account: stored encrypted, never returned, audited by field name 120ms
+ ✓ tests/db/gateway-accounts.dbtest.ts > agency gateway accounts (D7) > another organisation never sees the choice and keeps the platform account 36ms
+ ✓ tests/db/gateway-accounts.dbtest.ts > agency gateway accounts (D7) > choosing the platform account again clears every secret held 24ms
+ ✓ tests/db/gateway-accounts.dbtest.ts > agency gateway accounts (D7) > the table carries the tenant policy the sweep attaches 3ms
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > folds every filed sequence: the untouched leaf from 0000, the replacement from 0001, nothing never sent 1656ms
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > lists every sequence and says which it did not fold 13ms
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > never reads another organisation’s filings, and answers empty for a program with no submission 25ms
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > the migration creates the table the writer INSERTs into 2ms
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > carries every column the writer binds, including resolved_model 6ms
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > persists a row through the real writer 23ms
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > round-trips every provenance column, at the longest values the gateway writes (D6) 27ms
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > upgrades a table in the pre-2026-09-26 shape: columns added, region widened, rows kept (Rule 1) 94ms
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > stores NULL rather than inventing a resolution the provider never gave 8ms
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > records the EFFECTIVE temperature: NULL means no sampling parameter was sent 13ms
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > initialize() throws — naming the role — when the store is not writable 2ms
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > initialize() throws when the table is absent, and says which migration creates it 1ms
+ ✓ tests/db/ai-gateway-audit-log.dbtest.ts > ai.gateway_audit_log — AI provenance ledger > initialize() passes against the provisioned table 4ms
+ FAIL  tests/db/ana-vault-search-no-key.dbtest.ts [ tests/db/ana-vault-search-no-key.dbtest.ts ]
+Error: Vault fixture proof requires the recorded disposable database; retained QA is refused.
+ FAIL  tests/db/project-vault-secondary-access.dbtest.ts [ tests/db/project-vault-secondary-access.dbtest.ts ]
+Error: Use matching declared isolated QA connections and the restricted application role.
+ FAIL  tests/db/submission-required-deliverables.dbtest.ts [ tests/db/submission-required-deliverables.dbtest.ts ]
+Error: This fixture requires the explicitly reviewed QA target or canonical disposable CI database.
+ FAIL  tests/db/vault-chunking-off.dbtest.ts [ tests/db/vault-chunking-off.dbtest.ts ]
+Error: Vault fixture proof requires the recorded disposable database; retained QA is refused.
+ FAIL  tests/db/vault-passage-search-keyless.dbtest.ts [ tests/db/vault-passage-search-keyless.dbtest.ts ]
+Error: Vault fixture proof requires the recorded disposable database; retained QA is refused.
+ FAIL  tests/db/vault-passage-search.dbtest.ts [ tests/db/vault-passage-search.dbtest.ts ]
+Error: Vault fixture proof requires the recorded disposable database; retained QA is refused.
+ FAIL  tests/db/vault-placement.dbtest.ts [ tests/db/vault-placement.dbtest.ts ]
+Error: Vault fixture proof requires the recorded disposable database; retained QA is refused.
+ FAIL  tests/db/vault-where-used.dbtest.ts [ tests/db/vault-where-used.dbtest.ts ]
+Error: Vault fixture proof requires the recorded disposable database; retained QA is refused.
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project with no program > is refused at the project door, and nothing about the commitment changes
+AssertionError: {"success":true,"data":{"commitment":{"id":1140,"commitmentType":"pmc","status":"open","submission":null},"rule":{"signatureRequired":true,"evidenceRequired":true,"dateRequired":true,"meanings":["approval","responsibility"]},"projectLinked":false,"sequences":[],"sequencesTruncated":false,"vault":{"programId":null},"viewer":{"canWrite":true,"writeRefusal":null,"canSign":true,"signAuthorityRefusal":null}}}: expected 200 to be 404 // Object.is equality
+ FAIL  tests/db/estar-audit-admission.dbtest.ts > native tracked-filing concurrency > serializes two actual concurrent nonsigned transitions with one audit and one stale-state refusal
+AssertionError: expected +0 to be 2 // Object.is equality
+ Test Files  10 failed | 8 passed (18)
+      Tests  2 failed | 107 passed | 108 skipped (217)
+exit=1
+
+## 3. failing names (file-level refusals and failed cases), tree vs HEAD export
+ FAIL  tests/db/ana-vault-search-no-key.dbtest.ts [ tests/db/ana-vault-search-no-key.dbtest.ts ]
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project with no program > is refused at the project door, and nothing about the commitment changes
+ FAIL  tests/db/estar-audit-admission.dbtest.ts > native tracked-filing concurrency > serializes two actual concurrent nonsigned transitions with one audit and one stale-state refusal
+ FAIL  tests/db/project-vault-secondary-access.dbtest.ts [ tests/db/project-vault-secondary-access.dbtest.ts ]
+ FAIL  tests/db/submission-required-deliverables.dbtest.ts [ tests/db/submission-required-deliverables.dbtest.ts ]
+ FAIL  tests/db/vault-chunking-off.dbtest.ts [ tests/db/vault-chunking-off.dbtest.ts ]
+ FAIL  tests/db/vault-passage-search-keyless.dbtest.ts [ tests/db/vault-passage-search-keyless.dbtest.ts ]
+ FAIL  tests/db/vault-passage-search.dbtest.ts [ tests/db/vault-passage-search.dbtest.ts ]
+ FAIL  tests/db/vault-placement.dbtest.ts [ tests/db/vault-placement.dbtest.ts ]
+ FAIL  tests/db/vault-where-used.dbtest.ts [ tests/db/vault-where-used.dbtest.ts ]
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project with no program > is refused at the project door, and nothing about the commitment changes
+ × tests/db/estar-audit-admission.dbtest.ts > native tracked-filing concurrency > serializes two actual concurrent nonsigned transitions with one audit and one stale-state refusal
+IDENTICAL: the same 12 names on both. 8 files refuse this database by their own guard (they run only on a recorded disposable or canonical CI database); 2 cases fail the same way on HEAD. The tree passes 2 more tests than HEAD (109 vs 107): the two new F1 cases of ectd-filed-state-view.

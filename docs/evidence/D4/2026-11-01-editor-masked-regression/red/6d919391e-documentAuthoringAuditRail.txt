@@ -1,0 +1,65 @@
+
+ RUN  v4.1.7 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/parent
+
+ × client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx > the audit rail reads the real record > renders the server’s events — actor, role, operation, reason, hashes, section link 48ms
+   → [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ × client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx > the audit rail reads the real record > a failed read is a failure to READ — never "no governed acts occurred" 4ms
+   → [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ × client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx > the audit rail reads the real record > an empty trail says so honestly, as an empty — not an error 4ms
+   → [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ × client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx > the heuristic section check > runs the scan on demand and renders the flags under the server’s own honest framing 3ms
+   → [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ × client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx > the heuristic section check > zero flags reads as "passed mechanical checks" — never as compliant 4ms
+   → [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx > the audit rail reads the real record > renders the server’s events — actor, role, operation, reason, hashes, section link
+ FAIL  client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx > the audit rail reads the real record > a failed read is a failure to READ — never "no governed acts occurred"
+ FAIL  client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx > the audit rail reads the real record > an empty trail says so honestly, as an empty — not an error
+ FAIL  client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx > the heuristic section check > runs the scan on demand and renders the flags under the server’s own honest framing
+ FAIL  client/src/concept2cure/v2/__tests__/documentAuthoringAuditRail.test.tsx > the heuristic section check > zero flags reads as "passed mechanical checks" — never as compliant
+Error: [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+vi.mock(import("@/services/portal/authService"), async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    // your mocked methods
+  }
+})
+
+ ❯ actor client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts:23:44
+     21|   update: (patch: Partial<AssemblyBuildState>) => void;
+     22| }
+     23| const actor = (): string => { const user = authService.getUser(); retu…
+       |                                            ^
+     24| const scopeKey = (options: AssemblyBuildOptions): string => `${actor()…
+     25| function update(owner: Owner, bucket: AssemblyBucket, patch: Partial<A…
+ ❯ scopeKey client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts:24:64
+ ❯ useAuthoringAssemblyBuild client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts:198:15
+ ❯ DocumentWorkbench client/src/concept2cure/v2/editor/DocumentWorkbench.tsx:2061:20
+ ❯ Object.react_stack_bottom_frame ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+   Start at  22:30:16
+   Duration  4.10s (transform 2.45s, setup 147ms, import 3.13s, tests 68ms, environment 501ms)
+

@@ -157,6 +157,14 @@ describe('board ACL before private projection', () => {
     expect(result.queue[0]).toMatchObject({id:doc.id,doc:'Private review title',comments:1,myReviewStanding:'pending'});
     expect(result.thread[0]?.body).toBe('Private reviewer comment');
   });
+  it('previews the first section with text, not an empty first one (J3, 2026-11-06)', async () => {
+    const doc = await document();
+    await grant(doc);
+    await sql.query("UPDATE authoring_sections SET content='' WHERE id=$1 AND tenant_id=$2",[doc.sections[0],ORG]);
+    const row = (await board({itemId:doc.id})).queue[0];
+    expect(row?.passage).toBe('Private section 2 prose');
+    expect(row?.firstSectionId).toBe(doc.sections[0]);
+  });
   it('does not let a document ACL bypass private project admission', async () => {
     const doc = await document(PRIVATE_PROGRAM);
     await grant(doc);

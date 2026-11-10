@@ -544,6 +544,13 @@
 
 /* ─── DossierDrawer · Attachments tab ──────────────────────── */
 .mdx-shell .dd-att-wrap { display: flex; flex-direction: column; gap: 12px; }
+.mdx-shell .dd-att-note {
+  margin: 0; padding: 10px 12px; min-width: 0; overflow-wrap: anywhere;
+  font-size: 12px; color: var(--text-200); background: var(--bg-100);
+  border: 1px solid var(--border); border-radius: var(--radius-md);
+}
+.mdx-shell .dd-att-drop[data-busy="true"] { cursor: wait; opacity: .7; }
+
 .mdx-shell .dd-att-drop {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 6px;

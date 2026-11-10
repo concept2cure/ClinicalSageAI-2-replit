@@ -26,9 +26,19 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 // org-admin branch of the unlock panel's copy. A plain member: the tier branch
 // under test offers "Compare subscriptions" to every role, so this keeps the test honest
 // about which branch it is exercising.
+/* The signed-in account: an id (the navigation verdicts are read only for an account with one, navEntitlements.tsx
+   useNavigationReadOwner), and the same object on every render, as the session gives it. */
+const stableUser = vi.hoisted(() => {
+  const seen = new Map<string, Record<string, unknown>>();
+  return (u: Record<string, unknown>) => {
+    const key = JSON.stringify(u);
+    if (!seen.has(key)) seen.set(key, { id: 21, ...u });
+    return seen.get(key)!;
+  };
+});
 vi.mock('@/services/portal/authService', () => ({
   useAuth: () => ({
-    user: { firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: ['member'] },
+    user: stableUser({ firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: ['member'] }),
     logout: vi.fn(),
   }),
 }));
@@ -90,7 +100,7 @@ async function mountRail() {
       />
     </NavEntitlementsProvider>,
   );
-  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', NAV_URL));
+  await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', NAV_URL, undefined, undefined, expect.any(AbortSignal)));
   // The verdicts land a few microtasks after the request; flush them so an
   // assertion of ABSENCE (no lock) cannot pass merely by running too early.
   await act(async () => {
@@ -244,7 +254,8 @@ describe('Rail licence gating', () => {
        Home itself on the rail on 2026-10-16 (327bc9fb6, RAIL_CORE). Home has no
        catalog row: its name must NOT carry the locked suffix, and it navigates.
        Scoped to the list of places — the rail logo is also named "Home". */
-    const btn = within(document.querySelector<HTMLElement>('.rail-nav')!).getByRole('button', { name: 'Home' });
+    // The places are the first .rail-nav in the scrolled list; the actions group (New conversation, Search) sits above it (D1-1).
+    const btn = within(document.querySelector<HTMLElement>('.rail-scroll .rail-nav')!).getByRole('button', { name: 'Home' });
     expect(btn.getAttribute('aria-label')).toBeNull();
     expect(btn.getAttribute('data-locked')).toBeNull();
     fireEvent.click(btn);

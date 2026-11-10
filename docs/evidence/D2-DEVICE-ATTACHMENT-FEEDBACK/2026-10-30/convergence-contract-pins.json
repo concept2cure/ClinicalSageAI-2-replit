@@ -1,0 +1,44 @@
+{
+  "verdict": "approved minimal canonical-owner composition",
+  "canonical_base": "d79abdf9f4dd1a30091247bce2fdab2081a1e188",
+  "canonical_source_count": 21,
+  "canonical_sha256": {
+    "client/src/concept2cure/v2/vaultUploadVisit.ts": "2ad913b2f58ae90a33eb3705d2e60a91c229370de0e5ddee552feb1c5e719f8f",
+    "client/src/concept2cure/v2/useVaultUpload.ts": "64c19779124547d550e62519f1c05105cad9f2001fda11c35ebbcb9b8c54734c",
+    "client/src/concept2cure/v2/mutationOutcome.ts": "18060d64763233f38345df7e93a89ef96ea175f338c06d311faf5cec0e113f86",
+    "client/src/concept2cure/v2/vaultIngestReceipt.ts": "83af6a73aebfa765329bcd5d8d4b979c2a60502998dd357e7967e9fd915de00a",
+    "client/src/concept2cure/v2/vaultIngestTransport.ts": "420be6b1ca6c22ff5367a70aa484356ee62b1733b21de0675cebeaaaec030e8f",
+    "client/src/concept2cure/v2/dataConnect.tsx": "553667dc8a83c219fd0aee4feb66d79f7985ddc6011721464075a30396de2669",
+    "client/src/concept2cure/v2/editor/authoringCurrentRead.ts": "eeb1c7f6670a9372216bbb844bc11f52632e74e127260a3e9a29d50586a657d7",
+    "client/src/concept2cure/v2/shellProject.ts": "b64eca13dbcf858eec808251e9d391e9cbbac43f6d4e1491cbd21e60d07497b7",
+    "client/src/services/portal/authService.tsx": "959331a8300594b1d1d7ff74fa75518310ccfded283b3a69564b9bad3aa56b54",
+    "client/src/utils/authToken.ts": "c8fb94926f5a1dc4602ccac935f65e368b766c07bbab75cdc2670d17dc5e0e4c",
+    "client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes.tsx": "c1f0af4f48a26efe096ab9300969cb14b802b5f9686ce394a4f41227bc35a0c7",
+    "client/src/concept2cure/mdx/store/dossierStore.ts": "da488d82c39784ef5b2f415871ef079e45513d8b8aba973148d366a010bad415",
+    "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.upload.test.tsx": "68b22ca72b6b6b9ba3f33fdb0c8b1566ec161a0c3a5a128b0e173ef45e5b0e64",
+    "client/src/concept2cure/v2/__tests__/vaultUploadOwnership.test.tsx": "89d33b45a24ce39bc6fe6dcba7a10b780c1ffa7de71158de43d704713d9b489e",
+    "client/src/concept2cure/v2/__tests__/vaultUploadFailures.test.tsx": "792657c8d426d9f4e550fa2e2b55c4676b6ccf88ee7fe898fd4c40b9ea36b1dc",
+    "client/src/concept2cure/v2/__tests__/vaultStagingSessionOwnership.test.tsx": "dcd0166b151b87a2ecef1ea7dce5e0a9b094e3b8c447e52c104bd8c50be1eeac",
+    "client/src/concept2cure/v2/__tests__/useVaultUpload.test.tsx": "666b9a434ed99766912f7db970aa193d669e06f1a58df1afd62b04be03c02598",
+    "client/src/concept2cure/v2/surfaces/WorkflowCatalog.tsx": "563b1f5451649fb9a6f13d5033b563fa2eecf3aeb211dd0413cb0577353750d0",
+    "client/src/concept2cure/v2/surfaces/TaskBoard.tsx": "dce2dac454a3f6f3aef27237d2e35a4f024a6bf9d37f9f5d36ae9f278cd9c4ac",
+    "client/src/concept2cure/v2/__tests__/catalogReadRecovery.test.tsx": "9da51cc87c3dc754d5f20454c2d615ef8e8040345f62a971c06afa5a09a156b3",
+    "client/src/concept2cure/v2/__tests__/taskBoardReadTruth.test.tsx": "f9fb6e237935ff31c3e56541ee1ef4acba8c332152e16d6853f30feca765304e"
+  },
+  "historical_unpublished_candidate_commit": "61ea6da2c2a4b7053a11ba7ccad0c5b40bcee993",
+  "historical_candidate_sha256": {
+    "client/src/concept2cure/mdx/surfaces/pathway/DossierAttachments.tsx": "12e07476b74abe61279e8ea7c92fe37878a7cbc3320d82320a1aa8f9960d49a1",
+    "client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes.tsx": "ad598137329e7168af5f0022e09120e795f4c2a9ecf6eb79961105fe358cab35",
+    "client/src/concept2cure/mdx/pathway-tabs.css": "0819d24ca0b53b41f7eeb17144521b082235ed3951cdc86733457b7ae2fe601a"
+  },
+  "immutable_canonical_owners": [
+    "client/src/concept2cure/v2/vaultUploadVisit.ts",
+    "client/src/concept2cure/v2/useVaultUpload.ts",
+    "client/src/concept2cure/v2/mutationOutcome.ts",
+    "client/src/concept2cure/v2/vaultIngestReceipt.ts",
+    "client/src/concept2cure/v2/vaultIngestTransport.ts"
+  ],
+  "production_or_test_edits_by_reviewer": false,
+  "qualification_runner_by_reviewer": false,
+  "converged_runner_and_publication_status": "pending/root-owned; historical385/8 results are not new merged-state qualification"
+}

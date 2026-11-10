@@ -17,6 +17,12 @@
  *   4. a baseline entry with no real reason  -> must FAIL (not a snooze)
  *   5. a baseline that allows more than exists -> must FAIL (shrink only)
  *   6. the module that DEFINES the question   -> must not count as a door
+ *   9. a device package through the SECTION loaders (`loadAuthoredDeviceSections`,
+ *      `loadGovernedDeviceSections`), unguarded -> must FAIL (P-29.3, 2026-11-02:
+ *      /build and the official eSTAR's attachments read the filing this way,
+ *      and the scanner did not see it)
+ *  10. a device package that asks through `governedDeviceFilingAgreement` -> must PASS
+ *  11. the device loaders' own module         -> must not count as a door
  *
  * Case 1 is the one that matters: it is round 16's actual mistake, in miniature.
  * The freeze was gated and `/e-sign` as APPROVER — the path a client uses — was
@@ -115,6 +121,33 @@ export async function filingAgreesWithEditing(client, args) {
 }
 `;
 
+/** The two section loaders: /build, the official eSTAR's attachments, the EU technical file. */
+const SECTIONS_UNGUARDED = `
+export async function draftPackage(orgId, programId) {
+  return loadAuthoredDeviceSections(orgId, { programId });
+}
+export async function technicalFile(orgId, programId) {
+  return loadGovernedDeviceSections(orgId, programId, pool, ['mdr']);
+}
+`;
+
+/** The same package, having asked the device form of the question first. */
+const PACKAGE_GUARDED_DEVICE = `
+import { governedDeviceFilingAgreement } from '../services/pathway-engines/estar/estar-content-leaves';
+export async function buildPackage(orgId, programId) {
+  const agreement = await governedDeviceFilingAgreement(orgId, programId, {});
+  if (agreement.rewritten.length > 0) throw new Error('FILING_DIVERGED');
+  return loadAuthoredDeviceSections(orgId, { programId });
+}
+`;
+
+/** The device loaders' module calls its own loaders; it defines the doors' reads. */
+const DEVICE_LOADERS = `
+export async function resolveDeviceContentScope(orgId, opts) { return { scope: opts }; }
+export async function loadAuthoredDeviceSections(orgId, opts) { return loadGovernedDeviceSections(orgId, opts.programId); }
+export async function loadDeviceContentLeaves(orgId, opts) { return loadGovernedDeviceSections(orgId, opts.programId); }
+`;
+
 const NO_FILES = {};
 
 // 1. A new seal with no agreement check must FAIL, by name.
@@ -195,6 +228,31 @@ expect(
     baseline: { files: {} },
   }),
   { exit: 0, contains: ['OK'], absent: ['filing-section-target.ts:'] },
+);
+
+// 9. A device package through the section loaders must FAIL, by kind. These are
+//    the reads /build and the official eSTAR's attachments made, unseen.
+expect(
+  'a device package through the section loaders fails, naming each kind',
+  runGate({ files: { 'server/routes/new-sections.ts': SECTIONS_UNGUARDED }, baseline: { files: {} } }),
+  { exit: 1, contains: ['server/routes/new-sections.ts', 'device-sections-load', 'governed-sections-load', '2 site(s), baseline allows 0'] },
+);
+
+// 10. The same kind of door passes once it asks the device form of the question.
+expect(
+  'a device package that asks governedDeviceFilingAgreement passes',
+  runGate({ files: { 'server/routes/new-package.ts': PACKAGE_GUARDED_DEVICE }, baseline: { files: {} } }),
+  { exit: 0, contains: ['OK'], absent: ['new-package.ts'] },
+);
+
+// 11. The device loaders' own module is not a door, though it calls its loaders.
+expect(
+  'the device loaders\' module is not read as a door',
+  runGate({
+    files: { 'server/services/pathway-engines/estar/estar-content-leaves.ts': DEVICE_LOADERS },
+    baseline: { files: {} },
+  }),
+  { exit: 0, contains: ['OK'], absent: ['estar-content-leaves.ts:'] },
 );
 
 // 8. An empty tree passes — the gate must not invent doors.

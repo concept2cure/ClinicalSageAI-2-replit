@@ -58,12 +58,18 @@ vi.mock('../../db', () => {
     }),
     release: vi.fn(),
   };
-  return { db: { select: () => selectChain }, pool: { connect: vi.fn(async () => client), query: vi.fn() } };
+  // The organisation list (P-72 slice 1b): the sweep runs once per organisation, in its own scope.
+  const query = vi.fn(async (sql: string) =>
+    /FROM public\.organizations/i.test(String(sql)) ? { rows: [{ id: 7, uuid: '00000000-0000-4000-8000-000000000007' }] } : { rows: [] });
+  return { db: { select: () => selectChain }, pool: { connect: vi.fn(async () => client), query } };
 });
 vi.mock('../../services/auditService', () => ({
   writeChainedAuditRow: (client: unknown, entry: unknown, tenant?: unknown, resource?: unknown) => tx.audit(client, entry, tenant, resource),
 }));
-vi.mock('../../db/tenantStore', () => ({ runWithSystemTenantScope: (_label: string, fn: () => unknown) => fn() }));
+vi.mock('../../db/tenantStore', () => ({
+  runWithSystemTenantScope: (_label: string, fn: () => unknown) => fn(),
+  runWithTenantScope: (_scope: unknown, fn: () => unknown) => fn(),
+}));
 vi.mock('../../services/security-alerts', () => ({ reportSecurityAlert: (...a: unknown[]) => mail.reportSecurityAlert(...a) }));
 vi.mock('nodemailer', () => ({
   default: {
@@ -90,10 +96,11 @@ const doc = (id: string, over: Record<string, unknown> = {}) => ({
   ...over,
 });
 const policy = (policyName: string, archiveBeforeDelete: boolean, hardDelete: boolean) => ({ policyName, archiveBeforeDelete, hardDelete, active: true });
+/** The sweep reads, in order: the policies (once), then the organisation's expired documents and its holds. */
 function arrange(opts: { docs?: unknown[]; policies?: unknown[]; holds?: unknown[]; enumerationFails?: boolean }) {
-  selectResults = [opts.docs ?? [], opts.policies ?? [], opts.holds ?? []];
+  selectResults = [opts.policies ?? [], opts.docs ?? [], opts.holds ?? []];
   selectCall = 0;
-  selectThrowsAt = opts.enumerationFails ? 0 : null;
+  selectThrowsAt = opts.enumerationFails ? 1 : null; // the organisation's expired-documents read
 }
 const auditEntries = () => tx.audit.mock.calls.map(c => c[1] as { action: string; resourceId: string; details: Record<string, unknown> });
 
@@ -135,7 +142,7 @@ describe('runRetentionSweep — per-policy processing', () => {
     arrange({ docs: [doc('doc-raced'), doc('doc-fresh')] });
     tx.alreadyGone.add('doc-raced');
     const summary = await runRetentionSweep();
-    expect(summary).toEqual({ scanned: 2, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, alreadyDisposed: 1, errors: 0 });
+    expect(summary).toEqual({ organizations: 1, organizationsNotSwept: 0, scanned: 2, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, organizationMismatch: 0, alreadyDisposed: 1, errors: 0 });
     // Its archive insert ran inside the transaction and was rolled back with it.
     expect(tx.statements.filter(t => t === 'ROLLBACK')).toHaveLength(1);
     expect(tx.statements.filter(t => t === 'COMMIT')).toHaveLength(1);
@@ -145,7 +152,7 @@ describe('runRetentionSweep — per-policy processing', () => {
   it('falls back to archive + soft-delete for a document with no policy, and never hard-deletes it', async () => {
     arrange({ docs: [doc('doc-nopolicy')] });
     const summary = await runRetentionSweep();
-    expect(summary).toEqual({ scanned: 1, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, alreadyDisposed: 0, errors: 0 });
+    expect(summary).toEqual({ organizations: 1, organizationsNotSwept: 0, scanned: 1, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, organizationMismatch: 0, alreadyDisposed: 0, errors: 0 });
     expect(archived).toEqual(['doc-nopolicy']);
     expect(softDeleted).toEqual(['doc-nopolicy']);
     expect(deleted).toEqual([]);
@@ -156,7 +163,7 @@ describe('runRetentionSweep — per-policy processing', () => {
   it('uses the default (archive + soft-delete) when the named policy is unknown or inactive', async () => {
     arrange({ docs: [doc('doc-ghost', { retentionPolicy: 'no-such-policy' })], policies: [policy('something-else', true, true)] });
     const summary = await runRetentionSweep();
-    expect(summary).toEqual({ scanned: 1, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, alreadyDisposed: 0, errors: 0 });
+    expect(summary).toEqual({ organizations: 1, organizationsNotSwept: 0, scanned: 1, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, organizationMismatch: 0, alreadyDisposed: 0, errors: 0 });
     expect(deleted).toEqual([]);
     expect(auditEntries()[0].details).toMatchObject({ policyMatched: false, retentionPolicy: 'no-such-policy' });
   });
@@ -172,7 +179,7 @@ describe('runRetentionSweep — per-policy processing', () => {
       policies: [policy('purge', true, true), policy('keep-row', true, false), policy('no-archive', false, false)],
     });
     const summary = await runRetentionSweep();
-    expect(summary).toEqual({ scanned: 3, archived: 1, softDeleted: 2, destructionRefused: 1, heldByLegalHold: 0, alreadyDisposed: 0, errors: 0 });
+    expect(summary).toEqual({ organizations: 1, organizationsNotSwept: 0, scanned: 3, archived: 1, softDeleted: 2, destructionRefused: 1, heldByLegalHold: 0, organizationMismatch: 0, alreadyDisposed: 0, errors: 0 });
     expect(deleted).toEqual([]);
     expect(archived).toEqual(['doc-keep']);
     expect(softDeleted).toEqual(['doc-keep', 'doc-noarch']);
@@ -189,7 +196,7 @@ describe('runRetentionSweep — failure semantics', () => {
     arrange({ docs: [doc('doc-bad'), doc('doc-good')] });
     tx.archiveFailFor = new Set(['doc-bad']);
     const summary = await runRetentionSweep();
-    expect(summary).toEqual({ scanned: 2, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, alreadyDisposed: 0, errors: 1 });
+    expect(summary).toEqual({ organizations: 1, organizationsNotSwept: 0, scanned: 2, archived: 1, softDeleted: 1, destructionRefused: 0, heldByLegalHold: 0, organizationMismatch: 0, alreadyDisposed: 0, errors: 1 });
     expect(archived).toEqual(['doc-good']);
     expect(softDeleted).toEqual(['doc-good']);
     expect(auditEntries().map(e => e.resourceId)).toEqual(['doc-good']);

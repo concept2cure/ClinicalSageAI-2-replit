@@ -1,0 +1,3 @@
+  green  bytes-retained — the bytes the agency received can be read back by the transmittal and hash to its bundle_sha256
+  RED    transmittal-names-sequence — baselined SUB-2 → LX-12; observed false
+      Tests  15 passed (15)

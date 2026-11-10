@@ -11,29 +11,45 @@ vi.mock('@/services/portal/authService', () => ({ authService: {
   captureSessionReadGuard: () => { const revision = auth.revision; return { sameRevision: () => revision === auth.revision }; },
   on: () => () => {},
 } }));
+/* The company legal documents panel renders beside the form whenever the Builder
+   has a submission, and needs the full session service this file stubs; it is
+   not what these tests are about. */
+vi.mock('../surfaces/CompanySubmissionDocuments', () => ({ CompanySubmissionDocuments: () => null }));
 import { BuilderWorkspace } from '../surfaces/SubmissionSeqWorkspaces';
 
 const SEQ = { id: 21, sequenceNumber: '0000', type: 'original', status: 'assembling', region: 'fda', validationStatus: null };
-const DOCS = [{ id: 8, title: 'Study report', moduleNumber: '5.3.5.1', status: 'approved' },
-  { id: 9, title: 'Other report', moduleNumber: '5.3.5.1', status: 'approved' }];
+/* The Builder places the submission's PROJECT documents (2026-10-31): each is
+   filed as its filing copy (POST /api/coauthor/documents) and the leaf names
+   that copy. Copy 8 is the study report's, copy 9 the other report's. */
+const PROGRAM = '0c000000-0000-4000-8000-00000000000c';
+const SUB = { id: 7, title: 'ZX-9', applicationType: 'ind', primaryRegion: 'fda', programId: PROGRAM };
+const DOCS = [{ id: 'd8000000-0000-4000-8000-0000000000d8', title: 'Study report', module: 'M5', status: 'approved', copy: 8 },
+  { id: 'd9000000-0000-4000-8000-0000000000d9', title: 'Other report', module: 'M5', status: 'approved', copy: 9 }];
 const ok = (data: unknown) => new Response(JSON.stringify(data), { status: 200, headers: { 'Content-Type': 'application/json' } });
 const receipt = (extra = {}) => ({ id: 62, sequenceId: 21, sectionCode: '5.3.5.1', title: DOCS[0].title,
   lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 8,
   studyId: 'STUDY-101', stfFileTag: 'human-review-tag', auditTrail: { persisted: true, chained: true }, ...extra });
 const writes = () => apiRequest.mock.calls.filter(c => c[0] === 'PUT');
 function setup(write = async () => ok(receipt())) {
-  apiRequest.mockImplementation(async (method: string, path: string) => {
+  apiRequest.mockImplementation(async (method: string, path: string, body?: unknown) => {
     if (method === 'PUT') return write();
     if (path.split('?')[0].endsWith('/leaves')) return ok([]);
     if (path.endsWith('/history')) return ok({ entries: [], chain: { ok: true, rowsChecked: 0 }, truncated: false });
-    if (path.startsWith('/api/coauthor/documents')) return ok({ documents: DOCS, total: 2, returned: 2, offset: 0 });
+    if (path.startsWith('/api/authoring/docs?')) return ok({ success: true, documents: DOCS });
+    const sectionsOf = DOCS.find(d => path === `/api/authoring/docs/${d.id}/sections`);
+    if (sectionsOf) return ok({ sections: [{ code: '5.3.5.1', title: sectionsOf.title, content: '<p>Saved report text.</p>' }] });
+    if (method === 'POST' && path === '/api/coauthor/documents') {
+      const source = DOCS.find(d => d.id === (body as { sourceAuthoringDocId?: string })?.sourceAuthoringDocId);
+      return ok({ success: true, written: true, document: { id: source?.copy, status: 'approved', metadata: { source: 'authoring-document', docId: source?.id } } });
+    }
     return ok([]);
   });
 }
 async function open(seq = SEQ) {
-  render(<BuilderWorkspace seq={seq} />);
-  fireEvent.click(await screen.findByRole('button', { name: /Place a Co-Author document as a leaf/ }));
-  fireEvent.change(await screen.findByLabelText('Source document'), { target: { value: '8' } });
+  render(<BuilderWorkspace seq={seq} submission={SUB} />);
+  fireEvent.click(await screen.findByRole('button', { name: /Place a project document as a leaf/ }));
+  fireEvent.change(await screen.findByLabelText('Source document'), { target: { value: DOCS[0].id } });
+  fireEvent.change(screen.getByLabelText('Section code'), { target: { value: '5.3.5.1' } });
   fireEvent.change(screen.getByLabelText(/Reason for/), { target: { value: 'Place the sponsor reviewed study report' } });
 }
 function tag() {
@@ -70,7 +86,7 @@ describe('Builder study placement inputs', () => {
   });
   it('clears manually reviewed values when the source or canonical section changes', async () => {
     setup(); await open(); tag();
-    fireEvent.change(screen.getByLabelText('Source document'), { target: { value: '9' } });
+    fireEvent.change(screen.getByLabelText('Source document'), { target: { value: DOCS[1].id } });
     expect(screen.getByLabelText('Study id')).toHaveProperty('value', '');
     tag(); fireEvent.change(screen.getByLabelText('Section code'), { target: { value: '5.3.5.2' } });
     expect(screen.getByLabelText('STF file-tag')).toHaveProperty('value', '');
@@ -109,14 +125,15 @@ describe('Builder study placement confirmation', () => {
     expect(screen.getByLabelText('Source document')).toHaveProperty('disabled', true);
     expect(screen.getByLabelText('STF file-tag')).toHaveProperty('disabled', true);
     fireEvent.click(screen.getByRole('button', { name: 'Check sequence leaves' }));
-    await screen.findByRole('button', { name: /Place a Co-Author document as a leaf/ });
+    await screen.findByRole('button', { name: /Place a project document as a leaf/ });
     expect(writes()).toHaveLength(1);
   });
   it('keeps a definite refusal retryable and distinguishes a no-op', async () => {
     let attempt = 0;
     setup(async () => ++attempt === 1 ? new Response('{"message":"The source is locked"}', { status: 409 }) : ok(receipt({ unchanged: true, auditTrail: null })));
     await open(); tag(); place();
-    await screen.findByText(/The leaf was not placed/);
+    // The filing copy was taken first, so the refusal says so (placeIntoFilingCopy.ts leafFailure).
+    await screen.findByText(/The leaf was refused — The source is locked\..*filing copy was created.*nothing was placed/);
     expect(screen.getByRole('button', { name: 'Place leaf in the sequence' })).toHaveProperty('disabled', false); place();
     expect(await screen.findByText(/Nothing was placed, so nothing was recorded/)).toBeTruthy();
     expect(writes()).toHaveLength(2);

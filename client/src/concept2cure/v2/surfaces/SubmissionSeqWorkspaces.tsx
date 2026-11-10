@@ -40,16 +40,23 @@ import { useLiveRows, useLiveData, hasKeys, isRowsWith, liveGetOrNull, EmptyStat
 import { RecordHistory } from '../RecordHistory';
 import { assessmentStateFor } from '../assessmentState';
 import { documentSourceLabel } from '@shared/regulatory/canonical-document';
+import { AnswerLead } from '../AnswerLead';
 import { PlacementReasonField, placementReasonOk, matchingLeafReceipt, placementAuditWarning, type FilingLeafReceipt } from './filingTarget';
 import { StudyTaggingInputFields, studyTaggingPlacement, type StudyTaggingValues } from './StudyTaggingInputFields';
 import { normalizeCtdCode } from '@shared/regulatory/section-code';
+import { FILING_COPY_DOCUMENT_TABLE } from '@shared/types/submission-api';
 import { downloadBlob } from '../download';
 import { ExportReviewConfirmation, useExportReview } from '../ExportReviewConfirmation';
-import { gatewayLabel, transmittalStatusTone } from '../gatewayLabels';
+import { gatewayLabel, transmittalStatusTone, heldSendWhen, heldSendSettlementWords, type HeldSendSettlementRecord, type KeptReceipt } from '../gatewayLabels';
+import { dispatchWords } from './CommitmentRow';
 import { useSurfaceAvailable } from '../surfaceAvailable';
 /* The Truth Engine's recorded cross-document checks, which had no screen: the
    route's own comment said no browser client called it. */
 import { SubmissionConsistency } from './SubmissionConsistency';
+/* The editor's Place into filing step, shared: a project document is placed as its
+   filing copy. placeIntoFilingCopy.ts imports mutateVerbatim from here; both are
+   used only inside functions, so the import cycle is inert. */
+import { takeFilingCopy, leafFailure } from './placeIntoFilingCopy';
 import { SubmissionModule2Qc } from './SubmissionModule2Qc';
 import { stashNavParamsForTarget } from '../navParams';
 import { SequenceAssembleTestPackage } from './SequenceAssembleTestPackage';
@@ -67,6 +74,8 @@ import {
   type WaiverRequest,
 } from './ShadowReviewWaiver';
 import { ShadowFindingList, type DispositionRequest, type ShadowFindingRow } from './ShadowFindingDisposition';
+import { VaultVersionPicker, type PickedVaultVersion } from './VaultLibraryResults';
+import { ShadowRunCoverage } from './ShadowRunCoverage';
 import {
   SC_LENSES,
   SC_LIFECYCLE_OPS,
@@ -223,20 +232,17 @@ function mutationCode(body: unknown): string | undefined {
   return typeof code === 'string' ? code : undefined;
 }
 
-/* ── Sequence picker — the selector the per-sequence workspaces feed from ──── */
+/* ── Sequence picker — what stands in for the working sequence while it cannot be chosen (loading, unread, none);
+   the choosing itself is SeqSelect, in the context row ──── */
 
 export function SeqPicker({
   loading,
   error,
   rows,
-  selId,
-  onSel,
 }: {
   loading: boolean;
   error?: string;
   rows: SeqRow[];
-  selId: number | null;
-  onSel: (id: number) => void;
 }) {
   if (loading) {
     return <div role="status" className="scaf-note sc-mb">Loading this submission&#39;s sequences…</div>;
@@ -252,20 +258,27 @@ export function SeqPicker({
   if (rows.length === 0) {
     return (
       <div className="scaf-note sc-mb">
-        This submission has no eCTD sequences yet — create sequence 0000 from the Sequences
-        workspace first.
+        This submission has no eCTD sequences yet — create sequence 0000 from the Sequences tab
+        first.
       </div>
     );
   }
+  // D7-A2 step 8: the select itself is the context row's (SeqSelect); this keeps only what stands in its place.
+  return null;
+}
+
+/** The working sequence, in Submission Center's context row (D7-A2 step 8): one control, read by every per-sequence
+ *  workspace and the header's Compile & export. Its options carry each sequence's stage, so no chip repeats it. */
+export function SeqSelect({ rows, selId, onSel }: { rows: SeqRow[]; selId: number | null; onSel: (id: number) => void }) {
+  if (rows.length === 0) return null;
   const sel = rows.find((s) => s.id === selId) ?? rows[0];
   return (
-    <div className="cm-pushbar sc-seqbar sc-mb">
-      <label className="sp-q-s" htmlFor="sc-seq-picker">
-        Working sequence
-      </label>
+    <label className="sc-context-f" htmlFor="sc-seq-picker">
+      <span>Sequence</span>
       <select
         id="sc-seq-picker"
-        className="sc-subpick"
+        className="c2c-input"
+        aria-label="Working sequence"
         value={sel.id}
         onChange={(e) => onSel(Number(e.target.value))}
       >
@@ -275,8 +288,7 @@ export function SeqPicker({
           </option>
         ))}
       </select>
-      <Chip map={SC_SEQ_STATUS} k={sel.status} />
-    </div>
+    </label>
   );
 }
 
@@ -439,7 +451,7 @@ function StudyTaggingControl({ seq, leaf, leavesPath, session, context, isCurren
     setNotice({ tone: 'warn', text: 'Current study tagging was reread. Your entered values are retained. Review the current values below before saving; this read does not confirm the earlier write or its audit.' });
   }, [readAttempt, reread, current, leaf, seq.id]);
 
-  if (!open) return <button type="button" className="sc-trans-b"
+  if (!open) return <button type="button" className="btn ghost small"
     aria-label={`Edit study tagging for leaf ${leaf.sectionCode} ${leaf.title}`}
     onClick={() => { if (current()) setOpen(true); }}>Edit study tagging</button>;
 
@@ -547,12 +559,13 @@ function pinVerdict(r: LeafSourceResolution): { chip: string; tone: string; titl
 function LeafSourceCell({ leaf }: { leaf: LeafRow }) {
   const key = leaf.documentUuid ?? (leaf.documentId != null ? String(leaf.documentId) : null);
   if (!leaf.documentTable || key == null) return <>unlinked</>;
-  const isUuid = leaf.documentUuid != null;
   /* The source row, named rather than related. The key stays — it is how an
      auditor ties this leaf to its source — but it is qualified by a store name
      a reader can act on instead of by a relation name (documentSourceLabel).
      A uuid is shown short with the full value on hover. */
-  const label = documentSourceLabel(leaf.documentTable, isUuid ? `${key.slice(0, 8)}…` : key);
+  /* D7-A2 step 9: the cell names the store; the key it used to print ("Vault document #0b4878b0…") is on hover,
+     where an auditor still finds it, and the leaf's title is in its own column. */
+  const label = documentSourceLabel(leaf.documentTable);
   const r = leaf.sourceDocument ?? null;
   /* "source verified" said only that the content pin matched. On a Vault
      version nobody had reviewed it read as approval (QA 2026-10-08, j6): the
@@ -562,8 +575,11 @@ function LeafSourceCell({ leaf }: { leaf: LeafRow }) {
   const verdict = r ? sourceVerdict(r) : null;
   return (
     <>
-      <span className="sc-mono" title={isUuid ? key : undefined}>{label}</span>
-      {verdict && (
+      <span title={`${documentSourceLabel(leaf.documentTable, key)}`}>{label}</span>
+      {/* Not yet determined is said once above the table, with its count, and quietly here: a chip on every leaf
+          read as a finding on every leaf (D7-A2 step 9). A determined verdict keeps its chip. */}
+      {r?.status === 'undetermined' && <span className="sp-row-s" title={r.reason ?? undefined}> · not yet determined</span>}
+      {verdict && r?.status !== 'undetermined' && (
         <>
           {' '}
           <span className={`rd-chip ${verdict.tone}`} title={verdict.title}>{verdict.chip}</span>
@@ -573,47 +589,31 @@ function LeafSourceCell({ leaf }: { leaf: LeafRow }) {
   );
 }
 
-// GET /api/coauthor/documents → { documents, total, returned, offset } (coauthor_documents rows).
-interface CoauthorDocRow {
-  id: number;
+// GET /api/authoring/docs?status=all&programId= → { documents }: the project's
+// documents, the list the editor and Project home read (2026-10-31).
+interface ProjectDocRow {
+  id: string;
   title: string;
-  moduleNumber: string | null; // e.g. "3.2.S.4.1" — prefills the section code
+  module: string | null;
   status: string;
 }
-interface CoauthorDocPage {
-  documents: CoauthorDocRow[];
-  /** The organization's count under the page's own search; absent from an older server. */
-  total?: number;
+interface ProjectDocPage {
+  documents: ProjectDocRow[];
 }
 
-/** The list's page size (the route's default). */
-const DOC_PAGE = 50;
-
-/** The co-author list read: `q` searches title and module number, `offset` pages. */
-function coauthorDocsPath(query: string, offset: number): string {
-  const params = new URLSearchParams();
-  if (query) params.set('q', query);
-  if (offset > 0) params.set('offset', String(offset));
-  const qs = params.toString();
-  return `/api/coauthor/documents${qs ? `?${qs}` : ''}`;
+/** The project's documents, or null when the submission names no project. */
+function projectDocsPath(programId: string | null | undefined): string | null {
+  return programId ? `/api/authoring/docs?status=all&programId=${encodeURIComponent(programId)}` : null;
 }
 
 /**
- * What the picker shows of the list. QA 2026-10-08 (j6): it listed 50 of 53
- * documents and said nothing, so three could not be placed. Never silent: the
- * count it shows of how many there are, or that every one is shown.
+ * What the picker shows of the project's documents. Never silent (QA
+ * 2026-10-08, j6: a 50-row page hid three documents): the whole project list
+ * is read, and a search says how many of how many it matched.
  */
-function docCoverage(shown: number, total: number | null, query: string): string {
-  if (query) {
-    if (total === null) return `${shown} document${shown === 1 ? '' : 's'} shown for “${query}”.`;
-    return shown < total
-      ? `${shown} of ${total} documents matching “${query}” shown.`
-      : `${total} document${total === 1 ? ' matches' : 's match'} “${query}”.`;
-  }
-  if (total === null) return `${shown} documents shown; the server did not say how many there are, so search if one is missing.`;
-  return shown < total
-    ? `${shown} of ${total} documents shown, most recently updated first. Search by title or module number, or show more.`
-    : `All ${total} documents shown.`;
+function docCoverage(shown: number, total: number, query: string): string {
+  if (query) return `${shown} of ${total} document${total === 1 ? '' : 's'} match “${query}”.`;
+  return `All ${total} document${total === 1 ? '' : 's'} of this project shown.`;
 }
 
 /** What a leaf write did, for the Builder to re-read what changed. */
@@ -676,118 +676,132 @@ function lifecycleOpNote(seq: SeqRow, op: string): string {
 }
 
 /**
- * The co-author documents the Builder can place, read a page at a time:
- * `search` as typed, asked of the server (`q`) once typing pauses; `showMore`
- * reads the next page (`offset`) of the same list, and a new search starts over.
+ * The project's documents the Builder can place: the whole project list, read
+ * once the form opens, and searched as typed by title or module.
+ *
+ * It listed the organization's Co-Author documents (GET /api/coauthor/documents)
+ * until 2026-10-31: an org-wide list of copies rather than the project's own
+ * documents, read from a store a deployment built from the migration set does
+ * not have, so the readiness finding "Place a leaf at 3.2.S" ended in "Couldn't
+ * load the Co-Author documents".
  */
-function useCoauthorDocList(open: boolean) {
+function useProjectDocList(open: boolean, programId: string | null | undefined) {
   const [search, setSearch] = React.useState('');
-  const [query, setQuery] = React.useState('');
-  React.useEffect(() => {
-    const t = setTimeout(() => setQuery(search.trim()), 250);
-    return () => clearTimeout(t);
-  }, [search]);
-  const docsPath = open ? coauthorDocsPath(query, 0) : null;
-  const docs = useLiveData<CoauthorDocPage>(docsPath, [docsPath], hasKeys<CoauthorDocPage>('documents'));
-  const [more, setMore] = React.useState<{ forPath: string | null; rows: CoauthorDocRow[]; loading: boolean; error: boolean }>({
-    forPath: null,
-    rows: [],
-    loading: false,
-    error: false,
-  });
-  const extra = more.forPath === docsPath ? more : { rows: [] as CoauthorDocRow[], loading: false, error: false };
-  const rows = [...(Array.isArray(docs.data?.documents) ? docs.data.documents : []), ...extra.rows];
-  const total = typeof docs.data?.total === 'number' ? docs.data.total : null;
-  const showMore = async () => {
-    if (extra.loading || !docsPath) return;
-    const forPath = docsPath;
-    setMore({ forPath, rows: extra.rows, loading: true, error: false });
-    const r = await liveGetOrNull<CoauthorDocPage>(coauthorDocsPath(query, rows.length), hasKeys<CoauthorDocPage>('documents'));
-    const next = Array.isArray(r.data?.documents) ? r.data.documents : null;
-    setMore((m) =>
-      m.forPath !== forPath ? m : { forPath, rows: next ? [...m.rows, ...next] : m.rows, loading: false, error: next === null },
-    );
-  };
-  // The organization has none at all: nothing to search either.
-  const noneAtAll = !query && !docs.loading && !docs.error && docs.data !== null && rows.length === 0;
-  return { search, setSearch, query, docs, rows, total, more: extra, showMore, noneAtAll };
+  const docsPath = open ? projectDocsPath(programId) : null;
+  const docs = useLiveData<ProjectDocPage>(docsPath, [docsPath], hasKeys<ProjectDocPage>('documents'));
+  const all = Array.isArray(docs.data?.documents) ? docs.data.documents : [];
+  const query = search.trim();
+  const needle = query.toLowerCase();
+  const rows = needle
+    ? all.filter((d) => String(d.title ?? '').toLowerCase().includes(needle) || String(d.module ?? '').toLowerCase().includes(needle))
+    : all;
+  // The project has none at all: nothing to search either.
+  const noneAtAll = !docs.loading && !docs.error && docs.data !== null && all.length === 0;
+  return { search, setSearch, query, docs, rows, total: all.length, noneAtAll };
 }
 
-type CoauthorDocList = ReturnType<typeof useCoauthorDocList>;
+type ProjectDocList = ReturnType<typeof useProjectDocList>;
 
 /** The search box, the document select, and how much of the list it shows — never a silent cut-off. */
-function CoauthorDocField({ list, doc, onChoose, disabled }: { list: CoauthorDocList; doc: CoauthorDocRow | null; onChoose: (d: CoauthorDocRow | null) => void; disabled?: boolean }) {
-  const { rows, total, query, docs, more } = list;
+function ProjectDocField({ list, doc, onChoose, disabled }: { list: ProjectDocList; doc: ProjectDocRow | null; onChoose: (d: ProjectDocRow | null) => void; disabled?: boolean }) {
+  const { rows, total, query } = list;
   // The chosen document stays offered when a later search no longer lists it.
   const options = doc && !rows.some((d) => d.id === doc.id) ? [doc, ...rows] : rows;
   return (
     <>
       <div className="sc-field">
         <label htmlFor="sc-leaf-doc-find">Find a document</label>
-        <input
-          id="sc-leaf-doc-find"
-          className="sc-subpick"
-          type="search"
-          placeholder="Title or module number, e.g. 4.2.2"
-          value={list.search}
-          disabled={disabled}
-          onChange={(e) => list.setSearch(e.target.value)}
-        />
+        <input id="sc-leaf-doc-find" className="sc-subpick" type="search" placeholder="Title or module, e.g. Quality"
+          value={list.search} disabled={disabled} onChange={(e) => list.setSearch(e.target.value)} />
       </div>
       <div className="sc-field">
         <label htmlFor="sc-leaf-doc">Source document</label>
         {options.length === 0 ? (
-          <span id="sc-leaf-doc" className="sp-row-s" role="status">
-            {docs.loading ? 'Searching…' : `No Co-Author document matches “${query}”.`}
-          </span>
+          <span id="sc-leaf-doc" className="sp-row-s" role="status">No document of this project matches “{query}”.</span>
         ) : (
-          <select
-            id="sc-leaf-doc"
-            className="sc-subpick"
-            value={doc?.id ?? ''}
-            disabled={disabled}
-            aria-describedby="sc-leaf-doc-coverage"
-            onChange={(e) => onChoose(options.find((x) => x.id === Number(e.target.value)) ?? null)}
-          >
+          <select id="sc-leaf-doc" className="sc-subpick" value={doc?.id ?? ''} disabled={disabled}
+            aria-describedby="sc-leaf-doc-coverage" onChange={(e) => onChoose(options.find((x) => x.id === e.target.value) ?? null)}>
             <option value="">Choose a document…</option>
             {options.map((d) => (
               <option key={d.id} value={d.id}>
-                {d.title}
-                {d.moduleNumber ? ` · ${d.moduleNumber}` : ''} · {d.status}
+                {d.title}{d.module ? ` · ${d.module}` : ''} · {d.status}
               </option>
             ))}
           </select>
         )}
-        {rows.length > 0 && (
-          <span id="sc-leaf-doc-coverage" className="sp-row-s" role="status">
-            {docs.loading ? 'Searching… ' : ''}
-            {docCoverage(rows.length, total, query)}
-            {more.error ? ' The next documents could not be read; try again.' : ''}
-          </span>
-        )}
-        {total !== null && rows.length < total && (
-          <button type="button" className="sc-trans-b" disabled={disabled || more.loading} onClick={() => void list.showMore()}>
-            {more.loading ? 'Reading…' : `Show ${Math.min(DOC_PAGE, total - rows.length)} more`}
-          </button>
-        )}
+        <span id="sc-leaf-doc-coverage" className="sp-row-s" role="status">{docCoverage(rows.length, total, query)}</span>
       </div>
     </>
   );
 }
 
-/** Place a Co-Author document into the sequence as a leaf — a REAL persisted
- *  PUT (upsertLeaf), sourced from the real coauthor_documents list. No source
- *  document, no leaf: the picker never invents a document to place. */
-function AddLeafForm({ seq, onDone, isCurrent, placeAt, onCancel }: {
+const NO_LEAF_EFFECT: LeafWriteEffect = { changed: false, sequenceChanged: false };
+
+type LeafPlacementOutcome = ReturnType<typeof placementAnswer>;
+
+/** A failed step of a placement, as the form reports it. */
+const failedPlacement = (text: string, unconfirmed: boolean): LeafPlacementOutcome => ({
+  notice: { tone: unconfirmed ? 'warn' : 'err', text }, effect: NO_LEAF_EFFECT, confirmed: false, unconfirmed,
+});
+
+/**
+ * Place a project document as a leaf, the way the editor's Place into filing
+ * does (AuthoringPlaceIntoFiling.tsx): the document's filing copy is taken from
+ * its SAVED sections (takeFilingCopy, placeIntoFilingCopy.ts), then the leaf is
+ * placed on that copy. A leaf names a renderable store, and an authoring
+ * document is not one (leaf-document-tables.ts). Null when the context changed.
+ */
+async function placeProjectDocument(
+  seq: SeqRow, doc: ProjectDocRow, form: { sectionCode: string; op: string; reason: string; payload: ReturnType<typeof studyTaggingPlacement>['payload'] }, current: () => boolean,
+): Promise<LeafPlacementOutcome | null> {
+  const copy = await takeFilingCopy(doc.id, doc.title, form.sectionCode, form.reason, { current });
+  if (!copy) return null;
+  if (!copy.ok) return failedPlacement(copy.verdict.text, copy.unconfirmed);
+  const expected = { sequenceId: seq.id, sectionCode: form.sectionCode, lifecycleOp: form.op,
+    documentTable: FILING_COPY_DOCUMENT_TABLE, documentId: copy.snapshotId, ...form.payload };
+  const r = await mutateVerbatim<FilingLeafReceipt>('PUT', `/api/submissions/sequences/${seq.id}/leaves`, {
+    sectionCode: form.sectionCode, title: doc.title, lifecycleOp: form.op,
+    documentTable: expected.documentTable, documentId: copy.snapshotId, reason: form.reason, ...form.payload,
+  });
+  if (!current()) return null;
+  if (!matchingLeafReceipt(r.data, expected)) {
+    const failure = leafFailure(r, copy.snapshotId, seq.sequenceNumber, form.sectionCode);
+    return failedPlacement(failure.verdict.text, failure.unconfirmed);
+  }
+  return placementAnswer(seq, doc.title, r, expected);
+}
+
+/** The project a submission belongs to, or null. */
+const projectOf = (submission: SubLike | undefined): string | null => submission?.programId ?? null;
+
+/** True while the project's documents cannot be offered: no project, the read pending or failed, or none at all. */
+const projectDocListBlocked = (list: ProjectDocList, programId: string | null | undefined): boolean =>
+  !programId || (list.docs.loading && list.docs.data === null) || Boolean(list.docs.error) || list.noneAtAll;
+
+/** Why the project's documents cannot be offered, or null when they can. */
+function ProjectDocListState({ list, programId }: { list: ProjectDocList; programId: string | null | undefined }) {
+  if (!programId) return <div className="scaf-note">This submission is not in a project, so there is no project document to place. Place a file from the Vault instead (below).</div>;
+  if (list.docs.loading && list.docs.data === null) return <div role="status" className="scaf-note">Loading the project&#39;s documents…</div>;
+  if (list.docs.error) return <div className="sc-verdict tone-err" role="status">Couldn&#39;t load the project&#39;s documents — {redactInternals(list.docs.error, 'the read did not settle')}. Nothing to place.</div>;
+  if (list.noneAtAll) return <div className="scaf-note">This project has no documents yet. Start one from the project, or place a file from the Vault instead (below).</div>;
+  return null;
+}
+
+/** Place a project document into the sequence as a leaf — its filing copy,
+ *  then a REAL persisted PUT (upsertLeaf) on that copy (placeProjectDocument).
+ *  No source document, no leaf: the picker never invents a document to place. */
+function AddLeafForm({ seq, programId, onDone, isCurrent, placeAt, onCancel }: {
   seq: SeqRow; onDone: (n: Notice, effect: LeafWriteEffect) => void; isCurrent: () => boolean;
+  /** The submission's project, whose documents are offered. */
+  programId: string | null | undefined;
   /** Open at this section: the Builder was sent here by a readiness finding (F18). */
   placeAt?: { code: string | null } | null;
   /** The person closed the form without placing. */
   onCancel?: () => void;
 }) {
   const [open, setOpen] = React.useState(false);
-  const list = useCoauthorDocList(open);
-  const [doc, setDoc] = React.useState<CoauthorDocRow | null>(null);
+  const list = useProjectDocList(open, programId);
+  const [doc, setDoc] = React.useState<ProjectDocRow | null>(null);
   const [section, setSection] = React.useState('');
   const [op, setOp] = React.useState('new');
   const [reason, setReason] = React.useState('');
@@ -800,11 +814,11 @@ function AddLeafForm({ seq, onDone, isCurrent, placeAt, onCancel }: {
   const effectiveOp = isOriginalSequence(seq) ? 'new' : op;
   const tagging = studyTaggingPlacement(section, effectiveOp, seq.region, study);
   const disabled = saving || unconfirmed;
+  const ready = !!doc && !!section.trim() && placementReasonOk(reason) && tagging.valid;
   const clearStudy = () => setStudy({ studyId: '', stfFileTag: '' });
-  const choose = (value: CoauthorDocRow | null) => {
+  const choose = (value: ProjectDocRow | null) => {
     if (value?.id !== doc?.id) clearStudy();
     setDoc(value);
-    if (value?.moduleNumber && !section.trim()) setSection(value.moduleNumber);
   };
   const changeSection = (value: string) => {
     if ((normalizeCtdCode(value) ?? value.trim()) !== (normalizeCtdCode(section) ?? section.trim())) clearStudy();
@@ -817,19 +831,15 @@ function AddLeafForm({ seq, onDone, isCurrent, placeAt, onCancel }: {
     setStudy({ studyId: '', stfFileTag: '' });
   }, [placeAt]);
   const place = async () => {
-    if (!isCurrent() || !live.current || pending.current || disabled || !doc || !section.trim() || !placementReasonOk(reason) || !tagging.valid) return;
+    if (!isCurrent() || !live.current || pending.current || disabled || !doc || !ready) return;
     pending.current = true;
     setSaving(true);
-    const expected = { sequenceId: seq.id, sectionCode: section.trim(), lifecycleOp: effectiveOp,
-      documentTable: 'coauthor_documents' as const, documentId: doc.id, ...tagging.payload };
-    const r = await mutateVerbatim<FilingLeafReceipt>('PUT', `/api/submissions/sequences/${seq.id}/leaves`, {
-      sectionCode: expected.sectionCode, title: doc.title, lifecycleOp: effectiveOp,
-      documentTable: expected.documentTable, documentId: doc.id, reason: reason.trim(), ...tagging.payload,
-    });
-    if (!live.current || !isCurrent()) return;
+    const current = () => live.current && isCurrent();
+    const answer = await placeProjectDocument(seq, doc,
+      { sectionCode: section.trim(), op: effectiveOp, reason: reason.trim(), payload: tagging.payload }, current);
+    if (!answer || !current()) return;
     pending.current = false;
     setSaving(false);
-    const answer = placementAnswer(seq, doc.title, r, expected);
     setUnconfirmed(answer.unconfirmed);
     onDone(answer.notice, answer.effect);
     if (answer.confirmed) {
@@ -837,17 +847,16 @@ function AddLeafForm({ seq, onDone, isCurrent, placeAt, onCancel }: {
     }
   };
   if (!open) return <div className="cm-pushbar sc-mt">
-    <button type="button" className="sc-trans-b" onClick={() => setOpen(true)}>{I.plus} Place a Co-Author document as a leaf</button>
+    <button type="button" className="sc-trans-b" onClick={() => setOpen(true)}>{I.plus} Place a project document as a leaf</button>
   </div>;
   return <div className="sc-mt">
-    {list.docs.loading && list.docs.data === null ? <div role="status" className="scaf-note">Loading the Co-Author documents…</div>
-      : list.docs.error ? <div className="sc-verdict tone-err" role="status">Couldn&#39;t load the Co-Author documents — {redactInternals(list.docs.error, 'the read did not settle')}. Nothing to place.</div>
-      : list.noneAtAll ? <div className="scaf-note">No Co-Author documents in this organization. Place a document from the editor or the Vault instead (below).</div>
+    {projectDocListBlocked(list, programId) ? <ProjectDocListState list={list} programId={programId} />
       : <div className="sc-leafform">
-        <CoauthorDocField list={list} doc={doc} onChoose={choose} disabled={disabled} />
+        <p className="scaf-note" style={{ flexBasis: '100%' }}>Placing files a copy of the document&#39;s saved sections and places that copy as the leaf; unsaved edits do not travel with it.</p>
+        <ProjectDocField list={list} doc={doc} onChoose={choose} disabled={disabled} />
         <AddLeafPlacementFields seq={seq} section={section} onSection={changeSection} op={effectiveOp} onOp={setOp}
           study={study} onStudy={setStudy} tagging={tagging} reason={reason} onReason={setReason} disabled={disabled} />
-        <button type="button" className="sp-primary sc-btn" disabled={disabled || !doc || !section.trim() || !placementReasonOk(reason) || !tagging.valid} onClick={place}>
+        <button type="button" className="sp-primary sc-btn" disabled={disabled || !ready} onClick={place}>
           {I.layers} {saving ? 'Placing…' : 'Place leaf in the sequence'}
         </button>
         {unconfirmed && <button type="button" className="sc-trans-b" onClick={() => onDone({ tone: 'warn', text: 'Checking the current sequence leaves and audit history. Review them before another placement; this read does not confirm the earlier write or its audit.' }, { changed: false, sequenceChanged: false, reconcile: true })}>Check sequence leaves</button>}
@@ -897,7 +906,7 @@ function RemoveLeafControl({
   const [busy, setBusy] = React.useState(false);
   if (!open) {
     return (
-      <button type="button" className="sc-trans-b" aria-label={`Remove leaf ${leaf.sectionCode} ${leaf.title}`} onClick={() => setOpen(true)}>
+      <button type="button" className="btn ghost small" aria-label={`Remove leaf ${leaf.sectionCode} ${leaf.title}`} onClick={() => setOpen(true)}>
         Remove
       </button>
     );
@@ -950,26 +959,27 @@ function RemoveLeafControl({
 function BuilderSources({ onNav }: { onNav?: (id: string) => void }) {
   const available = useSurfaceAvailable();
   return (
-    <div className="scaf-note sc-mt" data-testid="sc-builder-sources">
-      Documents reach this sequence from where they are kept: an authored
-      document&apos;s Place into filing, in the editor, or a file&apos;s Place into
-      submission, in the Vault. Copying a leaf from another market&apos;s sequence
-      comes later.
+    <details className="pj-more sc-mt" data-testid="sc-builder-sources">
+      <summary>How documents reach this sequence</summary>
+      <p>
+        From where they are kept: an authored document&apos;s Place into filing, in the editor, or a file&apos;s Place
+        into submission, in the Vault.
+      </p>
       {onNav && (available('document-authoring') || available('vault')) && (
         <div className="cm-pushbar sc-mt">
           {available('document-authoring') && (
-            <button type="button" className="sc-trans-b" onClick={() => onNav('document-authoring')}>
+            <button type="button" className="btn ghost small" onClick={() => onNav('document-authoring')}>
               Open documents
             </button>
           )}
           {available('vault') && (
-            <button type="button" className="sc-trans-b" onClick={() => onNav('vault')}>
+            <button type="button" className="btn ghost small" onClick={() => onNav('vault')}>
               Open the Vault
             </button>
           )}
         </div>
       )}
-    </div>
+    </details>
   );
 }
 
@@ -1000,6 +1010,17 @@ export function BuilderWorkspace(props: BuilderWorkspaceProps) {
 }
 
 /** The Builder's leaf table columns; Actions only while leaves can change. */
+/** "Not yet determined", said once above the leaves with its count (D7-A2 step 9), not as a chip on every leaf. */
+function SourceUndeterminedNote({ rows }: { rows: LeafRow[] }) {
+  const undetermined = rows.filter((l) => l.sourceDocument?.status === 'undetermined').length;
+  if (undetermined === 0) return null;
+  return (
+    <p className="sec-sub" data-testid="sc-source-undetermined">
+      Source evidence not yet determined for {undetermined} {undetermined === 1 ? 'leaf' : 'leaves'}.
+    </p>
+  );
+}
+
 function LeafTableHead({ locked }: { locked: boolean }) {
   return (
     <thead>
@@ -1048,12 +1069,12 @@ function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, s
   };
 
   return (
-    <div className="pj-card">
-      <div className="pj-card-h">
-        <span className="t">Builder · eCTD leaves · sequence {seq.sequenceNumber}</span>
-        <span className="s">governed leaves</span>
+    <div className="pj-sec">
+      <div className="pj-sec-h">
+        <h2>Leaves</h2>
+        <span className="sec-sub">sequence {seq.sequenceNumber}</span>
       </div>
-      <div className="pj-card-b">
+      <div>
         <VerdictNote notice={notice} />
         {arrival.lineAt === 'top' && arrival.line}
         {leaves.loading ? (
@@ -1074,6 +1095,8 @@ function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, s
             hint="Each leaf carries a lifecycle operator (new / replace / append / delete) and traces to its source document. Place the first one below."
           />
         ) : (
+          <>
+          <SourceUndeterminedNote rows={leaves.rows} />
           <table className="ub-inv">
             <LeafTableHead locked={locked} />
             <tbody>
@@ -1106,6 +1129,7 @@ function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, s
               ))}
             </tbody>
           </table>
+          </>
         )}
         {arrival.lineAt === 'form' && arrival.line}
         {locked ? (
@@ -1115,7 +1139,7 @@ function BuilderWorkspaceForScope({ seq, submission, onSequenceChanged, onNav, s
           </div>
         ) : !leaves.loading && !leaves.error ? (
           <>
-            <AddLeafForm seq={seq} onDone={afterWrite} isCurrent={() => isScopeCurrent() && leaves.isCurrent()} placeAt={arrival.placeAt} onCancel={arrival.done} />
+            <AddLeafForm seq={seq} programId={projectOf(submission)} onDone={afterWrite} isCurrent={() => isScopeCurrent() && leaves.isCurrent()} placeAt={arrival.placeAt} onCancel={arrival.done} />
             <BuilderSources onNav={onNav} />
           </>
         ) : null}
@@ -1287,12 +1311,12 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
 
   return (
     <>
-      <div className="pj-card">
-      <div className="pj-card-h">
-        <span className="t">Validation · sequence {seq.sequenceNumber}</span>
-        <span className="s">dispatch readiness · validation</span>
+      <div className="pj-sec">
+      <div className="pj-sec-h">
+        <h2>Validation</h2>
+        <span className="sec-sub">sequence {seq.sequenceNumber}</span>
       </div>
-      <div className="pj-card-b">
+      <div>
         {live.loading ? (
           <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
             Running the deterministic validation checks…
@@ -1350,9 +1374,11 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
             )}
             {findings.length > 0 && (
               <div className="cm-pushbar sc-mt">
+                {/* A secondary act beside the page's one orange fill (D0 §7 check 2): ghost, with the spark of a
+                    request to the model (the coordinating session, 2026-11-09). */}
                 <button
                   type="button"
-                  className="sp-primary sc-btn"
+                  className="btn ghost small"
                   disabled={explain.phase === 'running'}
                   onClick={runExplain}
                 >
@@ -1440,6 +1466,8 @@ interface ShadowRunRow {
   createdAt: string | null;
   /** A failed run's closed failure code (P-34); absent on an older server. */
   failureCode?: string | null;
+  /** What the reviewer read (2026-10-25; ShadowRunCoverage.tsx); absent on an older run. */
+  inputCoverage?: unknown;
 }
 
 // GET /shadow-review/:runId/findings → shadow_review_findings rows, each with
@@ -1538,18 +1566,22 @@ export function ShadowReviewWorkspace({
     } else {
       setNotice({
         tone: 'err',
-        text: `The shadow review did not complete — ${r.error ?? 'the request failed'}. No findings were recorded.`,
+        text: `The shadow review did not complete — ${(r.error ?? 'the request failed').replace(/\.+$/, '')}. No findings were recorded.`,
       });
+      /* The server records a failed run, with its reason, before it answers the
+         error: read the list again so the run and that reason are shown (J4
+         human test, 2026-11-06). */
+      setBump((b) => b + 1);
     }
   };
 
   return (
-    <div className="pj-card">
-      <div className="pj-card-h">
-        <span className="t">Shadow review · sequence {seq.sequenceNumber}</span>
-        <span className="s">shadow review · findings</span>
+    <div className="pj-sec">
+      <div className="pj-sec-h">
+        <h2>Shadow review</h2>
+        <span className="sec-sub">sequence {seq.sequenceNumber}</span>
       </div>
-      <div className="pj-card-b">
+      <div>
         <div className="cm-pushbar sc-mb">
           <label className="sp-q-s" htmlFor="sc-shadow-lens">
             Review lens
@@ -1656,6 +1688,7 @@ export function ShadowReviewWorkspace({
             {run && (
               <div className="sc-mt">
                 {run.summary ? <div className="scaf-note sc-mb">{run.summary}</div> : null}
+                <ShadowRunCoverage run={run} />
                 {run.status === 'waived' ? (
                   <WaivedRunNote run={run} />
                 ) : findings.loading ? (
@@ -1721,12 +1754,81 @@ interface DispatchQcResult {
 /** The governed steps the parent's e-signature chain runs. 'shadow-waiver' is
  *  the P-34 Shadow Review waiver (ShadowReviewWaiver.tsx);
  *  'shadow-finding-disposition' closes one critical finding (P-35,
- *  ShadowFindingDisposition.tsx). */
-export type GovernedKind = 'freeze' | 'dispatch' | 'transmit' | 'shadow-waiver' | 'shadow-finding-disposition';
+ *  ShadowFindingDisposition.tsx); 'retire' takes a sequence never filed out of
+ *  use and frees its number (P-86, RetireSequence below). */
+export type GovernedKind = 'freeze' | 'dispatch' | 'transmit' | 'shadow-waiver' | 'shadow-finding-disposition' | 'retire' | 'held-send-settlement';
+
+/** P-92: the two ways a held FDA send is settled, and what each rests on (server: fda-esg-receipts.ts). */
+export type HeldSendOutcome = 'received' | 'not-received';
+export type HeldSendEvidenceKind = 'ack2' | 'ack3' | 'fda-non-receipt-confirmation' | 'platform-proof';
+/** POST governed-precheck {step:'held-send-settlement'} → its `heldSend`: which ways are offered (null) or why not. With a
+ *  chosen way, the statement the signer makes and the evidence it cites, both the server's and signed word for word. */
+export interface HeldSendOverview {
+  sequenceNumber: string;
+  sentAt: string | null;
+  transmittalId: number | null;
+  attemptId: string | null;
+  /** FDA's signed MDN for this message can be recorded on Gateway transmittals. */
+  receiptUpload: boolean;
+  outcomes: Record<HeldSendOutcome, string | null>;
+  /** The platform's own proof that nothing left (P-108 1(b)): no Vault document is chosen for a release on it. */
+  platformProof: string | null;
+  signerRefusal: string | null;
+  statement?: string;
+  evidence?: Record<string, unknown>;
+}
+/** What a settlement needs beyond its signature: the way, and the FDA document it rests on, by Vault id and in words. */
+export interface SettlementRequest {
+  outcome: HeldSendOutcome;
+  evidenceKind: HeldSendEvidenceKind;
+  evidenceDocumentId?: string;
+  documentLabel?: string;
+}
+/** A held-send answer the screen can act on, or null: an answer without its two outcomes is unreadable, never "nothing to settle". */
+export function heldSendOf(p: GovernedPrecheck | null | undefined): HeldSendOverview | null {
+  const h = p?.heldSend;
+  const o = h?.outcomes as Record<string, unknown> | undefined;
+  if (!h || typeof h.sequenceNumber !== 'string' || typeof h.receiptUpload !== 'boolean' || !o) return null;
+  return 'received' in o && 'not-received' in o ? h : null;
+}
+/** A held-send answer for a chosen way, with the server's statement and evidence to sign, or null. */
+export function settlementOf(p: GovernedPrecheck | null | undefined): (HeldSendOverview & { statement: string; evidence: Record<string, unknown> }) | null {
+  const h = heldSendOf(p);
+  if (!h || typeof h.statement !== 'string' || !h.statement.trim() || !h.evidence || typeof h.evidence !== 'object') return null;
+  return h as HeldSendOverview & { statement: string; evidence: Record<string, unknown> };
+}
+
 /** What a transmit needs beyond its signature (POST /sequences/:id/transmit). */
 export interface TransmitRequest {
   environment: 'staging' | 'production';
   applicationId: string;
+}
+
+/**
+ * Where a transmit goes, in words: the Dispatch tab, the signing dialog, the
+ * transmit's answer and the receipt upload all say it from here, and never as
+ * the stored value. The phrases are the server's (governed-transmit-checks.ts
+ * ENVIRONMENT_WORDS). F1 (row D7, 2026-11-01): a send to the agency's test
+ * environment ('staging') files nothing, so the sequence stays unfiled and can
+ * still be filed with the agency (submission-service.ts toDispatchStatus).
+ */
+export function environmentWords(environment: string | null | undefined): string {
+  if (environment === 'staging') return "the agency's test environment";
+  if (environment === 'production') return "the agency's production environment";
+  return environment ? 'an environment this screen does not name' : 'an environment not recorded';
+}
+/** What a send to the agency's test environment is not, wherever one is shown (F1, row D7). */
+export const TEST_SEND_NOT_A_FILING = 'A test send is not a filing';
+
+/** A sequence's dispatch status in words (F1, row D7, 2026-11-08). How the agency
+ *  holds it is dispatchWords' (CommitmentRow.tsx), the one map; a send still in
+ *  flight is said as one, never as "not on file at the agency"; a status this
+ *  screen does not know, or none, is not recorded, never 'pending'. After a test
+ *  send the sequence is not on file, as before it. */
+function dispatchStatusWords(status: string | null | undefined): string {
+  if (status === 'transmitting') return 'a send is in flight and not yet confirmed; confirm at the agency before sending again';
+  if (status === 'pending' || status === 'sent' || status === 'acknowledged' || status === 'rejected') return dispatchWords(status);
+  return 'not recorded';
 }
 
 /** POST /sequences/:seqId/governed-precheck {step:'transmit'} → its `transmit`. */
@@ -1746,12 +1848,32 @@ export interface TransmitReadiness {
   gate: { cleared: boolean; blockers: string[] };
   refusal: string | null;
 }
+/** POST /sequences/:seqId/governed-precheck {step:'retire'} → its `retirement` (P-86 C2,
+ *  submission-service.ts SequenceRetirementPrecheck): what retiring leaves on record, whether the number is freed,
+ *  and the statement the signer makes, which the signature carries word for word. */
+export interface RetirementPrecheck {
+  sequenceNumber: string;
+  /** The sends to the agency's test environment the retirement leaves on record, by UTC day. */
+  stagingSends: Array<{ sentOn: string }>;
+  numberFreed: boolean;
+  statement: string;
+}
 /** POST /sequences/:seqId/governed-precheck — the step's gates, asked before signing. */
 export interface GovernedPrecheck {
   step: GovernedKind;
   cleared: boolean;
   refusal: string | null;
   transmit?: TransmitReadiness;
+  retirement?: RetirementPrecheck;
+  heldSend?: HeldSendOverview;
+}
+
+/** A retirement answer the screen can act on, or null (P-86 C3). The statement is the server's and is signed word for
+ *  word, so an answer without one is unreadable, never "cleared". */
+export function retirementOf(p: GovernedPrecheck | null | undefined): RetirementPrecheck | null {
+  const r = p?.retirement;
+  if (!r || typeof r.statement !== 'string' || !r.statement.trim()) return null;
+  return Array.isArray(r.stagingSends) && typeof r.numberFreed === 'boolean' ? r : null;
 }
 
 const credentialWord = (v: boolean | null): string =>
@@ -1764,9 +1886,10 @@ function transmitBlockedBy(t: TransmitReadiness, env: 'staging' | 'production'):
   const transport = t.transportReadiness?.[env];
   if (transport?.implementation === 'unavailable') return transport.reason;
   const gw = gatewayLabel(t.route.gateway);
-  if (t.configured[env] === null) return `Whether ${gw} is configured for ${env} could not be checked, so nothing can be sent until it can.`;
+  const where = environmentWords(env);
+  if (t.configured[env] === null) return `Whether ${gw} is configured for ${where} could not be checked, so nothing can be sent until it can.`;
   if (t.configured[env] !== true) {
-    return `${gw} has no ${env} credentials configured for this organization, so nothing can be sent. An administrator adds them under Gateway accounts.`;
+    return `${gw} has no credentials for ${where} configured for this organization, so nothing can be sent. An administrator adds them under Gateway accounts.`;
   }
   return null;
 }
@@ -1826,12 +1949,13 @@ function TransmitFacts({ t }: { t: TransmitReadiness }) {
     ['Applicant', t.recordedApplicant ?? 'not recorded'],
     ['Application number', t.recordedApplicationNumber ?? 'not recorded'],
     ['Gateway', t.route.ok ? `${gatewayLabel(t.route.gateway)} (${t.route.region.toUpperCase()})` : 'none for this filing'],
-    ['Staging credentials', credentialWord(t.configured.staging)],
+    // The agency's test environment by its name, not the stored 'staging' (F1, row D7).
+    ['Test environment credentials', credentialWord(t.configured.staging)],
     ['Production credentials', credentialWord(t.configured.production)],
     ['Agency qualification', 'not verified — credentials alone do not establish agency acceptance'],
-    ['Staging transport', t.transportReadiness?.staging?.reason ?? 'could not be checked'],
+    ['Test environment transport', t.transportReadiness?.staging?.reason ?? 'could not be checked'],
     ['Production transport', t.transportReadiness?.production?.reason ?? 'could not be checked'],
-    ['Dispatch status', t.dispatchStatus ?? 'pending'],
+    ['Dispatch status', dispatchStatusWords(t.dispatchStatus)],
   ];
   return (
     <div className="tl-spec-grid sc-spec">
@@ -1855,8 +1979,22 @@ interface DossierTransmittal {
   ack_received_at?: string | null;
   submitted_by?: number | null;
   submitted_by_name?: string | null;
-  /** transmitSequence records the sequence NUMBER it filed and the environment. */
-  metadata?: { sequence?: string | null; environment?: string | null } | null;
+  /** transmitSequence records the sequence NUMBER it carried and the environment; a send since F1 slice 1 also names
+   *  the sequence it is bound to (`dispatchBinding.sequenceId`). */
+  metadata?: {
+    sequence?: string | null; environment?: string | null; dispatchBinding?: { sequenceId?: number } | null;
+    heldSendSettlement?: HeldSendSettlementRecord | null; as2ReceiptHistory?: KeptReceipt[] | null;
+  } | null;
+}
+
+
+/** Whose transmission a row is (P-86 C3): by the sequence it is bound to, never by its number alone, because a
+ *  retired sequence's number can be started again. A row with no binding is said to be of this number, no more. */
+function transmittalMark(t: DossierTransmittal, sequenceId: number, sequenceNumber: string): string {
+  const bound = t.metadata?.dispatchBinding?.sequenceId;
+  if (bound === sequenceId) return ' (this one)';
+  if (t.metadata?.sequence !== sequenceNumber) return '';
+  return typeof bound === 'number' ? ` (another sequence numbered ${sequenceNumber})` : ' (this number)';
 }
 
 const whenOf = (iso: string | null | undefined): string | null => (iso ? new Date(iso).toLocaleString() : null);
@@ -1866,11 +2004,15 @@ const whenOf = (iso: string | null | undefined): string | null => (iso ? new Dat
  * /api/mdx/gateways/transmittals?program_id=&region=, for the project this
  * submission belongs to and the region its gateway serves (`region`, from the
  * server's transmit route). A transmittal row records the sequence number it
- * filed, not the sequence, so the list says it is filtered by project and
+ * carried, not the sequence, so the list says it is filtered by project and
  * region and marks this sequence's rows. A failed or misshapen read is an
- * error, never "none sent"; a submission with no project is not listed.
+ * error, never "none sent"; a submission with no project is not listed. Each
+ * row says where it went in words, and a send to the agency's test environment
+ * that it is not a filing (F1, row D7, 2026-11-01).
  */
-function DossierTransmissions({ programId, region, sequenceNumber }: { programId: string | null | undefined; region: string; sequenceNumber: string }) {
+function DossierTransmissions({ programId, region, sequenceId, sequenceNumber }: {
+  programId: string | null | undefined; region: string; sequenceId: number; sequenceNumber: string;
+}) {
   const path = programId
     ? `/api/mdx/gateways/transmittals?program_id=${encodeURIComponent(programId)}&region=${encodeURIComponent(region)}`
     : null;
@@ -1880,8 +2022,8 @@ function DossierTransmissions({ programId, region, sequenceNumber }: { programId
   if (!programId) {
     body = (
       <div className="scaf-note">
-        This submission is not anchored to a project, so its transmissions cannot be listed by project here. Anchor it to its project,
-        under the submission&#39;s title, to list them.
+        This submission is not anchored to a project, so its transmissions cannot be listed by project here, test sends included
+        (a test send files nothing). Anchor it to its project, under the submission&#39;s title, to list them.
       </div>
     );
   } else if (live.loading) {
@@ -1905,7 +2047,7 @@ function DossierTransmissions({ programId, region, sequenceNumber }: { programId
             <div key={t.id} className="tl-spec-row">
               <span className="tl-spec-k">
                 Transmittal #{t.id}
-                {filed ? ` · sequence ${filed}${filed === sequenceNumber ? ' (this one)' : ''}` : ' · sequence not recorded'}
+                {filed ? ` · sequence ${filed}${transmittalMark(t, sequenceId, sequenceNumber)}` : ' · sequence not recorded'}
               </span>
               <span className="tl-spec-v">
                 {t.status ? <span className={`rd-chip tone-${transmittalStatusTone(t.status)}`}>{t.status}</span> : 'status not recorded'}
@@ -1913,8 +2055,16 @@ function DossierTransmissions({ programId, region, sequenceNumber }: { programId
                 {` · ${acked ? `acknowledged ${acked}` : 'not acknowledged'}`}
                 {` · sent by ${sender}`}
                 {whenOf(t.submitted_at) ? ` on ${whenOf(t.submitted_at)}` : ''}
-                {t.metadata?.environment ? ` (${t.metadata.environment})` : ''}
+                {/* Where it went, in words. After a reload the sequence reads only
+                    'pending', so this row is where a test send stays said (F1, row D7). */}
+                {t.metadata?.environment
+                  ? ` to ${environmentWords(t.metadata.environment)}${
+                      t.metadata.environment === 'staging' ? ` (${TEST_SEND_NOT_A_FILING.toLowerCase()})` : ''
+                    }`
+                  : ' (environment not recorded)'}
                 {t.error_message ? ` · ${t.error_message}` : ''}
+                {/* A held send settled by signature, and FDA's verified answer kept against it (P-92 C2, S9). */}
+                {heldSendSettlementWords(t.metadata, 'row') ? ` · ${heldSendSettlementWords(t.metadata, 'row')}` : ''}
               </span>
             </div>
           );
@@ -1927,7 +2077,7 @@ function DossierTransmissions({ programId, region, sequenceNumber }: { programId
       <div className="tl-spec-k sc-mb">Transmissions and acknowledgements</div>
       {programId && !live.loading && !live.error && (
         <div className="scaf-note sc-mb">
-          Filtered by project and {market}, not by sequence: a transmittal records the number of the sequence it filed.
+          Filtered by project and {market}, not by sequence: a transmittal records the number of the sequence it carried.
         </div>
       )}
       {body}
@@ -1942,7 +2092,9 @@ function DossierTransmissions({ programId, region, sequenceNumber }: { programId
  * "not configured" is said here, before a password is typed — never
  * discovered after (QA 2026-10-08, j6, the blocker).
  */
-function TransmitPanel({ seq, programId, onTransmit, canSign }: { seq: SeqRow; programId: string | null | undefined; onTransmit: (req: TransmitRequest) => void; canSign: boolean }) {
+function TransmitPanel({ seq, programId, onTransmit, onSettle, canSign }: {
+  seq: SeqRow; programId: string | null | undefined; onTransmit: (req: TransmitRequest) => void; onSettle: (req: SettlementRequest) => void; canSign: boolean;
+}) {
   const [ready, setReady] = React.useState<{ phase: 'loading' | 'done' | 'error'; t?: TransmitReadiness; error?: string }>({ phase: 'loading' });
   const [environment, setEnvironment] = React.useState<'staging' | 'production'>('staging');
   const [applicationId, setApplicationId] = React.useState('');
@@ -1981,8 +2133,8 @@ function TransmitPanel({ seq, programId, onTransmit, canSign }: { seq: SeqRow; p
         <div className="sc-field">
           <label htmlFor="sc-tx-env">Environment</label>
           <select id="sc-tx-env" className="sc-subpick" value={environment} onChange={(e) => setEnvironment(e.target.value as 'staging' | 'production')}>
-            <option value="staging">Staging (agency test)</option>
-            <option value="production">Production</option>
+            <option value="staging">Agency test environment</option>
+            <option value="production">Agency production environment</option>
           </select>
         </div>
         <div className="sc-field">
@@ -1995,29 +2147,39 @@ function TransmitPanel({ seq, programId, onTransmit, canSign }: { seq: SeqRow; p
           disabled={blockedBy !== null || !appNumber || !canSign}
           onClick={() => onTransmit({ environment, applicationId: appNumber })}
         >
-          {I.rocket} Transmit sequence {seq.sequenceNumber} (Part 11 e-signature)
+          {/* The button names where the package goes: a test send files nothing (F1, row D7). */}
+          {I.rocket}{' '}
+          {environment === 'production'
+            ? `File sequence ${seq.sequenceNumber} with the agency`
+            : `Send sequence ${seq.sequenceNumber} to ${environmentWords(environment)}`}{' '}
+          (Part 11 e-signature)
         </button>
       </div>
       {blockedBy ? (
-        <div className="sc-verdict tone-warn sc-mt" role="status">Transmit is not available: {clause(blockedBy)}.</div>
+        // The server's refusal, a record key said in words (blockerForDisplay): the dispatch gate's can name one.
+        <div className="sc-verdict tone-warn sc-mt" role="status">Transmit is not available: {clause(blockerForDisplay(blockedBy))}.</div>
       ) : !appNumber ? (
         <div className="scaf-note sc-mt">
           No agency application number is recorded for this project. Enter the number the agency assigned; a package is never sent without one.
         </div>
       ) : null}
-      {t.route.ok && <DossierTransmissions programId={programId} region={t.route.region} sequenceNumber={seq.sequenceNumber} />}
+      {/* Where the held send is told, the door to settle it (P-92 C2): only while a send is held. */}
+      {t.dispatchStatus === 'transmitting' && <HeldSendSettlement seq={seq} programId={programId} onSettle={onSettle} />}
+      {t.route.ok && <DossierTransmissions programId={programId} region={t.route.region} sequenceId={seq.id} sequenceNumber={seq.sequenceNumber} />}
     </div>
   );
 }
 
 /** The package and the transmit, for this sequence (QA 2026-10-08, j6, the blocker). */
-function PackageAndTransmit({ sub, seq, onTransmit, canSign }: { sub: SubLike; seq: SeqRow; onTransmit: (req: TransmitRequest) => void; canSign: boolean }) {
+function PackageAndTransmit({ sub, seq, onTransmit, onSettle, canSign }: {
+  sub: SubLike; seq: SeqRow; onTransmit: (req: TransmitRequest) => void; onSettle: (req: SettlementRequest) => void; canSign: boolean;
+}) {
   return (
     <div className="sc-mt">
-      <div className="tl-spec-k sc-mb">Package and transmit</div>
+      <div className="pj-sec-h sc-mt"><h3 className="sec-title">Package and transmit</h3></div>
       <PackageDownload sub={sub} seq={seq} />
       {seq.status === 'dispatched' ? (
-        <TransmitPanel seq={seq} programId={sub.programId} onTransmit={onTransmit} canSign={canSign} />
+        <TransmitPanel seq={seq} programId={sub.programId} onTransmit={onTransmit} onSettle={onSettle} canSign={canSign} />
       ) : (
         <div className="scaf-note sc-mt">
           Transmit opens once sequence {seq.sequenceNumber} is dispatched. It sends this package to the region&#39;s agency gateway,
@@ -2025,6 +2187,316 @@ function PackageAndTransmit({ sub, seq, onTransmit, canSign }: { sub: SubLike; s
         </div>
       )}
     </div>
+  );
+}
+
+const COUNT_WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'];
+
+/** A server blocker sentence for display: a record key ("ectd-sequence:1") is not a reader's word, and it is kept out
+ *  of the page entirely, tooltips included (D7-A2 step 10; the coordinating session, 2026-11-09). */
+export function blockerForDisplay(b: string): string {
+  return b.replace(/\bectd-sequence:\d+\b/g, 'this sequence').replace(/\b[a-z][a-z-]*:\d+\b/g, 'this record');
+}
+
+/** "Cleared to dispatch?", answered: the one emphasis="verdict" of D5–D7 (D7.md §A.4 step 10, P-33). */
+function DispatchVerdict({ a, sequenceNumber: n, awaitingOwnSignature, reauthorizing }: {
+  a: ReadinessAssessment; sequenceNumber: string; awaitingOwnSignature: boolean; reauthorizing: boolean;
+}) {
+  const blockers = a.gate.blockers;
+  const count = blockers.length;
+  const cleared = a.gate.cleared === true;
+  const headline = cleared
+    ? <>Yes. Sequence {n} is cleared to dispatch.<WaivedGateMark a={a} /></>
+    // `cleared` is the engine's own answer (a.gate.cleared === true), read only once the assessment answered: an empty
+    // blocker list is never taken for it.
+    : awaitingOwnSignature
+      ? <>Only its release signature stands between sequence {n} and dispatch, and the dispatch e-signature applies it.</>
+      : count === 0
+        // The engine's own answer is "not cleared", with no reason listed: said as that, never as "nothing stands".
+        ? <>Not yet. The gate has not cleared sequence {n} for dispatch, and it listed no reason.</>
+        : <>Not yet. {COUNT_WORDS[count] ?? count} {count === 1 ? 'thing stands' : 'things stand'} between sequence {n} and dispatch.</>;
+  const body = awaitingOwnSignature
+    ? reauthorizing
+      ? <>The earlier release signature does not cover the current recorded facts. Re-signing applies a release signature
+        to the current applicant, application and sequence content before any transmission.</>
+      : <>This submission type requires a 21 CFR Part 11 release signature, and none is on record for this sequence yet.
+        When the sequence is dispatched, the dispatch e-signature is recorded as that release signature, and the server
+        checks the full gate again with it on record before anything moves.</>
+    : !cleared && count > 0
+      ? <ul className="sc-blockers">{blockers.map((b, i) => <li key={i}>{blockerForDisplay(b)}</li>)}</ul>
+      : undefined;
+  return (
+    <div role="status" data-testid="sc-dispatch-verdict">
+      <AnswerLead emphasis="verdict" tone={cleared ? 'good' : awaitingOwnSignature ? 'calm' : 'urgent'}
+        eyebrow="Cleared to dispatch?" headline={headline} body={body} />
+    </div>
+  );
+}
+
+/** What a retirement keeps on record, in words: the test sends are named, never counted as filings. */
+function retirementHistory(sends: ReadonlyArray<{ sentOn: string }>): string {
+  const sent = sends.length === 0 ? '' : sends.length === 1 ? `, its test send of ${sends[0].sentOn} UTC` : `, its ${sends.length} test sends`;
+  return `Its leaves, compiles${sent} and its signatures stay recorded as history; it is no longer listed, built on or sent.`;
+}
+
+type RetireAnswer =
+  | { phase: 'offered'; retirement: RetirementPrecheck }
+  | { phase: 'refused'; refusal: string }
+  | { phase: 'unreadable' };
+type RetireState = { phase: 'closed' } | { phase: 'reading' } | (RetireAnswer & { atClick?: boolean });
+
+/** The retirement's own precheck (P-86 C2): offered, refused with the server's sentence, or unreadable. */
+async function askRetirement(seq: SeqRow): Promise<RetireAnswer> {
+  const r = await mutateVerbatim<GovernedPrecheck>('POST', `/api/submissions/sequences/${seq.id}/governed-precheck`, { step: 'retire' });
+  if (!r.data || typeof r.data.cleared !== 'boolean') return { phase: 'unreadable' };
+  if (!r.data.cleared) {
+    return { phase: 'refused', refusal: r.data.refusal?.trim() || `The server would not retire sequence ${seq.sequenceNumber}, and gave no reason.` };
+  }
+  const retirement = retirementOf(r.data);
+  return retirement ? { phase: 'offered', retirement } : { phase: 'unreadable' };
+}
+
+/**
+ * Retire this sequence (P-86, founder 2026-11-01; launch row D7): a sequence never filed is taken out of use by a
+ * signed act, and its number is freed. The foot of the Dispatch tab, closed by default, and outside the readiness
+ * read, so a sequence whose gate cannot be computed can still be retired. Each open asks the server again and no
+ * answer is kept across a close; the button asks once more and opens the one signature only when that answer clears.
+ * A refusal is said here, focused, never off screen. Nothing is signed or changed by this component.
+ */
+function RetireSequence({ seq, onRetire }: { seq: SeqRow; onRetire: () => void }) {
+  const n = seq.sequenceNumber;
+  const [state, setState] = React.useState<RetireState>({ phase: 'closed' });
+  const [busy, setBusy] = React.useState(false);
+  const asked = React.useRef(0);
+  const wasOpen = React.useRef(false);
+  const said = React.useRef<HTMLParagraphElement>(null);
+  const atClick = 'atClick' in state && state.atClick === true;
+  React.useEffect(() => { if (atClick) said.current?.focus(); }, [atClick, state]);
+  const onToggle = (e: React.SyntheticEvent<HTMLElement>) => {
+    // One open is one question: a toggle event that does not change the state asks nothing again.
+    const open = (e.currentTarget as { open?: boolean }).open === true;
+    if (open === wasOpen.current) return;
+    wasOpen.current = open;
+    const id = ++asked.current;
+    setBusy(false);
+    if (!open) { setState({ phase: 'closed' }); return; }
+    setState({ phase: 'reading' });
+    void askRetirement(seq).then((answer) => { if (asked.current === id) setState(answer); });
+  };
+  const retire = async () => {
+    const id = asked.current;
+    setBusy(true);
+    const answer = await askRetirement(seq);
+    if (asked.current !== id) return;
+    setBusy(false);
+    if (answer.phase === 'offered') { setState(answer); onRetire(); return; }
+    setState({ ...answer, atClick: true });
+  };
+  return (
+    <details className="pj-more" data-testid="retire-sequence" onToggle={onToggle}>
+      <summary>Retire sequence {n}…</summary>
+      {state.phase === 'reading' && <p role="status">Checking whether sequence {n} can be retired…</p>}
+      {state.phase === 'offered' && (
+        <>
+          <p>
+            Retiring takes sequence {n} out of use. Nothing is sent to the agency.{' '}
+            {retirementHistory(state.retirement.stagingSends)}{' '}
+            {state.retirement.numberFreed
+              ? `Its number, ${n}, becomes free, so a corrected sequence ${n} can then be started from the Sequences tab.`
+              : `Another sequence ${n} is in use, so the number stays taken.`}{' '}
+            Retirement cannot be undone.
+          </p>
+          <div className="sc-mt">
+            <button type="button" className="btn ghost small" disabled={busy} onClick={() => void retire()}>
+              Retire sequence {n}
+            </button>
+          </div>
+        </>
+      )}
+      {state.phase === 'refused' && (
+        <p ref={said} tabIndex={-1} role={atClick ? 'status' : 'note'}>
+          {blockerForDisplay(state.refusal)}{atClick ? ' Nothing was signed.' : ''}
+        </p>
+      )}
+      {state.phase === 'unreadable' && (
+        <p ref={said} tabIndex={-1} role="status">
+          Whether sequence {n} can be retired could not be checked.{atClick ? ' Nothing was signed.' : ''} Close this and
+          open it again to retry.
+        </p>
+      )}
+    </details>
+  );
+}
+
+/* ── P-92: settle a held FDA send (founder 2026-11-02; P-108 1(b); launch row D7) ───────────────────────────────── */
+
+type HeldSendState =
+  | { phase: 'closed' } | { phase: 'reading' } | { phase: 'unreadable' }
+  | { phase: 'blocked'; refusal: string } | { phase: 'offered'; overview: HeldSendOverview };
+type ChoiceState =
+  | { phase: 'idle' } | { phase: 'checking' } | { phase: 'unreadable' }
+  | { phase: 'refused'; refusal: string } | { phase: 'stated'; statement: string };
+
+const MDN_SENTENCE = "If FDA's signed receipt (its MDN) for this send arrives, record it on Gateway transmittals with 'Record agency MDN', which checks FDA's signature on it.";
+const precheckPath = (seqId: number) => `/api/submissions/sequences/${seqId}/governed-precheck`;
+
+/** The server's overview of the held send: which ways are offered, or why none is. */
+async function askHeldSend(seq: SeqRow): Promise<HeldSendState> {
+  const r = await mutateVerbatim<GovernedPrecheck>('POST', precheckPath(seq.id), { step: 'held-send-settlement' });
+  const overview = heldSendOf(r.data);
+  if (!overview || typeof r.data?.cleared !== 'boolean') return { phase: 'unreadable' };
+  return r.data.refusal ? { phase: 'blocked', refusal: r.data.refusal } : { phase: 'offered', overview };
+}
+
+/** The server's answer for one way on one ground: the statement to sign, or why not. */
+async function askSettlement(seqId: number, body: Record<string, unknown>): Promise<ChoiceState> {
+  const r = await mutateVerbatim<GovernedPrecheck>('POST', precheckPath(seqId), { step: 'held-send-settlement', ...body });
+  if (r.data?.cleared === true) {
+    const s = settlementOf(r.data);
+    return s ? { phase: 'stated', statement: s.statement } : { phase: 'unreadable' };
+  }
+  return r.data && typeof r.data.refusal === 'string' && r.data.refusal.trim() ? { phase: 'refused', refusal: r.data.refusal } : { phase: 'unreadable' };
+}
+
+const documentLabelOf = (d: PickedVaultVersion): string => (d.version ? `${d.title}, version ${d.version}` : d.title);
+
+/** One way, chosen: FDA's document from this project's Vault (and, to record it received, which acknowledgement it is),
+ *  or the platform's own proof with no document; then the server's statement, and the sign button. */
+function HeldSendChoice({ seq, programId, outcome, proof, onSettle }: {
+  seq: SeqRow; programId: string | null | undefined; outcome: HeldSendOutcome; proof: boolean; onSettle: (req: SettlementRequest) => void;
+}) {
+  const n = seq.sequenceNumber;
+  const [doc, setDoc] = React.useState<PickedVaultVersion | null>(null);
+  const [kind, setKind] = React.useState<HeldSendEvidenceKind | null>(
+    outcome === 'received' ? null : proof ? 'platform-proof' : 'fda-non-receipt-confirmation');
+  const [judged, setJudged] = React.useState<ChoiceState>({ phase: 'idle' });
+  const asked = React.useRef(0);
+  const needsDocument = kind !== 'platform-proof';
+  const docId = doc?.id;
+  const seqId = seq.id;
+  React.useEffect(() => {
+    const id = ++asked.current;
+    if (!kind || (needsDocument && !docId)) { setJudged({ phase: 'idle' }); return; }
+    setJudged({ phase: 'checking' });
+    void askSettlement(seqId, { outcome, evidenceKind: kind, ...(needsDocument ? { evidenceDocumentId: docId } : {}) })
+      .then((answer) => { if (asked.current === id) setJudged(answer); });
+  }, [seqId, outcome, kind, needsDocument, docId]);
+  const sign = () => onSettle({ outcome, evidenceKind: kind as HeldSendEvidenceKind,
+    ...(needsDocument && doc ? { evidenceDocumentId: doc.id, documentLabel: documentLabelOf(doc) } : {}) });
+  return (
+    <div className="sc-mt">
+      {needsDocument && (programId
+        ? <VaultVersionPicker programId={programId} label="Find FDA's document in this project's Vault" disabled={false} onChoose={setDoc} />
+        : <div role="note">This submission is not in a project, so no project Vault holds FDA&#39;s document.</div>)}
+      {needsDocument && doc && <div className="sc-mt">{`Chosen: ${documentLabelOf(doc)}.`}</div>}
+      {outcome === 'received' && (
+        <fieldset className="sc-mt">
+          <legend>Which acknowledgement is it?</legend>
+          {/* One radio row each, as the company documents list draws its choices (company-documents.css). */}
+          <label className="company-check"><input type="radio" name={`held-send-kind-${seq.id}`} checked={kind === 'ack2'} onChange={() => setKind('ack2')} />Ack2: FDA unpacked it and delivered it to the center</label>
+          <label className="company-check"><input type="radio" name={`held-send-kind-${seq.id}`} checked={kind === 'ack3'} onChange={() => setKind('ack3')} />Ack3: the center&#39;s validation result</label>
+        </fieldset>
+      )}
+      <HeldSendJudged judged={judged} proof={!needsDocument} signLabel={outcome === 'received' ? `Sign: record sequence ${n} as received` : `Sign: release sequence ${n}'s send`} onSign={sign} />
+    </div>
+  );
+}
+
+/** The server's answer for a chosen way: checking, why not, could not be checked, or the statement and the sign button. */
+function HeldSendJudged({ judged, proof, signLabel, onSign }: { judged: ChoiceState; proof: boolean; signLabel: string; onSign: () => void }) {
+  // Inside the door's own block, so each line takes the door's type, not the page's paragraph size.
+  if (judged.phase === 'idle') return null;
+  if (judged.phase === 'checking') return <div role="status" className="sc-mt">{proof ? "Checking the platform's record…" : 'Checking this document…'}</div>;
+  if (judged.phase === 'refused') return <div role="note" className="sc-mt">{blockerForDisplay(judged.refusal)}</div>;
+  if (judged.phase === 'unreadable') {
+    return <div role="status" className="sc-mt">Whether this can settle the send could not be checked. Choose again to retry.</div>;
+  }
+  return (
+    <>
+      <div className="sc-mt" data-testid="held-send-would-state">
+        <span className="tl-spec-k">By signing, you would state:</span>
+        <div><q>{judged.statement}</q></div>
+      </div>
+      <div className="sc-mt"><button type="button" className="btn ghost small" onClick={onSign}>{signLabel}</button></div>
+    </>
+  );
+}
+
+/** One way to settle: its button and what it does, or the server's sentence for why it is not offered. */
+function HeldSendWay({ label, line, refusal, onChoose }: { label: string; line: string; refusal: string | null; onChoose: () => void }) {
+  if (refusal) return <p role="note" className="sc-mt">{blockerForDisplay(refusal)}</p>;
+  return (
+    <div className="sc-mt">
+      <button type="button" className="btn ghost small" onClick={onChoose}>{label}</button>
+      <div>{line}</div>
+    </div>
+  );
+}
+
+/** The held send, told, and the ways it is offered to this person. */
+function HeldSendWays({ seq, programId, overview: h, onSettle }: {
+  seq: SeqRow; programId: string | null | undefined; overview: HeldSendOverview; onSettle: (req: SettlementRequest) => void;
+}) {
+  const [way, setWay] = React.useState<HeldSendOutcome | null>(null);
+  const n = h.sequenceNumber;
+  const when = heldSendWhen(h.sentAt);
+  const proof = h.platformProof !== null;
+  const documentWay = h.outcomes.received === null || (h.outcomes['not-received'] === null && !proof);
+  const release = proof
+    ? `On the platform's own record that this send never left. Sequence ${n} can then be sent again, under a new signature.`
+    : `On FDA's written confirmation that this send did not arrive. Sequence ${n} can then be sent again, under a new signature.`;
+  return (
+    <>
+      <p>{`Sequence ${n}'s send${when ? ` of ${when}` : ''} is held: the platform holds no verified answer from FDA to it.`}</p>
+      {h.receiptUpload && <p>{MDN_SENTENCE}</p>}
+      {h.signerRefusal ? <p role="note">{blockerForDisplay(h.signerRefusal)}</p> : (
+        <>
+          {documentWay && <p>{`${h.receiptUpload ? 'Otherwise, settle' : 'Settle'} it by signature, on FDA's own document added to this project's Vault.`}</p>}
+          <HeldSendWay label="Record as received" refusal={h.outcomes.received} onChoose={() => setWay('received')}
+            line={`On FDA's Ack2 or Ack3 for this send. Sequence ${n} is then on file with FDA and is not sent again.`} />
+          <HeldSendWay label="Release as not received" refusal={h.outcomes['not-received']} onChoose={() => setWay('not-received')} line={release} />
+          {way && <HeldSendChoice key={way} seq={seq} programId={programId} outcome={way} proof={way === 'not-received' && proof} onSettle={onSettle} />}
+        </>
+      )}
+    </>
+  );
+}
+
+/**
+ * Settle the held send (P-92 C2; design §5 C2, as re-cut in §10.3 D): where the held send is told, a closed door. Each
+ * open asks the server again and no answer is kept across a close. It offers the two ways the server offers, each on
+ * FDA's own document chosen in this project's Vault, or a release on the platform's own proof that nothing left; the
+ * statement shown is the server's, and the sign button hands the one signature to Submission Center, which asks again.
+ * No receipt upload is mounted here (Gateway transmittals records FDA's MDN), and nothing is signed or changed here.
+ */
+function HeldSendSettlement({ seq, programId, onSettle }: { seq: SeqRow; programId: string | null | undefined; onSettle: (req: SettlementRequest) => void }) {
+  const [state, setState] = React.useState<HeldSendState>({ phase: 'closed' });
+  const asked = React.useRef(0);
+  const wasOpen = React.useRef(false);
+  const onToggle = (e: React.SyntheticEvent<HTMLElement>) => {
+    // One open is one question: a toggle event that does not change the state asks nothing again.
+    const open = (e.currentTarget as { open?: boolean }).open === true;
+    if (open === wasOpen.current) return;
+    wasOpen.current = open;
+    const id = ++asked.current;
+    if (!open) { setState({ phase: 'closed' }); return; }
+    setState({ phase: 'reading' });
+    void askHeldSend(seq).then((answer) => { if (asked.current === id) setState(answer); });
+  };
+  const waiting = state.phase === 'reading' || state.phase === 'unreadable';
+  return (
+    <details className="pj-more sc-mt" data-testid="held-send" onToggle={onToggle}>
+      <summary>Settle the held send…</summary>
+      {waiting && (
+        <p role="status">
+          {state.phase === 'reading'
+            ? 'Checking how this send can be settled…'
+            : 'How this send can be settled could not be checked. Close this and open it again to retry.'}
+        </p>
+      )}
+      {state.phase === 'blocked' && <p role="note">{blockerForDisplay(state.refusal)}</p>}
+      {state.phase === 'offered' && <HeldSendWays key={asked.current} seq={seq} programId={programId} overview={state.overview} onSettle={onSettle} />}
+    </details>
   );
 }
 
@@ -2036,7 +2508,7 @@ export function DispatchWorkspace({
 }: {
   sub: SubLike;
   seq: SeqRow;
-  onGoverned: (seq: SeqRow, kind: GovernedKind, transmit?: TransmitRequest, waiver?: WaiverRequest) => void;
+  onGoverned: (seq: SeqRow, kind: GovernedKind, transmit?: TransmitRequest, waiver?: WaiverRequest, settlement?: SettlementRequest) => void;
   /** Shell navigation, for the compile screen opened on this sequence (F14). */
   onNav?: (id: string) => void;
 }) {
@@ -2103,18 +2575,12 @@ export function DispatchWorkspace({
   };
 
   return (
-    <div className="pj-card">
-      <div className="pj-card-h">
-        <span className="t">Dispatch · sequence {seq.sequenceNumber}</span>
-        <span className="s">dispatch readiness · QC</span>
+    <div className="pj-sec sc-dispatch">
+      <div className="pj-sec-h">
+        <h2>Dispatch</h2>
+        <span className="sec-sub">sequence {seq.sequenceNumber}</span>
       </div>
-      <div className="pj-card-b">
-        <div className="scaf-note sc-mb">
-          Dispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and
-          clear the deterministic dispatch gate before it can be dispatched. The gate below is
-          computed server-side from the canonical leaves and open Shadow Review criticals — the
-          same gate the freeze/dispatch endpoints enforce atomically with the e-signature.
-        </div>
+      <div>
         {live.loading ? (
           <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
             Computing the dispatch gate…
@@ -2129,53 +2595,30 @@ export function DispatchWorkspace({
         ) : (
           <>
             <ValidatedStageNote a={a} />
-            {/* Three states, not two. `awaitingOwnSignature` is a gate whose
-                only blocker is the release signature the dispatch e-signature
-                itself records (dispatchGateOnSigning clears, `gate` does not).
-                Reporting that as "Dispatch blocked" sent the user looking for a
-                defect that does not exist; reporting it as clear would be false.
+            {/* The one verdict (P-33; D7-A2 step 10): "Cleared to dispatch?", answered. Three states, not two.
+                `awaitingOwnSignature` is a gate whose only blocker is the release signature the dispatch e-signature
+                itself records (dispatchGateOnSigning clears, `gate` does not): calling it blocked sent the user
+                looking for a defect that does not exist; calling it clear would be false.
                 `?.` / `=== true`: network data, and missing fails closed. */}
-            <div
-              className={`sc-gate ${a.gate.cleared || awaitingOwnSignature ? 'ok' : 'blocked'}`}
-              role="status"
-            >
-              {a.gate.cleared || awaitingOwnSignature ? I.shieldCheck : I.lock}{' '}
-              {a.gate.cleared
-                ? <>Dispatch gate clear<WaivedGateMark a={a} /></>
-                : awaitingOwnSignature
-                  ? 'Dispatch gate clear except for the release signature — the dispatch e-signature applies it'
-                  : `Dispatch blocked — ${a.gate.blockers.length} ${
-                      a.gate.blockers.length === 1 ? 'blocker' : 'blockers'
-                    }`}
-            </div>
-            {awaitingOwnSignature && (
-              <div className="scaf-note sc-mb">
-                {reauthorizing ? <>
-                  The earlier release signature does not cover the current recorded facts. Re-signing applies a release signature
-                  to the current applicant, application and sequence content before any transmission.
-                </> : <>
-                  This submission type requires a 21 CFR Part 11 release signature, and none is on record
-                  for this sequence yet. When the sequence is dispatched, the dispatch e-signature is
-                  recorded as that release signature, and the server checks the full gate again with it
-                  on record before anything moves.
-                </>}
-              </div>
-            )}
-            {!a.gate.cleared && !awaitingOwnSignature && (
-              <ol className="sc-blockers">
-                {a.gate.blockers.map((b, i) => (
-                  <li key={i}>{b}</li>
-                ))}
-              </ol>
-            )}
-            <div className="scaf-note sc-mb">
+            <DispatchVerdict a={a} sequenceNumber={seq.sequenceNumber} awaitingOwnSignature={awaitingOwnSignature}
+              reauthorizing={reauthorizing} />
+            <p className="sec-sub sc-mb" data-testid="sc-dispatch-counts">
               {a.validationErrors} validation {a.validationErrors === 1 ? 'error' : 'errors'} ·{' '}
               {a.unacknowledgedShadowCriticals} unacknowledged shadow{' '}
               {a.unacknowledgedShadowCriticals === 1 ? 'critical' : 'criticals'} ·{' '}
               {a.shadowReviewRunCount} shadow {a.shadowReviewRunCount === 1 ? 'review' : 'reviews'}{' '}
               run · {a.leafCount} {a.leafCount === 1 ? 'leaf' : 'leaves'} · status{' '}
               {stageLabel({ status: a.sequenceStatus, validationStatus: seq.validationStatus })}
-            </div>
+            </p>
+            <details className="pj-more sc-mb">
+              <summary>How the dispatch gate works</summary>
+              <p>
+                Dispatch is governed: a sequence must be Validated → Frozen (Part 11 e-signature) and clear the
+                deterministic dispatch gate before it can be dispatched. The gate is computed server-side from the
+                canonical leaves and open Shadow Review criticals, the same gate the freeze and dispatch steps enforce
+                with the e-signature.
+              </p>
+            </details>
             {/* `shadowReviewMissing` is a HARD blocker merged into the gate, so
                 this note is the reason the gate blocks, never a permission. By
                 the P-34 waiver's state: active renders the server's notAssessed
@@ -2279,7 +2722,7 @@ export function DispatchWorkspace({
               <div className="cm-pushbar sc-mt">
                 <button
                   type="button"
-                  className="sc-trans-b"
+                  className="btn ghost small"
                   onClick={() => { stashNavParamsForTarget('ectd-compile', { sequenceId: String(seq.id) }); onNav('ectd-compile'); }}
                 >
                   Validate and compile this sequence {I.right}
@@ -2291,6 +2734,7 @@ export function DispatchWorkspace({
               seq={seq}
               canSign={!cannotSign}
               onTransmit={(req) => onGoverned(seq, 'transmit', req)}
+              onSettle={(req) => onGoverned(seq, 'held-send-settlement', undefined, undefined, req)}
             />
             {/* A freeze instruction reads the FREEZE verdict. Gated on `gate`,
                 it was hidden for every IND / NDA / BLA / MAA sequence — a third
@@ -2398,6 +2842,8 @@ export function DispatchWorkspace({
           </>
         )}
       </div>
+      {/* Outside the readiness read (P-86 C3): retiring a sequence never filed does not wait on its dispatch gate. */}
+      <RetireSequence seq={seq} onRetire={() => onGoverned(seq, 'retire')} />
     </div>
   );
 }

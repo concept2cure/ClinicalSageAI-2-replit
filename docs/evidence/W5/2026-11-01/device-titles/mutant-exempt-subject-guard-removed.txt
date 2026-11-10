@@ -1,0 +1,73 @@
+
+ RUN  v4.1.7 <repo>
+
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — MDR > marks every required MDR Annex II/III section present for a complete file 3ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — MDR > reports missing GSPR and CER as gaps, never invents them 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR > requires analytical + clinical performance and the PER (not a CER) 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR > is ready when IVDR performance evidence is supplied 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — each slot names the leaves it matched > two leaves with one section code: the CER slot holds the CER, not the first leaf with that code 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — each slot names the leaves it matched > an unmatched slot names no leaf 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR slots for the outline's II.6.3 / II.6.4 / II.6.5 > stability is a required slot after the PER; software/cybersecurity and usability are optional 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR slots for the outline's II.6.3 / II.6.4 / II.6.5 > an IVDR file without II.6.3 stability is not ready; with it, it is 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR slots for the outline's II.6.3 / II.6.4 / II.6.5 > claims II.6.3 / II.6.4 / II.6.5 keys (and the stability document type) and nothing next to them 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — IVDR slots for the outline's II.6.3 / II.6.4 / II.6.5 > the MDR registry is unchanged: stability evidence stays under Annex II 6 verification and validation 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — an outline-keyed leaf is placed by its key, not its title > MDR: a II.6.1.a report titled "Preclinical evaluation ..." is verification and validation, not the CER 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — an outline-keyed leaf is placed by its key, not its title > IVDR: a II.6.1.a "Analytical performance evaluation report" is analytical performance, not the PER 2ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — an outline-keyed leaf is placed by its key, not its title > IVDR: the II.6.2.a scientific-validity section does not stand in for the II.6.2.c PER 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — an outline-keyed leaf is placed by its key, not its title > a group IV leaf is claimed by no slot through its title (IVDR IV.4 SSP names "clinical performance") 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — an outline-keyed leaf is placed by its key, not its title > a document type still places a keyed leaf (the CER at II.6.1.b), and the key still places it too 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a title matcher matches the phrase as words, not inside another word > "preclinical", "pre-clinical" and "non-clinical" evaluation are not a clinical evaluation 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a title matcher matches the phrase as words, not inside another word > an analytical or clinical performance evaluation is not the performance evaluation report 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > underscore- and hyphen-joined file-name titles fill the IFU, GSPR and risk slots (the HEAD result) 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > the electronic IFU: "eIFU" (case transition) and "eifu" / "EIFU" / "e-IFU" (the eIFU token) fill the IFU slot 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > a phrase starts a token: "ifu" / "gspr" at the end of a longer word does not match 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > file-name titles of the CER and the PER fill their slots 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > pre-/non-clinical evaluation, in any spelling, is not the CER 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — titles are matched as tokens, so file-name titles match > a plan is not the report: the CEP is not the CER and a performance evaluation plan is not the PER 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — the end of a phrase is open: plurals and glued suffixes match, as at HEAD > plural acronyms fill the IFU and GSPR slots 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — the end of a phrase is open: plurals and glued suffixes match, as at HEAD > an acronym glued to a lower-case word is still the acronym; a capital run before a capitalised word still splits 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — the end of a phrase is open: plurals and glued suffixes match, as at HEAD > plural and glued nouns at the end of a phrase fill their slots 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — the end of a phrase is open: plurals and glued suffixes match, as at HEAD > the qualifiers still apply: a glued or plural plan is not the report, and a preclinical evaluation is not the CER 2ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — the outline key is read trimmed and case-insensitively > " II.6.1.a" and "ii.6.1.a" are the outline key: placed by key, never by title 2ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — the outline key is read trimmed and case-insensitively > a group IV leaf is claimed by no slot, by title or by document type (IV.4 SSCP with documentType "cer") 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a slot names the leaves it matched by title only > a CTD-coded "Clinical_Evaluation_Report_v2" with no document type is a title-only CER 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a slot names the leaves it matched by title only > a leaf matched by its outline key or its document type is not title-only 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a slot names the leaves it matched by title only > 'Preclinical bench testing' at CTD 4.2.1 is a title-only V&V match (no code-prefix match) 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a slot names the leaves it matched by title only > a slot with a keyed and a title-only leaf names only the title-only one 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a Vault-built IVDR file: stability, software and usability match by title > file-name stability and shelf-life titles fill the stability slot 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a Vault-built IVDR file: stability, software and usability match by title > specimen or sample stability is not the device stability of Annex II 6.3 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a Vault-built IVDR file: stability, software and usability match by title > software verification, cybersecurity and usability titles fill their optional slots 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a Vault-built IVDR file: stability, software and usability match by title > a complete Vault-built IVDR set (CTD codes, no document type) is ready, and without its stability report it is not 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a CTD Module 4/5 code is not device V&V evidence > a drug CSR at 5.3.5.1 leaves 'preclinical-clinical' missing 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a CTD Module 4/5 code is not device V&V evidence > drug leaves 4.2.3.2 and 5.3.6 fill no V&V slot 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a CTD Module 4/5 code is not device V&V evidence > a Vault V&V file named for its test still fills the slot, by title 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a V&V plan or protocol is not V&V evidence > plans and protocols leave the slot missing 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — a V&V plan or protocol is not V&V evidence > a report that names its plan or protocol still fills it 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — 'plantar', 'planar' and 'plane' are not plans; a mixed-case IFU is the IFU > a CER or PER title on a plantar, planar or plane device fills the CER / PER slot 2ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — 'plantar', 'planar' and 'plane' are not plans; a mixed-case IFU is the IFU > a V&V report on a plantar, planar or plane subject fills the V&V slot; planned changes do not 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — 'plantar', 'planar' and 'plane' are not plans; a mixed-case IFU is the IFU > a plan in any of its word forms is still not the CER or the PER 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — 'plantar', 'planar' and 'plane' are not plans; a mixed-case IFU is the IFU > a plan with a file-name tail glued on ('Planv2', 'planrev3', 'plandraft') is still a plan, in the CER, PER and V&V slots 1ms
+ × server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — 'plantar', 'planar' and 'plane' are not plans; a mixed-case IFU is the IFU > the plan for a plantar, planar or plane device is still not the CER or the PER 6ms
+   → Clinical_Evaluation_Plantar_Insole_Plan_v2: expected [ 'clinical-evaluation' ] to not include 'clinical-evaluation'
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — 'plantar', 'planar' and 'plane' are not plans; a mixed-case IFU is the IFU > a Vault-built MDR set whose CER and V&V titles are glued plans is not ready 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — 'plantar', 'planar' and 'plane' are not plans; a mixed-case IFU is the IFU > a mixed-case IFU fills the IFU slot 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — 'plantar', 'planar' and 'plane' are not plans; a mixed-case IFU is the IFU > i-f-u inside a word, or an 'If' before a camel-case 'U…' word, is not the IFU 1ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — 'plantar', 'planar' and 'plane' are not plans; a mixed-case IFU is the IFU > a capitalised word glued after an IFU keeps its own slot, as before this change 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — 'plantar', 'planar' and 'plane' are not plans; a mixed-case IFU is the IFU > a plan glued to an IFU is read as a plan, as when it is spelt apart 0ms
+ ✓ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — 'plantar', 'planar' and 'plane' are not plans; a mixed-case IFU is the IFU > a Vault-built MDR set with a mixed-case IFU and a plantar-device CER is ready 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts > assembleTechDoc — 'plantar', 'planar' and 'plane' are not plans; a mixed-case IFU is the IFU > the plan for a plantar, planar or plane device is still not the CER or the PER
+AssertionError: Clinical_Evaluation_Plantar_Insole_Plan_v2: expected [ 'clinical-evaluation' ] to not include 'clinical-evaluation'
+ ❯ server/services/pathway-engines/mdr-ivdr/__tests__/tech-doc-assembler.test.ts:541:45
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 52 passed (53)
+   Start at  00:16:38
+   Duration  530ms (transform 168ms, setup 102ms, import 97ms, tests 47ms, environment 0ms)
+

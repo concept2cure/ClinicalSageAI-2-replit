@@ -1,0 +1,12 @@
+
+<repo>/scripts/fda-esg-uat-smoke.ts
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to disable file ignore settings or use "--no-warn-ignored" to suppress this warning
+
+<repo>/server/services/submission-gateways/__tests__/fda-esg-hardening.test.ts
+  708:1  warning  File has too many lines (510). Maximum allowed is 500  max-lines
+
+<repo>/server/services/submission-gateways/fda-esg.ts
+  859:1  warning  File has too many lines (729). Maximum allowed is 500  max-lines
+
+✖ 3 problems (0 errors, 3 warnings)
+

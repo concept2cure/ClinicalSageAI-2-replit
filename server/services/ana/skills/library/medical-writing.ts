@@ -117,7 +117,6 @@ Writing, revising or quality-checking any regulatory or scientific document: pro
     ],
     tools: [
       'draft_clinical_overview_m2_5',
-      'plan_ind_module_authoring',
       'build_effects_table',
       'validate_cross_references',
       'reconcile_dossier_numbers',
@@ -133,7 +132,7 @@ Writing or reviewing CTD Module 2.5, the Clinical Overview (ICH M4E): the critic
 
 ## Method
 1. Establish what exists: the completed CSRs, the integrated analyses, the 2.7 summaries and the proposed labeling. The overview interprets them; it does not repeat Module 5 or 2.7. Where 2.7 presents the data, 2.5 says what they mean, how strong they are, and where they are weak.
-2. Draft with \`draft_clinical_overview_m2_5\`. When the program has completed CSRs it composes the overview from those records, with the pivotal efficacy and benefit-risk tables and a completeness and gaps report; otherwise it returns the outline with drafting guidance. Do not pass results, counts or rates to it, and do not add any to its draft. Report its gaps as gaps. For an IND transcription scaffold from facts the person supplies, \`plan_ind_module_authoring\` (module 2.5) returns a plan only: its facts are unverified, and the real artifact and its sources are checked separately before sealing.
+2. Draft with \`draft_clinical_overview_m2_5\`. When the program has completed CSRs it composes the overview from those records, with the pivotal efficacy and benefit-risk tables and a completeness and gaps report; otherwise it returns the outline with drafting guidance. Do not pass results, counts or rates to it, and do not add any to its draft. Report its gaps as gaps. For an IND with no completed CSR, the outline is the frame: state each section that has no data as such rather than filling it from the conversation.
 3. Keep the M4E order: product development rationale; overview of biopharmaceutics; overview of clinical pharmacology; overview of efficacy; overview of safety; benefits and risks conclusions; literature references.
 4. Analyze in each section rather than describe:
    - development rationale: the condition, the pharmacological class, the development program, and the agency advice that shaped it;
@@ -188,7 +187,7 @@ Writing or reviewing CTD Module 2.5, the Clinical Overview (ICH M4E): the critic
     ],
     tools: [
       'draft_clinical_summary_m2_7',
-      'plan_ind_module_authoring',
+      'get_document_template',
       'narrate_statistical_result',
       'get_csr_template',
       'lookup_fda_guidance',
@@ -207,7 +206,7 @@ Writing or reviewing CTD Module 2.7, the Clinical Summary (ICH M4E): the detaile
 
 ## Method
 1. Establish the study set: every completed study that goes in Module 5, its CSR, the integrated analyses and the SAP's pooling definitions. 2.7 summarizes and integrates; interpretation belongs in 2.5.
-2. Draft with \`draft_clinical_summary_m2_7\`. It composes 2.7.1 to 2.7.4 from the program's completed CSR records and flags gaps. Do not pass results, counts or rates to it; if the program has no completed CSR, say so. For an IND scaffold from supplied facts, \`plan_ind_module_authoring\` (module 2.7) returns a plan only, built on unverified facts.
+2. Draft with \`draft_clinical_summary_m2_7\`. It composes 2.7.1 to 2.7.4 from the program's completed CSR records and flags gaps. Do not pass results, counts or rates to it; if the program has no completed CSR, say so. With no completed CSR, \`get_document_template\` with template_id clinical_summary returns the 2.7 outline from the ICH M2–M5 record, each heading with its purpose; it is an outline, not a draft.
 3. Keep the M4E structure: 2.7.1 biopharmaceutic studies and associated analytical methods; 2.7.2 clinical pharmacology studies; 2.7.3 clinical efficacy; 2.7.4 clinical safety; 2.7.5 literature references; 2.7.6 synopses of individual studies. When the application covers more than one indication, follow M4E on presenting efficacy for each.
 4. Efficacy: describe each study's design and population, then compare results across studies, subgroups and doses using the analyses the SAP defined. Word results with \`narrate_statistical_result\` from the reported estimates, never from rounded or recalculated ones.
 5. Safety: exposure; common adverse events; deaths, serious and other significant events; laboratory findings; special populations; postmarketing data where they exist. Use the integrated safety analysis's pooling definitions and say which pool each table comes from.

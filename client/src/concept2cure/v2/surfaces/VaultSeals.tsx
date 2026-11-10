@@ -6,8 +6,14 @@
  * GET  /api/c2c/project-vault/:id/seals/:sealId/verify?bytes=1
  * GET  /api/c2c/project-vault/:id/seals/:sealId/archive   (VR-20, the closing archive)
  *
- * Each seal is listed with when, who, why, how many documents and its hash. A
- * role that may write the Vault is offered "Seal this Vault" through the
+ * Each seal is listed with when, who, why, how many documents and its hash.
+ * Under it, closed, is what it holds: each document and version as the seal
+ * recorded it, read from its stored manifest (S6, binders as a view). Opening
+ * one goes through the Vault's audited download and viewer, as a version in
+ * Versions does (VaultVersionViewer.tsx). A record that could not be read says
+ * so, and is never shown as empty.
+ *
+ * A role that may write the Vault is offered "Seal this Vault" through the
  * shared EsignModal; the server also requires signing authority. Verify
  * re-reads every sealed file and says the verdict in words: intact, changed
  * (naming the documents) or could not verify. A list that could not be read
@@ -19,12 +25,26 @@
  * received is checked against the SHA-256 the server recorded before it is
  * saved, and that hash is stated.
  */
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useId, useState } from 'react';
 import { ApiRequestError, apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
 import { useAuthUser } from '@/services/portal/authService';
 import { EsignModal, esignSignerOf, type EsigSignedManifest } from '../../_shared/components/EsignModal';
 import { useVaultCanWrite } from './VaultViewOnly';
 import { saveVerifiedArchive, type ArchiveOutcome } from './vaultArchiveDownload';
+import { stageLabel } from './VaultLifecycle';
+import { VaultVersionViewer, useVaultVersionViewer } from './VaultVersionViewer';
+
+/** One sealed document as the seal recorded it (listSeals, vault-seal.service.ts). */
+export interface SealedDocumentShape {
+  id: string;
+  title: string | null;
+  version: string | null;
+  indexNumber: string | null;
+  shortHash: string | null;
+  lifecycleStage: string | null;
+  /** The later version that replaced the sealed one (P-107); null when it is still current; absent when the chain was not read. */
+  supersededBy?: { version: string | null; at: string | null } | null;
+}
 
 export interface VaultSealShape {
   id: string;
@@ -34,6 +54,8 @@ export interface VaultSealShape {
   sealedBy: number;
   sealedByName: string | null;
   sealedAt: string;
+  /** What it holds, from its record as signed. Null, or anything unreadable, means not read, never "none". */
+  documents?: unknown;
 }
 
 export interface SealVerificationShape {
@@ -61,6 +83,28 @@ function isSeal(v: unknown): v is VaultSealShape {
   return !!s && typeof s.id === 'string' && typeof s.reason === 'string' && typeof s.manifestSha256 === 'string' &&
     typeof s.documentCount === 'number' && typeof s.sealedBy === 'number' && typeof s.sealedAt === 'string' &&
     (s.sealedByName === null || typeof s.sealedByName === 'string');
+}
+
+function isSealedDocument(v: unknown): v is SealedDocumentShape {
+  const d = v as Record<string, unknown> | null;
+  return !!d && typeof d.id === 'string' && d.id !== '' &&
+    ['title', 'version', 'indexNumber', 'shortHash', 'lifecycleStage'].every((k) => d[k] === null || typeof d[k] === 'string');
+}
+
+/**
+ * "Superseded by version 2.0 on 2026-11-03", from the version chain as it is now (P-107). Nothing for a sealed
+ * version that is still current, or when the chain was not read. The seal's own record is not changed by it.
+ */
+export function supersededLine(by: { version: string | null; at: string | null } | null | undefined): string | null {
+  if (!by) return null;
+  const version = by.version ? `version ${by.version}` : 'a later version';
+  return by.at ? `Superseded by ${version} on ${by.at.slice(0, 10)}. The seal still holds the version above.`
+    : `Superseded by ${version}. The seal still holds the version above.`;
+}
+
+/** What a seal holds as the server read it from the seal's record; null when it was not read. */
+function holdingOf(v: unknown): SealedDocumentShape[] | null {
+  return Array.isArray(v) && v.every(isSealedDocument) ? v : null;
 }
 
 function isVerification(v: unknown): v is SealVerificationShape {
@@ -151,6 +195,59 @@ export async function downloadSealArchive(projectId: string, sealId: string): Pr
   return saveArchive(res, sealId);
 }
 
+/** A sealed document's name and version as the seal recorded them. */
+function sealedLabel(d: SealedDocumentShape): string {
+  const title = d.title ?? 'Title not recorded';
+  return d.version ? `${title} v${d.version}` : title;
+}
+
+/**
+ * What a seal holds: each document and version as the seal recorded it, in the
+ * Vault's version-list style. Open reads the sealed version through the
+ * Vault's audited download, framed when its bytes are a PDF.
+ */
+function SealHoldings({ projectId, documents }: { projectId: string; documents: unknown }) {
+  const viewer = useVaultVersionViewer(projectId);
+  const docs = holdingOf(documents);
+  if (!docs) {
+    return (
+      <p className="vd-dr-err" role="note" data-testid="vault-seal-holds-unread">
+        What this seal holds could not be read from its record. This is not an empty seal. Verify it to check the record.
+      </p>
+    );
+  }
+  if (docs.length === 0) {
+    return <p className="vd-seals-note" data-testid="vault-seal-holds-none">This seal holds no documents. The Vault had no current documents when it was sealed.</p>;
+  }
+  return (
+    <details className="pj-more" data-testid="vault-seal-holds">
+      <summary>What it holds · {docs.length} {docs.length === 1 ? 'document' : 'documents'}</summary>
+      <p className="vd-seals-note">Each document as the seal recorded it: the version, review stage and content hash when it was sealed.</p>
+      <div className="vd-vers">
+        {docs.map((d) => (
+          <div key={d.id} className="vd-ver" data-testid="vault-seal-document">
+            <span className="vd-ver-v">
+              {d.indexNumber ? <span className="vd-num">{d.indexNumber}</span> : null}
+              {d.title ?? 'Title not recorded'} · {d.version ? `v${d.version}` : 'version not recorded'}
+            </span>
+            <span className="vd-ver-m">
+              {stageLabel(d.lifecycleStage)} · {d.shortHash ? <>SHA-256 <span className="mono">{d.shortHash}</span></> : 'content hash not recorded'}
+            </span>
+            {supersededLine(d.supersededBy) ? (
+              <span className="vd-ver-m" data-testid="vault-seal-superseded">{supersededLine(d.supersededBy)}</span>
+            ) : null}
+            <button type="button" className="btn ghost small" disabled={viewer.viewing === d.id}
+              onClick={() => void viewer.view(d.id, sealedLabel(d), null)} aria-label={`Open ${sealedLabel(d)}`}>
+              {viewer.viewing === d.id ? 'Opening…' : 'Open'}
+            </button>
+          </div>
+        ))}
+      </div>
+      <VaultVersionViewer state={viewer} />
+    </details>
+  );
+}
+
 function SealRow({ projectId, seal }: { projectId: string; seal: VaultSealShape }) {
   const [verifying, setVerifying] = useState(false);
   const [result, setResult] = useState<{ text: string; verdict: SealVerificationShape['verdict'] | 'failed' } | null>(null);
@@ -190,11 +287,12 @@ function SealRow({ projectId, seal }: { projectId: string; seal: VaultSealShape 
           {seal.documentCount === 1 ? 'document' : 'documents'} ·{' '}
           <span className="mono" title={seal.manifestSha256}>SHA-256 {seal.manifestSha256.slice(0, 12)}…</span>
         </span>
-        <button type="button" className="sp-ask" disabled={verifying} onClick={() => void verify()} data-testid="vault-seal-verify">
+        <button type="button" className="btn ghost small" disabled={verifying} onClick={() => void verify()} data-testid="vault-seal-verify">
           {verifying ? 'Verifying…' : 'Verify'}
         </button>
       </div>
       <div className="vd-seal-reason">Reason: {seal.reason}</div>
+      <SealHoldings projectId={projectId} documents={seal.documents} />
       {result && (
         <div className="vd-seal-verdict" role={result.verdict === 'intact' ? 'status' : 'alert'} data-testid="vault-seal-verdict">
           {result.text}
@@ -202,7 +300,7 @@ function SealRow({ projectId, seal }: { projectId: string; seal: VaultSealShape 
       )}
       {result?.verdict === 'intact' && (
         <div className="vd-seal-archive">
-          <button type="button" className="sp-ask" disabled={archiving} onClick={() => void archive()} data-testid="vault-seal-archive">
+          <button type="button" className="btn ghost small" disabled={archiving} onClick={() => void archive()} data-testid="vault-seal-archive">
             {archiving ? 'Building the archive…' : 'Download closing archive'}
           </button>
           <span className="vd-seals-note">The sealed files, the record as signed, an index, SHA256SUMS and the audit trail, in one ZIP.</span>
@@ -223,6 +321,7 @@ export function VaultSeals({ projectId }: { projectId: string }) {
   const [seals, setSeals] = useState<VaultSealShape[] | null>(null);
   const [readError, setReadError] = useState<string | null>(null);
   const [sealing, setSealing] = useState(false);
+  const headingId = useId();
   const load = useCallback(async () => {
     setReadError(null);
     try {
@@ -239,18 +338,28 @@ export function VaultSeals({ projectId }: { projectId: string }) {
   useEffect(() => { void load(); }, [load]);
 
   return (
-    <section className="vd-seals" aria-labelledby="vault-seals-heading" data-testid="vault-seals">
-      <div className="vd-d-seclbl" id="vault-seals-heading">Seals</div>
-      <p className="vd-seals-note">
-        A seal records every current document in this Vault (its version, content hash, filing and review stage) as it stands, under
-        your electronic signature. Nothing can change a seal afterwards; anyone in the organisation can verify it.
-      </p>
-      {readError && <p role="alert" data-testid="vault-seals-error">{readError} <button type="button" className="sp-ask" onClick={() => void load()}>Try again</button></p>}
-      {seals && seals.length === 0 && <p data-testid="vault-seals-empty">This Vault has not been sealed.</p>}
+    /* A section of the Seals & fixity view (D6 §C.4 steps 10–11): the heading,
+       how many seals, and the one act, "Seal this Vault…", as its action. */
+    <section className="pj-sec" aria-labelledby={headingId} data-testid="vault-seals">
+      <div className="pj-sec-h">
+        <h2 id={headingId}>Seals</h2>
+        {seals ? <span className="sec-sub">{seals.length === 0 ? 'None yet' : `${seals.length} ${seals.length === 1 ? 'seal' : 'seals'}`}</span> : null}
+        {canWrite && seals ? (
+          <div className="pj-sec-acts">
+            <button type="button" className="btn ghost small" onClick={() => setSealing(true)} data-testid="vault-seal-open">Seal this Vault…</button>
+          </div>
+        ) : null}
+      </div>
+      {readError && <p className="vd-dr-err" role="alert" data-testid="vault-seals-error">{readError} <button type="button" className="btn ghost small" onClick={() => void load()}>Try again</button></p>}
+      {seals && seals.length === 0 && <p className="vd-seals-empty" data-testid="vault-seals-empty">This Vault has not been sealed.</p>}
       {seals && seals.length > 0 && <ul className="vd-seal-list">{seals.map((s) => <SealRow key={s.id} projectId={projectId} seal={s} />)}</ul>}
-      {canWrite && seals && (
-        <button type="button" className="sp-primary" onClick={() => setSealing(true)} data-testid="vault-seal-open">Seal this Vault…</button>
-      )}
+      <details className="pj-more">
+        <summary>What a seal records</summary>
+        <p>
+          A seal records every current document in this Vault (its version, content hash, filing and review stage) as it stands, under
+          your electronic signature. Nothing can change a seal afterwards; anyone in the organisation can verify it.
+        </p>
+      </details>
       {sealing && (
         <EsignModal
           open

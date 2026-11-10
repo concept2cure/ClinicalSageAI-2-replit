@@ -47,12 +47,21 @@ describe('the Project home feed names a governed act and its reason', () => {
     render(<ProjectHome surface={{ id: 'project-home', label: 'Project' } as any} onAsk={vi.fn()} onNav={vi.fn()} segment="biopharma" />);
     const reason = await screen.findByTestId('pj-act-reason');
     expect(reason.textContent).toBe('. Reason: The EU filing starts this quarter');
+    /* D3-2b: the feed is the Records card's last disclosure, "Activity", in Project knowledge on every step. */
+    const disclosure = reason.closest('details[data-records-section="activity"]');
+    expect(disclosure?.querySelector('summary')?.textContent).toBe('Activity');
+    expect(disclosure?.closest('aside.pj-side')).toBeTruthy();
+    expect(document.querySelector('.pj-main')?.textContent ?? '').not.toMatch(/No recorded activity yet|Loading activity/);
     expect(reason.closest('.pj-act')?.textContent).toContain('Market added · EMA');
     expect(screen.getAllByTestId('pj-act-reason')).toHaveLength(1);
   });
 
-  it('a row with no governed event reads as recorded', () => {
-    expect(activityLabel(ACTIVITY[1])).toBe('c2c.project.evidence.unpin · regulatory_program');
+  it('a row with no governed event reads as its action, in words', () => {
+    /* 2026-10-31: stored names ("LEAF CREATED · submission_leaf") are said in words. */
+    expect(activityLabel(ACTIVITY[1])).toBe('Project evidence unpin');
+    expect(activityLabel({ action: 'LEAF_CREATED', resource_type: 'submission_leaf', event: null, event_agency: null })).toBe('Document placed in a sequence');
+    expect(activityLabel({ action: 'UPDATE', resource_type: 'regulatory_program', event: null, event_agency: null })).toBe('Update · Regulatory program');
+    expect(activityLabel({ action: 'DOCUMENT_ARCHIVED', resource_type: 'vault_document', event: null, event_agency: null })).toBe('Document archived');
     expect(activityLabel({ ...ACTIVITY[0], event_agency: null })).toBe('Market added');
     // A market's own application number recorded (P-44) is named in words.
     expect(activityLabel({ action: 'SUBMISSION_APPLICATION_NUMBER_RECORDED', resource_type: 'submission', event: null, event_agency: null }))

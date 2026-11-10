@@ -192,15 +192,17 @@ export type SurfaceView =
  * being the thing every surface loads through.
  */
 function SurfaceChunkFallback() {
+  /* One quiet line in the person's words, not a box (D1.md §D1.B step 8): its look is
+     app-v2.css `.scaf-note[aria-busy="true"]`, which the inline padding and alignment
+     it carried before would have overridden. */
   return React.createElement(
     'div',
     {
       className: 'scaf-note',
-      style: { padding: '40px 16px', textAlign: 'center' },
       role: 'status',
       'aria-busy': true,
     },
-    'Loading surface…',
+    'Loading…',
   );
 }
 
@@ -286,7 +288,6 @@ const Lifecycle = lazySurface(() => import('./surfaces/BiopharmaSpecialty').then
 const Pharmacovigilance = lazySurface(() => import('./surfaces/BiopharmaSpecialty').then((m) => ({ default: m.Pharmacovigilance })));
 const PvCockpit = lazySurface(() => import('./surfaces/PvCockpit').then((m) => ({ default: m.PvCockpit })));
 const Biostatistics = lazySurface(() => import('./surfaces/Biostatistics').then((m) => ({ default: m.Biostatistics })));
-const BiostatWorkbench = lazySurface(() => import('./surfaces/BiostatWorkbench').then((m) => ({ default: m.BiostatWorkbench })));
 const MissionControl = lazySurface(() => import('./surfaces/MissionControl').then((m) => ({ default: m.MissionControl })));
 const FilingStrategy = lazySurface(() => import('./surfaces/FilingStrategy').then((m) => ({ default: m.FilingStrategy })));
 const ChangeAssessment = lazySurface(() => import('./surfaces/ChangeAssessment').then((m) => ({ default: m.ChangeAssessment })));
@@ -384,7 +385,6 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'authoring-engine': { component: AuthoringEngine },
   'batch-draft': { component: BatchDraft, full: true },
   biostatistics: { component: Biostatistics },
-  'biostat-workbench': { component: BiostatWorkbench },
   'mission-control': { component: MissionControl },
   'filing-strategy': { component: FilingStrategy },
   'change-assessment': { component: ChangeAssessment },
@@ -427,7 +427,8 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   // gone — the shell owns the chrome and owns the conversation, so none of
   // these claims the rail's column.
   'device-510k': { component: DeviceSurfaces['device-510k'], full: true },
-  'device-analytics': { component: DeviceSurfaces['device-analytics'], full: true },
+  // No device-analytics: it joined Reporting & analytics (D2, fold F4, 2026-10-30);
+  // its address opens `insights` (DEEP_LINK_ALIASES), whose overview carries the device section.
   'device-cer': { component: DeviceSurfaces['device-cer'], full: true },
   'device-clinical-studies': { component: DeviceSurfaces['device-clinical-studies'], full: true },
   'device-diagnostics': { component: DeviceSurfaces['device-diagnostics'], full: true },
@@ -440,7 +441,8 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'device-udi': { component: DeviceSurfaces['device-udi'], full: true },
   // No device-validation: the organization-wide blocker list retired (D2, fold F5
   // item 2, 2026-10-29); its address opens Submission Center (DEEP_LINK_ALIASES).
-  'device-workstream': { component: DeviceSurfaces['device-workstream'], full: true },
+  // No device-workstream: the device portfolio folded into Projects (D2, fold F6,
+  // 2026-10-30); its address opens Projects with the MDX filter (DEEP_LINK_ALIASES).
   'dispatch-readiness': { component: DispatchReadiness, full: true },
   'doc-journey': { component: DocJourney },
   // Full-width editing, with no second AnA input. Requests preserve the saved

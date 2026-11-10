@@ -96,6 +96,11 @@ import {
   charterAuditEvents,
 } from '@shared/schema/project-charter';
 import auditService from '../services/auditService';
+import {
+  changeProjectObjectives,
+  computeCharterAuditEventHash,
+  sendProjectObjectives,
+} from '../services/c2c/charter-objectives';
 import { createScopedLogger } from '../utils/logger.js';
 
 const log = createScopedLogger('charters');
@@ -375,6 +380,18 @@ router.post('/', async (req: Request, res: Response) => {
   }
 });
 
+// The project's objective of record (P-80, P-82; ONE_DESIGN_PLAN.md §1a S1):
+// project-admitted, unlike the org-scoped charter reads below. The handlers are
+// server/services/c2c/charter-objectives.ts's; this router only mounts them.
+router.get('/by-project/:ref/objectives', (req: Request, res: Response) => {
+  const tenant = requireTenant(req, res);
+  if (tenant) void sendProjectObjectives(req, res, tenant);
+});
+router.put('/by-project/:ref/objectives', (req: Request, res: Response) => {
+  const tenant = requireTenant(req, res);
+  if (tenant) void changeProjectObjectives(req, res, tenant);
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/charters/:charterId — org-scoped read
 // ─────────────────────────────────────────────────────────────────────────────
@@ -566,36 +583,9 @@ async function loadOwnedCharter(
   return rows[0] ?? null;
 }
 
-/**
- * Compute the per-row integrity digest for a charter_audit_events row.
- *
- * Canonical projection (sorted keys, no whitespace) so the same logical event
- * deterministically reproduces this digest. The DB CHECK constraint
- * (`event_hash ~ '^[0-9a-f]{64}$'`) rejects a NULL / malformed digest so a
- * caller cannot accidentally insert an unverifiable audit row.
- */
-function computeCharterAuditEventHash(input: {
-  charterId: number;
-  entityType: string;
-  entityId: number;
-  eventType: string;
-  actorUserId: number;
-  occurredAt: string;
-  afterValue: unknown;
-}): string {
-  // Stable key order — construct in alphabetical order so the digest is
-  // reproducible from the row itself.
-  const canonical = {
-    actorUserId: input.actorUserId,
-    afterValue: input.afterValue ?? null,
-    charterId: input.charterId,
-    entityId: input.entityId,
-    entityType: input.entityType,
-    eventType: input.eventType,
-    occurredAt: input.occurredAt,
-  };
-  return createHash('sha256').update(JSON.stringify(canonical)).digest('hex');
-}
+// The per-row integrity digest of a charter_audit_events row has one
+// implementation, shared with the objectives section's writes:
+// computeCharterAuditEventHash in server/services/c2c/charter-objectives.ts.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/charters/:charterId/commitments — add a commitment

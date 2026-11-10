@@ -1,0 +1,237 @@
+# Mutation 5: nothing-on-file-ignores-withdrawn
+# 2026-11-01T23:20:29Z
+# What it removes: With nothing on file, the lead says no sequence was sent even when the filed sequences withdrew everything they filed.
+# File: client/src/concept2cure/v2/surfaces/EctdFiledState.tsx
+# Replaced:
+#   -     return view.sequences.some((s) => s.filed)
+#   -       ? 'Nothing is on file: every document the included sequences filed has been withdrawn.'
+#   -       : 'Nothing is on file: no sequence of this submission has been sent or acknowledged with a record of what it carried.';
+# With:
+#   +     return 'Nothing is on file: no sequence of this submission has been sent or acknowledged with a record of what it carried.';
+# Test run: npx vitest run client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx  (exit 1)
+# Expected to fail on its own assertion: ['tells "no submission" from "nothing filed"']
+# Failed as expected: {'tells "no submission" from "nothing filed"': True}
+# Other tests that failed: none
+# Failed on an assertion (no build, syntax, type or reference error): True
+# File restored byte for byte: True (sha256 before 1982f8cb4a47adc0dc31e04631c84269baeaf2183f12fb520a6ee7ecd47ec193, after 1982f8cb4a47adc0dc31e04631c84269baeaf2183f12fb520a6ee7ecd47ec193)
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > loads module readiness from the real status endpoint 131ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > compiles across the region and renders the server result with a backbone download 284ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > shows what the agency holds now, across the filed sequences (gap 6.1) 56ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > shows an honest empty state when no program is open (no fixture) 9ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > a program UUID ident is sent to the server (which resolves it) — the numeric-only dead-end is gone 51ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — what the surface may claim > names what is still missing instead of a bare negative 68ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — what the surface may claim > warns that the downloadable backbone is not a sequence 67ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — what the surface may claim > reports the readiness number as content completeness, not readiness to submit 42ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — what the surface may claim > claims nothing extra in the compile toast 55ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > opens both backbones as a navigable leaf hierarchy — Module 1 from the regional file 104ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > lists every file in the package and offers the regional backbone and the MD5 index 140ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > states the PDF/A outcome and whether the compilation was recorded 81ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > names an FDA form shipped as FDA issued apart from the PDF/A count 110ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > an unrecorded compilation says it can anchor no lifecycle 77ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > the region is the sequence's: shown, not chosen, and not sent 76ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > readiness counted from placed documents says so, and never reads as approval 32ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > history names the sequence each compilation covered and whether it anchors the next 48ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a follow-up sequence's lifecycle > a follow-up sequence shows every act against the filed state, and what was left out 90ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a follow-up sequence's lifecycle > a follow-up with no filed sequence on record says there is nothing on file to act on 96ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a follow-up sequence's lifecycle > an original sequence has no lifecycle to show 78ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > shows an imported report with its compilation, and says this product did not run it 49ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > names who imported it by account, and lists every report it replaced 55ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > replacing a report asks first, naming the report it replaces; cancelling opens nothing 199ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > imports a report against the compilation whose package it covered 107ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > a refused report is shown in the server's words, and nothing is shown as imported 74ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a rehearsal is asked for, and says it is one > is offered only for a follow-up sequence — an original has nothing to rehearse against 66ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a rehearsal is asked for, and says it is one > compiles as a rehearsal when asked, says which sequences were never filed, and exports the same 171ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a rehearsal is asked for, and says it is one > a compile without the toggle asks for no rehearsal 111ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a rehearsal is asked for, and says it is one > the history names a rehearsal compilation for what it is 29ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > groups what is on file by module, naming each document’s section, holding sequence and act 196ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > says how a replaced document came to be on file, and adds nothing for one filed once (gap 6.2) 35ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > names the sequences it includes and the ones it does not, with the reason in words, never a stored status 23ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > says a failed read, never an empty dossier, and retries 38ms
+ × client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > tells "no submission" from "nothing filed" 5020ms
+   → Unable to find an element with the text: /Nothing is on file: every document the included sequences filed has been withdrawn\./. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="pj-card"
+      data-testid="ectd-filed-state"
+    >
+      <div
+        class="pj-card-h"
+      >
+        <span
+          class="t"
+        >
+          On file at the agency
+        </span>
+        <span
+          class="s"
+        >
+          through sequence 0001
+        </span>
+      </div>
+      <div
+        class="pj-card-b"
+        style="padding: 0px;"
+      >
+        <p
+          style="font-size: 12px; margin: 0px; padding: 10px 10px 0px;"
+        >
+          Nothing is on file: no sequence of this submission has been sent or acknowledged with a record of what it carried.
+           Includes 0000 (acknowledged by the agency), 0001 (sent to the agency).
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="pj-card"
+      data-testid="ectd-filed-state"
+    >
+      <div
+        class="pj-card-h"
+      >
+        <span
+          class="t"
+        >
+          On file at the agency
+        </span>
+        <span
+          class="s"
+        >
+          through sequence 0001
+        </span>
+      </div>
+      <div
+        class="pj-card-b"
+        style="padding: 0px;"
+      >
+        <p
+          style="font-size: 12px; margin: 0px; padding: 10px 10px 0px;"
+        >
+          Nothing is on file: no sequence of this submission has been sent or acknowledged with a record of what it carried.
+           Includes 0000 (acknowledged by the agency), 0001 (sent to the agency).
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency: where each sequence’s record of what it put on file comes from (F1) > says the documents on file are read from what each sequence sent 16ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency: where each sequence’s record of what it put on file comes from (F1) > names a sequence read from its compiles, sent before the platform kept what each send carried 42ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency: where each sequence’s record of what it put on file comes from (F1) > says a sent sequence with no record of what it carried is not included, and why 13ms
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 36 passed (37)
+   Start at  23:20:18
+   Duration  10.57s (transform 966ms, setup 215ms, import 1.32s, tests 7.95s, environment 852ms)
+
+stderr | client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > shows an honest empty state when no program is open (no fixture)
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+Not implemented: navigation to another Document
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > tells "no submission" from "nothing filed"
+TestingLibraryElementError: Unable to find an element with the text: /Nothing is on file: every document the included sequences filed has been withdrawn\./. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="pj-card"
+      data-testid="ectd-filed-state"
+    >
+      <div
+        class="pj-card-h"
+      >
+        <span
+          class="t"
+        >
+          On file at the agency
+        </span>
+        <span
+          class="s"
+        >
+          through sequence 0001
+        </span>
+      </div>
+      <div
+        class="pj-card-b"
+        style="padding: 0px;"
+      >
+        <p
+          style="font-size: 12px; margin: 0px; padding: 10px 10px 0px;"
+        >
+          Nothing is on file: no sequence of this submission has been sent or acknowledged with a record of what it carried.
+           Includes 0000 (acknowledged by the agency), 0001 (sent to the agency).
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="pj-card"
+      data-testid="ectd-filed-state"
+    >
+      <div
+        class="pj-card-h"
+      >
+        <span
+          class="t"
+        >
+          On file at the agency
+        </span>
+        <span
+          class="s"
+        >
+          through sequence 0001
+        </span>
+      </div>
+      <div
+        class="pj-card-b"
+        style="padding: 0px;"
+      >
+        <p
+          style="font-size: 12px; margin: 0px; padding: 10px 10px 0px;"
+        >
+          Nothing is on file: no sequence of this submission has been sent or acknowledged with a record of what it carried.
+           Includes 0000 (acknowledged by the agency), 0001 (sent to the agency).
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx:135:25
+    133|       ], leaves: [] }));
+    134|     card();
+    135|     expect(await screen.findByText(/Nothing is on file: every document…
+       |                         ^
+    136|     expect(cardText()).not.toContain('no sequence of this submission h…
+    137|     expect(cardText()).toContain('Includes 0000 (acknowledged by the a…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

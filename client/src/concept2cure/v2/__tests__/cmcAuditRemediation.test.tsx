@@ -36,12 +36,26 @@ describe('CMC audited workflow gaps', () => {
     expect(state.api).not.toHaveBeenCalled();
   });
 
-  it('opens the reachable Module 3 build from the dossier control without leaving CMC', async () => {
+  /* Was: "opens the reachable Module 3 build from the dossier control". The
+     control it clicked was `CmConnectBar`'s "Module 3 dossier" chip, in the
+     "THIS WORK FLOWS INTO" band D5 §A.4.3 retires. The RULE is unchanged —
+     the Module 3 build is reached inside CMC and nothing navigates to a
+     'dossier' surface — and it now has two doors, so both are checked: the
+     tab in the Module 3 half, and Overview's "Open the Module 3 build board"
+     ghost, which carries the retired banner's alternative action. */
+  it('reaches the Module 3 build from inside CMC, by either door, without leaving it', async () => {
     const nav = vi.fn();
     const surface = getSurface('cmc');
     if (!surface) throw new Error('CMC surface is missing from the canonical registry');
     render(<CmcModule surface={surface} segment="biopharma" onAsk={vi.fn()} onNav={nav} />);
-    fireEvent.click(screen.getByRole('button', { name: /^Module 3 dossier$/i }));
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Open the Module 3 build board' }));
+    expect(await screen.findByRole('button', { name: /Compile Module 3/i })).toBeTruthy();
+    expect(nav).not.toHaveBeenCalledWith('dossier');
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Overview' }));
+    await screen.findByRole('button', { name: 'Open the Module 3 build board' });
+    fireEvent.click(screen.getByRole('tab', { name: 'Module 3 build' }));
     expect(await screen.findByRole('button', { name: /Compile Module 3/i })).toBeTruthy();
     expect(nav).not.toHaveBeenCalledWith('dossier');
     expect((window as any).C2C_PROJECT.id).toBe(PROJECT);

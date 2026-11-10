@@ -62,10 +62,11 @@ describe('named task handoff controls', () => {
     await waitFor(() => expect(request.mock.calls.filter(([method]) => method === 'GET')).toHaveLength(2));
   });
 
-  it('keeps an unresolved assignee account reference distinct from Unassigned', async () => {
+  it('keeps an unresolved assignee distinct from Unassigned, without showing the account number', async () => {
     current.meta.assigneeId = 99; render(<TaskAssignmentControls {...props()} />); await openManual();
-    expect(screen.getByText('Account #99', { exact: true })).toBeTruthy();
+    expect(screen.getByText('Someone not on the eligible list', { exact: true })).toBeTruthy();
     expect(screen.queryByText('Unassigned', { exact: true })).toBeNull();
+    expect(document.body.textContent).not.toMatch(/#99/);
   });
 
   it('distinguishes a verified empty directory and denied reassignment', async () => {
@@ -86,6 +87,39 @@ describe('named task handoff controls', () => {
     await screen.findByText("Couldn't load task assignment");
     expect(screen.queryByText('No other eligible colleagues are available for this task.')).toBeNull();
     expect(screen.queryByLabelText('New assignee')).toBeNull();
+  });
+});
+
+/* 2026-10-31 client demo: "Auto-assign task" on a task already with the member
+   the workload rule picks reported a failure. The route answers an empty batch
+   for that and for "nobody could take it"; a fresh read tells them apart. */
+describe('automatic assignment that changes nothing', () => {
+  const autoAnswer = (afterPost?: () => void) => request.mockImplementation(async (method: string) => {
+    if (method === 'POST') { afterPost?.(); return reply({ success: true, count: 0, data: [] }); }
+    return reply(current);
+  });
+  beforeEach(() => {
+    current.data = [{ id: '8', name: 'Rae Okafor', label: 'Rae Okafor' }, { id: '9', name: 'Sam Ito', label: 'Sam Ito' }];
+  });
+
+  it('says the task is already with that member and nothing changed', async () => {
+    autoAnswer();
+    render(<TaskAssignmentControls {...props()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Auto-assign task' }));
+    const said = await screen.findByText('Already with Rae Okafor, who has the fewest open tasks — nothing changed.');
+    expect(said.getAttribute('role')).toBe('status');
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(request.mock.calls.filter(([method]) => method === 'POST')).toHaveLength(1);
+    expect(changed).not.toHaveBeenCalled();
+  });
+
+  it('still says it was not assigned when the fresh read shows the task changed meanwhile', async () => {
+    // A new object: the first read's roster is held by reference.
+    autoAnswer(() => { current = { ...current, meta: { ...current.meta, assignmentVersion: 'c'.repeat(64) } }; });
+    render(<TaskAssignmentControls {...props()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Auto-assign task' }));
+    expect((await screen.findByRole('alert')).textContent).toMatch(/The saved task was not assigned/);
+    expect(screen.queryByText(/Already with/)).toBeNull();
   });
 });
 

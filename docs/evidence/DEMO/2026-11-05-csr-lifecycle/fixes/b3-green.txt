@@ -1,0 +1,27 @@
+B3 green: after the fix.
+
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — nothing placed yet, said plainly > names the application number, the bound sponsor and its D-U-N-S first, and where to record them 4ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — nothing placed yet, said plainly > says nothing internal: no store, id-space or contract wording in any error, finding or blocker 2ms
+ ✓ tests/routes/ectd-compile-spine.test.ts > POST /:projectIdent/compile — nothing placed yet, said plainly > with the application and the applicant recorded, the first error says nothing is placed and where to place it 2ms
+ ✓ tests/routes/ectd-compile-placement.test.ts > GET /:projectIdent/status measures what the sequence has placed > a sequence with nothing placed is a measured 0, counted as placement (at head: "approved") 7ms
+ Test Files  4 passed (4)
+      Tests  119 passed (119)
+
+Wider run: every test importing ectd-compile or package-identity, tests/routes/ectd-*, tests/unit/ectd-*, ectdCompile* (63 files):
+ × tests/routes/ectd-compile-dtd-evidence.test.ts > compile carries the existing package DTD proof > projects complete index, regional and STF proof and persists it in the existing findings record 1769ms
+ × tests/routes/ectd-compile-dtd-evidence.test.ts > compile history decodes its existing JSON evidence defensively > projects the typed proof and preserves the separate imported agency report 4ms
+ × tests/routes/ectd-backbone-leaf-honesty.test.ts > submission readiness > says why, rather than leaving the user to infer it 11ms
+ × server/routes/__tests__/orchestrator-program-start.routes.test.ts > selected canonical program orchestration > uses recorded sequence identity and governed inputs with the current tenant/actor, never supplied body arrays 67ms
+ × server/services/submission-service/__tests__/gateway-selection.test.ts > transmitSequence — an e-signed EU MAA sequence is refused before any gateway is resolved > throws VALIDATION naming the eSubmission Gateway; getGateway is never called 11ms
+ × server/services/submission-service/__tests__/gateway-selection.test.ts > transmitSequence — an e-signed EU MAA sequence is refused before any gateway is resolved > positive control: a DCP submission is routed on to ema:cesp 4ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  4 failed | 59 passed (63)
+      Tests  6 failed | 938 passed (944)
+
+Of those, ectd-backbone-leaf-honesty pinned the phrase "place approved documents into its eCTD sequence"; the new
+no-submission copy keeps it, and the file then passed (above). The other five fail identically on HEAD without this
+change (run on an export of HEAD at 0b33248bad): ectd-compile-dtd-evidence (2), gateway-selection (2),
+orchestrator-program-start (1). Pre-existing, not touched.
+
+ci:server-error-leaks: OK, 10 baselined sites across 10 files; no file gained one.
+Lint: server/routes/ectd-compile.ts 8 warnings before and after; package-identity.ts and the three test files 0.

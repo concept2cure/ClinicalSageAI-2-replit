@@ -315,14 +315,14 @@ export const MDX_WORKFLOWS: MdxWorkflow[] = [
     successCriteria: [
       'Every issue in the AI letter is in status "responded" or "deferred-with-justification".',
       'Cover letter exists with verbatim section content.',
-      'audit_logs has one correspondence.ingest + one correspondence.response.compile + one k510_workflow.transmit.',
+      'The letter is recorded in the project inbox by a person, and audit_logs has one correspondence.response.compile + one k510_workflow.transmit.',
     ],
     pitfalls: [
       'Responding to issues out of order — FDA reads in sequence; mismatched section refs cause confusion.',
       'Forgetting to link the response to the original AI letter — auditor reads the audit trail and sees an orphan transmit.',
     ],
     surfaces: ['pre-sub', 'estar-editor'],
-    tools: ['correspondence.ingest', 'section.approve'],
+    tools: ['section.approve'],
   },
   {
     id: 'W5',
@@ -531,8 +531,6 @@ const proposeWhenIndex: Record<string, string> = {
     'When the user has decided on a primary or reference predicate after reviewing candidates.',
   'se_matrix.patch':
     'When the user has resolved an SE matrix row (closed a technology-difference question).',
-  'correspondence.ingest':
-    'When the user uploads or pastes an FDA letter (AI letter, deficiency, IR, meeting minutes).',
 };
 
 export function buildMdxToolEntries(): MdxToolEntry[] {

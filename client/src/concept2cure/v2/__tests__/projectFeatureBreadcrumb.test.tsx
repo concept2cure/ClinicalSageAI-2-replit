@@ -20,6 +20,13 @@
  * 2026-10-29 (D2, folds F1c and F2): design-controls and risk folded into
  * device-engineering, and ivd-completeness into device-diagnostics, so the
  * cases that used them use those two features; the folded ids are no ⌘K row.
+ *
+ * D1-2 (.design/claude-convergence/D1.md §D1.B step 1, §D1.I): the root crumb
+ * ("Concept2Cure.RI", the sidebar's wordmark) and the tier crumb ("Projects", the
+ * sidebar's active row) went, and the open project became the first crumb on every
+ * screen, as a button that opens its page. So a feature reads "the project › the
+ * feature", and a core place carries the project crumb too while one is open.
+ * The registry's parent (breadcrumbTierOf) and ⌘K's hint are unchanged.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -30,8 +37,18 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
 }));
+/* The signed-in account: an id (the navigation verdicts are read only for an account with one, navEntitlements.tsx
+   useNavigationReadOwner), and the same object on every render, as the session gives it. */
+const stableUser = vi.hoisted(() => {
+  const seen = new Map<string, Record<string, unknown>>();
+  return (u: Record<string, unknown>) => {
+    const key = JSON.stringify(u);
+    if (!seen.has(key)) seen.set(key, { id: 21, ...u });
+    return seen.get(key)!;
+  };
+});
 vi.mock('@/services/portal/authService', () => ({
-  useAuth: () => ({ user: { firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: ['member'] }, logout: vi.fn() }),
+  useAuth: () => ({ user: stableUser({ firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: ['member'] }), logout: vi.fn() }),
 }));
 vi.mock('@/contexts/TenantContext', () => ({
   useTenant: () => ({ tenant: null, organizationId: 7, currentOrganization: { name: 'Concept2Cure Therapeutics' } }),
@@ -54,13 +71,13 @@ const surface = (id: string): UiSurface => {
   return s;
 };
 
-/** The breadcrumb's crumbs in order, separators left out. */
+/** The breadcrumb's crumbs in order, separators left out (the project crumb is a button). */
 function crumbs(): string[] {
-  return Array.from(document.querySelectorAll('.crumbs > span:not(.sep)')).map((el) => el.textContent ?? '');
+  return Array.from(document.querySelectorAll('.crumbs > :not(.sep)')).map((el) => el.textContent ?? '');
 }
-/** Every crumb above the page itself: the root, then the parents. */
+/** Every crumb above the page itself: the open project, when one is named. */
 function parents(): string[] {
-  return Array.from(document.querySelectorAll('.crumbs > span:not(.sep):not(.here)')).map((el) => el.textContent ?? '');
+  return Array.from(document.querySelectorAll('.crumbs > :not(.sep):not(.here)')).map((el) => el.textContent ?? '');
 }
 const here = () => document.querySelector('.crumbs .here')?.textContent ?? '';
 
@@ -85,39 +102,42 @@ afterEach(() => {
 });
 
 describe('a project feature is crumbed under the open project', () => {
-  it('engineering evidence, with a project open: Projects › the project › the feature', () => {
+  it('engineering evidence, with a project open: the project › the feature', () => {
     publishShellProject(PROJECT);
     bar('device-engineering');
-    expect(crumbs()).toEqual(['Concept2Cure.RI', 'Projects', 'NPX-510', 'Engineering evidence']);
+    expect(crumbs()).toEqual(['NPX-510', 'Engineering evidence']);
     expect(document.querySelector('.crumbs')?.textContent).not.toContain(OLD_TIER);
   });
 
   it('IVDR evidence, with a project open: the same trail, and no "Medical Device & IVD" parent', () => {
     publishShellProject(PROJECT);
     bar('device-diagnostics');
-    expect(crumbs()).toEqual(['Concept2Cure.RI', 'Projects', 'NPX-510', 'IVDR evidence']);
+    expect(crumbs()).toEqual(['NPX-510', 'IVDR evidence']);
     expect(document.querySelector('.crumbs')?.textContent).not.toContain(OLD_TIER);
   });
 
-  it('names the project as the project chip beside it does', () => {
+  /* Rewritten for D1-2: the chip beside the crumbs folded into the project crumb. */
+  it('names the project once, as the crumb button that opens its page', () => {
     publishShellProject(PROJECT);
     bar('labeling');
-    const chip = document.querySelector('.tb-proj .tb-proj-lbl')?.textContent;
-    expect(chip).toBe('NPX-510');
-    expect(parents()).toEqual(['Concept2Cure.RI', 'Projects', chip]);
+    const crumb = document.querySelector('.crumbs > .crumb-proj') as HTMLElement;
+    expect(crumb.tagName).toBe('BUTTON');
+    expect(crumb.textContent).toBe('NPX-510');
+    expect(document.querySelector('.tb-proj')).toBeNull();
+    expect(parents()).toEqual(['NPX-510']);
   });
 
   it('names a project with no code by its title', () => {
     publishShellProject({ id: PROJECT.id, title: PROJECT.title });
     bar('human-factors');
-    expect(crumbs()).toEqual(['Concept2Cure.RI', 'Projects', 'NeuroPanel-Dx 510(k)', 'Human factors (IEC 62366-1)']);
+    expect(crumbs()).toEqual(['NeuroPanel-Dx 510(k)', 'Human factors (IEC 62366-1)']);
   });
 
-  it('every MDX project feature: parents are Projects and the open project, never the old tier', () => {
+  it('every MDX project feature: its parent is the open project, never the old tier', () => {
     publishShellProject(PROJECT);
     for (const id of MDX_PROJECT_FEATURE_SURFACE_IDS) {
       bar(id);
-      expect(parents(), id).toEqual(['Concept2Cure.RI', 'Projects', 'NPX-510']);
+      expect(parents(), id).toEqual(['NPX-510']);
       expect(here(), id).toBe(surface(id).label);
       cleanup();
     }
@@ -126,38 +146,41 @@ describe('a project feature is crumbed under the open project', () => {
   it('follows the channel when another project is opened', () => {
     publishShellProject(PROJECT);
     bar('device-engineering');
-    expect(parents()).toEqual(['Concept2Cure.RI', 'Projects', 'NPX-510']);
+    expect(parents()).toEqual(['NPX-510']);
     act(() => {
       publishShellProject({ id: '1c0d9e8f-7a6b-4c5d-8e9f-0a1b2c3d4e5f', code: 'CV-104' });
     });
-    expect(parents()).toEqual(['Concept2Cure.RI', 'Projects', 'CV-104']);
+    expect(parents()).toEqual(['CV-104']);
   });
 });
 
 describe('the crumb never invents a project name', () => {
-  it('with no project open: Projects › the feature', () => {
+  it('with no project open: the feature alone', () => {
     bar('device-engineering');
-    expect(crumbs()).toEqual(['Concept2Cure.RI', 'Projects', 'Engineering evidence']);
+    expect(crumbs()).toEqual(['Engineering evidence']);
   });
 
-  it('with a project opened by id alone (a deep link, no name yet): Projects › the feature', () => {
+  it('with a project opened by id alone (a deep link, no name yet): the feature alone', () => {
     publishShellProject({ id: PROJECT.id });
     bar('device-diagnostics');
-    expect(crumbs()).toEqual(['Concept2Cure.RI', 'Projects', 'IVDR evidence']);
+    expect(crumbs()).toEqual(['IVDR evidence']);
   });
 });
 
 describe('other surfaces keep their crumbs', () => {
-  it('the project page is still named by the project, with no Projects crumb added', () => {
+  it('the project page is still named by the project, once, as the current page', () => {
     publishShellProject(PROJECT);
     bar('project-home');
-    expect(crumbs()).toEqual(['Concept2Cure.RI', 'NPX-510']);
+    expect(crumbs()).toEqual(['NPX-510']);
+    expect(document.querySelector('.crumb-proj')?.getAttribute('aria-current')).toBe('page');
   });
 
-  it('a core place carries no project crumb, even with a project open', () => {
+  /* Rewritten for D1-2 (§D1.B step 1): the project crumb is first on every screen while
+     one is open (FILING_SPINE F8), so a core place carries it too. */
+  it('a core place carries the project crumb while a project is open', () => {
     publishShellProject(PROJECT);
     bar('vault');
-    expect(crumbs()).toEqual(['Concept2Cure.RI', 'Vault']);
+    expect(crumbs()).toEqual(['NPX-510', 'Vault']);
   });
 
   it('a one-category surface keeps its category; an admin surface keeps Admin', () => {
@@ -190,11 +213,12 @@ describe('⌘K’s hint names Projects for a project feature', () => {
   }
   async function search(text: string) {
     render(<Harness />);
-    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', NAV_URL));
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', NAV_URL, undefined, undefined, expect.any(AbortSignal)));
     await act(async () => {
       await new Promise((r) => setTimeout(r, 0));
     });
-    fireEvent.change(screen.getByPlaceholderText(/Search surfaces/), { target: { value: text } });
+    // D1-3 (D1.md §D1.F step 1): the field's words name projects, conversations and pages.
+    fireEvent.change(screen.getByPlaceholderText(/^Search projects, conversations and pages/), { target: { value: text } });
   }
   const hintOf = (label: string) => {
     const row = Array.from(document.querySelectorAll('.cmdk-item')).find(

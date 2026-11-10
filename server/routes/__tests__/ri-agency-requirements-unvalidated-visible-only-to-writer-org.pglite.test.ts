@@ -1,22 +1,18 @@
 /**
- * An unvalidated agency requirement is visible only to the organization whose
- * member wrote it. A validated one is served to every tenant.
+ * Failure learning retains client content inside its writer organization.
+ * Curator validation is not reviewed de-identification, so even validated
+ * client-derived requirements remain tenant-local (architecture v0.5 §27).
+ * Real creating DDL and real route/service SQL run on PGlite; platform-role
+ * lookup and authenticated identity are fixtures. A dedicated non-superuser
+ * case also proves the database policy under a NOSUPERUSER/NOBYPASSRLS role.
  *
- * intelligence.agency_requirements had no organization column, and
- * GET /api/regulatory-intelligence/agency-requirements served unvalidated rows
- * by default (includeUnvalidated defaulted to true) with no tenant predicate. A
- * member of any organization could POST /patterns/:id/promote free text, and
- * every other tenant read it back as a discovered agency requirement.
- *
- * Now the table records the writer's organization (organization_id, amended
- * into its creating migration), the promote route binds it from the session,
- * and the read binds the caller's: unvalidated rows are the writer's own,
- * validated rows are everyone's, and a row written before the column existed
- * (no writer recorded) is served to no one until a curator validates it.
- *
- * Real DDL on PGlite: the creating migration, applied twice on an empty
- * database and once more over the table's earlier shape. The route and the
- * store are real; the session and the platform-role lookup are doubles.
+ * Since b8cee0745c a correction (non-empty correctionText) is recorded by
+ * recordAuditedHumanCorrection inside one transaction on the request's own
+ * client: it re-reads the actor's active membership (readCsrProjectActor, for
+ * share) and writes a chained source audit carrying only the correction's
+ * SHA-256. So the request carries a client over the same PGlite connection
+ * (production's authenticateToken attaches it), and the tables that path reads
+ * and writes come from their real creating DDL.
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import express from 'express';
@@ -24,6 +20,9 @@ import request from 'supertest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
+import { pglitePool } from '../../services/ana-ri/__tests__/pglite-pool.fixture';
+import { AUDIT_LOGS_PGLITE_DDL } from '../../db/pglite-harness';
+import { extractTableDdl } from '../../../tests/golden-journeys/harness';
 
 const h = vi.hoisted(() => ({
   pg: null as unknown as import('@electric-sql/pglite').PGlite,
@@ -46,11 +45,15 @@ const ORG_A = 7;
 const ORG_B = 8;
 const CURATOR_ORG = 9;
 
+// The request's pinned client, as establishRequestTenantScope attaches it.
+const requestClient = pglitePool(() => h.pg).client;
+
 const app = express();
 app.use(express.json());
 app.use((req, _res, next) => {
   (req as any).user = { id: h.userId, userId: h.userId, role: 'admin', organizationId: h.orgId };
   (req as any).userId = h.userId;
+  (req as any).dbClient = requestClient;
   next();
 });
 app.use('/api/regulatory-intelligence', router);
@@ -85,8 +88,22 @@ const columns = async () =>
 
 beforeAll(async () => {
   h.pg = new PGlite();
+  // The membership a correction's actor is re-read from, and the chained
+  // audit its source is written to, from their creating DDL.
+  await h.pg.exec(extractTableDdl('migrations/0000_sweet_joseph.sql', ['organizations', 'users', 'organization_users']));
+  await h.pg.exec(AUDIT_LOGS_PGLITE_DDL);
+  await h.pg.exec(fs.readFileSync(path.join(process.cwd(), 'migrations/20260921_audit_logs_chain_seq.sql'), 'utf8'));
+  await h.pg.exec(`INSERT INTO organizations (id, name, slug) VALUES
+      (${ORG_A}, 'Org A', 'org-a'), (${ORG_B}, 'Org B', 'org-b'), (${CURATOR_ORG}, 'Curator', 'curator');
+    INSERT INTO users (id, email, name, password_hash) VALUES (5, 'member@example.test', 'Member', 'fixture');
+    INSERT INTO organization_users (organization_id, user_id, role) VALUES
+      (${ORG_A}, 5, 'admin'), (${ORG_B}, 5, 'admin'), (${CURATOR_ORG}, 5, 'admin');`);
   await h.pg.exec(MIGRATION);
   await h.pg.exec(MIGRATION); // every file in the set re-runs on every deploy
+  await h.pg.exec(`CREATE ROLE learning_runtime NOLOGIN NOSUPERUSER NOBYPASSRLS;
+    GRANT USAGE ON SCHEMA intelligence TO learning_runtime;
+    GRANT SELECT, INSERT ON intelligence.agency_requirements TO learning_runtime;
+    GRANT SELECT ON intelligence.failure_patterns TO learning_runtime;`);
 }, 60_000);
 
 afterAll(async () => {
@@ -95,7 +112,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
   h.platform = vi.fn().mockResolvedValue(false);
-  await h.pg.exec(`DELETE FROM intelligence.agency_requirements; DELETE FROM intelligence.failure_patterns;`);
+  await h.pg.exec(`DELETE FROM intelligence.agency_requirements; DELETE FROM intelligence.failure_patterns; DELETE FROM intelligence.ana_interactions; DELETE FROM audit_logs;`);
   const p = await h.pg.query<{ id: string }>(
     `INSERT INTO intelligence.failure_patterns
        (pattern_fingerprint, agency, document_type, intent_class, suggested_correction,
@@ -145,6 +162,63 @@ describe('the creating migration', () => {
       { policyname: 'tenant_isolation_policy', cmd: 'SELECT' },
     ]);
   });
+
+  it('quarantines legacy raw correction text at the database boundary without rewriting it', async () => {
+    const secret = 'LEGACY_OWNERLESS_CMC_TRADE_SECRET_492';
+    await h.pg.query('UPDATE intelligence.failure_patterns SET suggested_correction = $1 WHERE id = $2', [secret, patternId]);
+    // Existing installations had neither flag; creator replay must protect them.
+    await h.pg.exec('ALTER TABLE intelligence.failure_patterns DISABLE ROW LEVEL SECURITY');
+    await h.pg.exec(MIGRATION);
+    await h.pg.exec(MIGRATION);
+    const flags = await h.pg.query<{ relrowsecurity: boolean; relforcerowsecurity: boolean }>(
+      "SELECT relrowsecurity, relforcerowsecurity FROM pg_class WHERE oid = 'intelligence.failure_patterns'::regclass",
+    );
+    expect(flags.rows).toEqual([{ relrowsecurity: true, relforcerowsecurity: true }]);
+    expect((await h.pg.query("SELECT policyname FROM pg_policies WHERE schemaname = 'intelligence' AND tablename = 'failure_patterns'")).rows).toEqual([]);
+    for (const organizationId of [ORG_A, ORG_B, null]) {
+      await h.pg.exec('BEGIN; SET LOCAL ROLE learning_runtime');
+      try {
+        await h.pg.query("SELECT set_config('app.current_tenant_id', $1, true)", [organizationId === null ? '' : String(organizationId)]);
+        expect((await h.pg.query('SELECT suggested_correction FROM intelligence.failure_patterns WHERE id = $1', [patternId])).rows).toEqual([]);
+      } finally {
+        await h.pg.exec('ROLLBACK');
+      }
+    }
+    // Privileged remediation retains the original record; no ownership guessed.
+    expect((await h.pg.query<{ suggested_correction: string }>('SELECT suggested_correction FROM intelligence.failure_patterns WHERE id = $1', [patternId])).rows)
+      .toEqual([{ suggested_correction: secret }]);
+  });
+
+  it('denies direct foreign and missing-tenant reads of validated rows under a real non-bypass role, including after replay', async () => {
+    h.platform = vi.fn().mockResolvedValue(true);
+    const a = await promote(ORG_A, 'TENANT_A_PRIVATE_MOLECULE', true);
+    const b = await promote(ORG_B, 'TENANT_B_PRIVATE_PROCESS', true);
+    // Recreate the formerly deployed broad policy, then prove the amended
+    // creator tightens an existing policy rather than only fresh databases.
+    await h.pg.exec(`ALTER POLICY tenant_isolation_policy ON intelligence.agency_requirements
+      USING (validation_status = 'validated' OR organization_id =
+        NULLIF(current_setting('app.current_tenant_id', true), '')::bigint);`);
+    await h.pg.exec(MIGRATION);
+    await h.pg.exec(MIGRATION);
+    for (const [orgId, visibleIds] of [[ORG_A, [a.requirementId]], [ORG_B, [b.requirementId]], [null, []]] as const) {
+      await h.pg.exec('BEGIN; SET LOCAL ROLE learning_runtime');
+      try {
+        await h.pg.query("SELECT set_config('app.current_tenant_id', $1, true)", [orgId === null ? '' : String(orgId)]);
+        const identity = await h.pg.query<{ rolsuper: boolean; rolbypassrls: boolean }>(
+          'SELECT rolsuper, rolbypassrls FROM pg_roles WHERE rolname = current_user',
+        );
+        expect(identity.rows).toEqual([{ rolsuper: false, rolbypassrls: false }]);
+        const visible = await h.pg.query<{ id: string }>(
+          'SELECT id FROM intelligence.agency_requirements WHERE id = ANY($1::uuid[]) ORDER BY id',
+          [[a.requirementId, b.requirementId]],
+        );
+        expect(visible.rows.map(row => row.id)).toEqual(visibleIds);
+      } finally {
+        await h.pg.exec('ROLLBACK');
+      }
+    }
+  });
+
 });
 
 describe('GET /agency-requirements across two organizations', () => {
@@ -165,16 +239,17 @@ describe('GET /agency-requirements across two organizations', () => {
     expect(Number(row.rows[0].organization_id)).toBe(ORG_A);
   });
 
-  it('serves a curator-validated requirement to every tenant', async () => {
+  it('retains a curator-validated requirement in its writer tenant without de-identification evidence', async () => {
     h.platform = vi.fn().mockResolvedValue(true);
     const validated = await promote(CURATOR_ORG, 'Validated: EMA requires the PIP statement', true);
     expect(validated.validationStatus).toBe('validated');
     h.platform = vi.fn().mockResolvedValue(false);
     await promote(ORG_A, 'Org A: unvalidated note');
 
-    expect(await visibleTo(ORG_B)).toEqual(['Validated: EMA requires the PIP statement']);
-    expect(await visibleTo(ORG_A)).toEqual(['Org A: unvalidated note', 'Validated: EMA requires the PIP statement']);
-    expect(await visibleTo(ORG_A, '&includeUnvalidated=false')).toEqual(['Validated: EMA requires the PIP statement']);
+    expect(await visibleTo(ORG_B)).toEqual([]);
+    expect(await visibleTo(ORG_A)).toEqual(['Org A: unvalidated note']);
+    expect(await visibleTo(ORG_A, '&includeUnvalidated=false')).toEqual([]);
+    expect(await visibleTo(CURATOR_ORG, '&includeUnvalidated=false')).toEqual(['Validated: EMA requires the PIP statement']);
   });
 
   it('serves an unvalidated requirement with no recorded writer to no one', async () => {
@@ -186,5 +261,78 @@ describe('GET /agency-requirements across two organizations', () => {
     );
     expect(await visibleTo(ORG_A)).toEqual([]);
     expect(await visibleTo(ORG_B)).toEqual([]);
+  });
+});
+
+
+describe('v0.5 shared-learning promotion boundary', () => {
+  const SECRET_A = 'TENANT_A_MOLECULE_47_UNBLINDED_RESULT';
+  const SECRET_B = 'TENANT_B_CMC_PROCESS_86_TRADE_SECRET';
+
+  it('keeps unique corrections from two tenants out of extraction, suggestions and legacy replay', async () => {
+    const sources: Array<{ tenant: number; id: string }> = [];
+    for (const [orgId, secret] of [[ORG_A, SECRET_A], [ORG_B, SECRET_B]] as const) {
+      const recorded = await as(orgId).post('/api/regulatory-intelligence/interactions').send({
+        agency: 'ema', documentType: 'cmc', intent: 'draft', outcome: 'edited',
+        promptSummary: 'Draft Module 3', correctionText: secret,
+      });
+      expect(recorded.status, JSON.stringify(recorded.body)).toBe(201);
+      sources.push({ tenant: orgId, id: recorded.body.data.sourceAuditEventId });
+    }
+    const retained = await h.pg.query<{ organization_id: number; correction_text: string }>(
+      'SELECT organization_id::integer, correction_text FROM intelligence.ana_interactions ORDER BY organization_id',
+    );
+    expect(retained.rows).toEqual([
+      { organization_id: ORG_A, correction_text: SECRET_A },
+      { organization_id: ORG_B, correction_text: SECRET_B },
+    ]);
+    // Each correction's source audit stays in its writer tenant and carries
+    // only the correction's hash, never its text.
+    const audits = await h.pg.query<{ id: string; tenant: number; new_values: unknown }>(
+      `SELECT id, tenant_id AS tenant, new_values FROM audit_logs
+        WHERE action = 'ana_correction.recorded' ORDER BY tenant_id`,
+    );
+    expect(audits.rows.map(({ id, tenant }) => ({ tenant, id }))).toEqual(sources);
+    expect(JSON.stringify(audits.rows)).not.toContain(SECRET_A);
+    expect(JSON.stringify(audits.rows)).not.toContain(SECRET_B);
+
+    // Even an existing legacy row, marked active with a large cohort, cannot
+    // establish either de-identification or named human artifact approval.
+    await h.pg.query(
+      `UPDATE intelligence.failure_patterns SET suggested_correction = $1,
+         tenant_count = 999, failure_count = 999 WHERE id = $2`, [SECRET_A, patternId],
+    );
+    const extracted = await as(ORG_A).post('/api/regulatory-intelligence/patterns/extract').send({
+      minTenantCount: 1, minFailureCount: 1, correctionQuorum: 0,
+      deidentified: true, approvedBy: 'request-body-cannot-grant-promotion',
+    });
+    expect(extracted.status).toBe(200);
+    expect(extracted.body.data).toEqual({ evaluated: 0, promoted: 0, suppressed: 0,
+      holdReason: 'deidentification_and_human_promotion_required' });
+
+    for (const orgId of [ORG_A, ORG_B]) {
+      const corrections = await as(orgId).get('/api/regulatory-intelligence/corrections?agency=ema&documentType=cmc&intent=draft');
+      expect(corrections.status).toBe(200);
+      expect(corrections.body.data).toEqual([]);
+      expect(JSON.stringify(corrections.body)).not.toContain(SECRET_A);
+      expect(JSON.stringify(corrections.body)).not.toContain(SECRET_B);
+    }
+    const { replayPattern, replayRecentlyPromoted, getActiveWarnings } = await import('../../services/intelligence/counterfactual-replay');
+    expect(await replayPattern(patternId)).toMatchObject({ warningsCreated: 0, tenantsWarned: 0,
+      holdReason: 'deidentification_and_human_promotion_required' });
+    expect(await replayRecentlyPromoted()).toMatchObject({ patternsReplayed: 0, warningsCreated: 0,
+      holdReason: 'deidentification_and_human_promotion_required' });
+    expect(await getActiveWarnings({ organizationId: ORG_B })).toEqual([]);
+    const count = await h.pg.query<{ count: number }>('SELECT count(*)::integer FROM intelligence.failure_patterns');
+    expect(count.rows[0].count).toBe(1); // extraction wrote no shared correction
+  });
+
+  it('does not disclose tenant-specific content merely because a curator validated it', async () => {
+    h.platform = vi.fn().mockResolvedValue(true);
+    await promote(ORG_A, SECRET_A, true);
+    await promote(ORG_B, SECRET_B, true);
+    expect(await visibleTo(ORG_A)).toEqual([SECRET_A]);
+    expect(await visibleTo(ORG_B)).toEqual([SECRET_B]);
+    expect(await visibleTo(CURATOR_ORG)).toEqual([]);
   });
 });

@@ -19,7 +19,7 @@ import { readSubmissionSequenceForRequest, requireSubmissionReadStillCurrent } f
 import { upsertLeaf, SUBMISSION_ERROR_STATUS, SubmissionError } from '../services/submission-service/submission-service';
 
 const router = Router();
-const copySchema = z.object({ programId: z.string().uuid(), expectedRevision: z.number().int().min(0), reason: governedReason }).strict();
+const copySchema = z.object({ programId: z.string().guid(), expectedRevision: z.number().int().min(0), reason: governedReason }).strict();
 const placeSchema = z.object({ sequenceId: z.number().int().positive(), sectionCode: z.string().trim().min(1).max(64), reason: governedReason }).strict();
 
 /** Dates are checked even when a library entry has unrestricted agency scope. */

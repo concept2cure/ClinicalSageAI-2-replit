@@ -20,22 +20,36 @@
  *     right CSR-0042 §10.1   "In total 251 subjects were randomised to treatment."
  *     -> 200 []   X-Consistency-Not-Compared: 0
  *
- * Two numbers that plainly disagree, and the answer read as a clean check. The
- * extractor wants `N = 248` or `randomised: 248`; widening what it recognises
- * is its own change, and is NOT what this fixes. What it fixes is reporting
- * silence as agreement.
+ * Two numbers that plainly disagree, and the answer read as a clean check.
+ *
+ * ## 2026-11-01: the other half
+ *
+ * The note above said the extractor wanting `N = 248` or `randomised: 248` was
+ * "its own change". That change has landed: the lexicon reads the passive
+ * voice, so THIS pair is compared now and reports the conflict it always
+ * should have — the last case in this file is that pair, by its real refs.
+ *
+ * Which leaves this file's own rule needing a claim that genuinely states no
+ * figure, and `NO_FIGURE` below is one: it is prose about the study with no
+ * quantity in it at all, which is what a narrative section often is. The rule
+ * is unchanged and is the durable one — a lexicon is never complete, so there
+ * will always be a claim it reads nothing from, and reporting that as
+ * agreement is the failure whatever the vocabulary.
  */
 import { describe, it, expect } from 'vitest';
 import { compareLabelledFigures } from '../figure-consistency';
 
-const PROSE = { ref: '§2.7.3 Table 4', text: 'A total of 248 subjects were randomised in the pivotal study.' };
+/** A claim with no quantity in it at all — what a narrative passage often is. */
+const NO_FIGURE = { ref: '§2.7.3 Table 4', text: 'The pivotal study demonstrated a clinically meaningful benefit in the treated population.' };
 const SOURCE = { ref: 'CSR-0042 §10.1', text: 'In total 251 subjects were randomised to treatment in this study.' };
+/** The pair the route was measured failing on, which the lexicon now reads. */
+const PROSE = { ref: '§2.7.3 Table 4', text: 'A total of 248 subjects were randomised in the pivotal study.' };
 const LABELLED = { ref: '§2.7.3 Table 4', text: 'Primary endpoint p = 0.001 in the pivotal study population.' };
 const LABELLED_SOURCE = { ref: 'CSR-0042 §10.1', text: 'Primary endpoint p = 0.03 in the treated population of this report.' };
 
 describe('a claim with no recognised figure is not a clean check', () => {
   it('reports that nothing was compared, instead of an empty all-clear', () => {
-    const out = compareLabelledFigures(PROSE, [SOURCE]);
+    const out = compareLabelledFigures(NO_FIGURE, [SOURCE]);
     expect(out.findings).toEqual([]);
     expect(out.notCompared).toHaveLength(1);
     expect(out.notCompared[0].rightRef).toBe('CSR-0042 §10.1');
@@ -45,17 +59,17 @@ describe('a claim with no recognised figure is not a clean check', () => {
   it('says it against every source the claim was to be checked against', () => {
     /* A reader needs to know which comparisons did not happen, not merely
        that some did not. */
-    const out = compareLabelledFigures(PROSE, [SOURCE, { ref: 'CSR-0043 §10.1', text: 'A further 99 subjects were randomised.' }]);
+    const out = compareLabelledFigures(NO_FIGURE, [SOURCE, { ref: 'CSR-0043 §10.1', text: 'A further 99 subjects were randomised.' }]);
     expect(out.notCompared.map((n) => n.rightRef)).toEqual(['CSR-0042 §10.1', 'CSR-0043 §10.1']);
   });
 
   it('names the absence rather than inventing a label for it', () => {
-    const out = compareLabelledFigures(PROSE, [SOURCE]);
+    const out = compareLabelledFigures(NO_FIGURE, [SOURCE]);
     expect(out.notCompared[0].label).toBe('(no figure recognised)');
   });
 
   it('still reports nothing compared when there is no source at all', () => {
-    const out = compareLabelledFigures(PROSE, []);
+    const out = compareLabelledFigures(NO_FIGURE, []);
     expect(out.findings).toEqual([]);
     expect(out.notCompared).toEqual([]);
   });
@@ -86,5 +100,24 @@ describe('a claim the engine does recognise is still compared as before', () => 
     expect(out.findings).toEqual([]);
     expect(out.notCompared).toHaveLength(1);
     expect(out.notCompared[0].reason).toMatch(/not stated in the source/);
+  });
+});
+
+describe('the pair this file was written over is compared now', () => {
+  it('reports 248 against 251 as the conflict it always was', () => {
+    /* The exact request measured through the running route on 2026-10-26,
+       which answered `200 []` with `X-Consistency-Not-Compared: 0`. First it
+       became an honest "nothing was compared"; now it is the finding. */
+    const out = compareLabelledFigures(PROSE, [SOURCE]);
+    expect(out.notCompared).toEqual([]);
+    expect(out.findings).toEqual([
+      expect.objectContaining({
+        leftRef: '§2.7.3 Table 4',
+        rightRef: 'CSR-0042 §10.1',
+        status: 'conflict',
+        label: 'sample_size',
+        detail: 'sample_size: §2.7.3 Table 4 gives 248; CSR-0042 §10.1 gives 251.',
+      }),
+    ]);
   });
 });

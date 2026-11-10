@@ -1,0 +1,6 @@
+MUTATION M16-proof-not-compared-to-transport in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T13:42:51.423114Z): replaced [if (fields.some(([key, value]) => evidence[key] !== value) || signed?.statement] with [if (signed?.statement]
+ × server/services/submission-service/__tests__/held-send-settlement.pglite.test.ts > P-92 E9 and E9′ (P-108 1(b), B1): released on the platform's own proof that nothing left > an AS2 row never takes the SFTP proof: a signature naming another proof does not settle it, and is voided 411ms
+ × server/services/submission-service/__tests__/held-send-settlement.pglite.test.ts > P-92 E9 and E9′ (P-108 1(b), B1): released on the platform's own proof that nothing left > an SFTP row never takes the AS2 proof: a signature naming it does not settle it, and is voided 57ms
+      Tests  2 failed | 29 skipped (31)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 2621075162e184977da0e6dcd6c07ebfa1f6a8eb469cad66a13df74acfd4d0f1 (expected 2621075162e184977da0e6dcd6c07ebfa1f6a8eb469cad66a13df74acfd4d0f1)

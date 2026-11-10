@@ -10,7 +10,7 @@ import {
   type AuthoringReviewExpected, type AuthoringReviewInput,
 } from '@shared/authoring/peer-review';
 import { assertNoSchemaGaps, createJourneyDb, type JourneyDb } from '../../../../tests/golden-journeys/harness';
-import { PREREQ, AUTHORING_ACCESS_DDL, AUTHOR, PROGRAM, ORG, OTHER_ORG } from '../../../routes/__tests__/_authoring-canvas-fixture';
+import { PREREQ, AUTHORING_ACCESS_DDL, AUTHOR, PROGRAM, ORG, OTHER_ORG, registerIndependentFindingAcceptance } from '../../../routes/__tests__/_authoring-canvas-fixture';
 import type { RequestConnectable, RequestSqlClient } from '../../../db/requestDb';
 import { grantAuthoringPermission } from '../authoring-permissions';
 import { authoringSnapshotHash } from '../authoring-content-digests';
@@ -161,6 +161,8 @@ async function revision(doc: SavedDocument, createdBy: string | null) {
     VALUES ($1,$2,$3,$4,$5,$6,NULL,$7,'human-edit','{}'::jsonb)`,
   [randomUUID(), doc.sections[0], content, createdBy, ORG, contentHash, chain]);
 }
+
+registerIndependentFindingAcceptance({ connection: () => connection, document, grant, requestReview, read, expected, submit, reviewerId: REVIEWER });
 
 describe('full visible review and retained content binding', () => {
   it('reads every saved section in canonical order and binds the verdict plus real chained audit', async () => {

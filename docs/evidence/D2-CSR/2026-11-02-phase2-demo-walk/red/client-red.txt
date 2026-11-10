@@ -1,0 +1,27 @@
+# Red run, before the fix: test results and each failure's first line (the jsdom DOM dumps are cut)
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > asks for the scientific review before an approval, and sends the completed map with it 469ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > a CSR the label does not name is caught by the server's refusal, and the panel opens instead of a reload 80ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > a CSR the server names (made from a CSR template, or renamed) opens the scientific review before any approval is sent 60ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > a document that is not a CSR approves as before, with no map 46ms
+ × client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > offers the study data frozen for this document when the program has no package run, and reads its tables 5042ms
+   → Unable to find a label with the text of: /Study data frozen for this document/
+ × client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > names the study data an imported CSR build was drafted from as that 5039ms
+   → Unable to find a label with the text of: /Study data the imported CSR build was drafted from/
+ × client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > lists package runs and study data together 5039ms
+ × client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > with neither, says where the study data is frozen, not a package run it cannot start 5034ms
+   → Unable to find an element with the text: /Build from the study’s data/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ × client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > a failed read of the study data is said, never shown as nothing to choose 5036ms
+   → Unable to find role="alert"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > offers the study data frozen for this document when the program has no package run, and reads its tables
+TestingLibraryElementError: Unable to find a label with the text of: /Study data frozen for this document/
+ FAIL  client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > names the study data an imported CSR build was drafted from as that
+TestingLibraryElementError: Unable to find a label with the text of: /Study data the imported CSR build was drafted from/
+ FAIL  client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > lists package runs and study data together
+ FAIL  client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > with neither, says where the study data is frozen, not a package run it cannot start
+TestingLibraryElementError: Unable to find an element with the text: /Build from the study’s data/. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ FAIL  client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > a failed read of the study data is said, never shown as nothing to choose
+TestingLibraryElementError: Unable to find role="alert"
+ Test Files  1 failed (1)
+      Tests  5 failed | 4 passed (9)
+   Duration  27.59s (transform 392ms, setup 219ms, import 513ms, tests 25.85s, environment 818ms)

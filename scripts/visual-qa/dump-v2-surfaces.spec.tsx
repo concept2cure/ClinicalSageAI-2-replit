@@ -81,10 +81,9 @@ const OUT = path.resolve(__dirname, '../../.visual-qa/markup');
  * different mock would overwrite that with a weaker fixture.
  */
 const ALREADY_COVERED = new Set<string>([
-  'device-workstream', 'device-510k', 'device-pma', 'device-cer', 'device-diagnostics',
+  'device-510k', 'device-pma', 'device-cer', 'device-diagnostics',
   'device-clinical-studies', 'device-software', 'device-engineering', 'device-udi',
   'device-postmarket', 'device-presub',
-  'device-analytics',
   'protocol-dev', 'pdev-cmc', 'pdev-nonclinical', 'pdev-clinical',
   'pdev-regulatory', 'pdev-ind-assembly', 'pdev-contradictions', 'pdev-fda-interactions',
 ]);

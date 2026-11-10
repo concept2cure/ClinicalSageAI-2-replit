@@ -26,7 +26,7 @@
 
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 /* The real class. The mock below spreads `importOriginal`, so this is the
    same ApiRequestError the transport actually throws — which is the point:
    the fixture has to fail the way production fails. */
@@ -127,8 +127,8 @@ describe('the editor asks why, once per section', () => {
     canvasEditor().chain().focus().selectAll().insertContent(text).run();
     await waitFor(() => expect(canvasText()).toBe(text));
   }
-  const saveBtn = () => within(screen.getByRole('group', { name: 'Save and sign' }))
-    .getByRole('button', { name: /^Save(?:d)?$/i }) as HTMLButtonElement;
+  /* D4-2: Save is in the editor's one bar (D4.md §D4.B); the "Save and sign" group is gone. */
+  const saveBtn = () => screen.getByTestId('save-section') as HTMLButtonElement;
   const reasonField = () => screen.getByTestId('change-reason') as HTMLInputElement;
   const patches = () => apiRequest.mock.calls.filter((c) => c[0] === 'PATCH');
 

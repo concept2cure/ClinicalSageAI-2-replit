@@ -527,13 +527,14 @@ async function auditLogsChainVerdict(
   try {
     const v = await verify(orgId);
     const head = v.head ? { head: v.head } : {};
-    // The walk held but the anchor could not be read: not a verdict (fix round DP-72).
+    // The walk could not read every chained row (P-72 slice 1b), or it held but
+    // the anchor could not be read (fix round DP-72): not a verdict.
     if (v.ok === null) {
       return {
         status: 'unverified',
         rowsChecked: v.rowsChecked,
         verifiedAt,
-        reason: v.head?.reason ?? 'the audit_logs chain head could not be verified',
+        reason: v.reason ?? v.head?.reason ?? 'the audit_logs chain head could not be verified',
         ...head,
       };
     }

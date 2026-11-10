@@ -1,0 +1,47 @@
+# Real PostgreSQL 16 (c2c_test, migrated by deploy-migrate.mjs), app_service under RLS_ENFORCE=on; final working tree (submission-service.ts sha256 1eb39576d1bbe697…); 2026-11-08T21:54:37Z
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the record a fulfilment is made on > runs as a role RLS applies to (not the owner, not BYPASSRLS)
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the record a fulfilment is made on > the filed rule is the platform one: sent and acknowledged
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > offers only this project's sequences the agency received, and this project's Vault
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a viewer reads the options as unable to write or sign
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a PMR that names nothing is refused before the password, which is never checked
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a PMR with no date is refused before the password: the server never chooses the signed date
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > evidence but no password is a missing signature component
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a sequence still pending transmit, before the password, and records nothing
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a sequence the agency rejected, before the password, and records nothing
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a frozen sequence never dispatched, before the password, and records nothing
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another project's sequence, before the password, and records nothing
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another organisation's sequence, before the password, and records nothing
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another project's Vault version, before the password, and records nothing
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses another organisation's Vault version, before the password, and records nothing
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a version that does not exist, before the password, and records nothing
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > refuses a version whose data was withdrawn, before the password, and records nothing
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR: what can be named, and what is refused before a password > a viewer cannot fulfil it at either door
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR, signed > signs: the row names the sequence and the version with its sha256, and the signature binds them
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR, signed > the list names what met it, who signed, and that the signature matches the record
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a project PMR, signed > a second fulfilment is refused
+ × tests/db/commitment-fulfilment-evidence.dbtest.ts > a project with no program > is refused at the project door, and nothing about the commitment changes
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a meeting commitment is a governed write with a reason > fulfils unsigned, naming a sequence, with a resolve ledger row
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a meeting commitment is a governed write with a reason > refuses a password: it takes none
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > offers a member only the sequences of programs they can open; the signer, who can open Q, is offered its sequence too
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > a commitment made under a submission is offered only that submission's sequences, and names it to a reader who can open it
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > a member who cannot open program Q cannot name its sequence: 404, nothing about it said
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > the organisation's register and a program the reader cannot open > the signer, who can open it, signs; the member's list says only that it is in a project they cannot open
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > tenant isolation > another organisation's admin reaches neither the options nor the fulfilment
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > tenant isolation > under RLS, the runtime role in another tenant scope reads none of these rows
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > more than 200 sequences the agency received: the list keeps the most recent > on a project's door: the newer submission's sequences are offered, newest first, and the oldest are the ones cut
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > more than 200 sequences the agency received: the list keeps the most recent > on the organisation's door, with no submission: the same, across every program the person can open
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a send to the agency's test environment is not evidence of a filing (F1, row D7) > the test environment's receipt leaves its sequence unfiled; a production receipt files its own
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a send to the agency's test environment is not evidence of a filing (F1, row D7) > is not offered as evidence of a filing; the production one is
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a send to the agency's test environment is not evidence of a filing (F1, row D7) > naming it is refused before the password, and nothing is recorded
+ ✓ tests/db/commitment-fulfilment-evidence.dbtest.ts > a send to the agency's test environment is not evidence of a filing (F1, row D7) > the database refuses a fulfilment naming it whatever the route (the commitment-evidence trigger), and accepts the production one
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > folds every filed sequence: the untouched leaf from 0000, the replacement from 0001, nothing never sent
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > lists every sequence and says which it did not fold
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > the current view of what the agency holds > never reads another organisation’s filings, and answers empty for a program with no submission
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > what the agency holds is what was sent (F1) > a leaf only an earlier preview of the sent sequence carried is not on file
+ ✓ tests/db/ectd-filed-state-view.dbtest.ts > what the agency holds is what was sent (F1) > a sequence sent with no compile on record is filed, read from what its transmit recorded
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/db/commitment-fulfilment-evidence.dbtest.ts > a project with no program > is refused at the project door, and nothing about the commitment changes
+AssertionError: {"success":true,"data":{"commitment":{"id":1271,"commitmentType":"pmc","status":"open","submission":null},"rule":{"signatureRequired":true,"evidenceRequired":true,"dateRequired":true,"meanings":["approval","responsibility"]},"projectLinked":false,"sequences":[],"sequencesTruncated":false,"vault":{"programId":null},"viewer":{"canWrite":true,"writeRefusal":null,"canSign":true,"signAuthorityRefusal":null}}}: expected 200 to be 404 // Object.is equality
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 39 passed (40)
+# The one failure, 'a project with no program', is pre-existing: 1-server/head-export-preexisting.txt shows it on a clean export of HEAD.

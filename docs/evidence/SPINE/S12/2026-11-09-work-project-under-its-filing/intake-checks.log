@@ -1,0 +1,13 @@
+## A program is still created through intake, unchanged (no parent, no kind)
+{"status":409,"error":"PROJECT_RECORD_UNAVAILABLE"}  (intake's own rule: this organisation has two active workspaces, so one must be named; AMBIGUOUS_CLIENT_WORKSPACE in the server log)
+## The hierarchy no longer creates a project
+POST /api/project-hierarchy/1/children -> HTTP 404
+## A malformed work project is refused before anything is written
+{"error":"INVALID_WORK_PROJECT","message":"A work project needs its parent project, a name of 1 to 200 characters and one of: cmc, biostatistics, rbm, data_management, clin_pharm, nonclinical."} HTTP 400
+## The same program, with its workspace named
+{"status":201,"created":true,"projectAnchorId":10,"projectAnchorCreated":true,"scaffoldedSections":92}
+## Its anchor row: a program, no parent, depth 0
+10|t||0
+## The work project's row and its audit row
+9|1|1|1/9|t|cmc
+project.work_project.create|projects|9|2|746

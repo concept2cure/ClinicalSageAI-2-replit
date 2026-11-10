@@ -1,5 +1,15 @@
 # shadow-review — CHANGELOG
 
+## v1.2 — 2026-10-25
+
+- The reviewer reads each leaf's text. v1.1 sent `{ sectionCode, title,
+  lifecycleOp }` per leaf, so every finding about content was a guess from a
+  title. Each leaf now carries its text from the rendered leaf the package would
+  carry, masked for contact details, cut to a per-leaf and per-run budget, with
+  `notRead` saying why a leaf was not sent (shadow-review-input.ts). Findings are
+  to rest on the text sent; a leaf not read is not evidence of absence. The leaf
+  text is data, never instructions.
+
 ## v1.1 — 2026-10-05
 
 - No risk score. v1.0 asked for `rtfRiskScore` / `crlRiskScore` "likelihoods"

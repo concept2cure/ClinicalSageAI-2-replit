@@ -41,7 +41,10 @@ import {
 } from '../services/client-intelligence-memory';
 import { buildMemoryContextForChat } from '../services/memory-context-assembler.js';
 import { serverError } from '../lib/api-response';
+import { ProjectAdmissionRefusal, requireProjectAdmission } from './c2c/project-access';
 import { createScopedLogger } from '../utils/logger';
+import { requestConnectable, requestDb, requestPgClient } from '../db/requestDb';
+import { z } from 'zod';
 
 const router = Router();
 const log = createScopedLogger('client-intelligence');
@@ -713,25 +716,41 @@ import {
   buildUserContext,
   upsertUserProfile,
   buildMergedContext,
+  readPrivateUserRuleLedger,
+  writePrivateUserRule,
 } from '../services/ana-context-router';
+
+const profileIdentityId = z.union([z.number(), z.string().regex(/^[1-9]\d*$/).transform(Number)]).pipe(z.number().int().positive().max(2147483647));
+function privateProfileIdentity(req: Request, res: Response): { userId: number; organizationId: number } | null {
+  const parsed = z.object({ userId: profileIdentityId, organizationId: profileIdentityId }).safeParse({ userId: req.user?.id, organizationId: req.user?.organizationId });
+  if (parsed.success) return parsed.data;
+  res.status(401).json({ success: false, error: { code: 'PRIVATE_OWNER_REQUIRED', message: 'Your verified account and organization are required.' } });
+  return null;
+}
+function privateProfileFailure(res: Response, error: unknown): Response {
+  if (error instanceof z.ZodError) return res.status(422).json({ success: false, error: { code: 'PRIVATE_RULE_INVALID', message: 'Check the private rule fields before saving.' } });
+  if (error instanceof Error && 'status' in error && typeof error.status === 'number' && [401,403,404,409,422,503].includes(error.status) &&
+    'code' in error && typeof error.code === 'string' && /^PRIVATE_[A-Z_]+$/.test(error.code)) {
+    return res.status(error.status).json({ success: false, error: { code: error.code, message: error.message } });
+  }
+  log.warn('Private profile operation could not be confirmed');
+  return res.status(500).json({ success: false, error: { code: 'PRIVATE_PROFILE_UNAVAILABLE', message: 'The private profile operation could not be confirmed.' } });
+}
 
 /**
  * GET /api/client-intelligence/ana/user-profile
  * Get the current user's intelligence profile (User.md layer).
  */
 router.get('/ana/user-profile', async (req: Request, res: Response) => {
+  const identity = privateProfileIdentity(req, res);
+  if (!identity) return;
   try {
-    const userId = (req as any).user?.id;
-    const organizationId = (req as any).user?.organizationId;
-    if (!userId || !organizationId) {
-      return sendError(res, 401, 'Authentication required');
-    }
-
-    const { db } = await import('../db');
+    const { userId, organizationId } = identity;
+    const privateRules = await readPrivateUserRuleLedger(requestPgClient(req), organizationId, userId);
     const { userIntelligenceProfiles } = await import('shared/schema/ana-intelligence');
     const { eq, and } = await import('drizzle-orm');
 
-    const [profile] = await db
+    const [profile] = await requestDb(req)
       .select()
       .from(userIntelligenceProfiles)
       .where(
@@ -742,9 +761,9 @@ router.get('/ana/user-profile', async (req: Request, res: Response) => {
       )
       .limit(1);
 
-    return sendSuccess(res, { profile: profile || null });
+    return sendSuccess(res, { profile: profile || null, privateRules });
   } catch (err) {
-    return serverError(res, log, 'reading the AnA user profile', err);
+    return privateProfileFailure(res, err);
   }
 });
 
@@ -753,17 +772,17 @@ router.get('/ana/user-profile', async (req: Request, res: Response) => {
  * Upsert the current user's intelligence profile.
  */
 router.post('/ana/user-profile', async (req: Request, res: Response) => {
+  const identity = privateProfileIdentity(req, res);
+  if (!identity) return;
   try {
-    const userId = (req as any).user?.id;
-    const organizationId = (req as any).user?.organizationId;
-    if (!userId || !organizationId) {
-      return sendError(res, 401, 'Authentication required');
+    const { userId, organizationId } = identity;
+    if (req.body && Object.prototype.hasOwnProperty.call(req.body, 'action')) {
+      return res.json(await writePrivateUserRule(requestConnectable(req), organizationId, userId, req.body));
     }
-
-    await upsertUserProfile(userId, organizationId, req.body);
+    await upsertUserProfile(userId, organizationId, req.body, requestPgClient(req));
     return sendSuccess(res);
   } catch (err) {
-    return serverError(res, log, 'saving the AnA user profile', err);
+    return privateProfileFailure(res, err);
   }
 });
 
@@ -896,46 +915,70 @@ router.post('/ana/log-outcome', async (req: Request, res: Response) => {
 
 /**
  * GET /api/client-intelligence/ana/wisdom
- * Get AnA platform wisdom entries.
+ * Explicit hold: legacy global wisdom has no reviewed promotion receipt.
  */
-router.get('/ana/wisdom', async (req: Request, res: Response) => {
-  try {
-    const { db } = await import('../db');
-    const { anaPlatformWisdom } = await import('shared/schema/ana-intelligence');
-    const { eq, and, desc, sql } = await import('drizzle-orm');
-
-    const projectType = req.query.projectType as string | undefined;
-    const regulatoryBody = req.query.regulatoryBody as string | undefined;
-
-    const wisdom = await db
-      .select()
-      .from(anaPlatformWisdom)
-      .where(
-        and(
-          eq(anaPlatformWisdom.isActive, true),
-          sql`${anaPlatformWisdom.evidenceCount} >= ${anaPlatformWisdom.minEvidenceThreshold}`
-        )
-      )
-      // 2026-10-15: by confidence_score, a stamped figure now null; by evidence.
-      .orderBy(desc(anaPlatformWisdom.evidenceCount))
-      .limit(50);
-
-    // Filter by context if provided
-    const filtered = wisdom.filter(w => {
-      if (regulatoryBody && w.regulatoryBody && w.regulatoryBody !== regulatoryBody) return false;
-      if (projectType && w.projectType && w.projectType !== projectType) return false;
-      return true;
-    });
-
-    return sendSuccess(res, { wisdom: filtered });
-  } catch (err) {
-    return serverError(res, log, 'reading AnA platform wisdom', err);
-  }
+router.get('/ana/wisdom', (_req: Request, res: Response) => {
+  // Type-only coupling keeps this refusal independent of storage initialization.
+  const holdReason: typeof import('../services/intelligence/ana-failure-learning').SHARED_LEARNING_HOLD = 'deidentification_and_human_promotion_required';
+  return sendSuccess(res, { wisdom: [], holdReason });
 });
 
 /**
- * GET /api/client-intelligence/ana/objectives
- * Get client objectives.
+ * The project an objective request names, admitted for this person: its
+ * integer project (a program UUID resolves to its anchor row), or null when it
+ * names none. A project the person may not open answers as the admission
+ * refuses it (404 for one outside their workspace or sharing), never with its
+ * objectives. Until 2026-11-01 the read filtered on the organisation alone, so
+ * any member could read a private project's objectives by its id, and a write
+ * could point an objective, or its links, at any project of the organisation.
+ */
+class ObjectiveRefusal extends Error {
+  constructor(readonly status: number, message: string) { super(message); }
+}
+async function admittedObjectiveProject(req: Request, organizationId: number, raw: unknown, forWrite: boolean): Promise<number> {
+  const { strictProjectRowForRef } = await import('../services/c2c/program-project-anchor');
+  const projectId = await strictProjectRowForRef(async () => (await import('../db')).db as never,
+    { ref: raw, orgId: organizationId, context: 'client-objectives' });
+  if (projectId === null) throw new ObjectiveRefusal(404, 'Project not found');
+  try {
+    await requireProjectAdmission(req, String(projectId), forWrite);
+  } catch (err) {
+    if (err instanceof ProjectAdmissionRefusal) throw new ObjectiveRefusal(err.status, err.message);
+    throw err;
+  }
+  return projectId;
+}
+
+/**
+ * Every project a new objective names is one this person may change (its own)
+ * or open (a linked one), resolved to its integer project; a parent is an
+ * objective of the same project. Rewrites `fields` in place; throws
+ * ObjectiveRefusal for anything it refuses.
+ */
+async function admitObjectiveReferences(req: Request, organizationId: number, fields: Record<string, any>): Promise<void> {
+  if (fields.projectId != null) fields.projectId = await admittedObjectiveProject(req, organizationId, fields.projectId, true);
+  if (fields.linkedProjectIds != null) {
+    if (!Array.isArray(fields.linkedProjectIds)) throw new ObjectiveRefusal(400, 'linkedProjectIds must be a list');
+    const linked: number[] = [];
+    for (const ref of fields.linkedProjectIds) linked.push(await admittedObjectiveProject(req, organizationId, ref, false));
+    fields.linkedProjectIds = linked;
+  }
+  if (fields.parentObjectiveId == null) return;
+  const { db } = await import('../db');
+  const { anaClientObjectives } = await import('shared/schema/ana-intelligence');
+  const { eq, and, isNull } = await import('drizzle-orm');
+  const parent = await db.select({ id: anaClientObjectives.id }).from(anaClientObjectives).where(and(
+    eq(anaClientObjectives.id, Number(fields.parentObjectiveId)),
+    eq(anaClientObjectives.organizationId, organizationId),
+    fields.projectId == null ? isNull(anaClientObjectives.projectId) : eq(anaClientObjectives.projectId, fields.projectId),
+  )).limit(1);
+  if (!parent.length) throw new ObjectiveRefusal(404, 'Parent objective not found');
+}
+
+/**
+ * GET /api/client-intelligence/ana/objectives[?projectId=<id or program uuid>]
+ * A project's objectives, admitted; with no project, the organisation's own
+ * objectives (those filed under no project).
  */
 router.get('/ana/objectives', async (req: Request, res: Response) => {
   try {
@@ -944,18 +987,16 @@ router.get('/ana/objectives', async (req: Request, res: Response) => {
       return sendError(res, 401, 'Authentication required');
     }
 
+    const raw = req.query.projectId ?? req.query.programId;
+    const projectId = raw === undefined || raw === '' ? null
+      : await admittedObjectiveProject(req, organizationId, raw, false);
+
     const { db } = await import('../db');
     const { anaClientObjectives } = await import('shared/schema/ana-intelligence');
-    const { eq, and, desc } = await import('drizzle-orm');
-
-    const projectId = req.query.projectId
-      ? parseInt(req.query.projectId as string, 10)
-      : undefined;
+    const { eq, and, desc, isNull } = await import('drizzle-orm');
 
     const conditions = [eq(anaClientObjectives.organizationId, organizationId)];
-    if (projectId) {
-      conditions.push(eq(anaClientObjectives.projectId, projectId));
-    }
+    conditions.push(projectId === null ? isNull(anaClientObjectives.projectId) : eq(anaClientObjectives.projectId, projectId));
 
     const objectives = await db
       .select()
@@ -966,6 +1007,7 @@ router.get('/ana/objectives', async (req: Request, res: Response) => {
 
     return sendSuccess(res, { objectives });
   } catch (err) {
+    if (err instanceof ObjectiveRefusal) return sendError(res, err.status, err.message);
     return serverError(res, log, 'listing client objectives', err);
   }
 });
@@ -986,6 +1028,7 @@ router.post('/ana/objectives', async (req: Request, res: Response) => {
     if (typeof fields.objective !== 'string' || !fields.objective.trim() || typeof fields.category !== 'string') {
       return sendError(res, 400, 'objective and category are required');
     }
+    await admitObjectiveReferences(req, organizationId, fields);
 
     const { db } = await import('../db');
     const { anaClientObjectives } = await import('shared/schema/ana-intelligence');
@@ -1006,6 +1049,7 @@ router.post('/ana/objectives', async (req: Request, res: Response) => {
 
     return sendSuccess(res, { objective });
   } catch (err) {
+    if (err instanceof ObjectiveRefusal) return sendError(res, err.status, err.message);
     return serverError(res, log, 'creating the client objective', err);
   }
 });

@@ -1,5 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import { join } from 'node:path';
+import * as as2Transport from '../as2-transport';
 import { as2CmsAvailable, buildAs2CmsEnvelope, as2PayloadEntity, splitAs2MultipartSignature } from '../as2-cms';
 import { verifyFileSignature } from '../../../utils/fileSignature';
 import { classifyVerifiedAs2Delivery, buildAs2Headers } from '../as2-transport';
@@ -59,4 +62,43 @@ describe('actual offline CMS AS2 envelope and receipt verification', () => {
     await expect(buildAs2CmsEnvelope(args)).rejects.toThrow('do not match');
     expect(() => as2PayloadEntity(args.body, 'application/octet-stream\r\nInjected: yes', 'ectd.zip')).toThrow('MIME metadata');
   });
+});
+
+/* 2026-11-01 (F1, DP-81 follow-up): one AS2 verdict. classifyAs2Delivery, the
+   syntax-only twin of classifyVerifiedAs2Delivery, was still exported and
+   called an unsigned, tied, accepting MDN RECEIVED. Production no longer
+   reached its 2xx judge, but the next caller would have. */
+describe('the AS2 verdicts this module exports', () => {
+  it('none calls an unsigned, tied, accepting 2xx MDN RECEIVED', async () => {
+    const verdicts = Object.entries(as2Transport).filter(([name, value]) => /^classify.*As2/.test(name) && typeof value === 'function');
+    expect(verdicts.map(([name]) => name)).toContain('classifyVerifiedAs2Delivery');
+    const unsigned = { ok: true as const, response: { httpStatus: 200, headers: { 'content-type': 'multipart/report; boundary="mdn-report"' }, body: receiptReport(MESSAGE, MIC) } };
+    for (const [name, verdict] of verdicts) {
+      const outcome = await (verdict as (...a: unknown[]) => unknown)(unsigned, MESSAGE, { agencyCertPem: fixture.pem('agency'), expectedMic: MIC }) as { kind: string };
+      expect({ name, kind: outcome.kind }).toEqual({ name, kind: 'DELIVERED_UNCONFIRMED' });
+    }
+  });
+});
+
+/* 2026-11-01 (F1): the UAT pre-flight printed headers transmit never sends
+   (signed receipts 'optional', Receipt-Delivery-Option 'sync', an unencrypted
+   octet-stream named ectd.zip), so an operator registering or troubleshooting
+   the ESG account read the wrong envelope. */
+describe('the FDA ESG UAT pre-flight', () => {
+  it('prints the headers transmit sends', () => {
+    const run = spawnSync(join(process.cwd(), 'node_modules/.bin/tsx'), ['scripts/fda-esg-uat-smoke.ts', '--print-envelope'], {
+      encoding: 'utf8', timeout: 60_000,
+      env: { ...process.env, FDA_ESG_STAGING_URL: 'https://127.0.0.1:9/as2', FDA_ESG_STAGING_AS2_FROM: 'SPONSOR', FDA_ESG_STAGING_AS2_TO: 'FDA',
+        FDA_ESG_STAGING_CERT_PATH: join(fixture.directory, 'sponsor.pem'), FDA_ESG_STAGING_KEY_PATH: join(fixture.directory, 'sponsor.key'),
+        FDA_ESG_STAGING_FDA_CERT_PATH: join(fixture.directory, 'agency.pem') },
+    });
+    expect(run.status, run.stderr).toBe(0);
+    const printed = (name: string) => run.stdout.split('\n').find((line) => line.trim().startsWith(`${name} `))?.trim().slice(name.length).trim();
+    const sent = as2Transport.buildAs2Headers({ messageId: MESSAGE, from: 'SPONSOR', to: 'FDA', contentType: 'application/pkcs7-mime; smime-type=enveloped-data; name="smime.p7m"', body: Buffer.alloc(0), filename: 'smime.p7m' });
+    expect(printed('Disposition-Notification-Options')).toBe(sent['Disposition-Notification-Options']);
+    expect(printed('Receipt-Delivery-Option')).toBeUndefined();
+    expect(printed('Content-Type')).toBe(sent['Content-Type']);
+    expect(printed('Content-Disposition')).toBe(sent['Content-Disposition']);
+    expect(printed('AS2-To')).toBe('FDA');
+  }, 90_000);
 });

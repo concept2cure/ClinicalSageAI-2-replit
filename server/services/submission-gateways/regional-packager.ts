@@ -1001,7 +1001,27 @@ function dtdRefusalDetails(validation: DtdValidationEvidence): string[] {
   return failures.length ? failures.slice(0, 6) : ['Required supportive-file verification or complete XML execution coverage is absent.'];
 }
 
+/**
+ * The sequence is the four-digit eCTD sequence.
+ *
+ * 2026-11-01 (F1, W5 residual F(1)a): packageEctdSubmission's first-sequence
+ * rules (LEAF-DELETE-IN-FIRST-SEQUENCE, the replace/append exemption, FDA's
+ * fdast1) compare it with the literal '0000', so a first sequence written '0' —
+ * AnA's package_ectd_for_region passes the model's value through — packaged a
+ * withdrawal of a document never on file as 123456-0-fda.zip, and an omitted
+ * one as 123456-undefined-fda.zip. Refused at entry, before any leaf is read;
+ * it also covers the plain-name check at the archive write.
+ */
+function refuseUnlessFourDigitSequence(sequence: unknown): void {
+  if (typeof sequence === 'string' && /^\d{4}$/.test(sequence)) return;
+  throw new ValidationError(
+    `The sequence must be the four-digit eCTD sequence, 0000 for the original; ${JSON.stringify(sequence ?? null)} is not one. Nothing was built.`,
+    [{ ruleId: 'PACKAGE-SEQUENCE-NOT-FOUR-DIGITS', severity: 'error', filePath: String(sequence ?? '') }],
+  );
+}
+
 export async function packageEctdSubmission(input: PackagerInput): Promise<SubmissionBundle> {
+  refuseUnlessFourDigitSequence(input.sequence);
   /* Resolve the caller-supplied submission type through the canonical bridge.
      This normalizes any alias/legacy string (e.g. '510k', 'SNDA', 'ind') to
      the registry entry so that backbone XML, display names, and audit rows
@@ -1439,7 +1459,9 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
   }
 
   /* Generate the zip + write to disk. */
-  if (!isPlainName(input.applicationId) || !isPlainName(input.sequence)) {
+  // The sequence is four digits by the entry check (2026-11-01), so only the
+  // application id can carry a path here.
+  if (!isPlainName(input.applicationId)) {
     throw new ValidationError(
       'The application id and the sequence number name the package file, so each must be a single name ' +
         'with no path in it.',

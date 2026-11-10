@@ -51,6 +51,7 @@ vi.mock('../download', async (importOriginal) => ({
 import type { A11yFinding } from '../../../../../scripts/visual-qa/a11y-rules.mjs';
 import { auditA11y } from '../../../../../scripts/visual-qa/a11y-rules.mjs';
 import { InsightsCanvas } from '../surfaces/Insights';
+import { ComplianceReports } from '../surfaces/ComplianceReports';
 import { AuditTrail } from '../surfaces/AdminSurfaces';
 
 import {
@@ -367,6 +368,20 @@ function respond(body: unknown) {
 }
 
 describe('entry points', () => {
+  it('goes back to Reporting & analytics, the work area it is reached from', async () => {
+    const onNav = vi.fn();
+    render(<ComplianceReports {...({ surface: { id: 'compliance-reports' }, onAsk: noop, onNav, segment: 'biotech' } as unknown as React.ComponentProps<typeof ComplianceReports>)} />);
+    await screen.findByText('User access review');
+    const area = document.querySelector('[data-work-area="compliance-reports"]') as HTMLElement | null;
+    expect(area, 'the page is a work area').not.toBeNull();
+    fireEvent.click(within(area!).getByRole('button', { name: /Reporting & analytics/ }));
+    expect(onNav).toHaveBeenCalledWith('insights');
+    // The page names where it is by going there, not by an eyebrow.
+    expect(document.querySelector('.ph-eyebrow')).toBeNull();
+    // The letterhead link is the header's action.
+    expect(area!.querySelector('.ph .ph-acts')?.textContent).toMatch(/Company letterhead/);
+  });
+
   it('Insights with no lead program still reaches the reports', async () => {
     respond({ success: true, data: { tier: 'standard', leadProgram: null } });
     const onNav = vi.fn();
@@ -391,8 +406,8 @@ describe('entry points', () => {
     });
     const onNav = vi.fn();
     render(<InsightsCanvas onNav={onNav} segment="biotech" surface={{ id: 'insights', label: 'Reporting & analytics' } as never} />);
-    await waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
-    const head = document.querySelector('.rc-ana-head') as HTMLElement;
+    await waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
+    const head = document.querySelector('[data-work-area="insights"] > .ph') as HTMLElement;
     fireEvent.click(within(head).getByRole('button', { name: 'Audit & compliance reports' }));
     expect(onNav).toHaveBeenCalledWith('compliance-reports');
   });

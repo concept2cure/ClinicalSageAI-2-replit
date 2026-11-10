@@ -18,7 +18,7 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
-import { loadPriorSequenceManifest, type PoolLike } from '../prior-sequence-loader';
+import { loadFiledStateBySubmission, loadPriorSequenceManifest, type PoolLike } from '../prior-sequence-loader';
 
 const ORG = 7;
 const OTHER_ORG = 8;
@@ -37,12 +37,17 @@ const leaf = (ctdSection: string, fileName: string, md5: string, operation = 'ne
 beforeAll(async () => {
   pg = new PGlite();
   // The columns the loader reads, named as in shared/schema.ts (ectdCompilations)
-  // and shared/schema/submissions.ts (ectdSequences).
+  // and shared/schema/submissions.ts (ectdSequences), and the transmittal row
+  // the fold reads what a sequence sent from (F1, 2026-11-01). None is sent
+  // with that record here, so every sequence reads from its compiles.
   await pg.exec(`
     CREATE TABLE ectd_sequences (
       id SERIAL PRIMARY KEY, submission_id INTEGER NOT NULL, region TEXT NOT NULL DEFAULT 'fda',
       sequence_number TEXT NOT NULL, organization_id INTEGER NOT NULL, dispatch_status TEXT,
-      deleted_at TIMESTAMPTZ
+      transmit_signature_action_id TEXT, transmit_attempt_id UUID, deleted_at TIMESTAMPTZ
+    );
+    CREATE TABLE submission_transmittals (
+      id SERIAL PRIMARY KEY, organization_id INTEGER NOT NULL, region TEXT, metadata JSONB DEFAULT '{}'::jsonb
     );
     CREATE TABLE ectd_compilations (
       id SERIAL PRIMARY KEY, organization_id INTEGER NOT NULL, submission_id INTEGER,
@@ -110,5 +115,27 @@ describe('a named prior sequence that is not on file is an error, never an empty
 
   it('refuses when the application number is missing, without reading', async () => {
     await expect(load('0001', '')).rejects.toThrow(/application number/i);
+  });
+});
+
+describe('a named sequence sent with no compile: the refusal says what the lookup found, never that it is off file (F1 review)', () => {
+  it('the current view reads it from its send; the named lookup cannot, and says only that', async () => {
+    const attempt = 'a0000000-0000-4000-8000-000000000301';
+    const { rows } = await pg.query<{ id: number }>(
+      `INSERT INTO ectd_sequences (submission_id, sequence_number, organization_id, dispatch_status, transmit_attempt_id, transmit_signature_action_id)
+       VALUES (3, '0000', $1, 'sent', $2, 'sig-301') RETURNING id`, [ORG, attempt]);
+    await pg.query(`INSERT INTO submission_transmittals (organization_id, region, metadata) VALUES ($1, 'fda', $2::jsonb)`, [ORG, JSON.stringify({
+      dispatchBinding: { attemptId: attempt, sequenceId: rows[0].id, signatureActionId: 'sig-301', organizationId: ORG },
+      leafManifest: [leaf('3.2.S.1', 'sent.pdf', 'a'.repeat(32))],
+    })]);
+    const state = await loadFiledStateBySubmission(pool, { organizationId: ORG, submissionId: 3 });
+    expect(state.sequences).toEqual([{ sequenceNumber: '0000', dispatchStatus: 'sent', filed: true, basis: 'transmit' }]);
+
+    const err = await load('0000', 'IND-654321').then(() => { throw new Error('expected a refusal'); }, (e: unknown) => e as Error);
+    expect(err.message).toMatch(/^PRIOR_SEQUENCE_NOT_FOUND: sequence 0000 of application IND-654321 could not be found by its number: /);
+    // AnA relays this sentence word for word, beside a card that lists 0000 as on file.
+    expect(err.message).not.toMatch(/not on file/);
+    expect(err.message).not.toMatch(/leaf manifest/);
+    expect(err.message).toMatch(/If it was sent with no compile, it can still be on file/);
   });
 });

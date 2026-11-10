@@ -10,9 +10,12 @@ const h = vi.hoisted(() => ({
   doc: null as QmsDocumentRow | null, pendingDoc: null as QmsDocumentRow | null, records: [] as Record<string, unknown>[],
   pending: [] as Record<string, unknown>[], statements: [] as string[],
   auditFails: false, commitFails: false, account: 'active', org: 'active', member: true, role: 'viewer', membershipRole: 'viewer',
-  pooled: vi.fn(), audit: vi.fn(), client: { query: vi.fn() },
+  pooled: vi.fn(), audit: vi.fn(), client: { query: vi.fn() }, tasks: vi.fn(),
 }));
 vi.mock('../../db', () => ({ pool: { query: h.pooled, connect: vi.fn(() => { throw new Error('No pooled fallback'); }) } }));
+// The training tasks are planned after the acknowledgement commits, in their own read-only transaction
+// (training-task.ts, tested in tests/db/qms-training-tasks.dbtest.ts); here, only that the route asks.
+vi.mock('../../services/qms/training-task', () => ({ reconcileTrainingTasks: (...args: unknown[]) => h.tasks(...args) }));
 vi.mock('../../services/auditService', () => ({
   default: { logAction: vi.fn(async () => ({ persisted: true, chained: true })) },
   writeChainedAuditRow: (...args: unknown[]) => h.audit(...args),
@@ -55,6 +58,7 @@ function commitFixture() {
 beforeEach(() => {
   h.doc = release(); h.pendingDoc = null; h.records = []; h.pending = []; h.statements = [];
   h.auditFails = false; h.commitFails = false; h.account = 'active'; h.org = 'active'; h.member = true; h.role = 'viewer'; h.membershipRole = 'viewer';
+  h.tasks.mockReset().mockResolvedValue(undefined);
   h.pooled.mockReset().mockRejectedValue(new Error('Shared pool cannot carry request context'));
   h.audit.mockReset().mockImplementation(async () => { if (h.auditFails) throw new Error('Audit refused'); });
   h.client.query.mockReset().mockImplementation(async (sql: string, params: unknown[] = []) => {
@@ -103,6 +107,7 @@ describe('native personal QMS training request contract', () => {
     expect(h.audit).toHaveBeenCalledWith(h.client, expect.objectContaining({ userId: USER, tenantId: ORG }));
     expect(h.statements.at(-1)).toBe('COMMIT'); expect(h.records).toHaveLength(1);
     expect(h.pooled).not.toHaveBeenCalled();
+    expect(h.tasks).toHaveBeenCalledExactlyOnceWith(h.client, ORG, { documentIds: [11], userIds: [USER] }, USER);
   });
   it.each([{ userId: 99 }, { understood: false }, { method: 'e-signature' }, { quizScore: 100 }])('refuses fabricated claims before a transaction: %j', async extra => {
     const res = await request(app()).post('/api/mdx/qms/documents/11/training-ack').send({ ...body(), ...extra });
@@ -111,6 +116,7 @@ describe('native personal QMS training request contract', () => {
   it('refuses a stale digest without recording or claiming an acknowledgement', async () => {
     const res = await request(app()).post('/api/mdx/qms/documents/11/training-ack').send({ ...body(), contentDigest: 'a'.repeat(64) });
     expect(res.status).toBe(409); expect(h.records).toEqual([]); expect(h.audit).not.toHaveBeenCalled();
+    expect(h.tasks, 'a refused acknowledgement moves no task').not.toHaveBeenCalled();
   });
   it('rolls the record back if the chained audit refuses', async () => {
     h.auditFails = true;

@@ -1,0 +1,146 @@
+# Review, 2026-11-01. The builder's change as left (server/lib/api-response.ts noting REQUEST_ENDED whatever the response's state), with the review's added test: a handler that had already sent its own response and then asked for its client must still be logged as a failure.
+# npx vitest run --config vitest.config.ts --maxWorkers=2 server/routes/__tests__/request-db-context-ended-request.test.ts server/db/__tests__/requestDb.test.ts server/lib/__tests__/api-response-500-containment.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/routes/__tests__/request-db-context-ended-request.test.ts
+{
+  "timestamp": "2026-11-01T21:57:30.021Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-01T21:57:30.022Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/request-db-context-ended-request.test.ts
+{
+  "timestamp": "2026-11-01T21:57:30.022Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/request-db-context-ended-request.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/request-db-context-ended-request.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/request-db-context-ended-request.test.ts
+{
+  "timestamp": "2026-11-01T21:57:30.322Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/request-db-context-ended-request.test.ts
+{
+  "timestamp": "2026-11-01T21:57:35.985Z",
+  "level": "info",
+  "message": "[startup:auth-boundary] Default-deny auth boundary mounted on /api",
+  "context": {
+    "modeAtBoot": "warn"
+  }
+}
+
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > doc-list (/api/mdx/qms/documents), boundary warn 40ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > change-list (/api/mdx/qms/changes), boundary warn 10ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > doc-review-due (/api/mdx/qms/documents/review-due), boundary warn 12ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > training-compliance (/api/mdx/qms/training/compliance), boundary warn 7ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > unread-count (/api/mdx/notifications/unread-count), boundary warn 7ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > unified work (/api/concept2cure/projects/5f0c2a41-7a8e-4d1b-9c55-1e2f3a4b5c6d/unified-work), boundary warn 7ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > doc-list (/api/mdx/qms/documents), boundary enforce 5ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > change-list (/api/mdx/qms/changes), boundary enforce 6ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > doc-review-due (/api/mdx/qms/documents/review-due), boundary enforce 7ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > training-compliance (/api/mdx/qms/training/compliance), boundary enforce 6ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > unread-count (/api/mdx/notifications/unread-count), boundary enforce 5ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > unified work (/api/concept2cure/projects/5f0c2a41-7a8e-4d1b-9c55-1e2f3a4b5c6d/unified-work), boundary enforce 5ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > doc-list (/api/mdx/qms/documents): the client left at standing read 1, in the /api boundary (authenticateToken) 59ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > doc-list (/api/mdx/qms/documents): the client left at standing read 2, in the global /api gate (authMiddleware), after the client was bound 68ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > change-list (/api/mdx/qms/changes): the client left at standing read 2, in the global /api gate 55ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > doc-review-due (/api/mdx/qms/documents/review-due): the client left at standing read 1, in the /api boundary 59ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > training-compliance (/api/mdx/qms/training/compliance): the client left at standing read 1, in the /api boundary 55ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > unread-count (/api/mdx/notifications/unread-count): the client left at standing read 1, in the /api boundary 54ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > loading unified work (/api/concept2cure/projects/5f0c2a41-7a8e-4d1b-9c55-1e2f3a4b5c6d/unified-work): the client left at standing read 3, in the mount's own authenticateToken 57ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a route with no scope installer still names the defect > REQUEST_DB_CONTEXT_REQUIRED, logged as a failure 4ms
+ ✓ server/db/__tests__/requestDb.test.ts > requestDb > returns a Drizzle wrapper bound to req.dbClient when one is set 30ms
+ ✓ server/db/__tests__/requestDb.test.ts > requestDb > fails closed with a typed error when dbClient is missing 2ms
+ ✓ server/db/__tests__/requestDb.test.ts > requestDb > fails closed when dbClient does not implement query 0ms
+ ✓ server/db/__tests__/requestDb.test.ts > requestDb > caches the wrapper on the request to avoid rebuilding per call 13ms
+ ✓ server/db/__tests__/requestDb.test.ts > requestPgClient (raw-SQL sibling for tables without a Drizzle schema) > hands back the request-scoped client itself 0ms
+ ✓ server/db/__tests__/requestDb.test.ts > requestPgClient (raw-SQL sibling for tables without a Drizzle schema) > fails closed with the same typed error when context is missing 0ms
+ ✓ server/db/__tests__/requestDb.test.ts > requestConnectable transaction ownership > keeps a healthy borrowed connection pinned but propagates uncertain completion to its actual owner 1ms
+ ✓ server/db/__tests__/requestDb.test.ts > a request whose client was released because its response ended > is refused as REQUEST_ENDED by requestPgClient, requestDb and requestConnectable, still failing closed as a missing context 1ms
+ ✓ server/db/__tests__/requestDb.test.ts > a request whose client was released because its response ended > leaves REQUEST_DB_CONTEXT_REQUIRED to a request that never had a client 1ms
+ ✓ server/db/__tests__/requestDb.test.ts > a request whose client was released because its response ended > serves a client retained past the response, and refuses it once its holder lets go 1ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > answers a missing-relation error without naming the relation 3ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > rejects the other driver-error shapes, not just the one that was reported 1ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > still gives the operator everything needed to find the real error 2ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > sends a code the client will not display and a sentence it will 1ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > omits the reference rather than inventing one when no request id was set 0ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError does not leak the underlying failure to the client > is falsifiable: the pre-fix behaviour would fail these assertions 0ms
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError on a request that ended before its database work ran > notes it, logs no failure and writes nothing to the ended response 1ms
+ × server/lib/__tests__/api-response-500-containment.test.ts > serverError on a request that ended before its database work ran > still logs it as a failure when the handler had already sent its own response 6ms
+   → expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "doc-create stopped: the request ended before its database work ran",
+      Object {
+        "code": "REQUEST_ENDED",
+        "correlationId": "req-2",
+      },
+    ]
+
+
+Number of calls: 1
+
+ ✓ server/lib/__tests__/api-response-500-containment.test.ts > serverError on a request that ended before its database work ran > still logs a request with no database context as a failure, with a 500 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/lib/__tests__/api-response-500-containment.test.ts > serverError on a request that ended before its database work ran > still logs it as a failure when the handler had already sent its own response
+AssertionError: expected "vi.fn()" to not be called at all, but actually been called 1 times
+
+Received:
+
+  1st vi.fn() call:
+
+    Array [
+      "doc-create stopped: the request ended before its database work ran",
+      Object {
+        "code": "REQUEST_ENDED",
+        "correlationId": "req-2",
+      },
+    ]
+
+
+Number of calls: 1
+
+ ❯ server/lib/__tests__/api-response-500-containment.test.ts:150:26
+    148|     const log = { error: vi.fn(), info: vi.fn() };
+    149|     serverError(res, log, 'doc-create', ended());
+    150|     expect(log.info).not.toHaveBeenCalled();
+       |                          ^
+    151|     expect(log.error).toHaveBeenCalledWith('doc-create failed', expect…
+    152|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 38 passed (39)
+   Start at  21:57:27
+   Duration  10.47s (transform 5.54s, setup 131ms, import 1.25s, tests 8.41s, environment 0ms)
+

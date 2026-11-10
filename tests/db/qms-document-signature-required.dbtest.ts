@@ -162,7 +162,7 @@ function post(path: string, body: Record<string, unknown>, by = approver) {
 }
 
 const approve = (id: number, by = approver) => post(`/${id}/approve`, { password: PASSWORD, meaning: 'APPROVED', reason: REASON }, by);
-const retire = (id: number) => post(`/${id}/retire`, { password: PASSWORD, meaning: 'APPROVED', reason: 'Retiring this controlled document for the P0-18 proof.' });
+const retire = (id: number) => post(`/${id}/retire`, { password: PASSWORD, meaning: 'retirement', reason: 'Retiring this controlled document for the P0-18 proof.' });
 const revise = (id: number) => post(`/${id}/revise`, { reason: 'Opening a revision for the P0-18 proof.', programId: PROGRAM });
 
 beforeAll(async () => {

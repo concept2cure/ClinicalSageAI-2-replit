@@ -1,0 +1,50 @@
+# Mutation 13 (finding: the mixed case claims 'read from what each sequence sent'). The lead claims it when any filed sequence is read from what it sent.
+# File: client/src/concept2cure/v2/surfaces/EctdFiledState.tsx
+# Replaced (exactly once):
+#   -   const allSent = filed.length > 0 && filed.every((s) => s.basis === 'transmit');
+# With:
+#   +   const allSent = filed.some((s) => s.basis === 'transmit');
+# Command: npx vitest run client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx
+# Exit code: 1 (non-zero = the test caught the mutation)
+# Restored byte for byte: sha256 e79daae6962b5d0818510c5b9cf58754606ec4869d2e0231def0d63bc437815b before and after
+# Run: 2026-11-02T01:29:55.392908Z
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > groups what is on file by module, naming each document’s section, holding sequence and act 230ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > says how a replaced document came to be on file, and adds nothing for one filed once (gap 6.2) 32ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > names the sequences it includes and the ones it does not, with the reason in words, never a stored status 29ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > says a failed read, never an empty dossier, and retries 56ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > tells "no submission" from "nothing filed" 25ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency: where each sequence’s record of what it put on file comes from (F1) > says the documents on file are read from what each sequence sent 25ms
+ × client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency: where each sequence’s record of what it put on file comes from (F1) > names a sequence read from its compiles, sent before the platform kept what each send carried 62ms
+   → expected 'On file at the agencythrough sequence…' to contain '2 documents are on file. Sequence 000…'
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency: where each sequence’s record of what it put on file comes from (F1) > says a sent sequence with no record of what it carried is not included, and why 28ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency: what the record cannot say is never shown as empty or complete (F1 review) > a sequence the agency acknowledged with no record of what it carried: not "nothing on file" 14ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency: what the record cannot say is never shown as empty or complete (F1 review) > a send that never settled is not said to be off file: its delivery is not known 29ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+   Start at  01:29:53
+   Duration  2.01s (transform 556ms, setup 156ms, import 660ms, tests 534ms, environment 502ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency: where each sequence’s record of what it put on file comes from (F1) > names a sequence read from its compiles, sent before the platform kept what each send carried
+AssertionError: expected 'On file at the agencythrough sequence…' to contain '2 documents are on file. Sequence 000…'
+
+Expected: "2 documents are on file. Sequence 0001 is read from what it sent; sequence 0000 is read from its compiles, recorded before the platform kept what each send carried, so what is listed for it may differ from what it sent: a document may be listed that it did not carry, or be missing that it did."
+Received: "On file at the agencythrough sequence 00012 documents are on file, read from what each sequence sent. Sequence 0001 is read from what it sent; sequence 0000 is read from its compiles, recorded before the platform kept what each send carried, so what is listed for it may differ from what it sent: a document may be listed that it did not carry, or be missing that it did. Includes 0000 (acknowledged by the agency), 0001 (sent to the agency). Not included: 0002 (not on file at the agency).Module 3SectionDocumentHeld in sequenceAct3.2.S.1General informationm3/32-body-data/general-v2.pdfFiled 0000 new (general.pdf), 0001 replaced (general-v2.pdf)0001replacedModule 5SectionDocumentHeld in sequenceAct5.3.5.1csr.pdfm5/csr.pdf0000new"
+
+ ❯ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx:158:24
+    156|     await screen.findByRole('table', { name: /Module 3/ });
+    157|     // Both bases named; no sentence claims one for all, and none patc…
+    158|     expect(cardText()).toContain('2 documents are on file. '
+       |                        ^
+    159|       + 'Sequence 0001 is read from what it sent; sequence 0000 is rea…
+    160|       + 'what each send carried, so what is listed for it may differ f…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+

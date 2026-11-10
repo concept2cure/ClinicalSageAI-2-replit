@@ -1,0 +1,38 @@
+ × template search in the existing New document picker > browses the returned catalog with a count and no additional reads 421ms
+ × template search in the existing New document picker > finds   pRoToCoL   in returned titles and metadata 135ms
+ × template search in the existing New document picker > finds dose protocol in returned titles and metadata 107ms
+ × template search in the existing New document picker > finds dose escalation in returned titles and metadata 105ms
+ × template search in the existing New document picker > finds clinical master in returned titles and metadata 101ms
+ × template search in the existing New document picker > finds Sponsor standards in returned titles and metadata 92ms
+ × template search in the existing New document picker > finds FDA in returned titles and metadata 76ms
+ × template search in the existing New document picker > finds M5 in returned titles and metadata 75ms
+ × template search in the existing New document picker > finds ctis-form in returned titles and metadata 130ms
+ × template search in the existing New document picker > finds registry:eu-cta in returned titles and metadata 139ms
+ × template search in the existing New document picker > finds EMA in returned titles and metadata 140ms
+ × template search in the existing New document picker > finds signed originals in returned titles and metadata 116ms
+ × template search in the existing New document picker > finds manual in returned titles and metadata 136ms
+ × template search in the existing New document picker > finds eCTD in returned titles and metadata 107ms
+ ✓ template search in the existing New document picker > clears a no-match query, restores browsing and keeps the typed document title 179ms
+ ✓ template search in the existing New document picker > keeps a chosen template when a later search excludes it and submits its original ID, module and selected projec
+ ✓ template search in the existing New document picker > preserves preparation placement and guidance when selected through metadata search 118ms
+ ✓ template search in the existing New document picker > permits keyboard typing, clearing, native selection, submission focus and dialog close 565ms
+ ✓ template search in the existing New document picker > resets the query and selection when the New document drawer is reopened 292ms
+ ✓ catalog state stays truthful in the picker > distinguishes a pending read from an empty catalog while allowing blank creation 89ms
+ ✓ catalog state stays truthful in the picker > explains an empty catalog and leaves a blank document unplaced until a module is chosen 125ms
+ ✓ catalog state stays truthful in the picker > keeps a http failure separate from an empty list 57ms
+ ✓ catalog state stays truthful in the picker > keeps a network failure separate from an empty list 82ms
+ ✓ catalog state stays truthful in the picker > keeps a malformed failure separate from an empty list 79ms
+ ✓ catalog state stays truthful in the picker > counts only loaded templates and retains the partial shared-catalog warning during search 92ms
+ ✓ filing guidance without hiding the global template library > promotes the exact filing and shared components without choosing the whole filing automatically 75ms
+ ✓ filing guidance without hiding the global template library > rejects a template choice retained from an earlier filing context before sending creation 95ms
+ × filing guidance without hiding the global template library > keeps the form when its filing becomes known after it opened, and creates the document 57ms
+ ✓ filing guidance without hiding the global template library > still requires a reopen when a filing that was known changes to another 70ms
+ ✓ filing guidance without hiding the global template library > does not infer a CTD placement for a new blank document 72ms
+ ✓ filing guidance without hiding the global template library > requires explicit reopen after filing round trip 145ms
+ ✓ filing guidance without hiding the global template library > requires explicit reopen after project round trip 141ms
+ ✓ filing guidance without hiding the global template library > requires explicit reopen after batched project round trip 205ms
+ ✓ filing guidance without hiding the global template library > requires explicit reopen after account replacement 209ms
+ ✓ filing guidance without hiding the global template library > requires explicit reopen after same-account session replacement 172ms
+ ✓ filing guidance without hiding the global template library > reopens with a fresh account catalog before creating a document under that account 206ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  15 failed | 21 passed (36)

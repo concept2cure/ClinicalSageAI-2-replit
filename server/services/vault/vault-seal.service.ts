@@ -19,7 +19,7 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 import { stableStringify } from '../../../shared/canonical-json.js';
 import { writeChainedAuditRow } from '../auditService.js';
 import { vaultBinaryAvailableSql, vaultDataEligibleSql } from '../document-data-disposition/eligibility.js';
-import { supersededSql } from './vault-version-family.js';
+import { readSuccessors, supersededSql, type VersionSuccessor } from './vault-version-family.js';
 import { vaultLifecycleStageSql } from './vault-document-filter.js';
 import { programInOrganization } from '../c2c/program-access.js';
 
@@ -176,10 +176,58 @@ function sealOf(r: Record<string, unknown>): VaultSeal {
   };
 }
 
-/** The project's seals, newest first. */
-export async function listSeals(q: Queryable, organizationId: number, programId: string): Promise<VaultSeal[]> {
+/** One sealed document as the seal list shows it: the manifest's record of it, never the document as it is now. */
+export interface SealedDocumentSummary {
+  /** The sealed version's vault.documents id, which the Vault's download opens. */
+  id: string;
+  title: string | null;
+  version: string | null;
+  indexNumber: string | null;
+  /** The first 12 hex characters of the content hash the seal recorded. */
+  shortHash: string | null;
+  lifecycleStage: string | null;
+  /**
+   * The later version that has since replaced the sealed one, and when (P-107): read from the version chain as it is
+   * now, beside the seal's record and never in place of it. Null: the sealed version is still the current one.
+   * Absent: the chain could not be read, which is not "current".
+   */
+  supersededBy?: VersionSuccessor | null;
+}
+
+/** A seal as the list shows it, with what it holds. */
+export interface ListedSeal extends VaultSeal {
+  /**
+   * The documents its stored manifest records, in the manifest's order. Null
+   * when that record cannot be read, or no longer hashes to the value recorded
+   * when it was signed. Null means not known, which is not "none".
+   */
+  documents: SealedDocumentSummary[] | null;
+}
+
+const textOf = (v: unknown): string | null => (typeof v === 'string' && v ? v : null);
+
+/**
+ * What a seal holds, from its stored manifest and nothing else. A seal is a
+ * snapshot, so no document is read again. Only this schema's record is read.
+ * An altered record does not list what was signed, so a manifest that no
+ * longer hashes to its recorded value is treated as unreadable, as verifySeal
+ * treats it.
+ */
+function sealHoldings(manifest: unknown, manifestSha256: string): SealedDocumentSummary[] | null {
+  const m = manifest as { schema?: unknown; documents?: unknown } | null;
+  const docs = m?.schema === SEAL_MANIFEST_SCHEMA ? m.documents : null;
+  if (!Array.isArray(docs) || !docs.every((d) => textOf((d as { id?: unknown } | null)?.id))) return null;
+  if (!sameDigest(sealManifestSha256(manifest as SealManifest), manifestSha256)) return null;
+  return (docs as SealDocument[]).map((d) => ({
+    id: d.id, title: textOf(d.title), version: textOf(d.version), indexNumber: textOf(d.indexNumber),
+    shortHash: textOf(d.contentHash)?.slice(0, 12) ?? null, lifecycleStage: textOf(d.lifecycleStage),
+  }));
+}
+
+/** The project's seals, newest first, each with what its stored manifest says it holds. */
+export async function listSeals(q: Queryable, organizationId: number, programId: string): Promise<ListedSeal[]> {
   const { rows } = await q.query(
-    `SELECT s.id::text, s.program_id::text, s.reason, s.manifest_sha256, s.document_count, s.sealed_by, s.sealed_at,
+    `SELECT s.id::text, s.program_id::text, s.reason, s.manifest, s.manifest_sha256, s.document_count, s.sealed_by, s.sealed_at,
             COALESCE(u.name, u.email) AS sealed_by_name
        FROM public.vault_data_room_seals s
        LEFT JOIN LATERAL public.actor_name(s.sealed_by) u ON TRUE
@@ -187,7 +235,21 @@ export async function listSeals(q: Queryable, organizationId: number, programId:
       ORDER BY s.sealed_at DESC, s.id`,
     [organizationId, programId],
   );
-  return rows.map(sealOf);
+  const seals = rows.map((r) => {
+    const seal = sealOf(r);
+    return { ...seal, documents: sealHoldings(r.manifest, seal.manifestSha256) };
+  });
+  /* One read of the version chain for every sealed version listed. What each seal recorded is untouched; a chain
+     that cannot be read leaves the field off, so the list never says "current" for a version it did not check. */
+  const ids = [...new Set(seals.flatMap((s) => (s.documents ?? []).map((d) => d.id)))];
+  if (!ids.length) return seals;
+  let successors: Map<string, VersionSuccessor>;
+  try {
+    successors = await readSuccessors(q, organizationId, programId, ids);
+  } catch {
+    return seals;
+  }
+  return seals.map((s) => ({ ...s, documents: s.documents?.map((d) => ({ ...d, supersededBy: successors.get(d.id) ?? null })) ?? null }));
 }
 
 /** The bytes check's reader: the one verified reader, or a refusal in its words. */

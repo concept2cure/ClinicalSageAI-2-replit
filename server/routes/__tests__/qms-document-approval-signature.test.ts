@@ -49,6 +49,10 @@ const H = vi.hoisted(() => ({
 // Fresh program/private-object authorization has a real persistence regression in the QMS lifecycle suite.
 vi.mock('../../services/authoring/authoring-program-access',()=>({authorizeAuthoringProgram:async()=>({principal:{id:'7',email:null,roles:['ADMIN']}}),AuthoringProgramAccessError:class extends Error{}}));
 
+// Training tasks are planned after COMMIT in their own read-only transaction (services/qms/training-task.ts,
+// tests/db/qms-training-tasks.dbtest.ts); here, only that the route asks once the act has committed.
+const T = vi.hoisted(() => ({ tasks: vi.fn(async (..._args: unknown[]) => undefined) }));
+vi.mock('../../services/qms/training-task', () => ({ reconcileTrainingTasks: (...args: unknown[]) => T.tasks(...args) }));
 vi.mock('../../db', () => ({
   pool: {
     query: (...a: unknown[]) => H.query(...a),
@@ -182,6 +186,7 @@ describe('QMS approval rechecks on the reserved request connection', () => {
 });
 
 beforeEach(() => {
+  T.tasks.mockClear();
   H.query.mockReset();
   H.txQuery.mockReset();
   H.release.mockReset();
@@ -382,6 +387,7 @@ describe('POST /api/mdx/qms/documents/:id/approve — the signed write path', ()
     // The sixth SELECT is the review route's (RR4): the document has none, so today's rule approves it.
     expect(txStatements()).toEqual(['BEGIN', 'SELECT', 'SELECT', 'SELECT', 'SELECT', 'SELECT', 'SELECT', 'UPDATE', 'INSERT', 'UPDATE', 'COMMIT']);
     expect(H.recordGoverned).toHaveBeenCalledTimes(1);
+    expect(T.tasks, 'the people assigned get their tasks after the commit').toHaveBeenCalledExactlyOnceWith(expect.anything(), ORG, { documentIds: [11] }, SIGNER);
     expect(H.persistSignature).toHaveBeenCalledTimes(1);
 
     const [client, params] = H.persistSignature.mock.calls[0] as [unknown, Record<string, any>];

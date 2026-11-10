@@ -1,0 +1,8 @@
+# After both amendments
+  ✓ applied: migrations/20261023_review_routes.sql
+  ✓ applied: migrations/20261029k_tenant_offboarding_custody.sql
+  ✓ applied: migrations/20261105_file_uploads_durable_object.sql
+✅ Schema migration complete — safe to roll services.
+
+# Replay (every file re-runs on every deploy, RULE 1)
+✅ Schema migration complete — safe to roll services.

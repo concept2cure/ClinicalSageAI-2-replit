@@ -1,0 +1,10 @@
+IND 145678
+We have the following requests:
+1. Provide the batch data for the lots.
+2. Provide the stability protocol, including:
+a. the storage conditions;
+b. the time points.
+3. Confirm CGMP.
+Sincerely,
+
+-- 1 of 1 --

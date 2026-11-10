@@ -1,0 +1,32 @@
+# Slice 4b (QP1), green
+
+## npx vitest run server/services/notifications/__tests__/notification-training-target.test.ts client/src/concept2cure/quality/__tests__/QualityNotificationTarget.test.tsx client/src/concept2cure/quality/__tests__/SopRegisterAuthoring.test.tsx client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx client/src/concept2cure/v2/__tests__/notificationTarget.test.ts
+ Test Files  5 passed (5)
+      Tests  74 passed (74)
+
+## Regression: server/services/notifications, every client notification suite, reviewRouteInbox, every Quality client suite, and every test that reads the notice contract
+ Test Files  38 passed (38)
+      Tests  384 passed (384)
+
+## bash dbtest.sh tests/db/qms-training-tasks.dbtest.ts (with the notice door case)
+ ✓ tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > reaches each person assigned with one task due the day it takes effect, and one notice
+ ✓ tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > opens each notice on the training reader for its person, through the one notification door (slice 4b)
+ ✓ tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > writes nothing when planned again
+ ✓ tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > completes only the task of the person who acknowledged the version
+ ✓ tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > writes a task only for the people an added assignment or role member newly covers
+ ✓ tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > withdraws a task when its person is no longer covered, and keeps the task of a person still named
+ ✓ tests/db/qms-training-tasks.dbtest.ts > a version approved for a later day > withdraws every open task when the document is retired
+ ✓ tests/db/qms-training-tasks.dbtest.ts > a version in force > is due now for someone it reached with no training period, and the sweep does not also say overdue
+ ✓ tests/db/qms-training-tasks.dbtest.ts > a version in force > is due 14 days after they were covered for someone assigned after it was in force (P-50 Q1)
+ ✓ tests/db/qms-training-tasks.dbtest.ts > a version in force > gives a task due in the future one due-soon notice and one overdue notice from the sweep
+ ✓ tests/db/qms-training-tasks.dbtest.ts > a version in force > distributes no release whose text no longer matches its signature: nobody could complete the task
+ ✓ tests/db/qms-training-tasks.dbtest.ts > a version in force > never undoes an approval whose tasks could not be written
+ ✓ tests/db/qms-training-tasks.dbtest.ts > a version in force > closes nothing when the plan could not be read
+ ✓ tests/db/qms-training-tasks.dbtest.ts > the next version approved for a later day > withdraws the open tasks of the version in force, writes its own, and only its own receipt completes them
+      Tests  14 passed (14)
+
+## bash dbtest.sh tests/db/task-filing-home.dbtest.ts tests/db/review-route-vault-rr1b.dbtest.ts
+Error: Vault fixture proof requires the recorded disposable database; retained QA is refused.
+ Test Files  1 failed | 1 passed (2)
+      Tests  10 passed | 8 skipped (18)
+(review-route-vault-rr1b refuses to run on any database but its recorded disposable one; task-filing-home, which resolves task notice targets on PostgreSQL, passes.)

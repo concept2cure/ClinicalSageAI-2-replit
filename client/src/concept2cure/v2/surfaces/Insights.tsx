@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useSearch } from 'wouter';
 import { I } from '../icons';
-import { useLiveData, EmptyState, ErrorState } from '../dataConnect';
+import { useLiveData, EmptyState, ErrorState, ProjectBack } from '../dataConnect';
 import { apiRequest, errorCodeOf, serverMessage } from '@/lib/queryClient';
 import { downloadBlob, safeFileName } from '../download';
 import { getOrgId } from '@/utils/authToken';
@@ -10,6 +10,7 @@ import { captureAuthoringSession, useAuthoringReadSession } from '../editor/auth
 import { canFinalizeReport, canGovernedWrite } from '@shared/constants/permissions';
 import { readinessPredicate, readinessQualifier } from '@shared/regulatory/readiness-statement';
 import { EsignModal, esignSignerOf, type EsigSignedManifest } from '../../_shared/components/EsignModal';
+import { ALL_ESIGN_MEANINGS } from '../../_shared/esignMeanings';
 import { GovernedTimestamp } from '../../_shared/components/GovernedTimestamp';
 import type { EsigMeaning } from '../../hooks/useEsignature';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
@@ -23,9 +24,12 @@ import { CatalogPanel, COUNTS_NOT_NARROWED, ORGANIZATION_WIDE_RECORDS, Organizat
 import { RunsPanel } from './InsightsRunsPanel';
 import { SchedulesPanel } from './InsightsSchedulesPanel';
 import { RunEvidence } from './InsightsRunEvidence';
+import { InsightsDevicePortfolio, type DevicePortfolioView } from './InsightsDevicePortfolio';
 import { LIBRARY_VIEWS, type LibraryReportType, type LibraryView } from './insightsLibraryShared';
-import type { BundlePdfContent, ReportRunRow } from './insightsLibraryModel';
+import { sealLineFrom, type BundlePdfContent, type ReportRunRow, type RunSealView } from './insightsLibraryModel';
 import { getSurfaceMeta } from '../registryModel';
+import { GlobalSchedule, type ScheduleProject } from './PyramidProject';
+import { getApplicationType } from '@shared/regulatory/global-document-registry';
 
 /* ── Entitlement tiers (mdx-entitlements) ── */
 
@@ -199,6 +203,8 @@ interface ProgramCtx {
   // Filing and agency come from authorized recorded registry metadata.
   // Missing/unverifiable context and the unsourced action date stay null.
   filing: string | null;
+  // The registry id of that filing (e.g. 'US_IND'); decides which packs fit.
+  registryId: string | null;
   indication: string | null;
   readiness: number | null;
   scope: string;
@@ -280,6 +286,10 @@ interface CanvasOverview {
   /** The programs the canvas can be opened on, for the picker shown when none is open. */
   programs?: Array<{ programId: string; code: string | null; label: string }>;
   portfolio: CanvasPortfolio;
+  /** Device analytics, folded into Reporting (D2, fold F4, 2026-10-30; decision
+   *  P-61 item 3): the device projects the reader can open, computed by the
+   *  server (report-os/device-portfolio.ts). Absent on a server that predates it. */
+  device?: DevicePortfolioView;
 }
 
 /** The name to call a program in prose.
@@ -303,6 +313,7 @@ function leadToProgramCtx(lp: CanvasLeadProgram): ProgramCtx {
     code: programName(lp),
     label: lp.label,
     filing: lp.filing,
+    registryId: lp.registryId ?? null,
     indication: lp.indication,
     readiness: lp.readiness,
     scope: lp.scope,
@@ -342,11 +353,21 @@ interface Preset {
 }
 
 /** A pack as defined: what it is for, in words that name no report. */
+/** The filings a pack is for, matched on the application registry's type and
+ *  family (shared/regulatory/global-document-registry). Absent: any filing. */
+interface PackFit {
+  applicationTypes?: string[];
+  families?: string[];
+  /** What it is for, as a reader says it: "a BLA". */
+  for: string;
+}
+
 interface PresetDef {
   id: string;
   label: string;
   types: string[];
   purpose: string;
+  fit?: PackFit;
 }
 
 /* A preset describes what the PACK contains — never what the reader's filing is
@@ -367,18 +388,18 @@ interface PresetDef {
    insightsReportsRunWhatTheyName.test.tsx (1b). */
 const RO_PRESETS: Record<string, PresetDef[]> = {
   pharma: [
-    { id: 'preapproval', label: 'Pre-approval command pack', types: ['readiness.executive_digest', 'ema.rmp_psur_signal_alignment', 'compliance.audit_assurance_pack'], purpose: 'For the run-up to an action date.' },
+    { id: 'preapproval', label: 'Pre-approval command pack', types: ['readiness.executive_digest', 'ema.rmp_psur_signal_alignment', 'compliance.audit_assurance_pack'], purpose: 'For the run-up to an action date.', fit: { families: ['marketing_authorization'], for: 'a marketing application' } },
     { id: 'globalfile', label: 'Global filing harmonization', types: ['ema.maa_readiness_assessment', 'china_nmpa.ctd_module_gap_analysis', 'provenance.evidence_trace_report'], purpose: 'For reusing the US dossier in other regions.' },
   ],
   biotech: [
-    { id: 'blaassembly', label: 'BLA assembly pack', types: ['readiness.executive_digest', 'provenance.evidence_trace_report', 'fcoi.disclosure_register'], purpose: 'For closing gaps before a BLA is filed.' },
+    { id: 'blaassembly', label: 'BLA assembly pack', types: ['readiness.executive_digest', 'provenance.evidence_trace_report', 'fcoi.disclosure_register'], purpose: 'For closing gaps before a BLA is filed.', fit: { applicationTypes: ['BLA'], for: 'a BLA' } },
     { id: 'nonclin', label: 'Nonclinical & CMC readiness', types: ['nonclinical.study_send_register', 'compliance.audit_assurance_pack'], purpose: 'For confirming Module 4 is submission-grade.' },
   ],
   medtech: [
-    { id: 'clearance', label: '510(k) clearance pack', types: ['usa_fda.estar_510k_equivalence_matrix', 'inspection.readiness_pack', 'compliance.audit_assurance_pack'], purpose: 'For keeping a 510(k) and the quality system ready for review.' },
+    { id: 'clearance', label: '510(k) clearance pack', types: ['usa_fda.estar_510k_equivalence_matrix', 'inspection.readiness_pack', 'compliance.audit_assurance_pack'], purpose: 'For keeping a 510(k) and the quality system ready for review.', fit: { applicationTypes: ['510(k)'], for: 'a 510(k)' } },
   ],
   diagnostics: [
-    { id: 'ivdperf', label: 'IVD performance & clearance pack', types: ['usa_fda.estar_510k_equivalence_matrix', 'inspection.readiness_pack', 'provenance.evidence_trace_report'], purpose: 'For an IVD 510(k) and the claims it rests on.' },
+    { id: 'ivdperf', label: 'IVD performance & clearance pack', types: ['usa_fda.estar_510k_equivalence_matrix', 'inspection.readiness_pack', 'provenance.evidence_trace_report'], purpose: 'For an IVD 510(k) and the claims it rests on.', fit: { applicationTypes: ['510(k)'], for: 'a 510(k)' } },
   ],
   cro: [
     { id: 'sponsor', label: 'Sponsor oversight pack', types: ['etmf.completeness_pack', 'inspection.readiness_pack'], purpose: 'For oversight across the sponsors and sites you run.' },
@@ -404,7 +425,7 @@ function roNamedList(labels: string[]): string {
  *  ones are listed once, as not computed in this release (roNotComputed), not
  *  as tiles inside packs. Each description is the pack's purpose and the
  *  reports it holds, by their catalog labels, so it names no other. */
-function roPresetsForSeg(seg: string, types: ReportType[]): Preset[] {
+function roPacksForSeg(seg: string, types: ReportType[]): Array<Preset & { fit?: PackFit }> {
   const runs = new Map(types.filter((t) => t.runnable).map((t) => [t.typeId, t.label] as const));
   return (RO_PRESETS[seg] || RO_PRESETS.pharma)
     .map(({ purpose, ...p }) => {
@@ -412,6 +433,32 @@ function roPresetsForSeg(seg: string, types: ReportType[]): Preset[] {
       return { ...p, types: held, why: `${purpose} It holds ${roNamedList(held.map((id) => runs.get(id) ?? id))}.` };
     })
     .filter((p) => p.types.length > 0);
+}
+
+/** Whether a pack fits the project's recorded filing. `null` when the filing is
+ *  not recorded or not in the registry: then nothing is known against it, and
+ *  the pack is offered, its card saying what it is for, as before. */
+function roPackFits(fit: PackFit | undefined, registryId: string | null | undefined): boolean | null {
+  if (!fit) return true;
+  const app = registryId ? getApplicationType(registryId) : undefined;
+  if (!app) return null;
+  return Boolean(fit.applicationTypes?.includes(app.applicationType) || fit.families?.includes(app.applicationFamily));
+}
+
+/** The packs offered for this project: the segment's, holding reports the
+ *  catalog computes, and fitting its filing (a BLA pack is not offered on an
+ *  IND). Seen in the running app, 2026-11-02. */
+function roPresetsForSeg(seg: string, types: ReportType[], registryId?: string | null): Preset[] {
+  return roPacksForSeg(seg, types).filter((p) => roPackFits(p.fit, registryId) !== false).map(({ fit: _fit, ...p }) => p);
+}
+
+/** The packs not offered because the filing does not fit, said rather than
+ *  dropped: "Not offered for this IND: the BLA assembly pack (for a BLA)." */
+function roPacksNotOffered(seg: string, types: ReportType[], registryId?: string | null): string | null {
+  const app = registryId ? getApplicationType(registryId) : undefined;
+  const out = roPacksForSeg(seg, types).filter((p) => roPackFits(p.fit, registryId) === false);
+  if (!app || out.length === 0) return null;
+  return `Not offered for this ${app.applicationType}: ${roNamedList(out.map((p) => `${p.label} (for ${p.fit?.for})`))}.`;
 }
 
 /** The program's catalog types no engine computes, by label, each once. */
@@ -488,6 +535,8 @@ function roRouteIntent(utterance: string): { matched: boolean; name?: string; ca
     regional_gap_analysis: ['gap', 'gaps', 'market', 'region', 'fda', 'ema', 'pmda', 'missing'],
     compare_regions: ['compare', 'comparison', 'versus', 'harmonization', 'markets', 'delta'],
     get_prediction: ['predict', 'prediction', 'forecast', 'risk', 'trajectory', 'likelihood'],
+    // THE_PROGRAM §5: the global schedule, each project's filing date and review clock side by side.
+    global_schedule: ['schedule', 'timeline', 'timelines', 'milestones', 'clock', 'clocks', 'dates', 'when'],
   };
   const scored = Object.keys(keywords).map(name => ({ name, score: keywords[name].reduce((a, kw) => a + (tokens.has(kw) ? 1 : 0), 0) })).sort((a, b) => b.score - a.score);
   const best = scored[0];
@@ -502,6 +551,20 @@ function roMarketsIn(utterance: string): string[] {
   const checks: [string, string][] = [['fda', 'FDA'], ['ema', 'EMA'], ['pmda', 'PMDA'], ['nmpa', 'NMPA'], ['mhra', 'MHRA'], ['health canada', 'Health Canada'], ['tga', 'TGA'], ['mfds', 'MFDS']];
   checks.forEach(([k, v]) => { if (t.includes(k)) out.push(v); });
   return out;
+}
+
+/* ── The global schedule (S11 step 6b; THE_PROGRAM §5) ──
+   Not a readiness figure and not the Enterprise rollup: every reader sees the projects they can open on one axis,
+   each from its own plan's dates (the schedule engine) and its agency's published clock. Nothing is computed here. */
+function roScheduleReply(tool: string, programs: NonNullable<CanvasOverview['programs']>): RouteReply {
+  const projects = programs.map((p) => ({ programId: p.programId, name: programName(p) }));
+  if (projects.length === 0) return { tool, text: 'There is no project you can open, so there is no schedule to lay out.', report: null, dashboard: null };
+  return {
+    tool,
+    text: `The schedule covers the ${projects.length === 1 ? 'one project' : `${projects.length} projects`} you can open, each from its own plan’s dates and its agency’s published review clock.`,
+    dashboard: { kind: 'schedule', label: 'Global schedule', why: 'Filing dates and review clocks', projects },
+    report: null,
+  };
 }
 
 /* ── Portfolio rollup (live, from overview.portfolio.programs) ── */
@@ -525,7 +588,7 @@ function roPortfolioFrom(programs: CanvasPortfolioProgram[]): PortfolioRow[] {
    preset is now offered as what it is: the standard starting pack for the
    segment. */
 function roSuggestForClient(p: ProgramCtx, seg: string, types: ReportType[]) {
-  const preset: Preset | null = roPresetsForSeg(seg, types)[0] ?? null;
+  const preset: Preset | null = roPresetsForSeg(seg, types, p.registryId)[0] ?? null;
   /* THE WORD "READY" IS NOT THE SERVER'S TO GIVE AWAY.
      This read `${p.code} is ${p.readiness}% ready` off the score alone. For a
      filing type with no resolved required-artifact matrix the score is section
@@ -544,17 +607,18 @@ function roSuggestForClient(p: ProgramCtx, seg: string, types: ReportType[]) {
      equivalence matrix", chosen by the shell's segment preference: the 510(k)
      prompt was offered to a biologic program, and neither report has an engine
      (QA 2026-10-08, j8). The prompts now name only what runs here. */
+  /* The facts open the page, under its title (D7 §D.4 step 4, note of
+     2026-11-02): a live fact is stated, never put behind a click. The preset
+     is the header's primary and says only what it builds, so no sentence
+     here claims it was chosen from these facts. */
   return {
-    headline: 'Build any governed report or dashboard — describe what you need.',
-    body: preset
-      ? `${rBit}.${pduBit} The ${preset.label} is the standard starting pack for ${SEG_LABEL[seg] || seg} — it is not picked from the readiness figure above.`
-      : `${rBit}.${pduBit}`,
+    facts: `${rBit}.${pduBit}`,
     preset,
     prompts: [
-      ...(preset ? [`Build the ${preset.label}`] : []),
       p.readiness != null ? `How ready is ${p.code} to file?` : `Generate the Executive Readiness Digest for ${p.code}`,
       `What reports can you run for ${p.code}?`,
       'Compare readiness across all my projects',
+      'When does each project file?',
     ],
   };
 }
@@ -603,6 +667,22 @@ interface RenderedReport {
   status: string;
   truthfulness: { allowedStatus: string; downgradedFrom?: string; reasons: string[] };
   sections: ROSection[];
+  /** Whether a finalize would be admitted, from the finalize route's own evaluation (GET /runs/:id/rendered).
+   *  Absent on a server that predates it; then Finalize is offered and the server decides, as before. */
+  finalEligibility?: { eligible: boolean; reasons: string[] };
+}
+
+/** The rendered read's finalize eligibility, or nothing when it is absent or malformed. */
+function finalEligibilityOf(body: unknown): RenderedReport['finalEligibility'] {
+  const f = (body as { finalEligibility?: { eligible?: unknown; reasons?: unknown } } | null)?.finalEligibility;
+  if (!f || typeof f.eligible !== 'boolean') return undefined;
+  return { eligible: f.eligible, reasons: Array.isArray(f.reasons) ? f.reasons.filter((r): r is string => typeof r === 'string') : [] };
+}
+
+/** Why a finalize would be refused, in a sentence: the gate's reasons without its "Cannot mark final:" lead. */
+export function finalizeHeldText(reasons: string[]): string {
+  const said = reasons.map((r) => r.replace(/^Cannot mark final:\s*/, '').replace(/\.$/, '')).filter(Boolean);
+  return `Can’t be finalized: ${said.length ? said.join('; ') : 'the report’s gate holds it below final'}.`;
 }
 
 /**
@@ -691,6 +771,8 @@ interface DashboardData {
   why: string;
   types?: string[];
   rows?: PortfolioRow[];
+  /** The global schedule's projects: the ones the reader can open (`overview.programs`). */
+  projects?: ScheduleProject[];
   markets?: string[];
   program?: ProgramCtx;
   /**
@@ -747,7 +829,7 @@ function roPortfolioCovers(count: number, truncated: boolean, dataScope?: string
  * "I will not show an estimated result" credited a judgement to AnA that a
  * `switch` had made. The routing is unchanged; the first person is gone.
  */
-function roRouteReply(utterance: string, tier: string, ctx: { program: ProgramCtx; portfolio: CanvasPortfolio; types: ReportType[]; report?: RenderedReport | null }): RouteReply {
+function roRouteReply(utterance: string, tier: string, ctx: { program: ProgramCtx; portfolio: CanvasPortfolio; types: ReportType[]; report?: RenderedReport | null; programs?: CanvasOverview['programs'] }): RouteReply {
   const c = ctx;
   const route = roRouteIntent(utterance);
   const name = route.matched ? route.name! : (route.candidates && route.candidates[0]) || 'generate_report';
@@ -771,6 +853,7 @@ function roRouteReply(utterance: string, tier: string, ctx: { program: ProgramCt
     const truncated = ctx.portfolio.summary?.truncated === true;
     return { tool: name, text: `${roPortfolioCovers(rows.length, truncated, ctx.portfolio.dataScope)} The numbers are the governed readiness scores, ranked — not recomputed here.`, dashboard: { kind: 'portfolio', label: 'Portfolio readiness', why: portfolioScopeText(ctx.portfolio.dataScope), rows, truncated, dataScope: ctx.portfolio.dataScope }, report: null };
   }
+  if (name === 'global_schedule') return roScheduleReply(name, ctx.programs ?? []);
   if (name === 'compare_regions') {
     const markets = roMarketsIn(utterance);
     if (markets.length < 2) return { tool: name, question: true, text: `Which markets should be compared for ${p.code}? Pick at least two.`, chips: [['FDA vs EMA', `Compare FDA and EMA for ${p.code}`], ['FDA vs EMA vs PMDA', `Compare FDA, EMA and PMDA for ${p.code}`], ['FDA vs NMPA', `Compare FDA and NMPA for ${p.code}`]], report: null, dashboard: null };
@@ -1020,11 +1103,13 @@ function reportHeading(report: RenderedReport): { fam: { label?: string; region?
 /** The run is headed by a project (or program, or submission) while its engine
  *  counted the organization's records: the run's own carried `computedScope`,
  *  never the type id. An account run is already headed as the organization. */
-function ROReport({ report, onExport, onFinalize, seal, runId, exporting = false }: {
+function ROReport({ report, onExport, onFinalize, finalizeHeld, seal, runId, exporting = false }: {
   report: RenderedReport;
   onExport: (r: RenderedReport) => void;
-  /** Offered only to a role that may finalize, on a run that is not final. */
+  /** Offered only to a role that may finalize, on a run that is not final and that a finalize would admit. */
   onFinalize?: () => void;
+  /** In Finalize's place, for a role that may finalize: why the server would refuse it. */
+  finalizeHeld?: string[];
   seal?: ReportSeal | null;
   /** The governed run behind the report, when there is one. It unlocks the
    *  evidence disclosure: GET /runs/:id/seal re-verifies the sealing act and
@@ -1070,7 +1155,7 @@ function ROReport({ report, onExport, onFinalize, seal, runId, exporting = false
           <div className="ro-sec-body">{sec.blocks.map((b, i) => <ROBlock key={i} block={b} />)}</div>
         </section>
       ))}
-      <ROReportActions report={report} onExport={onExport} onFinalize={onFinalize} exporting={exporting} />
+      <ROReportActions report={report} onExport={onExport} onFinalize={onFinalize} finalizeHeld={finalizeHeld} exporting={exporting} />
       {runId != null && <RunEvidence runId={runId} />}
     </div>
   );
@@ -1105,6 +1190,16 @@ function RunPackTile({ type, fam, onRun }: { type: ReportType; fam: { label?: st
 
 /* `onAsk` is gone from here too — it was declared, threaded down from the
    canvas and never called once in the whole component. */
+/** The global schedule's answer in the canvas (S11 step 6b): the Plan step's line, one row per project. */
+function ScheduleDashboard({ dashboard, onOpenProject }: { dashboard: DashboardData; onOpenProject?: (programId: string) => void }) {
+  return (
+    <div className="ro-dash">
+      <div className="ro-dash-head"><div><div className="ro-rep-eyebrow">Portfolio — schedule</div><h2 className="ro-rep-title">{dashboard.label}</h2></div></div>
+      <GlobalSchedule projects={dashboard.projects ?? []} onOpen={onOpenProject} />
+    </div>
+  );
+}
+
 function RODashboard({ dashboard, tier, actualTier, tierResolved, onRun, canRun, scope, catalog, onOpenProgram }: { dashboard: DashboardData; tier: string; actualTier: string; tierResolved: boolean; onRun: (t: ReportType) => void; canRun: boolean; scope: string; catalog: ReportType[]; onOpenProgram?: (r: PortfolioRow) => void }) {
   if (!dashboard) return null;
 
@@ -1341,9 +1436,11 @@ async function fetchRenderedRun(runId: number, type: ReportType, program: Progra
   if (!target) return null;
   try {
     const res = await apiRequest('GET', `/api/report-os/runs/${runId}/rendered`);
-    const rendered = (await res.json().catch(() => null))?.data;
+    const body = await res.json().catch(() => null);
+    const rendered = body?.data;
     if (!res.ok || !rendered || !Array.isArray(rendered.sections) || typeof rendered.generatedAt !== 'string') return null;
-    return reportFromRenderedRow(rendered, { id: runId, runUuid: '', reportTypeId: type.typeId, reportTypeLabel: type.label, scopeType: target.scope, scopeId: target.scopeId, scopeLabel: target.label, status: 'partial', confidence: null, createdAt: rendered.generatedAt }, type);
+    const report = reportFromRenderedRow(rendered, { id: runId, runUuid: '', reportTypeId: type.typeId, reportTypeLabel: type.label, scopeType: target.scope, scopeId: target.scopeId, scopeLabel: target.label, status: 'partial', confidence: null, createdAt: rendered.generatedAt }, type);
+    return { ...report, finalEligibility: finalEligibilityOf(body) };
   } catch {
     return null;
   }
@@ -1488,7 +1585,18 @@ async function fetchRenderedRunRow(
   if (!rendered || !Array.isArray(rendered.sections)) {
     return { note: `"${row.reportTypeLabel}" returned no document, so nothing is shown in its place.` };
   }
-  return { report: reportFromRenderedRow(rendered, row, catalog.find((t) => t.typeId === row.reportTypeId)) };
+  return { report: { ...reportFromRenderedRow(rendered, row, catalog.find((t) => t.typeId === row.reportTypeId)), finalEligibility: finalEligibilityOf(body) } };
+}
+
+/** A reopened sealed run's seal line, from its verified read-back (GET /runs/:id/seal); null when it does not verify. */
+async function readSealLine(runId: number): Promise<ReportSeal | null> {
+  try {
+    const res = await apiRequest('GET', `/api/report-os/runs/${runId}/seal`);
+    const body = await res.json().catch(() => null);
+    return res.ok ? sealLineFrom((body?.data ?? null) as RunSealView | null) : null;
+  } catch {
+    return null;
+  }
 }
 
 /** A finalized run's signature and seal, as the server returned them. */
@@ -1502,7 +1610,8 @@ export interface ReportSeal {
 }
 
 const REPORT_FINALIZE_MEANINGS: ReadonlyArray<EsigMeaning> = ['authorship', 'approval', 'responsibility'];
-const SEAL_MEANING_LABEL: Record<string, string> = { authorship: 'authorship', approval: 'approval', responsibility: 'responsibility' };
+/** The signature's meaning (21 CFR 11.50(a)(3)) in the signing dialog's own word (esignMeanings), never a token. */
+const sealMeaningLabel = (meaning: string): string => ALL_ESIGN_MEANINGS.find((m) => m.id === meaning)?.label ?? meaning;
 
 const textOr = (v: unknown, fallback: string): string => (typeof v === 'string' ? v : fallback);
 
@@ -1588,24 +1697,28 @@ function ROSealLine({ seal }: { seal: ReportSeal }) {
     <div className="ro-truth" role="note" data-testid="ro-seal">
       {I.shieldCheck}
       <span>
-        Final. Signed{seal.signer ? ` by ${seal.signer}` : ''} as {SEAL_MEANING_LABEL[seal.meaning] ?? seal.meaning},{' '}
+        Final. Signed{seal.signer ? ` by ${seal.signer}` : ''}, meaning {sealMeaningLabel(seal.meaning)},{' '}
         <GovernedTimestamp value={seal.signedAt} layout="inline" />. Sealed {seal.algorithm} {seal.hash.slice(0, 12)}… over {seal.atomCount} provenance atoms.
       </span>
     </div>
   );
 }
 
-/** Export reads; Finalize, when offered, signs. */
-function ROReportActions({ report, onExport, onFinalize, exporting = false }: {
+/** Export reads; Finalize, when offered, signs. Both are quiet: the page's one
+    primary is the header's (D7 §D.6), and an open report made Export a second. */
+function ROReportActions({ report, onExport, onFinalize, finalizeHeld, exporting = false }: {
   report: RenderedReport;
   onExport: (r: RenderedReport) => void;
   onFinalize?: () => void;
+  /** The gate's reasons a finalize would be refused, said in Finalize's place (never a signature asked for in vain). */
+  finalizeHeld?: string[];
   exporting?: boolean;
 }) {
   return (
     <div className="ro-rep-actions">
-      <button type="button" className="sp-primary" disabled={exporting} aria-busy={exporting} onClick={() => onExport(report)}>{I.download || I.fileText} {exporting ? 'Preparing PDF…' : 'Export PDF'}</button>
+      <button type="button" className="btn ghost" disabled={exporting} aria-busy={exporting} onClick={() => onExport(report)}>{I.download || I.fileText} {exporting ? 'Preparing PDF…' : 'Export PDF'}</button>
       {onFinalize && <button type="button" className="btn ghost" onClick={onFinalize}>{I.shieldCheck} Finalize…</button>}
+      {finalizeHeld && <span className="ro-rep-held" role="note" data-testid="ro-finalize-held">{finalizeHeldText(finalizeHeld)}</span>}
     </div>
   );
 }
@@ -1619,18 +1732,52 @@ const RO_PRESET_SEGMENT: Record<string, string> = {
 export function InsightsCanvas(props: OwnedSurfaceViewProps) {
   const session = useAuthoringReadSession(authService.getUser());
   const changed = session.key > 1;
-  if (changed && !authService.getUser()) return <div className="rc"><div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>
+  /* Why the canvas reloaded, against the session just before this one: another reader took it, or the same reader's
+     account was read again (opening the Account panel re-reads it; a changed role must withdraw private results, so
+     the canvas still reloads). The notice says which, never an account switch that did not happen (Reporting use
+     walk, 2026-11-09). Updated once per session key, so a re-render does not move it. */
+  const sessions = useRef({ key: session.key, actor: session.actor, before: session.actor });
+  if (sessions.current.key !== session.key) sessions.current = { key: session.key, actor: session.actor, before: sessions.current.actor };
+  const reloaded: ReportingReload = !changed ? false : sessions.current.before === session.actor ? 'reread' : 'account';
+  if (changed && !authService.getUser()) return <div className="page-inner rc" data-work-area="insights"><ReportingHead onNav={props.onNav} /><div className="rc-canvas">
     <ReportingRecoveryNotice ended />
     <EmptyState icon={I.lock} title="Sign in to read reporting" hint="Your previous reporting data has been withdrawn. Sign in again to reopen Run history." />
   </div></div>;
-  return <ReportingCanvasForSession key={session.key} {...props} owner={session} reloaded={changed} />;
+  return <ReportingCanvasForSession key={session.key} {...props} owner={session} reloaded={reloaded} />;
 }
 
-function ReportingRecoveryNotice({ ended = false }: { ended?: boolean }) {
+type ReportingReload = false | 'account' | 'reread';
+
+/* The work area's back link and page header (D5 §WA.4.2, D7 §D.4 steps 1-2).
+   The title is the surface's registry label. Every state of the canvas
+   (signed out, loading, a failed read, no project, the live canvas) carries
+   the same head, so the page is the same page while it loads. The way back is
+   the one shared link (dataConnect.tsx ProjectBack, D0-7). It renders nothing
+   with no project open. It is given the canvas's own read of the project, so
+   a project opened from the address by id alone is named, not "Project", until
+   the shell's title arrives (seen in the running app, 2026-11-02). */
+function ReportingHead({ onNav, sub, note, acts, name }: { onNav?: (id: string) => void; sub?: React.ReactNode; note?: React.ReactNode; acts?: React.ReactNode; name?: string }) {
+  return (
+    <>
+      <ProjectBack onNav={onNav} name={name} />
+      <header className="ph">
+        <div>
+          <h1 className="ph-title">{getSurfaceMeta('insights').label}</h1>
+          {sub ? <p className="ph-sub">{sub}</p> : null}
+          {note}
+        </div>
+        {acts ? <div className="ph-acts">{acts}</div> : null}
+      </header>
+    </>
+  );
+}
+
+function ReportingRecoveryNotice({ ended = false, reread = false }: { ended?: boolean; reread?: boolean }) {
+  if (reread) return <div className="ro-dash-note" role="status">Reporting reloaded because your account was read again, so it shows what your current access allows. Requests sent before may have completed: check Run history, Schedules and Bundles for their stored outcomes.</div>;
   return <div className="ro-dash-note" role="status">{ended ? 'Your reporting session ended.' : 'Reporting was reset for the current account.'} Requests sent before the change may have completed. In the original account, check Run history, Schedules and Bundles for their stored outcomes.</div>;
 }
 
-function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSurfaceViewProps & { owner: ReturnType<typeof captureAuthoringSession>; reloaded: boolean }) {
+function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSurfaceViewProps & { owner: ReturnType<typeof captureAuthoringSession>; reloaded: ReportingReload }) {
   const search = useSearch();
   const tabsId = React.useId();
 
@@ -1701,7 +1848,6 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
   // The displayed run's signature and seal once finalized here, and whether the signing dialog is open.
   const [seal, setSeal] = useState<ReportSeal | null>(null);
   const [signing, setSigning] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   /* Which artifact-pane view is open. 'report' is the report/dashboard/landing
      pane this surface has always shown and stays the default; the other four
@@ -1745,10 +1891,13 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
     setQuery('');
     setSigning(false); setBusy(false); setBundlePicks([]);
   }, [contextKey, hasReportingContext]);
-  /* The result sits just above the field; keep it in view as it changes. */
-  useEffect(() => { const el = scrollRef.current; if (el) el.scrollTop = el.scrollHeight; }, [found, runNote, busy]);
-
-  const pushCanvasTop = () => { const el = canvasRef.current; if (el) el.scrollTop = 0; };
+  /* A view change shows the top of the new view. The views were their own
+     scroll box, reset to 0; on one column the page scrolls, so the views are
+     brought into view only when their top has scrolled above the window. */
+  const pushCanvasTop = () => {
+    const el = canvasRef.current;
+    if (el && el.getBoundingClientRect().top < 0) el.scrollIntoView?.({ block: 'start' });
+  };
 
   /* Generate a report from the REAL governed backend. POST /api/report-os/runs
      computes + persists the run synchronously (no polling); GET /runs/:id/rendered
@@ -1809,7 +1958,7 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
     // roRouteReply resolves intent, chips and the entitlement lock — all
     // deterministic. When it resolves a report type, generation goes to the REAL
     // backend via runReport, not to a client-built preview.
-    const reply = roRouteReply(text, tier, { program, portfolio: { ...data.portfolio, dataScope: data.dataScope }, types: catalog, report });
+    const reply = roRouteReply(text, tier, { program, portfolio: { ...data.portfolio, dataScope: data.dataScope }, types: catalog, report, programs: data.programs });
     setFound({ text: reply.text, chips: reply.chips, locked: reply.locked, nav: reply.nav });
     if (reply.reportType) {
       await runReport(reply.reportType);
@@ -1935,6 +2084,11 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
     setReportRunId(row.id);
     setPaneView('report');
     pushCanvasTop();
+    // A sealed run reads the same reopened as just signed: its line, when its seal verifies.
+    if (result.report.status === 'final') {
+      const line = await readSealLine(row.id);
+      if (line && reportAccessCurrent() && request === requestSequence.current) setSeal(line);
+    }
   };
 
   const exportBundle = async (bundleId: string, name: string, content: BundlePdfContent) => {
@@ -1998,28 +2152,56 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
     publishShellProject({ id: row.programId, title: row.label, code: row.code });
     onNav?.('project-home');
   };
+  const openScheduleProject = (programId: string) => {
+    if (!reportAccessCurrent()) return;
+    const choice = (data?.programs ?? []).find((c) => c.programId === programId);
+    publishShellProject({ id: programId, title: choice?.label ?? undefined, code: choice?.code ?? undefined });
+    onNav?.('project-home');
+  };
   const libraryTabs = <ReportingTabs value={paneView} id={tabsId} onChange={view => { setPaneView(view); pushCanvasTop(); }} />;
-  const libraryPane = paneView === 'catalog' ? <CatalogPanel key={contextKey} types={libraryCatalog} onRun={runFromCatalog} canRun={canExecute} runUnavailableReason={unavailableRunReason} busy={busy} programLabel={program?.code ?? null} projectId={data?.leadProgram?.projectId} />
+  /* Preview plan (D7 §D.4 step 6): which plan the locks are read against, for
+     looking only. It sits with the Catalog's filters because that is where
+     the locks it changes are listed; the active item is the seg's quiet
+     raised state, never orange. */
+  const planControl = (
+    <div className="rl-filter">
+      <span className="gov-label" id={`${tabsId}-plan`}>Preview plan</span>
+      <div className="seg" role="group" aria-labelledby={`${tabsId}-plan`}>
+        {RO_TIERS.map(t => (<button key={t.id} type="button" className="seg-b" aria-pressed={tier === t.id} onClick={() => setTierOverride(t.id)}>{t.label}</button>))}
+      </div>
+    </div>
+  );
+  const libraryPane = paneView === 'catalog' ? <CatalogPanel key={contextKey} planControl={planControl} types={libraryCatalog} onRun={runFromCatalog} canRun={canExecute} runUnavailableReason={unavailableRunReason} busy={busy} programLabel={program?.code ?? null} projectId={data?.leadProgram?.projectId} />
     : paneView === 'runs' ? <RunsPanel types={libraryCatalog} scope={program ? { scopeType: program.scope, scopeId: program.scopeId, label: program.code } : null} onOpen={row => void openRunFromHistory(row)} onBundle={ids => { if (!reportAccessCurrent() || libraryActions.get(contextKey, 'bundle:create')) return; setBundlePicks(ids); setPaneView('bundles'); pushCanvasTop(); }} canBundle={canWrite && !libraryActions.get(contextKey, 'bundle:create')} />
-    : paneView === 'schedules' ? <SchedulesPanel key={contextKey} types={libraryCatalog} scope={program ? { scopeType: program.scope, scopeId: program.scopeId } : null} canWrite={canWrite} canSchedule={tierResolved && ['professional', 'enterprise'].includes(realTier)} actions={libraryActions} context={contextKey} accessCurrent={reportAccessCurrent} onSaved={msg => { if (reportAccessCurrent()) fireToast(msg); }} />
+    : paneView === 'schedules' ? <SchedulesPanel key={contextKey} types={libraryCatalog} scope={program ? { scopeType: program.scope, scopeId: program.scopeId, label: program.code } : null} canWrite={canWrite} canSchedule={tierResolved && ['professional', 'enterprise'].includes(realTier)} actions={libraryActions} context={contextKey} accessCurrent={reportAccessCurrent} onSaved={msg => { if (reportAccessCurrent()) fireToast(msg); }} />
     : paneView === 'bundles' ? <BundlesPanel key={contextKey} pendingRunIds={bundlePicks} canWrite={canWrite} pendingExports={pendingBundleExports} onExport={(id, name, content) => void exportBundle(id, name, content)} actions={libraryActions} context={contextKey} accessCurrent={reportAccessCurrent} onSaved={msg => { if (reportAccessCurrent()) fireToast(msg); }} onClearPending={() => { if (reportAccessCurrent()) setBundlePicks(now => now === bundlePicks ? [] : now); }} /> : null;
-  const reportPane = report ? <ROReport report={report} onExport={exportRep} onFinalize={canFinalize && reportRunId != null && report.status !== 'final' ? () => { if (reportAccessCurrent()) setSigning(true); } : undefined} seal={seal} runId={reportRunId} exporting={reportRunId != null && pendingReportExports.has(reportRunId)} /> : null;
+  /* Finalize is offered where a finalize would be admitted; where the server's
+     own evaluation says it would not, its reasons stand in Finalize's place
+     (Reporting use walk, 2026-11-09). */
+  const mayFinalizeHere = canFinalize && reportRunId != null && report != null && report.status !== 'final';
+  const finalizeHeld = mayFinalizeHere && report?.finalEligibility?.eligible === false ? report.finalEligibility.reasons : undefined;
+  const reportPane = report ? <ROReport report={report} onExport={exportRep} onFinalize={mayFinalizeHere && !finalizeHeld ? () => { if (reportAccessCurrent()) setSigning(true); } : undefined} finalizeHeld={finalizeHeld} seal={seal} runId={reportRunId} exporting={reportRunId != null && pendingReportExports.has(reportRunId)} /> : null;
   const visibleGeneration = requestSequence.current;
   const displayedReportCurrent = () => reportAccessCurrent() && displayedRun.current === reportRunId && requestSequence.current === visibleGeneration;
   const sealForDisplayedRun = (sealed: ReportSeal) => {
     if (displayedReportCurrent()) onSealed(sealed);
   };
   const planNotice = !tierResolved && <div className="ro-dash-note" role="status" data-testid="rc-tier-unresolved">{I.alertTriangle} {REPORT_PLAN_UNVERIFIED} This is not a statement about your plan — try again in a moment, and contact your administrator if it persists.</div>;
-  const recoveryNotice = reloaded && <ReportingRecoveryNotice />;
-  const withoutProgram = (content: React.ReactNode) => <div className="rc" {...ownerEvents}><div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>{libraryTabs}{recoveryNotice}{planNotice}<div role="tabpanel" id={`${tabsId}-panel`} aria-labelledby={`${tabsId}-${paneView}`}>{libraryPane || reportPane || content}</div>{busy && <div className="ro-dash-note" role="status">{I.clock} Opening the report…</div>}{runNote && !busy && <div className="ro-dash-note" role="alert">{I.alertTriangle} {runNote}</div>}<C2CToast msg={toast} />{signing && report && reportRunId != null && <ReportFinalizeModal runId={reportRunId} report={report} onClose={() => setSigning(false)} onSealed={sealForDisplayedRun} current={displayedReportCurrent} />}</div></div>;
+  const recoveryNotice = reloaded && <ReportingRecoveryNotice reread={reloaded === 'reread'} />;
+  /* The device section (fold F4): the device projects the reader can open, as
+     the overview computed them, on the Report tab's landing canvas, with or
+     without a project open. It shows nothing for a reader with no device project. */
+  const deviceSection = paneView === 'report' && !report && !dashboard ? <InsightsDevicePortfolio device={data?.device} /> : null;
+  const withoutProgram = (content: React.ReactNode) => <div className="page-inner rc" data-work-area="insights" {...ownerEvents}><ReportingHead onNav={onNav} /><div className="rc-canvas" ref={canvasRef}>{libraryTabs}{recoveryNotice}{planNotice}<div role="tabpanel" id={`${tabsId}-panel`} aria-labelledby={`${tabsId}-${paneView}`}>{libraryPane || reportPane || content}{deviceSection}</div>{busy && <div className="ro-dash-note" role="status">{I.clock} Opening the report…</div>}{runNote && !busy && <div className="ro-dash-note" role="alert">{I.alertTriangle} {runNote}</div>}<C2CToast msg={toast} />{signing && report && reportRunId != null && <ReportFinalizeModal runId={reportRunId} report={report} onClose={() => setSigning(false)} onSealed={sealForDisplayedRun} current={displayedReportCurrent} />}</div></div>;
 
   // Four-state render: loading → honest error → honest empty (no flagship
   // program) → the live canvas. No fixture stand-in in any state.
   const snapshotMatchesProgram = !openProgramId || !data?.openProgram || data.openProgram.programId === openProgramId;
   if (overview.loading || !snapshotMatchesProgram) {
     return (
-      <div className="rc" {...ownerEvents}>
-        <div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>
+      <div className="page-inner rc" data-work-area="insights" {...ownerEvents}>
+        <ReportingHead onNav={onNav} />
+        <div className="rc-canvas">
           {recoveryNotice}
           <EmptyState busy icon={I.barChart} title="Loading the reporting canvas…" />
         </div>
@@ -2028,8 +2210,9 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
   }
   if (overview.error) {
     return (
-      <div className="rc" {...ownerEvents}>
-        <div className="rc-canvas" style={{ gridColumn: '1 / -1' }}>
+      <div className="page-inner rc" data-work-area="insights" {...ownerEvents}>
+        <ReportingHead onNav={onNav} />
+        <div className="rc-canvas">
           {recoveryNotice}
           <ErrorState
             title="Couldn't load the reporting canvas"
@@ -2106,9 +2289,57 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
     );
   }
   const p = program; // narrowed non-null past the guards above
+  const packs = roPresetsForSeg(seg, catalog, p.registryId);
+  const packsNotOffered = roPacksNotOffered(seg, catalog, p.registryId);
+  const notComputed = roNotComputed(catalog);
+  const segLabel = SEG_LABEL[seg] || seg;
 
   return (
-    <div className="rc" {...ownerEvents}>
+    <div className="page-inner rc" data-work-area="insights" {...ownerEvents}>
+      <ReportingHead
+        onNav={onNav}
+        name={p.label}
+        sub={<>Governed reports for {p.code}. {suggest.facts} Every value is computed from the governed record; nothing is estimated.</>}
+        note={!canWrite && (
+          <p className="ph-sub" role="note" data-testid="rc-view-only">
+            {I.lock} View only. Running a governed report needs an editor role in this organization.
+          </p>
+        )}
+        acts={<>
+          {/* The organisation-wide audit and compliance reports live on their
+              own surface; this is the quiet way there. */}
+          <button type="button" className="btn ghost" onClick={() => onNav && onNav('compliance-reports')}>Audit & compliance reports</button>
+          {/* The one primary: the segment's standard pack. It is a static
+              per-segment default (roPresetsForSeg), and its card in the
+              Reports view says what it is for. */}
+          {suggest.preset && (
+            <button type="button" className="btn primary" onClick={() => suggest.preset && buildPreset(suggest.preset)}>Build the {suggest.preset.label}</button>
+          )}
+        </>}
+      />
+      {/* Find a report: one line under the header. A plain search field, not
+          the composer's look: it runs a deterministic router, and nothing but
+          the conversation may look like talking to AnA (FILING_SPINE §7.2 F6;
+          confirmed by the founder with P-91). Find is quiet for the same reason:
+          orange is the send glyph's in a conversation. Enter finds, as the
+          button does; the words stay after a search, so the field always says
+          what the result answers. */}
+      <div className="rc-find" role="search">
+        <label className="rc-find-l" htmlFor={fieldId}>Find a report</label>
+        <input id={fieldId} type="text" className="c2c-input rc-find-i" value={query} placeholder={`A report type, market or question for ${p.code}`}
+          onChange={e => setQuery(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void findReport(); } }} />
+        <button type="button" className="btn ghost" disabled={!tierResolved || !query.trim() || busy} onClick={() => void findReport()}>Find</button>
+      </div>
+      {/* Suggestions run the same router as the field, not AnA, so they carry
+          the search glyph, not AnA's mark. */}
+      <div className="sp-starters" data-layout="row" role="group" aria-label="Find suggestions">
+        {suggest.prompts.map(q => (
+          <button key={q} type="button" className="sp-starter" disabled={!tierResolved} onClick={() => findReport(q)}>
+            <span className="sk" aria-hidden="true">{I.search}</span><span>{q}</span>
+          </button>
+        ))}
+      </div>
       {/* -- Left: report routing pane --
            This column called itself "AnA -- Reporting analyst" and spoke in the
            first person, while what answered was `roRouteReply`: a deterministic
@@ -2133,45 +2364,15 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
            field labelled "Find a report", a Find button, and one result that
            the next search replaces. `roRouteReply` is still its router. -- */}
       <div className="rc-ana">
-        <div className="rc-ana-head">
-          <div className="rc-ana-id"><div><div className="nm">Report builder</div><div className="sub">{[p.code, p.filing, SEG_LABEL[seg] || seg].filter(Boolean).join(' — ')}</div></div></div>
-          {/* The organisation-wide audit and compliance reports live on their own
-              surface; this is the quiet way there from the program canvas. */}
-          <button type="button" className="pj-card-h-go" onClick={() => onNav && onNav('compliance-reports')}>Audit & compliance reports</button>
-        </div>
-
-        <div className="rc-ana-scroll" ref={scrollRef}>
-          {!canWrite && (
-            <div className="ro-dash-note" role="note" data-testid="rc-view-only">
-              {I.lock} View only. Running a governed report needs an editor role in this organization.
-            </div>
-          )}
-          {/* Opener. The program facts below are live; the preset is a static
-              per-segment default, and says so. */}
-          <div className="rc-opener">
-            <div className="ro-rep-eyebrow">Where to start</div>
-            <div className="rc-op-headline">{suggest.headline}</div>
-            <div className="rc-op-body">{suggest.body}</div>
-            {suggest.preset && (
-              <>
-                <button className="rc-preset-btn" onClick={() => suggest.preset && buildPreset(suggest.preset)}>{I.barChart} Build the {suggest.preset.label} {I.right}</button>
-                <div className="rc-op-why">{suggest.preset.why}</div>
-              </>
-            )}
-            <div className="rc-chips">
-              {suggest.prompts.map((q, i) => (<button key={i} className="rc-chip" disabled={!tierResolved} onClick={() => findReport(q)}>{q}</button>))}
-            </div>
-          </div>
-
+        <div className="rc-ana-scroll">
           {/* The result of the last search: the router's words, the choices it
               offers and the plan lock, in one section the next search replaces.
-              Not a thread: the searched words stay in the field below. The
+              Not a thread: the searched words stay in the field above. The
               section and its live region stay mounted, empty until the first
               search, so the first result is announced too (a live region
               inserted already holding its text is often not read). It is named
               "Result", a region, only while it holds one. */}
-          <section aria-label={found ? 'Result' : undefined} data-testid="rc-find-result" data-empty={found ? undefined : 'true'}>
-            {found && <div className="ro-rep-eyebrow">Result</div>}
+          <section className="rc-result" aria-label={found ? 'Result' : undefined} data-testid="rc-find-result" data-empty={found ? undefined : 'true'}>
             <p className="rc-op-body" role="status" style={found ? undefined : { margin: 0 }}>{found?.locked && !tierResolved ? REPORT_PLAN_UNVERIFIED : found?.text ?? ''}</p>
             {found?.locked && tierResolved && (
               <div className="rc-lock">
@@ -2183,8 +2384,12 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
                 </div>
               </div>
             )}
-            {found?.chips && found.chips.length ? <div className="rc-chips">{found.chips.map((c, ci) => (<button key={ci} className="rc-chip" disabled={!tierResolved} onClick={() => findReport(c[1])}>{c[0]}</button>))}</div> : null}
-            {found?.nav ? <div className="rc-chips"><button type="button" className="rc-chip" onClick={() => { if (found.nav && onNav) onNav(found.nav.surface); }}>{found.nav.label}</button></div> : null}
+            {found?.chips && found.chips.length ? (
+              <div className="sp-starters" data-layout="row" role="group" aria-label="Find next">
+                {found.chips.map((c, ci) => (<button key={ci} type="button" className="sp-starter" disabled={!tierResolved} onClick={() => findReport(c[1])}><span className="sk" aria-hidden="true">{I.search}</span><span>{c[0]}</span></button>))}
+              </div>
+            ) : null}
+            {found?.nav ? <div className="sp-starters" data-layout="row"><button type="button" className="sp-starter" onClick={() => { if (found.nav && onNav) onNav(found.nav.surface); }}><span>{found.nav.label}</span></button></div> : null}
           </section>
           {/* A run in flight is a sentence in a status region. It was three
               pulsing dots beside AnA's mark, which is how a chat says "typing". */}
@@ -2192,39 +2397,6 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
           {runNote && !busy && <div className="ro-dash-note" role="alert">{I.alertTriangle} {runNote}</div>}
         </div>
 
-        {/* Find a report, and the plan it is read against */}
-        <div className="rc-composer">
-          <div className="rc-tier" role="group" aria-label="Subscription tier">
-            <span className="rc-tier-lbl">Plan</span>
-            {RO_TIERS.map(t => (<button key={t.id} className={'rc-tier-b' + (tier === t.id ? ' on' : '')} aria-pressed={tier === t.id} onClick={() => setTierOverride(t.id)}>{t.label}</button>))}
-          </div>
-          {/* A preview looked exactly like the organisation's plan (reporting
-              review 2026-10-01). It says it is one, and names the real plan. */}
-          {previewing && (
-            <div className="ro-dash-note" role="status" data-testid="rc-tier-preview">
-              {I.info} Previewing {tierLabel(tier)}.{' '}
-              {tierResolved
-                ? <>Your organization's plan is {tierLabel(realTier)}.{' '}</>
-                : <>Your organization's plan could not be verified, so it is not named here.{' '}</>}
-              <button type="button" className="rc-chip" onClick={() => setTierOverride(null)}>
-                {tierResolved ? <>Back to {tierLabel(realTier)}</> : <>Stop previewing</>}
-              </button>
-            </div>
-          )}
-          {/* Not previewing, and the plan was never read: say so where the plan
-              is shown, so a wall of locks is not read as the plan's doing. */}
-          {!previewing && planNotice}
-          <label className="gov-label" htmlFor={fieldId} style={{ display: 'block', marginBottom: 5 }}>Find a report</label>
-          <div className="rc-input">
-            {/* One line: Enter finds, as the button does. The words stay after a
-                search, so the field always says what the result answers. */}
-            <textarea id={fieldId} rows={1} value={query} placeholder={`A report type, market or question for ${p.code}`}
-              onChange={e => setQuery(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void findReport(); } }} />
-            <button type="button" className="btn primary" disabled={!tierResolved || !query.trim() || busy} onClick={() => void findReport()}>Find</button>
-          </div>
-          <div className="rc-guardrail">{I.shieldCheck} {RO_GUARDRAIL}</div>
-        </div>
       </div>
 
       {/* -- Right: the report / dashboard artifact, and the library beside it --
@@ -2235,43 +2407,78 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
            this surface has always shown and remains the default, so a reader
            who never opens a tab sees exactly what they saw before. -- */}
       <div className="rc-canvas" ref={canvasRef}>
+        {/* A preview looked exactly like the organisation's plan (reporting
+            review 2026-10-01). It says it is one, and names the real plan, on
+            every view: a preview started from a locked result is still a
+            preview on the Reports view. Not previewing and the plan never
+            read: said above the views, so a wall of locks is not read as the
+            plan's doing. */}
+        {previewing ? (
+          <div className="ro-dash-note" role="status" data-testid="rc-tier-preview">
+            {I.info} Previewing {tierLabel(tier)}.{' '}
+            {tierResolved
+              ? <>Your organization's plan is {tierLabel(realTier)}.{' '}</>
+              : <>Your organization's plan could not be verified, so it is not named here.{' '}</>}
+            <button type="button" className="btn ghost" onClick={() => setTierOverride(null)}>
+              {tierResolved ? <>Back to {tierLabel(realTier)}</> : <>Stop previewing</>}
+            </button>
+          </div>
+        ) : planNotice}
         {libraryTabs}
         {recoveryNotice}
         <div role="tabpanel" id={`${tabsId}-panel`} aria-labelledby={`${tabsId}-${paneView}`}>
-        {libraryPane || reportPane || (dashboard ? <RODashboard dashboard={dashboard} tier={tier} actualTier={realTier} tierResolved={tierResolved} onRun={runFromTile} canRun={canExecute} scope={p.scope} catalog={catalog} onOpenProgram={openPortfolioProgram} />
+        {libraryPane || reportPane || (dashboard?.kind === 'schedule' ? <ScheduleDashboard dashboard={dashboard} onOpenProject={openScheduleProject} />
+          : dashboard ? <RODashboard dashboard={dashboard} tier={tier} actualTier={realTier} tierResolved={tierResolved} onRun={runFromTile} canRun={canExecute} scope={p.scope} catalog={catalog} onOpenProgram={openPortfolioProgram} />
           : (
-            <div className="rc-empty">
-              {/* "AnA builds the report" and "a pack AnA suggests … based on
-                  your whole portfolio" were the same two claims as the opener:
-                  a persona for a template matcher, and a portfolio-derived
-                  recommendation for `roPresetsForSeg(seg)`, which reads neither
-                  the portfolio nor the program. */}
-              <h2 className="rc-empty-h">Governed reports, built to order.</h2>
-              <p className="rc-empty-s">Find a report on the left, or start from one of the standard packs for {p.code}. Every value is computed from the governed record; nothing is estimated.</p>
-              <div className="rc-empty-presets">
-                {roPresetsForSeg(seg, catalog).map(pr => (
-                  <button key={pr.id} className="rc-empty-preset" onClick={() => buildPreset(pr)}>
-                    <div className="rc-ep-h">{I.barChart || I.grid} {pr.label}</div>
-                    <div className="rc-ep-s">{pr.why}</div>
-                    <div className="rc-ep-types">{pr.types.length} governed report{pr.types.length === 1 ? '' : 's'}</div>
-                  </button>
-                ))}
-              </div>
+            <>
+              {/* The standard packs (D7 §D.4 step 8): objects to pick, so cards.
+                  The page's sub says what the reports are; the centred
+                  "Governed reports, built to order." headline said it twice.
+                  A pack is `roPresetsForSeg(seg)`, a static per-segment list:
+                  its heading says so, and no copy here claims it was chosen
+                  from the portfolio or the program. */}
+              <section className="pj-sec" aria-labelledby={`${tabsId}-packs`}>
+                <div className="pj-sec-h">
+                  <h2 id={`${tabsId}-packs`}>Standard packs</h2>
+                  <span className="sec-sub">{packs.length} for {segLabel}</span>
+                </div>
+                {packs.length > 0 ? (
+                  <div className="rc-packs">
+                    {packs.map(pr => (
+                      <button key={pr.id} type="button" className="pj-card rc-pack" onClick={() => buildPreset(pr)}>
+                        <span className="pj-card-t">{pr.label}</span>
+                        <span className="pj-card-m">{pr.why}</span>
+                        <span className="pj-card-foot">{pr.types.length} governed report{pr.types.length === 1 ? '' : 's'}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="rc-packs-none">No standard pack for {segLabel} can run here. Find a report above, or open the Catalog.</p>
+                )}
+                {packsNotOffered && <p className="rc-packs-none" data-testid="rc-packs-not-offered">{packsNotOffered}</p>}
+              </section>
               {/* P-26: the program's report types no engine computes, listed
                   once, here, and never as tiles inside a pack. Asking for one
-                  by name says the same and runs nothing (roRouteReply). */}
-              {roNotComputed(catalog).length > 0 && (
-                <section aria-label="Not computed in this release" data-testid="ro-not-computed">
-                  <div className="ro-rep-eyebrow">Not computed in this release</div>
-                  <p className="rc-empty-s">
-                    No engine produces these reports for {p.code}, so no pack offers them and none is run: {roNotComputed(catalog).join('; ')}.
-                  </p>
-                </section>
+                  by name says the same and runs nothing (roRouteReply). A list,
+                  behind a disclosure: it was a fifteen-line run-on paragraph. */}
+              {notComputed.length > 0 && (
+                <details className="pj-more" data-testid="ro-not-computed">
+                  <summary>Reports not available for {p.code} ({notComputed.length})</summary>
+                  <p>No engine produces these reports for {p.code}, so no pack offers them and none is run.</p>
+                  <ul className="rc-nc-list">{notComputed.map(name => <li key={name}>{name}</li>)}</ul>
+                </details>
               )}
-            </div>
+            </>
           ))}
+        {deviceSection}
         </div>
       </div>
+      {/* How the numbers are made: the guardrail, whole, at the page foot. It
+          was six small lines under the field, read before anything was found. */}
+      <details className="pj-more">
+        <summary>How reports are computed</summary>
+        <p className="rc-guardrail">{RO_GUARDRAIL}</p>
+      </details>
       {signing && report && reportRunId != null && (
         <ReportFinalizeModal runId={reportRunId} report={report} onClose={() => setSigning(false)} onSealed={sealForDisplayedRun} current={displayedReportCurrent} />
       )}
@@ -2281,7 +2488,7 @@ function ReportingCanvasForSession({ onNav, segment, owner, reloaded }: OwnedSur
 }
 
 function ReportingTabs({ id, value, onChange }: { id: string; value: 'report' | LibraryView; onChange: (view: 'report' | LibraryView) => void }) {
-  const views = [{ id: 'report' as const, label: 'Report', icon: I.fileText }, ...LIBRARY_VIEWS];
+  const views = [{ id: 'report' as const, label: 'Reports' }, ...LIBRARY_VIEWS];
   const move = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
     const positions: Record<string, number> = { ArrowRight: (index + 1) % views.length, ArrowLeft: (index + views.length - 1) % views.length, Home: 0, End: views.length - 1 };
     const next = positions[event.key];
@@ -2290,5 +2497,5 @@ function ReportingTabs({ id, value, onChange }: { id: string; value: 'report' | 
     onChange(views[next].id);
     document.getElementById(`${id}-${views[next].id}`)?.focus();
   };
-  return <div className="rl-tabs" role="tablist" aria-label="Reporting views">{views.map((view, index) => <button key={view.id} id={`${id}-${view.id}`} type="button" role="tab" aria-selected={value === view.id} aria-controls={`${id}-panel`} tabIndex={value === view.id ? 0 : -1} className={'rl-tab' + (value === view.id ? ' on' : '')} onClick={() => onChange(view.id)} onKeyDown={event => move(event, index)}>{view.icon} {view.label}</button>)}</div>;
+  return <div className="tabs" role="tablist" aria-label="Reporting views">{views.map((view, index) => <button key={view.id} id={`${id}-${view.id}`} type="button" role="tab" aria-selected={value === view.id} aria-controls={`${id}-panel`} tabIndex={value === view.id ? 0 : -1} className="tab" onClick={() => onChange(view.id)} onKeyDown={event => move(event, index)}>{view.label}</button>)}</div>;
 }

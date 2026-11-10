@@ -23,7 +23,7 @@ import { createScopedLogger } from '../utils/logger';
 import { authedOrgId, requireAuthedOrgId } from '../utils/authedOrgId';
 import { resolvePlatformAdmin } from '../middleware/requirePlatformAdmin.js';
 import { verifyTenantChainOnAdminScope } from '../services/audit/tenant-chain-verdict.js';
-import { breakForTenant } from '../services/audit/audited-export.js';
+import { NO_CHAINED_ROWS_REASON, breakForTenant } from '../services/audit/audited-export.js';
 import { recordAuditRow, setAuditRowHeaders } from '../services/audit/audit-write-outcome';
 import { usableOrgId } from '../utils/authedOrgId';
 import { ProjectAdmissionRefusal, requireCurrentProjectActor } from './c2c/project-access';
@@ -264,7 +264,9 @@ async function chainVerdictFor(req: Request): Promise<ChainVerdict | null> {
     // verdict the compliance report could still give.
     return { scope: 'organization', ran: false, reason: err instanceof Error ? err.message : String(err) };
   }
-  if (v.ok === null) return { scope: 'organization', ran: false, reason: v.head?.reason ?? 'the chain head could not be checked' };
+  if (v.ok === null) return { scope: 'organization', ran: false, reason: v.reason ?? v.head?.reason ?? 'the chain head could not be checked' };
+  // A walk over no chained rows checked nothing: not "valid" (audited-export.ts tenantChainVerdict says the same).
+  if (v.ok && v.rowsChecked === 0) return { scope: 'organization', ran: false, reason: NO_CHAINED_ROWS_REASON };
   return {
     scope: 'organization',
     ran: true,

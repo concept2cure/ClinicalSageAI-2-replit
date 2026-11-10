@@ -11,10 +11,14 @@
  *
  * The "active programs" figure is upstream's truncation-aware count
  * (countFloor, 7332200d8) and is pinned by its own tests, not here.
+ *
+ * D2-1 (2026-11-01): the figures are the list view's footing and each row's
+ * readiness is a column there (.design/claude-convergence/D2.md §1.4 items 2,
+ * 6, 7), so these switch to the list before reading them.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -39,6 +43,9 @@ const props = () =>
 const summaryItem = (label: RegExp) =>
   Array.from(document.querySelectorAll('.pj-summary-i')).find((el) => label.test(el.textContent ?? ''));
 const figure = (label: RegExp) => summaryItem(label)?.querySelector('strong')?.textContent ?? null;
+const showList = () => fireEvent.click(screen.getByRole('button', { name: 'List' }));
+const listRow = (title: string) =>
+  Array.from(document.querySelectorAll('.ct-row')).find((c) => c.textContent?.includes(title)) as HTMLElement;
 
 const row = (id: string, status: string, readiness: number | null) => ({
   id, title: `Program ${id}`, ws: 'Pharma', code: id.toUpperCase(), stage: 'Planning',
@@ -53,6 +60,8 @@ describe('Projects — summary over a successful empty read', () => {
     apiRequest.mockImplementation(async () => ok({ data: [] }));
     render(<Projects {...props()} />);
     expect(await screen.findByText('No projects yet')).toBeTruthy();
+    expect(document.querySelector('.pj-summary'), 'the figures are the list view’s footing (D2-1)').toBeNull();
+    showList();
 
     expect(figure(/average readiness/i), 'a mean over no programmes rendered as a figure').toBe('Not recorded');
     expect(document.querySelector('.pj-summary')?.textContent).not.toMatch(/\d+%/);
@@ -74,6 +83,7 @@ describe('Projects — a mixed portfolio still has a mean', () => {
     );
     render(<Projects {...props()} />);
     await waitFor(() => expect(screen.getByText('Program a1')).toBeTruthy());
+    showList();
 
     // (40 + 20 + 90) / 3 = 50 — the mean still covers every program shown.
     expect(figure(/average readiness/i)).toBe('50%');
@@ -85,20 +95,25 @@ describe('Projects — a program with nothing measurable has no readiness figure
     apiRequest.mockImplementation(async () => ok({ data: [{ ...row('failed', 'active', null), readinessState: 'unavailable' }] }));
     render(<Projects {...props()} />);
     await screen.findByText('Program failed');
+    showList();
     expect(figure(/average readiness/i)).toBe('unavailable');
-    expect(screen.getByText('Dossier readiness unavailable')).toBeTruthy();
+    // The row's own figure is the list's Dossier readiness column (D2-1).
+    expect(listRow('Program failed').textContent).toContain('unavailable');
   });
   /* The server answers readiness null when the measurement failed or a
      program has no governed sections to measure (server/routes/c2c/projects.ts);
      both used to reach the card as a stored, never-updated "0% ready". */
-  it('says "Not recorded" on its card, never "0% ready"', async () => {
+  it('says "Not recorded" on its list row, never "0% ready"', async () => {
     apiRequest.mockImplementation(async (_m: string, url: string) =>
       url === '/api/c2c/projects' ? ok({ data: [row('u1', 'active', null)] }) : ok({ data: [] }),
     );
     render(<Projects {...props()} />);
     await waitFor(() => expect(screen.getByText('Program u1')).toBeTruthy());
-    // Named as the dossier readiness since QA 2026-10-08 (projectsCardStatusReadiness.test.tsx).
-    expect(screen.getByText('Dossier readiness Not recorded')).toBeTruthy();
+    // D2-1: the card states no readiness; the list's Dossier readiness column does
+    // (named so since QA 2026-10-08, projectsCardStatusReadiness.test.tsx).
+    showList();
+    expect(document.querySelector('.ct-head')?.textContent).toContain('Dossier readiness');
+    expect(listRow('Program u1').textContent).toContain('Not recorded');
     expect(screen.queryByText('0% ready')).toBeNull();
     expect(figure(/average readiness/i)).toBe('Not recorded');
   });
@@ -109,6 +124,7 @@ describe('Projects — a program with nothing measurable has no readiness figure
     );
     render(<Projects {...props()} />);
     await waitFor(() => expect(screen.getByText('Program m1')).toBeTruthy());
+    showList();
     // 40 over the one measured program — not (40 + 0) / 2.
     expect(figure(/average readiness/i)).toBe('40%');
   });

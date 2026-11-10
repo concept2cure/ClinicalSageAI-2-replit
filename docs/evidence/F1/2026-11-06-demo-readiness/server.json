@@ -1,0 +1,12 @@
+{
+  "pid": 24690,
+  "startedAt": "2026-11-06T20:24:03.712737+00:00",
+  "entrypoint": "npm run dev",
+  "port": 5100,
+  "codespacesFlags": true,
+  "runtimeRole": "app_service",
+  "ownerCredentialInApp": false,
+  "privateLog": "/workspace/scratch/demo-readiness-server.log",
+  "status": "stopped after successful CSR preparation and manual editor rehearsal",
+  "stoppedAt": "2026-11-06T20:34:48.161513+00:00"
+}

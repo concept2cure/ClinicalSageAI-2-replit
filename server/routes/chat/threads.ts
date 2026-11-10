@@ -17,15 +17,32 @@
 
 import type { Request, Response } from 'express';
 import { pool } from '../../db.js';
+import { requestPgClient } from '../../db/requestDb';
 import {
   deleteConversation,
   getThreadMessages,
+  readOwnerPrivateThreadMessages,
+  OwnerPrivateChatError,
+  threadHasOwnerPrivateBoundary,
   programIdForThread,
   readThreadSkills,
   resolveAccessibleThread,
   resolveThreadStore,
   ThreadAccessError,
 } from '../../services/chat-thread-helpers.js';
+
+/** This explicit HTTP reader never supplies plaintext to a model context. */
+async function messagesForOwner(req: Request, res: Response, threadId: string, organizationId: number) {
+  let privateBoundary: boolean;
+  try { privateBoundary = await threadHasOwnerPrivateBoundary(threadId); }
+  catch { res.locals.ownerPrivateCapture = true; throw new OwnerPrivateChatError(); }
+  if (!privateBoundary) return getThreadMessages(threadId);
+  res.locals.ownerPrivateCapture = true;
+  try {
+    const q = requestPgClient(req), userId = Number((req as any).user?.id);
+    return await readOwnerPrivateThreadMessages(q, { threadId, organizationId, userId });
+  } catch { throw new OwnerPrivateChatError(); }
+}
 
 /**
  * GET /api/chat/threads
@@ -196,7 +213,7 @@ export async function listThreadMessages(req: Request, res: Response) {
     }
 
     const limit = Math.min(parseInt((req.query.limit as string) || '30', 10), 100);
-    const messages = store === 'chat' ? await getThreadMessages(threadId) : await getAiThreadMessages(threadId);
+    const messages = store === 'chat' ? await messagesForOwner(req, res, threadId, Number(orgId)) : await getAiThreadMessages(threadId);
     // The skills the conversation's person picked (§10 of ANA_SKILLS): a
     // preference, so a failed read omits the field rather than failing the
     // transcript, and an omitted field never reads as "none picked".
@@ -251,7 +268,7 @@ export async function getThread(req: Request, res: Response) {
       });
     }
 
-    const messages = await getThreadMessages(threadId);
+    const messages = await messagesForOwner(req, res, threadId, Number(orgId));
 
     res.json({
       thread_id: threadId,

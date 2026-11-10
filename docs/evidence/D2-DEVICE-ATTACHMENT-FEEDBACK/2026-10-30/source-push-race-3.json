@@ -1,0 +1,35 @@
+{
+  "rejected_candidate": "fcb10fa0643647cc79244e55ce4beab26337bb3a",
+  "normal_gates_passed": true,
+  "typescript_errors": 0,
+  "push_result": "rejected concurrent ref compare-and-swap, exit1; no source accepted",
+  "push_log": "source-push-race-3.txt",
+  "new_canonical_base": "55d58630b1b02f28273b33adf9616a362a2f21a6",
+  "incoming_commits": 1,
+  "incoming_paths": [
+    "docs/evidence/D2-ONE-ANA/2026-10-30/folds-f4-f6-wip/README.md",
+    "docs/evidence/D2-ONE-ANA/2026-10-30/folds-f4-f6-wip/files.txt",
+    "docs/evidence/D2-ONE-ANA/2026-10-30/folds-f4-f6-wip/folds-f4-f6.part00.patch.txt",
+    "docs/evidence/D2-ONE-ANA/2026-10-30/folds-f4-f6-wip/folds-f4-f6.part01.patch.txt",
+    "docs/evidence/D2-ONE-ANA/2026-10-30/folds-f4-f6-wip/folds-f4-f6.part02.patch.txt",
+    "docs/evidence/D2-ONE-ANA/2026-10-30/folds-f4-f6-wip/folds-f4-f6.part03.patch.txt",
+    "docs/evidence/D2-ONE-ANA/2026-10-30/folds-f4-f6-wip/folds-f4-f6.part04.patch.txt",
+    "docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1b-wip/README.md",
+    "docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1b-wip/files.txt",
+    "docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1b-wip/p72-slice-1b.part00.patch.txt",
+    "docs/evidence/D6-PLATFORM-SCOPE/2026-10-29/slice-1b-wip/p72-slice-1b.part01.patch.txt"
+  ],
+  "runtime_changes": [],
+  "clean_merge": true,
+  "retained_qualification": {
+    "tests": 618,
+    "suites": 45,
+    "browser_checks": 8,
+    "browser_inputs": 36,
+    "publication_inputs": 128,
+    "input_mismatches": [],
+    "full_build_exit_code": 0
+  },
+  "canonical_table_rows_retained": 341,
+  "next_push": "pending every normal gate"
+}

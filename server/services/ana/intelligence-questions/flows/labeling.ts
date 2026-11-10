@@ -12,6 +12,7 @@
  */
 
 import type { FlowDefinition } from '../../../../../shared/types/intelligence-questions.js';
+import { usOrphanDesignationField } from './ind-submission-orphan-designation.js';
 
 export function createLabelingFlow(): FlowDefinition {
   return {
@@ -163,7 +164,82 @@ export function createLabelingFlow(): FlowDefinition {
             id: 'rems_required',
             label: 'Is a Risk Evaluation and Mitigation Strategy (REMS) required?',
             type: 'yes_no',
-            helpText: 'REMS programs may require Medication Guides, Communication Plans, ETASU, or other elements.',
+            /* 2026-11-02 (S4): a REMS is FDA's for a prescription drug or a
+               biologic, so a device, an IVD or an OTC product is not asked. */
+            visibleWhen: { field: 'product_type', operator: 'in', value: ['rx_drug', 'biologic', 'biosimilar', 'combination'] },
+            helpText:
+              'FDA can require a REMS for a prescription drug or a biologic (FD&C Act 505-1; 505(p)(1)(A)). It can include a Medication Guide, a patient package insert, a communication plan, packaging and disposal requirements, and Elements to Assure Safe Use (ETASU).',
+          },
+          /* 2026-11-02 (S4): xn_rems_without_etasu asked what the REMS consists
+             of in the NDA and BLA interviews and never here, so a labeling
+             programme with a REMS and no defined elements was told nothing.
+             Not required, so no visible-when deadlock. No value contains 'none'
+             or 'not_applicable'; "Not yet agreed with FDA" is read by the rule. */
+          {
+            id: 'rems_elements',
+            label: 'Which elements make up the REMS?',
+            type: 'multi_select',
+            visibleWhen: {
+              allOf: [
+                { field: 'rems_required', operator: 'eq', value: true },
+                { field: 'product_type', operator: 'in', value: ['rx_drug', 'biologic', 'biosimilar', 'combination'] },
+              ],
+            },
+            helpText:
+              'The elements FDA has required or agreed, as the REMS document lists them. Pick a Medication Guide or patient package insert here only where the REMS itself includes it. Choose "Not yet agreed with FDA" if the elements are still being negotiated.',
+            options: [
+              {
+                value: 'medication_guide',
+                label: 'Medication Guide (as a REMS element)',
+                commits:
+                  'The Medication Guide is part of the REMS. Its distribution is evaluated with the REMS, and a change to it is a REMS modification as well as a labeling change.',
+                authority: 'FD&C Act 505-1(e)(2)(A); 21 CFR Part 208 (distribution: 208.24); modification: 505-1(g)',
+              },
+              {
+                value: 'patient_package_insert',
+                label: 'Patient package insert (as a REMS element)',
+                commits:
+                  'The patient package insert is required REMS labeling rather than voluntary patient information, and it is evaluated with the REMS.',
+                authority: 'FD&C Act 505-1(e)(2)(B)',
+              },
+              {
+                value: 'communication_plan',
+                label: 'Communication plan to healthcare providers',
+                commits:
+                  'The sponsor sends FDA-agreed REMS communications, such as letters to healthcare providers and information through professional societies. How well they work is evaluated in the REMS assessments.',
+                authority: 'FD&C Act 505-1(e)(3); assessments: 505-1(d), (g)',
+              },
+              {
+                value: 'packaging_disposal',
+                label: 'Packaging or safe-disposal requirements',
+                commits:
+                  'For a drug with a serious risk of overdose, abuse or misuse, it is dispensed in specified packaging (such as unit-dose or set-duration packs) or with a safe-disposal packaging or system.',
+                authority: 'FD&C Act 505-1(e)(4), added by the SUPPORT for Patients and Communities Act (2018)',
+              },
+              {
+                value: 'etasu',
+                label: 'Elements to Assure Safe Use (ETASU)',
+                commits:
+                  'Restrictions on prescribing, dispensing or use. They are allowed only for a serious risk that the Medication Guide, patient package insert and communication plan cannot mitigate alone. The kinds are: prescriber training or certification; certified pharmacies or dispensers; dispensing only in certain settings; dispensing only with documentation of safe-use conditions such as lab results; patient monitoring; and a patient registry. They must not unduly burden patient access, and a generic shares a single system unless FDA waives it.',
+                authority: 'FD&C Act 505-1(f)(1)-(3) (kinds at (f)(3)(A)-(F); access and burden at (f)(2)); generics: 505-1(i)(1)(B)',
+              },
+              {
+                value: 'implementation_system',
+                label: 'Implementation system',
+                commits:
+                  'The sponsor runs a system to monitor and evaluate how dispensers and healthcare settings carry out the ETASU, and works to improve it. It goes with the certified-dispenser, restricted-setting or safe-use-documentation kinds of ETASU.',
+                authority: 'FD&C Act 505-1(f)(4)',
+              },
+              {
+                value: 'under_fda_discussion',
+                label: 'Not yet agreed with FDA',
+                commits:
+                  'The REMS elements are still being negotiated. AnA records the REMS as having no defined elements yet, which raises a warning, and labeling tied to the REMS cannot be finalised until they are agreed.',
+                authority:
+                  'FD&C Act 505-1(a)(1) (FDA determines that a REMS is necessary, and the applicant submits a proposed REMS with the application); 505-1(a)(2) (post-approval)',
+              },
+            ],
+            allowOther: { label: 'Another element', prompt: 'Which element, as the REMS document names it?' },
           },
           {
             id: 'reference_product',
@@ -530,12 +606,15 @@ export function createLabelingFlow(): FlowDefinition {
             placeholder: 'e.g., Dako PD-L1 IHC 22C3 pharmDx',
             visibleWhen: { field: 'companion_diagnostic', operator: 'eq', value: 'yes' },
           },
-          {
-            id: 'orphan_designation',
-            label: 'Does the product have Orphan Drug designation?',
-            type: 'yes_no',
-            helpText: 'Orphan designation may affect labeling scope and market exclusivity claims.',
-          },
+          /* 2026-11-02 (S4): a yes/no asked of every product, devices and
+             diagnostics included, though FDA's orphan-drug designation is for
+             drugs and biologics. The positions every interview offers, asked
+             where the product is one. */
+          usOrphanDesignationField({
+            visibleWhen: { field: 'product_type', operator: 'in', value: ['rx_drug', 'biologic', 'biosimilar', 'combination'] },
+            helpText:
+              "The designation adds no labeling content for this applicant. For a biosimilar, the reference product's unexpired orphan exclusivity for an indication may require that indication to be carved out of the labeling (asked below). For a combination product whose primary mode of action is the device, say so in your own words.",
+          }),
           {
             id: 'accelerated_approval',
             label: 'Is this an accelerated approval based on a surrogate endpoint?',

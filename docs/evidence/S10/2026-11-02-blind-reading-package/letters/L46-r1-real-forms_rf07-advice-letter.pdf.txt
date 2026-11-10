@@ -1,0 +1,47 @@
+DEPARTMENT OF HEALTH AND HUMAN SERVICES
+Public Health Service
+Food and Drug Administration
+Silver Spring MD 20993
+IND 138899
+ADVICE/INFORMATION REQUEST
+Coastal Biopharma Corp.
+Attention: Emily Rogers, MS
+Associate Director, Regulatory Affairs
+400 Ocean Boulevard
+San Diego, CA 92101
+Dear Ms. Rogers:
+Please refer to your Investigational New Drug Application (IND) submitted under section 505(i) of
+the Federal Food, Drug, and Cosmetic Act (FDCA) for CBP-901 (ravotinib) capsules.
+We also refer to your submission dated July 30, 2026 (Serial No. 0042), containing protocol
+CBP-901-201 entitled "A Phase 2, Randomized, Double-Blind, Placebo-Controlled Study of CBP-901 in
+Patients with Moderate to Severe Plaque Psoriasis."
+We have reviewed your submission and have the following comments and recommendations. We
+request that you submit a protocol amendment addressing these comments before enrolling subjects.
+Clinical
+1. The proposed primary endpoint, the proportion of subjects achieving PASI 75 at Week 12, is
+acceptable. However, we recommend that you also evaluate the proportion of subjects achieving an
+sPGA score of 0 or 1 with at least a 2-grade improvement from baseline as a co-primary endpoint.
+2. Your proposed exclusion criteria do not exclude subjects with a history of serious infections.
+Revise the exclusion criteria to exclude subjects with active or chronic infections, including
+tuberculosis, hepatitis B, and hepatitis C.
+Biostatistics
+3. Specify how intercurrent events, such as discontinuation of study drug due to lack of efficacy
+or use of rescue medication, will be handled in the primary analysis. Refer to ICH E9(R1).
+4. Provide the sample size calculation, including the assumed response rates, the type I error
+rate, and the power.
+Clinical Pharmacology
+5. Collect sparse pharmacokinetic samples from all subjects at Weeks 2, 4, 8, and 12 to support a
+population pharmacokinetic analysis.
+Please submit your protocol amendment as a new submission to this IND. If you have any questions,
+call Anne Walker, Regulatory Project Manager, at (301) 796-3333.
+Sincerely,
+{See appended electronic signature page}
+Kevin Hall, MD
+Director
+Division of Dermatology and Dentistry
+Office of Immunology and Inflammation
+Office of New Drugs
+Center for Drug Evaluation and Research
+Reference ID: 5734567
+
+-- 1 of 1 --

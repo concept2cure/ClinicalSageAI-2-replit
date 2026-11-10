@@ -1,0 +1,174 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/__tests__/pma-modules-own-document.pglite.test.ts > the PMA screen's modules > are this project's PMA document, scored by the PMA mapper's 21 CFR 814 modules 13ms
+   → expected [ 'preclinical', 'clinical', …(4) ] to deeply equal [ 'admin-regulatory', …(9) ]
+ × server/services/__tests__/pma-modules-own-document.pglite.test.ts > the PMA screen's modules > say the same as the assembly verdict over the same document 5ms
+   → Cannot read properties of undefined (reading 'status')
+ × server/services/__tests__/pma-modules-own-document.pglite.test.ts > the PMA screen's modules > show a blank PMA as not started, whatever the organization's 510(k) sections say 4ms
+   → expected [ { id: 'preclinical', …(4) }, …(5) ] to have a length of 10 but got 6
+ × server/services/__tests__/pma-modules-own-document.pglite.test.ts > the PMA screen's modules > are none for a project with no PMA document 4ms
+   → expected [ { id: 'preclinical', …(4) }, …(5) ] to deeply equal []
+ × server/services/__tests__/pma-modules-own-document.pglite.test.ts > the PMA screen's modules > are not another organization's 5ms
+   → expected { id: 'labeling', …(4) } to match object { status: 'present', …(1) }
+(4 matching properties omitted from actual)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/pma-modules-own-document.pglite.test.ts > the PMA screen's modules > are this project's PMA document, scored by the PMA mapper's 21 CFR 814 modules
+AssertionError: expected [ 'preclinical', 'clinical', …(4) ] to deeply equal [ 'admin-regulatory', …(9) ]
+
+- Expected
++ Received
+
+  [
+-   "admin-regulatory",
+-   "device-description",
++   "preclinical",
++   "clinical",
+    "manufacturing",
+-   "nonclinical",
+-   "clinical",
+    "labeling",
+-   "ssed-summary",
+-   "statistical-analysis",
+-   "post-approval-study",
+-   "references",
++   "statistical",
++   "financial",
+  ]
+
+ ❯ server/services/__tests__/pma-modules-own-document.pglite.test.ts:127:36
+    125|   it("are this project's PMA document, scored by the PMA mapper's 21 C…
+    126|     const mods = await getPmaModules(ORG, WRITTEN);
+    127|     expect(mods?.map((m) => m.id)).toEqual([
+       |                                    ^
+    128|       'admin-regulatory', 'device-description', 'manufacturing', 'nonc…
+    129|       'labeling', 'ssed-summary', 'statistical-analysis', 'post-approv…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  server/services/__tests__/pma-modules-own-document.pglite.test.ts > the PMA screen's modules > say the same as the assembly verdict over the same document
+TypeError: Cannot read properties of undefined (reading 'status')
+ ❯ server/services/__tests__/pma-modules-own-document.pglite.test.ts:150:28
+    148|     const mods = byId((await getPmaModules(ORG, WRITTEN))!);
+    149|     for (const slot of verdict.sections) {
+    150|       expect(mods[slot.id].status === 'present', slot.id).toBe(slot.pr…
+       |                            ^
+    151|       expect(mods[slot.id].required, slot.id).toBe(slot.required);
+    152|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  server/services/__tests__/pma-modules-own-document.pglite.test.ts > the PMA screen's modules > show a blank PMA as not started, whatever the organization's 510(k) sections say
+AssertionError: expected [ { id: 'preclinical', …(4) }, …(5) ] to have a length of 10 but got 6
+
+- Expected
++ Received
+
+- 10
++ 6
+
+ ❯ server/services/__tests__/pma-modules-own-document.pglite.test.ts:157:18
+    155|   it("show a blank PMA as not started, whatever the organization's 510…
+    156|     const mods = await getPmaModules(ORG, BLANK);
+    157|     expect(mods).toHaveLength(10);
+       |                  ^
+    158|     expect(mods!.every((m) => m.status === 'not_started' && m.finished…
+    159|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  server/services/__tests__/pma-modules-own-document.pglite.test.ts > the PMA screen's modules > are none for a project with no PMA document
+AssertionError: expected [ { id: 'preclinical', …(4) }, …(5) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "desc": "Bench, animal, biocompatibility",
++     "docs": 1,
++     "id": "preclinical",
++     "label": "Preclinical",
++     "status": "complete",
++   },
++   {
++     "desc": "Pivotal trial — enrollment + safety",
++     "docs": 2,
++     "id": "clinical",
++     "label": "Clinical",
++     "status": "complete",
++   },
++   {
++     "desc": "QS Regulation 21 CFR 820",
++     "docs": 1,
++     "id": "manufacturing",
++     "label": "Manufacturing",
++     "status": "complete",
++   },
++   {
++     "desc": "Professional labeling · IFU",
++     "docs": 1,
++     "id": "labeling",
++     "label": "Labeling",
++     "status": "complete",
++   },
++   {
++     "desc": "SAP · interim analysis · borrowing",
++     "docs": 1,
++     "id": "statistical",
++     "label": "Statistical",
++     "status": "complete",
++   },
++   {
++     "desc": "Investigator disclosures · user fee",
++     "docs": 1,
++     "id": "financial",
++     "label": "Financial",
++     "status": "complete",
++   },
++ ]
+
+ ❯ server/services/__tests__/pma-modules-own-document.pglite.test.ts:162:46
+    160|
+    161|   it('are none for a project with no PMA document', async () => {
+    162|     expect(await getPmaModules(ORG, NO_PMA)).toEqual([]);
+       |                                              ^
+    163|   });
+    164|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  server/services/__tests__/pma-modules-own-document.pglite.test.ts > the PMA screen's modules > are not another organization's
+AssertionError: expected { id: 'labeling', …(4) } to match object { status: 'present', …(1) }
+(4 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "finished": [
+-     "H.1",
+-   ],
+-   "status": "present",
++   "status": "draft",
+  }
+
+ ❯ server/services/__tests__/pma-modules-own-document.pglite.test.ts:167:73
+    165|   it("are not another organization's", async () => {
+    166|     expect(await getPmaModules(ORG, ELSEWHERE)).toBeNull();
+    167|     expect(byId((await getPmaModules(OTHER_ORG, ELSEWHERE))!).labeling…
+       |                                                                         ^
+    168|   });
+    169| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+   Start at  04:37:48
+   Duration  3.01s (transform 619ms, setup 74ms, import 1.01s, tests 1.69s, environment 0ms)
+

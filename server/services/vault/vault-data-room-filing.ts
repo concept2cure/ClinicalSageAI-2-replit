@@ -27,6 +27,7 @@ import { vaultWriteRefusal } from './vault-write-authority';
 import { readSourceUploads, sourceIdList, type SourceUpload } from '../clinical-regulatory-evidence/evidence-spine.service.js';
 import { currentVersionLateral, supersededSql } from './vault-version-family.js';
 import { capturedBinaryAvailableSql, capturedDataEligibleSql } from '../document-data-disposition/eligibility.js';
+import { NATIVE_RECORD_ORIGIN } from '../clinical-regulatory-evidence/record-source.js';
 import { fileUploadIntoVault } from './vault-file-upload-to-vault.js';
 
 const logger = createScopedLogger('vault-data-room-filing');
@@ -110,8 +111,11 @@ export async function countDataRoomStages(q: Queryable, programId: string, organ
           WHERE s.organization_id = $2 AND s.client_program_id = $1
             AND s.source_type = 'client_document' AND s.deleted_at IS NULL AND s.is_current IS NOT FALSE
             AND ${capturedDataEligibleSql('s')} AND ${capturedBinaryAvailableSql('s')}
+            -- The project's Quality records are captured with no original file (record-source.ts): not files the
+            -- classifier reads, and the lane's list leaves them out, so the counts do too (2026-11-10).
+            AND s.provenance->>'origin' IS DISTINCT FROM $3
        ) x`,
-    [programId, organizationId],
+    [programId, organizationId, NATIVE_RECORD_ORIGIN],
   );
   const r = rows[0] ?? {};
   return { captured: r.captured ?? 0, classified: r.classified ?? 0, filed: r.filed ?? 0, needsReview: r.needs_review ?? 0 };

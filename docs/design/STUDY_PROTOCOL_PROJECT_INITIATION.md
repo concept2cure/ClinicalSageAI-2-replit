@@ -136,3 +136,53 @@ an artifact. A skipped focus is not a failed save and must not replay later as
 a delayed surprise. Keep saved-artifact identity/deduplication behavior explicit.
 Mark the artifact focus handled before refusing it, so a repeated event for the
 same saved artifact cannot jump the screen once the pending guard clears.
+
+## Continuation — shell controls preserve pending protocol work
+
+Launch row D2, W2. Extend the existing manual shell controls, retaining one
+project workflow and the shared canvas/generator/editor.
+
+### What already exists
+
+- `client/src/concept2cure/v2/Shell.tsx`: Rail, TopBar/project chip and CmdK
+  own shell requests. Rail and CmdK dispatch validated alias/step actions before
+  `onNav`; guarding only the router callback would leave a stranded action.
+- `navParams.ts`: one shared surface-leave registry, fail-closed callbacks and
+  native-dialog detection. It currently treats the navigation palette itself
+  as a blocking dialog; retain strict defaults for every existing caller.
+- `ceremony.ts`: mounted governed forms report their ownership. Preserve it.
+- `surfaces/ProtocolWorkNavigation.ts`: pending text/status/save and local-dialog
+  refusal; `editor/DocumentWorkbench.tsx` registers shared-editor dirty/busy
+  state. `RichSectionEditor.tsx` also owns `beforeunload` for pending text.
+- `toast.tsx`: canonical accessible, tone-aware refusal feedback; reuse it.
+- `V2App.tsx`: canonical routing/Live Drive owner. Surface-owned navigation is
+  intentionally unchanged: `editor/SourceImportDialog.tsx` closes and hands a
+  saved working copy to `openImportedDocument` synchronously, before React has
+  removed the source dialog. A blanket router check would strand that target.
+- `TaskTray.tsx` and `notificationNavigation.ts`: already check the shared
+  refusal before their own record/navigation handoffs; retain their owners.
+- `server/services/ana/navigationTools.ts`, entitlement navigation services and
+  `shared/navigation`: validated navigation and admission owners. No server,
+  schema, route, AnA tool or entitlement change is needed.
+
+Searches covered navigation, leave guards, dialogs, ceremonies, pending edits,
+rail/palette/project chip, saved-source handoffs, routes/services/schemas and
+AnA tools. Deleted-history search: `git log --all --diff-filter=D --
+'client/**/*Nav*' 'client/**/*Guard*' 'client/**/*Rail*' 'client/**/*CmdK*'
+'client/**/*SourceImport*'`. The checkout has bounded history; no owners are
+removed or replaced.
+
+Preflight shell navigation before action dispatch, routing or client-type
+selection. Reuse ceremony, shared refusal and legacy `beforeunload` ownership,
+showing the actual reason through the existing toast. A rejected palette result
+stays open with its query/selection, and never replays after pending work clears.
+The palette may exempt only its exact mounted dialog element from the native
+dialog scan; underlying dialogs and registered guards remain strict. No global
+class exemption, delayed navigation, inferred save or discard.
+
+Scope: rail destinations/logo/account navigation/client-type selection, top-bar
+project/help navigation, and palette results. Account sign-out, organization
+switching, entitlement-resolution dialog handoffs, surface-owned explicit
+handoffs and browser history retain their existing owners. Test real shell
+controls and action-bus side effects, including
+clean navigation and underlying-dialog/ceremony negative controls.

@@ -126,3 +126,18 @@ describe('Vault Versions — View', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: 'Download version 1.0 of Clinical protocol' })).toBeTruthy());
   });
 });
+
+/* P-107 item 3, renditions: a Word version is offered "View as PDF"; the note says what the rendition was made from. */
+describe('a PDF rendition of a Word version', () => {
+  it('is offered for a .docx version and for nothing else that is not a PDF', async () => {
+    const { viewableAsRendition, viewableAsPdf, renditionNote } = await import('../surfaces/VaultVersionViewer');
+    expect(viewableAsRendition({ fileName: 'Protocol v2.DOCX' })).toBe(true);
+    expect(viewableAsRendition({ fileName: 'report.pdf' })).toBe(false);
+    expect(viewableAsRendition({ fileName: 'adsl.xpt' })).toBe(false);
+    expect(viewableAsRendition({ fileName: null })).toBe(false);
+    expect(viewableAsPdf({ fileName: 'Protocol v2.docx' })).toBe(false);
+    expect(renditionNote('6012a4576b91' + 'f'.repeat(52))).toMatch(/made from the version with SHA-256 6012a4576b91…/);
+    expect(renditionNote(null)).toMatch(/made from this version/);
+    expect(renditionNote(null)).not.toMatch(/verified/);
+  });
+});

@@ -21,13 +21,17 @@
  *
  * @module client/src/concept2cure/v2/surfaces/biostatBridge
  */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
+import React, { useCallback, useEffect, useState } from 'react';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { I } from '../icons';
 import { EmptyState, isRowsWith, useLiveRows, type ListState } from '../dataConnect';
-import { C2CForm } from '../C2CForm';
 import { readShellProject } from '../shellProject';
 import { stashNavParamsForTarget } from '../navParams';
+import { SizingRunCheck } from './biostatSizingRun';
+/* The two governed writes and their reason forms, split out on 2026-11-02:
+   this module had reached the 500-line ceiling exactly, and they were the
+   block that depended on nothing else in it. */
+import { ApplySampleSizeForm, RaiseTasksForm } from './biostatGovernedWrites';
 import {
   EngineResultPanel,
   StatisticalReviewTable,
@@ -36,6 +40,8 @@ import {
   muted,
   pct,
   readinessChecksOf,
+  verdictTone,
+  verdictWord,
   type EngineResult,
   type StatisticalReadiness,
   type StatisticalReview,
@@ -92,7 +98,13 @@ export interface DesignAssessment extends EngineResult {
   existingDeliverables: string[];
   proposedTasks: BridgeTaskBlueprint[];
   existingTaskKeys: string[];
+  /** The stored run behind the planned N (bridge-service SizingRunRead). Absent from an older server. */
+  sizingRun?:
+    | { state: 'found'; runId: number; recordedAt: string; plannedSampleSize: number | null }
+    | { state: 'none' }
+    | { state: 'unreadable' };
 }
+
 
 export const APP_LABELS: Record<string, string> = {
   ind: 'IND', nda: 'NDA', bla: 'BLA', anda: 'ANDA', maa: 'MAA', '510k': '510(k)', de_novo: 'De Novo', pma: 'PMA', cta: 'CTA',
@@ -204,9 +216,12 @@ export function StudyDesignCard({ designs, selectedId, onSelect }: {
   onSelect: (studyId: string) => void;
 }) {
   return (
-    <div className="pj-card">
-      <div className="pj-card-h"><span className="t">Study design</span><span className="s">{scopeLabel()}</span></div>
-      <div className="pj-card-b" style={{ padding: 8 }}>
+    <section className="pj-sec" aria-label="Study design">
+      <div className="pj-sec-h">
+        <h2>Study design</h2>
+        <span className="sec-sub">{scopeLabel()}</span>
+      </div>
+      <>
         {designs.loading ? (
           <div role="status" className="scaf-note" style={{ padding: '12px 10px' }}>Loading study designs…</div>
         ) : designs.error ? (
@@ -217,22 +232,31 @@ export function StudyDesignCard({ designs, selectedId, onSelect }: {
             hint="Design a study in the study-design spine (or the protocol workspace) and it appears here to load into the engine. The presets below are worked examples, not your study." />
         ) : (
           <div className="sp-list">
+            {/* Selection is the attribute the row already sets, styled in CSS
+                ([data-work-area] .sp-row[aria-pressed="true"], D5-0's block),
+                not an inline orange tint — it was one of this page's four
+                orange fills, on a row that is a choice and not an act. */}
             {designs.rows.map((d) => (
-              <button key={d.studyId} className="sp-row"
-                style={{ width: '100%', textAlign: 'left', ...(selectedId === d.studyId ? { background: 'var(--accent-000)', boxShadow: 'inset 0 0 0 1px var(--accent-muted)' } : {}) }}
+              <button key={d.studyId} type="button" className="sp-row"
                 aria-pressed={selectedId === d.studyId}
                 onClick={() => onSelect(d.studyId)} title={`Load "${d.title}" into the engine`}>
                 <span className="sp-row-b">
                   <span className="sp-row-t">{d.title}</span>
                   <span className="sp-row-s">{[d.phase && 'Phase ' + d.phase, d.indication].filter(Boolean).join(' · ')}{d.readiness.primaryEndpoint ? ' · ' + d.readiness.primaryEndpoint : ''}</span>
+                  {/* Labelled, and under the title rather than beside it: in the
+                      300px column a labelled chip beside the title squeezed it
+                      to a word per line. */}
+                  <span className="bs-row-chip">
+                    <span className={'rd-chip tone-' + readinessTone(d.readiness.percent)} title="Share of applicable statistical checks that pass">Statistical readiness {d.readiness.percent}%</span>
+                  </span>
                 </span>
-                <span className={'rd-chip tone-' + readinessTone(d.readiness.percent)} title="Statistical readiness — share of applicable checks that pass">{d.readiness.percent}%</span>
+                {selectedId === d.studyId && <span className="bs-row-check" aria-hidden="true">{I.check}</span>}
               </button>
             ))}
           </div>
         )}
-      </div>
-    </div>
+      </>
+    </section>
   );
 }
 
@@ -243,21 +267,121 @@ export function StudyDesignCard({ designs, selectedId, onSelect }: {
  * placed. Its own component so the panel stays inside the repo's complexity
  * budget rather than suppressing the rule.
  */
+/** "a" or "an" as the label is SAID: an acronym by its first letter's name
+ *  ("an IND", "an NDA", "a BLA"), a word by its first sound ("a De Novo"). */
+function article(label: string): 'a' | 'an' {
+  return /^[A-Z][A-Z(]/.test(label) ? (/^[AEFHILMNORSX]/.test(label) ? 'an' : 'a') : (/^[aeiou]/i.test(label) ? 'an' : 'a');
+}
+
 function FilingSentence({ filing }: { filing: DesignAssessment['filing'] }) {
   const app = filing.applicationType;
+  /* No inline font-size: this sentence renders inside the assessment's
+     disclosure now, whose own rule sets the ramp. A hard 12px there was a
+     fourth size on a page that has four. */
   if (app) {
+    const label = APP_LABELS[app] ?? app;
     return (
-      <div style={{ fontSize: 12 }}>
-        Files as a <b>{APP_LABELS[app] ?? app}</b>
+      <p>
+        Files as {article(label)} <b>{label}</b>
         {filing.projectId === null ? <span style={muted}> — the project has no tracking record yet, so tasks and documents cannot be bound to it</span> : null}.
-      </div>
+      </p>
     );
   }
   return (
-    <div style={{ fontSize: 12, ...muted }}>
+    <p>
       {filing.programId
         ? `The project's type (${filing.programType ?? 'unknown'}) does not map to a filing type, so no placements are shown.`
         : 'This design is not linked to a project, so filing placements and task binding are unavailable.'}
+    </p>
+  );
+}
+
+/**
+ * What the engine made of this design, in the figures a reader scans for.
+ *
+ * These are `ResultLead`'s headline facts (D5 §B.4 step 3): the banner that
+ * carried them is deleted, and a section's heading is where a summary belongs.
+ * The honesty rules come with them, not just the numbers:
+ *
+ * - a design the engine did not size reads "Not sized", never a dash standing
+ *   in for a figure — `engineFigureIsUsable` is the same gate the governed
+ *   Apply write runs on, so the heading and the button cannot disagree;
+ * - a readiness read that carried no checks at all contributes nothing, where
+ *   "0 of 0 checks pass" would report a broken read as a clean design;
+ * - the verdict is toned exactly as its chip is, by the one tone map.
+ */
+function assessmentSummary(a: DesignAssessment): React.ReactNode {
+  const parts: React.ReactNode[] = [];
+  const n = computedTotalN(a.computation);
+  if (engineFigureIsUsable(a) && n !== null) {
+    parts.push(`${n} subjects`, `${pct(a.computation?.power ?? null)} power`);
+  } else {
+    parts.push('Not sized');
+  }
+  const verdict = a.judgment?.overallVerdict;
+  if (verdict) parts.push(<span data-tone={verdictTone(verdict)}>{verdictWord(verdict)}</span>);
+  const checks = readinessChecksOf(a.readiness);
+  if (checks.length > 0) parts.push(`${checks.filter((c) => c.ok).length} of ${checks.length} checks pass`);
+  return <>{parts.map((part, i) => <React.Fragment key={i}>{i > 0 ? ' · ' : ''}{part}</React.Fragment>)}</>;
+}
+
+/**
+ * How this assessment was reached, folded away.
+ *
+ * Three quiet lines used to sit flat in the panel body, each true and none of
+ * them the answer: where these deliverables file, which standards the gates
+ * checked, and the fact that no figure on the screen was computed in the
+ * browser. A reader who wants them wants them once; a reader reading the
+ * verdict was reading past them. They keep their words inside the disclosure
+ * (D5 §B.4 step 6), which is where this page's standing explanations live.
+ */
+function AssessmentNotes({ assessment: a }: { assessment: DesignAssessment }) {
+  const standards = Array.isArray(a.review?.standardsChecked) ? a.review.standardsChecked : [];
+  return (
+    <details className="pj-more">
+      <summary>Standards checked and how the engine works</summary>
+      <FilingSentence filing={a.filing} />
+      {standards.length > 0 && <p>Standards checked: {standards.join(' · ')}</p>}
+      {/* The engine and its version are named once, on the computation's own
+          line above, and not again here: a `<details>` is in the document
+          whether it is open or shut, so a second copy is a second thing to
+          keep in step and a second hit for anyone searching the page. */}
+      <p>
+        Nothing on this screen is computed in the browser. Every figure above comes from the deterministic
+        statistical engine named on the computation line, which stamps each document it generates with its own
+        version and with the record of the inputs it ran on.
+      </p>
+    </details>
+  );
+}
+
+/**
+ * The two governed writes this assessment offers, and the three screens the
+ * work continues on.
+ *
+ * The writes are hairline actions in the section's heading now rather than an
+ * orange primary in its body: on a screen whose one primary is "Open in
+ * editor", a second filled button was a second answer to "what do I do here?"
+ * Neither fires on its click — each opens a reason form, as before.
+ */
+function AssessmentActions({ assessment: a, openTasks, onForm }: {
+  assessment: DesignAssessment;
+  openTasks: number;
+  onForm: (f: 'apply' | 'tasks') => void;
+}) {
+  const sizable = engineFigureIsUsable(a);
+  return (
+    <div className="pj-sec-acts">
+      {/* The same gate as the Statistics tab's: the engine produced a total,
+          not merely a computation object. */}
+      <button type="button" className="btn ghost small" disabled={!sizable} onClick={() => onForm('apply')}
+        title={sizable ? 'Write the computed sample size and power onto the design (governed)' : 'Resolve the blocking gaps first'}>
+        {I.penLine} Apply sample size to design
+      </button>
+      <button type="button" className="btn ghost small" disabled={openTasks === 0} onClick={() => onForm('tasks')}
+        title={openTasks ? `${openTasks} proposed task(s) not yet on the board` : a.proposedTasks.length ? 'Every proposed task is already on the board' : 'The assessment proposes no tasks'}>
+        {I.clipboardList ?? I.check} Raise tasks{openTasks ? ` (${openTasks})` : ''}
+      </button>
     </div>
   );
 }
@@ -271,54 +395,48 @@ export function DesignBridgePanel({ state, onNav, onApplied, onTasksRaised, fire
 }) {
   const { assessment: a, loading, error } = state;
   const [form, setForm] = useState<'apply' | 'tasks' | null>(null);
-  if (loading) return <div className="pj-card"><div className="pj-card-b"><div role="status" className="scaf-note">Assessing the design…</div></div></div>;
+  if (loading) return <section className="pj-sec bs-assess"><div role="status" className="scaf-note">Assessing the design…</div></section>;
   if (error) {
-    return <div className="pj-card"><div className="pj-card-b"><EmptyState tone="error" icon={I.alertTriangle} title="Couldn't assess the design" hint={error} /></div></div>;
+    return <section className="pj-sec bs-assess"><EmptyState tone="error" icon={I.alertTriangle} title="Couldn't assess the design" hint={error} /></section>;
   }
   if (!a) return null;
 
   const openTasks = a.proposedTasks.filter((t) => !a.existingTaskKeys.includes(t.key));
 
   return (
-    <div className="pj-card">
-      <div className="pj-card-h"><span className="t">Design assessment</span><span className="s">{a.title}</span></div>
-      <div className="pj-card-b" style={{ padding: 12, display: 'grid', gap: 10 }}>
-        {/* Readiness — the design record's own checks. */}
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 12 }}>
-          <span className={'rd-chip tone-' + readinessTone(a.readiness.percent)}>{a.readiness.percent}% ready</span>
-          <span style={muted}>{readinessChecksOf(a.readiness).filter((c) => c.ok).length} of {readinessChecksOf(a.readiness).length} statistical checks pass</span>
+    <section className="pj-sec bs-assess" aria-label="Design assessment">
+      <div className="pj-sec-h">
+        <h2>Design assessment</h2>
+        <span className="sec-sub">{assessmentSummary(a)}</span>
+        <AssessmentActions assessment={a} openTasks={openTasks.length} onForm={setForm} />
+      </div>
+      <div className="bs-assess-b">
+        {/* Readiness — the design record's own checks. The count that used to
+            follow this chip is in the heading summary now; saying it twice,
+            twelve pixels apart, is the repetition §WA.4.2 rule 4 retires. */}
+        <div>
+          <span className={'rd-chip tone-' + readinessTone(a.readiness.percent)}>Statistical readiness {a.readiness.percent}%</span>
         </div>
 
         {/* The engines: the computation, its gaps and assumptions, the judgment
-            by dimension. The one rendering, shared with the Statistics tab. */}
-        <EngineResultPanel assessment={a} />
+            by dimension. The one rendering, shared with the Statistics tab —
+            told that the heading above already carries the three figures, which
+            the Statistics tab has no heading for. */}
+        <EngineResultPanel assessment={a} figuresInLead />
 
         {/* Statistical review — the gates' findings and the engine's judgment as
             one risk table with a verdict (biostatistics-engine review format).
-            Rows cite the gate codes they rest on. */}
+            Each row's gates are its cell's hover text. */}
         {a.review && <StatisticalReviewTable review={a.review} />}
 
-        {/* Filing */}
-        <FilingSentence filing={a.filing} />
+        {/* Where the work continues. Three doors, named for where they go. */}
+        <div className="pj-sec-acts">
+          <button type="button" className="btn ghost small" onClick={() => onNav('protocol-dev')}>Open the protocol</button>
+          <button type="button" className="btn ghost small" onClick={() => onNav('tasks')}>Open Tasks</button>
+          <button type="button" className="btn ghost small" onClick={() => onNav('submission-center')}>Open Submission Center</button>
+        </div>
 
-        {/* Actions — governed writes open a reason form; nothing fires on the click itself. */}
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          {/* The same gate as the Statistics tab's: the engine produced a total,
-              not merely a computation object. */}
-          <button className="btn primary" style={{ height: 30 }} disabled={!engineFigureIsUsable(a)} onClick={() => setForm('apply')}
-            title={engineFigureIsUsable(a) ? 'Write the computed sample size and power onto the design (governed)' : 'Resolve the blocking gaps first'}>
-            {I.penLine} Apply sample size to design
-          </button>
-          <button className="btn" style={{ height: 30 }} disabled={openTasks.length === 0} onClick={() => setForm('tasks')}
-            title={openTasks.length ? `${openTasks.length} proposed task(s) not yet on the board` : a.proposedTasks.length ? 'Every proposed task is already on the board' : 'The assessment proposes no tasks'}>
-            {I.clipboardList ?? I.check} Raise tasks{openTasks.length ? ` (${openTasks.length})` : ''}
-          </button>
-        </div>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', fontSize: 12 }}>
-          <button className="btn" style={{ height: 26, fontSize: 12 }} onClick={() => onNav('protocol-dev')}>Open protocol workspace</button>
-          <button className="btn" style={{ height: 26, fontSize: 12 }} onClick={() => onNav('tasks')}>Open task board</button>
-          <button className="btn" style={{ height: 26, fontSize: 12 }} onClick={() => onNav('submission-center')}>Open submission center</button>
-        </div>
+        <AssessmentNotes assessment={a} />
       </div>
 
       {form === 'apply' && (
@@ -331,135 +449,7 @@ export function DesignBridgePanel({ state, onNav, onApplied, onTasksRaised, fire
           onDone={(msg) => { setForm(null); fireToast(msg); onTasksRaised(); }}
           onError={(msg) => fireToast(msg, 'error')} />
       )}
-    </div>
-  );
-}
-
-// ─── Governed forms ──────────────────────────────────────────────────────────
-
-/**
- * The sentence the bridge actually sent with a refusal.
- *
- * Its route answers a refused write with the canonical error envelope
- * `{ error: '<CODE>', details: { message: '<sentence>' } }` — `clientError` in
- * server/lib/api-response, carrying `BridgeError.message`. `serverMessage`
- * reads `error.message`, `message`, `detail`, and a bare `error` that is not an
- * enum token; the bridge's sentence is at none of those, and `CANNOT_SIZE` IS
- * an enum token, so every bridge refusal degraded to "HTTP 422". The one part
- * an author can act on — the engine's own reason for refusing — was the part
- * that got dropped.
- *
- * So this reads the bridge's shape too, preferring the canonical reader where
- * it finds copy. `redactInternals` stays as the last gate: the sentence is copy
- * the route wrote, but this must not become a new route for driver text onto a
- * screen. With nothing usable it falls back to the status, which is at least
- * true.
- */
-function bridgeRefusal(body: unknown, status: number): string {
-  const detail = (body as { details?: { message?: unknown } } | null)?.details?.message;
-  const sentence =
-    serverMessage(body) ??
-    (typeof detail === 'string' && detail.trim() ? redactInternals(detail, '') : '');
-  return sentence || `the server returned HTTP ${status}`;
-}
-
-
-function ApplySampleSizeForm({ assessment: a, onCancel, onDone, onError }: {
-  assessment: DesignAssessment; onCancel: () => void; onDone: (msg: string) => void; onError: (msg: string) => void;
-}) {
-  const [busy, setBusy] = useState(false);
-  // computedTotalN, not a third copy of it: it is the one definition of "the
-  // engine proposed a usable N", and it rejects a zero.
-  const n = computedTotalN(a.computation);
-  const submit = async (v: Record<string, string>) => {
-    if (busy) return;
-    setBusy(true);
-    try {
-      const res = await apiRequest('POST', `/api/biostat-bridge/designs/${encodeURIComponent(a.studyId)}/apply-sample-size`, { reason: v.reason ?? '' });
-      const body = (await res.json().catch(() => null)) as { data?: { plannedSampleSize?: number; auditId?: string } } | null;
-      if (!res.ok || !body?.data?.auditId) {
-        onError('The sample size was not applied — ' + bridgeRefusal(body, res.status) + '. The design is unchanged.');
-        return;
-      }
-      onDone(`Sample size ${body.data.plannedSampleSize} written to "${a.title}" — the write and its audit record committed together.`);
-    } catch (e) {
-      onError('The sample size was not applied — ' + (e instanceof Error ? e.message : String(e)) + '. The design is unchanged.');
-    } finally {
-      setBusy(false);
-    }
-  };
-  return (
-    <C2CForm
-      config={{
-        eyebrow: 'Biostatistics · governed write',
-        title: 'Apply sample size to the design',
-        sub: `Writes ${n ?? '—'} subjects at ${pct(a.computation?.power ?? null)} power onto the statistical plan of "${a.title}" (currently ${a.readiness.plannedSampleSize ?? 'unset'}). The protocol, SAP and registration projections re-render from it.`,
-        governed: true,
-        submitLabel: busy ? 'Applying…' : 'Apply and record',
-        fields: [{ key: 'reason', label: 'Reason for change', type: 'textarea', required: true, rows: 3, placeholder: 'Why this sample size is being adopted (at least 8 characters)' }],
-      }}
-      onCancel={onCancel}
-      onSubmit={(v) => void submit(v)}
-    />
-  );
-}
-
-function RaiseTasksForm({ assessment: a, onCancel, onDone, onError }: {
-  assessment: DesignAssessment; onCancel: () => void; onDone: (msg: string) => void; onError: (msg: string) => void;
-}) {
-  const open = useMemo(() => a.proposedTasks.filter((t) => !a.existingTaskKeys.includes(t.key)), [a]);
-  const [chosen, setChosen] = useState<Set<string>>(() => new Set(open.map((t) => t.key)));
-  const [reason, setReason] = useState('');
-  const [busy, setBusy] = useState(false);
-  const toggle = useCallback((k: string) => setChosen((s) => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; }), []);
-  const submit = async () => {
-    if (busy || chosen.size === 0) return;
-    setBusy(true);
-    try {
-      const res = await apiRequest('POST', `/api/biostat-bridge/designs/${encodeURIComponent(a.studyId)}/tasks`, {
-        keys: [...chosen], ...(reason.trim() ? { reason: reason.trim() } : {}),
-      });
-      const body = (await res.json().catch(() => null)) as { data?: { created?: unknown[]; skipped?: string[] } } | null;
-      if (!res.ok || !Array.isArray(body?.data?.created)) {
-        onError('No tasks were raised — ' + bridgeRefusal(body, res.status) + '.');
-        return;
-      }
-      const c = body!.data!.created!.length;
-      const s = body!.data!.skipped?.length ?? 0;
-      onDone(`${c} task${c === 1 ? '' : 's'} raised on the board${s ? ` (${s} already open, skipped)` : ''} — each carries the design as its source.`);
-    } catch (e) {
-      onError('No tasks were raised — ' + (e instanceof Error ? e.message : String(e)) + '.');
-    } finally {
-      setBusy(false);
-    }
-  };
-  return (
-    <div className="pj-card-b" style={{ borderTop: '1px solid var(--border)', padding: 12, display: 'grid', gap: 8 }} role="group" aria-label="Raise tasks">
-      <div style={{ fontSize: 12, fontWeight: 600 }}>Tasks proposed by the assessment</div>
-      {open.length === 0 ? (
-        <div style={muted}>Every proposed task is already on the board.</div>
-      ) : open.map((t) => (
-        <label key={t.key} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 12 }}>
-          <input type="checkbox" checked={chosen.has(t.key)} onChange={() => toggle(t.key)} aria-label={t.title} />
-          <span>
-            <span className={'rd-chip tone-' + (t.priority === 'critical' ? 'err' : t.priority === 'high' ? 'warn' : 'idle')} style={{ marginRight: 6 }}>{t.priority}</span>
-            <b>{t.title}</b>
-            <span style={{ ...muted, display: 'block' }}>{t.trigger} — {t.description}</span>
-          </span>
-        </label>
-      ))}
-      {a.existingTaskKeys.length > 0 && (
-        <div style={muted}>{a.existingTaskKeys.length} task{a.existingTaskKeys.length === 1 ? ' is' : 's are'} already open on the board for this design.</div>
-      )}
-      <label style={{ fontSize: 12, display: 'block' }}>
-        Reason (optional)
-        <input className="c2c-input" style={{ height: 30, width: '100%' }} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Why these tasks are being raised" />
-      </label>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button className="btn primary" style={{ height: 30 }} disabled={busy || chosen.size === 0} onClick={() => void submit()}>{busy ? 'Raising…' : `Raise ${chosen.size} task${chosen.size === 1 ? '' : 's'}`}</button>
-        <button className="btn" style={{ height: 30 }} onClick={onCancel} disabled={busy}>Cancel</button>
-      </div>
-    </div>
+    </section>
   );
 }
 
@@ -594,6 +584,7 @@ function BoundDesignCard({ studyId, assessment, onNav, onApplied }: {
             {failed.map((c) => <li key={c.key}>{c.label}{c.hint ? <span style={muted}> — {c.hint}</span> : null}</li>)}
           </ul>
         )}
+        <SizingRunCheck assessment={assessment} />
         {/* What the ENGINE computes for it — the same rendering the designer
             shows, so the two surfaces cannot disagree about one design. */}
         <div style={{ borderTop: '1px solid var(--border)', paddingTop: 8, display: 'grid', gap: 8 }}>

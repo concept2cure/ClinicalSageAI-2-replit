@@ -1,0 +1,11 @@
+ × client/src/concept2cure/v2/__tests__/labelingEmptyStateHasItsAction.test.tsx > no labeling document yet > offers a writer the action it describes, which asks AnA to start the record 132ms
+   → the empty state describes a create and offers nothing to click: expected null not to be null
+ × client/src/concept2cure/v2/__tests__/labelingEmptyStateHasItsAction.test.tsx > no labeling document yet > does not describe a create the screen itself offers 13ms
+   → expected 'Specialist / device / LabelingLabelin…' not to match /Create a device IFU, package insert, …/
+ × client/src/concept2cure/v2/__tests__/labelingEmptyStateHasItsAction.test.tsx > no labeling document yet > offers a viewer no start, and says why 18ms
+   → expected 'Specialist / device / LabelingLabelin…' to match /Your role can read labeling, not star…/
+ × client/src/concept2cure/v2/__tests__/labelingEmptyStateHasItsAction.test.tsx > no labeling document yet > tells AnA the same: a writer can have it started, a viewer cannot 10ms
+   → expected [ Array(1) ] to deeply equal [ StringMatching{…} ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed (4)

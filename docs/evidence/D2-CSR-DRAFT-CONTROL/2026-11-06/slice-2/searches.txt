@@ -1,0 +1,83 @@
+### CSR_FIGURE
+### csrFigures
+### csr_figures
+### NOT_FROM_ENGINE
+### optionSet
+### option_set
+### optionSetOf
+### figureMarks
+### unclaimedFigures
+server/services/ana/csr-saved-evidence.ts:61:  unclaimedFigures: Array<{ section: string; figure: string; blocking: boolean }>;
+server/services/ana/csr-saved-evidence.ts:260:  const unclaimedFigures = plans.flatMap(p => p.unclaimed.map(figure => ({ section: p.code, figure, blocking: p.results })));
+server/services/ana/csr-saved-evidence.ts:265:  const base = { basis: 'exact_retained_table_cell' as const, runs, unclaimedFigures };
+server/services/ana/csr-saved-evidence.ts:287:  const blocked = issues.some(i => i.blocking !== false) || unclaimedFigures.some(f => f.blocking);
+server/services/ana/saved-section-writing-review.ts:77:    unclaimedFigures: figures.items, ...(figures.truncated ? { unclaimedFiguresTruncated: true, unclaimedFigureCount: figures.total } : {}),
+server/services/ana/saved-section-writing-review.ts:101:    unclaimed: document.unclaimedFigures.filter(f => f.section === one.label).map(({ figure, blocking }) => ({ figure, blocking })),
+server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts:72:    expect(r.csrSectionEvidence).toMatchObject({ status: 'reconciled_pending_human_review', issues: [], unclaimedFig
+server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts:87:    expect(r.csrSectionEvidence.unclaimedFigures).toEqual(expect.arrayContaining([{ figure: '15', blocking: true }])
+server/services/ana/__tests__/medical-writing-review-document-ref.pglite.test.ts:116:      unclaimedFigures: [{ figure: '16', blocking: true }, { figure: '305', blocking: true }] });
+server/services/ana/saved-document-critique.ts:133:    issueCount: csr.issues.length, unclaimedFigureCount: csr.unclaimedFigures.length,
+server/services/ana/saved-document-critique.ts:134:    blockingUnclaimedFigureCount: csr.unclaimedFigures.filter(f => f.blocking).length, editedSectionCount: csr.editedSections.length, runs: csr.runs 
+server/services/ana/saved-document-critique.ts:140:  for (const f of csr.unclaimedFigures) {
+### planSections
+server/services/ana/csr-saved-evidence.ts:259:  const plans = planSections(sections, receipts);
+server/services/ana/csr-saved-evidence.ts:299:function planSections(sections: readonly SavedCsrSection[], receipts: Map<string, CsrImportedSectionEvidence>): SectionPlan[] {
+server/services/ana/csr-saved-evidence.ts:321:  const plan = planSections(sections, receipts)[index];
+### planSection
+server/services/ana/csr-saved-evidence.ts:105:function planSection(s: SavedCsrSection & { code: string }, receipts: CsrImportedSectionEvidence | undefined): SectionPlan {
+server/services/ana/csr-saved-evidence.ts:259:  const plans = planSections(sections, receipts);
+server/services/ana/csr-saved-evidence.ts:299:function planSections(sections: readonly SavedCsrSection[], receipts: Map<string, CsrImportedSectionEvidence>): SectionPlan[] {
+server/services/ana/csr-saved-evidence.ts:302:    .map(s => planSection(s, receipts.get(s.code)));
+server/services/ana/csr-saved-evidence.ts:321:  const plan = planSections(sections, receipts)[index];
+server/services/authoring/csr-import-into-document.ts:142:function planSection({ code, title, raw, byReference }: { code: string; title: string; raw: string; byReference: boolean },
+server/services/authoring/csr-import-into-document.ts:158:    const planned = planSection({ code: section.code, title: section.title, raw: section.content,
+### importedCsrEvidence
+server/services/ana/csr-saved-evidence.ts:79:export function importedCsrEvidence(provenance: unknown): Map<string, CsrImportedSectionEvidence> {
+server/services/ana/saved-section-writing-review.ts:23:import { assessSavedCsrEvidence, importedCsrEvidence, savedCsrSectionEvidenceInput, type SavedCsrEvidenceIssue } from './csr-saved-evidence';
+server/services/ana/saved-section-writing-review.ts:91:  const receipts = importedCsrEvidence(header.provenance);
+server/services/ana/saved-document-critique.ts:20:import { assessSavedCsrEvidence, csrEvidenceRuns, importedCsrEvidence, type RetainedRunRead, type SavedCsrEvidenceVerdict } from './csr-saved-evidence
+server/services/ana/saved-document-critique.ts:195:  const receipts = importedCsrEvidence(header.provenance);
+server/services/ana/saved-document-critique.ts:201:export async function readCsrEvidenceRuns(q: RequestSqlClient, receipts: ReturnType<typeof importedCsrEvidence>,
+### findUnclaimedNumbers
+server/services/ana/csr-saved-evidence.ts:25:import { findUnclaimedNumbers, isCsrObservedResultsSection, unclaimedCsrSynopsisResults } from '../csr/unsupplied-statistics';
+server/services/ana/csr-saved-evidence.ts:114:    ...findUnclaimedNumbers(currentText, { claimed, info }).map(n => n.text),
+server/services/csr/__tests__/unsupplied-statistics.test.ts:51:import { acceptEvidenceBoundDraft, findUnclaimedNumbers, findUnsuppliedStatistics, findUnsupportedCsrOutcomeConclusion, unsupportedCsrDea
+server/services/csr/__tests__/unsupplied-statistics.test.ts:74:describe('findUnclaimedNumbers (evidence-bound sections)', () => {
+server/services/csr/__tests__/unsupplied-statistics.test.ts:77:    expect(findUnclaimedNumbers('12 of 114 patients (10.5%); see Table 14.3.1, Listing 16.2.7, §12.2.1 and ICH E3.', known)).toEqual([])
+server/services/csr/__tests__/unsupplied-statistics.test.ts:80:    expect(findUnclaimedNumbers('13 of 114 patients; 11.5 percent; 1,250 events', known).map(f => f.text)).toEqual(['13', '11.5', '1250']
+server/services/csr/__tests__/unsupplied-statistics.test.ts:83:    expect(findUnclaimedNumbers('section 11.5% of patients', known).map(f => f.text)).toEqual(['11.5']);
+server/services/csr/__tests__/csr-results-claim-provenance.test.ts:9:  findUnclaimedNumbers, acceptEvidenceBoundDraft, isCsrObservedResultsSection,
+server/services/csr/__tests__/csr-results-claim-provenance.test.ts:68:    expect(findUnclaimedNumbers(
+server/services/csr/__tests__/csr-results-claim-provenance.test.ts:72:    expect(findUnclaimedNumbers(
+server/services/csr/unsupplied-statistics.ts:52:    for (const figure of findUnclaimedNumbers(clause, { claimed })) findings.add(figure.text);
+server/services/csr/unsupplied-statistics.ts:161:export function findUnclaimedNumbers(prose: string, supplied: unknown): UnsuppliedStatistic[] {
+### unverifiedFiguresAtSigning
+server/services/authoring/draft-figure-check.ts:220:export function unverifiedFiguresAtSigning(
+server/services/authoring/draft-source-references.ts:238: * check (P-89, draft-figure-check.ts unverifiedFiguresAtSigning). Inside the
+server/services/authoring/__tests__/draft-figure-check.test.ts:10:  unverifiedFiguresAtSigning, figureAcknowledgementDigest, figureAcknowledgementVerdict,
+server/services/authoring/__tests__/draft-figure-check.test.ts:100:describe('unverifiedFiguresAtSigning', () => {
+server/services/authoring/__tests__/draft-figure-check.test.ts:104:    const items = unverifiedFiguresAtSigning(
+server/services/authoring/__tests__/draft-figure-check.test.ts:115:    expect(unverifiedFiguresAtSigning(
+server/services/authoring/__tests__/draft-figure-check.test.ts:122:    const items = unverifiedFiguresAtSigning(
+server/services/authoring/__tests__/draft-figure-check.test.ts:132:    expect(unverifiedFiguresAtSigning([section('The response rate was 52%.', '2.7.3')], [{ sectionCode: '2.5.4', excerpts: [SOURCE] }
+server/services/authoring/__tests__/draft-figure-check.test.ts:136:    const items = unverifiedFiguresAtSigning([section('The response rate was 52%.')], [
+server/services/authoring/__tests__/draft-figure-check.test.ts:144:  const items = unverifiedFiguresAtSigning(
+server/services/authoring/__tests__/draft-figure-check.test.ts:165:    const edited = unverifiedFiguresAtSigning(
+server/services/authoring/__tests__/saved-source-excerpts-for-signing.pglite.integration.test.ts:5: * unverifiedFiguresAtSigning).
+### checkSectionFigures
+server/services/authoring/authoring-from-draft.ts:21:import { checkSectionFigures, figureSpansInContent, type CitedExcerpt, type SectionFigureCheck } from './draft-figure-check';
+server/services/authoring/authoring-from-draft.ts:352:      const figures = checkSectionFigures(sectionText, excerpts);
+server/services/authoring/draft-figure-check.ts:105:export function checkSectionFigures(sectionText: string, excerpts: CitedExcerpt[]): SectionFigureCheck {
+server/services/authoring/__tests__/section-claims-check.test.ts:163:    const seam = from.slice(from.indexOf('checkSectionFigures('), from.indexOf('checkSectionFigures(') + 900);
+server/services/authoring/__tests__/draft-figure-check.test.ts:9:  checkSectionFigures, figureSpansInContent, FINDINGS_KEPT,
+server/services/authoring/__tests__/draft-figure-check.test.ts:21:describe('checkSectionFigures', () => {
+server/services/authoring/__tests__/draft-figure-check.test.ts:23:    const out = checkSectionFigures('In 212 patients, the response rate was 47%; HR 0.62 (95% CI 0.50-0.77).', [SOURCE]);
+server/services/authoring/__tests__/draft-figure-check.test.ts:32:    const out = checkSectionFigures('The response rate was 52% in 212 patients.', [SOURCE]);
+server/services/authoring/__tests__/draft-figure-check.test.ts:39:    const out = checkSectionFigures('The response rate was 31%.', [SOURCE]);
+server/services/authoring/__tests__/draft-figure-check.test.ts:44:    expect(checkSectionFigures('The response rate was 47%.', [])).toMatchObject({ checked: 1, unverified: 1, found: 0 });
+server/services/authoring/__tests__/draft-figure-check.test.ts:49:    const out = checkSectionFigures('The response rate was 47%.', [linked]);
+server/services/authoring/__tests__/draft-figure-check.test.ts:57:    const out = checkSectionFigures(many, [SOURCE]);
+### engine figure
+### not from the engine
+### chose 2 of 3
+### of 3, concise

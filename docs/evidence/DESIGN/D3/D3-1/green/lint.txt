@@ -1,0 +1,6 @@
+npx eslint <the 19 changed .ts/.tsx files>
+
+✖ 6 problems (0 errors, 6 warnings)
+
+
+Trunk, the same files (git stash): 6 warnings, 0 errors.

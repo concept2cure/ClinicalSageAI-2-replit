@@ -9,6 +9,7 @@ import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
 import { RBM_NAV, RBM_LINKS } from '../fixtures/rbm-data';
 import type { RbmBoard, RbmProgram } from './rbmBoard';
 import { isRbmProgramRows, rbmBoardHasData } from './rbmBoard';
+import { rbmWrite, RbmWriteNote } from './rbmWrites';
 import {
   SeedEmpty,
   RbmAnaDock,
@@ -64,6 +65,23 @@ const SEED_ACTIONS: Record<string, string[]> = {
   sites: ['Recompute site risk'],
   oversight: ['Recompute site risk'],
   plan: ['Generate a risk-based monitoring plan'],
+};
+
+/* Each seed button is the deterministic engine write it names (J5-03,
+   2026-11-06). They used to ask AnA, so with no model a tester's "Seed risk
+   assessment" did nothing, while the writes below already existed. Every one
+   takes the project id and is admitted by the server's own project check. */
+const SEED_WRITES: Record<string, string> = {
+  'Seed risk assessment': '/rbm-assessments/seed',
+  'Seed a default ICH E6(R3) assessment': '/rbm-assessments/seed',
+  'Seed KRIs': '/rbm-kris/seed',
+  'Seed the standard KRI library': '/rbm-kris/seed',
+  'Seed QTLs': '/rbm-qtls/seed',
+  'Propose quality tolerance limits': '/rbm-qtls/seed',
+  'Run central monitoring': '/rbm-central-monitoring/run',
+  'Scan the patient cohort': '/rbm-patient-profiles/score',
+  'Recompute site risk': '/rbm-site-risk/recompute',
+  'Generate a risk-based monitoring plan': '/rbm-monitoring-plans/generate',
 };
 
 /* ── Icon map for cross-app links ── */
@@ -161,6 +179,37 @@ function RbmWorkspace({ onNav, liveDrive, project, owner }: OwnedSurfaceViewProp
       productType: selected.productType ?? undefined });
   };
   const navigate = (target: string) => { if (current() && study) onNav?.(target); };
+  /* The open project, when the roster does not list it: it has neither the
+     New project flag nor a monitoring record yet. Starting it is the RACT
+     seed for that project; the server admits it only with project access. */
+  const unstarted = !programs.loading && !programs.error && !reconciliationRequired && requestedProject && !selProgram ? requestedProject : null;
+  const [writing, setWriting] = useState(false);
+  const [writeNote, setWriteNote] = useState<string | null>(null);
+  const runSeed = async (label: string, programId: string | null) => {
+    const path = SEED_WRITES[label];
+    if (!path || !programId || writing || !current()) return;
+    setWriting(true); setWriteNote(null);
+    try {
+      await rbmWrite('POST', path, { programId });
+      if (!current()) return;
+      retryRoster(); reload();
+    } catch (failure) {
+      if (current()) setWriteNote(failure instanceof Error ? failure.message : 'The change was not saved.');
+    } finally {
+      if (mounted.current) setWriting(false);
+    }
+  };
+  const startEmpty = unstarted ? (
+    <div style={{ padding: 24 }}>
+      <SeedEmpty
+        title="Risk-based monitoring has not started for this project"
+        body="Starting it records the ICH E6(R3) default risk assessment (RACT) for the open project, ready to tailor. No indicator, limit or score is recorded until you add or seed it."
+        actions={['Start risk-based monitoring']}
+        onRun={() => void runSeed('Seed risk assessment', unstarted)}
+      />
+      <RbmWriteNote note={writeNote} />
+    </div>
+  ) : null;
 
   /* AnA — the REAL streaming assistant (/api/ana-ri/stream), grounded to the
      selected RBM program. The former rbmAnaResolve() heuristic that fabricated
@@ -281,7 +330,7 @@ function RbmWorkspace({ onNav, liveDrive, project, owner }: OwnedSurfaceViewProp
   if (!current()) return <EmptyState title="Risk-based monitoring is unavailable for this session" hint="Reopen monitoring after selecting your account and project." />;
 
   return (
-    <div data-screen-label={`RBM — ${nav.label}`}>
+    <div className="page-inner" data-screen-label={`RBM — ${nav.label}`}>
       <div className="reg-head">
         <div>
           <div className="ph-eyebrow">Clinical — risk-based quality management</div>
@@ -308,11 +357,11 @@ function RbmWorkspace({ onNav, liveDrive, project, owner }: OwnedSurfaceViewProp
                 </option>
               ))}
           </select>
-          <span className="rbm-study-m">
-            {bd && bd.programId === study
-              ? `${bd.summary.sites.total} sites — ${bd.summary.patients.scored} subjects scored`
-              : 'Live RBM read-model'}
-          </span>
+          {/* With no project's board read there is nothing to say here; this
+              read "Live RBM read-model", the implementation's name for it. */}
+          {bd && bd.programId === study && (
+            <span className="rbm-study-m">{`${bd.summary.sites.total} sites — ${bd.summary.patients.scored} subjects scored`}</span>
+          )}
         </div>
       </div>
 
@@ -374,12 +423,14 @@ function RbmWorkspace({ onNav, liveDrive, project, owner }: OwnedSurfaceViewProp
                 retry={retryRoster}
               />
             </div>
+          ) : startEmpty ? (
+            startEmpty
           ) : programs.rows.length === 0 ? (
             <div style={{ padding: 24 }}>
               <EmptyState
                 icon={I.clipboardList}
                 title={reconciliationRequired ? 'Monitoring project relationships need repair' : 'No monitoring projects yet'}
-                hint={reconciliationRequired ? 'Ask your project administrator to repair the project relationships before opening monitoring.' : 'Select risk-based monitoring when setting up a project. Existing projects with recorded monitoring data also appear here; no risk assessment or score is invented.'}
+                hint={reconciliationRequired ? 'Ask your project administrator to repair the project relationships before opening monitoring.' : 'Open a project and start its monitoring here, or select risk-based monitoring when setting up a project. Projects with recorded monitoring data appear here; no risk assessment or score is invented.'}
               />
             </div>
           ) : !study ? (
@@ -414,9 +465,10 @@ function RbmWorkspace({ onNav, liveDrive, project, owner }: OwnedSurfaceViewProp
               title={`No RBM data for ${studyLabel} yet`}
               body="This study has no risk assessment, indicators or tolerance limits. Seeding creates the ICH E6(R3) TransCelerate defaults, scoped to this study, ready to tailor."
               actions={SEED_ACTIONS[tab] || SEED_ACTIONS.overview}
-              onRun={a => askAna(`${a} for ${studyLabel}`)}
+              onRun={a => SEED_WRITES[a] ? void runSeed(a, study) : askAna(`${a} for ${studyLabel}`)}
             />
           )}
+          {!startEmpty && <RbmWriteNote note={writeNote} />}
         </div>
         {anaOpen ? (
           <RbmAnaDock

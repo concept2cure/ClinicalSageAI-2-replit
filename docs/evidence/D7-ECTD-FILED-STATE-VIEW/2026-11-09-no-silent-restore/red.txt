@@ -1,0 +1,16 @@
+# Red at 92c984c2f (before the change): P-99 C1
+# npx vitest run tests/routes/ectd-compile-sent-sequence.test.ts
+ × tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: a sequence on file is not compiled and recorded again > refuses a compile of the program's latest sequence when it is sent, and records nothing
+   → expected [ [ …(2) ] ] to have a length of +0 but got 1
+ × tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: a sequence on file is not compiled and recorded again > refuses a compile of the program's latest sequence when it is acknowledged, and records nothing
+   → expected [ [ …(2) ] ] to have a length of +0 but got 1
+ × tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: a sequence on file is not compiled and recorded again > refuses a compile of a named sequence that is sent, the same way
+   → expected [ [ …(2) ] ] to have a length of +0 but got 1
+ × tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: a sequence on file is not compiled and recorded again > refuses a compile while a send of the sequence is unresolved (transmitting)
+   → expected [ [ …(2) ] ] to have a length of +0 but got 1
+ ✓ tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: what is not on file compiles as before > compiles and records a sequence whose dispatch status is not recorded
+ ✓ tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: what is not on file compiles as before > compiles and records a sequence whose dispatch status is pending
+ ✓ tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: what is not on file compiles as before > compiles and records a sequence whose dispatch status is rejected
+ ✓ tests/routes/ectd-compile-sent-sequence.test.ts > P-99 C1: what is not on file compiles as before > a rehearsal of a sent sequence is not refused as on file: it is recorded as a rehearsal, never as what was sent
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 4 passed (8)

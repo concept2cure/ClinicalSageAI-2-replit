@@ -6,8 +6,11 @@ import { useTenant } from '@/contexts/TenantContext';
 import { capturedActorHeaders } from '@/utils/authToken';
 import { projectIntakeId, type ProjectIntakeActor } from '@shared/project-intake-workspace';
 import { createProjectIntake, readProjectIntakeWorkspaces, type IntakeOptionsAnswer } from './projectIntakeRequest';
-import { ProjectClientFilter, portfolioClients, portfolioClientContext } from './ProjectClientFilter';
-import { ProjectPortfolioFilters, portfolioCounts, portfolioFilterUrl, portfolioIsUnfilteredEmpty, portfolioStatusChoices } from './ProjectPortfolioFilters';
+import { ClientChoicesNote, ProjectClientFilter, portfolioClients, portfolioClientContext } from './ProjectClientFilter';
+import { PortfolioLine, PortfolioLinesNote, usePortfolioLines } from './PyramidProject';
+import { PortfolioPagedNote, ProjectPortfolioFilters, WS_LABEL, countFloor, daysUntil, portfolioCounts, portfolioFilterUrl, portfolioIsUnfilteredEmpty, portfolioStatusChoices, readIsPaged, searchPlaceholder } from './ProjectPortfolioFilters';
+import { NewProjectObjectiveField, NewProjectObjectiveReview } from './ProjectObjective';
+import { enumWords } from './projectWords';
 import { useDialog } from '../useDialog';
 import {
   productTypeForFilingType,
@@ -25,6 +28,7 @@ import {
 } from '@shared/regulatory/filing-document-classes';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { openProjectHome, publishShellProject } from '../shellProject';
+import { consumeNavParams, NAV_PARAMS_EVENT } from '../navParams';
 import { DOSSIER_READINESS_LABEL, DOSSIER_READINESS_MEANS, dossierReadinessValue, isMeasuredReadiness, type DossierFigureState } from '../dossierReadiness';
 import {
   listedChoices,
@@ -42,7 +46,8 @@ import { usePublishSurfaceContext, type SurfaceContext } from '../surfaceContext
 // Importing RegistryBridge also runs its side effects, which populate the
 // window.GLOBAL_REGISTRY / REG_SEGMENTS that RegistryPicker reads.
 import { RegistryPicker, type FilingBrowseState } from './AnaVerbs';
-import { MarketSupportLine } from '../MarketSupportLine';
+import { marketSupportText, useMarketSupport, type MarketSupportView } from '../MarketSupportLine';
+import { PATHWAY_LABEL, REGULATORY_PATHWAYS, REGULATORY_PATH_TO_PATHWAY, pathwayKey, type RegulatoryPathway } from '@shared/constants/mdx';
 import { getSubmissionTypeContext } from './RegistryBridge';
 import { ProjectDiscoveryHandoff } from './ProjectDiscoveryHandoff';
 import {
@@ -184,6 +189,85 @@ function documentClassLabel(programType: string): string | null {
   return label ? label.charAt(0).toUpperCase() + label.slice(1) : null;
 }
 
+/**
+ * The filing as people name it ("510(k)", "IND", "De Novo"), from the one
+ * pathway vocabulary (shared/constants/mdx.ts). Only a type that IS a pathway
+ * takes its label: an MDR technical file is not "CER", nor a bare IVD "IVDR".
+ * The review read "510K · ivd" (2026-10-31).
+ */
+export function filingLabel(programType: string): string {
+  const classLabel = documentClassLabel(programType);
+  if (classLabel) return classLabel;
+  const key = pathwayKey(programType);
+  const own: RegulatoryPathway | null = (REGULATORY_PATHWAYS as readonly string[]).includes(key) ? key as RegulatoryPathway
+    : Object.hasOwn(REGULATORY_PATH_TO_PATHWAY, key) && REGULATORY_PATH_TO_PATHWAY[key] === 'k510' ? 'k510' : null;
+  return own && own !== 'other' ? PATHWAY_LABEL[own] : key.toUpperCase().replace(/_/g, ' ');
+}
+
+/** A product type as the vocabulary labels it ("In-vitro diagnostic"). */
+function productTypeLabel(value: string | null): string {
+  if (!value) return 'not stated';
+  return PRODUCT_TYPES.find(t => t.value === value)?.label ?? value;
+}
+
+/** A date input's YYYY-MM-DD as the review prints it ("Mar 31, 2027"). */
+export function reviewDate(iso: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!m) return iso.trim() || 'Not set';
+  return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])))
+    .toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+}
+
+/** What a step still needs before it can move on, naming the first missing
+ *  field; null when nothing is missing. Continue and Create were disabled with
+ *  no word of why, and a disabled primary looked enabled (2026-10-31). */
+export function wizardMissing(step: number, s: {
+  filingChosen: boolean; workspaceRead: boolean; workspaceChosen: boolean; nameGiven: boolean; classStated: boolean;
+}): string | null {
+  const then = step === 2 ? 'to create the project' : 'to continue';
+  if (step === 0) return s.filingChosen ? null : `Choose a filing type ${then}.`;
+  if (!s.workspaceChosen) return s.workspaceRead ? `Choose a client workspace ${then}.` : 'Checking client workspaces…';
+  if (!s.nameGiven) return `Enter a project name ${then}.`;
+  return s.classStated ? null : `Choose a product type ${then}.`;
+}
+
+/** A name already used by a project on the loaded portfolio page, or null. */
+export function duplicateProjectName(name: string, existing: readonly string[]): string | null {
+  const wanted = name.trim().toLowerCase();
+  if (!wanted) return null;
+  return existing.find(title => title.trim().toLowerCase() === wanted) ?? null;
+}
+
+/**
+ * What the project will get, in one sentence: the outline it is built against.
+ * Read from the same market answer the project's submission rows show
+ * (MarketSupportLine), and only its outline: whether and how a sequence can be
+ * sent is the Submit tab's matter. The wizard opened with the full market line,
+ * "Transmit not proven: FDA onboarding … have not been verified", before a
+ * project existed (2026-10-31). A filing not offered keeps the server's words.
+ */
+export function wizardSetupText(m: Pick<MarketSupportView, 'offered' | 'summary' | 'line' | 'outline'>): string {
+  if (!m.offered) return marketSupportText(m);
+  const pack = m.outline?.state === 'outline' ? m.outline.pack : null;
+  if (pack?.label.trim()) return `The project is built against the ${pack.label.trim()} outline, section by section.`;
+  return 'This filing has no dossier outline here yet: the project is created, and its documents are added to it.';
+}
+
+function WizardFilingSetup({ applicationType, market }: { applicationType: string; market: string }) {
+  const read = useMarketSupport(applicationType, market);
+  const m = read.data?.markets?.[0];
+  if (read.loading) return <span data-testid="market-support" data-state="loading">Checking what this filing sets up…</span>;
+  if (read.error || !m) {
+    return (
+      <span role="status" data-testid="market-support" data-state="error">
+        What this filing sets up could not be read.{' '}
+        <button type="button" className="btn ghost sm" onClick={read.retry}>Retry</button>
+      </span>
+    );
+  }
+  return <span data-testid="market-support" data-state={m.offered ? 'offered' : 'refused'}>{wizardSetupText(m)}</span>;
+}
+
 /** The three steps, in order. One list, read by the step rail, the sub-heading
  *  and the bounds checks below, so a step cannot be renamed in one place and
  *  stay stale in another. */
@@ -212,7 +296,11 @@ function wizardScreenContext(step: number, filing: SelTpl | null, applicationTyp
  *  must offer a way out), and driving it through the whole Projects surface
  *  would test the registry loader rather than the banner. */
 type NewProjectWizardProps = { onClose: () => void; onNav: (id: string) => void; segment?: string;
-  onAsk?: (text: string) => void; onContext?: (context: WizardScreenContext | null) => void };
+  onAsk?: (text: string) => void; onContext?: (context: WizardScreenContext | null) => void;
+  /** The titles of the projects on the loaded portfolio page, so a name already
+   *  in use is said before the project is created. Not a uniqueness rule: the
+   *  server allows it, and a page is not the whole portfolio. */
+  existingNames?: readonly string[] };
 export function NewProjectWizard(props: NewProjectWizardProps) {
   const { onContext } = props;
   const user = useAuthUser();
@@ -236,7 +324,7 @@ export function NewProjectWizard(props: NewProjectWizardProps) {
   return <NewProjectWizardSession key={key} {...props} actor={{ actorUserId, organizationId }} isCurrent={() => current.current === key} />;
 }
 
-function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, actor, isCurrent }: NewProjectWizardProps & { actor: ProjectIntakeActor; isCurrent: () => boolean }) {
+function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, existingNames = [], actor, isCurrent }: NewProjectWizardProps & { actor: ProjectIntakeActor; isCurrent: () => boolean }) {
   const { setCurrentClientWorkspace } = useTenant();
   const capturedActor = useMemo(() => ({ actorUserId: actor.actorUserId, organizationId: actor.organizationId }), [actor.actorUserId, actor.organizationId]);
   // Retain the pending outcome in this view. A ref also protects an Escape or
@@ -254,6 +342,12 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
      below, not in here. */
   const viewRef = useDialog(closeIfSettled);
   const [step, setStep] = useState(0);
+  /* Each step opens at its top. The review step was reached scrolled to where
+     the long filing catalogue had been left (2026-10-31). */
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+  }, [step]);
   const [tpl, setTpl] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [product, setProduct] = useState('');
@@ -287,9 +381,13 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
     setDeviceFlags(f => (f.includes(id) ? f.filter(x => x !== id) : [...f, id]));
   // Team assignment needs a persisted project id (GET /:id/team); no endpoint
   // lists selectable org members for a not-yet-created project, so the wizard
-  // creates the project solo and teammates are added afterward.
+  // creates the project solo (the creator-only list the server expects) and
+  // people are added afterward on the project's Team section, through
+  // ProjectTeamSharing.tsx ("Grant sharing").
   const [team] = useState<string[]>([]);
   const [target, setTarget] = useState('');
+  /** The project's objective, optional here: recorded as its charter's objective once the project exists (S1). */
+  const [objective, setObjective] = useState('');
   const [creating, setCreating] = useState(false);
   const [writeStopped, setWriteStopped] = useState(false);
   const [retired, setRetired] = useState(false);
@@ -397,6 +495,12 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
   /* Configure is complete when the name is given and, where the filing type
      leaves it open, the class is chosen. */
   const configured = savedName !== '' && recordedClass !== null && workspace !== null;
+  /* Said beside Continue / Create while it is disabled, and named by it. */
+  const missing = wizardMissing(step, {
+    filingChosen: Boolean(tpl), workspaceRead: workspaceOptions !== null, workspaceChosen: workspace !== null,
+    nameGiven: savedName !== '', classStated: recordedClass !== null,
+  });
+  const sameName = duplicateProjectName(savedName, existingNames);
 
   // Persist a real regulatory program (POST /api/c2c/projects → regulatory_programs)
   // then navigate into it using the id the store assigns. On failure we surface
@@ -451,6 +555,9 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
         targetSubmissionDate: target || null,
         teamMembers: team,
         riskBasedMonitoring,
+        /* The objective is recorded with the project, as version 1 of its charter, in the creation's own transaction
+           (S1, 505449d7a): one write, so a refused objective refuses the creation in the server's words. */
+        ...(objective.trim() ? { objective: objective.trim() } : {}),
       };
       const answer = await createProjectIntake(actor, verifiedWorkspace, body, currentSession);
       if (!mountedSession()) return;
@@ -527,12 +634,12 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
         <span className="pd-crumb-here">New project</span>
       </div>
 
+      {/* No eyebrow: the crumb above says where this is (D2.md §2.4 item 1). */}
       <header className="npw-head">
         <div className="npw-head-inner">
-          <div className="ph-eyebrow">Workspace</div>
           <h1 className="ph-title" id="new-project-title">New project</h1>
           <p className="ph-sub">
-            What are you filing? Choose the filing, describe the product, then review what will be recorded.
+            Choose the filing, describe the project, then review what will be recorded.
             The filing decides the dossier outline the project is built against.
           </p>
         </div>
@@ -543,7 +650,8 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
           strip. Position is stated three ways here: the number or tick, the
           step's own name, and aria-current. Nothing is signalled by colour
           alone. A finished step is re-openable; a step ahead of the current one
-          is not, because nothing has been entered into it yet. */}
+          is not, because nothing has been entered into it yet. "Step N" is read
+          by screen readers and not shown: the disc already numbers the step. */}
       <nav className="npw-steps" aria-label="New project steps">
         <ol>
           {STEP_LABELS.map((label, i) => (
@@ -561,7 +669,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
               >
                 <span className="npw-step-n" aria-hidden="true">{i < step ? I.check : i + 1}</span>
                 <span className="npw-step-l">
-                  <span className="npw-step-k">Step {i + 1}</span>
+                  <span className="sr-only">Step {i + 1}</span>
                   <span className="npw-step-t">{label}</span>
                 </span>
               </button>
@@ -570,7 +678,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
         </ol>
       </nav>
 
-      <div className="npw-scroll">
+      <div className="npw-scroll" ref={scrollRef}>
         {/* The registry step is a catalogue and wants the width; the two form
             steps are read line by line and want a measure. One container, two
             widths, rather than one compromise that serves neither. */}
@@ -578,8 +686,8 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
           {/* Step 0: Choose template */}
           {step === 0 && (
             <div>
+              {/* One quiet line above the catalogue. No spark: it marks AnA, not a note. */}
               <div className="npw-seg-note">
-                <span className="ico" aria-hidden="true">{I.sparkles}</span>
                 <div>
                   <div className="npw-seg-t">Tailored for {segLabel}</div>
                   <div className="npw-seg-s">The filings for your client type come first. Use the tabs for other kinds of product, or search by name.</div>
@@ -607,10 +715,10 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
           {step === 1 && selTpl && (
             <div className="npw-form">
               <h2 className="npw-h2">Configure your {selTpl.label} project</h2>
-              {/* What the platform can carry for the market this filing type
-                  opens, in the server's words (FILING_SPINE.md F19). */}
+              {/* What the project will get: the outline it is built against,
+                  from the server's market answer (FILING_SPINE.md F19). */}
               <p className="npw-seg-s" data-testid="npw-market-support">
-                <MarketSupportLine applicationType={programTypeFor(selTpl, uiSeg)} market={selTpl.agency || 'FDA'} />
+                <WizardFilingSetup applicationType={programTypeFor(selTpl, uiSeg)} market={selTpl.agency || 'FDA'} />
               </p>
 
               <ProjectDiscoveryHandoff
@@ -654,8 +762,10 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
                     aria-required="true"
                     aria-describedby="npw-name-help"
                   />
-                  <span className="npw-field-help" id="npw-name-help">
-                    Required. The project is listed under this name.
+                  <span className="npw-field-help" id="npw-name-help" data-testid="npw-name-help">
+                    {sameName
+                      ? `A project named “${sameName}” is already in your portfolio. Choose another name, or keep it if this is a separate project.`
+                      : 'Required. The project is listed under this name.'}
                   </span>
                 </label>
 
@@ -727,6 +837,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
                   <span className="npw-field-l">Target submission date</span>
                   <input className="c2c-input" type="date" value={target} onChange={e => setTarget(e.target.value)} />
                 </label>
+                <NewProjectObjectiveField value={objective} onChange={setObjective} />
               </div>
 
               {isFdaDeviceFiling && (
@@ -742,8 +853,8 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
                       aria-describedby="npw-pc-help"
                     />
                     <span className="npw-field-help" id="npw-pc-help">
-                      Three letters. It decides the regulation number, the review panel and which
-                      predicates you can compare against.
+                      The three-letter FDA product code from the product classification database.
+                      Enter its regulation number and review panel below; they are not filled in from it.
                     </span>
                   </label>
 
@@ -756,7 +867,7 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
                       placeholder="e.g. 868.1860"
                       aria-describedby="npw-rn-help"
                     />
-                    <span className="npw-field-help" id="npw-rn-help">21 CFR — the part is the panel.</span>
+                    <span className="npw-field-help" id="npw-rn-help">The 21 CFR regulation listed for the product code.</span>
                   </label>
 
                   <label className="npw-field">
@@ -841,23 +952,17 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
                 </>
               )}
 
-              <label className="npw-field npw-field-wide npw-flag">
+              <label className="npw-flag npw-field-wide">
                 <input type="checkbox" checked={riskBasedMonitoring} onChange={event => setRiskBasedMonitoring(event.target.checked)} />
-                <span><span className="npw-field-l">Risk-based monitoring</span>{' '}<span className="npw-field-help">Include risk assessment, monitoring indicators and site oversight for this project. No assessment or monitoring data is created during setup; existing access requirements apply.</span></span>
+                {/* The device flags' checkbox card (npw-flag), not a form field:
+                    as `npw-field` it stacked the box above its words. */}
+                <span><span className="npw-flag-l">Risk-based monitoring</span>{' '}<span className="npw-flag-w">Include risk assessment, monitoring indicators and site oversight for this project. No assessment or monitoring data is created during setup; existing access requirements apply.</span></span>
               </label>
-
-              <div className="npw-field npw-field-wide">
-                <span className="npw-field-l">Team members</span>
-                {/* Backend gap: no endpoint lists selectable org members for a
-                    not-yet-created project (GET /api/c2c/projects/:id/team needs a
-                    persisted project id). Rather than show a fabricated roster, the
-                    project is created solo and teammates are added afterward. */}
-                <EmptyState
-                  icon={I.info}
-                  title="Team assignment isn't available yet"
-                  hint="You'll be able to add teammates once the project exists and org members can be listed."
-                />
-              </div>
+              {/* No "Team members" field. It was an empty box saying team
+                  assignment "isn't available yet": a roadmap message in place of
+                  a control. People are added once the project exists, on its
+                  Team section (ProjectHome.tsx → ProjectTeamSharing.tsx), and the
+                  review step below says so (D2.md §2.4 item 7). */}
             </div>
           )}
 
@@ -909,13 +1014,14 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
                 )}
                 <div className="npw-review-row">
                   <dt>Target date</dt>
-                  <dd>{target || 'Not set'}</dd>
+                  <dd>{reviewDate(target)}</dd>
                 </div>
+                <NewProjectObjectiveReview value={objective} />
                 <div className="npw-review-row">
                   <dt>Pathway</dt>
-                  {/* A filing document class names itself: its pathway key is the
-                      'ctd' default, which read "CTD" for a supplement or a CSR. */}
-                  <dd>{documentClassLabel(programType) ?? (selTpl.pathway || '').toUpperCase()}{selTpl.submissionFormat && selTpl.submissionFormat !== '—' ? ' — ' + selTpl.submissionFormat : ''}</dd>
+                  {/* Named as the filing is named (filingLabel), never its key:
+                      "CTD" for a supplement, "510K" for a 510(k). */}
+                  <dd>{filingLabel(programType)}{selTpl.submissionFormat && selTpl.submissionFormat !== '—' ? ' — ' + selTpl.submissionFormat : ''}</dd>
                 </div>
                 {/* Both lines are derived exactly as the create call derives
                     them, so the review step shows what will actually persist.
@@ -923,12 +1029,13 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
                     pane said "Workstream: Biotech / Recorded as: 510K · biologic"
                     for a device filing — and then stored it. */}
                 <div className="npw-review-row">
-                  <dt>Workstream</dt>
-                  <dd>{workstreamForFilingType(programType, recordedClass) ?? SEG2WS[uiSeg] ?? 'Biotech'}</dd>
+                  <dt>Client type</dt>
+                  {/* Said in words (WS_LABEL): the stored key "MDX" read as jargon to a device tester (J1, 2026-11-06). */}
+                  {(() => { const ws = workstreamForFilingType(programType, recordedClass) ?? SEG2WS[uiSeg] ?? 'Biotech'; return <dd>{WS_LABEL[ws] ?? ws}</dd>; })()}
                 </div>
                 <div className="npw-review-row">
                   <dt>Recorded as</dt>
-                  <dd>{programType.toUpperCase().replace(/_/g, ' ')} · {recordedClass ?? 'not stated'}</dd>
+                  <dd>{filingLabel(programType)} · {productTypeLabel(recordedClass)}</dd>
                 </div>
                 {/* Only what was actually entered. A device row that reads
                     "Not recorded" is the truth about the programme; filling it
@@ -971,10 +1078,14 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
                 )}
               </dl>
 
-              <div className="npw-next">
-                <span className="ico" aria-hidden="true">{I.sparkles}</span>
-                <span>Your project is saved to the portfolio and opens in its workspace, where you can add documents and author sections with AnA.</span>
-              </div>
+              {/* What happens on create, and where people are added: one quiet
+                  line under the list, not a tinted box with AnA's spark. "Team"
+                  is the project page's heading for its people and their sharing
+                  (newProjectWizardLook.test.tsx follows it there). */}
+              <p className="npw-review-note">
+                Your project is saved to the portfolio and opens in its workspace, where you can add documents and author sections with AnA.
+                {' '}After it is created, share it with people in your organization from its Team section.
+              </p>
             </div>
           )}
 
@@ -1051,18 +1162,24 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
           <button type="button" className="btn ghost" disabled={creating} onClick={closeIfSettled}>Cancel</button>
           {step > 0 && <button type="button" className="btn ghost" disabled={creating} onClick={() => setStep(s => s - 1)}>Back</button>}
           <span className="npw-foot-gap" />
+          {/* Why the primary is unavailable, beside it and named by it. */}
+          <span className="npw-field-help" id="npw-missing" role="status" data-testid="npw-missing">
+            {missing && !creating && !writeStopped ? missing : ''}
+          </span>
           {step < 2 && (
             <button
               type="button"
               className="btn primary"
-              disabled={(step === 0 && !tpl) || (step === 1 && !configured)}
+              disabled={missing !== null}
+              aria-describedby={missing ? 'npw-missing' : undefined}
               onClick={() => setStep(s => s + 1)}
             >
               Continue
             </button>
           )}
           {step === 2 && (
-            <button type="button" className="btn primary" disabled={creating || writeStopped || !configured} onClick={doCreate}>
+            <button type="button" className="btn primary" disabled={creating || writeStopped || !configured}
+              aria-describedby={missing ? 'npw-missing' : undefined} onClick={doCreate}>
               {creating ? 'Creating project…' : <>{I.plus} Create project</>}
             </button>
           )}
@@ -1074,33 +1191,15 @@ function NewProjectWizardSession({ onClose, onNav, segment, onAsk, onContext, ac
 
 /* ════ Projects — portfolio of programs ════ */
 
-/** True when the list route said there is more than the page it returned. */
-function readIsPaged(meta: Record<string, unknown> | undefined): boolean {
-  return meta !== undefined && meta.hasMore === true;
-}
-
-/** A count read from one page of a longer list is a floor, and reads as one. */
-function countFloor(n: number, paged: boolean): string {
-  return paged ? `${n}+` : String(n);
-}
-
-function PortfolioPagedNote({ paged, settled, count, scopedCounts }: { paged: boolean; settled: boolean; count: number; scopedCounts: boolean }) {
-  if (!paged || !settled) return null;
-  return (
-    <div role="status" className="scaf-note" style={{ marginBottom: 12 }}>
-      Showing the first {count} projects. {scopedCounts ? 'The average readiness, status filter and search cover these only. Counts cover all projects matching the selected filters.' : 'The totals, the average readiness, status filter and search cover these only.'}
-    </div>
-  );
-}
-
 /**
  * Portfolio row — the display contract projected by GET /api/c2c/projects
  * (server/routes/c2c/projects.ts), one field per real `regulatory_programs`
  * column (phase → stage, target_submission_date → due, lead_user_id → lead),
- * and the home filing's dossier readiness, measured on each read. `blocker` is in the projection but the list query
- * returns it as a literal NULL — no blocker is computed at list level — so it is
- * typed nullable and rendered null-safe, never fabricated. Null means "not
- * assessed here", never "none": the card says nothing about blockers then.
+ * and the home filing's dossier readiness, measured on each read. No blocker:
+ * the list query projected one as a literal NULL, so its column read "—" on
+ * every row, and it is gone from the projection and the list (2026-10-31,
+ * server/services/c2c/project-portfolio.ts). A project's blockers are on its
+ * project home.
  */
 interface ProjPortfolioEntry {
   id: string;
@@ -1117,13 +1216,23 @@ interface ProjPortfolioEntry {
   readinessReason?: string;
   status: string;
   lead: string;
-  blocker: string | null;
   due: string;
   /** target_submission_date as YYYY-MM-DD, or null when none is set. */
   due_date?: string | null;
-  activity: string;
+  /** When the project's record last changed ('Updated Oct 29'), from
+   *  projects.updated_at on the server; null when the record holds none. */
+  activity: string | null;
   client_workspace_id?: number | null;
   client_name?: string | null;
+  /** What the project says it is, for the card's one line (S11, 2026-11-01):
+   *  each a regulatory_programs column, null when nothing (or only whitespace)
+   *  is stated. Optional for a payload from before the projection carried them. */
+  description?: string | null;
+  indication?: string | null;
+  /** primary_agency as stored, e.g. 'FDA'. */
+  agency?: string | null;
+  /** The filing type as stored, e.g. 'ind' or '510k'. */
+  program_type?: string | null;
 }
 
 /**
@@ -1141,18 +1250,34 @@ function portfolioMean(projects: ProjPortfolioEntry[], settled: boolean): { mean
   return { mean, cover: partial ? `${measured.length} of ${projects.length} measured` : '' };
 }
 
-/** Whole days from today to a YYYY-MM-DD date, in the viewer's calendar; null
- *  for no date or an unreadable one. */
-function daysUntil(isoDate: string | null | undefined, today: Date = new Date()): number | null {
-  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate ?? '');
-  if (!m) return null;
-  const due = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-  const now = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
-  return Math.round((due - now) / 86_400_000);
+/** The list view's columns: project, client type, stage, dossier readiness,
+ *  status, lead, target date. The list is the dense view: it holds, as text,
+ *  what the cards leave out (D2 §1.4 item 6). */
+const LIST_COLUMNS = '1.8fr 150px 110px 130px 100px 120px 120px';
+
+/** A stated text value, or null for none: blank, or the server's '—'. */
+function stated(value: string | null | undefined): string | null {
+  const v = value?.trim();
+  return v && v !== '—' ? v : null;
 }
 
-/** Workstream → chip tone (presentation config, not data). */
-const WS_TONE: Record<string, string> = { MDX: 'ai', Biotech: 'ok', Pharma: 'warn', CRO: 'idle' };
+/**
+ * The card's one line: what the project is (D2 §1.4 item 5; ONE_DESIGN_PLAN §2
+ * "Projects": "the name, a one-line description and when it was updated").
+ * The stated description first; otherwise the filing in words (filing type,
+ * agency, indication), each only when stated; otherwise, for a payload without
+ * those fields, the stage and the lead the card used to show. Nothing is
+ * filled in that the record does not hold.
+ */
+function cardLine(p: Pick<ProjPortfolioEntry, 'description' | 'program_type' | 'agency' | 'indication' | 'stage' | 'lead'>): string {
+  const description = stated(p.description);
+  if (description) return description;
+  const programType = stated(p.program_type);
+  const filing = [programType ? filingLabel(programType) : null, stated(p.agency), stated(p.indication)].filter(Boolean);
+  if (filing.length) return filing.join(' · ');
+  const lead = stated(p.lead);
+  return [stated(p.stage), lead ? `Lead ${lead}` : null].filter(Boolean).join(' · ');
+}
 
 /* A program whose stored status is `blocked` while the list carries no blocker
    for it. The product writes only active and archived (POST and the close-out
@@ -1160,6 +1285,26 @@ const WS_TONE: Record<string, string> = { MDX: 'ai', Biotech: 'ok', Pharma: 'war
    does not assess blockers. The card states the gap instead of a bare red chip. */
 const BLOCKED_NO_CAUSE = 'No cause recorded';
 const BLOCKED_NO_CAUSE_TITLE = 'This project’s status is recorded as blocked, and no blocker is recorded against it.';
+
+/**
+ * A project screen chosen from the rail with no project ever opened lands on
+ * Projects: say which one, rather than nothing (2026-10-31).
+ */
+function NeedsProjectNotice() {
+  const [label, setLabel] = useState<string | null>(null);
+  useEffect(() => {
+    const receive = () => setLabel((current) => consumeNavParams('projects')?.needsProject ?? current);
+    receive();
+    window.addEventListener(NAV_PARAMS_EVENT, receive);
+    return () => window.removeEventListener(NAV_PARAMS_EVENT, receive);
+  }, []);
+  if (!label) return null;
+  return (
+    <p className="ph-sub" role="status" data-testid="projects-needs-project">
+      <strong>{label} opens inside a project.</strong> Open one below, or create one with New project.
+    </p>
+  );
+}
 
 export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   const [ws, setWs] = useState('all');
@@ -1181,6 +1326,8 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   const portfolioUrl = portfolioFilterUrl(clientWorkspaceId, ws, pathway);
   const live = useLiveRows<ProjPortfolioEntry>(portfolioUrl, [reloadNonce, clientWorkspaceId, ws, pathway]);
   const projects = live.rows;
+  // Each card's plan line (S11, THE_PROGRAM §5): one read for the page, from the schedule engine.
+  const plans = usePortfolioLines(projects.map(p => p.id));
   // Options come from accessible program anchors, not an organization-wide
   // client directory. The server applies this filter before it pages the list.
   const clients = useMemo(() => portfolioClients(live.meta), [live.meta]);
@@ -1210,8 +1357,10 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
      failed, so every figure here resolved to a settled 0 — and the `|| 1`
      divisor turned what would at least have been a visible NaN into a clean
      "0%", a portfolio-mean readiness computed over no programs. A director
-     reading the header learned they run nothing and have nothing blocked. */
-  const { mean: meanReadiness, cover: measuredCover } = portfolioMean(projects, !live.loading && !live.error);
+     reading the header learned they run nothing and have nothing blocked.
+     `settled` also gates the search placeholder's count and the paged note. */
+  const settled = !live.loading && !live.error;
+  const { mean: meanReadiness, cover: measuredCover } = portfolioMean(projects, settled);
   /* No "Blocked" figure. A program's status is only ever written as active or
      archived (POST and the close-out routes in server/routes/c2c/projects.ts),
      and the list computes no blocker, so the count could only read 0: an
@@ -1223,11 +1372,13 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   }).length;
   const health = useMemo(() => {
     const kv = (value: string) => (live.loading || live.error ? '—' : value);
+    const active = kv(counts ? String(counts.total) : countFloor(projects.length, truncated));
     return [
-    { l: 'Active projects', n: kv(counts ? String(counts.total) : countFloor(projects.length, truncated)), m: 'matching the selected server filters', t: '' },
+    // "1 active project", never "1 active projects" (2026-10-31).
+    { l: active === '1' ? 'Active project' : 'Active projects', n: active, m: 'matching the selected server filters', t: '' },
     // A mean over some of the programs says how many it covers (`q`).
     { l: 'Average readiness', n: kv(meanReadiness), m: 'portfolio mean', t: '', q: measuredCover },
-    { l: 'Filing < 60 days', n: kv(counts ? String(counts.filingWithin60Days) : countFloor(filingSoon, truncated)), m: 'target filing date set', t: 'warn' },
+    { l: 'Filing within 60 days', n: kv(counts ? String(counts.filingWithin60Days) : countFloor(filingSoon, truncated)), m: 'target filing date set', t: 'warn' },
     ];
   }, [live.loading, live.error, counts, projects.length, truncated, meanReadiness, measuredCover, filingSoon]);
   /* The status filter offers the statuses the portfolio actually holds. It
@@ -1238,9 +1389,9 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   /* What AnA can see of this screen.
      The portfolio is the screen a user is most likely to ask a general question
      on — "which programs are at risk?", "what should I do next?" — and until now
-     she was told only that the surface was called "projects". The button in the
-     header literally sends her "Which programs are at risk this week?" with no
-     way to know which programs exist.
+     she was told only that the surface was called "projects". The header's
+     "Ask AnA" button (gone since D2-1; ⌘K asks AnA) sent her "Which programs
+     are at risk this week?" with no way to know which programs exist.
 
      A FAILED read publishes the failure. `projects` is [] both when the org has
      no programmes and when the read threw, and a summary saying "0 programs"
@@ -1313,19 +1464,18 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         // `p.lead` is deliberately NOT published: the server projects it as
         // COALESCE(u.name, u.email, '—'), so a lead with no name set resolves to
         // an EMAIL — PII that must not enter the model prompt. It stays on the
-        // card (where the person reads it); the sibling ProjectHome publisher
+        // list (where the person reads it); the sibling ProjectHome publisher
         // drops the team member's email for the same reason.
         programs: list.slice(0, 12).map(p => ({
           id: p.id, code: p.code, title: p.title, workstream: p.ws, pathway: p.pathway ?? null, stage: p.stage,
           status: p.status, readiness: p.readiness, readinessState: p.readinessState ?? null, due: p.due,
-          blocker: p.blocker ?? null,
         })),
       },
       availableActions: [
         'Open a project to enter its project home',
-        'Filter the portfolio by workstream (MDX, Biotech, Pharma), pathway or client; filter the loaded page by status',
+        'Filter the portfolio by client type (medical device & IVD, biotech, pharma), pathway or client; filter the loaded page by status',
         'Search the portfolio by project title or code',
-        'Switch between the grid and list views',
+        'Switch between the grid and list views; the list shows readiness, status, lead and the portfolio figures',
         'Create a new project through the new-project wizard',
       ],
     };
@@ -1453,7 +1603,8 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
      the shell persists, and backing out of a half-filled form would then have to
      unwind that too. */
   if (wizardOpen) {
-    return <NewProjectWizard onClose={() => setWizardOpen(false)} onNav={onNav} segment={segment} onAsk={onAsk} onContext={setWizardContext} />;
+    return <NewProjectWizard onClose={() => setWizardOpen(false)} onNav={onNav} segment={segment} onAsk={onAsk} onContext={setWizardContext}
+      existingNames={projects.map(project => project.title)} />;
   }
 
   return (
@@ -1462,67 +1613,50 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
        `.page-inner` here is what capped the workspace index at a 1160px reading
        measure — see the note beside `projects:` in surfaceViews.ts. */
     <div className="pj-index">
+      {/* Claude's Projects page (D2 §1.3–1.4): the serif title and one primary
+          action. The "Workspace" eyebrow, the sub-line and "Ask AnA" are gone:
+          the rail and the crumb say where you are, and ⌘K's "Ask AnA" and the
+          Home composer ask AnA anything, over this screen's published context. */}
       <div className="ph">
         <div>
-          <div className="ph-eyebrow">Workspace</div>
           <h1 className="ph-title">Projects</h1>
-          <div className="ph-sub">Every regulatory project across all workstreams. Open one to enter its project home.</div>
+          <NeedsProjectNotice />
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn ghost" onClick={() => onAsk('Which projects are at risk this week?')}>{I.sparkles} Ask AnA</button>
-          <button className="btn primary" onClick={() => openNewProject(onNav)}>{I.plus} New project</button>
+        <div className="ph-acts">
+          <button type="button" className="btn primary" onClick={() => openNewProject(onNav)}>{I.plus} New project</button>
         </div>
       </div>
 
-      {/* ── The four metric tiles are one line now (2026-09-07) ──
-          "Active programs / Average readiness / Blocked / Filing < 60 days" was
-          a dashboard bolted to the top of a directory: four large figures a
-          person had to read past to reach the thing they came for, which is
-          their project. The figures themselves are unchanged and still honest —
-          `kv()` still resolves every one of them to an em dash while the read is
-          in flight or has failed, so a failed portfolio read cannot render as a
-          real "0%" portfolio mean. They are simply quiet now. */}
-      <div className="pj-summary">
-        {health.map((h, i) => (
-          <span key={i} className="pj-summary-i" data-tone={h.t || undefined}>
-            <strong>{h.n}</strong> {h.l.toLowerCase()}{'q' in h && h.q ? `, ${h.q}` : ''}
-          </span>
-        ))}
-      </div>
-      <PortfolioPagedNote paged={truncated} settled={!live.loading && !live.error} count={projects.length} scopedCounts={counts !== null} />
-
+      {/* One quiet toolbar row: search, the filters as selects, the view. */}
       <div className="pj-toolbar">
         <div className="pj-search">
           <span className="ico">{I.search}</span>
           <input
             type="search"
             className="pj-search-i"
-            placeholder="Search projects"
+            placeholder={searchPlaceholder(projects.length, truncated, settled)}
             value={q}
             onChange={e => setQ(e.target.value)}
             aria-label="Search projects by title or code"
           />
         </div>
-        <ProjectClientFilter value={clientWorkspaceId} clients={clients} hasMore={clientContext.hasMore} onChange={setClientWorkspaceId} />
-        <span style={{ flex: 1 }} />
-        <div className="seg">
-          <button className={`seg-b${view === 'grid' ? ' on' : ''}`} onClick={() => setView('grid')}>Grid</button>
-          <button className={`seg-b${view === 'list' ? ' on' : ''}`} onClick={() => setView('list')}>List</button>
+        <ProjectClientFilter value={clientWorkspaceId} clients={clients} onChange={setClientWorkspaceId} />
+        <ProjectPortfolioFilters workstream={ws} pathway={pathway} counts={counts}
+          hasDeviceRows={projects.some(project => project.ws === 'MDX')} onWorkstream={setWs} onPathway={setPathway} />
+        {statusChoices.visible && (
+          <select className="c2c-input pj-filter" aria-label="Status" value={status} onChange={e => setStatus(e.target.value)}>
+            {statusChoices.choices.map(s => (
+              <option key={s} value={s}>{s === 'all' ? 'All statuses' : enumWords(s) ?? s}</option>
+            ))}
+          </select>
+        )}
+        <span className="pj-toolbar-gap" />
+        <div className="seg" role="group" aria-label="View">
+          <button type="button" className={`seg-b${view === 'grid' ? ' on' : ''}`} aria-pressed={view === 'grid'} onClick={() => setView('grid')}>Grid</button>
+          <button type="button" className={`seg-b${view === 'list' ? ' on' : ''}`} aria-pressed={view === 'list'} onClick={() => setView('list')}>List</button>
         </div>
       </div>
-
-      <ProjectPortfolioFilters workstream={ws} pathway={pathway} counts={counts}
-        hasDeviceRows={projects.some(project => project.ws === 'MDX')} onWorkstream={setWs} onPathway={setPathway} />
-
-      {statusChoices.visible && (
-        <div className="seg" style={{ marginBottom: 18 }}>
-          {statusChoices.choices.map(s => (
-            <button key={s} className={`seg-b${status === s ? ' on' : ''}`} onClick={() => setStatus(s)}>
-              {s[0].toUpperCase() + s.slice(1)}
-            </button>
-          ))}
-        </div>
-      )}
+      <ClientChoicesNote hasMore={clientContext.hasMore} />
 
       {live.loading ? (
         <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading projects…</div>
@@ -1552,80 +1686,87 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
           hint={
             needle
               ? 'Search matches a project’s title or code on the loaded page. Clear the search, or adjust the filters.'
-              : 'Adjust the client, workstream, pathway or status filter to see more.'
+              : 'Adjust the client, client type, pathway or status filter to see more.'
           }
         />
       ) : view === 'grid' ? (
+        /* A calm card: the name, one line of what the project is, and its code
+           and last update (the device portfolio's "last activity", folded into
+           Projects: D2, fold F6, 2026-10-30). Readiness, client type, stage and
+           lead are the list view's columns (D2 §1.5). */
         <div className="pj-cards">
-          {list.map(p => (
-            <button key={p.id} className="pj-card" onClick={() => openProj(p)}>
-              <div className="pj-card-t">{p.title}</div>
-              <div className="pj-card-m">{p.code} · {p.stage} · Lead {p.lead}</div>
-              {/* No figure draws no bar: an empty track reads as 0. */}
-              {isMeasuredReadiness(p.readiness, p.readinessState) ? (
-                <div className="ph-bar-track" style={{ margin: '12px 0 6px' }}>
-                  <div className="ph-bar-fill" data-tone={p.status === 'blocked' ? 'warn' : 'ok'} style={{ width: p.readiness + '%' }} />
+          <PortfolioLinesNote error={plans.error} />
+          {list.map(p => {
+            const line = cardLine(p);
+            return (
+              <button type="button" key={p.id} className="pj-card" onClick={() => openProj(p)}>
+                <div className="pj-card-t">{p.title}</div>
+                {line && <div className="pj-card-m">{line}</div>}
+                <PortfolioLine line={plans.lines[p.id]} />
+                <div className="pj-card-r">
+                  <span>{[stated(p.code), p.activity].filter(Boolean).join(' · ')}</span>
+                  {p.due_date && <span>Due {p.due}</span>}
                 </div>
-              ) : <div style={{ height: 12 }} />}
-              <div className="pj-card-r">
-                <span title={p.readinessReason ?? DOSSIER_READINESS_MEANS}>{DOSSIER_READINESS_LABEL} {dossierReadinessValue(p.readiness, p.readinessState)}</span><span>{p.due}</span>
-              </div>
-              <div className="pj-card-f">
-                <span className={`rd-chip tone-${WS_TONE[p.ws]}`}>{p.ws}</span>
-                <span className={`rd-chip tone-${p.status === 'blocked' ? 'err' : p.status === 'complete' ? 'ok' : 'ai'}`}>{p.status}</span>
-                {/* The blocker keeps its own line and its warning tone: it is
-                    the one thing on this card that changes what you do next,
-                    and colour is not carrying it alone — the icon and the text
-                    both say so. */}
-                {/* Nothing when no blocker came back: the list does not
-                    assess blockers, so "No open blockers" was an all-clear
-                    nothing had checked. */}
-                {p.blocker && <span className="pj-card-blk">{I.alertTriangle} {p.blocker}</span>}
-                {/* A status of blocked with no blocker behind it (NM-512 in the
-                    QA organisation, QA 2026-10-08 j1) says so in words. The red
-                    chip alone read as a finding with its cause withheld. */}
-                {!p.blocker && p.status === 'blocked' && (
-                  <span className="pj-card-blk" title={BLOCKED_NO_CAUSE_TITLE}>{I.alertTriangle} {BLOCKED_NO_CAUSE}</span>
+                {/* Active is the default and is not stated. The list assesses no
+                    blockers, so a status of blocked (NM-512 in the QA
+                    organisation, QA 2026-10-08 j1) says in words that no cause is
+                    recorded: a red chip alone read as a finding with its cause
+                    withheld. */}
+                {p.status === 'blocked' && (
+                  <span className="pj-card-blk" title={BLOCKED_NO_CAUSE_TITLE}>{I.alertTriangle} Blocked · {BLOCKED_NO_CAUSE}</span>
                 )}
-              </div>
-            </button>
-          ))}
+                {p.status && p.status !== 'active' && p.status !== 'blocked' && (
+                  <span className="pj-card-foot">{enumWords(p.status)}</span>
+                )}
+              </button>
+            );
+          })}
         </div>
       ) : (
         <div className="ctable">
-          <div className="ct-head" style={{ gridTemplateColumns: '1.6fr 80px 1fr 120px 100px 90px' }}>
-            <div>Project</div><div>WS</div><div>Stage / readiness</div><div>Blocker</div><div>Lead</div><div>Due</div>
+          {/* Status, where a Blocker column read "—" on every row: the list
+              assesses no blockers (2026-10-31). The figure is text under the
+              name Project home uses, with the server's reason as its title. */}
+          <div className="ct-head" style={{ gridTemplateColumns: LIST_COLUMNS }}>
+            <div>Project</div><div>Client type</div><div>Stage</div><div>{DOSSIER_READINESS_LABEL}</div><div>Status</div><div>Lead</div><div>Target date</div>
           </div>
           {list.map(p => (
-            <button key={p.id} className="ct-row" style={{ gridTemplateColumns: '1.6fr 80px 1fr 120px 100px 90px' }} onClick={() => openProj(p)}>
+            <button type="button" key={p.id} className="ct-row" style={{ gridTemplateColumns: LIST_COLUMNS }} onClick={() => openProj(p)}>
               <div>
                 <div className="ct-strong">{p.title}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-300)' }}>{p.code}</div>
+                <div className="pj-list-sub">{[stated(p.code), p.activity].filter(Boolean).join(' · ')}</div>
               </div>
-              <div><span className={`rd-chip tone-${WS_TONE[p.ws]}`}>{p.ws}</span></div>
-              <div>
-                <div style={{ fontSize: 11.5 }}>{p.stage}</div>
-                {isMeasuredReadiness(p.readiness, p.readinessState) && (
-                  <div className="ph-bar-track" style={{ marginTop: 5 }}>
-                    <div className="ph-bar-fill" data-tone={p.status === 'blocked' ? 'warn' : 'ok'} style={{ width: p.readiness + '%' }} />
-                  </div>
-                )}
-                <div style={{ fontSize: 11, color: 'var(--text-300)', marginTop: 3 }} title={p.readinessReason ?? DOSSIER_READINESS_MEANS}>
-                  {DOSSIER_READINESS_LABEL} {dossierReadinessValue(p.readiness, p.readinessState)}
-                </div>
-              </div>
+              <div>{WS_LABEL[p.ws] ?? p.ws}</div>
+              <div>{p.stage}</div>
+              <div><span title={p.readinessReason ?? DOSSIER_READINESS_MEANS}>{dossierReadinessValue(p.readiness, p.readinessState)}</span></div>
               <div
-                style={{ fontSize: 11, color: p.blocker || p.status === 'blocked' ? 'var(--warning)' : 'var(--text-400)' }}
-                title={!p.blocker && p.status === 'blocked' ? BLOCKED_NO_CAUSE_TITLE : undefined}
+                data-tone={p.status === 'blocked' ? 'warn' : undefined}
+                title={p.status === 'blocked' ? BLOCKED_NO_CAUSE_TITLE : undefined}
               >
-                {p.blocker ? '1 blocker' : p.status === 'blocked' ? BLOCKED_NO_CAUSE : '—'}
+                {enumWords(p.status) ?? 'Not recorded'}
+                {p.status === 'blocked' && <div className="pj-list-sub">{BLOCKED_NO_CAUSE}</div>}
               </div>
-              <div style={{ fontSize: 11.5 }}>{p.lead}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-300)' }}>{p.due}</div>
+              <div>{p.lead}</div>
+              <div>{p.due}<PortfolioLine line={plans.lines[p.id]} className="pj-list-sub" /></div>
             </button>
           ))}
         </div>
       )}
+
+      {/* The portfolio figures are the list's footing, not the page's chrome
+          (plan §2: no stat strip). `kv()` still resolves every one of them to
+          an em dash while the read is in flight or has failed, so a failed
+          portfolio read cannot render as a real "0%" portfolio mean. */}
+      {view === 'list' && (
+        <div className="pj-summary">
+          {health.map((h, i) => (
+            <span key={i} className="pj-summary-i" data-tone={h.t || undefined}>
+              <strong>{h.n}</strong> {h.l.toLowerCase()}{'q' in h && h.q ? `, ${h.q}` : ''}
+            </span>
+          ))}
+        </div>
+      )}
+      <PortfolioPagedNote paged={truncated} settled={settled} count={projects.length} scopedCounts={counts !== null} />
     </div>
   );
 }

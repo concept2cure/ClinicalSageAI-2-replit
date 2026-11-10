@@ -35,7 +35,8 @@ const props = () => ({
   segment: 'biopharma',
 });
 
-const headerText = () => document.querySelector('.vd-top')?.textContent ?? '';
+// D6-3: the header is D0's `.ph` (title, one line, actions); `.vd-top` was retired (D6 §C.4 step 2).
+const headerText = () => document.querySelector('.ph')?.textContent ?? '';
 
 function vaultWith(vault: () => Response) {
   apiRequest.mockImplementation(async (method: string, url: string) =>
@@ -53,7 +54,7 @@ describe('Vault — header document count', () => {
   it('states no count when no project is open and nothing was read', async () => {
     vaultWith(() => ok({}));
     render(<Vault {...props()} />);
-    expect(await screen.findByText('Open a project to see its vault')).toBeTruthy();
+    expect(await screen.findByText("Choose a project's Vault")).toBeTruthy();
 
     expect(headerText(), 'a document count over a vault nobody read').not.toMatch(/\d+\s+documents?/);
     expect(apiRequest.mock.calls.filter(([, url]) => String(url).startsWith('/api/c2c/project-vault'))).toEqual([]);
@@ -136,10 +137,13 @@ describe('Vault — a refused read is a refusal', () => {
     (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-301' };
     vaultWith(() => failed(403));
     render(<Vault {...props()} />);
-    expect(await screen.findByText(/Couldn.t load the project vault/)).toBeTruthy();
+    /* S6 V1 (2026-11-05): an uncoded 403 is the person's role, said through the one read classifier; the module
+       gate's and the release's 403s are said as themselves (vaultRefusalNotFailedRead.test.tsx). */
+    expect(await screen.findByText('Your role cannot do this')).toBeTruthy();
 
-    expect(document.body.textContent).toMatch(/don.t have access to this project.s documents/i);
+    expect(document.body.textContent).toMatch(/Your role cannot do this, so the project vault was not read\./);
     expect(document.body.textContent).not.toMatch(/didn.t respond/i);
+    expect(screen.queryByRole('button', { name: /try again|retry/i })).toBeNull();
   });
 
   it('a 5xx says the store did not respond, and offers a retry', async () => {
@@ -155,6 +159,8 @@ describe('Vault — a refused read is a refusal', () => {
 
 describe('Vault — upload controls', () => {
   it('names document types for a reader, not by wire token', async () => {
+    // D6-3: the type picker lives in an open project's Uploads view now (D6 §C.4 step 5).
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-301' };
     vaultWith(() => ok({}));
     render(<Vault {...props()} />);
     const picker = (await screen.findByTestId('vault-upload-type')) as HTMLSelectElement;
@@ -175,5 +181,31 @@ describe('Vault — upload controls', () => {
     const upload = (await screen.findByTestId('vault-upload-button')) as HTMLButtonElement;
     expect(upload.disabled).toBe(true);
     expect(upload.title).toMatch(/Open a project first/);
+  });
+});
+
+/* UI walk, 2026-10-31: the header's line wrapped on both sides of a dot and
+   left it alone on a line ("IND · 21 CFR 312 / · / 1 authored document"), and
+   the upload type picker was an unlabelled "Other" box beside the buttons. */
+describe('Vault — the header reads as a line, and its picker is named', () => {
+  it('keeps each part with its separator, so a dot never stands alone', async () => {
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'HLV-333' };
+    vaultWith(() => ok({ success: true, data: { program: 'HLV-333', spine: 'IND · 21 CFR 312', standard: 'pharma', documentCount: 1,
+      documentCounts: { authored: 1, artifacts: 0, uploads: 0 }, tree: [] } }));
+    render(<Vault {...props()} />);
+    await waitFor(() => expect(headerText()).toMatch(/1 authored document/));
+    // D6-3: the line is the header's `.ph-sub` (D6 §C.4 step 2).
+    const parts = [...document.querySelectorAll('.ph-sub .vd-sub-part')];
+    expect(parts.map((p) => p.textContent?.trim())).toEqual(['IND · 21 CFR 312', '1 authored document · 0 uploaded files']);
+    expect(parts[1].firstElementChild?.tagName.toLowerCase(), 'the separator belongs to the part it introduces').toBe('svg');
+  });
+
+  it('names the upload type picker on screen', async () => {
+    // D6-3: the picker is in an open project's Uploads view, named for what it sets (D6 §C.4 step 5).
+    (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID, title: 'BX-301' };
+    vaultWith(() => ok({}));
+    render(<Vault {...props()} />);
+    const picker = await screen.findByTestId('vault-upload-type');
+    expect(picker.closest('label')?.textContent).toMatch(/^Type for files added next/);
   });
 });

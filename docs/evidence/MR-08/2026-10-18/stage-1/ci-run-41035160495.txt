@@ -1,0 +1,37 @@
+CI run 41035160495 (workflow CI, branch concept2cure-v2, head 12ab1bdd01cbd377f221691adf292cb6db8700ec).
+Read 2026-11-01 through the GitHub Actions API (jobs list and job log) by session_01Gx2fiwvxaXi6mQgddPqMaG.
+https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/41035160495
+
+Job 124503622771  "Production Boot Smoke (RLS on, non-superuser role)"  conclusion: success
+  started 2026-11-01T09:16:16Z, completed 2026-11-01T09:18:51Z
+  step 11 "Start the pinned virus scanner (clamd) and wait for it"          success
+  step 12 "Boot in production mode and require /readyz=200"                  success
+  step 13 "Scanner log on failure"                                           skipped
+
+Job 124503622853  "Production Image Boot (built image, empty database, sign-in)"  conclusion: success
+  started 2026-11-01T09:21:32Z, completed 2026-11-01T09:28:24Z
+  step 5  "Build the provision and production images (as deploy-aws.yml does)"   success
+  step 8  "Start the pinned virus scanner (clamd) and wait for it"               success
+  step 9  "Start the production image and require /healthz and /readyz = 200"    success
+  step 10 "Sign a person in to the running image, second factor included, and upload through the scanner"  success
+
+Job 124503622853 log, steps 9-10 (timestamps as logged):
+2026-11-01T09:28:21.2210346Z /readyz=200 after 8s
+2026-11-01T09:28:21.2285514Z {"ready":true,"dependencies":{"database":"ok","schema":"ok","ana":"ok","storage":"ok","virusScan":"ok","redis":"skipped","worker":"skipped"},"schemaState":"ready","anaState":"deterministic","capabilityRegistry":"pending","anaDetail":"AI_GATEWAY_DETERMINISTIC is set — AnA serves fixed responses, not live model output"}
+2026-11-01T09:28:21.2351669Z /healthz=200
+2026-11-01T09:28:21.5527819Z enrolled user 1 in organisation 5, authenticator on
+2026-11-01T09:28:21.7281196Z POST /api/auth/login → 200, second factor required (authenticator)
+2026-11-01T09:28:21.7577941Z POST /api/auth/mfa/verify with a wrong code → 401, refused
+2026-11-01T09:28:21.9062473Z POST /api/auth/mfa/verify with the authenticator code → 200, access token issued
+2026-11-01T09:28:21.9232881Z GET /api/auth/me → 200, signed in as image-boot-signin@example.invalid
+2026-11-01T09:28:21.9233645Z image sign-in: OK
+2026-11-01T09:28:22.1196529Z POST /api/c2c/projects → 201, project 23205fd3-6062-4e08-8d11-8bc21d4e82ac
+2026-11-01T09:28:22.5615553Z POST /api/vault/ingest eicar.txt → 400 FILE_SCAN_REJECTED, refused by the scanner
+2026-11-01T09:28:22.7686347Z POST /api/vault/ingest image-boot.pdf → 201, scanned clean and filed (document 03c4bfbf-3181-4d9a-8ae9-68029757c4bb)
+2026-11-01T09:28:22.7687520Z image upload through the scanner: OK
+
+The same run's other jobs, for the record (none is a Stage 1 acceptance line):
+  Security Scan failure (lockfile audit / Trivy fs); AnA Readiness Tests failure;
+  Blank DB Provisioning + Deploy Migration failure (step 17, server SQL ratchet);
+  Integration Tests failure (real-database tests) then cancelled; Test, Coverage, Lint,
+  Security Contract Tests cancelled; Build and release evidence skipped.

@@ -1,0 +1,65 @@
+
+ RUN  v4.1.7 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/parent
+
+ × client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > lists the record’s elements for 2.5, named as the record’s statement and as unverified, with its basis 46ms
+   → [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ × client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > shows a parent code’s contained sections instead of an empty list 4ms
+   → [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ × client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > names the containing section when the answer came from an ancestor entry 4ms
+   → [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ × client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > reads a code the record does not index as not indexed — never as nothing required 4ms
+   → [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+ × client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > says nothing about required content when the server sent no record statement 5ms
+   → [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > lists the record’s elements for 2.5, named as the record’s statement and as unverified, with its basis
+ FAIL  client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > shows a parent code’s contained sections instead of an empty list
+ FAIL  client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > names the containing section when the answer came from an ancestor entry
+ FAIL  client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > reads a code the record does not index as not indexed — never as nothing required
+ FAIL  client/src/concept2cure/v2/__tests__/authoringSectionCheckRecord.test.tsx > the section check shows the record’s required content > says nothing about required content when the server sent no record statement
+Error: [vitest] No "authService" export is defined on the "@/services/portal/authService" mock. Did you forget to return it from "vi.mock"?
+If you need to partially mock a module, you can use "importOriginal" helper inside:
+
+vi.mock(import("@/services/portal/authService"), async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    // your mocked methods
+  }
+})
+
+ ❯ actor client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts:23:44
+     21|   update: (patch: Partial<AssemblyBuildState>) => void;
+     22| }
+     23| const actor = (): string => { const user = authService.getUser(); retu…
+       |                                            ^
+     24| const scopeKey = (options: AssemblyBuildOptions): string => `${actor()…
+     25| function update(owner: Owner, bucket: AssemblyBucket, patch: Partial<A…
+ ❯ scopeKey client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts:24:64
+ ❯ useAuthoringAssemblyBuild client/src/concept2cure/v2/editor/useAuthoringAssemblyBuild.ts:198:15
+ ❯ DocumentWorkbench client/src/concept2cure/v2/editor/DocumentWorkbench.tsx:2061:20
+ ❯ Object.react_stack_bottom_frame ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+   Start at  22:30:11
+   Duration  3.97s (transform 2.34s, setup 170ms, import 2.98s, tests 67ms, environment 496ms)
+

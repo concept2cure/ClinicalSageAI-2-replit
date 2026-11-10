@@ -443,7 +443,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
   const scopeLabel = scope === 'all' ? 'All artifacts' : 'Essential (ICH E6(R3) Appendix C)';
 
   return (
-    <div className="page-inner etmf">
+    <div className="page-inner">
       <div className="surface-head">
         <div>
           <div className="surface-kicker">{I.vault || I.folder} Vault — CRO / service view — Trial Master File (DIA Reference Model v3)</div>

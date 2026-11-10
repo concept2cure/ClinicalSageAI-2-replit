@@ -1,0 +1,110 @@
+# Green summary, 2026-10-25 (working tree on HEAD f8e0d3210 with this change).
+
+## 1. The new and updated tests (the red run's files): 3 files
+NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts \
+  server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts \
+  server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts \
+  server/services/ai-gateway/providers/__tests__/placement.test.ts
+ Test Files  3 passed (3)
+      Tests  65 passed (65)
+(red, same files, unchanged source: 27 failed | 38 passed (65); red/vitest-red.txt)
+
+ ✓ server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts > a zero-retention approval names its agreement > an approval with no agreement fails closed, as misconfiguration, and nothing is sent
+ ✓ server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts > both keys: the approval and the placement registry > the approval alone is not zero retention: with ANTHROPIC_ZERO_RETENTION unset, PII is not sent
+ ✓ server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts > both keys: the approval and the placement registry > an agreement that takes effect tomorrow is not in force today
+ ✓ server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts > both keys: the approval and the placement registry > both keys and an agreement in force today: sent, and the ledger row names the agreement
+ ✓ server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts > the ledger names the agreement only where a dispatch relied on it > a non-sensitive call relied on nothing and names no agreement
+ ✓ server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts > the ledger names the agreement only where a dispatch relied on it > an embedding of PII on a third-party lane names the agreement on its row
+ ✓ server/services/ai-gateway/__tests__/zero-retention-agreement.test.ts > the ledger names the agreement only where a dispatch relied on it > the self-hosted lane needs no agreement and names none
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > no PII
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > ordinary PII
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > health information
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > shared without ZDR
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > unknown provider
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > missing region
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > region outside approval
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > detector failure
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > tenant policy lookup failure
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > canonical sensitive placement decision > allows only an authorized, reasoned ordinary-PII false-positive override and never a PHI override
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > production deployment guard > rejects missing mode, missing settings, and contradictory approval
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > production deployment guard > accepts an explicit internally consistent human-supplied contract
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > production deployment guard > rejects malformed fields instead of trusting a JSON type assertion
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > refuses a zero-retention approval that names no agreement, saying what is missing
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > refuses it at production boot through the existing path
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > refuses an agreement with a blank reference
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > refuses an agreement with no reference
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > refuses an agreement with a date that is not one
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > refuses an agreement with a date in another format
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > refuses an agreement with a string instead of an object
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > reads a JSON null as no agreement, as Terraform does
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > keeps the agreement it parsed
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > a self-hosted lane needs no agreement: no third party receives its text (ADR-0014 §1.5)
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > zero retention rests on a named agreement > an approval without zero retention needs no agreement
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the approval and the placement registry cannot disagree at production boot > refuses a zero-retention approval for a provider whose registry entry retains data
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the approval and the placement registry cannot disagree at production boot > refuses one for Moonshot, which is never a zero-retention lane
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the approval and the placement registry cannot disagree at production boot > refuses one for a name the gateway does not route to
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the approval and the placement registry cannot disagree at production boot > refuses a registry zero-retention flag that no approval and agreement back
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the approval and the placement registry cannot disagree at production boot > boots when both say so
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the dispatch decision relies on zero retention only when both keys say so and the agreement is in force > the registry alone, or the approval alone, is not zero retention
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the dispatch decision relies on zero retention only when both keys say so and the agreement is in force > an agreement that takes effect later is not yet in force
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the dispatch decision relies on zero retention only when both keys say so and the agreement is in force > a third-party lane with no agreement is not zero retention, even if the approval says so
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-policy.test.ts > the dispatch decision relies on zero retention only when both keys say so and the agreement is in force > names the agreement an allowed dispatch relied on, and none when zero retention was not required
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > provider placement registry > marks shared frontier providers as multi-tenant without ZDR by default
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > provider placement registry > marks private-cloud Claude (bedrock) as frontier_private without ZDR by default
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > provider placement registry > marks local as the only self-hosted, on-prem, air-gappable substrate
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > placement compliance > allows any provider when no requirements are set
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > placement compliance > excludes shared frontier when zero data retention is required
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > placement compliance > requires a self-hosted substrate for on-prem residency
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > placement compliance > enforces regional residency against the provider region list
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > placement compliance > combines residency and ZDR (both must hold)
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud residency follows the region the client calls (D6) > default Vertex (us-east5) claims us only — never eu
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud residency follows the region the client calls (D6) > Vertex pointed at an EU region claims eu
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud residency follows the region the client calls (D6) > Bedrock residency comes from the client region, not a declaration
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud residency follows the region the client calls (D6) > a region with no residency code guarantees none
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud residency follows the region the client calls (D6) > Azure claims no residency unless one is declared
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud residency follows the region the client calls (D6) > a declared residency is known codes only: an unknown token claims nothing, and is reported
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud zero retention (D6) > Bedrock claims zero retention only when the operator records it
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud zero retention (D6) > no lane a third party runs claims zero retention without configuration; the self-hosted lane does
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud zero retention (D6) > reads the environment it is given
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > private-cloud zero retention (D6) > Vertex and Azure claim zero retention only when the operator records it
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > assertPlacementRegistryConsistency — production boot (D6) > refuses a declared Bedrock residency the client region does not serve
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > assertPlacementRegistryConsistency — production boot (D6) > refuses a declared Vertex residency list wider than the client region
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > assertPlacementRegistryConsistency — production boot (D6) > boots when the declaration matches the client region
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > assertPlacementRegistryConsistency — production boot (D6) > judges only enabled lanes, and only in production
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > what the region and the SDK say about residency (D6 review) > London and Zurich are not EU residency; the EU regions are
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > what the region and the SDK say about residency (D6 review) > an SDK base-URL override means the region no longer says where requests go
+ ✓ server/services/ai-gateway/providers/__tests__/placement.test.ts > what the region and the SDK say about residency (D6 review) > Bedrock zero retention is claimed only for true
+
+## 2. Every ai-gateway test, and the boot tests whose approval fixtures changed: 81 files
+NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --config vitest.config.ts --maxWorkers=2 server/services/ai-gateway \
+  server/config/__tests__/environment.test.ts server/config/__tests__/environment-audit-export-key.test.ts \
+  server/services/storage/__tests__/storage-posture.test.ts server/startup/__tests__/ai-provider-election-posture.test.ts \
+  server/startup/__tests__/authoring-import-cycle.boot.test.ts server/eval/localai/__tests__/oq-live-check.test.ts \
+  server/routes/__tests__/ai-placement-policy.test.ts tests/ci/pii-screen.test.ts
+ × server/services/ai-gateway/__tests__/ledger-provenance.test.ts > a row claims only what happened (2026-09-26 review) > a malformed content block still leaves a row, hashed
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 80 passed (81)
+      Tests  1 failed | 938 passed (939)
+The one failure is not this change's: TypeError 'input.matchAll is not a function' in
+server/services/ai-governance/classification/heuristic-classifier.ts, an uncommitted edit by another session in the same
+working tree. It failed identically in the baseline run made before any edit in this slice (27 files: 314 passed, 1 failed).
+
+## 3. Terraform (v1.11.4; aws 5.100.0, random 3.6.3 from a local mirror; scratch copy of terraform/)
+terraform fmt -check -recursive terraform/   -> exit 0
+terraform test (terraform/stack, this change):
+Success! 84 passed, 0 failed.
+terraform test (terraform/stack, HEAD variables.tf and tftest, for comparison):
+Success! 78 passed, 0 failed.
+terraform test -test-directory=tests-split (the six new runs, one file each), this change:
+  run "accepts_a_well_formed_agreement"... pass
+  run "refuses_a_zero_retention_approval_that_names_no_agreement"... pass
+  run "refuses_a_zero_retention_approval_this_stack_sets_no_flag_for"... pass
+  run "refuses_an_agreement_date_in_another_format"... pass
+  run "refuses_an_agreement_date_that_is_not_a_date"... pass
+  run "refuses_an_agreement_with_a_blank_reference"... pass
+Success! 6 passed, 0 failed.
+(red, same runs, HEAD variables.tf: 1 passed, 5 failed; red/terraform-test-red.txt)
+
+## 4. Lint and types
+npx eslint <the 14 changed source and test files> -> 0 errors, 29 warnings; the same files at HEAD carry 29 (no warning added).
+npx tsc -p <scratch tsconfig extending tsconfig.json, files = the 3 sources + 6 changed tests> -> exit 0, no diagnostics.

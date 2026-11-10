@@ -1,0 +1,640 @@
+# F1 view copy part: red, before the change
+# 2026-11-01T22:27:42Z
+# Tree: HEAD 609ef94c7 + part 1 (server, uncommitted) + this part's changed client tests only.
+# client/src/concept2cure/v2/surfaces/EctdFiledState.tsx is byte-identical to HEAD (git diff --quiet HEAD on it: clean; sha256 33c5955928564ddf80dd97bc017c26501b32267c6260a387e9e06533ccd9e7b1).
+#
+# Expected red (6), each on its own assertion:
+#   ectdFiledState: the three states of the design's rule 4 -
+#     (1) lead for a dossier read from what each sequence sent,
+#     (2) the note naming sequences read from their compiles (mixed, all-compiles, server predating basis),
+#     (3) a sent/acknowledged sequence with no record: 'nothing on record says what it carried';
+#   plus the reworded summary (dispatch statuses in words, 'Includes' for 'Folds'), the nothing-on-file lead,
+#   and ectdCompile's pin of the summary through EctdCompile.
+# Expected green: every other case of both files (no behaviour change outside the copy).
+
+$ npx vitest run client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > loads module readiness from the real status endpoint 112ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > compiles across the region and renders the server result with a backbone download 280ms
+stderr | client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > shows an honest empty state when no program is open (no fixture)
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > shows what the agency holds now, across the filed sequences (gap 6.1) 67ms
+   → expected 'On file at the agencythrough sequence…' to contain '1 document is on file, read from what…'
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > shows an honest empty state when no program is open (no fixture) 10ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > a program UUID ident is sent to the server (which resolves it) — the numeric-only dead-end is gone 52ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — what the surface may claim > names what is still missing instead of a bare negative 68ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — what the surface may claim > warns that the downloadable backbone is not a sequence 50ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — what the surface may claim > reports the readiness number as content completeness, not readiness to submit 39ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — what the surface may claim > claims nothing extra in the compile toast 56ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > opens both backbones as a navigable leaf hierarchy — Module 1 from the regional file 100ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > lists every file in the package and offers the regional backbone and the MD5 index 126ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > states the PDF/A outcome and whether the compilation was recorded 76ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > names an FDA form shipped as FDA issued apart from the PDF/A count 80ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > an unrecorded compilation says it can anchor no lifecycle 67ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > the region is the sequence's: shown, not chosen, and not sent 91ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > readiness counted from placed documents says so, and never reads as approval 29ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > history names the sequence each compilation covered and whether it anchors the next 52ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a follow-up sequence's lifecycle > a follow-up sequence shows every act against the filed state, and what was left out 87ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a follow-up sequence's lifecycle > a follow-up with no filed sequence on record says there is nothing on file to act on 88ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a follow-up sequence's lifecycle > an original sequence has no lifecycle to show 91ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > shows an imported report with its compilation, and says this product did not run it 60ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > names who imported it by account, and lists every report it replaced 51ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > replacing a report asks first, naming the report it replaces; cancelling opens nothing 176ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > imports a report against the compilation whose package it covered 110ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > a refused report is shown in the server's words, and nothing is shown as imported 79ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a rehearsal is asked for, and says it is one > is offered only for a follow-up sequence — an original has nothing to rehearse against 87ms
+Not implemented: navigation to another Document
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a rehearsal is asked for, and says it is one > compiles as a rehearsal when asked, says which sequences were never filed, and exports the same 156ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a rehearsal is asked for, and says it is one > a compile without the toggle asks for no rehearsal 99ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a rehearsal is asked for, and says it is one > the history names a rehearsal compilation for what it is 35ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > groups what is on file by module, naming each document’s section, holding sequence and act 220ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > says how a replaced document came to be on file, and adds nothing for one filed once (gap 6.2) 34ms
+ × client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > names the sequences it includes and the ones it does not, with the reason in words, never a stored status 37ms
+   → expected 'On file at the agencythrough sequence…' to contain 'Not included: 0002 (not on file at th…'
+ × client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > where each sequence’s record of what it put on file comes from (F1) > says the documents on file are read from what each sequence sent 30ms
+   → expected 'On file at the agencythrough sequence…' to contain '2 documents are on file, read from wh…'
+ × client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > where each sequence’s record of what it put on file comes from (F1) > names a sequence read from its compiles, sent before the platform kept what each send carried 25ms
+   → expected 'On file at the agencythrough sequence…' to contain '2 documents are on file, read from wh…'
+ × client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > where each sequence’s record of what it put on file comes from (F1) > says a sent sequence with no record of what it carried is not included, and why 16ms
+   → expected 'On file at the agencythrough sequence…' to contain 'Not included: 0001 (acknowledged by t…'
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > says a failed read, never an empty dossier, and retries 38ms
+ × client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > tells "no submission" from "nothing filed" 5016ms
+   → Unable to find an element with the text: /Nothing is on file: no sequence of this submission has been sent or acknowledged with a record of what it carried\./. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="pj-card"
+      data-testid="ectd-filed-state"
+    >
+      <div
+        class="pj-card-h"
+      >
+        <span
+          class="t"
+        >
+          On file at the agency
+        </span>
+        <span
+          class="s"
+        >
+          nothing on file
+        </span>
+      </div>
+      <div
+        class="pj-card-b"
+        style="padding: 0px;"
+      >
+        <p
+          style="font-size: 12px; margin: 0px; padding: 10px 10px 0px;"
+        >
+          Nothing is on file: no sequence of this submission has been sent or acknowledged with a filed compile on record.
+           Not included: 0000 (pending, not filed).
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="pj-card"
+      data-testid="ectd-filed-state"
+    >
+      <div
+        class="pj-card-h"
+      >
+        <span
+          class="t"
+        >
+          On file at the agency
+        </span>
+        <span
+          class="s"
+        >
+          nothing on file
+        </span>
+      </div>
+      <div
+        class="pj-card-b"
+        style="padding: 0px;"
+      >
+        <p
+          style="font-size: 12px; margin: 0px; padding: 10px 10px 0px;"
+        >
+          Nothing is on file: no sequence of this submission has been sent or acknowledged with a filed compile on record.
+           Not included: 0000 (pending, not filed).
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > shows what the agency holds now, across the filed sequences (gap 6.1)
+AssertionError: expected 'On file at the agencythrough sequence…' to contain '1 document is on file, read from what…'
+
+Expected: "1 document is on file, read from what each sequence sent. Includes 0000 (acknowledged by the agency)."
+Received: "On file at the agencythrough sequence 00001 document is on file, read from the leaf manifests of the filed sequences. Folds 0000 (acknowledged).Module 3SectionDocumentHeld in sequenceAct3.2.S.1General informationm3/general.pdf0000new"
+
+ ❯ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx:72:64
+     70|     const m3 = await screen.findByRole('table', { name: 'Module 3: 1 d…
+     71|     expect(within(m3).getByText('General information')).toBeTruthy();
+     72|     expect(screen.getByTestId('ectd-filed-state').textContent).toConta…
+       |                                                                ^
+     73|   });
+     74|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > names the sequences it includes and the ones it does not, with the reason in words, never a stored status
+AssertionError: expected 'On file at the agencythrough sequence…' to contain 'Not included: 0002 (not on file at th…'
+
+Expected: "Not included: 0002 (not on file at the agency), 0003 (sent to the agency, but nothing on record says what it carried)."
+Received: "On file at the agencythrough sequence 00012 documents are on file, read from the leaf manifests of the filed sequences. Folds 0000 (acknowledged), 0001 (sent). Not included: 0002 (not sent), 0003 (sent, but no filed compile with a leaf manifest is on record).Module 3SectionDocumentHeld in sequenceAct3.2.S.1General informationm3/32-body-data/general-v2.pdfFiled 0000 new (general.pdf), 0001 replaced (general-v2.pdf)0001replacedModule 5SectionDocumentHeld in sequenceAct5.3.5.1csr.pdfm5/csr.pdf0000new"
+
+ ❯ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx:98:18
+     96|     const text = cardText();
+     97|     // A sent sequence with neither a record of its send nor a compile…
+     98|     expect(text).toContain('Not included: 0002 (not on file at the age…
+       |                  ^
+     99|     expect(text).toContain('Includes 0000 (acknowledged by the agency)…
+    100|     expect(text).not.toMatch(/\((?:sent|acknowledged|pending|rejected|…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > where each sequence’s record of what it put on file comes from (F1) > says the documents on file are read from what each sequence sent
+AssertionError: expected 'On file at the agencythrough sequence…' to contain '2 documents are on file, read from wh…'
+
+Expected: "2 documents are on file, read from what each sequence sent."
+Received: "On file at the agencythrough sequence 00012 documents are on file, read from the leaf manifests of the filed sequences. Folds 0000 (acknowledged), 0001 (sent). Not included: 0002 (not sent), 0003 (sent, but no filed compile with a leaf manifest is on record).Module 3SectionDocumentHeld in sequenceAct3.2.S.1General informationm3/32-body-data/general-v2.pdfFiled 0000 new (general.pdf), 0001 replaced (general-v2.pdf)0001replacedModule 5SectionDocumentHeld in sequenceAct5.3.5.1csr.pdfm5/csr.pdf0000new"
+
+ ❯ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx:109:26
+    107|       card();
+    108|       await screen.findByRole('table', { name: /Module 3/ });
+    109|       expect(cardText()).toContain('2 documents are on file, read from…
+       |                          ^
+    110|       expect(cardText()).not.toContain('compiles');
+    111|       expect(cardText()).not.toContain('leaf manifest');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > where each sequence’s record of what it put on file comes from (F1) > names a sequence read from its compiles, sent before the platform kept what each send carried
+AssertionError: expected 'On file at the agencythrough sequence…' to contain '2 documents are on file, read from wh…'
+
+Expected: "2 documents are on file, read from what each sequence sent. Sequence 0000 is read from its compiles instead, recorded before the platform kept what each send carried, so a document listed for it may not have been sent."
+Received: "On file at the agencythrough sequence 00012 documents are on file, read from the leaf manifests of the filed sequences. Folds 0000 (acknowledged), 0001 (sent). Not included: 0002 (not sent), 0003 (sent, but no filed compile with a leaf manifest is on record).Module 3SectionDocumentHeld in sequenceAct3.2.S.1General informationm3/32-body-data/general-v2.pdfFiled 0000 new (general.pdf), 0001 replaced (general-v2.pdf)0001replacedModule 5SectionDocumentHeld in sequenceAct5.3.5.1csr.pdfm5/csr.pdf0000new"
+
+ ❯ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx:118:26
+    116|       card();
+    117|       await screen.findByRole('table', { name: /Module 3/ });
+    118|       expect(cardText()).toContain('2 documents are on file, read from…
+       |                          ^
+    119|         + 'Sequence 0000 is read from its compiles instead, recorded b…
+    120|         + 'so a document listed for it may not have been sent.');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > where each sequence’s record of what it put on file comes from (F1) > says a sent sequence with no record of what it carried is not included, and why
+AssertionError: expected 'On file at the agencythrough sequence…' to contain 'Not included: 0001 (acknowledged by t…'
+
+Expected: "Not included: 0001 (acknowledged by the agency, but nothing on record says what it carried)."
+Received: "On file at the agencythrough sequence 00012 documents are on file, read from the leaf manifests of the filed sequences. Folds 0000 (acknowledged). Not included: 0001 (acknowledged, but no filed compile with a leaf manifest is on record).Module 3SectionDocumentHeld in sequenceAct3.2.S.1General informationm3/32-body-data/general-v2.pdfFiled 0000 new (general.pdf), 0001 replaced (general-v2.pdf)0001replacedModule 5SectionDocumentHeld in sequenceAct5.3.5.1csr.pdfm5/csr.pdf0000new"
+
+ ❯ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx:148:26
+    146|       card();
+    147|       await screen.findByRole('table', { name: /Module 3/ });
+    148|       expect(cardText()).toContain('Not included: 0001 (acknowledged b…
+       |                          ^
+    149|       expect(cardText()).toContain('read from what each sequence sent.…
+    150|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > tells "no submission" from "nothing filed"
+TestingLibraryElementError: Unable to find an element with the text: /Nothing is on file: no sequence of this submission has been sent or acknowledged with a record of what it carried\./. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="pj-card"
+      data-testid="ectd-filed-state"
+    >
+      <div
+        class="pj-card-h"
+      >
+        <span
+          class="t"
+        >
+          On file at the agency
+        </span>
+        <span
+          class="s"
+        >
+          nothing on file
+        </span>
+      </div>
+      <div
+        class="pj-card-b"
+        style="padding: 0px;"
+      >
+        <p
+          style="font-size: 12px; margin: 0px; padding: 10px 10px 0px;"
+        >
+          Nothing is on file: no sequence of this submission has been sent or acknowledged with a filed compile on record.
+           Not included: 0000 (pending, not filed).
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="pj-card"
+      data-testid="ectd-filed-state"
+    >
+      <div
+        class="pj-card-h"
+      >
+        <span
+          class="t"
+        >
+          On file at the agency
+        </span>
+        <span
+          class="s"
+        >
+          nothing on file
+        </span>
+      </div>
+      <div
+        class="pj-card-b"
+        style="padding: 0px;"
+      >
+        <p
+          style="font-size: 12px; margin: 0px; padding: 10px 10px 0px;"
+        >
+          Nothing is on file: no sequence of this submission has been sent or acknowledged with a filed compile on record.
+           Not included: 0000 (pending, not filed).
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx:171:25
+    169|       sequences: [{ sequenceNumber: '0000', dispatchStatus: 'pending',…
+    170|     card();
+    171|     expect(await screen.findByText(/Nothing is on file: no sequence of…
+       |                         ^
+    172|     expect(cardText()).toContain('Not included: 0000 (not on file at t…
+    173|     cleanup();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  6 failed | 31 passed (37)
+   Start at  22:27:19
+   Duration  10.32s (transform 791ms, setup 212ms, import 1.11s, tests 7.90s, environment 845ms)
+
+
+
+# ── Addendum 2026-11-01T22:33:46Z: the final test files, against the HEAD surface ──
+# After the first red, ectdFiledState.test.tsx was restructured for two eslint warnings only (an unused
+# binding in withBasis; the outer describe over 100 lines, so the three F1 cases moved to a top-level
+# describe). No assertion changed. The final files were copied into a clean export of HEAD 609ef94c7
+# (git archive, node_modules symlinked), whose EctdFiledState.tsx is HEAD's (cmp: identical), and run there.
+# Final test files:
+#   d25b58676d46f3e648365e40132ff62d9ef1c509d991283c386e28838371b3da  client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx
+#   cec5b3f494dead6e88fdb53f4d24cb9bf09e825db6d63a2cea37ff8002ec98c7  client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx
+# Same 6 red, on the same assertions; 31 passed.
+
+$ (in the HEAD export) npx vitest run client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx
+
+ RUN  v4.1.7 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/5d0b158e-991f-5354-8b6b-8cf5f02b467a/scratchpad/f1-view-head-export
+
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > loads module readiness from the real status endpoint 130ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > compiles across the region and renders the server result with a backbone download 325ms
+stderr | client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > shows an honest empty state when no program is open (no fixture)
+An update to EctdCompileForScope inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > shows what the agency holds now, across the filed sequences (gap 6.1) 67ms
+   → expected 'On file at the agencythrough sequence…' to contain '1 document is on file, read from what…'
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > shows an honest empty state when no program is open (no fixture) 12ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > a program UUID ident is sent to the server (which resolves it) — the numeric-only dead-end is gone 50ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — what the surface may claim > names what is still missing instead of a bare negative 83ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — what the surface may claim > warns that the downloadable backbone is not a sequence 114ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — what the surface may claim > reports the readiness number as content completeness, not readiness to submit 74ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — what the surface may claim > claims nothing extra in the compile toast 60ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > opens both backbones as a navigable leaf hierarchy — Module 1 from the regional file 104ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > lists every file in the package and offers the regional backbone and the MD5 index 138ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > states the PDF/A outcome and whether the compilation was recorded 76ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > names an FDA form shipped as FDA issued apart from the PDF/A count 107ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > an unrecorded compilation says it can anchor no lifecycle 73ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > the region is the sequence's: shown, not chosen, and not sent 97ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > readiness counted from placed documents says so, and never reads as approval 30ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — the compiled package > history names the sequence each compilation covered and whether it anchors the next 49ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a follow-up sequence's lifecycle > a follow-up sequence shows every act against the filed state, and what was left out 90ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a follow-up sequence's lifecycle > a follow-up with no filed sequence on record says there is nothing on file to act on 89ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a follow-up sequence's lifecycle > an original sequence has no lifecycle to show 95ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > shows an imported report with its compilation, and says this product did not run it 60ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > names who imported it by account, and lists every report it replaced 50ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > replacing a report asks first, naming the report it replaces; cancelling opens nothing 200ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > imports a report against the compilation whose package it covered 138ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — an imported agency-validator report > a refused report is shown in the server's words, and nothing is shown as imported 90ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a rehearsal is asked for, and says it is one > is offered only for a follow-up sequence — an original has nothing to rehearse against 105ms
+Not implemented: navigation to another Document
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a rehearsal is asked for, and says it is one > compiles as a rehearsal when asked, says which sequences were never filed, and exports the same 214ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a rehearsal is asked for, and says it is one > a compile without the toggle asks for no rehearsal 115ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — a rehearsal is asked for, and says it is one > the history names a rehearsal compilation for what it is 35ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > groups what is on file by module, naming each document’s section, holding sequence and act 280ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > says how a replaced document came to be on file, and adds nothing for one filed once (gap 6.2) 78ms
+ × client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > names the sequences it includes and the ones it does not, with the reason in words, never a stored status 49ms
+   → expected 'On file at the agencythrough sequence…' to contain 'Not included: 0002 (not on file at th…'
+ ✓ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > says a failed read, never an empty dossier, and retries 54ms
+ × client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > tells "no submission" from "nothing filed" 5018ms
+   → Unable to find an element with the text: /Nothing is on file: no sequence of this submission has been sent or acknowledged with a record of what it carried\./. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="pj-card"
+      data-testid="ectd-filed-state"
+    >
+      <div
+        class="pj-card-h"
+      >
+        <span
+          class="t"
+        >
+          On file at the agency
+        </span>
+        <span
+          class="s"
+        >
+          nothing on file
+        </span>
+      </div>
+      <div
+        class="pj-card-b"
+        style="padding: 0px;"
+      >
+        <p
+          style="font-size: 12px; margin: 0px; padding: 10px 10px 0px;"
+        >
+          Nothing is on file: no sequence of this submission has been sent or acknowledged with a filed compile on record.
+           Not included: 0000 (pending, not filed).
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="pj-card"
+      data-testid="ectd-filed-state"
+    >
+      <div
+        class="pj-card-h"
+      >
+        <span
+          class="t"
+        >
+          On file at the agency
+        </span>
+        <span
+          class="s"
+        >
+          nothing on file
+        </span>
+      </div>
+      <div
+        class="pj-card-b"
+        style="padding: 0px;"
+      >
+        <p
+          style="font-size: 12px; margin: 0px; padding: 10px 10px 0px;"
+        >
+          Nothing is on file: no sequence of this submission has been sent or acknowledged with a filed compile on record.
+           Not included: 0000 (pending, not filed).
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+ × client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency: where each sequence’s record of what it put on file comes from (F1) > says the documents on file are read from what each sequence sent 27ms
+   → expected 'On file at the agencythrough sequence…' to contain '2 documents are on file, read from wh…'
+ × client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency: where each sequence’s record of what it put on file comes from (F1) > names a sequence read from its compiles, sent before the platform kept what each send carried 28ms
+   → expected 'On file at the agencythrough sequence…' to contain '2 documents are on file, read from wh…'
+ × client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency: where each sequence’s record of what it put on file comes from (F1) > says a sent sequence with no record of what it carried is not included, and why 28ms
+   → expected 'On file at the agencythrough sequence…' to contain 'Not included: 0001 (acknowledged by t…'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx > EctdCompile — real eCTD assembly > shows what the agency holds now, across the filed sequences (gap 6.1)
+AssertionError: expected 'On file at the agencythrough sequence…' to contain '1 document is on file, read from what…'
+
+Expected: "1 document is on file, read from what each sequence sent. Includes 0000 (acknowledged by the agency)."
+Received: "On file at the agencythrough sequence 00001 document is on file, read from the leaf manifests of the filed sequences. Folds 0000 (acknowledged).Module 3SectionDocumentHeld in sequenceAct3.2.S.1General informationm3/general.pdf0000new"
+
+ ❯ client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx:72:64
+     70|     const m3 = await screen.findByRole('table', { name: 'Module 3: 1 d…
+     71|     expect(within(m3).getByText('General information')).toBeTruthy();
+     72|     expect(screen.getByTestId('ectd-filed-state').textContent).toConta…
+       |                                                                ^
+     73|   });
+     74|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > names the sequences it includes and the ones it does not, with the reason in words, never a stored status
+AssertionError: expected 'On file at the agencythrough sequence…' to contain 'Not included: 0002 (not on file at th…'
+
+Expected: "Not included: 0002 (not on file at the agency), 0003 (sent to the agency, but nothing on record says what it carried)."
+Received: "On file at the agencythrough sequence 00012 documents are on file, read from the leaf manifests of the filed sequences. Folds 0000 (acknowledged), 0001 (sent). Not included: 0002 (not sent), 0003 (sent, but no filed compile with a leaf manifest is on record).Module 3SectionDocumentHeld in sequenceAct3.2.S.1General informationm3/32-body-data/general-v2.pdfFiled 0000 new (general.pdf), 0001 replaced (general-v2.pdf)0001replacedModule 5SectionDocumentHeld in sequenceAct5.3.5.1csr.pdfm5/csr.pdf0000new"
+
+ ❯ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx:100:18
+     98|     const text = cardText();
+     99|     // A sent sequence with neither a record of its send nor a compile…
+    100|     expect(text).toContain('Not included: 0002 (not on file at the age…
+       |                  ^
+    101|     expect(text).toContain('Includes 0000 (acknowledged by the agency)…
+    102|     expect(text).not.toMatch(/\((?:sent|acknowledged|pending|rejected|…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency > tells "no submission" from "nothing filed"
+TestingLibraryElementError: Unable to find an element with the text: /Nothing is on file: no sequence of this submission has been sent or acknowledged with a record of what it carried\./. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="pj-card"
+      data-testid="ectd-filed-state"
+    >
+      <div
+        class="pj-card-h"
+      >
+        <span
+          class="t"
+        >
+          On file at the agency
+        </span>
+        <span
+          class="s"
+        >
+          nothing on file
+        </span>
+      </div>
+      <div
+        class="pj-card-b"
+        style="padding: 0px;"
+      >
+        <p
+          style="font-size: 12px; margin: 0px; padding: 10px 10px 0px;"
+        >
+          Nothing is on file: no sequence of this submission has been sent or acknowledged with a filed compile on record.
+           Not included: 0000 (pending, not filed).
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="pj-card"
+      data-testid="ectd-filed-state"
+    >
+      <div
+        class="pj-card-h"
+      >
+        <span
+          class="t"
+        >
+          On file at the agency
+        </span>
+        <span
+          class="s"
+        >
+          nothing on file
+        </span>
+      </div>
+      <div
+        class="pj-card-b"
+        style="padding: 0px;"
+      >
+        <p
+          style="font-size: 12px; margin: 0px; padding: 10px 10px 0px;"
+        >
+          Nothing is on file: no sequence of this submission has been sent or acknowledged with a filed compile on record.
+           Not included: 0000 (pending, not filed).
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx:124:25
+    122|       sequences: [{ sequenceNumber: '0000', dispatchStatus: 'pending',…
+    123|     card();
+    124|     expect(await screen.findByText(/Nothing is on file: no sequence of…
+       |                         ^
+    125|     expect(cardText()).toContain('Not included: 0000 (not on file at t…
+    126|     cleanup();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency: where each sequence’s record of what it put on file comes from (F1) > says the documents on file are read from what each sequence sent
+AssertionError: expected 'On file at the agencythrough sequence…' to contain '2 documents are on file, read from wh…'
+
+Expected: "2 documents are on file, read from what each sequence sent."
+Received: "On file at the agencythrough sequence 00012 documents are on file, read from the leaf manifests of the filed sequences. Folds 0000 (acknowledged), 0001 (sent). Not included: 0002 (not sent), 0003 (sent, but no filed compile with a leaf manifest is on record).Module 3SectionDocumentHeld in sequenceAct3.2.S.1General informationm3/32-body-data/general-v2.pdfFiled 0000 new (general.pdf), 0001 replaced (general-v2.pdf)0001replacedModule 5SectionDocumentHeld in sequenceAct5.3.5.1csr.pdfm5/csr.pdf0000new"
+
+ ❯ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx:146:24
+    144|     card();
+    145|     await screen.findByRole('table', { name: /Module 3/ });
+    146|     expect(cardText()).toContain('2 documents are on file, read from w…
+       |                        ^
+    147|     expect(cardText()).not.toContain('compiles');
+    148|     expect(cardText()).not.toContain('leaf manifest');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency: where each sequence’s record of what it put on file comes from (F1) > names a sequence read from its compiles, sent before the platform kept what each send carried
+AssertionError: expected 'On file at the agencythrough sequence…' to contain '2 documents are on file, read from wh…'
+
+Expected: "2 documents are on file, read from what each sequence sent. Sequence 0000 is read from its compiles instead, recorded before the platform kept what each send carried, so a document listed for it may not have been sent."
+Received: "On file at the agencythrough sequence 00012 documents are on file, read from the leaf manifests of the filed sequences. Folds 0000 (acknowledged), 0001 (sent). Not included: 0002 (not sent), 0003 (sent, but no filed compile with a leaf manifest is on record).Module 3SectionDocumentHeld in sequenceAct3.2.S.1General informationm3/32-body-data/general-v2.pdfFiled 0000 new (general.pdf), 0001 replaced (general-v2.pdf)0001replacedModule 5SectionDocumentHeld in sequenceAct5.3.5.1csr.pdfm5/csr.pdf0000new"
+
+ ❯ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx:155:24
+    153|     card();
+    154|     await screen.findByRole('table', { name: /Module 3/ });
+    155|     expect(cardText()).toContain('2 documents are on file, read from w…
+       |                        ^
+    156|       + 'Sequence 0000 is read from its compiles instead, recorded bef…
+    157|       + 'so a document listed for it may not have been sent.');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx > On file at the agency: where each sequence’s record of what it put on file comes from (F1) > says a sent sequence with no record of what it carried is not included, and why
+AssertionError: expected 'On file at the agencythrough sequence…' to contain 'Not included: 0001 (acknowledged by t…'
+
+Expected: "Not included: 0001 (acknowledged by the agency, but nothing on record says what it carried)."
+Received: "On file at the agencythrough sequence 00012 documents are on file, read from the leaf manifests of the filed sequences. Folds 0000 (acknowledged). Not included: 0001 (acknowledged, but no filed compile with a leaf manifest is on record).Module 3SectionDocumentHeld in sequenceAct3.2.S.1General informationm3/32-body-data/general-v2.pdfFiled 0000 new (general.pdf), 0001 replaced (general-v2.pdf)0001replacedModule 5SectionDocumentHeld in sequenceAct5.3.5.1csr.pdfm5/csr.pdf0000new"
+
+ ❯ client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx:185:24
+    183|     card();
+    184|     await screen.findByRole('table', { name: /Module 3/ });
+    185|     expect(cardText()).toContain('Not included: 0001 (acknowledged by …
+       |                        ^
+    186|     expect(cardText()).toContain('read from what each sequence sent.');
+    187|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  6 failed | 31 passed (37)
+   Start at  22:33:20
+   Duration  11.54s (transform 910ms, setup 331ms, import 1.29s, tests 8.44s, environment 989ms)
+

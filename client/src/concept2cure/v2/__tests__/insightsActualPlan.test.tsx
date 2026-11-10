@@ -65,15 +65,19 @@ function ask() {
   fireEvent.change(field, { target: { value: 'Generate the Executive Readiness Digest' } });
   fireEvent.keyDown(field, { key: 'Enter' });
 }
+/** The plan preview lives in the Catalog's filters (D7 §D.4 step 6): open it,
+ *  choose, and come back to the Reports view the tests read. */
 function preview(name: string) {
-  fireEvent.click(within(screen.getByRole('group', { name: 'Subscription tier' })).getByRole('button', { name }));
+  fireEvent.click(screen.getByRole('tab', { name: 'Catalog' }));
+  fireEvent.click(within(screen.getByRole('group', { name: 'Preview plan' })).getByRole('button', { name }));
+  fireEvent.click(screen.getByRole('tab', { name: 'Reports' }));
 }
 async function catalog() {
-  fireEvent.click(screen.getByRole('tab', { name: 'Report catalog' }));
+  fireEvent.click(screen.getByRole('tab', { name: 'Catalog' }));
   await screen.findByRole('heading', { name: 'Report catalog' });
 }
 async function pack() {
-  fireEvent.click(document.querySelector('.rc-preset-btn') as HTMLElement);
+  fireEvent.click(document.querySelector('[data-work-area="insights"] .ph-acts .btn.primary') as HTMLElement);
   await waitFor(() => expect(document.querySelector('.ro-pack-grid')).not.toBeNull());
 }
 
@@ -111,7 +115,7 @@ describe('actual known Free plan — generation controls', () => {
   });
   it.each(['Standard', 'Enterprise'])('a %s preview keeps catalog controls disabled with the actual plan reason', async name => {
     await canvas(); preview(name); await catalog();
-    const control = screen.getByRole('button', { name: 'Run' }) as HTMLButtonElement;
+    const control = screen.getByRole('button', { name: /^Run / }) as HTMLButtonElement;
     expect(control.disabled).toBe(true);
     expectPlanRefusal(control.getAttribute('title'));
     expect(document.querySelector('.rl-card')?.textContent).toMatch(/Standard plan/);
@@ -176,7 +180,7 @@ describe('actual plan — existing reads and positive execution', () => {
   it('opens a retained history report on Free without generating one', async () => {
     await canvas();
     fireEvent.click(screen.getByRole('tab', { name: 'Run history' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Open' }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Open the / }));
     await waitFor(() => expect(document.querySelector('.ro-report')).not.toBeNull());
     expect(runs()).toHaveLength(0);
   });
@@ -187,7 +191,7 @@ describe('actual plan — existing reads and positive execution', () => {
     expect(document.querySelectorAll('button.ro-pack-card')).toHaveLength(0);
   });
   it('keeps exactly the three existing plan preview choices', async () => {
-    await canvas();
-    expect(within(screen.getByRole('group', { name: 'Subscription tier' })).getAllByRole('button').map(button => button.textContent)).toEqual(['Standard', 'Professional', 'Enterprise']);
+    await canvas(); await catalog();
+    expect(within(screen.getByRole('group', { name: 'Preview plan' })).getAllByRole('button').map(button => button.textContent)).toEqual(['Standard', 'Professional', 'Enterprise']);
   });
 });

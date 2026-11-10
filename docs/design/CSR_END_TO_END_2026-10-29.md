@@ -114,7 +114,54 @@ MODEL GOVERNANCE
 
 ## Decisions (product manager, 2026-10-29, under the founder's delegation)
 
-1. **Where it lives.** A build starts from the retained Submission Center run that holds the engine tables (its CSR card), and the draft lands in the one Authoring editor (`workflow-source-import.ts`), where it is reviewed, signed and exported like any governed document. No new surface; the hidden csr-workflow board becomes the build's progress view inside that flow.
+1. **OVERTURNED by the founder, 2026-10-31.** *"CSR is just one of the reports that we build. We build a lot of other documents. You initiate it out of a project. … Do I have an IND card? No, these are document types."*
+   **The rule now:** a CSR is a document type like every other. It is started from its **project**, through the same document-start path every document type uses, and worked in the one Authoring editor. There is no per-document-type card, screen or entry point, for the CSR or any other type. The CSR-specific controls placed on Submission Center's eCTD Compile surface (`CsrSourceInputControls`, `CsrRunBuilds`, `CsrHeadingReview`, `CsrNarrativeBuild`, `CsrAssemblyControl`, 2026-10-30) are to be converged onto the project's document start and the editor, and removed from Submission Center in the same change (zero duplication). Before that work: find the existing project → document-start path (RULE 3) and name it.
+   *Superseded text:* **Where it lives.** A build starts from the retained Submission Center run that holds the engine tables (its CSR card), and the draft lands in the one Authoring editor (`workflow-source-import.ts`), where it is reviewed, signed and exported like any governed document. No new surface; the hidden csr-workflow board becomes the build's progress view inside that flow.
+   **Convergence plan (2026-10-31, under CLAUDE.md RULE 4). What already exists, by path:**
+   - *The one document start:* **New document** in Authoring (`client/src/concept2cure/v2/surfaces/AuthoringCreateExport.tsx`), opened from the project, where a template is the document type. The CSR is already a type there: `clinical_study_report` (`server/services/market-specs/document-template-library.ts:445`), every ICH E3 heading (119).
+   - *The one editor:* `DocumentCanvas.tsx` / `DocumentWorkbench.tsx`. It already holds sources (`SourceAssemblyDialog.tsx`, `SourceImportDialog.tsx`), per-section AI draft, the editor's own review and signature, export, and filing placement (`AuthoringPlaceIntoFiling.tsx`). §14.3.3 by reference is already in it (`CsrNarrativeReferenceView.tsx`).
+   - *Beside it, to converge in (and delete from Submission Center):* the study's source data and frozen tables (`CsrSourceInputControls.tsx`), the build (`CsrBuildDraftControl`, `CsrRunBuilds.tsx`), section review (`CsrHeadingReview`, a second review beside the editor's own), narratives (`CsrNarrativeBuild`) and assembly with placement (`CsrAssemblyControl.tsx`).
+   **Order:** (1) open the running app and walk Project → New document → Clinical study report, recording what works and what does not; (2) the study's data becomes a source of that document in the editor's existing sources; (3) drafting a heading uses the editor's section draft, grounded in the engine tables (the CSR job's drafter serves it, not a separate build screen); (4) narratives and assembly become actions of the document in the editor; (5) review and approval are the editor's, and `CsrHeadingReview` and the job's separate section-review state are retired onto it; (6) the CSR controls leave Submission Center's eCTD Compile in the same change, each removal naming its replacement by path. Each step is opened and used in the running app before it is called done.
+   **Step 1, walked 2026-10-31.** BX-512 → Project home → "Find or start a document in the editor" → New document →
+   "GLOBAL · Clinical Study Report (CSR)" creates the document (119 E3 sections) and opens it in the editor, which
+   shows "Build from the study's data" (`editor/StudyDataBuild.tsx`, moved there by `13612551d4`). That panel then
+   sends the author away: *"No saved run holds this study's data yet. Include the study's clinical source in a
+   package run in Submission Center first."* The study's tables are frozen only inside a Submission Center package
+   run, and that run needs a recorded submission, sequence and agency application number. So a CSR cannot use its
+   study's data until a filing exists, and never from its own document.
+   **Step 2 design (2026-10-31): the study's data is frozen as a source of the CSR document.**
+   - *What already exists.*
+     - **The study's data.** It is a Vault document, a `concept2cure.csr-source.v1` file or an ADaM bundle
+       manifest. It is listed, previewed and loaded by `/api/submission-orchestrator/csr/sources`,
+       `/csr/source-preview` and `withCsrVaultSource` (`services/csr/vault-source-input.ts`), with an exact
+       version, its digest and lifecycle approval.
+     - **The frozen form.** It is the sealed input snapshot of a package run (`submission_orchestrator_inputs`,
+       `captureOrchestratorInputs`, `verifyOrchestratorReceipt`). Its `run_id` references
+       `submission_orchestrator_runs`, whose submission, application number and region are NOT NULL.
+     - **One reader serves the whole engine.** That is `readVerifiedRetainedStudies` in
+       `services/csr/saved-clinical-tables.ts`, behind `readSavedClinicalTables` and
+       `readRetainedStudyForAssembly`. The build's evidence check, the narratives (`csr-narrative-store.ts`, which
+       read the pinned ADaM bundle from the verified receipt), the assembly and the drafting context all reach the
+       data through it. The CSR job records its source as `evidenceSource: { programId, runId, studyId }`.
+   - *Decision.*
+     - **The store.** A CSR document's study data is frozen into `public.csr_study_data`
+       (`organization_id INTEGER NOT NULL`, the project, and the authoring document it is a source of). It is sealed
+       with the same digest and seal as a run's inputs, and immutable.
+     - **No package run.** A run-less row in `submission_orchestrator_inputs` would need the runs row's filing
+       fields filled in, which would be invented values.
+     - **The reader.** `readVerifiedRetainedStudies` resolves the retained id against a package run's inputs, and
+       otherwise against `csr_study_data`, with the same verification. Every reader downstream is unchanged, and
+       the job's `evidenceSource.runId` names either.
+   - *Converged, not duplicated.*
+     - The editor becomes the one place where a study's data enters a CSR: choose the clinical source, preview it,
+       and freeze it as the document's study data.
+     - Submission Center's clinical-source input (`CsrSourceInputControls` on `OrchestratorRunControls`, and the
+       for-program run's `clinicalSource`) is removed in the same change.
+     - Package runs already retained stay readable for their builds; no new run takes a clinical source.
+   **Step 2 done 2026-10-31.** Walked in the running app: the CSR document froze the study's source and built on it,
+   with no package run (`docs/evidence/D2-ONE-PRODUCT/2026-10-31-csr-into-editor/`). Steps 3–5 are open. The build
+   meets the AI gateway's per-user rate limit at 30 section drafts a minute; that is recorded there.
+
 2. **Import and verify, not compute, for launch.** The engine derives descriptive tables from ADaM and imports the approved SAP/TFL efficacy outputs; every number in the text is verified against them. Model-based efficacy estimation (a validated biostatistics engine) is a later decision.
 3. **Composition boundary.** First scope: a Phase 2/3 parallel-arm interventional CSR (drug or biologic). Crossover, PK/BE, device and non-interventional studies are refused by name until widened, as CMC's `composition-scope.ts` does.
 4. **Reference content.** Verbatim public ICH E3 and E3 Q&A (R1) text and the CC-BY CORE Reference may be encoded as basis with quoted spans; TransCelerate templates wait for a licence check. End-to-end proofs use the public CDISC pilot ADaM data; no sponsor CSR is in the repository today.

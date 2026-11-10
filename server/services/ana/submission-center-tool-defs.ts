@@ -679,13 +679,13 @@ export const GET_SUBMISSION_REQUIREMENTS: AnaTool = {
 export const ASSESS_PATHWAY_ELIGIBILITY: AnaTool = {
   name: 'assess_pathway_eligibility',
   description:
-    "Check eligibility for an expedited/special regulatory designation (fda_breakthrough, fda_fast_track, fda_accelerated_approval, fda_priority_review, fda_orphan, eu_prime, eu_orphan, eu_conditional_ma, pmda_sakigake, pmda_orphan). Without `answers` it returns the designation's criteria. With `answers` (a map of criterion id → true/false) it returns eligibility — eligible only when EVERY criterion is met, undetermined while any is unanswered. This is a structured check against the published program definition, NOT the agency's designation decision. Omit `designation` to list all; pass `market` to scope.",
+    "Check eligibility for an expedited/special regulatory designation (fda_breakthrough, fda_fast_track, fda_accelerated_approval, fda_priority_review, fda_orphan, eu_prime, eu_orphan, eu_conditional_ma, pmda_sakigake, pmda_orphan). Without `answers` it returns the designation's criteria. With `answers` (a map of criterion id → true/false) it returns eligibility: eligible is true only when EVERY criterion is met (answered true), false when any is answered false, and null (undetermined) while any is unanswered and none is false; a non-boolean answer is refused. This is a structured check against the published program definition, NOT the agency's designation decision. Omit `designation` to list all; pass `market` to scope.",
   input_schema: {
     type: 'object',
     properties: {
       designation: { type: 'string', description: "e.g. 'fda_breakthrough', 'eu_prime', 'pmda_sakigake'." },
       market: { type: 'string', description: 'Filter the list by market (us, eu, jp).' },
-      answers: { type: 'object', description: 'Map of criterion id → boolean, to assess eligibility.' },
+      answers: { type: 'object', description: 'Map of criterion id → boolean, to assess eligibility. An omitted or null criterion stays unanswered; any other non-boolean value is refused.' },
     },
     required: [],
   },
@@ -930,11 +930,11 @@ export const GET_DEVICE_LABELING: AnaTool = {
 export const ASSESS_QMS: AnaTool = {
   name: 'assess_qms',
   description:
-    "Inspect or gap-check a device quality management system against ISO 13485:2016 (with the FDA QSR→QMSR mapping). Without `present_clause_ids` it returns the major clause structure (design controls, purchasing, production, complaints/reporting, nonconforming product, CAPA…) with each clause's FDA mapping (21 CFR 820.x) and auditor questions, plus the QMSR transition note (effective 2026-02-02). With `present_clause_ids` it reports readiness + missing clauses. Static reference + pure assessment, deterministic — an audit-prep aid, not an audit verdict.",
+    "Inspect or gap-check a device quality management system against ISO 13485:2016 (with the FDA QSR→QMSR mapping). Without `present_clause_ids` it returns the major clause structure (design controls, purchasing, production, complaints/reporting, nonconforming product, CAPA…) with each clause's FDA mapping (21 CFR 820.x) and auditor questions, plus the QMSR transition note (effective 2026-02-02). With `present_clause_ids` it reports readiness + missing clauses; an id that is not a clause id is refused, never counted as missing. Static reference + pure assessment, deterministic — an audit-prep aid, not an audit verdict.",
   input_schema: {
     type: 'object',
     properties: {
-      present_clause_ids: { type: 'array', items: { type: 'string' }, description: 'Clause ids the QMS has in place (for the readiness assessment).' },
+      present_clause_ids: { type: 'array', items: { type: 'string' }, description: 'Clause ids the QMS has in place (for the readiness assessment), as the clause structure lists them.' },
     },
     required: [],
   },
@@ -950,7 +950,7 @@ export const LIST_REGULATORY_CAPABILITIES: AnaTool = {
 export const PLACE_INTO_SEQUENCE: AnaTool = {
   name: 'place_into_sequence',
   description:
-    "Place a document into an eCTD sequence of the canonical submission core — create or update a submission_leaves row (upsert semantics: pass leaf_id to update an existing leaf, omit it to create one). Tenant and acting user come from the active context; the write is audited (LEAF_CREATED / LEAF_UPDATED). The server REFUSES a frozen or dispatched sequence (its leaves are immutable) and a source document not owned by the caller's organization (coauthor_documents, unified_documents, ctd_onboarding_documents, rendered_leaf_files and c2c_document_sections are all tenancy-checked at placement) — surface that refusal verbatim, never claim a placement the server declined. document_table/document_id link the leaf to its source. document_table is a CLOSED set — the server REFUSES (400) any value outside it, so a guessed or misspelled table is never placed; pick the table the document actually lives in. coauthor_documents, unified_documents, ctd_onboarding_documents, rendered_leaf_files and c2c_document_sections are materialized into the package; vault_documents is a documented pointer the assembler cannot materialize: the dispatch-readiness gate reports it as an ERROR (EXTERNAL_DOCUMENT_NOT_MATERIALIZABLE) and transmit fails closed on it, so do not place one unless the user explicitly asks for that pointer. Use this when a user asks to file a drafted document into a sequence.",
+    "Place a document into an eCTD sequence of the canonical submission core — create or update a submission_leaves row (upsert semantics: pass leaf_id to update an existing leaf, omit it to create one). Tenant and acting user come from the active context; the write is audited (LEAF_CREATED / LEAF_UPDATED). The server REFUSES a frozen or dispatched sequence (its leaves are immutable) and a source document not owned by the caller's organization (coauthor_documents, unified_documents, ctd_onboarding_documents, rendered_leaf_files and c2c_document_sections are all tenancy-checked at placement) — surface that refusal verbatim, never claim a placement the server declined. document_table/document_id link the leaf to its source. document_table is a CLOSED set — the server REFUSES (400) any value outside it, so a guessed or misspelled table is never placed; pick the table the document actually lives in. coauthor_documents, unified_documents, rendered_leaf_files and c2c_document_sections are materialized into the package. ctd_onboarding_documents takes a withdrawal only (lifecycle_op 'delete', for an upload already filed): the server REFUSES new content from it, because an upload is no longer placed in a sequence. A document uploaded there is uploaded to the project's Vault, approved there and placed from the Vault. vault_documents is materialized too (an already-valid PDF, checked against its recorded hash), but a Vault document is keyed by a uuid this tool does not take, so the person places a Vault version from the Vault ('Place into filing'), not with this tool. Use this when a user asks to file a drafted document into a sequence.",
   input_schema: {
     type: 'object',
     properties: {

@@ -1,0 +1,1966 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/qms/__tests__/changeControl.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T16:54:27.743Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T16:54:27.745Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/qms/__tests__/changeControl.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T16:54:27.745Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/qms/__tests__/changeControl.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/qms/__tests__/changeControl.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T16:54:28.015Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/services/qms/__tests__/changeControl.pglite.integration.test.ts
+   ✓ QMS quality: 9 controlled docs, 0 training acks, 6 changes, 9 links seeded
+
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > seeds the controlled-document register and change-control log 6ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > summary reflects the seeded lifecycle spread 2ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > counts every change past its target whose implementation is unfinished, whatever its stage 1ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > flags each such change on the register from the server’s date, with the same predicate 2ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > reads every change’s linked records for the register in one org-scoped query 3ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > links a change to its deviation and validation records 2ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > seeds no effective document and no training against one: approval is a signature the seed cannot give 1ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > advances proposed → assessed → approved (by a different user) → implemented → verified → closed 11ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > rejects an illegal transition (closed is terminal) 3ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > refuses approval without a signature, for the proposer and anyone else, and changes nothing 5ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > links only a record of this organisation, and keeps a removed link with who removed it and why 13ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > removes only the owned active change through an executor that supplies rows alone 4ms
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > requires a recorded effectiveness review: undefined 10ms
+   → promise resolved "{ id: 12, organization_id: 1, …(27) }" instead of rejecting
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > requires a recorded effectiveness review: null 4ms
+   → promise resolved "{ id: 13, organization_id: 1, …(27) }" instead of rejecting
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > requires a recorded effectiveness review: "" 3ms
+   → promise resolved "{ id: 14, organization_id: 1, …(27) }" instead of rejecting
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > requires a recorded effectiveness review: "   " 3ms
+   → promise resolved "{ id: 15, organization_id: 1, …(27) }" instead of rejecting
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > does not record anonymous closure 3ms
+   → promise resolved "{ id: 16, organization_id: 1, …(27) }" instead of rejecting
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > only a required native deviation blocks closure; a descriptive reference does not 7ms
+   → promise resolved "{ id: 17, organization_id: 1, …(27) }" instead of rejecting
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > does not treat a failed CAPA effectiveness check as completed required work 6ms
+   → promise resolved "{ id: 19, organization_id: 1, …(27) }" instead of rejecting
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > resolves a CAPA code inside the change programme and refuses an ambiguous organization-only code 13ms
+   → promise resolved "{ id: 21, organization_id: 1, …(27) }" instead of rejecting
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > requires effective controlled documents and refuses typed-only completion claims 6ms
+   → promise resolved "{ id: 23, organization_id: 1, …(27) }" instead of rejecting
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > refuses closure when a required document is retired after the prerequisite read 5ms
+   → promise resolved "{ id: 24, organization_id: 1, …(27) }" instead of rejecting
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > refuses a stale closure after an interleaved state change 6ms
+   → promise resolved "{ id: 25, organization_id: 1, …(27) }" instead of rejecting
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > refuses a stale closure after an interleaved content change 6ms
+   → promise resolved "{ id: 26, organization_id: 1, …(27) }" instead of rejecting
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > refuses a stale closure after an interleaved link change 4ms
+   → promise resolved "{ id: 27, organization_id: 1, …(27) }" instead of rejecting
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > does not attach or erase a requirement after closure 8ms
+   → promise resolved "{ id: 23, organization_id: 1, …(12) }" instead of rejecting
+(node:42) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts
+{
+  "timestamp": "2026-11-08T16:54:31.601Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT
+[CMC Batch] Release testing for batch 9: released
+
+stderr | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back
+[CMC Batch] Error processing release: Error: signer identity unresolvable
+    at /workspace/scratch/3002d574f952/concept2cure-v2/server/api/cmc/__tests__/cmc-sign-signature-row.test.ts:230:17
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back
+[CMC Specs] Error approving specification: Error: signer identity unresolvable
+    at /workspace/scratch/3002d574f952/concept2cure-v2/server/api/cmc/__tests__/cmc-sign-signature-row.test.ts:230:17
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:302:11
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:26
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:2326:20
+    at new Promise (<anonymous>)
+    at runWithCancel (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:2323:10)
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:2305:20
+    at new Promise (<anonymous>)
+    at runWithTimeout (file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:2272:10)
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:2955:64
+
+stderr | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back
+{
+  "timestamp": "2026-11-08T16:54:31.924Z",
+  "level": "error",
+  "message": "[cmc-routes] CMC write failed",
+  "context": {
+    "operation": "Failed to record the qualification of container closure system",
+    "error": "signer identity unresolvable"
+  }
+}
+
+stderr | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'analytical-method validation' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back
+{
+  "timestamp": "2026-11-08T16:54:31.932Z",
+  "level": "error",
+  "message": "[cmc-routes] CMC write failed",
+  "context": {
+    "operation": "Failed to record the validation of analytical method",
+    "error": "signer identity unresolvable"
+  }
+}
+
+stderr | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'process-validation approval' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back
+{
+  "timestamp": "2026-11-08T16:54:31.938Z",
+  "level": "error",
+  "message": "[cmc-routes] CMC write failed",
+  "context": {
+    "operation": "Failed to record the approval of process validation record",
+    "error": "signer identity unresolvable"
+  }
+}
+
+stderr | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'comparability approval' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back
+{
+  "timestamp": "2026-11-08T16:54:31.946Z",
+  "level": "error",
+  "message": "[cmc-routes] CMC write failed",
+  "context": {
+    "operation": "Failed to record the approval of comparability assessment",
+    "error": "signer identity unresolvable"
+  }
+}
+
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT 27ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back 10ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing 4ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT 4ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back 4ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT 3ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back 3ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing 4ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'analytical-method validation' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT 3ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'analytical-method validation' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'analytical-method validation' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing 1ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'process-validation approval' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'process-validation approval' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'process-validation approval' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing 1ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'comparability approval' writes the electronic_signatures row with its ledger sign > records the signature row on the ledger's own client, before COMMIT 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'comparability approval' writes the electronic_signatures row with its ledger sign > a signature row that cannot be written rolls the signed act back 5ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'comparability approval' writes the electronic_signatures row with its ledger sign > a request with no credentials is refused and writes nothing 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' requires a signer with signing authority > refuses a viewer who knows their own password before re-authentication, and writes nothing 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'batch release' requires a signer with signing authority > refuses a user with no membership row in the organization 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' requires a signer with signing authority > refuses a viewer who knows their own password before re-authentication, and writes nothing 1ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'specification approval' requires a signer with signing authority > refuses a user with no membership row in the organization 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' requires a signer with signing authority > refuses a viewer who knows their own password before re-authentication, and writes nothing 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'container-closure qualification' requires a signer with signing authority > refuses a user with no membership row in the organization 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'analytical-method validation' requires a signer with signing authority > refuses a viewer who knows their own password before re-authentication, and writes nothing 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'analytical-method validation' requires a signer with signing authority > refuses a user with no membership row in the organization 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'process-validation approval' requires a signer with signing authority > refuses a viewer who knows their own password before re-authentication, and writes nothing 2ms
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'approved' disposition is signed with meaning 'release', on the ledger and the signature row
+[CMC Batch] Release testing for batch 9: released
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'conditional' disposition is signed with meaning 'responsibility', on the ledger and the signature row
+[CMC Batch] Release testing for batch 9: conditional-release
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'rejected' disposition is signed with meaning 'responsibility', on the ledger and the signature row
+[CMC Batch] Release testing for batch 9: rejected
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a full release needs every result reviewed; a conditional release over an unreviewed one is signed responsibility
+[CMC Batch] Release testing for batch 9: conditional-release
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > an open deviation blocks a full release (21 CFR 211.192) but not a conditional one
+[CMC Batch] Release testing for batch 9: conditional-release
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > the release record carries the RECORDED results, never the ones the request supplies
+[CMC Batch] Release testing for batch 9: released
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > an unchanged pass/review status does not conceal changed QC content during reauthentication
+[CMC Batch] Release testing for batch 9: released
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a deviation opened while the signer reauthenticates blocks full release under the final batch lock
+[CMC Batch] Release testing for batch 9: released
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > rechecking deviations preserves the existing conditional disposition policy
+[CMC Batch] Release testing for batch 9: conditional-release
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > rechecking deviations preserves the existing rejected disposition policy
+[CMC Batch] Release testing for batch 9: rejected
+
+stdout | server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > accepts a declared meaning that agrees with the disposition
+[CMC Batch] Release testing for batch 9: released
+
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'process-validation approval' requires a signer with signing authority > refuses a user with no membership row in the organization 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'comparability approval' requires a signer with signing authority > refuses a viewer who knows their own password before re-authentication, and writes nothing 41ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC 'comparability approval' requires a signer with signing authority > refuses a user with no membership row in the organization 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'approved' disposition is signed with meaning 'release', on the ledger and the signature row 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'conditional' disposition is signed with meaning 'responsibility', on the ledger and the signature row 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a 'rejected' disposition is signed with meaning 'responsibility', on the ledger and the signature row 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > an 'approved' disposition over a recorded result that fails is refused before re-authentication, and writes nothing 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a release with no result recorded against the batch is refused — zero tests is not "all passed" 3ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a full release needs every result reviewed; a conditional release over an unreviewed one is signed responsibility 3ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > an open deviation blocks a full release (21 CFR 211.192) but not a conditional one 3ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > the release record carries the RECORDED results, never the ones the request supplies 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > results that change while the signer re-authenticates refuse the signature, and nothing is signed 1ms
+ × server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > an unchanged pass/review status does not conceal changed QC content during reauthentication 4ms
+   → {"success":true,"data":{"batchRecord":{"id":9,"status":"draft","approval_status":"draft","project_id":null,"tenant_id":"7","organization_id":7,"batch_number":"B-9","release_status":null,"ich_q2_parameters":{"characteristics":["Specificity","Accuracy"]},"validation_report":"PV-RPT-011","justification":"Comparable on every attribute against the pre-change criteria."},"releaseEvaluation":{"decision":"approved","releasedBy":"user 42","comments":null,"testResults":[{"qcId":1,"sampleId":"S-B9-1","testMethod":"AM-001","result":{"value":"99.2"},"criterion":{"acceptanceCriteria":"98.0-102.0%"},"passFail":"pass","reviewed":true,"passed":true}],"allTestsPassed":true,"releaseStatus":"released","releasedAt":"2026-11-08T16:54:32.035Z"}},"governance":{"actionId":"act_1","sha256Chain":"chain_1"},"message":"Batch released successfully","timestamp":"2026-11-08T16:54:32.035Z","module3Linked":true}: expected 200 to be 409 // Object.is equality
+ × server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a deviation opened while the signer reauthenticates blocks full release under the final batch lock 3ms
+   → {"success":true,"data":{"batchRecord":{"id":9,"status":"draft","approval_status":"draft","project_id":null,"tenant_id":"7","organization_id":7,"batch_number":"B-9","release_status":null,"ich_q2_parameters":{"characteristics":["Specificity","Accuracy"]},"validation_report":"PV-RPT-011","justification":"Comparable on every attribute against the pre-change criteria."},"releaseEvaluation":{"decision":"approved","releasedBy":"user 42","comments":null,"testResults":[{"qcId":1,"sampleId":"S-B9-1","testMethod":"AM-001","result":{"value":"99.2"},"criterion":{"acceptanceCriteria":"98.0-102.0%"},"passFail":"pass","reviewed":true,"passed":true}],"allTestsPassed":true,"releaseStatus":"released","releasedAt":"2026-11-08T16:54:32.039Z"}},"governance":{"actionId":"act_1","sha256Chain":"chain_1"},"message":"Batch released successfully","timestamp":"2026-11-08T16:54:32.039Z","module3Linked":true}: expected 200 to be 409 // Object.is equality
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > rechecking deviations preserves the existing conditional disposition policy 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > rechecking deviations preserves the existing rejected disposition policy 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > refuses a declared 'release' on a rejected batch before re-authentication, and writes nothing 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > refuses a declared meaning outside the closed vocabulary, and writes nothing 2ms
+ ✓ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > accepts a declared meaning that agrees with the disposition 1ms
+(node:50) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ × server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: undefined 27ms
+   → promise resolved "{ …(25) }" instead of rejecting
+ × server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: null 9ms
+   → promise resolved "{ …(25) }" instead of rejecting
+ × server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: {} 10ms
+   → promise resolved "{ …(25) }" instead of rejecting
+ × server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: undefined 8ms
+   → promise resolved "{ …(25) }" instead of rejecting
+ × server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: "effective" 9ms
+   → promise resolved "{ …(25) }" instead of rejecting
+ × server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: {"outcome":"effective"} 9ms
+   → promise resolved "{ …(25) }" instead of rejecting
+ × server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: {"outcome":"effective","narrative":"  "} 9ms
+   → promise resolved "{ …(25) }" instead of rejecting
+ × server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: {"outcome":"not_effective","narrative":"Failed."} 7ms
+   → promise resolved "{ …(25) }" instead of rejecting
+ × server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not call an action plan implemented while an action is planned 9ms
+   → promise resolved "{ …(25) }" instead of rejecting
+ × server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not call an action plan implemented while an action is in_progress 11ms
+   → promise resolved "{ …(25) }" instead of rejecting
+ × server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not call an action plan implemented while an action is blocked 12ms
+   → promise resolved "{ …(25) }" instead of rejecting
+ × server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not call an action plan implemented while an action is cancelled 13ms
+   → promise resolved "{ …(25) }" instead of rejecting
+ × server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > rechecks actions for effective closure, including a legacy record already at effectiveness check 8ms
+   → promise resolved "{ …(25) }" instead of rejecting
+ × server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not complete an action without recorded completion evidence: undefined 7ms
+   → promise resolved "{ …(14) }" instead of rejecting
+ × server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not complete an action without recorded completion evidence: undefined 6ms
+   → promise resolved "{ …(14) }" instead of rejecting
+ × server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not complete an action without recorded completion evidence: {} 7ms
+   → promise resolved "{ …(14) }" instead of rejecting
+ × server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not complete an action without recorded completion evidence: {"kind":"reference","label":" "} 6ms
+   → promise resolved "{ …(14) }" instead of rejecting
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > completes a documented action and closes with the matching effective result under the actual actor 23ms
+ ✓ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > records unsuccessful effectiveness honestly and keeps its existing reopen path 13ms
+ × server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not append an action to a closed_effective CAPA 8ms
+   → promise resolved "{ …(14) }" instead of rejecting
+ × server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not append an action to a closed_not_effective CAPA 8ms
+   → promise resolved "{ …(14) }" instead of rejecting
+(node:62) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ × server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > reads only unassigned QC for an unassigned batch, never every same-number project 8ms
+   → expected [ 1, 2, 3 ] to deeply equal [ 1 ]
+ ✓ server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > reads only the actual project for a project-bound batch 1ms
+ × server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > fingerprints the recorded result and criterion even if pass/review flags are unchanged 1ms
+   → expected '2:pass:r' not to be '2:pass:r' // Object.is equality
+ × server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > fingerprints who reviewed and when the result changed 3ms
+   → expected '3:pass:r' not to be '3:pass:r' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 38 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > an unchanged pass/review status does not conceal changed QC content during reauthentication
+AssertionError: {"success":true,"data":{"batchRecord":{"id":9,"status":"draft","approval_status":"draft","project_id":null,"tenant_id":"7","organization_id":7,"batch_number":"B-9","release_status":null,"ich_q2_parameters":{"characteristics":["Specificity","Accuracy"]},"validation_report":"PV-RPT-011","justification":"Comparable on every attribute against the pre-change criteria."},"releaseEvaluation":{"decision":"approved","releasedBy":"user 42","comments":null,"testResults":[{"qcId":1,"sampleId":"S-B9-1","testMethod":"AM-001","result":{"value":"99.2"},"criterion":{"acceptanceCriteria":"98.0-102.0%"},"passFail":"pass","reviewed":true,"passed":true}],"allTestsPassed":true,"releaseStatus":"released","releasedAt":"2026-11-08T16:54:32.035Z"}},"governance":{"actionId":"act_1","sha256Chain":"chain_1"},"message":"Batch released successfully","timestamp":"2026-11-08T16:54:32.035Z","module3Linked":true}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts:362:50
+    360|     h.qcAfter = [qcRow({ test_results: { value: '100.7' } })];
+    361|     const res = await release({ decision: 'approved' });
+    362|     expect(res.status, JSON.stringify(res.body)).toBe(409);
+       |                                                  ^
+    363|     expect(res.body.code).toBe('EVIDENCE_CHANGED');
+    364|     expect(h.log).toContain('ROLLBACK');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/38]⎯
+
+ FAIL  server/api/cmc/__tests__/cmc-sign-signature-row.test.ts > CMC batch release: the signature means what the disposition is > a deviation opened while the signer reauthenticates blocks full release under the final batch lock
+AssertionError: {"success":true,"data":{"batchRecord":{"id":9,"status":"draft","approval_status":"draft","project_id":null,"tenant_id":"7","organization_id":7,"batch_number":"B-9","release_status":null,"ich_q2_parameters":{"characteristics":["Specificity","Accuracy"]},"validation_report":"PV-RPT-011","justification":"Comparable on every attribute against the pre-change criteria."},"releaseEvaluation":{"decision":"approved","releasedBy":"user 42","comments":null,"testResults":[{"qcId":1,"sampleId":"S-B9-1","testMethod":"AM-001","result":{"value":"99.2"},"criterion":{"acceptanceCriteria":"98.0-102.0%"},"passFail":"pass","reviewed":true,"passed":true}],"allTestsPassed":true,"releaseStatus":"released","releasedAt":"2026-11-08T16:54:32.039Z"}},"governance":{"actionId":"act_1","sha256Chain":"chain_1"},"message":"Batch released successfully","timestamp":"2026-11-08T16:54:32.039Z","module3Linked":true}: expected 200 to be 409 // Object.is equality
+
+- Expected
++ Received
+
+- 409
++ 200
+
+ ❯ server/api/cmc/__tests__/cmc-sign-signature-row.test.ts:376:50
+    374|     });
+    375|     const res = await release({ decision: 'approved' });
+    376|     expect(res.status, JSON.stringify(res.body)).toBe(409);
+       |                                                  ^
+    377|     expect(res.body.code).toBe('RELEASE_EVIDENCE');
+    378|     expect(res.body.error).toMatch(/1 open deviation/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/38]⎯
+
+ FAIL  server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: undefined
+AssertionError: promise resolved "{ …(25) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "assignedTo": null,
++   "auditTrail": {
++     "chained": true,
++     "persisted": true,
++   },
++   "capaCode": "dee9a1b6-1317-42eb-af17-6eb0e5aa38a3",
++   "closedAt": 2026-11-08T16:54:34.293Z,
++   "closedBy": "7",
++   "containmentActions": null,
++   "correctiveActionPlan": null,
++   "createdAt": 2026-11-08T16:54:34.282Z,
++   "createdBy": null,
++   "effectivenessCheckCriteria": null,
++   "effectivenessCheckResult": null,
++   "id": "dee9a1b6-1317-42eb-af17-6eb0e5aa38a3",
++   "problemStatement": null,
++   "programId": "11111111-1111-4111-8111-111111111111",
++   "riskLevel": "medium",
++   "rootCauseAnalysis": null,
++   "source": "nonconformance",
++   "sourceRefs": null,
++   "state": "closed_effective",
++   "summary": null,
++   "targetCloseDate": null,
++   "title": "Closure proof",
++   "type": "corrective",
++   "updatedAt": 2026-11-08T16:54:34.293Z,
++   "updatedBy": "7",
+  }
+
+ ❯ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts:77:120
+     75|       const id = await capa();
+     76|       const before = await snapshot();
+     77|       await expect(transitionCapa(1, id, { to: 'closed_effective', eff…
+       |                                                                                                                        ^
+     78|         .rejects.toMatchObject({ name: 'InvalidTransitionError', messa…
+     79|       expect(await snapshot()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/38]⎯
+
+ FAIL  server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: null
+AssertionError: promise resolved "{ …(25) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "assignedTo": null,
++   "auditTrail": {
++     "chained": true,
++     "persisted": true,
++   },
++   "capaCode": "c1be1b82-6f7d-428a-bc0c-59a98c256322",
++   "closedAt": 2026-11-08T16:54:34.311Z,
++   "closedBy": "7",
++   "containmentActions": null,
++   "correctiveActionPlan": null,
++   "createdAt": 2026-11-08T16:54:34.307Z,
++   "createdBy": null,
++   "effectivenessCheckCriteria": null,
++   "effectivenessCheckResult": null,
++   "id": "c1be1b82-6f7d-428a-bc0c-59a98c256322",
++   "problemStatement": null,
++   "programId": "11111111-1111-4111-8111-111111111111",
++   "riskLevel": "medium",
++   "rootCauseAnalysis": null,
++   "source": "nonconformance",
++   "sourceRefs": null,
++   "state": "closed_effective",
++   "summary": null,
++   "targetCloseDate": null,
++   "title": "Closure proof",
++   "type": "corrective",
++   "updatedAt": 2026-11-08T16:54:34.311Z,
++   "updatedBy": "7",
+  }
+
+ ❯ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts:77:120
+     75|       const id = await capa();
+     76|       const before = await snapshot();
+     77|       await expect(transitionCapa(1, id, { to: 'closed_effective', eff…
+       |                                                                                                                        ^
+     78|         .rejects.toMatchObject({ name: 'InvalidTransitionError', messa…
+     79|       expect(await snapshot()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/38]⎯
+
+ FAIL  server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: {}
+AssertionError: promise resolved "{ …(25) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "assignedTo": null,
++   "auditTrail": {
++     "chained": true,
++     "persisted": true,
++   },
++   "capaCode": "026a2110-3497-4b92-b0a7-26d59cbb83c3",
++   "closedAt": 2026-11-08T16:54:34.320Z,
++   "closedBy": "7",
++   "containmentActions": null,
++   "correctiveActionPlan": null,
++   "createdAt": 2026-11-08T16:54:34.315Z,
++   "createdBy": null,
++   "effectivenessCheckCriteria": null,
++   "effectivenessCheckResult": {},
++   "id": "026a2110-3497-4b92-b0a7-26d59cbb83c3",
++   "problemStatement": null,
++   "programId": "11111111-1111-4111-8111-111111111111",
++   "riskLevel": "medium",
++   "rootCauseAnalysis": null,
++   "source": "nonconformance",
++   "sourceRefs": null,
++   "state": "closed_effective",
++   "summary": null,
++   "targetCloseDate": null,
++   "title": "Closure proof",
++   "type": "corrective",
++   "updatedAt": 2026-11-08T16:54:34.320Z,
++   "updatedBy": "7",
+  }
+
+ ❯ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts:77:120
+     75|       const id = await capa();
+     76|       const before = await snapshot();
+     77|       await expect(transitionCapa(1, id, { to: 'closed_effective', eff…
+       |                                                                                                                        ^
+     78|         .rejects.toMatchObject({ name: 'InvalidTransitionError', messa…
+     79|       expect(await snapshot()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/38]⎯
+
+ FAIL  server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: undefined
+AssertionError: promise resolved "{ …(25) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "assignedTo": null,
++   "auditTrail": {
++     "chained": true,
++     "persisted": true,
++   },
++   "capaCode": "b690a822-40ee-4004-940c-86db35af3fcc",
++   "closedAt": 2026-11-08T16:54:34.329Z,
++   "closedBy": "7",
++   "containmentActions": null,
++   "correctiveActionPlan": null,
++   "createdAt": 2026-11-08T16:54:34.325Z,
++   "createdBy": null,
++   "effectivenessCheckCriteria": null,
++   "effectivenessCheckResult": [],
++   "id": "b690a822-40ee-4004-940c-86db35af3fcc",
++   "problemStatement": null,
++   "programId": "11111111-1111-4111-8111-111111111111",
++   "riskLevel": "medium",
++   "rootCauseAnalysis": null,
++   "source": "nonconformance",
++   "sourceRefs": null,
++   "state": "closed_effective",
++   "summary": null,
++   "targetCloseDate": null,
++   "title": "Closure proof",
++   "type": "corrective",
++   "updatedAt": 2026-11-08T16:54:34.329Z,
++   "updatedBy": "7",
+  }
+
+ ❯ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts:77:120
+     75|       const id = await capa();
+     76|       const before = await snapshot();
+     77|       await expect(transitionCapa(1, id, { to: 'closed_effective', eff…
+       |                                                                                                                        ^
+     78|         .rejects.toMatchObject({ name: 'InvalidTransitionError', messa…
+     79|       expect(await snapshot()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/38]⎯
+
+ FAIL  server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: "effective"
+AssertionError: promise resolved "{ …(25) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "assignedTo": null,
++   "auditTrail": {
++     "chained": true,
++     "persisted": true,
++   },
++   "capaCode": "f411edc0-1be7-4c1b-b28e-b71111e9e4e7",
++   "closedAt": 2026-11-08T16:54:34.338Z,
++   "closedBy": "7",
++   "containmentActions": null,
++   "correctiveActionPlan": null,
++   "createdAt": 2026-11-08T16:54:34.333Z,
++   "createdBy": null,
++   "effectivenessCheckCriteria": null,
++   "effectivenessCheckResult": "effective",
++   "id": "f411edc0-1be7-4c1b-b28e-b71111e9e4e7",
++   "problemStatement": null,
++   "programId": "11111111-1111-4111-8111-111111111111",
++   "riskLevel": "medium",
++   "rootCauseAnalysis": null,
++   "source": "nonconformance",
++   "sourceRefs": null,
++   "state": "closed_effective",
++   "summary": null,
++   "targetCloseDate": null,
++   "title": "Closure proof",
++   "type": "corrective",
++   "updatedAt": 2026-11-08T16:54:34.338Z,
++   "updatedBy": "7",
+  }
+
+ ❯ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts:77:120
+     75|       const id = await capa();
+     76|       const before = await snapshot();
+     77|       await expect(transitionCapa(1, id, { to: 'closed_effective', eff…
+       |                                                                                                                        ^
+     78|         .rejects.toMatchObject({ name: 'InvalidTransitionError', messa…
+     79|       expect(await snapshot()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/38]⎯
+
+ FAIL  server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: {"outcome":"effective"}
+AssertionError: promise resolved "{ …(25) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "assignedTo": null,
++   "auditTrail": {
++     "chained": true,
++     "persisted": true,
++   },
++   "capaCode": "805f8cb0-dc22-4100-8dbb-d79fb3b74507",
++   "closedAt": 2026-11-08T16:54:34.347Z,
++   "closedBy": "7",
++   "containmentActions": null,
++   "correctiveActionPlan": null,
++   "createdAt": 2026-11-08T16:54:34.342Z,
++   "createdBy": null,
++   "effectivenessCheckCriteria": null,
++   "effectivenessCheckResult": {
++     "outcome": "effective",
++   },
++   "id": "805f8cb0-dc22-4100-8dbb-d79fb3b74507",
++   "problemStatement": null,
++   "programId": "11111111-1111-4111-8111-111111111111",
++   "riskLevel": "medium",
++   "rootCauseAnalysis": null,
++   "source": "nonconformance",
++   "sourceRefs": null,
++   "state": "closed_effective",
++   "summary": null,
++   "targetCloseDate": null,
++   "title": "Closure proof",
++   "type": "corrective",
++   "updatedAt": 2026-11-08T16:54:34.347Z,
++   "updatedBy": "7",
+  }
+
+ ❯ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts:77:120
+     75|       const id = await capa();
+     76|       const before = await snapshot();
+     77|       await expect(transitionCapa(1, id, { to: 'closed_effective', eff…
+       |                                                                                                                        ^
+     78|         .rejects.toMatchObject({ name: 'InvalidTransitionError', messa…
+     79|       expect(await snapshot()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/38]⎯
+
+ FAIL  server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: {"outcome":"effective","narrative":"  "}
+AssertionError: promise resolved "{ …(25) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "assignedTo": null,
++   "auditTrail": {
++     "chained": true,
++     "persisted": true,
++   },
++   "capaCode": "2709bb4b-cbb0-4971-bffc-816a26f659d0",
++   "closedAt": 2026-11-08T16:54:34.355Z,
++   "closedBy": "7",
++   "containmentActions": null,
++   "correctiveActionPlan": null,
++   "createdAt": 2026-11-08T16:54:34.350Z,
++   "createdBy": null,
++   "effectivenessCheckCriteria": null,
++   "effectivenessCheckResult": {
++     "narrative": "  ",
++     "outcome": "effective",
++   },
++   "id": "2709bb4b-cbb0-4971-bffc-816a26f659d0",
++   "problemStatement": null,
++   "programId": "11111111-1111-4111-8111-111111111111",
++   "riskLevel": "medium",
++   "rootCauseAnalysis": null,
++   "source": "nonconformance",
++   "sourceRefs": null,
++   "state": "closed_effective",
++   "summary": null,
++   "targetCloseDate": null,
++   "title": "Closure proof",
++   "type": "corrective",
++   "updatedAt": 2026-11-08T16:54:34.355Z,
++   "updatedBy": "7",
+  }
+
+ ❯ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts:77:120
+     75|       const id = await capa();
+     76|       const before = await snapshot();
+     77|       await expect(transitionCapa(1, id, { to: 'closed_effective', eff…
+       |                                                                                                                        ^
+     78|         .rejects.toMatchObject({ name: 'InvalidTransitionError', messa…
+     79|       expect(await snapshot()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/38]⎯
+
+ FAIL  server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > refuses effective closure without its matching outcome and narrative: {"outcome":"not_effective","narrative":"Failed."}
+AssertionError: promise resolved "{ …(25) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "assignedTo": null,
++   "auditTrail": {
++     "chained": true,
++     "persisted": true,
++   },
++   "capaCode": "2c9adf59-eb76-4e7c-b947-38aca5c5b47b",
++   "closedAt": 2026-11-08T16:54:34.364Z,
++   "closedBy": "7",
++   "containmentActions": null,
++   "correctiveActionPlan": null,
++   "createdAt": 2026-11-08T16:54:34.360Z,
++   "createdBy": null,
++   "effectivenessCheckCriteria": null,
++   "effectivenessCheckResult": {
++     "narrative": "Failed.",
++     "outcome": "not_effective",
++   },
++   "id": "2c9adf59-eb76-4e7c-b947-38aca5c5b47b",
++   "problemStatement": null,
++   "programId": "11111111-1111-4111-8111-111111111111",
++   "riskLevel": "medium",
++   "rootCauseAnalysis": null,
++   "source": "nonconformance",
++   "sourceRefs": null,
++   "state": "closed_effective",
++   "summary": null,
++   "targetCloseDate": null,
++   "title": "Closure proof",
++   "type": "corrective",
++   "updatedAt": 2026-11-08T16:54:34.364Z,
++   "updatedBy": "7",
+  }
+
+ ❯ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts:77:120
+     75|       const id = await capa();
+     76|       const before = await snapshot();
+     77|       await expect(transitionCapa(1, id, { to: 'closed_effective', eff…
+       |                                                                                                                        ^
+     78|         .rejects.toMatchObject({ name: 'InvalidTransitionError', messa…
+     79|       expect(await snapshot()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/38]⎯
+
+ FAIL  server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not call an action plan implemented while an action is planned
+AssertionError: promise resolved "{ …(25) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "assignedTo": null,
++   "auditTrail": {
++     "chained": true,
++     "persisted": true,
++   },
++   "capaCode": "fb8cbf56-10a7-4e8d-b95e-929a6a68d2d3",
++   "closedAt": null,
++   "closedBy": null,
++   "containmentActions": null,
++   "correctiveActionPlan": null,
++   "createdAt": 2026-11-08T16:54:34.367Z,
++   "createdBy": null,
++   "effectivenessCheckCriteria": null,
++   "effectivenessCheckResult": null,
++   "id": "fb8cbf56-10a7-4e8d-b95e-929a6a68d2d3",
++   "problemStatement": null,
++   "programId": "11111111-1111-4111-8111-111111111111",
++   "riskLevel": "medium",
++   "rootCauseAnalysis": null,
++   "source": "nonconformance",
++   "sourceRefs": null,
++   "state": "action_implemented",
++   "summary": null,
++   "targetCloseDate": null,
++   "title": "Closure proof",
++   "type": "corrective",
++   "updatedAt": 2026-11-08T16:54:34.372Z,
++   "updatedBy": "7",
+  }
+
+ ❯ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts:89:79
+     87|       await action(id, state);
+     88|       const before = await snapshot();
+     89|       await expect(transitionCapa(1, id, { to: 'action_implemented' },…
+       |                                                                               ^
+     90|         name: 'InvalidTransitionError', message: expect.stringMatching…
+     91|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/38]⎯
+
+ FAIL  server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not call an action plan implemented while an action is in_progress
+AssertionError: promise resolved "{ …(25) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "assignedTo": null,
++   "auditTrail": {
++     "chained": true,
++     "persisted": true,
++   },
++   "capaCode": "1e507c1c-f65a-4ed1-a616-dfdaa4fd610a",
++   "closedAt": null,
++   "closedBy": null,
++   "containmentActions": null,
++   "correctiveActionPlan": null,
++   "createdAt": 2026-11-08T16:54:34.376Z,
++   "createdBy": null,
++   "effectivenessCheckCriteria": null,
++   "effectivenessCheckResult": null,
++   "id": "1e507c1c-f65a-4ed1-a616-dfdaa4fd610a",
++   "problemStatement": null,
++   "programId": "11111111-1111-4111-8111-111111111111",
++   "riskLevel": "medium",
++   "rootCauseAnalysis": null,
++   "source": "nonconformance",
++   "sourceRefs": null,
++   "state": "action_implemented",
++   "summary": null,
++   "targetCloseDate": null,
++   "title": "Closure proof",
++   "type": "corrective",
++   "updatedAt": 2026-11-08T16:54:34.382Z,
++   "updatedBy": "7",
+  }
+
+ ❯ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts:89:79
+     87|       await action(id, state);
+     88|       const before = await snapshot();
+     89|       await expect(transitionCapa(1, id, { to: 'action_implemented' },…
+       |                                                                               ^
+     90|         name: 'InvalidTransitionError', message: expect.stringMatching…
+     91|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/38]⎯
+
+ FAIL  server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not call an action plan implemented while an action is blocked
+AssertionError: promise resolved "{ …(25) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "assignedTo": null,
++   "auditTrail": {
++     "chained": true,
++     "persisted": true,
++   },
++   "capaCode": "651b1ce1-063e-4d26-9957-b7318d339b3f",
++   "closedAt": null,
++   "closedBy": null,
++   "containmentActions": null,
++   "correctiveActionPlan": null,
++   "createdAt": 2026-11-08T16:54:34.387Z,
++   "createdBy": null,
++   "effectivenessCheckCriteria": null,
++   "effectivenessCheckResult": null,
++   "id": "651b1ce1-063e-4d26-9957-b7318d339b3f",
++   "problemStatement": null,
++   "programId": "11111111-1111-4111-8111-111111111111",
++   "riskLevel": "medium",
++   "rootCauseAnalysis": null,
++   "source": "nonconformance",
++   "sourceRefs": null,
++   "state": "action_implemented",
++   "summary": null,
++   "targetCloseDate": null,
++   "title": "Closure proof",
++   "type": "corrective",
++   "updatedAt": 2026-11-08T16:54:34.394Z,
++   "updatedBy": "7",
+  }
+
+ ❯ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts:89:79
+     87|       await action(id, state);
+     88|       const before = await snapshot();
+     89|       await expect(transitionCapa(1, id, { to: 'action_implemented' },…
+       |                                                                               ^
+     90|         name: 'InvalidTransitionError', message: expect.stringMatching…
+     91|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/38]⎯
+
+ FAIL  server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not call an action plan implemented while an action is cancelled
+AssertionError: promise resolved "{ …(25) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "assignedTo": null,
++   "auditTrail": {
++     "chained": true,
++     "persisted": true,
++   },
++   "capaCode": "753ed514-b516-45d4-8f31-83ceb2fa4396",
++   "closedAt": null,
++   "closedBy": null,
++   "containmentActions": null,
++   "correctiveActionPlan": null,
++   "createdAt": 2026-11-08T16:54:34.399Z,
++   "createdBy": null,
++   "effectivenessCheckCriteria": null,
++   "effectivenessCheckResult": null,
++   "id": "753ed514-b516-45d4-8f31-83ceb2fa4396",
++   "problemStatement": null,
++   "programId": "11111111-1111-4111-8111-111111111111",
++   "riskLevel": "medium",
++   "rootCauseAnalysis": null,
++   "source": "nonconformance",
++   "sourceRefs": null,
++   "state": "action_implemented",
++   "summary": null,
++   "targetCloseDate": null,
++   "title": "Closure proof",
++   "type": "corrective",
++   "updatedAt": 2026-11-08T16:54:34.407Z,
++   "updatedBy": "7",
+  }
+
+ ❯ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts:89:79
+     87|       await action(id, state);
+     88|       const before = await snapshot();
+     89|       await expect(transitionCapa(1, id, { to: 'action_implemented' },…
+       |                                                                               ^
+     90|         name: 'InvalidTransitionError', message: expect.stringMatching…
+     91|       });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/38]⎯
+
+ FAIL  server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > rechecks actions for effective closure, including a legacy record already at effectiveness check
+AssertionError: promise resolved "{ …(25) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "assignedTo": null,
++   "auditTrail": {
++     "chained": true,
++     "persisted": true,
++   },
++   "capaCode": "6274513c-80ca-476a-8bb7-2e64350c777f",
++   "closedAt": 2026-11-08T16:54:34.417Z,
++   "closedBy": "7",
++   "containmentActions": null,
++   "correctiveActionPlan": null,
++   "createdAt": 2026-11-08T16:54:34.412Z,
++   "createdBy": null,
++   "effectivenessCheckCriteria": null,
++   "effectivenessCheckResult": {
++     "narrative": "No recurrence in the assessed batches.",
++     "outcome": "effective",
++   },
++   "id": "6274513c-80ca-476a-8bb7-2e64350c777f",
++   "problemStatement": null,
++   "programId": "11111111-1111-4111-8111-111111111111",
++   "riskLevel": "medium",
++   "rootCauseAnalysis": null,
++   "source": "nonconformance",
++   "sourceRefs": null,
++   "state": "closed_effective",
++   "summary": null,
++   "targetCloseDate": null,
++   "title": "Closure proof",
++   "type": "corrective",
++   "updatedAt": 2026-11-08T16:54:34.417Z,
++   "updatedBy": "7",
+  }
+
+ ❯ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts:99:112
+     97|     const id = await capa();
+     98|     await action(id, 'planned');
+     99|     await expect(transitionCapa(1, id, { to: 'closed_effective', effec…
+       |                                                                                                                ^
+    100|       .rejects.toMatchObject({ name: 'InvalidTransitionError' });
+    101|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/38]⎯
+
+ FAIL  server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not complete an action without recorded completion evidence: undefined
+AssertionError: promise resolved "{ …(14) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "auditTrail": {
++     "chained": true,
++     "persisted": true,
++   },
++   "capaId": "69ba3cb4-f035-4d7f-8b2f-e7a7aa36c6b8",
++   "completedAt": 2026-11-08T16:54:34.424Z,
++   "completedBy": "7",
++   "createdAt": 2026-11-08T16:54:34.420Z,
++   "description": "Recorded action",
++   "dueDate": null,
++   "evidenceRefs": null,
++   "id": "e959677b-c0af-472e-83ac-1d05b7c871ef",
++   "n": 1,
++   "owner": null,
++   "state": "done",
++   "type": "corrective",
++   "updatedAt": 2026-11-08T16:54:34.424Z,
+  }
+
+ ❯ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts:108:91
+    106|       const actionId = await action(id, 'in_progress');
+    107|       const before = await snapshot();
+    108|       await expect(transitionCapaAction(1, actionId, { to: 'done', evi…
+       |                                                                                           ^
+    109|         .rejects.toMatchObject({ name: 'InvalidTransitionError', messa…
+    110|       expect(await snapshot()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/38]⎯
+
+ FAIL  server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not complete an action without recorded completion evidence: undefined
+AssertionError: promise resolved "{ …(14) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "auditTrail": {
++     "chained": true,
++     "persisted": true,
++   },
++   "capaId": "19fccc82-0e93-4147-83e1-78e1951e7dcc",
++   "completedAt": 2026-11-08T16:54:34.430Z,
++   "completedBy": "7",
++   "createdAt": 2026-11-08T16:54:34.427Z,
++   "description": "Recorded action",
++   "dueDate": null,
++   "evidenceRefs": [],
++   "id": "b41fc62e-5d34-46b4-b070-480aeef4bc3e",
++   "n": 1,
++   "owner": null,
++   "state": "done",
++   "type": "corrective",
++   "updatedAt": 2026-11-08T16:54:34.430Z,
+  }
+
+ ❯ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts:108:91
+    106|       const actionId = await action(id, 'in_progress');
+    107|       const before = await snapshot();
+    108|       await expect(transitionCapaAction(1, actionId, { to: 'done', evi…
+       |                                                                                           ^
+    109|         .rejects.toMatchObject({ name: 'InvalidTransitionError', messa…
+    110|       expect(await snapshot()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/38]⎯
+
+ FAIL  server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not complete an action without recorded completion evidence: {}
+AssertionError: promise resolved "{ …(14) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "auditTrail": {
++     "chained": true,
++     "persisted": true,
++   },
++   "capaId": "13710c7a-f88d-455a-b96f-1fe8ac73bb50",
++   "completedAt": 2026-11-08T16:54:34.436Z,
++   "completedBy": "7",
++   "createdAt": 2026-11-08T16:54:34.433Z,
++   "description": "Recorded action",
++   "dueDate": null,
++   "evidenceRefs": [
++     {},
++   ],
++   "id": "4b9c7fe8-d023-42c5-9564-b398f6540d80",
++   "n": 1,
++   "owner": null,
++   "state": "done",
++   "type": "corrective",
++   "updatedAt": 2026-11-08T16:54:34.436Z,
+  }
+
+ ❯ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts:108:91
+    106|       const actionId = await action(id, 'in_progress');
+    107|       const before = await snapshot();
+    108|       await expect(transitionCapaAction(1, actionId, { to: 'done', evi…
+       |                                                                                           ^
+    109|         .rejects.toMatchObject({ name: 'InvalidTransitionError', messa…
+    110|       expect(await snapshot()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/38]⎯
+
+ FAIL  server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not complete an action without recorded completion evidence: {"kind":"reference","label":" "}
+AssertionError: promise resolved "{ …(14) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "auditTrail": {
++     "chained": true,
++     "persisted": true,
++   },
++   "capaId": "068e06d3-152c-492b-b5ff-cf065e85a4b5",
++   "completedAt": 2026-11-08T16:54:34.442Z,
++   "completedBy": "7",
++   "createdAt": 2026-11-08T16:54:34.440Z,
++   "description": "Recorded action",
++   "dueDate": null,
++   "evidenceRefs": [
++     {
++       "kind": "reference",
++       "label": " ",
++     },
++   ],
++   "id": "bf649767-8c92-4574-90ea-9d70e72d3cff",
++   "n": 1,
++   "owner": null,
++   "state": "done",
++   "type": "corrective",
++   "updatedAt": 2026-11-08T16:54:34.442Z,
+  }
+
+ ❯ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts:108:91
+    106|       const actionId = await action(id, 'in_progress');
+    107|       const before = await snapshot();
+    108|       await expect(transitionCapaAction(1, actionId, { to: 'done', evi…
+       |                                                                                           ^
+    109|         .rejects.toMatchObject({ name: 'InvalidTransitionError', messa…
+    110|       expect(await snapshot()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/38]⎯
+
+ FAIL  server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not append an action to a closed_effective CAPA
+AssertionError: promise resolved "{ …(14) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "auditTrail": {
++     "chained": true,
++     "persisted": true,
++   },
++   "capaId": "b40d5b6e-69b3-4f68-81c4-cb5e4d249bd1",
++   "completedAt": null,
++   "completedBy": null,
++   "createdAt": 2026-11-08T16:54:34.482Z,
++   "description": "A later action",
++   "dueDate": null,
++   "evidenceRefs": null,
++   "id": "12525ac9-9325-4d59-9b2c-9c3a7a91dedc",
++   "n": 1,
++   "owner": null,
++   "state": "planned",
++   "type": "corrective",
++   "updatedAt": 2026-11-08T16:54:34.482Z,
+  }
+
+ ❯ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts:138:109
+    136|     const id = await capa(state);
+    137|     const before = await snapshot();
+    138|     await expect(addCapaAction(1, { capaId: id, type: 'corrective', de…
+       |                                                                                                             ^
+    139|       .rejects.toMatchObject({ name: 'InvalidTransitionError' });
+    140|     expect(await snapshot()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/38]⎯
+
+ FAIL  server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts > CAPA native closure prerequisites > does not append an action to a closed_not_effective CAPA
+AssertionError: promise resolved "{ …(14) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "auditTrail": {
++     "chained": true,
++     "persisted": true,
++   },
++   "capaId": "7219d072-1c94-4c39-bee4-e4ec8c6dcf51",
++   "completedAt": null,
++   "completedBy": null,
++   "createdAt": 2026-11-08T16:54:34.491Z,
++   "description": "A later action",
++   "dueDate": null,
++   "evidenceRefs": null,
++   "id": "07766fd1-d19e-447e-abf1-8958845c4142",
++   "n": 1,
++   "owner": null,
++   "state": "planned",
++   "type": "corrective",
++   "updatedAt": 2026-11-08T16:54:34.491Z,
+  }
+
+ ❯ server/services/capa-mdr/__tests__/capa-closure.pglite.test.ts:138:109
+    136|     const id = await capa(state);
+    137|     const before = await snapshot();
+    138|     await expect(addCapaAction(1, { capaId: id, type: 'corrective', de…
+       |                                                                                                             ^
+    139|       .rejects.toMatchObject({ name: 'InvalidTransitionError' });
+    140|     expect(await snapshot()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/38]⎯
+
+ FAIL  server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > reads only unassigned QC for an unassigned batch, never every same-number project
+AssertionError: expected [ 1, 2, 3 ] to deeply equal [ 1 ]
+
+- Expected
++ Received
+
+  [
+    1,
++   2,
++   3,
+  ]
+
+ ❯ server/services/cmc/__tests__/batch-release-evidence.test.ts:26:39
+     24|   it('reads only unassigned QC for an unassigned batch, never every sa…
+     25|     const rows = await readRecordedReleaseTests(queryable, 7, { batch_…
+     26|     expect(rows.map(row => row.qcId)).toEqual([1]);
+       |                                       ^
+     27|   });
+     28|   it('reads only the actual project for a project-bound batch', async …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/38]⎯
+
+ FAIL  server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > fingerprints the recorded result and criterion even if pass/review flags are unchanged
+AssertionError: expected '2:pass:r' not to be '2:pass:r' // Object.is equality
+ ❯ server/services/cmc/__tests__/batch-release-evidence.test.ts:35:81
+     33|     const rows = await readRecordedReleaseTests(queryable, 7, { batch_…
+     34|     const before = evidenceFingerprint(rows);
+     35|     expect(evidenceFingerprint([{ ...rows[0], result: { value: 100.1 }…
+       |                                                                                 ^
+     36|     expect(evidenceFingerprint([{ ...rows[0], criterion: { limit: 97 }…
+     37|     expect(evidenceFingerprint([{ ...rows[0], sampleId: 'OTHER-SAMPLE'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/38]⎯
+
+ FAIL  server/services/cmc/__tests__/batch-release-evidence.test.ts > batch evidence keeps its exact recorded scope and content > fingerprints who reviewed and when the result changed
+AssertionError: expected '3:pass:r' not to be '3:pass:r' // Object.is equality
+ ❯ server/services/cmc/__tests__/batch-release-evidence.test.ts:44:44
+     42|     await pg.query("UPDATE qc_testing SET reviewed_by=6, updated_at='2…
+     43|     const after = await readRecordedReleaseTests(queryable, 7, { batch…
+     44|     expect(evidenceFingerprint(after)).not.toBe(evidenceFingerprint(be…
+       |                                            ^
+     45|   });
+     46| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/38]⎯
+
+ FAIL  server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > requires a recorded effectiveness review: undefined
+AssertionError: promise resolved "{ id: 12, organization_id: 1, …(27) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "approved_at": null,
++   "approved_by": null,
++   "assessed_by": null,
++   "change_number": "CC-CLOSE-1",
++   "change_type": "other",
++   "classification": "minor",
++   "closed_at": 2026-11-08T16:54:30.249Z,
++   "created_at": 2026-11-08T16:54:30.247Z,
++   "deleted_at": null,
++   "description": null,
++   "effectiveness_review": null,
++   "from_status": "verification",
++   "id": 12,
++   "impact_assessment": null,
++   "implementation_plan": null,
++   "implemented_at": 2026-11-08T16:54:30.248Z,
++   "metadata": {},
++   "organization_id": 1,
++   "program_id": null,
++   "proposed_by": 10,
++   "qms_document_id": null,
++   "reason": null,
++   "risk_level": null,
++   "status": "closed",
++   "target_implementation_date": null,
++   "title": "Closure requirement",
++   "updated_at": 2026-11-08T16:54:30.249Z,
++   "verified_at": 2026-11-08T16:54:30.249Z,
++   "verified_by": 11,
+  }
+
+ ❯ server/services/qms/__tests__/changeControl.pglite.integration.test.ts:313:101
+    311|   it.each([undefined, null, '', '   '])('requires a recorded effective…
+    312|     const change = await verification();
+    313|     await expect(svc.transitionChange(ORG, change.id, 'closed', { user…
+       |                                                                                                     ^
+    314|       .rejects.toBeInstanceOf(svc.InvalidChangeTransitionError);
+    315|     expect(await svc.getChange(ORG, change.id)).toMatchObject({ status…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/38]⎯
+
+ FAIL  server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > requires a recorded effectiveness review: null
+AssertionError: promise resolved "{ id: 13, organization_id: 1, …(27) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "approved_at": null,
++   "approved_by": null,
++   "assessed_by": null,
++   "change_number": "CC-CLOSE-2",
++   "change_type": "other",
++   "classification": "minor",
++   "closed_at": 2026-11-08T16:54:30.258Z,
++   "created_at": 2026-11-08T16:54:30.257Z,
++   "deleted_at": null,
++   "description": null,
++   "effectiveness_review": null,
++   "from_status": "verification",
++   "id": 13,
++   "impact_assessment": null,
++   "implementation_plan": null,
++   "implemented_at": 2026-11-08T16:54:30.257Z,
++   "metadata": {},
++   "organization_id": 1,
++   "program_id": null,
++   "proposed_by": 10,
++   "qms_document_id": null,
++   "reason": null,
++   "risk_level": null,
++   "status": "closed",
++   "target_implementation_date": null,
++   "title": "Closure requirement",
++   "updated_at": 2026-11-08T16:54:30.258Z,
++   "verified_at": 2026-11-08T16:54:30.258Z,
++   "verified_by": 11,
+  }
+
+ ❯ server/services/qms/__tests__/changeControl.pglite.integration.test.ts:313:101
+    311|   it.each([undefined, null, '', '   '])('requires a recorded effective…
+    312|     const change = await verification();
+    313|     await expect(svc.transitionChange(ORG, change.id, 'closed', { user…
+       |                                                                                                     ^
+    314|       .rejects.toBeInstanceOf(svc.InvalidChangeTransitionError);
+    315|     expect(await svc.getChange(ORG, change.id)).toMatchObject({ status…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/38]⎯
+
+ FAIL  server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > requires a recorded effectiveness review: ""
+AssertionError: promise resolved "{ id: 14, organization_id: 1, …(27) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "approved_at": null,
++   "approved_by": null,
++   "assessed_by": null,
++   "change_number": "CC-CLOSE-3",
++   "change_type": "other",
++   "classification": "minor",
++   "closed_at": 2026-11-08T16:54:30.262Z,
++   "created_at": 2026-11-08T16:54:30.260Z,
++   "deleted_at": null,
++   "description": null,
++   "effectiveness_review": "",
++   "from_status": "verification",
++   "id": 14,
++   "impact_assessment": null,
++   "implementation_plan": null,
++   "implemented_at": 2026-11-08T16:54:30.261Z,
++   "metadata": {},
++   "organization_id": 1,
++   "program_id": null,
++   "proposed_by": 10,
++   "qms_document_id": null,
++   "reason": null,
++   "risk_level": null,
++   "status": "closed",
++   "target_implementation_date": null,
++   "title": "Closure requirement",
++   "updated_at": 2026-11-08T16:54:30.262Z,
++   "verified_at": 2026-11-08T16:54:30.262Z,
++   "verified_by": 11,
+  }
+
+ ❯ server/services/qms/__tests__/changeControl.pglite.integration.test.ts:313:101
+    311|   it.each([undefined, null, '', '   '])('requires a recorded effective…
+    312|     const change = await verification();
+    313|     await expect(svc.transitionChange(ORG, change.id, 'closed', { user…
+       |                                                                                                     ^
+    314|       .rejects.toBeInstanceOf(svc.InvalidChangeTransitionError);
+    315|     expect(await svc.getChange(ORG, change.id)).toMatchObject({ status…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/38]⎯
+
+ FAIL  server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > requires a recorded effectiveness review: "   "
+AssertionError: promise resolved "{ id: 15, organization_id: 1, …(27) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "approved_at": null,
++   "approved_by": null,
++   "assessed_by": null,
++   "change_number": "CC-CLOSE-4",
++   "change_type": "other",
++   "classification": "minor",
++   "closed_at": 2026-11-08T16:54:30.265Z,
++   "created_at": 2026-11-08T16:54:30.264Z,
++   "deleted_at": null,
++   "description": null,
++   "effectiveness_review": "   ",
++   "from_status": "verification",
++   "id": 15,
++   "impact_assessment": null,
++   "implementation_plan": null,
++   "implemented_at": 2026-11-08T16:54:30.264Z,
++   "metadata": {},
++   "organization_id": 1,
++   "program_id": null,
++   "proposed_by": 10,
++   "qms_document_id": null,
++   "reason": null,
++   "risk_level": null,
++   "status": "closed",
++   "target_implementation_date": null,
++   "title": "Closure requirement",
++   "updated_at": 2026-11-08T16:54:30.265Z,
++   "verified_at": 2026-11-08T16:54:30.265Z,
++   "verified_by": 11,
+  }
+
+ ❯ server/services/qms/__tests__/changeControl.pglite.integration.test.ts:313:101
+    311|   it.each([undefined, null, '', '   '])('requires a recorded effective…
+    312|     const change = await verification();
+    313|     await expect(svc.transitionChange(ORG, change.id, 'closed', { user…
+       |                                                                                                     ^
+    314|       .rejects.toBeInstanceOf(svc.InvalidChangeTransitionError);
+    315|     expect(await svc.getChange(ORG, change.id)).toMatchObject({ status…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/38]⎯
+
+ FAIL  server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > does not record anonymous closure
+AssertionError: promise resolved "{ id: 16, organization_id: 1, …(27) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "approved_at": null,
++   "approved_by": null,
++   "assessed_by": null,
++   "change_number": "CC-CLOSE-5",
++   "change_type": "other",
++   "classification": "minor",
++   "closed_at": 2026-11-08T16:54:30.268Z,
++   "created_at": 2026-11-08T16:54:30.267Z,
++   "deleted_at": null,
++   "description": null,
++   "effectiveness_review": "Effective.",
++   "from_status": "verification",
++   "id": 16,
++   "impact_assessment": null,
++   "implementation_plan": null,
++   "implemented_at": 2026-11-08T16:54:30.267Z,
++   "metadata": {},
++   "organization_id": 1,
++   "program_id": null,
++   "proposed_by": 10,
++   "qms_document_id": null,
++   "reason": null,
++   "risk_level": null,
++   "status": "closed",
++   "target_implementation_date": null,
++   "title": "Closure requirement",
++   "updated_at": 2026-11-08T16:54:30.268Z,
++   "verified_at": 2026-11-08T16:54:30.268Z,
++   "verified_by": null,
+  }
+
+ ❯ server/services/qms/__tests__/changeControl.pglite.integration.test.ts:320:103
+    318|   it('does not record anonymous closure', async () => {
+    319|     const change = await verification();
+    320|     await expect(svc.transitionChange(ORG, change.id, 'closed', { effe…
+       |                                                                                                       ^
+    321|       .rejects.toBeInstanceOf(svc.InvalidChangeTransitionError);
+    322|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/38]⎯
+
+ FAIL  server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > only a required native deviation blocks closure; a descriptive reference does not
+AssertionError: promise resolved "{ id: 17, organization_id: 1, …(27) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "approved_at": null,
++   "approved_by": null,
++   "assessed_by": null,
++   "change_number": "CC-CLOSE-6",
++   "change_type": "other",
++   "classification": "minor",
++   "closed_at": 2026-11-08T16:54:30.275Z,
++   "created_at": 2026-11-08T16:54:30.270Z,
++   "deleted_at": null,
++   "description": null,
++   "effectiveness_review": "The approved acceptance criteria were met.",
++   "from_status": "verification",
++   "id": 17,
++   "impact_assessment": null,
++   "implementation_plan": null,
++   "implemented_at": 2026-11-08T16:54:30.271Z,
++   "metadata": {},
++   "organization_id": 1,
++   "program_id": null,
++   "proposed_by": 10,
++   "qms_document_id": null,
++   "reason": null,
++   "risk_level": null,
++   "status": "closed",
++   "target_implementation_date": null,
++   "title": "Closure requirement",
++   "updated_at": 2026-11-08T16:54:30.275Z,
++   "verified_at": 2026-11-08T16:54:30.275Z,
++   "verified_by": 11,
+  }
+
+ ❯ server/services/qms/__tests__/changeControl.pglite.integration.test.ts:329:36
+    327|     await svc.addLink(ORG, required.id, { linkType: 'deviation', linke…
+    328|     await svc.addLink(ORG, referenced.id, { linkType: 'deviation', lin…
+    329|     await expect(close(required.id)).rejects.toMatchObject({ message: …
+       |                                    ^
+    330|     await expect(close(referenced.id)).resolves.toMatchObject({ status…
+    331|     // A cancelled record does not attest completion of a specifically…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/38]⎯
+
+ FAIL  server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > does not treat a failed CAPA effectiveness check as completed required work
+AssertionError: promise resolved "{ id: 19, organization_id: 1, …(27) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "approved_at": null,
++   "approved_by": null,
++   "assessed_by": null,
++   "change_number": "CC-CLOSE-8",
++   "change_type": "other",
++   "classification": "minor",
++   "closed_at": 2026-11-08T16:54:30.280Z,
++   "created_at": 2026-11-08T16:54:30.277Z,
++   "deleted_at": null,
++   "description": null,
++   "effectiveness_review": "The approved acceptance criteria were met.",
++   "from_status": "verification",
++   "id": 19,
++   "impact_assessment": null,
++   "implementation_plan": null,
++   "implemented_at": 2026-11-08T16:54:30.278Z,
++   "metadata": {},
++   "organization_id": 1,
++   "program_id": "11111111-1111-4111-8111-111111111111",
++   "proposed_by": 10,
++   "qms_document_id": null,
++   "reason": null,
++   "risk_level": null,
++   "status": "closed",
++   "target_implementation_date": null,
++   "title": "Closure requirement",
++   "updated_at": 2026-11-08T16:54:30.280Z,
++   "verified_at": 2026-11-08T16:54:30.280Z,
++   "verified_by": 11,
+  }
+
+ ❯ server/services/qms/__tests__/changeControl.pglite.integration.test.ts:342:34
+    340|     await svc.addLink(ORG, change.id, { linkType: 'capa', linkedRef: '…
+    341|     await pglite.query("UPDATE capa_records SET state='closed_not_effe…
+    342|     await expect(close(change.id)).rejects.toBeInstanceOf(svc.InvalidC…
+       |                                  ^
+    343|     await pglite.query("UPDATE capa_records SET state='closed_effectiv…
+    344|     await expect(close(change.id)).resolves.toMatchObject({ status: 'c…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/38]⎯
+
+ FAIL  server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > resolves a CAPA code inside the change programme and refuses an ambiguous organization-only code
+AssertionError: promise resolved "{ id: 21, organization_id: 1, …(27) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "approved_at": null,
++   "approved_by": null,
++   "assessed_by": null,
++   "change_number": "CC-CLOSE-10",
++   "change_type": "other",
++   "classification": "minor",
++   "closed_at": 2026-11-08T16:54:30.295Z,
++   "created_at": 2026-11-08T16:54:30.286Z,
++   "deleted_at": null,
++   "description": null,
++   "effectiveness_review": "The approved acceptance criteria were met.",
++   "from_status": "verification",
++   "id": 21,
++   "impact_assessment": null,
++   "implementation_plan": null,
++   "implemented_at": 2026-11-08T16:54:30.287Z,
++   "metadata": {},
++   "organization_id": 1,
++   "program_id": "33333333-3333-4333-8333-333333333333",
++   "proposed_by": 10,
++   "qms_document_id": null,
++   "reason": null,
++   "risk_level": null,
++   "status": "closed",
++   "target_implementation_date": null,
++   "title": "Closure requirement",
++   "updated_at": 2026-11-08T16:54:30.295Z,
++   "verified_at": 2026-11-08T16:54:30.295Z,
++   "verified_by": 11,
+  }
+
+ ❯ server/services/qms/__tests__/changeControl.pglite.integration.test.ts:356:33
+    354|     await expect(close(scoped.id)).resolves.toMatchObject({ status: 'c…
+    355|     await svc.addLink(ORG, other.id, { linkType: 'capa', linkedRef: 'C…
+    356|     await expect(close(other.id)).rejects.toBeInstanceOf(svc.InvalidCh…
+       |                                 ^
+    357|     await expect(svc.addLink(ORG, unscoped.id, { linkType: 'capa', lin…
+    358|       .rejects.toBeInstanceOf(svc.ChangeLinkRefusedError);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[32/38]⎯
+
+ FAIL  server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > requires effective controlled documents and refuses typed-only completion claims
+AssertionError: promise resolved "{ id: 23, organization_id: 1, …(27) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "approved_at": null,
++   "approved_by": null,
++   "assessed_by": null,
++   "change_number": "CC-CLOSE-12",
++   "change_type": "other",
++   "classification": "minor",
++   "closed_at": 2026-11-08T16:54:30.300Z,
++   "created_at": 2026-11-08T16:54:30.297Z,
++   "deleted_at": null,
++   "description": null,
++   "effectiveness_review": "The approved acceptance criteria were met.",
++   "from_status": "verification",
++   "id": 23,
++   "impact_assessment": null,
++   "implementation_plan": null,
++   "implemented_at": 2026-11-08T16:54:30.297Z,
++   "metadata": {},
++   "organization_id": 1,
++   "program_id": null,
++   "proposed_by": 10,
++   "qms_document_id": null,
++   "reason": null,
++   "risk_level": null,
++   "status": "closed",
++   "target_implementation_date": null,
++   "title": "Closure requirement",
++   "updated_at": 2026-11-08T16:54:30.300Z,
++   "verified_at": 2026-11-08T16:54:30.300Z,
++   "verified_by": 11,
+  }
+
+ ❯ server/services/qms/__tests__/changeControl.pglite.integration.test.ts:366:34
+    364|       (organization_id,doc_number,title,doc_type,status) VALUES (1,'SO…
+    365|     await svc.addLink(ORG, change.id, { linkType: 'sop', linkedRef: 'S…
+    366|     await expect(close(change.id)).rejects.toBeInstanceOf(svc.InvalidC…
+       |                                  ^
+    367|     await pglite.query("UPDATE qms_documents SET status='effective' WH…
+    368|     await expect(close(change.id)).resolves.toMatchObject({ status: 'c…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[33/38]⎯
+
+ FAIL  server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > refuses closure when a required document is retired after the prerequisite read
+AssertionError: promise resolved "{ id: 24, organization_id: 1, …(27) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "approved_at": null,
++   "approved_by": null,
++   "assessed_by": null,
++   "change_number": "CC-CLOSE-13",
++   "change_type": "other",
++   "classification": "minor",
++   "closed_at": 2026-11-08T16:54:30.306Z,
++   "created_at": 2026-11-08T16:54:30.302Z,
++   "deleted_at": null,
++   "description": null,
++   "effectiveness_review": "The approved acceptance criteria were met.",
++   "from_status": "verification",
++   "id": 24,
++   "impact_assessment": null,
++   "implementation_plan": null,
++   "implemented_at": 2026-11-08T16:54:30.303Z,
++   "metadata": {},
++   "organization_id": 1,
++   "program_id": null,
++   "proposed_by": 10,
++   "qms_document_id": null,
++   "reason": null,
++   "risk_level": null,
++   "status": "closed",
++   "target_implementation_date": null,
++   "title": "Closure requirement",
++   "updated_at": 2026-11-08T16:54:30.306Z,
++   "verified_at": 2026-11-08T16:54:30.306Z,
++   "verified_by": 11,
+  }
+
+ ❯ server/services/qms/__tests__/changeControl.pglite.integration.test.ts:387:42
+    385|       return pool.query(sql, params);
+    386|     } };
+    387|     await expect(close(change.id, client)).rejects.toBeInstanceOf(svc.…
+       |                                          ^
+    388|     expect(await svc.getChange(ORG, change.id)).toMatchObject({ status…
+    389|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[34/38]⎯
+
+ FAIL  server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > refuses a stale closure after an interleaved state change
+AssertionError: promise resolved "{ id: 25, organization_id: 1, …(27) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "approved_at": null,
++   "approved_by": null,
++   "assessed_by": null,
++   "change_number": "CC-CLOSE-14",
++   "change_type": "other",
++   "classification": "minor",
++   "closed_at": 2026-11-08T16:54:30.312Z,
++   "created_at": 2026-11-08T16:54:30.309Z,
++   "deleted_at": null,
++   "description": null,
++   "effectiveness_review": "The approved acceptance criteria were met.",
++   "from_status": "verification",
++   "id": 25,
++   "impact_assessment": null,
++   "implementation_plan": null,
++   "implemented_at": 2026-11-08T16:54:30.309Z,
++   "metadata": {},
++   "organization_id": 1,
++   "program_id": null,
++   "proposed_by": 10,
++   "qms_document_id": null,
++   "reason": null,
++   "risk_level": null,
++   "status": "closed",
++   "target_implementation_date": null,
++   "title": "Closure requirement",
++   "updated_at": 2026-11-08T16:54:30.312Z,
++   "verified_at": 2026-11-08T16:54:30.312Z,
++   "verified_by": 11,
+  }
+
+ ❯ server/services/qms/__tests__/changeControl.pglite.integration.test.ts:403:42
+    401|       return pool.query(sql, params);
+    402|     } };
+    403|     await expect(close(change.id, client)).rejects.toBeInstanceOf(svc.…
+       |                                          ^
+    404|     expect((await svc.getChange(ORG, change.id))?.closed_at).toBeNull(…
+    405|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[35/38]⎯
+
+ FAIL  server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > refuses a stale closure after an interleaved content change
+AssertionError: promise resolved "{ id: 26, organization_id: 1, …(27) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "approved_at": null,
++   "approved_by": null,
++   "assessed_by": null,
++   "change_number": "CC-CLOSE-15",
++   "change_type": "other",
++   "classification": "minor",
++   "closed_at": 2026-11-08T16:54:30.318Z,
++   "created_at": 2026-11-08T16:54:30.313Z,
++   "deleted_at": null,
++   "description": null,
++   "effectiveness_review": "The approved acceptance criteria were met.",
++   "from_status": "verification",
++   "id": 26,
++   "impact_assessment": null,
++   "implementation_plan": "A revised plan needing review.",
++   "implemented_at": 2026-11-08T16:54:30.316Z,
++   "metadata": {},
++   "organization_id": 1,
++   "program_id": null,
++   "proposed_by": 10,
++   "qms_document_id": null,
++   "reason": null,
++   "risk_level": null,
++   "status": "closed",
++   "target_implementation_date": null,
++   "title": "Closure requirement",
++   "updated_at": 2026-11-08T16:54:30.318Z,
++   "verified_at": 2026-11-08T16:54:30.318Z,
++   "verified_by": 11,
+  }
+
+ ❯ server/services/qms/__tests__/changeControl.pglite.integration.test.ts:403:42
+    401|       return pool.query(sql, params);
+    402|     } };
+    403|     await expect(close(change.id, client)).rejects.toBeInstanceOf(svc.…
+       |                                          ^
+    404|     expect((await svc.getChange(ORG, change.id))?.closed_at).toBeNull(…
+    405|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[36/38]⎯
+
+ FAIL  server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > refuses a stale closure after an interleaved link change
+AssertionError: promise resolved "{ id: 27, organization_id: 1, …(27) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "approved_at": null,
++   "approved_by": null,
++   "assessed_by": null,
++   "change_number": "CC-CLOSE-16",
++   "change_type": "other",
++   "classification": "minor",
++   "closed_at": 2026-11-08T16:54:30.322Z,
++   "created_at": 2026-11-08T16:54:30.319Z,
++   "deleted_at": null,
++   "description": null,
++   "effectiveness_review": "The approved acceptance criteria were met.",
++   "from_status": "verification",
++   "id": 27,
++   "impact_assessment": null,
++   "implementation_plan": null,
++   "implemented_at": 2026-11-08T16:54:30.320Z,
++   "metadata": {},
++   "organization_id": 1,
++   "program_id": null,
++   "proposed_by": 10,
++   "qms_document_id": null,
++   "reason": null,
++   "risk_level": null,
++   "status": "closed",
++   "target_implementation_date": null,
++   "title": "Closure requirement",
++   "updated_at": 2026-11-08T16:54:30.322Z,
++   "verified_at": 2026-11-08T16:54:30.322Z,
++   "verified_by": 11,
+  }
+
+ ❯ server/services/qms/__tests__/changeControl.pglite.integration.test.ts:403:42
+    401|       return pool.query(sql, params);
+    402|     } };
+    403|     await expect(close(change.id, client)).rejects.toBeInstanceOf(svc.…
+       |                                          ^
+    404|     expect((await svc.getChange(ORG, change.id))?.closed_at).toBeNull(…
+    405|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[37/38]⎯
+
+ FAIL  server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > does not attach or erase a requirement after closure
+AssertionError: promise resolved "{ id: 23, organization_id: 1, …(12) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "change_id": 28,
++   "created_at": 2026-11-08T16:54:30.328Z,
++   "created_by": null,
++   "id": 23,
++   "link_type": "validation",
++   "linked_id": null,
++   "linked_label": null,
++   "linked_ref": "VP-LATE",
++   "note": null,
++   "organization_id": 1,
++   "relationship": "requires",
++   "removal_reason": null,
++   "removed_at": null,
++   "removed_by": null,
+  }
+
+ ❯ server/services/qms/__tests__/changeControl.pglite.integration.test.ts:411:121
+    409|     const link = await svc.addLink(ORG, change.id, { linkType: 'other'…
+    410|     await close(change.id);
+    411|     await expect(svc.addLink(ORG, change.id, { linkType: 'validation',…
+       |                                                                                                                         ^
+    412|       .rejects.toBeInstanceOf(svc.ChangeLinkRefusedError);
+    413|     expect(await svc.removeLink(ORG, change.id, link.id, { removedBy: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[38/38]⎯
+
+
+ Test Files  4 failed (4)
+      Tests  38 failed | 59 passed (97)
+   Start at  08:54:26
+   Duration  9.81s (transform 1.76s, setup 100ms, import 3.81s, tests 5.30s, environment 0ms)
+

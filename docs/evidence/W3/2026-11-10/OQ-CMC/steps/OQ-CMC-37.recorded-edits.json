@@ -1,0 +1,57 @@
+{
+  "observed": [
+    {
+      "register": "analytical-methods",
+      "id": 3,
+      "acts": [
+        "cmc.register.create",
+        "cmc.register.update"
+      ],
+      "changedFields": [
+        "title",
+        "purpose"
+      ],
+      "sealed": true
+    },
+    {
+      "register": "stability-studies",
+      "id": 4,
+      "acts": [
+        "cmc.register.create",
+        "cmc.register.update"
+      ],
+      "changedFields": [
+        "status"
+      ],
+      "sealed": true
+    },
+    {
+      "register": "comparability-studies",
+      "id": "a34c6528-f69d-4f79-923c-38799d789ae6",
+      "acts": [
+        "cmc.register.create",
+        "cmc.register.update"
+      ],
+      "changedFields": [
+        "justification"
+      ],
+      "sealed": true
+    }
+  ],
+  "ghost": 404,
+  "chain": {
+    "store": "audit_logs",
+    "legacyRows": 0,
+    "sequencedRows": 276,
+    "ok": true,
+    "rowsChecked": 276,
+    "head": {
+      "verified": false,
+      "status": "not_configured",
+      "anchorKey": null,
+      "anchoredAt": null,
+      "breaks": [],
+      "reason": "head not verified against the anchor: no anchor store is configured on this deployment, so this verdict is the chain walk only"
+    }
+  }
+}

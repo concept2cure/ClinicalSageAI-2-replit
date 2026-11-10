@@ -1,0 +1,334 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires completion after replacing the 'section id' 206ms
+   → expected [ Array(1) ] to deeply equal []
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires completion after replacing the 'backend document' 55ms
+   → expected [ Array(1) ] to deeply equal []
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires completion after replacing the 'program' 38ms
+   → expected [ Array(1) ] to deeply equal []
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires completion after replacing the 'pathway' 34ms
+   → expected [ Array(1) ] to deeply equal []
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires a section-label A to B to A visit instead of reviving the first completion 44ms
+   → expected [ Array(1) ] to deeply equal []
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires a batched shell A to B to A visit even when drawer props return unchanged 37ms
+   → expected [ Array(1) ] to deeply equal []
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload completion cannot cross account or mounted-view lifetime > retires a replacement session, same actor=false 39ms
+   → expected [ Array(1) ] to deeply equal []
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload completion cannot cross account or mounted-view lifetime > retires a replacement session, same actor=true 39ms
+   → expected [ Array(1) ] to deeply equal []
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload completion cannot cross account or mounted-view lifetime > retires an upload across close and reopening the same section 39ms
+   → expected [ Array(1) ] to deeply equal []
+ × client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload completion cannot cross account or mounted-view lifetime > retires an upload across unmount and reopening the same section 37ms
+   → expected [ Array(1) ] to deeply equal []
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > current device upload visits retain legitimate completion > publishes a confirmed file when its original visit remains current 27ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > current device upload visits retain legitimate completion > keeps an ordinary bearer refresh current and accepts its valid unchanged receipt 25ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires completion after replacing the 'section id'
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "kind": "pdf",
++     "live": true,
++     "name": "owned-evidence.pdf",
++     "size": 35,
++     "source": "Sources/uploads/",
++     "when": "2026-10-30T18:57:21.954Z",
++     "who": "You",
++   },
++ ]
+
+ ❯ expectNoLatePublication client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:124:80
+    122| function expectNoLatePublication(h: Awaited<ReturnType<typeof mount>>,…
+    123|   const props = h.props(), target = props.target ?? TARGET;
+    124|   expect(DossierStore.readSectionAttachments('k510', TARGET.id, TARGET…
+       |                                                                                ^
+    125|   expect(DossierStore.readSectionAttachments(props.pathway, target.id,…
+    126|   expect(document.querySelectorAll('.dd-att-row')).toHaveLength(0);
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:171:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires completion after replacing the 'backend document'
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "kind": "pdf",
++     "live": true,
++     "name": "owned-evidence.pdf",
++     "size": 35,
++     "source": "Sources/uploads/",
++     "when": "2026-10-30T18:57:22.013Z",
++     "who": "You",
++   },
++ ]
+
+ ❯ expectNoLatePublication client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:124:80
+    122| function expectNoLatePublication(h: Awaited<ReturnType<typeof mount>>,…
+    123|   const props = h.props(), target = props.target ?? TARGET;
+    124|   expect(DossierStore.readSectionAttachments('k510', TARGET.id, TARGET…
+       |                                                                                ^
+    125|   expect(DossierStore.readSectionAttachments(props.pathway, target.id,…
+    126|   expect(document.querySelectorAll('.dd-att-row')).toHaveLength(0);
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:171:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires completion after replacing the 'program'
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "kind": "pdf",
++     "live": true,
++     "name": "owned-evidence.pdf",
++     "size": 35,
++     "source": "Sources/uploads/",
++     "when": "2026-10-30T18:57:22.051Z",
++     "who": "You",
++   },
++ ]
+
+ ❯ expectNoLatePublication client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:124:80
+    122| function expectNoLatePublication(h: Awaited<ReturnType<typeof mount>>,…
+    123|   const props = h.props(), target = props.target ?? TARGET;
+    124|   expect(DossierStore.readSectionAttachments('k510', TARGET.id, TARGET…
+       |                                                                                ^
+    125|   expect(DossierStore.readSectionAttachments(props.pathway, target.id,…
+    126|   expect(document.querySelectorAll('.dd-att-row')).toHaveLength(0);
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:171:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires completion after replacing the 'pathway'
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "kind": "pdf",
++     "live": true,
++     "name": "owned-evidence.pdf",
++     "size": 35,
++     "source": "Sources/uploads/",
++     "when": "2026-10-30T18:57:22.086Z",
++     "who": "You",
++   },
++ ]
+
+ ❯ expectNoLatePublication client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:124:80
+    122| function expectNoLatePublication(h: Awaited<ReturnType<typeof mount>>,…
+    123|   const props = h.props(), target = props.target ?? TARGET;
+    124|   expect(DossierStore.readSectionAttachments('k510', TARGET.id, TARGET…
+       |                                                                                ^
+    125|   expect(DossierStore.readSectionAttachments(props.pathway, target.id,…
+    126|   expect(document.querySelectorAll('.dd-att-row')).toHaveLength(0);
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:171:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires a section-label A to B to A visit instead of reviving the first completion
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "kind": "pdf",
++     "live": true,
++     "name": "owned-evidence.pdf",
++     "size": 35,
++     "source": "Sources/uploads/",
++     "when": "2026-10-30T18:57:22.131Z",
++     "who": "You",
++   },
++ ]
+
+ ❯ expectNoLatePublication client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:124:80
+    122| function expectNoLatePublication(h: Awaited<ReturnType<typeof mount>>,…
+    123|   const props = h.props(), target = props.target ?? TARGET;
+    124|   expect(DossierStore.readSectionAttachments('k510', TARGET.id, TARGET…
+       |                                                                                ^
+    125|   expect(DossierStore.readSectionAttachments(props.pathway, target.id,…
+    126|   expect(document.querySelectorAll('.dd-att-row')).toHaveLength(0);
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:182:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload ownership follows the original drawer visit > retires a batched shell A to B to A visit even when drawer props return unchanged
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "kind": "pdf",
++     "live": true,
++     "name": "owned-evidence.pdf",
++     "size": 35,
++     "source": "Sources/uploads/",
++     "when": "2026-10-30T18:57:22.168Z",
++     "who": "You",
++   },
++ ]
+
+ ❯ expectNoLatePublication client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:124:80
+    122| function expectNoLatePublication(h: Awaited<ReturnType<typeof mount>>,…
+    123|   const props = h.props(), target = props.target ?? TARGET;
+    124|   expect(DossierStore.readSectionAttachments('k510', TARGET.id, TARGET…
+       |                                                                                ^
+    125|   expect(DossierStore.readSectionAttachments(props.pathway, target.id,…
+    126|   expect(document.querySelectorAll('.dd-att-row')).toHaveLength(0);
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:194:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload completion cannot cross account or mounted-view lifetime > retires a replacement session, same actor=false
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "kind": "pdf",
++     "live": true,
++     "name": "owned-evidence.pdf",
++     "size": 35,
++     "source": "Sources/uploads/",
++     "when": "2026-10-30T18:57:22.206Z",
++     "who": "You",
++   },
++ ]
+
+ ❯ expectNoLatePublication client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:124:80
+    122| function expectNoLatePublication(h: Awaited<ReturnType<typeof mount>>,…
+    123|   const props = h.props(), target = props.target ?? TARGET;
+    124|   expect(DossierStore.readSectionAttachments('k510', TARGET.id, TARGET…
+       |                                                                                ^
+    125|   expect(DossierStore.readSectionAttachments(props.pathway, target.id,…
+    126|   expect(document.querySelectorAll('.dd-att-row')).toHaveLength(0);
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:208:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload completion cannot cross account or mounted-view lifetime > retires a replacement session, same actor=true
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "kind": "pdf",
++     "live": true,
++     "name": "owned-evidence.pdf",
++     "size": 35,
++     "source": "Sources/uploads/",
++     "when": "2026-10-30T18:57:22.246Z",
++     "who": "You",
++   },
++ ]
+
+ ❯ expectNoLatePublication client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:124:80
+    122| function expectNoLatePublication(h: Awaited<ReturnType<typeof mount>>,…
+    123|   const props = h.props(), target = props.target ?? TARGET;
+    124|   expect(DossierStore.readSectionAttachments('k510', TARGET.id, TARGET…
+       |                                                                                ^
+    125|   expect(DossierStore.readSectionAttachments(props.pathway, target.id,…
+    126|   expect(document.querySelectorAll('.dd-att-row')).toHaveLength(0);
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:208:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload completion cannot cross account or mounted-view lifetime > retires an upload across close and reopening the same section
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "kind": "pdf",
++     "live": true,
++     "name": "owned-evidence.pdf",
++     "size": 35,
++     "source": "Sources/uploads/",
++     "when": "2026-10-30T18:57:22.286Z",
++     "who": "You",
++   },
++ ]
+
+ ❯ expectNoLatePublication client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:124:80
+    122| function expectNoLatePublication(h: Awaited<ReturnType<typeof mount>>,…
+    123|   const props = h.props(), target = props.target ?? TARGET;
+    124|   expect(DossierStore.readSectionAttachments('k510', TARGET.id, TARGET…
+       |                                                                                ^
+    125|   expect(DossierStore.readSectionAttachments(props.pathway, target.id,…
+    126|   expect(document.querySelectorAll('.dd-att-row')).toHaveLength(0);
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:226:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx > pending device upload completion cannot cross account or mounted-view lifetime > retires an upload across unmount and reopening the same section
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "kind": "pdf",
++     "live": true,
++     "name": "owned-evidence.pdf",
++     "size": 35,
++     "source": "Sources/uploads/",
++     "when": "2026-10-30T18:57:22.324Z",
++     "who": "You",
++   },
++ ]
+
+ ❯ expectNoLatePublication client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:124:80
+    122| function expectNoLatePublication(h: Awaited<ReturnType<typeof mount>>,…
+    123|   const props = h.props(), target = props.target ?? TARGET;
+    124|   expect(DossierStore.readSectionAttachments('k510', TARGET.id, TARGET…
+       |                                                                                ^
+    125|   expect(DossierStore.readSectionAttachments(props.pathway, target.id,…
+    126|   expect(document.querySelectorAll('.dd-att-row')).toHaveLength(0);
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadOwnership.test.tsx:226:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 2 passed (12)
+   Start at  18:57:20
+   Duration  2.15s (transform 505ms, setup 153ms, import 635ms, tests 625ms, environment 556ms)
+

@@ -1,0 +1,17 @@
+# 3b Slice 3 (a) red: server/services/report-os/__tests__/orchestrator-readiness.test.ts on trunk a2bad27e1. The 2 filing-document-class cases fail; the 8 existing cases and the IND control pass.
+
+ ✓ server/services/report-os/__tests__/orchestrator-readiness.test.ts > computeInitialRun — one readiness verdict > uses a validated explicit regional registry instead of the stored default 6ms
+ ✓ server/services/report-os/__tests__/orchestrator-readiness.test.ts > computeInitialRun — one readiness verdict > rejects an unresolved explicit registry rather than falling back to project metadata 2ms
+ ✓ server/services/report-os/__tests__/orchestrator-readiness.test.ts > computeInitialRun — one readiness verdict > resolves an explicit submission type and records the selected request as provenance 2ms
+ ✓ server/services/report-os/__tests__/orchestrator-readiness.test.ts > computeInitialRun — one readiness verdict > rejects conflicting explicit registry and submission type before reading source records 1ms
+ ✓ server/services/report-os/__tests__/orchestrator-readiness.test.ts > computeInitialRun — one readiness verdict > never calls one approved artifact a compliance assurance check 1ms
+ ✓ server/services/report-os/__tests__/orchestrator-readiness.test.ts > computeInitialRun — one readiness verdict > says readiness was not computed for a project with no registry context, even with approved artifacts 1ms
+ ✓ server/services/report-os/__tests__/orchestrator-readiness.test.ts > computeInitialRun — one readiness verdict > reports no confidence: nothing in the run measures one 0ms
+ ✓ server/services/report-os/__tests__/orchestrator-readiness.test.ts > computeInitialRun — one readiness verdict > says readiness is not computed for a scope it is not evaluated over 1ms
+ × server/services/report-os/__tests__/orchestrator-readiness.test.ts > computeInitialRun — a document is not judged as an application > 'ICH_CSR': submission readiness is not computed, and the digest says why 11ms
+   → expected '17 regulatory gaps detected (Clinical…' to be 'Submission readiness not computed: a …' // Object.is equality
+ × server/services/report-os/__tests__/orchestrator-readiness.test.ts > computeInitialRun — a document is not judged as an application > 'US_NDA_SUPP': submission readiness is not computed, and the digest says why 2ms
+   → expected '17 regulatory gaps detected (NDA/BLA …' to be 'Submission readiness not computed: a …' // Object.is equality
+ ✓ server/services/report-os/__tests__/orchestrator-readiness.test.ts > computeInitialRun — a document is not judged as an application > an IND project is still evaluated against its registry entry 1ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 9 passed (11)

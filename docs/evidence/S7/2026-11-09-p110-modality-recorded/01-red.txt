@@ -1,0 +1,9 @@
+ × server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > refuses a small molecule the record only INFERS — mutation 5’s antibody 7ms
+   → a terse route admitted a monoclonal antibody into small-molecule Module 3: expected null not to be null
+ × server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > says the verdict was an inference, not that the record is empty 1ms
+   → Cannot read properties of null (reading 'message')
+ × server/services/cmc/__tests__/composition-scope.test.ts > compositionRefusal — small-molecule US IND, and nothing else > admits a small molecule once its modality is recorded, and only then 1ms
+   → expected null not to be null
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 33 passed (36)

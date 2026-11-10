@@ -265,3 +265,151 @@ describe("the uploader's declared type informs the proposal (VR-04)", () => {
     expect(classifyForFiling({ fileName: 'stability-summary-24m.pdf', view: 'pharma', documentType: 'OTHER' })).toEqual(plain);
   });
 });
+
+/* S6 (2026-11-05): Module 1 is the CTD's one regional module (ICH M4), and the rule tables state the US
+   heading. Labeling was proposed at 1.14 and the IB at 1.14.4.1 for every CTD project, so an EMA project's
+   SmPC and a PMDA project's package insert were proposed at US 1.14. The project's region now selects the
+   heading from the regional Module 1 record (shared/regulatory/regional-module1.ts). */
+describe("Module 1 proposals follow the project's region (S6)", () => {
+  const IB_TEXT = "Investigator's Brochure, edition 7. Summary of data and guidance for the investigator.";
+  const ib = (jurisdiction?: 'US' | 'EU' | 'JP' | 'CA' | null, applicationKind?: string | null) => classifyForFiling({
+    fileName: 'document-final-2.pdf', view: 'pharma', extractedText: IB_TEXT, jurisdiction, applicationKind,
+  });
+
+  it('US: labeling at 1.14 and the IB at 1.14.4.1, exactly as before', () => {
+    const before = classifyForFiling({ fileName: 'USPI-draft-labeling-v4.docx', view: 'pharma' });
+    expect(before.ctdSection).toBe('1.14');
+    for (const applicationKind of ['ind', 'nda', null]) {
+      expect(classifyForFiling({ fileName: 'USPI-draft-labeling-v4.docx', view: 'pharma', jurisdiction: 'US', applicationKind }))
+        .toEqual(before);
+    }
+    expect(ib().ctdSection).toBe('1.14.4.1');
+    expect(ib('US', 'ind')).toEqual(ib());
+    expect(classifyForFiling({ fileName: 'form-fda-1571.pdf', view: 'pharma', jurisdiction: 'US', applicationKind: 'ind' }))
+      .toEqual(classifyForFiling({ fileName: 'form-fda-1571.pdf', view: 'pharma' }));
+  });
+
+  it("EU: an EMA project's labeling is proposed at 1.3.1, the SmPC heading", () => {
+    const c = classifyForFiling({ fileName: 'SmPC-draft-labelling-v2.docx', view: 'pharma', jurisdiction: 'EU', applicationKind: 'maa' });
+    expect(c.folderId).toBe('module-1');
+    expect(c.ctdSection).toBe('1.3.1');
+    expect(c.needsReview).toBe(false);
+    expect(c.rationale).toMatch(/EU 1\.3\.1, SmPC, Labelling and Package Leaflet/);
+    expect(classifyForFiling({ fileName: 'SmPC-draft-labelling-v2.docx', view: 'biotech', jurisdiction: 'EU', applicationKind: null }).ctdSection)
+      .toBe('1.3.1');
+  });
+
+  it("JP: a PMDA project's package insert is proposed at 1.8, Package Insert (Draft)", () => {
+    const c = classifyForFiling({ fileName: 'package-insert-draft-ja.docx', view: 'pharma', jurisdiction: 'JP', applicationKind: 'jnda' });
+    expect(c.folderId).toBe('module-1');
+    expect(c.ctdSection).toBe('1.8');
+    expect(c.needsReview).toBe(false);
+    expect(c.rationale).toMatch(/JP 1\.8, Package Insert \(Draft\)/);
+  });
+
+  it('EU and JP: the record holds no Module 1 heading for an IB, so none is proposed and a person places it', () => {
+    for (const j of ['EU', 'JP'] as const) {
+      const c = ib(j, j === 'EU' ? 'maa' : 'jnda');
+      expect(c.folderId, j).toBe('module-1');
+      expect(c.ctdSection, j).toBeNull();
+      expect(c.needsReview, j).toBe(true);
+      expect(c.rationale, j).toMatch(new RegExp(`The ${j} Module 1 holds no single heading for this document`));
+    }
+  });
+
+  it('an application the regional tree does not model gets no heading: an EU CTA is not an MAA', () => {
+    const c = classifyForFiling({ fileName: 'SmPC-draft-labelling-v2.docx', view: 'pharma', jurisdiction: 'EU', applicationKind: 'cta' });
+    expect(c.ctdSection).toBeNull();
+    expect(c.needsReview).toBe(true);
+    expect(c.rationale).toMatch(/in this application \(CTA\)/);
+  });
+
+  it('a US-only rule gives no other region a heading: an FDA form in an EU project', () => {
+    const c = classifyForFiling({ fileName: 'form-fda-1571.pdf', view: 'pharma', jurisdiction: 'EU', applicationKind: 'maa' });
+    expect(c.folderId).toBe('module-1');
+    expect(c.ctdSection).toBeNull();
+    expect(c.needsReview).toBe(true);
+    // An FDA form number names a US form even through the CTD filename detector.
+    for (const fileName of ['356h-application.pdf', 'Form 1571 signed.pdf']) {
+      expect(classifyForFiling({ fileName, view: 'pharma', jurisdiction: 'EU', applicationKind: 'maa' }).ctdSection, fileName).toBeNull();
+    }
+  });
+
+
+  it("CA, AU, or an agency that names no region: Module 1, no section, needs review, and the rationale says why", () => {
+    for (const j of ['CA', 'AU'] as const) {
+      const c = classifyForFiling({ fileName: 'product-monograph-labeling.docx', view: 'pharma', jurisdiction: j, applicationKind: 'nda' });
+      expect(c.folderId, j).toBe('module-1');
+      expect(c.ctdSection, j).toBeNull();
+      expect(c.needsReview, j).toBe(true);
+      expect(c.confidence, j).toBe('medium');
+      expect(c.rationale, j).toMatch(new RegExp(`the ${j} Module 1 is not modelled here, so no section is proposed`));
+    }
+    const unknown = classifyForFiling({ fileName: 'product-monograph-labeling.docx', view: 'pharma', jurisdiction: null });
+    expect(unknown.ctdSection).toBeNull();
+    expect(unknown.needsReview).toBe(true);
+    expect(unknown.rationale).toMatch(/agency names no region whose Module 1 is modelled here/);
+    expect(ib('CA', 'nda').ctdSection).toBeNull();
+  });
+
+  it('Modules 2 to 5 and the device views do not depend on the region', () => {
+    for (const j of ['EU', 'JP', 'CA', null] as const) {
+      expect(classifyForFiling({ fileName: 'stability-summary-24m.pdf', view: 'biotech', jurisdiction: j }).ctdSection).toBe('3.2.P.8');
+      expect(classifyForFiling({ fileName: 'CSR-BX204-301-efficacy.pdf', view: 'pharma', jurisdiction: j }).folderId).toBe('module-5');
+      expect(classifyForFiling({ fileName: 'BX-204-IFU-EN-v2.7.pdf', view: 'device', jurisdiction: j }))
+        .toEqual(classifyForFiling({ fileName: 'BX-204-IFU-EN-v2.7.pdf', view: 'device' }));
+    }
+  });
+
+  it('a module-only proposal names no US heading, so it is left as it is', () => {
+    const before = classifyForFiling({ fileName: 'Module 1 administrative notes.pdf', view: 'pharma' });
+    expect(before.ctdSection).toBeNull();
+    expect(classifyForFiling({ fileName: 'Module 1 administrative notes.pdf', view: 'pharma', jurisdiction: 'CA' })).toEqual(before);
+  });
+});
+
+/* S6/F1 (2026-11-05): the CTD filename detector names what a Module 1 document is, so its region's heading is read
+   from the record as for labeling. A cover letter was proposed at US 1.2 in every region, or none. */
+describe("the CTD filename detector's Module 1 documents follow the project's region (F1)", () => {
+  it("the CTD filename detector's Module 1 documents take their region's heading from the record", () => {
+    const at = (fileName: string, jurisdiction: 'EU' | 'JP', applicationKind: string) =>
+      classifyForFiling({ fileName, view: 'pharma', jurisdiction, applicationKind });
+    expect(at('cover letter.pdf', 'EU', 'maa')).toMatchObject({ folderId: 'module-1', ctdSection: '1.0', needsReview: false });
+    expect(at('cover letter.pdf', 'EU', 'maa').rationale).toMatch(/EU 1\.0, Cover Letter/);
+    expect(at('Application form MAA.pdf', 'EU', 'maa').ctdSection).toBe('1.2');
+    const rmp = at('RMP draft.pdf', 'EU', 'maa');
+    expect(rmp.ctdSection).toBe('1.8.2');
+    // The US record gives an RMP no heading; the region's does, and the reason says that, not "no section".
+    expect(rmp.rationale).toMatch(/^The file name names a Module 1 document\. Module 1 follows the project's region: EU 1\.8\.2/);
+    expect(at('Application form.pdf', 'JP', 'jnda').ctdSection).toBe('1.2');
+    expect(at('patent status.pdf', 'JP', 'jnda').ctdSection).toBe('1.4');
+    expect(at('RMP draft.pdf', 'JP', 'jnda').ctdSection).toBe('1.11');
+    // Where the region's record holds no heading for it, none is proposed and a person places it.
+    for (const [fileName, j, kind] of [['patent certification.pdf', 'EU', 'maa'], ['cover letter.pdf', 'JP', 'jnda']] as const) {
+      const c = at(fileName, j, kind);
+      expect(c.ctdSection, fileName).toBeNull();
+      expect(c.needsReview, fileName).toBe(true);
+      expect(c.rationale, fileName).toMatch(new RegExp(`The ${j} Module 1 holds no single heading for this document`));
+    }
+  });
+
+  it("the CTD filename detector's US headings are unchanged", () => {
+    for (const fileName of ['cover letter.pdf', 'Application form.pdf', 'patent information.pdf', 'RMP draft.pdf', '356h-application.pdf']) {
+      const before = classifyForFiling({ fileName, view: 'pharma' });
+      expect(classifyForFiling({ fileName, view: 'pharma', jurisdiction: 'US', applicationKind: 'nda' }), fileName).toEqual(before);
+    }
+    expect(classifyForFiling({ fileName: 'cover letter.pdf', view: 'pharma' }).ctdSection).toBe('1.2');
+    expect(classifyForFiling({ fileName: 'RMP draft.pdf', view: 'pharma' }).ctdSection).toBeNull();
+  });
+});
+
+/* J2 human test (2026-11-06): a data-room letter filed itself and the note under "Looks like" read
+   "filed to corresp for the biotech view" — a folder id and an internal view name, not the folder a person sees. */
+describe('the classifier note names the folder a person sees', () => {
+  it('says the folder by its label, never its id or the view', () => {
+    const c = classifyForFiling({ fileName: '[Demo] FDA information request - IND C2C-101.txt', view: 'biotech' });
+    expect(c.folderId).toBe('corresp');
+    expect(c.rationale).toBe('Matched agency correspondence — filed to Agency correspondence.');
+    expect(c.rationale).not.toMatch(/\bcorresp\b|biotech view/);
+  });
+});

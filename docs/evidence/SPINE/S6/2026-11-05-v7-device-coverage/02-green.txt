@@ -1,0 +1,40 @@
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the Vault is one work area, the library first (D6 §C.3) > has the back link, one header with one primary, three starters and five views, Library first 705ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the Vault is one work area, the library first (D6 §C.3) > moves between views with the arrow keys, Home and End, one tab stop 287ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > AnA's hands reach the view they act on (D6 §C.6 3) > vault.search from the Seals & fixity view shows the Library with the query in the box 244ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > AnA's hands reach the view they act on (D6 §C.6 3) > vault.focus-document from the Uploads view opens that document on its record 155ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the upload flow (D6 §C.4 steps 2, 5, 6; §C.6 4) > "Add files" shows the Uploads view and opens the picker 115ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the upload flow (D6 §C.4 steps 2, 5, 6; §C.6 4) > a file dropped anywhere on the page is staged in the Uploads view 147ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the upload flow (D6 §C.4 steps 2, 5, 6; §C.6 4) > when the Vault cannot be read, files added are still staged on screen, not lost behind the views 47ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the upload flow (D6 §C.4 steps 2, 5, 6; §C.6 4) > a viewer is offered no upload: no drop zone, no picker, no import ask 203ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the record is D0's inspector (D6 §C.4 step 9; §C.6 5) > docks beside the list at 1280px and wider, each part a disclosure with the first open 77ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the record is D0's inspector (D6 §C.4 step 9; §C.6 5) > below 1280px a row opens it as a drawer; Escape closes it and focus returns to the row 218ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the record is D0's inspector (D6 §C.4 step 9; §C.6 5) > below 1280px, Place into filing opened from the record keeps the keyboard: Tab stays in it, Escape closes it alone 227ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the record is D0's inspector (D6 §C.4 step 9; §C.6 5) > below 1024px the structure is a drawer opened from the list 220ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultWorkArea.test.tsx > the seals and the fixity check keep their acts (D6 §C.4 steps 10–11; §C.6 6) > "Seal this Vault…" and "Check stored files" are quiet acts in their sections of the Seals & fixity view 166ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > shows the counts and the rule pack they come from, and no percentage 192ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > tells AnA the same counts the page shows 87ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > says when the list is the ICH baseline and not the program's own 86ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > files an existing document at a missing section through the filing call 488ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > shows why when there is no figure, and never "0 of" 180ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > a device filing's coverage opens its outline in the Library 372ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > coverageOf (pure) > counts a confirmed filing and nothing else: a suggestion is not coverage 4ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > coverageOf (pure) > a document filed deeper covers the section above it, never the reverse 1ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > coverageOf (pure) > carries no percentage 1ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > a program with no program type reports the fallback with its reason, never as its own list 1ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > a rule-pack store that cannot be read is unavailable with the reason, never "0 of m" 1ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > filings that cannot be read are unavailable too, not zero 1ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > a filing document class is not a CTD dossier: it says so, and counts nothing 0ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > a view that is not CTD-numbered shows why, and no figure 1ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > a device or diagnostic filing names itself and points to its outline in the Library, with no figure 1ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > hde counts no medicinal CTD requirement even in a pharma view 1ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > mdl counts no medicinal CTD requirement even in a pharma view 0ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > ivd_licence counts no medicinal CTD requirement even in a pharma view 0ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > shonin counts no medicinal CTD requirement even in a pharma view 0ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > ninsho counts no medicinal CTD requirement even in a pharma view 0ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > todokede counts no medicinal CTD requirement even in a pharma view 0ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > ivd_approval counts no medicinal CTD requirement even in a pharma view 0ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > jp_cdx counts no medicinal CTD requirement even in a pharma view 0ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > counts from the live pack when one applies, and names it 0ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > Vault coverage feeds no readiness figure > is imported by the Vault read model only 313ms
+ Test Files  3 passed (3)
+      Tests  38 passed (38)

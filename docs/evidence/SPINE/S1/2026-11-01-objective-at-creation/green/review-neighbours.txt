@@ -1,0 +1,43 @@
+# Review (2026-11-01): 20 test files that import a changed module (projects.ts, charter-objectives.ts,
+# projectSettingsRequest.ts), run on the builder's code before the review's fix: 19 passed, 314 tests passed, 6 failed,
+# all in tests/lineage/founder-path-lineage.pglite.test.ts (hop 8 transmit: 500 where 422 was expected, then the
+# walks that depend on it).
+# The same file, run with HEAD's three S1 source files swapped in (restored, cmp-verified), fails the same 6:
+# the failure is not S1's. Section A is the 20-file run; section B is the HEAD comparison.
+
+# The 20 files: tests/unit/charters-routes.test.ts, server/services/lumen-context/__tests__/intelligence-prefix-project.test.ts,
+# tests/schema-contract/project-charters-declared-columns.contract.test.ts, server/routes/c2c/__tests__/projects-create.test.ts,
+# projects-create-anchor.pglite, projects-create-market-offer, projects-create-eu-device-classes, projects-authorization,
+# projects-create-stated-facts, projects-create-us-biotech-identities.pglite, projects-create-regional-devices
+# (all under server/routes/c2c/__tests__/), project-settings.pglite (same folder),
+# tests/golden-journeys/{cer-eu-mdr,device-510k-estar,drug-nda-ectd,marketing-application}.journey.test.ts,
+# tests/lineage/founder-path-lineage.pglite.test.ts, client/src/concept2cure/v2/__tests__/{ProjectSettings,projectSettingsArchive}.test.tsx,
+# server/__tests__/routes/smoke.test.ts. Run with --maxWorkers=2.
+
+## A
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held every table and column the code asked for
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows
+ Test Files  1 failed | 19 passed (20)
+      Tests  6 failed | 314 passed (320)
+
+## B (HEAD S1 sources)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > hop 8 · transmit — the sequence is frozen, dispatched and transmitted to FDA ESG (the wire stubbed)
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk back · from the transmittal to cre_evidence_sources.checksum = sha256(X) and to the project
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > walk forward · from the project and from the source to the transmittal
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > retention · a project holding filed records is archived, never deleted; a draft-only one may be deleted
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the database the walk ran on held every table and column the code asked for
+ FAIL  tests/lineage/founder-path-lineage.pglite.test.ts > LX-00 — the founder path: project → Data Room → AnA → editor → seal → Vault → Submission Center → agency > the baseline names only real checks, each with its verified finding and LX fix, and never grows
+ Test Files  1 failed (1)
+      Tests  6 failed | 9 passed (15)
+
+## C (after the review's two fixes): the 18 files that exercise the create, its 42P01 branch, the charter and the AnA
+## prefix: every projects-create* suite, projects-authorization, the four golden journeys, intelligence-prefix-project,
+## tests/unit/charters-routes, the charter declared-columns contract, project-settings.pglite and ProjectSettings.test.tsx
+ Test Files  18 passed (18)
+      Tests  285 passed (285)

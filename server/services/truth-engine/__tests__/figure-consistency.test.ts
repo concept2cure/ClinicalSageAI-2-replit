@@ -60,6 +60,43 @@ describe('compareLabelledFigures', () => {
     expect(r.notCompared[0]).toMatchObject({ rightRef: 'CSR', label: 'sample_size' });
   });
 
+  /* ── The arm-level guard, over the shapes a CSR actually writes ──────────
+   * The lexicon learned the passive voice on 2026-11-01 ("496 patients were
+   * randomly assigned"), which is how a CSR states its own enrolment — and
+   * also how it states each ARM's. Measured the moment the lexicon could read
+   * it, before this guard was widened:
+   *
+   *   claim  "A total of 496 patients were randomly assigned to receive
+   *           pembrolizumab, and 498 to receive placebo."
+   *   source "In total 994 patients were randomised in this study…"
+   *   →  conflict  sample_size: 496 vs 994
+   *
+   * 496 and 994 are both correct and both right: one is an arm, one is the
+   * total. A fabricated conflict is worse than a missed one — it sends a
+   * reviewer to reconcile two numbers that already agree — so each of these
+   * gets no verdict and says why. */
+  it.each([
+    ['assigned to receive', 'A total of 496 patients were randomly assigned to receive pembrolizumab, and 498 to receive placebo.'],
+    ['assigned to a named group', 'A total of 363 participants were assigned to the pembrolizumab group in this analysis.'],
+    ['counted in a named arm', 'In total 351 participants were randomised in the control arm of the pivotal study.'],
+    ['counted per arm', 'A total of 120 subjects were enrolled per arm across the participating sites.'],
+  ])('gives no verdict on an arm-level count (%s)', (_shape, claim) => {
+    const r = one(claim, 'In total 994 patients were randomised in this study across the participating sites.');
+    expect(r.findings, 'an arm count was compared against a total').toEqual([]);
+    expect(r.notCompared[0]).toMatchObject({ label: 'sample_size', reason: 'an arm-level count, not the total' });
+  });
+
+  it('still compares a total stated in the passive voice', () => {
+    /* The guard must not swallow the thing the widening was for. */
+    const r = one(
+      'A total of 248 subjects were randomised in the pivotal study described in this section.',
+      'In total 251 subjects were randomised across the participating investigational sites.',
+    );
+    expect(r.findings).toEqual([
+      expect.objectContaining({ status: 'conflict', label: 'sample_size', detail: 'sample_size: M2.7.3 gives 248; CSR gives 251.' }),
+    ]);
+  });
+
   it('names each figure of the claim a source does not state', () => {
     const r = one('The study randomized 186 subjects; the hazard ratio was 0.71.', 'The study randomized 186 subjects.');
     expect(r.findings).toEqual([expect.objectContaining({ status: 'match', label: 'sample_size' })]);

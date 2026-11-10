@@ -1,0 +1,804 @@
+ole holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts > approved derivative dispatch and local reinjection > does not reuse a successful derivative after custody is revoked
+[AI Gateway Audit] ✗ none/none task=document_analysis tokens=0 2ms org=7 user=3 caller=approved-derivative req=90769fef-73a6-4f1d-9dd9-0a563123fab9
+
+(node:47521) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts > approved derivative dispatch and local reinjection > does not reuse a successful derivative after custody is revoked 3300ms
+stdout | server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts > approved derivative dispatch and local reinjection > strips an ordinary caller attempt to mint reserved derivative generation evidence
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=2 1ms org=- user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts > approved derivative dispatch and local reinjection > strips an ordinary caller attempt to mint reserved derivative generation evidence
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts > last-mile sensitive-dispatch gate > blocks Tier 3 even with PII screening off and provenance public, and audits no content
+[AI Gateway Audit] ✗ none/none task=chat tokens=0 3ms org=7 user=- caller=- req=a508d852-b6d5-4773-aa7f-c374dbe2d39b
+
+stderr | server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts > last-mile sensitive-dispatch gate > blocks Tier 3 even with PII screening off and provenance public, and audits no content
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts > last-mile sensitive-dispatch gate > blocks Tier 3 even with PII screening off and provenance tenant_derived, and audits no content
+[AI Gateway Audit] ✗ none/none task=chat tokens=0 1ms org=7 user=- caller=- req=02605c83-9759-42d2-a571-8dc00153bf0a
+
+stderr | server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts > last-mile sensitive-dispatch gate > blocks Tier 3 even with PII screening off and provenance tenant_derived, and audits no content
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts > last-mile sensitive-dispatch gate > blocks Tier 3 even with PII screening off and provenance tenant_governed, and audits no content
+[AI Gateway Audit] ✗ none/none task=chat tokens=0 1ms org=7 user=- caller=- req=b3022253-d612-4362-a35f-dae94fa4b805
+
+stderr | server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts > last-mile sensitive-dispatch gate > blocks Tier 3 even with PII screening off and provenance tenant_governed, and audits no content
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts > last-mile sensitive-dispatch gate > retains the tier decision in the served ledger without changing legacy unclassified calls
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=2 1ms org=- user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts > last-mile sensitive-dispatch gate > retains the tier decision in the served ledger without changing legacy unclassified calls
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stdout | server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts > last-mile sensitive-dispatch gate > retains the tier decision in the served ledger without changing legacy unclassified calls
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=2 1ms org=- user=- caller=- req=fake
+
+(node:47521) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:47521) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:47521) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:47521) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+(node:47521) AuditWarning: AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts > approved derivative dispatch and local reinjection > strips an ordinary caller attempt to mint reserved derivative generation evidence 3129ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts > last-mile sensitive-dispatch gate > blocks Tier 3 even with PII screening off and provenance public, and audits no content 11ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts > last-mile sensitive-dispatch gate > blocks Tier 3 even with PII screening off and provenance tenant_derived, and audits no content 5ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts > last-mile sensitive-dispatch gate > blocks Tier 3 even with PII screening off and provenance tenant_governed, and audits no content 5ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts > last-mile sensitive-dispatch gate > retains the tier decision in the served ledger without changing legacy unclassified calls 5ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts > last-mile sensitive-dispatch gate > pins classifications before asynchronous tenant policy resolution 4ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts > last-mile sensitive-dispatch gate > applies the same tier wall before embedding dispatch 2ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts > last-mile sensitive-dispatch gate > malformed placement approvals under enforcement is a terminal policy error, not a retried outage 7ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts > last-mile sensitive-dispatch gate > audit mode records a content-free structured warning for PII-bound dispatch without blocking 5ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts > last-mile sensitive-dispatch gate > audit mode survives malformed approvals: records the config failure, still never blocks 5ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts > last-mile sensitive-dispatch gate > audit mode stays silent for non-sensitive content 3ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts > last-mile sensitive-dispatch gate > staging with AI_SENSITIVE_DATA_POLICY_MODE=enforce blocks an unapproved sensitive dispatch 3ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts > last-mile sensitive-dispatch gate > staging without AI_SENSITIVE_DATA_POLICY_MODE=enforce or AI_PII_ENFORCEMENT=block stays audit-mode: records, never blocks 1ms
+ ✓ server/services/ai-gateway/__tests__/sensitive-placement-gate.test.ts > last-mile sensitive-dispatch gate > production enforcement is unchanged: blocks without either opt-in variable set 4ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > accepts a complete, reasoned, satisfiable policy 5ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > refuses a partial policy — an omitted field must never reset a constraint 2ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > refuses an unknown key, including a client-supplied organizationId 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > requires a reason for change 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > refuses an empty allow-list — null says "no constraint", [] would refuse everything 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > refuses values this build does not know, rather than dropping them 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > refuses a policy no AI service could satisfy 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > parsePlacementPolicyInput > refuses a residency or retention no allowed lane could ever provide (D6 review) 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > writeOrgPlacementPolicy > writes the policy and its audit row (before, after, reason) in one transaction, then invalidates 4ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > writeOrgPlacementPolicy > commits nothing and invalidates nothing when the audit row cannot be written 3ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > writeOrgPlacementPolicy > the next dispatch sees a tightened policy at once, not after the cache expires 2ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > derivative custody management and exact-use authority > keeps maps/candidate encrypted, exposes reviewed residual only, and attestation changes next use 25ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > derivative custody management and exact-use authority > rejects stale versions, changed SHA, body human claims and non-admin writers 10ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > derivative custody management and exact-use authority > refuses foreign tenant/project/actor, raw T3 or unknown source classification 7ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > derivative custody management and exact-use authority > invalidates issued authority for expiry/revoke/source/extraction/policy/ordinary placement changes 72ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > derivative custody management and exact-use authority > revokes without KMS/source access even after policy disabled and source expired 5ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > derivative custody transaction outcomes > rolls back lifecycle mutation and cleans encrypted orphan when audit fails 11ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > derivative custody transaction outcomes > preserves an encrypted candidate after an unknown commit outcome and discards the connection 6ms
+ ✓ server/services/ai-gateway/providers/__tests__/org-placement-writer.test.ts > derivative authority integrity > rejects cloned authority, one-byte stored tampering and invalid/missing/duplicate model tokens 9ms
+stdout | server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts
+{
+  "timestamp": "2026-11-06T22:12:44.013Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:12:44.017Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts
+{
+  "timestamp": "2026-11-06T22:12:44.017Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts
+{
+  "timestamp": "2026-11-06T22:12:44.157Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > uses the recorded Canadian CTA for an omitted or blank filing choice: undefined 417ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > uses the recorded Canadian CTA for an omitted or blank filing choice: "" 39ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > uses the recorded Canadian CTA for an omitted or blank filing choice: "   " 67ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > keeps recorded TA/modality/stage/population above conflicting declarations without calling them scientific evidence 38ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > preserves an explicit filing choice and states its disagreement with the recorded application 44ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > keeps ambiguous charters and declared fallback distinct instead of choosing a charter 38ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > keeps a recorded broad biologic unassessed even when a caller supplies a specific modality 35ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > carries exact ICH_PROTOCOL identity into the shared clinical profile selection 59ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > carries exact ICH_CSR identity into the shared clinical profile selection 40ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > refuses unauthorized project access before dispatch: {"projectId":"11111111-2222-4333-8444-000000000021","userId":7} 17ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > real service drafts from the admitted recorded product and application > refuses unauthorized project access before dispatch: {"projectId":"11111111-2222-4333-8444-000000000011","userId":8} 15ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > recorded-context streaming is exposed only after currentness is confirmed > emits successful recorded-project chunks in order after the post-provider check 35ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > recorded-context streaming is exposed only after currentness is confirmed > emits no chunks when charter changes after provider streaming begins 39ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > recorded-context streaming is exposed only after currentness is confirmed > emits no chunks when access changes after provider streaming begins 30ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > recorded-context streaming is exposed only after currentness is confirmed > preserves live streaming for an ordinary request without a project 16ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > service dispatch and post-provider boundaries re-read actual records > refuses a charter changed while the outbound call waits, before model effect 29ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > service dispatch and post-provider boundaries re-read actual records > refuses changed charter after provider response instead of returning draft text 43ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > service dispatch and post-provider boundaries re-read actual records > refuses changed access after provider response instead of returning draft text 34ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > service dispatch and post-provider boundaries re-read actual records > refuses changed filing after provider response instead of returning draft text 31ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > recorded UK CTA uses shared drafting with explicit IRAS boundaries > prepares content for external combined review without inventing IRAS form formatting 39ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > reaches the recorded product guidance at UK_CTA / uk_cta_protocol 33ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > reaches the recorded product guidance at EU_CTA / PART_I.PROTOCOL 54ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > reaches the recorded product guidance at EU_CTA / PART_I.SYNOPSIS 56ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > reaches the recorded product guidance at CA_CTA / 1.7.1 37ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > reaches the recorded product guidance at CA_CTA / 1.4.1 30ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > reaches the recorded product guidance at CA_CTA_A / 1.7.1 33ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > keeps clinical arrays out of UK_CTA / uk_cta_quality 35ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > keeps clinical arrays out of UK_CTA / uk_cta_nonclinical 27ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > keeps clinical arrays out of UK_CTA / uk_cta_application_form 34ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > keeps clinical arrays out of EU_CTA / PART_I.IMPD_Q 50ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > keeps clinical arrays out of EU_CTA / FORM.COVER 29ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > keeps clinical arrays out of EU_CTA / PART_II.CONSENT 37ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > keeps clinical arrays out of CA_CTA / 2.3 29ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > keeps clinical arrays out of CA_CTA / 1.2.1 31ms
+ ✓ server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts > regional protocol preparation reuses clinical therapeutic guidance > keeps clinical arrays out of CA_CTA_A / 1.4.1 38ms
+stdout | server/services/authoring/__tests__/authoring-draft-template.test.ts
+{
+  "timestamp": "2026-11-06T22:13:04.298Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:04.300Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-draft-template.test.ts
+{
+  "timestamp": "2026-11-06T22:13:04.301Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/authoring-draft-template.test.ts
+[database] Database connection successful
+
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > carries its own saved EU / EU_CTA / PART_I.PROTOCOL identity without consulting the project filing 11ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > carries its own saved EU / EU_CTA / PART_I.SYNOPSIS identity without consulting the project filing 3ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > carries its own saved CA / CA_CTA / 1.7.1 identity without consulting the project filing 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > carries its own saved CA / CA_CTA / 1.4.1 identity without consulting the project filing 3ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > carries its own saved CA / CA_CTA_A / 1.7.1 identity without consulting the project filing 3ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > uses the selected assembly source instead of the parent clinical identity 4ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > calls the existing validator for the captured document/project and one saved section without extra SQL 3ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > honors an assembled section’s identity, region and limits over a different/manual parent 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > keeps exact Unicode, quotes, newlines and checklist text without shortening the reference 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > preserves null for an unbound document instead of inventing a program sentinel 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > keeps an ad-hoc document available without inventing a template or eligibility record 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > refuses the explicit recorded restriction {"aiDraftable":false} 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > refuses the explicit recorded restriction {"kind":"preparation"} 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > refuses the explicit recorded restriction {"authoringMode":"manual"} 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > refuses a selected manual section even when its parent permits drafting 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > does not infer complete source fields or eligibility from current-reference text 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > does not treat current E3 reference identity as a retained historical section policy 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > retains historical identity-only source fields without filling missing eligibility 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > still enforces an explicit negative restriction in historical identity-only fields 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > reports canonical validation failure as unavailable instead of using another/current template 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > a CSR drafts as a CSR whatever template it was made from > drafts the component CSR New document offers as a CSR, though its source records no registry id 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > a CSR drafts as a CSR whatever template it was made from > keeps a non-CSR document as it was 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses unsupported actual notified-body agency for component:performance_evaluation_report without substituting EMA 104ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses unsupported actual notified-body agency for registry:EU_PER without substituting EMA 62ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > keeps the actual IVDR technical-document manual limit ahead of any writing preference 52ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > does not interpret an unsupported recorded agency as a geographic region code 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > derives US writing control only when the caller omitted it 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > derives CA writing control only when the caller omitted it 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > derives EU writing control only when the caller omitted it 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > derives JP writing control only when the caller omitted it 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an explicit region conflicting with the recorded section 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > does not inherit a receiving region from the parent when the selected section is GLOBAL 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > requires an explicit writing region when the saved reference has no receiving region 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > requires an explicit writing region when the saved reference has no receiving region 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region "" 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region "unknown" 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region "GLOBAL" 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region null 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region {} 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region 7 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > uses exact ICH_CSR template identity for the document kind 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > uses exact ICH_PROTOCOL template identity for the document kind 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > uses exact ICH_IB template identity for the document kind 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the entire mandatory reference block has one UTF-8 byte budget > accepts the exact full-block ASCII boundary and refuses the next byte without clipping 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the entire mandatory reference block has one UTF-8 byte budget > counts multibyte Unicode rather than JavaScript character length 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the one prompt composer retains caller and evidence inputs separately > keeps exact tone/context/requirements and the source-attribution envelope, with a working-draft instruction 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > a revision by instruction (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md, slice 3) > appends to the one prompt and changes nothing before it; without a revision the prompt is the same 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > a revision by instruction (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md, slice 3) > reads the revise field: absent is no revision; a malformed one is refused, trimmed instructions are kept 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > a revision by instruction (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md, slice 3) > admits a live, current, complete base and names what the revision is derived from 3ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the draft route’s revision parts > reads nothing for a request that is not a revision, and spreads empty parts 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the draft route’s revision parts > reads the named candidate once and refuses before reading when the request is malformed 2ms
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts
+{
+  "timestamp": "2026-11-06T22:13:06.604Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:06.608Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts
+{
+  "timestamp": "2026-11-06T22:13:06.609Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts
+[database] Database connection successful
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts
+{
+  "timestamp": "2026-11-06T22:13:06.702Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (eligible): quality_optimized chat does not land on it, though it ranks first
+{
+  "timestamp": "2026-11-06T22:13:07.038Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:07.041Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (eligible): quality_optimized chat does not land on it, though it ranks first
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=- user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (eligible): quality_optimized chat does not land on it, though it ranks first
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (relaxed): with every provider unhealthy, the list-order first row is passed over
+{
+  "timestamp": "2026-11-06T22:13:07.063Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:07.063Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (relaxed): with every provider unhealthy, the list-order first row is passed over
+[AI Gateway Audit] ✓ openai/gpt-4o task=chat tokens=2 1ms org=- user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (relaxed): with every provider unhealthy, the list-order first row is passed over
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > fallback: the ladder passes over it when the primary fails
+{
+  "timestamp": "2026-11-06T22:13:07.070Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:07.070Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > fallback: the ladder passes over it when the primary fails
+{
+  "timestamp": "2026-11-06T22:13:07.073Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] anthropic/claude-opus-5-5 failed: Model provider request failed (HTTP 400).",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > fallback: the ladder passes over it when the primary fails
+[AI Gateway Audit] ✓ anthropic/claude-opus-5 task=chat tokens=2 1ms org=- user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > fallback: the ladder passes over it when the primary fails
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > explicit: naming it is refused with a terminal error — not served, not substituted
+{
+  "timestamp": "2026-11-06T22:13:07.076Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:07.076Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > explicit: naming it is refused with a terminal error — not served, not substituted
+[AI Gateway Audit] ✗ none/none task=chat tokens=0 2ms org=- user=- caller=- req=c1fe89b7-94fd-4f63-a640-d38f87fc8431
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > explicit: naming it is refused with a terminal error — not served, not substituted
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > high risk: a row drifted off its pinned version under an approved id is not served
+{
+  "timestamp": "2026-11-06T22:13:07.082Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:07.082Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > high risk: a row drifted off its pinned version under an approved id is not served
+[AI Gateway Audit] ✓ anthropic/claude-opus-5 task=document_drafting tokens=2 1ms org=- user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > high risk: a row drifted off its pinned version under an approved id is not served
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > the refusal leaves one ledger row naming what was withheld, and the author reads why
+{
+  "timestamp": "2026-11-06T22:13:07.086Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:07.087Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > the refusal leaves one ledger row naming what was withheld, and the author reads why
+{
+  "timestamp": "2026-11-06T22:13:07.110Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/connectors/connector-registry.ts:342:26",
+    "queryPreview": "SELECT connector_id, credentials, is_valid FROM connector_credentials WHERE organization_id = $1 AND connector_id IN ('llm_anthropic','llm_openai','llm_moons...",
+    "enforcement": "off"
+  }
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > the refusal leaves one ledger row naming what was withheld, and the author reads why
+[AI Gateway Audit] ✗ none/none task=chat tokens=0 24ms org=42 user=- caller=- req=ba6e2d75-7fd1-4159-80a8-cb85619a49ce
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > the refusal leaves one ledger row naming what was withheld, and the author reads why
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > is refused with a terminal error naming the value; nothing is dispatched, retried or fallen back to
+{
+  "timestamp": "2026-11-06T22:13:07.118Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:07.119Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > is refused with a terminal error naming the value; nothing is dispatched, retried or fallen back to
+[AI Gateway Audit] ✗ none/none task=chat tokens=0 0ms org=- user=- caller=- req=098235da-7076-43d8-8d3d-ef5c46997be2
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > is refused with a terminal error naming the value; nothing is dispatched, retried or fallen back to
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > a model named under a provider that has no such row names no row
+{
+  "timestamp": "2026-11-06T22:13:07.124Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:07.124Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > a model named under a provider that has no such row names no row
+[AI Gateway Audit] ✗ none/none task=chat tokens=0 0ms org=- user=- caller=- req=14bd7a3f-7eac-45d8-b7c4-a06bd8829404
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > a model named under a provider that has no such row names no row
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (eligible): quality_optimized chat does not land on it, though it ranks first 30ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > strategy (relaxed): with every provider unhealthy, the list-order first row is passed over 7ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > fallback: the ladder passes over it when the primary fails 6ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > explicit: naming it is refused with a terminal error — not served, not substituted 5ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > high risk: a row drifted off its pinned version under an approved id is not served 5ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4a — a row that is not its own approved entry is never served > the refusal leaves one ledger row naming what was withheld, and the author reads why 31ms
+ ✓ server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > is refused with a terminal error naming the value; nothing is dispatched, retried or fallen back to 6ms
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > control: a known row whose provider is not configured still falls through to strategy, as before
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5 task=chat tokens=2 1ms org=- user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4b — an explicit model that names no registry row is refused, not substituted > control: a known row whose provider is not configured still falls through to strategy, as before
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > explicit: refused in production, naming it
+{
+  "timestamp": "2026-11-06T22:13:07.134Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] moonshot is not a production AI service (ADR-0014 §1); its lane is disabled and its key is not used",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:07.134Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:07.134Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > explicit: refused in production, naming it
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > strategy: cost_optimized chat (local-default costs nothing) is not served by it in production
+{
+  "timestamp": "2026-11-06T22:13:07.139Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] moonshot is not a production AI service (ADR-0014 §1); its lane is disabled and its key is not used",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:07.140Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:07.140Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > strategy: cost_optimized chat (local-default costs nothing) is not served by it in production
+{
+  "timestamp": "2026-11-06T22:13:07.144Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/usage-recorder.ts:104:16",
+    "queryPreview": "INSERT INTO api_usage_logs (organization_id, user_id, module, endpoint, model, request_count, tokens_used, cost_cents, metadata, created_at) VALUES ($1, $2, ...",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > strategy: cost_optimized chat (local-default costs nothing) is not served by it in production
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > strategy: a tenant allowed only its own models is refused in production, not served a placeholder
+{
+  "timestamp": "2026-11-06T22:13:07.145Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] moonshot is not a production AI service (ADR-0014 §1); its lane is disabled and its key is not used",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:07.145Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:07.145Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > strategy: a tenant allowed only its own models is refused in production, not served a placeholder
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > fallback: it is not on the production ladder
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > control: outside production it is served as before
+{
+  "timestamp": "2026-11-06T22:13:07.154Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:07.154Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > control: outside production it is served as before
+[AI Gateway Audit] ✓ local/local-default task=chat tokens=2 1ms org=- user=- caller=- req=fake
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > control: outside production it is served as before
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > control: a local entry that pins a weights digest is selectable in production
+{
+  "timestamp": "2026-11-06T22:13:07.156Z",
+  "level": "warn",
+  "message": "[ai-gateway] [AI Gateway] moonshot is not a production AI service (ADR-0014 §1); its lane is disabled and its key is not used",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:07.156Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:07.156Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > §4c — local-default pins a placeholder, so production does not select it > control: a local entry that pins a weights digest is selectable in production
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > serves verified evidence and exact provider version (local=false)
+{
+  "timestamp": "2026-11-06T22:13:07.162Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:07.162Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > serves verified evidence and exact provider version (local=false)
+[AI Gateway Audit] ✓ anthropic/claude-opus-5-5-20261101 task=document_drafting tokens=2 1ms org=- user=- caller=- req=unit-response
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > serves verified evidence and exact provider version (local=false)
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > serves verified evidence and exact provider version (local=true)
+{
+  "timestamp": "2026-11-06T22:13:07.176Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:07.176Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > serves verified evidence and exact provider version (local=true)
+[AI Gateway Audit] ✓ local/weights@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa task=document_drafting tokens=2 1ms org=- user=- caller=- req=unit-response
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > serves verified evidence and exact provider version (local=true)
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered id before reading any caller path or dispatching
+{
+  "timestamp": "2026-11-06T22:13:07.181Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:07.181Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered id before reading any caller path or dispatching
+[AI Gateway Audit] ✗ none/none task=document_drafting tokens=0 1ms org=- user=- caller=- req=b64a3add-c4ea-419c-a94e-5182ffdf9925
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered id before reading any caller path or dispatching
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered provider before reading any caller path or dispatching
+{
+  "timestamp": "2026-11-06T22:13:07.185Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:07.185Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered provider before reading any caller path or dispatching
+[AI Gateway Audit] ✗ none/none task=document_drafting tokens=0 0ms org=- user=- caller=- req=fdc0ba98-b1cd-4c17-ae3d-fdd0259e3c81
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered provider before reading any caller path or dispatching
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered pinnedVersion before reading any caller path or dispatching
+{
+  "timestamp": "2026-11-06T22:13:07.188Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:07.188Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered pinnedVersion before reading any caller path or dispatching
+[AI Gateway Audit] ✗ none/none task=document_drafting tokens=0 0ms org=- user=- caller=- req=ca049c40-63c7-4367-aa19-61e357cca95c
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered pinnedVersion before reading any caller path or dispatching
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered intendedUse before reading any caller path or dispatching
+{
+  "timestamp": "2026-11-06T22:13:07.191Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:07.191Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered intendedUse before reading any caller path or dispatching
+[AI Gateway Audit] ✗ none/none task=document_drafting tokens=0 0ms org=- user=- caller=- req=ad4f8737-0b7a-455f-abe1-0807b8925056
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered intendedUse before reading any caller path or dispatching
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered pqReference before reading any caller path or dispatching
+{
+  "timestamp": "2026-11-06T22:13:07.194Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:07.194Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered pqReference before reading any caller path or dispatching
+[AI Gateway Audit] ✗ none/none task=document_drafting tokens=0 0ms org=- user=- caller=- req=4a7d6c55-456e-4e48-bdc9-e84e83b60d73
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered pqReference before reading any caller path or dispatching
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered pqSha256 before reading any caller path or dispatching
+{
+  "timestamp": "2026-11-06T22:13:07.197Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:07.198Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered pqSha256 before reading any caller path or dispatching
+[AI Gateway Audit] ✗ none/none task=document_drafting tokens=0 0ms org=- user=- caller=- req=30baf046-fb43-48b9-b2ce-4f5a29380188
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses altered pqSha256 before reading any caller path or dispatching
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses malformed pin null without a default
+{
+  "timestamp": "2026-11-06T22:13:07.201Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:07.201Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses malformed pin null without a default
+[AI Gateway Audit] ✗ none/none task=document_drafting tokens=0 1ms org=- user=- caller=- req=acb7436e-68f6-4b45-bd04-92497beb1f0a
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses malformed pin null without a default
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses malformed pin {} without a default
+{
+  "timestamp": "2026-11-06T22:13:07.203Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:07.203Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses malformed pin {} without a default
+[AI Gateway Audit] ✗ none/none task=document_drafting tokens=0 0ms org=- user=- caller=- req=73a75150-bf51-405d-b90a-db48a936386b
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses malformed pin {} without a default
+[AI Gateway Audit] AI provenance ledger unusable: table ai.gateway_audit_log does not exist. ai.gateway_audit_log is created by db/migrations/20260813_ai_gateway_audit_log.sql; apply the migration set (npm run db:migrate:deploy) and ensure the runtime role holds INSERT on it (scripts/db/provision-app-role.mjs). Until then every AI call is unrecorded.
+
+stderr | server/services/ai-gateway/__tests__/gateway-model-governance.test.ts > exact qualified model pins > refuses malformed pin {"id":"only-id"} without a default
+{
+  "timestamp": "2026-11-06T22:13:07.206Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/bedrock-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/bedrock-sdk",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T22:13:07.206Z",
+  "level": "warn",
+  "message": "[ai-gateway:providers] [AI Gateway] Provider package \"@anthropic-ai/vertex-sdk\" not installed — substrate disabled. Run: npm i @anthropic-ai/vertex-sdk",
+  "context": {}
+}
+
+stdout | server/services/ai-gateway/_

@@ -499,7 +499,8 @@ interface QueueItemContext {
   reviewViews: ReviewRequestView[];
   steps: StepRow[];
   flags: ScopeFlags;
-  firstSection: SectionRow | null;
+  // passage: the first section with text, not an empty title page (J3, 2026-11-06)
+  firstSection: SectionRow | null; passage: string;
   openComments: number;
 }
 
@@ -509,7 +510,7 @@ interface QueueItemContext {
  * shape — the fields the client reads are listed once, in one place.
  */
 function buildQueueItem(ctx: QueueItemContext): ReviewItemView {
-  const { doc, reviews, reviewViews, steps, flags, firstSection, openComments } = ctx;
+  const { doc, reviews, reviewViews, steps, flags, firstSection, passage, openComments } = ctx;
   const { reviewer, role } = pickReviewerAndRole(reviews, reviewViews, flags.currentStep);
   return {
     id: doc.id,
@@ -537,7 +538,7 @@ function buildQueueItem(ctx: QueueItemContext): ReviewItemView {
     esig: deriveEsigState(doc.status, flags.currentStep, steps.length),
     conf: null,
     prov: buildProvenance(doc, reviews),
-    passage: excerpt(firstSection?.content),
+    passage,
     firstSectionId: firstSection?.id ?? null,
     requestedAt: reviewViews[0]?.requestedAt ?? null,
   };
@@ -647,7 +648,7 @@ export async function buildAuthoringReviewBoard(input: BuildReviewBoardInput): P
       reviewViews,
       steps,
       flags,
-      firstSection: sections[0] ?? null,
+      firstSection: sections[0] ?? null, passage: sections.map((section) => excerpt(section.content)).find((text) => text !== '') ?? '',
       openComments: openCommentsByDoc.get(doc.id) ?? 0,
     }));
     if (steps.length > 0) workflows[doc.id] = buildWorkflowChain(steps);

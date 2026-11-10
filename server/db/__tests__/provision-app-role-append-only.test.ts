@@ -158,6 +158,7 @@ describe('APPEND_ONLY_TABLES', () => {
         'words, author and placement are fixed, but a retraction sets deleted_at once and status moves: UPDATEs (20261001_review_comments_record.sql)',
       'public.cre_evidence_sources':
         'write-once and one-way columns, the rest (title, extraction and ingestion status) governed by its writer: UPDATEs (20261001_cre_evidence_sources_capture_immutability.sql)',
+      'public.concept2cure_artifact_versions': "never rewritten: UPDATE and TRUNCATE are refused by trigger, and DELETE stays open for the tenant purge's cascade, which a revoke would break (20261029k_artifact_versions_no_rewrite.sql, MR-12 CAT2-20)",
       'vault.legal_holds':
         'placed once and lifted once: the lift is one UPDATE, lifted_at, lifted_by and lift_reason going NULL → value, which the trigger admits and nothing else (20261029b_vault_legal_holds_append_only.sql)',
     };

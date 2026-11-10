@@ -587,7 +587,7 @@ const aiDraftBodySchema = z.object({
   projectId: z.number().int().positive(),
   documentCode: z.string().min(1).max(128).optional(),
   userPrompt: z.string().max(8000).optional(),
-  evidenceObjectIds: z.array(z.string().uuid()).max(32).optional(),
+  evidenceObjectIds: z.array(z.string().guid()).max(32).optional(),
 });
 
 router.post(
@@ -773,7 +773,7 @@ const fdaApplyBodySchema = z.object({
   mappings: z
     .array(
       z.object({
-        commitmentId: z.string().uuid(),
+        commitmentId: z.string().guid(),
         activityKey: z.string().min(1).max(96),
         forceState: z.boolean().optional(),
       })
@@ -819,7 +819,7 @@ router.post(
 // ─── POST /api/pdev/programs/:programId/activities/:activityKey/evidence ────
 
 const evidenceAttachBodySchema = z.object({
-  evidenceObjectId: z.string().uuid(),
+  evidenceObjectId: z.string().guid(),
   linkType: z.enum(['supports', 'contradicts', 'references', 'supersedes']).optional(),
   strength: z.enum(['strong', 'moderate', 'weak']).optional(),
   rationale: z.string().max(4000).optional(),

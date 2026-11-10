@@ -51,7 +51,9 @@ export interface UdiSurfaceProps {
   /** The open project, from the host's `programForContext`. Null reads nothing. */
   programId: string | null;
   onAskAna: (text: string, opts?: { tool?: string }) => void;
-  onOpenEditor?: (docId: string) => void;
+  onOpenEditor?: (docId: string, doc: KitDocument) => void;
+  /** Open Labeling, where a labeling document starts (M17); none draws no door. */
+  onOpenLabeling?: () => void;
 }
 
 interface UdiBlocker {
@@ -101,7 +103,7 @@ function toLabelDocuments(rows: readonly LabelRow[]): KitDocument[] {
   });
 }
 
-export function UdiSurface({ programId, onAskAna, onOpenEditor }: UdiSurfaceProps) {
+export function UdiSurface({ programId, onAskAna, onOpenEditor, onOpenLabeling }: UdiSurfaceProps) {
   const [awarenessOpen, setAwarenessOpen] = React.useState(false);
 
   const live = useUdi(programId);
@@ -252,12 +254,15 @@ export function UdiSurface({ programId, onAskAna, onOpenEditor }: UdiSurfaceProp
         state={live.labels}
         label="labeling documents"
         onRetry={live.refresh}
-        emptyHint="IFUs, package and on-device labels appear here once labeling documents are created."
+        emptyHint="IFUs, package and on-device labels appear here once labeling documents are created. A labeling document starts in Labeling."
+        /* M17 (MDX journey, found in the running app 2026-11-02): the hint
+           named where labels come from and offered only Check again. */
+        emptyAction={onOpenLabeling ? { label: 'Open Labeling', onAct: onOpenLabeling } : undefined}
       >
         {(rows) => (
           <DocumentsPanel
             title="Documents in flight"
-            subtitle="Tap any row to open in the label editor · sparkle to draft a translation or symbol revision with AnA"
+            subtitle="A label opens in Labeling · sparkle to draft a translation or symbol revision with AnA"
             docs={toLabelDocuments(rows)}
             frameworks={frameworks}
             onOpenEditor={onOpenEditor}

@@ -1,0 +1,81 @@
+diff --git a/client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx b/client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx
+index 504d64110..be512752b 100644
+--- a/client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx
++++ b/client/src/concept2cure/v2/editor/__tests__/savedAssemblySourcesFlow.test.tsx
+@@ -48,6 +48,11 @@ function deferred<T>() {
+ let savedReply: () => Response | Promise<Response>;
+ let commitReply: (input: AssemblyPreviewInput) => Response | Promise<Response>;
+ let storedSections: AssemblySection[];
++/** The sections read as the server sends it since 8013c9457: authoring-document-read.ts adds every section's
++ *  writing-agency projection. The existing section has no saved template ('not-recorded'); the section the build
++ *  appends carries its template's recorded region, the FDA that plan().draftRegion states. */
++const sectionRead = (rows: AssemblySection[]) => rows.map(row => ({ ...row, ...(row.id === NEXT
++  ? { draftingRegion: 'FDA', draftingRegionState: 'recorded' } : { draftingRegion: null, draftingRegionState: 'not-recorded' }) }));
+ function plan(input: AssemblyPreviewInput): AssemblyPlan {
+   return { version: 1, docId: DOC, programId: PROGRAM, templateId: TEMPLATE, selection: input.selection,
+     targetSnapshot: 'current-target', templateSnapshot: 'current-template', fingerprint: 'fresh-build-plan',
+@@ -77,7 +82,7 @@ beforeEach(async () => {
+     if (method === 'POST' && url.endsWith('/ai/draft')) return ok({ success: true, draft: { content: 'Fresh selected-source candidate.', draftId: 'fresh-candidate', metadata: {} } });
+     if (url.startsWith('/api/authoring/docs?')) return ok({ success: true, documents: [{ ...doc, program_id: PROGRAM }] });
+     if (new URL(url, 'http://localhost').pathname === `/api/authoring/docs/${DOC}`) return ok({ success: true, document: { ...doc, client_program_id: PROGRAM } });
+-    if (new URL(url, 'http://localhost').pathname === `/api/authoring/docs/${DOC}/sections`) return ok({ success: true, sections: storedSections });
++    if (new URL(url, 'http://localhost').pathname === `/api/authoring/docs/${DOC}/sections`) return ok({ success: true, sections: sectionRead(storedSections) });
+     if (url.startsWith('/api/c2c/documents/')) return ok({}, 404);
+     return ok({ success: true, sources: [], comments: [], revisions: [], events: [] });
+   });
+@@ -157,7 +162,7 @@ describe('historical checks fail closed in the actual editor', () => {
+       if (method === 'GET' && projection === 'detail' && path === `/api/authoring/docs/${DOC}`)
+         return ok({ success: true, document: { ...doc, readScope: 'sections', sourceMetadataState: 'unavailable' } });
+       if (method === 'GET' && projection === 'sections' && path === `/api/authoring/docs/${DOC}/sections`)
+-        return ok({ success: true, sections: storedSections, readScope: 'sections' });
++        return ok({ success: true, sections: sectionRead(storedSections), readScope: 'sections' });
+       return normal(method, url, input);
+     });
+     await mounted();
+@@ -277,7 +282,14 @@ describe('manual draft review retains its buffer during a saved-source reuse', (
+     const pending = deferred<Response>(); savedReply = () => pending.promise;
+     fireEvent.click(reuse); await waitFor(() => expect(savedReads()).toHaveLength(2));
+     fireEvent.click(screen.getByTestId('ai-draft-open'));
+-    fireEvent.click(await screen.findByTestId('ai-draft-generate'));
++    const generate = await screen.findByTestId('ai-draft-generate') as HTMLButtonElement;
++    /* No receiving agency is recorded, so the pane assumes none: Region is blank and Draft section waits for an
++       explicit choice (8013c9457; docs/evidence/D4/2026-10-30-ind-development/region-ui.md). */
++    const pane = within(screen.getByTestId('ai-draft-panel'));
++    expect((pane.getByLabelText('Region') as HTMLSelectElement).value).toBe(''); expect(generate.disabled).toBe(true);
++    expect(pane.getByTestId('ai-draft-region-note').textContent).toContain('Choose a supported writing region before drafting.');
++    fireEvent.change(pane.getByLabelText('Region'), { target: { value: 'FDA' } });
++    await waitFor(() => expect(generate.disabled).toBe(false)); fireEvent.click(generate);
+     const body = await screen.findByTestId('ai-draft-body') as HTMLTextAreaElement;
+     fireEvent.change(body, { target: { value: 'My retained manual review edits.' } });
+     await act(async () => { pending.resolve(ok({ success: true, data: savedRecord })); await pending.promise; });
+diff --git a/client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx b/client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx
+index 1b65fdc7c..7d9311cd5 100644
+--- a/client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx
++++ b/client/src/concept2cure/v2/editor/__tests__/workbenchDraftParagraphs.test.tsx
+@@ -50,7 +50,9 @@ function serve(content: string, qualified = true) {
+     }
+     if (url.startsWith('/api/authoring/docs?')) return ok({ documents: [doc] });
+     if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ document: doc });
+-    if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) return ok({ sections: [section] });
++    /* The sections read as the server sends it since 8013c9457 (authoring-document-read.ts): every section carries its
++       writing-agency projection. This report records no saved template, so the projection is 'not-recorded'. */
++    if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) return ok({ sections: [{ ...section, draftingRegion: null, draftingRegionState: 'not-recorded' }] });
+     if (url.startsWith('/api/c2c/documents/')) return ok({ success: false }, 404);
+     return ok({ success: true });
+   });
+@@ -68,7 +70,14 @@ async function openAlternatives(expectEmpty = false) {
+   const open = screen.getByTestId('ai-draft-open') as HTMLButtonElement;
+   await waitFor(() => expect(open.disabled).toBe(false));
+   fireEvent.click(open);
+-  fireEvent.click(await screen.findByRole('button', { name: 'Draft three alternatives' }));
++  /* No receiving agency is recorded, so none is assumed: the person chooses one before drafting
++     (8013c9457; docs/evidence/D4/2026-10-30-ind-development/region-ui.md). */
++  const three = await screen.findByRole('button', { name: 'Draft three alternatives' }) as HTMLButtonElement;
++  const region = within(screen.getByTestId('ai-draft-panel')).getByLabelText('Region') as HTMLSelectElement;
++  expect(region.value).toBe(''); expect(three.disabled).toBe(true);
++  fireEvent.change(region, { target: { value: 'FDA' } });
++  await waitFor(() => expect(three.disabled).toBe(false));
++  fireEvent.click(three);
+   const group = await screen.findByRole('radiogroup', { name: /alternatives/i });
+   await waitFor(() => expect((within(group).getByRole('radio', { name: /Detailed/ }) as HTMLInputElement).disabled).toBe(false));
+   return group;

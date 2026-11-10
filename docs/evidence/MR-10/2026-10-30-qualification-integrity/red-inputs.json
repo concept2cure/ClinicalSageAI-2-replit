@@ -1,0 +1,16 @@
+{
+  "base": "32eafdbf2c57bfa70d98429b8d312652eb08afe5",
+  "kind": "canonical ZIP validation reach before production; tests only",
+  "files": {
+    "server/services/ectd/qualification/qualify.ts": "cbf5cfadbd7c7e9c32c752af19960cd50afbaca4ecba13fdf01d4a4c3b555937",
+    "server/services/ectd/qualification/outcome.ts": "aa0d27d12037193a177f459f8050dd3a501843e1a50587445d90e3994d0234a9",
+    "server/services/ectd/qualification/golden-fixtures.ts": "0a12c7bef35847a6310218c4696999cca966bb5be7705e450df31dc1926c1f57",
+    "server/services/ectd/qualification/__tests__/qualification-outcomes.test.ts": "09577eda82cb3cf5bc06faf621f9dd987d570c29f52d4cb30905f3200bea12ef",
+    "server/services/ectd/qualification/__tests__/qualification-package-integrity.test.ts": "e28d01e10e28be58da217b937a2a1aa955d79b143d9ac503d89fa3b93f3c2d51",
+    "server/services/submission-gateways/ectd-structural-validator.ts": "65a34b0a144aa1c596da10d41d3a73b2915e6948c5fb6019f8fdeefe91e2b718",
+    "package.json": "d5237fb405d77f3fb5aba77245c8ba832be7c88d65114822e5b2bfe221757fc6",
+    "package-lock.json": "7153128c3fb8850fa4bb3a8e13af8d3b48e0855014d27fdc61d1e93f938304c3",
+    "tsconfig.json": "ce8f64ec0d529490b49380d5d30897965b230a007aedb4fdf0fbe3e1f4c6cc26",
+    "vitest.config.ts": "3313ac173bd587e2b4ed0dde2f90dc021db861996a4d8ae4f38627504ac6551d"
+  }
+}

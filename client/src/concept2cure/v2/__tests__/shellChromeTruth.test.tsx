@@ -90,9 +90,11 @@ describe('breadcrumb client category (finding 128)', () => {
     expect(breadcrumbTierOf(surface('identity-console'))?.label).toBe('Admin');
   });
 
-  it('does not repeat the surface’s own name ("Medical Device & IVD › Medical Device & IVD")', () => {
-    // The device workstream's own name is the old tier's; its parent is Projects.
-    expect(breadcrumbTierOf(surface('device-workstream'))?.label).toBe('Projects');
+  it('does not repeat the surface’s own name ("Medical Device & IVD › Medical Device & IVD"), for every surface', () => {
+    // The device workstream, whose own name was the old tier's, folded into Projects (D2, fold F6, 2026-10-30) and
+    // has no registry row now; the rule it was checked for holds for every surface that remains.
+    expect(UI_SURFACES.some((s) => s.id === 'device-workstream')).toBe(false);
+    for (const s of UI_SURFACES) expect(breadcrumbTierOf(s)?.label, s.id).not.toBe(s.label);
   });
 
   it('never names a category the rail does not list the surface under — for every surface', () => {
@@ -107,29 +109,42 @@ describe('breadcrumb client category (finding 128)', () => {
     }
   });
 
-  it('the header draws exactly that crumb', () => {
+  it('the header draws no category crumb at all', () => {
     render(<TopBar surface={surface('device-510k')} onPalette={() => {}} segment="medtech" onSegment={() => {}} />);
     const crumbs = document.querySelector('.crumbs')?.textContent ?? '';
     expect(crumbs).not.toMatch(/Biotech & Pharma|Medical Device & IVD/);
-    // A project feature, with no project open: Projects, then the feature.
-    expect(crumbs).toMatch(/Concept2Cure\.RI\s*›\s*Projects\s*›\s*510\(k\) and eSTAR/);
+    // D1-2 (D1.md §D1.B step 1): the root and tier crumbs went (the sidebar's wordmark and
+    // its active row say them); a project feature with no project open names itself.
+    expect(crumbs.trim()).toBe('510(k) and eSTAR');
   });
 });
 
-describe('header controls (findings 131, 132)', () => {
+/* D1-2 (D1.md §D1.B step 4, §D1.I): the organisation label and Help left the top bar.
+   The organisation is the sidebar account's second line (D1-1, §D1.A step 2) and Help is
+   the account menu's "Get help", the same HELP_SURFACE. These cases follow them there. */
+describe('header controls (findings 131, 132), now in the sidebar’s account', () => {
   const renderBar = (onNav = vi.fn()) => {
     render(
       <TopBar surface={{ id: 'projects', label: 'Projects' } as never} onPalette={() => {}} segment="biopharma" onSegment={() => {}} onNav={onNav} />,
     );
     return onNav;
   };
+  const mountRail = (onNav = vi.fn()) => {
+    render(
+      <NavEntitlementsProvider>
+        <Rail activeId="projects" onNav={onNav} collapsed={false} setCollapsed={() => {}} segment="biopharma" setSegment={() => {}} />
+      </NavEntitlementsProvider>,
+    );
+    return { onNav, account: document.querySelector('.rail-account') as HTMLElement };
+  };
 
-  it('shows the organisation as a label, not as a control that does nothing', () => {
+  it('shows the organisation as words under the person, not as a control that does nothing', () => {
     renderBar();
-    const org = document.querySelector('.tb-org') as HTMLElement;
-    expect(org.tagName).not.toBe('BUTTON');
-    expect(org.querySelector('.tb-org-chev'), 'a dropdown chevron on something that opens nothing').toBeNull();
-    expect(org.getAttribute('title')).toBe('Concept2Cure Therapeutics');
+    expect(document.querySelector('.tb-org'), 'the top bar keeps no organisation label').toBeNull();
+    cleanup();
+    const { account } = mountRail();
+    expect(account.querySelector('.rl')?.textContent).toBe('Concept2Cure Therapeutics');
+    expect(account.querySelector('.tb-org-chev')).toBeNull();
     expect(document.body.innerHTML).not.toMatch(/switcher lands with the auth flow phase/);
   });
 
@@ -137,17 +152,22 @@ describe('header controls (findings 131, 132)', () => {
     const named = tenant.current;
     tenant.current = { currentOrganization: null };
     try {
-      renderBar();
-      expect(document.querySelector('.tb-org'), 'an organisation chip with no organisation').toBeNull();
+      const { account } = mountRail();
+      // The role, as words, stands in its place (D1-1).
+      expect(account.querySelector('.rl')?.textContent).toBe('Member');
       expect(screen.queryByText('Organization')).toBeNull();
     } finally {
       tenant.current = named;
     }
   });
 
-  it('Help goes where the account menu’s "Get help" goes', () => {
-    const onNav = renderBar();
-    fireEvent.click(screen.getByRole('button', { name: 'Get help' }));
+  it('Help is the account menu’s "Get help", and the top bar draws no Help of its own', () => {
+    renderBar();
+    expect(screen.queryByRole('button', { name: 'Get help' })).toBeNull();
+    cleanup();
+    const { onNav, account } = mountRail();
+    fireEvent.click(account);
+    fireEvent.click(within(screen.getByRole('menu')).getByRole('menuitem', { name: 'Get help' }));
     expect(onNav).toHaveBeenCalledWith('conversation-thread');
   });
 });
@@ -174,8 +194,14 @@ describe('rail: where you are vs what you chose (findings 130, 135)', () => {
 
   it('draws the current page, and no rule draws a client category on the rail', () => {
     const css = readFileSync(path.resolve(__dirname, '../styles/app-v2.css'), 'utf8');
-    expect(css).toMatch(/\.nav-item\[aria-current="page"\]\{background:var\(--accent-000\)/);
-    expect(css).toMatch(/\.nav-item\[aria-current="page"\]::before\{/);
+    /* Claude's active row is a soft neutral fill, with no marker bar and no orange
+       (D1.md §D1.A step 8; ONE_DESIGN_PLAN §2, "the active item takes a soft fill").
+       This pinned `--accent-000` and a `::before` bar, which the sheet stopped drawing
+       in 4a5cc0d224; it was red until D1-1. */
+    expect(css).toMatch(/\.nav-item\[aria-current="page"\]\{background:var\(--bg-200\)/);
+    const active = css.match(/\.nav-item\[aria-current="page"\]\{([^}]*)\}/)?.[1] ?? '';
+    expect(active).not.toMatch(/--accent-000/);
+    expect(css).not.toMatch(/\.nav-item\[aria-current="page"\]::before/);
     // The rule that drew a category as the current page is gone, and so is
     // the one that drew it as pressed: the rail lists no category.
     expect(css).not.toMatch(/\.nav-item\[aria-current="true"\]/);
@@ -219,13 +245,14 @@ describe('task launcher (findings 136, 137, 139)', () => {
         <CollabLayer onNav={vi.fn()} />
       </>,
     );
-    fireEvent.click(screen.getByTitle('New task — assign & track from this screen'));
+    // D1-2 (§D1.B step 3): icon buttons named by aria-label; the tinted "Task" chip went.
+    fireEvent.click(screen.getByRole('button', { name: 'New task from this screen' }));
     let dlg = await screen.findByRole('dialog');
     expect(within(dlg).getByRole('tab', { selected: true }).textContent).toMatch(/New task/);
     fireEvent.keyDown(document, { key: 'Escape' });
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
 
-    fireEvent.click(screen.getByRole('button', { name: 'Collaborate' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Collaborate on this screen' }));
     dlg = await screen.findByRole('dialog');
     expect(within(dlg).getByRole('tab', { selected: true }).textContent).toMatch(/Collaborate/);
   });

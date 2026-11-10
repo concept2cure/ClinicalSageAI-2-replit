@@ -1,0 +1,67 @@
+Tier 5 Browser Smoke: remote CI seed failure, inspected 2026-11-08
+
+Connected GitHub job-log reads; no rerun or remote mutation was performed.
+The current source commit and its immediate parent both failed before server/browser startup.
+Both jobs passed dependency installation, AnA fresh-install ordering, Playwright/Chromium installation and schema provisioning.
+Each then failed in the governed-workflow identity seed for all four browser invocations.
+Only synthetic fixture identity and failure lines are excerpted below.
+
+Commit: c88d892390a15f01d258f7a72fb597858aaf4497
+Run: https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42515637802
+Job: https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42515637802/job/128837908716
+2026-11-08T19:36:28.0364544Z Created user: e2e-admin@trialsage.test (id=2)
+2026-11-08T19:36:28.1071050Z Created user: e2e-author@trialsage.test (id=3)
+2026-11-08T19:36:28.1119398Z Seed failed: new row for relation "organization_users" violates check constraint "organization_users_role_known"
+2026-11-08T19:36:28.1148644Z node tests/e2e/seed-governed-workflow.cjs exited with code 1
+2026-11-08T19:36:28.1239575Z ##[error]Process completed with exit code 1.
+
+2026-11-08T19:36:31.4176822Z Updated user: e2e-admin@trialsage.test (id=2)
+2026-11-08T19:36:31.4887742Z Updated user: e2e-author@trialsage.test (id=3)
+2026-11-08T19:36:31.4923545Z Seed failed: new row for relation "organization_users" violates check constraint "organization_users_role_known"
+2026-11-08T19:36:31.4950191Z node tests/e2e/seed-governed-workflow.cjs exited with code 1
+2026-11-08T19:36:31.5031540Z ##[error]Process completed with exit code 1.
+
+2026-11-08T19:36:35.3777568Z Updated user: e2e-admin@trialsage.test (id=2)
+2026-11-08T19:36:35.4489097Z Updated user: e2e-author@trialsage.test (id=3)
+2026-11-08T19:36:35.4528227Z Seed failed: new row for relation "organization_users" violates check constraint "organization_users_role_known"
+2026-11-08T19:36:35.4552834Z node tests/e2e/seed-governed-workflow.cjs exited with code 1
+2026-11-08T19:36:35.4628014Z ##[error]Process completed with exit code 1.
+
+2026-11-08T19:36:38.6475933Z Updated user: e2e-admin@trialsage.test (id=2)
+2026-11-08T19:36:38.7188818Z Updated user: e2e-author@trialsage.test (id=3)
+2026-11-08T19:36:38.7227868Z Seed failed: new row for relation "organization_users" violates check constraint "organization_users_role_known"
+2026-11-08T19:36:38.7253636Z node tests/e2e/seed-governed-workflow.cjs exited with code 1
+2026-11-08T19:36:38.7335915Z ##[error]Process completed with exit code 1.
+
+Commit: 7eb7346c54020ad68ac07fd6bb9c8b4116f6e62b
+Run: https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42509830621
+Job: https://github.com/concept2cure/ClinicalSageAI-2-replit/actions/runs/42509830621/job/128820260153
+2026-11-08T18:27:43.3524135Z Created user: e2e-admin@trialsage.test (id=2)
+2026-11-08T18:27:43.4243603Z Created user: e2e-author@trialsage.test (id=3)
+2026-11-08T18:27:43.4298160Z Seed failed: new row for relation "organization_users" violates check constraint "organization_users_role_known"
+2026-11-08T18:27:43.4340199Z node tests/e2e/seed-governed-workflow.cjs exited with code 1
+2026-11-08T18:27:43.4450935Z ##[error]Process completed with exit code 1.
+
+2026-11-08T18:27:46.3438976Z Updated user: e2e-admin@trialsage.test (id=2)
+2026-11-08T18:27:46.4166449Z Updated user: e2e-author@trialsage.test (id=3)
+2026-11-08T18:27:46.4219651Z Seed failed: new row for relation "organization_users" violates check constraint "organization_users_role_known"
+2026-11-08T18:27:46.4259201Z node tests/e2e/seed-governed-workflow.cjs exited with code 1
+2026-11-08T18:27:46.4364473Z ##[error]Process completed with exit code 1.
+
+2026-11-08T18:27:50.6982610Z Updated user: e2e-admin@trialsage.test (id=2)
+2026-11-08T18:27:50.7709228Z Updated user: e2e-author@trialsage.test (id=3)
+2026-11-08T18:27:50.7760867Z Seed failed: new row for relation "organization_users" violates check constraint "organization_users_role_known"
+2026-11-08T18:27:50.7799821Z node tests/e2e/seed-governed-workflow.cjs exited with code 1
+2026-11-08T18:27:50.7899232Z ##[error]Process completed with exit code 1.
+
+2026-11-08T18:27:53.7934553Z Updated user: e2e-admin@trialsage.test (id=2)
+2026-11-08T18:27:53.8661708Z Updated user: e2e-author@trialsage.test (id=3)
+2026-11-08T18:27:53.8711885Z Seed failed: new row for relation "organization_users" violates check constraint "organization_users_role_known"
+2026-11-08T18:27:53.8750277Z node tests/e2e/seed-governed-workflow.cjs exited with code 1
+2026-11-08T18:27:53.8854713Z ##[error]Process completed with exit code 1.
+
+Source comparison: the workflow, runner, admin seed, governed seed, install/deploy runners and organization_users role-constraint migration are unchanged between the immediate parent and c88d892390a15f01d258f7a72fb597858aaf4497.
+The fresh-schema constraint admits canonical member, not the fixture's author persona. scripts/run-e2e-smoke.mjs awaits seedIdentities before startDevServer and Playwright dispatch.
+Proposed/authorized repair is confined to the existing test seed: retain the author persona/email/userIds.author, and persist organizationRole=member for that actor. No auth policy, constraint or workflow change.
+This excerpt establishes the baseline blocker only; it does not qualify browser behavior beyond the failed seed.
+

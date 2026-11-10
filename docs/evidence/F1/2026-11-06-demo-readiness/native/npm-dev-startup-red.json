@@ -1,0 +1,13 @@
+{
+  "command": "npm run dev",
+  "packageScriptAtRed": "bash -lc: source scripts/startup.sh && main && NODE_OPTIONS=--trace-warnings tsx --inspect=0 server/index.ts",
+  "nodeVersion": "v22.23.4",
+  "codespacePreflightPassed": true,
+  "runtimeRole": "app_service",
+  "superuser": false,
+  "bypassRls": false,
+  "failure": "bash: line 1: tsx: command not found",
+  "fallback": "Same startup main, explicit Node22 + existing tsx CLI; temporary diagnostic, not npm dev proof",
+  "databaseIsolatedFromNativeFixtures": true,
+  "observedZombieExitStatus": 127
+}

@@ -16,7 +16,27 @@ vi.mock('../navEntitlements', () => ({ useNavEntitlements: () => ({ launchScopeE
 
 import { ReportEngine } from '../surfaces/ReportEngine';
 import { Biostatistics } from '../surfaces/Biostatistics';
-import { BiostatWorkbench } from '../surfaces/BiostatWorkbench';
+import { isStatisticalSave, statisticalSaveReceipt } from './_statistical-handoff-fixture';
+import { DefensibilitySection, DesignCalculatorsSection } from '../surfaces/BiostatWorkbench';
+import { C2CToast, useToast } from '../toast';
+
+/* `BiostatWorkbench` was a registered surface until 2026-11-09, when the merge
+   `docs/SURFACE_CONSOLIDATION_2026-08.md` §5 decided ("Survivor: biostatistics.
+   Fold the workbench in as a tab") was carried out. Its two capabilities are
+   now sections of the one Biostatistics surface. This harness composes them
+   exactly as `surfaces/Biostatistics.tsx` does — same components, same toast —
+   so every case below still exercises the real thing. */
+function BiostatWorkbench(p: { onNav?: (id: string) => void }) {
+  const [toast, fireToast] = useToast();
+  return (
+    <div className="page-inner" data-work-area="biostatistics">
+      <DefensibilitySection fireToast={fireToast} />
+      <DesignCalculatorsSection fireToast={fireToast} onNav={p.onNav} />
+      <C2CToast msg={toast} />
+    </div>
+  );
+}
+
 import { PvCockpit } from '../surfaces/PvCockpit';
 import { CmChange } from '../surfaces/CmcModule';
 import { CmQuality } from '../surfaces/CmcQuality';
@@ -126,7 +146,7 @@ const BOARD = {
   meta: { projectId: PROGRAM, portfolioProvisioned: true, sectionsProvisioned: null, generatedAt: '2026-10-16T12:00:00Z' },
 };
 function authoringCalls() {
-  return apiRequest.mock.calls.filter(([method, url]) => method === 'POST' && String(url).startsWith('/api/authoring/'));
+  return apiRequest.mock.calls.filter(([method, url, body]) => method === 'POST' && (String(url).startsWith('/api/authoring/') || isStatisticalSave(url, body)));
 }
 function specialistResponse(method: string, url: string): Response | Promise<Response> {
   if (url.startsWith('/api/cmc/module3-board')) return json(200, { success: true, data: BOARD });
@@ -169,6 +189,14 @@ beforeEach(async () => {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string, body?: Record<string, unknown>) => {
     if (method === 'GET' && url.startsWith('/api/authoring/')) return readReply(url);
+    if (method === 'POST' && isStatisticalSave(url, body)) {
+      const response = await createReply();
+      if (!response.ok) return response;
+      const payload = await response.clone().json();
+      if (payload.success !== true || !payload.document) return response;
+      const receipt = statisticalSaveReceipt(body, payload.document.id, { organizationId: 8, governance: payload.governance });
+      return json(response.status, { ...receipt, ...(payload.governance ? {} : { governance: undefined }) });
+    }
     if (method === 'POST' && url === '/api/authoring/docs') return createReply();
     if (method === 'POST' && url === '/api/authoring/sections') {
       sectionCode = String(body?.code); return sectionReply();
@@ -193,12 +221,36 @@ function openReport() { fireEvent.click(screen.getByRole('button', { name: 'Open
 const settle = () => act(async () => { await Promise.resolve(); await Promise.resolve(); await Promise.resolve(); });
 
 describe('independent actual caller recovery admission', () => {
+  it.each([false, true])('atomic statistical recovery never continues without its full saved section (mismatched basis: %s)', async mismatched => {
+    const docId = '55555555-5555-4555-8555-555555555555';
+    createReply = () => json(503, { success: false, ok: false, code: 'AUTHORING_CREATE_COMMIT_UNCONFIRMED',
+      creationOutcome: 'unconfirmed', retryAllowed: false, recovery: { organizationId: 8, programId: PROGRAM, documentId: docId } });
+    readReply = url => {
+      const call = apiRequest.mock.calls.find(([, path, body]) => isStatisticalSave(path, body))!;
+      const receipt = statisticalSaveReceipt(call[2], docId, { organizationId: 8 });
+      if (mismatched) receipt.data.doc.provenance.statisticalSource.basis = { kind: 'worked_example', label: 'Different calculation' };
+      if (url.includes('?')) return json(200, { success: true, documents: [{ id: docId, title: 'Statistical draft', program_id: PROGRAM }] });
+      return url.endsWith('/sections') ? json(200, { success: true, sections: [] }) : json(200, { success: true, document: receipt.data.doc });
+    };
+    const onNav = vi.fn();
+    render(<Biostatistics {...props('biostatistics', onNav)} />);
+    await waitFor(() => expect(document.querySelector('.bs-doc-render')?.textContent).toContain('Sample Size Rationale'));
+    fireEvent.click(screen.getByRole('button', { name: 'Copy example to editor' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Check document sections' }));
+    await waitFor(() => expect(document.body.textContent).toContain(mismatched
+      ? 'Could not verify the current working document and sections' : 'a section-only continuation cannot preserve'));
+    expect(screen.queryByRole('button', { name: 'Continue saving text' })).toBeNull();
+    expect(authoringCalls()).toHaveLength(1); expect(onNav).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Copy example to editor' })); await settle();
+    expect(authoringCalls()).toHaveLength(1);
+  });
+
   it('Biostatistics Open and Attach share one synchronous creation lane', async () => {
     const pending = deferred<Response>(); createReply = () => pending.promise;
     render(<Biostatistics {...props('biostatistics')} />);
     await waitFor(() => expect(document.querySelector('.bs-doc-render')?.textContent).toContain('Sample Size Rationale'));
-    const open = screen.getByRole('button', { name: 'Open in document editor' });
-    const attach = screen.getByRole('button', { name: 'File it to the dossier' });
+    const open = screen.getByRole('button', { name: 'Copy example to editor' });
+    const attach = screen.getByRole('button', { name: 'Save the example as a working document' });
     act(() => { fireEvent.click(open); fireEvent.click(attach); });
     expect(authoringCalls()).toHaveLength(1);
     await act(async () => pending.resolve(docReceipt()));
@@ -225,10 +277,10 @@ async function clickRecovery(label: string) {
 async function prepareBiostatistics() {
   const view = render(<Biostatistics {...props('biostatistics')} />);
   await waitFor(() => expect(document.querySelector('.bs-doc-render')?.textContent).toContain('Sample Size Rationale'));
-  return { ...view, action: screen.getByRole('button', { name: 'File it to the dossier' }) };
+  return { ...view, action: screen.getByRole('button', { name: 'Save the example as a working document' }) };
 }
 async function prepareCalculator() {
-  const view = render(<BiostatWorkbench {...props('biostat-workbench')} />);
+  const view = render(<BiostatWorkbench {...props('biostatistics')} />);
   for (const [label, value] of [[/Prior mean effect/, '0.4'], [/^Prior SD/, '0.15'], [/^n per arm/, '120']] as const) {
     fireEvent.change(screen.getByLabelText(label), { target: { value } });
   }

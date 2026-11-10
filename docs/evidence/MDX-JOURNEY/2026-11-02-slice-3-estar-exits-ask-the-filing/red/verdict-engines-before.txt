@@ -1,0 +1,11 @@
+ × server/services/pathway-engines/device-assembly/__tests__/assemble-device-submission.test.ts > assembleDeviceSubmission — a filed copy that is not the document's text > produces nothing, and names the section and the remedy 5ms
+   → a rewritten filed copy read as a producible official eSTAR: expected true to be false // Object.is equality
+ × server/services/pathway-engines/device-assembly/__tests__/assemble-device-submission.test.ts > assembleDeviceSubmission — a filed copy that is not the document's text > is unchanged when the filing agrees, or was not compared 1ms
+   → expected undefined to deeply equal []
+ × server/services/pathway-engines/estar/__tests__/estar-filing-readiness.test.ts > a filed copy that is not the document's text > blocks filing, naming the section and the remedy 5ms
+   → a submission with a rewritten filed copy read as "Can file now": expected true to be false // Object.is equality
+ × server/services/pathway-engines/estar/__tests__/estar-filing-readiness.test.ts > a filed copy that is not the document's text > is silent when the filing agrees, or was not compared 1ms
+   → expected undefined to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  4 failed | 24 passed (28)

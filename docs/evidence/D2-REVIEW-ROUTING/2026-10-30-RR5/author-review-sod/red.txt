@@ -1,0 +1,229 @@
+# Red: the author signs REVIEWER on their own Authoring document (RR5 follow-up, Open item 2)
+#
+# Code under test: HEAD 619052719, run from a plain `git archive HEAD` export with the new test file
+# copied in. The export's server/routes/authoring.router.ts was checked byte-identical to HEAD's.
+# Suite: tests/db/review-route-authoring-rr5.dbtest.ts, through the real authoring router behind the
+# real object gate and the real signing ceremony (a bcrypt password re-verified on the signing
+# transaction).
+# Database: platform_ci_vault_fixture_sod, built fresh by scripts/db/provision-test-db.sh
+#   (C2C_TESTDB=c2c_sod_fresh), then node scripts/db/deploy-migrate.mjs, then renamed.
+# Posture: RLS_ENFORCE=on; the router's runtime role is app_service (APP_DATABASE_URL).
+# Accounts: synthetic dbtest-rr5-<run>-<who>@example.test only. No credential appears below.
+#
+# Expected: the three defect cases fail. Each was answered 200 and wrote a signature, or froze the
+# document. The controls pass: AUTHOR e-sign and freeze, a non-author's REVIEWER with no route, the
+# author on a live route refused ROUTE_NOT_NAMED, and every RR5 case.
+# Result: 3 failed, 20 passed (23).
+#   x with no route: the author's REVIEWER e-sign is refused 403 ...           -> 200, signature written
+#   x after the route completes: ... the author's is refused the same way     -> 200, signature written
+#   x a REVIEWER freeze by the author is refused 403 before the credential ... -> 200, document frozen
+#
+
+ RUN  v4.1.7 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/2dce5675-71af-532e-b288-abcf4efad803/scratchpad/head
+
+{"level":30,"time":"2026-10-30T15:36:21.492Z","pid":28653,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-10-30T15:36:21.495Z","pid":28653,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-10-30T15:36:21.495Z","pid":28653,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stderr | tests/db/review-route-authoring-rr5.dbtest.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stdout | tests/db/review-route-authoring-rr5.dbtest.ts
+[database] Database connection successful
+
+stdout | tests/db/review-route-authoring-rr5.dbtest.ts
+✅ Template tables initialized
+
+{"level":30,"time":"2026-10-30T15:36:27.586Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc d788f18c-6946-484c-8f96-728405de9a61 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:27.624Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc d788f18c-6946-484c-8f96-728405de9a61 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:27.778Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc d788f18c-6946-484c-8f96-728405de9a61 by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > the request and its route commit together (RR5) > one request writes the review rows, the grants, the route header and each reviewer’s task, and tells each reviewer 363ms
+{"level":30,"time":"2026-10-30T15:36:27.908Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 672c51c3-0ab3-407f-8a8c-14a273b0ac1b by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:27.945Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 672c51c3-0ab3-407f-8a8c-14a273b0ac1b by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > the request and its route commit together (RR5) > or neither does: a reviewer the validator refuses, after the request rows were written, leaves nothing 173ms
+{"level":30,"time":"2026-10-30T15:36:28.056Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 70ffd58b-6584-4637-8c75-958934df6717 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:28.082Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 70ffd58b-6584-4637-8c75-958934df6717 by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > the request and its route commit together (RR5) > a request with no due date, or no reason, is refused with nothing written 111ms
+{"level":30,"time":"2026-10-30T15:36:28.163Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc f8243789-0ee0-4b8e-b4a4-63caab225873 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:28.201Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc f8243789-0ee0-4b8e-b4a4-63caab225873 by d***@example.test"}
+{"level":40,"time":"2026-10-30T15:36:28.310Z","pid":28653,"hostname":"vm","context":{"tenantId":26,"principalId":"44","method":"GET","path":"/authoring/documents/f8243789-0ee0-4b8e-b4a4-63caab225873/route-candidates","action":"edit","docId":"f8243789-0ee0-4b8e-b4a4-63caab225873","sectionId":null,"reason":"permission-denied"},"msg":"[authoring-object-authorization] Authoring object mutation denied"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > the request and its route commit together (RR5) > the picker’s read answers with the one validator: a member without signing authority is refused, and why, before anything is sent 198ms
+{"level":30,"time":"2026-10-30T15:36:28.355Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 986badc9-e578-4909-bd21-524cfbd84a3d by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:28.388Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 986badc9-e578-4909-bd21-524cfbd84a3d by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:28.476Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 986badc9-e578-4909-bd21-524cfbd84a3d by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:28.606Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 986badc9-e578-4909-bd21-524cfbd84a3d by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > the request and its route commit together (RR5) > asking another reviewer while the route is open on the same content adds them to it 330ms
+{"level":30,"time":"2026-10-30T15:36:28.703Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 87f839ef-4740-4e66-a19f-c27db6f04135 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:28.733Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 87f839ef-4740-4e66-a19f-c27db6f04135 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:28.834Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 87f839ef-4740-4e66-a19f-c27db6f04135 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:28.935Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 87f839ef-4740-4e66-a19f-c27db6f04135 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:29.027Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 87f839ef-4740-4e66-a19f-c27db6f04135 by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > a REVIEWER /e-sign closes the reviewer’s route task (RR5, §2.8) > stamps the signature on the member row, cites it, tells the sender, and the last reviewer completes the route 395ms
+{"level":30,"time":"2026-10-30T15:36:29.077Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc b5baf40d-2ee5-49fa-865c-8f531062bcb4 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:29.104Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc b5baf40d-2ee5-49fa-865c-8f531062bcb4 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:29.172Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc b5baf40d-2ee5-49fa-865c-8f531062bcb4 by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > a REVIEWER /e-sign closes the reviewer’s route task (RR5, §2.8) > refuses, before the credential, a reviewer the route does not name: a wrong password is never checked 190ms
+{"level":30,"time":"2026-10-30T15:36:29.278Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc a275721f-8e9f-4805-85ee-608169748253 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:29.310Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc a275721f-8e9f-4805-85ee-608169748253 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:29.435Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc a275721f-8e9f-4805-85ee-608169748253 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:29.561Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc a275721f-8e9f-4805-85ee-608169748253 by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > a REVIEWER /e-sign closes the reviewer’s route task (RR5, §2.8) > refuses a reviewer whose step has not opened, one after another 449ms
+{"level":30,"time":"2026-10-30T15:36:29.733Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 4ec14611-a65f-40d7-97d0-cc2b136d853e by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:29.768Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 4ec14611-a65f-40d7-97d0-cc2b136d853e by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:29.867Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 4ec14611-a65f-40d7-97d0-cc2b136d853e by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > a REVIEWER /e-sign closes the reviewer’s route task (RR5, §2.8) > refuses a review signature over content the route is not about 244ms
+{"level":30,"time":"2026-10-30T15:36:29.949Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 86052c71-d4e0-4127-8c3e-e8588dbb56b3 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:29.966Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 86052c71-d4e0-4127-8c3e-e8588dbb56b3 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:30.002Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 86052c71-d4e0-4127-8c3e-e8588dbb56b3 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:30.079Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 02f368e0-5115-40b9-bcee-097c5b6ea888 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:30.118Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 02f368e0-5115-40b9-bcee-097c5b6ea888 by d***@example.test"}
+ × tests/db/review-route-authoring-rr5.dbtest.ts > an author does not sign REVIEWER on their own document, route or none (RR5 follow-up, §2.13, 21 CFR 11.10(g)) > with no route: the author’s REVIEWER e-sign is refused 403, before the credential, and no signature is written 105ms
+   → {"success":true,"signatureId":"9cd166b5-04a3-4131-b48b-a60f0d00b714","documentHash":"b7231055bf018f4bc6fcad4d127c411eda0b63bd15c100c0d178d0421f025bb0","digest":"4a3199e8d8e48f27d9e064794c095f59a6b803f0a3b11519450778fdc9371d25","covers":null,"workflowSourceAdoption":null,"signedAt":"2026-10-30T15:36:30.007Z","filingApproval":null}: expected { status: 200, code: undefined } to deeply equal { status: 403, …(1) }
+{"level":30,"time":"2026-10-30T15:36:30.204Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 02f368e0-5115-40b9-bcee-097c5b6ea888 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:30.286Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 02f368e0-5115-40b9-bcee-097c5b6ea888 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:30.334Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 02f368e0-5115-40b9-bcee-097c5b6ea888 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:30.382Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 4b1c85d1-5650-462f-9e22-70e778d029a9 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:30.401Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 4b1c85d1-5650-462f-9e22-70e778d029a9 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:30.452Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc 4b1c85d1-5650-462f-9e22-70e778d029a9 by d***@example.test"}
+ × tests/db/review-route-authoring-rr5.dbtest.ts > an author does not sign REVIEWER on their own document, route or none (RR5 follow-up, §2.13, 21 CFR 11.10(g)) > after the route completes: the named reviewer’s signature closes it, and the author’s is refused the same way 314ms
+   → {"success":true,"signatureId":"9361c198-184e-45a0-b30f-ea2a7eeb8954","documentHash":"b7231055bf018f4bc6fcad4d127c411eda0b63bd15c100c0d178d0421f025bb0","digest":"4a3199e8d8e48f27d9e064794c095f59a6b803f0a3b11519450778fdc9371d25","covers":null,"workflowSourceAdoption":null,"signedAt":"2026-10-30T15:36:30.338Z","filingApproval":null}: expected { status: 200, code: undefined } to deeply equal { status: 403, …(1) }
+{"level":30,"time":"2026-10-30T15:36:30.497Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 3952905c-96c2-4e72-ab26-9c3acbc0a7c9 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:30.541Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 3952905c-96c2-4e72-ab26-9c3acbc0a7c9 by d***@example.test"}
+ × tests/db/review-route-authoring-rr5.dbtest.ts > an author does not sign REVIEWER on their own document, route or none (RR5 follow-up, §2.13, 21 CFR 11.10(g)) > a REVIEWER freeze by the author is refused 403 before the credential: not frozen, no snapshot, no signature 117ms
+   → {"success":true,"contentHash":"f71d17f355188ce2ffea887817b7688fdf3b5d966bf57ddff2ec23789d2ec9bc","version":"v1.0.frozen","signatureId":"1dff8313-08fe-446b-b80c-141e7b6fced7","documentHash":"b7231055bf018f4bc6fcad4d127c411eda0b63bd15c100c0d178d0421f025bb0","frozenAt":"2026-10-30T15:36:30.456Z"}: expected { status: 200, code: undefined } to deeply equal { status: 403, …(1) }
+{"level":30,"time":"2026-10-30T15:36:30.570Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 3952905c-96c2-4e72-ab26-9c3acbc0a7c9 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:30.609Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: FREEZE on doc 3952905c-96c2-4e72-ab26-9c3acbc0a7c9 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:30.659Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 64bfdacb-6781-42b7-86f0-cdc7fd2e6cd8 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:30.689Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 64bfdacb-6781-42b7-86f0-cdc7fd2e6cd8 by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > an author does not sign REVIEWER on their own document, route or none (RR5 follow-up, §2.13, 21 CFR 11.10(g)) > the author still signs AUTHOR, by e-sign and by freeze 158ms
+{"level":30,"time":"2026-10-30T15:36:30.727Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 64bfdacb-6781-42b7-86f0-cdc7fd2e6cd8 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:30.760Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc eb820970-6818-45f5-80e0-a75c413f500c by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:30.777Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc eb820970-6818-45f5-80e0-a75c413f500c by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:30.816Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 20a56623-cfce-44f9-80de-25c620809b4a by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > an author does not sign REVIEWER on their own document, route or none (RR5 follow-up, §2.13, 21 CFR 11.10(g)) > someone who did not write it still signs REVIEWER with no route 115ms
+{"level":30,"time":"2026-10-30T15:36:30.833Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 20a56623-cfce-44f9-80de-25c620809b4a by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:30.900Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc eb820970-6818-45f5-80e0-a75c413f500c by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > the Authoring signature door (RR5 merged with P-59) > closes a member’s task only on their own signature, with REVIEWER, over this document and the routed content 270ms
+{"level":30,"time":"2026-10-30T15:36:31.031Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 97b48901-229e-4666-be29-f790d1e2039e by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:31.056Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 97b48901-229e-4666-be29-f790d1e2039e by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:31.156Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 97b48901-229e-4666-be29-f790d1e2039e by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:31.292Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: document_reviewed on doc 97b48901-229e-4666-be29-f790d1e2039e by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:31.415Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 97b48901-229e-4666-be29-f790d1e2039e by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > a negative verdict returns the route and opens nobody’s step (RR5, §2.9, B5) > “changes requested” is recorded, the route is returned with its reason, every unsigned member is cancelled, the sender is told 437ms
+{"level":30,"time":"2026-10-30T15:36:31.493Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 9a5c8466-acf5-4c71-92c5-c82acb63d2f6 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:31.529Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 9a5c8466-acf5-4c71-92c5-c82acb63d2f6 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:31.607Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 9a5c8466-acf5-4c71-92c5-c82acb63d2f6 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:31.714Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: document_reviewed on doc 9a5c8466-acf5-4c71-92c5-c82acb63d2f6 by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > a negative verdict returns the route and opens nobody’s step (RR5, §2.9, B5) > an approval verdict records the verdict and leaves the route task to the signature 293ms
+{"level":30,"time":"2026-10-30T15:36:31.772Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 0e49844a-7163-459b-ac94-64a7decd33e1 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:31.795Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 0e49844a-7163-459b-ac94-64a7decd33e1 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:31.893Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 0e49844a-7163-459b-ac94-64a7decd33e1 by d***@example.test"}
+(node:28653) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+{"level":30,"time":"2026-10-30T15:36:32.044Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 0e49844a-7163-459b-ac94-64a7decd33e1 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:32.367Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 0e49844a-7163-459b-ac94-64a7decd33e1 by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > the Review board reads a reviewer’s route signature (RR5 phone acceptance, open item) > a reviewer who signed is no longer awaiting review; one who has not is; the request names who asked 701ms
+{"level":30,"time":"2026-10-30T15:36:32.461Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 619cb79d-e79e-4670-89f4-d4aa292aa92d by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:32.483Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 619cb79d-e79e-4670-89f4-d4aa292aa92d by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:32.577Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 619cb79d-e79e-4670-89f4-d4aa292aa92d by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:32.628Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 619cb79d-e79e-4670-89f4-d4aa292aa92d by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > the Review board reads a reviewer’s route signature (RR5 phone acceptance, open item) > a signature over content the document no longer has is not a review of it: the reviewer is awaiting again 253ms
+{"level":30,"time":"2026-10-30T15:36:32.714Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc f8eaae46-db38-4018-a65d-40ff2ad3a3cc by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:32.732Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc f8eaae46-db38-4018-a65d-40ff2ad3a3cc by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:32.822Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc f8eaae46-db38-4018-a65d-40ff2ad3a3cc by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:32.929Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc f8eaae46-db38-4018-a65d-40ff2ad3a3cc by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:33.018Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc f8eaae46-db38-4018-a65d-40ff2ad3a3cc by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > reassign and hand back (RR5 with RR3’s acts) > reassigns a reviewer: the task is kept, the review request moves, and the new reviewer signs 338ms
+{"level":30,"time":"2026-10-30T15:36:33.062Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 526b0116-5e64-453c-95eb-1702b5b6175b by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:33.080Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 526b0116-5e64-453c-95eb-1702b5b6175b by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:33.164Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 526b0116-5e64-453c-95eb-1702b5b6175b by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > reassign and hand back (RR5 with RR3’s acts) > a reviewer hands back: their task waits on the sender, who is told, and they do not sign meanwhile 301ms
+{"level":30,"time":"2026-10-30T15:36:33.360Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 49a10820-cb47-4b43-ba02-d0255704d5d4 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:33.379Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 49a10820-cb47-4b43-ba02-d0255704d5d4 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:33.461Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: review_requested on doc 49a10820-cb47-4b43-ba02-d0255704d5d4 by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > reassign and hand back (RR5 with RR3’s acts) > another organization’s member reads no round 159ms
+{"level":30,"time":"2026-10-30T15:36:33.529Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 9910f24d-20d9-48cf-b54d-d6a8116bcef4 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:33.559Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 9910f24d-20d9-48cf-b54d-d6a8116bcef4 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:33.636Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: document_reviewed on doc 9910f24d-20d9-48cf-b54d-d6a8116bcef4 by d***@example.test"}
+{"level":30,"time":"2026-10-30T15:36:33.694Z","pid":28653,"hostname":"vm","context":{},"msg":"[authoring-evidence] Audit trail created: E_SIGN on doc 9910f24d-20d9-48cf-b54d-d6a8116bcef4 by d***@example.test"}
+ ✓ tests/db/review-route-authoring-rr5.dbtest.ts > grandfathering: a review requested before RR5 keeps today’s loop (§2.13, M1) > a reviewer with a request row and a task and no route: the verdict completes the task as before, and no route is written 211ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/review-route-authoring-rr5.dbtest.ts > an author does not sign REVIEWER on their own document, route or none (RR5 follow-up, §2.13, 21 CFR 11.10(g)) > with no route: the author’s REVIEWER e-sign is refused 403, before the credential, and no signature is written
+AssertionError: {"success":true,"signatureId":"9cd166b5-04a3-4131-b48b-a60f0d00b714","documentHash":"b7231055bf018f4bc6fcad4d127c411eda0b63bd15c100c0d178d0421f025bb0","digest":"4a3199e8d8e48f27d9e064794c095f59a6b803f0a3b11519450778fdc9371d25","covers":null,"workflowSourceAdoption":null,"signedAt":"2026-10-30T15:36:30.007Z","filingApproval":null}: expected { status: 200, code: undefined } to deeply equal { status: 403, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "code": "SEPARATION_OF_DUTIES",
+-   "status": 403,
++   "code": undefined,
++   "status": 200,
+  }
+
+ ❯ answered tests/db/review-route-authoring-rr5.dbtest.ts:116:89
+    114| /** A reply's status, and its refusal code when one is named; the body…
+    115| const answered = (res: { status: number; body: { code?: string } }, st…
+    116|   expect({ status: res.status, code: code && res.body.code }, JSON.str…
+       |                                                                                         ^
+    117| async function verdict(who: Who, docId: string, review_status: string,…
+    118|   const read = await call(who, 'get', `/documents/${docId}/reviews`);
+ ❯ tests/db/review-route-authoring-rr5.dbtest.ts:358:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  tests/db/review-route-authoring-rr5.dbtest.ts > an author does not sign REVIEWER on their own document, route or none (RR5 follow-up, §2.13, 21 CFR 11.10(g)) > after the route completes: the named reviewer’s signature closes it, and the author’s is refused the same way
+AssertionError: {"success":true,"signatureId":"9361c198-184e-45a0-b30f-ea2a7eeb8954","documentHash":"b7231055bf018f4bc6fcad4d127c411eda0b63bd15c100c0d178d0421f025bb0","digest":"4a3199e8d8e48f27d9e064794c095f59a6b803f0a3b11519450778fdc9371d25","covers":null,"workflowSourceAdoption":null,"signedAt":"2026-10-30T15:36:30.338Z","filingApproval":null}: expected { status: 200, code: undefined } to deeply equal { status: 403, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "code": "SEPARATION_OF_DUTIES",
+-   "status": 403,
++   "code": undefined,
++   "status": 200,
+  }
+
+ ❯ answered tests/db/review-route-authoring-rr5.dbtest.ts:116:89
+    114| /** A reply's status, and its refusal code when one is named; the body…
+    115| const answered = (res: { status: number; body: { code?: string } }, st…
+    116|   expect({ status: res.status, code: code && res.body.code }, JSON.str…
+       |                                                                                         ^
+    117| async function verdict(who: Who, docId: string, review_status: string,…
+    118|   const read = await call(who, 'get', `/documents/${docId}/reviews`);
+ ❯ tests/db/review-route-authoring-rr5.dbtest.ts:371:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  tests/db/review-route-authoring-rr5.dbtest.ts > an author does not sign REVIEWER on their own document, route or none (RR5 follow-up, §2.13, 21 CFR 11.10(g)) > a REVIEWER freeze by the author is refused 403 before the credential: not frozen, no snapshot, no signature
+AssertionError: {"success":true,"contentHash":"f71d17f355188ce2ffea887817b7688fdf3b5d966bf57ddff2ec23789d2ec9bc","version":"v1.0.frozen","signatureId":"1dff8313-08fe-446b-b80c-141e7b6fced7","documentHash":"b7231055bf018f4bc6fcad4d127c411eda0b63bd15c100c0d178d0421f025bb0","frozenAt":"2026-10-30T15:36:30.456Z"}: expected { status: 200, code: undefined } to deeply equal { status: 403, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "code": "SEPARATION_OF_DUTIES",
+-   "status": 403,
++   "code": undefined,
++   "status": 200,
+  }
+
+ ❯ answered tests/db/review-route-authoring-rr5.dbtest.ts:116:89
+    114| /** A reply's status, and its refusal code when one is named; the body…
+    115| const answered = (res: { status: number; body: { code?: string } }, st…
+    116|   expect({ status: res.status, code: code && res.body.code }, JSON.str…
+       |                                                                                         ^
+    117| async function verdict(who: Who, docId: string, review_status: string,…
+    118|   const read = await call(who, 'get', `/documents/${docId}/reviews`);
+ ❯ tests/db/review-route-authoring-rr5.dbtest.ts:377:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 20 passed (23)
+   Start at  15:36:16
+   Duration  16.89s (transform 6.93s, setup 122ms, import 277ms, tests 15.98s, environment 0ms)
+

@@ -1,0 +1,29 @@
+
+ RUN  v4.1.7 /workspace/Concept2Cure
+
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > narrative facts come from the rows > reads the fatal SAE of subject 8 (index 7) with its onset, seriousness and source rows 14ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > narrative facts come from the rows > converts an ADaM numeric date (SAS days since 1960-01-01) and refuses partial dates 2ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > passes the template narrative, which states each onset by study day 12ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses a narrative whose onset day differs from ADAE ASTDY, even when the wrong day is another recorded fact 6ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses a narrative whose onset date differs from ADAE ASTDT 6ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses unsourced age, grade, severity, death and omitted events 9ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > discards a model rewrite that moves the onset, keeps the template, and records why 4ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > discards a model rewrite that changes a number the gate has no pattern for (exposure days), or restates a date or day in another form 4ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses a severity stated for an event whose rows record none 3ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > accepts a model rewrite that changes only connective prose, and names the model 4ms
+ ✓ server/services/csr/__tests__/narrative-reconciliation.test.ts > the fact gate > refuses a subject whose ADSL death has no fatal ADAE event, by name 1ms
+ ✓ server/services/ana/__tests__/safety-narrative.test.ts > composeSafetyNarrative > assembles a complete serious-AE narrative in order with no missing fields 2ms
+ ✓ server/services/ana/__tests__/safety-narrative.test.ts > composeSafetyNarrative > flags missing required fields and never fabricates them 1ms
+ ✓ server/services/ana/__tests__/safety-narrative.test.ts > composeSafetyNarrative > uses onset date when day-on-study is absent and closes with causality vs study drug 0ms
+ ✓ server/services/ana/__tests__/safety-narrative.test.ts > composeSafetyNarrative — CDISC terms as a medical writer states them > names the event as a (serious) adverse event with its intensity or grade 0ms
+ ✓ server/services/ana/__tests__/safety-narrative.test.ts > composeSafetyNarrative — CDISC terms as a medical writer states them > states each seriousness criterion as what the event did 0ms
+ ✓ server/services/ana/__tests__/safety-narrative.test.ts > composeSafetyNarrative — CDISC terms as a medical writer states them > states the action taken with the study drug (AEACN) as a sentence 0ms
+ ✓ server/services/ana/__tests__/safety-narrative.test.ts > composeSafetyNarrative — CDISC terms as a medical writer states them > states the outcome (AEOUT) as a sentence 0ms
+ ✓ server/services/ana/__tests__/safety-narrative.test.ts > composeSafetyNarrative — CDISC terms as a medical writer states them > states dechallenge and rechallenge as a sentence 0ms
+ ✓ server/services/ana/__tests__/safety-narrative.test.ts > composeSafetyNarrative — CDISC terms as a medical writer states them > states the investigator's causality category (AEREL) in words, keeping the category 1ms
+
+ Test Files  2 passed (2)
+      Tests  20 passed (20)
+   Start at  19:55:52
+   Duration  766ms (transform 242ms, setup 89ms, import 240ms, tests 77ms, environment 0ms)
+

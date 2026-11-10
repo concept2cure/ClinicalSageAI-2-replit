@@ -1,0 +1,9 @@
+ × client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > keeps the facts the figures carried, in brackets, and tells AnA what the register is 12ms
+ × client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > states the register in one sentence above its rows 19ms
+ × client/src/concept2cure/quality/__tests__/ChangeControlProject.test.tsx > a change log scoped to the open project > counts its own rows, not the organisation summary 18ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  3 failed | 44 passed (47)
+ × client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > is a table with column headers, one body per document 259ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 14 skipped (15)

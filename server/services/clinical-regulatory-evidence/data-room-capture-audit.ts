@@ -59,6 +59,7 @@ export async function recordCapture(
       clientProgramId: source.clientProgramId,
       clientWorkspaceId: source.clientWorkspaceId,
       origin: typeof provenance?.origin === 'string' ? provenance.origin : null,
+      ...(provenance?.origin === 'native_record_snapshot' ? { nativeRecord: provenance.recordSnapshot ?? null } : {}),
       fileUploadId: typeof provenance?.fileUploadId === 'string' ? provenance.fileUploadId : null,
       supersedes,
       capturedBy: actorId,

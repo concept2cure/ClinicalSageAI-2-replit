@@ -1,48 +1,143 @@
-<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="_base.css"><style>
-.stack { display:flex; flex-direction:column; gap: 14px; }
-.lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-subtle); margin-bottom: 6px; font-weight: 500;}
-.input {
-  width: 100%; box-sizing: border-box;
-  padding: 10px 14px; background: white;
-  border: 1px solid var(--border); border-radius: var(--radius-lg);
-  font-family: var(--font-sans); font-size: 13px; color: var(--ink);
-  outline: none; transition: all 200ms var(--ease);
+<!doctype html><html><head><meta charset="utf-8"><title>Inputs</title><link rel="stylesheet" href="_base.css"><style>
+/* Copied from client/src/concept2cure/v2/styles/app-v2.css, the D0 foundations block (inputs). */
+.c2c-v2 input:focus-visible,
+.c2c-v2 textarea:focus-visible,
+.c2c-v2 select:focus-visible { outline: 2px solid var(--accent-200); outline-offset: 2px; border-radius: var(--radius-md); }
+.c2c-v2 :is(.c2c-input, .de-input, .de-select, .de-textarea) {
+  display: block; width: 100%; font: inherit; font-size: var(--fs-body); line-height: 1.4; color: var(--text-100);
+  background: var(--bg-000); border: 1px solid var(--border-control); border-radius: var(--radius-lg);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
-.input::placeholder { color: var(--ink-subtle); }
-.input:focus { border-color: var(--accent-main-100); box-shadow: 0 0 0 3px var(--accent-subtle); }
-.composer {
-  background: white; border: 1px solid var(--border);
-  border-radius: 16px; padding: 14px 14px 10px;
-  box-shadow: 0 0 0 0 transparent;
+.c2c-v2 .c2c-input { min-height: 32px; padding: 5px 10px; }                       /* inline: matches .btn */
+.c2c-v2 :is(.de-input, .de-select) { min-height: 36px; padding: 7px 12px; }         /* form: matches .de-btn */
+.c2c-v2 .de-textarea { min-height: 80px; padding: 8px 12px; resize: vertical; line-height: 1.5; }
+.c2c-v2 :is(.c2c-input, .de-input, .de-textarea)::placeholder { color: var(--text-300); font-style: italic; }
+.c2c-v2 :is(.c2c-input, .de-input, .de-select, .de-textarea):is(:focus, :focus-visible) {
+  outline: 2px solid transparent; border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-000);
 }
-.composer:focus-within { border-color: var(--border-strong); box-shadow: var(--shadow-glow); }
-.composer-input {
-  font-family: var(--font-sans); font-size: 15px; color: var(--ink);
-  border: 0; outline: none; width: 100%; resize: none; background: transparent;
-  min-height: 24px; padding: 0; line-height: 1.5;
+.c2c-v2 :is(select.c2c-input, .de-select) {
+  appearance: none; padding-right: 32px; background-repeat: no-repeat; background-position: right 10px center;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a8880' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
 }
-.composer-actions { display:flex; justify-content: space-between; align-items: center; margin-top: 8px; gap: 8px; }
-.composer-actions .left { display: flex; gap: 4px; color: var(--ink-muted); align-items: center; }
-.composer-actions .left svg { display: block; }
-.chip { display:inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border: 1px solid var(--border); border-radius: 9999px; font-size: 12px; font-weight: 500; color: var(--ink-body); background: var(--bg-050); }
-.send { width: 30px; height: 30px; padding: 0; border-radius: 9999px; background: var(--accent-main-100); color: #fff; border:0; display:inline-flex; align-items:center; justify-content:center; cursor: pointer; }
+.c2c-v2 :is(.c2c-input, .de-input, .de-select, .de-textarea)[readonly] { background: var(--bg-100); color: var(--text-300); }
+.c2c-v2 :is(.c2c-input, .de-input, .de-select, .de-textarea):disabled { opacity: .6; cursor: not-allowed; }
+.c2c-v2 .de-label { display: block; margin: 0 0 6px; font-size: var(--fs-small); font-weight: 500; color: var(--text-200); }
+.c2c-v2 .de-label .req { color: var(--error); margin-left: 3px; }
+.c2c-v2 .de-desc { margin: 0 0 6px; font-size: var(--fs-caption); line-height: 1.45; color: var(--text-300); }
+@media (pointer: coarse) {
+  .c2c-v2 :is(.c2c-input, .de-input, .de-select) { min-height: 44px; font-size: 16px; } /* iOS does not zoom at ≥16px */
+}
+.c2c-v2 :is(.landing-input, .pj-composer textarea, .ct-composer textarea, .cmdk-in input):focus-visible { outline: none; }
+/* Copied from app-v2.css, the composer's chrome (each composer keeps its own layout). */
+.c2c-v2 :is(.landing-composer, .pj-composer, .ct-composer) {
+  background: var(--canvas-elevated); border: 1px solid var(--border); border-radius: 20px;
+  box-shadow: 0 1px 2px rgb(20 20 19 / .04), 0 6px 20px -8px rgb(20 20 19 / .10);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.c2c-v2.dark :is(.landing-composer, .pj-composer, .ct-composer) { box-shadow: 0 1px 2px rgb(0 0 0 / .30), 0 6px 20px -8px rgb(0 0 0 / .45); }
+.c2c-v2 :is(.landing-composer, .pj-composer, .ct-composer):focus-within { border-color: var(--border-focus); outline: 2px solid transparent; }
+.c2c-v2 :is(.landing-input, .pj-composer textarea, .ct-composer textarea) { font-size: 15px; line-height: 1.5; color: var(--text-100); }
+.c2c-v2 :is(.landing-input, .pj-composer textarea, .ct-composer textarea)::placeholder { color: var(--text-300); }
+.c2c-v2 :is(.landing-send, .pj-comp-send, .ct-comp-send) {
+  flex-shrink: 0; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;
+  border: 0; border-radius: var(--radius-lg); background: var(--accent-strong); color: var(--accent-on-strong);
+  transition: background-color var(--dur) var(--ease), opacity var(--dur) var(--ease);
+}
+.c2c-v2 :is(.landing-send, .pj-comp-send, .ct-comp-send) svg { width: 16px; height: 16px; }
+/* Copied from client/src/concept2cure/v2/styles/surfaces-v2.css, the Home composer's own layout. */
+.c2c-v2 .landing-composer{width:100%;padding:0;display:flex;flex-direction:column;overflow:hidden;position:relative;}
+.c2c-v2 .landing-input{width:100%;border:none;outline:none;background:transparent;resize:none;padding:16px 18px 8px;font-family:inherit;}
+.c2c-v2 .landing-crow{display:flex;align-items:center;justify-content:space-between;padding:6px 10px 10px;}
+.c2c-v2 .landing-crow-l{display:flex;align-items:center;gap:4px;position:relative;}
+.c2c-v2 .landing-crow-r{display:flex;align-items:center;gap:6px;position:relative;}
+.c2c-v2 .landing-tool{width:32px;height:32px;border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;color:var(--text-300);font-size:18px;transition:background var(--dur);}
+
+/* ── specimen only ──
+   Focus shown at rest: the declarations are the focus rules above, unchanged. */
+.c2c-v2 .c2c-input.is-focus { outline: 2px solid transparent; border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-000); }
+.c2c-v2 .landing-composer.is-focus { border-color: var(--border-focus); outline: 2px solid transparent; }
+.stack { display: flex; flex-direction: column; gap: 16px; margin-top: 8px; }
+.lbl { margin: 0 0 6px; font-size: var(--fs-caption); font-weight: 500; color: var(--text-300); }
+.landing-tool svg { width: 18px; height: 18px; } /* the icon is 1em of the tool's 18px */
+.note { margin: 12px 0 0; font-size: var(--fs-small); color: var(--text-300); max-width: 68ch; }
 </style></head><body><div class="card">
-  <div class="stack">
-    <div><div class="lbl">Text input · default</div>
-      <input class="input" placeholder="Search your chats…" />
-    </div>
-    <div><div class="lbl">Chat composer · focused</div>
-      <div class="composer">
-        <div class="composer-input" contenteditable="true">Draft Section 2.5 clinical overview for NDA 212345</div>
-        <div class="composer-actions">
-          <div class="left">
-            <div class="chip">AnA 1.0 RI</div>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+<div class="panels">
+  <section class="c2c-v2 panel" aria-label="Light">
+    <div class="label">Light</div>
+    <div class="stack">
+      <div><div class="lbl">Inline field, 32px</div>
+        <input class="c2c-input" placeholder="Search projects" aria-label="Search projects" />
+      </div>
+      <div><div class="lbl">Inline field, focused: one ring</div>
+        <input class="c2c-input is-focus" value="C2C-101" aria-label="Search projects" />
+      </div>
+      <div><div class="lbl">Form field, 36px</div>
+        <label class="de-label">Study title<span class="req">*</span></label>
+        <div class="de-desc">As it appears on the protocol's title page.</div>
+        <input class="de-input" placeholder="e.g. A phase 2 study of C2C-101 in plaque psoriasis" aria-label="Study title" />
+      </div>
+      <div><div class="lbl">Select</div>
+        <select class="de-select" aria-label="Agency"><option>FDA</option><option>EMA</option></select>
+      </div>
+      <div><div class="lbl">Derived, read only</div>
+        <input class="de-input" readonly value="Sequence 0003" aria-label="Sequence" />
+      </div>
+      <div><div class="lbl">Text area</div>
+        <textarea class="de-textarea" placeholder="What the agency asked, in its words" aria-label="Question"></textarea>
+      </div>
+      <div><div class="lbl">Composer, focused</div>
+        <div class="landing-composer is-focus">
+          <textarea class="landing-input" rows="2" aria-label="Message AnA">Draft Section 2.5, the clinical overview, for NDA 212345</textarea>
+          <div class="landing-crow">
+            <div class="landing-crow-l">
+              <span class="landing-tool" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></span>
+            </div>
+            <div class="landing-crow-r">
+              <button class="landing-send" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg></button>
+            </div>
           </div>
-          <button class="send"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button>
         </div>
       </div>
     </div>
-  </div>
+  </section>
+  <section class="c2c-v2 dark panel" aria-label="Dark">
+    <div class="label">Dark</div>
+    <div class="stack">
+      <div><div class="lbl">Inline field, 32px</div>
+        <input class="c2c-input" placeholder="Search projects" aria-label="Search projects" />
+      </div>
+      <div><div class="lbl">Inline field, focused: one ring</div>
+        <input class="c2c-input is-focus" value="C2C-101" aria-label="Search projects" />
+      </div>
+      <div><div class="lbl">Form field, 36px</div>
+        <label class="de-label">Study title<span class="req">*</span></label>
+        <div class="de-desc">As it appears on the protocol's title page.</div>
+        <input class="de-input" placeholder="e.g. A phase 2 study of C2C-101 in plaque psoriasis" aria-label="Study title" />
+      </div>
+      <div><div class="lbl">Select</div>
+        <select class="de-select" aria-label="Agency"><option>FDA</option><option>EMA</option></select>
+      </div>
+      <div><div class="lbl">Derived, read only</div>
+        <input class="de-input" readonly value="Sequence 0003" aria-label="Sequence" />
+      </div>
+      <div><div class="lbl">Text area</div>
+        <textarea class="de-textarea" placeholder="What the agency asked, in its words" aria-label="Question"></textarea>
+      </div>
+      <div><div class="lbl">Composer, focused</div>
+        <div class="landing-composer is-focus">
+          <textarea class="landing-input" rows="2" aria-label="Message AnA">Draft Section 2.5, the clinical overview, for NDA 212345</textarea>
+          <div class="landing-crow">
+            <div class="landing-crow-l">
+              <span class="landing-tool" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></span>
+            </div>
+            <div class="landing-crow-r">
+              <button class="landing-send" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+<p class="note">Fields: radius 8, a <code>--border-control</code> edge (3:1 or better), 14px text and an italic placeholder. Focus is one ring: the field's own edge and a 3px halo. Under a coarse pointer a field is 44px with 16px text. The composer: radius 20, a hairline and a soft shadow; focus changes only its edge.</p>
 </div></body></html>

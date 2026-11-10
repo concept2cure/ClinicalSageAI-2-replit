@@ -1,0 +1,5 @@
+[ci:surface-text-ramp] FAIL — generated ramp sheet(s) do not match the stylesheets:
+    client/src/concept2cure/v2/styles/surface-text-ramp.css — stale
+  A stylesheet gained or lost a tinted-surface rule, so the re-based
+  text ramp no longer covers what the sources imply. Regenerate:
+    node scripts/design/generate-surface-text-ramp.mjs

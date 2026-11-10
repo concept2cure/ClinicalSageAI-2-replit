@@ -1,0 +1,54 @@
+{
+  "rejected_candidate": "3ffbfa5569f087bd127781acf8ba3e9291999ca8",
+  "normal_gates_passed": true,
+  "typescript_errors": 0,
+  "push_result": "rejected concurrent ref compare-and-swap, exit1; no source accepted",
+  "push_log": "source-push-race-6.txt",
+  "canonical_base": "98cc17c8c5c28379a30665048d5b44f21f2f3a4e",
+  "incoming_commits": 7,
+  "incoming_paths": [
+    "docs/evidence/MR-12/2026-10-29-training-assignment/README.md",
+    "docs/evidence/MR-12/2026-10-29-training-assignment/slice4-green.txt",
+    "docs/evidence/MR-12/2026-10-29-training-assignment/slice4-mutations.txt",
+    "docs/evidence/MR-12/2026-10-29-training-assignment/slice4-red.txt",
+    "server/routes/__tests__/mdx-qms-retire.test.ts",
+    "server/routes/__tests__/qms-document-approval-signature.test.ts",
+    "server/routes/__tests__/qms-personal-training.test.ts",
+    "server/routes/mdx-qms-training.ts",
+    "server/routes/mdx-qms.ts",
+    "server/services/qms/__tests__/training-task.test.ts",
+    "server/services/qms/governed-qms-write.ts",
+    "server/services/qms/training-task.ts",
+    "server/services/tasking/__tests__/source-task.test.ts",
+    "server/services/tasking/source-task.ts",
+    "tests/db/qms-document-signature-required.dbtest.ts",
+    "tests/db/qms-training-tasks.dbtest.ts"
+  ],
+  "clean_merge": true,
+  "client_changes": [],
+  "server_checks": {
+    "passed": 76,
+    "suites": 5,
+    "failures": 0,
+    "skipped": 0,
+    "exit_code": 0,
+    "log": "race-6-qms-tests.txt"
+  },
+  "server_and_audit_verifier_build": {
+    "exit_code": 0,
+    "log": "race-6-server-build.txt"
+  },
+  "retained_checks": {
+    "client_tests": 618,
+    "client_suites": 45,
+    "ocr_review_server_checks": 13,
+    "ocr_review_server_suites": 2,
+    "browser_flows": 8,
+    "browser_inputs": 36,
+    "full_client_build_passed": true
+  },
+  "current_publication_inputs": 162,
+  "input_mismatches": [],
+  "native_db_qualification": "existing canonical owner evidence only; not newly run here",
+  "next_push": "pending all normal gates"
+}

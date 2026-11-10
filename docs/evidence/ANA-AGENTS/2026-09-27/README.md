@@ -27,3 +27,111 @@ on the work-order board as the founder's explicit exception to RULE 2.
 | S5c (2a) | `run_agent` defined and classified; offered only to a hosting turn whose tenant policy was read strictly; `'incomplete'` in the trace | `3e6b74b7e` | `../2026-10-05/S5c-run-agent-defined/` | landed; not yet offered (no caller hosts) |
 | S5c (2b) | Sub-agents become reachable: the stream hosts `run_agent` (host only on a hosting turn, the parent's round on a child's pause, `agent_event` frames, no record-only trace to the model, the child's own tools as the only evidence, `'incomplete'` said plainly and not retried), and `/api/agent-swarm` is retired | `1d19566c` | `../2026-10-05/S5c-stream-hosting/` | landed; off in production until the S7 capture |
 | S6–S7 | Client agent rows, live two-agent capture, ledger cost read | — | — | not started; S7 needs a model key |
+
+
+## 2026-11-06 continuation — P-104 architecture v0.5
+
+This dated continuation extends the agents recorded above. Its current source is `a2f9264a5`, private HTTP/index
+and transmission refusal repairs are `5c5b89836`, and the roadmap is `docs/design/ONE_DESIGN_PLAN.md` §1d. The
+full expanded spike remains acceptance pending. No new source file, screen, mount, table, tool or dependency was
+introduced by this continuation.
+
+### What already exists
+
+- `ana/sub-agent.ts`, `AnaToolExecutor.ts` and `agentic-workflow-tools.ts`: the bounded read-only child loop and
+  existing `run_agent` host. They now reach durable assignment, progress, report, peer and refusal receipts before
+  their projections. Children cannot approve, lock or transmit.
+- `ana/run-events.ts`, `run-control.ts`, `turn-plan.ts` and `turn-record.ts`: existing run/event/record homes.
+  Chained audit plus record blobs are authoritative; lossy run mirrors and UI are projections. Opaque in-process
+  source/capture capabilities cannot be minted from model JSON or copied metadata.
+- `AnaWorkPanel.tsx`, `ConversationThread.tsx` and `useAgentActivity.ts`: existing conversation work view, extended
+  with a default-off Show team toggle. Counters require measured totals; unavailable completion time stays unknown.
+- `projects/schedule-of-events/service.ts`, `tasking/task-planning.ts` and `c2c/charter-objectives.ts`: existing
+  project goal/task graph, now monitored using canonical charter versions and strict dependency/source/review heads.
+  Filing observations are non-authorizing; the final canonical release gate still runs at the actual action.
+- `ana-context-router.ts`, `client-intelligence.ts`, `shared/ana/skills.ts` and `WhatAnaRemembers.tsx`: existing owner
+  profile, rule and memory surfaces. Corrections, versions, conflicts and revocation remain owner-only. Generic
+  prompt builders omit private prose; protected opaque capsules expand only in final SDK parameters.
+- `chat-thread-helpers.ts`, AnA history/record routes and `security/field-encryption.ts`: existing chat/storage/crypto
+  homes. Private runs/messages/whole turn bundles use tenant KMS custody, owner admission and immutable hash/chain
+  checks. Generic history readers receive placeholders. Current-key changes hold new seals; old exact ciphertext
+  retains its own authorized historical key. Older immutable records predating the boundary are not claimed cleaned.
+- `intelligence/ana-failure-learning.ts`, QMS controls and account Skills bundles: existing learning/review/install
+  paths. Only fixed generic class/count cohorts enter reviewed learning, with audited consent, exact immutable QMS
+  artifact/signatures and explicit client installation. Historical global raw wisdom remains quarantined.
+
+### Verification and limits
+
+| Boundary | Actual result | What it establishes |
+|---|---|---|
+| Running browser | 18 team + 10 private-rule checks | Real authenticated endpoints, durable fixtures, keyboard/default-off behavior, owner CRUD/reload and 390px layouts; no provider simulation presented as PQ. |
+| Runtime | 20 tests | Registered parallel workers, actual SQL sources, durable coordination/cancellation/refusals, private external/write holds and safe wire data. |
+| Private SQL/AES | Latest 34 tests | Owner/admin separation, whole encrypted capture/history, immutable source checks, revoked rules, malicious peer data and two-turn tenant-key rotation. |
+| Gateway SDK seam | 24 tests | Private text appears only in final SDK parameters; generic routing/dispatch/audit has no canary; prepared-payload SHA matches actual parameters. Copied capabilities/lineage, revoked admission, frontier tier changes and demo/cache/stream responses are refused. Network I/O is substituted. |
+| Private owner/pool profile | 30 native + 11 omission tests | Real non-bypass RLS, current owner CRUD/version/retry guards, missing unique-index convergence and truthful generic-context omission. |
+| Private UI/telemetry | 45 tests | Owner/session fencing, exact intent receipts, uncertain save reconciliation and request/response body suppression. |
+| Shared learning | 260 focused + 16 native QMS | Audited contribution policy, closed classes/counts, current cohort/signatures, explicit install and fresh loader admission. |
+| Database deployment | 462 migrations + 49 native RLS | Canonical replay and actual non-superuser/non-bypass row security after owner-index repair. |
+| Project monitor | 158 focused tests | Objective/task/dependency/source/review head binding and honest unknowns; no task-percent claim of filing approval. |
+| Canonical transmission repair | 107 checks | One-byte signed-manifest mutation voids approval and durably records TRANSMIT_BLOCKED; audit failure releases nothing. This is not approval of a final ZIP bitstream. |
+
+Counts overlap broader runs and must not be summed. Source fixtures identify synthetic KMS/SDK/authentication
+boundaries; the cryptography, SQL, RLS, hash/audit verification and canonical service paths execute where stated.
+The real model registry has 16 pending PQ entries: no live model qualification, customer key grant, deployed
+provider terms or scientific correctness is asserted. Automatic private reflection remains held until its captured
+lifetime is proven. Exact final-ZIP approval and the joined ordinary AnA draft/checker/human/freeze gate are being
+verified separately; component tests do not close the expanded spike.
+
+Run the named existing suites with Vitest and one worker; native `.dbtest.ts` suites use `vitest.db.config.ts`
+against a disposable canonical PostgreSQL database under the provisioned non-bypass runtime role. Current detailed
+session logs and browser captures are in `/workspace/scratch/anna-*` and `/workspace/scratch/private-*`; they contain
+synthetic fixtures only. Final merged compiler, build, pre-push and remote publication receipts follow after success.
+
+
+### Final integrated source checks before publication
+
+The merged component consolidation passes **844 tests in 41 suites**; its 30 database-only cases are skipped in
+that command and pass separately on native PostgreSQL. The consolidation used the installed Node 24 runtime;
+individual native/SDK/build and canonical compiler/release checks use the repository's Node 22 runtime. A later
+child-denial delta passes 5 cases, including actual audit INSERT failure and no second model call.
+
+The joined native authoring fixture now passes **21/21**, with actual non-bypass RLS/JWT/bcrypt: ordinary AnA
+unverified genesis, a real child freeze attempt with durable refusal, saved independent check, assigned human
+finding decisions, an actual qualification hold, full canonical human rewrite/lineage, fresh review and reviewer
+signature, then author freeze bound to the exact saved document SHA. Separate CSR scientific-evidence denial
+remains tested. Qualification component fixtures pass **52/52**, including refusal of legacy model-name-only
+records and calls without actual gateway request identity. No fixture claims a passed real model PQ.
+
+`75c351e96` records the denial and fixture/lint repairs. The final ordinary AnA gate additionally checks immutable
+successful noncached/nondeterministic gateway delivery against the exact retained turn, original actor/project and
+current repository-controlled qualified pin. Generic displayed provenance and old provider/model strings confer
+no release authority. The production client/server and both standalone audit/qualification verifiers build. The
+mandatory changed-source lint checks pass with zero errors and a net reduction of four warnings. Final canonical
+compiler, pre-push and confirmed remote receipt remain the publication gate.
+
+
+### Canonical synchronization and combined source checks
+
+The first complete publication attempt passed every mandatory gate, including the full zero-baseline compiler
+with **zero errors**, then Git refused the update because canonical work advanced. `43fe4a8e2` merges that editor,
+source and credential work. `cd23db47c` preserves both sets of protections at all five SDK sites, composes team and
+native source checkpoints, and registers the actual admitted native selection in run authority inherited by child
+calls. The additional joined regressions prove that a changed team anchor blocks parent follow-up and changed
+native facts block the child before its first provider call. Their source/admission/retained/coordination SQL runs;
+the QMS collector is an explicitly bounded database fact producer, not a complete QMS or model qualification.
+
+Combined validation passes **42 SDK checkpoint tests**, **34 private SQL/AES tests**, **11 stream tests**,
+**82 authoring component tests** and **21 native workflow tests**. The merged production client/server build and
+standalone verifiers build. The final SDK terminal-error helper rerun also passes 42/42 with no added source lint
+warning. Later canonical drafting-panel changes merge without touching the team/private surfaces and pass 32/32.
+The encrypted-family/monitor rehome meets the unchanged size ceilings and preserves 63 private/SDK/runtime plus
+275 monitor/graph regression checks. Current administration reauthentication passes 25 cases, including revoked
+authority before password checking; QMS error envelopes pass 15 ceremony cases and the unchanged disclosure guard.
+These runs overlap and must not be summed. Final merged publication is retried with the normal hooks.
+
+
+The second complete publication attempt, on `5277bb277`, also passed all gates and the full zero-error compiler,
+then lost a remote ref race to `772a1238a`. The later merge retains the CSR/read/editor fixes. New incoming checks
+pass 112 backend and 46 UI cases; source callbacks, private custody and strict qualification remain intact. The
+coordination file records the requested publication window and continued normal retry. Remote acceptance is still
+pending; neither a green hook nor a rejected push is described as publication.

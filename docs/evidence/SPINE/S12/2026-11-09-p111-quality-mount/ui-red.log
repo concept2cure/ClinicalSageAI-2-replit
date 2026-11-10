@@ -1,0 +1,318 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/workProjectTasks.test.tsx > a work area bound to a work project (P-111 slice 2) > shows nothing and reads nothing when the area was not opened from a work project 17ms
+ × client/src/concept2cure/v2/__tests__/workProjectTasks.test.tsx > a work area bound to a work project (P-111 slice 2) > is bound by the door, keeps the binding on its URL, and lists the work project's own tasks 5014ms
+   → Unable to find an element with the text: Drug substance CMC · JM Smith. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Work project: Drug substance CMC"[39m
+      [33mclass[39m=[32m"pj-work-projects"[39m
+      [33mdata-testid[39m=[32m"work-project-bound"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-work-projects-h"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pj-work-project-n"[39m
+        [36m>[39m
+          [0mWorking in [0m
+          [0mDrug substance CMC · CMC · JM Smith[0m
+        [36m</p>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost small"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mShow the whole project[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<ul[39m
+        [33mclass[39m=[32m"pj-work-projects-l"[39m
+        [33mdata-testid[39m=[32m"work-project-tasks"[39m
+      [36m>[39m
+        [36m<li>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-card-note"[39m
+          [36m>[39m
+            [0mConfirm the drug substance specification · Dana Ruiz · due Nov 30, 2026 · Open[0m
+          [36m</span>[39m
+        [36m</li>[39m
+      [36m</ul>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost small"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-plus"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.5"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M5 12h14"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 5v14"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m [0m
+        [0mAdd a task[0m
+      [36m</button>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Work project: Drug substance CMC"[39m
+      [33mclass[39m=[32m"pj-work-projects"[39m
+      [33mdata-testid[39m=[32m"work-project-bound"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-work-projects-h"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pj-work-project-n"[39m
+        [36m>[39m
+          [0mWorking in [0m
+          [0mDrug substance CMC · CMC · JM Smith[0m
+        [36m</p>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost small"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mShow the whole project[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<ul[39m
+        [33mclass[39m=[32m"pj-work-projects-l"[39m
+        [33mdata-testid[39m=[32m"work-project-tasks"[39m
+      [36m>[39m
+        [36m<li>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-card-note"[39m
+          [36m>[39m
+            [0mConfirm the drug substance specification · Dana Ruiz · due Nov 30, 2026 · Open[0m
+          [36m</span>[39m
+        [36m</li>[39m
+      [36m</ul>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost small"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-plus"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.5"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M5 12h14"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 5v14"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m [0m
+        [0mAdd a task[0m
+      [36m</button>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ × client/src/concept2cure/v2/__tests__/workProjectTasks.test.tsx > a work area bound to a work project (P-111 slice 2) > stays bound when the area consumes the hand-off itself and passes it on (QualityModule), before or after the panel mounts 2ms
+   → keepWorkProjectBinding is not a function
+ ✓ client/src/concept2cure/v2/__tests__/workProjectTasks.test.tsx > a work area bound to a work project (P-111 slice 2) > adds a task to the work project, never as its Deliver task 138ms
+ ✓ client/src/concept2cure/v2/__tests__/workProjectTasks.test.tsx > a work area bound to a work project (P-111 slice 2) > says a refused binding and a failed task read, never "no tasks" 11ms
+ ✓ client/src/concept2cure/v2/__tests__/workProjectTasks.test.tsx > a work area bound to a work project (P-111 slice 2) > offers no add to a person who may not write, and binds only the areas that show tasks 12ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/workProjectTasks.test.tsx > a work area bound to a work project (P-111 slice 2) > is bound by the door, keeps the binding on its URL, and lists the work project's own tasks
+TestingLibraryElementError: Unable to find an element with the text: Drug substance CMC · JM Smith. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Work project: Drug substance CMC"[39m
+      [33mclass[39m=[32m"pj-work-projects"[39m
+      [33mdata-testid[39m=[32m"work-project-bound"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-work-projects-h"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pj-work-project-n"[39m
+        [36m>[39m
+          [0mWorking in [0m
+          [0mDrug substance CMC · CMC · JM Smith[0m
+        [36m</p>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost small"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mShow the whole project[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<ul[39m
+        [33mclass[39m=[32m"pj-work-projects-l"[39m
+        [33mdata-testid[39m=[32m"work-project-tasks"[39m
+      [36m>[39m
+        [36m<li>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-card-note"[39m
+          [36m>[39m
+            [0mConfirm the drug substance specification · Dana Ruiz · due Nov 30, 2026 · Open[0m
+          [36m</span>[39m
+        [36m</li>[39m
+      [36m</ul>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost small"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-plus"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.5"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M5 12h14"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 5v14"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m [0m
+        [0mAdd a task[0m
+      [36m</button>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+
+Ignored nodes: comments, script, style
+[36m<body>[39m
+  [36m<div>[39m
+    [36m<section[39m
+      [33maria-label[39m=[32m"Work project: Drug substance CMC"[39m
+      [33mclass[39m=[32m"pj-work-projects"[39m
+      [33mdata-testid[39m=[32m"work-project-bound"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"pj-work-projects-h"[39m
+      [36m>[39m
+        [36m<p[39m
+          [33mclass[39m=[32m"pj-work-project-n"[39m
+        [36m>[39m
+          [0mWorking in [0m
+          [0mDrug substance CMC · CMC · JM Smith[0m
+        [36m</p>[39m
+        [36m<button[39m
+          [33mclass[39m=[32m"btn ghost small"[39m
+          [33mtype[39m=[32m"button"[39m
+        [36m>[39m
+          [0mShow the whole project[0m
+        [36m</button>[39m
+      [36m</div>[39m
+      [36m<ul[39m
+        [33mclass[39m=[32m"pj-work-projects-l"[39m
+        [33mdata-testid[39m=[32m"work-project-tasks"[39m
+      [36m>[39m
+        [36m<li>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"pj-card-note"[39m
+          [36m>[39m
+            [0mConfirm the drug substance specification · Dana Ruiz · due Nov 30, 2026 · Open[0m
+          [36m</span>[39m
+        [36m</li>[39m
+      [36m</ul>[39m
+      [36m<button[39m
+        [33mclass[39m=[32m"btn ghost small"[39m
+        [33mtype[39m=[32m"button"[39m
+      [36m>[39m
+        [36m<svg[39m
+          [33maria-hidden[39m=[32m"true"[39m
+          [33mclass[39m=[32m"lucide lucide-plus"[39m
+          [33mfill[39m=[32m"none"[39m
+          [33mfocusable[39m=[32m"false"[39m
+          [33mheight[39m=[32m"1em"[39m
+          [33mstroke[39m=[32m"currentColor"[39m
+          [33mstroke-linecap[39m=[32m"round"[39m
+          [33mstroke-linejoin[39m=[32m"round"[39m
+          [33mstroke-width[39m=[32m"1.5"[39m
+          [33mviewBox[39m=[32m"0 0 24 24"[39m
+          [33mwidth[39m=[32m"1em"[39m
+          [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+        [36m>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M5 12h14"[39m
+          [36m/>[39m
+          [36m<path[39m
+            [33md[39m=[32m"M12 5v14"[39m
+          [36m/>[39m
+        [36m</svg>[39m
+        [0m [0m
+        [0mAdd a task[0m
+      [36m</button>[39m
+    [36m</section>[39m
+  [36m</div>[39m
+[36m</body>[39m
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ client/src/concept2cure/v2/__tests__/workProjectTasks.test.tsx:74:25
+     72|     doorBinds('cmc', 101);
+     73|     render(<WorkProjectTasks area="cmc" />);
+     74|     expect(await screen.findByText('Drug substance CMC · JM Smith')).t…
+       |                         ^
+     75|     expect(screen.getByText('Its tasks are listed here. The records be…
+     76|     expect(new URLSearchParams(window.location.search).get('workProjec…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/workProjectTasks.test.tsx > a work area bound to a work project (P-111 slice 2) > stays bound when the area consumes the hand-off itself and passes it on (QualityModule), before or after the panel mounts
+TypeError: keepWorkProjectBinding is not a function
+ ❯ client/src/concept2cure/v2/__tests__/workProjectTasks.test.tsx:95:5
+     93|     window.history.replaceState(null, '', `/concept2cure/quality?progr…
+     94|     bindWorkProject('quality', 101);
+     95|     keepWorkProjectBinding(consumeNavParams('quality'));
+       |     ^
+     96|     render(<WorkProjectTasks area="quality" />);
+     97|     expect(await screen.findByText('Drug substance CMC · JM Smith')).t…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 4 passed (6)
+   Start at  11:48:01
+   Duration  6.42s (transform 539ms, setup 111ms, import 666ms, tests 5.20s, environment 340ms)
+

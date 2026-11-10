@@ -82,7 +82,7 @@ describe('the server configuration fires it on import (a real production boot)',
       AUDIT_EXPORT_SIGNING_KEY: 'probe-audit-export-signing-key-min-32-chars',
       AI_SENSITIVE_DATA_POLICY_MODE: 'enforce',
       AI_PROVIDER_PLACEMENT_APPROVALS:
-        '{"private-deployment":{"region":"us","zeroRetentionApproved":true,"approvedDataClasses":[],"approvedIntendedUses":[]}}',
+        '{"private-deployment":{"region":"us","zeroRetentionApproved":false,"approvedDataClasses":[],"approvedIntendedUses":[]}}',
       STORAGE_PROVIDER: 's3',
       AWS_S3_BUCKET: 'c2c-vault-probe',
       ...extra,

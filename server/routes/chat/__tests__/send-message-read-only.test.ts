@@ -21,7 +21,9 @@ vi.mock('../../../services/ana/project-scope-admission', () => ({
   AnaProjectScopeError: class extends Error {},
 }));
 vi.mock('../../../services/ana/source-context-admission', () => ({ assertAnaUploadAccess: async () => undefined }));
-vi.mock('../../../services/chat-thread-helpers.js', () => ({
+vi.mock('../../../services/chat-thread-helpers.js', async importOriginal => ({
+  OwnerPrivateChatError: (await importOriginal<typeof import('../../../services/chat-thread-helpers.js')>()).OwnerPrivateChatError,
+  threadHasOwnerPrivateBoundary: async () => false,
   getOrCreateThread: async () => 'thread-json', getThreadMessages: async () => [...io.history],
   saveChatMessage: io.save, ThreadAccessError: class extends Error {},
 }));
@@ -58,6 +60,8 @@ vi.mock('../../../services/ana/governed-toolset.js', () => ({ governedToolsetFor
 import { registerToolHandler } from '../../../services/ana/AnaToolExecutor';
 import { sendMessageHandler } from '../send-message';
 import { READ_ONLY_INSTRUCTION } from '../../../services/ana/read-only-turn';
+import { syntheticCurrentPolicyQuery } from '../../../services/ana/__tests__/support/source-read-tool-fixture';
+import { runWithTenantScope } from '../../../db/tenantStore';
 
 const SUMMARY = 'The project has an existing evidence record. [SRC-1]';
 const ACTION = '```ana-action\n' + JSON.stringify({ type: 'memo', confidence: 'strong', title: 'Unrequested memo', content: 'A new memo body.' }) + '\n```';
@@ -75,7 +79,10 @@ registerToolHandler('start_product_demo', async () => JSON.stringify({ status: '
 
 const app = express();
 app.use(express.json());
-app.use((req, _res, next) => { Object.assign(req, { tenantId: 7, user: { id: 3, organizationId: 7 } }); next(); });
+app.use((req, _res, next) => {
+  Object.assign(req, { tenantId: 7, user: { id: 3, organizationId: 7 } });
+  runWithTenantScope({ tenantId: '7', accountId: 3, role: 'member', source: 'request', caller: 'classic-read-only-fixture' }, next);
+});
 app.post('/api/chat/send-message', sendMessageHandler);
 const send = (message: string, extra = {}) => httpRequest(app).post('/api/chat/send-message').send({ message, thread_id: 'thread-json', ...extra });
 const modelReply = (content: string, toolUses: any[] = []) => ({ content, toolUses, provider: 'anthropic', model: 'mock-model', requestId: 'mock-request',
@@ -88,13 +95,14 @@ beforeEach(() => {
   io.history = [{ role: 'user', content: 'Draft a document and create follow-up tasks.' }, { role: 'assistant', content: 'I can draft it next.' }];
   io.responses = [];
   io.gateway.mockImplementation(async () => io.responses.shift() ?? modelReply(SUMMARY));
-  io.query.mockImplementation(async (sql: string) => {
+  io.query.mockImplementation(async (sql: string, params?: unknown[]) => {
     if (/SELECT organization_id FROM ai_threads/.test(sql)) return { rows: [{ organization_id: 7 }] };
     if (/INSERT INTO ai_retrieval_runs/.test(sql)) return { rows: [{ id: 'retrieval-json' }] };
     if (/INSERT INTO ai_retrieval_chunks/.test(sql)) return { rows: [{ id: 'chunk-json', rank: 1, atom_id: 'atom-json', score: 0.9 }] };
     if (/INSERT INTO ai_generation_runs/.test(sql)) return { rows: [{ id: 'generation-json' }] };
     if (/INSERT INTO ai_claims/.test(sql)) return { rows: [{ id: 'claim-json' }] };
-    return { rows: [], rowCount: 0 };
+    // Explicit active unit actor and empty current rule store; no database/RLS claim.
+    return syntheticCurrentPolicyQuery(sql, params);
   });
   io.search.mockResolvedValue([{ id: 'atom-json', title: 'Existing evidence', content: 'The project has an existing evidence record.', score: 0.9 }]);
   io.admit.mockResolvedValue({ projectId: 42, projectRef: '42' });
@@ -209,5 +217,41 @@ describe('JSON chat current-turn read-only enforcement', () => {
     expect(response.body.orchestration.suggestedActions).toEqual(['draft', 'review']);
     expect(io.intercept).toHaveBeenCalledOnce();
     expect(io.memoryWrite).toHaveBeenCalledOnce();
+  });
+});
+
+describe('JSON chat admitted memory snapshot', () => {
+  const omissionNotice = '## Memory context incomplete\n' +
+    "Some recalled memory records were omitted to fit this turn's character budget. " +
+    'Do not infer that omitted decisions or exclusions do not exist; ask for or verify needed context.';
+  const working = { id: 1, layer: 'working_memory', title: 'Working summary', content: 'The next action is to verify the exclusion.' };
+  const admitted = { id: 2, layer: 'project_memory', title: 'Reviewed scope', content: 'The draft is provisional until the source is checked.' };
+  const omitted = { id: 3, layer: 'project_memory', title: 'Oversized candidate', content: 'This record was not admitted to the prompt.' };
+
+  it.each([
+    { label: 'all candidates omitted', read: [], records: '', expected: 'working=no, semantic atoms=0' },
+    { label: 'only one semantic record admitted', read: [{ layer: admitted.layer, title: admitted.title }],
+      records: `${admitted.title}: ${admitted.content}\n`, expected: 'working=no, semantic atoms=1' },
+    { label: 'working memory and one semantic record admitted',
+      read: [{ layer: working.layer, title: working.title }, { layer: admitted.layer, title: admitted.title }],
+      records: `${working.title}: ${working.content}\n${admitted.title}: ${admitted.content}\n`, expected: 'working=yes, semantic atoms=1' },
+    { label: 'fallback result without an admitted read list', read: undefined, records: '', expected: 'working=no, semantic atoms=0' },
+  ])('reports what reached the prompt when $label', async ({ read, records, expected }) => {
+    const memoryBlock = `\n\n--- PERSISTENT MEMORY CONTEXT ---\n${omissionNotice}\n\n${records}--- END PERSISTENT MEMORY CONTEXT ---\n`;
+    io.memoryRead.mockResolvedValue({ memoryBlock, atoms: [working, admitted, omitted], read, diagnostics: { trimmed: true } });
+
+    const response = await send('Read-only: summarize the recalled project context.');
+
+    expect(response.status).toBe(200);
+    const prompt = io.gateway.mock.calls[0][0].messages[0].content;
+    expect(prompt).toContain(`- Memory: ${expected}\n`);
+    expect(prompt).toContain(memoryBlock);
+    expect(prompt).not.toContain(omitted.content);
+    if (!read?.some(entry => entry.layer === working.layer)) expect(prompt).not.toContain(working.content);
+    // Candidate counts remain diagnostic; only the model-facing snapshot
+    // describes the records actually admitted to its prompt.
+    expect(response.body.retrievalMeta).toMatchObject({
+      memoryAtomCount: 3, memoryBlockChars: memoryBlock.length, memoryDiagnostics: { trimmed: true },
+    });
   });
 });

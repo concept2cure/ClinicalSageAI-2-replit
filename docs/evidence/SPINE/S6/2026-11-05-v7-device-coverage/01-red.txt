@@ -1,0 +1,28 @@
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > shows the counts and the rule pack they come from, and no percentage 160ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > tells AnA the same counts the page shows 72ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > says when the list is the ICH baseline and not the program's own 79ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > files an existing document at a missing section through the filing call 346ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > shows why when there is no figure, and never "0 of" 137ms
+ × client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > a device filing's coverage opens its outline in the Library 1052ms
+   → Unable to find an accessible element with the role "button" and name "Show the outline in the Library"
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > coverageOf (pure) > counts a confirmed filing and nothing else: a suggestion is not coverage 3ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > coverageOf (pure) > a document filed deeper covers the section above it, never the reverse 1ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > coverageOf (pure) > carries no percentage 0ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > a program with no program type reports the fallback with its reason, never as its own list 1ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > a rule-pack store that cannot be read is unavailable with the reason, never "0 of m" 1ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > filings that cannot be read are unavailable too, not zero 1ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > a filing document class is not a CTD dossier: it says so, and counts nothing 0ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > a view that is not CTD-numbered shows why, and no figure 0ms
+ × server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > a device or diagnostic filing names itself and points to its outline in the Library, with no figure 5ms
+   → expected 'This vault is not CTD-numbered, so th…' not to match /there is no required-section list/
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > hde counts no medicinal CTD requirement even in a pharma view 1ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > mdl counts no medicinal CTD requirement even in a pharma view 0ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > ivd_licence counts no medicinal CTD requirement even in a pharma view 0ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > shonin counts no medicinal CTD requirement even in a pharma view 0ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > ninsho counts no medicinal CTD requirement even in a pharma view 0ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > todokede counts no medicinal CTD requirement even in a pharma view 0ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > ivd_approval counts no medicinal CTD requirement even in a pharma view 0ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > jp_cdx counts no medicinal CTD requirement even in a pharma view 0ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > readVaultCoverage > counts from the live pack when one applies, and names it 1ms
+ ✓ server/services/vault/__tests__/vault-coverage.test.ts > Vault coverage feeds no readiness figure > is imported by the Vault read model only 265ms
+      Tests  2 failed | 23 passed (25)

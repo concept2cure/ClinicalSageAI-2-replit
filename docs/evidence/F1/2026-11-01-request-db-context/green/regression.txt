@@ -1,0 +1,29 @@
+# Regression runs after the change (vitest, --maxWorkers=2). Full logs were kept out of the repository; the summaries and every failure are below.
+
+## Run 1
+# After the change. npx vitest run --config vitest.config.ts --maxWorkers=2 server/db/__tests__ server/middleware/__tests__ server/lib/__tests__ <QMS, notification, schedule, insights-canvas, mdx-engineering, analytics and review-board route tests> server/routes/__tests__/request-db-context-ended-request.test.ts
+ Test Files  2 failed | 129 passed | 2 skipped (133)
+      Tests  3 failed | 1496 passed | 17 skipped (1516)
+Failures:
+× server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with CMC / Module 3 in the catalog (P-28) > every /api/cmc path the CMC screens name answers launch, and ci:launch-scope-api finds nothing 
+× server/middleware/__tests__/launch-scope-api-gate.test.ts > the real registry with the IND tools in Submission Center, agency questions locked (P-32) > every IND path the IND screen names answers launch, and ci:launch
+× server/routes/__tests__/qms-document-content-access.test.ts > QMS reads preserve canonical object access > keeps a genuine empty version history distinct from a denied authored history 8ms
+
+## Run 2
+# After the change. Every other unit test file naming MissingRequestDbContextError, REQUEST_DB_CONTEXT_REQUIRED, requestDbLease, serverError or requestPgClient
+ Test Files  2 failed | 108 passed (110)
+      Tests  7 failed | 1289 passed (1296)
+Failures:
+× server/__tests__/routes/content-digest-binders.pglite.test.ts > accepting a residual risk binds the hazard as it was accepted > the signature row carries the hazard content digest, with its controls 31ms
+× server/__tests__/routes/content-digest-binders.pglite.test.ts > accepting a residual risk binds the hazard as it was accepted > the read says it matches, then detects a benefit-risk rationale rewritten after the accep
+× server/__tests__/routes/content-digest-binders.pglite.test.ts > accepting a residual risk binds the hazard as it was accepted > detects a risk control changed after the acceptance 19ms
+× server/__tests__/routes/content-digest-binders.pglite.test.ts > fail closed: content that cannot be bound is not signed over the chain hash instead > a hazard whose controls cannot be read: 409, nothing signed, the ha
+× server/__tests__/routes/content-digest-binders.pglite.test.ts > the read is honest about signatures it cannot check > a record never signed reads as unsigned 8ms
+× server/routes/__tests__/protocol-signatures.routes.test.ts > the protocol signing ceremony checks signing authority before the password (§11.10(g)) > a member cannot finalize: 403 ESIGNATURE_NO_AUTHORITY, no password
+× server/routes/__tests__/protocol-signatures.routes.test.ts > current transaction authority after protocol reservation > rechecks the actual transaction role after reservation before SoD or domain writes 4ms
+
+## The ten failures are not this change's
+Each failing file was run again with server/db/requestDb.ts, server/db/requestDbLease.ts and server/lib/api-response.ts replaced by their HEAD (f7335f970) text (git show HEAD:<path>), then restored byte for byte (cmp):
+  launch-scope-api-gate.test.ts + qms-document-content-access.test.ts: Tests 3 failed | 49 passed (52), the same three.
+  content-digest-binders.pglite.test.ts + protocol-signatures.routes.test.ts: Tests 7 failed | 37 passed (44), the same seven.
+They fail the same way without this change. Neither file reads a request client's released state or serverError's REQUEST_ENDED branch.

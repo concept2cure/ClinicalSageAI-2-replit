@@ -270,20 +270,21 @@ export interface LifecycleStage {
   now: string;
   /** `now` for a device or diagnostic project, when it differs. */
   nowDevice?: string;
+  /** The step's suggestion in the project's composer: a question a person can
+   *  send AnA as it is, never a claim about the program (D3-1, D3.md §4.4). It
+   *  fills the box; it never sends. */
+  starter: string;
+  /** `starter` for a device or diagnostic project, when it differs. */
+  starterDevice?: string;
   /** Stage names that no longer have a tab and whose work is on this one.
    *  `project-home.set-stage` still accepts them (shared/navigation/
    *  surface-actions.ts), so an AnA call naming one opens this tab. */
   aliases?: readonly string[];
-  /** What this step will hold once it works, in words, shown with no button
-   *  (FILING_SPINE.md §2, §5): only this step's rows of
-   *  .design/client-journey/INFORMATION_ARCHITECTURE.md (sections 3 and 5.4)
-   *  that are placed but not yet shown. A feature that starts to work leaves
-   *  this line in the same change as its door appears (IA section 11). */
-  later?: string;
-  /** `later` for a device or diagnostic project, when it differs: a drug
-   *  line names an IND's documents and post-approval obligations, which a
-   *  510(k), De Novo or PMA does not have. */
-  laterDevice?: string;
+  /* `later` and `laterDevice`, each step's "Coming later:" roadmap line, were
+     removed on 2026-10-31. A client demo read them as the product apologising
+     for itself on every step, and Evidence's named risk-based monitoring as
+     still to come while it works (the project's work areas open it). The
+     steps say what works today; the roadmap is not customer copy. */
 }
 
 
@@ -306,76 +307,37 @@ export const PJ_LIFECYCLE: LifecycleStage[] = [
     id: 'plan', label: 'Plan', icon: 'clipboardList', blurb: 'What this filing needs, who does it, and by when',
     now: 'See every document this filing needs. Start each from its template, and assign it to a person with a due date.',
     nowDevice: 'See the work this filing needs, by discipline. Assign each piece to a person with a due date.',
-    // Slice A.1. Not named because they work today: AnA's pathway and filing-order advice beside this step
-    // (strategic-advisor, global-ri), the protocol workspace (Author's door), and the phase 2 meeting request
-    // and briefing documents, which start from their templates here. Only recording the meeting is missing.
-    later:
-      'The chosen pathway and filing order across agencies, recorded on the project. For a US IND: the GLP studies ' +
-      'and what Module 4 still needs; what each Investigator’s Brochure section still needs; each deliverable’s ' +
-      'development work and evidence; the Pre-IND meeting recorded in Communication; and the documents an IND ' +
-      'amendment, annual report or safety report needs, listed as the initial IND’s are.',
-    laterDevice:
-      'For a US filing, the Pre-Sub for FDA as one of this project’s workstreams; the chosen pathway and filing ' +
-      'order across agencies, recorded on the project.',
+    starter: 'What does this filing still need, and who has each piece?',
   },
   {
     id: 'evidence', label: 'Evidence', icon: 'search', blurb: 'Project files and the data room the documents are written from',
     now: 'Add the documents this filing is written from: protocols, study reports, prior correspondence. Each file is read on upload and becomes a source you can trace.',
-    // Slice A.1. Not named because they work today: AnA's literature search and its cited answers from the
-    // project's files, and the device evidence features, opened from Plan's workstreams.
-    later:
-      'Research runs on a question in the literature and registries, listed here and filed to Vault; risk-based ' +
-      'monitoring for this project’s study.',
-    laterDevice:
-      'The usability engineering file for this device; research runs on a question in the literature and ' +
-      'registries, listed here and filed to Vault.',
+    starter: 'Which sources does this filing still need?',
   },
   {
     id: 'author', label: 'Author', icon: 'penLine', blurb: 'Draft eCTD sections with AnA, track changes',
     now: 'Draft the filing’s documents from those sources. Ask AnA to draft a section, or open a document and write it yourself.',
     nowDevice: 'Draft the filing’s documents from the device or diagnostic evidence. Ask AnA to draft a section, or open a document and write it yourself.',
-    // Slice A.1: the editor's "For this document" (IA section 6, slice 6).
-    later: 'Each document’s own tools, chosen by its type, beside it in the editor.',
+    starter: 'Draft the next section from this project’s sources',
+    starterDevice: 'Draft the next section from the device evidence',
   },
   {
     id: 'review', label: 'Review', icon: 'checkCircle', blurb: 'Review, approve & e-sign',
     now: 'Send each document for review, resolve the comments, and approve it with your signature.',
-    // Slice A.1. AnA already checks documents against each other on request, and the editor's sources rail
-    // already shows whether one document's cited source was replaced: what is to come is the standing list.
-    later:
-      'Where this project’s documents disagree with each other, kept as a list that updates when a governed ' +
-      'value changes; citations to sources that have since been superseded, across the project’s documents.',
+    starter: 'What is waiting for review or my signature?',
   },
   {
     id: 'submit', label: 'Submit', icon: 'rocket', blurb: "Build and validate each market's eCTD sequence",
     now: 'Place the approved documents in each market’s sequence, check its readiness, then compile the submission.',
     nowDevice: 'Assemble the eSTAR or technical documentation from the approved documents.',
+    starter: 'What blocks dispatch of each market’s sequence?',
+    starterDevice: 'What does the eSTAR still need?',
     aliases: ['lifecycle'],
-    // Rewritten in slice A.1 to today's truth. It named IND annual-report tracking (IND forms assembles, downloads
-    // and files the annual report), the variation classifier and regulatory intelligence (AnA runs both), agency
-    // meetings (folded into Communication), and market access, pharmacovigilance and precedent, which are not
-    // Submit's. Not named because they work today: each market's application number, what was sent and whether
-    // it was acknowledged (each sequence's Dispatch tab), and the next sequence after approval (Submission
-    // Center's follow-up sequences).
-    later:
-      'Each approved market’s registration status and renewal date; renewals and post-approval obligations ' +
-      'tracked as they fall due; safety reports with their reporting clock.',
-    laterDevice:
-      'Each market’s registration status and renewal date; renewals and post-market obligations tracked as they ' +
-      'fall due.',
   },
   {
     id: 'respond', label: 'Respond', icon: 'messageCircle', blurb: 'Draft responses to agency letters',
     now: 'When the agency writes, add its letter here, draft each answer from it with AnA, and start the response sequence.',
-    // Question-by-question tracking left this list on 2026-10-18: each inbox
-    // letter now holds its questions and a signed response to each
-    // (AgencyResponses.tsx). Agency meetings left it in slice A.1: they fold
-    // into Communication, whose Meetings and recorded commitments work today.
-    // One line for every project: a drug project has no Pre-Sub, so it is
-    // named for a device filing.
-    later:
-      'Precedent responses, showing how the agency answered similar questions before; for a US device filing, ' +
-      'FDA’s written feedback on its Pre-Sub.',
+    starter: 'Draft answers to the agency’s open questions',
   },
 ];
 

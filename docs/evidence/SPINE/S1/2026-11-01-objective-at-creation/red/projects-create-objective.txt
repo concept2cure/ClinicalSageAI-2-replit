@@ -1,0 +1,253 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts
+{
+  "timestamp": "2026-11-01T20:59:51.856Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts
+{
+  "timestamp": "2026-11-01T20:59:54.258Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-01T20:59:54.259Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts
+{
+  "timestamp": "2026-11-01T20:59:54.259Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > records a stated objective as version 1 of the charter objectives section, in the creation, and its audit row names it
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ × server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > records a stated objective as version 1 of the charter objectives section, in the creation, and its audit row names it 90ms
+   → expected [] to deeply equal [ { id: Any<Number>, …(3) } ]
+ ✓ server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > records nothing when the objective is absent: no charter, no section, no placeholder 34ms
+ ✓ server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > records nothing when the objective is empty: no charter, no section, no placeholder 28ms
+ ✓ server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > records nothing when the objective is only whitespace: no charter, no section, no placeholder 27ms
+ ✓ server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > records nothing when the objective is null: no charter, no section, no placeholder 27ms
+ × server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > refuses an objective not text before anything is written, without echoing it 33ms
+   → {"data":{"id":"62c413b4-2dba-43b0-96f6-7f1a1620d910","title":"S1 refused","ws":"MDX","pathway":"k510","code":"GS6","stage":"Planning","status":"active","lead":"Lead","due":"—","due_date":null,"activity":"Updated Nov 01","client_workspace_id":1,"client_name":"Default Workspace","description":null,"indication":null,"agency":"FDA","program_type":"510k","readiness":null,"readinessState":"unavailable","readinessReason":"The governed section store is not provisioned in this environment."},"program":{"id":"62c413b4-2dba-43b0-96f6-7f1a1620d910","code":"GS6","name":"S1 refused","program_type":"510k","status":"active","phase":"planning","priority":"medium","description":null,"product_name":"GS-6","indication":null,"intended_use":null,"primary_agency":"FDA","target_agencies":["FDA"],"target_submission_date":null,"actual_submission_date":null,"approval_date":null,"lead_user_id":11,"team_members":[],"created_at":"2026-11-01T20:59:55.888Z","updated_at":"2026-11-01T20:59:55.888Z","application_number":null,"product_type":"device","device_class":null,"regulatory_path":"510k","product_code":null,"sponsor_name":"one","client_workspace_id":1,"client_name":"Default Workspace","registry_id":"US_510K","submission_type_id":null,"riskBasedMonitoring":false,"predicate_devices":[],"review_panel":null,"regulation_number":null,"device_flags":null,"readiness":null,"readinessState":"unavailable","readinessReason":"The governed section store is not provisioned in this environment.","readinessAsOf":null},"meta":{"created":true,"organizationId":1,"actorUserId":11,"clientWorkspaceId":1,"clientWorkspaceName":"Default Workspace","documentId":null,"scaffoldedSections":0,"marketSupport":{"tier":"author_only","label":"Author documents for this market","reason":"Author the documents here. This platform builds no FDA sequence for a 510K.","appliesTo":null},"projectAnchorId":6,"projectAnchorCreated":true}}: expected 201 to be 400 // Object.is equality
+ × server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > refuses an objective longer than the objective field allows before anything is written, without echoing it 25ms
+   → {"data":{"id":"b9c72f88-9b25-4107-a78b-0543bfd46e91","title":"S1 refused","ws":"MDX","pathway":"k510","code":"GS7","stage":"Planning","status":"active","lead":"Lead","due":"—","due_date":null,"activity":"Updated Nov 01","client_workspace_id":1,"client_name":"Default Workspace","description":null,"indication":null,"agency":"FDA","program_type":"510k","readiness":null,"readinessState":"unavailable","readinessReason":"The governed section store is not provisioned in this environment."},"program":{"id":"b9c72f88-9b25-4107-a78b-0543bfd46e91","code":"GS7","name":"S1 refused","program_type":"510k","status":"active","phase":"planning","priority":"medium","description":null,"product_name":"GS-7","indication":null,"intended_use":null,"primary_agency":"FDA","target_agencies":["FDA"],"target_submission_date":null,"actual_submission_date":null,"approval_date":null,"lead_user_id":11,"team_members":[],"created_at":"2026-11-01T20:59:55.916Z","updated_at":"2026-11-01T20:59:55.916Z","application_number":null,"product_type":"device","device_class":null,"regulatory_path":"510k","product_code":null,"sponsor_name":"one","client_workspace_id":1,"client_name":"Default Workspace","registry_id":"US_510K","submission_type_id":null,"riskBasedMonitoring":false,"predicate_devices":[],"review_panel":null,"regulation_number":null,"device_flags":null,"readiness":null,"readinessState":"unavailable","readinessReason":"The governed section store is not provisioned in this environment.","readinessAsOf":null},"meta":{"created":true,"organizationId":1,"actorUserId":11,"clientWorkspaceId":1,"clientWorkspaceName":"Default Workspace","documentId":null,"scaffoldedSections":0,"marketSupport":{"tier":"author_only","label":"Author documents for this market","reason":"Author the documents here. This platform builds no FDA sequence for a 510K.","appliesTo":null},"projectAnchorId":7,"projectAnchorCreated":true}}: expected 201 to be 400 // Object.is equality
+ × server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > refuses an objective citing a source address that is not http before anything is written, without echoing it 35ms
+   → {"data":{"id":"f01d3da2-7309-4eb7-a6fb-832d7a18b089","title":"S1 refused","ws":"MDX","pathway":"k510","code":"GS8","stage":"Planning","status":"active","lead":"Lead","due":"—","due_date":null,"activity":"Updated Nov 01","client_workspace_id":1,"client_name":"Default Workspace","description":null,"indication":null,"agency":"FDA","program_type":"510k","readiness":null,"readinessState":"unavailable","readinessReason":"The governed section store is not provisioned in this environment."},"program":{"id":"f01d3da2-7309-4eb7-a6fb-832d7a18b089","code":"GS8","name":"S1 refused","program_type":"510k","status":"active","phase":"planning","priority":"medium","description":null,"product_name":"GS-8","indication":null,"intended_use":null,"primary_agency":"FDA","target_agencies":["FDA"],"target_submission_date":null,"actual_submission_date":null,"approval_date":null,"lead_user_id":11,"team_members":[],"created_at":"2026-11-01T20:59:55.942Z","updated_at":"2026-11-01T20:59:55.942Z","application_number":null,"product_type":"device","device_class":null,"regulatory_path":"510k","product_code":null,"sponsor_name":"one","client_workspace_id":1,"client_name":"Default Workspace","registry_id":"US_510K","submission_type_id":null,"riskBasedMonitoring":false,"predicate_devices":[],"review_panel":null,"regulation_number":null,"device_flags":null,"readiness":null,"readinessState":"unavailable","readinessReason":"The governed section store is not provisioned in this environment.","readinessAsOf":null},"meta":{"created":true,"organizationId":1,"actorUserId":11,"clientWorkspaceId":1,"clientWorkspaceName":"Default Workspace","documentId":null,"scaffoldedSections":0,"marketSupport":{"tier":"author_only","label":"Author documents for this market","reason":"Author the documents here. This platform builds no FDA sequence for a 510K.","appliesTo":null},"projectAnchorId":8,"projectAnchorCreated":true}}: expected 201 to be 400 // Object.is equality
+ × server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > refuses an objective citing a source with no title before anything is written, without echoing it 35ms
+   → {"data":{"id":"587212f9-a379-424a-9b22-e6e0ead43492","title":"S1 refused","ws":"MDX","pathway":"k510","code":"GS9","stage":"Planning","status":"active","lead":"Lead","due":"—","due_date":null,"activity":"Updated Nov 01","client_workspace_id":1,"client_name":"Default Workspace","description":null,"indication":null,"agency":"FDA","program_type":"510k","readiness":null,"readinessState":"unavailable","readinessReason":"The governed section store is not provisioned in this environment."},"program":{"id":"587212f9-a379-424a-9b22-e6e0ead43492","code":"GS9","name":"S1 refused","program_type":"510k","status":"active","phase":"planning","priority":"medium","description":null,"product_name":"GS-9","indication":null,"intended_use":null,"primary_agency":"FDA","target_agencies":["FDA"],"target_submission_date":null,"actual_submission_date":null,"approval_date":null,"lead_user_id":11,"team_members":[],"created_at":"2026-11-01T20:59:55.980Z","updated_at":"2026-11-01T20:59:55.980Z","application_number":null,"product_type":"device","device_class":null,"regulatory_path":"510k","product_code":null,"sponsor_name":"one","client_workspace_id":1,"client_name":"Default Workspace","registry_id":"US_510K","submission_type_id":null,"riskBasedMonitoring":false,"predicate_devices":[],"review_panel":null,"regulation_number":null,"device_flags":null,"readiness":null,"readinessState":"unavailable","readinessReason":"The governed section store is not provisioned in this environment.","readinessAsOf":null},"meta":{"created":true,"organizationId":1,"actorUserId":11,"clientWorkspaceId":1,"clientWorkspaceName":"Default Workspace","documentId":null,"scaffoldedSections":0,"marketSupport":{"tier":"author_only","label":"Author documents for this market","reason":"Author the documents here. This platform builds no FDA sequence for a 510K.","appliesTo":null},"projectAnchorId":9,"projectAnchorCreated":true}}: expected 201 to be 400 // Object.is equality
+ × server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > refuses an objective sources sent with no objective before anything is written, without echoing it 34ms
+   → {"data":{"id":"7c6bb06b-98ce-4ded-8362-fe38d966afd2","title":"S1 refused","ws":"MDX","pathway":"k510","code":"GS-10","stage":"Planning","status":"active","lead":"Lead","due":"—","due_date":null,"activity":"Updated Nov 01","client_workspace_id":1,"client_name":"Default Workspace","description":null,"indication":null,"agency":"FDA","program_type":"510k","readiness":null,"readinessState":"unavailable","readinessReason":"The governed section store is not provisioned in this environment."},"program":{"id":"7c6bb06b-98ce-4ded-8362-fe38d966afd2","code":"GS-10","name":"S1 refused","program_type":"510k","status":"active","phase":"planning","priority":"medium","description":null,"product_name":"GS-10","indication":null,"intended_use":null,"primary_agency":"FDA","target_agencies":["FDA"],"target_submission_date":null,"actual_submission_date":null,"approval_date":null,"lead_user_id":11,"team_members":[],"created_at":"2026-11-01T20:59:56.013Z","updated_at":"2026-11-01T20:59:56.013Z","application_number":null,"product_type":"device","device_class":null,"regulatory_path":"510k","product_code":null,"sponsor_name":"one","client_workspace_id":1,"client_name":"Default Workspace","registry_id":"US_510K","submission_type_id":null,"riskBasedMonitoring":false,"predicate_devices":[],"review_panel":null,"regulation_number":null,"device_flags":null,"readiness":null,"readinessState":"unavailable","readinessReason":"The governed section store is not provisioned in this environment.","readinessAsOf":null},"meta":{"created":true,"organizationId":1,"actorUserId":11,"clientWorkspaceId":1,"clientWorkspaceName":"Default Workspace","documentId":null,"scaffoldedSections":0,"marketSupport":{"tier":"author_only","label":"Author documents for this market","reason":"Author the documents here. This platform builds no FDA sequence for a 510K.","appliesTo":null},"projectAnchorId":10,"projectAnchorCreated":true}}: expected 201 to be 400 // Object.is equality
+ × server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > rolls the whole creation back when the objective cannot be recorded: no program, no record, no charter 32ms
+   → expected 201 to be greater than or equal to 500
+ × server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > starts the charter for 'an EU MDR technical file at a Notifie…', a filing the charter did not classify before 32ms
+   → expected [] to deeply equal [ ObjectContaining{…} ]
+ × server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > starts the charter for 'a clinical study report under ICH', a filing the charter did not classify before 31ms
+   → expected [] to deeply equal [ ObjectContaining{…} ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > records a stated objective as version 1 of the charter objectives section, in the creation, and its audit row names it
+AssertionError: expected [] to deeply equal [ { id: Any<Number>, …(3) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "id": Any<Number>,
+-     "product_name": "GS-1",
+-     "regulatory_region": "FDA",
+-     "submission_type": "510K",
+-   },
+- ]
++ []
+
+ ❯ server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts:151:22
+    149|
+    150|     const { charters, sections } = await charterOf(projectId);
+    151|     expect(charters).toEqual([{ id: expect.any(Number), submission_typ…
+       |                      ^
+    152|     expect(sections).toHaveLength(1);
+    153|     expect(sections[0]).toMatchObject({ version: 1, previous_version_h…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > refuses an objective not text before anything is written, without echoing it
+AssertionError: {"data":{"id":"62c413b4-2dba-43b0-96f6-7f1a1620d910","title":"S1 refused","ws":"MDX","pathway":"k510","code":"GS6","stage":"Planning","status":"active","lead":"Lead","due":"—","due_date":null,"activity":"Updated Nov 01","client_workspace_id":1,"client_name":"Default Workspace","description":null,"indication":null,"agency":"FDA","program_type":"510k","readiness":null,"readinessState":"unavailable","readinessReason":"The governed section store is not provisioned in this environment."},"program":{"id":"62c413b4-2dba-43b0-96f6-7f1a1620d910","code":"GS6","name":"S1 refused","program_type":"510k","status":"active","phase":"planning","priority":"medium","description":null,"product_name":"GS-6","indication":null,"intended_use":null,"primary_agency":"FDA","target_agencies":["FDA"],"target_submission_date":null,"actual_submission_date":null,"approval_date":null,"lead_user_id":11,"team_members":[],"created_at":"2026-11-01T20:59:55.888Z","updated_at":"2026-11-01T20:59:55.888Z","application_number":null,"product_type":"device","device_class":null,"regulatory_path":"510k","product_code":null,"sponsor_name":"one","client_workspace_id":1,"client_name":"Default Workspace","registry_id":"US_510K","submission_type_id":null,"riskBasedMonitoring":false,"predicate_devices":[],"review_panel":null,"regulation_number":null,"device_flags":null,"readiness":null,"readinessState":"unavailable","readinessReason":"The governed section store is not provisioned in this environment.","readinessAsOf":null},"meta":{"created":true,"organizationId":1,"actorUserId":11,"clientWorkspaceId":1,"clientWorkspaceName":"Default Workspace","documentId":null,"scaffoldedSections":0,"marketSupport":{"tier":"author_only","label":"Author documents for this market","reason":"Author the documents here. This platform builds no FDA sequence for a 510K.","appliesTo":null},"projectAnchorId":6,"projectAnchorCreated":true}}: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts:209:50
+    207|     const before = await holdings();
+    208|     const res = await create({ name: 'S1 refused', ...extra });
+    209|     expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                  ^
+    210|     expect(JSON.stringify(res.body)).not.toContain('SECRET-AIM');
+    211|     expect(await holdings()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > refuses an objective longer than the objective field allows before anything is written, without echoing it
+AssertionError: {"data":{"id":"b9c72f88-9b25-4107-a78b-0543bfd46e91","title":"S1 refused","ws":"MDX","pathway":"k510","code":"GS7","stage":"Planning","status":"active","lead":"Lead","due":"—","due_date":null,"activity":"Updated Nov 01","client_workspace_id":1,"client_name":"Default Workspace","description":null,"indication":null,"agency":"FDA","program_type":"510k","readiness":null,"readinessState":"unavailable","readinessReason":"The governed section store is not provisioned in this environment."},"program":{"id":"b9c72f88-9b25-4107-a78b-0543bfd46e91","code":"GS7","name":"S1 refused","program_type":"510k","status":"active","phase":"planning","priority":"medium","description":null,"product_name":"GS-7","indication":null,"intended_use":null,"primary_agency":"FDA","target_agencies":["FDA"],"target_submission_date":null,"actual_submission_date":null,"approval_date":null,"lead_user_id":11,"team_members":[],"created_at":"2026-11-01T20:59:55.916Z","updated_at":"2026-11-01T20:59:55.916Z","application_number":null,"product_type":"device","device_class":null,"regulatory_path":"510k","product_code":null,"sponsor_name":"one","client_workspace_id":1,"client_name":"Default Workspace","registry_id":"US_510K","submission_type_id":null,"riskBasedMonitoring":false,"predicate_devices":[],"review_panel":null,"regulation_number":null,"device_flags":null,"readiness":null,"readinessState":"unavailable","readinessReason":"The governed section store is not provisioned in this environment.","readinessAsOf":null},"meta":{"created":true,"organizationId":1,"actorUserId":11,"clientWorkspaceId":1,"clientWorkspaceName":"Default Workspace","documentId":null,"scaffoldedSections":0,"marketSupport":{"tier":"author_only","label":"Author documents for this market","reason":"Author the documents here. This platform builds no FDA sequence for a 510K.","appliesTo":null},"projectAnchorId":7,"projectAnchorCreated":true}}: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts:209:50
+    207|     const before = await holdings();
+    208|     const res = await create({ name: 'S1 refused', ...extra });
+    209|     expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                  ^
+    210|     expect(JSON.stringify(res.body)).not.toContain('SECRET-AIM');
+    211|     expect(await holdings()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > refuses an objective citing a source address that is not http before anything is written, without echoing it
+AssertionError: {"data":{"id":"f01d3da2-7309-4eb7-a6fb-832d7a18b089","title":"S1 refused","ws":"MDX","pathway":"k510","code":"GS8","stage":"Planning","status":"active","lead":"Lead","due":"—","due_date":null,"activity":"Updated Nov 01","client_workspace_id":1,"client_name":"Default Workspace","description":null,"indication":null,"agency":"FDA","program_type":"510k","readiness":null,"readinessState":"unavailable","readinessReason":"The governed section store is not provisioned in this environment."},"program":{"id":"f01d3da2-7309-4eb7-a6fb-832d7a18b089","code":"GS8","name":"S1 refused","program_type":"510k","status":"active","phase":"planning","priority":"medium","description":null,"product_name":"GS-8","indication":null,"intended_use":null,"primary_agency":"FDA","target_agencies":["FDA"],"target_submission_date":null,"actual_submission_date":null,"approval_date":null,"lead_user_id":11,"team_members":[],"created_at":"2026-11-01T20:59:55.942Z","updated_at":"2026-11-01T20:59:55.942Z","application_number":null,"product_type":"device","device_class":null,"regulatory_path":"510k","product_code":null,"sponsor_name":"one","client_workspace_id":1,"client_name":"Default Workspace","registry_id":"US_510K","submission_type_id":null,"riskBasedMonitoring":false,"predicate_devices":[],"review_panel":null,"regulation_number":null,"device_flags":null,"readiness":null,"readinessState":"unavailable","readinessReason":"The governed section store is not provisioned in this environment.","readinessAsOf":null},"meta":{"created":true,"organizationId":1,"actorUserId":11,"clientWorkspaceId":1,"clientWorkspaceName":"Default Workspace","documentId":null,"scaffoldedSections":0,"marketSupport":{"tier":"author_only","label":"Author documents for this market","reason":"Author the documents here. This platform builds no FDA sequence for a 510K.","appliesTo":null},"projectAnchorId":8,"projectAnchorCreated":true}}: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts:209:50
+    207|     const before = await holdings();
+    208|     const res = await create({ name: 'S1 refused', ...extra });
+    209|     expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                  ^
+    210|     expect(JSON.stringify(res.body)).not.toContain('SECRET-AIM');
+    211|     expect(await holdings()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > refuses an objective citing a source with no title before anything is written, without echoing it
+AssertionError: {"data":{"id":"587212f9-a379-424a-9b22-e6e0ead43492","title":"S1 refused","ws":"MDX","pathway":"k510","code":"GS9","stage":"Planning","status":"active","lead":"Lead","due":"—","due_date":null,"activity":"Updated Nov 01","client_workspace_id":1,"client_name":"Default Workspace","description":null,"indication":null,"agency":"FDA","program_type":"510k","readiness":null,"readinessState":"unavailable","readinessReason":"The governed section store is not provisioned in this environment."},"program":{"id":"587212f9-a379-424a-9b22-e6e0ead43492","code":"GS9","name":"S1 refused","program_type":"510k","status":"active","phase":"planning","priority":"medium","description":null,"product_name":"GS-9","indication":null,"intended_use":null,"primary_agency":"FDA","target_agencies":["FDA"],"target_submission_date":null,"actual_submission_date":null,"approval_date":null,"lead_user_id":11,"team_members":[],"created_at":"2026-11-01T20:59:55.980Z","updated_at":"2026-11-01T20:59:55.980Z","application_number":null,"product_type":"device","device_class":null,"regulatory_path":"510k","product_code":null,"sponsor_name":"one","client_workspace_id":1,"client_name":"Default Workspace","registry_id":"US_510K","submission_type_id":null,"riskBasedMonitoring":false,"predicate_devices":[],"review_panel":null,"regulation_number":null,"device_flags":null,"readiness":null,"readinessState":"unavailable","readinessReason":"The governed section store is not provisioned in this environment.","readinessAsOf":null},"meta":{"created":true,"organizationId":1,"actorUserId":11,"clientWorkspaceId":1,"clientWorkspaceName":"Default Workspace","documentId":null,"scaffoldedSections":0,"marketSupport":{"tier":"author_only","label":"Author documents for this market","reason":"Author the documents here. This platform builds no FDA sequence for a 510K.","appliesTo":null},"projectAnchorId":9,"projectAnchorCreated":true}}: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts:209:50
+    207|     const before = await holdings();
+    208|     const res = await create({ name: 'S1 refused', ...extra });
+    209|     expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                  ^
+    210|     expect(JSON.stringify(res.body)).not.toContain('SECRET-AIM');
+    211|     expect(await holdings()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > refuses an objective sources sent with no objective before anything is written, without echoing it
+AssertionError: {"data":{"id":"7c6bb06b-98ce-4ded-8362-fe38d966afd2","title":"S1 refused","ws":"MDX","pathway":"k510","code":"GS-10","stage":"Planning","status":"active","lead":"Lead","due":"—","due_date":null,"activity":"Updated Nov 01","client_workspace_id":1,"client_name":"Default Workspace","description":null,"indication":null,"agency":"FDA","program_type":"510k","readiness":null,"readinessState":"unavailable","readinessReason":"The governed section store is not provisioned in this environment."},"program":{"id":"7c6bb06b-98ce-4ded-8362-fe38d966afd2","code":"GS-10","name":"S1 refused","program_type":"510k","status":"active","phase":"planning","priority":"medium","description":null,"product_name":"GS-10","indication":null,"intended_use":null,"primary_agency":"FDA","target_agencies":["FDA"],"target_submission_date":null,"actual_submission_date":null,"approval_date":null,"lead_user_id":11,"team_members":[],"created_at":"2026-11-01T20:59:56.013Z","updated_at":"2026-11-01T20:59:56.013Z","application_number":null,"product_type":"device","device_class":null,"regulatory_path":"510k","product_code":null,"sponsor_name":"one","client_workspace_id":1,"client_name":"Default Workspace","registry_id":"US_510K","submission_type_id":null,"riskBasedMonitoring":false,"predicate_devices":[],"review_panel":null,"regulation_number":null,"device_flags":null,"readiness":null,"readinessState":"unavailable","readinessReason":"The governed section store is not provisioned in this environment.","readinessAsOf":null},"meta":{"created":true,"organizationId":1,"actorUserId":11,"clientWorkspaceId":1,"clientWorkspaceName":"Default Workspace","documentId":null,"scaffoldedSections":0,"marketSupport":{"tier":"author_only","label":"Author documents for this market","reason":"Author the documents here. This platform builds no FDA sequence for a 510K.","appliesTo":null},"projectAnchorId":10,"projectAnchorCreated":true}}: expected 201 to be 400 // Object.is equality
+
+- Expected
++ Received
+
+- 400
++ 201
+
+ ❯ server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts:209:50
+    207|     const before = await holdings();
+    208|     const res = await create({ name: 'S1 refused', ...extra });
+    209|     expect(res.status, JSON.stringify(res.body)).toBe(400);
+       |                                                  ^
+    210|     expect(JSON.stringify(res.body)).not.toContain('SECRET-AIM');
+    211|     expect(await holdings()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > rolls the whole creation back when the objective cannot be recorded: no program, no record, no charter
+AssertionError: expected 201 to be greater than or equal to 500
+ ❯ server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts:217:24
+    215|     const before = await holdings();
+    216|     const res = await create({ name: 'S1 rollback', objective: 'EXPLOD…
+    217|     expect(res.status).toBeGreaterThanOrEqual(500);
+       |                        ^
+    218|     expect(await holdings()).toEqual(before);
+    219|   }, T);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > starts the charter for 'an EU MDR technical file at a Notifie…', a filing the charter did not classify before
+AssertionError: expected [] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+- [
+-   ObjectContaining {
+-     "regulatory_region": "EMA",
+-     "submission_type": "MDR",
+-   },
+- ]
++ []
+
+ ❯ server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts:228:22
+    226|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+    227|     const { charters, sections } = await charterOf(res.body.meta.proje…
+    228|     expect(charters).toEqual([expect.objectContaining(charter)]);
+       |                      ^
+    229|     expect(sections.map((s) => s.version)).toEqual([1]);
+    230|   }, T);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts > POST /api/c2c/projects records the objective it is given > starts the charter for 'a clinical study report under ICH', a filing the charter did not classify before
+AssertionError: expected [] to deeply equal [ ObjectContaining{…} ]
+
+- Expected
++ Received
+
+- [
+-   ObjectContaining {
+-     "regulatory_region": "ICH",
+-     "submission_type": "CSR",
+-   },
+- ]
++ []
+
+ ❯ server/routes/c2c/__tests__/projects-create-objective.pglite.test.ts:228:22
+    226|     expect(res.status, JSON.stringify(res.body)).toBe(201);
+    227|     const { charters, sections } = await charterOf(res.body.meta.proje…
+    228|     expect(charters).toEqual([expect.objectContaining(charter)]);
+       |                      ^
+    229|     expect(sections.map((s) => s.version)).toEqual([1]);
+    230|   }, T);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 failed | 4 passed (13)
+   Start at  20:59:46
+   Duration  9.93s (transform 3.86s, setup 106ms, import 667ms, tests 8.83s, environment 0ms)
+

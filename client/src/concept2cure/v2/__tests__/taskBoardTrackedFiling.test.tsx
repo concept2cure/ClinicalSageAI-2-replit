@@ -11,7 +11,8 @@ const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async original => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
 vi.mock('@/services/portal/authService', () => ({ useAuth: () => ({ user: { id: '7', organizationId: 7, permissions: [] } }) }));
 const publishShellProject = vi.hoisted(() => vi.fn());
-vi.mock('../shellProject', () => ({ publishShellProject }));
+// No project is open: the board reads the open project to seed its filter.
+vi.mock('../shellProject', () => ({ publishShellProject, useShellProject: () => null }));
 import { TaskBoard } from '../surfaces/TaskBoard';
 import { clearNavParams, consumeNavParams } from '../navParams';
 

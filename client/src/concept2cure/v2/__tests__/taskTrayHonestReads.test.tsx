@@ -135,7 +135,8 @@ describe('TaskTray — the bell badge', () => {
   it('when every count loads and nothing is waiting, there is no badge', async () => {
     serve();
     render(<TaskTray onNav={vi.fn()} />);
-    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/mdx/notifications/unread-count'));
+    // Reads carry an abort signal since c3794c8fe (stalled reads recover), so match the request, not the arity.
+    await waitFor(() => expect(apiRequest.mock.calls.some((c) => c[0] === 'GET' && c[1] === '/api/mdx/notifications/unread-count')).toBe(true));
     await waitFor(() => expect(trigger().getAttribute('aria-label')).toBe('Your work'));
     expect(document.querySelector('.tt-badge')).toBeNull();
   });
@@ -145,6 +146,27 @@ describe('TaskTray — the bell badge', () => {
     render(<TaskTray onNav={vi.fn()} />);
     await waitFor(() => expect(document.querySelector('.tt-badge')?.textContent).toBe('3'));
     expect(trigger().getAttribute('aria-label')).toBe('Your work — 3 items waiting');
+    // Nothing late: no mark, and the name does not say "overdue" (D1 §D1.B step 6).
+    expect(trigger().hasAttribute('data-overdue')).toBe(false);
+  });
+
+  /* D1-2 (§D1.B step 6, acceptance B3): the closed bell said nothing about lateness; the
+     same badge stood for 4 open items as for 4 with 2 overdue. It is red then (the
+     sheet's .tt-trigger[data-overdue] .tt-badge), and its name says so. */
+  it('when something is overdue, the bell is marked and its name says how many', async () => {
+    serve({ myWork: { payload: { success: true, data: { ...MY_WORK.data, total: 4, overdue: 2 } } } });
+    render(<TaskTray onNav={vi.fn()} />);
+    await waitFor(() => expect(trigger().getAttribute('aria-label')).toBe('Your work — 4 items waiting, 2 overdue'));
+    expect(trigger().hasAttribute('data-overdue')).toBe(true);
+    expect(document.querySelector('.tt-badge')?.textContent).toBe('4');
+  });
+
+  it('a late item still marks the bell when another count failed, beside the "?"', async () => {
+    serve({ myWork: { payload: { success: true, data: { ...MY_WORK.data, total: 1, overdue: 1 } } }, unread: { payload: { error: 'boom' }, status: 500 } });
+    render(<TaskTray onNav={vi.fn()} />);
+    await waitFor(() => expect(trigger().getAttribute('aria-label')).toMatch(/couldn't load every count; at least 1 item waiting, 1 overdue$/));
+    expect(trigger().hasAttribute('data-overdue')).toBe(true);
+    expect(document.querySelector('.tt-badge')?.textContent).toBe('?');
   });
 });
 

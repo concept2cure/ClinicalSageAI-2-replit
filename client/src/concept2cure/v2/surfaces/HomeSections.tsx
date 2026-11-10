@@ -4,12 +4,13 @@
  */
 import React from 'react';
 import { I } from '../icons';
-import { hasKeys, useLiveData, type ListState } from '../dataConnect';
+import { type ListState } from '../dataConnect';
 import type { OnboardingWelcome } from '../onboardingWelcome';
 import { openProjectHome } from '../shellProject';
 import { applySurfaceAction } from '../surfaceActions';
 import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
 import { PJ_LIFECYCLE } from '../fixtures/project-home-data';
+import { WS_LABEL } from './ProjectPortfolioFilters';
 import { OpenWorkGroups, useOpenWorkReads } from '../OpenWork';
 import { taskActorScope, taskTargetLocation } from '../taskTarget';
 import { useAuth } from '@/services/portal/authService';
@@ -46,14 +47,8 @@ export interface HomeProgram {
 
 /** How many projects Home lists before "All projects". */
 const HOME_PROJECTS = 5;
-/** How many of the person's conversations Home lists. */
-const HOME_CONVERSATIONS = 5;
-
-/** One of the person's own AnA conversations (GET /api/chat/threads). */
-interface HomeThread { id: string; title: string | null }
-
 /**
- * Your projects — the first thing on Home.
+ * Your projects — on Home, beneath the composer.
  *
  * Four honest states, no fixture (the rule HomeLeadProgram set on 2026-09-07,
  * when a constant named a programme the organization had never created):
@@ -103,7 +98,7 @@ export function HomeProjects({
       ) : empty ? (
         <div className="home-first" data-testid="home-first-project">
           <p className="home-first-lead">
-            A project holds one regulatory filing, for example an IND, and everything that goes into it. You work
+            A project holds one regulatory filing, for example an IND or a 510(k), and everything that goes into it. You work
             through it in six steps:
           </p>
           <ol className="home-steps">
@@ -128,7 +123,7 @@ export function HomeProjects({
                   onClick={() => openProjectHome({ id: p.id, title: p.title, code: p.code, ws: p.ws, status: p.status }, onNav)}
                 >
                   <span className="home-row-t">{p.code ? `${p.code} — ${p.title}` : p.title}</span>
-                  <span className="home-row-m">{[p.ws, p.stage, p.status].filter(Boolean).join(' · ')}</span>
+                  <span className="home-row-m">{[p.ws ? WS_LABEL[p.ws] ?? p.ws : null, p.stage, p.status].filter(Boolean).join(' · ')}</span>
                   <span className="home-row-go" aria-hidden="true">{I.right}</span>
                 </button>
               </li>
@@ -215,55 +210,6 @@ export function HomeTasks({ onNav }: { onNav: (id: string) => void }) {
           queue={queue.data} queueError={queue.error} approvalRows={approvalRows} approvalsError={approvals.error}
           go={onNav} openTask={openTask} />
       </div>
-    </section>
-  );
-}
-
-/**
- * Your recent conversations, newest first. The server lists the caller's own
- * (server/routes/chat/threads.ts, the global recents branch, which had no
- * client caller). A reply without `threads` is a failed read, never an empty
- * list. Each row reopens its thread the way a project's list does.
- */
-export function HomeConversations({ onNav }: { onNav: (id: string) => void }) {
-  const read = useLiveData<{ threads: HomeThread[] }>(
-    `/api/chat/threads?limit=${HOME_CONVERSATIONS}`,
-    [],
-    hasKeys<{ threads: HomeThread[] }>('threads'),
-  );
-  const threads = read.data?.threads ?? [];
-  return (
-    <section className="home-sec" aria-labelledby="home-convos-h">
-      <h2 id="home-convos-h" className="home-sec-h">Recent conversations</h2>
-      {read.loading ? (
-        <div role="status" className="home-note">Loading your conversations…</div>
-      ) : read.error ? (
-        <div role="alert" className="home-note" data-tone="error">
-          <span className="ico">{I.alertTriangle}</span>
-          Couldn&rsquo;t load your conversations. This is a failed read, not an empty list.
-        </div>
-      ) : threads.length === 0 ? (
-        <div className="home-note">No conversations yet. Ask AnA above, and the conversation is kept here.</div>
-      ) : (
-        <ul className="home-list" data-testid="home-conversations">
-          {threads.slice(0, HOME_CONVERSATIONS).map((t) => (
-            <li key={t.id}>
-              <button
-                type="button"
-                className="home-row"
-                title="Resume this conversation"
-                onClick={() => {
-                  window.C2C_CONVO = { id: t.id };
-                  onNav('conversation-thread');
-                }}
-              >
-                <span className="home-row-t">{(t.title || 'Untitled conversation').slice(0, 120)}</span>
-                <span className="home-row-go" aria-hidden="true">{I.right}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
     </section>
   );
 }

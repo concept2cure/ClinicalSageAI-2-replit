@@ -8,11 +8,13 @@ import { classifyVerifiedAs2Delivery } from './as2-transport';
 import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership';
 import { readCsrProjectActor, CsrScopeError } from '../csr/project-scope';
 import { writeChainedAuditRow } from '../auditService';
+import { LAUNCH_SEQUENCE_MAX_BYTES, launchSequenceSizeRefusal } from '../ectd/ectd-regional-rules';
 
 export class FdaAs2ReceiptRefusal extends Error {
   constructor(readonly code: string, readonly status: 400 | 403 | 404 | 409 | 422, message: string) { super(message); }
 }
-export interface FdaAs2ReceiptResult { verified: true; recorded: true; status: 'received' | 'rejected'; duplicate: boolean; auditTrail: true; sequenceResolution: 'resolved' | 'already-resolved' | 'unreconciled' }
+/** `environment` is the original send's, as its binding recorded it: a receipt from the agency's test environment files nothing (F1, row D7). */
+export interface FdaAs2ReceiptResult { verified: true; recorded: true; status: 'received' | 'rejected'; duplicate: boolean; auditTrail: true; sequenceResolution: 'resolved' | 'already-resolved' | 'unreconciled'; environment: 'staging' | 'production' }
 interface ReceiptBinding { messageId: string; mic: string; environment: 'staging' | 'production' }
 function bindingOf(metadata: Record<string, unknown> | null): ReceiptBinding {
   const binding = metadata?.as2 as Partial<ReceiptBinding> | undefined;
@@ -72,9 +74,18 @@ export async function ingestFdaAs2Receipt(args: ReceiptInput): Promise<FdaAs2Rec
     const liveBinding = bindingOf(current.metadata);
     if (liveBinding.messageId !== binding.messageId || liveBinding.mic !== binding.mic || liveBinding.environment !== binding.environment) throw new FdaAs2ReceiptRefusal('AS2_RECEIPT_BINDING_CHANGED', 409, 'The original AS2 binding changed during verification. Nothing was recorded.');
     const history = Array.isArray(current.metadata?.as2ReceiptHistory) ? current.metadata.as2ReceiptHistory : [];
+    const contradicted = contradictedSettlement(current.metadata, status);
+    if (history.some((entry: { sha256?: string; contradicts?: string }) => entry?.sha256 === sha256 && entry.contradicts)) {
+      throw contradictionRefusal(current.metadata, status);
+    }
+    if (contradicted) {
+      await keepContradictingReceipt(client, args, current, { sha256, status, messageId: binding.messageId, history });
+      await client.query('COMMIT');
+      throw contradictionRefusal(current.metadata, status);
+    }
     if (history.some((entry: { sha256?: string }) => entry?.sha256 === sha256)) {
       const sequenceResolution = await resolveReceiptSequence(client, args.organizationId, current, status);
-      await client.query('COMMIT'); return { verified: true, recorded: true, status, duplicate: true, auditTrail: true, sequenceResolution };
+      await client.query('COMMIT'); return { verified: true, recorded: true, status, duplicate: true, auditTrail: true, sequenceResolution, environment: binding.environment };
     }
     const nextStatus = nextReceiptStatus(current.status, status);
     const observedAt = new Date().toISOString();
@@ -90,7 +101,7 @@ export async function ingestFdaAs2Receipt(args: ReceiptInput): Promise<FdaAs2Rec
     await recordGovernedAction(client, { orgId: args.organizationId, userId: args.userId, command: 'transition', target: `submission-transmittal:${args.transmittalId}`, reason: 'Recorded cryptographically verified FDA AS2 receipt', domain: 'regulatory', surface: 'gateway-transmittals',
       payload: { receiptSha256: sha256, from: current.status, to: nextStatus, receiptKind: 'AS2-MDN', originalMessageId: binding.messageId, micVerified: status === 'received', sequenceResolution },
     });
-    await client.query('COMMIT'); return { verified: true, recorded: true, status, duplicate: false, auditTrail: true, sequenceResolution };
+    await client.query('COMMIT'); return { verified: true, recorded: true, status, duplicate: false, auditTrail: true, sequenceResolution, environment: binding.environment };
   } catch (err) { await client.query('ROLLBACK'); throw err; }
   finally { client.release(); }
 }
@@ -105,7 +116,13 @@ function dispatchBindingOf(transmittal: ReceiptTransmittal, organizationId: numb
 async function resolveReceiptSequence(client: { query: (sql: string, args?: unknown[]) => Promise<{ rows: any[] }> }, organizationId: number, transmittal: ReceiptTransmittal, status: 'received' | 'rejected', receipt?: { userId: number; transmittalId: number; receiptSha256: string; originalMessageId: string }): Promise<FdaAs2ReceiptResult['sequenceResolution']> {
   const binding = dispatchBindingOf(transmittal, organizationId);
   if (!binding) return 'unreconciled';
-  const next = status === 'received' ? 'sent' : 'rejected';
+  // F1 (row D7, 2026-11-01): only a production receipt files the sequence. One
+  // from the agency's test environment settles the attempt it binds to
+  // 'pending', never 'sent' or 'rejected': the test environment's verdict is not
+  // FDA's, and the sequence can still be filed (submission-service.ts
+  // toDispatchStatus). `!==`, so an environment that is neither files nothing.
+  const environment = (transmittal.metadata?.as2 as Partial<ReceiptBinding> | undefined)?.environment;
+  const next = environment !== 'production' ? 'pending' : status === 'received' ? 'sent' : 'rejected';
   if (receipt) {
     const sequence = (await client.query(`SELECT id FROM ectd_sequences WHERE id=$1 AND organization_id=$2
       AND status='dispatched' AND deleted_at IS NULL FOR UPDATE`, [binding.sequenceId, organizationId])).rows[0];
@@ -113,13 +130,9 @@ async function resolveReceiptSequence(client: { query: (sql: string, args?: unkn
     // A signed positive or negative MDN proves this wire attempt occurred.
     // Use the same one-use ledger as transmitSequence, inside this transaction,
     // so a released rejection can never re-authorize its original signature.
-    const spent = await client.query(`SELECT action FROM audit_logs WHERE tenant_id=$1 AND table_name='ectd_sequence'
-      AND record_id=$2 AND action IN ('SEQUENCE_FROZEN','SEQUENCE_DISPATCHED','ECTD_TRANSMITTED','GOVERNED_SIGNATURE_VOIDED')
-      AND new_values::jsonb->>'signatureActionId'=$3 LIMIT 1`, [organizationId, String(binding.sequenceId), binding.signatureActionId]);
-    if (!spent.rows.length) await writeChainedAuditRow(client, {
-      organizationId, userId: receipt.userId, action: 'ECTD_TRANSMITTED', resourceType: 'ectd_sequence', resourceId: binding.sequenceId,
-      details: { ...receipt, signatureActionId: binding.signatureActionId, transmitAttemptId: binding.attemptId,
-        status, environment: (transmittal.metadata?.as2 as ReceiptBinding).environment, region: 'fda', gateway: 'esg', source: 'agency-signed-receipt-reconciliation' },
+    await spendTransmitSignature(client as Queryable, {
+      organizationId, userId: receipt.userId, sequenceId: binding.sequenceId, signatureActionId: binding.signatureActionId,
+      details: { ...receipt, transmitAttemptId: binding.attemptId, status, environment, region: 'fda', gateway: 'esg', source: 'agency-signed-receipt-reconciliation' },
     });
     const changed = await client.query(`UPDATE ectd_sequences SET dispatch_status = $3, updated_at = now()
       WHERE id = $1 AND organization_id = $2 AND status = 'dispatched' AND deleted_at IS NULL
@@ -128,5 +141,232 @@ async function resolveReceiptSequence(client: { query: (sql: string, args?: unkn
   }
   const row = (await client.query(`SELECT dispatch_status FROM ectd_sequences WHERE id = $1 AND organization_id = $2
     AND deleted_at IS NULL AND transmit_signature_action_id = $3 AND transmit_attempt_id=$4::uuid`, [binding.sequenceId, organizationId, binding.signatureActionId, binding.attemptId])).rows[0];
-  return row?.dispatch_status === next ? 'already-resolved' : 'unreconciled';
+  return row?.dispatch_status === next || agreesWithFiledSequence(status, environment, row?.dispatch_status) ? 'already-resolved' : 'unreconciled';
+}
+/** P-92 (§3.3): after a signed settlement recorded the send as received, a positive production MDN agrees with it,
+ *  whether the settlement read an Ack2 ('sent') or an Ack3 ('acknowledged'). */
+function agreesWithFiledSequence(status: 'received' | 'rejected', environment: unknown, dispatchStatus: unknown): boolean {
+  return status === 'received' && environment === 'production' && (dispatchStatus === 'sent' || dispatchStatus === 'acknowledged');
+}
+
+// ── P-92: a held FDA send, settled by a signed act (founder 2026-11-02; P-108 1(b); design §3, §10.3, §10.4) ──────
+
+type Queryable = { query: (sql: string, args?: unknown[]) => Promise<{ rows: any[]; rowCount?: number | null }> };
+/** Every act that spends a signature on a sequence, as Gate 1 reads it (submission-service.ts signatureSpentBy). */
+const SIGNATURE_SPENDING_ACTIONS = ['SEQUENCE_FROZEN', 'SEQUENCE_DISPATCHED', 'ECTD_TRANSMITTED', 'GOVERNED_SIGNATURE_VOIDED', 'TRANSMIT_BLOCKED',
+  'SHADOW_REVIEW_WAIVED', 'SHADOW_FINDING_DISPOSITIONED', 'ECTD_SEQUENCE_RETIRED', 'ECTD_HELD_SEND_SETTLED'];
+
+/** Spend a transmit signature S, once: the receipt path and the settlement share this (§3.3), so S never authorizes a second send. */
+export async function spendTransmitSignature(client: Queryable, p: {
+  organizationId: number; userId: number; sequenceId: number; signatureActionId: string; details: Record<string, unknown>;
+}): Promise<void> {
+  const spent = await client.query(`SELECT action FROM audit_logs WHERE tenant_id = $1 AND table_name = 'ectd_sequence' AND record_id = $2
+      AND action = ANY($3::text[]) AND new_values::jsonb->>'signatureActionId' = $4 LIMIT 1`,
+  [p.organizationId, String(p.sequenceId), SIGNATURE_SPENDING_ACTIONS, p.signatureActionId]);
+  if (spent.rows.length) return;
+  await writeChainedAuditRow(client as PoolClient, {
+    organizationId: p.organizationId, userId: p.userId, action: 'ECTD_TRANSMITTED', resourceType: 'ectd_sequence', resourceId: p.sequenceId,
+    details: { ...p.details, signatureActionId: p.signatureActionId },
+  });
+}
+
+/** How long a send with no finishing write must be quiet before it can be settled (E5(b)). */
+export const HELD_SEND_QUIET_PERIOD_MS = 24 * 60 * 60 * 1000;
+export const HELD_SEND_OUTCOMES = ['received', 'not-received'] as const;
+export const HELD_SEND_EVIDENCE_KINDS = ['ack2', 'ack3', 'fda-non-receipt-confirmation', 'platform-proof'] as const;
+export type HeldSendOutcome = typeof HELD_SEND_OUTCOMES[number];
+export type HeldSendEvidenceKind = typeof HELD_SEND_EVIDENCE_KINDS[number];
+/** The platform's own proof that nothing left (E9, E9′). */
+export type PlatformProof = 'no-as2-message' | 'sftp-client-never-shipped';
+export interface HeldSendSequence { id: number; sequenceNumber: string; dispatchStatus: string | null; transmitSignatureActionId: string | null; transmitAttemptId: string | null }
+export interface HeldSendTransmittal {
+  id: number; transport: string; status: string; environment: string | null; as2Environment: string | null; as2MessageId: string | null;
+  verifiedReceipt: boolean; hasReceipt: boolean; httpStatus: number | null; transmissionId: string | null; errorMessage: string | null;
+  acknowledged: boolean; hasMdn: boolean; submittedAt: string; updatedAt: string; settlement: Record<string, unknown> | null; bundleSizeBytes: number | null;
+}
+export interface HeldSendFacts { sequence: HeldSendSequence; transmittal: HeldSendTransmittal | null; now: number }
+
+function as2Facts(m: Record<string, any>) {
+  const as2 = m.as2 && typeof m.as2.messageId === 'string' ? m.as2 : null;
+  return { as2MessageId: as2 ? String(as2.messageId) : null, as2Environment: as2 && typeof as2.environment === 'string' ? String(as2.environment) : null };
+}
+function transmittalFacts(r: Record<string, any>): HeldSendTransmittal {
+  const m = (r.metadata ?? {}) as Record<string, any>;
+  const settlement = m.heldSendSettlement && typeof m.heldSendSettlement === 'object' ? m.heldSendSettlement as Record<string, unknown> : null;
+  return {
+    id: Number(r.id), transport: String(r.transport ?? ''), status: String(r.status ?? ''),
+    environment: typeof m.environment === 'string' ? m.environment : null, ...as2Facts(m),
+    verifiedReceipt: m.as2Receipt?.verified === true, hasReceipt: Boolean(m.as2Receipt),
+    httpStatus: r.http_status == null ? null : Number(r.http_status), transmissionId: r.transmission_id ?? null, errorMessage: r.error_message ?? null,
+    acknowledged: r.ack_received_at != null, hasMdn: r.has_mdn === true,
+    submittedAt: new Date(r.submitted_at).toISOString(), updatedAt: new Date(r.updated_at).toISOString(), settlement,
+    bundleSizeBytes: r.bundle_size_bytes == null ? null : Number(r.bundle_size_bytes),
+  };
+}
+
+/** E2: the one FDA ESG transmittal bound to this attempt (A) and its signature (S). Two throw: fail closed, as slice 1's fold. */
+export async function readHeldSend(q: Queryable, organizationId: number, seq: HeldSendSequence, opts: { lock?: boolean } = {}): Promise<HeldSendFacts> {
+  const now = Date.now();
+  if (!seq.transmitSignatureActionId || !seq.transmitAttemptId) return { sequence: seq, transmittal: null, now };
+  const params = [organizationId, String(seq.id), seq.transmitAttemptId];
+  // Two literal statements, the act's under FOR UPDATE: no SQL text is built from an expression (ci:sql-interpolation).
+  const { rows } = opts.lock
+    ? await q.query(`SELECT id, transport, status, metadata, bundle_sha256, bundle_size_bytes, http_status, transmission_id, error_message,
+      ack_received_at, mdn_raw IS NOT NULL AS has_mdn, submitted_at, updated_at FROM submission_transmittals
+    WHERE organization_id = $1 AND region = 'fda' AND gateway = 'esg' AND metadata->'dispatchBinding'->>'sequenceId' = $2::text
+      AND lower(metadata->'dispatchBinding'->>'attemptId') = lower($3) ORDER BY id FOR UPDATE`, params)
+    : await q.query(`SELECT id, transport, status, metadata, bundle_sha256, bundle_size_bytes, http_status, transmission_id, error_message,
+      ack_received_at, mdn_raw IS NOT NULL AS has_mdn, submitted_at, updated_at FROM submission_transmittals
+    WHERE organization_id = $1 AND region = 'fda' AND gateway = 'esg' AND metadata->'dispatchBinding'->>'sequenceId' = $2::text
+      AND lower(metadata->'dispatchBinding'->>'attemptId') = lower($3) ORDER BY id`, params);
+  const bound = rows.filter((r) => dispatchBindingOf(r as ReceiptTransmittal, organizationId)?.signatureActionId === seq.transmitSignatureActionId);
+  if (bound.length > 1) throw new Error(`Two FDA transmittals are bound to one attempt of sequence ${seq.sequenceNumber}`);
+  return { sequence: seq, transmittal: bound[0] ? transmittalFacts(bound[0]) : null, now };
+}
+
+/** "3 November 2026 at 14:05 UTC": how a held send's date is said. */
+export function heldSendWhen(iso: string): string {
+  const d = new Date(iso);
+  const month = d.toLocaleString('en-GB', { month: 'long', timeZone: 'UTC' });
+  return `${d.getUTCDate()} ${month} ${d.getUTCFullYear()} at ${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')} UTC`;
+}
+const NOTHING = 'Nothing was changed.';
+const settledWords = (t: HeldSendTransmittal) => `${t.settlement?.outcome === 'received' ? 'recorded as received' : 'released'} on ${heldSendWhen(String(t.settlement?.settledAt ?? t.updatedAt))}`;
+const ended = (t: HeldSendTransmittal, now: number) =>
+  t.status === 'received' || t.status === 'rejected' || t.errorMessage !== null || now - Date.parse(t.updatedAt) >= HELD_SEND_QUIET_PERIOD_MS;
+
+/** E1–E5: what keeps a held send from being settled either way, in words; null when it may be settled. */
+export function heldSendBlocker(f: HeldSendFacts): string | null {
+  const n = f.sequence.sequenceNumber;
+  if (f.sequence.dispatchStatus !== 'transmitting') return `Sequence ${n} has no held send to settle. ${NOTHING}`;
+  if (!f.sequence.transmitSignatureActionId || !f.sequence.transmitAttemptId) {
+    return `Sequence ${n}'s held send was claimed before the platform bound each send to its signature, so which transmission it was cannot be read, and it is not settled by guess. ${NOTHING}`;
+  }
+  const t = f.transmittal;
+  if (!t) return `No FDA transmission is recorded for sequence ${n}'s held send, so there is no FDA answer to settle it with. Only a held send to FDA is settled here. ${NOTHING}`;
+  if (t.environment === 'staging' || t.as2Environment === 'staging') return `Sequence ${n}'s held send went to FDA's test environment, which is not a filing, so it is not settled here. ${NOTHING}`;
+  if (t.environment !== 'production') return `Where sequence ${n}'s held send went is not recorded, so it is not settled here. ${NOTHING}`;
+  if (t.settlement) return `Sequence ${n}'s held send is already settled (${settledWords(t)}). ${NOTHING}`;
+  if (t.status === 'received' || t.verifiedReceipt || !['pending', 'in_transit', 'rejected'].includes(t.status)) {
+    return "FDA's signed answer to this send is already kept on the platform, so it is not settled by a signature here. On Gateway transmittals, " +
+      "download FDA's answer from this send's row and record it with 'Record agency MDN', which checks FDA's signature on it and records the send by " +
+      `FDA's own answer. ${NOTHING}`;
+  }
+  if (!ended(t, f.now)) {
+    return `This send of sequence ${n} may still be in progress, so it is not settled yet. ${NOTHING} If the platform hears nothing more of it, ` +
+      `it can be settled after ${heldSendWhen(new Date(Date.parse(t.updatedAt) + HELD_SEND_QUIET_PERIOD_MS).toISOString())}.`;
+  }
+  return null;
+}
+
+/** E5b: "received" needs a send that left, and that FDA's endpoint did not refuse when it was made. */
+export function receivedRefusal(t: HeldSendTransmittal): string | null {
+  if (t.transport !== 'as2' || !t.as2MessageId || t.status === 'pending') {
+    return `The platform's record shows this send never left the platform, so an FDA acknowledgement cannot be for it. ${NOTHING}`;
+  }
+  if (t.status === 'rejected' && t.httpStatus !== null && t.httpStatus >= 400 && t.httpStatus < 500) {
+    return `FDA's AS2 endpoint refused this send when it was made, so FDA did not unpack it and an acknowledgement cannot be for it. ${NOTHING}`;
+  }
+  return null;
+}
+
+/** E9 and E9′: the platform's own proof that nothing left, or null. AS2 only for the first, SFTP only for the second (B1 (d)). */
+export function platformProofOf(t: HeldSendTransmittal): PlatformProof | null {
+  if (t.transport === 'as2') return t.as2MessageId ? null : 'no-as2-message';
+  if (t.transport !== 'sftp') return null;
+  const nothingCameBack = !t.as2MessageId && !t.hasReceipt && !t.transmissionId && !t.acknowledged && !t.hasMdn;
+  return nothingCameBack && ['pending', 'in_transit', 'rejected'].includes(t.status) ? 'sftp-client-never-shipped' : null;
+}
+export function platformProofRefusal(t: HeldSendTransmittal): string {
+  return t.transport === 'as2' && t.as2MessageId
+    ? `The platform's record does not prove this send never left: an AS2 message was formed for it. Only FDA's written confirmation of non-receipt releases it. ${NOTHING}`
+    : `The platform's record does not prove this send never left: it holds an answer or an identifier from the far side. Only FDA's written confirmation of non-receipt releases it. ${NOTHING}`;
+}
+
+/** E7: the kind fits the outcome. */
+export function evidenceKindRefusal(outcome: HeldSendOutcome, kind: unknown): string | null {
+  const fits = outcome === 'received' ? kind === 'ack2' || kind === 'ack3' : kind === 'fda-non-receipt-confirmation' || kind === 'platform-proof';
+  return fits ? null : "An Ack2 or Ack3 records a send as received; FDA's written confirmation of non-receipt, or the platform's own proof that nothing left, releases it.";
+}
+
+const RISK = (n: string) => `If FDA did receive the first send after all, sending sequence ${n} again files it twice: FDA would hold two copies of sequence ${n}, and may refuse the second or require it to be corrected.`;
+/** The one source of a settlement's words (§3.4, §10.3 A.1, §10.4 (c)): the precheck answers it, the payload binds it, the act repeats it. */
+export function heldSendStatement(p: {
+  outcome: HeldSendOutcome; kind: HeldSendEvidenceKind; sequenceNumber: string; sentAt: string; as2MessageId: string | null; proof: PlatformProof | null; bundleSizeBytes: number | null;
+}): string {
+  const n = p.sequenceNumber;
+  const when = heldSendWhen(p.sentAt);
+  const id = p.as2MessageId ? ` (AS2 message ID ${p.as2MessageId})` : '; no AS2 message was formed for this send';
+  // §10.3 A.2: a legacy SFTP send was over the launch ceiling; its release says the resend is refused as it is (P-93).
+  const over = p.bundleSizeBytes !== null && p.bundleSizeBytes > LAUNCH_SEQUENCE_MAX_BYTES ? launchSequenceSizeRefusal(p.bundleSizeBytes) : null;
+  const again = `Releasing the send lets sequence ${n} be sent again, under a new signature.${over ? ` Sequence ${n} cannot be sent as it is: ${over}.` : ''}`;
+  if (p.kind === 'ack2') {
+    return `FDA's Ack2 for the send of sequence ${n} on ${when}${id} is the document chosen from this project's Vault. It shows that FDA unpacked sequence ${n} and delivered it to the center. ` +
+      `Sequence ${n} is recorded as received by FDA: it is on file with FDA and is not sent again. No Ack3 for this send is on the platform. If one arrives and does not accept sequence ${n}, ` +
+      'it is recorded as a technical rejection. The platform did not verify this acknowledgement; the record rests on this document and this signature.';
+  }
+  if (p.kind === 'ack3') {
+    return `FDA's Ack3 for the send of sequence ${n} on ${when}${id} is the document chosen from this project's Vault. It reports the center's validation result for sequence ${n}, and that result accepts it. ` +
+      `Sequence ${n} is recorded as received by FDA and acknowledged by the center: it is on file with FDA and is not sent again. The platform did not verify this acknowledgement; the record rests on this document and this signature.`;
+  }
+  if (p.kind === 'fda-non-receipt-confirmation') {
+    return `FDA has confirmed in writing that it did not receive the send of sequence ${n} on ${when}${id}; that confirmation is the document chosen from this project's Vault. ${again} ${RISK(n)} Release it only on FDA's written confirmation.`;
+  }
+  const ground = p.proof === 'sftp-client-never-shipped'
+    ? `The send of sequence ${n} on ${when} used the SFTP route to FDA, and no connection to FDA could be made for it: the platform never shipped the SFTP client that route needed.`
+    : `The platform's own record shows that the send of sequence ${n} on ${when} never left this platform: no AS2 message was formed for it, and this platform forms that message before any byte is sent.`;
+  return `${ground} FDA cannot confirm a send it never received, so no FDA document is cited. ${again} ${RISK(n).replace('If FDA did receive the first send after all', 'If this record is wrong and FDA did receive the first send')}`;
+}
+
+/** The transmittal's record of its settlement, set once, on the status that was judged (§3.3 afterUpdate (1)). */
+export async function markHeldSendSettled(client: Queryable, p: { organizationId: number; transmittalId: number; fromStatus: string; toStatus: string; settlement: Record<string, unknown> }): Promise<void> {
+  const res = await client.query(`UPDATE submission_transmittals SET status = $4, metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('heldSendSettlement', $5::jsonb),
+      updated_at = now() WHERE id = $1 AND organization_id = $2 AND status = $3 AND NOT (COALESCE(metadata, '{}'::jsonb) ? 'heldSendSettlement') RETURNING id`,
+  [p.transmittalId, p.organizationId, p.fromStatus, p.toStatus, JSON.stringify(p.settlement)]);
+  if (!res.rows.length) throw new Error('The transmission changed while this settlement was recorded.');
+}
+
+/** A verified receipt that contradicts a signed settlement, or null: FDA's positive answer after a release, its refusal after "received". */
+function contradictedSettlement(metadata: Record<string, any> | null, status: 'received' | 'rejected'): 'received' | 'not-received' | null {
+  const outcome = metadata?.heldSendSettlement?.outcome;
+  if (outcome === 'not-received' && status === 'received') return 'not-received';
+  if (outcome === 'received' && status === 'rejected') return 'received';
+  return null;
+}
+function contradictionRefusal(metadata: Record<string, any> | null, status: 'received' | 'rejected'): FdaAs2ReceiptRefusal {
+  const settlement = (metadata?.heldSendSettlement ?? {}) as Record<string, unknown>;
+  const n = typeof settlement.sequenceNumber === 'string' ? settlement.sequenceNumber : 'this sequence';
+  const on = heldSendWhen(String(settlement.settledAt ?? new Date().toISOString()));
+  const sentence = status === 'received'
+    ? `FDA's signed receipt shows it received this send of sequence ${n}, which was released as not received on ${on}. The receipt is kept with the send's record. Sequence ${n} is not sent again: FDA may already hold it. Contact FDA before anything else is done with it.`
+    : `FDA's signed answer refuses this send of sequence ${n}, which was recorded as received on ${on}. The answer is kept with the send's record, and the sequence stays recorded as received until that is decided.`;
+  return new FdaAs2ReceiptRefusal('AS2_RECEIPT_CONTRADICTS_SETTLEMENT', 409, sentence);
+}
+/** Keep FDA's contradicting answer beside the signed record: history only; the status, as2Receipt, mdn_raw and the settlement are untouched. */
+async function keepContradictingReceipt(client: PoolClient, args: ReceiptInput, current: { status: string; metadata: Record<string, any> },
+  r: { sha256: string; status: 'received' | 'rejected'; messageId: string; history: unknown[] }) {
+  const contradicts = contradictedSettlement(current.metadata, r.status);
+  const entry = { sha256: r.sha256, bodyBase64: args.body.toString('base64'), contentType: args.contentType, receivedAt: new Date().toISOString(),
+    verified: true, submittedBy: args.userId, source: 'agency-signed-upload', status: r.status, contradicts };
+  await client.query(`UPDATE submission_transmittals SET metadata = jsonb_set(metadata, '{as2ReceiptHistory}', $3::jsonb), updated_at = now() WHERE id = $1 AND organization_id = $2`,
+    [args.transmittalId, args.organizationId, JSON.stringify([...r.history, entry])]);
+  await recordGovernedAction(client, { orgId: args.organizationId, userId: args.userId, command: 'transition', target: `submission-transmittal:${args.transmittalId}`,
+    reason: 'Kept a cryptographically verified FDA AS2 receipt that contradicts a signed settlement', domain: 'regulatory', surface: 'gateway-transmittals',
+    payload: { receiptSha256: r.sha256, from: current.status, to: current.status, receiptKind: 'AS2-MDN', originalMessageId: r.messageId, contradicts },
+  });
+}
+
+/** While FDA's verified receipt contradicts a release, the sequence is not sent again (§3.3): the sentence, or null. */
+export async function releasedSendReceivedRefusal(q: Queryable, organizationId: number, sequenceId: number): Promise<string | null> {
+  // Only markHeldSendSettled writes heldSendSettlement, and only on an FDA ESG row, so the record itself names the gateway.
+  const { rows } = await q.query(`SELECT metadata FROM submission_transmittals WHERE organization_id = $1 AND region = 'fda'
+      AND metadata->'dispatchBinding'->>'sequenceId' = $2::text AND metadata->'heldSendSettlement'->>'outcome' = 'not-received'
+      AND EXISTS (SELECT 1 FROM jsonb_array_elements(COALESCE(metadata->'as2ReceiptHistory', '[]'::jsonb)) e
+                   WHERE e->>'contradicts' = 'not-received' AND e->>'verified' = 'true')
+    ORDER BY id DESC LIMIT 1`, [organizationId, String(sequenceId)]);
+  const s = rows[0]?.metadata?.heldSendSettlement as Record<string, unknown> | undefined;
+  if (s?.outcome !== 'not-received') return null;
+  const n = typeof s.sequenceNumber === 'string' ? `sequence ${s.sequenceNumber}` : 'this sequence';
+  const when = typeof s.sentAt === 'string' && Number.isFinite(Date.parse(s.sentAt)) ? ` of ${heldSendWhen(s.sentAt)}` : '';
+  return `FDA's signed receipt shows it already received ${n}'s send${when}, which was released as not received. ${n[0].toUpperCase()}${n.slice(1)} is not sent again. Nothing was signed or sent.`;
 }

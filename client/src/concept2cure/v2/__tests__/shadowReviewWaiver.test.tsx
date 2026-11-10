@@ -179,7 +179,7 @@ describe('Dispatch tab — the waiver is offered only when the server says so', 
   it('eligible but already dispatched: not offered', async () => {
     readinessIs({ ...ELIGIBLE, sequenceStatus: 'dispatched' });
     renderDispatch({ ...SEQ, status: 'dispatched' });
-    await waitFor(() => expect(text()).toMatch(/Dispatch blocked/));
+    await waitFor(() => expect(text()).toMatch(/Not yet\. /));
     expect(screen.queryByRole('button', { name: WAIVE_BUTTON })).toBeNull();
   });
 });
@@ -189,8 +189,8 @@ describe('Dispatch tab — what a waiver state says', () => {
     readinessIs(ACTIVE);
     renderDispatch();
     await waitFor(() => expect(text()).toContain(ACTIVE_NOTE));
-    const gate = document.querySelector('.sc-gate');
-    expect(gate?.textContent).toMatch(/Dispatch gate clear/);
+    const gate = document.querySelector('[data-testid="sc-dispatch-verdict"]');
+    expect(gate?.textContent).toMatch(/is cleared to dispatch/);
     expect(gate?.textContent).toMatch(/not assessed by Shadow Review/);
     expect(text()).not.toMatch(/\breviewed\b/i);
     expect(text()).not.toMatch(/one of the reasons the gate blocks/);
@@ -228,7 +228,8 @@ describe('Shadow review tab — waived and failed runs', () => {
     expect(text()).not.toContain('0.00');
     expect(text()).not.toMatch(/recorded no findings/);
     expect(text()).not.toMatch(/Complete/);
-    expect(apiRequest).not.toHaveBeenCalledWith('GET', '/api/submissions/shadow-review/92/findings');
+    // By path, whatever the arguments after it: a live read also carries its read-deadline signal (c3794c8fef).
+    expect(apiRequest.mock.calls.map(([method, url]) => `${method} ${url}`)).not.toContain('GET /api/submissions/shadow-review/92/findings');
   });
 
   it('a failed run names its failure and, when eligible, points at the waiver on the Dispatch tab', async () => {
@@ -246,7 +247,7 @@ describe('Shadow review tab — waived and failed runs', () => {
     ]);
     render(<ShadowReviewWorkspace seq={SEQ} />);
     await waitFor(() => expect(text()).toMatch(/Run #91 failed because the model's reply was not an assessment/));
-    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/sequences/21/dispatch-readiness'));
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/submissions/sequences/21/dispatch-readiness', undefined, undefined, expect.any(AbortSignal)));
     expect(text()).not.toMatch(/offers a signed waiver/);
   });
 });

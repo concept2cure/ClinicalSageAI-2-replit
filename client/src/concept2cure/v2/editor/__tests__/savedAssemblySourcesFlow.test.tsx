@@ -20,6 +20,7 @@ import { authService } from '@/services/portal/authService';
 import { clearEditorTarget, setEditorTarget } from '../../editorTarget';
 import { publishShellProject } from '../../shellProject';
 import { __resetCeremonies, registerCeremonyOpen } from '../../ceremony';
+import { openEditorControl } from './workbenchAssemblyBuild.testSupport';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111381';
 const DOC = '22222222-2222-4222-8222-222222222381';
@@ -37,7 +38,7 @@ const historical: AssemblySourceManifest = { version: 1, programId: PROGRAM, fin
 const freshManifest: AssemblySourceManifest = { ...historical, fingerprint: 'e'.repeat(64),
   entries: historical.entries.map(entry => ({ ...entry, span: { start: 200, end: 300, totalChars: 400, sha256: 'f'.repeat(64) } })) };
 const savedRecord: SavedAssemblySources = { version: 1, docId: DOC, programId: PROGRAM, record: { eventId: EVENT, recordedAt: AT, manifest: historical } };
-const doc = { id: DOC, title: 'Saved reference working document', module: 'M3', product_code: null, status: 'DRAFT', updated_at: AT, section_count: 1 };
+const doc = { id: DOC, c2c_document_id: null, title: 'Saved reference working document', module: 'M3', product_code: null, status: 'DRAFT', updated_at: AT, section_count: 1 };
 const section: AssemblySection = { id: SECTION, doc_id: DOC, code: '3.2.S.1', title: 'Existing saved section', content: '<p>Existing authored text.</p>', order_index: 3, updated_at: AT };
 const nextSection: AssemblySection = { id: NEXT, doc_id: DOC, code: '3.2.S.2', title: 'Missing manufacture section', content: '', order_index: 4, updated_at: AT };
 const ok = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -48,6 +49,11 @@ function deferred<T>() {
 let savedReply: () => Response | Promise<Response>;
 let commitReply: (input: AssemblyPreviewInput) => Response | Promise<Response>;
 let storedSections: AssemblySection[];
+/** The sections read as the server sends it since 8013c9457: authoring-document-read.ts adds every section's
+ *  writing-agency projection. The existing section has no saved template ('not-recorded'); the section the build
+ *  appends carries its template's recorded region, the FDA that plan().draftRegion states. */
+const sectionRead = (rows: AssemblySection[]) => rows.map(row => ({ ...row, ...(row.id === NEXT
+  ? { draftingRegion: 'FDA', draftingRegionState: 'recorded' } : { draftingRegion: null, draftingRegionState: 'not-recorded' }) }));
 function plan(input: AssemblyPreviewInput): AssemblyPlan {
   return { version: 1, docId: DOC, programId: PROGRAM, templateId: TEMPLATE, selection: input.selection,
     targetSnapshot: 'current-target', templateSnapshot: 'current-template', fingerprint: 'fresh-build-plan',
@@ -77,7 +83,7 @@ beforeEach(async () => {
     if (method === 'POST' && url.endsWith('/ai/draft')) return ok({ success: true, draft: { content: 'Fresh selected-source candidate.', draftId: 'fresh-candidate', metadata: {} } });
     if (url.startsWith('/api/authoring/docs?')) return ok({ success: true, documents: [{ ...doc, program_id: PROGRAM }] });
     if (new URL(url, 'http://localhost').pathname === `/api/authoring/docs/${DOC}`) return ok({ success: true, document: { ...doc, client_program_id: PROGRAM } });
-    if (new URL(url, 'http://localhost').pathname === `/api/authoring/docs/${DOC}/sections`) return ok({ success: true, sections: storedSections });
+    if (new URL(url, 'http://localhost').pathname === `/api/authoring/docs/${DOC}/sections`) return ok({ success: true, sections: sectionRead(storedSections) });
     if (url.startsWith('/api/c2c/documents/')) return ok({}, 404);
     return ok({ success: true, sources: [], comments: [], revisions: [], events: [] });
   });
@@ -157,7 +163,7 @@ describe('historical checks fail closed in the actual editor', () => {
       if (method === 'GET' && projection === 'detail' && path === `/api/authoring/docs/${DOC}`)
         return ok({ success: true, document: { ...doc, readScope: 'sections', sourceMetadataState: 'unavailable' } });
       if (method === 'GET' && projection === 'sections' && path === `/api/authoring/docs/${DOC}/sections`)
-        return ok({ success: true, sections: storedSections, readScope: 'sections' });
+        return ok({ success: true, sections: sectionRead(storedSections), readScope: 'sections' });
       return normal(method, url, input);
     });
     await mounted();
@@ -276,8 +282,15 @@ describe('manual draft review retains its buffer during a saved-source reuse', (
     await mounted(); const reuse = await inspectSaved();
     const pending = deferred<Response>(); savedReply = () => pending.promise;
     fireEvent.click(reuse); await waitFor(() => expect(savedReads()).toHaveLength(2));
-    fireEvent.click(screen.getByTestId('ai-draft-open'));
-    fireEvent.click(await screen.findByTestId('ai-draft-generate'));
+    fireEvent.click(openEditorControl('Draft from sources', 'ana'));
+    const generate = await screen.findByTestId('ai-draft-generate') as HTMLButtonElement;
+    /* No receiving agency is recorded, so the pane assumes none: Region is blank and Draft section waits for an
+       explicit choice (8013c9457; docs/evidence/D4/2026-10-30-ind-development/region-ui.md). */
+    const pane = within(screen.getByTestId('ai-draft-panel'));
+    expect((pane.getByLabelText('Region') as HTMLSelectElement).value).toBe(''); expect(generate.disabled).toBe(true);
+    expect(pane.getByTestId('ai-draft-region-note').textContent).toContain('Choose a supported writing region before drafting.');
+    fireEvent.change(pane.getByLabelText('Region'), { target: { value: 'FDA' } });
+    await waitFor(() => expect(generate.disabled).toBe(false)); fireEvent.click(generate);
     const body = await screen.findByTestId('ai-draft-body') as HTMLTextAreaElement;
     fireEvent.change(body, { target: { value: 'My retained manual review edits.' } });
     await act(async () => { pending.resolve(ok({ success: true, data: savedRecord })); await pending.promise; });

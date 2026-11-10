@@ -1,0 +1,99 @@
+waiting for server to start.... done
+server started
+(node:16) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:16) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:34) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"level":30,"time":"2026-11-08T17:03:43.291Z","pid":34,"hostname":"8e30f1e3f944","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-08T17:03:43.292Z","pid":34,"hostname":"8e30f1e3f944","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-08T17:03:43.292Z","pid":34,"hostname":"8e30f1e3f944","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/capa-governed-transactions.dbtest.ts
+[database] Database connection successful
+
+ ✓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA authority and governed writes > uses genuine authentication, async scope, verified TLS runtime and deployed FORCE RLS 96ms
+ ✓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA authority and governed writes > commits all eight actual mutation types with the corresponding timeline and chained audit 429ms
+{"level":40,"time":"2026-11-08T17:03:45.124Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":"PROJECT_PERMISSION_DENIED"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-11-08T17:03:45.135Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":"PROJECT_NOT_FOUND"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-11-08T17:03:45.147Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":"PROJECT_ANCHOR_UNRESOLVED"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-11-08T17:03:45.162Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":"CAPA_ACTOR_REQUIRED"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-11-08T17:03:45.176Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":"PROJECT_PERMISSION_DENIED"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-11-08T17:03:45.201Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":"PROJECT_PERMISSION_DENIED"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+ ✓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA authority and governed writes > refuses private, foreign and unanchored programmes and a current viewer with forged admin claims 207ms
+{"level":40,"time":"2026-11-08T17:03:45.255Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-11-08T17:03:45.461Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-11-08T17:03:45.482Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-11-08T17:03:45.612Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-11-08T17:03:45.635Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-11-08T17:03:45.654Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-11-08T17:03:45.710Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+ ✓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA authority and governed writes > proves the actual schema prevents a second programme anchor instead of inventing an impossible ambiguous fixture 6ms
+ ✓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA authority and governed writes > refuses an invalid state transition without changing domain, timeline or audit rows 26ms
+ ✓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA authority and governed writes > enforces action evidence and effective closure prerequisites through the authenticated canonical route 454ms
+{"level":40,"time":"2026-11-08T17:03:45.751Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+ ✓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA authority and governed writes > refuses an MDR backlink to another accessible programme without changing either complaint or the proposed MDR 42ms
+ ✓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > holds actor, programme, anchor and private-sharing authority until state, timeline and audit commit together 1550ms
+{"level":40,"time":"2026-11-08T17:03:47.332Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-11-08T17:03:47.363Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-11-08T17:03:47.402Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-11-08T17:03:47.430Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-11-08T17:03:47.454Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-11-08T17:03:47.483Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-11-08T17:03:47.510Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-11-08T17:03:47.538Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+ ✓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > rolls back all eight mutation types on actual timeline-refusal without claiming successful audit 237ms
+{"level":40,"time":"2026-11-08T17:03:47.570Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":"CAPA_AUDIT_UNAVAILABLE"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-11-08T17:03:47.599Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":"CAPA_AUDIT_UNAVAILABLE"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-11-08T17:03:47.637Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":"CAPA_AUDIT_UNAVAILABLE"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-11-08T17:03:47.665Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":"CAPA_AUDIT_UNAVAILABLE"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-11-08T17:03:47.692Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":"CAPA_AUDIT_UNAVAILABLE"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-11-08T17:03:47.718Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":"CAPA_AUDIT_UNAVAILABLE"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-11-08T17:03:47.748Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":"CAPA_AUDIT_UNAVAILABLE"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+{"level":40,"time":"2026-11-08T17:03:47.778Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":"CAPA_AUDIT_UNAVAILABLE"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+ ✓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > rolls back all eight mutation types on actual audit-refusal without claiming successful audit 238ms
+{"level":40,"time":"2026-11-08T17:03:47.808Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"commit","code":"08006"},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+ ✓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > reports an actual committed transaction with lost completion as uncertain and provides current authorized readback 92ms
+{"level":40,"time":"2026-11-08T17:03:48.956Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"sourceEntityType":"capa_record","match":{"exact":"capa:3a24ca06-f221-41b6-97df-734f4a192b54"},"err":"deadlock detected"},"msg":"[source-task] The tasks could not all be written; the governed act stands"}
+{"level":40,"time":"2026-11-08T17:03:48.957Z","pid":34,"hostname":"8e30f1e3f944","context":{"organizationId":6,"phase":"before-commit","code":null},"msg":"[governed-capa] Governed CAPA transaction did not return confirmed success"}
+ ✓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > serializes concurrent transitions and code creation without duplicate events or display codes 1203ms
+ ✓ tests/db/capa-governed-transactions.dbtest.ts > native CAPA atomic failures and recovery > verifies the real tenant audit chain and HMAC seals after successful, refused and uncertain operations 6ms
+(node:69) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"level":30,"time":"2026-11-08T17:03:49.866Z","pid":69,"hostname":"8e30f1e3f944","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-08T17:03:49.868Z","pid":69,"hostname":"8e30f1e3f944","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-08T17:03:49.868Z","pid":69,"hostname":"8e30f1e3f944","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ↓ tests/db/source-capture-study-concurrency.dbtest.ts > native concurrent study-specific source capture > two overlapping initial captures of identical bytes commit one identity and one capture audit
+ ↓ tests/db/source-capture-study-concurrency.dbtest.ts > native concurrent study-specific source capture > overlapping distinct revisions form one chain without losing captured bytes or audit history
+ ↓ tests/db/source-capture-study-concurrency.dbtest.ts > native concurrent study-specific source capture > same-named files for two studies remain current and unrelated under contention
+ ↓ tests/db/source-capture-study-concurrency.dbtest.ts > native concurrent study-specific source capture > rechecks the current actor after a real lock wait
+ ↓ tests/db/source-capture-study-concurrency.dbtest.ts > native concurrent study-specific source capture > an active organization member without the private project grant cannot capture or resolve its source
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/source-capture-study-concurrency.dbtest.ts [ tests/db/source-capture-study-concurrency.dbtest.ts ]
+error: inconsistent types deduced for parameter $2
+ ❯ node_modules/pg-pool/index.js:45:11
+ ❯ tests/db/source-capture-study-concurrency.dbtest.ts:40:20
+     38|   actor = await createActor('owner');
+     39|   outsider = await createActor('unshared');
+     40|   const program = (await owner.query(`INSERT INTO regulatory_programs
+       |                    ^
+     41|     (organization_id,name,code,program_type,product_type,primary_agenc…
+     42|     VALUES($1,$2,$2,'IND','drug','FDA','Source capture fixture',$3) RE…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { length: 155, severity: 'ERROR', code: '42P08', detail: 'text versus character varying', hint: undefined, position: '149', internalPosition: undefined, internalQuery: undefined, where: undefined, schema: undefined, table: undefined, dataType: undefined, constraint: undefined, file: 'parse_param.c', routine: 'variable_coerce_param_hook' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  13 passed | 5 skipped (18)
+   Start at  09:03:41
+   Duration  8.43s (transform 1.60s, setup 74ms, import 1.98s, tests 5.95s, environment 0ms)
+
+waiting for server to shut down.... done
+server stopped

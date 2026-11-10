@@ -22,7 +22,7 @@ const m = vi.hoisted(() => ({
   recordArtifactProvenance: vi.fn(),
   findSourceByChecksum: vi.fn(),
   findSupersededCandidate: vi.fn(),
-  createSource: vi.fn(),
+  captureClientSource: vi.fn(),
   createSupersedingSource: vi.fn(),
   writeUploadRetrievalAtom: vi.fn(),
   resolveVaultView: vi.fn(),
@@ -61,7 +61,7 @@ vi.mock('../../services/provenance/artifact-provenance', () => ({
 vi.mock('../../services/clinical-regulatory-evidence/evidence-spine.service.js', () => ({
   findSourceByChecksum: m.findSourceByChecksum,
   findSupersededCandidate: m.findSupersededCandidate,
-  createSource: m.createSource,
+  captureClientSource: m.captureClientSource,
   createSupersedingSource: m.createSupersedingSource,
 }));
 vi.mock('../../services/chat-uploads/upload-retrieval-atom.js', () => ({
@@ -131,7 +131,7 @@ beforeEach(() => {
   extractsWith();
   m.findSourceByChecksum.mockResolvedValue(null);
   m.findSupersededCandidate.mockResolvedValue(null);
-  m.createSource.mockResolvedValue({ id: 41 });
+  m.captureClientSource.mockResolvedValue({ source: { id: 41 }, reused: false, supersededId: null });
   m.createSupersedingSource.mockResolvedValue({ source: { id: 41 } });
   m.resolveVaultView.mockResolvedValue('ctd');
   m.resolveOrgVaultView.mockResolvedValue('ctd');

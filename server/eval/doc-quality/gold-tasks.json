@@ -1,6 +1,6 @@
 {
-  "$comment": "Per-document-type extraction/generation eval tasks. `input` is the source a model is given; `requiredSections` and `forbiddenPatterns` are the ground truth it is scored against (case-insensitive substring, so patterns are multi-word to avoid matching inside other words). `candidateContent`/`candidateExtraction` are CAPTURED model outputs, which let server/eval/doc-quality/run-eval.ts score offline; tasks added to reach the PQ sample floor carry none, because no output had been captured for them and inventing one would fabricate the evidence the bank exists to provide. run-eval.ts skips a generation task with no captured candidate; server/eval/pq/run-pq.ts ignores captured candidates entirely and generates with the pinned model, so the floor in pq-protocol.json (minTasksPerDocType) is measured against these tasks. 0.5.0 (2026-10-15, P-31 conditions 3 and 5): 24 authored extraction tasks bring each document type to 12 against the extraction floor of 10, and 6 authored generation tasks bring each to 12 against the generation floor of 10, so retiring a task does not drop the bank below either floor. Their source passages are fictional but regulatorily accurate; every expected field is stated in its own passage (gold-bank-floor.test.ts checks it), and each task was reviewed by an independent SME pass. They carry no captured candidate.",
-  "version": "0.5.0",
+  "$comment": "Per-document-type extraction/generation eval tasks. `input` is the source a model is given; `requiredSections` and `forbiddenPatterns` are the ground truth it is scored against (case-insensitive substring, so patterns are multi-word to avoid matching inside other words). `candidateContent`/`candidateExtraction` are CAPTURED model outputs, which let server/eval/doc-quality/run-eval.ts score offline; tasks added to reach the PQ sample floor carry none, because no output had been captured for them and inventing one would fabricate the evidence the bank exists to provide. run-eval.ts skips a generation task with no captured candidate; server/eval/pq/run-pq.ts ignores captured candidates entirely and generates with the pinned model, so the floor in pq-protocol.json (minTasksPerDocType) is measured against these tasks. 0.5.0 (2026-10-15, P-31 conditions 3 and 5): 24 authored extraction tasks bring each document type to 12 against the extraction floor of 10, and 6 authored generation tasks bring each to 12 against the generation floor of 10, so retiring a task does not drop the bank below either floor. Their source passages are fictional but regulatorily accurate; every expected field is stated in its own passage (gold-bank-floor.test.ts checks it), and each task was reviewed by an independent SME pass. They carry no captured candidate. 0.6.0 (2026-11-01, P-31 item 4 and P-56): 48 tasks for the two document types the platform sells and the bank did not cover, module-2-clinical (Module 2.5 and 2.7) and module-3-quality (CMC / Module 3), 12 generation and 12 extraction each. Unlike the passages above, these are REAL SOURCE TEXT, never invented: each input is cut verbatim from a public CSR synopsis kept in csrs/ (Pfizer A0081186 and A0221045, Convergence 1014802/201) or from a CC BY 4.0 article retrieved through PubMed Central, and each task names its source (document or PMID, PMCID and DOI, licence, section). Every expected value is stated in its own passage, and each task passed an independent regulatory-writer review (docs/evidence/D4/2026-11-01-pq-module2-module3-coverage/). server/eval/pq/__tests__/gold-bank-coverage.test.ts holds both types at both floors and checks the csrs/ tasks line by line against the PDF. They carry no captured candidate.",
+  "version": "0.6.0",
   "tasks": [
     {
       "id": "510k-se-summary-generate",
@@ -1889,6 +1889,1711 @@
         "phase-1",
         "distractor"
       ]
+    },
+    {
+      "id": "m2-pregabalin-rls-efficacy-generate",
+      "docType": "module-2-clinical",
+      "taskType": "generation",
+      "input": "Study Design: This was a fixed-dose, randomized, 12-week, placebo-controlled,\ndouble-blind study, with a comparator-controlled component that assessed pregabalin and\npramipexole tolerability and safety over a total of 52 weeks. The study provided pivotal\nefficacy data for pregabalin over an initial 12-week period that assessed the alleviation of\nRLS symptoms by study drug in these subjects. In addition, pregabalin efficacy was\nevaluated by rate of efficacy augmentation, time to efficacy augmentation, and general\ntolerability and safety of pregabalin and pramipexole in subjects with moderate to severe\nidiopathic RLS over 52 weeks.\nActive treatments included fixed dose 300 mg/day pregabalin and 0.25 mg/day (or\n0.5 mg/day) pramipexole. Each active treatment was administered over a 2-week escalation\nperiod for a total study duration of 52 weeks. Subjects who were initially randomized to\nplacebo were redistributed to 1 of these active treatment arms after 12 weeks, and continued\nstudy treatment for the remaining 40 weeks.\n\nPrimary Efficacy Endpoints:\nIRLS Total Score 12-Week Assessment for Pregabalin Versus Placebo: Treatment with\npregabalin resulted in a statistically significant improvement in RLS symptoms, measured as\nleast square (LS) mean change from Baseline in IRLS total score, averaged across the first\n12 weeks of treatment, compared to treatment with placebo (p<0.0001) (Table 7).\nPramipexole treatment was significant at the 0.5 mg level, but not at the 0.25 mg level,\ncompared with placebo (p<0.0001 and p=0.3603, respectively).",
+      "requiredSections": [
+        "study design",
+        "IRLS total score",
+        "results"
+      ],
+      "forbiddenPatterns": [
+        "cures restless legs",
+        "superior to all comparators",
+        "proven safe and effective",
+        "there were no adverse events",
+        "eliminates all symptoms",
+        "guaranteed"
+      ],
+      "tags": [
+        "ctd",
+        "module-2",
+        "2.7.3",
+        "efficacy",
+        "pregabalin"
+      ],
+      "source": {
+        "document": "csrs/A0081186_Synopsis.pdf",
+        "title": "Public Disclosure Synopsis, Protocol A0081186: Randomized, Double-Blind, 12-Month Study of Pregabalin in Subjects With Restless Legs Syndrome",
+        "sponsor": "Pfizer Inc.",
+        "date": "18 July 2014",
+        "product": "Lyrica (pregabalin)",
+        "section": "Methods: Study Design; Results: Primary Efficacy Endpoints (IRLS total score)",
+        "transcription": "verbatim; page counters, running headers and approval stamps removed; bullet glyphs as \"•\"",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m2-pregabalin-rls-augmentation-generate",
+      "docType": "module-2-clinical",
+      "taskType": "generation",
+      "input": "Augmentation Rates 52-Week Assessment: There was a significantly lower number and\npercentage of subjects with augmentation in the pregabalin 300 mg treatment group\ncompared with the pramipexole 0.50 mg treatment group. The number and percentage of\naugmentation was numerically lower in the pregabalin 300 mg group compared with the\npramipexole 0.25 mg group; however, the difference did not reach statistical significance\nTable 10.\n\n\nTable 10. Augmentation Rate Analysis, Pregabalin Versus Pramipexole Using\nStratified Log-Rank Test by Block – ITT Population\nTreatment Group Block 40a Block 52b Pregabalin vs\nPramipexole\np-Valuec\nPregabalin 300 mg N 59 176\nSubjects censored (%) 57 (96.6) 173 (98.3)\nSubjects having augmentation (%) 2 (3.4) 3 (1.7)\nPramipexole 0.25 mg N 58 167 0.0826\nSubjects censored (%) 57 (98.3) 156 (93.4)\nSubjects having augmentation (%) 1 (1.7) 11 (6.6)\nPramipexole 0.5 mg N 57 178 0.0012\nSubjects censored (%) 55 (96.5) 162 (91.0)\nSubjects having augmentation (%) 2 (3.5) 16 (9.0)\nITT = intent-to-treat; N = number of subjects; vs = versus.\na. Placebo turned active subjects had a potential of getting 40 weeks of active treatment after 12 weeks on placebo.\nb. All on active subjects had a potential of getting 52 weeks of active treatment during the entire study.\nc. p-value was obtained using Stratified log-rank test by block.",
+      "requiredSections": [
+        "augmentation rate",
+        "pramipexole",
+        "results"
+      ],
+      "forbiddenPatterns": [
+        "prevents augmentation entirely",
+        "significantly lower than both pramipexole doses",
+        "proven safe and effective",
+        "there were no adverse events",
+        "eliminates all symptoms",
+        "guaranteed"
+      ],
+      "tags": [
+        "ctd",
+        "module-2",
+        "2.7.3",
+        "efficacy",
+        "pregabalin"
+      ],
+      "source": {
+        "document": "csrs/A0081186_Synopsis.pdf",
+        "title": "Public Disclosure Synopsis, Protocol A0081186: Randomized, Double-Blind, 12-Month Study of Pregabalin in Subjects With Restless Legs Syndrome",
+        "sponsor": "Pfizer Inc.",
+        "date": "18 July 2014",
+        "product": "Lyrica (pregabalin)",
+        "section": "Results: Augmentation Rates 52-Week Assessment, Table 10",
+        "transcription": "verbatim; page counters, running headers and approval stamps removed; bullet glyphs as \"•\"",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m2-pregabalin-rls-safety-generate",
+      "docType": "module-2-clinical",
+      "taskType": "generation",
+      "input": "Safety Results: An overview of treatment-emergent AEs is given in Table 30. The number\nof subjects experiencing at least 1 treatment-emergent AE was comparable among the\n6 treatment arms.\nNine (4.9%), 12 (6.7%), 9 (5.0%), 5 (8.5%), and 2 (3.4%) subjects experienced\ntreatment-emergent SAEs during pregabalin 300 mg, pramipexole 0.25 mg, pramipexole\n0.50 mg, placebo to pregabalin 300 mg, and placebo to pramipexole 0.25 mg treatment,\nrespectively (Table 30).\nTwenty-one (11.5%), 24 (13.5%), 23 (12.8%), 11 (18.6%), 7 (11.9%), and 9 (14.8%) subjects\nexperienced treatment-emergent severe AEs during pregabalin 300 mg, pramipexole\n0.25 mg, pramipexole 0.50 mg, placebo to pregabalin 300 mg, placebo to pramipexole\n0.25 mg, and placebo to pramipexole 0.50 mg treatment, respectively (Table 30).\n\nThe most frequently reported all causality treatment-emergent AEs during pregabalin 300 mg\ntreatment were dizziness, somnolence, fatigue, headache and nasopharyngitis. The most\nfrequently reported AEs during pramipexole 0.25 mg treatment were headache,\nnasopharyngitis, fatigue, and nausea. The most frequently reported AEs during pramipexole\n0.50 mg treatment were headache, nausea, and fatigue. The most frequently reported\ntreatment-emergent AEs during placebo to pregabalin 300 mg treatment were dizziness,\nheadache, somnolence, and fatigue. The most frequently reported AEs during placebo to\npramipexole 0.25 mg treatment were influenza, weight increase, dizziness, and headache.",
+      "requiredSections": [
+        "overview",
+        "serious adverse event",
+        "common adverse event"
+      ],
+      "forbiddenPatterns": [
+        "no safety concerns",
+        "safer than pramipexole",
+        "proven safe and effective",
+        "there were no adverse events",
+        "eliminates all symptoms",
+        "guaranteed"
+      ],
+      "tags": [
+        "ctd",
+        "module-2",
+        "2.7.4",
+        "safety",
+        "pregabalin"
+      ],
+      "source": {
+        "document": "csrs/A0081186_Synopsis.pdf",
+        "title": "Public Disclosure Synopsis, Protocol A0081186: Randomized, Double-Blind, 12-Month Study of Pregabalin in Subjects With Restless Legs Syndrome",
+        "sponsor": "Pfizer Inc.",
+        "date": "18 July 2014",
+        "product": "Lyrica (pregabalin)",
+        "section": "Results: Safety Results and all-causality adverse events",
+        "transcription": "verbatim; page counters, running headers and approval stamps removed; bullet glyphs as \"•\"",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m2-pregabalin-rls-overview-generate",
+      "docType": "module-2-clinical",
+      "taskType": "generation",
+      "input": "Subject Disposition and Demography: A total of 1379 subjects were screened, and\n731 were assigned to a study treatment. Of those assigned to study treatment, 719 subjects\nreceived at least 1 dose. There were 354 (48.4%) subjects who completed the study, and\n365 (49.9%) subjects discontinued. There were 127 (17.7%) subjects who withdrew due to\nAEs related to study drug, and 39 (5.4%) subjects who withdrew due to AEs not related to\nstudy drug. In addition, there were 198 (27.5%) subjects who discontinued the study for\nwhich the relationship to study drug was not defined; these are detailed in Table 4.\n\nCONCLUSIONS: Pregabalin 300 mg/day demonstrated significant improvements in RLS\nsubjects in each of the 3 co-primary endpoints: the difference of change from Baseline in the\nIRLS total score (compared to placebo for 12 weeks and pramipexole 0.25 and 0.5 mg/day\nfor 12 and 52 weeks), CGI-I responder rates (compared to placebo over 12 weeks), and\nreduction in the rate of augmentation (compared to pramipexole 0.5 mg/day). Pregabalin\n300 mg/day demonstrated lesser augmentation severity than both pramipexole 0.25 and\n0.5 mg/day. Pregabalin 300 mg/day in this study population was shown to be safe, well\ntolerated, and consistent with the known safety profile of pregabalin.",
+      "requiredSections": [
+        "efficacy conclusion",
+        "safety conclusion",
+        "discontinuation"
+      ],
+      "forbiddenPatterns": [
+        "cures restless legs",
+        "all subjects completed",
+        "proven safe and effective",
+        "there were no adverse events",
+        "eliminates all symptoms",
+        "guaranteed"
+      ],
+      "tags": [
+        "ctd",
+        "module-2",
+        "2.5",
+        "clinical-overview",
+        "pregabalin"
+      ],
+      "source": {
+        "document": "csrs/A0081186_Synopsis.pdf",
+        "title": "Public Disclosure Synopsis, Protocol A0081186: Randomized, Double-Blind, 12-Month Study of Pregabalin in Subjects With Restless Legs Syndrome",
+        "sponsor": "Pfizer Inc.",
+        "date": "18 July 2014",
+        "product": "Lyrica (pregabalin)",
+        "section": "Results: Subject Disposition and Demography; Conclusions",
+        "transcription": "verbatim; page counters, running headers and approval stamps removed; bullet glyphs as \"•\"",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m2-pregabalin-rls-disposition-extract",
+      "docType": "module-2-clinical",
+      "taskType": "extraction",
+      "input": "Subject Disposition and Demography: A total of 1379 subjects were screened, and\n731 were assigned to a study treatment. Of those assigned to study treatment, 719 subjects\nreceived at least 1 dose. There were 354 (48.4%) subjects who completed the study, and\n365 (49.9%) subjects discontinued. There were 127 (17.7%) subjects who withdrew due to\nAEs related to study drug, and 39 (5.4%) subjects who withdrew due to AEs not related to\nstudy drug. In addition, there were 198 (27.5%) subjects who discontinued the study for\nwhich the relationship to study drug was not defined; these are detailed in Table 4.",
+      "expectedFields": {
+        "subjects_screened": "1379",
+        "subjects_assigned_to_treatment": "731",
+        "subjects_dosed": "719",
+        "subjects_completed": "354",
+        "withdrawals_due_to_related_aes": "127"
+      },
+      "tags": [
+        "ctd",
+        "module-2",
+        "2.7.4",
+        "disposition",
+        "pregabalin"
+      ],
+      "source": {
+        "document": "csrs/A0081186_Synopsis.pdf",
+        "title": "Public Disclosure Synopsis, Protocol A0081186: Randomized, Double-Blind, 12-Month Study of Pregabalin in Subjects With Restless Legs Syndrome",
+        "sponsor": "Pfizer Inc.",
+        "date": "18 July 2014",
+        "product": "Lyrica (pregabalin)",
+        "section": "Results: Subject Disposition and Demography",
+        "transcription": "verbatim; page counters, running headers and approval stamps removed; bullet glyphs as \"•\"",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m2-pregabalin-rls-primary-extract",
+      "docType": "module-2-clinical",
+      "taskType": "extraction",
+      "input": "Primary Efficacy Endpoints:\nIRLS Total Score 12-Week Assessment for Pregabalin Versus Placebo: Treatment with\npregabalin resulted in a statistically significant improvement in RLS symptoms, measured as\nleast square (LS) mean change from Baseline in IRLS total score, averaged across the first\n12 weeks of treatment, compared to treatment with placebo (p<0.0001) (Table 7).\nPramipexole treatment was significant at the 0.5 mg level, but not at the 0.25 mg level,\ncompared with placebo (p<0.0001 and p=0.3603, respectively).",
+      "expectedFields": {
+        "primary_measure": "IRLS total score",
+        "assessment_period_weeks": "12",
+        "pregabalin_vs_placebo_p_value": "<0.0001",
+        "pramipexole_0_25_mg_vs_placebo_p_value": "0.3603"
+      },
+      "tags": [
+        "ctd",
+        "module-2",
+        "2.7.3",
+        "efficacy",
+        "pregabalin"
+      ],
+      "source": {
+        "document": "csrs/A0081186_Synopsis.pdf",
+        "title": "Public Disclosure Synopsis, Protocol A0081186: Randomized, Double-Blind, 12-Month Study of Pregabalin in Subjects With Restless Legs Syndrome",
+        "sponsor": "Pfizer Inc.",
+        "date": "18 July 2014",
+        "product": "Lyrica (pregabalin)",
+        "section": "Results: Primary Efficacy Endpoints (IRLS total score)",
+        "transcription": "verbatim; page counters, running headers and approval stamps removed; bullet glyphs as \"•\"",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m2-pregabalin-rls-augmentation-extract",
+      "docType": "module-2-clinical",
+      "taskType": "extraction",
+      "input": "Augmentation Rates 52-Week Assessment: There was a significantly lower number and\npercentage of subjects with augmentation in the pregabalin 300 mg treatment group\ncompared with the pramipexole 0.50 mg treatment group. The number and percentage of\naugmentation was numerically lower in the pregabalin 300 mg group compared with the\npramipexole 0.25 mg group; however, the difference did not reach statistical significance\nTable 10.\n\n\nTable 10. Augmentation Rate Analysis, Pregabalin Versus Pramipexole Using\nStratified Log-Rank Test by Block – ITT Population\nTreatment Group Block 40a Block 52b Pregabalin vs\nPramipexole\np-Valuec\nPregabalin 300 mg N 59 176\nSubjects censored (%) 57 (96.6) 173 (98.3)\nSubjects having augmentation (%) 2 (3.4) 3 (1.7)\nPramipexole 0.25 mg N 58 167 0.0826\nSubjects censored (%) 57 (98.3) 156 (93.4)\nSubjects having augmentation (%) 1 (1.7) 11 (6.6)\nPramipexole 0.5 mg N 57 178 0.0012\nSubjects censored (%) 55 (96.5) 162 (91.0)\nSubjects having augmentation (%) 2 (3.5) 16 (9.0)\nITT = intent-to-treat; N = number of subjects; vs = versus.\na. Placebo turned active subjects had a potential of getting 40 weeks of active treatment after 12 weeks on placebo.\nb. All on active subjects had a potential of getting 52 weeks of active treatment during the entire study.\nc. p-value was obtained using Stratified log-rank test by block.",
+      "expectedFields": {
+        "pregabalin_block_52_augmentation": "3 (1.7",
+        "pramipexole_0_5_mg_block_52_augmentation": "16 (9.0",
+        "p_value_vs_pramipexole_0_5_mg": "0.0012",
+        "p_value_vs_pramipexole_0_25_mg": "0.0826",
+        "statistical_test": "Stratified log-rank test"
+      },
+      "tags": [
+        "ctd",
+        "module-2",
+        "2.7.3",
+        "efficacy",
+        "pregabalin"
+      ],
+      "source": {
+        "document": "csrs/A0081186_Synopsis.pdf",
+        "title": "Public Disclosure Synopsis, Protocol A0081186: Randomized, Double-Blind, 12-Month Study of Pregabalin in Subjects With Restless Legs Syndrome",
+        "sponsor": "Pfizer Inc.",
+        "date": "18 July 2014",
+        "product": "Lyrica (pregabalin)",
+        "section": "Results: Augmentation Rates 52-Week Assessment, Table 10",
+        "transcription": "verbatim; page counters, running headers and approval stamps removed; bullet glyphs as \"•\"",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m2-pregabalin-rls-safety-extract",
+      "docType": "module-2-clinical",
+      "taskType": "extraction",
+      "input": "Safety Results: An overview of treatment-emergent AEs is given in Table 30. The number\nof subjects experiencing at least 1 treatment-emergent AE was comparable among the\n6 treatment arms.\nNine (4.9%), 12 (6.7%), 9 (5.0%), 5 (8.5%), and 2 (3.4%) subjects experienced\ntreatment-emergent SAEs during pregabalin 300 mg, pramipexole 0.25 mg, pramipexole\n0.50 mg, placebo to pregabalin 300 mg, and placebo to pramipexole 0.25 mg treatment,\nrespectively (Table 30).\nTwenty-one (11.5%), 24 (13.5%), 23 (12.8%), 11 (18.6%), 7 (11.9%), and 9 (14.8%) subjects\nexperienced treatment-emergent severe AEs during pregabalin 300 mg, pramipexole\n0.25 mg, pramipexole 0.50 mg, placebo to pregabalin 300 mg, placebo to pramipexole\n0.25 mg, and placebo to pramipexole 0.50 mg treatment, respectively (Table 30).\n\nThe most frequently reported all causality treatment-emergent AEs during pregabalin 300 mg\ntreatment were dizziness, somnolence, fatigue, headache and nasopharyngitis. The most\nfrequently reported AEs during pramipexole 0.25 mg treatment were headache,\nnasopharyngitis, fatigue, and nausea. The most frequently reported AEs during pramipexole\n0.50 mg treatment were headache, nausea, and fatigue. The most frequently reported\ntreatment-emergent AEs during placebo to pregabalin 300 mg treatment were dizziness,\nheadache, somnolence, and fatigue. The most frequently reported AEs during placebo to\npramipexole 0.25 mg treatment were influenza, weight increase, dizziness, and headache.",
+      "expectedFields": {
+        "pregabalin_saes_percent": "4.9",
+        "pregabalin_severe_aes_percent": "11.5",
+        "most_frequent_ae_pregabalin": "dizziness",
+        "most_frequent_ae_pramipexole_0_25_mg": "headache"
+      },
+      "tags": [
+        "ctd",
+        "module-2",
+        "2.7.4",
+        "safety",
+        "pregabalin"
+      ],
+      "source": {
+        "document": "csrs/A0081186_Synopsis.pdf",
+        "title": "Public Disclosure Synopsis, Protocol A0081186: Randomized, Double-Blind, 12-Month Study of Pregabalin in Subjects With Restless Legs Syndrome",
+        "sponsor": "Pfizer Inc.",
+        "date": "18 July 2014",
+        "product": "Lyrica (pregabalin)",
+        "section": "Results: Safety Results and all-causality adverse events",
+        "transcription": "verbatim; page counters, running headers and approval stamps removed; bullet glyphs as \"•\"",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m2-fesoterodine-oab-primary-generate",
+      "docType": "module-2-clinical",
+      "taskType": "generation",
+      "input": "Primary Objective: To compare the efficacy, in terms of a reduction of urgency episodes, of\n12-weeks flexible dose fesoterodine relative to placebo in elderly subjects with\noveractive bladder (OAB).\n\nStudy Design: This was a 24-week (12 weeks DB and 12 weeks OL) randomized,\nplacebo-controlled, parallel-group, multicenter study. The first part of the study consisted of\na 2-week no-treatment Screening period and a 12-week DB treatment phase that required a\ntotal of 5 visits: Screening visit, Randomization/Baseline visit, Week 4 visit, Week 8 visit,\nand an end of DB treatment visit at Week 12. The second part of the study consisted of a\n12-week OL treatment phase that required a total of 3 visits (Week 16, Week 20, and an end\nof treatment visit at Week 24) and a follow-up telephone call at Week 26.\nDuring the Screening period any current pharmacological treatments for OAB were to be\nstopped, and the subjects were to complete 3-day micturition diaries prior to the Baseline\nvisit. In the 12-week DB treatment phase, enrolled subjects who met all entry criteria were\neligible to be randomized to receive fesoterodine SR 4 mg or equivalent placebo once daily\n(QD), and were randomized to receive instructions to take the study medication either in the\nevening or in the morning.\n\nPrimary Endpoint Result: Treatment with fesoterodine for 12 weeks resulted in clinically\nand statistically significant improvement (p-value <0.0001) from Baseline in the mean\nnumber of micturition-related urgency episodes per 24 hours compared to placebo (Table 6):\nthe difference in the LS means (fesoterodine – placebo) was -1.54; the 95% CI for the\ndifference was (-2.12, -0.97).",
+      "requiredSections": [
+        "primary objective",
+        "study design",
+        "primary endpoint"
+      ],
+      "forbiddenPatterns": [
+        "cures overactive bladder",
+        "eliminates urgency episodes",
+        "proven safe and effective",
+        "there were no adverse events",
+        "eliminates all symptoms",
+        "guaranteed"
+      ],
+      "tags": [
+        "ctd",
+        "module-2",
+        "2.7.3",
+        "efficacy",
+        "fesoterodine"
+      ],
+      "source": {
+        "document": "csrs/A0221045_Synopsis.pdf",
+        "title": "Public Disclosure Synopsis, Protocol A0221045: Fesoterodine Flexible Dose Regimen in Elderly Patients With Overactive Bladder",
+        "sponsor": "Pfizer Inc.",
+        "date": "28 March 2014",
+        "product": "Toviaz (fesoterodine fumarate)",
+        "section": "Study Objectives; Methods: Study Design; Results: Primary Endpoint Result",
+        "transcription": "verbatim; page counters, running headers and approval stamps removed; bullet glyphs as \"•\"",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m2-fesoterodine-oab-secondary-generate",
+      "docType": "module-2-clinical",
+      "taskType": "generation",
+      "input": "Secondary Endpoint Results:\n• Percent Changes From Baseline of Micturition-Related Urgency Episodes: Treatment\nwith fesoterodine for 12 weeks resulted in clinically and statistically significant\nimprovement (p-value <0.0001) from Baseline in the percent changes from Baseline in\nmicturition-related urgency episodes per 24 hours compared to placebo: the median\ndifference (fesoterodine – placebo) was -14.44%; the 95% CI for the median difference\nwas (-14.67%, -14.25%) (Table 7).\n\nChanges From Baseline in Mean Number of Severe Micturition-Related Urgency\nEpisodes: Treatment with fesoterodine for 12 weeks resulted in clinically and\nstatistically significant improvement (p-value=0.0001) from Baseline in the mean number\nof severe micturition-related urgency episodes per 24 hours compared to placebo: the\ndifference in the LS means (fesoterodine – placebo) was -0.85; the 95% CI for the\ndifference was (-1.28, -0.42) (Table 8).",
+      "requiredSections": [
+        "secondary endpoint",
+        "urgency episode",
+        "results"
+      ],
+      "forbiddenPatterns": [
+        "improvement in every endpoint",
+        "eliminates urgency episodes",
+        "proven safe and effective",
+        "there were no adverse events",
+        "eliminates all symptoms",
+        "guaranteed"
+      ],
+      "tags": [
+        "ctd",
+        "module-2",
+        "2.7.3",
+        "efficacy",
+        "fesoterodine"
+      ],
+      "source": {
+        "document": "csrs/A0221045_Synopsis.pdf",
+        "title": "Public Disclosure Synopsis, Protocol A0221045: Fesoterodine Flexible Dose Regimen in Elderly Patients With Overactive Bladder",
+        "sponsor": "Pfizer Inc.",
+        "date": "28 March 2014",
+        "product": "Toviaz (fesoterodine fumarate)",
+        "section": "Results: Secondary Endpoint Results",
+        "transcription": "verbatim; page counters, running headers and approval stamps removed; bullet glyphs as \"•\"",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m2-fesoterodine-oab-safety-generate",
+      "docType": "module-2-clinical",
+      "taskType": "generation",
+      "input": "Safety Results: An overall summary of treatment-emergent AEs (TEAEs) that occurred\nduring the DB and OL phases is provided in Table 29. During the DB phase, the\nfesoterodine treatment group had a greater proportion of subjects in every category than the\nplacebo group. However, the rate of serious adverse events (SAEs) was less than 5% for\nboth treatment groups, and only 1 of these (urinary retention in a subject receiving DB\nfesoterodine) was considered treatment-related by the investigator.\nDuring the OL phase, greater proportions of subjects who received placebo during the DB\nphase reported TEAEs, had dose reductions or temporary discontinuations due to TEAEs,\nand discontinued from the study due to TEAEs compared to those who received fesoterodine\nduring the DB phase.\n\nTable 29. Overview of Treatment-Emergent Adverse Events (Double-Blind and\nOpen-Label Phases)\nNo. (%) of Subjects Double-Blind Phase Open-Label Phase\nFesoterodine Placebo DB\nFesoterodine/\nOL Fesoterodine\nDB Placebo/\nOL\nFesoterodine\nSubjects evaluable for AEs 392 393 313 341\nSubjects with adverse event\nAll causalities 244 (62.2) 142 (36.1) 96 (30.7) 164 (48.1)\nTreatment-related 199 (50.8) 75 (19.1) 42 (13.4) 138 (40.5)\nSubjects with serious adverse event\nAll causalities 14 (3.6)a 9 (2.3)b 11 (3.5) 7 (2.1)c\nTreatment-related 1 (0.3) 0 0 3 (0.9)\nSubjects with severe adverse event\nAll causalities 27 (6.9) 9 (2.3) 13 (4.2) 14 (4.1)\nTreatment-related 17 (4.3) 2 (0.5) 4 (1.3) 12 (3.5)\nSubjects discontinued due to adverse events\nAll causalities 53 (13.5) 20 (5.1) 6 (1.9) 32 (9.4)\nTreatment-related 42 (10.7) 15 (3.8) 4 (1.3) 31 (9.1)",
+      "requiredSections": [
+        "overview",
+        "serious adverse event",
+        "open-label"
+      ],
+      "forbiddenPatterns": [
+        "no serious adverse events occurred",
+        "safety profile identical to placebo",
+        "proven safe and effective",
+        "there were no adverse events",
+        "eliminates all symptoms",
+        "guaranteed"
+      ],
+      "tags": [
+        "ctd",
+        "module-2",
+        "2.7.4",
+        "safety",
+        "fesoterodine"
+      ],
+      "source": {
+        "document": "csrs/A0221045_Synopsis.pdf",
+        "title": "Public Disclosure Synopsis, Protocol A0221045: Fesoterodine Flexible Dose Regimen in Elderly Patients With Overactive Bladder",
+        "sponsor": "Pfizer Inc.",
+        "date": "28 March 2014",
+        "product": "Toviaz (fesoterodine fumarate)",
+        "section": "Results: Safety Results, Table 29",
+        "transcription": "verbatim; page counters, running headers and approval stamps removed; bullet glyphs as \"•\"",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m2-fesoterodine-oab-overview-generate",
+      "docType": "module-2-clinical",
+      "taskType": "generation",
+      "input": "CONCLUSIONS:\n• Treatment of aged OAB subjects 65 years old and above with flexible-dose fesoterodine\n(4 mg or 8 mg QD) resulted in clinically relevant and statistically significant\nimprovements compared to placebo in the primary efficacy endpoint (changes from\nBaseline in the number of micturition-related urgency episodes per 24 hours) at Week 12\n(end of the DB phase).\n• Treatment with flexible-dose fesoterodine (4 mg or 8 mg QD) resulted in clinically\nrelevant and statistically significant improvements compared to placebo in most\nsecondary diary and PRO endpoints in an elderly population at Week 12.\n\n• The additional efficacy achieved with fesoterodine treatment compared to placebo in\nbladder diary and PRO endpoints seen after 12 weeks of treatment was maintained\nthrough 24 weeks of treatment.\n• Subjects advancing from placebo (12 weeks of treatment in the DB phase) to fesoterodine\n(12 weeks of treatment in the OL phase) had efficacy results (for bladder diary and PRO\nendpoints) at Week 24 (end of the OL phase) that were similar to those achieved at Week\n24 by those receiving fesoterodine for 24 weeks during the DB and OL phases.\n• The overall AE and safety profiles were consistent with known effects of fesoterodine.\n\n• There were no new safety signals (including falls) in this medically complex elderly\npopulation.\n• Fesoterodine was generally well tolerated in elderly subjects with OAB syndrome for up\nto 24 weeks.",
+      "requiredSections": [
+        "efficacy conclusion",
+        "safety conclusion",
+        "elderly"
+      ],
+      "forbiddenPatterns": [
+        "cures overactive bladder",
+        "no adverse events in elderly",
+        "proven safe and effective",
+        "there were no adverse events",
+        "eliminates all symptoms",
+        "guaranteed"
+      ],
+      "tags": [
+        "ctd",
+        "module-2",
+        "2.5",
+        "clinical-overview",
+        "fesoterodine"
+      ],
+      "source": {
+        "document": "csrs/A0221045_Synopsis.pdf",
+        "title": "Public Disclosure Synopsis, Protocol A0221045: Fesoterodine Flexible Dose Regimen in Elderly Patients With Overactive Bladder",
+        "sponsor": "Pfizer Inc.",
+        "date": "28 March 2014",
+        "product": "Toviaz (fesoterodine fumarate)",
+        "section": "Conclusions (the bullet on the ≤75-year subgroup is omitted: its \"≤\" did not survive text extraction)",
+        "transcription": "verbatim; page counters, running headers and approval stamps removed; bullet glyphs as \"•\"",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m2-fesoterodine-oab-subjects-extract",
+      "docType": "module-2-clinical",
+      "taskType": "extraction",
+      "input": "Number of Subjects (Planned and Analyzed): Approximately 790 subjects were planned\nto be randomized in this study. A total of 1045 subjects were screened of which 794 were\nassigned to study treatment (50 in Austria, 11 in Belgium, 25 in Denmark, 97 in Finland,\n64 in Germany, 25 in Israel, 29 in Italy, 65 in Norway, 65 in Portugal, 68 in Slovakia, 80 in\nSpain, 127 in Sweden, 15 in Switzerland, 14 in Turkey, and 59 in the UK): 398 subjects to\nfesoterodine and 396 subjects to placebo. Of the 794 subjects randomized, 785 subjects\nreceived study treatment (fesoterodine [392] and placebo [393]). All 785 treated subjects\nwere analyzed for safety; 756 subjects were included in the Full Analysis Set (FAS) for\nefficacy.",
+      "expectedFields": {
+        "subjects_screened": "1045",
+        "subjects_assigned_to_treatment": "794",
+        "subjects_treated": "785",
+        "full_analysis_set": "756",
+        "fesoterodine_arm_assigned": "398"
+      },
+      "tags": [
+        "ctd",
+        "module-2",
+        "2.7.3",
+        "disposition",
+        "fesoterodine"
+      ],
+      "source": {
+        "document": "csrs/A0221045_Synopsis.pdf",
+        "title": "Public Disclosure Synopsis, Protocol A0221045: Fesoterodine Flexible Dose Regimen in Elderly Patients With Overactive Bladder",
+        "sponsor": "Pfizer Inc.",
+        "date": "28 March 2014",
+        "product": "Toviaz (fesoterodine fumarate)",
+        "section": "Number of Subjects (Planned and Analyzed)",
+        "transcription": "verbatim; page counters, running headers and approval stamps removed; bullet glyphs as \"•\"",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m2-fesoterodine-oab-primary-extract",
+      "docType": "module-2-clinical",
+      "taskType": "extraction",
+      "input": "Primary Endpoint Result: Treatment with fesoterodine for 12 weeks resulted in clinically\nand statistically significant improvement (p-value <0.0001) from Baseline in the mean\nnumber of micturition-related urgency episodes per 24 hours compared to placebo (Table 6):\nthe difference in the LS means (fesoterodine – placebo) was -1.54; the 95% CI for the\ndifference was (-2.12, -0.97).",
+      "expectedFields": {
+        "primary_endpoint": "urgency episodes per 24 hours",
+        "ls_mean_difference": "-1.54",
+        "ci_95_lower": "-2.12",
+        "ci_95_upper": "-0.97",
+        "p_value": "<0.0001",
+        "timepoint_weeks": "12"
+      },
+      "tags": [
+        "ctd",
+        "module-2",
+        "2.7.3",
+        "efficacy",
+        "fesoterodine"
+      ],
+      "source": {
+        "document": "csrs/A0221045_Synopsis.pdf",
+        "title": "Public Disclosure Synopsis, Protocol A0221045: Fesoterodine Flexible Dose Regimen in Elderly Patients With Overactive Bladder",
+        "sponsor": "Pfizer Inc.",
+        "date": "28 March 2014",
+        "product": "Toviaz (fesoterodine fumarate)",
+        "section": "Results: Primary Endpoint Result",
+        "transcription": "verbatim; page counters, running headers and approval stamps removed; bullet glyphs as \"•\"",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m2-fesoterodine-oab-withdrawals-extract",
+      "docType": "module-2-clinical",
+      "taskType": "extraction",
+      "input": "One subject in each of the treatment groups died. Forty-six (11.6%) subjects in the\nfesoterodine group and 22 (5.6%) subjects in the placebo group withdrew due to AEs\n(36 [9.2%] subjects in the fesoterodine group and 17 [4.3%] subjects in the placebo group\nwithdrew due to AEs considered treatment-related).",
+      "expectedFields": {
+        "fesoterodine_withdrawals_due_to_aes_percent": "11.6",
+        "placebo_withdrawals_due_to_aes_percent": "5.6",
+        "fesoterodine_treatment_related_ae_withdrawals_percent": "9.2",
+        "placebo_treatment_related_ae_withdrawals_percent": "4.3"
+      },
+      "tags": [
+        "ctd",
+        "module-2",
+        "2.7.4",
+        "disposition",
+        "fesoterodine"
+      ],
+      "source": {
+        "document": "csrs/A0221045_Synopsis.pdf",
+        "title": "Public Disclosure Synopsis, Protocol A0221045: Fesoterodine Flexible Dose Regimen in Elderly Patients With Overactive Bladder",
+        "sponsor": "Pfizer Inc.",
+        "date": "28 March 2014",
+        "product": "Toviaz (fesoterodine fumarate)",
+        "section": "Results: Subject Disposition and Demography",
+        "transcription": "verbatim; page counters, running headers and approval stamps removed; bullet glyphs as \"•\"",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m2-fesoterodine-oab-safety-extract",
+      "docType": "module-2-clinical",
+      "taskType": "extraction",
+      "input": "Safety Results: An overall summary of treatment-emergent AEs (TEAEs) that occurred\nduring the DB and OL phases is provided in Table 29. During the DB phase, the\nfesoterodine treatment group had a greater proportion of subjects in every category than the\nplacebo group. However, the rate of serious adverse events (SAEs) was less than 5% for\nboth treatment groups, and only 1 of these (urinary retention in a subject receiving DB\nfesoterodine) was considered treatment-related by the investigator.\nDuring the OL phase, greater proportions of subjects who received placebo during the DB\nphase reported TEAEs, had dose reductions or temporary discontinuations due to TEAEs,\nand discontinued from the study due to TEAEs compared to those who received fesoterodine\nduring the DB phase.\n\nTable 29. Overview of Treatment-Emergent Adverse Events (Double-Blind and\nOpen-Label Phases)\nNo. (%) of Subjects Double-Blind Phase Open-Label Phase\nFesoterodine Placebo DB\nFesoterodine/\nOL Fesoterodine\nDB Placebo/\nOL\nFesoterodine\nSubjects evaluable for AEs 392 393 313 341\nSubjects with adverse event\nAll causalities 244 (62.2) 142 (36.1) 96 (30.7) 164 (48.1)\nTreatment-related 199 (50.8) 75 (19.1) 42 (13.4) 138 (40.5)\nSubjects with serious adverse event\nAll causalities 14 (3.6)a 9 (2.3)b 11 (3.5) 7 (2.1)c\nTreatment-related 1 (0.3) 0 0 3 (0.9)\nSubjects with severe adverse event\nAll causalities 27 (6.9) 9 (2.3) 13 (4.2) 14 (4.1)\nTreatment-related 17 (4.3) 2 (0.5) 4 (1.3) 12 (3.5)\nSubjects discontinued due to adverse events\nAll causalities 53 (13.5) 20 (5.1) 6 (1.9) 32 (9.4)\nTreatment-related 42 (10.7) 15 (3.8) 4 (1.3) 31 (9.1)",
+      "expectedFields": {
+        "treatment_related_sae": "urinary retention",
+        "db_fesoterodine_sae_all_causalities_percent": "3.6",
+        "db_fesoterodine_subjects_with_aes_percent": "62.2",
+        "db_placebo_subjects_with_aes_percent": "36.1"
+      },
+      "tags": [
+        "ctd",
+        "module-2",
+        "2.7.4",
+        "safety",
+        "fesoterodine"
+      ],
+      "source": {
+        "document": "csrs/A0221045_Synopsis.pdf",
+        "title": "Public Disclosure Synopsis, Protocol A0221045: Fesoterodine Flexible Dose Regimen in Elderly Patients With Overactive Bladder",
+        "sponsor": "Pfizer Inc.",
+        "date": "28 March 2014",
+        "product": "Toviaz (fesoterodine fumarate)",
+        "section": "Results: Safety Results, Table 29",
+        "transcription": "verbatim; page counters, running headers and approval stamps removed; bullet glyphs as \"•\"",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m2-cnv1014802-lsr-efficacy-generate",
+      "docType": "module-2-clinical",
+      "taskType": "generation",
+      "input": "Methodology:\nThis was a multi-centre, double-blind, randomized, 2-period cross-over study of CNV1014802 versus\nplacebo. Following a screening period, 137 subjects with a diagnosis of neuropathic pain due to\nlumbosacral radiculopathy (LSR) were enrolled into a run-in phase where they received single blind\nplacebo medication for two weeks. On Day 15, 82 subjects were randomized to take part in two\nsequential 22-day dosing periods (AM dose only on day 22). Subjects were randomized in a 1:1 ratio to\nreceive either 350mg CNV1014802 BID followed by placebo BID, or vice versa. The dosing periods\nwere separated by a 13 day washout period and were followed by a 7 day run out, during which subjects\nreceived placebo.\n\nEfficacy:\n• CNV1014802 significantly improved neuropathic pain in LSR patients. On the primary\nendpoint, there was a difference in the average change in PI-NRS for neuropathic pain from\nbaseline to Week 3 of -0.43 (p= 0.0255) for CNV1014802 compared to placebo.\n• A statistically significant effect on neuropathic pain levels was seen from Week 2 onwards.\n• There were no statistically significant effects of CNV1014802 on PI-NRS assessments of lower\nback pain – non-neuropathic.\n• The effect of CNV1014802 on neuropathic pain was most pronounced in monotherapy patients.\nThere was a difference in the average change in PI-NRS for neuropathic pain from baseline to\nWeek 3 of -0.73 (p= 0.0038) for CNV1014802 compared to placebo in monotherapy patients.\n• There was no evidence that patients with no prior surgery responded any differently to\nCNV1014802 than those with a history of surgery.\n• There were no statistically significant differences between CNV1014802 and placebo on any of\nthe other secondary efficacy endpoints as analysed using the period 1 baseline only.\n• Sensitivity analyses conducted analysing the first period only in a between subject analysis\nshowed a similar magnitude of effect of PI-NRS in Week 3 compared to baseline, in both the all\nsubject ITT population (-0.43, p= 0.1858) and the Monotherapy subjects (-0.81, p=0.0555).",
+      "requiredSections": [
+        "study design",
+        "primary endpoint",
+        "monotherapy"
+      ],
+      "forbiddenPatterns": [
+        "cures neuropathic pain",
+        "significant on every secondary endpoint",
+        "proven safe and effective",
+        "there were no adverse events",
+        "eliminates all symptoms",
+        "guaranteed"
+      ],
+      "tags": [
+        "ctd",
+        "module-2",
+        "2.7.3",
+        "efficacy",
+        "cnv1014802"
+      ],
+      "source": {
+        "document": "csrs/NCT01561027-Synopsis.pdf",
+        "title": "CSR synopsis, Protocol 1014802/201 (NCT01561027): CNV1014802 in neuropathic pain from lumbosacral radiculopathy",
+        "sponsor": "Convergence Pharmaceuticals Ltd",
+        "date": "04 September 2014",
+        "product": "CNV1014802",
+        "section": "Methodology; Results: Efficacy",
+        "transcription": "verbatim; page counters, running headers and approval stamps removed; bullet glyphs as \"•\"",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m2-cnv1014802-lsr-pharmacokinetics-generate",
+      "docType": "module-2-clinical",
+      "taskType": "generation",
+      "input": "Pharmacokinetics:\n• CNV1014802 plasma concentrations and exposures were as expected from the healthy volunteer\n\n\nPhase I PK data.\n• Individual PK exposures could be estimated in 78/79 subjects that received active treatment 350\nBID.\n• The median (90% percentile range) derived exposures were AUC(0-24)-ss 55 (40 - 78)\n[μg*hr/ml], Cmax-ss 3.7 (2.7 - 5.0) [μg/ml], Cmin-ss 1.4 (0.9 - 2.0) [μg/ml].\n• The PK data suggested no evidence of major non-compliance.",
+      "requiredSections": [
+        "pharmacokinetics",
+        "exposure",
+        "compliance"
+      ],
+      "forbiddenPatterns": [
+        "dose proportionality was established",
+        "no inter-subject variability",
+        "proven safe and effective",
+        "there were no adverse events",
+        "eliminates all symptoms",
+        "guaranteed"
+      ],
+      "tags": [
+        "ctd",
+        "module-2",
+        "2.7.2",
+        "clinical-pharmacology",
+        "cnv1014802"
+      ],
+      "source": {
+        "document": "csrs/NCT01561027-Synopsis.pdf",
+        "title": "CSR synopsis, Protocol 1014802/201 (NCT01561027): CNV1014802 in neuropathic pain from lumbosacral radiculopathy",
+        "sponsor": "Convergence Pharmaceuticals Ltd",
+        "date": "04 September 2014",
+        "product": "CNV1014802",
+        "section": "Results: Pharmacokinetics",
+        "transcription": "verbatim; page counters, running headers and approval stamps removed; bullet glyphs as \"•\"",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m2-cnv1014802-lsr-safety-generate",
+      "docType": "module-2-clinical",
+      "taskType": "generation",
+      "input": "Safety:\n• CNV1014802 was well tolerated; 58% subjects dosed with CNV1014802 reported TEAE‟s\ncompared to 49% dosed with placebo.\n• The most common treatment emergent adverse events occurring in this study were headache\n(CNV1014802: 12 subjects (15.2%); placebo: 5 subjects (6.8%)) and dizziness (CNV1014802: 9\nsubjects (11.4%); placebo: 3 subjects (4.1%)). The majority of all TEAE‟s were mild in\nseverity.\n• A total of 8 (10.1%) CNV1014802 and 1 (1.4%) placebo treated subjects were discontinued due\nto TEAE‟s. One CNV1014802 subject was discontinued due to a rash which was considered to\nbe related to study drug.\n• ALT increases of >3xULN were observed in two subjects dosed with CNV1014802. One\nsubject was discontinued from the study; this subject also had significant elevations of AST,\nGGT and alkaline phosphatase. Serum bilirubin was normal in both subjects. The abnormal\nlaboratory parameters in both subjects rapidly fell once CNV1014802 was withdrawn.\n• No other clinically significant changes in laboratory test parameters, were reported.\n• There were no clinically significant changes in BP, heart rate or ECG parameters associated\nwith CNV1014802",
+      "requiredSections": [
+        "common adverse events",
+        "discontinuation",
+        "laboratory"
+      ],
+      "forbiddenPatterns": [
+        "no liver signal",
+        "no discontinuations due to adverse events",
+        "proven safe and effective",
+        "there were no adverse events",
+        "eliminates all symptoms",
+        "guaranteed"
+      ],
+      "tags": [
+        "ctd",
+        "module-2",
+        "2.7.4",
+        "safety",
+        "cnv1014802"
+      ],
+      "source": {
+        "document": "csrs/NCT01561027-Synopsis.pdf",
+        "title": "CSR synopsis, Protocol 1014802/201 (NCT01561027): CNV1014802 in neuropathic pain from lumbosacral radiculopathy",
+        "sponsor": "Convergence Pharmaceuticals Ltd",
+        "date": "04 September 2014",
+        "product": "CNV1014802",
+        "section": "Results: Safety",
+        "transcription": "verbatim; page counters, running headers and approval stamps removed; bullet glyphs as \"•\"",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m2-cnv1014802-lsr-overview-generate",
+      "docType": "module-2-clinical",
+      "taskType": "generation",
+      "input": "SUMMARY: CONCLUSION\nThe primary objective of this study was to investigate the efficacy of repeat oral dosing of CNV1014802\non neuropathic pain in subjects with lumbosacral radiculopathy. There was a small but statistically\nsignificant effect of CNV1014802 compared to placebo at Week 3 on the change in neuropathic pain\nassociated with LSR, but not with low back pain. The improvement in the monotherapy subset was\ngreater than in the overall ITT population. No significant changes in the secondary endpoints were\nobserved. Whilst improvements in pain ratings were seen, there were no statistically significant\ndifferences between CNV1014802 and placebo on any of the other secondary efficacy endpoints.\nHowever, these were analysed using the period 1 baseline only for both treatment periods baseline.\nCNV1014802 plasma concentrations and exposures were as expected from phase I healthy volunteer data\nand there was no evidence of major non-compliance.\nCNV1014802 was generally well tolerated with the most common adverse events being headache and\ndizziness. No serious adverse events were reported and only 2 subjects experienced severe treatment\nemergent adverse events (headache and liver function test abnormal) which both resolved without\nsequelae. Two subjects treated with CNV1014802 reported rises in ALT greater than 3x ULN which fell\nrapidly once CNV1014802 was terminated. One subject was discontinued with a rash which was related\nto CNV1014802. No other clinically significant changes in laboratory test parameters, vital signs or\nECG changes were reported.",
+      "requiredSections": [
+        "low back pain",
+        "safety",
+        "secondary endpoint"
+      ],
+      "forbiddenPatterns": [
+        "cures neuropathic pain",
+        "robust effect on low back pain",
+        "proven safe and effective",
+        "there were no adverse events",
+        "eliminates all symptoms",
+        "guaranteed"
+      ],
+      "tags": [
+        "ctd",
+        "module-2",
+        "2.5",
+        "clinical-overview",
+        "cnv1014802"
+      ],
+      "source": {
+        "document": "csrs/NCT01561027-Synopsis.pdf",
+        "title": "CSR synopsis, Protocol 1014802/201 (NCT01561027): CNV1014802 in neuropathic pain from lumbosacral radiculopathy",
+        "sponsor": "Convergence Pharmaceuticals Ltd",
+        "date": "04 September 2014",
+        "product": "CNV1014802",
+        "section": "Summary: Conclusion",
+        "transcription": "verbatim; page counters, running headers and approval stamps removed; bullet glyphs as \"•\"",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m2-cnv1014802-lsr-design-extract",
+      "docType": "module-2-clinical",
+      "taskType": "extraction",
+      "input": "Methodology:\nThis was a multi-centre, double-blind, randomized, 2-period cross-over study of CNV1014802 versus\nplacebo. Following a screening period, 137 subjects with a diagnosis of neuropathic pain due to\nlumbosacral radiculopathy (LSR) were enrolled into a run-in phase where they received single blind\nplacebo medication for two weeks. On Day 15, 82 subjects were randomized to take part in two\nsequential 22-day dosing periods (AM dose only on day 22). Subjects were randomized in a 1:1 ratio to\nreceive either 350mg CNV1014802 BID followed by placebo BID, or vice versa. The dosing periods\nwere separated by a 13 day washout period and were followed by a 7 day run out, during which subjects\nreceived placebo.\n\nNumber of subjects:\nPlanned Randomized: 80\nEnrolled: 137\nRandomized: 82\nTreated: 81 (CNV1014802 N=79; Placebo N=73)",
+      "expectedFields": {
+        "subjects_enrolled": "137",
+        "subjects_randomized": "82",
+        "dose_mg": "350",
+        "dosing_frequency": "BID",
+        "washout_period_days": "13"
+      },
+      "tags": [
+        "ctd",
+        "module-2",
+        "2.7.3",
+        "design",
+        "cnv1014802"
+      ],
+      "source": {
+        "document": "csrs/NCT01561027-Synopsis.pdf",
+        "title": "CSR synopsis, Protocol 1014802/201 (NCT01561027): CNV1014802 in neuropathic pain from lumbosacral radiculopathy",
+        "sponsor": "Convergence Pharmaceuticals Ltd",
+        "date": "04 September 2014",
+        "product": "CNV1014802",
+        "section": "Methodology; Number of subjects",
+        "transcription": "verbatim; page counters, running headers and approval stamps removed; bullet glyphs as \"•\"",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m2-cnv1014802-lsr-efficacy-extract",
+      "docType": "module-2-clinical",
+      "taskType": "extraction",
+      "input": "Efficacy:\n• CNV1014802 significantly improved neuropathic pain in LSR patients. On the primary\nendpoint, there was a difference in the average change in PI-NRS for neuropathic pain from\nbaseline to Week 3 of -0.43 (p= 0.0255) for CNV1014802 compared to placebo.\n• A statistically significant effect on neuropathic pain levels was seen from Week 2 onwards.\n• There were no statistically significant effects of CNV1014802 on PI-NRS assessments of lower\nback pain – non-neuropathic.\n• The effect of CNV1014802 on neuropathic pain was most pronounced in monotherapy patients.\nThere was a difference in the average change in PI-NRS for neuropathic pain from baseline to\nWeek 3 of -0.73 (p= 0.0038) for CNV1014802 compared to placebo in monotherapy patients.\n• There was no evidence that patients with no prior surgery responded any differently to\nCNV1014802 than those with a history of surgery.\n• There were no statistically significant differences between CNV1014802 and placebo on any of\nthe other secondary efficacy endpoints as analysed using the period 1 baseline only.\n• Sensitivity analyses conducted analysing the first period only in a between subject analysis\nshowed a similar magnitude of effect of PI-NRS in Week 3 compared to baseline, in both the all\nsubject ITT population (-0.43, p= 0.1858) and the Monotherapy subjects (-0.81, p=0.0555).",
+      "expectedFields": {
+        "primary_difference_vs_placebo": "-0.43",
+        "primary_p_value": "0.0255",
+        "monotherapy_difference_vs_placebo": "-0.73",
+        "monotherapy_p_value": "0.0038"
+      },
+      "tags": [
+        "ctd",
+        "module-2",
+        "2.7.3",
+        "efficacy",
+        "cnv1014802"
+      ],
+      "source": {
+        "document": "csrs/NCT01561027-Synopsis.pdf",
+        "title": "CSR synopsis, Protocol 1014802/201 (NCT01561027): CNV1014802 in neuropathic pain from lumbosacral radiculopathy",
+        "sponsor": "Convergence Pharmaceuticals Ltd",
+        "date": "04 September 2014",
+        "product": "CNV1014802",
+        "section": "Results: Efficacy",
+        "transcription": "verbatim; page counters, running headers and approval stamps removed; bullet glyphs as \"•\"",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m2-cnv1014802-lsr-pharmacokinetics-extract",
+      "docType": "module-2-clinical",
+      "taskType": "extraction",
+      "input": "Pharmacokinetics:\n• CNV1014802 plasma concentrations and exposures were as expected from the healthy volunteer\n\n\nPhase I PK data.\n• Individual PK exposures could be estimated in 78/79 subjects that received active treatment 350\nBID.\n• The median (90% percentile range) derived exposures were AUC(0-24)-ss 55 (40 - 78)\n[μg*hr/ml], Cmax-ss 3.7 (2.7 - 5.0) [μg/ml], Cmin-ss 1.4 (0.9 - 2.0) [μg/ml].\n• The PK data suggested no evidence of major non-compliance.",
+      "expectedFields": {
+        "subjects_with_pk_estimates": "78/79",
+        "median_auc_0_24_ss": "55",
+        "median_cmax_ss": "3.7",
+        "median_cmin_ss": "1.4"
+      },
+      "tags": [
+        "ctd",
+        "module-2",
+        "2.7.2",
+        "clinical-pharmacology",
+        "cnv1014802"
+      ],
+      "source": {
+        "document": "csrs/NCT01561027-Synopsis.pdf",
+        "title": "CSR synopsis, Protocol 1014802/201 (NCT01561027): CNV1014802 in neuropathic pain from lumbosacral radiculopathy",
+        "sponsor": "Convergence Pharmaceuticals Ltd",
+        "date": "04 September 2014",
+        "product": "CNV1014802",
+        "section": "Results: Pharmacokinetics",
+        "transcription": "verbatim; page counters, running headers and approval stamps removed; bullet glyphs as \"•\"",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m2-cnv1014802-lsr-safety-extract",
+      "docType": "module-2-clinical",
+      "taskType": "extraction",
+      "input": "Safety:\n• CNV1014802 was well tolerated; 58% subjects dosed with CNV1014802 reported TEAE‟s\ncompared to 49% dosed with placebo.\n• The most common treatment emergent adverse events occurring in this study were headache\n(CNV1014802: 12 subjects (15.2%); placebo: 5 subjects (6.8%)) and dizziness (CNV1014802: 9\nsubjects (11.4%); placebo: 3 subjects (4.1%)). The majority of all TEAE‟s were mild in\nseverity.\n• A total of 8 (10.1%) CNV1014802 and 1 (1.4%) placebo treated subjects were discontinued due\nto TEAE‟s. One CNV1014802 subject was discontinued due to a rash which was considered to\nbe related to study drug.\n• ALT increases of >3xULN were observed in two subjects dosed with CNV1014802. One\nsubject was discontinued from the study; this subject also had significant elevations of AST,\nGGT and alkaline phosphatase. Serum bilirubin was normal in both subjects. The abnormal\nlaboratory parameters in both subjects rapidly fell once CNV1014802 was withdrawn.\n• No other clinically significant changes in laboratory test parameters, were reported.\n• There were no clinically significant changes in BP, heart rate or ECG parameters associated\nwith CNV1014802",
+      "expectedFields": {
+        "cnv1014802_headache_incidence_percent": "15.2",
+        "cnv1014802_dizziness_incidence_percent": "11.4",
+        "cnv1014802_discontinued_due_to_teaes_percent": "10.1",
+        "alt_threshold": "3xULN"
+      },
+      "tags": [
+        "ctd",
+        "module-2",
+        "2.7.4",
+        "safety",
+        "cnv1014802"
+      ],
+      "source": {
+        "document": "csrs/NCT01561027-Synopsis.pdf",
+        "title": "CSR synopsis, Protocol 1014802/201 (NCT01561027): CNV1014802 in neuropathic pain from lumbosacral radiculopathy",
+        "sponsor": "Convergence Pharmaceuticals Ltd",
+        "date": "04 September 2014",
+        "product": "CNV1014802",
+        "section": "Results: Safety",
+        "transcription": "verbatim; page counters, running headers and approval stamps removed; bullet glyphs as \"•\"",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m3-itraconazole-stress-mass-balance-generate",
+      "docType": "module-3-quality",
+      "taskType": "generation",
+      "input": "All results correspond to maintaining the stress conditions for 72 h, except for the analysis of oxidative conditions, which was conducted after 24 h. This difference in the study time was due to the higher degradation observed in the oxidative media, in which at 24 h more than a 50% was degraded in the finished product. Observing the MB, calculated by the summatory of the degraded ITZ peak and the observed impurities, a balance between 95–105% is obtained in all conditions except for the FP in the oxidative media, in which more than a 90% of ITZ was degraded. Despite this extreme degradation, a MB of 77.08% was obtained. This degradation difference between the API and the FP is probably because the active ingredient in the FP has suffered a change in its configuration due to the manufacturing process. Acceptable resolution was obtained between the observed degradation products, the known impurities, and ITZ. Of the known impurities, impurities B and E were observed to increase during stress study under alkaline conditions for impurity B and temperature, acidic hydrolysis and oxidative conditions for impurity E. It was therefore concluded that, in addition to being synthesis impurities, they are also degradation products. As a result, impurities B and E will be monitored in further stability studies, along with the listed unidentified degradation products, once a finished product of ITZ is manufactured.",
+      "requiredSections": [
+        "stress conditions",
+        "oxidative",
+        "mass balance",
+        "degradation products",
+        "stability studies"
+      ],
+      "forbiddenPatterns": [
+        "mass balance of 100%",
+        "no degradation under any",
+        "free of all impurities",
+        "stable under all conditions",
+        "guaranteed"
+      ],
+      "tags": [
+        "module-3",
+        "cmc",
+        "small-molecule",
+        "3.2.P.5.5",
+        "3.2.P.5.3",
+        "forced-degradation",
+        "mass-balance",
+        "itraconazole",
+        "tablets"
+      ],
+      "source": {
+        "pmid": "42515747",
+        "pmcid": "PMC13414520",
+        "doi": "10.3390/ph19071066",
+        "title": "Development and Optimisation of a Stability-Indicating Analytical Method for Itraconazole in Drug Product by High-Performance Liquid Chromatography Using a QbD Approach",
+        "journal": "Pharmaceuticals (Basel)",
+        "year": "2026",
+        "license": "CC BY 4.0",
+        "section": "2. Results and Discussion > 2.4. Selectivity Study of the Optimised Analytical Method (stress study results, paragraphs 4-6)",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m3-latanoprost-forced-degradation-generate",
+      "docType": "module-3-quality",
+      "taskType": "generation",
+      "input": "To confirm the stability-indicating power of the tested method and to investigate the main potential degradation products of latanoprost, forced degradation studies under severe physical and chemical conditions were performed. Degrading agents were selected such that the active substance was reduced to a maximum of 30%. In the case of alkaline hydrolysis, using 0.2 M NaOH led to the complete hydrolysis of the ester and the formation of 100% latanoprost acid. Therefore, milder conditions were used, i.e., half the concentration of NaOH for the decomposition of latanoprost, and only the product without timolol showed an increase in degradants. The mass balance for all reaction types was within a range of 95–105%, indicating the suitability of the method for monitoring the stability of both mono and combo product formulations. The forced degradation studies indicated that two known latanoprost process impurities, H and F, originating from organic synthesis (listed in latanoprost Ph. Eur. monograph 2230) may form in drug products as a result of degradation. Impurity H can be generated from different types of degradation, both through alkaline and acidic hydrolysis, as well as under elevated temperatures. Since ophthalmic products are aqueous solutions that promote hydrolysis reactions, impurity H should be considered the main and most typical degradation product. Chemical impurity H is free latanoprost acid formed through the hydrolysis of inactive latanoprost prodrug in the form of isopropyl ester into a pharmacologically active moiety.",
+      "requiredSections": [
+        "forced degradation",
+        "alkaline hydrolysis",
+        "mass balance",
+        "impurity H",
+        "latanoprost acid"
+      ],
+      "forbiddenPatterns": [
+        "free of all impurities",
+        "mass balance of 100%",
+        "stable under all conditions",
+        "fully validated for all",
+        "guaranteed"
+      ],
+      "tags": [
+        "module-3",
+        "cmc",
+        "small-molecule",
+        "3.2.P.5.5",
+        "3.2.P.5.3",
+        "forced-degradation",
+        "impurities",
+        "latanoprost",
+        "ophthalmic-solution"
+      ],
+      "source": {
+        "pmid": "40430439",
+        "pmcid": "PMC12114650",
+        "doi": "10.3390/ph18050619",
+        "title": "Developing a Chromatographic Method for Quantifying Latanoprost and Related Substances in Glaucoma Treatments",
+        "journal": "Pharmaceuticals (Basel)",
+        "year": "2025",
+        "license": "CC BY 4.0",
+        "section": "2. Results > 2.2. Method Validation > 2.2.2. Specificity and Stability-Indicating Power (paragraphs 2-3, second truncated)",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m3-ritlecitinib-validation-generate",
+      "docType": "module-3-quality",
+      "taskType": "generation",
+      "input": "The LOD and LOQ values were determined experimentally, the method based on signal-to-noise (S/N) ratio was applied. The LOD (S/N = 3) and LOQ (S/N = 10) values were found to be 0.04 and 0.14 µg/mL, indicating the sensitivity of the method. Method precision was determined by repeatability (intraday), where the analysis of samples at the same concentrations was evaluated on the same day at different time intervals, and by intermediate precision (interday), where the samples were evaluated by comparing the assays on three separate days. Each day six sample solutions (10 µg/mL) were prepared and analyzed; the assay value was expressed in terms of RSD values and the box-and-whisker plot. Low values of RSDs, ranging from 0.12 to 0.15%, demonstrate acceptable method precision. Method accuracy was calculated using the regression equation based on percentage recoveries at three concentration levels (low-level 2 µg/mL, medium-level 10 µg/mL, and high-level 100 µg/mL) crossing the linearity curve. All solutions prepared and analyzed in triplicate were experimentally recovered (99.9–100.3%) with low values of RSD (lower than 0.7%) during analysis.",
+      "requiredSections": [
+        "LOD",
+        "LOQ",
+        "repeatability",
+        "intermediate precision",
+        "accuracy"
+      ],
+      "forbiddenPatterns": [
+        "fully validated for all",
+        "robustness was demonstrated",
+        "zero variability",
+        "complete recovery",
+        "guaranteed"
+      ],
+      "tags": [
+        "module-3",
+        "cmc",
+        "small-molecule",
+        "3.2.S.4.3",
+        "validation",
+        "ich-q2",
+        "ritlecitinib",
+        "drug-substance"
+      ],
+      "source": {
+        "pmid": "39861185",
+        "pmcid": "PMC11768339",
+        "doi": "10.3390/ph18010124",
+        "title": "The Stability-Indicating Ultra High-Performance Liquid Chromatography with Diode Array Detector and Tandem Mass Spectrometry Method Applied for the Forced Degradation Study of Ritlecitinib: An Appraisal of Green and Blue Metrics",
+        "journal": "Pharmaceuticals (Basel)",
+        "year": "2025",
+        "license": "CC BY 4.0",
+        "section": "2. Results and Discussion > 2.2. Method Validation (paragraphs 3-5)",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m3-ritlecitinib-forced-degradation-generate",
+      "docType": "module-3-quality",
+      "taskType": "generation",
+      "input": "Over 72 h, ritlecitinib significantly degraded through basic hydrolysis at room temperature. This stress condition resulted in a degradation of 12.6% of ritlecitinib with the appearance of three degradation peaks. Relative retention times (RRTs) of DP1 and DP2 were lower than 1.0, indicating lower hydrophobicity of these degradation products, while the RRT value of DP3 was higher than 1.0, indicating its higher hydrophobicity compared to ritlecitinib. The degradation of ritlecitinib under oxidative stress, using 33% hydrogen peroxide solution, occurred rapidly, achieving a degradation of 9.5% of ritlecitinib within 48 h. The chromatogram obtained from analyzing oxidative stress illustrates a distinct separation between ritlecitinib and two more hydrophobic degradation products, namely DP3 and DP4. The acidic degradation study was carried out in 1 M HCl for 10 days under reflux conditions, at room temperature and 70 °C. It was revealed that ritlecitinib is stable to acidic hydrolysis, with a loss of ritlecitinib of less than 1%. For thermal degradation, the ritlecitinib standard solution was kept at 40 and 70 °C for 10 days, but no appreciable degradation occurred under these conditions (less than 1%). The photolytic degradation of ritlecitinib resulted in a loss of analyte of 1% without the formation of a degradant peak.",
+      "requiredSections": [
+        "basic hydrolysis",
+        "oxidative",
+        "acid",
+        "thermal",
+        "photolytic"
+      ],
+      "forbiddenPatterns": [
+        "stable under all conditions",
+        "no degradation under any",
+        "free of all impurities",
+        "stable indefinitely",
+        "guaranteed"
+      ],
+      "tags": [
+        "module-3",
+        "cmc",
+        "small-molecule",
+        "3.2.S.7.3",
+        "3.2.S.3.2",
+        "forced-degradation",
+        "ritlecitinib",
+        "drug-substance"
+      ],
+      "source": {
+        "pmid": "39861185",
+        "pmcid": "PMC11768339",
+        "doi": "10.3390/ph18010124",
+        "title": "The Stability-Indicating Ultra High-Performance Liquid Chromatography with Diode Array Detector and Tandem Mass Spectrometry Method Applied for the Forced Degradation Study of Ritlecitinib: An Appraisal of Green and Blue Metrics",
+        "journal": "Pharmaceuticals (Basel)",
+        "year": "2025",
+        "license": "CC BY 4.0",
+        "section": "2. Results and Discussion > 2.3. Forced Degradation Study (paragraphs 3-5)",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m3-velpatasvir-forced-degradation-generate",
+      "docType": "module-3-quality",
+      "taskType": "generation",
+      "input": "Sample solutions after degradation studies were diluted to 0.1 mg mLand analyzed using validated HPLC-UV method. The overall level of degradation was quantified by comparing the results of sample solution with freshly prepared reference solution. VEL both, pure drug substance and VEL-CSD, were hydrolyzed 16–20% in alkaline and acidic conditions and oxidized about 37–40% on exposure to oxidative stressed conditions. VEL is photolabile and the pure drug substance was degraded more than 15% during storage in photo-stability chamber for 7 days. VEL-CSD was also degraded during photolytic degradation studies, but the level of degradation was less than VEL pure drug i.e., 9.4%. The effect of dry heat and humidity on VEL and VEL-CSD was negligible and there was no degradation detected. Similarly, the solutions of VEL pure drug substance and VEL-CSD stored in amber color flasks at room temperature and refrigerator, were stable and showed no degradation during studies.",
+      "requiredSections": [
+        "alkaline",
+        "oxidative",
+        "photolytic",
+        "dry heat",
+        "humidity"
+      ],
+      "forbiddenPatterns": [
+        "stable under all conditions",
+        "not photolabile",
+        "no degradation under any",
+        "light protection is not required",
+        "guaranteed"
+      ],
+      "tags": [
+        "module-3",
+        "cmc",
+        "small-molecule",
+        "3.2.S.7.3",
+        "3.2.P.5.5",
+        "forced-degradation",
+        "photostability",
+        "velpatasvir",
+        "solid-dispersion"
+      ],
+      "source": {
+        "pmid": "35884151",
+        "pmcid": "PMC9311562",
+        "doi": "10.3390/antibiotics11070897",
+        "title": "Forced Degradation Studies and Development and Validation of HPLC-UV Method for the Analysis of Velpatasvir Copovidone Solid Dispersion",
+        "journal": "Antibiotics (Basel)",
+        "year": "2022",
+        "license": "CC BY 4.0",
+        "section": "3. Results and Discussion > 3.7. Forced Degradation Studies (paragraph 1)",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m3-miglitol-forced-degradation-generate",
+      "docType": "module-3-quality",
+      "taskType": "generation",
+      "input": "Degradation was not observed in stressed conditions when the analyte was subjected to photolytic, thermal, acid, base or water hydrolysis. The degradation of the drug was observed only under oxidative conditions. Miglitol under oxidative conditions leaded to the formation of one unknown degradation peak at the relative retention time (RRT) of 0.33. The peak purity factor, over the threshold obtained in all stressed samples for the analyte peak, demonstrated its specificity. The mass of the degradant is 16 units higher than the molecular weight of miglitol. Further studies can be done by characterizing this degradation impurity to understand the possible impurities during the stability and the metabolites of miglitol.",
+      "requiredSections": [
+        "oxidative",
+        "photolytic",
+        "thermal",
+        "peak purity",
+        "relative retention time"
+      ],
+      "forbiddenPatterns": [
+        "stable under all stress conditions",
+        "structure was confirmed",
+        "structurally identified as",
+        "free of all impurities",
+        "guaranteed"
+      ],
+      "tags": [
+        "module-3",
+        "cmc",
+        "small-molecule",
+        "3.2.S.7.3",
+        "3.2.S.4.3",
+        "forced-degradation",
+        "specificity",
+        "miglitol",
+        "drug-substance"
+      ],
+      "source": {
+        "pmid": "27754407",
+        "pmcid": "PMC5198025",
+        "doi": "10.3390/scipharm84040654",
+        "title": "Development and Validation of Miglitol and Its Impurities by RP-HPLC and Characterization Using Mass Spectrometry Techniques",
+        "journal": "Scientia Pharmaceutica",
+        "year": "2016",
+        "license": "CC BY 4.0",
+        "section": "3. Results and Discussion > 3.2. Results of Forced Degradation Studies",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m3-ramipril-degradation-impurities-generate",
+      "docType": "module-3-quality",
+      "taskType": "generation",
+      "input": "The identification of RAM degradation products via HPLC–MS facilitated the description of its decay pathways. The obtained chromatogram for pure RAM depicted one peak at t≈ 6.85 min for the anionic form ESand t≈ 6.98 for the cationic form ES; the/values were 415 and 417, respectively. This confirmed the identity of the drug (RAM molar mass = 416). The HPLC–MS chromatogram registered for the degraded sample (after stress at T = 363 K, RH = 76.4% for 40 days) revealed three peaks attributed to the parent compound and two degradation impurities: (a) RAM (t≈ 6.88 min for ESand t≈ 6.86 for ES;/= 415 and 417, respectively); (b) degradation impurity n°1 (t≈ 3.38 min for ESand t≈ 3.45 min for ES;/= 387 and 389, respectively), and (c) degradation impurity n°2 (t≈ 5.41 min for ESand t≈ 5.49 min for ES;/= 397 and 399, respectively). Based on the obtained m/z values, it was concluded that pure RAM underwent simultaneous hydrolysis with the formation of ramiprilat (RAMat), and intramolecular cyclization that produced the diketopiperazine derivative (DKP). Under the applied experimental conditions, the dominant reaction was hydrolysis over cyclization, as evidenced by the 20-fold larger HPLC and HPLC–MS peak sizes for RAMat than for DKP. RAMat is the active form of RAM; it has low toxicity; however, it is not absorbed from the gastrointestinal tract following oral administration; thus, its formation compromises RAM’s bioavailability and potency. The presence of DKP, in turn, may pose a safety concern, as the data on its toxicity remain unavailable until now. Therefore, owing to RAM’s indications for long-term use and its potential high lifetime exposure, further toxicological studies are recommended for DKP.",
+      "requiredSections": [
+        "hydrolysis",
+        "intramolecular",
+        "ramiprilat",
+        "diketopiperazine",
+        "toxicological"
+      ],
+      "forbiddenPatterns": [
+        "no further toxicological",
+        "no safety concern",
+        "free of all impurities",
+        "proven non-toxic",
+        "guaranteed"
+      ],
+      "tags": [
+        "module-3",
+        "cmc",
+        "small-molecule",
+        "3.2.S.3.2",
+        "3.2.S.7.3",
+        "impurities",
+        "degradation-pathway",
+        "hplc-ms",
+        "ramipril"
+      ],
+      "source": {
+        "pmid": "34683893",
+        "pmcid": "PMC8538641",
+        "doi": "10.3390/pharmaceutics13101600",
+        "title": "Solid-State Stability Profiling of Ramipril to Optimize Its Quality Efficiency and Safety",
+        "journal": "Pharmaceutics",
+        "year": "2021",
+        "license": "CC BY 4.0",
+        "section": "4. Discussion > 4.7. Degradants",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m3-cisatracurium-shelf-life-generate",
+      "docType": "module-3-quality",
+      "taskType": "generation",
+      "input": "The cisatracurium concentration decreased slightly during the first 90 days of storage and then stabilized within the predefined acceptance interval. From M15 onwards (at a cisatracurium concentration equal to 93.9% of C0), the concentration fell steadily and went below the lower boundary of the ±10% acceptance interval; the concentration was 88.7% of C0 after 18 months of storage at between 2 and 8 °C. Based on these results, we conclude that refrigerated ampoules of cisatracurium solution are stable for 15 months. The fact that our initial cisatracurium concentration, for the unique pilot batch produced for stability study, equals 97% of the rated concentration leads to a reduced shelf life as it will reach the limit of 90% of the nominal concentration earlier than with a 100% initial concentration. Because the rate of lost potency is constant, this issue could be overcome by using an overage in our process of compounding ampoules, as it is mentioned in the Nimbexdrug product information. Even if the overage is usually discouraged according to ICH Q8 R2, in our case, it is an interesting add-on initiative that needs to be considered, even if it needs to accurately define a potential amount justification for this drug with a very low therapeutic margin. Additionally, a stability study should be performed to assess the shelf life of cisatracurium ampoules with a defined overage. We estimated the shelf life by applying (i) the GERPAC-SFPC methodology and (ii) the ICH (Q1E) model with a linear fit and confidence intervals. The shelf life was defined as the intercept between the lower confidence interval and the 90% assay value. Using the ICH Q1E criteria, the estimated shelf life was 16.3 months, this is consistent with our other results.",
+      "requiredSections": [
+        "shelf",
+        "storage",
+        "acceptance",
+        "overage",
+        "Q1E"
+      ],
+      "forbiddenPatterns": [
+        "stable indefinitely",
+        "no loss of potency",
+        "guaranteed shelf life",
+        "stable at room temperature",
+        "guaranteed"
+      ],
+      "tags": [
+        "module-3",
+        "cmc",
+        "small-molecule",
+        "3.2.P.8.1",
+        "3.2.P.8.3",
+        "stability",
+        "shelf-life",
+        "ich-q1e",
+        "cisatracurium",
+        "injection"
+      ],
+      "source": {
+        "pmid": "37242646",
+        "pmcid": "PMC10221331",
+        "doi": "10.3390/pharmaceutics15051404",
+        "title": "Cistracurium Besylate 10 mg/mL Solution Compounded in a Hospital Pharmacy to Prevent Drug Shortages: A Stability Study Involving Four Degradation Products",
+        "journal": "Pharmaceutics",
+        "year": "2023",
+        "license": "CC BY 4.0",
+        "section": "3. Results and Discussion > 3.3.3. The HPLC-UV Analysis of Compounded Ampoules (paragraphs 2-5)",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m3-levothyroxine-accelerated-stability-generate",
+      "docType": "module-3-quality",
+      "taskType": "generation",
+      "input": "This study investigated three brands of L-Tformulations with different excipient lists. All of the brands maintained their potencies after 1.5 months of accelerated conditions (40 ± 2 °C/75% RH ± 5% RH). However, failures were documented for two brands (B and C) after 3 months of stability. By the 6th month, all brands were below the USP assay limits for L-Ttablets. For the samples kept in their original containers with desiccants, under ambient normal room temperature of ~23 °C, at 6 months, the potency of brand A was below the allowable limits, while B and C were just at the borderline (95.3% and 95.6%, respectively) of the lower limit for the USP assay (95.0%). For the samples stored under stressed conditions (50 ± 2 °C/75% RH ± 5% RH), only brand C was stable after 1.5 months, while others were below the USP assay limits.",
+      "requiredSections": [
+        "accelerated",
+        "potency",
+        "assay limit",
+        "desiccant",
+        "stress"
+      ],
+      "forbiddenPatterns": [
+        "no loss of potency",
+        "stable under all conditions",
+        "guaranteed shelf life",
+        "stable indefinitely",
+        "guaranteed"
+      ],
+      "tags": [
+        "module-3",
+        "cmc",
+        "small-molecule",
+        "3.2.P.8.3",
+        "3.2.P.8.1",
+        "stability",
+        "accelerated",
+        "levothyroxine",
+        "tablets"
+      ],
+      "source": {
+        "pmid": "38256876",
+        "pmcid": "PMC10819580",
+        "doi": "10.3390/ph17010042",
+        "title": "Potency and Powder X-ray Diffraction (PXRD) Evaluation of Levothyroxine Sodium Tablets under Ambient, Accelerated, and Stressed Conditions",
+        "journal": "Pharmaceuticals (Basel)",
+        "year": "2023",
+        "license": "CC BY 4.0",
+        "section": "3. Discussion > 3.1. Possible Role of Excipients on Levothyroxine Tablets Stability (paragraph 1)",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m3-meropenem-in-use-stability-generate",
+      "docType": "module-3-quality",
+      "taskType": "generation",
+      "input": "No significant changes were monitored in pH, osmolality, visible particulates, turbidity and crystallization throughout the study, but a progressive change in solution color was observed, evolving from colorless in the freshly prepared solution to a very pale yellow in the thawed samples subsequently stored under refrigeration, with the yellow color intensifying to a deeper shade by the last day (D7) of the refrigeration phase. This color change was reflected by a progressive increase in the chromatographic peak observed at approximately 1 min. On day 7, aerobic, anaerobic, and fungal cultures of the 50 mg/mL meropenem eye drops stored in refrigerated PP bottles yielded negative results for all analyzed samples. Thus, the meropenem 50 mg/mL eye drops in PP dropper bottles were regarded as physically and chemically stable for up to 24 h and microbiologically stable for up to 7 days under refrigeration conditions.",
+      "requiredSections": [
+        "24 h",
+        "osmolality",
+        "color",
+        "microbiological",
+        "refrigeration"
+      ],
+      "forbiddenPatterns": [
+        "chemically stable for up to 7 days",
+        "no color change",
+        "stable indefinitely",
+        "remained colorless",
+        "guaranteed"
+      ],
+      "tags": [
+        "module-3",
+        "cmc",
+        "small-molecule",
+        "3.2.P.8.3",
+        "3.2.P.8.1",
+        "stability",
+        "in-use",
+        "microbiological",
+        "meropenem",
+        "ophthalmic-solution"
+      ],
+      "source": {
+        "pmid": "42654088",
+        "pmcid": "PMC13516646",
+        "doi": "10.3390/pharmaceutics18080971",
+        "title": "Stability Study of Meropenem 50 mg/mL Eye Drops in Polypropylene Dropper Bottles",
+        "journal": "Pharmaceutics",
+        "year": "2026",
+        "license": "CC BY 4.0",
+        "section": "3. Results > 3.2.2. Refrigerated Conditions (paragraphs 2-4)",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m3-amiodarone-dissolution-accuracy-generate",
+      "docType": "module-3-quality",
+      "taskType": "generation",
+      "input": "To verify the accuracy of the proposed RP-HPLC method, a recovery test was performed to confirm whether amiodarone could be quantified without bias within the dissolution matrix containing the surfactant (polysorbate 80). For the QC accuracy evaluation, spiked samples were prepared by adding the amiodarone working standard to the placebo dissolution matrix at three levels: 80%, 100%, and 120% of the target working concentration, To evaluate the true accuracy of the analytical procedure rather than mere instrument precision, three independent sample solutions were prepared from scratch at each concentration level, resulting in a total of nine independent determinations. The experimental results reveal that the mean recoveries at the 80%, 100%, and 120% levels were 100.11%, 100.03%, and 99.90%, respectively, demonstrating close proximity to the ideal true value (100%) across all concentration zones. The overall mean recovery combining all three concentration levels was 100.01%, and the overall RSD was calculated to be 0.139, confirming extremely low variability in the measured data. These quantitative outcomes satisfied the pre-established acceptance criteria range (95.0–105.0% recovery). Consequently, these findings demonstrate that the proposed method is capable of quantifying amiodarone with high accuracy and reliability across the entire analytical range, free from visual or chemical interferences derived from the complex dissolution buffer and formulation excipient matrix.",
+      "requiredSections": [
+        "accuracy",
+        "recovery",
+        "placebo",
+        "polysorbate 80",
+        "acceptance"
+      ],
+      "forbiddenPatterns": [
+        "fully validated for all",
+        "validated for all dissolution media",
+        "zero variability",
+        "complete recovery",
+        "guaranteed"
+      ],
+      "tags": [
+        "module-3",
+        "cmc",
+        "small-molecule",
+        "3.2.P.5.3",
+        "validation",
+        "accuracy",
+        "dissolution",
+        "amiodarone",
+        "tablets"
+      ],
+      "source": {
+        "pmid": "42653752",
+        "pmcid": "PMC13516048",
+        "doi": "10.3390/ph19081255",
+        "title": "AQbD-Driven RP-HPLC Method for Rapid Dissolution Monitoring of Amiodarone Hydrochloride Tablets Without Sample Dilution",
+        "journal": "Pharmaceuticals (Basel)",
+        "year": "2026",
+        "license": "CC BY 4.0",
+        "section": "2. Results and Discussion > 2.4. Method Validation > 2.4.5. Accuracy",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m3-bupropion-naltrexone-release-generate",
+      "docType": "module-3-quality",
+      "taskType": "generation",
+      "input": "it became evident that the release of BUP·HCl reached almost 75% from formulation A and 60% from formulation B at t = 420 min. Moreover, the release of BUP·HCl from both A and B followed the requisite pattern (modified release). An analogous-release profile from both the A and B formulations was followed by the NTX·HCl active substance. The fact that the % release of NTX·HCl was in all cases higher than that of BUP·HCl could be attributed to the lower aqueous solubility of the latter, both as a free base (t > 120 min) and as a hydrochloride salt (t < 120 min). Moreover, naltrexone is a five-bond count H-bond acceptor, whilst bupropion a two-bond count H-bond acceptor. This resulted in a more favorable interaction between the water and naltrexone than between the water molecules and bupropion, leading to an enhanced solubility and, therefore, a % release of the former.",
+      "requiredSections": [
+        "modified",
+        "release profile",
+        "solubility",
+        "naltrexone",
+        "bupropion"
+      ],
+      "forbiddenPatterns": [
+        "bioequivalence was demonstrated",
+        "zero-order",
+        "100% released",
+        "complete release within",
+        "guaranteed"
+      ],
+      "tags": [
+        "module-3",
+        "cmc",
+        "small-molecule",
+        "3.2.P.2.2",
+        "dissolution",
+        "modified-release",
+        "bupropion",
+        "naltrexone",
+        "bilayer-tablets"
+      ],
+      "source": {
+        "pmid": "36499947",
+        "pmcid": "PMC9739382",
+        "doi": "10.3390/ma15238451",
+        "title": "Dissolution Assay of Bupropion/Naltrexone Hydrochloride Salts of Bilayer Composition Tablets Following the Development and Validation of a Novel HPLC Method",
+        "journal": "Materials (Basel)",
+        "year": "2022",
+        "license": "CC BY 4.0",
+        "section": "3. Results and Discussion > 3.5. Dissolution Study Results (paragraph 2)",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m3-itraconazole-hplc-conditions-extract",
+      "docType": "module-3-quality",
+      "taskType": "extraction",
+      "input": "A new high-performance liquid chromatography stability-indicating method for the quantification of ITZ and its impurities and degradation products has been developed. The following chromatographic conditions were established: a stationary phase Poroshell EC-C18 150 × 3.0 mm, 2.7 µm; mobile phase composed of a mixture of 55% of ACN and 45% of 10 mM ammonium dihydrogen phosphate (NH)(HPO) buffer solution in water adjusted to pH 4.0 at a flow rate of 0.6 mL/min; wavelength of 260 nm; injection volume of 5 µL; a column heater temperature of 50 °C; a run time of 15 min; and a working concentration of 100 µg/mL of ITZ. The diluent used in preparing the sample and reference solutions is qualitatively the same as the mobile phase, but at a proportion of 50:50 ACN and BS. This method has a working range for ITZ quantification from 70 to 130 µg/mL and from 0.15 to 1.30 µg/mL for its related substances.",
+      "expectedFields": {
+        "column": "Poroshell EC-C18",
+        "flow_rate": "0.6 mL/min",
+        "detection_wavelength": "260 nm",
+        "column_temperature": "50",
+        "assay_working_range": "70 to 130",
+        "related_substances_working_range": "0.15 to 1.30"
+      },
+      "tags": [
+        "module-3",
+        "cmc",
+        "small-molecule",
+        "3.2.P.5.2",
+        "3.2.P.5.3",
+        "hplc",
+        "itraconazole",
+        "distractor"
+      ],
+      "source": {
+        "pmid": "42515747",
+        "pmcid": "PMC13414520",
+        "doi": "10.3390/ph19071066",
+        "title": "Development and Optimisation of a Stability-Indicating Analytical Method for Itraconazole in Drug Product by High-Performance Liquid Chromatography Using a QbD Approach",
+        "journal": "Pharmaceuticals (Basel)",
+        "year": "2026",
+        "license": "CC BY 4.0",
+        "section": "4. Conclusions (paragraphs 1-2)",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m3-latanoprost-lod-loq-criteria-extract",
+      "docType": "module-3-quality",
+      "taskType": "extraction",
+      "input": "In the next step, the estimated limit values were experimentally verified through a six-fold analysis of latanoprost solutions at concentrations of 0.025 µg/mL, 0.035 µg/mL, and 0.050 µg/mL. The signal-to-noise ratio and standard deviation of the signal areas from six injections were determined. The results were evaluated against the following requirements: for LOD, a signal-to-noise ratio of no less than 3; for LOQ, a signal-to-noise ratio of no less than 10; and for RSD, an= 6 of no more than 5.0%. The experimentally determined limit of quantification was less than the adopted reporting threshold value of 0.050 µg/mL (0.1% in relation to the declared latanoprost content in the tested products), indicating its adequate high sensitivity for determining the purity of low-dose products.",
+      "expectedFields": {
+        "lod_acceptance_criterion": "no less than 3",
+        "loq_acceptance_criterion": "no less than 10",
+        "rsd_acceptance_criterion": "5.0%",
+        "verification_concentrations": "0.035",
+        "reporting_threshold_concentration": "0.050"
+      },
+      "tags": [
+        "module-3",
+        "cmc",
+        "small-molecule",
+        "3.2.P.5.3",
+        "validation",
+        "lod-loq",
+        "reporting-threshold",
+        "latanoprost",
+        "distractor"
+      ],
+      "source": {
+        "pmid": "40430439",
+        "pmcid": "PMC12114650",
+        "doi": "10.3390/ph18050619",
+        "title": "Developing a Chromatographic Method for Quantifying Latanoprost and Related Substances in Glaucoma Treatments",
+        "journal": "Pharmaceuticals (Basel)",
+        "year": "2025",
+        "license": "CC BY 4.0",
+        "section": "2. Results > 2.2. Method Validation > 2.2.5. Limit of Detection and Quantification (paragraphs 3-4)",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m3-velpatasvir-stress-conditions-extract",
+      "docType": "module-3-quality",
+      "taskType": "extraction",
+      "input": "Solutions of drug substance and copovidone solid dispersion equivalent to VEL 0.5 mg mLsubjected to hydrolysis in acidic and alkaline conditions using 5 M HCl and 1 M sodium hydroxide solutions. Acidic, alkaline and neutral solutions were refluxed separately for 4 h and 8 h and the hydrolytic DPs were determined using the same validated procedure. The solutions of drug substance VEL and VEL-CSD having same concentration were kept in 10% HOat room temperature and the extent of degradation were checked after 4 h and 8 h. Following ICH IB guidelines, VEL drug substance and VEL-CSD were exposed to 200 W hUV light (320 to 400 nm) and 1.2 milli lux h mvisible light (400 to 800 nm) at 40 °C using photo stability chamber. The effect of heat and humidity on the drug substance was studied, exposing the VEL drug substance and VEL-CSD to dry heat 105 °C ± 5 °C and 80 °C/75 ± 5% RH for 24 h. The stability of solutions stored at room temperature (15–25 °C) and refrigerator (02–08 °C) for 7 days was also established, comparing the results with the results of reference standards’ freshly prepared solutions.",
+      "expectedFields": {
+        "acid_hydrolysis_reagent": "5 M HCl",
+        "base_hydrolysis_reagent": "1 M sodium hydroxide",
+        "hydrolysis_reflux_durations": "4 h and 8 h",
+        "dry_heat_condition": "105",
+        "heat_humidity_condition": "80",
+        "solution_stability_period": "7 days"
+      },
+      "tags": [
+        "module-3",
+        "cmc",
+        "small-molecule",
+        "3.2.S.7.3",
+        "forced-degradation",
+        "stress-conditions",
+        "velpatasvir"
+      ],
+      "source": {
+        "pmid": "35884151",
+        "pmcid": "PMC9311562",
+        "doi": "10.3390/antibiotics11070897",
+        "title": "Forced Degradation Studies and Development and Validation of HPLC-UV Method for the Analysis of Velpatasvir Copovidone Solid Dispersion",
+        "journal": "Antibiotics (Basel)",
+        "year": "2022",
+        "license": "CC BY 4.0",
+        "section": "2. Experimental > 2.4. Forced Degradation Studies",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m3-cisatracurium-acceptance-criteria-extract",
+      "docType": "module-3-quality",
+      "taskType": "extraction",
+      "input": "Chemical stability was considered to be acceptable if the remaining concentration of cisatracurium was between 90 and 110% of the initial value (C0) and devoid of toxic DPs or any significant variations in other parameters studied (organoleptic characteristics, pH, osmolality, etc.). There are no specific literature data on the toxicity of cisatracurium’s DPs other than laudanosine. Given that cisatracurium’s DPs do not have neuromuscular blocking activity, we considered that semi-quantitative monitoring was sufficient for DPs other than laudanosine. According to the USP monograph on cisatracurium besylate injection, the acceptance criteria for DPs is 4% of the cisatracurium (base) area for laudanosine, 4.3% for cis-quaternary acid (EP impurity A), 5% for cis-quarternary alcohol (EP impurity F), 2.5% for cis-monoacrylate (EP impurity O), and 14.4% for total DPs.",
+      "expectedFields": {
+        "assay_acceptance_range": "90 and 110%",
+        "laudanosine_limit": "4%",
+        "impurity_a_limit": "4.3%",
+        "impurity_o_limit": "2.5%",
+        "total_degradation_products_limit": "14.4%"
+      },
+      "tags": [
+        "module-3",
+        "cmc",
+        "small-molecule",
+        "3.2.P.5.1",
+        "3.2.P.8.1",
+        "specification",
+        "degradation-products",
+        "cisatracurium",
+        "distractor"
+      ],
+      "source": {
+        "pmid": "37242646",
+        "pmcid": "PMC10221331",
+        "doi": "10.3390/pharmaceutics15051404",
+        "title": "Cistracurium Besylate 10 mg/mL Solution Compounded in a Hospital Pharmacy to Prevent Drug Shortages: A Stability Study Involving Four Degradation Products",
+        "journal": "Pharmaceutics",
+        "year": "2023",
+        "license": "CC BY 4.0",
+        "section": "2. Materials and Methods > 2.4.6. Data Analysis (paragraph 1)",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m3-ramipril-specificity-limits-extract",
+      "docType": "module-3-quality",
+      "taskType": "extraction",
+      "input": "The selectivity of the developed stability-indicating HPLC method was expressed by the retention times (t) of the signals in the obtained chromatograms. In the time range from 2 to 10 min, single and well-separated peaks were observed, which were attributed to RAM (t= 7.80 min) and RAM decomposition products (t= 4.15 and 5.83 min, respectively). The studied excipients (MC, HPMC, T, and S) exhibited no interference with RAM or its degradation impurities. Their peaks were not recorded in the tested time range. Standard deviation (SD), relative standard deviation (RSD) and variation coefficient (CV%) were used to evidence the method’s precision. Linearity was described by the parameters of the regression: correlation coefficient (r), slope (a) and intercept (b); they were determined by the least squares method. Under the applied analytical conditions, QL for RAM equaled 0.0083% and DL was 0.0027%.",
+      "expectedFields": {
+        "selectivity_time_range": "2 to 10 min",
+        "ramipril_retention_time": "7.80 min",
+        "degradation_product_retention_times": "4.15 and 5.83",
+        "quantitation_limit": "0.0083%",
+        "detection_limit": "0.0027%"
+      },
+      "tags": [
+        "module-3",
+        "cmc",
+        "small-molecule",
+        "3.2.S.4.3",
+        "validation",
+        "specificity",
+        "ramipril"
+      ],
+      "source": {
+        "pmid": "34683893",
+        "pmcid": "PMC8538641",
+        "doi": "10.3390/pharmaceutics13101600",
+        "title": "Solid-State Stability Profiling of Ramipril to Optimize Its Quality Efficiency and Safety",
+        "journal": "Pharmaceutics",
+        "year": "2021",
+        "license": "CC BY 4.0",
+        "section": "3. Results > 3.1. Validation of the Analytical Method",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m3-levothyroxine-storage-conditions-extract",
+      "docType": "module-3-quality",
+      "taskType": "extraction",
+      "input": "The study samples were stored under accelerated, ambient, and stressed temperatures and relative humilities (RH). Sufficient amounts of all products for the assay and impurity tests were placed under ICH Q1 recommended general storage conditions for accelerated stability studies of 40 °C/75% RH and real-time ambient conditions of ~23 °C. Additional samples were also placed at 50 °C/75% RH to explore L-Ttablet properties at exacerbated conditions. The samples for ambient conditions remained capped in their original plastic containers and enclosed desiccant packaging materials, while the ones for accelerated studies were placed in opened containers. All of the samples for accelerated studies were stored inside tightly sealed desiccators containing a saturated brine solution which provided the required relative humidity (75%) and they were kept in ovens set at the appropriate temperatures. Prior to use, the ovens were mapped with traceable thermometers to verify they read ±5 °C of the set temperatures. The samples were withdrawn at intervals of 0, 1.5, 3, and 6 months, and United States Pharmacopiea (USP) tests were conducted to determine the stability status.",
+      "expectedFields": {
+        "accelerated_storage_condition": "40",
+        "real_time_storage_temperature": "23",
+        "stress_storage_condition": "50",
+        "humidity_control": "saturated brine solution",
+        "oven_mapping_tolerance": "±5",
+        "sampling_time_points": "1.5"
+      },
+      "tags": [
+        "module-3",
+        "cmc",
+        "small-molecule",
+        "3.2.P.8.1",
+        "stability-protocol",
+        "ich-q1a",
+        "levothyroxine",
+        "tablets"
+      ],
+      "source": {
+        "pmid": "38256876",
+        "pmcid": "PMC10819580",
+        "doi": "10.3390/ph17010042",
+        "title": "Potency and Powder X-ray Diffraction (PXRD) Evaluation of Levothyroxine Sodium Tablets under Ambient, Accelerated, and Stressed Conditions",
+        "journal": "Pharmaceuticals (Basel)",
+        "year": "2023",
+        "license": "CC BY 4.0",
+        "section": "4. Materials and Methods > 4.2. Storage Conditions for Tests Samples",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m3-levothyroxine-system-suitability-extract",
+      "docType": "module-3-quality",
+      "taskType": "extraction",
+      "input": "Chromatographic system: mode: LC; detector: UV 225 nm; column: 4.6 mm × 25 cm; packing L10; flow rate: 1.5 mL/min; injection volume: 100 µL. System suitability-sample: standard solution. Suitability requirements—Resolution: ≥5.0 between liothyronine and levothyroxine; RSD: ≤2.0% for the levothyroxine peak.",
+      "expectedFields": {
+        "detection_wavelength": "225 nm",
+        "column_packing": "L10",
+        "flow_rate": "1.5 mL/min",
+        "injection_volume": "100",
+        "resolution_requirement": "5.0",
+        "rsd_requirement": "2.0%"
+      },
+      "tags": [
+        "module-3",
+        "cmc",
+        "small-molecule",
+        "3.2.P.5.2",
+        "system-suitability",
+        "compendial-method",
+        "levothyroxine"
+      ],
+      "source": {
+        "pmid": "38256876",
+        "pmcid": "PMC10819580",
+        "doi": "10.3390/ph17010042",
+        "title": "Potency and Powder X-ray Diffraction (PXRD) Evaluation of Levothyroxine Sodium Tablets under Ambient, Accelerated, and Stressed Conditions",
+        "journal": "Pharmaceuticals (Basel)",
+        "year": "2023",
+        "license": "CC BY 4.0",
+        "section": "4. Materials and Methods > 4.3.1. Levothyroxine Sodium Tablets USP Assay Methods 1 and 2 (chromatographic system and system suitability)",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m3-meropenem-validation-results-extract",
+      "docType": "module-3-quality",
+      "taskType": "extraction",
+      "input": "The HPLC method exhibited excellent linearity across the tested range, with a coefficient of determination (R2) = 0.9997 and a regression equation of y = 29,660,826x + 8,019.919. Intra-day and inter-day precision for three meropenem quality control levels were highly satisfactory: intra-day relative standard deviation (RSD%) ranged from 0.114 to 0.150 and inter-day RSD% from 0.649 to 0.888, meeting the ICH criteria of ≤1% and ≤2% for repeatability and intermediate precision, respectively. Accuracy, determined by recovery rates at three concentration levels, ranged from 99.89% to 100.09%, falling within the accepted 98–102% interval. The LOD and LOQ were calculated as 0.81 mg·mLand 2.70 mg·mL, respectively.",
+      "expectedFields": {
+        "coefficient_of_determination": "0.9997",
+        "intra_day_rsd_range": "0.114 to 0.150",
+        "inter_day_rsd_range": "0.649 to 0.888",
+        "recovery_range": "99.89% to 100.09%",
+        "lod": "0.81",
+        "loq": "2.70"
+      },
+      "tags": [
+        "module-3",
+        "cmc",
+        "small-molecule",
+        "3.2.P.5.3",
+        "validation",
+        "meropenem",
+        "ophthalmic-solution",
+        "distractor"
+      ],
+      "source": {
+        "pmid": "42654088",
+        "pmcid": "PMC13516646",
+        "doi": "10.3390/pharmaceutics18080971",
+        "title": "Stability Study of Meropenem 50 mg/mL Eye Drops in Polypropylene Dropper Bottles",
+        "journal": "Pharmaceutics",
+        "year": "2026",
+        "license": "CC BY 4.0",
+        "section": "3. Results > 3.1. Validation of the Analytical Method",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m3-miglitol-related-substances-conditions-extract",
+      "docType": "module-3-quality",
+      "taskType": "extraction",
+      "input": "The chromatographic separation was optimized in the prevail carbohydrate ES column (W. R. Grace & Co.-Conn., Columbia, MD, USA) with the dimension of 250 mm × 4.6 mm and 3.5 µm particle size. The elution involved 10 mM dipotassium hydrogen orthophosphate in water and pH adjusted to 8.0 using concentrated phosphoric acid buffer as mobile phase A and acetonitrile as mobile phase B with gradient of 0/90, 35/70, 40/70, 50/90, 55/90 (Time/%B). The flow rate of the mobile phase and the column temperature was set as 1.0 mL·minand 35 °C. The detection wave length was optimized at 210 nm. The column loading was finalized by injecting 20 µL of miglitol (10 mg/mL) to the HPLC. A mixture of water and acetonitrile was used as a diluent in the same ratio.",
+      "expectedFields": {
+        "column": "prevail carbohydrate ES",
+        "mobile_phase_a": "10 mM dipotassium hydrogen orthophosphate",
+        "mobile_phase_a_ph": "8.0",
+        "column_temperature": "35",
+        "detection_wavelength": "210 nm",
+        "injection_volume": "20"
+      },
+      "tags": [
+        "module-3",
+        "cmc",
+        "small-molecule",
+        "3.2.S.4.2",
+        "related-substances",
+        "hplc",
+        "miglitol"
+      ],
+      "source": {
+        "pmid": "27754407",
+        "pmcid": "PMC5198025",
+        "doi": "10.3390/scipharm84040654",
+        "title": "Development and Validation of Miglitol and Its Impurities by RP-HPLC and Characterization Using Mass Spectrometry Techniques",
+        "journal": "Scientia Pharmaceutica",
+        "year": "2016",
+        "license": "CC BY 4.0",
+        "section": "2. Materials and Methods > 2.2.2. Chromatographic Conditions",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m3-amiodarone-dissolution-procedure-extract",
+      "docType": "module-3-quality",
+      "taskType": "extraction",
+      "input": "The dissolution test was performed in accordance with USP Dissolution Test Method II (Paddle method) (708-DS Dissolution Apparatus, Agilent, Santa Clara, CA, USA). A single amiodarone tablet was introduced into 900 mL of the pH 4.0 dissolution medium maintained at 37 ± 0.5 °C, followed by agitation at 75 rpm. At a time point of 30 min after the initiation of the test, a 4 mL aliquot of the dissolution medium was withdrawn. The collected sample was filtered through a 0.45 μm RC syringe filter to remove insoluble excipients. At this stage, consistent with the aforementioned preparation of the working standard solution, the initial portion of the filtrate was discarded to eliminate potential adsorption interference of the active ingredient onto the filter membrane. The subsequent filtrate was then utilized as the sample solution for the HPLC analysis.",
+      "expectedFields": {
+        "dissolution_apparatus": "paddle",
+        "medium_volume": "900 mL",
+        "medium_ph": "4.0",
+        "paddle_speed": "75 rpm",
+        "sampling_time": "30 min",
+        "sample_filter": "RC syringe filter"
+      },
+      "tags": [
+        "module-3",
+        "cmc",
+        "small-molecule",
+        "3.2.P.5.2",
+        "dissolution",
+        "amiodarone",
+        "tablets"
+      ],
+      "source": {
+        "pmid": "42653752",
+        "pmcid": "PMC13516048",
+        "doi": "10.3390/ph19081255",
+        "title": "AQbD-Driven RP-HPLC Method for Rapid Dissolution Monitoring of Amiodarone Hydrochloride Tablets Without Sample Dilution",
+        "journal": "Pharmaceuticals (Basel)",
+        "year": "2026",
+        "license": "CC BY 4.0",
+        "section": "3. Materials and Method > 3.5.3. Dissolution Samples",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m3-amiodarone-dissolution-linearity-extract",
+      "docType": "module-3-quality",
+      "taskType": "extraction",
+      "input": "To establish the linearity and analytical range of the method, the ICH guideline recommendation of “±20% of the established dissolution specification range in the quality standard of the formulation” was applied. Considering the QC dissolution specification of the formulation, which is “not less than 80% dissolution within 30 min,” the range was set to encompass 20% to 120% of the final target working concentration. Accordingly, five concentration levels of amiodarone (44.0, 110.0, 176.0, 220.0, and 264.0 μg/mL) were selected. To ensure the utmost reliability and evaluate true method reproducibility rather than mere instrument precision, three independent calibration curves were constructed. For each curve, a fresh set of calibration standard solutions was independently prepared from scratch, resulting in three independent experiments. A calibration curve was constructed by plotting the analyte concentration on the x-axis against the corresponding peak area on the y-axis, and linear regression analysis was performed using the least-squares method. The suitability of the method was evaluated based on a coefficient of determination criterion of ≥0.99 to demonstrate the statistical correlation between the concentration and the analytical response.",
+      "expectedFields": {
+        "dissolution_specification": "not less than 80% dissolution within 30 min",
+        "calibration_levels": "176.0",
+        "determination_coefficient_criterion": "0.99",
+        "regression_method": "least-squares",
+        "linearity_range_percent_of_target": "20% to 120%"
+      },
+      "tags": [
+        "module-3",
+        "cmc",
+        "small-molecule",
+        "3.2.P.5.1",
+        "3.2.P.5.3",
+        "dissolution",
+        "linearity",
+        "specification",
+        "amiodarone"
+      ],
+      "source": {
+        "pmid": "42653752",
+        "pmcid": "PMC13516048",
+        "doi": "10.3390/ph19081255",
+        "title": "AQbD-Driven RP-HPLC Method for Rapid Dissolution Monitoring of Amiodarone Hydrochloride Tablets Without Sample Dilution",
+        "journal": "Pharmaceuticals (Basel)",
+        "year": "2026",
+        "license": "CC BY 4.0",
+        "section": "3. Materials and Method > 3.6. Method Validation > 3.6.3. Linearity and Range",
+        "retrieved": "2026-11-01"
+      }
+    },
+    {
+      "id": "m3-bupropion-naltrexone-dissolution-media-extract",
+      "docType": "module-3-quality",
+      "taskType": "extraction",
+      "input": "The dissolution tests of the prepared tablets were performed in a test apparatus USP type II (Pharmatest, Hainerp, Germany) (paddle method, 50 rpm) in two different aqueous media; the dissolution profile of BUP·HCl and NTX·HCl was monitored in two steps by withdrawing solutions of the samples (5 mL) every 30 min for the first 2 h from a 450 mL 1.2 pH HCl solution (0.063 M) to simulate the gastric environment and every hour for the next 6 h from a 6.8 pH aqueous medium to simulate the intestinal fluids. The 6.8 pH medium was created by adding another 450 mL of a buffer KHPOsolution to the 450 mL 1.2 pH solution (0.14 M, pH 9.0), reaching a final volume of 900 mL (2); the withdrawn volume of the aqueous media was replenished. The temperature of the dissolution media was kept stable at 37 ± 0.5 °C.",
+      "expectedFields": {
+        "dissolution_apparatus": "USP type II",
+        "paddle_speed": "50 rpm",
+        "acid_stage_medium": "1.2",
+        "acid_stage_sampling_interval": "30 min",
+        "buffer_stage_ph": "6.8",
+        "final_medium_volume": "900 mL"
+      },
+      "tags": [
+        "module-3",
+        "cmc",
+        "small-molecule",
+        "3.2.P.2.2",
+        "3.2.P.5.2",
+        "dissolution",
+        "modified-release",
+        "bupropion",
+        "naltrexone"
+      ],
+      "source": {
+        "pmid": "36499947",
+        "pmcid": "PMC9739382",
+        "doi": "10.3390/ma15238451",
+        "title": "Dissolution Assay of Bupropion/Naltrexone Hydrochloride Salts of Bilayer Composition Tablets Following the Development and Validation of a Novel HPLC Method",
+        "journal": "Materials (Basel)",
+        "year": "2022",
+        "license": "CC BY 4.0",
+        "section": "2. Materials and Methods > 2.5. In Vitro Dissolution Studies",
+        "retrieved": "2026-11-01"
+      }
     }
   ]
 }

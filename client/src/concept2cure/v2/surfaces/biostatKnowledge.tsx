@@ -92,7 +92,7 @@ function IngestSection() {
       >
         <label style={{ fontSize: 12 }}>
           CSR id
-          <input className="c2c-input" style={{ height: 30 }} inputMode="numeric" value={csrId}
+          <input className="c2c-input" inputMode="numeric" value={csrId}
             onChange={(e) => setCsrId(e.target.value)} placeholder="e.g. 41" />
         </label>
         <button className="btn" style={{ height: 30 }} type="submit">{I.upload} Ingest</button>
@@ -173,7 +173,7 @@ function QuerySection() {
       >
         <label style={{ fontSize: 12, flex: 1, minWidth: 260 }}>
           Question
-          <input className="c2c-input" style={{ height: 30 }} value={question}
+          <input className="c2c-input" value={question}
             onChange={(e) => setQuestion(e.target.value)}
             placeholder="e.g. which methods have we used for HbA1c endpoints" />
         </label>
@@ -216,7 +216,7 @@ function LandscapeSection() {
       >
         <label style={{ fontSize: 12, flex: 1, minWidth: 220 }}>
           Indication
-          <input className="c2c-input" style={{ height: 30 }} value={indication}
+          <input className="c2c-input" value={indication}
             onChange={(e) => setIndication(e.target.value)} placeholder="e.g. type 2 diabetes" />
         </label>
         <button className="btn" style={{ height: 30 }} type="submit" disabled={indication.trim().length === 0}>
@@ -273,17 +273,17 @@ function MatrixSection() {
             phase or agency filter because there they would be dropped. */}
         <label style={{ fontSize: 12 }}>
           Indication
-          <input className="c2c-input" style={{ height: 30 }} value={filters.indication ?? ''}
+          <input className="c2c-input" value={filters.indication ?? ''}
             onChange={set('indication')} placeholder="any" />
         </label>
         <label style={{ fontSize: 12 }}>
           Phase
-          <input className="c2c-input" style={{ height: 30 }} value={filters.phase ?? ''}
+          <input className="c2c-input" value={filters.phase ?? ''}
             onChange={set('phase')} placeholder="any" />
         </label>
         <label style={{ fontSize: 12 }}>
           Agency
-          <input className="c2c-input" style={{ height: 30 }} value={filters.agency ?? ''}
+          <input className="c2c-input" value={filters.agency ?? ''}
             onChange={set('agency')} placeholder="any" />
         </label>
         <button className="btn" style={{ height: 30 }} type="submit">{I.grid} Load matrix</button>
@@ -332,7 +332,7 @@ function TrendSection() {
       >
         <label style={{ fontSize: 12, flex: 1, minWidth: 220 }}>
           Method
-          <input className="c2c-input" style={{ height: 30 }} value={concept}
+          <input className="c2c-input" value={concept}
             onChange={(e) => setConcept(e.target.value)} placeholder="e.g. MMRM" />
         </label>
         <button className="btn" style={{ height: 30 }} type="submit" disabled={concept.trim().length === 0}>
@@ -366,12 +366,12 @@ function TrendSection() {
 
 export function BiostatKnowledgePanel() {
   return (
-    <div className="pj-card">
-      <div className="pj-card-h">
-        <span className="t">Method precedent</span>
-        <span className="s">your own CSR corpus, as a graph of indications, endpoints and methods</span>
-      </div>
-      <div className="pj-card-b" style={{ padding: 12, display: 'grid', gap: 12 }}>
+    /* A section of the design-calculators work area since D5-4, not a card
+       inside it: the page's frame is D5-0's, and a card drawn inside a
+       frameless work area is the second frame §WA.3 retires. */
+    <section className="pj-sec" aria-label="Method precedent">
+      <div className="pj-sec-h"><h2>Method precedent</h2><span className="sec-sub">your own CSR corpus, as a graph of indications, endpoints and methods</span></div>
+      <div className="wb-panel-b">
         <div style={{ fontSize: 12, color: 'var(--text-300,#6b6963)', lineHeight: 1.5 }}>
           Ingesting a clinical study report extracts its indication, endpoints, statistical methods and design
           into a graph you can then ask questions of. The three precedent views below aggregate agency outcomes,
@@ -384,6 +384,6 @@ export function BiostatKnowledgePanel() {
         <MatrixSection />
         <TrendSection />
       </div>
-    </div>
+    </section>
   );
 }

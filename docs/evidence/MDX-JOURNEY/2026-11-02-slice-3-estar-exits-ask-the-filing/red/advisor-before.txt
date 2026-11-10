@@ -1,0 +1,5 @@
+ × server/services/ana-advisory/__tests__/device-market-advisor.test.ts > adviseDeviceReadiness — a filed copy that is not the document's text > is not ready, and names the section and the remedy instead of missing content 6ms
+   → the advisor said Ready over a rewritten filed copy: expected true to be false // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 13 passed (14)

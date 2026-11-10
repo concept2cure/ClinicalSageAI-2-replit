@@ -1,0 +1,61 @@
+# The orchestrator's two probes, run UNCHANGED against the tree after the F1 review fixes, 2026-11-02T01:32:32Z
+# (scratchpad/ectd-probe/*.probe.mts; npx tsx from the repo root), and the reviewer's schema copy (scratchpad/review-f1/).
+#
+# The originals build their own PGlite schema with none of the columns the fold now reads, so each stops on the first
+# missing column before it can report. The reviewer's copy adds transmit_attempt_id and an empty submission_transmittals;
+# the review's fixes also read transmit_signature_action_id and the transmittal's region, so it stops on the next one.
+# The probes' own scenario with every column the fold reads is in legacy-schema.after-change.out.txt; the send as made
+# after the change is in after-change.out.txt. Their outputs at trunk d914c2618, for comparison:
+
+## trunk: phantom-leaf
+# phantom-leaf probe re-run at trunk d914c2618, 2026-11-01T19:56:48Z
+on file per the fold: ["draft-only.pdf","general.pdf"]
+DEFECT REPRODUCED: draft-only.pdf, carried only by an earlier preview of the sent sequence, is reported as on file at the agency.
+exit=0
+
+## trunk: sent-without-compile
+# sent-without-compile probe at trunk d914c2618, 2026-11-01T20:04:21Z
+case 1 (0000 sent, no compile row):
+  view leaves: []  sequences: [{"sequenceNumber":"0000","dispatchStatus":"sent","filed":false},{"sequenceNumber":"0001","dispatchStatus":null,"filed":false}]
+  prior state 0001 binds against: {"priorSequenceNumber":"","leaves":[]}
+  DEFECT (b) REPRODUCED: a sent sequence with no compile row is absent from the prior state; 0001 would file every leaf as new with no modified-file.
+case 2 (one compile before the send):
+  view leaves: [{"f":"general.pdf","md5":"aaaa"}]
+  the md5 is the compile's; transmit re-assembles and records no manifest, so nothing on record says what was sent.
+exit=0
+
+## after the review fixes, unchanged
+$ npx tsx /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/5d0b158e-991f-5354-8b6b-8cf5f02b467a/scratchpad/ectd-probe/phantom-leaf.probe.mts
+error: column s.transmit_attempt_id does not exist
+  length: 119,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '66',
+  internalPosition: undefined,
+exit=1
+
+$ npx tsx /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/5d0b158e-991f-5354-8b6b-8cf5f02b467a/scratchpad/ectd-probe/sent-without-compile.probe.mts
+error: column s.transmit_attempt_id does not exist
+  length: 119,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '66',
+  internalPosition: undefined,
+exit=1
+
+## after the review fixes, the reviewer's copy (two schema items)
+$ npx tsx /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/5d0b158e-991f-5354-8b6b-8cf5f02b467a/scratchpad/review-f1/sent-without-compile.legacy-schema.probe.mts
+error: column s.transmit_signature_action_id does not exist
+  length: 128,
+  severity: 'ERROR',
+  code: '42703',
+  detail: undefined,
+  hint: undefined,
+  position: '89',
+  internalPosition: undefined,
+exit=1
+

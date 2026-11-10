@@ -64,7 +64,7 @@ describe('template search in the existing New document picker', () => {
     await screen.findByText('3 of 3 templates');
     expect(listedTemplates().map(option => option.textContent)).toEqual(['Protocol scaffold', 'Regional submission', 'Nonclinical overview']);
     expect(picker().value).toBe('(blank document)');
-    expect(apiRequest.mock.calls).toEqual([['GET', '/api/authoring/templates']]);
+    expect(apiRequest.mock.calls).toEqual([['GET', '/api/authoring/templates', undefined, undefined, expect.any(AbortSignal)]]);
   });
 
   it.each([
@@ -77,7 +77,7 @@ describe('template search in the existing New document picker', () => {
     search(query);
     expect(listedTemplates().map(option => option.textContent)).toEqual([expected]);
     expect(screen.getByText('1 of 3 templates')).toBeTruthy();
-    expect(apiRequest.mock.calls).toEqual([['GET', '/api/authoring/templates']]);
+    expect(apiRequest.mock.calls).toEqual([['GET', '/api/authoring/templates', undefined, undefined, expect.any(AbortSignal)]]);
   });
 
   it('clears a no-match query, restores browsing and keeps the typed document title', async () => {
@@ -211,6 +211,30 @@ describe('filing guidance without hiding the global template library', () => {
     expect(apiRequest.mock.calls.filter(call => call[0] === 'POST')).toHaveLength(0);
     expect(screen.getByText(/project or filing changed/i)).toBeTruthy();
   });
+  /* UI walk, 2026-10-31: New document clicked as soon as the editor drew it,
+     before the project's filing was read, said "The project or filing changed
+     … Close this form and open New document again", and kept saying it. The
+     filing had not changed; it had become known. */
+  it('keeps the form when its filing becomes known after it opened, and creates the document', async () => {
+    wire({ templates: catalog, globalCatalog: 'ok' }); const p = props();
+    const view = render(<AuthoringCreateExport {...p} filingContext={{ projectId: PROJECT, registryId: null, filingDocumentId: null }} />);
+    await open(); await screen.findByText('3 of 3 templates');
+    view.rerender(<AuthoringCreateExport {...p} filingContext={{ projectId: PROJECT, registryId: 'US_BLA', filingDocumentId: 'filing-doc-1' }} />);
+    expect(screen.queryByText(/project or filing changed/i)).toBeNull();
+    fireEvent.change(screen.getByRole('textbox', { name: 'Document title' }), { target: { value: 'Opened early' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create document' }));
+    await waitFor(() => expect(apiRequest.mock.calls.filter(call => call[0] === 'POST')).toHaveLength(1));
+  });
+  it('still requires a reopen when a filing that was known changes to another', async () => {
+    wire({ templates: catalog, globalCatalog: 'ok' }); const p = props();
+    const view = render(<AuthoringCreateExport {...p} filingContext={{ projectId: PROJECT, registryId: null, filingDocumentId: null }} />);
+    await open(); await screen.findByText('3 of 3 templates');
+    view.rerender(<AuthoringCreateExport {...p} filingContext={{ projectId: PROJECT, registryId: 'US_BLA', filingDocumentId: 'filing-doc-1' }} />);
+    view.rerender(<AuthoringCreateExport {...p} filingContext={{ projectId: PROJECT, registryId: 'US_NDA', filingDocumentId: 'filing-doc-2' }} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Create document' }));
+    expect(apiRequest.mock.calls.filter(call => call[0] === 'POST')).toHaveLength(0);
+    expect(screen.getByText(/project or filing changed/i)).toBeTruthy();
+  });
   it('does not infer a CTD placement for a new blank document', async () => {
     wire({ templates: [], globalCatalog: 'ok' }); render(<AuthoringCreateExport {...props()} filingContext={context} />); await open();
     fireEvent.change(screen.getByRole('textbox', { name: 'Document title' }), { target: { value: 'Working response' } });
@@ -264,5 +288,21 @@ describe('filing guidance without hiding the global template library', () => {
     await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('POST', '/api/authoring/docs',
       { title: 'Current account draft', module: null, template_id: 'current-template', client_program_id: PROJECT },
       { Authorization: `Bearer ${token}`, 'x-organization-id': '12' }));
+  });
+});
+
+describe('the created-document notice', () => {
+  const context = { projectId: PROJECT, registryId: 'US_BLA' };
+  /* UI walk, 2026-10-31: after creating a document the editor opened it and
+     still showed "Document created. Open created document" above it. */
+  it('offers to open the created document only while it is not the one open', async () => {
+    wire({ templates: [], globalCatalog: 'ok' }); const p = props();
+    const view = render(<AuthoringCreateExport {...p} filingContext={context} />); await open();
+    fireEvent.change(screen.getByRole('textbox', { name: 'Document title' }), { target: { value: 'Created here' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Create document' }));
+    expect(await screen.findByRole('button', { name: 'Open created document' })).toBeTruthy();
+    view.rerender(<AuthoringCreateExport {...p} docId="created-document" docTitle="Created here" filingContext={context} />);
+    expect(screen.queryByRole('button', { name: 'Open created document' })).toBeNull();
+    expect(screen.queryByText('Document created.')).toBeNull();
   });
 });

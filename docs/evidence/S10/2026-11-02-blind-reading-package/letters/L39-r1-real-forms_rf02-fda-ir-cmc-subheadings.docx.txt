@@ -1,0 +1,71 @@
+IND 145678
+
+INFORMATION REQUEST
+
+Acme Therapeutics, Inc.
+
+Attention: Jane Smith, PhD
+
+Senior Director, Regulatory Affairs
+
+100 Main Street, Suite 400
+
+Cambridge, MA 02139
+
+Dear Dr. Smith:
+
+Please refer to your Investigational New Drug Application (IND) submitted under section 505(i)
+
+of the Federal Food, Drug, and Cosmetic Act (FDCA) for EXM-101 (examplinib) Tablets.
+
+We are reviewing the Chemistry, Manufacturing, and Controls (CMC) section of your submission
+
+and have the following comments and information requests. We request a written response by
+
+November 20, 2026, in order to continue our evaluation of your IND.
+
+Drug Substance
+
+1. Provide the batch analysis data for all drug substance lots used in nonclinical toxicology
+
+studies and the lot proposed for the clinical study.
+
+2. Revise the acceptance criterion for unspecified impurities to NMT 0.10% in accordance with
+
+ICH Q3A(R2), or provide justification.
+
+Drug Product
+
+Manufacturing
+
+3. Provide a description of the manufacturing process and in-process controls for the clinical
+
+batch, including the batch formula and equipment class.
+
+Stability
+
+4. Provide the stability protocol for the clinical batches, including the storage conditions,
+
+time points, tests, and acceptance criteria.
+
+Container Closure System
+
+5. Identify the container closure system and provide the DMF reference for each component.
+
+Please submit your response to this information request as an amendment to this IND. If you
+
+have any questions, contact Robert Jones, Regulatory Project Manager, at (301) 796-1234.
+
+Sincerely,
+
+{See appended electronic signature page}
+
+Michael Brown, PhD
+
+Branch Chief, Branch II
+
+Division of New Drug Products I
+
+Office of Pharmaceutical Quality
+
+Center for Drug Evaluation and Research

@@ -1,0 +1,61 @@
+# mutant m2-not-reactive: Biostatistics' read: `readShellProject()` at render, not the hook
+# edits to client/src/concept2cure/v2/dataConnect.tsx (reverted after the run):
+#   - "import { useShellProject } from './shellProject';"
+#   + "import { readShellProject } from './shellProject';"
+#   - 'const project = useShellProject();\n  if (!project) return null;'
+#   + 'const project = readShellProject();\n  if (!project) return null;'
+$ npx vitest run --config vitest.config.ts --maxWorkers=1 client/src/concept2cure/v2/__tests__/projectBack.test.tsx
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > renders nothing while no project is open 26ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > is a .pj-back button named by the open project, its arrow hidden from screen readers 233ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > says "Project" when the title is missing, so the button always has a name 23ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > says "Project" when the title is empty, so the button always has a name 37ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > says "Project" when the title is blank, so the button always has a name 16ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > goes to the project home on click 26ms
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > works from the keyboard: Tab reaches it, and Enter and Space each go back 77ms
+ × client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > follows the shell channel: it appears when a project opens after mount and goes when it closes 29ms
+   → Unable to find an accessible element with the role "button" and name "BX-301"
+
+There are no accessible roles. But there might be some inaccessible roles. If you wish to access them, then set the `hidden` option to `true`. Learn more about this here: https://testing-library.com/docs/dom-testing-library/api-queries#byrole
+
+Ignored nodes: comments, script, style
+<body>
+  <div />
+</body>
+ ✓ client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > does nothing, and throws nothing, when the screen gives it no onNav 19ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+   Start at  02:39:07
+   Duration  2.60s (transform 555ms, setup 270ms, import 737ms, tests 490ms, environment 854ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectBack.test.tsx > ProjectBack, the one way back to the project > follows the shell channel: it appears when a project opens after mount and goes when it closes
+TestingLibraryElementError: Unable to find an accessible element with the role "button" and name "BX-301"
+
+There are no accessible roles. But there might be some inaccessible roles. If you wish to access them, then set the `hidden` option to `true`. Learn more about this here: https://testing-library.com/docs/dom-testing-library/api-queries#byrole
+
+Ignored nodes: comments, script, style
+<body>
+  <div />
+</body>
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/projectBack.test.tsx:99:19
+     97|
+     98|     act(() => publishShellProject({ id: PID, title: 'BX-301' }));
+     99|     expect(screen.getByRole('button', { name: 'BX-301' })).toBeTruthy(…
+       |                   ^
+    100|
+    101|     act(() => clearShellProject());
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+exit 1

@@ -91,7 +91,10 @@ async function openStability() {
       segment="biotech"
     />,
   );
-  fireEvent.click(screen.getByRole('button', { name: /Stability/ }));
+  /* Stability is in the Study records half of the work area (D5 §A.3), so a
+     user reaches it through the half and then the tab. */
+  fireEvent.click(screen.getByRole('button', { name: 'Study records' }));
+  fireEvent.click(screen.getByRole('tab', { name: 'Stability' }));
   await waitFor(() => expect(screen.getByRole('button', { name: /Assess poolability/ })).toBeTruthy());
 }
 

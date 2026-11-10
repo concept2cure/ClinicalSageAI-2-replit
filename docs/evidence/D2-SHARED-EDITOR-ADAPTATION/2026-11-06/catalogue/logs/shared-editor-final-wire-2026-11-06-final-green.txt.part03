@@ -1,0 +1,76 @@
+"2026-11-06T20:43:32.028Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/draft-source-service-checkpoint.test.ts
+{
+  "timestamp": "2026-11-06T20:43:32.028Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana/__tests__/draft-source-service-checkpoint.test.ts
+[database] Database connection successful
+
+stderr | server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source generation checkpoints > keeps a successful sibling when a later preloaded source is withdrawn while queued
+{
+  "timestamp": "2026-11-06T20:43:33.490Z",
+  "level": "error",
+  "message": "[ana-drafting-batch] batch section failed",
+  "context": {
+    "sectionType": "2.5",
+    "err": "SOURCE_UNAVAILABLE"
+  }
+}
+
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses a spread loaded-context assertion before gateway handoff 9ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses a json loaded-context assertion before gateway handoff 2ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses a manual loaded-context assertion before gateway handoff 2ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses another consumer organizationId for a genuine context 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses another consumer userId for a genuine context 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses another consumer projectId for a genuine context 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses selected-source onStream before any release 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses selected-source enableTools before any release 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source service authority > refuses a same-length extraction correction while the selected context waited 2ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source generation checkpoints > carries the exact qualified choice to the gateway without the legacy Anthropic preference 8ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source generation checkpoints > passes a genuine identity-bearing context through a private dispatch guard and text-free metadata 3ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source generation checkpoints > rechecks a retained context immediately before the stubbed provider boundary 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source generation checkpoints > suppresses returned content if current source identity changes during the response wait 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > selected-source generation checkpoints > keeps a successful sibling when a later preloaded source is withdrawn while queued 3ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > ordinary drafting and immutable request snapshots > keeps ordinary streaming/tools without a source dispatch guard 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > ordinary drafting and immutable request snapshots > keeps ordinary streaming/tools without a source dispatch guard 1ms
+ ✓ server/services/ana/__tests__/draft-source-service-checkpoint.test.ts > ordinary drafting and immutable request snapshots > pins request identity, source object and declared project context before the first await 2ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > Gate 0 — local generation client activation > returns null when no local base URL is configured (no accidental activation) 2ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > Gate 0 — local generation client activation > returns a client when LOCAL_AI_BASE_URL is set 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > Gate 0 — local generation client activation > falls back to LITELLM_BASE_URL when LOCAL_AI_BASE_URL is absent 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > Gate 0 — on-prem / ZDR residency routing > classifies the local substrate as self-hosted, on-prem, zero-retention 2ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > Gate 0 — on-prem / ZDR residency routing > routes an on-prem-residency requirement ONLY to the local substrate 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > Gate 0 — on-prem / ZDR residency routing > satisfies a zero-data-retention requirement while shared frontier does not 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK clients at the deterministic credential boundary > creates fresh OpenAI clients for each tenant and request without a platform API key 3ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK clients at the deterministic credential boundary > uses fresh Anthropic regular and beta message clients with the tenant key and no retries 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK clients at the deterministic credential boundary > pins Moonshot to its fixed endpoint and keeps tenant keys separate from a configured platform key 3ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK clients at the deterministic credential boundary > rejects a captured grant that is revoked before any SDK create 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK clients at the deterministic credential boundary > rejects a captured grant that is expired before any SDK create 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK clients at the deterministic credential boundary > rejects a captured grant that is rotated before any SDK create 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK clients at the deterministic credential boundary > rejects a captured grant that is audit unavailable before any SDK create 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK clients at the deterministic credential boundary > rechecks the captured revision on every create, including reuse of the same client 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK clients at the deterministic credential boundary > runs final qualification after the awaited credential check and preserves a policy refusal before SDK dispatch 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK clients at the deterministic credential boundary > never falls back to a platform key when tenant availability or capture fails 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK clients at the deterministic credential boundary > returns null only for an explicitly platform-owned credential mode 0ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > final source and qualification checks before customer SDK use > rechecks qualification after an awaited final source check without sanitizing its policy refusal 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK failures and embedding authority > strips arbitrary SDK errors, headers and causes while retaining HTTP 429 8ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK failures and embedding authority > strips arbitrary SDK errors, headers and causes while retaining HTTP 503 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK failures and embedding authority > drops malformed status fields and preserves direct cancellation without retaining SDK details 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK failures and embedding authority > sanitizes async iterator failures and retains AbortError identity for cancellation 1ms
+ ✓ server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts > customer-owned SDK failures and embedding authority > uses the embedding grant purpose and exact captured authority for OpenAI embeddings 2ms
+
+ Test Files  9 passed (9)
+      Tests  250 passed (250)
+   Start at  20:42:49
+   Duration  44.75s (transform 15.38s, setup 343ms, import 32.85s, tests 9.16s, environment 2ms)
+

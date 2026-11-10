@@ -1,0 +1,16 @@
+[
+  {
+    "pid": 18836,
+    "codespaces": true,
+    "nonemptyOwnerCredentialNames": [],
+    "rlsEnforce": "on",
+    "nodeExecutable": "/workspace/scratch/editor-toolchain/node_modules/node/bin/node"
+  },
+  {
+    "pid": 18867,
+    "codespaces": true,
+    "nonemptyOwnerCredentialNames": [],
+    "rlsEnforce": "on",
+    "nodeExecutable": "/workspace/scratch/editor-toolchain/node_modules/node/bin/node"
+  }
+]

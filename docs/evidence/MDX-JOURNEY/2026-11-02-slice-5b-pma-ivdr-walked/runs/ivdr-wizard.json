@@ -1,0 +1,28 @@
+{
+ "url": "/concept2cure/project-home?program=5728bf01-b707-4585-8138-c621e44fd7d7",
+ "api": [
+  {
+   "status": 201,
+   "id": "5728bf01-b707-4585-8138-c621e44fd7d7",
+   "program_type": "ivdr",
+   "pathway": "ivdr"
+  }
+ ],
+ "labels": [
+  "Client workspace",
+  "Project nameRequired. The project is listed under ",
+  "Product name",
+  "EU IVDR classNot yet determinedClass AClass BClass",
+  "Product typeIn-vitro diagnosticCompanion diagnosti",
+  "Target submission date",
+  "Indications for use",
+  "Risk-based monitoring Include risk assessment, mon"
+ ],
+ "placeholders": [
+  "e.g. BX-204 — IVDR Technical Documentation",
+  "e.g. BX-204",
+  "",
+  ""
+ ],
+ "reviewText": "Projects\nProjects\n/\nNew project\nNew project\n\nChoose the filing, describe the project, then review what will be recorded. The filing decides the dossier outline the project is built against.\n\nStep 1\nChoose filing type\nStep 2\nConfigure project\n3\nStep 3\nReview & create\nReview & create\nClient workspace\nConcept2Cure Therapeutics\nFiling type\nIVDR Technical Documentation\nAgency / Region\nEU / Notified Body · EU\nDossier\nregional\nProject name\nVeritas assay — IVDR\nRisk-based monitoring\nNot selected\nProduct\nVeritas assay\nTarget date\nNot set\nPathway\nIVDR — STED\nWorkstream\nMDX\nRecorded as\nIVDR · In-vitro diagnostic\nClassification\nNot recorded\n\nYour project is saved to the portfolio and opens in its workspace, where you can add documents and author sections with AnA. After it is created, share it with people in your organization from its Team section.\n\nCancel\nBack\nCreate project"
+}

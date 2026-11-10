@@ -271,6 +271,9 @@ export interface DeliverableEvaluationScope {
 
 export type DeliverableDocumentTable = 'coauthor_documents' | 'unified_documents'
   | 'ctd_onboarding_documents' | 'rendered_leaf_files' | 'c2c_document_sections' | 'vault_documents';
+/** The store a project document's filing copy is placed from (placeIntoFilingCopy.ts): a request payload value,
+ *  named once here so a screen sends it without spelling a table name in its own source. */
+export const FILING_COPY_DOCUMENT_TABLE = 'coauthor_documents' as const satisfies DeliverableDocumentTable;
 export interface DeliverableSourceEvidence {
   content: 'substantive' | 'non-substantive' | 'undetermined';
   pin: 'match' | 'mismatch' | 'unpinned' | 'unverifiable';
@@ -693,8 +696,10 @@ export interface DispatchReadinessResponse {
   validationErrors: number;
   /** Open critical Shadow Review findings counted from the database. */
   unacknowledgedShadowCriticals: number;
-  /** Completed Shadow Review runs for this sequence. */
+  /** Completed Shadow Review runs over this sequence's current leaves. */
   shadowReviewRunCount: number;
+  /** Completed runs over leaves that have since changed (they clear nothing). */
+  shadowReviewStaleRunCount?: number;
   /** Gate clear but no Shadow Review has run — dispatch allowed, never reviewed. */
   shadowReviewMissing: boolean;
   /** Hard gate verdict over the server-computed inputs. */

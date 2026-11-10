@@ -36,16 +36,27 @@
  *     it, and after the seal that remedy is gone.
  *
  *   PACKAGE — a file that loads device/IVD content from the filing to build a
- *     deliverable (`loadDeviceContentLeaves`, `resolveDeviceContentScope`).
- *     These are the device exits P-29.3 put on the list and that no candidate
- *     exit list contained: they read `c2c_document_sections`, consult no seal
- *     and hash neither store.
+ *     deliverable (`loadDeviceContentLeaves`, `resolveDeviceContentScope`,
+ *     `loadAuthoredDeviceSections`, `loadGovernedDeviceSections`). These are
+ *     the device exits P-29.3 put on the list and that no candidate exit list
+ *     contained: they read `c2c_document_sections`, consult no seal and hash
+ *     neither store.
+ *
+ *     The two SECTION loaders were added 2026-11-02 (MDX journey slice 3).
+ *     Until then the scanner saw only the leaf loaders, so /build's section
+ *     load, the official eSTAR's section attachments (estar-attachment-plan.ts)
+ *     and the EU technical file (assemble-technical-file-from-core.ts) were
+ *     doors it could not see — the failure a discovering gate exists to
+ *     prevent, one loader over.
  *
  * WHAT COUNTS AS GUARDED: a call to `filingAgreesWithEditing` in the same file,
- * or to one of the router's two wrappers around it (`filingBlocksSeal`,
- * `sealRefusedForFiling`). Same file, not same function — the scanner cannot
- * follow a call across a boundary, which is what the baseline's reasons are
- * for.
+ * to one of the router's two wrappers around it (`filingBlocksSeal`,
+ * `sealRefusedForFiling`), or to the question asked from the filing's side
+ * (`filingAgreesWithBoundDocuments`, filing-section-target.ts) or its device
+ * form (`governedDeviceFilingAgreement`, estar-content-leaves.ts, which reads
+ * the same governed document the loaders read). Same file, not same function —
+ * the scanner cannot follow a call across a boundary, which is what the
+ * baseline's reasons are for.
  *
  * THE BASELINE is per-file, shrink-only, and every entry needs a written
  * reason, in the shape `scripts/ci/sign-ceremony-baseline.json` and
@@ -74,10 +85,12 @@ const SEAL_PATTERNS = [
 const PACKAGE_PATTERNS = [
   { re: /\bloadDeviceContentLeaves\s*\(/, kind: 'device-content-load' },
   { re: /\bresolveDeviceContentScope\s*\(/, kind: 'device-content-scope' },
+  { re: /\bloadAuthoredDeviceSections\s*\(/, kind: 'device-sections-load' },
+  { re: /\bloadGovernedDeviceSections\s*\(/, kind: 'governed-sections-load' },
 ];
 
-/** The one question, and the router's two wrappers around it. */
-const GUARD_RE = /\b(filingAgreesWithEditing|filingBlocksSeal|sealRefusedForFiling)\s*\(/;
+/** The one question, the router's two wrappers around it, and its two forms from the filing's side. */
+const GUARD_RE = /\b(filingAgreesWithEditing|filingBlocksSeal|sealRefusedForFiling|filingAgreesWithBoundDocuments|governedDeviceFilingAgreement)\s*\(/;
 
 /**
  * Modules that DEFINE what is guarded, rather than being a door.

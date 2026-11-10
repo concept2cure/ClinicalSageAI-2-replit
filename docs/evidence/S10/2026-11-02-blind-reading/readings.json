@@ -1,0 +1,4488 @@
+{
+  "reading": "S10 blind second reading of the letter-question list: all 177 questions, adjudicated",
+  "package": "docs/evidence/S10/2026-11-02-blind-reading-package",
+  "packageCommit": "a0b2b6701",
+  "questionsJsonSha256": "57964e3ab70e858e977c73fd48014369bb16cd341efdcf5acc2b2da6dcd27937",
+  "fields": {
+    "id": "questions.json n",
+    "lines": "questions.json lineStart-lineEnd (1-based, split on LF)",
+    "span": "questions.json [start, end), UTF-16 code units",
+    "group": "g1 = L01-L17, g2 = L18-L33, g3 = L34-L49; each group had its own two readers and adjudicator",
+    "A": "settled answer to (A): would a regulatory reader record this as one of the letter's questions",
+    "B": "settled answer to (B): does one contiguous span hold exactly the agency's words of this question",
+    "B_inside": "when B is no: what is inside, by line",
+    "readerA / readerB": "each reader's own (A) and (B); the full reader files are in raw/",
+    "settled_by": "agreed = both readers gave the same (A) and (B) and the adjudicator confirmed it on reading; adjudicated = the readers differed and the adjudicator settled it (see disagreements.json)",
+    "reason": "the adjudicator's reason"
+  },
+  "counts": {
+    "questions": 177,
+    "A": {
+      "yes": 165,
+      "no": 0,
+      "unsure": 12
+    },
+    "B": {
+      "yes": 148,
+      "no": 29
+    },
+    "missing": 11,
+    "disagreements": 10,
+    "disagreementsByKind": {
+      "B": 1,
+      "C-start": 7,
+      "C-location": 2
+    }
+  },
+  "adjudication": {
+    "g1": {
+      "letters": "L01-L17",
+      "method": "Every letter L01-L17 was read in full (lines JSON.stringify-ed, sha256 and UTF-16 length checked against questions.json). Every one of the 63 slices was read as letter.slice(start, end) with 25 characters either side, first/last words confirmed, and scanned for control and non-ASCII characters (only U+000C in Q2 and Q44; U+000B at L06 offset 22 is outside every slice). Line breaks, including empty docx paragraphs, are not counted as foreign content, as both readers did. All 63 agreed questions were spot-checked (well above 5 per group); no spot-check found both readers wrong. No letter has an unlisted question.",
+      "spotChecked": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63
+      ],
+      "bothReadersWrong": []
+    },
+    "g2": {
+      "letters": "L18-L33",
+      "method": "Every one of the 44 spans was sliced in Node by UTF-16 [start,end), printed with JSON.stringify beside the numbered lines of its letter, and scanned for any code unit other than LF outside printable ASCII and CJK text; every letter was read whole for (C). All 43 agreed questions were therefore spot-checked (well above 5); none showed both readers wrong. The one disagreement (76) is settled below. Neither reader listed a missing question and the adjudicator found none.",
+      "spotChecked": [
+        64,
+        65,
+        66,
+        67,
+        68,
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76,
+        77,
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86,
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        96,
+        97,
+        98,
+        99,
+        100,
+        101,
+        102,
+        103,
+        104,
+        105,
+        106,
+        107
+      ],
+      "bothReadersWrong": 0,
+      "missingChecked": "Read every letter L18-L33 whole. Non-questions confirmed: L18 line 26 response instruction and line 28 closer; L24 line 5 closer; L25 line 5 lead-in; L28 items 1-3 are parts of Question 1; L30 line 13 以上 end marker. No question a reader would record is absent from the list."
+    },
+    "g3": {
+      "letters": "L34-L49",
+      "method": "Every letter L34-L49 was read in full (lines JSON.stringify-ed; sha256 and UTF-16 length of every letter checked against questions.json; questions.json sha256 checked). Every one of the 70 slices (n108-n177) was read as letter.slice(start, end) with 60 characters either side, first and last words confirmed, and scanned for control and non-ASCII characters: none exist anywhere in L34-L49. Line breaks, including empty docx paragraphs, are not counted as foreign content, as both readers did and as g1 settled. The readers agree on (A) and (B) for all 70 questions; all 70 were spot-checked and no spot-check found both readers wrong. For the 12 meeting questions (L45, L47, L49) both readers' (B) 'no' was tested against the literal README wording: the span is the sponsor's text, which does not belong; read as question plus response it would take in the sponsor's text and the response label; only the agency's response alone is a clean span, and that is a different text, recorded under missing. Every (C) item either reader listed was read at its line and settled; the settled missing items carry their exact [start, end) UTF-16 span, each checked clean. A (C) disagreement is counted when the readers place an item at a different line or a different first word; 'C-location' means they chose different text for the same obligation.",
+      "spotChecked": [
+        108,
+        109,
+        110,
+        111,
+        112,
+        113,
+        114,
+        115,
+        116,
+        117,
+        118,
+        119,
+        120,
+        121,
+        122,
+        123,
+        124,
+        125,
+        126,
+        127,
+        128,
+        129,
+        130,
+        131,
+        132,
+        133,
+        134,
+        135,
+        136,
+        137,
+        138,
+        139,
+        140,
+        141,
+        142,
+        143,
+        144,
+        145,
+        146,
+        147,
+        148,
+        149,
+        150,
+        151,
+        152,
+        153,
+        154,
+        155,
+        156,
+        157,
+        158,
+        159,
+        160,
+        161,
+        162,
+        163,
+        164,
+        165,
+        166,
+        167,
+        168,
+        169,
+        170,
+        171,
+        172,
+        173,
+        174,
+        175,
+        176,
+        177
+      ],
+      "bothReadersWrong": []
+    }
+  },
+  "questions": [
+    {
+      "id": 1,
+      "letter": "L01",
+      "ref": "1",
+      "lines": "3-3",
+      "span": [
+        71,
+        127
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 1 of the IR, one line; slice is exactly its words. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 2,
+      "letter": "L01",
+      "ref": "2",
+      "lines": "4-7",
+      "span": [
+        131,
+        283
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "no",
+      "B_inside": "Line 6 \"Page 1\\fPage 2\": page 1's page number, a form feed (U+000C, offset 223) and page 2's page number. Line 5 \"Food and Drug Administration\" is the question's own words (\"the guidance issued by the Food and Drug Administration in 2019\"), not letterhead.",
+      "readerA": {
+        "A": "yes",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 2 is a question; its sentence is cut by a page break (line 6 \"Page 1\\fPage 2\"), so no single span holds only its words. Line 5 completes the sentence. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 3,
+      "letter": "L01",
+      "ref": "3",
+      "lines": "8-8",
+      "span": [
+        287,
+        321
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 3, one line; slice ends before the page number on line 9. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 4,
+      "letter": "L02",
+      "ref": "A1",
+      "lines": "9-10",
+      "span": [
+        312,
+        435
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Deficiency A1 (two sentences, lines 9-10); slice is exactly its words. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 5,
+      "letter": "L02",
+      "ref": "A2",
+      "lines": "11-22",
+      "span": [
+        440,
+        763
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "no",
+      "B_inside": "Lines 13-16 page-1 letterhead footer (\"U.S. Food & Drug Administration\", \"10903 New Hampshire Avenue\", \"Silver Spring, MD 20993\", \"www.fda.gov\"); line 17 blank; line 18 page marker \"-- 1 of 2 --\"; line 19 blank; line 20 running header \"K201234 - Example Devices, Inc.\"; line 21 page number \"Page 2\". The question's words resume on line 22 \"circulating blood contact.\"",
+      "readerA": {
+        "A": "yes",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "Deficiency A2 runs across the page break; letterhead, page marker, running header and page number (lines 13-21) sit inside it. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 6,
+      "letter": "L02",
+      "ref": "A3",
+      "lines": "23-23",
+      "span": [
+        768,
+        842
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Deficiency A3, one line, clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 7,
+      "letter": "L02",
+      "ref": "A4",
+      "lines": "24-24",
+      "span": [
+        847,
+        898
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Deficiency A4, one line; slice ends before the closing on line 25. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 8,
+      "letter": "L03",
+      "ref": "1",
+      "lines": "5-5",
+      "span": [
+        73,
+        129
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 1, one paragraph, clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 9,
+      "letter": "L03",
+      "ref": "2",
+      "lines": "7-11",
+      "span": [
+        134,
+        320
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 2 includes its follow-on paragraphs \"We request that you submit...\" (lines 9-11), which are the same request; only empty docx paragraphs lie between, which are line breaks, not foreign content. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 10,
+      "letter": "L03",
+      "ref": "3",
+      "lines": "13-17",
+      "span": [
+        325,
+        483
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 3 includes \"Your response should include a justification...\" (lines 15-17), part of the same request; only empty paragraphs between. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 11,
+      "letter": "L03",
+      "ref": "4",
+      "lines": "19-19",
+      "span": [
+        488,
+        525
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 4, one paragraph; slice ends before \"Sincerely,\". Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 12,
+      "letter": "L04",
+      "ref": "1",
+      "lines": "3-3",
+      "span": [
+        71,
+        127
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 1, one line, clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 13,
+      "letter": "L04",
+      "ref": "2",
+      "lines": "4-6",
+      "span": [
+        131,
+        315
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 2 with its continuation \"We request that you submit...\" (lines 5-6), all the same request; clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 14,
+      "letter": "L04",
+      "ref": "3",
+      "lines": "7-9",
+      "span": [
+        319,
+        475
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 3 with its continuation \"Your response should include...\" (lines 8-9); clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 15,
+      "letter": "L04",
+      "ref": "4",
+      "lines": "10-10",
+      "span": [
+        479,
+        516
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 4, one line; slice ends before \"Sincerely,\". Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 16,
+      "letter": "L05",
+      "ref": "1",
+      "lines": "8-10",
+      "span": [
+        193,
+        377
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 1 with \"Your response should include the certificates...\" (line 10), part of the same request; clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 17,
+      "letter": "L05",
+      "ref": "2",
+      "lines": "11-14",
+      "span": [
+        381,
+        581
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 2 with \"We request that you submit the toxicological qualification report...\" (lines 13-14); clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 18,
+      "letter": "L05",
+      "ref": "3",
+      "lines": "15-15",
+      "span": [
+        585,
+        635
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 3, one line; slice ends before the closer on line 16. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 19,
+      "letter": "L06",
+      "ref": "1",
+      "lines": "5-5",
+      "span": [
+        38,
+        82
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Major objection 1 under \"Major\\vobjections\"; the vertical tab (offset 22) is in the heading, outside the slice [38,82). Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 20,
+      "letter": "L06",
+      "ref": "1",
+      "lines": "9-9",
+      "span": [
+        103,
+        151
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Other concern 1, one paragraph, clean; numbering restarts under the new heading. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 21,
+      "letter": "L07",
+      "ref": "A1",
+      "lines": "5-15",
+      "span": [
+        138,
+        412
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "no",
+      "B_inside": "Lines 6-9 page-1 letterhead footer (\"U.S. Food & Drug Administration\", \"10903 New Hampshire Avenue\", \"Silver Spring, MD 20993\", \"www.fda.gov\"); line 10 blank; line 11 page marker \"-- 1 of 2 --\"; line 12 blank; line 13 running header \"DEN230045 - Example Devices, Inc.\"; line 14 page number \"Page 2\". The question's second sentence is on line 15.",
+      "readerA": {
+        "A": "yes",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "Deficiency A1 runs across the page break; letterhead, page marker, running header and page number (lines 6-14) sit between its two sentences. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 22,
+      "letter": "L07",
+      "ref": "A2",
+      "lines": "16-16",
+      "span": [
+        417,
+        491
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Deficiency A2, one line; slice ends before the closing on line 17. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 23,
+      "letter": "L08",
+      "ref": "1",
+      "lines": "3-3",
+      "span": [
+        72,
+        127
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 1, one line, clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 24,
+      "letter": "L08",
+      "ref": "2",
+      "lines": "4-6",
+      "span": [
+        131,
+        222
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 2 with its DMF list (lines 5-6), which is the question's own words (\"these drug master files:\"); slice ends before \"Reference ID\" on line 7. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 25,
+      "letter": "L08",
+      "ref": "3",
+      "lines": "13-13",
+      "span": [
+        281,
+        308
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 3 on page 2, one line; slice starts after the running header and page number. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 26,
+      "letter": "L09",
+      "ref": "1",
+      "lines": "7-9",
+      "span": [
+        169,
+        260
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 1 with its DMF list (lines 8-9), the question's own words; clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 27,
+      "letter": "L09",
+      "ref": "2",
+      "lines": "10-13",
+      "span": [
+        264,
+        434
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 2: \"DMF 056789\" on line 12 is mid-sentence and the question's own words; clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 28,
+      "letter": "L09",
+      "ref": "3",
+      "lines": "14-14",
+      "span": [
+        438,
+        475
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 3, one line; slice ends before the closer. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 29,
+      "letter": "L10",
+      "ref": "1",
+      "lines": "9-9",
+      "span": [
+        152,
+        239
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Quality major objection 1, one line, clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 30,
+      "letter": "L10",
+      "ref": "2",
+      "lines": "10-10",
+      "span": [
+        243,
+        300
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Quality major objection 2, one line; ends before \"Other concerns\". Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 31,
+      "letter": "L10",
+      "ref": "1",
+      "lines": "12-12",
+      "span": [
+        319,
+        345
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Quality other concern 1, one line; ends before \"Clinical aspects\". Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 32,
+      "letter": "L10",
+      "ref": "1",
+      "lines": "19-19",
+      "span": [
+        419,
+        473
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Clinical major objection 1, one line; a stated deficiency the applicant must answer. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 33,
+      "letter": "L10",
+      "ref": "1",
+      "lines": "21-21",
+      "span": [
+        492,
+        522
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Clinical other concern 1, one line; ends before the reference footer on line 22. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 34,
+      "letter": "L11",
+      "ref": "1",
+      "lines": "9-9",
+      "span": [
+        73,
+        160
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Drug substance major objection 1, one paragraph, clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 35,
+      "letter": "L11",
+      "ref": "1",
+      "lines": "13-13",
+      "span": [
+        181,
+        254
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Drug substance other concern 1, one paragraph, clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 36,
+      "letter": "L11",
+      "ref": "2",
+      "lines": "15-15",
+      "span": [
+        259,
+        285
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Drug substance other concern 2, one paragraph, clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 37,
+      "letter": "L11",
+      "ref": "1",
+      "lines": "21-21",
+      "span": [
+        320,
+        354
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Drug product other concern 1, one paragraph; ends before \"Clinical aspects\". Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 38,
+      "letter": "L11",
+      "ref": "1",
+      "lines": "27-27",
+      "span": [
+        395,
+        502
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Clinical major objection 1, two sentences in one paragraph, clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 39,
+      "letter": "L12",
+      "ref": "1",
+      "lines": "5-6",
+      "span": [
+        69,
+        156
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Drug substance major objection 1, wrapped over lines 5-6, clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 40,
+      "letter": "L12",
+      "ref": "1",
+      "lines": "8-9",
+      "span": [
+        175,
+        248
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Drug substance other concern 1, wrapped over lines 8-9, clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 41,
+      "letter": "L12",
+      "ref": "2",
+      "lines": "10-10",
+      "span": [
+        252,
+        278
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Drug substance other concern 2, one line, clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 42,
+      "letter": "L12",
+      "ref": "1",
+      "lines": "13-13",
+      "span": [
+        310,
+        344
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Drug product other concern 1, one line; ends before the footer on line 14. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 43,
+      "letter": "L12",
+      "ref": "1",
+      "lines": "23-24",
+      "span": [
+        466,
+        573
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Clinical major objection 1, lines 23-24; ends before \"Official address\" on line 25. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 44,
+      "letter": "L13",
+      "ref": "1",
+      "lines": "7-16",
+      "span": [
+        85,
+        327
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "no",
+      "B_inside": "Line 9 blank; lines 10-12 page-1 running footer (\"Assessment report\", \"EMA/CHMP/123456/2026\", \"Page 1/2\"); a form feed (U+000C, offset 235) on line 12; lines 12-14 page-2 running header (\"Assessment report\", \"EMA/CHMP/123456/2026\", \"Page 2/2\"); line 15 blank. Line 8 \"EMA/CHMP/ICH/279/1995\" is the cited guideline and the question's own words, not the document reference EMA/CHMP/123456/2026. The words resume on line 16.",
+      "readerA": {
+        "A": "yes",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "Major objection 1 is cut by the page footer, form feed and page-2 header (lines 9-15); line 8 is the cited guideline and belongs to the question. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 45,
+      "letter": "L13",
+      "ref": "2",
+      "lines": "17-17",
+      "span": [
+        331,
+        379
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Major objection 2, one line; ends before the trailing page header on lines 19-21. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 46,
+      "letter": "L14",
+      "ref": "1",
+      "lines": "5-5",
+      "span": [
+        38,
+        82
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Major objection 1, one paragraph, clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 47,
+      "letter": "L14",
+      "ref": "2",
+      "lines": "7-13",
+      "span": [
+        87,
+        189
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Major objection 2 with its list \"Assay\", \"Related substances\", \"Dissolution\" (lines 9-13), the question's own words; only empty paragraphs between. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 48,
+      "letter": "L14",
+      "ref": "1",
+      "lines": "17-17",
+      "span": [
+        210,
+        258
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Other concern 1 after the numbering restarts; clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 49,
+      "letter": "L14",
+      "ref": "2",
+      "lines": "19-19",
+      "span": [
+        263,
+        314
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Other concern 2, one paragraph, clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 50,
+      "letter": "L15",
+      "ref": "1",
+      "lines": "2-2",
+      "span": [
+        35,
+        66
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Comment 1, one line, clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 51,
+      "letter": "L15",
+      "ref": "2",
+      "lines": "3-3",
+      "span": [
+        70,
+        113
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Comment 2, one line; ends before the closer on line 4. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 52,
+      "letter": "L16",
+      "ref": "1",
+      "lines": "10-11",
+      "span": [
+        316,
+        413
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Clinical deficiency 1 (lines 10-11), a CRL deficiency the applicant must resolve; clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 53,
+      "letter": "L16",
+      "ref": "2",
+      "lines": "12-12",
+      "span": [
+        417,
+        475
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Clinical deficiency 2, one line; ends before \"Reference ID\" on line 13. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 54,
+      "letter": "L16",
+      "ref": "3",
+      "lines": "20-21",
+      "span": [
+        573,
+        632
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Clinical deficiency 3 on page 2 (lines 20-21); starts after the running headers. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 55,
+      "letter": "L16",
+      "ref": "4",
+      "lines": "23-24",
+      "span": [
+        652,
+        764
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Product quality deficiency 4 (lines 23-24), clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 56,
+      "letter": "L16",
+      "ref": "5",
+      "lines": "25-33",
+      "span": [
+        768,
+        936
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "no",
+      "B_inside": "Line 26 \"Reference ID: 4987654\" (page-2 footer); line 27 blank; line 28 page marker \"-- 2 of 3 --\"; line 29 blank; line 30 running header \"NDA 212345\"; line 31 page number \"Page 3\"; line 32 running header \"Example Pharma Inc. Examplinib tablets\". The question's last words \"particle size.\" are on line 33.",
+      "readerA": {
+        "A": "yes",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "Product quality deficiency 5 is cut by the page-2 footer and page-3 headers (lines 26-32). Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 57,
+      "letter": "L16",
+      "ref": "6",
+      "lines": "35-36",
+      "span": [
+        963,
+        1095
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Facilities deficiency 6 (lines 35-36); ends before the closer on line 37. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 58,
+      "letter": "L17",
+      "ref": "1",
+      "lines": "10-11",
+      "span": [
+        316,
+        413
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Clinical deficiency 1 (lines 10-11); clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 59,
+      "letter": "L17",
+      "ref": "2",
+      "lines": "12-12",
+      "span": [
+        417,
+        475
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Clinical deficiency 2, one line; ends before \"Reference ID\" on line 13. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 60,
+      "letter": "L17",
+      "ref": "3",
+      "lines": "20-21",
+      "span": [
+        573,
+        632
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Clinical deficiency 3 on page 2 (lines 20-21); starts after the running headers. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 61,
+      "letter": "L17",
+      "ref": "1",
+      "lines": "23-24",
+      "span": [
+        652,
+        764
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Product quality deficiency 1 (numbering restarts), lines 23-24, clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 62,
+      "letter": "L17",
+      "ref": "2",
+      "lines": "25-33",
+      "span": [
+        768,
+        936
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "no",
+      "B_inside": "Line 26 \"Reference ID: 4987654\" (page-2 footer); line 27 blank; line 28 page marker \"-- 2 of 3 --\"; line 29 blank; line 30 running header \"NDA 212345\"; line 31 page number \"Page 3\"; line 32 running header \"Example Pharma Inc. Examplinib tablets\". The question's last words \"particle size.\" are on line 33.",
+      "readerA": {
+        "A": "yes",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "Product quality deficiency 2 is cut by the page-2 footer and page-3 headers (lines 26-32). Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 63,
+      "letter": "L17",
+      "ref": "1",
+      "lines": "35-36",
+      "span": [
+        963,
+        1095
+      ],
+      "group": "g1",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Facilities deficiency 1 (lines 35-36); ends before the closer on line 37. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 64,
+      "letter": "L18",
+      "ref": "1",
+      "lines": "9-10",
+      "span": [
+        289,
+        401
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Span lines 9-10 holds only the question's words; one wrap LF inside, no furniture."
+    },
+    {
+      "id": 65,
+      "letter": "L18",
+      "ref": "2",
+      "lines": "11-14",
+      "span": [
+        405,
+        613
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Span lines 11-14 holds the request and its agency sub-items a. and b.; nothing foreign."
+    },
+    {
+      "id": 66,
+      "letter": "L18",
+      "ref": "3",
+      "lines": "15-22",
+      "span": [
+        617,
+        774
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "no",
+      "B_inside": "Line 16 \"Reference ID: 5123456\", line 17 empty, line 18 \"-- 1 of 2 --\", line 19 empty, line 20 running header \"IND 123456\", line 21 page number \"Page 2\", between line 15 and line 22.",
+      "readerA": {
+        "A": "yes",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Span lines 15-22 crosses the page break: Reference ID (16), \"-- 1 of 2 --\" (18), running header \"IND 123456\" (20) and \"Page 2\" (21) lie between \"including\" and \"the discriminating ability\"."
+    },
+    {
+      "id": 67,
+      "letter": "L18",
+      "ref": "4",
+      "lines": "24-25",
+      "span": [
+        778,
+        841
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Label \"4.\" stands alone on line 23 outside the span; lines 24-25 are the question's words only."
+    },
+    {
+      "id": 68,
+      "letter": "L19",
+      "ref": "1",
+      "lines": "3-7",
+      "span": [
+        12,
+        115
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Span lines 3-7: request, \"The following lots are affected.\" and the two lots it names; only empty docx paragraphs between; heading \"Quality\" outside."
+    },
+    {
+      "id": 69,
+      "letter": "L19",
+      "ref": "1",
+      "lines": "11-11",
+      "span": [
+        130,
+        169
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Restarted numbering under heading \"Clinical\" (line 9, outside); a reader records it as Clinical 1; span line 11 clean."
+    },
+    {
+      "id": 70,
+      "letter": "L19",
+      "ref": "2",
+      "lines": "13-13",
+      "span": [
+        174,
+        194
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Span line 13 holds only the question's words."
+    },
+    {
+      "id": 71,
+      "letter": "L20",
+      "ref": "1",
+      "lines": "2-3",
+      "span": [
+        13,
+        91
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "no",
+      "B_inside": "Form feed U+000C at offset 67 (start of line 3), between \"registration\" and \"batches\".",
+      "readerA": {
+        "A": "yes",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: U+000C form feed at offset 67 (start of line 3) sits between \"registration\" and \"batches\"; the words straddle it."
+    },
+    {
+      "id": 72,
+      "letter": "L20",
+      "ref": "2",
+      "lines": "4-4",
+      "span": [
+        95,
+        112
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Span line 4 holds only the question's words."
+    },
+    {
+      "id": 73,
+      "letter": "L21",
+      "ref": "1",
+      "lines": "2-2",
+      "span": [
+        13,
+        90
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "no",
+      "B_inside": "Form feed U+000C at offset 66 (line 2), joining \"registration\" and \"batches\".",
+      "readerA": {
+        "A": "yes",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: U+000C form feed at offset 66 on line 2 is the only separator between \"registration\" and \"batches\"."
+    },
+    {
+      "id": 74,
+      "letter": "L21",
+      "ref": "2",
+      "lines": "3-3",
+      "span": [
+        94,
+        111
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Span line 3 holds only the question's words."
+    },
+    {
+      "id": 75,
+      "letter": "L22",
+      "ref": "1",
+      "lines": "8-8",
+      "span": [
+        193,
+        249
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Span line 8 holds only the question's words."
+    },
+    {
+      "id": 76,
+      "letter": "L22",
+      "ref": "2",
+      "lines": "9-9",
+      "span": [
+        253,
+        319
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "adjudicated",
+      "reason": "Line 16 \"Drug Product\" is a section heading, not the tail of question 2: own line, title case where body text writes \"drug substance\" in lower case (line 8), no terminal period where every question in the letter ends with one, directly above the drug-product item 3, and the package names the source fixture heading-opens-page; so question 2's stored words end at \"for the\" (line 9) and span [253,319) holds all of them with nothing foreign. The question is truncated in the letter as stored, which a response preparer flags, but (B) asks about the stored text and no other words of question 2 exist in it. Reader A's \"no\" rests on words the stored text does not contain."
+    },
+    {
+      "id": 77,
+      "letter": "L22",
+      "ref": "3",
+      "lines": "17-17",
+      "span": [
+        391,
+        441
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Heading \"Drug Product\" (line 16) is outside; span line 17 holds only the question's words."
+    },
+    {
+      "id": 78,
+      "letter": "L23",
+      "ref": "1",
+      "lines": "2-4",
+      "span": [
+        13,
+        116
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: \"Kind Regards\" (line 3) is the product's trade name inside the sentence, not a closer; span lines 2-4 clean."
+    },
+    {
+      "id": 79,
+      "letter": "L23",
+      "ref": "2",
+      "lines": "5-5",
+      "span": [
+        120,
+        139
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Span line 5 holds only the question's words."
+    },
+    {
+      "id": 80,
+      "letter": "L24",
+      "ref": "1",
+      "lines": "2-2",
+      "span": [
+        13,
+        36
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Span line 2 holds only the question's words."
+    },
+    {
+      "id": 81,
+      "letter": "L24",
+      "ref": "2",
+      "lines": "3-4",
+      "span": [
+        40,
+        140
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Second sentence \"Include the trend plots for each attribute.\" (line 4) is part of question 2; closer line 5 outside."
+    },
+    {
+      "id": 82,
+      "letter": "L25",
+      "ref": "1",
+      "lines": "3-3",
+      "span": [
+        52,
+        108
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Span line 3 holds only the question's words."
+    },
+    {
+      "id": 83,
+      "letter": "L25",
+      "ref": "2",
+      "lines": "7-7",
+      "span": [
+        171,
+        221
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Unnumbered lead-in (line 5) introduces items 2 and 3 and is context, not question 2's own words; span line 7 clean."
+    },
+    {
+      "id": 84,
+      "letter": "L25",
+      "ref": "3",
+      "lines": "9-9",
+      "span": [
+        226,
+        260
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Span line 9 holds only the question's words."
+    },
+    {
+      "id": 85,
+      "letter": "L26",
+      "ref": "1",
+      "lines": "4-9",
+      "span": [
+        89,
+        241
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "no",
+      "B_inside": "Line 6 empty, line 7 page marker \"-- 1 of 2 --\", line 8 empty, between \"Food and Drug Administration\" (line 5) and \"in 2024 for the registration batches.\" (line 9).",
+      "readerA": {
+        "A": "yes",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: \"Food and Drug Administration\" (line 5) completes \"issued by the\" and is the question's words; \"-- 1 of 2 --\" (line 7) with blanks 6 and 8 lies before \"in 2024\" (line 9)."
+    },
+    {
+      "id": 86,
+      "letter": "L26",
+      "ref": "2",
+      "lines": "10-10",
+      "span": [
+        245,
+        282
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Span line 10 holds only the question's words."
+    },
+    {
+      "id": 87,
+      "letter": "L27",
+      "ref": "1",
+      "lines": "7-9",
+      "span": [
+        169,
+        296
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Lot list (1)-(2) on lines 8-9 is the object of \"listed below:\" and part of the question."
+    },
+    {
+      "id": 88,
+      "letter": "L27",
+      "ref": "2",
+      "lines": "10-10",
+      "span": [
+        300,
+        331
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Span line 10 holds only the question's words."
+    },
+    {
+      "id": 89,
+      "letter": "L27",
+      "ref": "3",
+      "lines": "11-11",
+      "span": [
+        335,
+        361
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Span line 11 holds only the question's words."
+    },
+    {
+      "id": 90,
+      "letter": "L28",
+      "ref": "1",
+      "lines": "2-5",
+      "span": [
+        26,
+        201
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: One agency question labelled \"Question 1\"; its items 1-3 (lines 3-5) are its own parts."
+    },
+    {
+      "id": 91,
+      "letter": "L29",
+      "ref": "1",
+      "lines": "7-9",
+      "span": [
+        169,
+        283
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: \"Please clarify.\" (line 9) is the question's request; Reference ID (line 10) is outside."
+    },
+    {
+      "id": 92,
+      "letter": "L29",
+      "ref": "2",
+      "lines": "16-18",
+      "span": [
+        342,
+        452
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Span starts after page-2 header and \"Page 2\" (lines 14-15); \"Please clarify.\" (line 18) inside; Reference ID (19) outside."
+    },
+    {
+      "id": 93,
+      "letter": "L29",
+      "ref": "3",
+      "lines": "25-25",
+      "span": [
+        511,
+        548
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Span line 25 after page-3 header holds only the question's words."
+    },
+    {
+      "id": 94,
+      "letter": "L30",
+      "ref": "照会事項１",
+      "lines": "7-7",
+      "span": [
+        42,
+        71
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Reference 照会事項１ and U+3000 (offset 41) outside; span line 7 holds only the question's words."
+    },
+    {
+      "id": 95,
+      "letter": "L30",
+      "ref": "照会事項２",
+      "lines": "9-9",
+      "span": [
+        79,
+        96
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Reference 照会事項２ and U+3000 (offset 78) outside; span line 9 clean."
+    },
+    {
+      "id": 96,
+      "letter": "L30",
+      "ref": "照会事項３",
+      "lines": "11-11",
+      "span": [
+        104,
+        127
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Reference 照会事項３ and U+3000 (offset 103) outside; span line 11 clean; end marker 以上 outside."
+    },
+    {
+      "id": 97,
+      "letter": "L31",
+      "ref": "Deficiency 1",
+      "lines": "7-13",
+      "span": [
+        135,
+        304
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Predicates K201234 and K193456 (lines 9, 11) are part of the deficiency's sentence; only empty docx paragraphs between; K261234 (line 1) outside."
+    },
+    {
+      "id": 98,
+      "letter": "L31",
+      "ref": "Deficiency 2",
+      "lines": "15-15",
+      "span": [
+        320,
+        400
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Span line 15 holds only the deficiency's words."
+    },
+    {
+      "id": 99,
+      "letter": "L32",
+      "ref": "1",
+      "lines": "8-8",
+      "span": [
+        193,
+        253
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Span line 8 holds only the question's words."
+    },
+    {
+      "id": 100,
+      "letter": "L32",
+      "ref": "2",
+      "lines": "9-9",
+      "span": [
+        257,
+        314
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Span line 9 holds only the question's words."
+    },
+    {
+      "id": 101,
+      "letter": "L32",
+      "ref": "3",
+      "lines": "10-10",
+      "span": [
+        318,
+        368
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Span line 10 holds only the question's words; Reference ID (line 11) outside."
+    },
+    {
+      "id": 102,
+      "letter": "L32",
+      "ref": "4",
+      "lines": "17-18",
+      "span": [
+        427,
+        537
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: \"With / regards to the impurity profile\" (lines 17-18) is the question's words, not a closer; span starts after page-2 header."
+    },
+    {
+      "id": 103,
+      "letter": "L32",
+      "ref": "5",
+      "lines": "19-19",
+      "span": [
+        541,
+        584
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Span line 19 holds only the question's words."
+    },
+    {
+      "id": 104,
+      "letter": "L32",
+      "ref": "6",
+      "lines": "20-20",
+      "span": [
+        588,
+        623
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Span line 20 holds only the question's words; closer outside."
+    },
+    {
+      "id": 105,
+      "letter": "L33",
+      "ref": "1",
+      "lines": "7-13",
+      "span": [
+        169,
+        317
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "no",
+      "B_inside": "Line 9 \"Reference ID: 5123456\", line 10 empty, line 11 \"-- 1 of 3 --\", line 12 empty, between \"Table 2\" (line 8) and \"and justify the proposed limits.\" (line 13).",
+      "readerA": {
+        "A": "yes",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: \"Table 2\" (line 8) completes \"as shown in\"; Reference ID (9) and \"-- 1 of 3 --\" (11) with blanks 10 and 12 lie before \"and justify the proposed limits.\" (13)."
+    },
+    {
+      "id": 106,
+      "letter": "L33",
+      "ref": "2",
+      "lines": "14-20",
+      "span": [
+        321,
+        460
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "no",
+      "B_inside": "Line 16 \"Reference ID: 5123456\", line 17 empty, line 18 \"-- 2 of 3 --\", line 19 empty, between \"Table 5\" (line 15) and \"and provide the trend plots.\" (line 20).",
+      "readerA": {
+        "A": "yes",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: \"Table 5\" (line 15) completes \"as given in\"; Reference ID (16) and \"-- 2 of 3 --\" (18) with blanks 17 and 19 lie before \"and provide the trend plots.\" (20)."
+    },
+    {
+      "id": 107,
+      "letter": "L33",
+      "ref": "3",
+      "lines": "21-21",
+      "span": [
+        464,
+        501
+      ],
+      "group": "g2",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Both readers; adjudicator read the span and confirms: Span line 21 holds only the question's words."
+    },
+    {
+      "id": 108,
+      "letter": "L34",
+      "ref": "1",
+      "lines": "3-3",
+      "span": [
+        145,
+        208
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 1, one line; the slice is exactly its words. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 109,
+      "letter": "L34",
+      "ref": "2",
+      "lines": "4-9",
+      "span": [
+        212,
+        327
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "no",
+      "B_inside": "Lines 5-8 between 'the stopping' (line 4) and 'boundaries for efficacy.' (line 9): blank line 5, page marker '-- 1 of 2 --' (line 6), blank line 7, unmarked running header 'CONFIDENTIAL' (line 8).",
+      "readerA": {
+        "A": "yes",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 2 is a question; its sentence ('...and the stopping' / 'boundaries for efficacy.') is cut by the page break, so no single span holds only its words. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 110,
+      "letter": "L34",
+      "ref": "3",
+      "lines": "10-10",
+      "span": [
+        331,
+        382
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 3, one line; clean, ends before 'Sincerely,'. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 111,
+      "letter": "L35",
+      "ref": "1",
+      "lines": "3-3",
+      "span": [
+        52,
+        108
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 1, one line; clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 112,
+      "letter": "L35",
+      "ref": "2",
+      "lines": "5-7",
+      "span": [
+        113,
+        207
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Item 2 states a deficiency and opens a lead-in ('To address this concern, provide the following:') that no list follows in the stored text (line 9 is sibling item 3); a reader records it as written. The empty docx paragraph (line 6) inside the sentence is a line break, not foreign content. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 113,
+      "letter": "L35",
+      "ref": "3",
+      "lines": "9-9",
+      "span": [
+        212,
+        246
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 3, the letter's last line; clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 114,
+      "letter": "L36",
+      "ref": "1",
+      "lines": "3-3",
+      "span": [
+        46,
+        82
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 1, one line; clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 115,
+      "letter": "L36",
+      "ref": "2",
+      "lines": "4-6",
+      "span": [
+        86,
+        175
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 2 with its own sub-items a. and b. (lines 5-6); clean, no tab or control character in the stored text. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 116,
+      "letter": "L36",
+      "ref": "3",
+      "lines": "7-7",
+      "span": [
+        179,
+        192
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "'Confirm CGMP.', one line; clean, ends before 'Sincerely,'. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 117,
+      "letter": "L37",
+      "ref": "1",
+      "lines": "3-3",
+      "span": [
+        46,
+        82
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 1, one line; clean. L37 is byte-identical to L36 (same sha256). Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 118,
+      "letter": "L37",
+      "ref": "2",
+      "lines": "4-6",
+      "span": [
+        86,
+        175
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 2 with its own sub-items a. and b. (lines 5-6); clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 119,
+      "letter": "L37",
+      "ref": "3",
+      "lines": "7-7",
+      "span": [
+        179,
+        192
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "'Confirm CGMP.', one line; clean, ends before 'Sincerely,'. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 120,
+      "letter": "L38",
+      "ref": "1",
+      "lines": "21-23",
+      "span": [
+        849,
+        1107
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 1 (lines 21-23); clean; the heading 'Drug Substance' (line 20) lies before the span. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 121,
+      "letter": "L38",
+      "ref": "2",
+      "lines": "24-26",
+      "span": [
+        1111,
+        1310
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Deficiency with its request (revise to NMT 0.10% or justify); clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 122,
+      "letter": "L38",
+      "ref": "3",
+      "lines": "27-35",
+      "span": [
+        1314,
+        1641
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "no",
+      "B_inside": "Lines 29-34: 'Reference ID: 5498765' (29), blank (30), page marker '-- 1 of 3 --' (31), blank (32), running header 'IND 145678' (33), page number 'Page 2' (34).",
+      "readerA": {
+        "A": "yes",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 3 is cut between 'For each impurity' (line 28) and 'classified as Class 1, 2, or 3' (line 35) by page-1 footer and page-2 header, so no single span holds only its words. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 123,
+      "letter": "L38",
+      "ref": "4",
+      "lines": "37-38",
+      "span": [
+        1658,
+        1823
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 4; clean; the heading 'Drug Product' (line 36) lies before the span. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 124,
+      "letter": "L38",
+      "ref": "5",
+      "lines": "39-41",
+      "span": [
+        1827,
+        2089
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Deficiency 5 with its request (dissolution profiles, method development report); clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 125,
+      "letter": "L38",
+      "ref": "6",
+      "lines": "42-46",
+      "span": [
+        2093,
+        2310
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 6 with its own sub-items a.-c. (lines 44-46); clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 126,
+      "letter": "L38",
+      "ref": "7",
+      "lines": "47-48",
+      "span": [
+        2314,
+        2461
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 7; clean, ends before the closing 'Please submit your response...' paragraph. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 127,
+      "letter": "L39",
+      "ref": "1",
+      "lines": "29-31",
+      "span": [
+        645,
+        789
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 1; the empty docx paragraph inside the wrapped sentence (line 30) is a line break, not foreign content; clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 128,
+      "letter": "L39",
+      "ref": "2",
+      "lines": "33-35",
+      "span": [
+        794,
+        924
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 2; the empty docx paragraph (line 34) is a line break; clean; the headings 'Drug Product'/'Manufacturing' lie after it. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 129,
+      "letter": "L39",
+      "ref": "3",
+      "lines": "41-43",
+      "span": [
+        958,
+        1106
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 3; the empty docx paragraph (line 42) is a line break; clean; subheadings lie outside. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 130,
+      "letter": "L39",
+      "ref": "4",
+      "lines": "47-49",
+      "span": [
+        1122,
+        1258
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 4; the empty docx paragraph (line 48) is a line break; clean; subheadings lie outside. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 131,
+      "letter": "L39",
+      "ref": "5",
+      "lines": "53-53",
+      "span": [
+        1289,
+        1376
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 5, one paragraph; clean; heading 'Container Closure System' lies before it. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 132,
+      "letter": "L40",
+      "ref": "1",
+      "lines": "19-20",
+      "span": [
+        745,
+        888
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 1 (lines 19-20); clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 133,
+      "letter": "L40",
+      "ref": "2",
+      "lines": "21-22",
+      "span": [
+        892,
+        1021
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 2 (lines 21-22); clean; headings 'Drug Product'/'Manufacturing' lie after it. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 134,
+      "letter": "L40",
+      "ref": "3",
+      "lines": "25-26",
+      "span": [
+        1052,
+        1199
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 3 (lines 25-26); clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 135,
+      "letter": "L40",
+      "ref": "4",
+      "lines": "28-29",
+      "span": [
+        1213,
+        1348
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 4 (lines 28-29); clean; heading 'Stability' lies before it. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 136,
+      "letter": "L40",
+      "ref": "5",
+      "lines": "31-31",
+      "span": [
+        1377,
+        1464
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 5 (line 31); clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 137,
+      "letter": "L41",
+      "ref": "1",
+      "lines": "19-20",
+      "span": [
+        745,
+        888
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 1 (lines 19-20); clean; L41 is the text-file twin of L40. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 138,
+      "letter": "L41",
+      "ref": "2",
+      "lines": "21-22",
+      "span": [
+        892,
+        1021
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 2 (lines 21-22); clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 139,
+      "letter": "L41",
+      "ref": "3",
+      "lines": "25-26",
+      "span": [
+        1052,
+        1199
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 3 (lines 25-26); clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 140,
+      "letter": "L41",
+      "ref": "4",
+      "lines": "28-29",
+      "span": [
+        1213,
+        1348
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 4 (lines 28-29); clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 141,
+      "letter": "L41",
+      "ref": "5",
+      "lines": "31-31",
+      "span": [
+        1377,
+        1464
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 5 (line 31); clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 142,
+      "letter": "L42",
+      "ref": "1",
+      "lines": "25-35",
+      "span": [
+        1225,
+        1725
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "no",
+      "B_inside": "Lines 28-33: 'Reference ID: 5512345' (28), blank (29), page marker '-- 1 of 2 --' (30), blank (31), running header 'IND 152233' (32), page number 'Page 2' (33).",
+      "readerA": {
+        "A": "yes",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "Hold deficiency 1 is cut between 'occurred at all dose levels.' (line 27) and its cure 'To resolve this deficiency, provide...' (line 34) by page furniture. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 143,
+      "letter": "L42",
+      "ref": "2",
+      "lines": "36-39",
+      "span": [
+        1729,
+        2041
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Hold deficiency 2 with its request to revise the stopping rules; clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 144,
+      "letter": "L42",
+      "ref": "3",
+      "lines": "40-42",
+      "span": [
+        2045,
+        2333
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Hold deficiency 3; clean, ends before the heading 'NON-HOLD COMMENTS'. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 145,
+      "letter": "L42",
+      "ref": "1",
+      "lines": "46-46",
+      "span": [
+        2479,
+        2560
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Non-hold comment 1: the letter asks that it be addressed in the complete response, so a reader records it (as 'non-hold comment 1', since its ref repeats the hold numbering); clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 146,
+      "letter": "L42",
+      "ref": "2",
+      "lines": "47-47",
+      "span": [
+        2564,
+        2649
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Non-hold comment 2, same footing as comment 1; clean, ends before 'Please identify your response...'. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 147,
+      "letter": "L43",
+      "ref": "1",
+      "lines": "20-24",
+      "span": [
+        835,
+        1228
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "CRL deficiency 1 with its 'Recommendation:' paragraph (lines 23-24), all the agency's words; clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 148,
+      "letter": "L43",
+      "ref": "2",
+      "lines": "25-35",
+      "span": [
+        1232,
+        1651
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "no",
+      "B_inside": "Lines 28-33: 'Reference ID: 5623456' (28), blank (29), page marker '-- 1 of 3 --' (30), blank (31), running header 'NDA 219876' (32), page number 'Page 2' (33).",
+      "readerA": {
+        "A": "yes",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "CRL deficiency 2 is cut between '50 mg dose.' (line 27) and its 'Recommendation:' (line 34) by page furniture. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 149,
+      "letter": "L43",
+      "ref": "3",
+      "lines": "38-40",
+      "span": [
+        1684,
+        1927
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "CRL deficiency 3 with its request (revise the criterion, submit the specification); clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 150,
+      "letter": "L43",
+      "ref": "4",
+      "lines": "41-42",
+      "span": [
+        1931,
+        2096
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "CRL deficiency 4 has no explicit request, but the resubmission must answer it (accept 24-month dating or supply data); clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 151,
+      "letter": "L43",
+      "ref": "5",
+      "lines": "44-47",
+      "span": [
+        2121,
+        2415
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "CRL deficiency 5 (facility); clean, ends before 'Reference ID' (line 48). Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 152,
+      "letter": "L44",
+      "ref": "1",
+      "lines": "20-24",
+      "span": [
+        835,
+        1228
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "CRL deficiency 1 with its 'Recommendation:' paragraph (lines 23-24); clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 153,
+      "letter": "L44",
+      "ref": "2",
+      "lines": "25-29",
+      "span": [
+        1232,
+        1596
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "In this variant deficiency 2's Recommendation (lines 28-29) precedes the page break, so the span ends at line 29, before 'Reference ID' and the page furniture (lines 30-35); clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 154,
+      "letter": "L44",
+      "ref": "3",
+      "lines": "38-40",
+      "span": [
+        1684,
+        1927
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "CRL deficiency 3; clean; headings and page furniture (lines 30-37) lie before it. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 155,
+      "letter": "L44",
+      "ref": "4",
+      "lines": "41-42",
+      "span": [
+        1931,
+        2096
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "CRL deficiency 4, no explicit request but must be answered in the resubmission; clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 156,
+      "letter": "L44",
+      "ref": "5",
+      "lines": "44-47",
+      "span": [
+        2121,
+        2415
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "CRL deficiency 5; clean, ends before 'Reference ID' (line 48). Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 157,
+      "letter": "L45",
+      "ref": "1",
+      "lines": "53-54",
+      "span": [
+        2030,
+        2140
+      ],
+      "group": "g3",
+      "A": "unsure",
+      "B": "no",
+      "B_inside": "Only the sponsor's text: meeting Question 1 (lines 53-54). No page furniture, heading or control character.",
+      "readerA": {
+        "A": "unsure",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "unsure",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "Meeting Question 1 is the sponsor's question as the agency's document reproduces it; whether a reader records it as a letter question is unsure because the unit is the question number while the agency's words are its response. (B) no: the span is wholly the sponsor's text, which the README excludes, so it holds none of the agency's words; read as question plus response, the span would take in the sponsor's text and the response label as well. The agency's response (lines 55-56) is recorded under missing. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 158,
+      "letter": "L45",
+      "ref": "2",
+      "lines": "57-58",
+      "span": [
+        2337,
+        2466
+      ],
+      "group": "g3",
+      "A": "unsure",
+      "B": "no",
+      "B_inside": "Only the sponsor's text: meeting Question 2 (lines 57-58). No page furniture, heading or control character.",
+      "readerA": {
+        "A": "unsure",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "unsure",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "Meeting Question 2 is the sponsor's question as the agency's document reproduces it; whether a reader records it as a letter question is unsure because the unit is the question number while the agency's words are its response. (B) no: the span is wholly the sponsor's text, which the README excludes, so it holds none of the agency's words; read as question plus response, the span would take in the sponsor's text and the response label as well. The agency's response (lines 59-62) is recorded under missing. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 159,
+      "letter": "L45",
+      "ref": "3",
+      "lines": "70-72",
+      "span": [
+        2790,
+        2989
+      ],
+      "group": "g3",
+      "A": "unsure",
+      "B": "no",
+      "B_inside": "Only the sponsor's text: meeting Question 3 (lines 70-72). The page furniture (lines 63-68) and heading '2.2. Nonclinical' (69) lie before the span, not in it.",
+      "readerA": {
+        "A": "unsure",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "unsure",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "Meeting Question 3 is the sponsor's question as the agency's document reproduces it; whether a reader records it as a letter question is unsure because the unit is the question number while the agency's words are its response. (B) no: the span is wholly the sponsor's text, which the README excludes, so it holds none of the agency's words; read as question plus response, the span would take in the sponsor's text and the response label as well. The agency's response (lines 73-75) is recorded under missing. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 160,
+      "letter": "L45",
+      "ref": "4",
+      "lines": "76-77",
+      "span": [
+        3266,
+        3425
+      ],
+      "group": "g3",
+      "A": "unsure",
+      "B": "no",
+      "B_inside": "Only the sponsor's text: meeting Question 4 (lines 76-77).",
+      "readerA": {
+        "A": "unsure",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "unsure",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "Meeting Question 4 is the sponsor's question; the agency's response (line 78, 'We agree, consistent with ICH S9.') asks nothing, so it is at most a meeting outcome. Kept unsure for the same unit question as Q1-Q3. (B) no: the span is wholly the sponsor's text. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 161,
+      "letter": "L46",
+      "ref": "1",
+      "lines": "21-23",
+      "span": [
+        921,
+        1205
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Comment 1 accepts the endpoint and recommends a co-primary endpoint; the letter asks for a protocol amendment addressing every comment (line 19), so a reader records it; clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 162,
+      "letter": "L46",
+      "ref": "2",
+      "lines": "24-26",
+      "span": [
+        1209,
+        1442
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Comment 2, deficiency with its request to revise the exclusion criteria; clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 163,
+      "letter": "L46",
+      "ref": "3",
+      "lines": "28-29",
+      "span": [
+        1460,
+        1645
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Comment 3, request to specify intercurrent-event handling; clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 164,
+      "letter": "L46",
+      "ref": "4",
+      "lines": "30-31",
+      "span": [
+        1649,
+        1761
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Comment 4, request for the sample size calculation; clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 165,
+      "letter": "L46",
+      "ref": "5",
+      "lines": "33-34",
+      "span": [
+        1787,
+        1918
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Comment 5, instruction to collect sparse PK samples; clean, ends before 'Please submit...'. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 166,
+      "letter": "L47",
+      "ref": "1",
+      "lines": "28-29",
+      "span": [
+        1253,
+        1363
+      ],
+      "group": "g3",
+      "A": "unsure",
+      "B": "no",
+      "B_inside": "Only the sponsor's text: meeting Question 1 (lines 28-29).",
+      "readerA": {
+        "A": "unsure",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "unsure",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "Meeting Question 1 is the sponsor's question as the agency's document reproduces it; whether a reader records it as a letter question is unsure because the unit is the question number while the agency's words are its response. (B) no: the span is wholly the sponsor's text, which the README excludes, so it holds none of the agency's words; read as question plus response, the span would take in the sponsor's text and the response label as well. The agency's response (lines 30-31) is recorded under missing. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 167,
+      "letter": "L47",
+      "ref": "2",
+      "lines": "33-34",
+      "span": [
+        1597,
+        1726
+      ],
+      "group": "g3",
+      "A": "unsure",
+      "B": "no",
+      "B_inside": "Only the sponsor's text: meeting Question 2 (lines 33-34). Read as question plus response, 'Page 1' (35), '-- 1 of 2 --' (37), 'PIND 160123' (39) and 'Page 2' (40) would also lie inside.",
+      "readerA": {
+        "A": "unsure",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "unsure",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "Meeting Question 2 is the sponsor's question as the agency's document reproduces it; whether a reader records it as a letter question is unsure because the unit is the question number while the agency's words are its response. (B) no: the span is wholly the sponsor's text, which the README excludes, so it holds none of the agency's words; read as question plus response, the span would take in the sponsor's text and the response label as well. The agency's response (lines 41-44) is recorded under missing; the span correctly stops before 'Page 1' (35) and the page-2 header (37-40). Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 168,
+      "letter": "L47",
+      "ref": "3",
+      "lines": "48-50",
+      "span": [
+        2192,
+        2391
+      ],
+      "group": "g3",
+      "A": "unsure",
+      "B": "no",
+      "B_inside": "Only the sponsor's text: meeting Question 3 (lines 48-50).",
+      "readerA": {
+        "A": "unsure",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "unsure",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "Meeting Question 3 is the sponsor's question as the agency's document reproduces it; whether a reader records it as a letter question is unsure because the unit is the question number while the agency's words are its response. (B) no: the span is wholly the sponsor's text, which the README excludes, so it holds none of the agency's words; read as question plus response, the span would take in the sponsor's text and the response label as well. The agency's response (lines 51-52) is recorded under missing. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 169,
+      "letter": "L47",
+      "ref": "4",
+      "lines": "54-55",
+      "span": [
+        2646,
+        2805
+      ],
+      "group": "g3",
+      "A": "unsure",
+      "B": "no",
+      "B_inside": "Only the sponsor's text: meeting Question 4 (lines 54-55).",
+      "readerA": {
+        "A": "unsure",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "unsure",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "Meeting Question 4 is the sponsor's question; the agency's response (line 56) is bare agreement and line 57 records no discussion, so it is at most a meeting outcome. Kept unsure for the same unit question as Q1-Q3. (B) no: the span is wholly the sponsor's text. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 170,
+      "letter": "L48",
+      "ref": "1",
+      "lines": "19-21",
+      "span": [
+        621,
+        894
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 1 (materials of construction); clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 171,
+      "letter": "L48",
+      "ref": "2",
+      "lines": "22-37",
+      "span": [
+        898,
+        1556
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "no",
+      "B_inside": "Lines 26-34: letterhead footer 'U.S. Food & Drug Administration' / '10903 New Hampshire Avenue' / 'Silver Spring, MD 20993' / 'www.fda.gov' (26-29), blank (30), page marker '-- 1 of 2 --' (31), blank (32), running header 'K261234 - Jane Doe' (33), page number 'Page 2' (34).",
+      "readerA": {
+        "A": "yes",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 2 is cut between its lead-in 'Please provide the following:' (line 25) and its sub-items a.-c. (lines 35-37) by the page-1 letterhead footer and page-2 header. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 172,
+      "letter": "L48",
+      "ref": "3",
+      "lines": "38-40",
+      "span": [
+        1560,
+        1809
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 3 (EO/ECH residuals); clean. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 173,
+      "letter": "L48",
+      "ref": "4",
+      "lines": "41-43",
+      "span": [
+        1813,
+        2059
+      ],
+      "group": "g3",
+      "A": "yes",
+      "B": "yes",
+      "B_inside": null,
+      "readerA": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "readerB": {
+        "A": "yes",
+        "B": "yes"
+      },
+      "settled_by": "agreed",
+      "reason": "Request 4 (rated burst pressure after aging, or justification); clean, ends before 'The deficiencies identified above...'. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 174,
+      "letter": "L49",
+      "ref": "1",
+      "lines": "28-29",
+      "span": [
+        1258,
+        1368
+      ],
+      "group": "g3",
+      "A": "unsure",
+      "B": "no",
+      "B_inside": "Only the sponsor's text: meeting Question 1 (lines 28-29).",
+      "readerA": {
+        "A": "unsure",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "unsure",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "Meeting Question 1 is the sponsor's question as the agency's document reproduces it; whether a reader records it as a letter question is unsure because the unit is the question number while the agency's words are its response. (B) no: the span is wholly the sponsor's text, which the README excludes, so it holds none of the agency's words; read as question plus response, the span would take in the sponsor's text and the response label as well. The agency's response (lines 30-31, after the label 'CBER Response:') is recorded under missing. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 175,
+      "letter": "L49",
+      "ref": "2",
+      "lines": "33-34",
+      "span": [
+        1589,
+        1718
+      ],
+      "group": "g3",
+      "A": "unsure",
+      "B": "no",
+      "B_inside": "Only the sponsor's text: meeting Question 2 (lines 33-34). Read as question plus response, 'Page 1' (35), '-- 1 of 2 --' (37), 'PIND 160123' (39) and 'Page 2' (40) would also lie inside.",
+      "readerA": {
+        "A": "unsure",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "unsure",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "Meeting Question 2 is the sponsor's question as the agency's document reproduces it; whether a reader records it as a letter question is unsure because the unit is the question number while the agency's words are its response. (B) no: the span is wholly the sponsor's text, which the README excludes, so it holds none of the agency's words; read as question plus response, the span would take in the sponsor's text and the response label as well. The agency's response (lines 41-44) is recorded under missing; the span correctly stops before 'Page 1' (35) and the page-2 header (37-40). Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 176,
+      "letter": "L49",
+      "ref": "3",
+      "lines": "48-50",
+      "span": [
+        2171,
+        2370
+      ],
+      "group": "g3",
+      "A": "unsure",
+      "B": "no",
+      "B_inside": "Only the sponsor's text: meeting Question 3 (lines 48-50).",
+      "readerA": {
+        "A": "unsure",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "unsure",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "Meeting Question 3 is the sponsor's question as the agency's document reproduces it; whether a reader records it as a letter question is unsure because the unit is the question number while the agency's words are its response. (B) no: the span is wholly the sponsor's text, which the README excludes, so it holds none of the agency's words; read as question plus response, the span would take in the sponsor's text and the response label as well. The agency's response (lines 51-52) is recorded under missing. Adjudicator read the slice and the letter: agrees with both readers."
+    },
+    {
+      "id": 177,
+      "letter": "L49",
+      "ref": "4",
+      "lines": "54-55",
+      "span": [
+        2612,
+        2771
+      ],
+      "group": "g3",
+      "A": "unsure",
+      "B": "no",
+      "B_inside": "Only the sponsor's text: meeting Question 4 (lines 54-55).",
+      "readerA": {
+        "A": "unsure",
+        "B": "no"
+      },
+      "readerB": {
+        "A": "unsure",
+        "B": "no"
+      },
+      "settled_by": "agreed",
+      "reason": "Meeting Question 4 is the sponsor's question; the agency's response (line 56, 'CBER Response: We agree, consistent with ICH S9.') is bare agreement and line 57 records no discussion. Kept unsure for the same unit question as Q1-Q3. (B) no: the span is wholly the sponsor's text. Adjudicator read the slice and the letter: agrees with both readers."
+    }
+  ]
+}

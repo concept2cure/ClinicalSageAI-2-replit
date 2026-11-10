@@ -21,13 +21,12 @@ import {
   NAV_TIERS_V2,
   NAV_GROUP_OF,
   READINESS_META,
-  getSegmentContext,
 } from '../registryModel';
 import '../styles/surfaces-v2.css';
 import { useChatUpload, composeTurn, CHAT_UPLOAD_ACCEPT } from '../../hooks/useChatUpload';
 import { AppMentionMenu, useAppMentions } from '../appMentions';
 import type { OnboardingWelcome } from '../onboardingWelcome';
-import { HomeConversations, HomeProjects, HomeTasks, type HomeProgram } from './HomeSections';
+import { HomeProjects, HomeTasks, type HomeProgram } from './HomeSections';
 import { HomeSetup } from './HomeSetup';
 import { useLiveRows } from '../dataConnect';
 import { openNewProject } from '../surfaceActions';
@@ -49,7 +48,6 @@ type HomeModeBinding =
 export function Home({
   onNav,
   onAsk,
-  segment,
   mode: boundMode,
   setMode: setBoundMode,
   welcome,
@@ -57,6 +55,8 @@ export function Home({
 }: {
   onNav: (id: string) => void;
   onAsk: (text: string) => void;
+  /** The client type. Home no longer prints it beside the greeting (Claude's
+   *  front door carries the greeting alone); callers still pass it. */
   segment: string;
   /** First-run AnA welcome. It lived in the right rail, which is gone
    *  (docs/design/ONE_ANA_ONE_CANVAS.md, slices 6 and 9). Home offers it while
@@ -110,7 +110,6 @@ export function Home({
   /* `@app` on the front door — the same hook the rail and the thread use. */
   const draftRef = React.useRef<HTMLTextAreaElement>(null);
   const mentions = useAppMentions(draft, setDraft, draftRef);
-  const ctx = getSegmentContext(segment);
 
   /* ── "Attach file" opened a picker into nothing ────────────────────────────
      The `<input type="file">` below carried no onChange, so on the product's
@@ -127,7 +126,10 @@ export function Home({
   /* Time-aware greeting — the only warmth in the product, once. */
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  const userName = user?.firstName || user?.displayName || 'there';
+  /* A first name, as Claude greets. An account that has only an email gets
+     the part before the @, never the whole address across the page. */
+  const named = user?.firstName || user?.displayName || '';
+  const userName = (named.includes('@') ? named.split('@')[0] : named) || 'there';
   const engine = ANA_MODES.find((m) => m.id === mode) ?? ANA_MODES[0];
   const engineMenuId = React.useId();
   const engineBtnRef = React.useRef<HTMLButtonElement>(null);
@@ -177,20 +179,19 @@ export function Home({
           <h1>
             {greeting}, {userName}
           </h1>
-          {ctx && <span className="landing-segctx-cat">{ctx.label}</span>}
         </div>
-        <HomeSetup onNav={onNav} onNewProject={newProject} projects={projects} />
-        <HomeProjects onNav={onNav} onNewProject={newProject} welcome={welcome} onDismissWelcome={onDismissWelcome}
-          read={projects} onRetry={() => setProjectsEpoch((n) => n + 1)} />
-        <HomeTasks onNav={onNav} />
-        <section className="home-sec" aria-labelledby="home-ask-h">
-          <h2 id="home-ask-h" className="home-sec-h">Ask AnA</h2>
+        {/* Claude's front door: the greeting, then the composer. Where the
+            work is (the founder's 2026-10-25 finding) follows beneath it, as
+            Claude lists recent work under its composer; recent conversations
+            are the sidebar's Recents (Shell.tsx RailRecents). */}
+        <section className="home-ask" aria-labelledby="home-ask-h">
+          <h2 id="home-ask-h" className="sr-only">Ask AnA</h2>
         <div className="landing-composer">
           <textarea
             ref={draftRef}
             className="landing-input"
             rows={3}
-            placeholder="Ask AnA to draft, check or find something. Type @ to name a place."
+            placeholder="How can I help with your filing today?"
             value={draft}
             aria-autocomplete="list"
             aria-controls={mentions.open ? 'landing-mentions' : undefined}
@@ -341,7 +342,10 @@ export function Home({
           )}
         </div>
         </section>
-        <HomeConversations onNav={onNav} />
+        <HomeSetup onNav={onNav} onNewProject={newProject} projects={projects} />
+        <HomeProjects onNav={onNav} onNewProject={newProject} welcome={welcome} onDismissWelcome={onDismissWelcome}
+          read={projects} onRetry={() => setProjectsEpoch((n) => n + 1)} />
+        <HomeTasks onNav={onNav} />
       </div>
     </div>
   );

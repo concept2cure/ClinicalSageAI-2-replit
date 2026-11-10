@@ -1,0 +1,21 @@
+B8 green.
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault file's next step is seen without opening Versions (B8) > "Sign review" stands outside the collapsed list, named as the next step for the current version 568ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault file's next step is seen without opening Versions (B8) > "Approve" stands outside the collapsed list, named as the next step for the current version 561ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault file's next step is seen without opening Versions (B8) > "Send for review" stands outside the collapsed list, named as the next step for the current version 621ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault file's next step is seen without opening Versions (B8) > when no step is the person's, nothing is shown above the list 79ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLifecycle.test.tsx > a Vault file's next step is seen without opening Versions (B8) > reads the versions once for the step and the list together 552ms
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+
+Every Vault suite (68 files):
+ Test Files  68 passed (68)
+      Tests  698 passed (698)
+
+The running app (own server on 5300, fresh database), JM Smith, the demo project's Vault, define.xml (not yet sent for
+review), Versions left collapsed:
+   {"versionsOpen":false,"stepButtons":1,"visibleStepButtons":1,"insideCollapsedList":false,"lead":"Next step · v1.0Send for review"}
+Screenshot: b8-green-vault-next-step.png ("Next step · v1.0  Send for review" above the collapsed Versions).
+
+Lint: VaultVersions.tsx 0 and VaultLifecycle.tsx 0 (as on HEAD), Vault.tsx 4 (as on HEAD), vaultLifecycle.test.tsx 0.
+ci:undefined-css-classes OK (no new class).

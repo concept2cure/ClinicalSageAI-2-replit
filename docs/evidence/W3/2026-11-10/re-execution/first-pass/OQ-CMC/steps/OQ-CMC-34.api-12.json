@@ -1,0 +1,22 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/cmc/comparability-studies/28a35007-b94c-459f-ae66-17d33aa60c9d",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 404,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 22,
+    "rateLimitRetries": 0,
+    "body": {
+      "error": "API endpoint not found",
+      "path": "/api/cmc/comparability-studies/28a35007-b94c-459f-ae66-17d33aa60c9d",
+      "method": "GET",
+      "message": "The requested API endpoint does not exist. Check the URL and try again.",
+      "timestamp": "2026-11-10T02:56:21.741Z"
+    }
+  }
+}

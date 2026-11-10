@@ -633,7 +633,7 @@ function IvdProjectSurface({ program, onAskAna, onOpenEditor, onNav, onOpenLette
       {/* eSTAR filing journey — register → assess → produce-gate → track,
           scoped to THIS programme — without programId the readiness verdict
           is computed over every device in the organisation. The IVD eSTAR shares this flow. */}
-      <EstarFilingPanel programId={program?.id ?? null} />
+      <EstarFilingPanel programId={program?.id ?? null} defaultVariant={officialEstarVariantFor(program)} />
     </>
   );
 

@@ -68,8 +68,10 @@ describe('assignment ownership and existing automatic path', () => {
     ] }, expect.objectContaining({ 'x-client-id': '21' }));
   });
   it('does not turn an empty batch or a different task receipt into assignment success', async () => {
+    // An empty batch assigned nothing: `unchanged`, never `confirmed`. The
+    // controls re-read to say whether the task already sat with the pick.
     request.mockResolvedValue(reply({ success: true, count: 0, data: [] }));
-    expect((await autoAssignSavedTask(meta, () => ({}), () => true)).kind).toBe('refused');
+    expect((await autoAssignSavedTask(meta, () => ({}), () => true)).kind).toBe('unchanged');
     request.mockResolvedValue(reply({ success: true, count: 1, data: [{ taskId: 'TASK-OTHER', assigneeId: 9 }] }));
     expect((await autoAssignSavedTask(meta, () => ({}), () => true)).kind).toBe('unconfirmed');
   });

@@ -1,0 +1,34 @@
+DEPARTMENT OF HEALTH AND HUMAN SERVICES
+Food and Drug Administration
+Silver Spring, MD 20993
+IND 123456
+INFORMATION REQUEST
+Dear Dr. Example:
+Please refer to your Investigational New Drug Application (IND) submitted under section 505(i).
+We have the following requests for information:
+1. Provide the batch analysis data for drug substance lots used in the
+clinical study, including residual solvents.
+2. Justify the proposed acceptance criterion for impurity B in the drug
+product specification. Address the following:
+a. the toxicological qualification of impurity B; and
+b. the batch data supporting the limit.
+3. Provide the dissolution method development report, including
+Reference ID: 5123456
+
+-- 1 of 2 --
+
+IND 123456
+Page 2
+the discriminating ability of the method.
+4.
+Clarify the container closure system for the
+clinical supplies.
+Please submit your response to this information request as an amendment to this IND by
+November 30, 2026.
+If you have any questions, please contact the Regulatory Project Manager.
+Sincerely,
+{See appended electronic signature page}
+Jane Reviewer, PhD
+Reference ID: 5123456
+
+-- 2 of 2 --

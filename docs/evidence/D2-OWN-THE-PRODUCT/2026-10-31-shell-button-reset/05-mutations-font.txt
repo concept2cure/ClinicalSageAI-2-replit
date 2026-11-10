@@ -1,0 +1,8 @@
+## mutation: the full font reset outside Quality removed
+ × the shell’s button reset > keeps the whole font (size, weight, line height) at the old strength outside Quality 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 8 passed (9)
+## mutation: the font-family hold removed
+ × the shell’s button reset > keeps the shell’s font family on every button, over a one-class legacy rule 18ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 8 passed (9)

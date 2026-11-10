@@ -43,6 +43,7 @@
 
  */
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { SectionVaultReplacements } from './SectionVaultReplacements';
 import { I } from '../icons';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { EmptyState, useDataReadVisit, type DataReadOwner, type DataReadVisit } from '../dataConnect';
@@ -59,6 +60,7 @@ import { AuthoringCollab } from '../surfaces/AuthoringCollab';
 import { AuthoringCreateExport } from '../surfaces/AuthoringCreateExport';
 import type { AuthoringDocumentStart } from './useAuthoringCreation';
 import { NOTICE_UUID } from '@shared/types/notification-navigation';
+import { sectionNumberLabel } from '@shared/regulatory/section-code';
 import { newDocumentAction } from '../newDocumentAction';
 import { downloadBlob, safeFileName } from '../download';
 import { ProjectFilesPanel } from './ProjectFilesPanel';
@@ -69,7 +71,8 @@ import { useAuthoringRefileSavedText } from './AuthoringRefileSavedText';
 import { refileControlRefusal, refileSavedSource } from './authoringRefileSavedTextState';
 import { hasUnsavedSessionWork } from '@/lib/sessionChangeGuard';
 import { SendForReviewDialog } from './SendForReviewDialog';
-import { useProgramRead, programHeadline, programName } from './programSummary';
+import { ReturnedReviewNote } from './AuthoringReviewRound';
+import { useProgramRead, programHeadline, programName, offersIndLibrary } from './programSummary';
 import { askAnaToDraftPrompt, openConversationWithPrompt, originWithSavedVersion, prefillConversation, type AskOrigin, type SavedSectionVersion } from './askAnaToDraft';
 import { describeClaimsCheck, describeFigureCheck, describeProvenance } from './provenance';
 import { DraftFigureLine } from './DraftFigureLine';
@@ -83,10 +86,16 @@ import { RichSectionEditor, type RichSectionEditorHandle, type ProposalState } f
 import { scopedProposalResult, type EditorProposalReceipt } from './editorProposalReceipt';
 import { readSavedTemplateContext, savedTemplateFacts, sourceMetadataUnavailable } from './savedTemplateContext';
 import { AuthoringOversightActions } from './AuthoringOversightActions';
+import { MenuButton, MenuItem, WORKING_COPY_NOTE, downloadWorkingCopy } from './DownloadMenu';
+import { StatusPill, ToDocumentsButton } from './CanvasDocumentList';
 import { AuthoringAssemblyBuild, useAuthoringAssemblyBuild } from './AuthoringAssemblyBuild';
+import { StudyDataBuild } from './StudyDataBuild';
+import { isCsrTemplateId } from '@shared/authoring/csr-scientific-review';
 import { captureAssemblySourceIntent, captureSourceDocumentStartIntent, type AssemblySourceIntent, type AssemblySourceDocumentStartIntent } from './assemblySourceIntent';
 import { assemblySelectionKey } from './assemblySourceSelection';
 import { admitWorkbenchNavigation, workbenchAlreadyThere, workbenchAssemblyIntent, workbenchNavigationRefusal, type WorkbenchLeaveTarget } from './workbenchLeaveTarget';
+import { filingTargetInventoryKey, resolveFilingSectionTarget, workingFilingBinding } from './filingSectionTarget';
+import { filingAuthorityLabel, workbenchWritingFiling } from './writingAgencyPresentation';
 import { ImportSourceNotice } from './ImportSourceNotice';
 import { CsrNarrativeReferenceView, narrativeReferenceFor } from './CsrNarrativeReferenceView';
 import { authoringCurrentReadPath, authoringReadRefused, useAuthoringReadSession } from './authoringCurrentRead';
@@ -193,6 +202,39 @@ interface AuthSection {
   draftingRegion?: string | null;
   draftingRegionState?: import('@shared/authoring/writing-regions').DraftingRegionState;
 }
+
+interface SavedEditorSnapshot {
+  sectionId: string | null;
+  rows: AuthSection[];
+  dirty: boolean;
+  saving: boolean;
+}
+
+function sectionContentChanged(previous: AuthSection | undefined, next: AuthSection | undefined): boolean {
+  return !!previous && !!next && previous.content !== next.content;
+}
+
+function sectionVersionChanged(previous: AuthSection | undefined, next: AuthSection | undefined): boolean {
+  return sectionContentChanged(previous, next) || !!previous && !!next && previous.updated_at !== next.updated_at;
+}
+
+/** The buffer and its saved concurrency base move together, or neither moves. */
+function refreshedSectionRows(rows: AuthSection[], before: SavedEditorSnapshot, latest: SavedEditorSnapshot,
+  editor: RichSectionEditorHandle | null): { rows: AuthSection[]; held: boolean; remount: boolean } {
+  const previous = latest.rows.find(row => row.id === latest.sectionId);
+  const incoming = rows.find(row => row.id === latest.sectionId);
+  const requested = before.rows.find(row => row.id === latest.sectionId);
+  const held = !!editor && sectionVersionChanged(previous, incoming) &&
+    (latest.dirty || latest.saving || hasUnsavedSessionWork() || sectionVersionChanged(requested, previous));
+  return {
+    rows: held ? rows.map(row => row.id === previous?.id ? previous ?? row : row) : rows,
+    held,
+    remount: !!editor && !held && sectionContentChanged(previous, incoming),
+  };
+}
+
+const SECTION_REFRESH_HELD = 'The saved record changed while this section was open. Your loaded version and unsaved text were kept. Saving may be refused until the versions are reconciled.';
+const SECTION_REFRESH_FAILED = 'The saved sections could not be refreshed. The loaded text and any unsaved changes are still here.';
 
 interface AuthRevision {
   id: string;
@@ -729,7 +771,9 @@ interface SectionSource {
   citedAt: string | null;
   citationText: string | null;
   citedChecksum: string | null;
-  state: 'current' | 'changed' | 'superseded' | 'unverified' | 'unresolved';
+  state: 'current' | 'changed' | 'superseded' | 'unverified' | 'unresolved' | 'unverifiable';
+  /** Why an `unverifiable` source could not be verified (its refusal code). */
+  reasonCode?: string;
   source: {
     id: number;
     title: string | null;
@@ -774,6 +818,13 @@ function sourceStateLabel(s: SectionSource): {
         text: 'Source changed since cited',
         tone: 'warn',
         hint: 'This section was drafted from earlier content. Nothing has been rewritten — re-read the source and decide whether it changes what this section says.',
+      };
+    case 'unverifiable':
+      /* S12 (2026-11-09): one native source that cannot be verified is listed, never used, and the others still are. */
+      return {
+        text: 'Source could not be verified',
+        tone: 'warn',
+        hint: `This source’s current record could not be verified${s.reasonCode ? ` (${s.reasonCode})` : ''}, so it is not used for drafting or citing. The citation remains recorded; nothing has been rewritten.`,
       };
     case 'unresolved':
       return {
@@ -948,6 +999,15 @@ export function machineTextNote(machineText: unknown): string {
   );
 }
 
+/** True when the signed-in user created the document (`created_by`). The creator is always one of
+ *  its authors (authoringDocumentAuthors, separation-of-duties.ts), so the server refuses them every
+ *  signature meaning but authorship; the signing bar does not offer one. Unknown on either side is
+ *  false, and the server decides. */
+export function signedInUserCreated(createdBy: unknown, userId: unknown): boolean {
+  const creator = String(createdBy ?? '').trim();
+  return creator !== '' && creator === String(userId ?? '').trim();
+}
+
 /** True when the server refuses every signature but the review signature. */
 export function esignReviewOnly(access: DocumentAccess): boolean {
   return !!actRefusal(access.esign) && access.esignReview?.allowed === true;
@@ -969,6 +1029,31 @@ export function escapeBelongsToInner(target: KeyboardEvent['target']): boolean {
   return Boolean(
     target.closest('[role="dialog"], [role="alertdialog"], .ProseMirror, input, textarea, select, [contenteditable="true"]'),
   );
+}
+
+/** Where the outline's open or closed choice is remembered (D4-4, D4.md §D4.C). */
+export const OUTLINE_KEY = 'c2c.editor.outline';
+
+/**
+ * The outline's first state (D4-4). A remembered choice wins. Otherwise it opens on the page at 1280 px and wider,
+ * and stays closed beside the conversation, where the document needs the width. Where the width cannot be read it
+ * opens: the outline is how a filing's sections are reached. Storage can throw (a private window), so it is tried.
+ */
+export function initialOutline(embedded: boolean): boolean {
+  try {
+    const stored = window.localStorage.getItem(OUTLINE_KEY);
+    if (stored === 'open') return true;
+    if (stored === 'closed') return false;
+  } catch { /* no storage: fall through to the default */ }
+  if (embedded) return false;
+  return typeof window.matchMedia !== 'function' || window.matchMedia('(min-width: 1280px)').matches;
+}
+
+/** Whether the open outline floats over the page rather than taking a column (the narrow `artifact` container,
+ *  authoring-v2.css). Read from the cascade, because the width that decides it is the panel's, not the window's. */
+export function outlineOverlays(root: Element | null | undefined): boolean {
+  const tree = root?.querySelector<HTMLElement>(':scope > .ed-tree');
+  return !!tree && !tree.hidden && window.getComputedStyle(tree).position === 'absolute';
 }
 
 /** A right rail's own close control, matching AnA's (`ed-comments-close`).
@@ -1185,21 +1270,28 @@ export interface DocumentWorkbenchProps {
   /** Pin the workbench to one document (the canvas). The tree lists only it
    *  and no document switch is offered. */
   pinnedDocId?: string | null;
-  /** Mounted inside a conversation: draws "Back to conversation" and uses
-   *  that host's composer for every AnA request.
-   *  `hostShowsBack` when the host's own chrome already carries the way back —
-   *  the document canvas's bar does — so this component does not draw a
-   *  second one into its crumb trail. `onBack` is still the one callback the
-   *  way back runs, whoever draws the control. */
+  /** Mounted inside a conversation or a work area: the bar draws the way back and uses that host's composer for
+   *  every AnA request. Since D4-5 the bar is the only one: the document canvas no longer draws its own above it. */
   embedded?: {
     onBack: () => void;
     backLabel?: string;
-    hostShowsBack?: boolean;
+    /** The host only hides this workbench when it closes and keeps it mounted (the document canvas), so nothing is
+     *  lost and the close needs no leave guard. It is "Back to conversation", and Escape does the same. */
+    collapses?: boolean;
+    /** The conversation's documents, "← Documents (n)", drawn after the outline toggle. */
+    onShowList?: () => void;
+    listCount?: number | null;
+    /** "Open full width": the same document, full width, in the editor's page placement. */
+    onExpand?: () => void;
+    /** The close button, for the host's focus contract (canvasFocus.ts `useCanvasRegionFocus`). */
+    closeRef?: React.Ref<HTMLButtonElement>;
     /** The host is told which section is open and given its suggestion door,
      *  or null with no section open. A sealed document is reported as not editable. */
     onEditorBridge?: (bridge: EditorBridge | null) => void;
     /** A section the host asks to show; each new nonce is one request. */
     focusSection?: { id: string; nonce: number } | null;
+    /** A verified host read found saved changes; retained editors re-read without rebasing unsaved text. */
+    savedRefreshKey?: number;
   } | null;
   /** Surface-action bus id to register under, or null to register nothing —
    *  the canvas must not claim the bus while ConversationThread is on. */
@@ -1303,6 +1395,18 @@ export function DocumentWorkbench({
     return docs[0]?.id ?? null;
   }, [pinnedDocId, chosenDocId, docs]);
 
+  /* The outline, on demand (D4-4): a toggle in the bar shows and hides it, and the choice is remembered. While no
+     document is open it stays open, because then it is the document list. */
+  const [outlineOpen, setOutlineOpen] = useState(() => initialOutline(!!embedded));
+  const outlineId = useId();
+  const outlineToggleRef = useRef<HTMLButtonElement | null>(null);
+  const outlineForced = !activeDocId && docsState === 'ready';
+  const outlineShown = outlineOpen || outlineForced;
+  const setOutline = useCallback((open: boolean) => {
+    setOutlineOpen(open);
+    try { window.localStorage.setItem(OUTLINE_KEY, open ? 'open' : 'closed'); } catch { /* not remembered */ }
+  }, []);
+
   const { user } = useAuth();
   const readSession = useAuthoringReadSession(user);
   const readKey = JSON.stringify([readSession.actor, readSession.key, programId, activeDocId]);
@@ -1382,6 +1486,8 @@ export function DocumentWorkbench({
   useEffect(() => { setDraftPassage(null); }, [activeSectionId]);
   useEffect(() => { if (!aiDraftOpen) setDraftPassage(null); }, [aiDraftOpen]);
   const editorRef = useRef<RichSectionEditorHandle | null>(null);
+  const savedEditorRead = useRef({ sectionId: activeSectionId, rows: sections, dirty: editorDirty, saving, state: sectionsState });
+  savedEditorRead.current = { sectionId: activeSectionId, rows: sections, dirty: editorDirty, saving, state: sectionsState };
 
   /* ── A comment being anchored to a text range ──
      The editor's Comment button hands over the selection's anchor and waits;
@@ -1464,8 +1570,6 @@ export function DocumentWorkbench({
   const docAccess = readRefusal ? unavailableReadAccess(readRefusal) : currentMetadata?.refused
     ? unavailableReadAccess('The document could not be read with current access. Re-open it before a whole-document action.')
     : readDocumentAccess(currentMetadata?.access, partialRead ? 'sections' : undefined);
-  const assignRefusalId = useId();
-  const vaultRefusalId = useId();
   /* Bumped after a save or an export so the Exports rail re-reads. A save
      changes the live content hash, which is exactly what its verdict compares
      against — a rail left stale would keep saying "matches the last export"
@@ -1627,11 +1731,19 @@ export function DocumentWorkbench({
   /* The filing the open document is the editing copy of: an added market's
      Module 1 and 3.2.R when it is that market's copy (FILING_SPINE F22b),
      otherwise the project's home filing. */
-  const filing = useFilingOutline(projectIdForOutline, activeDoc?.c2c_document_id ?? null);
+  const binding = workingFilingBinding({ activeId: activeDocId, projectId: programId, listed: activeDoc,
+    header: sourceDocument, headerAnswered: Boolean(currentMetadata), headerAvailable: Boolean(metadataAvailable && !currentMetadata?.refused) });
+  const unboundDraft = Boolean(activeDocId && binding.known && binding.documentId === null);
+  // Keep the existing home-copy creation action; known-null copies borrow no requirements.
+  const filing = useFilingOutline(projectIdForOutline, binding.documentId,
+    { bindingUnavailable: Boolean(activeDocId && !binding.known), unboundDocument: unboundDraft });
   /* The outline's keys: a node the outline does not subdivide opens the
      document's sections under it (findSectionForNode; QA 2026-10-08, walk 2). */
   const outlineKeys = useMemo(() => Array.from(filing.flat, n => n.key), [filing.flat]);
-  const unboundDraft = !!activeDoc && activeDoc.module === null && !activeDoc.c2c_document_id;
+  const filingInventoryKey = useMemo(() => filingTargetInventoryKey(docs), [docs]);
+  const filingInventoryRef = useRef({ key: filingInventoryKey });
+  if (filingInventoryRef.current.key !== filingInventoryKey) filingInventoryRef.current = { key: filingInventoryKey };
+  const filingInventoryVisit = filingInventoryRef.current;
   const activeSection = sections.find(s => s.id === activeSectionId) ?? null;
   const docSealed =
     activeDoc != null && ['FROZEN', 'APPROVED'].includes(String(activeDoc.status).toUpperCase());
@@ -2092,6 +2204,7 @@ export function DocumentWorkbench({
      handled (defaultPrevented, e.g. the rename group) is not taken twice. */
   const railToggleRefs = useRef<Partial<Record<string, HTMLButtonElement | null>>>({});
   const railReturnFocusRef = useRef<string | null>(null);
+  const moreBtnRef = useRef<HTMLButtonElement | null>(null);
   const closeRail = useCallback(() => {
     setRail(current => {
       railReturnFocusRef.current = current;
@@ -2102,8 +2215,29 @@ export function DocumentWorkbench({
     if (rail !== null) return;
     const from = railReturnFocusRef.current;
     railReturnFocusRef.current = null;
-    if (from) railToggleRefs.current[from]?.focus({ preventScroll: true });
+    if (!from) return;
+    /* A rail its own act opened (the Exports rail from an export's recovery,
+       Review tasks after Send for review) has no opener in the bar since
+       D4-2: every rail is in More, so its close returns focus there rather
+       than dropping it on the page. */
+    const opener = railToggleRefs.current[from];
+    (opener?.isConnected ? opener : moreBtnRef.current)?.focus({ preventScroll: true });
   }, [rail]);
+  /* D4-2, the bar (D4.md §D4.B): a rail is opened from the control that names
+     it — the status word, "v{n}", Comments, or an item of the More menu — and
+     its close returns focus there. A menu item unmounts with its menu, so
+     More's own button is the return target for every rail it opens. */
+  const openRail = useCallback((id: Exclude<typeof rail, null>, from: HTMLButtonElement | null) => {
+    railToggleRefs.current[id] = from;
+    setRail(id);
+  }, []);
+  /* Stable, so a re-render does not take Comments' return target back from More. */
+  const commentsToggleRef = useCallback((el: HTMLButtonElement | null) => {
+    if (el) railToggleRefs.current.comments = el;
+  }, []);
+  /* New document and New section are drawn by AuthoringCreateExport, which
+     keeps their drawers mounted; the More menu asks for one by counting. */
+  const [createRequests, setCreateRequests] = useState({ document: 0, section: 0 });
   useEffect(() => {
     if (rail === null) return;
     const closeOnEscape = (event: KeyboardEvent) => {
@@ -2115,12 +2249,32 @@ export function DocumentWorkbench({
          own control — the canvas's Back bar — is the host's. */
       const t = event.target;
       if (t instanceof Node && t !== document.body && !rootRef.current?.contains(t)) return;
+      if (t instanceof Element && t.closest('[data-host-close]')) return;
       event.preventDefault();
       closeRail();
     };
     document.addEventListener('keydown', closeOnEscape);
     return () => document.removeEventListener('keydown', closeOnEscape);
   }, [closeRail, rail]);
+  /* D4-4: floating over a narrow page, the outline closes on Escape first, as a rail does, and focus returns to its
+     toggle. Docked in its own column it is not in the way, so Escape leaves it to the host. */
+  useEffect(() => {
+    if (!outlineShown || outlineForced) return;
+    const closeOverlay = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape' || event.defaultPrevented) return;
+      if (escapeBelongsToInner(event.target)) return;
+      if (document.querySelector('[role="dialog"], [role="alertdialog"]')) return;
+      const t = event.target;
+      if (t instanceof Node && t !== document.body && !rootRef.current?.contains(t)) return;
+      if (t instanceof Element && t.closest('[data-host-close]')) return;
+      if (!outlineOverlays(rootRef.current)) return;
+      event.preventDefault();
+      setOutline(false);
+      outlineToggleRef.current?.focus({ preventScroll: true });
+    };
+    document.addEventListener('keydown', closeOverlay);
+    return () => document.removeEventListener('keydown', closeOverlay);
+  }, [outlineShown, outlineForced, setOutline]);
 
   /* ── The document list is the host's ──
      The Authoring surface reads it (status filter, program scope) and the
@@ -2177,16 +2331,21 @@ export function DocumentWorkbench({
   const [storedStructure, setStructure] = useState<SectionStructure | null>(null);
   const structure = sectionsCurrent && sectionsState === 'ready' && !partialRead ? storedStructure : null;
   const sectionsGeneration = useRef(0);
+  const quietSectionRead = useRef<{ generation: number; quiet: boolean } | null>(null);
+  const [writtenRefreshKey, setWrittenRefreshKey] = useState(0);
   const loadedSectionsKey = useRef<string | null>(null);
   const loadSections = useCallback(async (docId: string, afterRead?: (rows: AuthSection[]) => void, recovery = false,
-    recoveryOwner?: { current: () => boolean; headers: Record<string, string> }) => {
+    recoveryOwner?: { current: () => boolean; headers: Record<string, string> }, options: { quiet?: boolean } = {}) => {
     if (recoveryOwner?.current() === false) throw new Error('The section recovery owner changed.');
     const scope = creationScopeRef.current;
     const generation = ++sectionsGeneration.current;
     const revision = authService.captureSessionReadGuard().sameRevision;
     const current = () => aliveRef.current && currentReadKey.current === readKey &&
       creationScopeRef.current === scope && generation === sectionsGeneration.current && readSession.sameRevision() && revision() && recoveryOwner?.current() !== false;
-    setSectionsState('loading');
+    const before = savedEditorRead.current;
+    const quiet = !!options.quiet && loadedSectionsKey.current === readKey && before.state === 'ready';
+    quietSectionRead.current = { generation, quiet };
+    if (!quiet) setSectionsState('loading');
     if (loadedSectionsKey.current !== readKey) setSections([]);
     loadedSectionsKey.current = readKey;
     setSectionsRead({ key: readKey });
@@ -2197,8 +2356,14 @@ export function DocumentWorkbench({
       if (recovery) throw new Error('The section recovery context changed.');
       return;
     }
+    quietSectionRead.current = null;
     if (!usableSectionRead(ok, body, docId, recovery)) {
-      if (authoringReadRefused(status, body)) {
+      const refused = authoringReadRefused(status, body);
+      if (quiet && !refused) {
+        setTargetNotice(SECTION_REFRESH_FAILED);
+        return;
+      }
+      if (refused) {
         metadataGeneration.current += 1;
         setMetadataRead({ key: readKey, refused: true });
       }
@@ -2208,7 +2373,13 @@ export function DocumentWorkbench({
       if (recovery) throw new Error('The section recovery read could not be verified.');
       return;
     }
-    const list = Array.isArray(body.sections) ? body.sections : [];
+    const incomingRows = Array.isArray(body.sections) ? body.sections : [];
+    const adopted = refreshedSectionRows(incomingRows, before, savedEditorRead.current, editorRef.current);
+    const list = adopted.rows;
+    // Keep the saved base with its live buffer: adopting only a newer timestamp would permit a blind overwrite.
+    setContentEpoch(epoch => adopted.remount ? epoch + 1 : epoch);
+    setTargetNotice(notice => adopted.held ? SECTION_REFRESH_HELD
+      : notice === SECTION_REFRESH_HELD || notice === SECTION_REFRESH_FAILED ? null : notice);
     setSectionsRead({ key: readKey, readScope: body.readScope });
     setSections(list);
     /* Two document-level facts no single section can show: a code filed twice,
@@ -2234,6 +2405,17 @@ export function DocumentWorkbench({
     afterRead?.(list);
   }, [programId, readKey, readSession]);
   sectionLoaderRef.current = loadSections;
+
+  /** Retire a pre-write background read before its old row can follow the confirmed write in one React batch. */
+  const retireQuietSectionRead = useCallback((scope: { key: string }, sectionId: string) => {
+    if (creationScopeRef.current !== scope || !savedEditorRead.current.rows.some(row => row.id === sectionId)) return;
+    const read = quietSectionRead.current;
+    if (!read?.quiet || read.generation !== sectionsGeneration.current) return;
+    sectionsGeneration.current += 1;
+    quietSectionRead.current = null;
+    // Re-read after the confirmed row commits, so other sections from the retired read are not left stale.
+    setWrittenRefreshKey(key => key + 1);
+  }, []);
 
   const openCreatedSection = useCallback(async (section: { id: string; code: string }) => {
     if (!activeDocId || programSwitchHeld) return;
@@ -2293,7 +2475,10 @@ export function DocumentWorkbench({
     onReviewSection: sectionId => {
       const refusal = linkedTargetRefusal();
       if (refusal) { fireToast(refusal, 'error'); return; }
-      requestLeaveRef.current({ kind: 'section', id: sectionId, mode: 'section', draftReview: true });
+      /* Decision 4 (CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md, slices 3–4): the person asked to review this section's
+         retained candidate, so a passage view left open on it gives way to the section's draft review. Another
+         section clears it on its own (the passage belongs to its section); the same section did not. */
+      if (requestLeaveRef.current({ kind: 'section', id: sectionId, mode: 'section', draftReview: true })) setDraftPassage(null);
     },
   });
   assemblyLeaveRefusalRef.current = assembly.leaveRefusal;
@@ -2329,6 +2514,16 @@ export function DocumentWorkbench({
     return () => { sectionsGeneration.current += 1; };
   }, [activeDocId, loadSections, creationScopeKey, readRefusal]);
 
+  const savedRefreshKey = embedded?.savedRefreshKey;
+  const lastSavedRefresh = useRef({ readKey, value: savedRefreshKey, written: writtenRefreshKey });
+  useEffect(() => {
+    const previous = lastSavedRefresh.current;
+    lastSavedRefresh.current = { readKey, value: savedRefreshKey, written: writtenRefreshKey };
+    const unchanged = previous.value === savedRefreshKey && previous.written === writtenRefreshKey;
+    if (previous.readKey !== readKey || unchanged || !activeDocId || readRefusal) return;
+    void loadSections(activeDocId, undefined, false, undefined, { quiet: true });
+  }, [savedRefreshKey, writtenRefreshKey, readKey, activeDocId, readRefusal, loadSections]);
+
   /* F4: a click on an outline node with no section here starts it — created
      through POST /api/authoring/sections, opened, the cursor put in it — but
      only in the document that is the filing's editing copy. */
@@ -2337,7 +2532,7 @@ export function DocumentWorkbench({
     activeSectionId, docPane: () => docScrollRef.current,
   });
   /* F22b: a market's editing copy, created bound to its document and opened. */
-  const treeTitleRef = useRef<HTMLDivElement>(null);
+  const treeTitleRef = useRef<HTMLSpanElement>(null);
   const marketCopy = useCreateMarketCopy({
     programId, fireToast, openDocument: openPulledDocument, focusOpened: () => treeTitleRef.current?.focus(),
   });
@@ -2452,6 +2647,25 @@ export function DocumentWorkbench({
         if (current() && !ceremonyOpen()) { setTargetNotice(null); setSourceDocumentStart(start); }
       } });
   }, [openPulledDocument]);
+  const openNamedFilingTarget = useCallback(async (intent: { target: EditorTarget; docType: string; scope: { key: string };
+    sequence: number; current: () => boolean }) => {
+    const { target, docType, scope, sequence, current } = intent;
+    const sameInventory = () => filingInventoryRef.current === filingInventoryVisit;
+    const result = await resolveFilingSectionTarget({ projectId: programId, docType, target, docs, read: readJson,
+      current: () => current() && sameInventory() && creationScopeRef.current === scope && navigationSequence.current === sequence });
+    if (!current() || !linkedReadStillCurrent(scope, sequence)) return;
+    if (!sameInventory()) { setTargetNotice('The accessible document list or its filing bindings changed. Retry the linked filing; nothing was selected.'); return; }
+    if (result.kind === 'retired') return;
+    if (result.kind !== 'match' && result.kind !== 'document') { setTargetNotice(`Couldn’t open ${describeEditorTarget(target)} — ${result.message}`); return; }
+    const sectionId = result.kind === 'match' ? result.section.id : undefined;
+    const label = result.kind === 'match' ? `${result.section.code} · ${result.section.title} — ${editorTargetDocLabel(docType)} filing`
+      : `${editorTargetDocLabel(docType)} filing’s working copy`;
+    // Recheck the captured visit through the unsaved decision; requestLeave advances its own navigation counter.
+    const opened = requestLeaveRef.current({ kind: 'document', id: result.documentId, sectionId,
+      current: () => current() && sameInventory() && creationScopeRef.current === scope });
+    setTargetNotice(null); setTreeScrollNonce(n => n + 1);
+    fireToast(opened ? `Opened ${label}.` : `${label} will open once you decide about the unsaved work here.`);
+  }, [docs, programId, filingInventoryVisit, linkedReadStillCurrent, fireToast]);
   useEffect(() => {
     if (targetAttemptedRef.current) return;
     if (!sectionOpenTarget || docsState === 'loading' || programSwitchHeld) return;
@@ -2513,13 +2727,12 @@ export function DocumentWorkbench({
       }
       return;
     }
-    // Only the section flow consults the governed outline; its guards below
-    // need the filing settled before the one attempt is spent.
-    if (filing.loading) return;
+    // A named family resolves its own filing, independently of the default outline.
+    if (!t.docType && filing.loading) return;
     targetAttemptedRef.current = true;
     // A hand-off that named no section carried only program scope, which
     // window.C2C_PROJECT already delivered. Nothing more was claimed.
-    if (!t.sectionCode && !t.sectionLabel) return;
+    if (!t.sectionCode && !t.sectionLabel && !t.filingDocumentId) return;
     // A navigation-directive target claims no document family; the guards and
     // notices below only speak of one when the sender actually named it.
     const family = editorTargetDocLabel(t.docType);
@@ -2532,23 +2745,14 @@ export function DocumentWorkbench({
       );
       return;
     }
-    if (t.docType && filing.document && filing.document.doc_type !== t.docType) {
-      setTargetNotice(
-        `Couldn’t open ${wanted} — this project’s governed dossier is ` +
-          `${filing.document.doc_type.toUpperCase()}, not ${family}. ` +
-          'Showing the editor’s default view instead.'
-      );
-      return;
-    }
     const scope = creationScopeRef.current;
     const sequence = navigationSequence.current;
     void (async () => {
       const revision = authService.captureSessionReadGuard().sameRevision;
       const current = () => aliveRef.current && currentReadKey.current === readKey && revision() && readSession.sameRevision();
-      // The docs list is program-scoped (or the org's current filter); a
-      // program's dossier is one or a few documents, so the search is bounded
-      // defensively rather than paged.
-      for (const d of docs.slice(0, 8)) {
+      if (t.docType) { await openNamedFilingTarget({ target: t, docType: t.docType, scope, sequence, current }); return; }
+      // Legacy untyped matching retains its behavior over the complete admitted list.
+      for (const d of docs) {
         const { ok, body } = await readJson<{ sections?: AuthSection[] }>(
           authoringCurrentReadPath(d.id, programId, true)
         );
@@ -2603,6 +2807,7 @@ export function DocumentWorkbench({
     linkedReadStillCurrent,
     pinnedDocId,
     openSourceDocumentStart,
+    openNamedFilingTarget,
   ]);
 
   /* ── Open-by-document-type hand-off (navigate_to `authoringDocType`) ──
@@ -3346,6 +3551,7 @@ export function DocumentWorkbench({
         const adopted = (json as { section?: AuthSection })?.section;
         confirmedSaveVersionRef.current = { sectionId: activeSection.id, updatedAt: adopted?.updated_at ?? null };
         const persisted = adopted?.content ?? serialized;
+        retireQuietSectionRead(assemblyHostScope, activeSection.id);
         // Adopt the server row (revision counter, updated_at) into the tree.
         setSections(ss =>
           ss.map(s =>
@@ -3426,7 +3632,7 @@ export function DocumentWorkbench({
         setSaving(false);
       }
     },
-    [activeSection, rail, loadHistory, fireToast]
+    [activeSection, rail, loadHistory, fireToast, assemblyHostScope, retireQuietSectionRead]
   );
 
   /* ── Upload a figure into the governed image store ──
@@ -3474,6 +3680,7 @@ export function DocumentWorkbench({
   const toggleTrackChanges = useCallback(
     async (on: boolean) => {
       if (!activeSection) throw new Error('No section open');
+      const expectedUpdatedAt = activeSection.updated_at;
       /* apiRequest THROWS the server's real refusal (a frozen document), and the
          editor's toggleTrack swallows the rethrow to keep its state truthful —
          so the author got no reason at all. The reason is said here, then the
@@ -3482,6 +3689,7 @@ export function DocumentWorkbench({
       try {
         res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
           track_changes: on,
+          ...(expectedUpdatedAt ? { expectedUpdatedAt } : {}),
         });
       } catch (e) {
         fireToast(
@@ -3502,7 +3710,16 @@ export function DocumentWorkbench({
         );
         throw new Error('track toggle refused');
       }
-      setSections(ss => ss.map(s => (s.id === activeSection.id ? { ...s, track_changes: on } : s)));
+      const updatedAt = (json as { section?: AuthSection } | null)?.section?.updated_at;
+      // The mode changed against the version this editor loaded. Carry its new
+      // token without adopting content, and never regress a newer save that
+      // settled while this response was in flight. An unversioned request
+      // cannot vouch that the returned token still describes our loaded text.
+      setSections(ss => ss.map(s => (s.id === activeSection.id ? {
+        ...s, track_changes: on,
+        ...(expectedUpdatedAt && s.updated_at === expectedUpdatedAt && typeof updatedAt === 'string'
+          ? { updated_at: updatedAt } : {}),
+      } : s)));
       fireToast(
         on
           ? 'Track changes on — edits are captured as attributed suggestions until accepted or rejected.'
@@ -3562,6 +3779,7 @@ export function DocumentWorkbench({
         }
         const adopted = (json as { section?: AuthSection })?.section;
         const content = adopted?.content ?? '';
+        retireQuietSectionRead(assemblyHostScope, activeSection.id);
         setSections(ss =>
           ss.map(s => (s.id === activeSection.id ? { ...s, ...(adopted ?? {}), content } : s))
         );
@@ -3579,7 +3797,7 @@ export function DocumentWorkbench({
         );
       }
     },
-    [activeSection, loadHistory, fireToast]
+    [activeSection, loadHistory, fireToast, assemblyHostScope, retireQuietSectionRead]
   );
 
   /* ── Add a comment on the active section ──
@@ -3978,6 +4196,7 @@ export function DocumentWorkbench({
         return;
       }
       const content = section.content;
+      retireQuietSectionRead(assemblyHostScope, activeSectionId);
       setSections(ss =>
         ss.map(x => (x.id === section.id ? { ...x, ...(section as Partial<AuthSection>), content } : x)),
       );
@@ -4000,7 +4219,7 @@ export function DocumentWorkbench({
       void loadSources(activeSectionId);
       if (activeDocId) void loadAudit(activeDocId);
     },
-    [activeSectionId, activeDocId, assemblyHostScope, markAssemblyAccepted, loadHistory, loadSources, loadAudit, fireToast],
+    [activeSectionId, activeDocId, assemblyHostScope, markAssemblyAccepted, loadHistory, loadSources, loadAudit, fireToast, retireQuietSectionRead],
   );
 
   /** Post one reviewer action — one decision, or a whole accept/reject-all.
@@ -4093,9 +4312,10 @@ export function DocumentWorkbench({
     [activeDocId, flushDecisions],
   );
 
-  const draftPrompt = activeSection
-    ? `Draft ${activeSection.code} ${activeSection.title} from the linked section evidence.`
-    : 'Draft this section from the linked section evidence.';
+  /* The person's words only. The section travels in the saved origin (askAna, originWithSavedVersion), so a stored
+     title, which anyone with the edit right can write, never becomes part of what the person asks (2ae0b1cb5a's
+     guarantee). It is the sentence the empty section's "Draft with AnA" already sends. */
+  const draftPrompt = 'Draft this section from the linked section evidence.';
 
   // What the filing outline was built FROM, in the words the filer sees.
   // Null only when there is no governed document, in which case there is no
@@ -4117,21 +4337,36 @@ export function DocumentWorkbench({
     onRefiled: () => { if (rail === 'audit' && activeDocId) void loadAudit(activeDocId); },
   });
 
+  /* What the bar says (D4-2): the version, the comment count, the save state,
+     and — from the crumbs it replaced — the project and the module. */
+  const revs = num(activeSection?.revision_count);
+  const cc = num(activeSection?.comment_count);
+  const citations = num(activeSection?.citation_count);
+  const savedAt = activeSection?.updated_at ?? activeDoc?.updated_at ?? null;
+  const headline = programHeadline(program);
+  const moduleWord = activeDoc ? activeDoc.module ?? (activeDoc.c2c_document_id ? 'Unassigned module' : 'Unbound draft') : null;
+  const draftRefusal = editRefusal ?? (docSealed ? 'This document is frozen — new drafts cannot be inserted.'
+    : narrativeReference ? 'These narratives are held by reference: they are read here, not drafted.' : undefined);
+
   return (
-    <div className="ed" ref={rootRef} data-comments={rail != null || undefined} data-rail={rail ?? undefined}>
+    <div className="ed" ref={rootRef} data-comments={rail != null || undefined} data-rail={rail ?? undefined}
+      data-outline={outlineShown ? 'open' : 'closed'}>
       {readRefusal ? <div className="scaf-note" role="alert">{readRefusal}</div> : <>
       {/* ── Left: document + section tree ── */}
-      <aside className="ed-tree">
+      <aside className="ed-tree" id={outlineId} hidden={!outlineShown} aria-label="Outline">
         <div className="ed-tree-h">
-          {/* Focusable by script only: after a market's editing copy is created
-              and opened, focus lands here, on the opened document's name
-              (accessibility review, 2026-10-15; FilingMarkets.tsx). */}
-          <div className="ed-tree-t" tabIndex={-1} ref={treeTitleRef}>
+          {/* The project and the module, from the crumbs the bar replaced (D4-2). */}
+          {(headline || moduleWord) && (
+            <div className="ed-tree-p" title={program?.name ?? undefined} data-testid="ed-tree-p">
+              {[headline, moduleWord].filter(Boolean).join(' · ')}
+            </div>
+          )}
+          <div className="ed-tree-t">
             {unboundDraft ? activeDoc?.title : filing.document ? filing.document.title : pinnedDocId ? (activeDoc?.title ?? 'Document') : 'Document tree'}
           </div>
           <div className="ed-tree-m">
             {unboundDraft ? 'Saved draft sections · unbound' : filing.document
-              ? `${filing.document.doc_type.toUpperCase()} · ${filing.document.agency.toUpperCase()} · ${
+              ? `${filing.document.doc_type.toUpperCase()} · ${filingAuthorityLabel(filing.document)} · ${
                   filing.flat.length
                 } sections`
               : docsState === 'ready'
@@ -4178,19 +4413,20 @@ export function DocumentWorkbench({
         </div>
 
         {/* The project's filings: its home filing and each market added to it
-            (FILING_SPINE F22b), and from here, which one to open. */}
-        {!unboundDraft && !pinnedDocId && (
-          <FilingMarkets
-            home={filing.home}
-            markets={filing.markets}
-            marketsError={filing.marketsError}
-            shownId={filing.document?.id ?? null}
-            docs={docs}
-            onOpen={(id) => requestLeave({ kind: 'document', id })}
-            onCreate={(m) => void marketCopy.create(m)}
-            creatingId={marketCopy.creatingId}
-          />
-        )}
+            (FILING_SPINE F22b), and from here, which one to open. While a
+            working or pinned document is open, only a home filing with no
+            editing copy is listed, so its create is always reachable. */}
+        <FilingMarkets
+          home={filing.home}
+          markets={filing.markets}
+          marketsError={filing.marketsError}
+          shownId={filing.document?.id ?? null}
+          docs={docs}
+          onOpen={(id) => requestLeave({ kind: 'document', id })}
+          onCreate={(m, home) => void marketCopy.create(m, home)}
+          creatingId={marketCopy.creatingId}
+          quiet={unboundDraft || !!pinnedDocId}
+        />
 
         {/* ── What the outline below was built FROM ──
             Until this shipped, a tree transcribed from 21 CFR 814.20(b) and a
@@ -4199,15 +4435,16 @@ export function DocumentWorkbench({
             they were drafting against. The provenance columns recorded the
             difference; this is where it becomes visible. */}
         {provenance && filing.tree.length > 0 && (
-          <div className="ed-basis">
-            <div className="ed-basis-h">
+          /* One click away rather than a paragraph above every row (D4-4): the headline keeps its tone. */
+          <details className="ed-basis">
+            <summary>
               <span className="ed-basis-chip" data-tone={provenance.tone}>
                 {provenance.headline}
               </span>
-              <span className="ed-basis-l">outline basis</span>
-            </div>
+              <span className="ed-basis-l">About this outline</span>
+            </summary>
             <p className="ed-basis-d">{provenance.detail}</p>
-          </div>
+          </details>
         )}
 
         {/* ── The governed filing outline, when this project has one ──
@@ -4239,7 +4476,8 @@ export function DocumentWorkbench({
                   key={node.key}
                   className="ed-tree-row"
                   data-active={isActive || undefined}
-                  style={{ paddingLeft: 10 + node.depth * 12, opacity: bound || sectionsUnread ? 1 : 0.62 }}
+                  data-unstarted={(!bound && !sectionsUnread) || undefined}
+                  style={{ paddingLeft: 8 + node.depth * 12 }}
                   title={
                     readState !== 'ready'
                       ? unboundNodeTitle(node.label, readState)
@@ -4267,24 +4505,18 @@ export function DocumentWorkbench({
                   }}
                 >
                   <span className="ed-num">{node.key}</span>
-                  <span className="ed-lbl" style={{ fontWeight: node.depth === 0 ? 600 : 400 }}>
+                  <span className="ed-lbl" data-depth={node.depth}>
                     {node.label}
                   </span>
                   {node.mandatory && !bound && !sectionsUnread && (
-                    <span
-                      className="rd-chip tone-idle"
-                      style={{ marginLeft: 'auto' }}
-                      title="Required by the rule pack"
-                    >
-                      required
-                    </span>
+                    <span className="ed-req" title="Required by the rule pack"><span className="sr-only">required</span></span>
                   )}
                   {/* Asked of BOTH stores. node.has_content reads the governed
                       c2c_document_sections; this editor writes authoring_sections,
                       so on its own the dot could never light for anything drafted
                       here. See nodeHasDraft. */}
                   {nodeHasDraft(node, bound) && (
-                    <span className="ed-dot" data-s="ok" title={node.status} />
+                    <span className="ed-dot" data-s="ok" title={node.status}><span className="sr-only">drafted</span></span>
                   )}
                 </button>
               );
@@ -4293,14 +4525,16 @@ export function DocumentWorkbench({
         )}
 
         {!unboundDraft && filing.document?.filing_scope === 'market' && (
-          <FilingGaps gaps={filing.gaps} agency={filing.document.agency} />
+          <FilingGaps gaps={filing.gaps} agency={filing.document.agency} docType={filing.document.doc_type} />
         )}
 
         {/* Why there is no outline, said plainly rather than as a blank pane.
             A project with no governed document is usually not a fault: program
             types ivd/device/ide/biologic/anda have no rule pack, and the
-            scaffolder skips them deliberately. */}
-        {filing.reason === 'no-governed-document' && (
+            scaffolder skips them deliberately. Said only when the tree is
+            otherwise empty: above a document's own headings it read as
+            "nothing here" (seen in the running app, 2026-10-31). */}
+        {filing.reason === 'no-governed-document' && docs.length === 0 && (
           <div className="scaf-note" style={{ padding: '10px 12px', fontSize: 12 }}>
             This project has no governed filing document, so there is no section outline to show.
             Projects created before scaffolding — and project types with no rule pack — fall here.
@@ -4370,7 +4604,7 @@ export function DocumentWorkbench({
                   >
                     <span className="ed-num">{d.module ?? '—'}</span>
                     <span className="ed-lbl">{d.title}</span>
-                    <span className="rd-chip tone-idle" style={{ marginLeft: 'auto' }}>
+                    <span className="ed-tree-n">
                       {/* null is "not counted", not zero */}
                       {d.section_count == null ? '—' : num(d.section_count)}
                     </span>
@@ -4427,7 +4661,7 @@ export function DocumentWorkbench({
                           onClick={() => requestLeave({ kind: 'section', id: s.id })}
                           style={{ paddingLeft: 22 }}
                         >
-                          <span className="ed-num">{s.code}</span>
+                          <span className="ed-num">{sectionNumberLabel(s.code)}</span>
                           <span className="ed-lbl">{s.title}</span>
                           {num(s.comment_count) > 0 && (
                             <span
@@ -4445,93 +4679,102 @@ export function DocumentWorkbench({
             })
           )}
         </div>
+        {!unboundDraft && filing.tree.length > 0 && (
+          <p className="ed-tree-key" aria-hidden="true">
+            <span className="ed-req" /> required, not started · <span className="ed-dot" data-s="ok" /> drafted
+          </p>
+        )}
       </aside>
 
       {/* ── Center: editable canvas ── */}
       <section className="ed-doc">
-        <header className="ed-doc-h">
-          <div className="ed-crumbs">
-            {((embedded && !embedded.hostShowsBack) || (!embedded && returnTo)) && (
+        {/* ── The bar (D4-2, D4.md §D4.B) ──
+            One row where a 25-control header wrapped into three to seven: the
+            title and its state, then the view switch, presence and lock, Save,
+            AnA (✻), Comments, Download and More (⋯). Every act the header had
+            is reached from here or from one of the two menus, by its old name
+            and test id, through the handler it already had. The crumbs went:
+            the project and module are in the outline's header and the title's
+            tooltip, the section code is the masthead's.
+            Freeze, E-sign, Place into filing and Re-file saved text stay in the
+            bar, mounted as they were, until D4-3 gives them the inspector. */}
+        <header className="dcv-bar ed-bar" data-testid="ed-bar">
+          <button ref={outlineToggleRef} type="button" className="btn ed-ico" onClick={() => setOutline(!outlineOpen)}
+            disabled={outlineForced} aria-controls={outlineId} aria-expanded={outlineShown}
+            aria-label={outlineShown ? 'Hide the outline' : 'Show the outline'}
+            title={outlineForced ? 'The outline lists the documents while none is open' : outlineShown ? 'Hide the outline' : 'Show the outline'}
+            data-testid="ed-outline-toggle">
+            {I.panelLeft}
+          </button>
+          {embedded?.onShowList && <ToDocumentsButton count={embedded.listCount ?? null} onClick={embedded.onShowList} />}
+          <div className="ed-bar-id">
+            {/* Focusable by script only: after a market's editing copy is created and opened, focus lands on the
+                opened document's name (accessibility review, 2026-10-15; FilingMarkets.tsx). It was the outline's
+                title until D4-4 made the outline closable. */}
+            <span className="dcv-bar-t" tabIndex={-1} ref={treeTitleRef}
+              title={activeDoc ? [activeDoc.title, headline].filter(Boolean).join(' — ') : undefined}>
+              {activeDoc?.title ?? (docsState === 'ready' ? 'No document open' : 'Documents')}
+            </span>
+            <span className="dcv-bar-p">
+              {activeDoc && (
+                <button type="button" className="ed-status" title="Review and sign"
+                  onClick={e => openRail('tasks', e.currentTarget)} data-testid="ed-status">
+                  <StatusPill status={activeDoc.status ?? null} testId="dc-status" />
+                </button>
+              )}
+              {activeSection && (
+                <button type="button" className="ed-ver" onClick={e => openRail('history', e.currentTarget)}
+                  aria-label={`Versions: ${revs} revision${revs === 1 ? '' : 's'} of ${activeSection.code}`} data-testid="ed-versions">
+                  v{Math.max(revs, 1)}
+                </button>
+              )}
+              <span className="ed-saved" data-dirty={dirty || undefined} data-testid="ed-saved">
+                {dirty ? 'Unsaved changes — on this device only' : savedAt ? `Saved ${relTime(savedAt)}` : ''}
+              </span>
+            </span>
+          </div>
+          <div className="ed-bar-acts">
+            {/* Section / Document. An author writes a section but SHIPS a
+                document, and until now the whole document was never on screen
+                at any point in the workflow. */}
+            <div className="seg ed-view" role="group" aria-label="Editor view">
               <button
                 type="button"
-                className="ed-back"
-                onClick={() => {
-                  const refusal = linkedTargetRefusal();
-                  if (refusal) { fireToast(refusal, 'error'); return; }
-                  if (embedded) requestLeave({ kind: 'host-back', label: embedded.backLabel ?? 'the previous workspace', onContinue: embedded.onBack });
-                  else if (returnTo && !programSwitchHeld) requestLeave({ kind: 'host-back', label: 'the AnA conversation', onContinue: () => openConversationWithPrompt(null, onNav, returnTo.conversationId) });
-                }}
-                data-testid="workbench-back"
+                className="seg-b"
+                onClick={() => requestLeave({ kind: 'view', mode: 'section' })}
+                aria-pressed={viewMode === 'section'}
+                title="Edit one section"
               >
-                {I.left} {embedded?.backLabel ?? 'Back to conversation'}
+                Section
               </button>
+              <button
+                type="button"
+                className="seg-b"
+                onClick={() => requestLeave({ kind: 'view', mode: 'document' })}
+                aria-pressed={viewMode === 'document'}
+                title="Read the whole document"
+                disabled={!activeDocId}
+              >
+                Document
+              </button>
+            </div>
+            {activeDoc && (
+              <AuthoringCollab
+                documentId={activeDoc.id}
+                /* The section only once it is this document's: on switching
+                   documents the previous one's section id rode along for a
+                   render, and the room join was refused (403) for the pair. */
+                sectionId={readableSourceSectionId}
+                fireToast={fireToast}
+              />
             )}
-            {programHeadline(program) && (
-              <>
-                <span className="ed-program" title={program?.name ?? undefined}>
-                  {programHeadline(program)}
-                </span>
-                <span className="sep" aria-hidden="true">›</span>
-              </>
-            )}
-            <span className="sep-first">{activeDoc?.module ?? (activeDoc ? (activeDoc.c2c_document_id ? 'Unassigned module' : 'Unbound draft') : 'eCTD')}</span>
-            <span className="sep" aria-hidden="true">›</span>
-            <span className="doc-title" title={activeDoc?.title ?? undefined}>
-              {activeDoc?.title ?? 'No document'}
-            </span>
-            {activeSection && (
-              <>
-                <span className="sep" aria-hidden="true">›</span>
-                <span className="here">{activeSection.code}</span>
-              </>
-            )}
-          </div>
-          {/* The governed acts — the reason for change, Save, lock / freeze /
-              e-sign, Place into filing — are a group of their own that wraps
-              and is never clipped. They sat at the far end of the panel
-              scroller below, past its edge at 1440px and at 390px, so an
-              author could not see Save or E-sign without scrolling a strip
-              that did not look scrollable (QA 2026-10-08, walk 2, j5). */}
-          <div className="ed-doc-commit" role="group" aria-label="Save and sign">
             {/* Reason for change, stated once per section and carried on every
-                save of it. Inline beside Save rather than a dialog: there is no
-                autosave here, but Save and ⌘S each fire many times while
-                working through a section, and a modal on each would be the
-                friction the regulation does not ask for. */}
-            {/* 2026-09-28, coverage-gap sweep GA-1: the rule lived in the
-                placeholder, gone after one keystroke, and why Save stayed
-                inert was a `title` on a disabled button, which a keyboard
-                never reaches. The field is now aria-required, and the rule is
-                a persistent note both the field and Save are described by —
-                the ProtocolDevSection `pde-sec-state` pattern. */}
-            {dirty && !docSealed && (
-              <>
-                <input
-                  className="de-input"
-                  style={{ height: 30, width: 260 }}
-                  value={changeReason}
-                  onChange={e => setChangeReason(e.target.value)}
-                  placeholder="Why this changed (at least 8 characters)"
-                  aria-label="Reason for change"
-                  aria-required="true"
-                  aria-describedby={reasonNoteId}
-                  data-testid="change-reason"
-                />
-                <span
-                  id={reasonNoteId}
-                  aria-live="polite"
-                  style={{ fontSize: 11.5, color: 'var(--text-400)', maxWidth: 220 }}
-                  data-testid="change-reason-note"
-                >
-                  {changeReason.trim().length < 8
-                    ? 'Required to save: at least 8 characters, recorded with the revision.'
-                    : 'Recorded with the revision.'}
-                </span>
-              </>
-            )}
+                save of it: the strip under the bar, while there is something to
+                save. Save is the one primary only then; clean, it is the quiet
+                state word ("Saved", "Read only", "Frozen"). */}
             <button
-              className="btn primary"
-              style={{ height: 30 }}
+              type="button"
+              className={dirty ? 'btn primary ed-save' : 'btn ed-save'}
               onClick={() => void editorRef.current?.save()}
               aria-describedby={dirty && !docSealed ? reasonNoteId : undefined}
               disabled={!dirty || saving || contentReadOnly || changeReason.trim().length < 8}
@@ -4551,6 +4794,8 @@ export function DocumentWorkbench({
                   document or section open ("eCTD › No document" … "Saved"). */}
               {I.check} {saving ? 'Saving…' : editRefusal ? 'Read only' : docSealed ? 'Frozen' : dirty ? 'Save' : activeSection ? 'Saved' : 'Save'}
             </button>
+            {/* The governed acts D4-3 moves into the inspector (D4.md §D4.F),
+                mounted exactly as they were until then. */}
             {activeDoc && (
               <AuthoringFilingBar
                 key={activeDoc.id}
@@ -4570,14 +4815,15 @@ export function DocumentWorkbench({
                    control stays open for that one meaning (QA 2026-10-08, j4). */
                 esignRefusal={esignReviewOnly(docAccess) ? null : actRefusal(docAccess.esign)}
                 reviewOnly={esignReviewOnly(docAccess)}
+                signerIsAuthor={signedInUserCreated(activeDoc.created_by, user?.id)}
                 workflowOrigin={docProvenance?.importSource && isWorkflowImportOrigin(docProvenance.importSource) ? docProvenance.importSource : undefined}
                 docRevision={`${activeDoc.updated_at ?? ''}:${contentEpoch}:${sections.map(s => s.updated_at ?? '').join('|')}`}
+                /* P-95: an approval refused because review is not complete offers the same Send for review. */
+                onSendForReview={() => { if (activeDocId) setSendForReviewOpen({ context: writerContext, documentId: activeDocId }); }}
               />
             )}
             {/* The authoring → filing seam: place the OPEN document into an
-                eCTD sequence of the canonical submission core. Beside the
-                freeze/e-sign bar because it is the same family of act — the
-                document leaving the editor for the governed record. */}
+                eCTD sequence of the canonical submission core. */}
             {activeDoc && (
               <AuthoringPlaceIntoFiling
                 docId={activeDoc.id}
@@ -4594,9 +4840,73 @@ export function DocumentWorkbench({
                 fireToast={fireToast}
               />
             )}
-          </div>
-          <div className="ed-doc-actions">
             {refileSavedText}
+            {/* AnA's help, one entry point (D4.md §D4.G step 1). "Draft with
+                AnA" asks in the conversation, whose text is inserted as a
+                tracked suggestion (author lineage). "Draft from sources"
+                retrieves the Data Room and accepts through the ONE endpoint
+                that records verified span-level source citations alongside the
+                content, in the same transaction: the same act, a different
+                record. "Review with AnA" is the four asks and their note. */}
+            <MenuButton ariaLabel="AnA" title="Ask AnA" icon={<span className="ed-spark" aria-hidden="true">✻</span>}
+              menuLabel="Ask AnA about this document" testId="ed-ana">
+              {close => (
+                <>
+                  <div role="group" aria-label="Draft" className="dlm-group">
+                    <MenuItem
+                      label="Draft with AnA"
+                      disabled={contentReadOnly}
+                      note={contentReadOnly ? draftRefusal : undefined}
+                      onChoose={() => { close(); askAna(draftPrompt); }}
+                    />
+                    <MenuItem
+                      label="Draft from sources"
+                      disabled={!activeSection || contentReadOnly || selectedSourceReviewMissing}
+                      note={
+                        editRefusal ? editRefusal : docSealed
+                          ? 'This document is frozen — its content cannot be edited.'
+                          : narrativeReference
+                            ? draftRefusal
+                          : !activeSection
+                            ? 'Open a section to draft it.'
+                            : selectedSourceReviewMissing
+                              ? 'Build a candidate from these selected sources first, then review it in this editor.'
+                              : 'Draft this section from Data Room evidence and accept it with recorded citations.'
+                      }
+                      onChoose={() => {
+                        close();
+                        /* The panel lives in the section view — document view assembles
+                           sections for reading and edits none of them. Toggling open
+                           state from here would be a click with no visible effect, so
+                           it goes to the section it is about to draft instead. */
+                        if (viewMode === 'document') {
+                          setDraftPassage(null);
+                          setViewMode('section');
+                          setAiDraftOpen(true);
+                          return;
+                        }
+                        setAiDraftOpen(o => !o);
+                      }}
+                      testId="ai-draft-open"
+                    />
+                  </div>
+                  <AuthoringOversightActions variant="menu" projectOpen={!!programId} sectionOpen={!!activeSection}
+                    documentOpen={!!activeDocId} dirty={dirty} onAsk={askAna} onChoose={close} />
+                </>
+              )}
+            </MenuButton>
+            <button
+              type="button"
+              className="btn ed-ico"
+              ref={commentsToggleRef}
+              onClick={e => { if (rail === 'comments') setRail(null); else openRail('comments', e.currentTarget); }}
+              aria-pressed={rail === 'comments'}
+              aria-label={`Comments${cc > 0 ? ` ${cc}` : ''}`}
+              title="Comments"
+              data-testid="ed-comments-open"
+            >
+              {I.messageSquare}{cc > 0 && <span className="ed-n" aria-hidden="true">{cc}</span>}
+            </button>
             <AuthoringCreateExport
               docId={activeDoc?.id ?? null}
               docTitle={activeDoc?.title ?? null}
@@ -4620,264 +4930,156 @@ export function DocumentWorkbench({
                 setExportsEpoch(e => e + 1);
                 setRail('exports');
               }}
+              triggers="download"
+              requests={createRequests}
             />
-            {/* Section / Document. An author writes a section but SHIPS a
-                document, and until now the whole document was never on screen
-                at any point in the workflow. */}
-            <div className="ed-viewtoggle" role="group" aria-label="Editor view">
-              <button
-                className="btn ghost"
-                style={{ height: 30 }}
-                onClick={() => requestLeave({ kind: 'view', mode: 'section' })}
-                data-active={viewMode === 'section' || undefined}
-                aria-pressed={viewMode === 'section'}
-                title="Edit one section"
-              >
-                {I.penLine} Section
-              </button>
-              <button
-                className="btn ghost"
-                style={{ height: 30 }}
-                onClick={() => requestLeave({ kind: 'view', mode: 'document' })}
-                data-active={viewMode === 'document' || undefined}
-                aria-pressed={viewMode === 'document'}
-                title="Read the whole document"
-                disabled={!activeDocId}
-              >
-                {I.fileText} Document
-              </button>
-            </div>
-            {!embedded && (
-              <button
-                className="btn ghost"
-                style={{ height: 30 }}
-                onClick={() => requestLeave({ kind: 'conversation', prompt: '' })}
-              >
-                {I.sparkles} AnA
-              </button>
-            )}
-            <button
-              className="btn ghost"
-              style={{ height: 30 }}
-              ref={el => { railToggleRefs.current.comments = el; }}
-              onClick={() => setRail(rail === 'comments' ? null : 'comments')}
-              data-active={rail === 'comments' || undefined}
-            >
-              {I.checkCircle} Comments
-              {activeSection && num(activeSection.comment_count) > 0
-                ? ' ' + num(activeSection.comment_count)
-                : ''}
-            </button>
-            <button
-              className="btn ghost"
-              style={{ height: 30 }}
-              ref={el => { railToggleRefs.current.history = el; }}
-              onClick={() => setRail(rail === 'history' ? null : 'history')}
-              data-active={rail === 'history' || undefined}
-            >
-              {I.clock} History
-              {activeSection && num(activeSection.revision_count) > 0
-                ? ' ' + num(activeSection.revision_count)
-                : ''}
-            </button>
-            <button
-              className="btn ghost"
-              style={{ height: 30 }}
-              ref={el => { railToggleRefs.current.sources = el; }}
-              onClick={() => setRail(rail === 'sources' ? null : 'sources')}
-              data-active={rail === 'sources' || undefined}
-              data-testid="sources-rail-open"
-            >
-              {I.fileText} Sources
-              {activeSection && num(activeSection.citation_count) > 0
-                ? ' ' + num(activeSection.citation_count)
-                : ''}
-            </button>
-            {/* §11.50(b): the signature record was stored, exposed by
-                GET /docs/:docId/signatures, and read by nothing. The only
-                manifestation a signer saw was a toast that fades in 4.2s. */}
-            <button
-              className="btn ghost"
-              style={{ height: 30 }}
-              ref={el => { railToggleRefs.current.signatures = el; }}
-              onClick={() => setRail(rail === 'signatures' ? null : 'signatures')}
-              data-active={rail === 'signatures' || undefined}
-            >
-              {I.shieldCheck} Signatures
-            </button>
-            {/* §11.10(e): the audit trail has been WRITTEN on every governed
-                act since the store shipped — and readable by nothing. A
-                record that cannot be reviewed satisfies no regulation. */}
-            <button
-              className="btn ghost"
-              style={{ height: 30 }}
-              ref={el => { railToggleRefs.current.audit = el; }}
-              onClick={() => setRail(rail === 'audit' ? null : 'audit')}
-              data-active={rail === 'audit' || undefined}
-            >
-              {I.activity} Audit
-            </button>
-            {/* Every export writes an authoring_export_history row — actor,
-                time, format, and the document's content hash at that moment.
-                Three endpoints read that table and none had a caller, so the
-                product could hand someone a Word file and never tell them it
-                had gone out of date. */}
-            <button
-              className="btn ghost"
-              style={{ height: 30 }}
-              ref={el => { railToggleRefs.current.exports = el; }}
-              onClick={() => setRail(rail === 'exports' ? null : 'exports')}
-              data-active={rail === 'exports' || undefined}
-              data-testid="exports-rail-open"
-            >
-              {I.fileDown} Exports
-            </button>
-            {/* The project's vault, beside the page. The editor had no vault
-                connection at all (docs/design/ANA_DOCUMENT_CANVAS.md): the
-                one way in was Vault → editor; nothing read the vault from here
-                and nothing filed a document into it. */}
-            <button
-              className="btn ghost"
-              style={{ height: 30 }}
-              ref={el => { railToggleRefs.current.vault = el; }}
-              onClick={() => setRail(rail === 'vault' ? null : 'vault')}
-              data-active={rail === 'vault' || undefined}
-              data-testid="vault-rail-open"
-            >
-              {I.vault} Project files
-            </button>
-            <button
-              className="btn ghost"
-              style={{ height: 30 }}
-              ref={el => { railToggleRefs.current.tasks = el; }}
-              onClick={() => setRail(rail === 'tasks' ? null : 'tasks')}
-              data-active={rail === 'tasks' || undefined}
-              data-testid="tasks-rail-open"
-            >
-              {I.checkSquare} Tasks
-            </button>
-            <button
-              className="btn ghost"
-              ref={el => { railToggleRefs.current.access = el; }}
-              onClick={() => setRail(rail === 'access' ? null : 'access')}
-              data-active={rail === 'access' || undefined}
-              data-testid="access-rail-open"
-            >
-              {I.shieldCheck} Access
-            </button>
-            {/* GE-P-3 (2026-09-28): disabled, not hidden, when the server
-                will refuse this caller — the reason is the text beside it.
-                2026-10-08: "Assign review" created a task the Review board
-                never reads. Send for review records the review request the
-                board lists, and each reviewer's task with it, as one act. The
-                gate is that act's: the task create's role check, then the
-                request's Owner or Author grant on a document that is not
-                sealed (wave 2D, authoring.router.ts callerDocumentAccess). */}
-            {activeDoc && (
-              <button
-                className="btn ghost"
-                style={{ height: 30 }}
-                onClick={() => activeDocId && setSendForReviewOpen({ context: writerContext, documentId: activeDocId })}
-                disabled={!!actRefusal(docAccess.assignReview)}
-                aria-describedby={actRefusal(docAccess.assignReview) ? assignRefusalId : undefined}
-                data-testid="send-for-review-open"
-              >
-                {I.send} Send for review
-              </button>
-            )}
-            {activeDoc && actRefusal(docAccess.assignReview) && (
-              <span id={assignRefusalId} style={{ fontSize: 11.5, color: 'var(--text-400)', maxWidth: 240 }}>
-                {actRefusal(docAccess.assignReview)}
-              </span>
-            )}
-            {activeDoc && (
-              <button
-                className="btn ghost"
-                style={{ height: 30 }}
-                onClick={() => activeDocId && setFileToVaultOpen({ context: writerContext, documentId: activeDocId })}
-                disabled={dirty || !!actRefusal(docAccess.fileToVault)}
-                aria-describedby={actRefusal(docAccess.fileToVault) ? vaultRefusalId : undefined}
-                title={
-                  dirty
-                    ? 'Save the open section first — the vault files the saved document.'
-                    : !programId
-                      ? 'This document is not filed under a project; the vault is project-scoped.'
-                      : 'Export this document and file the file into the project vault, with its SHA-256 recorded.'
-                }
-                data-testid="file-to-vault-open"
-              >
-                {I.vault} File to vault
-              </button>
-            )}
-            {activeDoc && actRefusal(docAccess.fileToVault) && (
-              <span id={vaultRefusalId} style={{ fontSize: 11.5, color: 'var(--text-400)', maxWidth: 240 }}>
-                {actRefusal(docAccess.fileToVault)}
-              </span>
-            )}
-            <button
-              className="btn ghost"
-              style={{ height: 30 }}
-              onClick={() => askAna(draftPrompt)}
-              disabled={contentReadOnly}
-              title={
-                editRefusal || (docSealed ? 'This document is frozen — new drafts cannot be inserted.' : undefined)
-              }
-            >
-              {I.sparkles} Draft with AnA
-            </button>
-            {/* Distinct from "Draft with AnA" on purpose, and named for the
-                difference: AnA is a conversation whose text you insert as a
-                tracked suggestion (author lineage). This retrieves the Data
-                Room and accepts through the ONE endpoint that records verified
-                span-level source citations alongside the content, in the same
-                transaction. Same act, different record — so it gets its own
-                control rather than being folded into the other. */}
-            <button
-              className="btn ghost"
-              style={{ height: 30 }}
-              onClick={() => {
-                /* The panel lives in the section view — document view assembles
-                   sections for reading and edits none of them. Toggling open
-                   state from here would be a click with no visible effect, so
-                   it goes to the section it is about to draft instead. */
-                if (viewMode === 'document') {
-                  setDraftPassage(null);
-                  setViewMode('section');
-                  setAiDraftOpen(true);
-                  return;
-                }
-                setAiDraftOpen(o => !o);
+            <MenuButton ariaLabel="More document actions" title="More" icon={I.more} testId="ed-more" buttonRef={moreBtnRef}>
+              {close => {
+                const choose = (act: () => void) => () => { close(); act(); };
+                const fromMore = (id: Exclude<typeof rail, null>) => choose(() => openRail(id, moreBtnRef.current));
+                const assignRefusal = actRefusal(docAccess.assignReview);
+                const vaultRefusal = actRefusal(docAccess.fileToVault);
+                return (
+                  <>
+                    <div role="group" aria-label="Panels" className="dlm-group">
+                      {/* The section's citation count, as the old toggle said it ("Sources 3"). */}
+                      <MenuItem label={`Sources${citations > 0 ? ` ${citations}` : ''}`} onChoose={fromMore('sources')} testId="sources-rail-open" />
+                      <MenuItem label="Vault" onChoose={fromMore('vault')} testId="vault-rail-open" />
+                      <MenuItem label="Versions" onChoose={fromMore('history')} />
+                      <MenuItem label="Exports" onChoose={fromMore('exports')} testId="exports-rail-open" />
+                      <MenuItem label="Review tasks" onChoose={fromMore('tasks')} testId="tasks-rail-open" />
+                      <MenuItem label="Signatures" onChoose={fromMore('signatures')} />
+                      <MenuItem label="Audit trail" onChoose={fromMore('audit')} />
+                      <MenuItem label="Access" onChoose={fromMore('access')} testId="access-rail-open" />
+                    </div>
+                    {activeDoc && (
+                      <div role="group" aria-label="Review and file" className="dlm-group">
+                        {/* GE-P-3 (2026-09-28): disabled, not hidden, when the server
+                            will refuse this caller — the reason is the item's note.
+                            Send for review records the review request the board
+                            lists, and each reviewer's task with it, as one act. */}
+                        <MenuItem
+                          label="Send for review…"
+                          disabled={!!assignRefusal}
+                          note={assignRefusal ?? undefined}
+                          onChoose={choose(() => { if (activeDocId) setSendForReviewOpen({ context: writerContext, documentId: activeDocId }); })}
+                          testId="send-for-review-open"
+                        />
+                        <MenuItem
+                          label="File to vault…"
+                          disabled={dirty || !!vaultRefusal}
+                          note={vaultRefusal ?? (dirty
+                            ? 'Save the open section first — the vault files the saved document.'
+                            : !programId
+                              ? 'This document is not filed under a project; the vault is project-scoped.'
+                              : 'Export this document and file the file into the project vault, with its SHA-256 recorded.')}
+                          onChoose={choose(() => { if (activeDocId) setFileToVaultOpen({ context: writerContext, documentId: activeDocId }); })}
+                          testId="file-to-vault-open"
+                        />
+                      </div>
+                    )}
+                    <div role="group" aria-label="Create" className="dlm-group">
+                      <MenuItem label="New document…" onChoose={choose(() => setCreateRequests(r => ({ ...r, document: r.document + 1 })))} />
+                      {activeDoc && (
+                        <MenuItem label="New section…" onChoose={choose(() => setCreateRequests(r => ({ ...r, section: r.section + 1 })))} />
+                      )}
+                    </div>
+                    {/* The controls a phone-width bar does not draw (`.ed-more-narrow`). */}
+                    <div role="group" aria-label="View" className="dlm-group ed-more-narrow">
+                      <MenuItem label="Section view" role="menuitemradio" checked={viewMode === 'section'}
+                        onChoose={choose(() => requestLeave({ kind: 'view', mode: 'section' }))} />
+                      <MenuItem label="Document view" role="menuitemradio" checked={viewMode === 'document'} disabled={!activeDocId}
+                        onChoose={choose(() => requestLeave({ kind: 'view', mode: 'document' }))} />
+                      <MenuItem label="Comments" onChoose={fromMore('comments')} />
+                      {activeDoc && (
+                        <MenuItem label="Download working copy (Word)" note={WORKING_COPY_NOTE}
+                          onChoose={choose(() => {
+                            void downloadWorkingCopy({ id: activeDoc.id, title: activeDoc.title }, 'docx')
+                              .then(out => fireToast(out.message, out.ok ? 'ok' : 'error'));
+                          })} />
+                      )}
+                    </div>
+                  </>
+                );
               }}
-              data-active={(aiDraftOpen && viewMode === 'section') || undefined}
-              disabled={!activeSection || contentReadOnly || selectedSourceReviewMissing}
-              data-testid="ai-draft-open"
-              title={
-                editRefusal ? editRefusal : docSealed
-                  ? 'This document is frozen — its content cannot be edited.'
-                  : selectedSourceReviewMissing
-                    ? 'Build a candidate from these selected sources first, then review it in this editor.'
-                  : 'Draft this section from Data Room evidence and accept it with recorded citations.'
-              }
-            >
-              {I.wand} Draft from sources
-            </button>
-            {activeDoc && (
-              <AuthoringCollab
-                documentId={activeDoc.id}
-                sectionId={activeSectionId}
-                fireToast={fireToast}
-              />
+            </MenuButton>
+            {/* D4-5 (§D4.A step 5): beside the conversation, the same document full width; on the page, the
+                conversation beside it. */}
+            {embedded?.onExpand ? (
+              <button type="button" className="btn ed-ico" onClick={embedded.onExpand}
+                aria-label="Open full width" title="Open full width" data-testid="dc-edit-in-authoring">
+                {I.maximize}
+              </button>
+            ) : !embedded && (
+              <button type="button" className="btn ed-ico" onClick={() => requestLeave({ kind: 'conversation', prompt: '' })}
+                aria-label="Show the conversation" title="Show the conversation" data-testid="ed-show-conversation">
+                {I.minimize}
+              </button>
+            )}
+            {/* The canvas's close (§D4.A step 6): it only hides the editor, so it needs no leave guard, and Escape
+                does the same. `data-host-close`: an Escape from it is the host's, not an open rail's. */}
+            {embedded?.collapses ? (
+              <button ref={embedded.closeRef} type="button" className="btn ed-ico" onClick={embedded.onBack}
+                aria-label="Back to conversation" aria-keyshortcuts="Escape" title="Back to conversation (Esc)"
+                data-host-close="" data-testid="dc-back">
+                {I.close}
+              </button>
+            ) : (embedded || returnTo) && (
+              <button
+                type="button"
+                className="btn ed-ico"
+                onClick={() => {
+                  const refusal = linkedTargetRefusal();
+                  if (refusal) { fireToast(refusal, 'error'); return; }
+                  if (embedded) requestLeave({ kind: 'host-back', label: embedded.backLabel ?? 'the previous workspace', onContinue: embedded.onBack });
+                  else if (returnTo && !programSwitchHeld) requestLeave({ kind: 'host-back', label: 'the AnA conversation', onContinue: () => openConversationWithPrompt(null, onNav, returnTo.conversationId) });
+                }}
+                aria-label={embedded?.backLabel ?? 'Back to conversation'}
+                title={embedded?.backLabel ?? 'Back to conversation'}
+                data-testid="workbench-back"
+              >
+                {I.close}
+              </button>
             )}
           </div>
         </header>
+        {dirty && !docSealed && (
+          /* 2026-09-28, coverage-gap sweep GA-1: the rule lived in the
+             placeholder, gone after one keystroke, and why Save stayed inert
+             was a `title` on a disabled button, which a keyboard never
+             reaches. The field is aria-required, and the rule is a persistent
+             note both the field and Save are described by. Inline rather than
+             a dialog: there is no autosave here, but Save and ⌘S each fire
+             many times while working through a section. */
+          <div className="ed-reason">
+            <input
+              className="de-input"
+              value={changeReason}
+              onChange={e => setChangeReason(e.target.value)}
+              placeholder="Why this changed (at least 8 characters)"
+              aria-label="Reason for change"
+              aria-required="true"
+              aria-describedby={reasonNoteId}
+              data-testid="change-reason"
+            />
+            <span id={reasonNoteId} className="ed-reason-note" aria-live="polite" data-testid="change-reason-note">
+              {changeReason.trim().length < 8
+                ? 'Required to save: at least 8 characters, recorded with the revision.'
+                : 'Recorded with the revision.'}
+            </span>
+          </div>
+        )}
         <div ref={setCreationNoticeContainer} data-testid="authoring-creation-notices" />
-        <AuthoringOversightActions projectOpen={!!programId} sectionOpen={!!activeSection} documentOpen={!!activeDocId} dirty={dirty} onAsk={askAna} />
         {partialRead && <div className="scaf-note" role="status" data-testid="workbench-read-scope" style={{ padding: '8px 16px' }}>
           Showing only sections available with your current access. The full document and source metadata are not available in this view.
         </div>}
         {currentMetadata?.refused && <div className="scaf-note" role="alert" style={{ padding: '8px 16px' }}>
           This document could not be read with your current access. Re-open it to read the current record.
         </div>}
+        {/* J3 R2: a review returned for changes is said where the document opens, not only under Review tasks. */}
+        {activeDocId && !currentMetadata?.refused && (
+          <ReturnedReviewNote docId={activeDocId} refreshKey={tasksEpoch} onOpenTasks={from => openRail('tasks', from)} />
+        )}
 
         {/* ── The deep-link's honest miss ──
             A workbench click named a section this canvas could not open. The
@@ -4906,6 +5108,14 @@ export function DocumentWorkbench({
         <div className="ed-doc-scroll" ref={docScrollRef}>
           <div className="ed-doc-inner">
             <AuthoringAssemblyBuild controller={assembly} />
+            {/* A clinical study report is built from the study's data here, in the one editor (RULE 4). A CSR is
+                known by its stored template id, the four built-in CSR templates the scientific review reads
+                (shared CSR_TEMPLATE_IDS), so one made from registry:ICH_CSR or the IND 5.3.5.1/5.3.5.2 report
+                templates gets it too, not only the E3 component (D2-CSR F1, 2026-11-05). */}
+            {programId && activeDocId && isCsrTemplateId(docTemplateId) && <StudyDataBuild key={activeDocId} programId={programId} documentId={activeDocId} onNav={onNav}
+              /* F6: the import wrote this document's sections on the server. Read them again and remount the
+                 canvas on the imported text, as a revert does, unless the person has unsaved typing open. */
+              onDocumentChanged={() => void loadSections(activeDocId, undefined, false, undefined, { quiet: true })} />}
             {viewMode === 'document' && activeDoc ? (
               /* The whole document, in order, as one read. Sections are shown,
                  not edited: editing is section-scoped because a revision, a
@@ -4966,7 +5176,7 @@ export function DocumentWorkbench({
                         aria-label={`${sec.code} ${sec.title}`}
                       >
                         <div className="ed-full-sec-h">
-                          <span className="ed-full-sec-num">{sec.code}</span>
+                          <span className="ed-full-sec-num">{sectionNumberLabel(sec.code)}</span>
                           <h2 className="ed-full-sec-t">{sec.title}</h2>
                           <button
                             className="btn ghost ed-full-edit"
@@ -5071,7 +5281,7 @@ export function DocumentWorkbench({
                     </div>
                   ) : (
                     <>
-                      <div className="ed-mast-num">{activeSection.code}</div>
+                      <div className="ed-mast-num">{sectionNumberLabel(activeSection.code)}</div>
                       <h1 className="ed-mast-t" style={{ display: 'inline' }}>
                         {activeSection.title}
                       </h1>
@@ -5136,7 +5346,7 @@ export function DocumentWorkbench({
                   <div className="ed-mast-meta">
                     {activeDoc?.title ?? ''}
                     {num(activeSection.revision_count) > 0
-                      ? ` · ${num(activeSection.revision_count)} revisions`
+                      ? ` · ${num(activeSection.revision_count)} revision${num(activeSection.revision_count) === 1 ? '' : 's'}`
                       : ''}
                     {num(activeSection.citation_count) > 0
                       ? ` · ${num(activeSection.citation_count)} citations`
@@ -5403,10 +5613,9 @@ export function DocumentWorkbench({
                     programId={programId}
                     sectionCode={activeSection.code}
                     sectionTitle={activeSection.title}
-                    recordedFiling={{ registryId: program?.id === programId ? program.registryId ?? null : null,
-                      draftingRegion: activeSection.draftingRegion, draftingRegionState: activeSection.draftingRegionState,
-                      state: !sectionsCurrent || sectionsState === 'loading' || programReadState === 'loading' ? 'loading'
-                        : sectionsState === 'error' || programReadState === 'error' ? 'error' : 'ready' }}
+                    recordedFiling={workbenchWritingFiling({ binding, filing, program, programId, programReadState,
+                      section: { draftingRegion: activeSection.draftingRegion, draftingRegionState: activeSection.draftingRegionState },
+                      sectionsCurrent, sectionsState })}
                     docSealed={docSealed}
                     editorDirty={dirty}
                     reviewSession={assembly.reviewSessions[activeSection.id]}
@@ -5421,16 +5630,9 @@ export function DocumentWorkbench({
                   />
                 )}
                 {narrativeReference && <CsrNarrativeReferenceView reference={narrativeReference} />}
-                <div
-                  style={{
-                    minHeight: 460,
-                    border: '1px solid var(--border)',
-                    borderRadius: 'var(--radius-lg)',
-                    overflow: 'hidden',
-                    display: 'flex',
-                    flexDirection: 'column',
-                  }}
-                >
+                {/* The page (D4.md §D4.D item 3): no border, no minimum height, no overflow clip. The bordered,
+                    clipping box it replaces hid the ribbon's ends once the ribbon spans the page (walk 2026-11-09). */}
+                <div className="ed-page">
                   <RichSectionEditor
                     /* contentEpoch remounts the canvas when the server
                        replaces content out from under it (revert). */
@@ -5557,7 +5759,8 @@ export function DocumentWorkbench({
                       precedingSourceIds: precedingCitations.ids,
                       resolutionState: citationResolutionState,
                       resolutionError: projectCatalogue.error ?? citationAdmission.error,
-                      onRetry: () => { loadProjectSources(); citationAdmission.retry(); },
+                      // A refused catalogue read (not licensed, not in this release, a role) offers no retry: none can change it.
+                      onRetry: projectCatalogue.error && !projectCatalogue.retryable ? undefined : () => { loadProjectSources(); citationAdmission.retry(); },
                       scopeKey: citationScope,
                       onCite: sourceId => citeSource(Number(sourceId)),
                     }}
@@ -6149,6 +6352,8 @@ export function DocumentWorkbench({
               )}
             </>
           )}
+          {/* S12: an independent read, so a failed citations read above does not hide it. */}
+          {activeSection && <SectionVaultReplacements programId={programId} sectionId={activeSection.id} onNav={onNav} />}
         </aside>
       )}
 
@@ -6158,11 +6363,12 @@ export function DocumentWorkbench({
           source into the open section through the editor's own citation
           command, or insert a plain reference to a file that is not a source. */}
       {rail === 'vault' && (
-        <aside className="ed-comments" aria-label="Project files">
+        <aside className="ed-comments" aria-label="Vault">
           <ProjectFilesPanel
             programId={programId}
             readOwner={projectSourceOwner}
             programName={programName(program)}
+            indLibrary={offersIndLibrary(program)}
             sectionOpen={activeSection != null && !contentReadOnly}
             sectionCode={activeSection?.code ?? null}
             projectSources={projectSources.filter(sourceCitationEligible)}

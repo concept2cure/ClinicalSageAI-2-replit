@@ -6,6 +6,9 @@
  * These preserve drafting, evidence, follow-up, answer visibility and focus
  * capabilities while refusing a second editor conversation.
  */
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
@@ -24,6 +27,11 @@ import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
 import { CanonicalAuthoringFlow, setAuthoringFlowScope, clearAuthoringFlowScope, serveAuthoringStream, sendAuthoringPrefill, toolbarDraftButton, sentAuthoringTurns } from './canonicalAuthoringFlow';
 
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => payload } as Response);
+/** The list as GET /api/authoring/docs answers a project read (authoring-document-read.ts): success, and each row's program_id. */
+const scopedList = (url: string, body: { success?: boolean; documents: object[] }) => {
+  const programId = new URLSearchParams(url.split('?')[1]).get('programId');
+  return programId === null ? body : { success: true, ...body, documents: body.documents.map(row => ({ program_id: programId, ...row })) };
+};
 
 function anaStream(events: unknown[]): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();
@@ -80,7 +88,7 @@ beforeEach(() => {
   setAuthoringFlowScope();
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
-    if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
+    if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(scopedList(url, DOCS));
     if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001') return ok({ document: DOCS.documents[0] });
     if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001/sections') return ok(SECTIONS);
     if (method === 'GET' && url.startsWith('/api/authoring/sections/aaaaaaaa-0000-4000-8000-000000000001/history'))
@@ -110,7 +118,8 @@ describe('DocumentAuthoring — asks arrive in the canonical conversation', () =
     expect(screen.queryByLabelText(/AnA — document authoring/)).toBeNull();
     fireEvent.click(toolbarDraftButton());
     const composer = await screen.findByRole('textbox', { name: 'Reply to AnA' }) as HTMLTextAreaElement;
-    expect(composer.value).toMatch(/Draft 3\.2\.S\.1 General Information/);
+    // The person's words only; the section travels in the saved context below, never its stored title (2026-11-09).
+    expect(composer.value).toBe('Draft this section from the linked section evidence.');
     expect(sentAuthoringTurns()).toHaveLength(0);
     await sendAuthoringPrefill();
     await waitFor(() => expect(sentAuthoringTurns()).toHaveLength(1));
@@ -120,7 +129,7 @@ describe('DocumentAuthoring — asks arrive in the canonical conversation', () =
 
   it('an empty section keeps both draft controls, and the toolbar asks for the exact section', async () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (url.startsWith('/api/authoring/docs?')) return ok(DOCS);
+      if (url.startsWith('/api/authoring/docs?')) return ok(scopedList(url, DOCS));
       if (url.split('?')[0] === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001') return ok({ document: DOCS.documents[0] });
       if (url.split('?')[0] === '/api/authoring/docs/dddddddd-0000-4000-8000-000000000001/sections') return ok({ sections: [{ ...SECTIONS.sections[0], content: '' }] });
       if (url.startsWith('/api/c2c/documents/')) return { ...ok({}), ok: false, status: 404 };
@@ -128,16 +137,20 @@ describe('DocumentAuthoring — asks arrive in the canonical conversation', () =
     });
     render(<CanonicalAuthoringFlow />);
     await screen.findAllByText('General Information');
-    await waitFor(() => expect(screen.getAllByRole('button', { name: /Draft with AnA/ })).toHaveLength(2));
+    /* The empty section's own "Draft with AnA" stays on the page; the bar's is an item of its AnA (✻) menu (D4-2). */
+    await waitFor(() => expect(screen.getAllByRole('button', { name: /Draft with AnA/ })).toHaveLength(1));
+    expect(screen.getByRole('button', { name: /Draft with AnA/ }).closest('.rse-empty-cta')).not.toBeNull();
     fireEvent.click(toolbarDraftButton());
     await sendAuthoringPrefill();
-    await waitFor(() => expect(sentAuthoringTurns()[0]?.message).toMatch(/Draft 3\.2\.S\.1/));
+    // The exact section is named in the turn's saved context, not by writing its stored title into the ask (2026-11-09).
+    await waitFor(() => expect(sentAuthoringTurns()[0]?.message).toBe('Draft this section from the linked section evidence.'));
+    expect(sentAuthoringTurns()[0].module_context).toMatchObject({ sectionId: 'aaaaaaaa-0000-4000-8000-000000000001' });
   });
 
   it('the canonical composer sends the person’s edited question in the same saved document context', async () => {
     render(<CanonicalAuthoringFlow />);
     await screen.findAllByText('General Information');
-    fireEvent.click(screen.getByRole('button', { name: /^AnA/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Show the conversation' }));
     const pane = await sendAuthoringPrefill('Is this claim supported by the linked evidence?');
     await waitFor(() => expect(pane.textContent).toMatch(/Is this claim supported/));
     expect(sentAuthoringTurns()[0].message).toBe('Is this claim supported by the linked evidence?');
@@ -155,7 +168,7 @@ describe('DocumentAuthoring — asks arrive in the canonical conversation', () =
     ]));
     render(<CanonicalAuthoringFlow />);
     await screen.findAllByText('General Information');
-    fireEvent.click(screen.getByRole('button', { name: /^AnA/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Show the conversation' }));
     const pane = await sendAuthoringPrefill('Check the citation chain.');
     expect((await within(pane).findAllByText('Checking dossier consistency')).length).toBeGreaterThan(0);
     expect(await within(pane).findByText(/All 2 specific claims found in this turn's sources/)).toBeTruthy();
@@ -172,7 +185,7 @@ describe('DocumentAuthoring — asks arrive in the canonical conversation', () =
     expect(screen.queryByRole('textbox', { name: 'Reply to AnA' })).toBeNull();
     expect(screen.queryByLabelText(/AnA — document authoring/)).toBeNull();
     expect(sentAuthoringTurns()).toHaveLength(0);
-    fireEvent.click(screen.getByRole('button', { name: /^AnA/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Show the conversation' }));
     const composer = await screen.findByRole('textbox', { name: 'Reply to AnA' }) as HTMLTextAreaElement;
     expect(composer.value).toBe('');
     expect((screen.getByRole('button', { name: 'Send message to AnA' }) as HTMLButtonElement).disabled).toBe(true);
@@ -254,14 +267,19 @@ describe('DocumentAuthoring — the answer is on screen after a turn', () => {
 
 /* QA 2026-10-08, walk 2, j5 (c): Save, the reason field, E-sign and Place
    into filing were inside the header's horizontal scroller (.ed-doc-actions,
-   overflow-x:auto), past its right edge at 1440px and at 390px. The governed
-   acts are their own group, which wraps and is never clipped. */
+   overflow-x:auto), past its right edge at 1440px and at 390px. D4-2: they
+   are in the one bar (D4.md §D4.B), whose acts wrap at phone width and never
+   scroll sideways, and the reason field is the strip under it. */
 describe('DocumentAuthoring — the governed acts are never scrolled out of the header', () => {
-  it('Save is in the commit group, outside the panel scroller', async () => {
+  it('Save is in the bar, and no rule makes the bar scroll sideways', async () => {
     render(<DocumentAuthoring {...props()} />);
     await screen.findAllByText('General Information');
     const save = await screen.findByTestId('save-section');
-    expect(save.closest('.ed-doc-commit')).not.toBeNull();
-    expect(save.closest('.ed-doc-actions')).toBeNull();
+    expect(save.closest('[data-testid="ed-bar"] .ed-bar-acts')).not.toBeNull();
+    const css = fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'styles', 'authoring-v2.css'), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '');
+    const barRules = [...css.matchAll(/\.ed-bar(?:-acts)?\s*\{([^}]*)\}/g)].map(m => m[1]);
+    expect(barRules.length).toBeGreaterThan(0);
+    for (const body of barRules) expect(body, body).not.toMatch(/overflow-x\s*:\s*(auto|scroll)/);
   });
 });

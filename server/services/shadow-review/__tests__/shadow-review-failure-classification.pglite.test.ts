@@ -62,6 +62,8 @@ beforeAll(async () => {
   // Every migration re-runs on every deploy (CLAUDE.md RULE 1): twice.
   await h.pglite.exec(migration('migrations/20261015_shadow_review_waiver.sql'));
   await h.pglite.exec(migration('migrations/20261015_shadow_review_waiver.sql'));
+  // 2026-10-25: a run records the leaves it covered and what it read.
+  await h.pglite.exec(migration('migrations/20261025_shadow_review_run_coverage.sql'));
   await h.pglite.exec(`
     INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by)
       VALUES (1,'A','ind','biotech','fda',${ORG},${USER});
@@ -161,6 +163,19 @@ describe('a refusal is not an outage, and the caller is told what it was', () =>
   it('no provider configured: no_provider_configured, not waivable', async () => {
     holder.route = fails(new GatewayNoProviderError('No AI provider is configured.'));
     await outcome(runShadowReview({ sequenceId: SEQ, organizationId: ORG, userId: USER }));
+    expect(await newestRun()).toMatchObject({ status: 'failed', failure_code: 'no_provider_configured' });
+    expect(failedAuditRows()[0]?.details).toMatchObject({ failureCode: 'no_provider_configured', waivable: false });
+  });
+
+  /* J4 human test, 2026-11-06 (docs/evidence/HUMAN-TEST/J4/): with no model key
+     the gateway answers with its fixed demo-mode reply (`deterministic: true`).
+     The run was recorded as invalid_ai_response, and Submission Center told the
+     publisher the model's reply was not countable — of a reply no model wrote. */
+  it('the gateway’s fixed demo-mode reply: no_provider_configured, not an invalid model reply, not waivable', async () => {
+    holder.route = () => Promise.resolve({ model: 'demo-mode', content: '## Regulatory Review (Demo Mode)\n\nNo review was performed.', deterministic: true } as never);
+    const err = await outcome(runShadowReview({ sequenceId: SEQ, organizationId: ORG, userId: USER }));
+    // The caller is told the cause, not "The AI request could not be completed."
+    expect(String(err?.message)).toMatch(/No AI provider is configured on this deployment/);
     expect(await newestRun()).toMatchObject({ status: 'failed', failure_code: 'no_provider_configured' });
     expect(failedAuditRows()[0]?.details).toMatchObject({ failureCode: 'no_provider_configured', waivable: false });
   });

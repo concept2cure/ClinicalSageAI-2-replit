@@ -1,0 +1,42 @@
+date: 2026-11-02T02:22:35Z
+$ npx eslint <every changed or new .ts/.tsx file of this build: 26>
+  client/src/concept2cure/v2/__tests__/ectdCompile.test.tsx
+  client/src/concept2cure/v2/__tests__/ectdFiledState.test.tsx
+  client/src/concept2cure/v2/surfaces/EctdFiledState.tsx
+  server/routes/ectd-compile.ts
+  server/services/ectd/__tests__/filed-state-history.test.ts
+  server/services/ectd/__tests__/filed-state-what-was-sent.pglite.test.ts
+  server/services/ectd/__tests__/lifecycle-declared-acts.pglite.test.ts
+  server/services/ectd/__tests__/lifecycle-from-core.test.ts
+  server/services/ectd/__tests__/lifecycle-parent-leaf-binding.test.ts
+  server/services/ectd/__tests__/lifecycle-rehearsal.pglite.test.ts
+  server/services/ectd/__tests__/named-prior-sequence-is-the-filed-state.pglite.test.ts
+  server/services/ectd/__tests__/prior-sequence-fold.test.ts
+  server/services/ectd/__tests__/prior-sequence-loader.test.ts
+  server/services/ectd/__tests__/prior-sequence-transmitted-only.test.ts
+  server/services/ectd/__tests__/sequence-spine-fda-submission-id.pglite.test.ts
+  server/services/ectd/__tests__/vault-version-lifecycle-binding.pglite.test.ts
+  server/services/ectd/__tests__/withdrawal-approval-binding.pglite.test.ts
+  server/services/ectd/prior-sequence-loader.ts
+  server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts
+  server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts
+  server/services/submission-gateways/index.ts
+  server/services/submission-gateways/types.ts
+  server/services/submission-service/__tests__/_freeze-gate-fixture.ts
+  server/services/submission-service/__tests__/filed-baseline-effects.pglite.test.ts
+  server/services/submission-service/__tests__/transmit-guard-refusal-releases-claim.test.ts
+  tests/db/ectd-filed-state-view.dbtest.ts
+
+/home/user/ClinicalSageAI-2-replit/server/routes/ectd-compile.ts
+   665:75  warning  Async arrow function has too many lines (188). Maximum allowed is 100                    max-lines-per-function
+   665:75  warning  Async arrow function has a complexity of 38. Maximum allowed is 15                       complexity
+   782:1   warning  File has too many lines (1484). Maximum allowed is 500                                   max-lines
+   908:5   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+   960:1   warning  Function 'leafPlacementFindings' has a complexity of 19. Maximum allowed is 15           complexity
+  1073:1   warning  Async function 'compileFromSpine' has too many lines (244). Maximum allowed is 100       max-lines-per-function
+  1073:1   warning  Async function 'compileFromSpine' has a complexity of 62. Maximum allowed is 15          complexity
+  1378:3   warning  Unexpected console statement. Only these console methods are allowed: warn, error, info  no-console
+
+✖ 8 problems (0 errors, 8 warnings)
+
+exit=0

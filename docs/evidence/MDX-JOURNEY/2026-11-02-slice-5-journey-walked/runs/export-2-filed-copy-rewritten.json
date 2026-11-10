@@ -1,0 +1,23 @@
+{
+ "api": [
+  {
+   "s": 409,
+   "body": {
+    "error": "FILING_DIVERGED",
+    "message": "Nothing was built. The filed copy of section B1 is not the document's text. The submission is built from the filed copy, so it would carry text the document does not. Open that section and choose Re-file saved text, which restores the saved text to its filing.",
+    "diverged": [
+     "B1"
+    ],
+    "deviceContentSource": "governed_program"
+   }
+  }
+ ],
+ "said": [
+  "Export failed — Nothing was built. The filed copy of section B1 is not the document's text. The submission is built from the filed copy, so it would carry text the document does not. Open that section and choose Re-file saved text, which restores the saved text to its filing.",
+  "Predicate intelligence is not reachable for this tenant. Live K-number candidates appear here once the shadow service is reachable; until then the reduced openFDA clearance lookup below is the only source.",
+  "Reduced openFDA fallback unavailable — openFDA device/510k.json unreachable: fetch failed",
+  "Could not load predicate candidates\nTry again",
+  "Could not load substantial-equivalence rows\nTry again",
+  "No tracked filings yet\nSelect a submission type and run a filing-readiness assessment; tracking becomes available once it has one.\nServes the eSTAR submission record (FDA 510(k) / De Novo)"
+ ]
+}

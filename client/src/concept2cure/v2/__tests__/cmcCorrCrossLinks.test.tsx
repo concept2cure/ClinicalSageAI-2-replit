@@ -123,7 +123,7 @@ describe('CmOverview — Module 3 questions overdue on this project', () => {
     expect(screen.queryByText(/questions? (is|are) overdue/)).toBeNull();
   });
 
-  it('a read that failed is unknown, never zero, and the lead says so', async () => {
+  it('a read that failed is unknown, never zero, and the screen says so', async () => {
     wire({ module3: 'error' });
     inModule(<CmOverview ask={vi.fn()} nav={vi.fn()} />);
     await screen.findAllByText('BLA 761234');
@@ -133,7 +133,13 @@ describe('CmOverview — Module 3 questions overdue on this project', () => {
     expect(within(tile).getByText('—')).toBeTruthy();
     expect(within(tile).queryByText('0')).toBeNull();
     expect(screen.queryByRole('button', { name: /questions overdue/ })).toBeNull();
-    expect(screen.getAllByText(/not established/i).length).toBeGreaterThan(1);
+    /* It said so TWICE until 2026-11-01: on this figure and again in the
+       answer banner's body, which D5 §A.4.8 retires. Once is the point —
+       what the rule forbids is the failure being shown as a zero, and what
+       it requires is that nothing on the screen contradicts the "—".
+       Asserted as that, rather than as a count of echoes. */
+    expect(screen.getAllByText(/not established/i).length).toBe(1);
+    expect(screen.queryByText(/\b0 Module 3 questions? (is|are) overdue/)).toBeNull();
   });
 
   it('with no program open it claims no count and issues no read', async () => {
@@ -233,8 +239,14 @@ describe('CmOverview — what the server counts is said as what it is', () => {
     wire({ module3: payload });
     const nav = vi.fn();
     inModule(<CmOverview ask={vi.fn()} nav={nav} />);
-    expect(await screen.findByText(/1 Module 3 letter is overdue/)).toBeTruthy();
-    expect(screen.getByText(/with no question to answer recorded on it\. Record its questions on the letter, or mark it as needing no response, in Communication\./)).toBeTruthy();
+    /* The figure's own sub-text is where this is said now (D5 §A.4.8): the
+       answer banner's body repeated it in a second voice above the figure.
+       Same words for the same fact — a letter overdue with nothing recorded
+       on it is NOT one more overdue question, and the count stays 0. */
+    const label = await screen.findByText(/^Module 3 questions overdue on this project/, { selector: '.reg-kpi-l' });
+    await waitFor(() => expect(label.textContent)
+      .toMatch(/1 Module 3 letter overdue with no question to answer recorded/));
+    expect(within(label.closest('.reg-kpi') as HTMLElement).getByText('0')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Open the overdue letters in Communication' }));
     expect(nav).toHaveBeenCalledWith('communication-center');
     expect(navParams()?.params).toEqual({ letterId: 'ace_bare' });
@@ -247,8 +259,14 @@ describe('CmOverview — what the server counts is said as what it is', () => {
     ]);
     wire({ module3: payload });
     inModule(<CmOverview ask={vi.fn()} nav={vi.fn()} />);
-    expect(await screen.findByText(/1 Module 3 question is overdue/)).toBeTruthy();
-    expect(screen.getByText(/on 1 letter \(§3\.2\.P\.7\)/)).toBeTruthy();
+    const label = await screen.findByText(/^Module 3 questions overdue on this project/, { selector: '.reg-kpi-l' });
+    await waitFor(() => expect(label.textContent).toMatch(/on 1 letter/));
+    /* One overdue question, counted as one; the other letter is overdue only
+       on a Clinical question, so it is not on this figure. The §section the
+       overdue question is against moved here from the retired banner's
+       parenthesis (D5 §A.4.8). */
+    expect(within(label.closest('.reg-kpi') as HTMLElement).getByText('1')).toBeTruthy();
+    expect(label.textContent).toMatch(/§3\.2\.P\.7/);
   });
 });
 

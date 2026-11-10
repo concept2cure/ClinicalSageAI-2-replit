@@ -1,0 +1,388 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > mounts the Profile card and each setting card on the Settings tab 490ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > says that the cards change their settings, not that nothing on the tab does 126ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > shows the organisation’s name from its record and renames it only under a reason 206ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > Settings carries every governed setting Setup held > offers the client type chips in words 172ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > the SSO tab opens the Identity console > names where SSO and SCIM are governed and opens it 109ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > the SSO tab opens the Identity console > still offers the door when the SSO read failed 98ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > publishes the name and client type while Settings shows them 101ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > publishes an unsaved change and whether a reason is entered 107ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > publishes no configuration on another tab 100ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > a failed organisation read is published as a failure, never as an empty name 93ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AnA summarises the configuration from admin-console’s context > asks AnA to summarise the configuration from the Settings tab 155ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > client administration credential vault > captures a key through the governed route, clears entry and never displays saved or reflected values 199ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > client administration credential vault > closes on failed submit and uses a fixed refusal without server response text 163ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > client administration credential vault > revokes without sending any credential material 89ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > client administration credential vault > takes capability from the backend and shows a failed read without fabricating status 28ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > client administration credential vault > drops a secret drawer and late old-tenant metadata on an organisation switch 109ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > client administration credential vault > cancels without retaining a key on reopen 81ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > keeps portal credentials explicitly storage-only 17ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > cannot apply an old tenant write receipt after the organisation changes 197ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > does not call an unconfirmed write response a recorded credential change 70ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > accepts the complete 14-card metadata contract and keeps all eight existing adapter management forms reachable 951ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > captures the Google private key without a raw DOM value and sends exact PEM newlines 251ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AI placement and derivative custody stay in the existing administration card > loads the real contract and preserves the legacy whole placement policy on replacement 66ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AI placement and derivative custody stay in the existing administration card > submits typed derivative policy with fresh reauthentication and without actor/body authority 73ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AI placement and derivative custody stay in the existing administration card > prepares explicit spans and template without automatically attesting or publishing its payload 110ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AI placement and derivative custody stay in the existing administration card > shows the exact residual and hash, requires explicit review, and binds fresh attestation to current version/SHA 140ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AI placement and derivative custody stay in the existing administration card > does not attest from the default not-reviewed selection and clears the residual on cancellation 179ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AI placement and derivative custody stay in the existing administration card > revokes from metadata with exact version/SHA and without residual or map bytes 52ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AI placement and derivative custody stay in the existing administration card > does not offer attestation for an unbound review receipt: organization 79ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AI placement and derivative custody stay in the existing administration card > does not offer attestation for an unbound review receipt: version 110ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AI placement and derivative custody stay in the existing administration card > does not offer attestation for an unbound review receipt: hash 80ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AI placement and derivative custody stay in the existing administration card > does not offer attestation for an unbound review receipt: payload 89ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > AI placement and derivative custody stay in the existing administration card > does not offer attestation for an unbound review receipt: unaudited 95ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > derivative administration receipts remain bound to the current session > fails closed on an invalid metadata contract: organization 8ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > derivative administration receipts remain bound to the current session > fails closed on an invalid metadata contract: record_organization 9ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > derivative administration receipts remain bound to the current session > fails closed on an invalid metadata contract: hash 12ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > derivative administration receipts remain bound to the current session > fails closed on an invalid metadata contract: custody 10ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > derivative administration receipts remain bound to the current session > drops residual and reauthentication on a session revision, and ignores late former-session review receipts 106ms
+ ✓ client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx > derivative administration receipts remain bound to the current session > clears a visible residual and password at a same-user session revision, and drops late attestation receipts 198ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > the Skills tab > keeps saved skills inside their section so the flex layout cannot clip the ledger row 863ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > the Skills tab > says a failed library read failed, and never shows it as an empty library 98ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > the Skills tab > turns a skill off only with a stated reason, and sends that reason 429ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > the Skills tab > sends the change with the reason when one is stated 379ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > the Skills tab > shows which skills a question would load and why 157ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > sourced corrections and the visible rule ledger > captures one atomic correction and rule, then shows its source, date, state and version 869ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > sourced corrections and the visible rule ledger > routes an explicit project rule through the existing project endpoint 493ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > sourced corrections and the visible rule ledger > promotes with the expected version and explicit mandatory approval binding 100ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > sourced corrections and the visible rule ledger > revokes explicitly without lowering the mandatory level or dropping its binding 391ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > sourced corrections and the visible rule ledger > keeps terminal rule records read-only 61ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > explicit rule conflict decisions and correction privacy > keeps a structured conflict visible and replaces only versions the person explicitly selects 298ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > explicit rule conflict decisions and correction privacy > keeps correction source text out of prompt tests and design-with-AnA messages 471ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > explicit rule conflict decisions and correction privacy > adds a typed rule to an existing method with its exact version and a recorded correction source 335ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > explicit rule conflict decisions and correction privacy > keeps stale-version and malformed conflict failures contained without retrying or overwriting 124ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > explicit rule conflict decisions and correction privacy > suppresses late saves and clears source fields after a session change 270ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > explicit rule conflict decisions and correction privacy > retires a draft when the selected skill version changes instead of overwriting newer work 103ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > how often AnA used each skill > says how many turns followed skills, marks each skill’s use, and explains it in the drawer 179ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > how often AnA used each skill > filters to the skills AnA did not use, and to those written for a market 143ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > how often AnA used each skill > says use could not be read, and never shows every skill as unused 74ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > sourced approval rules in the existing skill studio > shows mandatory rules independently of prompt selection and links their source audit record 173ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > sourced approval rules in the existing skill studio > keeps approval bindings and provenance out of an ordinary method edit instead of clearing or rewriting them 228ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSkills.test.tsx > sourced approval rules in the existing skill studio > distinguishes saved draft rules and retains their source reference when history cannot load 152ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > offers "Build CSR draft" only for a saved run that holds retained tables, and binds that run 410ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > renders no build control for a run with no retained tables 50ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > shows the server refusal as stated, never a silent empty or a queued build 125ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > does not block the document CSR source picker when optional package-run history is unavailable 24ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > permits retained document study data to build even when older package-run history fails 65ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > keeps the existing frozen CSR build accessible while a newer source is being selected 309ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > tells the user when package history is malformed instead of pretending there are no runs 21ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > does not expose the source picker after the document study-data read itself fails 37ms
+stderr | client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > records a review decision on the exact text, and shows a refused decision
+An update to CsrHeadingReview inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > does not offer review, inspection or import for a section whose saved bytes failed SHA-256 53ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > excludes a corrupted record from approved-section imports even if it falsely carries an approved state 96ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > records a review decision on the exact text, and shows a refused decision 259ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > reads a template row as template text with data missing: not drafted, not counted, not offered for review 45ms
+stderr | client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > requires a stated reason to send a section back
+An update to CsrHeadingReview inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > shows the saved text as saved, with its lines and paragraphs, before an approval 56ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > requires a stated reason to send a section back 44ms
+stderr | client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > the csr-workflow board shows the build headings with review state and re-reads after a decision
+An update to CsrHeadingReview inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to CsrWorkflowBoard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > the csr-workflow board shows the build headings with review state and re-reads after a decision
+An update to CsrWorkflowBoard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > the csr-workflow board shows the build headings with review state and re-reads after a decision
+An update to CsrWorkflowBoard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > the csr-workflow board shows the build headings with review state and re-reads after a decision
+An update to CsrWorkflow inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > the csr-workflow board shows the build headings with review state and re-reads after a decision
+An update to CsrWorkflowBoard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to CsrWorkflowBoard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to CsrWorkflowBoard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > the csr-workflow board shows the build headings with review state and re-reads after a decision
+An update to CsrWorkflowBoard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > the csr-workflow board shows the build headings with review state and re-reads after a decision 158ms
+ ✓ client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > refuses to approve when the section read is missing or its hash has changed 180ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > saved-content-bound human review > shows the complete saved section and table before a decision 748ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > saved-content-bound human review > posts the captured request and saved snapshot binding 405ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > saved-content-bound human review > does not announce or refresh success from an unaudited success flag 380ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > the board opens the decision the reviewer pressed > "Request changes..." opens with Request changes chosen and asks for the reason 180ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > the board opens the decision the reviewer pressed > "Record review decision" still opens with nothing chosen 249ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > prevents duplicate writes and ignores Escape and backdrop while a verdict is in flight 91ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > keeps a saved-content refusal open, disables retry, and clears the choice on explicit reload 173ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > shows the authoritative refusal alongside the full read without offering a verdict 28ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > rejects a same-tick account token swap before posting the displayed person’s choice 70ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > refuses AnA document selection while this governed dialog owns the canvas 232ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > decision ceremony ownership > preserves the confirmed receipt when the refreshed board no longer contains the document 343ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > replacement document and actor contexts > does not publish a delayed previous-document read into its replacement 20ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > replacement document and actor contexts > retires a late verdict after an actor replacement without reporting success 86ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > synchronous verdict dispatch boundary > prevents a stale click callback from retrying before React commits (confirmed=true) 56ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > synchronous verdict dispatch boundary > prevents a stale click callback from retrying before React commits (confirmed=false) 57ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > independent findings within the existing human review dialog > runs checks without a model, refreshes the server receipt and unlocks an eligible approval 230ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > independent findings within the existing human review dialog > retains a human disagreement without letting it waive a current blocking finding 413ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > independent findings within the existing human review dialog > allows a reasoned human resolution only after the latest checks no longer reproduce the finding 203ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > independent check mutation reconciliation and session fencing > holds an unknown check outcome until an explicit reload recovers its actual server receipt 225ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > independent check mutation reconciliation and session fencing > fences a stale approval and stale rerun callback immediately after a new blocking receipt 76ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx > independent check mutation reconciliation and session fencing > does not publish a delayed former actor’s findings into the replacement session 164ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings reads the organization record > shows the organization’s real name, not an invented default 189ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings reads the organization record > shows no translation-workspace card: nothing reads organizations.settings.translation 97ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings reads the organization record > addresses the org from the token claim, never the stale localStorage id 94ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings reads the organization record > writes nothing to the browser-local settings blob it replaced 150ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings governed save > sends nothing until something has changed 95ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings governed save > refuses to write without a reason, because the route audits one 115ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings governed save > PATCHes the profile with the reason and the token’s org id, and writes no settings section 137ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings governed save > leaves a refused section dirty, and re-sends only that section 160ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings governed save > reports an unreachable server as unreachable, not as a refusal 94ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings claims no control it does not have > offers the existing Vault legal-hold controls beside the retention period 97ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings claims no control it does not have > has no switch for anything enforced elsewhere or per user 84ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings claims no control it does not have > offers the agency gateway account choice (D7, founder decision 2026-10-01) 82ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings claims no control it does not have > offers Require PDF/A, the organisation's own choice (D7, the PDF/A rule, 2026-10-01) 121ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > Admin → Settings claims no control it does not have > does not offer edits it cannot persist when the record fails to load 75ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > reviewed derivative references reach the existing AnA conversation > propagates the Settings tab handoff using only fixed public intent and candidate/project references 636ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > reviewed derivative references reach the existing AnA conversation > does not offer an ineligible prepared candidate 46ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > reviewed derivative references reach the existing AnA conversation > does not offer an ineligible revoked candidate 33ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > reviewed derivative references reach the existing AnA conversation > does not offer an ineligible expired candidate 38ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > reviewed derivative references reach the existing AnA conversation > does not offer an ineligible policy_changed candidate 45ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > reviewed derivative references reach the existing AnA conversation > does not offer an ineligible disabled candidate 73ms
+ ✓ client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx > reviewed derivative references reach the existing AnA conversation > requires the conversation callback and blocks a stale session callback without publishing residuals 87ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > asks for the scientific review before an approval, and sends the completed map with it 877ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > a CSR the label does not name is caught by the server's refusal, and the panel opens instead of a reload 154ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > a CSR the server names (made from a CSR template, or renamed) opens the scientific review before any approval is sent 103ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > a document that is not a CSR approves as before, with no map 63ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > offers the study data frozen for this document when the program has no package run, and reads its tables 126ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > names the study data an imported CSR build was drafted from as that 69ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > lists package runs and study data together 83ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > with neither, says where the study data is frozen, not a package run it cannot start 60ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > allows mapped review of frozen document data if separate package-run history is unreadable 128ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > does not report an empty history when package-run discovery itself failed 211ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > names malformed package history without hiding the document’s saved study data 97ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > fails closed on malformed document study data even if package history is readable 139ms
+ ✓ client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the study data a CSR is reviewed against > a failed read of the study data is said, never shown as nothing to choose 77ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > queues the build, shows subjects done of total while it runs, then the outcome and the QC list 369ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > refreshes the QC list and the board when the build finished before the first status read 66ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > keeps the newer completion and QC when an older running poll finishes later, without restarting polling 40ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > applies arriving progress while a newer poll is outstanding, then keeps completion over older replies 25ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > keeps the latest status-read error when an older successful poll finishes later 68ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > retires an outstanding status read when the mounted control changes jobs 34ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > shows a failed build by its recorded refusal, naming the rows 27ms
+stderr | client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > is reachable on the csr-workflow board for the job
+An update to CsrWorkflow inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > is reachable on the csr-workflow board for the job
+An update to CsrWorkflowBoard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to CsrWorkflowBoard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to CsrWorkflowBoard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > is reachable on the csr-workflow board for the job
+An update to CsrWorkflowBoard inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > says a stalled build stopped, and building again resumes it 44ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > shows the server refusal as stated 27ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > says so when the build status cannot be read, rather than showing nothing 12ms
+ ✓ client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx > is reachable on the csr-workflow board for the job 57ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > existing authenticated transport for saved peer review > uses the captured bearer and organization for the complete read and exact native verdict 30ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > existing authenticated transport for saved peer review > permits a refreshed token for the same actor and pins it at dispatch 6ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > existing authenticated transport for saved peer review > refuses same-org actor swap before transport even before React rerenders 3ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > existing authenticated transport for saved peer review > refuses organization swap before transport even before React rerenders 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > existing authenticated transport for saved peer review > refuses missing claims before transport even before React rerenders 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > existing authenticated transport for saved peer review > refuses malformed token before transport even before React rerenders 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > existing authenticated transport for saved peer review > refuses missing bearer before reading the document 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > existing authenticated transport for saved peer review > retires an old actor response before exposing its saved document 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > authoritative read context > refuses actor mismatch 3ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > authoritative read context > refuses organization mismatch 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > authoritative read context > refuses document mismatch 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > authoritative read context > refuses missing snapshot mismatch 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > authoritative read context > refuses malformed digest mismatch 3ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > authoritative read context > refuses noncanonical actor 0 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > authoritative read context > refuses noncanonical actor -7 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > authoritative read context > refuses noncanonical actor 07 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > authoritative read context > refuses noncanonical actor 7.0 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > authoritative read context > refuses noncanonical actor true 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > authoritative read context > refuses noncanonical actor null 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > authoritative read context > refuses noncanonical actor 2147483648 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > keeps audit missing receipt unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > keeps audit false receipt unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > keeps actor receipt unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > keeps organization receipt unconfirmed 3ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > keeps document receipt unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > keeps request receipt unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > keeps round receipt unconfirmed 9ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > keeps hash receipt unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > keeps basis receipt unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > keeps verdict receipt unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > keeps snapshot receipt unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > keeps note receipt unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > keeps stale receipt unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > requires reconciliation after HTTP408 4ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > requires reconciliation after HTTP503 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > shows a stale-content refusal without claiming rollback or allowing an unbound retry 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > requires meaningful grounds before a change request with  1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > audited exact verdict receipt > requires meaningful grounds before a change request with short 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > server-bound independent check receipts > dispatches only the captured saved snapshot and validates the server-issued check receipt 4ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > server-bound independent check receipts > keeps a hash check response unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > server-bound independent check receipts > keeps a receipt check response unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > server-bound independent check receipts > keeps a stale check response unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > server-bound independent check receipts > keeps a hard count check response unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > server-bound independent check receipts > keeps a semantic claim check response unconfirmed 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > server-bound independent check receipts > keeps a duplicates check response unconfirmed 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > server-bound independent check receipts > requires reconciliation after an unknown check outcome HTTP408 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > server-bound independent check receipts > requires reconciliation after an unknown check outcome HTTP503 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > server-bound independent check receipts > fences an account swap before dispatch and does not accept stale check metadata on a read 2ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > human dispositions bind to server findings without overriding hard checks > automatically carries exact receipt, snapshot and finding identities for a removed finding 3ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > human dispositions bind to server findings without overriding hard checks > refuses resolve current before posting a human verdict 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > human dispositions bind to server findings without overriding hard checks > refuses reject hard approval before posting a human verdict 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > human dispositions bind to server findings without overriding hard checks > refuses unknown finding before posting a human verdict 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > human dispositions bind to server findings without overriding hard checks > refuses short reason before posting a human verdict 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts > human dispositions bind to server findings without overriding hard checks > records disagreement with a change request while retaining the blocking finding 1ms
+
+ Test Files  8 passed (8)
+      Tests  197 passed (197)
+   Start at  22:11:58
+   Duration  46.04s (transform 5.33s, setup 1.61s, import 9.22s, tests 23.75s, environment 8.75s)
+

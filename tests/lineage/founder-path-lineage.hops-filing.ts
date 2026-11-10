@@ -16,6 +16,7 @@ import type { Request } from 'express';
 import { requestDb } from '../../server/db/requestDb';
 import { Hop, ORG_A, AUTHOR, PASSWORD, SHA256_X, HEX64, sha256, json, asPrincipal, type World } from './founder-path-lineage.world';
 import { requiredModule1Codes } from '../../server/services/ectd/assess-dispatch-readiness';
+import { coverCurrentLeaves } from '../../server/services/shadow-review/__tests__/review-covers-current-leaves';
 
 type Row = Record<string, unknown>;
 
@@ -232,11 +233,15 @@ async function freezeDispatchTransmit(w: World): Promise<request.Response> {
      VALUES ($1, $2, 'fda', 'fda_filing', 'complete', 'Seeded completed run: the reviewer calls a model', $3)`,
     [seqId, ORG_A, 3],
   );
+  // Since 3cacf2e15a a complete run counts only over the leaves it read, so the seeded run
+  // names the sequence's current leaves, as runShadowReview records for a run over them.
+  await coverCurrentLeaves(w.jdb.pool, seqId, ORG_A);
   const sign = async (intent: 'freeze' | 'dispatch' | 'transmit'): Promise<string> => {
     const s = await as(4)(request(w.app).post('/api/c2c/actions/sign')).send({
       target: `ectd-sequence:${seqId}`,
       reason: `Approved for ${intent}: the C2C-101 IND original sequence is complete.`,
-      payload: { intent, meaning: 'approval' },
+      // A transmit signature names the environment it is given for (F1, row D7, 2026-11-08).
+      payload: { intent, meaning: 'approval', ...(intent === 'transmit' ? { environment: 'staging' } : {}) },
       reauth: { password: PASSWORD },
     });
     expect(s.status, JSON.stringify(s.body)).toBe(200);
@@ -295,11 +300,17 @@ export async function hopTransmit(w: World): Promise<void> {
     observe(callers.length);
     expect(callers.length).toBeGreaterThan(0);
   });
+  /* LX-12's bytes half (3cab286e12, 2026-10-29): the guard keeps the exact package in the byte store
+     before the wire and stamps where on the transmittal, metadata.sentPackage. bundle_path names the
+     staging file the send still removes by design, so the walk follows the recorded key instead, read
+     from a fresh provider instance, and compares it with what left on the wire. */
   await hop.check('bytes-retained', 'the bytes the agency received can be read back by the transmittal and hash to its bundle_sha256', async (observe) => {
-    const kept = typeof tx.bundle_path === 'string' && fs.existsSync(tx.bundle_path);
-    observe(kept);
-    expect(kept).toBe(true);
-    expect(sha256(fs.readFileSync(String(tx.bundle_path)))).toBe(tx.bundle_sha256);
+    const sent = (json(tx.metadata) as { sentPackage?: { provider?: string; storageVersionId?: string } } | null)?.sentPackage;
+    const storage = await import('../../server/services/storage/index');
+    storage.resetStorageProvider();
+    const got = sent?.storageVersionId ? await storage.getStorageProviderFor(sent.provider ?? null).get(sent.storageVersionId, ORG_A) : null;
+    observe(got !== null && sha256(got.bytes) === tx.bundle_sha256 && sha256(got.bytes) === sha256(w.h.wire[0]));
+    expect(got && sha256(got.bytes)).toBe(sha256(w.h.wire[0]));
   });
   await hop.check('transmittal-names-project', 'the transmittal row names its project, taken from its submission', async (observe) => {
     observe(tx.program_id === k.programId);
@@ -554,10 +565,15 @@ export async function hopRetention(w: World): Promise<void> {
     expect(audit).toHaveLength(1);
   });
   await hop.check('filed-project-archived', 'the same project can be archived, and its records still read from it', async (observe) => {
-    const archived = await as3(request(w.app).post(`/api/c2c/projects/${k.programId}/archive`)).send({});
+    // Since a58029e991 archiving requires the person's reason (21 CFR 11.10(e)), recorded verbatim.
+    const reason = 'The C2C-101 IND was transmitted; the program is closed and kept for its filed record.';
+    const archived = await as3(request(w.app).post(`/api/c2c/projects/${k.programId}/archive`)).send({ reason });
     const records = await as3(request(w.app).get(`/api/c2c/projects/${k.programId}/records`));
-    observe({ archived: archived.status, records: records.status });
-    expect(archived.status).toBe(200);
+    const audit = await q<{ reason: string | null }>(`SELECT new_values->>'reason' AS reason FROM audit_logs
+      WHERE action = 'c2c.project.archive' AND record_id = $1`, [k.programId]);
+    observe({ archived: archived.status, records: records.status, auditedReasons: audit.map((a) => a.reason) });
+    expect(archived.status, JSON.stringify(archived.body)).toBe(200);
+    expect(audit.map((a) => a.reason)).toEqual([reason]);
     expect(records.status).toBe(200);
     expect(records.body.records.submissions.rows).toHaveLength(1);
     expect(records.body.records.vaultDocuments.rows.length).toBeGreaterThan(0);

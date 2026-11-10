@@ -280,3 +280,78 @@ export function acceptedMachineText(raw: unknown): AcceptedMachineTextEntry[] {
   }
   return out;
 }
+
+/**
+ * One filed section's revision head, as a filing records it (LX-10 of
+ * docs/design/LINEAGE_END_TO_END_PLAN_2026-09-25.md, 2026-11-01).
+ *
+ * A Vault filing recorded the document's version and a digest of its sections,
+ * but not which revision of each section it rendered. The revision is where a
+ * section's provenance lives: its `origin` says which write path produced the
+ * text (an accepted AI draft, a person's edit, a template), `inputs.contributors`
+ * names the machine authors the save attributed, and the section's audit trail
+ * row for that write carries the model, provider and turn record. Without the
+ * revision id, a filed rendition could not be walked back to any of it.
+ */
+export interface FiledSectionRevision {
+  sectionId: string;
+  code: string | null;
+  /** The section's latest revision, or null when it has none (a pre-ledger section). */
+  revisionId: string | null;
+  origin: string | null;
+  chainSha256: string | null;
+  /** The machine authors the head revision's save attributed, by server id. */
+  machineContributors: string[];
+  /** Whether the head revision's content is the text that was filed. False is
+   *  stated, never hidden: the filed text then has no revision of its own. */
+  matchesFiledText: boolean;
+}
+
+/** Each filed section with its revision head. Pure; `heads` are doc_revisions rows, at most one per section. */
+export function filedRevisionHeads(
+  sections: Array<{ id: string; code?: string | null; content?: string | null }>,
+  heads: Array<{ section_id: string; id: string; origin: string | null; content_sha256: string | null; chain_sha256: string | null; inputs: unknown }>,
+): FiledSectionRevision[] {
+  const bySection = new Map(heads.map((h) => [String(h.section_id).toLowerCase(), h]));
+  return sections.map((s) => {
+    const head = bySection.get(String(s.id).toLowerCase());
+    const inputs = (typeof head?.inputs === 'string' ? safeJson(head.inputs) : head?.inputs) as { contributors?: unknown } | null;
+    return {
+      sectionId: String(s.id),
+      code: s.code ?? null,
+      revisionId: head ? String(head.id) : null,
+      origin: head?.origin ?? null,
+      chainSha256: head?.chain_sha256 ?? null,
+      machineContributors: machineContributors(inputs?.contributors).map((c) => c.id),
+      matchesFiledText: !!head && head.content_sha256 === sha256Hex(s.content ?? ''),
+    };
+  });
+}
+
+/**
+ * Each filed section's revision head, read on the filing's client in its lock
+ * (authoring-file-to-vault.ts recordFiling), so it is the revision the rendered
+ * bytes came from. The revision id is the anchor of the section's provenance:
+ * its origin, its machine contributors, and the audit trail row naming the
+ * model and turn record.
+ */
+export async function readFiledSectionRevisions(
+  client: { query: (text: string, params?: unknown[]) => Promise<{ rows: any[] }> },
+  tenantId: number,
+  sections: Array<{ id: string; code?: string | null; content?: string | null }>,
+): Promise<FiledSectionRevision[]> {
+  if (sections.length === 0) return [];
+  const heads = await client.query(
+    `SELECT DISTINCT ON (section_id) section_id::text AS section_id, id::text AS id, origin,
+            content_sha256, chain_sha256, inputs
+       FROM doc_revisions
+      WHERE tenant_id = $1 AND section_id = ANY($2::uuid[])
+      ORDER BY section_id, created_at DESC, id DESC`,
+    [tenantId, sections.map((s) => String(s.id))],
+  );
+  return filedRevisionHeads(sections, heads.rows);
+}
+
+function safeJson(text: string): unknown {
+  try { return JSON.parse(text); } catch { return null; }
+}

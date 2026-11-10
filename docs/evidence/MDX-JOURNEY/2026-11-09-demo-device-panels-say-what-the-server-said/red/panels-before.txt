@@ -1,0 +1,770 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/mdx/surfaces/__tests__/deviceScreensSayNotConfiguredAndNotStarted.test.tsx > the 510(k) screen, when predicate intelligence is not configured > says so once, and offers no read failure or retry for the candidates or the SE matrix 5046ms
+   → expected 'Return to project workflowNeuroPanel-…' to match /Predicate intelligence is not configu…/
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="mdx-shell"
+        data-surface="true"
+      >
+        <div
+          class="page"
+        >
+          <div
+            class="page-inner"
+          >
+            <nav
+              aria-label="Project context"
+              class="page-actions"
+            >
+              <button
+                class="btn ghost"
+                type="button"
+              >
+                Return to project workflow
+              </button>
+              <span>
+                NeuroPanel-Dx
+              </span>
+            </nav>
+            <div
+              aria-label="Pathway sub-tabs"
+              class="pwt-bar"
+              role="tablist"
+            >
+              <button
+                aria-selected="true"
+                class="pwt-btn active"
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Workspace
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Predicate · SE · eSTAR
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Audit trail
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  21 CFR Part 11
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  RTA / AI-Hold
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Agency / NB queries
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Approvals
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Your pending e-sign · all projects
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Files
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Full filesystem
+                </span>
+              </button>
+            </div>
+            <div
+              class="pwt-pane"
+            >
+              <div
+                class="section-hdr"
+              >
+                <div>
+                  <div
+                    class="section-title"
+                  >
+                    510(k) pathway · 
+                    NeuroPanel-Dx
+                  </div>
+                  <div
+                    class="section-sub"
+                  >
+                    Stage 4 of 7 — Performance testing · No target set
+                  </div>
+                </div>
+                <button
+                  class="section-more"
+                >
+                  Open §11 in editor 
+                  <svg
+                    fill="none"
+                    height="16"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="16"
+                  >
+                    <line
+                      x1="5"
+                      x2="19"
+                      y1="12"
+                      y2="12"
+                    />
+                    <polyline
+                      points="12 5 19 12 12 19"
+                    />
+                  </svg>
+                </button>
+                <button
+                  class="section-more"
+                  style="margin-left: 8px;"
+                  title="Assemble a draft ZIP of rendered section PDFs from your authored content — NOT the official FDA eSTAR PDF that CDRH ingests"
+                >
+ ...
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/deviceScreensSayNotConfiguredAndNotStarted.test.tsx > the 510(k) screen, when predicate intelligence is not configured > still reports a service that is down as a failure 50ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/deviceScreensSayNotConfiguredAndNotStarted.test.tsx > the IVD screen, when the project has no GSPR assessment > shows the empty matrix with its own hint, not a read failure 5018ms
+   → expected 'Return to project workflowNeuroPanel-…' to match /Start the GSPR matrix for this device…/
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="mdx-shell"
+        data-surface="true"
+      >
+        <div
+          class="page"
+        >
+          <div
+            class="page-inner"
+          >
+            <nav
+              aria-label="Project context"
+              class="page-actions"
+            >
+              <button
+                class="btn ghost"
+                type="button"
+              >
+                Return to project workflow
+              </button>
+              <span>
+                NeuroPanel-Dx
+              </span>
+            </nav>
+            <div
+              aria-label="Pathway sub-tabs"
+              class="pwt-bar"
+              role="tablist"
+            >
+              <button
+                aria-selected="true"
+                class="pwt-btn active"
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Workspace
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Class · validation · GSPR
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Audit trail
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  21 CFR Part 11
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  NB / GSPR
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Agency / NB queries
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Approvals
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Your pending e-sign · all projects
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Files
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Full filesystem
+                </span>
+              </button>
+            </div>
+            <div
+              class="pwt-pane"
+            >
+              <div
+                class="section-hdr"
+              >
+                <div>
+                  <div
+                    class="section-title"
+                  >
+                    IVDR pathway · 
+                    NeuroPanel-Dx
+                  </div>
+                  <div
+                    class="section-sub"
+                  >
+                    Project phase: Authoring
+                     · 
+                    No target set
+                  </div>
+                </div>
+                <button
+                  class="section-more"
+                >
+                  Assemble technical file 
+                  <svg
+                    fill="none"
+                    height="16"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="16"
+                  >
+                    <path
+                      d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                    />
+                    <polyline
+                      points="14 2 14 8 20 8"
+                    />
+                    <line
+                      x1="16"
+                      x2="8"
+                      y1="13"
+                      y2="13"
+                    />
+                    <line
+                      x1="16"
+                      x2="8"
+                      y1="17"
+                    ...
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/deviceScreensSayNotConfiguredAndNotStarted.test.tsx > the IVD screen, when the project has no GSPR assessment > still reports a failed read as a failure 49ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/deviceScreensSayNotConfiguredAndNotStarted.test.tsx > the 510(k) screen, when predicate intelligence is not configured > says so once, and offers no read failure or retry for the candidates or the SE matrix
+AssertionError: expected 'Return to project workflowNeuroPanel-…' to match /Predicate intelligence is not configu…/
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="mdx-shell"
+        data-surface="true"
+      >
+        <div
+          class="page"
+        >
+          <div
+            class="page-inner"
+          >
+            <nav
+              aria-label="Project context"
+              class="page-actions"
+            >
+              <button
+                class="btn ghost"
+                type="button"
+              >
+                Return to project workflow
+              </button>
+              <span>
+                NeuroPanel-Dx
+              </span>
+            </nav>
+            <div
+              aria-label="Pathway sub-tabs"
+              class="pwt-bar"
+              role="tablist"
+            >
+              <button
+                aria-selected="true"
+                class="pwt-btn active"
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Workspace
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Predicate · SE · eSTAR
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Audit trail
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  21 CFR Part 11
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  RTA / AI-Hold
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Agency / NB queries
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Approvals
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Your pending e-sign · all projects
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Files
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Full filesystem
+                </span>
+              </button>
+            </div>
+            <div
+              class="pwt-pane"
+            >
+              <div
+                class="section-hdr"
+              >
+                <div>
+                  <div
+                    class="section-title"
+                  >
+                    510(k) pathway · 
+                    NeuroPanel-Dx
+                  </div>
+                  <div
+                    class="section-sub"
+                  >
+                    Stage 4 of 7 — Performance testing · No target set
+                  </div>
+                </div>
+                <button
+                  class="section-more"
+                >
+                  Open §11 in editor 
+                  <svg
+                    fill="none"
+                    height="16"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="16"
+                  >
+                    <line
+                      x1="5"
+                      x2="19"
+                      y1="12"
+                      y2="12"
+                    />
+                    <polyline
+                      points="12 5 19 12 12 19"
+                    />
+                  </svg>
+                </button>
+                <button
+                  class="section-more"
+                  style="margin-left: 8px;"
+                  title="Assemble a draft ZIP of rendered section PDFs from your authored content — NOT the official FDA eSTAR PDF that CDRH ingests"
+                >
+ ...
+
+- Expected:
+/Predicate intelligence is not configured for this workspace/
+
++ Received:
+"Return to project workflowNeuroPanel-DxWorkspacePredicate · SE · eSTARAudit trail021 CFR Part 11RTA / AI-Hold0Agency / NB queriesApprovalsYour pending e-sign · all projectsFilesFull filesystem510(k) pathway · NeuroPanel-DxStage 4 of 7 — Performance testing · No target setOpen §11 in editor Export 510(k) package IntakeDevice spec · intended useClassifyProduct code · pathwayPredicate searchPrecedent intelligence4Performance testingBench · analytical · clinical5Substantial equivalenceSE matrix · differences6Assemble eSTARsections · validation7SubmiteSTAR + cover letterDevice profileNo device profile yetEditPredicate intelligence is not reachable for this tenant. Live K-number candidates appear here once the shadow service is reachable; until then the reduced openFDA clearance lookup below is the only source.Reduced openFDA fallback unavailable — openFDA unavailablePredicate search · K-numbers0 of 0 selected · ranked by similarity · check 2+ for side-by-sidePredicate of record: reading the device profile…Could not load predicate candidatesTry againK-numberDeviceClearedMatchDiffsStatusSubstantial equivalence matrixNeuroPanel-Dx vs. Could not load substantial-equivalence rowsTry againeSTAR sectionsSections not yet readCould not load eSTAR sectionsThe eSTAR section list returned a response this screen could not read.Try againOfficial eSTAR · 510(k) · IVD eSTARThe field list could not be loadedGenerate official eSTAR (PDF) Not yet producible The official template or its field map is not availableOptional Vault attachments. Choose each FDA destination explicitly; earlier files and exports stay unchanged.No Vault attachments selected.Add Vault attachmentFields the template carriesGoverned values are read-only and written as held. A value entered here is written to this export only and is not stored.Could not load the field listThe field list could not be readTry againeSTAR filing readinessNot yet registered — toggle the prerequisites you holdFDA ESG accountMark heldCDRH Portal accountMark heldOrg identity (DUNS/FEI)Mark heldMDUFA fee accountMark heldCorrespondent and declarationHeld on the org's eSTAR registration and written into the official eSTAR's correspondent and Declaration of Conformity fields. The declaration's company name and address are one legal entity, so both are held here. A blank field stays blank in the eSTAR.Correspondent company nameCorrespondent contact emailCorrespondent telephoneDeclaration of Conformity company nameDeclaration of Conformity company addressSaveAssess a submissionFiling-readiness against your authored contentDevice (nIVD)IVDSelect a submission…Start trackingTracked submissionsNo tracked filings yetNo tracked filings yetSelect a submission type and run a filing-readiness assessment; tracking becomes available once it has one.Serves the eSTAR submission record (FDA 510(k) / De Novo)"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/deviceScreensSayNotConfiguredAndNotStarted.test.tsx:76:55
+     74|     stubFetch({ predicate: [NOT_CONFIGURED, 503] });
+     75|     const { container } = mount('device-510k');
+     76|     await waitFor(() => expect(container.textContent).toMatch(/Predica…
+       |                                                       ^
+     77|     await waitFor(() => expect(container.textContent).toMatch(/The SE …
+     78|     expect(container.textContent).not.toMatch(/Could not load predicat…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/deviceScreensSayNotConfiguredAndNotStarted.test.tsx > the IVD screen, when the project has no GSPR assessment > shows the empty matrix with its own hint, not a read failure
+AssertionError: expected 'Return to project workflowNeuroPanel-…' to match /Start the GSPR matrix for this device…/
+
+Ignored nodes: comments, script, style
+<html>
+  <head />
+  <body>
+    <div>
+      <div
+        class="mdx-shell"
+        data-surface="true"
+      >
+        <div
+          class="page"
+        >
+          <div
+            class="page-inner"
+          >
+            <nav
+              aria-label="Project context"
+              class="page-actions"
+            >
+              <button
+                class="btn ghost"
+                type="button"
+              >
+                Return to project workflow
+              </button>
+              <span>
+                NeuroPanel-Dx
+              </span>
+            </nav>
+            <div
+              aria-label="Pathway sub-tabs"
+              class="pwt-bar"
+              role="tablist"
+            >
+              <button
+                aria-selected="true"
+                class="pwt-btn active"
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Workspace
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Class · validation · GSPR
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Audit trail
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  21 CFR Part 11
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  NB / GSPR
+                </span>
+                <span
+                  class="pwt-count "
+                >
+                  0
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Agency / NB queries
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Approvals
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Your pending e-sign · all projects
+                </span>
+              </button>
+              <button
+                aria-selected="false"
+                class="pwt-btn "
+                role="tab"
+              >
+                <span
+                  class="pwt-label"
+                >
+                  Files
+                </span>
+                <span
+                  class="pwt-sub"
+                >
+                  Full filesystem
+                </span>
+              </button>
+            </div>
+            <div
+              class="pwt-pane"
+            >
+              <div
+                class="section-hdr"
+              >
+                <div>
+                  <div
+                    class="section-title"
+                  >
+                    IVDR pathway · 
+                    NeuroPanel-Dx
+                  </div>
+                  <div
+                    class="section-sub"
+                  >
+                    Project phase: Authoring
+                     · 
+                    No target set
+                  </div>
+                </div>
+                <button
+                  class="section-more"
+                >
+                  Assemble technical file 
+                  <svg
+                    fill="none"
+                    height="16"
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.75"
+                    viewBox="0 0 24 24"
+                    width="16"
+                  >
+                    <path
+                      d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                    />
+                    <polyline
+                      points="14 2 14 8 20 8"
+                    />
+                    <line
+                      x1="16"
+                      x2="8"
+                      y1="13"
+                      y2="13"
+                    />
+                    <line
+                      x1="16"
+                      x2="8"
+                      y1="17"
+                    ...
+
+- Expected:
+/Start the GSPR matrix for this device to populate the chapter breakdown/
+
++ Received:
+"Return to project workflowNeuroPanel-DxWorkspaceClass · validation · GSPRAudit trail021 CFR Part 11NB / GSPR0Agency / NB queriesApprovalsYour pending e-sign · all projectsFilesFull filesystemIVDR pathway · NeuroPanel-DxProject phase: Authoring · No target setAssemble technical file 1IntakeBiomarker · intended purpose2ClassificationAnnex VIII rule engine3Analytical validationLoD · LoQ · precision4Clinical evidence2×2 · sensitivity · specificity5GSPR complianceAnnex I · 20 requirements6Assemble dossierTechnical file · declaration7SubmitEUDAMED · NB reviewThe IVDR pathway's 7 stages. None is marked: a project records its project phase, stated above, not an IVDR stage.IVDR readiness · technical fileGSPR · analytical and clinical performance · scientific validity · PER · classification · PMPFThe IVDR readiness was not readThe IVDR readiness could not be read. Nothing here is a finding about the technical file.Try againAssess, save and review IVD evidenceClassification and generated documents are saved snapshots. A verified working copy opens the existing Authoring review and signature workflow; its approval does not transfer from the source.Assess IVDR classification Draft Field Safety Notice Refresh saved IVD recordsunexpected response shape for /api/ivd-assessments?program_id=aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeeeClassification · Annex VIII0 devices · class A–D risk rulesNo device classifications yetClassify this device under Annex VIII to populate the table.Check againServes the IVDR Annex VIII classification recordClinical performance · 2×2 contingency0 studies · sensitivity · specificity · PPV · NPVNo clinical performance studies yetRecord a clinical performance study to populate the contingency table.Check againServes the IVDR Annex XIII performance evaluationAnalytical validationLoD · LoQ · precision (CV) · pass/failNo analytical validations yetLog an analytical performance study (LoD, precision, interference) to populate this table.Check againServes the IVDR Annex XIII analytical performance recordGSPR compliance · Annex INot yet assessedCould not load GSPR chaptersTry againCompanion diagnosticsDrug–diagnostic pairings · FDA/EMA approval · biomarkerNo companion diagnostic pairings yetPair this diagnostic with a drug programme to coordinate CDx co-development.Check againCLIA categorizationComplexity · CLIA waiver lifecycle · CMS letterNo CLIA categorizations yetCategorize this test's CLIA complexity to plan a waiver strategy.Check againServes the CLIA complexity categorizationOfficial eSTAR · 510(k) · IVD eSTARThe field list could not be loadedGenerate official eSTAR (PDF) Not yet producible The official template or its field map is not availableOptional Vault attachments. Choose each FDA destination explicitly; earlier files and exports stay unchanged.No Vault attachments selected.Add Vault attachmentFields the template carriesGoverned values are read-only and written as held. A value entered here is written to this export only and is not stored.Could not load the field listThe field list could not be readTry againeSTAR filing readinessNot yet registered — toggle the prerequisites you holdFDA ESG accountMark heldCDRH Portal accountMark heldOrg identity (DUNS/FEI)Mark heldMDUFA fee accountMark heldCorrespondent and declarationHeld on the org's eSTAR registration and written into the official eSTAR's correspondent and Declaration of Conformity fields. The declaration's company name and address are one legal entity, so both are held here. A blank field stays blank in the eSTAR.Correspondent company nameCorrespondent contact emailCorrespondent telephoneDeclaration of Conformity company nameDeclaration of Conformity company addressSaveAssess a submissionFiling-readiness against your authored contentDevice (nIVD)IVDSelect a submission…Start trackingTracked submissionsNo tracked filings yetNo tracked filings yetSelect a submission type and run a filing-readiness assessment; tracking becomes available once it has one.Serves the eSTAR submission record (FDA 510(k) / De Novo)"
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/deviceScreensSayNotConfiguredAndNotStarted.test.tsx:94:55
+     92|     stubFetch({ gspr: [NO_GSPR, 404] });
+     93|     const { container } = mount('device-diagnostics');
+     94|     await waitFor(() => expect(container.textContent).toMatch(/Start t…
+       |                                                       ^
+     95|     expect(container.textContent).not.toMatch(/Could not load GSPR cha…
+     96|   });
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  17:29:04
+   Duration  12.57s (transform 1.50s, setup 119ms, import 1.83s, tests 10.17s, environment 344ms)
+

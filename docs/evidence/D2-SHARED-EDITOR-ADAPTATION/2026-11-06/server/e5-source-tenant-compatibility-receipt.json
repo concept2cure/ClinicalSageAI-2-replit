@@ -1,0 +1,194 @@
+{
+  "observedAt": "2026-11-06T22:23:33.861479+00:00",
+  "sourceCommitBeforeRuns": "d6cb7f9a9e10e20fea8daa97408c41c78b3b0942",
+  "sourceCommitAfterRuns": "bd304512fc7c5ea1fd1fd3c2348e5556fd2cd2fb",
+  "branch": "concept2cure-v2",
+  "scope": "Bounded e5 authoring source/from-draft/workflow-governance and tenant-scope integration",
+  "results": {
+    "initialRun": {
+      "files": 9,
+      "totalCases": 159,
+      "passedCases": 135,
+      "failedCases": 24,
+      "exitCode": 1,
+      "durationSeconds": 85.83,
+      "failedFile": "server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts",
+      "failedFileTotalCases": 30,
+      "failedFilePassedCases": 6,
+      "unaffectedFiles": 8,
+      "unaffectedPassedCases": 129,
+      "cause": "Legacy governance fixture omitted audit_logs.chain_seq, which new independentLedger requires; expected release codes were masked by INDEPENDENT_CHECK_REQUIRED."
+    },
+    "diagnosis": {
+      "method": "Exact shared AUDIT_LOGS_PGLITE_DDL and existing canonical audit-chain migration executed on isolated PGlite",
+      "before": "42703 missing column",
+      "after": "chain_seq readable, empty ledger preserved"
+    },
+    "affectedFullSuiteAfterFixtureCorrection": {
+      "files": 1,
+      "totalCases": 30,
+      "passedCases": 30,
+      "failedCases": 0,
+      "exitCode": 0,
+      "durationSeconds": 15.03
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 0,
+      "exitCode": 0,
+      "maxWarnings": 0
+    },
+    "composedCoverage": {
+      "files": 9,
+      "passedCases": 159,
+      "note": "129 cases in eight unchanged green suites from initial run plus corrected full governance suite30. Not a fresh nine-suite green execution."
+    }
+  },
+  "fixtureChange": {
+    "path": "server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts",
+    "change": "Append existing migrations/20260921_audit_logs_chain_seq.sql to canonical fixture setup list. No invented audit row, approval or signature.",
+    "onlyCanonicalMigrationAdded": true,
+    "productionGuardsAndEveryTestAssertionUnchanged": true
+  },
+  "commands": {
+    "initialRun": "NODE_OPTIONS=--max-old-space-size=4096 PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH npx --no-install vitest run --config vitest.config.ts --maxWorkers=1 --fileParallelism=false server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts server/routes/__tests__/artifact-workflow-source.test.ts server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts server/db/__tests__/withTenantConnection.test.ts server/db/__tests__/withTenantConnection-scope-before-checkout.test.ts server/db/__tests__/poolInstrumentation-tenant-scope.test.ts server/db/__tests__/tenantScope.test.ts --reporter=dot",
+    "affectedRun": "NODE_OPTIONS=--max-old-space-size=4096 PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH npx --no-install vitest run --config vitest.config.ts --maxWorkers=1 --fileParallelism=false server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts --reporter=verbose --reporter=json --outputFile=/workspace/scratch/shared-editor-e5-governance-green.json",
+    "lint": "NODE_OPTIONS=--max-old-space-size=4096 PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH npx --no-install eslint server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts --max-warnings=0"
+  },
+  "inputsBeforeInitialRun": {
+    "observedAt": "2026-11-06T22:17:01.828781+00:00",
+    "headBeforeRun": "d6cb7f9a9e10e20fea8daa97408c41c78b3b0942",
+    "mergeHeadBeforeRun": null,
+    "unmergedPaths": [],
+    "files": {
+      "server/services/authoring/authoring-source-import.ts": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+      "server/services/authoring/authoring-from-draft.ts": "05fdb79cb887a07216dfe18e7b03580b2bee7daa568182fbef5e8864f64a0741",
+      "server/services/authoring/workflow-import-governance.ts": "f709cf12c6ea7656f4b2fa1d126b474556cd17d68aa01e2294aaf78170a6dfc7",
+      "server/services/authoring/import-source-references.ts": "b4a9a3f3395681d54f616bf98976c8db4285ed208c4a3946b2a77791be18478b",
+      "server/services/authoring/artifact-workflow-source.ts": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+      "server/services/ai-governance/approved-models.ts": "9350d2ab137d5da95185e16974d47c6ec7f1953b545863be3fb0399fa8f33aaa",
+      "server/services/ai-gateway/model-governance.ts": "f7d5ed4903899d690ee2d487684db6b597e4bfa55f3891d85744ac012fbff99f",
+      "server/db/withTenantConnection.ts": "7567ed8bc46d1f53f7432bb3384151eaec05ffbef07d78ba3c4d707627d06321",
+      "server/db/sessionScope.ts": "0366a47f024e7bac659282a8b7bf3548adc9b6fa3b0fbc1c8b34f6ec6de7b0bf",
+      "server/db/tenantStore.ts": "54cabd46a01a570e0a334f15e1f68ed9c8ac0357c6318d1de398b24051b33644",
+      "server/db/poolInstrumentation.ts": "8ff0fe0ada7cb6f2719e4bb754080158ad488fa3d855167348eb952663cc4f7b",
+      "server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts": "22312d759d83564a29152508a06e1fd2df8154342873d3e05a6f76001e5110b9",
+      "server/routes/__tests__/artifact-workflow-source.test.ts": "a33f9925426b68bfcffc80a0462e3f0cbae141c20f4c4e18d4cee80fecbda375",
+      "server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts": "4b8b70f092d0487ba7553c2c17595bd4706e8c584e1d09d0adc0541e81a41993",
+      "server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts": "231f654a143f8e07a62274e40505c6288f0ffa267640e513103be7f95823a2f3",
+      "server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts": "84ea419b694769ee5d73aae6cdaf8d93e28dc7c19e6acaac4a54ad0b8f9b0f10",
+      "server/db/__tests__/withTenantConnection.test.ts": "ea945da2a53ecd116d80890d10dc81d976b56cb726a65cd5037770abe9cb8d59",
+      "server/db/__tests__/withTenantConnection-scope-before-checkout.test.ts": "0ecc59eb6c725f1a75c936401f51f43a71124d99997891a878544bfd4c702ddf",
+      "server/db/__tests__/poolInstrumentation-tenant-scope.test.ts": "14212047a9c314afbf16ff97b7a44bfd8da4d5f1727adc8de6830dd5d726451f",
+      "server/db/__tests__/tenantScope.test.ts": "bd3ccdcd502aa8a8e32e975aec88e8099a5904bbde0f4ea362f71aeee1680691",
+      "server/routes/__tests__/_authoring-canvas-fixture.ts": "0714fa5e9fdc76489639390d450c5bea8649040458cc113c63db5c9973280067",
+      "server/routes/__tests__/_source-import-recovery-qualification.ts": "4ac0baea70adffd77492f56627750d99c122eb729f3bc3e9551d42301321d0dc"
+    }
+  },
+  "inputsBeforeAffectedRun": {
+    "observedAt": "2026-11-06T22:21:25.657578+00:00",
+    "headBeforeRun": "d6cb7f9a9e10e20fea8daa97408c41c78b3b0942",
+    "mergeHeadBeforeRun": null,
+    "unmergedPaths": [],
+    "files": {
+      "server/services/authoring/authoring-source-import.ts": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+      "server/services/authoring/authoring-from-draft.ts": "05fdb79cb887a07216dfe18e7b03580b2bee7daa568182fbef5e8864f64a0741",
+      "server/services/authoring/workflow-import-governance.ts": "f709cf12c6ea7656f4b2fa1d126b474556cd17d68aa01e2294aaf78170a6dfc7",
+      "server/services/authoring/import-source-references.ts": "b4a9a3f3395681d54f616bf98976c8db4285ed208c4a3946b2a77791be18478b",
+      "server/services/authoring/artifact-workflow-source.ts": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+      "server/services/ai-governance/approved-models.ts": "9350d2ab137d5da95185e16974d47c6ec7f1953b545863be3fb0399fa8f33aaa",
+      "server/services/ai-gateway/model-governance.ts": "f7d5ed4903899d690ee2d487684db6b597e4bfa55f3891d85744ac012fbff99f",
+      "server/db/withTenantConnection.ts": "7567ed8bc46d1f53f7432bb3384151eaec05ffbef07d78ba3c4d707627d06321",
+      "server/db/sessionScope.ts": "0366a47f024e7bac659282a8b7bf3548adc9b6fa3b0fbc1c8b34f6ec6de7b0bf",
+      "server/db/tenantStore.ts": "54cabd46a01a570e0a334f15e1f68ed9c8ac0357c6318d1de398b24051b33644",
+      "server/db/poolInstrumentation.ts": "8ff0fe0ada7cb6f2719e4bb754080158ad488fa3d855167348eb952663cc4f7b",
+      "server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts": "22312d759d83564a29152508a06e1fd2df8154342873d3e05a6f76001e5110b9",
+      "server/routes/__tests__/artifact-workflow-source.test.ts": "a33f9925426b68bfcffc80a0462e3f0cbae141c20f4c4e18d4cee80fecbda375",
+      "server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts": "4b8b70f092d0487ba7553c2c17595bd4706e8c584e1d09d0adc0541e81a41993",
+      "server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts": "231f654a143f8e07a62274e40505c6288f0ffa267640e513103be7f95823a2f3",
+      "server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts": "0f328733815926984c4f3e4db33f12c2b18cd17c489b6f69425a41c5171a35d0",
+      "server/db/__tests__/withTenantConnection.test.ts": "ea945da2a53ecd116d80890d10dc81d976b56cb726a65cd5037770abe9cb8d59",
+      "server/db/__tests__/withTenantConnection-scope-before-checkout.test.ts": "0ecc59eb6c725f1a75c936401f51f43a71124d99997891a878544bfd4c702ddf",
+      "server/db/__tests__/poolInstrumentation-tenant-scope.test.ts": "14212047a9c314afbf16ff97b7a44bfd8da4d5f1727adc8de6830dd5d726451f",
+      "server/db/__tests__/tenantScope.test.ts": "bd3ccdcd502aa8a8e32e975aec88e8099a5904bbde0f4ea362f71aeee1680691",
+      "server/routes/__tests__/_authoring-canvas-fixture.ts": "0714fa5e9fdc76489639390d450c5bea8649040458cc113c63db5c9973280067",
+      "server/routes/__tests__/_source-import-recovery-qualification.ts": "4ac0baea70adffd77492f56627750d99c122eb729f3bc3e9551d42301321d0dc"
+    },
+    "onlyCanonicalMigrationAdded": true
+  },
+  "sourceFingerprintsAfterRuns": {
+    "server/services/authoring/authoring-source-import.ts": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+    "server/services/authoring/authoring-from-draft.ts": "05fdb79cb887a07216dfe18e7b03580b2bee7daa568182fbef5e8864f64a0741",
+    "server/services/authoring/workflow-import-governance.ts": "f709cf12c6ea7656f4b2fa1d126b474556cd17d68aa01e2294aaf78170a6dfc7",
+    "server/services/authoring/import-source-references.ts": "b4a9a3f3395681d54f616bf98976c8db4285ed208c4a3946b2a77791be18478b",
+    "server/services/authoring/artifact-workflow-source.ts": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+    "server/services/ai-governance/approved-models.ts": "9350d2ab137d5da95185e16974d47c6ec7f1953b545863be3fb0399fa8f33aaa",
+    "server/services/ai-gateway/model-governance.ts": "f7d5ed4903899d690ee2d487684db6b597e4bfa55f3891d85744ac012fbff99f",
+    "server/db/withTenantConnection.ts": "7567ed8bc46d1f53f7432bb3384151eaec05ffbef07d78ba3c4d707627d06321",
+    "server/db/sessionScope.ts": "0366a47f024e7bac659282a8b7bf3548adc9b6fa3b0fbc1c8b34f6ec6de7b0bf",
+    "server/db/tenantStore.ts": "54cabd46a01a570e0a334f15e1f68ed9c8ac0357c6318d1de398b24051b33644",
+    "server/db/poolInstrumentation.ts": "8ff0fe0ada7cb6f2719e4bb754080158ad488fa3d855167348eb952663cc4f7b",
+    "server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts": "22312d759d83564a29152508a06e1fd2df8154342873d3e05a6f76001e5110b9",
+    "server/routes/__tests__/artifact-workflow-source.test.ts": "a33f9925426b68bfcffc80a0462e3f0cbae141c20f4c4e18d4cee80fecbda375",
+    "server/routes/__tests__/authoringWorkflowImport.pglite.integration.test.ts": "4b8b70f092d0487ba7553c2c17595bd4706e8c584e1d09d0adc0541e81a41993",
+    "server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts": "231f654a143f8e07a62274e40505c6288f0ffa267640e513103be7f95823a2f3",
+    "server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts": "0f328733815926984c4f3e4db33f12c2b18cd17c489b6f69425a41c5171a35d0",
+    "server/db/__tests__/withTenantConnection.test.ts": "ea945da2a53ecd116d80890d10dc81d976b56cb726a65cd5037770abe9cb8d59",
+    "server/db/__tests__/withTenantConnection-scope-before-checkout.test.ts": "0ecc59eb6c725f1a75c936401f51f43a71124d99997891a878544bfd4c702ddf",
+    "server/db/__tests__/poolInstrumentation-tenant-scope.test.ts": "14212047a9c314afbf16ff97b7a44bfd8da4d5f1727adc8de6830dd5d726451f",
+    "server/db/__tests__/tenantScope.test.ts": "bd3ccdcd502aa8a8e32e975aec88e8099a5904bbde0f4ea362f71aeee1680691",
+    "server/routes/__tests__/_authoring-canvas-fixture.ts": "0714fa5e9fdc76489639390d450c5bea8649040458cc113c63db5c9973280067",
+    "server/routes/__tests__/_source-import-recovery-qualification.ts": "4ac0baea70adffd77492f56627750d99c122eb729f3bc3e9551d42301321d0dc"
+  },
+  "changedDuringInitialToFinal": [
+    "server/services/authoring/__tests__/workflow-import-governance.pglite.test.ts"
+  ],
+  "finalRunInputsUnchanged": true,
+  "logs": {
+    "shared-editor-e5-source-tenant-initial.txt": {
+      "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/server/shared-editor-e5-source-tenant-initial.txt.gz",
+      "rawBytes": 72695,
+      "rawLines": 1470,
+      "rawSha256": "883a85ebfd4f60e8876ce9c6bed499467345b3ac0d1b10063518bfcd9e97d129",
+      "compressed": true
+    },
+    "shared-editor-e5-governance-schema-diagnosis.txt": {
+      "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/server/shared-editor-e5-governance-schema-diagnosis.txt",
+      "rawBytes": 128,
+      "rawLines": 1,
+      "rawSha256": "dae7c35a514e1794c2e937a06aba1d7bbabe922ce21af5c5c05ff6478c674077",
+      "compressed": false
+    },
+    "shared-editor-e5-governance-green.txt": {
+      "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/server/shared-editor-e5-governance-green.txt",
+      "rawBytes": 8821,
+      "rawLines": 78,
+      "rawSha256": "e02e011ba0cdee1a60dc1212d0c38fddd23f9c2ccf2681afed8f19d430110069",
+      "compressed": false
+    },
+    "shared-editor-e5-governance-green.json": {
+      "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/server/shared-editor-e5-governance-green.json",
+      "rawBytes": 13605,
+      "rawLines": 1,
+      "rawSha256": "e5086e9250bd6985c7349c8d2fb6961ec259df5f15866914f8aba452c3f68b31",
+      "compressed": false
+    },
+    "shared-editor-e5-governance-lint.txt": {
+      "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/server/shared-editor-e5-governance-lint.txt",
+      "rawBytes": 0,
+      "rawLines": 0,
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "compressed": false
+    }
+  },
+  "proof": [
+    "Binary and artifact imports retain independent unbound copies, edited-copy reuse, saved bindings and original source bytes/hash; stored workflow sources remain current and authorized.",
+    "Existing from-draft provenance attribution, explicit human adoption, retained known-machine qualification holds and CSR scientific-review requirements remain passing.",
+    "Tenant primitives validate and explicitly propagate/clear trusted account owner scope; fake-driver checks cover checkout ordering, scope inheritance boundaries and cleanup."
+  ],
+  "limits": [
+    "Actual source/copy/governance SQL uses minimal PGlite fixtures; some policy/source seams remain mocked. Tenant scope checks use fake driver pools, not native PostgreSQL/RLS proof.",
+    "No production edit or weakening of INDEPENDENT_CHECK_REQUIRED/adoption/model/CSR/source assertions. No native DB schema changes or real credential/provider calls.",
+    "No full compiler/build, commit or deployment performed by this scope. New derivative generation and private-profile native security qualification remain with their owners."
+  ]
+}

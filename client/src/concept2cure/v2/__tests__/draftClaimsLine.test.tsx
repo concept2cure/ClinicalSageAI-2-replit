@@ -109,13 +109,15 @@ describe('the line is on the surface the author already reads', () => {
     const { join } = require('node:path') as typeof import('node:path');
     const wb = readFileSync(join(__dirname, '..', 'editor', 'DocumentWorkbench.tsx'), 'utf8');
     expect(wb).toContain("import { DraftClaimsLine } from './DraftClaimsLine'");
-    expect(wb).toContain('describeClaimsCheck(body.document.provenance)');
+    // Derived from the same current read as the figure line, so the two never describe different revisions.
+    expect(wb).toContain('describeFigureCheck(sourceDocument.provenance)');
+    expect(wb).toContain('describeClaimsCheck(sourceDocument.provenance)');
     // Beside the figure line, in every place it appears: the document masthead and the section one.
     const figureAt = [...wb.matchAll(/\{docFigures && <DraftFigureLine check=\{docFigures\} \/>\}/g)];
     const claimsAt = [...wb.matchAll(/\{docClaims && <DraftClaimsLine check=\{docClaims\} \/>\}/g)];
     expect(figureAt.length).toBeGreaterThan(0);
     expect(claimsAt.length).toBe(figureAt.length);
-    // And cleared when the document changes, so a stale check is never shown against new text.
-    expect(wb).toContain('setDocClaims(null)');
+    // And recomputed from that read, gated on it being available, so a stale check is never shown against new text.
+    expect(wb).toMatch(/const docClaims = useMemo\(\(\) => metadataAvailable \? describeClaimsCheck\(sourceDocument\.provenance\) : null, \[metadataAvailable, sourceDocument\]\)/);
   });
 });

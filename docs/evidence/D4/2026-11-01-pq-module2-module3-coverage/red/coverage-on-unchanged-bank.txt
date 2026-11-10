@@ -1,0 +1,8 @@
+ × server/eval/pq/__tests__/gold-bank-coverage.test.ts > the bank covers CMC / Module 3 and Module 2.5–2.7 > module-2-clinical reaches both floors with headroom 4ms
+   → module-2-clinical generation tasks: expected 0 to be greater than 10
+ × server/eval/pq/__tests__/gold-bank-coverage.test.ts > the bank covers CMC / Module 3 and Module 2.5–2.7 > module-3-quality reaches both floors with headroom 1ms
+   → module-3-quality generation tasks: expected 0 to be greater than 10
+ ✓ server/eval/pq/__tests__/gold-bank-coverage.test.ts > every owed task names the real document it was cut from > a document in this repository, or a reusable published article 1ms
+ ✓ server/eval/pq/__tests__/gold-bank-coverage.test.ts > every owed task names the real document it was cut from > a task cut from a synopsis in csrs/ is that PDF's own text, line by line 102ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  2 failed | 2 passed (4)

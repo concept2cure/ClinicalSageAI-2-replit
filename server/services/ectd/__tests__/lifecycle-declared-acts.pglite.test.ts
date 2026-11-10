@@ -62,6 +62,9 @@ beforeAll(async () => {
       id SERIAL PRIMARY KEY, organization_id INTEGER, submission_id INTEGER, compilation_type TEXT,
       sequence_number TEXT, leaf_manifest JSONB, compiled_at TIMESTAMP DEFAULT NOW()
     );
+    -- The transmittal row the filed fold reads what a sequence sent from (F1, 2026-11-01);
+    -- no sequence here is sent with that record, so each is read from its compiles.
+    CREATE TABLE IF NOT EXISTS submission_transmittals (id SERIAL PRIMARY KEY, organization_id INTEGER NOT NULL, region TEXT, metadata JSONB DEFAULT '{}'::jsonb);
     INSERT INTO submissions (id, title, application_type, client_type, primary_region, organization_id, created_by) VALUES
       (1, 'rename', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
       (2, 'append', 'ind', 'biotech', 'fda', ${ORG}, ${USER}),
@@ -89,7 +92,7 @@ beforeAll(async () => {
   `);
   // Submission 1 filed the section under a different file name than the one
   // this sequence stages; submission 2 filed it under the same one. Submission 3
-  // has a sent 0000 and no inventory on record at all.
+  // has a sent 0000 and no inventory on record at all, which is refused.
   await harness.pglite.query(
     `INSERT INTO ectd_compilations (organization_id, submission_id, sequence_number, leaf_manifest) VALUES
        ($1, 1, '0000', $2), ($1, 2, '0000', $3), ($1, 5, '0000', $4)`,
@@ -142,17 +145,15 @@ describe('declared lifecycle acts', () => {
     }
   });
 
-  it('refuses a declared replace when no filed prior is on record, instead of shipping a replace of nothing', async () => {
-    const r = await assemble(6);
-    try {
-      expect(await indexXmlOf(r.bundle.path)).not.toMatch(/operation="replace"/);
-      expect(r.skipped).toEqual([
-        { sectionCode: 'm3.2.s.1', reason: 'declared replace: no filed prior sequence is on record to act on' },
-      ]);
-      expect(r.priorSequence).toBeNull();
-    } finally {
-      await r.cleanup();
-    }
+  it('refuses to assemble against a sent prior that nothing on record describes, instead of shipping a replace of nothing', async () => {
+    // 0000 was sent, and neither a record of the send nor a compile says what it carried. It
+    // was left out, so this sequence bound against an empty prior: its replace was skipped
+    // and the rest filed as new while the agency held 0000 (F1 review, 2026-11-01). Nothing
+    // is packaged now. A declared replace with no filed prior at all is still skipped, with
+    // its reason (lifecycle-rehearsal.pglite.test.ts, "for filing").
+    await expect(assemble(6)).rejects.toThrow(
+      /^Sequence 0000 was sent to the agency, but nothing on record says what it carried: no record of the send, and no compile\. What is on file cannot be read, so nothing was bound against it\.$/,
+    );
   });
 
   it('refuses a declared replace in a first sequence', async () => {

@@ -54,18 +54,19 @@ export async function withNativeCatalogClient<T>(
   const { runWithTenantScope } = await import('../../server/db/tenantStore');
   const { applySessionScope } = await import('../../server/db/sessionScope');
   const { LazyRequestDbClient } = await import('../../server/middleware/lazyRequestDbClient');
-  const session = { tenantId: String(actor.organizationId), orgUuid: actor.organizationUuid, role: actor.role };
+  const session = { tenantId: String(actor.organizationId), orgUuid: actor.organizationUuid, role: actor.role, accountId: actor.userId };
   return runWithTenantScope({ ...session, source: 'request', caller: actor.caller }, async () => {
     const sqlClient = new LazyRequestDbClient(getPool(), client => applySessionScope(client, session));
     try {
       const { rows } = await sqlClient.query(
         `SELECT current_database() AS database, current_user AS role, r.rolsuper, r.rolbypassrls,
-                current_setting('app.rls_enforce', true) AS enforcement
+                current_setting('app.rls_enforce', true) AS enforcement,
+                current_setting('app.current_account_id', true) AS account
            FROM pg_roles r WHERE r.rolname = current_user`,
       );
       const posture = rows[0];
       if (rows.length !== 1 || posture.database !== expectedDatabase || posture.role !== 'app_service' ||
-          posture.rolsuper !== false || posture.rolbypassrls !== false || posture.enforcement !== 'on') {
+          posture.rolsuper !== false || posture.rolbypassrls !== false || posture.enforcement !== 'on' || posture.account !== String(actor.userId)) {
         throw new Error('Catalogue native calls require the actual app_service/NOSUPERUSER/NOBYPASSRLS/RLS-on runtime.');
       }
       return await work(sqlClient);

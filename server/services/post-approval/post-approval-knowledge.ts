@@ -3,10 +3,11 @@
  * ============================================================================
  *
  * Pure, closed-form, reproducible TypeScript. NO LLM, NO network, NO database.
- * One import, of pure data: the licensed-biologic annual-report record
+ * Its imports: the licensed-biologic annual-report record
  * (ind/ctd/us-biotech-bla-reports-sources.ts, which itself imports only types),
  * so planAnnualReport gives a BLA its own 21 CFR 601.12(d) parts rather than a
- * copy of them (2026-10-29). Identical input always yields identical output.
+ * copy of them (2026-10-29), and the shared input readers, which refuse a
+ * malformed value (ComputationRefusal). Identical input always yields identical output.
  *
  * This module encodes the regulatory science of managing chemistry, manufacturing
  * and controls (CMC) changes AFTER a product is approved — the "lifecycle" phase
@@ -37,6 +38,14 @@
  *   • ICH Q5E — Comparability of Biotechnological/Biological Products Subject to
  *     Changes in Their Manufacturing Process.
  *
+ * Rule 2 S5d (2026-11-09): an omitted or null true/false input reads as
+ * not_stated (inputStates) and is never read as true or false. A risk score or
+ * tier, reporting category, variation type, SUPAC level, established-condition
+ * status, comparability extent or ICH Q12 tool that an unstated fact could
+ * change is null, and undecided names the facts and what each answer gives. A
+ * malformed value is refused by field. An omitted modality, magnitude,
+ * development approach or change stage keeps its default, said in the result.
+ *
  * IMPORTANT — every numeric threshold, category mapping, and citation in this file
  * is reproduced from the public regulatory texts above. Callers (including LLM
  * agents) must report the returned values and citations verbatim. A fabricated or
@@ -47,8 +56,23 @@
  */
 
 import { US_BLA_REPORT_SOURCES, US_BLA_REPORT_SOURCE_IDS } from '../ind/ctd/us-biotech-bla-reports-sources.js';
-
-/* eslint-disable @typescript-eslint/no-magic-numbers */
+import { ComputationRefusal, refuseUnlessStated } from '../ana-biostats/computation-engine.js';
+import {
+  decidingFacts,
+  everyAnswer,
+  listed,
+  oneOfInput,
+  shown,
+  statedBoolean,
+  statedList,
+  statedNumber,
+  statedOneOf,
+  statedText,
+} from '../immunogenicity/immunogenicity-reference.js';
+import {
+  CHANGE_AREA_PROFILES, CITATIONS, EC_BASE_RULES, defaultPacmpTests, euProcedure, supacLevelFromTier, usDistributionRule,
+  usRegulationFor, type ChangeAreaProfile, type CitationRecord, type EcBaseRule,
+} from './post-approval-reference.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SECTION 0 — Shared types
@@ -107,172 +131,8 @@ function provenance(engine: string): EngineProvenance {
 // SECTION 1 — Canonical citation library
 // ─────────────────────────────────────────────────────────────────────────────
 
-interface CitationRecord extends RegulatoryCitation {
-  key: string;
-}
-
-/**
- * Master citation table. Every function pulls citations from here by key so the
- * exact reference text is identical everywhere it appears.
- */
-const CITATIONS: CitationRecord[] = [
-  {
-    key: 'ich_q12',
-    source: 'ICH',
-    reference: 'ICH Q12 (2019), Technical and Regulatory Considerations for Pharmaceutical Product Lifecycle Management',
-    note: 'Introduces Established Conditions (ECs), PACMP, and the PLCM document.',
-  },
-  {
-    key: 'ich_q12_ec',
-    source: 'ICH',
-    reference: 'ICH Q12 Section 3 — Established Conditions',
-    note: 'ECs are legally binding information considered necessary to assure product quality; changes to ECs require a regulatory submission.',
-  },
-  {
-    key: 'ich_q12_pacmp',
-    source: 'ICH',
-    reference: 'ICH Q12 Section 4 — Post-Approval Change Management Protocol (PACMP)',
-    note: 'A regulatory tool providing predictability via a pre-agreed plan describing a specific change and how it will be evaluated.',
-  },
-  {
-    key: 'ich_q12_plcm',
-    source: 'ICH',
-    reference: 'ICH Q12 Section 5 — Product Lifecycle Management (PLCM) document',
-    note: 'A central repository summarizing ECs, reporting categories, PACMPs, and post-approval CMC commitments.',
-  },
-  {
-    key: 'ich_q12_annex',
-    source: 'ICH',
-    reference: 'ICH Q12 Annex — illustrative examples of ECs by development approach',
-    note: 'Shows how enhanced (QbD) development can justify fewer/parameter-level ECs and lower reporting categories.',
-  },
-  {
-    key: 'cfr_314_70',
-    source: 'US FDA',
-    reference: '21 CFR 314.70 — Supplements and other changes to an approved NDA',
-    note: 'Defines PAS (b), CBE-30 (c)(3), CBE-0 (c)(6), and Annual Report (d) categories.',
-  },
-  {
-    key: 'cfr_314_70b',
-    source: 'US FDA',
-    reference: '21 CFR 314.70(b) — Changes requiring supplement submission and approval prior to distribution (Prior Approval Supplement)',
-    note: 'Major changes with substantial potential to affect product quality.',
-  },
-  {
-    key: 'cfr_314_70c',
-    source: 'US FDA',
-    reference: '21 CFR 314.70(c) — Changes requiring supplement submission at least 30 days prior to distribution (CBE-30)',
-    note: 'Moderate changes; product may be distributed 30 days after FDA receives the supplement unless FDA objects.',
-  },
-  {
-    key: 'cfr_314_70c6',
-    source: 'US FDA',
-    reference: '21 CFR 314.70(c)(6) — Changes that may be distributed upon receipt of the supplement by FDA (CBE-0)',
-    note: 'Subset of moderate changes specifically permitted for immediate distribution.',
-  },
-  {
-    key: 'cfr_314_70d',
-    source: 'US FDA',
-    reference: '21 CFR 314.70(d) — Minor changes; documentation in the annual report',
-    note: 'Minimal potential to affect product quality; no supplement required.',
-  },
-  {
-    key: 'cfr_601_12',
-    source: 'US FDA',
-    reference: '21 CFR 601.12 — Changes to an approved application (biologics / BLA)',
-    note: 'Biologics analogue of 314.70; major (601.12(b)), moderate CBE-30 (601.12(c)), and minor/AR (601.12(d)).',
-  },
-  {
-    key: 'fda_bio_cmc_changes',
-    source: 'US FDA',
-    reference: 'FDA Draft Guidance: Chemistry, Manufacturing, and Controls Changes to an Approved Application: Certain Biological Products (June 2021)',
-    note: 'Biologics counterpart of the NDA/ANDA changes guidance for 601.12 reporting categories. Recall: title and date not re-read on fda.gov.',
-  },
-  {
-    key: 'fda_changes_guidance',
-    source: 'US FDA',
-    reference: 'FDA Guidance for Industry: Changes to an Approved NDA or ANDA (April 2004)',
-    note: 'Component/composition, manufacturing site, process, scale, equipment, specification, and container-closure change categories.',
-  },
-  {
-    key: 'fda_comparability_protocols',
-    source: 'US FDA',
-    reference: 'FDA Draft Guidance: Comparability Protocols — Chemistry, Manufacturing, and Controls Information (2016)',
-    note: 'US analogue of the PACMP; a CP may reduce the reporting category for a prospectively defined change.',
-  },
-  {
-    key: 'fda_ar_changes',
-    source: 'US FDA',
-    reference: 'FDA Guidance: CMC Postapproval Manufacturing Changes To Be Documented in Annual Reports (2014)',
-    note: 'Lists specific manufacturing changes reportable in the annual report.',
-  },
-  {
-    key: 'supac_ir',
-    source: 'US FDA',
-    reference: 'FDA SUPAC-IR (1995) — Immediate Release Solid Oral Dosage Forms: Scale-Up and Post-Approval Changes',
-    note: 'Level 1/2/3 change framework for components, site, scale, and process for IR oral products.',
-  },
-  {
-    key: 'supac_mr',
-    source: 'US FDA',
-    reference: 'FDA SUPAC-MR (1997) — Modified Release Solid Oral Dosage Forms',
-    note: 'Level 1/2/3 framework for MR products; release-controlling excipient changes are higher risk.',
-  },
-  {
-    key: 'eu_variations_reg',
-    source: 'EU',
-    reference: 'Commission Regulation (EC) No 1234/2008 on the examination of variations to the terms of marketing authorisations',
-    note: 'Legal basis for Type IA / IAIN / IB / II variations and Extensions.',
-  },
-  {
-    key: 'eu_variations_guideline',
-    source: 'EU',
-    reference: 'Guidelines on the details of the various categories of variations (2013/C 223/01)',
-    note: 'Classification guideline listing specific changes and their default variation categories and conditions.',
-  },
-  {
-    key: 'ich_q8',
-    source: 'ICH',
-    reference: 'ICH Q8(R2) — Pharmaceutical Development',
-    note: 'Quality target product profile, critical quality attributes (CQAs), design space; basis for enhanced approach.',
-  },
-  {
-    key: 'ich_q9',
-    source: 'ICH',
-    reference: 'ICH Q9(R1) — Quality Risk Management',
-    note: 'Risk assessment methodology used to assign change-risk tiers and reporting categories.',
-  },
-  {
-    key: 'ich_q10',
-    source: 'ICH',
-    reference: 'ICH Q10 — Pharmaceutical Quality System',
-    note: 'Change management system; the PQS evaluates and manages changes throughout the lifecycle.',
-  },
-  {
-    key: 'ich_q11',
-    source: 'ICH',
-    reference: 'ICH Q11 — Development and Manufacture of Drug Substances',
-    note: 'Establishes CQAs and control strategy for the drug substance; informs ECs for DS changes.',
-  },
-  {
-    key: 'ich_q5e',
-    source: 'ICH',
-    reference: 'ICH Q5E — Comparability of Biotechnological/Biological Products Subject to Changes in Their Manufacturing Process',
-    note: 'Framework for demonstrating comparability after a manufacturing change for biologics.',
-  },
-  {
-    key: 'ich_q14',
-    source: 'ICH',
-    reference: 'ICH Q14 — Analytical Procedure Development',
-    note: 'Analytical procedures may have ECs; enhanced approach can lower reporting for method changes.',
-  },
-  {
-    key: 'ich_q2',
-    source: 'ICH',
-    reference: 'ICH Q2(R2) — Validation of Analytical Procedures',
-    note: 'Validation requirements supporting analytical comparability and method change reporting.',
-  },
-];
+// The citation library, the change-area profiles, the US and EU category texts, the established-condition base
+// rules and the default PACMP test panels are in post-approval-reference.ts (moved unchanged 2026-11-09, S5d).
 
 function cite(...keys: string[]): RegulatoryCitation[] {
   const out: RegulatoryCitation[] = [];
@@ -312,170 +172,6 @@ export type ChangeMagnitude = 'minor' | 'moderate' | 'major';
 /** SUPAC level mapping for solid oral products. */
 export type SupacLevel = 'Level 1' | 'Level 2' | 'Level 3' | 'N/A';
 
-interface ChangeAreaProfile {
-  area: ChangeArea;
-  label: string;
-  /** Default US category when magnitude is not specified (conservative). */
-  defaultUs: UsReportingCategory;
-  /** Default EU type when magnitude is not specified (conservative). */
-  defaultEu: EuVariationType;
-  /** Whether this area typically involves comparability for biologics. */
-  comparabilitySensitive: boolean;
-  /** Whether this area is governed by SUPAC for solid oral products. */
-  supacGoverned: boolean;
-  /** Short description of what falls in this area. */
-  scope: string;
-  /** Citation keys most relevant to this area. */
-  citationKeys: string[];
-}
-
-/**
- * Change-area profiles. Annotated with an explicit element interface (no
- * `as const`) per the strict-mode rules for module-level typed tables.
- */
-const CHANGE_AREA_PROFILES: ChangeAreaProfile[] = [
-  {
-    area: 'manufacturing_site',
-    label: 'Manufacturing site change',
-    defaultUs: 'PAS',
-    defaultEu: 'II',
-    comparabilitySensitive: true,
-    supacGoverned: true,
-    scope: 'Move/addition of a drug product or drug substance manufacturing, testing, or packaging site.',
-    citationKeys: ['fda_changes_guidance', 'supac_ir', 'eu_variations_guideline', 'cfr_314_70'],
-  },
-  {
-    area: 'manufacturing_process',
-    label: 'Manufacturing process change',
-    defaultUs: 'CBE-30',
-    defaultEu: 'IB',
-    comparabilitySensitive: true,
-    supacGoverned: true,
-    scope: 'Changes to process steps, order, in-process controls, or processing parameters outside the approved design space.',
-    citationKeys: ['fda_changes_guidance', 'supac_ir', 'ich_q8', 'eu_variations_guideline'],
-  },
-  {
-    area: 'scale',
-    label: 'Batch scale change',
-    defaultUs: 'CBE-30',
-    defaultEu: 'IB',
-    comparabilitySensitive: false,
-    supacGoverned: true,
-    scope: 'Scale-up or scale-down of the batch size beyond approved ranges.',
-    citationKeys: ['supac_ir', 'supac_mr', 'fda_changes_guidance', 'eu_variations_guideline'],
-  },
-  {
-    area: 'equipment',
-    label: 'Equipment change',
-    defaultUs: 'CBE-30',
-    defaultEu: 'IA',
-    comparabilitySensitive: false,
-    supacGoverned: true,
-    scope: 'Change to equipment of the same or different design/operating principle.',
-    citationKeys: ['fda_changes_guidance', 'supac_ir', 'eu_variations_guideline'],
-  },
-  {
-    area: 'composition_excipient',
-    label: 'Composition / excipient change',
-    defaultUs: 'PAS',
-    defaultEu: 'II',
-    comparabilitySensitive: false,
-    supacGoverned: true,
-    scope: 'Qualitative or quantitative change in excipients of the drug product.',
-    citationKeys: ['fda_changes_guidance', 'supac_ir', 'eu_variations_guideline'],
-  },
-  {
-    area: 'specification',
-    label: 'Specification change',
-    defaultUs: 'CBE-30',
-    defaultEu: 'IB',
-    comparabilitySensitive: true,
-    supacGoverned: false,
-    scope: 'Change to acceptance criteria, addition/deletion of a test, or tightening/relaxing limits.',
-    citationKeys: ['fda_changes_guidance', 'eu_variations_guideline', 'ich_q12_ec'],
-  },
-  {
-    area: 'analytical_method',
-    label: 'Analytical method change',
-    defaultUs: 'CBE-30',
-    defaultEu: 'IB',
-    comparabilitySensitive: false,
-    supacGoverned: false,
-    scope: 'Replacement or modification of an analytical procedure used to release or test material.',
-    citationKeys: ['fda_changes_guidance', 'ich_q14', 'ich_q2', 'eu_variations_guideline'],
-  },
-  {
-    area: 'container_closure',
-    label: 'Container-closure system change',
-    defaultUs: 'CBE-30',
-    defaultEu: 'IB',
-    comparabilitySensitive: false,
-    supacGoverned: false,
-    scope: 'Change to primary or functional secondary packaging components.',
-    citationKeys: ['fda_changes_guidance', 'eu_variations_guideline'],
-  },
-  {
-    area: 'stability_shelf_life',
-    label: 'Stability / shelf-life / storage change',
-    defaultUs: 'PAS',
-    defaultEu: 'II',
-    comparabilitySensitive: false,
-    supacGoverned: false,
-    scope: 'Extension of shelf life, change of storage conditions, or revised stability protocol.',
-    citationKeys: ['fda_changes_guidance', 'eu_variations_guideline'],
-  },
-  {
-    area: 'drug_substance_source',
-    label: 'Drug substance source / supplier change',
-    defaultUs: 'PAS',
-    defaultEu: 'II',
-    comparabilitySensitive: true,
-    supacGoverned: false,
-    scope: 'New manufacturer or new source of the active pharmaceutical ingredient.',
-    citationKeys: ['fda_changes_guidance', 'ich_q11', 'eu_variations_guideline', 'cfr_601_12'],
-  },
-  {
-    area: 'drug_substance_process',
-    label: 'Drug substance manufacturing process change',
-    defaultUs: 'PAS',
-    defaultEu: 'II',
-    comparabilitySensitive: true,
-    supacGoverned: false,
-    scope: 'Change to the synthesis route, fermentation, purification, or DS process controls.',
-    citationKeys: ['fda_changes_guidance', 'ich_q11', 'ich_q5e', 'eu_variations_guideline'],
-  },
-  {
-    area: 'starting_material',
-    label: 'Starting material / reagent change',
-    defaultUs: 'CBE-30',
-    defaultEu: 'IB',
-    comparabilitySensitive: true,
-    supacGoverned: false,
-    scope: 'Change to a designated starting material, key reagent, or its specification.',
-    citationKeys: ['ich_q11', 'fda_changes_guidance', 'eu_variations_guideline'],
-  },
-  {
-    area: 'labeling_cmc',
-    label: 'CMC-related labeling change',
-    defaultUs: 'CBE-0',
-    defaultEu: 'IA',
-    comparabilitySensitive: false,
-    supacGoverned: false,
-    scope: 'Editorial or CMC-driven labeling changes (e.g., storage statement consistent with stability).',
-    citationKeys: ['fda_changes_guidance', 'eu_variations_guideline'],
-  },
-  {
-    area: 'facility_administrative',
-    label: 'Administrative / facility change',
-    defaultUs: 'Annual Report',
-    defaultEu: 'IA',
-    comparabilitySensitive: false,
-    supacGoverned: false,
-    scope: 'Name/address changes, administrative updates with no quality impact.',
-    citationKeys: ['cfr_314_70d', 'eu_variations_guideline'],
-  },
-];
-
 function profileFor(area: ChangeArea): ChangeAreaProfile {
   const p = CHANGE_AREA_PROFILES.find((x: ChangeAreaProfile) => x.area === area);
   // Fallback profile (conservative) — should not occur for valid ChangeArea.
@@ -491,6 +187,86 @@ function profileFor(area: ChangeArea): ChangeAreaProfile {
       citationKeys: ['cfr_314_70', 'eu_variations_reg'],
     }
   );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Input readers (Rule 2 S5d, 2026-11-09). Omitted or null is not stated; a value
+// of the wrong kind is refused by field, never read as another value.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** A true/false input: true, false or not_stated. */
+type BooleanState = boolean | 'not_stated';
+
+/** A conclusion an unstated fact leaves open: the facts it turns on, and what each answer gives. */
+export interface Undecided {
+  conclusion: string;
+  decidingFacts: string[];
+  couldBe: Array<string | number | boolean>;
+}
+
+const CHANGE_AREAS: readonly ChangeArea[] = CHANGE_AREA_PROFILES.map((p: ChangeAreaProfile) => p.area);
+const MODALITIES = ['small_molecule', 'biologic', 'vaccine', 'cell_gene_therapy', 'peptide_oligonucleotide'] as const;
+const MAGNITUDES = ['minor', 'moderate', 'major'] as const;
+const US_CATEGORIES = ['PAS', 'CBE-30', 'CBE-0', 'Annual Report'] as const;
+const DEV_APPROACHES = ['minimal', 'enhanced'] as const;
+const CHANGE_STAGES = ['upstream', 'downstream', 'formulation', 'analytical', 'fill_finish'] as const;
+const FREQUENCIES = ['one_time', 'recurring', 'multiple_sites'] as const;
+const REGIONS = ['US', 'EU', 'global'] as const;
+/** The five risk qualifiers, in the order the risk model reads them. */
+const RISK_FLAGS = ['affectsCqa', 'affectsControlStrategy', 'sterileProcess', 'withinDesignSpace', 'priorKnowledge'] as const;
+type RiskFlag = (typeof RISK_FLAGS)[number];
+
+function refuse(field: string, expected: string, value: unknown): never {
+  throw new ComputationRefusal('invalid_input', `${field} must be ${expected} (got ${shown(value)}). Leave it out if it is not known.`, field);
+}
+
+/** A stated object, or undefined when omitted or null. */
+function statedObject(field: string, value: unknown): Record<string, unknown> | undefined {
+  if (value === undefined || value === null) return undefined;
+  return typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : refuse(field, 'an object', value);
+}
+
+/** A required value from a fixed vocabulary, refused by name when missing or outside it. */
+function requiredOneOf<T extends string>(field: string, value: unknown, allowed: readonly T[]): T {
+  refuseUnlessStated('post-approval', [oneOfInput(field, value, allowed)], 'classified');
+  return value as T;
+}
+
+/** The entries of a stated list of objects, each refused by its index when it is not an object. */
+function objects(field: string, value: unknown): Array<Record<string, unknown>> {
+  return (statedList(field, value) ?? []).map((v: unknown, i: number) => statedObject(`${field}[${i}]`, v) ?? refuse(`${field}[${i}]`, 'an object', v));
+}
+
+/** The stated risk qualifiers, each true, false or undefined; the magnitude is checked against its vocabulary. */
+function readRisk(field: string, value: unknown): ChangeRiskInputs {
+  const r = statedObject(field, value) ?? {};
+  const out: ChangeRiskInputs = { magnitude: statedOneOf(`${field}.magnitude`, r.magnitude, MAGNITUDES) };
+  for (const k of RISK_FLAGS) out[k] = statedBoolean(`${field}.${k}`, r[k]);
+  return out;
+}
+
+/** The inputStates entries of a risk object. */
+function riskStates(field: string, risk: ChangeRiskInputs): Record<string, BooleanState> {
+  return Object.fromEntries(RISK_FLAGS.map((k: RiskFlag) => [`${field}.${k}`, risk[k] ?? 'not_stated']));
+}
+
+/** The one value every answer gives, or null with an undecided entry naming the facts it turns on. */
+function settled<K extends string, T>(
+  conclusion: string,
+  stated: Record<K, boolean | undefined>,
+  on: (answer: Record<K, boolean>) => T,
+  undecided: Undecided[],
+  name: (key: K) => string = (key: K) => key,
+): T | null {
+  const values = everyAnswer(stated).map(on);
+  const distinct = [...new Set(values.map((v: T) => JSON.stringify(v)))];
+  if (distinct.length === 1) return values[0];
+  undecided.push({
+    conclusion,
+    decidingFacts: decidingFacts(stated, (a: Record<K, boolean>) => JSON.stringify(on(a))).map(name),
+    couldBe: distinct.map((v: string) => JSON.parse(v) as string | number | boolean),
+  });
+  return null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -587,26 +363,33 @@ export interface ClassifyPostApprovalChangeResult {
   changeArea: ChangeArea;
   changeLabel: string;
   modality: ProductModality;
+  /** A null field is not determined: an unstated fact could change it (see undecided). */
   us: {
-    category: UsReportingCategory;
-    regulation: string;
-    distributionRule: string;
+    category: UsReportingCategory | null;
+    regulation: string | null;
+    distributionRule: string | null;
     rationale: string;
   };
   eu: {
-    variationType: EuVariationType;
-    procedure: string;
+    variationType: EuVariationType | null;
+    procedure: string | null;
     rationale: string;
   };
   supac: {
-    applicable: boolean;
-    level: SupacLevel;
+    applicable: boolean | null;
+    level: SupacLevel | null;
     note: string;
   };
-  risk: RiskScore;
-  comparabilityLikelyRequired: boolean;
+  /** A factor's applies is null while its fact is not stated. */
+  risk: { score: number | null; tier: ChangeRiskTier | null; factors: Array<Omit<RiskFactor, 'applies'> & { applies: boolean | null }> };
+  comparabilityLikelyRequired: boolean | null;
+  /** The tools every answer to the unstated facts recommends. */
   recommendedTools: string[];
   warnings: string[];
+  /** Each true/false input: true, false or not_stated. */
+  inputStates: Record<string, BooleanState>;
+  /** The conclusions an unstated fact leaves open. */
+  undecided: Undecided[];
   citations: RegulatoryCitation[];
   provenance: EngineProvenance;
 }
@@ -630,82 +413,30 @@ function adjustEuType(base: EuVariationType, tier: ChangeRiskTier): EuVariationT
   return order[idx];
 }
 
-function usRegulationFor(category: UsReportingCategory, biologic: boolean): string {
-  if (biologic) {
-    switch (category) {
-      case 'PAS':
-        return '21 CFR 601.12(b)';
-      case 'CBE-30':
-        return '21 CFR 601.12(c)(1)';
-      case 'CBE-0':
-        return '21 CFR 601.12(c)(5)';
-      case 'Annual Report':
-        return '21 CFR 601.12(d)';
-    }
-  }
-  switch (category) {
-    case 'PAS':
-      return '21 CFR 314.70(b)';
-    case 'CBE-30':
-      return '21 CFR 314.70(c)(3)';
-    case 'CBE-0':
-      return '21 CFR 314.70(c)(6)';
-    case 'Annual Report':
-      return '21 CFR 314.70(d)';
-  }
+/** The true/false facts a classification turns on. */
+const CLASSIFY_FACTS = [...RISK_FLAGS, 'solidOralProduct', 'modifiedRelease', 'biologicLicense'] as const;
+type ClassifyFact = (typeof CLASSIFY_FACTS)[number];
+type ClassifyAnswer = Record<ClassifyFact, boolean>;
+
+/** A classification on one full answer to its true/false facts. */
+interface ClassifyOutcome {
+  risk: RiskScore;
+  usCategory: UsReportingCategory;
+  euType: EuVariationType;
+  supacApplicable: boolean;
+  supacLevel: SupacLevel;
+  supacNote: string;
+  comparabilityLikelyRequired: boolean;
+  recommendedTools: string[];
+  warnings: string[];
+  citationKeys: string[];
+  biologic: boolean;
 }
 
-function usDistributionRule(category: UsReportingCategory): string {
-  switch (category) {
-    case 'PAS':
-      return 'Product manufactured with the change may NOT be distributed until FDA approves the supplement.';
-    case 'CBE-30':
-      return 'Product may be distributed 30 days after FDA receives the supplement, unless FDA notifies the applicant within that period that a prior-approval supplement is required.';
-    case 'CBE-0':
-      return 'Product may be distributed immediately upon FDA receipt of the supplement (changes-being-effected).';
-    case 'Annual Report':
-      return 'No supplement required; the change is documented in the next annual report (no distribution hold).';
-  }
-}
-
-function euProcedure(type: EuVariationType): string {
-  switch (type) {
-    case 'IA':
-      return 'Type IA "Do and Tell": implement first, notify the competent authority within 12 months (annual notification window).';
-    case 'IAIN':
-      return 'Type IA Immediate Notification: implement first, notify within 14 days of implementation.';
-    case 'IB':
-      return 'Type IB "Tell, Wait and Do": submit notification and wait 30 days; implement if no objection ("default" category for minor changes not otherwise classified).';
-    case 'II':
-      return 'Type II major variation: submit and obtain approval before implementation (30/60/90-day assessment timetable).';
-    case 'Extension':
-      return 'Extension of the marketing authorisation: assessed as a new application annex (not a variation).';
-  }
-}
-
-function supacLevelFromTier(tier: ChangeRiskTier): SupacLevel {
-  switch (tier) {
-    case 'low':
-      return 'Level 1';
-    case 'moderate':
-      return 'Level 2';
-    case 'high':
-      return 'Level 3';
-  }
-}
-
-/**
- * Classify a CMC change into a US reporting category (PAS / CBE-30 / CBE-0 /
- * Annual Report) and an EU variation type (IA / IAIN / IB / II), with a
- * quality-risk assessment per ICH Q9.
- */
-export function classifyPostApprovalChange(
-  params: ClassifyPostApprovalChangeParams,
-): ClassifyPostApprovalChangeResult {
-  const modality: ProductModality = params.modality ?? 'small_molecule';
-  const profile = profileFor(params.changeArea);
-  const risk = scoreChangeRisk(modality, params.risk ?? { magnitude: params.magnitude }, profile.comparabilitySensitive);
-
+/** The classification on one full answer (the pre-S5d rules, with every fact stated). */
+function classifyOn(area: ChangeArea, modality: ProductModality, magnitude: ChangeMagnitude | undefined, a: ClassifyAnswer): ClassifyOutcome {
+  const profile = profileFor(area);
+  const risk = scoreChangeRisk(modality, { ...a, magnitude }, profile.comparabilitySensitive);
   const warnings: string[] = [];
 
   // Start from the area default, then move with risk tier.
@@ -713,15 +444,14 @@ export function classifyPostApprovalChange(
   let euType = adjustEuType(profile.defaultEu, risk.tier);
 
   // Hard overrides — certain conditions always escalate to PAS / Type II.
-  const risks = params.risk ?? {};
-  if (risks.sterileProcess === true && (params.changeArea === 'manufacturing_process' || params.changeArea === 'manufacturing_site')) {
+  if (a.sterileProcess && (area === 'manufacturing_process' || area === 'manufacturing_site')) {
     usCategory = 'PAS';
     euType = 'II';
     warnings.push(
       'Change to a sterile/aseptic process or site is generally a Prior Approval Supplement (PAS) / Type II variation regardless of computed risk tier.',
     );
   }
-  if (risks.affectsCqa === true && usCategory === 'Annual Report') {
+  if (a.affectsCqa && usCategory === 'Annual Report') {
     usCategory = 'CBE-30';
     warnings.push('A change affecting a CQA cannot be a minor (Annual Report) change; escalated to CBE-30 minimum.');
   }
@@ -731,19 +461,19 @@ export function classifyPostApprovalChange(
     warnings.push('Cell & gene therapy manufacturing changes of moderate+ risk are treated as PAS / Type II given limited comparability tools.');
   }
   // If the change is explicitly within an approved design space, it may not need a submission at all.
-  if (risks.withinDesignSpace === true && risk.tier === 'low') {
+  if (a.withinDesignSpace && risk.tier === 'low') {
     warnings.push(
       'Movement within an approved design space is not a change requiring a regulatory submission per ICH Q8(R2); confirm the parameter range is covered by the approved design space before relying on this.',
     );
   }
 
   // SUPAC mapping for solid oral products.
-  const supacApplicable = params.solidOralProduct === true && profile.supacGoverned;
+  const supacApplicable = a.solidOralProduct && profile.supacGoverned;
   let supacLevel: SupacLevel = supacApplicable ? supacLevelFromTier(risk.tier) : 'N/A';
   let supacNote = supacApplicable
-    ? `Maps to SUPAC ${supacLevel} for a ${params.modifiedRelease ? 'modified-release (SUPAC-MR)' : 'immediate-release (SUPAC-IR)'} solid oral product. Level 1 = annual report, Level 2 = CBE-30, Level 3 = PAS for most categories.`
+    ? `Maps to SUPAC ${supacLevel} for a ${a.modifiedRelease ? 'modified-release (SUPAC-MR)' : 'immediate-release (SUPAC-IR)'} solid oral product. Level 1 = annual report, Level 2 = CBE-30, Level 3 = PAS for most categories.`
     : 'SUPAC level framework does not apply to this change area / product type.';
-  if (supacApplicable && params.modifiedRelease === true && params.changeArea === 'composition_excipient') {
+  if (supacApplicable && a.modifiedRelease && area === 'composition_excipient') {
     supacLevel = 'Level 3';
     supacNote =
       'A change to a release-controlling excipient in a modified-release product is a SUPAC-MR Level 3 change (PAS), per SUPAC-MR (1997).';
@@ -760,47 +490,131 @@ export function classifyPostApprovalChange(
   if (risk.tier === 'high' || usCategory === 'PAS') recommendedTools.push('design_pacmp');
   recommendedTools.push('assess_established_conditions');
 
-  const citationKeys = [...profile.citationKeys, 'ich_q9', 'ich_q12'];
-  if (params.biologicLicense === true) citationKeys.push('cfr_601_12');
-  else citationKeys.push('cfr_314_70');
+  const citationKeys = [...profile.citationKeys, 'ich_q9', 'ich_q12', a.biologicLicense ? 'cfr_601_12' : 'cfr_314_70'];
+  return {
+    risk, usCategory, euType, supacApplicable, supacLevel, supacNote, comparabilityLikelyRequired,
+    recommendedTools: Array.from(new Set(recommendedTools)), warnings, citationKeys, biologic: a.biologicLicense,
+  };
+}
+
+/** The stated facts of a classification, and the defaults it used for an omitted modality or magnitude. */
+function classifyFacts(params: ClassifyPostApprovalChangeParams, field = ''): {
+  area: ChangeArea; modality: ProductModality; magnitude: ChangeMagnitude | undefined;
+  stated: Record<ClassifyFact, boolean | undefined>; defaults: string[];
+} {
+  const area = requiredOneOf(`${field}changeArea`, params.changeArea, CHANGE_AREAS);
+  const modalityStated = statedOneOf(`${field}modality`, params.modality, MODALITIES);
+  const risk = readRisk(`${field}risk`, params.risk);
+  // Before S5d a risk object without a magnitude dropped the stated top-level magnitude.
+  const magnitude = risk.magnitude ?? statedOneOf(`${field}magnitude`, params.magnitude, MAGNITUDES);
+  if (risk.magnitude !== undefined) statedOneOf(`${field}magnitude`, params.magnitude, MAGNITUDES);
+  const stated = {
+    ...(Object.fromEntries(RISK_FLAGS.map((k: RiskFlag) => [k, risk[k]])) as Record<RiskFlag, boolean | undefined>),
+    solidOralProduct: statedBoolean(`${field}solidOralProduct`, params.solidOralProduct),
+    modifiedRelease: statedBoolean(`${field}modifiedRelease`, params.modifiedRelease),
+    biologicLicense: statedBoolean(`${field}biologicLicense`, params.biologicLicense),
+  };
+  const defaults = [
+    ...(modalityStated === undefined ? ['modality was not stated: the change is classified for a small molecule.'] : []),
+    ...(magnitude === undefined ? ['magnitude was not stated: the risk score starts from a moderate change (3).'] : []),
+  ];
+  return { area, modality: modalityStated ?? 'small_molecule', magnitude, stated, defaults };
+}
+
+/**
+ * Classify a CMC change into a US reporting category (PAS / CBE-30 / CBE-0 /
+ * Annual Report) and an EU variation type (IA / IAIN / IB / II), with a
+ * quality-risk assessment per ICH Q9.
+ */
+export function classifyPostApprovalChange(
+  params: ClassifyPostApprovalChangeParams,
+): ClassifyPostApprovalChangeResult {
+  // 2026-11-09 (S5d): an omitted risk qualifier, solidOralProduct or biologicLicense read as false, so a category,
+  // SUPAC level and regulation were given from facts nobody stated; 'true' read as false; an unknown area was
+  // classified as PAS; a risk object without a magnitude dropped the stated one.
+  const { area, modality, magnitude, stated, defaults } = classifyFacts(params);
+  const profile = profileFor(area);
+  const undecided: Undecided[] = [];
+  const seen = new Map<string, ClassifyOutcome>();
+  const on = (a: ClassifyAnswer): ClassifyOutcome => {
+    const key = CLASSIFY_FACTS.map((k: ClassifyFact) => (a[k] ? 1 : 0)).join('');
+    if (!seen.has(key)) seen.set(key, classifyOn(area, modality, magnitude, a));
+    return seen.get(key)!;
+  };
+  const outcomes = everyAnswer(stated).map(on);
+  const name = (k: ClassifyFact): string => ((RISK_FLAGS as readonly string[]).includes(k) ? `risk.${k}` : k);
+  const settle = <T>(conclusion: string, get: (o: ClassifyOutcome) => T): T | null =>
+    settled(conclusion, stated, (a: ClassifyAnswer) => get(on(a)), undecided, name);
+
+  const score = settle('risk.score', (o) => o.risk.score);
+  const tier = settle('risk.tier', (o) => o.risk.tier);
+  const usCategory = settle('us.category', (o) => o.usCategory);
+  const regulation = settle('us.regulation', (o) => usRegulationFor(o.usCategory, o.biologic));
+  const euType = settle('eu.variationType', (o) => o.euType);
+  const supacApplicable = settle('supac.applicable', (o) => o.supacApplicable);
+  const supacLevel = settle('supac.level', (o) => o.supacLevel);
+  const supacNote = settle('supac.note', (o) => o.supacNote);
+  const comparabilityLikelyRequired = settle('comparabilityLikelyRequired', (o) => o.comparabilityLikelyRequired);
+  const every = <T>(lists: T[][]): T[] => lists[0].filter((x: T) => lists.every((l: T[]) => l.includes(x)));
+  const why = (conclusion: string): string => {
+    const u = undecided.find((x: Undecided) => x.conclusion === conclusion)!;
+    return `it turns on ${listed(u.decidingFacts)}, not stated (could be ${u.couldBe.join(' or ')})`;
+  };
 
   const usRationale = [
     `Area default for ${profile.label} is ${profile.defaultUs}.`,
-    `Quality risk tier computed as ${risk.tier} (score ${risk.score}).`,
-    `Final US category: ${usCategory}.`,
+    tier === null ? `Quality risk tier not determined: ${why('risk.tier')}.` : `Quality risk tier computed as ${tier} (score ${score ?? 'not determined'}).`,
+    usCategory === null ? `Final US category not determined: ${why('us.category')}.` : `Final US category: ${usCategory}.`,
   ].join(' ');
 
   const euRationale = [
     `Area default EU type for ${profile.label} is ${profile.defaultEu}.`,
-    `After risk adjustment: ${euType}.`,
+    euType === null ? `After risk adjustment: not determined (${why('eu.variationType')}).` : `After risk adjustment: ${euType}.`,
     'EU default for an unclassified minor change is Type IB ("Tell, Wait and Do").',
   ].join(' ');
 
+  const factorStates: Record<string, boolean | undefined> = {
+    'Affects a critical quality attribute (CQA)': stated.affectsCqa,
+    'Affects the control strategy or an established condition': stated.affectsControlStrategy,
+    'Involves a sterile / aseptic operation': stated.sterileProcess,
+    'Change is within an approved design space': stated.withinDesignSpace,
+    'Supported by prior knowledge / platform experience': stated.priorKnowledge,
+  };
+  const factors: Array<Omit<RiskFactor, 'applies'> & { applies: boolean | null }> = outcomes[0].risk.factors.map((f: RiskFactor) =>
+    f.label in factorStates ? { ...f, applies: factorStates[f.label] ?? null } : f,
+  );
+
   return {
-    changeArea: params.changeArea,
+    changeArea: area,
     changeLabel: profile.label,
     modality,
     us: {
       category: usCategory,
-      regulation: usRegulationFor(usCategory, params.biologicLicense === true),
-      distributionRule: usDistributionRule(usCategory),
+      regulation,
+      distributionRule: usCategory === null ? null : usDistributionRule(usCategory),
       rationale: usRationale,
     },
     eu: {
       variationType: euType,
-      procedure: euProcedure(euType),
+      procedure: euType === null ? null : euProcedure(euType),
       rationale: euRationale,
     },
     supac: {
       applicable: supacApplicable,
       level: supacLevel,
-      note: supacNote,
+      note: supacNote ?? `SUPAC not determined: ${why('supac.note')}.`,
     },
-    risk,
+    risk: { score, tier, factors },
     comparabilityLikelyRequired,
-    recommendedTools: Array.from(new Set(recommendedTools)),
-    warnings,
-    citations: cite(...Array.from(new Set(citationKeys))),
+    recommendedTools: every(outcomes.map((o: ClassifyOutcome) => o.recommendedTools)),
+    warnings: [
+      ...every(outcomes.map((o: ClassifyOutcome) => o.warnings)),
+      ...defaults,
+      ...undecided.map((u: Undecided) => `${u.conclusion} not determined: ${listed(u.decidingFacts)} not stated (could be ${u.couldBe.join(' or ')}).`),
+    ],
+    inputStates: Object.fromEntries(CLASSIFY_FACTS.map((k: ClassifyFact) => [name(k), stated[k] ?? 'not_stated'])),
+    undecided,
+    citations: cite(...Array.from(new Set(outcomes.flatMap((o: ClassifyOutcome) => o.citationKeys)))),
     provenance: provenance('classifyPostApprovalChange'),
   };
 }
@@ -846,12 +660,12 @@ export interface AssessEstablishedConditionsParams {
 export interface EstablishedConditionAssessment {
   name: string;
   elementType: DossierElementType;
-  /** TRUE = legally binding Established Condition; FALSE = supportive information. */
-  isEstablishedCondition: boolean;
-  classification: 'established_condition' | 'supportive_information';
-  /** Reporting category that a future CHANGE to this element would attract. */
-  changeReportingCategory: UsReportingCategory;
-  euChangeType: EuVariationType;
+  /** TRUE = legally binding Established Condition; FALSE = supportive information; null = an unstated fact decides it. */
+  isEstablishedCondition: boolean | null;
+  classification: 'established_condition' | 'supportive_information' | 'not_determined';
+  /** Reporting category that a future CHANGE to this element would attract; null while not determined. */
+  changeReportingCategory: UsReportingCategory | null;
+  euChangeType: EuVariationType | null;
   rationale: string;
 }
 
@@ -862,110 +676,19 @@ export interface AssessEstablishedConditionsResult {
     totalElements: number;
     establishedConditions: number;
     supportiveInformation: number;
+    /** Elements whose EC status an unstated fact decides. */
+    notDetermined: number;
     enhancedApproachBenefit: string;
   };
   assessments: EstablishedConditionAssessment[];
   guidance: string[];
+  /** Each true/false input: true, false or not_stated. */
+  inputStates: Record<string, BooleanState>;
+  /** The conclusions an unstated fact leaves open. */
+  undecided: Undecided[];
   citations: RegulatoryCitation[];
   provenance: EngineProvenance;
 }
-
-interface EcBaseRule {
-  elementType: DossierElementType;
-  /** Is this element an EC by default (minimal approach)? */
-  defaultEc: boolean;
-  /** Default reporting category for a change to this EC. */
-  defaultUs: UsReportingCategory;
-  defaultEu: EuVariationType;
-  description: string;
-}
-
-const EC_BASE_RULES: EcBaseRule[] = [
-  {
-    elementType: 'drug_substance_synthesis_step',
-    defaultEc: true,
-    defaultUs: 'PAS',
-    defaultEu: 'II',
-    description: 'Synthetic route steps are ECs; route changes are major.',
-  },
-  {
-    elementType: 'drug_substance_specification',
-    defaultEc: true,
-    defaultUs: 'CBE-30',
-    defaultEu: 'IB',
-    description: 'DS specification acceptance criteria are ECs.',
-  },
-  {
-    elementType: 'manufacturing_process_step',
-    defaultEc: true,
-    defaultUs: 'CBE-30',
-    defaultEu: 'IB',
-    description: 'Unit operations / process steps are ECs.',
-  },
-  {
-    elementType: 'process_parameter',
-    defaultEc: false,
-    defaultUs: 'CBE-30',
-    defaultEu: 'IB',
-    description: 'Individual process parameters are ECs only if they impact a CQA and are not otherwise controlled.',
-  },
-  {
-    elementType: 'in_process_control',
-    defaultEc: true,
-    defaultUs: 'CBE-30',
-    defaultEu: 'IB',
-    description: 'IPC tests/limits that are part of the control strategy are ECs.',
-  },
-  {
-    elementType: 'drug_product_composition',
-    defaultEc: true,
-    defaultUs: 'PAS',
-    defaultEu: 'II',
-    description: 'Qualitative/quantitative composition is an EC.',
-  },
-  {
-    elementType: 'drug_product_specification',
-    defaultEc: true,
-    defaultUs: 'CBE-30',
-    defaultEu: 'IB',
-    description: 'DP specification acceptance criteria are ECs.',
-  },
-  {
-    elementType: 'analytical_procedure',
-    defaultEc: true,
-    defaultUs: 'CBE-30',
-    defaultEu: 'IB',
-    description: 'Analytical procedures are ECs; principle vs parameter-level ECs depend on Q14 approach.',
-  },
-  {
-    elementType: 'container_closure',
-    defaultEc: true,
-    defaultUs: 'CBE-30',
-    defaultEu: 'IB',
-    description: 'Primary container-closure components are ECs.',
-  },
-  {
-    elementType: 'control_strategy_element',
-    defaultEc: true,
-    defaultUs: 'CBE-30',
-    defaultEu: 'IB',
-    description: 'Elements of the documented control strategy are ECs.',
-  },
-  {
-    elementType: 'shelf_life',
-    defaultEc: true,
-    defaultUs: 'PAS',
-    defaultEu: 'II',
-    description: 'Shelf life and storage conditions are ECs.',
-  },
-  {
-    elementType: 'facility_site',
-    defaultEc: true,
-    defaultUs: 'PAS',
-    defaultEu: 'II',
-    description: 'Manufacturing site identity is an EC.',
-  },
-];
 
 function ecRuleFor(elementType: DossierElementType): EcBaseRule {
   const r = EC_BASE_RULES.find((x: EcBaseRule) => x.elementType === elementType);
@@ -980,6 +703,54 @@ function ecRuleFor(elementType: DossierElementType): EcBaseRule {
   );
 }
 
+/** EC status, and the reporting a change to the element attracts, on one full answer (the pre-S5d rules). */
+function ecOn(
+  rule: EcBaseRule, elementType: DossierElementType, approach: DevelopmentApproach,
+  a: { cqaImpact: boolean; controlledDownstream: boolean; withinDesignSpace: boolean },
+): { isEc: boolean; us: UsReportingCategory; eu: EuVariationType; rationale: string } {
+  let isEc = rule.defaultEc;
+  // Enhanced approach: a parameter within a design space, fully controlled
+  // downstream and without direct CQA impact, can be classified as
+  // supportive information rather than an EC (Q12 Annex examples).
+  if (a.controlledDownstream && !a.cqaImpact) isEc = false;
+  if (a.withinDesignSpace) isEc = false;
+  if (elementType === 'process_parameter') isEc = a.cqaImpact && !a.controlledDownstream;
+  // CQA impact forces EC regardless of approach.
+  if (a.cqaImpact && !a.withinDesignSpace) isEc = true;
+
+  // Reporting category for a change to the element.
+  let us = rule.defaultUs;
+  let eu = rule.defaultEu;
+  if (!isEc) {
+    // Changes to supportive information generally need no submission (notify in AR at most).
+    us = 'Annual Report';
+    eu = 'IA';
+  } else if (approach === 'enhanced') {
+    // Enhanced approach can lower the reporting category by one tier for
+    // parameter-level ECs that remain within the demonstrated knowledge space.
+    if (elementType === 'process_parameter' || elementType === 'analytical_procedure') {
+      us = adjustUsCategory(us, 'low');
+      eu = adjustEuType(eu, 'low');
+    }
+  }
+
+  const rationaleParts: string[] = [rule.description];
+  if (!isEc) {
+    rationaleParts.push(
+      a.withinDesignSpace
+        ? 'Element is within an approved design space, so movement is not a change requiring a submission (supportive information).'
+        : 'Element is fully controlled downstream without direct CQA impact, so it is supportive information rather than an EC.',
+    );
+  } else if (approach === 'enhanced') {
+    rationaleParts.push(
+      'Enhanced (QbD) development can justify a parameter-level EC with a reduced reporting category for changes within the demonstrated knowledge space (Q12 Annex).',
+    );
+  } else {
+    rationaleParts.push('Minimal development approach: element described as a fixed condition and is an EC.');
+  }
+  return { isEc, us, eu, rationale: rationaleParts.join(' ') };
+}
+
 /**
  * Assess which dossier elements are Established Conditions (legally binding) vs
  * supportive information, and the reporting category a future change to each
@@ -989,79 +760,56 @@ function ecRuleFor(elementType: DossierElementType): EcBaseRule {
 export function assessEstablishedConditions(
   params: AssessEstablishedConditionsParams,
 ): AssessEstablishedConditionsResult {
-  const approach: DevelopmentApproach = params.developmentApproach ?? 'minimal';
-  const modality: ProductModality = params.modality ?? 'small_molecule';
+  // 2026-11-09 (S5d): an omitted cqaImpact, controlledDownstream or withinDesignSpace read as false, so an element was
+  // called an EC (or supportive information) from facts nobody stated; an unknown element type was an EC.
+  refuseUnlessStated('assessEstablishedConditions', [{ field: 'elements', value: params.elements, ok: Array.isArray(params.elements), expected: 'a list' }], 'classified');
+  const approachStated = statedOneOf('developmentApproach', params.developmentApproach, DEV_APPROACHES);
+  const modalityStated = statedOneOf('modality', params.modality, MODALITIES);
+  const approach: DevelopmentApproach = approachStated ?? 'minimal';
+  const modality: ProductModality = modalityStated ?? 'small_molecule';
+  const ELEMENT_TYPES = EC_BASE_RULES.map((r: EcBaseRule) => r.elementType);
+  const inputStates: Record<string, BooleanState> = {};
+  const undecided: Undecided[] = [];
 
-  const assessments: EstablishedConditionAssessment[] = params.elements.map(
-    (el: DossierElementInput): EstablishedConditionAssessment => {
-      const rule = ecRuleFor(el.elementType);
-
-      // Determine EC status.
-      let isEc = rule.defaultEc;
-
-      // Enhanced approach: a parameter within a design space, fully controlled
-      // downstream and without direct CQA impact, can be classified as
-      // supportive information rather than an EC (Q12 Annex examples).
-      if (el.controlledDownstream === true && el.cqaImpact !== true) {
-        isEc = false;
-      }
-      if (el.withinDesignSpace === true) {
-        isEc = false;
-      }
-      if (el.elementType === 'process_parameter') {
-        isEc = el.cqaImpact === true && el.controlledDownstream !== true;
-      }
-      // CQA impact forces EC regardless of approach.
-      if (el.cqaImpact === true && el.withinDesignSpace !== true) {
-        isEc = true;
-      }
-
-      // Reporting category for a change to the element.
-      let us = rule.defaultUs;
-      let eu = rule.defaultEu;
-
-      if (!isEc) {
-        // Changes to supportive information generally need no submission (notify in AR at most).
-        us = 'Annual Report';
-        eu = 'IA';
-      } else if (approach === 'enhanced') {
-        // Enhanced approach can lower the reporting category by one tier for
-        // parameter-level ECs that remain within the demonstrated knowledge space.
-        if (el.elementType === 'process_parameter' || el.elementType === 'analytical_procedure') {
-          us = adjustUsCategory(us, 'low');
-          eu = adjustEuType(eu, 'low');
-        }
-      }
-
-      const rationaleParts: string[] = [rule.description];
-      if (!isEc) {
-        rationaleParts.push(
-          el.withinDesignSpace === true
-            ? 'Element is within an approved design space, so movement is not a change requiring a submission (supportive information).'
-            : 'Element is fully controlled downstream without direct CQA impact, so it is supportive information rather than an EC.',
-        );
-      } else if (approach === 'enhanced') {
-        rationaleParts.push(
-          'Enhanced (QbD) development can justify a parameter-level EC with a reduced reporting category for changes within the demonstrated knowledge space (Q12 Annex).',
-        );
-      } else {
-        rationaleParts.push('Minimal development approach: element described as a fixed condition and is an EC.');
-      }
-
+  const assessments: EstablishedConditionAssessment[] = objects('elements', params.elements).map(
+    (el: Record<string, unknown>, i: number): EstablishedConditionAssessment => {
+      const elementType = requiredOneOf(`elements[${i}].elementType`, el.elementType, ELEMENT_TYPES);
+      const name = statedText(`elements[${i}].name`, el.name) ?? '';
+      const stated = {
+        cqaImpact: statedBoolean(`elements[${i}].cqaImpact`, el.cqaImpact),
+        controlledDownstream: statedBoolean(`elements[${i}].controlledDownstream`, el.controlledDownstream),
+        withinDesignSpace: statedBoolean(`elements[${i}].withinDesignSpace`, el.withinDesignSpace),
+      };
+      for (const [k, v] of Object.entries(stated)) inputStates[`elements[${i}].${k}`] = v ?? 'not_stated';
+      const rule = ecRuleFor(elementType);
+      const on = (a: Record<keyof typeof stated, boolean>) => ecOn(rule, elementType, approach, a);
+      const own: Undecided[] = [];
+      const field = (k: string): string => `elements[${i}].${k}`;
+      const isEc = settled(`elements[${i}].isEstablishedCondition`, stated, (a) => on(a).isEc, own, field);
+      const us = settled(`elements[${i}].changeReportingCategory`, stated, (a) => on(a).us, own, field);
+      const eu = settled(`elements[${i}].euChangeType`, stated, (a) => on(a).eu, own, field);
+      const rationale = settled(`elements[${i}].rationale`, stated, (a) => on(a).rationale, [], field);
+      undecided.push(...own);
+      const open = own.find((u: Undecided) => u.conclusion.endsWith('isEstablishedCondition'));
       return {
-        name: el.name,
-        elementType: el.elementType,
+        name,
+        elementType,
         isEstablishedCondition: isEc,
-        classification: isEc ? 'established_condition' : 'supportive_information',
+        classification: isEc === null ? 'not_determined' : isEc ? 'established_condition' : 'supportive_information',
         changeReportingCategory: us,
         euChangeType: eu,
-        rationale: rationaleParts.join(' '),
+        rationale:
+          rationale ??
+          (isEc === null
+            ? `${rule.description} Not determined: whether it is an EC turns on ${listed(open?.decidingFacts ?? [])}, not stated.`
+            : `${rule.description} ${isEc ? 'An established condition' : 'Supportive information'} on every answer to ` +
+              `${listed(Object.keys(stated).filter((k) => stated[k as keyof typeof stated] === undefined).map(field))}, not stated.`),
       };
     },
   );
 
-  const ecCount = assessments.filter((a: EstablishedConditionAssessment) => a.isEstablishedCondition).length;
-  const siCount = assessments.length - ecCount;
+  const ecCount = assessments.filter((a: EstablishedConditionAssessment) => a.isEstablishedCondition === true).length;
+  const siCount = assessments.filter((a: EstablishedConditionAssessment) => a.isEstablishedCondition === false).length;
 
   const enhancedBenefit =
     approach === 'enhanced'
@@ -1078,6 +826,8 @@ export function assessEstablishedConditions(
       'For biologics, more process parameters tend to be ECs because the process defines the product; comparability (ICH Q5E) underpins any EC change.',
     );
   }
+  if (approachStated === undefined) guidance.push('developmentApproach was not stated: the minimal approach is assumed.');
+  if (modalityStated === undefined) guidance.push('modality was not stated: the elements are assessed for a small molecule.');
 
   return {
     developmentApproach: approach,
@@ -1086,10 +836,13 @@ export function assessEstablishedConditions(
       totalElements: assessments.length,
       establishedConditions: ecCount,
       supportiveInformation: siCount,
+      notDetermined: assessments.length - ecCount - siCount,
       enhancedApproachBenefit: enhancedBenefit,
     },
     assessments,
     guidance,
+    inputStates,
+    undecided,
     citations: cite('ich_q12', 'ich_q12_ec', 'ich_q12_annex', 'ich_q8', 'ich_q11', 'ich_q14'),
     provenance: provenance('assessEstablishedConditions'),
   };
@@ -1140,20 +893,26 @@ export interface DesignPacmpResult {
     attribute: string;
     test: string;
     acceptanceCriterion: string;
-    cqa: boolean;
+    /** null while tests[i].cqa is not stated. */
+    cqa: boolean | null;
     purpose: string;
   }>;
   stabilityCommitment: string | null;
+  /** A null field is not determined: an unstated fact could change it (see undecided). */
   reportingCategory: {
-    withoutProtocol: UsReportingCategory;
-    proposedWithProtocol: UsReportingCategory;
+    withoutProtocol: UsReportingCategory | null;
+    proposedWithProtocol: UsReportingCategory | null;
     euMechanism: string;
-    feasible: boolean;
+    feasible: boolean | null;
     rationale: string;
   };
   executionSteps: PacmpStep[];
   prerequisites: string[];
   warnings: string[];
+  /** Each true/false input: true, false or not_stated. */
+  inputStates: Record<string, BooleanState>;
+  /** The conclusions an unstated fact leaves open. */
+  undecided: Undecided[];
   citations: RegulatoryCitation[];
   provenance: EngineProvenance;
 }
@@ -1170,57 +929,98 @@ function reduceCategoryOneTier(cat: UsReportingCategory): UsReportingCategory {
  * reporting category at the time of implementation.
  */
 export function designPACMP(params: DesignPacmpParams): DesignPacmpResult {
-  const modality: ProductModality = params.modality ?? 'small_molecule';
-  const profile = profileFor(params.plannedChangeArea);
+  // 2026-11-09 (S5d): an omitted risk qualifier read as false in the category without a protocol and the sterile
+  // check, an omitted cqa as "not a CQA", and an omitted includeStability as no commitment, with nothing said.
+  const area = requiredOneOf('plannedChangeArea', params.plannedChangeArea, CHANGE_AREAS);
+  refuseUnlessStated('designPACMP', [{
+    field: 'plannedChangeDescription', value: params.plannedChangeDescription,
+    ok: typeof params.plannedChangeDescription === 'string' && params.plannedChangeDescription.trim().length > 0, expected: 'non-empty text',
+  }], 'designed');
+  const modalityStated = statedOneOf('modality', params.modality, MODALITIES);
+  const modality: ProductModality = modalityStated ?? 'small_molecule';
+  const profile = profileFor(area);
+  const risk = readRisk('risk', params.risk);
+  const currentStated = statedOneOf('currentCategoryIfNoProtocol', params.currentCategoryIfNoProtocol, US_CATEGORIES);
+  const proposedStated = statedOneOf('proposedReducedCategory', params.proposedReducedCategory, US_CATEGORIES);
+  const includeStability = statedBoolean('includeStability', params.includeStability);
+  const testsStated = objects('tests', params.tests).map((t: Record<string, unknown>, i: number): PacmpTestInput => {
+    const text = (k: string): string => {
+      refuseUnlessStated('designPACMP', [{ field: `tests[${i}].${k}`, value: t[k], ok: typeof t[k] === 'string', expected: 'text' }], 'designed');
+      return t[k] as string;
+    };
+    return { attribute: text('attribute'), test: text('test'), acceptanceCriterion: text('acceptanceCriterion'), cqa: statedBoolean(`tests[${i}].cqa`, t.cqa) };
+  });
+  const undecided: Undecided[] = [];
+  const warnings: string[] = [];
 
-  const withoutProtocol =
-    params.currentCategoryIfNoProtocol ??
-    classifyPostApprovalChange({
-      changeArea: params.plannedChangeArea,
-      modality,
-      risk: params.risk,
-    }).us.category;
+  // Without a stated category, it is the classification's, on every answer to the facts it turns on.
+  let withoutProtocol: UsReportingCategory | null = currentStated ?? null;
+  if (currentStated === undefined) {
+    const c = classifyPostApprovalChange({ changeArea: area, modality, risk: params.risk });
+    withoutProtocol = c.us.category;
+    if (withoutProtocol === null) {
+      const u = c.undecided.find((x: Undecided) => x.conclusion === 'us.category')!;
+      undecided.push({ conclusion: 'reportingCategory.withoutProtocol', decidingFacts: u.decidingFacts, couldBe: u.couldBe });
+      warnings.push(
+        `The category without a protocol is not determined: it turns on ${listed(u.decidingFacts)}, not stated. ` +
+          'State currentCategoryIfNoProtocol, or the risk facts (classify_post_approval_change takes the others).',
+      );
+    }
+  }
 
   // Default proposed category: one tier down from the unprotocoled category.
-  const proposed = params.proposedReducedCategory ?? reduceCategoryOneTier(withoutProtocol);
-
-  const warnings: string[] = [];
+  const proposed = proposedStated ?? (withoutProtocol === null ? null : reduceCategoryOneTier(withoutProtocol));
 
   // Feasibility: PACMP cannot reduce below CBE-0 to Annual Report for CQA-affecting
   // changes, and cannot turn a sterile process change into a notification.
   const order: UsReportingCategory[] = ['Annual Report', 'CBE-0', 'CBE-30', 'PAS'];
-  let feasible = order.indexOf(proposed) <= order.indexOf(withoutProtocol);
-  if (!feasible) {
+  let feasible: boolean | null = proposed === null || withoutProtocol === null ? null : order.indexOf(proposed) <= order.indexOf(withoutProtocol);
+  if (feasible === false) {
     warnings.push('Proposed reduced category is not lower than the unprotocoled category; a PACMP provides no reporting benefit here.');
   }
-  const risks = params.risk ?? {};
-  if (risks.sterileProcess === true && proposed === 'Annual Report') {
+  if (risk.sterileProcess === true && proposed === 'Annual Report') {
     feasible = false;
     warnings.push('A sterile/aseptic process change cannot be reduced to an Annual Report category even with a PACMP.');
+  } else if (risk.sterileProcess === undefined && proposed === 'Annual Report' && feasible !== false) {
+    feasible = null;
+    undecided.push({ conclusion: 'reportingCategory.feasible', decidingFacts: ['risk.sterileProcess'], couldBe: [false, true] });
+    warnings.push('risk.sterileProcess was not stated: a sterile/aseptic process change cannot be reduced to an Annual Report category.');
   }
-  if ((modality === 'cell_gene_therapy') && order.indexOf(proposed) < order.indexOf('CBE-30')) {
+  if ((modality === 'cell_gene_therapy') && proposed !== null && order.indexOf(proposed) < order.indexOf('CBE-30')) {
     warnings.push('For cell & gene therapies, regulators rarely accept reduction below CBE-30 due to limited comparability assurance.');
   }
 
   // Build the test plan. If the caller supplies tests, annotate them; otherwise
   // generate a sensible default panel for the change area.
-  const suppliedTests: PacmpTestInput[] = params.tests ?? defaultPacmpTests(params.plannedChangeArea, modality);
-  const testPlan = suppliedTests.map((t: PacmpTestInput) => ({
+  const suppliedTests: PacmpTestInput[] = params.tests === undefined || params.tests === null ? defaultPacmpTests(area, modality) : testsStated;
+  if (params.tests === undefined || params.tests === null) {
+    warnings.push('No tests were stated: the test plan is this engine\'s default panel for the change area; confirm each acceptance criterion against the approved specification.');
+  }
+  const testPlan = suppliedTests.map((t: PacmpTestInput, i: number) => ({
     attribute: t.attribute,
     test: t.test,
     acceptanceCriterion: t.acceptanceCriterion,
-    cqa: t.cqa === true,
+    cqa: t.cqa ?? null,
     purpose: t.cqa === true
       ? 'Demonstrate the CQA remains within criteria after the change (comparability anchor).'
-      : 'Confirm the quality attribute is unaffected by the change.',
+      : t.cqa === false
+        ? 'Confirm the quality attribute is unaffected by the change.'
+        : `Not stated whether the attribute is a CQA (tests[${i}].cqa); if it is, this test is a comparability anchor.`,
   }));
 
+  const stabilityByArea = profile.area === 'container_closure' || profile.area === 'stability_shelf_life';
   const stabilityCommitment =
-    params.includeStability === true || profile.area === 'container_closure' || profile.area === 'stability_shelf_life'
+    includeStability === true || stabilityByArea
       ? 'Place the first 1–3 production batches manufactured under the change on the approved stability protocol (e.g., long-term 25°C/60%RH and accelerated 40°C/75%RH per ICH Q1A) and commit to report any out-of-trend results; confirm shelf life is unaffected.'
       : null;
+  if (includeStability === undefined && !stabilityByArea) {
+    warnings.push('includeStability was not stated: no stability commitment is included for this change area.');
+  }
+  if (modalityStated === undefined) warnings.push('modality was not stated: the protocol is designed for a small molecule.');
 
   const protocolType: 'PACMP (ICH Q12)' | 'Comparability Protocol (FDA)' = 'PACMP (ICH Q12)';
+  const reduced = proposed ?? 'the agreed reduced category (not determined)';
+  const unreduced = withoutProtocol ?? 'the category without a protocol (not determined)';
 
   const executionSteps: PacmpStep[] = [
     {
@@ -1238,7 +1038,7 @@ export function designPACMP(params: DesignPacmpParams): DesignPacmpResult {
     {
       step: 3,
       title: 'Report under the reduced category (Step 2)',
-      detail: `If all acceptance criteria are met, implement and report the change under the agreed reduced category (${proposed}) rather than ${withoutProtocol}. If any criterion fails, the reduced category does not apply and the change reverts to ${withoutProtocol}.`,
+      detail: `If all acceptance criteria are met, implement and report the change under the agreed reduced category (${reduced}) rather than ${unreduced}. If any criterion fails, the reduced category does not apply and the change reverts to ${unreduced}.`,
     },
   ];
 
@@ -1253,7 +1053,7 @@ export function designPACMP(params: DesignPacmpParams): DesignPacmpResult {
 
   return {
     plannedChange: {
-      area: params.plannedChangeArea,
+      area,
       label: profile.label,
       description: params.plannedChangeDescription,
     },
@@ -1265,65 +1065,28 @@ export function designPACMP(params: DesignPacmpParams): DesignPacmpResult {
     stabilityCommitment,
     reportingCategory: {
       withoutProtocol,
-      proposedWithProtocol: feasible ? proposed : withoutProtocol,
+      proposedWithProtocol: feasible === true ? proposed : feasible === false ? withoutProtocol : null,
       euMechanism:
         'In the EU, the equivalent mechanism is a Post-Approval Change Management Protocol submitted as a Type II variation; once approved, the subsequent change can be implemented as a lower-tier variation (often Type IB or IA) as agreed in the protocol.',
       feasible,
-      rationale: feasible
+      rationale: feasible === true
         ? `A PACMP can reduce the reporting category from ${withoutProtocol} to ${proposed} because the assessment of the change is performed up front against agreed criteria.`
-        : `The proposed reduction to ${proposed} is not supportable; the change should be reported as ${withoutProtocol}.`,
+        : feasible === false
+          ? `The proposed reduction to ${proposed} is not supportable; the change should be reported as ${withoutProtocol}.`
+          : `Not determined: ${listed(undecided.flatMap((u: Undecided) => u.decidingFacts))} not stated.`,
     },
     executionSteps,
     prerequisites,
     warnings,
+    inputStates: {
+      includeStability: includeStability ?? 'not_stated',
+      ...Object.fromEntries(testsStated.map((t: PacmpTestInput, i: number) => [`tests[${i}].cqa`, t.cqa ?? 'not_stated'])),
+      ...riskStates('risk', risk),
+    },
+    undecided,
     citations: cite('ich_q12', 'ich_q12_pacmp', 'fda_comparability_protocols', 'ich_q9', 'ich_q10', 'eu_variations_reg'),
     provenance: provenance('designPACMP'),
   };
-}
-
-function defaultPacmpTests(area: ChangeArea, modality: ProductModality): PacmpTestInput[] {
-  const biologic = modality === 'biologic' || modality === 'vaccine' || modality === 'cell_gene_therapy';
-  switch (area) {
-    case 'manufacturing_site':
-    case 'manufacturing_process':
-    case 'scale':
-    case 'equipment':
-      return biologic
-        ? [
-            { attribute: 'Identity / primary structure', test: 'Peptide map / intact mass', acceptanceCriterion: 'Comparable to reference profile', cqa: true },
-            { attribute: 'Purity / impurities', test: 'SEC-HPLC, CE-SDS', acceptanceCriterion: 'Within approved limits; comparable profile', cqa: true },
-            { attribute: 'Potency', test: 'Validated bioassay', acceptanceCriterion: 'Within approved acceptance range', cqa: true },
-            { attribute: 'Charge variants', test: 'iCIEF / IEX', acceptanceCriterion: 'Comparable distribution', cqa: true },
-          ]
-        : [
-            { attribute: 'Assay', test: 'HPLC assay', acceptanceCriterion: '95.0–105.0% label claim', cqa: true },
-            { attribute: 'Impurities', test: 'Related substances by HPLC', acceptanceCriterion: 'Within approved specification', cqa: true },
-            { attribute: 'Dissolution', test: 'Dissolution profile (f2)', acceptanceCriterion: 'f2 ≥ 50 vs pre-change profile', cqa: true },
-            { attribute: 'Uniformity', test: 'Content uniformity', acceptanceCriterion: 'Meets USP <905>', cqa: false },
-          ];
-    case 'composition_excipient':
-      return [
-        { attribute: 'Dissolution', test: 'Dissolution profile (f2)', acceptanceCriterion: 'f2 ≥ 50 vs reference', cqa: true },
-        { attribute: 'Assay', test: 'HPLC assay', acceptanceCriterion: 'Within specification', cqa: true },
-        { attribute: 'Physical attributes', test: 'Hardness, friability, disintegration', acceptanceCriterion: 'Within in-process limits', cqa: false },
-      ];
-    case 'specification':
-    case 'analytical_method':
-      return [
-        { attribute: 'Method equivalence', test: 'Cross-validation old vs new method', acceptanceCriterion: 'Equivalent results within stated tolerance', cqa: false },
-        { attribute: 'System suitability', test: 'Per ICH Q2(R2)', acceptanceCriterion: 'Meets validation acceptance criteria', cqa: false },
-      ];
-    case 'container_closure':
-      return [
-        { attribute: 'Container integrity', test: 'Container closure integrity test (CCIT)', acceptanceCriterion: 'Pass', cqa: true },
-        { attribute: 'Extractables/leachables', test: 'E&L study (as applicable)', acceptanceCriterion: 'Below safety thresholds', cqa: false },
-        { attribute: 'Stability', test: 'ICH Q1A stability', acceptanceCriterion: 'Meets specification through shelf life', cqa: true },
-      ];
-    default:
-      return [
-        { attribute: 'Release testing', test: 'Full release panel', acceptanceCriterion: 'Within approved specification', cqa: true },
-      ];
-  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1357,8 +1120,9 @@ export interface PlanAnnualReportParams {
 export interface AnnualReportableChange {
   changeArea: ChangeArea;
   description: string;
-  classifiedCategory: UsReportingCategory;
-  annualReportable: boolean;
+  /** null while the facts the classification turns on are not stated (and no category was asserted). */
+  classifiedCategory: UsReportingCategory | null;
+  annualReportable: boolean | null;
   note: string;
 }
 
@@ -1380,6 +1144,8 @@ export interface PlanAnnualReportResult {
     requiredSections: string[];
     reportableChanges: AnnualReportableChange[];
     nonAnnualReportableFlagged: AnnualReportableChange[];
+    /** Changes whose category the facts stated do not decide. */
+    notDetermined: AnnualReportableChange[];
     stabilityUpdate: string;
   };
   plcmDocument: {
@@ -1388,6 +1154,8 @@ export interface PlanAnnualReportResult {
     sections: PlcmSection[];
   };
   guidance: string[];
+  /** Each true/false input: true, false or not_stated. */
+  inputStates: Record<string, BooleanState>;
   citations: RegulatoryCitation[];
   provenance: EngineProvenance;
 }
@@ -1405,7 +1173,8 @@ function blaAnnualReportSections(): { record: string; sections: string[] } {
 
 /** Licensed under a BLA: as stated, else taken from a biologic, vaccine or cell/gene therapy modality. */
 function isLicensedBiologic(params: PlanAnnualReportParams, modality: ProductModality): boolean {
-  if (params.biologicLicense !== undefined) return params.biologicLicense;
+  const stated = statedBoolean('biologicLicense', params.biologicLicense);
+  if (stated !== undefined) return stated;
   return modality === 'biologic' || modality === 'vaccine' || modality === 'cell_gene_therapy';
 }
 
@@ -1434,11 +1203,14 @@ function annualChangeNote(classified: UsReportingCategory, licensed: boolean): s
   return `This change is classified ${classified} and requires a supplement${licensed ? ' under 21 CFR 601.12(b) or (c)' : ''}; it is NOT merely annual-reportable. Include only after the supplement is filed/approved as appropriate.`;
 }
 
-function annualStabilityUpdate(licensed: boolean, protocolOngoing: boolean): string {
+function annualStabilityUpdate(licensed: boolean, protocolOngoing: boolean | undefined): string {
   if (licensed) return 'Stability data appear in this report only as data supporting a minor change it describes, or where an approved commitment requires them; this planner does not decide that. Confirm against the BLA\'s approved commitments.';
-  return protocolOngoing
-    ? 'Include updated stability data for batches on the approved stability protocol, any commitment batches, and a statement of conformance to the approved shelf life. Report any confirmed out-of-specification or significant out-of-trend results promptly (these may require a separate field alert or supplement).'
-    : 'Provide a statement on stability status; if no new long-term data are available this period, state so and reference the approved stability commitment.';
+  const ongoing = 'Include updated stability data for batches on the approved stability protocol, any commitment batches, and a statement of conformance to the approved shelf life. Report any confirmed out-of-specification or significant out-of-trend results promptly (these may require a separate field alert or supplement).';
+  const none = 'Provide a statement on stability status; if no new long-term data are available this period, state so and reference the approved stability commitment.';
+  if (protocolOngoing === undefined) {
+    return `Whether a stability protocol or commitment is ongoing was not stated (stabilityProtocolOngoing). If one is: ${ongoing} If not: ${none}`;
+  }
+  return protocolOngoing ? ongoing : none;
 }
 
 /** The regime lines of the guidance: which rule governs, and what is a separate report. */
@@ -1458,43 +1230,56 @@ function annualRegimeGuidance(licensed: boolean, licenceStated: boolean): string
  * categories.
  */
 export function planAnnualReport(params: PlanAnnualReportParams): PlanAnnualReportResult {
-  const modality: ProductModality = params.modality ?? 'small_molecule';
+  // 2026-11-09 (S5d): a change with no asserted category was classified with its risk facts read as false (this tool
+  // takes none), an omitted stabilityProtocolOngoing read as false, and 'true' read as false or crashed.
+  const modality: ProductModality = statedOneOf('modality', params.modality, MODALITIES) ?? 'small_molecule';
   const licensed = isLicensedBiologic(params, modality);
-  const productName = params.productName ?? 'the product';
-  const reportingPeriod = params.reportingPeriod ?? 'the current annual reporting period';
+  const productName = statedText('productName', params.productName) ?? 'the product';
+  const reportingPeriod = statedText('reportingPeriod', params.reportingPeriod) ?? 'the current annual reporting period';
+  const stabilityOngoing = statedBoolean('stabilityProtocolOngoing', params.stabilityProtocolOngoing);
+  const includePlcm = statedBoolean('includePlcmDocument', params.includePlcmDocument);
 
   const reportable: AnnualReportableChange[] = [];
   const nonReportableFlagged: AnnualReportableChange[] = [];
+  const notDetermined: AnnualReportableChange[] = [];
 
-  for (const ch of params.changes ?? []) {
-    const classified =
-      ch.assertedCategory ??
-      classifyPostApprovalChange({
-        changeArea: ch.changeArea,
-        modality: ch.modality ?? modality,
-        magnitude: ch.magnitude,
-      }).us.category;
-
+  objects('changes', params.changes).forEach((ch: Record<string, unknown>, i: number) => {
+    const at = `changes[${i}].`;
+    const changeArea = requiredOneOf(`${at}changeArea`, ch.changeArea, CHANGE_AREAS);
+    const description = statedText(`${at}description`, ch.description) ?? '';
+    const asserted = statedOneOf(`${at}assertedCategory`, ch.assertedCategory, US_CATEGORIES);
+    const changeModality = statedOneOf(`${at}modality`, ch.modality, MODALITIES) ?? modality;
+    const magnitude = statedOneOf(`${at}magnitude`, ch.magnitude, MAGNITUDES);
+    const c = asserted === undefined ? classifyPostApprovalChange({ changeArea, modality: changeModality, magnitude }) : undefined;
+    const classified = asserted ?? c!.us.category;
+    if (classified === null) {
+      const u = c!.undecided.find((x: Undecided) => x.conclusion === 'us.category')!;
+      notDetermined.push({
+        changeArea, description, classifiedCategory: null, annualReportable: null,
+        note: `Not determined: the category could be ${u.couldBe.join(' or ')}, and turns on ${listed(u.decidingFacts)}, which this planner does not take. State assertedCategory, or classify the change with classify_post_approval_change and its risk facts.`,
+      });
+      return;
+    }
     const isAr = classified === 'Annual Report';
     const entry: AnnualReportableChange = {
-      changeArea: ch.changeArea,
-      description: ch.description,
+      changeArea,
+      description,
       classifiedCategory: classified,
       annualReportable: isAr,
       note: annualChangeNote(classified, licensed),
     };
     if (isAr) reportable.push(entry);
     else nonReportableFlagged.push(entry);
-  }
+  });
 
-  const stabilityUpdate = annualStabilityUpdate(licensed, params.stabilityProtocolOngoing === true);
+  const stabilityUpdate = annualStabilityUpdate(licensed, stabilityOngoing);
 
   // A licensed biologic's annual report is the 601.12(d) report of minor changes,
   // read from its own record. Until 2026-10-29 a biologic got the NDA sections
   // with a one-line note.
   const { record: sourceRecord, sections: requiredSections } = annualReportSections(licensed);
 
-  const plcmIncluded = params.includePlcmDocument === true;
+  const plcmIncluded = includePlcm === true;
   const plcmSections: PlcmSection[] = plcmIncluded
     ? [
         {
@@ -1521,9 +1306,10 @@ export function planAnnualReport(params: PlanAnnualReportParams): PlanAnnualRepo
     : [];
 
   const guidance: string[] = [
-    ...annualRegimeGuidance(licensed, params.biologicLicense !== undefined),
+    ...annualRegimeGuidance(licensed, params.biologicLicense !== undefined && params.biologicLicense !== null),
     'The PLCM document is a structured, living summary of ECs, their reporting categories, PACMPs, and post-approval commitments that travels with the dossier (ICH Q12 Section 5).',
     'Keep the PLCM document consistent with the approved application; update it whenever ECs or reporting categories change.',
+    ...(includePlcm === undefined ? ['includePlcmDocument was not stated: the PLCM document structure is not included.'] : []),
   ];
 
   return {
@@ -1536,6 +1322,7 @@ export function planAnnualReport(params: PlanAnnualReportParams): PlanAnnualRepo
       requiredSections,
       reportableChanges: reportable,
       nonAnnualReportableFlagged: nonReportableFlagged,
+      notDetermined,
       stabilityUpdate,
     },
     plcmDocument: {
@@ -1545,6 +1332,11 @@ export function planAnnualReport(params: PlanAnnualReportParams): PlanAnnualRepo
       sections: plcmSections,
     },
     guidance,
+    inputStates: {
+      biologicLicense: statedBoolean('biologicLicense', params.biologicLicense) ?? 'not_stated',
+      stabilityProtocolOngoing: stabilityOngoing ?? 'not_stated',
+      includePlcmDocument: includePlcm ?? 'not_stated',
+    },
     citations: cite('ich_q12', 'ich_q12_plcm', ...(licensed ? ['cfr_601_12', 'fda_bio_cmc_changes'] : ['cfr_314_70d', 'fda_ar_changes'])),
     provenance: provenance('planAnnualReport'),
   };
@@ -1575,60 +1367,58 @@ export interface AssessPostApprovalComparabilityResult {
   changeArea: ChangeArea;
   comparabilityApplicable: boolean;
   framework: string;
-  extent: ComparabilityExtent;
+  /** A null field is not determined: an unstated fact could change it (see undecided). */
+  extent: ComparabilityExtent | null;
   analyticalComparability: {
     required: boolean;
     recommendedAttributes: string[];
     note: string;
   };
   functionalBiologicalComparability: {
-    required: boolean;
+    required: boolean | null;
     note: string;
   };
   bridgingStudies: {
-    nonclinicalRequired: boolean;
-    clinicalRequired: boolean;
-    pkPdRequired: boolean;
+    nonclinicalRequired: boolean | null;
+    clinicalRequired: boolean | null;
+    pkPdRequired: boolean | null;
     rationale: string;
   };
   riskBasedExtentRationale: string;
   decisionTree: string[];
   warnings: string[];
+  /** Each true/false input: true, false or not_stated. */
+  inputStates: Record<string, BooleanState>;
+  /** The conclusions an unstated fact leaves open. */
+  undecided: Undecided[];
   citations: RegulatoryCitation[];
   provenance: EngineProvenance;
 }
 
-/**
- * Assess comparability for a manufacturing change: analytical and biological
- * comparability, whether nonclinical/clinical bridging is needed, and the
- * risk-based extent — grounded in ICH Q5E (biologics) and the comparability
- * principles underlying FDA/EU change assessment.
- */
-export function assessPostApprovalComparability(
-  params: AssessPostApprovalComparabilityParams,
-): AssessPostApprovalComparabilityResult {
-  const modality: ProductModality = params.modality ?? 'small_molecule';
+/** The true/false facts a comparability assessment turns on. */
+const COMPARABILITY_FACTS = ['affectsCqa', 'analyticalCoverageComplete', 'clinicalDataAvailable', ...RISK_FLAGS.map((k: RiskFlag) => `risk.${k}` as const)] as const;
+type ComparabilityFact = (typeof COMPARABILITY_FACTS)[number];
+
+/** The extent, bridging and warnings on one full answer (the pre-S5d rules, with every fact stated). */
+function comparabilityOn(
+  area: ChangeArea, modality: ProductModality, stage: NonNullable<AssessPostApprovalComparabilityParams['changeStage']>,
+  magnitude: ChangeMagnitude | undefined, a: Record<ComparabilityFact, boolean>,
+): {
+  tier: ChangeRiskTier; extent: ComparabilityExtent; nonclinicalRequired: boolean; clinicalRequired: boolean;
+  pkPdRequired: boolean; functionalRequired: boolean; cqaAffected: boolean; warnings: string[];
+} {
   const isBiologic = modality === 'biologic' || modality === 'vaccine' || modality === 'cell_gene_therapy' || modality === 'peptide_oligonucleotide';
-  const profile = profileFor(params.changeArea);
-  const risk = scoreChangeRisk(modality, params.risk ?? {}, profile.comparabilitySensitive);
-
+  const profile = profileFor(area);
+  const risk = scoreChangeRisk(modality, {
+    affectsCqa: a['risk.affectsCqa'], affectsControlStrategy: a['risk.affectsControlStrategy'], sterileProcess: a['risk.sterileProcess'],
+    withinDesignSpace: a['risk.withinDesignSpace'], priorKnowledge: a['risk.priorKnowledge'], magnitude,
+  }, profile.comparabilitySensitive);
   const warnings: string[] = [];
-
-  // For small molecules, formal Q5E comparability is generally not invoked; instead
-  // physicochemical equivalence + dissolution + impurities suffices.
-  const comparabilityApplicable = isBiologic || profile.comparabilitySensitive;
-
-  const framework = isBiologic
-    ? 'ICH Q5E — Comparability of Biotechnological/Biological Products Subject to Changes in Their Manufacturing Process'
-    : 'Physicochemical and in vitro equivalence per FDA Changes Guidance and SUPAC (no formal Q5E comparability exercise for small molecules)';
-
-  // Determine extent via decision tree.
-  const stage = params.changeStage ?? (profile.comparabilitySensitive ? 'upstream' : 'downstream');
   const upstream = stage === 'upstream';
-  const cqaAffected = params.affectsCqa === true || (params.risk?.affectsCqa === true);
-  const analyticalComplete = params.analyticalCoverageComplete !== false; // default true unless explicitly false
+  const cqaAffected = a.affectsCqa || a['risk.affectsCqa'];
+  const analyticalComplete = a.analyticalCoverageComplete;
 
-  let extent: ComparabilityExtent = 'analytical_only';
+  let extent: ComparabilityExtent;
   let nonclinicalRequired = false;
   let clinicalRequired = false;
   let pkPdRequired = false;
@@ -1662,9 +1452,84 @@ export function assessPostApprovalComparability(
   }
 
   // If clinical exists already, a new study may be avoidable.
-  if (clinicalRequired && params.clinicalDataAvailable === true) {
+  if (clinicalRequired && a.clinicalDataAvailable) {
     warnings.push('Existing clinical/PK data may bridge the change; confirm relevance and avoid a new clinical study if the prior data cover the affected CQAs.');
   }
+  return {
+    tier: risk.tier, extent, nonclinicalRequired, clinicalRequired, pkPdRequired,
+    functionalRequired: isBiologic && (cqaAffected || risk.tier !== 'low'), cqaAffected, warnings,
+  };
+}
+
+/**
+ * Assess comparability for a manufacturing change: analytical and biological
+ * comparability, whether nonclinical/clinical bridging is needed, and the
+ * risk-based extent — grounded in ICH Q5E (biologics) and the comparability
+ * principles underlying FDA/EU change assessment.
+ */
+export function assessPostApprovalComparability(
+  params: AssessPostApprovalComparabilityParams,
+): AssessPostApprovalComparabilityResult {
+  // 2026-11-09 (S5d): an omitted analyticalCoverageComplete read as true and an omitted CQA or risk fact as false, so
+  // the extent and the bridging studies were chosen from facts nobody stated; 'false' read as complete coverage.
+  const area = requiredOneOf('changeArea', params.changeArea, CHANGE_AREAS);
+  const modalityStated = statedOneOf('modality', params.modality, MODALITIES);
+  const modality: ProductModality = modalityStated ?? 'small_molecule';
+  const isBiologic = modality === 'biologic' || modality === 'vaccine' || modality === 'cell_gene_therapy' || modality === 'peptide_oligonucleotide';
+  const profile = profileFor(area);
+  const risk = readRisk('risk', params.risk);
+  const stageStated = statedOneOf('changeStage', params.changeStage, CHANGE_STAGES);
+  const stage = stageStated ?? (profile.comparabilitySensitive ? 'upstream' : 'downstream');
+  const cqaTop = statedBoolean('affectsCqa', params.affectsCqa);
+  const inputStates: Record<string, BooleanState> = {
+    affectsCqa: cqaTop ?? 'not_stated',
+    analyticalCoverageComplete: statedBoolean('analyticalCoverageComplete', params.analyticalCoverageComplete) ?? 'not_stated',
+    clinicalDataAvailable: statedBoolean('clinicalDataAvailable', params.clinicalDataAvailable) ?? 'not_stated',
+    ...riskStates('risk', risk),
+  };
+  // affectsCqa and risk.affectsCqa state one fact: either, stated, answers the other, and with neither stated the
+  // search tries it once (risk.affectsCqa follows affectsCqa), never as two facts that disagree.
+  const cqaOneFact = cqaTop === undefined && risk.affectsCqa === undefined;
+  const stated = {
+    ...(Object.fromEntries(COMPARABILITY_FACTS.map((k: ComparabilityFact) => [k, inputStates[k] === 'not_stated' ? undefined : inputStates[k]])) as
+      Record<ComparabilityFact, boolean | undefined>),
+    affectsCqa: cqaTop ?? risk.affectsCqa,
+    'risk.affectsCqa': cqaOneFact ? false : risk.affectsCqa ?? cqaTop,
+  };
+  const undecided: Undecided[] = [];
+  const on = (a: Record<ComparabilityFact, boolean>) =>
+    comparabilityOn(area, modality, stage, risk.magnitude, cqaOneFact ? { ...a, 'risk.affectsCqa': a.affectsCqa } : a);
+  const settle = <T>(conclusion: string, get: (o: ReturnType<typeof on>) => T): T | null =>
+    settled(conclusion, stated, (a: Record<ComparabilityFact, boolean>) => get(on(a)), undecided);
+  const extent = settle('extent', (o) => o.extent);
+  const nonclinicalRequired = settle('bridgingStudies.nonclinicalRequired', (o) => o.nonclinicalRequired);
+  const clinicalRequired = settle('bridgingStudies.clinicalRequired', (o) => o.clinicalRequired);
+  const pkPdRequired = settle('bridgingStudies.pkPdRequired', (o) => o.pkPdRequired);
+  const functionalRequired = settle('functionalBiologicalComparability.required', (o) => o.functionalRequired);
+  const cqaAffected = settle('cqaAffected', (o) => o.cqaAffected);
+  const tier = settle('riskTier', (o) => o.tier);
+  const outcomes = everyAnswer(stated).map(on);
+  const warnings: string[] = outcomes[0].warnings.filter((w: string) => outcomes.every((o) => o.warnings.includes(w)));
+  if (stated.clinicalDataAvailable === undefined && clinicalRequired !== false) {
+    warnings.push('clinicalDataAvailable was not stated: existing clinical/PK data may bridge the change if they cover the affected CQAs.');
+  }
+  if (stageStated === undefined) warnings.push(`changeStage was not stated: taken as ${stage} from the change area.`);
+  if (modalityStated === undefined) warnings.push('modality was not stated: the change is assessed for a small molecule.');
+  for (const u of undecided) {
+    if (u.conclusion !== 'cqaAffected' && u.conclusion !== 'riskTier') {
+      warnings.push(`${u.conclusion} not determined: ${listed(u.decidingFacts)} not stated (could be ${u.couldBe.join(' or ')}).`);
+    }
+  }
+
+  // For small molecules, formal Q5E comparability is generally not invoked; instead
+  // physicochemical equivalence + dissolution + impurities suffices.
+  const comparabilityApplicable = isBiologic || profile.comparabilitySensitive;
+
+  const framework = isBiologic
+    ? 'ICH Q5E — Comparability of Biotechnological/Biological Products Subject to Changes in Their Manufacturing Process'
+    : 'Physicochemical and in vitro equivalence per FDA Changes Guidance and SUPAC (no formal Q5E comparability exercise for small molecules)';
+  const shownOr = (v: unknown, open: string): string => (v === null ? `not determined: ${open}` : String(v));
+  const analyticalComplete = stated.analyticalCoverageComplete;
 
   const recommendedAttributes: string[] = isBiologic
     ? [
@@ -1707,7 +1572,7 @@ export function assessPostApprovalComparability(
         : 'Compare physicochemical and in vitro release attributes of pre- and post-change batches against the approved specification and pre-change profile.',
     },
     functionalBiologicalComparability: {
-      required: isBiologic && (cqaAffected || risk.tier !== 'low'),
+      required: functionalRequired,
       note: isBiologic
         ? 'Include potency/bioactivity and, where mechanism-relevant, binding (e.g., FcRn, FcγR) and functional (ADCC/CDC) assays.'
         : 'Functional/biological comparability assays are generally not applicable to small molecules.',
@@ -1716,12 +1581,14 @@ export function assessPostApprovalComparability(
       nonclinicalRequired,
       clinicalRequired,
       pkPdRequired,
-      rationale: `Extent "${extent}" selected from change stage (${stage}), CQA impact (${cqaAffected}), analytical coverage (${analyticalComplete ? 'complete' : 'incomplete'}), and risk tier (${risk.tier}).`,
+      rationale: `Extent "${shownOr(extent, 'see undecided')}" selected from change stage (${stage}), CQA impact (${shownOr(cqaAffected, 'not stated')}), analytical coverage (${analyticalComplete === undefined ? 'not stated' : analyticalComplete ? 'complete' : 'incomplete'}), and risk tier (${shownOr(tier, 'turns on facts not stated')}).`,
     },
     riskBasedExtentRationale:
       'ICH Q5E and quality risk management (ICH Q9) direct a risk-based, stepwise approach: the extent of comparability data is proportionate to the potential of the change to affect quality, safety, and efficacy. Analytical data are the foundation; nonclinical/clinical bridging is added only when residual uncertainty warrants it.',
     decisionTree,
     warnings,
+    inputStates,
+    undecided,
     citations: isBiologic
       ? cite('ich_q5e', 'ich_q9', 'ich_q12', 'ich_q8', 'cfr_601_12')
       : cite('fda_changes_guidance', 'supac_ir', 'ich_q9', 'ich_q12'),
@@ -1768,9 +1635,10 @@ export type Q12Tool =
 export interface LifecycleToolRecommendation {
   changeArea: ChangeArea;
   description: string;
-  recommendedTool: Q12Tool;
-  defaultUsCategory: UsReportingCategory;
-  defaultEuType: EuVariationType;
+  /** A null field is not determined: the change's unstated risk facts could change it (see undecided). */
+  recommendedTool: Q12Tool | null;
+  defaultUsCategory: UsReportingCategory | null;
+  defaultEuType: EuVariationType | null;
   rationale: string;
 }
 
@@ -1792,8 +1660,23 @@ export interface PlanLifecycleManagementResult {
   };
   plcmDocumentPlan: PlcmSection[];
   integratedPlan: string[];
+  /** The defaults used for omitted inputs, and the conclusions not determined. */
+  notes: string[];
+  /** Each true/false input: true, false or not_stated. */
+  inputStates: Record<string, BooleanState>;
+  /** The conclusions an unstated fact leaves open. */
+  undecided: Undecided[];
   citations: RegulatoryCitation[];
   provenance: EngineProvenance;
+}
+
+/** The ICH Q12 tool for a planned change with a known US category (the pre-S5d rules). */
+function lifecycleToolFor(category: UsReportingCategory, area: ChangeArea, frequency: PlannedChangeSummary['expectedFrequency'], approach: DevelopmentApproach): Q12Tool {
+  if (category === 'Annual Report') return 'Annual Report category';
+  if (frequency === 'recurring' || frequency === 'multiple_sites') return 'PACMP / Comparability Protocol';
+  if (approach === 'enhanced' && (area === 'manufacturing_process' || area === 'process_parameter' as ChangeArea)) return 'Design Space (ICH Q8)';
+  if (category === 'PAS' && profileFor(area).comparabilitySensitive) return 'PACMP / Comparability Protocol';
+  return 'Standard supplement/variation';
 }
 
 /**
@@ -1804,43 +1687,57 @@ export interface PlanLifecycleManagementResult {
 export function planLifecycleManagement(
   params: PlanLifecycleManagementParams,
 ): PlanLifecycleManagementResult {
-  const modality: ProductModality = params.modality ?? 'small_molecule';
-  const approach: DevelopmentApproach = params.developmentApproach ?? 'minimal';
-  const productName = params.productName ?? 'the product';
-  const regions = params.marketedRegions ?? ['global'];
+  // 2026-11-09 (S5d): a planned change's omitted risk facts read as false, so its category and ICH Q12 tool were
+  // chosen from facts nobody stated; a history entry with no reported category was classified the same way.
+  const modalityStated = statedOneOf('modality', params.modality, MODALITIES);
+  const approachStated = statedOneOf('developmentApproach', params.developmentApproach, DEV_APPROACHES);
+  const regionsStated = statedList('marketedRegions', params.marketedRegions)?.map((r: unknown, i: number) => requiredOneOf(`marketedRegions[${i}]`, r, REGIONS));
+  const modality: ProductModality = modalityStated ?? 'small_molecule';
+  const approach: DevelopmentApproach = approachStated ?? 'minimal';
+  const productName = statedText('productName', params.productName) ?? 'the product';
+  const regions = regionsStated ?? ['global'];
+  const notes: string[] = [
+    ...(modalityStated === undefined ? ['modality was not stated: the plan is for a small molecule.'] : []),
+    ...(approachStated === undefined ? ['developmentApproach was not stated: the minimal approach is assumed.'] : []),
+    ...(regionsStated === undefined ? ['marketedRegions was not stated: the plan is global.'] : []),
+  ];
+  const inputStates: Record<string, BooleanState> = {};
+  const undecided: Undecided[] = [];
 
-  const toolRecommendations: LifecycleToolRecommendation[] = (params.plannedChanges ?? []).map(
-    (pc: PlannedChangeSummary): LifecycleToolRecommendation => {
-      const classified = classifyPostApprovalChange({
-        changeArea: pc.changeArea,
-        modality,
-        magnitude: pc.magnitude,
-        risk: pc.risk,
-      });
+  const toolRecommendations: LifecycleToolRecommendation[] = objects('plannedChanges', params.plannedChanges).map(
+    (pcIn: Record<string, unknown>, i: number): LifecycleToolRecommendation => {
+      const at = `plannedChanges[${i}].`;
+      const pc: PlannedChangeSummary = {
+        changeArea: requiredOneOf(`${at}changeArea`, pcIn.changeArea, CHANGE_AREAS),
+        description: statedText(`${at}description`, pcIn.description),
+        expectedFrequency: statedOneOf(`${at}expectedFrequency`, pcIn.expectedFrequency, FREQUENCIES),
+        magnitude: statedOneOf(`${at}magnitude`, pcIn.magnitude, MAGNITUDES),
+        risk: readRisk(`${at}risk`, pcIn.risk),
+      };
+      Object.assign(inputStates, riskStates(`${at}risk`, pc.risk!));
+      const classified = classifyPostApprovalChange({ changeArea: pc.changeArea, modality, magnitude: pc.magnitude, risk: pcIn.risk as ChangeRiskInputs });
       const profile = profileFor(pc.changeArea);
-
-      // Tool selection logic.
-      let tool: Q12Tool;
-      if (classified.us.category === 'Annual Report') {
-        tool = 'Annual Report category';
-      } else if (pc.expectedFrequency === 'recurring' || pc.expectedFrequency === 'multiple_sites') {
-        tool = 'PACMP / Comparability Protocol';
-      } else if (approach === 'enhanced' && (pc.changeArea === 'manufacturing_process' || pc.changeArea === 'process_parameter' as ChangeArea)) {
-        tool = 'Design Space (ICH Q8)';
-      } else if (classified.us.category === 'PAS' && profile.comparabilitySensitive) {
-        tool = 'PACMP / Comparability Protocol';
-      } else {
-        tool = 'Standard supplement/variation';
+      const category = classified.undecided.find((u: Undecided) => u.conclusion === 'us.category');
+      const categories = (category?.couldBe ?? [classified.us.category]) as UsReportingCategory[];
+      const tools = [...new Set(categories.map((c: UsReportingCategory) => lifecycleToolFor(c, pc.changeArea, pc.expectedFrequency, approach)))];
+      const tool: Q12Tool | null = tools.length === 1 ? tools[0] : null;
+      for (const u of classified.undecided.filter((x: Undecided) => x.conclusion === 'us.category' || x.conclusion === 'eu.variationType')) {
+        undecided.push({ ...u, conclusion: `toolRecommendations[${i}].${u.conclusion}`, decidingFacts: u.decidingFacts.map((f: string) => `${at}${f}`) });
+      }
+      if (tool === null) {
+        undecided.push({ conclusion: `toolRecommendations[${i}].recommendedTool`, decidingFacts: category!.decidingFacts.map((f: string) => `${at}${f}`), couldBe: tools });
       }
 
       const rationale =
-        tool === 'PACMP / Comparability Protocol'
-          ? 'A recurring/major comparability-sensitive change benefits from a pre-agreed PACMP to gain predictability and a reduced reporting category (ICH Q12 Section 4).'
-          : tool === 'Design Space (ICH Q8)'
-            ? 'An enhanced (QbD) process change may be managed within an approved design space, avoiding a submission for in-space movement (ICH Q8(R2)).'
-            : tool === 'Annual Report category'
-              ? 'A minor change is managed via the annual report category without a supplement (21 CFR 314.70(d)).'
-              : 'A standard one-time change is best handled with a conventional supplement/variation.';
+        tool === null
+          ? `Not determined: the tool turns on the change's reporting category (${categories.join(' or ')}), which turns on ${listed(category!.decidingFacts.map((f: string) => `${at}${f}`))}, not stated.`
+          : tool === 'PACMP / Comparability Protocol'
+            ? 'A recurring/major comparability-sensitive change benefits from a pre-agreed PACMP to gain predictability and a reduced reporting category (ICH Q12 Section 4).'
+            : tool === 'Design Space (ICH Q8)'
+              ? 'An enhanced (QbD) process change may be managed within an approved design space, avoiding a submission for in-space movement (ICH Q8(R2)).'
+              : tool === 'Annual Report category'
+                ? 'A minor change is managed via the annual report category without a supplement (21 CFR 314.70(d)).'
+                : 'A standard one-time change is best handled with a conventional supplement/variation.';
 
       return {
         changeArea: pc.changeArea,
@@ -1863,13 +1760,21 @@ export function planLifecycleManagement(
 
   // Change-history summary.
   const byCategory: Record<string, number> = {};
-  for (const h of params.changeHistory ?? []) {
+  const history = objects('changeHistory', params.changeHistory);
+  history.forEach((h: Record<string, unknown>, i: number) => {
+    const changeArea = requiredOneOf(`changeHistory[${i}].changeArea`, h.changeArea, CHANGE_AREAS);
+    statedText(`changeHistory[${i}].description`, h.description);
+    statedNumber(`changeHistory[${i}].yearImplemented`, h.yearImplemented, Number.isInteger, 'a whole year');
     const cat =
-      h.reportedCategory ??
-      classifyPostApprovalChange({ changeArea: h.changeArea, modality }).us.category;
+      statedOneOf(`changeHistory[${i}].reportedCategory`, h.reportedCategory, US_CATEGORIES) ??
+      classifyPostApprovalChange({ changeArea, modality }).us.category ??
+      'not determined';
     byCategory[cat] = (byCategory[cat] ?? 0) + 1;
+  });
+  if (byCategory['not determined']) {
+    notes.push(`${byCategory['not determined']} history change(s) with no reportedCategory are counted as not determined: their category turns on risk facts this planner does not take.`);
   }
-  const totalHistory = (params.changeHistory ?? []).length;
+  const totalHistory = history.length;
 
   const ecStrategy = {
     approachNote:
@@ -1920,6 +1825,9 @@ export function planLifecycleManagement(
     },
     plcmDocumentPlan,
     integratedPlan,
+    notes: [...notes, ...undecided.map((u: Undecided) => `${u.conclusion} not determined: ${listed(u.decidingFacts)} not stated (could be ${u.couldBe.join(' or ')}).`)],
+    inputStates,
+    undecided,
     citations: cite('ich_q12', 'ich_q12_ec', 'ich_q12_pacmp', 'ich_q12_plcm', 'ich_q8', 'ich_q9', 'ich_q10', 'ich_q11', 'cfr_314_70', 'eu_variations_reg'),
     provenance: provenance('planLifecycleManagement'),
   };

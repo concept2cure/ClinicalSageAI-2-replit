@@ -1,0 +1,22 @@
+{
+  "node": "v22.16.0",
+  "typescript": "5.8.3",
+  "qualification": "syntax/transpilation only; not full repository type-check",
+  "files": [
+    {
+      "file": "server/services/csr/csr-narrative-landed.ts",
+      "gitBlob": "c38e76b9937c499a42995606a6cb95a7d8b92771",
+      "diagnostics": []
+    },
+    {
+      "file": "server/services/csr/__tests__/csr-narrative-reference-consistency.test.ts",
+      "gitBlob": "d270eeade16bc9b60b724602bd4b805447d1bffe",
+      "diagnostics": []
+    },
+    {
+      "file": "server/services/csr/__tests__/csr-narrative-reference-consistency.pglite.test.ts",
+      "gitBlob": "61ead77689802477fb962b28b38df4f1bc5514e1",
+      "diagnostics": []
+    }
+  ]
+}

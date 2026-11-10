@@ -1,0 +1,288 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:39) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T17:49:46.373Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T17:49:47.646Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T17:49:47.647Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T17:49:47.647Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > retains the actual study snapshot and full calculation without inventing a saved run
+{
+  "timestamp": "2026-11-08T17:49:52.791Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 0c87d954-2f9c-4fdd-a9ec-14ace6bef2c9 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > keeps edited calculation inputs separate from the design and its verified saved run
+{
+  "timestamp": "2026-11-08T17:49:52.910Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 529890d7-8be0-44bc-a84d-a675bb6f3654 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > retains the actual study snapshot and full calculation without inventing a saved run 282ms
+stdout | server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > labels worked examples in content, title and provenance and asserts no study or run
+{
+  "timestamp": "2026-11-08T17:49:53.022Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 0edfe976-923f-4963-8af6-2f589a947f8e by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > keeps edited calculation inputs separate from the design and its verified saved run 120ms
+ ✓ server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > labels worked examples in content, title and provenance and asserts no study or run 103ms
+ ✓ server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > refuses another project before creating any authoring evidence 41ms
+ ✓ server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > refuses an unknown study before creating any authoring evidence 37ms
+stderr | server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > rolls the document, section, revision and lineage back when the audit insert fails
+CRITICAL: Failed to create audit trail: Error: injected statistical audit failure
+    at Object.query (/workspace/scratch/3002d574f952/concept2cure-v2/server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts:74:96)
+    at writeAuthoringAuditTrail (/workspace/scratch/3002d574f952/concept2cure-v2/server/services/authoring/authoring-evidence.ts:240:37)
+    at insertSectionSeedTx (/workspace/scratch/3002d574f952/concept2cure-v2/server/services/authoring/authoring-section-seed.ts:32:9)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at insertDocumentTx (/workspace/scratch/3002d574f952/concept2cure-v2/server/services/authoring/authoring-documents.ts:336:7)
+    at createDocumentFromDraft (/workspace/scratch/3002d574f952/concept2cure-v2/server/services/authoring/authoring-from-draft.ts:592:20)
+    at /workspace/scratch/3002d574f952/concept2cure-v2/server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts:174:5
+    at file:///workspace/scratch/3002d574f952/concept2cure-v2/node_modules/@vitest/runner/dist/chunk-artifact.js:1903:20
+
+ ✓ server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > refuses a stale design before creating any authoring evidence 38ms
+ ✓ server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > refuses a mismatched run before creating any authoring evidence 35ms
+ ✓ server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > refuses an altered preview before creating any authoring evidence 3ms
+ ✓ server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > refuses an intact-looking run whose stored output hash does not match its bytes 41ms
+stdout | server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > public from-draft provenance cannot manufacture statistical source proof
+{
+  "timestamp": "2026-11-08T17:49:53.381Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 1ee75ea6-0c0d-4626-bdb0-6d079828350a by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > rolls the document, section, revision and lineage back when the audit insert fails 98ms
+ ✓ server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > rechecks membership inside the create transaction 31ms
+ ✓ server/services/ana-biostats/__tests__/authoring-basis.pglite.integration.test.ts > statistical basis uses the canonical atomic writer > public from-draft provenance cannot manufacture statistical source proof 34ms
+(node:56) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > does not offer another study’s same-filename source as predecessor 23ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > finds the correct study even when a second study has the same filename 16ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > does not infer a successor when the incoming study is unmatched 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > does not equate two unresolved study references 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > binds the complete project scope as well as study identity 15ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > captures two studies’ same filename independently, then revises only its own study 136ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > reuses current bytes without changing the original upload, capturer or title 76ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > captures unmatched scope without retiring the same-named study source 69ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > captures multiple known scope without retiring the same-named study source 68ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > captures later unmatched scope without retiring the same-named study source 69ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > captures no study scope without retiring the same-named study source 67ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > declines two same-study filename candidates without guessing the newest 44ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture retains historical bytes and exact identity > never reactivates superseded bytes or creates a current clone of them 92ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture retains historical bytes and exact identity > cannot revive unresolved retired bytes after a study is registered 24ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture retains historical bytes and exact identity > matches identical bytes only within the explicitly selected study 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture admission and commit outcomes fail closed > an audit failure rolls back retirement and the new source together 70ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture admission and commit outcomes fail closed > a failed study lookup refuses capture rather than recording an unrelated source 15ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture admission and commit outcomes fail closed > rechecks membership after waiting for the capture reservation 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture admission and commit outcomes fail closed > requires the recorded original upload and never accepts a guessed byte binding 14ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture admission and commit outcomes fail closed > a retained deleted capture cannot be replaced by a fresh current identity for its bytes 54ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture admission and commit outcomes fail closed > a project use share permits reading but cannot capture a file 12ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture admission and commit outcomes fail closed > a lost commit acknowledgement preserves uncertainty and a retry resolves the committed identity 69ms
+(node:68) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T17:49:57.654Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > source versioning — a citation stops calling itself current > a cited source that is superseded reports SUPERSEDED, not current 63ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > source versioning — a citation stops calling itself current > refuses to fork a lineage: a source can be superseded only once 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > source versioning — a citation stops calling itself current > does not retire a source belonging to another tenant 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > findSupersededCandidate — declines to guess > finds the single current same-name document in the project 12ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > findSupersededCandidate — declines to guess > returns null when TWO documents in the project share the name 14ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > findSupersededCandidate — declines to guess > returns null with no project scope — a filename alone is not identity 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > findSupersededCandidate — declines to guess > does not offer an already-superseded source as a candidate 14ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > the version column carries what was observed, and nothing else (L21) > round-trips a declared version into cre_evidence_sources.version 12ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > the version column carries what was observed, and nothing else (L21) > leaves the column NULL when the caller records no version 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > the version column carries what was observed, and nothing else (L21) > carries the version across a supersession without renumbering it 16ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > SourceRef.version reports a label it can carry, or none > reports an integer label as that integer 13ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > SourceRef.version reports a label it can carry, or none > reports a dotted label as NOT RECORDED rather than truncating it 47ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > SourceRef.version reports a label it can carry, or none > reports an absent version as absent 34ms
+(node:80) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/services/clinical-regulatory-evidence/__tests__/csr-adapter.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/csr-adapter.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T17:50:00.390Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/csr-adapter.pglite.integration.test.ts > adaptCsrReport > maps a CSR into a source + canonical study + describes_study edge 22ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/csr-adapter.pglite.integration.test.ts > adaptCsrReport > is idempotent — adapting the same CSR twice does not duplicate 36ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/csr-adapter.pglite.integration.test.ts > adaptCsrReport > returns null for a CSR not visible to the org 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/csr-adapter.pglite.integration.test.ts > projectOrgCsrReports (batch bootstrap of a tenant corpus) > projects every visible CSR into the spine, counting new vs already-present 56ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/csr-adapter.pglite.integration.test.ts > projectOrgCsrReports (batch bootstrap of a tenant corpus) > scopes strictly to the acting org and skips soft-deleted reports 10ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/csr-adapter.pglite.integration.test.ts > atomizeCsrReport (CSR design features → retrieval atoms) > materializes csr_design_feature atoms for the CSR, idempotently 60ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/csr-adapter.pglite.integration.test.ts > atomizeCsrReport (CSR design features → retrieval atoms) > returns null for a CSR not visible to the org 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/csr-adapter.pglite.integration.test.ts > extractDesignFeatures (deterministic, provenance-bearing) > extracts endpoints/design/size with source location + explicit flag 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/csr-adapter.pglite.integration.test.ts > extractDesignFeatures (deterministic, provenance-bearing) > emits nothing for absent fields (never guesses) 1ms
+(node:92) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/services/clinical-regulatory-evidence/__tests__/evidence-spine.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/evidence-spine.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T17:50:03.038Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/evidence-spine.pglite.integration.test.ts > schema + CRUD (real Postgres) > applies the migration and creates a source → finding → outcome chain 16ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/evidence-spine.pglite.integration.test.ts > schema + CRUD (real Postgres) > upserts a canonical study idempotently on its key 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/evidence-spine.pglite.integration.test.ts > §13 tenant isolation > a tenant sees GLOBAL_PUBLIC + its own rows, never another tenant’s private rows 47ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/evidence-spine.pglite.integration.test.ts > governance invariants > forces potentially_related edges to be inferred + carry confidence 6ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/evidence-spine.pglite.integration.test.ts > governance invariants > refuses to generalize a design lesson from a single source 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/evidence-spine.pglite.integration.test.ts > bound list limits preserve optional filters > keeps source, study and finding filters separate from the clamped limit 22ms
+(node:104) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a design the engine declines to size > answers 422 with the engine’s own sentence, not 500
+{
+  "timestamp": "2026-11-08T17:50:05.068Z",
+  "level": "error",
+  "message": "[ana-biostats] Compute error",
+  "context": {
+    "err": "Agreement (kappa) sample size is not supported: the published methods (Donner & Eliasziw 1992; Flack et al. 1988) need the null kappa and the marginal rating prevalence, which this engine does not take as inputs."
+  }
+}
+
+stderr | server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a design the engine declines to size > names the field it needs, so a form can mark the control
+{
+  "timestamp": "2026-11-08T17:50:05.078Z",
+  "level": "error",
+  "message": "[ana-biostats] Compute error",
+  "context": {
+    "err": "Diagnostic-accuracy sizing needs the expected sensitivity (sensitivity); none was given, and none is assumed."
+  }
+}
+
+stderr | server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a design the engine declines to size > carries no figure of any kind with the refusal
+{
+  "timestamp": "2026-11-08T17:50:05.081Z",
+  "level": "error",
+  "message": "[ana-biostats] Compute error",
+  "context": {
+    "err": "Agreement (kappa) sample size is not supported: the published methods (Donner & Eliasziw 1992; Flack et al. 1988) need the null kappa and the marginal rating prevalence, which this engine does not take as inputs."
+  }
+}
+
+stderr | server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a design the engine declines to size > reports the refusal the same way on /api/ana-biostats/compute-enhanced
+{
+  "timestamp": "2026-11-08T17:50:05.084Z",
+  "level": "error",
+  "message": "[ana-biostats] Enhanced compute error",
+  "context": {
+    "err": "Agreement (kappa) sample size is not supported: the published methods (Donner & Eliasziw 1992; Flack et al. 1988) need the null kappa and the marginal rating prevalence, which this engine does not take as inputs."
+  }
+}
+
+stderr | server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a design the engine declines to size > reports the refusal the same way on /api/ana-biostats/compare
+{
+  "timestamp": "2026-11-08T17:50:05.095Z",
+  "level": "error",
+  "message": "[ana-biostats] Compare error",
+  "context": {
+    "err": "Agreement (kappa) sample size is not supported: the published methods (Donner & Eliasziw 1992; Flack et al. 1988) need the null kappa and the marginal rating prevalence, which this engine does not take as inputs."
+  }
+}
+
+stderr | server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a session with no tenant > is told the organization context is required, with a 403 rather than a 500
+{
+  "timestamp": "2026-11-08T17:50:05.104Z",
+  "level": "error",
+  "message": "[ana-biostats] Document generation error",
+  "context": {
+    "err": "Organization context required"
+  }
+}
+
+ ✓ server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a design the engine declines to size > answers 422 with the engine’s own sentence, not 500 23ms
+ ✓ server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a design the engine declines to size > names the field it needs, so a form can mark the control 4ms
+ ✓ server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a design the engine declines to size > carries no figure of any kind with the refusal 3ms
+ ✓ server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a design the engine declines to size > reports the refusal the same way on /api/ana-biostats/compute-enhanced 3ms
+ ✓ server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a design the engine declines to size > reports the refusal the same way on /api/ana-biostats/compare 11ms
+ ✓ server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a design the engine declines to size > is still sized for multiplicity, which does not depend on the endpoint type 3ms
+ ✓ server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a design the engine CAN size still computes > answers 200 with the deterministic result 3ms
+ ✓ server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a session with no tenant > is told the organization context is required, with a 403 rather than a 500 2ms
+ ✓ server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a statistical document is based on a server computation > generates from the submitted inputs without accepting a computed-result receipt 8ms
+ ✓ server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a statistical document is based on a server computation > does not turn a caller-edited result into engine-generated evidence 6ms
+(node:112) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/services/clinical-regulatory-evidence/__tests__/crl-ingestion.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/crl-ingestion.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T17:50:05.830Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/crl-ingestion.pglite.integration.test.ts > ingestCrl > maps a CRL into a global-public source + findings + outcome + typed edges 26ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/crl-ingestion.pglite.integration.test.ts > ingestCrl > makes findings visible to ANY tenant (global-public) 29ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/crl-ingestion.pglite.integration.test.ts > ingestCrl > rejects an empty ingest (never a source with no findings) 2ms
+(node:124) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-checksum-executor.test.ts > findSourceByChecksum supplied executor > uses the caller transaction without changing historical identity or filters 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-checksum-executor.test.ts > findSourceByChecksum supplied executor > retains the existing pool fallback and empty-checksum no-query behavior 1ms
+
+ Test Files  8 passed (8)
+      Tests  77 passed (77)
+   Start at  09:49:44
+   Duration  23.38s (transform 3.79s, setup 133ms, import 9.42s, tests 12.77s, environment 1ms)
+

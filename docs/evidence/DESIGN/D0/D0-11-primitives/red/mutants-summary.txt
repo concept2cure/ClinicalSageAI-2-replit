@@ -1,0 +1,8 @@
+m1-seg-btn-alias-unscoped: exit 1, 1 failed: the 28px item covers admin's .seg-btn, scoped to admin 14ms
+m2-bare-tone-back: exit 1, 1 failed: no v2 stylesheet has a rule whose subject is a tone class alone 36ms
+m3-rejected-tag-loses-its-fill: exit 1, 1 failed: .rv-wf-tag.tone-err keeps what the bare rule showed, in coverage-v2.css 13ms
+m4-sp-primary-lifts-again: exit 1, 2 failed: no other sheet gives .sp-primary chrome: it keeps its row layout, and its grey disabled state 38ms | nothing moves it on hover, in any sheet 51ms
+m5-disabled-primary-keeps-orange-border: exit 1, 1 failed: no other sheet gives .sp-primary chrome: it keeps its row layout, and its grey disabled state 20ms
+m6-admin-primary-back: exit 1, 1 failed: of its button rules, only the small size is left 11ms
+m7-card-header-nowrap: exit 1, 1 failed: .pj-card-h has flex-wrap: wrap, in its one rule 37ms
+m8-regulation-line-text-400: exit 1, 1 failed: the regulation line is --text-300, in its one rule 60ms

@@ -199,7 +199,11 @@ describe('the controls follow the endpoint, not the sponsor’s track', () => {
 describe('the two designs that had no way in have a preset', () => {
   it('ROC / AUC sends a complete AUC design', async () => {
     mount();
-    fireEvent.click(screen.getByText(/ROC \/ AUC/));
+    /* Exact, not a substring: since the 2026-11-09 merge this surface also
+       carries the CLSI calculator "ROC / AUC with a confidence interval", which
+       estimates an AUC from data. This case is about the DESIGN preset that
+       sizes a diagnostic-accuracy study (BS_PRESETS.roc). */
+    fireEvent.click(screen.getByText('ROC / AUC'));
     const body = await lastBody((b) => b?.endpointType === 'auc_roc');
     expect(body.aucTarget).toBe(0.85);
     expect(body.aucNull).toBe(0.5);

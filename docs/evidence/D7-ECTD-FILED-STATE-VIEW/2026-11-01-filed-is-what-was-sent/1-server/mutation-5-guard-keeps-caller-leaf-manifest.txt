@@ -1,0 +1,91 @@
+# Mutation 5: guard-keeps-caller-leaf-manifest
+# 2026-11-01T22:20:34Z
+# What it removes: The guard keeps a caller-supplied metadata.leafManifest instead of stamping (bound) or removing (unbound) it.
+# File: server/services/submission-gateways/index.ts
+# Replaced:
+#   -           leafManifest: sentLeaves,
+# With:
+#   +           leafManifest: req.metadata?.leafManifest ?? sentLeaves,
+# Test run: npx vitest run server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts  (exit 1)
+# Expected to fail on its own assertion: ['bound transmit’s are overwritten', 'unbound transmit’s are removed']
+# Failed as expected: {'bound transmit’s are overwritten': True, 'unbound transmit’s are removed': True}
+# Failed on an assertion (no build or syntax error): True
+# File restored byte for byte: True (sha256 before f2329d357d7c46e6827e2db069e485721b61a78e4f421e3c5d00c62c6ef12a98, after f2329d357d7c46e6827e2db069e485721b61a78e4f421e3c5d00c62c6ef12a98)
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > stamps the leaf manifest of the package it hands the gateway, and its binding 12ms
+ × server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > a caller cannot supply what was sent: a bound transmit’s are overwritten 10ms
+   → expected [ { ctdSection: '2.5', …(3) } ] to deeply equal [ { ctdSection: '2.2', …(7) } ]
+ × server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > and an unbound transmit’s are removed, so nothing reads it as a sequence’s send 3ms
+   → expected { applicationId: 'IND123456', …(5) } to not have property "leafManifest"
+ ✓ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > a sequence transmit with no leaf manifest is refused before anything is kept or sent 1ms
+ ✓ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > the FDA ESG transmittal row, written before any connection, carries both 2ms
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+   Start at  22:20:32
+   Duration  2.01s (transform 1.31s, setup 78ms, import 1.67s, tests 39ms, environment 0ms)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > a caller cannot supply what was sent: a bound transmit’s are overwritten
+AssertionError: expected [ { ctdSection: '2.5', …(3) } ] to deeply equal [ { ctdSection: '2.2', …(7) } ]
+
+- Expected
++ Received
+
+  [
+    {
+-     "backbone": "index.xml",
+-     "ctdSection": "2.2",
+-     "fileName": "intro.pdf",
+-     "href": "m2/22-intro/intro.pdf",
+-     "leafId": "leaf-intro",
+-     "md5": "11111111111111111111111111111111",
+-     "operation": "new",
+-     "title": "Introduction",
++     "ctdSection": "2.5",
++     "fileName": "forged.pdf",
++     "href": "m2/forged.pdf",
++     "md5": "ffffffffffffffffffffffffffffffff",
+    },
+  ]
+
+ ❯ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts:113:35
+    111|     }));
+    112|     const metadata = (wire.mock.calls[0][0] as GatewayTransmitRequest)…
+    113|     expect(metadata.leafManifest).toEqual(buildLeafManifest(LEAF_MANIF…
+       |                                   ^
+    114|     expect(metadata.dispatchBinding).toEqual(binding());
+    115|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > and an unbound transmit’s are removed, so nothing reads it as a sequence’s send
+AssertionError: expected { applicationId: 'IND123456', …(5) } to not have property "leafManifest"
+
+- Expected:
+undefined
+
++ Received:
+[
+  {
+    "ctdSection": "2.5",
+    "fileName": "forged.pdf",
+    "href": "m2/forged.pdf",
+    "md5": "ffffffffffffffffffffffffffffffff",
+  },
+]
+
+ ❯ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts:125:24
+    123|     }));
+    124|     const stored = JSON.parse(JSON.stringify((wire.mock.calls[0][0] as…
+    125|     expect(stored).not.toHaveProperty('leafManifest');
+       |                        ^
+    126|     expect(stored).not.toHaveProperty('dispatchBinding');
+    127|     expect(stored).toMatchObject({ applicationId: 'IND123456', sequenc…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+

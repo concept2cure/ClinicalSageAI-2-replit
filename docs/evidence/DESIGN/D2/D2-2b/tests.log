@@ -1,0 +1,323 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+{
+  "timestamp": "2026-11-09T13:58:11.534Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T13:58:11.535Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+{
+  "timestamp": "2026-11-09T13:58:11.535Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx
+[database] Database connection successful
+
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > shows the catalog description and the selected market facts as visible text 175ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > asks the catalog question about the chosen filing without changing the selection 224ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > keeps author-only limits in the details instead of claiming a sequence or transmit 131ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > does not present parent-application build facts as facts about an unclaimed filing 99ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > reports missing build fields without discarding the existing offer or inventing facts 77ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker selected filing reference and build facts > keeps Ask AnA absent for callers with no question callback 68ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker description search > finds an offered filing using wording present only in its description 109ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker description search > uses the same description rule for refused filings and retains the refusal reason 84ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker description search > a refused filing with a reason of its own shows that reason, not the market's general one 77ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > for every catalog row, a tile is shown exactly when the server offers the filing, and author-only ones say so 1155ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > offers exact Canada device authoring while medicinal applications retain their refusal 101ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > a filing whose agency the server names no market for is not offered, and its reason is the server's 99ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > the chosen filing states its offer as text 99ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > lists nothing while the verdict is pending 7ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker offers what the market verdict offers > a failed read is an error with Retry, never an empty or a full list 81ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker leads with what is built here > a tab shows the filings built and validated here first; the rest are one press away 174ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker leads with what is built here > a chosen filing among the rest is never hidden behind the press 516ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker leads with what is built here > a search lists everything it matches, built here or not, with no press 85ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > a filing that creates an IND without being one (a Pre-IND meeting) states no tier; the NDA itself says Build and sequence 152ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > a Type A meeting package is its own class: authored here, and says so 88ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > the harmonised documents are offered for authoring under ICH, asked of the server by their own market 80ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > the EU MDR/IVDR lane at a Notified Body is offered for authoring, asked of the server by its own market 74ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > a search lists not-offered filings by the same fields as offered ones (an eCTD search finds Health Canada) 122ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > the not-offered note counts the tab it is shown on 165ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker states only what the verdict states for that filing > Retry stays mounted and busy while it reads again, and focus lands on the search box when the list arrives 81ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > catalogue functions carried into the Projects picker > shows the selected filing lifecycle as a clearly labelled reference 195ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > catalogue functions carried into the Projects picker > keeps the segment visible on a search result across all segments 98ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > catalogue functions carried into the Projects picker > finds a filing by the existing workflow label 93ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerOffers.test.tsx > RegistryPicker reads what the platform offers once, not on every open > a second open within minutes reads nothing again, and both show the same filings 164ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > requires a local multi-workspace choice despite the global default, and sends the reviewed sponsor 500ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > names and records the single verified workspace 185ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed duplicate directory without enabling Continue 102ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed foreign directory without enabling Continue 101ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed inactive directory without enabling Continue 99ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed actor directory without enabling Continue 94ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refuses a malformed missing-name directory without enabling Continue 115ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified workspace creation receipt 260ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified actor creation receipt 279ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified anchor creation receipt 272ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified uuid creation receipt 273ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks resubmission and navigation after an unverified json creation receipt 307ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks duplicate creation after an unknown transport outcome 269ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > blocks duplicate creation after an unknown server outcome 257ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project workspace intake > refreshes active options before retrying a confirmed refusal 250ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > retires sponsor form contents on an account or organization change 220ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > does not send a stale write after a token switch 200ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > retires a late workspace read when the bearer changes without a render 93ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > does not publish or navigate after an old create receipt arrives under another bearer 263ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > returns to Configure without writing if the selected workspace changes before Create 296ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project intake session retirement > states confirmed creation when only the saved project details are unavailable 213ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project verified workspace handoff > hands the verified sponsor to the actual sharing and assignment consumers before leaving the wizard 210ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project verified workspace handoff > hands off the verified workspace for a confirmed scaffold notice without navigating 194ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project pending creation exits > keeps the pending write visible through Cancel, then restores Check projects after uncertainty 315ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project pending creation exits > keeps the pending write visible through Projects, then restores Check projects after uncertainty 322ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardWorkspace.test.tsx > New project pending creation exits > keeps the pending write visible through Escape, then restores Check projects after uncertainty 317ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the header and the step rail > has no eyebrow, and one sub-line that says what the three steps do 170ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the header and the step rail > states each step for screen readers only, and the current one with aria-current 10ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the header and the step rail > keeps the step-1 note as text, without AnA’s spark 7ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: Team members leaves the form, and the review says where people are added > step 2 has no Team members field and no empty-state box 195ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: Team members leaves the form, and the review says where people are added > step 3 says, under the list, what happens on create and where to add people; the body is unchanged 230ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: Team members leaves the form, and the review says where people are added > the place the review names exists: the project page has a Team section that grants sharing 303ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > is found 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > draws no orange: the one primary button is D0’s, not this block’s 0ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > sizes every text from the D0 type scale, never below 12px 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > uses no muted ink below --text-300 (the quiet floor off --bg-000) 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > marks the current step in ink, a done step in --text-200, never in a status colour 0ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > turns the step-1 box into one quiet line, and retires the kicker and the green box 0ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > keeps `.npw-seg-t` a heading where step 2 uses it, outside the step-1 note 0ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > frames the review once, at radius 12, with hairline rows and no fill 0ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > aligns the header, rail, body and footer on one gutter, the Projects page’s 1120px column 0ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > gives form fields 36px, and gives touch its 44px back 0ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > keeps the shared field classes’ layout where other screens use them: the two-column grid is the wizard’s own 0ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — full-canvas view semantics > is a labelled region, not a modal dialog 151ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — full-canvas view semantics > closes on Escape and hands focus into the view on open 9ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — full-canvas view semantics > offers a named way back to the portfolio 62ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — full-canvas view semantics > states the current step in text, not only in colour 6ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > shows the human sentence and never the enum token 249ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > offers a retry for a confirmed refusal, after verifying workspaces again 230ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > shows the correlation id as the support handle 199ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > renders nothing internal even if an internal string reaches it 201ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — failed create > does not render a browser-native fetch message 230ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardFailure.test.tsx > New Project wizard — created but not scaffolded > is a polite status with no retry, because the project exists 230ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > the actual wizard reports its public state through the Projects publisher > publishes the first step and chosen filing, and passes Ask AnA through 271ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > the actual wizard reports its public state through the Projects publisher > reports actual picker segment and search alongside the selected filing 58ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > the actual wizard reports its public state through the Projects publisher > keeps an inspected unavailable filing separate from the selected creation choice and retires both with the actor 58ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > the actual wizard reports its public state through the Projects publisher > reports the visible filing segment and search, and clears the browsing context on close 77ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > wizard context preserves configuration and actor boundaries > tracks Configure, Review and Back while excluding entered/private fields 232ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > wizard context preserves configuration and actor boundaries > replaces a prior selection and restores portfolio context on close 123ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > wizard context preserves configuration and actor boundaries > keeps wizard state when a delayed portfolio response arrives 58ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > wizard context preserves configuration and actor boundaries > retires selected metadata if the signed-in organization no longer matches 57ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardContext.test.tsx > wizard context preserves configuration and actor boundaries > starts a matching new account at the first step with no prior selection 154ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > reads only on request, previews context, and copies stated fields only after confirmation 508ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > preserves manually entered fields, including entries typed after the preview was loaded 260ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > allows a member to reuse a saved draft and never substitutes therapeutic area for indication 202ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > copies device purpose only into intended use and leaves classification fields unset 268ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > saved discovery in the canonical new-project wizard > keeps project creation on the separate review step and sends the reviewed copied wording 264ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > discovery reads and tenant boundaries > shows an honest unstarted state while manual project entry remains usable 143ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > discovery reads and tenant boundaries > reports a network read failure and allows an explicit retry 195ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > discovery reads and tenant boundaries > reports a invalid read failure and allows an explicit retry 159ms
+ ✓ client/src/concept2cure/v2/__tests__/projectDiscoveryHandoff.test.tsx > discovery reads and tenant boundaries > drops a late tenant read and never applies another organization’s preview 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > reads the client TSX and the v2 stylesheets 2ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-head`: no more than 18 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-eyebrow`: no more than 18 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-title`: no more than 18 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-state`: no more than 23 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-head`: no more than 11 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-eyebrow`: no more than 9 uses, and gone from the CSS at 0 5ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-title`: no more than 11 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-sub`: no more than 10 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-head`: no more than 0 uses, and gone from the CSS at 0 8ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-kicker`: no more than 0 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-title`: no more than 0 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `surface-head`: no more than 5 uses, and gone from the CSS at 0 5ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `surface-kicker`: no more than 2 uses, and gone from the CSS at 0 5ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pj-eyebrow`: no more than 1 uses, and gone from the CSS at 0 5ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-cta`: no more than 13 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `landing-newproj`: no more than 1 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-primary`: no more than 50 uses, and gone from the CSS at 0 5ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `btn sm`: no more than 14 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-card`: no more than 15 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-tabs`: no more than 11 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-tab`: no more than 13 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-subtab`: no more than 0 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sc-ws`: no more than 0 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cc-tab`: no more than 1 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pj-seg`: no more than 2 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `ml-seg`: no more than 4 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cl-toast`: no more than 1 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `tb-detail`: no more than 4 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `rbm-modal`: no more than 3 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-connect`: no more than 0 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pj-stageband`: no more than 0 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `rbm-tabs`: no more than 1 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `ml-tab`: no more than 1 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pd-tab`: no more than 1 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `ra-tab`: no more than 1 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `rl-tab`: no more than 0 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `adm-tab`: no more than 1 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `company-tabs`: no more than 1 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `rpk-tab`: no more than 1 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cl-tab`: no more than 2 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `qms-tabbar`: no more than 1 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `qms-seg`: no more than 1 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pdev-seg`: no more than 3 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `seg-btn`: no more than 7 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `rbm-card`: no more than 7 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `py-card`: no more than 5 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `dj-card`: no more than 4 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cv-card`: no more than 2 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `lic-card`: no more than 2 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `ph-card`: no more than 1 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-kpi`: no more than 30 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `metric-card`: no more than 40 uses, and gone from the CSS at 0 5ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cv-kpi`: no more than 6 uses, and gone from the CSS at 0 5ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `ra-kpi`: no more than 4 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `etmf-kpi`: no more than 3 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `ivd-stat`: no more than 4 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `py-stat`: no more than 3 uses, and gone from the CSS at 0 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `rbm-tile`: no more than 1 uses, and gone from the CSS at 0 5ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `status-pill`: no more than 49 uses, and gone from the CSS at 0 5ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `sp-tag`: no more than 17 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `reg-pill`: no more than 10 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `ml-chip`: no more than 10 uses, and gone from the CSS at 0 5ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pg-badge`: no more than 8 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `rc-chip`: no more than 3 uses, and gone from the CSS at 0 5ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `tt-panel`: no more than 3 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `pdev-sheet`: no more than 4 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `py-sheet`: no more than 1 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `de-sheet`: no more than 5 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `ana-sheet`: no more than 1 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `adm-drawer`: no more than 4 uses, and gone from the CSS at 0 5ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `risk-drawer`: no more than 1 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `ec-composer`: no more than 1 uses, and gone from the CSS at 0 5ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `rc-composer`: no more than 0 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `rbm-ana-composer`: no more than 1 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `cm-meta`: no more than 84 uses, and gone from the CSS at 0 6ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `What to do now`: no more than 0 uses, and gone from the CSS at 0 5ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `This work flows into`: no more than 1 uses, and gone from the CSS at 0 4ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > reads the v2 stylesheets and resolves nesting and :is() lists 4ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .btn is defined in exactly one stylesheet, app-v2.css 2ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .pj-card is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .pj-card-h is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .rd-chip is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .al-lead is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .al-k is defined in exactly one stylesheet, app-v2.css 0ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .ph-title is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .seg is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .tab is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .reg-tbl th is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .c2c-input is defined in exactly one stylesheet, app-v2.css 0ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .c2c-empty-state is defined in exactly one stylesheet, app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .de is defined in exactly one stylesheet, journey-v2.css 0ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .de-toast is defined in exactly one stylesheet, journey-v2.css 0ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > .pj-seclbl is defined in exactly one stylesheet, app-v2.css 0ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsOneDefinition.test.ts > one definition per primitive (ONE_DESIGN_PLAN §2, D0 guard 2) > retired alias .btn.sm is defined at most once, in app-v2.css 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > 'mdrIII' offers only its exact declared-class scope, without choosing one 333ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > 'mdrI' offers only its exact declared-class scope, without choosing one 178ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > 'ivdrA' offers only its exact declared-class scope, without choosing one 175ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > 'ivdrCD' offers only its exact declared-class scope, without choosing one 137ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > leaves a class-specific filing unconfirmed when the sponsor has not stated its class 208ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > mdr asks its regional class, initially unstated 160ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > ivdr asks its regional class, initially unstated 152ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > mdr sends and reviews only the stated regional classification 228ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > ivdr sends and reviews only the stated regional classification 198ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > an unstated IVDR class sends null, never an FDA class 177ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > changing from FDA to IVDR retires hidden FDA facts and does not restore them on return 660ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardEuDeviceClasses.test.tsx > existing EU classification vocabulary reaches project initialization > changing MDR to IVDR and back retires both earlier regional classifications 367ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardSaysWhatIsMissing.test.tsx > New Project wizard — a disabled Continue says why > names the first missing field beside Continue, step by step, and Continue is described by it 425ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardSaysWhatIsMissing.test.tsx > New Project wizard — a disabled Continue says why > states the order the fields are asked in, for the create step too 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardSaysWhatIsMissing.test.tsx > New Project wizard — what the project gets, and the review > opens Configure with the outline the project is built against, without transmit caveats 73ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardSaysWhatIsMissing.test.tsx > New Project wizard — what the project gets, and the review > keeps a filing the platform does not offer in the server’s words 0ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardSaysWhatIsMissing.test.tsx > New Project wizard — what the project gets, and the review > names the filing and the product type by their labels, and prints the date as a date 179ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardSaysWhatIsMissing.test.tsx > New Project wizard — what the project gets, and the review > labels a filing as people name it, never by its key 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardSaysWhatIsMissing.test.tsx > New Project wizard — what the project gets, and the review > says when the name is already a project in the portfolio, and does not refuse it 148ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerReference.test.tsx > filing catalogue functions reached in the canonical picker > shows category descriptions and identifies the segment on cross-segment results 267ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerReference.test.tsx > filing catalogue functions reached in the canonical picker > searches by the existing workflow display label as well as descriptions 180ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerReference.test.tsx > filing catalogue functions reached in the canonical picker > shows exact filing metadata and authored lifecycle content for an offered selection 62ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerReference.test.tsx > filing catalogue functions reached in the canonical picker > lets every unavailable filing be inspected without selecting or starting it 87ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerReference.test.tsx > filing catalogue functions reached in the canonical picker > reports only the actual segment and search to its caller 65ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerReference.test.tsx > filing catalogue functions reached in the canonical picker > publishes the opened unavailable reference separately and clears it when closed 119ms
+ ✓ client/src/concept2cure/v2/__tests__/registryPickerReference.test.tsx > filing catalogue functions reached in the canonical picker > retires an inspected reference when search or segment removes its detail 1069ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > us_cdx_pma retains CDx in review and create across arrival lanes 433ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > us_cdx_510k retains CDx in review and create across arrival lanes 248ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > eu_cdx_ivdr_d retains CDx in review and create across arrival lanes 261ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > us_510k permits the supported samd refinement and sends the reviewed value 251ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > ca_mdl permits the supported samd refinement and sends the reviewed value 185ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > ca_ivd_licence permits the supported cdx refinement and sends the reviewed value 180ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > jp_ivd_approval permits the supported cdx refinement and sends the reviewed value 200ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > a person records the device subtype that the project retains > retires a previous subtype when the person changes filing 354ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'medtech' search for 'us_hde' retains 'hde'/'device'/'FDA' 228ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'us_hde' retains 'hde'/'ivd'/'FDA' 222ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'ca_mdl' retains 'mdl'/'device'/'Health Canada' 199ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'medtech' search for 'ca_ivd_licence' retains 'ivd_licence'/'ivd'/'Health Canada' 206ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'jp_shonin' retains 'shonin'/'device'/'PMDA' 217ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'jp_nintei' retains 'ninsho'/'device'/'Registered certification body' 189ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'diagnostics' search for 'jp_todokede' retains 'todokede'/'device'/'PMDA' 194ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'medtech' search for 'jp_ivd_approval' retains 'ivd_approval'/'ivd'/'PMDA' 203ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegionalDevices.test.tsx > existing registry search reaches exact regional authoring projects > 'medtech' search for 'jp_cdx' retains 'jp_cdx'/'cdx'/'PMDA' 197ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — the indication is stated, never a therapeutic-area default > offers no therapeutic area and no pre-chosen indication: the indication is an empty text field 369ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — the indication is stated, never a therapeutic-area default > sends no indication when none was typed, and the review says it is not stated 203ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — the indication is stated, never a therapeutic-area default > sends exactly the indication the person typed 235ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — an IND’s product type is chosen, not taken from the tab > starts on "Not stated — choose" and offers only drug and biologic 116ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — an IND’s product type is chosen, not taken from the tab > cannot continue until the product type is chosen 177ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — an IND’s product type is chosen, not taken from the tab > records the class that was chosen, and the review shows it 166ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRegulatedChoices.test.tsx > New Project wizard — a filing type that fixes the class asks nothing > an NDA is recorded as a drug with no product-type question 150ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > cannot continue past Configure without a project name, and says it is required 325ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > treats a name of spaces as no name 136ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the project name > never reaches a review that reads "(unnamed)" 113ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > sends the typed name and product, trimmed, exactly as the review showed them 183ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > with no product name, the review says the project name will be recorded as the product 168ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardName.test.tsx > New Project wizard — the review is what is saved > never sends the filing type label as the name or the product 166ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsNewProjectAction.test.tsx > projects.new-project reaches the canonical wizard without writing > opens the real wizard using a validated action, and never submits intake 220ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsNewProjectAction.test.tsx > projects.new-project reaches the canonical wizard without writing > preserves a chosen filing and typed input when opened again 220ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsNewProjectAction.test.tsx > projects.new-project reaches the canonical wizard without writing > stashes across navigation and mount and consumes the opener once 54ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsNewProjectAction.test.tsx > projects.new-project reaches the canonical wizard without writing > keeps other portfolio actions guarded while the person is in intake 67ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsNewProjectAction.test.tsx > projects.new-project reaches the canonical wizard without writing > does not advertise an AnA cancellation action while the wizard owns the screen 50ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsNewProjectAction.test.tsx > projects.new-project reaches the canonical wizard without writing > can open intake even when the portfolio read failed 26ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardPredicatePair.test.tsx > New Project wizard — the predicate of record is whole or absent > asks for the trade name as well as the number 391ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardPredicatePair.test.tsx > New Project wizard — the predicate of record is whole or absent > sends both halves when both are given 335ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardPredicatePair.test.tsx > New Project wizard — the predicate of record is whole or absent > does not read a number with no trade name as a recorded predicate 234ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardPredicatePair.test.tsx > New Project wizard — the predicate of record is whole or absent > says nothing about a predicate when neither half is given 191ms
+ ✓ client/src/concept2cure/v2/__tests__/j1ClientTypeInWords.test.tsx > Home names a project's client type in words > a device project reads "Medical device & IVD", never the key MDX 136ms
+ ✓ client/src/concept2cure/v2/__tests__/j1ClientTypeInWords.test.tsx > Home names a project's client type in words > with no project, the example names a device filing as well as a drug one 6ms
+ ✓ client/src/concept2cure/v2/__tests__/j1ClientTypeInWords.test.tsx > New project's review names the client type in words > an NDA is reviewed under "Client type", not "Workstream" 203ms
+ ✓ client/src/concept2cure/v2/__tests__/j1ClientTypeInWords.test.tsx > New project's review names the client type in words > a 510(k) is reviewed as "Medical device & IVD", never MDX 219ms
+ ✓ client/src/concept2cure/v2/__tests__/j1ClientTypeInWords.test.tsx > New project's objective speaks to every filing type > the placeholder names a device outcome beside the IND one, and no study endpoint 7ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts > sentence case: no stylesheet uppercases text (ONE_DESIGN_PLAN §2, D0 guard 1) > reads the stylesheets it guards 5ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts > sentence case: no stylesheet uppercases text (ONE_DESIGN_PLAN §2, D0 guard 1) > every allowlist entry carries a written reason 1ms
+ ✓ client/src/concept2cure/v2/__tests__/foundationsSentenceCase.test.ts > sentence case: no stylesheet uppercases text (ONE_DESIGN_PLAN §2, D0 guard 1) > no `text-transform: uppercase` in v2/styles/*.css or design-system/colors_and_type.css 18ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardObjective.test.tsx > New project — the objective > shows it on the review and records it on the new project, after the create 413ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardObjective.test.tsx > New project — the objective > records nothing when none is stated 213ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardObjective.test.tsx > New project — the objective > says so when the objective is refused, and the project still exists 236ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardNotOffered.test.tsx > New project wizard — a filing creation refuses > states the reason, offers no "Try again", and "Choose another filing" returns to step 1 without sending again 422ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardNotOffered.test.tsx > New project wizard — a filing creation refuses > another confirmed refusal keeps "Try again" 197ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx > actual registry search preserves the selected product family across lanes > 'diagnostics' search for 'eu_mdr_techdoc' records 'device' 454ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx > actual registry search preserves the selected product family across lanes > 'diagnostics' search for 'eu_cer' records 'device' 234ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx > actual registry search preserves the selected product family across lanes > 'medtech' search for 'us_510k_ivd' records 'ivd' 294ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardCrossLaneSearch.test.tsx > actual registry search preserves the selected product family across lanes > 'diagnostics' search for 'us_510k' records 'ivd' 270ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx > existing project setup monitoring choice > reviews and persists the explicitly selected monitoring service without seeding a record 467ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardRbm.test.tsx > existing project setup monitoring choice > leaves monitoring unselected unless the creator chooses it 306ms
+ ✓ client/src/concept2cure/v2/__tests__/j1PageLayout.test.ts > Project home keeps one column width on every step > `.pj` claims the flex row it sits in 3ms
+ ✓ client/src/concept2cure/v2/__tests__/j1PageLayout.test.ts > The Projects list reads at 1440 and at 390 > a cell's text wraps inside its column 0ms
+ ✓ client/src/concept2cure/v2/__tests__/j1PageLayout.test.ts > The Projects list reads at 1440 and at 390 > on a phone the table scrolls inside its frame and keeps its columns 0ms
+ ✓ client/src/concept2cure/v2/__tests__/j1PageLayout.test.ts > Project home's section actions stay on a phone's screen > the head and its actions wrap at ≤640px 4ms
+ ✓ client/src/concept2cure/v2/__tests__/j1PageLayout.test.ts > New project's filing tabs reach every client type on a phone > the wizard scrolls its filing tabs sideways and does not shrink them 4ms
+ ✓ client/src/concept2cure/v2/__tests__/filingAskPrompt.test.tsx > the canonical picker preserves the filing catalogue Ask AnA question > uses the shared builder for the chosen real catalog filing without changing selection 211ms
+ ✓ client/src/concept2cure/v2/__tests__/filingAskPrompt.test.tsx > the canonical picker preserves the filing catalogue Ask AnA question > preserves the existing question wording and the catalog display name 4ms
+
+ Test Files  24 passed (24)
+      Tests  287 passed (287)
+   Start at  13:58:08
+   Duration  58.27s (transform 4.55s, setup 1.13s, import 12.85s, tests 35.06s, environment 6.79s)
+

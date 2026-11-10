@@ -1,0 +1,9 @@
+# Re-run at review (2026-11-01) at HEAD 805a6f0ee, with HEAD's server/services/c2c/charter-objectives.ts
+# swapped in for the run only (restored, cmp-verified). The catalog lines match the builder's capture at
+# e10622010. The GRID line is the review's route-faithful grid (the agency as POST /api/c2c/projects sends it);
+# it replaces the builder's unsaved 12-spelling grid (68 / 411), which no saved script produced.
+#   npx tsx --tsconfig tsconfig.json docs/evidence/SPINE/S1/2026-11-01-objective-at-creation/probe-charter-classification.ts
+catalog entries 251 skipped (not creatable) 205
+CLASSIFIED 22
+REFUSED 24 anda@FDA->FDA dmf@FDA->FDA cta@EMA->EMA cer@EU / Notified Body->EMA cta@Health Canada->Health_Canada cta@NMPA->NMPA cta@TGA->TGA csr@ICH / Global->ICH hde@FDA->FDA ide@FDA->FDA mdr@EU / Notified Body->EMA mdl@Health Canada->Health_Canada shonin@PMDA->PMDA ninsho@Registered certification body->Registered_Certification_Body todokede@PMDA->PMDA jp_cdx@PMDA->PMDA ivd_approval@PMDA->PMDA ivd_licence@Health Canada->Health_Canada
+GRID agency spellings 28 offered pairs 651 classified 59 refused 592

@@ -93,7 +93,7 @@ afterEach(() => cleanup());
 
 async function renderCanvas() {
   render(<InsightsCanvas {...OWNED_PROPS} />);
-  await waitFor(() => expect(document.querySelector('.rc-ana-head')).not.toBeNull());
+  await waitFor(() => expect(document.querySelector('[data-testid="rc-find-result"]')).not.toBeNull());
 }
 
 describe('Insights reporting pane — identity', () => {
@@ -107,7 +107,7 @@ describe('Insights reporting pane — identity', () => {
 
     // …and so did the composer's placeholder, which is the last thing a user
     // reads before typing a question.
-    const composer = document.querySelector('.rc-input textarea') as HTMLTextAreaElement | null;
+    const composer = document.querySelector('[data-work-area="insights"] .rc-find input') as HTMLInputElement | null;
     expect(composer, 'the composer textarea should still exist').not.toBeNull();
     expect(composer!.placeholder).not.toMatch(/\bAnA\b/);
 
@@ -119,7 +119,7 @@ describe('Insights reporting pane — identity', () => {
 
   it('does not claim the suggested pack was derived from the readiness figure', async () => {
     await renderCanvas();
-    const opener = document.querySelector('.rc-opener')?.textContent ?? '';
+    const opener = document.querySelector('[data-work-area="insights"] > .ph .ph-sub')?.textContent ?? '';
 
     // The live facts SHOULD still be stated — they are real, from the governed
     // overview read-model. Losing them would be the wrong fix.

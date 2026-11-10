@@ -1,0 +1,27 @@
+# npm run ci:internals-in-copy (exit 1, pre-existing: SubmissionSeqWorkspaces.tsx:745, RIM's lane)
+
+❌ Internal identifiers in user-visible copy.
+
+   client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:745  [table name]
+     coauthor_documents
+
+   The reader of these surfaces is a regulatory director. A route name tells
+   them nothing they can act on, and the internal shape of a governed system is
+   an information-disclosure finding in a regulated product, not a cosmetic one.
+   (BIOPHARMA_WORK_ORDER.md guardrail 3; BP-W0-5.)
+
+   Name the CAPABILITY, not the endpoint:
+
+# npm run ci:check-phantom-tokens (exit 1, pre-existing: --danger-000 in D3's .pj-quality rule, HEAD line 496, now 444 because the .npw block above it is shorter)
+[ci:phantom-tokens] 9 phantom token(s) across 52 site(s) (baseline 9).
+
+  1 baseline token(s) now resolve: --accent-050
+  Regenerate so the ratchet holds:
+    node scripts/ci/check-phantom-tokens.mjs --write-baseline
+
+[ci:phantom-tokens] FAIL — new phantom token(s):
+
+  --danger-000  — declared nowhere, 1 use(s):
+      client/src/concept2cure/v2/styles/project-home-v2.css:444
+
+This renders the fallback every time — the var() is decoration, and the style is

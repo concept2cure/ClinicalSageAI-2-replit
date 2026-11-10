@@ -84,4 +84,33 @@ describe(FILE, () => {
       await pg.close();
     }
   }, T);
+
+  it('quarantines legacy active text from a non-bypass runtime role regardless of platform labels or enforcement switches', async () => {
+    const pg = new PGlite();
+    try {
+      await pg.exec(PREREQS);
+      await pg.exec(SQL);
+      await pg.exec(`INSERT INTO ana_platform_wisdom(wisdom_key,category,pattern_description,recommendation,evidence_count,is_active)
+        VALUES('quarantine-canary','risk_reduction','PRIVATE_LEGACY_CANARY','PRIVATE_STRATEGY_CANARY',1000,true);
+        CREATE ROLE wisdom_runtime NOSUPERUSER NOBYPASSRLS;
+        GRANT USAGE ON SCHEMA public TO wisdom_runtime;
+        GRANT SELECT,INSERT,UPDATE,DELETE ON ana_platform_wisdom TO wisdom_runtime;
+        GRANT USAGE ON SEQUENCE ana_platform_wisdom_id_seq TO wisdom_runtime;`);
+      await pg.exec(SQL);
+      const flags = await pg.query('SELECT relrowsecurity,relforcerowsecurity FROM pg_class WHERE oid=\'ana_platform_wisdom\'::regclass');
+      expect(flags.rows).toEqual([{ relrowsecurity: true, relforcerowsecurity: true }]);
+      expect((await pg.query("SELECT policyname FROM pg_policies WHERE tablename='ana_platform_wisdom'")).rows).toEqual([]);
+      await pg.exec('SET ROLE wisdom_runtime');
+      for (const enforce of ['on', 'off', '']) {
+        await pg.query("SELECT set_config('app.rls_enforce',$1,false),set_config('app.current_user_role','app_super_admin',false)", [enforce]);
+        expect((await pg.query('SELECT pattern_description,recommendation FROM ana_platform_wisdom')).rows).toEqual([]);
+      }
+      await expect(pg.query("INSERT INTO ana_platform_wisdom(wisdom_key,category,pattern_description,recommendation) VALUES('forged','risk_reduction','p','r')")).rejects.toMatchObject({ code: '42501' });
+      expect((await pg.query("UPDATE ana_platform_wisdom SET recommendation='forged' RETURNING id")).rows).toEqual([]);
+      expect((await pg.query('DELETE FROM ana_platform_wisdom RETURNING id')).rows).toEqual([]);
+      await pg.exec('RESET ROLE');
+      expect((await pg.query("SELECT pattern_description FROM ana_platform_wisdom WHERE wisdom_key='quarantine-canary'")).rows)
+        .toEqual([{ pattern_description: 'PRIVATE_LEGACY_CANARY' }]);
+    } finally { await pg.close(); }
+  }, T);
 });

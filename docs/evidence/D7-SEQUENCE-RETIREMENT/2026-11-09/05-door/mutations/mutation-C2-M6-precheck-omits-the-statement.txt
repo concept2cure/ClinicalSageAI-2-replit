@@ -1,0 +1,9 @@
+MUTATION C2-M6-precheck-omits-the-statement in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T08:12:23.062724Z): replaced [numberFreed: facts.numberFreed, statement: retirementStatement(n) },] with [numberFreed: facts.numberFreed },]
+ × server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: the precheck asks the retirement rule before anyone signs (C2) > a retirable sequence: cleared, its test sends by UTC day, its number freed, the statement to sign; nothing changes 36ms
+ × server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: the precheck asks the retirement rule before anyone signs (C2) > the sequence's creator is told another person signs it 12ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: the precheck asks the retirement rule before anyone signs (C2) > a sequence something keeps is refused in the words the act refuses it with, before the creator rule 54ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: the precheck asks the retirement rule before anyone signs (C2) > a legacy duplicate is answered with its number not freed 11ms
+ ✓ server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: the precheck asks the retirement rule before anyone signs (C2) > a retired sequence is answered with when and by whom it was retired 50ms
+      Tests  2 failed | 3 passed | 21 skipped (26)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 c181f73fc67b752a4b89be87365668aec37fd22d8efc1e2f6d3deed64d3c4f64 (expected c181f73fc67b752a4b89be87365668aec37fd22d8efc1e2f6d3deed64d3c4f64)

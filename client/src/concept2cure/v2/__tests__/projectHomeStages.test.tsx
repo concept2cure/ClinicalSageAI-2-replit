@@ -123,16 +123,15 @@ describe('Project home — six steps follow the work', () => {
     }
   });
 
-  it('what Submit will hold is named as coming later, in words, with no button', async () => {
+  it('no step names a roadmap: the "Coming later" lines are gone (2026-10-31)', async () => {
     render(<ProjectHome {...props()} />);
     await waitFor(() => expect(tab('Submit')).toBeTruthy());
-    fireEvent.click(tab('Submit')!);
-    const line = await screen.findByTestId('pj-coming-later');
-    expect(line.textContent).toBe(
-      'Coming later: Each approved market’s registration status and renewal date; renewals and post-approval ' +
-      'obligations tracked as they fall due; safety reports with their reporting clock.',
-    );
-    expect(within(line).queryByRole('button'), 'a coming-later line offers nothing to click').toBeNull();
+    for (const label of ['Plan', 'Evidence', 'Author', 'Review', 'Submit', 'Respond']) {
+      fireEvent.click(tab(label)!);
+      await waitFor(() => expect(activeLabel()).toBe(label));
+      expect(screen.queryByTestId('pj-coming-later'), `${label} has a coming-later line`).toBeNull();
+      expect(document.body.textContent, `${label} names something as coming later`).not.toMatch(/Coming later/);
+    }
   });
 });
 
@@ -159,34 +158,72 @@ describe('Project home — AnA names each step, and the removed one', () => {
 describe('Project home — the start box sits beside every step', () => {
   it('a message typed in the start box survives switching tabs', async () => {
     render(<ProjectHome {...props()} />);
-    const box = await screen.findByRole('textbox', { name: /Start a conversation in/ });
+    const box = await screen.findByRole('textbox', { name: 'Ask AnA about this project' });
     fireEvent.change(box, { target: { value: 'Draft the 2.5 clinical overview from the CSR' } });
 
     for (const label of ['Plan', 'Review', 'Submit', 'Evidence', 'Respond', 'Author']) {
       fireEvent.click(tab(label)!);
       await waitFor(() => expect(activeLabel()).toBe(label));
-      const now = screen.getByRole('textbox', { name: /Start a conversation in/ }) as HTMLTextAreaElement;
+      const now = screen.getByRole('textbox', { name: 'Ask AnA about this project' }) as HTMLTextAreaElement;
       expect(now.value, `the message was lost on switching to ${label}`).toBe('Draft the 2.5 clinical overview from the CSR');
     }
   });
 
-  it('the steps come first; the start box and the conversations sit beside the step and stay on every step', async () => {
+  it('the start box comes first, above the steps; the conversations sit beside them; both stay on every step', async () => {
     render(<ProjectHome {...props()} />);
-    const region = await screen.findByRole('region', { name: /Start a conversation in/ });
+    const region = await screen.findByRole('region', { name: 'Ask AnA about this project' });
     await screen.findByText(THREAD.title);
     const tablist = screen.getByRole('navigation', { name: 'Project lifecycle' });
     // The open stage is told to a screen reader, not only drawn (WCAG 4.1.2).
     expect(within(tablist).getAllByRole('button').filter((b) => b.getAttribute('aria-current') === 'step')).toHaveLength(1);
     expect(tablist.querySelector('[aria-selected]')).toBeNull();
-    /* CLIENT_JOURNEY pass 4 (decision 5): the steps first, then the open step, AnA beside it. */
-    expect(tablist.compareDocumentPosition(region) & Node.DOCUMENT_POSITION_FOLLOWING, 'steps before the start box').toBeTruthy();
-    expect(region.closest('aside'), 'start box in the side column').toBeTruthy();
+    /* Claude's project page (founder, 2026-11-01; RULE 4), superseding CLIENT_JOURNEY pass 4 decision 5:
+       the conversation with AnA first in the main column, then the steps. */
+    expect(region.compareDocumentPosition(tablist) & Node.DOCUMENT_POSITION_FOLLOWING, 'start box before the steps').toBeTruthy();
+    expect(region.closest('.pj-main'), 'start box in the main column').toBeTruthy();
+    /* D3-1 (2026-11-06, D3.md §4.5): the conversations sit under the composer, as Claude lists a project's
+       conversations, and before the steps. */
     const threads = screen.getByTestId('pj-threads');
-    expect(threads.closest('aside'), 'conversations in the side column').toBeTruthy();
+    expect(threads.closest('.pj-main'), 'conversations in the main column').toBeTruthy();
+    expect(region.compareDocumentPosition(threads) & Node.DOCUMENT_POSITION_FOLLOWING, 'conversations after the composer').toBeTruthy();
+    expect(threads.compareDocumentPosition(tablist) & Node.DOCUMENT_POSITION_FOLLOWING, 'conversations before the steps').toBeTruthy();
 
     fireEvent.click(tab('Submit')!);
     await waitFor(() => expect(activeLabel()).toBe('Submit'));
     expect(screen.getByText(THREAD.title)).toBeTruthy();
-    expect(screen.getByRole('region', { name: /Start a conversation in/ })).toBeTruthy();
+    expect(screen.getByRole('region', { name: 'Ask AnA about this project' })).toBeTruthy();
   });
 });
+
+/* D3-2a (2026-11-06, D3.md §4.8): Project knowledge is the same column on every step, in Claude's order. Its cards
+   were About only, with the readiness, skills, memory and records cards on Author alone. */
+describe('Project home — Project knowledge is the same on every step', () => {
+  const cards = () => Array.from(document.querySelectorAll('aside.pj-side h3')).map((h) => h.textContent?.trim());
+
+  it('About, Filing, Team, then What AnA knows and Records, on all six steps', async () => {
+    render(<ProjectHome {...props()} />);
+    await screen.findByRole('region', { name: 'Filing' });
+    await waitFor(() => expect(cards()).toContain('Records'));
+    const first = cards();
+    const at = (name: string) => first.indexOf(name);
+    for (const name of ['About', 'Filing', 'Team', 'What AnA knows', 'Records']) expect(at(name), name).toBeGreaterThan(-1);
+    expect(at('About')).toBeLessThan(at('Filing'));
+    expect(at('Filing')).toBeLessThan(at('Team'));
+    expect(at('Team')).toBeLessThan(at('What AnA knows'));
+    expect(at('What AnA knows')).toBeLessThan(at('Records'));
+    for (const label of ['Plan', 'Evidence', 'Author', 'Review', 'Submit', 'Respond']) {
+      fireEvent.click(tab(label)!);
+      await waitFor(() => expect(activeLabel()).toBe(label));
+      expect(cards(), label).toEqual(first);
+    }
+  });
+
+  it("the Filing card's readiness figure opens Author, where its detail is", async () => {
+    render(<ProjectHome {...props()} />);
+    fireEvent.click(tab('Plan')!);
+    const filing = await screen.findByRole('region', { name: 'Filing' });
+    fireEvent.click(within(filing).getByRole('button', { name: /Dossier readiness/ }));
+    await waitFor(() => expect(activeLabel()).toBe('Author'));
+  });
+});
+

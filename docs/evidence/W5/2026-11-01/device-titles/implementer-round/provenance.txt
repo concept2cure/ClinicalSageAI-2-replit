@@ -1,0 +1,28 @@
+# provenance (read-only git show / git log in the main repo)
+## commits touching the file
+1bd3af0bc5 2026-10-14 Show required submission deliverables using current authorized evidence
+553887bf56 2026-10-05 An IVDR GSPR checklist now cites IVDR Annex I numbering (§1–8, §9–19, §20), not the MDR's
+e6f80d7577 2026-10-05 A drug dossier no longer reads as a ready Japanese Shōnin or EU MDR device file
+2364f546dd 2026-09-23 Device technical file: each slot places the leaves it matched, and Vault titles match
+b5e5476cb6 2026-09-20 Every FDA letter containing the word "information" was tagged an eCTD formatting issue
+## first commit with A_PLAN_NOT_ITS_REPORT (git log -S)
+e6f80d7577 2026-10-05 A drug dossier no longer reads as a ready Japanese Shōnin or EU MDR device file
+## 2364f546dd^ (before the token matcher): substring titleHas, no plan qualifier
+57:const titleHas = (...n: string[]): Matcher => (l) => n.some((x) => l.title.toLowerCase().includes(x));
+81:  { id: 'manufacturer-information', label: 'Information supplied by the manufacturer (labelling/IFU)', annex: `${annexPrefix} 2`, required: true, match: any(docType('ifu', 'labelling', 'label'), titleHas('instructions for use', 'ifu', 'labelling'), annexKey('II.2')) },
+90:  { id: 'clinical-evaluation', label: 'Clinical Evaluation Report (CER)', annex: 'Annex XIV', required: true, match: any(docType('cer', 'clinical_evaluation'), titleHas('clinical evaluation'), exactKey('II.6.1.g')) },
+98:  { id: 'performance-evaluation', label: 'Performance Evaluation Report (PER) & scientific validity', annex: 'Annex XIII', required: true, match: any(docType('per', 'performance_evaluation', 'scientific_validity'), titleHas('performance evaluation', 'scientific validity'), exactKey('II.6.2.c')) },
+## 2364f546dd: the token matcher brings the prefix plan rule; V&V slot still codeStarts('4','5'), no A_PLAN_NOT_ITS_REPORT
+236:    if (beforeApplies && r.notBefore.some((b) => next.startsWith(b))) continue;
+252:const NOT_THE_PLAN: Qualifiers = { notBefore: ['plan'], notBeforeUnless: ['report'] };
+303:  { id: 'preclinical-clinical', label: 'Product verification & validation (preclinical + clinical)', annex: 'Annex II 6', required: true, match: any(docType('preclinical', 'verification_validation'), codeStarts('4', '5'), titleHas('preclinical', 'verificat
+## e6f80d7577: A_PLAN_NOT_ITS_REPORT added with titleHas('plan', 'protocol'); codeStarts removed
+262:const A_PLAN_NOT_ITS_REPORT: Matcher = all(titleHas('plan', 'protocol'), not(titleHas('report', 'result')));
+309:  /* 2026-10-05 (g-shonin-and-techdoc-fail-closed): codeStarts('4', '5') is
+## the reviewer's run of both versions on the three V&V titles: probe-proof/hist.txt
+"Biocompatibility – plantar insole (ISO 10993)" @4.2.1	2364f546dd=[preclinical-clinical]	e6f80d7577=[]
+"Design verification – planar detector" @4.2.1	2364f546dd=[preclinical-clinical]	e6f80d7577=[]
+"Bench test summary – plane of section" @4.2.1	2364f546dd=[preclinical-clinical]	e6f80d7577=[]
+## mdr-ivdr directory unchanged between the export base 5f30fdda0d and the current repo HEAD
+e259430d35
+(empty line above = no change)

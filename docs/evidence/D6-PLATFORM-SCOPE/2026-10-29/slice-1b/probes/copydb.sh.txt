@@ -1,0 +1,4 @@
+#!/bin/bash
+# Copy lane C's production-shaped base to $1: lc_base = P-72 slice 0's seeded two-tenant copy (s1a_base), replayed by deploy-migrate at HEAD (tree-head/HEAD.sha) as the superuser, then every object handed to the NOSUPERUSER NOBYPASSRLS c2c_rds_master (probe 41).
+PG="postgresql://postgres@127.0.0.1:55474/postgres?sslmode=disable"
+psql "$PG" -q -c "DROP DATABASE IF EXISTS $1 WITH (FORCE)" -c "CREATE DATABASE $1 TEMPLATE ${2:-lc_base_h}" -c "ALTER DATABASE $1 OWNER TO c2c_rds_master"

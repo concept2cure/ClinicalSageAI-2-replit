@@ -487,6 +487,7 @@ export function CrlLibrary({ onAsk }: SurfaceViewProps) {
         reassure="Every displayed finding resolves to an official source and page. Anything inferred is labelled as inferred."
         action={{
           label: 'Ask AnA about these findings',
+          icon: I.sparkles,
           onClick: () =>
             onAsk(
               'Compare our design to the FDA findings currently shown in the CRL library, and tell me how they differ from our study.',

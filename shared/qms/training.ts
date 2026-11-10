@@ -9,6 +9,8 @@ const timestamp = z.string().datetime({ offset: true });
 
 export const QMS_TRAINING_DECLARATION = 'I have read and understood this released revision.';
 export const QMS_TRAINABLE_DOCUMENT_TYPES = ['sop', 'wi', 'manual', 'policy', 'protocol', 'curriculum'] as const;
+/** The task source a person's training on a controlled document is written under (server/services/qms/training-task.ts). */
+export const QMS_TRAINING_TASK_SOURCE = 'qms_training';
 
 /** A trainee cannot supply another actor, a score, a trainer or a signature method. */
 export const qmsTrainingAcknowledgementInputSchema = z.object({

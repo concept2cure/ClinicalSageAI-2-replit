@@ -1,0 +1,12 @@
+{
+  "base": "32eafdbf2c57bfa70d98429b8d312652eb08afe5",
+  "withUncommittedImplementation": true,
+  "command": "npm exec --yes --package=node@22 -- npm run build",
+  "exitCode": 0,
+  "outputs": [
+    "client",
+    "server",
+    "audit-chain-verifier"
+  ],
+  "pinnedSourceChanges": []
+}

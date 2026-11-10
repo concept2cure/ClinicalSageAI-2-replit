@@ -1,0 +1,60 @@
+
+ RUN  v4.1.7 <repo>
+
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > encrypts for the agency and signs the exact binary MIME entity, verified by independent OpenSSL roundtrip 97ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > requests required signed synchronous receipts without an invalid async receipt URL 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > accepts only a pinned agency-signed receipt naming the original message and exact MIC 52ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > retains delivery ambiguity for rogue signatures without freeing a resend 41ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > retains delivery ambiguity for wrong-pin signatures without freeing a resend 39ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > rejects an altered signed MDN 34ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > does not accept an authenticated receipt for another message 34ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > does not accept an authenticated receipt for another MIC 42ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > keeps an unsigned success receipt unconfirmed 1ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > allows only the authenticated tied failure receipt to establish agency refusal 94ms
+ ✓ server/services/submission-gateways/__tests__/as2-cms.test.ts > actual offline CMS AS2 envelope and receipt verification > refuses mismatched signing key and MIME header injection before sending 2ms
+ × server/services/submission-gateways/__tests__/as2-cms.test.ts > the AS2 verdicts this module exports > none calls an unsigned, tied, accepting 2xx MDN RECEIVED 8ms
+   → expected { name: 'classifyAs2Delivery', …(1) } to deeply equal { name: 'classifyAs2Delivery', …(1) }
+ × server/services/submission-gateways/__tests__/as2-cms.test.ts > the FDA ESG UAT pre-flight > prints the headers transmit sends 319ms
+   → expected 'signed-receipt-protocol=optional, pkc…' to be 'signed-receipt-protocol=required, pkc…' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/submission-gateways/__tests__/as2-cms.test.ts > the AS2 verdicts this module exports > none calls an unsigned, tied, accepting 2xx MDN RECEIVED
+AssertionError: expected { name: 'classifyAs2Delivery', …(1) } to deeply equal { name: 'classifyAs2Delivery', …(1) }
+
+- Expected
++ Received
+
+  {
+-   "kind": "DELIVERED_UNCONFIRMED",
++   "kind": "RECEIVED",
+    "name": "classifyAs2Delivery",
+  }
+
+ ❯ server/services/submission-gateways/__tests__/as2-cms.test.ts:78:44
+     76|     for (const [name, verdict] of verdicts) {
+     77|       const outcome = await (verdict as (...a: unknown[]) => unknown)(…
+     78|       expect({ name, kind: outcome.kind }).toEqual({ name, kind: 'DELI…
+       |                                            ^
+     79|     }
+     80|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/submission-gateways/__tests__/as2-cms.test.ts > the FDA ESG UAT pre-flight > prints the headers transmit sends
+AssertionError: expected 'signed-receipt-protocol=optional, pkc…' to be 'signed-receipt-protocol=required, pkc…' // Object.is equality
+
+Expected: "signed-receipt-protocol=required, pkcs7-signature; signed-receipt-micalg=required, sha-256"
+Received: "signed-receipt-protocol=optional, pkcs7-signature; signed-receipt-micalg=optional, sha-256"
+
+ ❯ server/services/submission-gateways/__tests__/as2-cms.test.ts:98:57
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 11 passed (13)
+   Start at  22:23:08
+   Duration  2.16s (transform 259ms, setup 82ms, import 250ms, tests 1.58s, environment 0ms)
+

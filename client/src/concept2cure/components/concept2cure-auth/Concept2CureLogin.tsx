@@ -24,8 +24,9 @@ import {
 } from '@/services/portal/authService';
 import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 
-import { computeRedirect, parseSsoHandoff, parseSsoMfaHandoff } from '../../auth/redirectUtils';
+import { computeRedirect, parseSsoHandoff, parseSsoMfaHandoff, verifyDemoAccessReadiness } from '../../auth/redirectUtils';
 import { OrganizationSso } from './OrganizationSso';
+import { DemoAccountPicker, parseDemoAccounts } from './DemoAccounts';
 import { takeSignOutReason, type SessionEndReason } from '../../../utils/sessionEnd';
 import brandIcon from '../../../assets/concept2cure-icon.svg';
 import styles from './styles.module.css';
@@ -192,6 +193,9 @@ export const Concept2CureLogin: React.FC = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<AuthError | null>(null);
+  /* A view's own error, never the last one's: "Incorrect email or password" followed the person from a failed sign-in
+     onto "Reset your password" (human test J1, 2026-11-06). Changing view clears it. */
+  const showView = (next: View) => { setError(null); setView(next); };
   const [ssoReturnTo, setSsoReturnTo] = useState<string | null>(null);
   // Why the last session ended on its own account (inactivity, lifetime), read
   // once from where the auth service left it (P1-1).
@@ -263,21 +267,32 @@ export const Concept2CureLogin: React.FC = () => {
      seeded by DEMO_USER_EMAIL). 2026-10-15: both buttons posted one person's
      personal address; with no identity configured there is now no button. */
   const devLoginEmail = String(import.meta.env.VITE_DEV_LOGIN_EMAIL ?? '').trim();
+  /* The demo people "Demo access" may sign in as (DemoAccounts.tsx). The configured identity stays the default. */
+  const demoAccounts = useMemo(() => parseDemoAccounts(import.meta.env.VITE_DEMO_ACCOUNTS), []);
+  const [demoEmail, setDemoEmail] = useState(devLoginEmail || demoAccounts[0]?.email || '');
 
   /* Handlers — preserved verbatim from ZenLogin to keep capability parity */
 
   const handleDemoAccess = useCallback(async () => {
-    if (!devLoginEmail) return;
+    if (!demoEmail) return;
     setIsLoading(true);
     setError(null);
     try {
       const res = await fetch('/api/auth/dev-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: devLoginEmail }),
+        body: JSON.stringify({ email: demoEmail }),
       });
       const data = await res.json();
       if (data.success && data.accessToken) {
+        // Demo Access means a usable, populated demonstration, not merely a
+        // valid JWT. Never persist this session until its current organization,
+        // accessible project and Tasking read are verified.
+        const readiness = await verifyDemoAccessReadiness(data.accessToken, data.user, demoEmail);
+        if (!readiness.ready) {
+          setError({ message: readiness.message || 'Demo environment is not ready.' });
+          return;
+        }
         const expiry = new Date(Date.now() + (data.expiresIn || 86400) * 1000).toISOString();
         localStorage.setItem('trialsage_access_token', data.accessToken);
         localStorage.setItem('trialsage_refresh_token', data.refreshToken || '');
@@ -296,7 +311,7 @@ export const Concept2CureLogin: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [devLoginEmail]);
+  }, [demoEmail]);
 
   const handleLogin = useCallback(async () => {
     if (!validateEmail(email)) {
@@ -560,7 +575,7 @@ export const Concept2CureLogin: React.FC = () => {
                 <button
                   type="button"
                   className={styles.ghost}
-                  onClick={() => setView('forgot-password')}
+                  onClick={() => showView('forgot-password')}
                 >
                   {t('action.forgotPassword')}
                 </button>
@@ -571,9 +586,13 @@ export const Concept2CureLogin: React.FC = () => {
                 {t('action.signIn')}
               </button>
 
-              {isDev && devLoginEmail && (
+              {isDev && demoEmail && (
                 <>
                   <div className={styles.demoDivider}>{t('action.devOnly')}</div>
+                  {demoAccounts.length > 1 && (
+                    <DemoAccountPicker accounts={demoAccounts} value={demoEmail} onChange={setDemoEmail} disabled={isLoading}
+                      classes={{ field: styles.field, label: styles.label, input: styles.input }} />
+                  )}
                   <button
                     type="button"
                     className={styles.demo}
@@ -645,7 +664,7 @@ export const Concept2CureLogin: React.FC = () => {
                   type="button"
                   className={styles.ghost}
                   onClick={() => {
-                    setView('sign-in');
+                    showView('sign-in');
                     setPassword('');
                     setMfaCode('');
                     setSsoReturnTo(null);
@@ -713,7 +732,7 @@ export const Concept2CureLogin: React.FC = () => {
                 {t('action.sendResetLink')}
               </button>
 
-              <button type="button" className={styles.secondary} onClick={() => setView('sign-in')}>
+              <button type="button" className={styles.secondary} onClick={() => showView('sign-in')}>
                 {t('action.backToSignIn')}
               </button>
             </div>
@@ -733,7 +752,7 @@ export const Concept2CureLogin: React.FC = () => {
                   components={{ strong: <strong /> }}
                 />
               </p>
-              <button type="button" className={styles.secondary} onClick={() => setView('sign-in')}>
+              <button type="button" className={styles.secondary} onClick={() => showView('sign-in')}>
                 {t('action.returnToSignIn')}
               </button>
             </div>

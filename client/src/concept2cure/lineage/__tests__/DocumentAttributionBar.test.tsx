@@ -231,3 +231,20 @@ describe('DocumentAttributionBar — citations, access and refresh', () => {
     await waitFor(() => expect(fetchDocumentAttribution).toHaveBeenCalledTimes(2));
   });
 });
+
+/* J3 human test, 2026-11-06: the editor shows this bar for the open SECTION. An
+   empty Title Page read "This document has no text yet." while the document's
+   Summary had text. The host names what the figure describes. */
+describe('DocumentAttributionBar — names what it measures', () => {
+  it('an empty section says the section has no text, not the document', async () => {
+    fetchDocumentAttribution.mockResolvedValue(summary({ contentLength: 0, spans: [] }));
+    render(<DocumentAttributionBar {...DOC} subject="section" />);
+    await screen.findByText('This section has no text yet.');
+    expect(document.body.textContent).not.toMatch(/This document has no text/);
+  });
+  it('a section with text gives its own share', async () => {
+    fetchDocumentAttribution.mockResolvedValue(summary());
+    render(<DocumentAttributionBar {...DOC} subject="section" />);
+    await screen.findByText(/% of this section has a recorded origin/i);
+  });
+});

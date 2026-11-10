@@ -97,3 +97,19 @@ describe('deep research — the job contract is the engine\'s', () => {
     expect(screen.queryByText('Aggregated results')).toBeNull();
   });
 });
+
+
+describe('research connector credentials have one secure administration home', () => {
+  it('opens the current Settings destination without collecting or posting a credential', async () => {
+    const onNav = vi.fn();
+    apiRequest.mockImplementation(async (_method: string, path: string) => path === '/api/deep-research/board' ? ok({ data: { ...BOARD,
+      connectors: [{ id: 'veeva_vault', name: 'Veeva Vault', cat: 'enterprise', tier: 'professional', creds: true, configured: false, desc: 'Client documents', cf: [] }],
+      configuredCount: 0 } }) : ok({}));
+    render(<DeepResearch {...({ surface: { id: 'deep-research', label: 'Deep research' }, onAsk: vi.fn(), onNav, segment: 'biopharma' } as any)} />);
+    fireEvent.click(screen.getByText('Manage connectors'));
+    fireEvent.click(await screen.findByRole('button', { name: /Manage credentials in Settings/ }));
+    expect(onNav).toHaveBeenCalledWith('setup'); // existing alias opens Admin and access → Settings
+    expect(screen.queryByRole('dialog')).toBeNull(); expect(document.querySelector('input[type="password"]')).toBeNull();
+    expect(apiRequest.mock.calls.some(([method, path]) => method === 'POST' && path === '/api/deep-research/connectors')).toBe(false);
+  });
+});

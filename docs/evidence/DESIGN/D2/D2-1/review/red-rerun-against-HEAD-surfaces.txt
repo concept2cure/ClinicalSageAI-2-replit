@@ -1,0 +1,80 @@
+# Skeptic's re-run of red: the 7 new or rewritten test files from the working tree, against HEAD's
+# Projects.tsx, ProjectPortfolioFilters.tsx and ProjectClientFilter.tsx (HEAD 8535bd981, 2026-11-01).
+# No checkout: a scratch vitest config (mergeConfig over vitest.config.ts) adds a 'pre' plugin whose load()
+# hook returns 'git show HEAD:<file>' for those three module ids, so their relative imports resolve as usual.
+# DEBUG_PRINT_LIMIT=0 npx vitest run --maxWorkers=1 --config <scratch>/vitest.head-surfaces.config.ts <the 7 files>
+# Result: 7 files failed, 26 tests failed, 18 passed (the builder's red/ run reported the same 26/18).
+
+ × client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > uses server totals beyond the page and keeps readiness and search page bounded 526ms
+   → Unable to find an accessible element with the role "combobox" and name "Client type"
+ × client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > requests workstream and pathway on the server, retaining the Client filter 5065ms
+   → Unable to find role="option" and name "Medical device & IVD (58)"
+ ✓ client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > applies the same pathway through the existing surface action and rejects unknown keys 46ms
+ × client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > keeps a failed filtered read distinct from an empty portfolio and allows clearing 276ms
+   → Unable to find an accessible element with the role "combobox" and name "Pathway"
+ × client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > does not call an empty pathway result a new organization 291ms
+   → Unable to find an accessible element with the role "combobox" and name "Pathway"
+ × client/src/concept2cure/v2/__tests__/projectsPathwayCounts.test.tsx > Projects full-portfolio counts and server pathway filters > keeps a selected page status clearable when a server filter returns different statuses 5042ms
+   → Unable to find role="option" and name "Blocked"
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > a program recorded blocked with no blocker says no cause is recorded (the NM-512 case) 104ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > reads no blocker from a list row, and a blocked status still says no cause is recorded 32ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > an active program makes no blocker claim either way 36ms
+ × client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects card — a blocked status carries its cause, or says none is recorded > the list view says the same for the blocked program 293ms
+   → expected 'ProjectWorkstreamStage / readinessSta…' to contain 'Client type'
+ × client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects list — readiness is named as the dossier readiness > labels a measured figure and an unmeasured one with the same name Project home uses 135ms
+   → expected 'ProjectWorkstreamStage / readinessSta…' to contain 'Dossier readiness'
+ × client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects — no bar anywhere; the figure is text with its reason (F23, D2-1) > no card draws a bar or states a readiness figure 31ms
+   → expected <div class="ph-bar-track" …(1)>…(1)</div> to be null
+ × client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects — no bar anywhere; the figure is text with its reason (F23, D2-1) > the list view states each figure as text, with no bar 104ms
+   → expected <div class="ph-bar-track" …(1)>…(1)</div> to be null
+ × client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects — no bar anywhere; the figure is text with its reason (F23, D2-1) > an unavailable figure says so, and why, never "Not recorded" 94ms
+   → expected 'Dossier readiness unavailable' to be 'unavailable' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/projectsCardStatusReadiness.test.tsx > Projects — no bar anywhere; the figure is text with its reason (F23, D2-1) > the portfolio mean says how many programs it covers when some have no recorded measurement 20ms
+   → expected <div class="pj-summary">…(3)</div> to be null
+ × client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > WS_LABEL names each workstream code as a client type > is exported, in sentence case, with the rail’s device name 11ms
+   → expected undefined to deeply equal { MDX: 'Medical device & IVD', …(3) }
+ × client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > reads the stated description first 106ms
+   → expected 'DESCRIBED · Planning · Lead Rae Okafo…' to be 'Phase 2 programme for BX-204 in moder…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > falls back to the filing in words when no description is stated 29ms
+   → expected 'FILING · Planning · Lead Rae Okafor ·…' to be 'IND · FDA · Moderate-to-severe plaque…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > falls back to the stage and lead for a payload without the four fields 27ms
+   → expected 'OLDER · Planning · Lead Rae Okafor · …' to be 'Planning · Lead Rae Okafor' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > never fills a value the record does not hold 20ms
+ × client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > ends with the code and when it was updated, and the target date only when one is set 25ms
+   → expected 'Dossier readiness Not recorded—' to be 'OLDER · Updated Oct 31' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the card’s one line says what the project is, from what is stated > carries no readiness bar, no chip and no readiness line 21ms
+   → expected <span class="rd-chip tone-ok"></span> to be null
+ × client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the Projects header holds the title and one primary action > has no eyebrow, no sub-line and no Ask AnA button, and one New project 21ms
+   → expected <div class="ph-eyebrow"></div> to be null
+ × client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the Projects header holds the title and one primary action > states the count the search covers in its placeholder, and none while loading 5023ms
+   → expected 'Search projects' to be 'Search 5 projects' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/projectsCardLine.test.tsx > the list view holds what the cards dropped, as text > names the client type in words and puts the portfolio figures after the table 23ms
+   → expected <div class="pj-summary">…(3)</div> to be null
+ ✓ client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > no card claims "No open blockers" when no blocker was looked for 123ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > shows no "Blocked" figure, since nothing writes that status 287ms
+ × client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > counts the programs whose target filing date is within the next 60 days 28ms
+   → the figures are the list view’s footing (D2-1): expected <div class="pj-summary">…(3)</div> to be null
+ ✓ client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > says one active project in the singular, and several in the plural 171ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsHonestCounts.test.tsx > Projects — figures and cards say only what was assessed > offers no status filter that can only show an empty list 22ms
+ × client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — summary over a successful empty read > states no mean readiness over zero programs 88ms
+   → the figures are the list view’s footing (D2-1): expected <div class="pj-summary">…(3)</div> to be null
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — a mixed portfolio still has a mean > averages readiness over every program shown 255ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — a program with nothing measurable has no readiness figure > keeps failed dossier measurements unavailable in the mean 64ms
+ × client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — a program with nothing measurable has no readiness figure > says "Not recorded" on its list row, never "0% ready" 58ms
+   → expected 'ProjectWorkstreamStage / readinessSta…' to contain 'Dossier readiness'
+ ✓ client/src/concept2cure/v2/__tests__/projectsPortfolioEmptyMean.test.tsx > Projects — a program with nothing measurable has no readiness figure > averages only the programs that were measured 94ms
+ × client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — the summary line stays honest when the read fails > renders no percentage at all over a FAILED portfolio read 92ms
+   → the figures are the list view’s footing (D2-1): expected <div class="pj-summary">…(3)</div> to be null
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — the summary line stays honest when the read fails > renders no percentage while the read is still in flight 281ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — the summary line stays honest when the read fails > does render the real figures once the read succeeds 108ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — search > matches on title and hides the rest 31ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — search > matches on the program code 46ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — search > does NOT match the lead field, which can hold an email address 22ms
+ ✓ client/src/concept2cure/v2/__tests__/projectsDirectory.test.tsx > Projects — search > names the query in the empty state instead of blaming the filters 26ms
+ × client/src/concept2cure/v2/__tests__/projectsPortfolioTruncation.test.tsx > Projects — a truncated portfolio read > says the list is the first page, and the count is a floor 129ms
+   → expected 'Search projects' to be 'Search the first 2 projects' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/projectsPortfolioTruncation.test.tsx > Projects — a truncated portfolio read > a complete read says nothing extra 26ms
+   → expected 'Search projects' to be 'Search 2 projects' // Object.is equality
+⎯⎯⎯⎯⎯⎯ Failed Tests 26 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  7 failed (7)
+      Tests  26 failed | 18 passed (44)

@@ -51,6 +51,7 @@ import {
   withShadowFindingDispositions,
 } from '../shadow-finding-disposition';
 import { assessSequenceDispatchReadiness } from '../assess-dispatch-readiness';
+import { reviewedLeavesDigest } from '../../shadow-review/shadow-review-coverage';
 import { evaluateShadowPresenceWithWaiver } from '../shadow-review-waiver';
 import { evaluateDispatchGate, mergeDispatchGates } from '../dispatch-gate';
 import { getShadowReviewFindings } from '../../shadow-review/shadow-review-service';
@@ -97,11 +98,13 @@ async function makeSequence(status = 'validated', createdBy = AUTHOR, org = ORG)
 
 /** A Shadow Review run, `hoursAgo` old. */
 async function run(seq: number, status: string, hoursAgo: number, org = ORG): Promise<number> {
+  // A complete run covers the sequence's leaves as they stand when it is recorded (2026-10-25).
+  const digest = status === 'complete' ? await reviewedLeavesDigest({ query: q }, seq, org) : null;
   const r = await q(
-    `INSERT INTO shadow_review_runs (sequence_id, region, lens, status, organization_id, created_by, created_at, updated_at)
-     VALUES ($1, 'fda', 'fda_filing', $2, $3, $4, now() - make_interval(secs => $5::float8 * 3600), now() - make_interval(secs => $5::float8 * 3600))
+    `INSERT INTO shadow_review_runs (sequence_id, region, lens, status, organization_id, created_by, created_at, updated_at, leaf_manifest_digest)
+     VALUES ($1, 'fda', 'fda_filing', $2, $3, $4, now() - make_interval(secs => $5::float8 * 3600), now() - make_interval(secs => $5::float8 * 3600), $6)
      RETURNING id`,
-    [seq, status, org, AUTHOR, hoursAgo],
+    [seq, status, org, AUTHOR, hoursAgo, digest],
   );
   return Number(r.rows[0].id);
 }
@@ -203,6 +206,8 @@ beforeAll(async () => {
   await h.pglite.exec(migration('migrations/20260604_shadow_review.sql'));
   await h.pglite.exec(migration('migrations/20261015_shadow_review_waiver.sql'));
   await h.pglite.exec(migration('migrations/20261015b_shadow_finding_disposition.sql'));
+  // 2026-10-25: a run records the leaves it covered and what it read.
+  await h.pglite.exec(migration('migrations/20261025_shadow_review_run_coverage.sql'));
 }, 120_000);
 afterAll(async () => { await h.close(); });
 

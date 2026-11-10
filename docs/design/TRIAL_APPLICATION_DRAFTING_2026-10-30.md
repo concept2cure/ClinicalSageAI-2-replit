@@ -206,3 +206,31 @@ These changes extend the existing source selector and attribution primitive.
 Clinical guidance selection/currency is improved, but regional Module 1 source
 content, indexed disease/phase/population conditions, nonclinical source binding
 and independent scientific qualification remain open work under slices 4–7.
+
+
+## UK preparation repair (2026-11-06, F1)
+
+The previously unpublished UK continuation is recovered in the existing core workflow.
+The shared UK_CTA record now supplies 25 preparation rows and nine tasks to both
+project bootstrap and the static server catalogs. Metadata and the shared channel
+name regional combined IRAS review, with no platform connector. The existing
+MHRA checklist reads that same record and remains unassessed from labels alone.
+Drafting carries dated MHRA/HRA URLs, platform basis and unresolved conditions;
+actual forms are completed and validated in IRAS. This is preparation for medicinal
+trials, not a UK eCTD dossier, an admission expansion or a readiness qualification.
+
+The initial submission date, old/new-rule selection, product/document applicability,
+regional therapeutic-area endpoint matching, nonclinical source binding and independent
+scientific/model assessment remain open. No app, card, editor, screen, API, tool or
+store was added. Inventory and proof:
+`.design/claude-convergence/UK_CTA_PREPARATION_2026-11-06.md` and
+`docs/evidence/D4/2026-11-06-uk-cta-preparation/README.md`.
+
+
+## Regional therapeutic selection completion (2026-11-06, F1)
+
+The existing UK, EU and Canadian CTA/CTA-A protocol/synopsis rows now carry a small advisory role on their canonical blueprint record. Exact resolver provenance and the validated saved-template identity feed the same existing profile renderer. This reaches existing endpoint/statistical arrays from all 25 profiles without a separate document-type UI or a fictitious CTD location. Canadian amendment still excludes initial-only PSEAT, and quality rows retain their CMC modality context. Unknown, conflicting, administrative and quality/nonclinical regional identities do not enable the clinical arrays. Source currentness, recorded-fact precedence, model/PQ and drafting lifecycle guards remain in place.
+
+This is selection of existing advisory knowledge, not additional primary clinical guidance or scientific qualification. NMPA is frozen; Australia/Japan content is unchanged. Phase/modality/population applicability, nonclinical source binding and independent qualification remain open. Inventory and receipts: `.design/claude-convergence/REGIONAL_THERAPEUTIC_SELECTION_2026-11-06.md` and `docs/evidence/D4/2026-11-06-regional-therapeutic-selection/`.
+
+UK saved regional templates remain outside the existing US/EU/CA/JP/GLOBAL template-region contract; this increment does not widen it. UK clinical selection is verified through project-filing/nested drafting and direct advisory identities. Saved-template handoff proof is for currently admitted EU/CA identities.

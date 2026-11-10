@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React, { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/services/portal/authService', async original => ({ ...await original<typeof import('@/services/portal/authService')>(), useAuth: () => ({ user: null, logout: vi.fn() }) }));
@@ -65,7 +65,8 @@ describe('the project’s step survives leaving the page', () => {
     await waitFor(() => expect(create.hasAttribute('disabled')).toBe(false));
     fireEvent.click(create);
     await screen.findByTestId('editor-visit');
-    fireEvent.click(screen.getByRole('button', { name: /Open project\s*A-101/ }));
+    // D1-2 (D1.md §D1.B step 1): the top bar's chip is its project crumb, named by the project.
+    fireEvent.click(within(document.querySelector('header.topbar') as HTMLElement).getByRole('button', { name: 'A-101' }));
     await waitFor(() => expect(active()).toBe('Plan'));
     expect(await screen.findByRole('button', { name: /Open Target Product Profile/ })).toBeTruthy();
     expect(apiRequest).toHaveBeenCalledWith('POST', '/api/authoring/docs', expect.objectContaining({ client_program_id: A, template_id: TEMPLATE }));
@@ -106,10 +107,12 @@ describe('the project’s step survives leaving the page', () => {
     expect(readShellProject()?.step).toBe('submit');
   });
 
-  it('falls back to Review for a bare workId, including an invalid stage', async () => {
-    stashNavParamsForTarget('project-home', { workId: 'review:target', stage: 'invalid' });
+  /* D3-4 (D3.md §4.6 item 4): the project's tasks are listed on Plan only, so a task handed over opens Plan, whatever
+     step the handoff names (the Tasks board sends 'review'). */
+  it.each(['invalid', 'review', undefined])('opens Plan for a workId with stage %s', async (stage) => {
+    stashNavParamsForTarget('project-home', { workId: 'review:target', ...(stage ? { stage } : {}) });
     render(<ProjectHome {...props} />);
-    await waitFor(() => expect(active()).toBe('Review'));
-    expect(readShellProject()?.step).toBe('review');
+    await waitFor(() => expect(active()).toBe('Plan'));
+    expect(readShellProject()?.step).toBe('plan');
   });
 });

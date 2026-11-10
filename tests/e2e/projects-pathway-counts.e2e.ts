@@ -58,33 +58,43 @@ test('MDX links and pathway filters agree with scoped portfolio counts', async (
   await page.goto('/concept2cure/mdx');
   await expect(page).toHaveURL(/\/concept2cure\/projects(?:\?|$)/);
   await expect(page.getByRole('heading', { name: 'Projects', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'MDX 2', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  // D2-1: the workstream filter is the toolbar's "Client type" select; its counts are in the option text.
+  const clientType = page.getByRole('combobox', { name: 'Client type', exact: true });
+  await expect(clientType).toHaveValue('MDX');
+  await expect(clientType.getByRole('option', { name: 'Medical device & IVD (2)', exact: true })).toHaveCount(1);
   await expect.poll(() => aliasReads.find(read => read.url === '/api/c2c/projects?ws=MDX')).toEqual({ url: '/api/c2c/projects?ws=MDX', status: 200 });
   await expect(page.locator('.pj-card')).toHaveCount(2);
   await expect(page.locator('.pj-card').filter({ hasText: `Pathway project 3 ${stamp}` })).toHaveCount(0);
-  await expect(page.locator('.pj-summary')).toContainText('2 active projects');
+  // D2-1: the active count is in the search's placeholder; the figures line is the list view's footing.
+  await expect(page.getByRole('searchbox', { name: 'Search projects by title or code' })).toHaveAttribute('placeholder', 'Search 2 projects');
   await testInfo.attach('mdx-alias-portfolio.png', { body: await page.screenshot(), contentType: 'image/png' });
 
   // A person's later choice survives subsequent screen updates. The alias is
   // an opening action; it must not continually reassert the MDX filter.
-  const biotech = page.getByRole('button', { name: 'Biotech 1', exact: true });
-  await biotech.click();
+  await expect(clientType.getByRole('option', { name: 'Biotech (1)', exact: true })).toHaveCount(1);
+  await clientType.selectOption('Biotech');
   await expect(page.locator('.pj-card')).toHaveCount(1);
   await expect(page.locator('.pj-card').first()).toContainText(`Pathway project 3 ${stamp}`);
   await page.getByRole('searchbox', { name: 'Search projects by title or code' }).fill('Pathway project 3');
-  await expect(biotech).toHaveAttribute('aria-pressed', 'true');
+  await expect(clientType).toHaveValue('Biotech');
   await page.getByRole('searchbox', { name: 'Search projects by title or code' }).clear();
-  await expect(biotech).toHaveAttribute('aria-pressed', 'true');
+  await expect(clientType).toHaveValue('Biotech');
   await expect(page.locator('.pj-card')).toHaveCount(1);
-  await page.getByRole('button', { name: 'All workstreams 3', exact: true }).click();
+  await expect(clientType.getByRole('option', { name: 'All client types (3)', exact: true })).toHaveCount(1);
+  await clientType.selectOption('all');
   await expect(page.locator('.pj-card')).toHaveCount(3);
-  await page.getByRole('button', { name: 'MDX 2', exact: true }).click();
+  await clientType.selectOption('MDX');
   await expect(page.locator('.pj-card')).toHaveCount(2);
   const filteredRead = page.waitForResponse(response => response.url().includes('/api/c2c/projects?ws=MDX&pathway=k510'));
-  await page.getByRole('button', { name: '510(k) 2', exact: true }).click();
+  const pathwaySelect = page.getByRole('combobox', { name: 'Pathway', exact: true });
+  await expect(pathwaySelect.getByRole('option', { name: '510(k) (2)', exact: true })).toHaveCount(1);
+  await pathwaySelect.selectOption('k510');
   expect((await filteredRead).status()).toBe(200);
-  await expect(page.locator('.pj-summary')).toContainText('2 active projects');
+  await expect(page.getByRole('searchbox', { name: 'Search projects by title or code' })).toHaveAttribute('placeholder', 'Search 2 projects');
   await expect(page.locator('.pj-card')).toHaveCount(2);
+  await page.getByRole('button', { name: 'List', exact: true }).click();
+  await expect(page.locator('.pj-summary')).toContainText('2 active projects');
+  await page.getByRole('button', { name: 'Grid', exact: true }).click();
   await testInfo.attach('pathway-portfolio.png', { body: await page.screenshot(), contentType: 'image/png' });
   await testInfo.attach('pathway-counts.json', { body: JSON.stringify({ pageCount: result.meta.count,
     hasMore: result.meta.hasMore, counts: result.meta.counts,

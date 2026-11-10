@@ -63,6 +63,19 @@ describe('actor-aware registered source tools', () => {
     expect(result.message).not.toMatch(/have now read|model received|served in a turn/i);
     expect(receipts.get('tu-read').sourceSnapshot).toMatchObject({ organizationId: 42, userId: 7, programId, documentId, extractedTextSha256: result.extractedTextSha256 });
   });
+  it('a document the serving model may not receive is refused at the read with no text; an Internal one is read', async () => {
+    // Demo sweep, 2026-11-09: read and recorded, it refused the turn's next round, and AnA never answered.
+    const onClaude = { ...ctx, servingModel: { provider: 'anthropic', model: 'claude-sonnet-5' } };
+    h.actor.mockResolvedValue({ ...doc(), classification: 'CONFIDENTIAL' });
+    const refused = await call('read_project_document', { document_id: documentId }, onClaude);
+    expect(refused).toMatchObject({ ok: false, code: 'SOURCE_TIER_NOT_SENDABLE', classification: 'CONFIDENTIAL' });
+    expect(JSON.stringify(refused)).not.toContain('Allowed source evidence');
+    h.actor.mockResolvedValue({ ...doc(), classification: 'INTERNAL' });
+    expect((await call('read_project_document', { document_id: documentId }, onClaude)).ok).toBe(true);
+    // Without a known serving model (another caller), the read and its run-source check are unchanged.
+    h.actor.mockResolvedValue({ ...doc(), classification: 'CONFIDENTIAL' });
+    expect((await call('read_project_document', { document_id: documentId })).ok).toBe(true);
+  });
   it('historical by-ID text is disclosed without a new current-source receipt', async () => {
     h.actor.mockResolvedValue({ ...doc(), isCurrent: false, sourceAccess: { ...sourceAccess, currentVersion: false, currentUseEligible: false, receiptEligible: false, notice: 'Historical version; not current source evidence.' } });
     const receipts = new Map();

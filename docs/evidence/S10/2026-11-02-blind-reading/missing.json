@@ -1,0 +1,230 @@
+{
+  "question": "(C) Questions a regulatory reader would record that are not in questions.json",
+  "questionsJsonSha256": "57964e3ab70e858e977c73fd48014369bb16cd341efdcf5acc2b2da6dcd27937",
+  "count": 11,
+  "fields": {
+    "line / lines": "1-based lines in the letter file",
+    "span": "[start, end) UTF-16 code units of the agency's words, each checked: starts with firstWords, no control character, no page furniture",
+    "text": "the letter file sliced at span",
+    "listedBy": "which readers listed it",
+    "settled_by": "agreed = both readers placed it the same; adjudicated = see the disagreement id in disagreements.json"
+  },
+  "missing": [
+    {
+      "letter": "L43",
+      "line": 59,
+      "lines": "59-61",
+      "span": [
+        2765,
+        3049
+      ],
+      "firstWords": "When you respond to the above deficiencies, include a safety",
+      "text": "When you respond to the above deficiencies, include a safety update as described at 21 CFR\n314.50(d)(5)(vi)(b). The safety update should include data from all nonclinical and clinical\nstudies/trials of the drug under consideration regardless of indication, dosage form, or dose level.",
+      "listedBy": [
+        "A",
+        "B"
+      ],
+      "settled_by": "agreed",
+      "why": "Unnumbered request under the heading SAFETY UPDATE (line 58): the resubmission must include a safety update per 21 CFR 314.50(d)(5)(vi)(b); a reader preparing the Complete Response resubmission records it beside deficiencies 1-5. One clean span (lines 59-61). PRESCRIBING INFORMATION (55-57) reserves comment and OTHER (63-70) is procedure, so neither is a question."
+    },
+    {
+      "letter": "L44",
+      "line": 59,
+      "lines": "59-61",
+      "span": [
+        2765,
+        3049
+      ],
+      "firstWords": "When you respond to the above deficiencies, include a safety",
+      "text": "When you respond to the above deficiencies, include a safety update as described at 21 CFR\n314.50(d)(5)(vi)(b). The safety update should include data from all nonclinical and clinical\nstudies/trials of the drug under consideration regardless of indication, dosage form, or dose level.",
+      "listedBy": [
+        "A",
+        "B"
+      ],
+      "settled_by": "agreed",
+      "why": "Unnumbered request under the heading SAFETY UPDATE (line 58): the resubmission must include a safety update per 21 CFR 314.50(d)(5)(vi)(b); a reader preparing the Complete Response resubmission records it beside deficiencies 1-5. One clean span (lines 59-61). PRESCRIBING INFORMATION (55-57) reserves comment and OTHER (63-70) is procedure, so neither is a question. Identical in L44 (only deficiency 2's page break differs)."
+    },
+    {
+      "letter": "L45",
+      "line": 55,
+      "lines": "55-56",
+      "span": [
+        2169,
+        2324
+      ],
+      "firstWords": "We generally agree. However, include a test for residual solvents",
+      "text": "We generally agree. However, include a test for residual solvents\nwith acceptance criteria consistent with ICH Q3C(R8) and a test for bacterial endotoxins.",
+      "listedBy": [
+        "A",
+        "B"
+      ],
+      "settled_by": "adjudicated",
+      "why": "The agency's request for meeting Question 1 (residual solvents test per ICH Q3C(R8) and bacterial endotoxins test), lines 55-56; the listed item holds only the sponsor's question, so these words are on no list. Span starts after the label 'FDA Response to Question 1:' (a heading) and keeps 'We generally agree.', which the 'However' depends on; clean.",
+      "disagreement": "C:L45:55"
+    },
+    {
+      "letter": "L45",
+      "line": 59,
+      "lines": "59-62",
+      "span": [
+        2495,
+        2704
+      ],
+      "firstWords": "Yes, your proposal appears reasonable. Provide the following in the",
+      "text": "Yes, your proposal appears reasonable. Provide the following in the\nIND:\n1. the stability protocol, including tests, acceptance criteria and time points;\n2. the available stability data for the clinical batch.",
+      "listedBy": [
+        "A",
+        "B"
+      ],
+      "settled_by": "adjudicated",
+      "why": "The agency's request for meeting Question 2 (stability protocol and available stability data in the IND, sub-items 1.-2.), lines 59-62; on no list. Span starts after the label 'FDA Response to Question 2:'; clean, Reference ID (63) follows outside.",
+      "disagreement": "C:L45:59"
+    },
+    {
+      "letter": "L45",
+      "line": 73,
+      "lines": "73-75",
+      "span": [
+        3018,
+        3253
+      ],
+      "firstWords": "No. The rationale for the starting dose based on the",
+      "text": "No. The rationale for the starting dose based on the HNSTD in dogs is\nnot adequate for a molecule with this mechanism. Provide a starting dose rationale based on the\nSTD10 in rats and one-sixth of the HNSTD in dogs, whichever is lower.",
+      "listedBy": [
+        "A",
+        "B"
+      ],
+      "settled_by": "adjudicated",
+      "why": "The agency's finding and request for meeting Question 3: the HNSTD-based starting dose is not adequate; provide a rationale based on the STD10 in rats and one-sixth of the HNSTD in dogs, whichever is lower (lines 73-75). Starts at line 73 after the label 'FDA Response to Question 3:', so the finding stays with the request it motivates; clean.",
+      "disagreement": "C:L45:73"
+    },
+    {
+      "letter": "L47",
+      "line": 30,
+      "lines": "30-31",
+      "span": [
+        1392,
+        1547
+      ],
+      "firstWords": "We generally agree. However, include a test for residual solvents",
+      "text": "We generally agree. However, include a test for residual solvents\nwith acceptance criteria consistent with ICH Q3C(R8) and a test for bacterial endotoxins.",
+      "listedBy": [
+        "A",
+        "B"
+      ],
+      "settled_by": "adjudicated",
+      "why": "The agency's request for meeting Question 1 (residual solvents test per ICH Q3C(R8) and bacterial endotoxins test), lines 30-31; the listed item holds only the sponsor's question, so these words are on no list. Span starts after the label 'FDA Response to Question 1:' (a heading) and keeps 'We generally agree.', which the 'However' depends on; clean. No action item restates it.",
+      "disagreement": "C:L47:30"
+    },
+    {
+      "letter": "L47",
+      "line": 41,
+      "lines": "41-44",
+      "span": [
+        1796,
+        2005
+      ],
+      "firstWords": "Yes, your proposal appears reasonable. Provide the following in the",
+      "text": "Yes, your proposal appears reasonable. Provide the following in the\nIND:\n1. the stability protocol, including tests, acceptance criteria and time points;\n2. the available stability data for the clinical batch.",
+      "listedBy": [
+        "A",
+        "B"
+      ],
+      "settled_by": "adjudicated",
+      "why": "The agency's request for meeting Question 2 (stability protocol and available stability data in the IND, sub-items 1.-2.), lines 41-44; on no list. Span starts after the label 'FDA Response to Question 2:'; clean; the page furniture (35-40) lies before it. Action item 2 (line 66) restates it as the sponsor's commitment and is not a separate question.",
+      "disagreement": "C:L47:41"
+    },
+    {
+      "letter": "L47",
+      "line": 51,
+      "lines": "51-52",
+      "span": [
+        2420,
+        2538
+      ],
+      "firstWords": "No. The rationale for the starting dose based on the",
+      "text": "No. The rationale for the starting dose based on the HNSTD in dogs is\nnot adequate for a molecule with this mechanism.",
+      "listedBy": [
+        "B"
+      ],
+      "settled_by": "adjudicated",
+      "why": "The agency's deficiency for meeting Question 3 ('No. The rationale for the starting dose based on the HNSTD in dogs is not adequate...', lines 51-52): the sponsor must cure it in the IND (Discussion line 53; action item 1, line 65). A deficiency with no explicit request is still recorded, as both readers did for CRL deficiency 4. Span starts after the label; clean.",
+      "disagreement": "C:L47:Q3"
+    },
+    {
+      "letter": "L49",
+      "line": 30,
+      "lines": "30-31",
+      "span": [
+        1384,
+        1539
+      ],
+      "firstWords": "We generally agree. However, include a test for residual solvents",
+      "text": "We generally agree. However, include a test for residual solvents\nwith acceptance criteria consistent with ICH Q3C(R8) and a test for bacterial endotoxins.",
+      "listedBy": [
+        "A",
+        "B"
+      ],
+      "settled_by": "adjudicated",
+      "why": "The agency's request for meeting Question 1 (residual solvents test per ICH Q3C(R8) and bacterial endotoxins test), lines 30-31; the listed item holds only the sponsor's question, so these words are on no list. Span starts after the label 'CBER Response:' (a heading) and keeps 'We generally agree.', which the 'However' depends on; clean. No action item restates it.",
+      "disagreement": "C:L49:30"
+    },
+    {
+      "letter": "L49",
+      "line": 41,
+      "lines": "41-44",
+      "span": [
+        1775,
+        1984
+      ],
+      "firstWords": "Yes, your proposal appears reasonable. Provide the following in the",
+      "text": "Yes, your proposal appears reasonable. Provide the following in the\nIND:\n1. the stability protocol, including tests, acceptance criteria and time points;\n2. the available stability data for the clinical batch.",
+      "listedBy": [
+        "A",
+        "B"
+      ],
+      "settled_by": "adjudicated",
+      "why": "The agency's request for meeting Question 2 (stability protocol and available stability data in the IND, sub-items 1.-2.), lines 41-44; on no list. Span starts after the label 'CBER Response:'; clean; the page furniture (35-40) lies before it. Action item 2 (line 66) restates it and is not a separate question.",
+      "disagreement": "C:L49:41"
+    },
+    {
+      "letter": "L49",
+      "line": 51,
+      "lines": "51-52",
+      "span": [
+        2386,
+        2504
+      ],
+      "firstWords": "No. The rationale for the starting dose based on the",
+      "text": "No. The rationale for the starting dose based on the HNSTD in dogs is\nnot adequate for a molecule with this mechanism.",
+      "listedBy": [
+        "B"
+      ],
+      "settled_by": "adjudicated",
+      "why": "The agency's deficiency for meeting Question 3 ('No. The rationale for the starting dose based on the HNSTD in dogs is not adequate...', lines 51-52): the sponsor must cure it in the IND (Discussion line 53; action item 1, line 65). Same as L47 line 51 with the CBER label; span starts after the label; clean.",
+      "disagreement": "C:L49:Q3"
+    }
+  ],
+  "rejectedCandidates": [
+    {
+      "letter": "L47",
+      "line": 65,
+      "listedBy": [
+        "A"
+      ],
+      "why": "Action item 1 restates the line 51 obligation as the sponsor's commitment; see C:L47:Q3."
+    },
+    {
+      "letter": "L49",
+      "line": 65,
+      "listedBy": [
+        "A"
+      ],
+      "why": "Action item 1 restates the line 51 obligation; see C:L49:Q3."
+    }
+  ],
+  "noneFound": {
+    "g1": "L01-L17: neither reader nor the adjudicator found a missing question. Closers, lead-ins, L15's ENCLOSURES list and L14's list of tests are not separate questions.",
+    "g2": "Read every letter L18-L33 whole. Non-questions confirmed: L18 line 26 response instruction and line 28 closer; L24 line 5 closer; L25 line 5 lead-in; L28 items 1-3 are parts of Question 1; L30 line 13 以上 end marker. No question a reader would record is absent from the list."
+  }
+}

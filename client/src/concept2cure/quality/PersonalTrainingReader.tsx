@@ -3,8 +3,7 @@ import { canGovernedWrite } from '@shared/constants/permissions';
 import { QMS_TRAINING_DECLARATION, type QmsTrainingAcknowledgement, type QmsTrainingContext } from '@shared/qms/training';
 import { useAuthUser } from '@/services/portal/authService';
 import { GovernedTimestamp } from '../_shared/components/GovernedTimestamp';
-import { useDialog } from '../v2/useDialog';
-import { registerCeremonyOpen } from '../v2/ceremony';
+import { DialogPanel } from './ControlledDocumentDialogs';
 import { ControlledTextEditor } from './ControlledTextEditor';
 import { STATUS_LABEL } from './data';
 import { personalTrainingScope, type PersonalTrainingScope } from './qmsPersonalTraining';
@@ -12,6 +11,8 @@ import { usePersonalTrainingAcknowledgement, usePersonalTrainingRecord, type Per
 
 export interface PersonalTrainingReaderProps {
   documentId: number;
+  /** Open on the version approved for a later day, when one waits (a training notice); otherwise the version in force. */
+  startOnSuccessor?: boolean;
   onClose: () => void;
   onAcknowledged: () => void | Promise<void>;
 }
@@ -40,7 +41,7 @@ function mayEdit(props: ReaderSessionProps, record: PersonalTrainingRecord): boo
 }
 
 function ReaderSession(props: ReaderSessionProps) {
-  const record = usePersonalTrainingRecord(props.scope, props.isCurrent);
+  const record = usePersonalTrainingRecord(props.scope, props.isCurrent, props.startOnSuccessor ? 'successor' : 'in-force');
   const { busy, inFlight, acknowledge } = usePersonalTrainingAcknowledgement(props.scope, record, props.onAcknowledged);
   const [editing, setEditing] = React.useState(false);
   const beforeClose = React.useRef<(() => Promise<boolean>) | null>(null);
@@ -50,8 +51,6 @@ function ReaderSession(props: ReaderSessionProps) {
     if (inFlight.current || !await allowDiscard()) return;
     if (record.current()) props.onClose();
   };
-  const dialogRef = useDialog(() => { void close(); });
-  React.useEffect(registerCeremonyOpen, []);
   const back = async () => { if (await allowDiscard() && record.current()) setEditing(false); };
   const reloadEditor = async () => {
     if (await allowDiscard() && record.current()) { setEditing(false); await record.load(); }
@@ -68,31 +67,30 @@ function ReaderSession(props: ReaderSessionProps) {
       'Controlled text was saved as a draft. Send this revision for review before approval.');
   };
   const editable = mayEdit(props, record);
-  return <div className="qms-training-overlay">
-    <div className="qms-training-dialog" role="dialog" aria-modal="true" aria-labelledby="qms-personal-training-title" tabIndex={-1} ref={dialogRef}>
-      <header className="qms-training-head">
-        <div><h2 id="qms-personal-training-title">{editing ? 'Edit controlled text' : 'Read and acknowledge'}</h2>
-          {record.context && record.selected && <p>{record.context.docNumber} · {record.context.title} · Revision {record.selected.documentVersion} · {versionStatus(record.selected)}</p>}
-        </div>
-        <button type="button" className="qms-btn ghost" disabled={busy} onClick={() => { void close(); }}>Close</button>
-      </header>
-      <ReaderMessages record={record} />
-      {!record.loading && !editing && <SuccessorChoice record={record} busy={busy} />}
-      {!record.loading && (editing ?
-        <ControlledTextPane props={props} record={record} editable={editable} registerBeforeClose={registerBeforeClose} onSaved={controlledTextSaved} onReload={reloadEditor} /> :
-        <TrainingReadContent record={record} busy={busy} acknowledge={acknowledge} />)}
-      <footer className="qms-training-actions">
-        {editable && !editing && <button type="button" className="qms-btn ghost" disabled={busy} onClick={() => setEditing(true)}>Edit controlled text</button>}
-        {editing ? <button type="button" className="qms-btn ghost" onClick={() => { void back(); }}>Back to document</button> :
-          <button type="button" className="qms-btn ghost" disabled={busy || record.loading || !props.scope} onClick={() => { void record.load(); }}>Reload record</button>}
-      </footer>
-    </div>
-  </div>;
+  /* C16: the product's drawer (DialogPanel, as C2CForm's), which also registers the ceremony. The acknowledgement is the
+     footer's primary action, so it stays in view below the text however long the procedure is. */
+  const acknowledging = !editing && !record.loading && record.selected?.eligible === true && !record.receipt;
+  const footer = <>
+    {editable && !editing && <button type="button" className="de-btn ghost" disabled={busy} onClick={() => setEditing(true)}>Edit controlled text</button>}
+    {editing ? <button type="button" className="de-btn ghost" onClick={() => { void back(); }}>Back to document</button> :
+      <button type="button" className="de-btn ghost" disabled={busy || record.loading || !props.scope} onClick={() => { void record.load(); }}>Reload record</button>}
+    {acknowledging && <button type="button" className="de-btn primary" disabled={!record.understood || busy || record.blocked}
+      onClick={() => { void acknowledge(); }}>{busy ? 'Recording…' : 'Acknowledge this revision'}</button>}
+  </>;
+  const sub = record.context && record.selected
+    ? `${record.context.docNumber} · ${record.context.title} · Revision ${record.selected.documentVersion} · ${versionStatus(record.selected)}` : undefined;
+  return <DialogPanel title={editing ? 'Edit controlled text' : 'Read and acknowledge'} sub={sub} busy={busy} onClose={() => { void close(); }} footer={footer}>
+    <ReaderMessages record={record} />
+    {!record.loading && !editing && <SuccessorChoice record={record} busy={busy} />}
+    {!record.loading && (editing ?
+      <ControlledTextPane props={props} record={record} editable={editable} registerBeforeClose={registerBeforeClose} onSaved={controlledTextSaved} onReload={reloadEditor} /> :
+      <TrainingReadContent record={record} busy={busy} />)}
+  </DialogPanel>;
 }
 
 function ReaderMessages({ record }: { record: PersonalTrainingRecord }) {
   return <>
-    {record.loading && <p role="status">Loading the controlled revision…</p>}
+    {record.loading && <p className="de-desc" role="status">Loading the controlled revision…</p>}
     {record.error && <p className="qms-training-error" role="alert">{record.error}</p>}
     {record.notice && <p className="qms-training-notice" role="status">{record.notice}</p>}
   </>;
@@ -138,9 +136,7 @@ function ControlledTextPane({ props, record, editable, registerBeforeClose, onSa
     isCurrent={record.current} registerBeforeClose={registerBeforeClose} onSaved={onSaved} onReload={onReload} />;
 }
 
-function TrainingReadContent({ record, busy, acknowledge }: {
-  record: PersonalTrainingRecord; busy: boolean; acknowledge: () => Promise<void>;
-}) {
+function TrainingReadContent({ record, busy }: { record: PersonalTrainingRecord; busy: boolean }) {
   const context = record.selected;
   if (!context) return null;
   return <>
@@ -150,7 +146,7 @@ function TrainingReadContent({ record, busy, acknowledge }: {
     </div>}
     {!context.eligible && <p className="qms-training-unavailable">{context.unavailableReason ?? 'Verified readable released text is unavailable. A document owner must save and release the controlled section text before you can acknowledge it.'}</p>}
     {record.receipt && <TrainingReceipt receipt={record.receipt} countsFrom={countsFrom(context)} />}
-    {context.eligible && !record.receipt && <TrainingDeclaration record={record} busy={busy} acknowledge={acknowledge} countsFrom={countsFrom(context)} />}
+    {context.eligible && !record.receipt && <TrainingDeclaration record={record} busy={busy} countsFrom={countsFrom(context)} />}
   </>;
 }
 
@@ -167,13 +163,11 @@ function TrainingReceipt({ receipt, countsFrom: day }: { receipt: QmsTrainingAck
   </section>;
 }
 
-function TrainingDeclaration({ record, busy, acknowledge, countsFrom: day }: {
-  record: PersonalTrainingRecord; busy: boolean; acknowledge: () => Promise<void>; countsFrom: string | null;
-}) {
+/** The declaration a person makes; its "Acknowledge this revision" is the drawer's primary action (C16). */
+function TrainingDeclaration({ record, busy, countsFrom: day }: { record: PersonalTrainingRecord; busy: boolean; countsFrom: string | null }) {
   return <div className="qms-training-declaration">
     <label><input type="checkbox" checked={record.understood} disabled={busy || record.blocked} onChange={(event) => record.setUnderstood(event.target.checked)} />{QMS_TRAINING_DECLARATION}</label>
     <p>For your signed-in account only. This is a personal attestation, not an electronic signature.</p>
     {day && <p>Your acknowledgement is recorded now and counts from {day}.</p>}
-    <button type="button" className="qms-btn primary" disabled={!record.understood || busy || record.blocked} onClick={() => { void acknowledge(); }}>{busy ? 'Recording…' : 'Acknowledge this revision'}</button>
   </div>;
 }

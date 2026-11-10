@@ -75,10 +75,30 @@ vi.mock('../../services/part11/signature-persistence', async (importOriginal) =>
 });
 
 import mdxQmsRouter from '../mdx-qms';
+import { learningPromotionOf, computeQmsChangeContentDigest } from '../../services/qms/change-approval-signature';
+import { sha256CanonicalJson } from '../../services/part11/signature-persistence';
 
 const ORG = 9;
 const SIGNER = 8;
 const PROPOSER = 7;
+
+describe('reviewed learning artifact identity', () => {
+  const artifact = { kind: 'aggregate_learning_v1', libraryVersionId: '11111111-1111-4111-8111-111111111111',
+    classKey: 'independent_review', agency: 'fda', documentType: 'cer', cohortMinimum: 3, tenantCount: 3, eventCount: 4 };
+  it('accepts only a canonical closed artifact and binds every count and enum byte', () => {
+    const promotion = { artifact, artifactSha256: sha256CanonicalJson(artifact) };
+    expect(learningPromotionOf({ learningPromotion: promotion })).toEqual(promotion);
+    expect(() => learningPromotionOf({ learningPromotion: { ...promotion, artifact: { ...artifact, eventCount: 5 } } })).toThrow('Nothing was shared.');
+    expect(learningPromotionOf({})).toBeNull();
+  });
+  it.each([
+    { donorText: 'RAW_TENANT_CANARY' }, { tenantIds: [10, 11, 12] }, { textFingerprint: 'a'.repeat(64) },
+    { cohortMinimum: 1 }, { tenantCount: 2 }, { classKey: 'RAW_TENANT_CANARY' },
+  ])('refuses free fields or unsupported cohort controls even with a recalculated hash: %o', patch => {
+    const candidate = { ...artifact, ...patch };
+    expect(() => learningPromotionOf({ learningPromotion: { artifact: candidate, artifactSha256: sha256CanonicalJson(candidate) } })).toThrow('Nothing was shared.');
+  });
+});
 
 const UNDER_ASSESSMENT = {
   id: 1, organization_id: ORG, change_number: 'CC-2026-014', title: 'Sterile filter supplier change',
@@ -89,7 +109,10 @@ const UNDER_ASSESSMENT = {
   target_implementation_date: '2026-11-01', qms_document_id: null, metadata: {},
 };
 
-const VALID_BODY = { password: 'correct horse', meaning: 'APPROVED', reason: 'Impact assessment reviewed; approved for implementation.' };
+/* The approver signs the content they read: the register's content_digest for the row the dialog showed. */
+const READ_DIGEST = () => computeQmsChangeContentDigest(UNDER_ASSESSMENT);
+const VALID_BODY = { password: 'correct horse', meaning: 'APPROVED', reason: 'Impact assessment reviewed; approved for implementation.',
+  get expectedContentDigest() { return READ_DIGEST(); } };
 
 function app(userId = SIGNER) {
   const a = express();
@@ -184,6 +207,28 @@ describe('POST /api/mdx/qms/changes/:id/approve — the signed door', () => {
     expect(txSql()).toContain('ROLLBACK');
     expect(H.persistSignature).not.toHaveBeenCalled();
     expect(wroteApproval()).toBe(false);
+  });
+
+  /* 2026-11-10: an edit landing between the dialog opening and the signature was signed unseen. */
+  it('409 QMS_CHANGED_SINCE_READ when the change was edited after it was read; rolled back, nothing signed', async () => {
+    const read = computeQmsChangeContentDigest({ ...UNDER_ASSESSMENT, implementation_plan: 'The plan as it was read.' });
+    const res = await request(app()).post('/api/mdx/qms/changes/1/approve').send({ ...VALID_BODY, expectedContentDigest: read });
+    expect(res.status).toBe(409);
+    expect(res.body.details?.code).toBe('QMS_CHANGED_SINCE_READ');
+    expect(res.body.error).toMatch(/Nothing was signed/);
+    expect(txSql()).toContain('ROLLBACK');
+    expect(H.persistSignature).not.toHaveBeenCalled();
+    expect(H.recordGoverned).not.toHaveBeenCalled();
+    expect(wroteApproval()).toBe(false);
+  });
+
+  it('400 without the digest of the content read; nothing verified or written', async () => {
+    const withoutDigest = { password: VALID_BODY.password, meaning: VALID_BODY.meaning, reason: VALID_BODY.reason };
+    const res = await request(app()).post('/api/mdx/qms/changes/1/approve').send(withoutDigest);
+    expect(res.status).toBe(400);
+    expect(JSON.stringify(res.body)).toMatch(/expectedContentDigest/);
+    expect(H.compare).not.toHaveBeenCalled();
+    expect(H.txQuery).not.toHaveBeenCalled();
   });
 
   it('409 when the change is not under assessment; rolled back', async () => {

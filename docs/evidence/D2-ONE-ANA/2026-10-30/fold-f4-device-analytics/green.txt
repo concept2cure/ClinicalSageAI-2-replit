@@ -1,0 +1,354 @@
+# Green: the F4 suites and every suite the fold edited, after the change (2026-10-30).
+# npx vitest run --maxWorkers=3 <12 files>
+ Test Files  12 passed (12)
+      Tests  170 passed (170)
+
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping > maps every catalogued fold to its target, and names the folds that had no catalogue row
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping > agrees with the screens: each folded id opens its target
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping > carries to live catalogue modules only; the uncatalogued folds have no row to hold a grant
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves tasks's paths to an organization holding only device-tasks
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves vault's paths to an organization holding only device-vault
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves vault's paths to an organization holding only artifacts-center
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves ectd-compile's paths to an organization holding only ectd-publishing
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves device-engineering's paths to an organization holding only risk
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves device-engineering's paths to an organization holding only design-controls
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves device-diagnostics's paths to an organization holding only ivd-completeness
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves submission-center's paths to an organization holding only device-validation
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves submission-center's paths to an organization holding only device-submission
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves insights's paths to an organization holding only device-analytics
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > refuses a tiered target's own paths to an organization holding neither
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > a revocation written on the target stands: the carried grant does not undo it
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > a lapsed or revoked grant of the folded module carries nothing
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > the target's own grant serves as before
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > canAccessModule allows the target and names the folded module that carries it
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > the target revoked: refused for use, but an administrator may switch it back on
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > the Apps catalogue lists the target as subscribed through the folded module, and not the folded module
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the resolver's other answers read the same carried grant > the rail, ⌘K and AnA's targets: the target is entitled, as subscribed
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the operator console answers as the rail does > shows the target held through the folded module, entitled as subscribed
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the operator console answers as the rail does > shows a revoked target as revoked, and a tenant holding neither as below its tier
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping is consulted in exactly one place > only its own module names the mapping
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the mapping is consulted in exactly one place > only the licence read derives the carried grants, once
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > keeps folded dossier identities deprecated across replay without deleting their rows
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > replays every catalog writer in the deploy set, in deploy order
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > seeds a non-trivial catalog (guards against asserting over zero rows)
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > shares its rules with the source gate rather than restating them
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > makes no unsupported compliance claim in any module description or name
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > states what the authoring-engine page is, since it reads no program data
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > states no fixed count of report types — the registry grows
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > describes batch-draft to a customer, not by its function names
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > describes document-authoring by what it does, not by an internal handoff note
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > describes the IND lifecycle without offering what P-32 withholds
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Apps catalog module descriptions > describes agency-question approval as what it is, not as a signature
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired filing catalogue subscriptions > fresh replay neither creates a retired filing identity nor requires it for packaging
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired filing catalogue subscriptions > keeps an existing filing catalogue and subscription retired across catalogue and packaging replay
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired device task workbench > fresh replay neither creates device-tasks nor requires it for packaging, and Tasks stays offered
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired device task workbench > keeps an existing device-tasks row and its subscription, deprecated, across catalogue and packaging replay
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired Artifacts center and device vault > fresh replay creates neither row nor requires either for packaging, and the Vault stays offered at free
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired Artifacts center and device vault > keeps each existing row and its subscription, deprecated, across catalogue and packaging replay
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired Part 11 console > fresh replay creates no part11-console row, and Audit trail stays uncatalogued
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired Part 11 console > deprecates a part11-console row added by another path, and keeps its subscription, across replay
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired eCTD publishing reference > a fresh database replaying the whole catalogue set twice never creates the row nor requires it for packaging, and eCTD Compile stays offered
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired eCTD publishing reference > keeps a deployed row, its tier and its subscription, deprecated, across catalogue and packaging replay
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired risk, design-controls and ivd-completeness > a fresh database replaying the whole catalogue set twice holds none of the three, and both targets and human factors stay offered at standard
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired risk, design-controls and ivd-completeness > keeps each deployed row, its tier and its subscription, deprecated, across replay of every writer
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired organization-wide blocker list > a fresh database replaying the whole catalogue set twice never holds device-validation, and Submission Center stays offered at standard
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired organization-wide blocker list > keeps a deployed row, its tier and its subscription, deprecated, across replay of every writer
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired device submission packages > a fresh database replaying the whole catalogue set twice never holds device-submission, and Submission Center stays offered at standard
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired device submission packages > keeps a deployed row, its tier and its subscription, deprecated, across replay of every writer
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired device analytics > a fresh database replaying the whole catalogue set twice never holds device-analytics, and Reporting & analytics stays offered at standard
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired device analytics > keeps a deployed row, its tier and its subscription, deprecated, across replay of every writer
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > the device section of the Reporting overview > runs as a role that cannot bypass row security
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > the device section of the Reporting overview > counts device projects the reader can open, by recorded status, and never a drug, deleted or other-tenant project
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > the device section of the Reporting overview > reads only the projects the reader can open
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > the device section of the Reporting overview > counts nothing of another tenant, even when its project id is named
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > the device section of the Reporting overview > says there is no device project when none the reader can open is a device project
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > the device section of the Reporting overview > paces recorded submissions over the 24 calendar months to now, oldest first
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > the device section of the Reporting overview > builds the month window from the date it is given, across a year boundary
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > the device section of the Reporting overview > rates AnA drafts recorded against a device project the reader can open, and no other draft
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > the device section of the Reporting overview > gives a genuine zero as zero, and no rate where no AnA draft is recorded
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > an unreadable source is unavailable, never zero > the drafts store missing (42P01) leaves the project figures and withholds only the rate
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > an unreadable source is unavailable, never zero > the drafts store missing (42703) leaves the project figures and withholds only the rate
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > an unreadable source is unavailable, never zero > the programs read failing (42P01) throws, so the section is unavailable rather than empty
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > an unreadable source is unavailable, never zero > the programs read failing (42703) throws, so the section is unavailable rather than empty
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > an unreadable source is unavailable, never zero > any other drafts failure throws too: no partial section stands in for a failed read
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > an unreadable source is unavailable, never zero > refuses an identity it cannot trust before reading anything
+ ✓ client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > the device section shows what the device read computed, and nothing else > states each recorded status with its count, the pace and the acceptance rate
+ ✓ client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > the device section shows what the device read computed, and nothing else > says when no AnA draft is recorded, rather than a rate of zero
+ ✓ client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > the device section shows what the device read computed, and nothing else > withholds only the rate when the drafts could not be read
+ ✓ client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > the device section shows what the device read computed, and nothing else > says a failed read failed, and draws no figure
+ ✓ client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > the device section shows what the device read computed, and nothing else > draws nothing for a reader with no device project, or an overview without the section
+ ✓ client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > Reporting & analytics carries the device section from its overview > on the canvas of an open project
+ ✓ client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > Reporting & analytics carries the device section from its overview > with no project open, beside the project picker
+ ✓ client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > Reporting & analytics carries the device section from its overview > a failed device read is said on the canvas
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts > device-analytics is folded into Reporting & analytics > resolves the old id to Reporting & analytics from a link, an in-app move and AnA, with or without a project open
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts > device-analytics is folded into Reporting & analytics > lands on Reporting & analytics, whose overview reads the device section over the projects the reader can open
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts > device-analytics is folded into Reporting & analytics > keeps no screen of its own: no view, no registry entry for ⌘K, no kit id, no host publish
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts > device-analytics is folded into Reporting & analytics > leaves no client code, no organization-wide aggregate and no claim for the old route
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts > device-analytics is folded into Reporting & analytics > is in neither project scope list, the rail, a focus list nor the group tables, and no tour stops there
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > unset ⇒ on in production, off elsewhere
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > explicit values win in either environment
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > an explicit off in production is said once, as an error; off elsewhere and on are quiet
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > readLaunchScopeMode > a value that is neither on nor off refuses to boot in production, and is off elsewhere
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > reaches MDX as project features without adding app or module grants
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > has seven apps and every app surface is in the id set
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > CMC / Module 3 is a launch app — decision P-28, 2026-10-12
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > CMC grants NO module, so the professional band still decides who sees it
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > Reporting & analytics is a launch app — founder decision, 2026-09-26
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > protocol development is in the Authoring app — founder decision, 2026-09-21
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the authoring engine explainer is outside the scope — swapped out for protocol development
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > keeps the Part 11 surface the catalog may never gate
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > program-journey is out of the projects app — fixture-demo: empty for every program a client creates
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > filings-catalog is out of the projects app — folded identity: reference discovery and creation live in the New project wizard
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > regulatory-workspace is out of the authoring app — a fixed paragraph where the editor should be
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > template-library is out of the authoring app — a saved template formats no document
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > ectd-coauthor is out of the submission-center app — a second editor whose checks report a fixed failure
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > dossier-map is out of the projects app — retired screen: its tracked records are reached in project Author
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > ectd-publishing is out of the submission-center app — a reference page that publishes nothing
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > qmp is out of the qms app — a plan cannot be given its gates, and nothing reads them
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the shell no longer carries ana-command — enterprise-only, and says runs are recorded that are not
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the shell no longer carries ana-memory — shows a store nothing writes, not the memory AnA loads
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > the shell no longer carries training — no path, lesson or certification exists
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the scope list itself > every app keeps a screen a client can work in
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded device task workbench > is in neither project scope list: Tasks holds it (D2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded Artifacts center and device vault > are in no scope list and no new grant: the Vault holds both (D2, fold F3, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded Part 11 console > is in no scope list and no grant: Audit trail holds both chain verdicts (D2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded setup > is in no scope list and no grant: Admin and access → Settings holds the organisation's setup (D2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded eCTD publishing reference > is in no scope list and no grant: eCTD Compile holds the reference (D2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded billing screen > is in no scope list and no grant: Licensing holds the invoices, usage keeps the limits (D2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded AnA memory > is in no scope list and no grant: the conversation holds what AnA remembers (D2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded risk file, design-control trace and IVDR readiness board > are in no scope list and no new grant: Engineering and IVDR evidence hold them (D2, folds F1c and F2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the retired organization-wide blocker list > is in no scope list and no new grant: each filing's readiness holds its blockers (D2, fold F5 item 2, 2026-10-29)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded device submission packages > are in no scope list and no new grant: Submission Center holds the device filings (D2, fold F5 item 1, 2026-10-30)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded device analytics > is in no scope list and no new grant: Reporting & analytics holds the device section (D2, fold F4, 2026-10-30)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > the IND lifecycle and forms screen is a feature of Submission Center — decision P-32, 2026-10-15
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > agency questions stay locked until approval is a signed act
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > P-32 grants NO module: the Submission Center modules are its own three plus dispatch-readiness, and the standard tier still decides
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Center carries the IND lifecycle tools — decision P-32 > pharmacovigilance, which holds the IND safety-report routes, stays outside the scope (P-32)
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > leaves a launch surface verdict untouched, whatever it said
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > locks a bought module outside the scope — the boundary never widens
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > emits a verdict for every registered surface outside the scope that has no catalog row
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > applyLaunchScope > never emits a launch-scope verdict for a launch surface
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Readiness is a Submission Center screen — founder decision, 2026-10-17 > is no longer an app of its own
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Readiness is a Submission Center screen — founder decision, 2026-10-17 > its surface and module moved to Submission Center, so the readiness verdict stays reachable
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > Submission Readiness is a Submission Center screen — founder decision, 2026-10-17 > grants a new organisation exactly the modules it was granted before the fold
+ ✓ server/routes/__tests__/insights-canvas-device-section.test.ts > the overview's device section > is read over the reader's accessible projects, on the request's own connection
+ ✓ server/routes/__tests__/insights-canvas-device-section.test.ts > the overview's device section > is read even when the reader can open no project, and says so as the engine does
+ ✓ server/routes/__tests__/insights-canvas-device-section.test.ts > the overview's device section > a failed device read is unavailable, with no detail and nothing else of the canvas withdrawn
+ ✓ server/routes/__tests__/insights-canvas-device-section.test.ts > the overview's device section > a failed portfolio read is still the 503 it was: the device section does not stand in for it
+ ✓ server/routes/__tests__/mdx-analytics-availability.test.ts > MDX analytics data availability > no longer serves the organization-wide kit aggregate, and reads nothing for it
+ ✓ server/routes/__tests__/mdx-analytics-availability.test.ts > MDX analytics data availability > reads positive tenant data on the pinned connection
+ ✓ server/routes/__tests__/mdx-analytics-availability.test.ts > MDX analytics data availability > reports 42P01 as unavailable rather than zero counts
+ ✓ server/routes/__tests__/mdx-analytics-availability.test.ts > MDX analytics data availability > reports 42703 as unavailable rather than zero counts
+ ✓ server/routes/__tests__/mdx-analytics-availability.test.ts > MDX analytics data availability > reports a missing request connection rather than borrowing a shared one
+ ✓ server/routes/__tests__/mdx-analytics-availability.test.ts > MDX analytics data availability > permits genuine zero counts from an initialized source
+ ✓ server/middleware/__tests__/launch-scope-device-features.test.ts > the real registry with the device features in Projects (62a8d5e7) > the walk reaches each device screen's own hooks, and each names a call
+ ✓ server/middleware/__tests__/launch-scope-device-features.test.ts > the real registry with the device features in Projects (62a8d5e7) > serves every call a device screen names, under the gate production builds
+ ✓ server/middleware/__tests__/launch-scope-device-features.test.ts > the real registry with the device features in Projects (62a8d5e7) > refuses the retired device analytics family in production: no launch screen claims /api/mdx/analytics (fold F4, 2026-10-30)
+ ✓ server/middleware/__tests__/launch-scope-device-features.test.ts > the real registry with the device features in Projects (62a8d5e7) > claims no /api/mdx or /api/submission-ops root, nor a family no screen of it calls
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > keeps a US diagnostic on its recorded 510(k) route and adds the assay bench
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > gives MDR clinical evaluation and IVDR performance evaluation different leads and deliverables
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > shares evidence across recorded filings without converting a De Novo into a 510(k)
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > hands De Novo assembly to project authoring while preserving its filing identity
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > does not fabricate a 510(k) for an unknown device route or an MDX workflow for a drug
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow > opens an existing feature and uses project evidence for specialist laboratory reports
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > states an unreadable additional-filing list and never offers a locked feature
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > opens a secondary MDR evaluation from its clinical evidence without changing the primary 510(k)
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > uses project evidence for US assay work and only opens IVDR evidence for a recorded IVDR filing
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a 510(k) project names its strategy and assembly doors for the pathway, and opens its feature
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a PMA project names its strategy and assembly doors for the pathway, and opens its feature
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a MDR project names its strategy and assembly doors for the pathway, and opens its feature
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > a IVDR project names its strategy and assembly doors for the pathway, and opens its feature
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > names the software, agency, post-market and clinical-studies doors for their jobs
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > project MDX workflow — doors and headings > heads a filing with no recorded route by its kind, in words a client reads
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > places each of the 16 project features once: opened from Plan, or listed with why it has no door
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > opens exactly those twelve features from a device project's Plan, over every recorded route and product type
+ ✓ client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx > device features inside the project > offers no door to device-workstream from inside the project
+ ✓ tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX rich-surface interactive smoke > Postmarket: every button click is handler-safe
+ ✓ tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX rich-surface interactive smoke > Engineering: every risk-matrix cell click is handler-safe
+ ✓ tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX rich-surface interactive smoke > UDI: every label-preview / format-picker click is handler-safe
+ ✓ tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX Files tab — root structure > renders all five filesystem roots on PathwayPanes(k510)
+ ✓ tests/concept2cure/design-system-surfaces-smoke.test.tsx > design-system surface smoke tests > DocumentsPanel renders an empty doc list without error
+ ✓ tests/concept2cure/design-system-surfaces-smoke.test.tsx > design-system surface smoke tests > EngineeringSurface renders with program context
+ ✓ tests/concept2cure/design-system-surfaces-smoke.test.tsx > design-system surface smoke tests > EngineeringSurface renders with null program
+ ✓ tests/concept2cure/design-system-surfaces-smoke.test.tsx > design-system surface smoke tests > UdiSurface renders for a project
+ ✓ tests/concept2cure/design-system-surfaces-smoke.test.tsx > design-system surface smoke tests > UdiSurface renders with no project
+ ✓ tests/concept2cure/design-system-surfaces-smoke.test.tsx > design-system surface smoke tests > PostmarketSurface renders
+
+# Neighbouring suites: every test file that imports what the fold changed (the host, the kit ids, the registry and aliases, the canvas and its route, the scope lists, the navigation targets and tours, the grant mapping, the analytics router): 109 files in four batches, before the contract-test refactor and the eslint fixes (which were rerun above).
+batch 00: Test Files 28 passed (28) · Tests 257 passed (257)
+batch 01: Test Files 28 passed (28) · Tests 160 passed (160)
+batch 02: Test Files 28 passed (28) · Tests 348 passed (348)
+batch 03: Test Files 25 passed (25) · Tests 324 passed (324)
+
+# The 109 files:
+client/src/concept2cure/mdx/__tests__/MdxSurfaceHost.test.tsx
+client/src/concept2cure/mdx/__tests__/deviceFeaturesReadTheProject.test.tsx
+client/src/concept2cure/mdx/__tests__/editorHandoff.test.tsx
+client/src/concept2cure/mdx/__tests__/engineeringAnaContext.test.tsx
+client/src/concept2cure/mdx/__tests__/engineeringAnaContextSettles.test.tsx
+client/src/concept2cure/mdx/__tests__/ivdReadinessAnaContext.test.tsx
+client/src/concept2cure/mdx/__tests__/k510IvdVariant.test.tsx
+client/src/concept2cure/mdx/__tests__/surfaceHostFailure.test.tsx
+client/src/concept2cure/mdx/__tests__/surfaceHostRenders.test.tsx
+client/src/concept2cure/mdx/components/__tests__/dataGateContract.test.tsx
+client/src/concept2cure/mdx/presub/__tests__/PreSubManager.dossierLinkUnwired.test.tsx
+client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.noProject.test.tsx
+client/src/concept2cure/mdx/surfaces/__tests__/IvdSurface.recordedPhase.test.tsx
+client/src/concept2cure/mdx/surfaces/__tests__/PmaSurface.recordedPhase.test.tsx
+client/src/concept2cure/v2/__tests__/ProjectMdxWorkflow.test.tsx
+client/src/concept2cure/v2/__tests__/anaAskDestination.test.tsx
+client/src/concept2cure/v2/__tests__/anaOperatesGatewayTransmittals.test.tsx
+client/src/concept2cure/v2/__tests__/appMentions.test.tsx
+client/src/concept2cure/v2/__tests__/capabilityBrowser.test.tsx
+client/src/concept2cure/v2/__tests__/clientCopyNoProgram.test.ts
+client/src/concept2cure/v2/__tests__/clientNamesSlice1.test.tsx
+client/src/concept2cure/v2/__tests__/complianceReports.test.tsx
+client/src/concept2cure/v2/__tests__/complianceReportsReview.test.tsx
+client/src/concept2cure/v2/__tests__/conversationRefChipsNoLock.test.ts
+client/src/concept2cure/v2/__tests__/foldAnaMemory.test.ts
+client/src/concept2cure/v2/__tests__/foldBilling.test.ts
+client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts
+client/src/concept2cure/v2/__tests__/foldDeviceSubmission.test.ts
+client/src/concept2cure/v2/__tests__/foldDeviceTasks.test.ts
+client/src/concept2cure/v2/__tests__/foldDeviceValidation.test.ts
+client/src/concept2cure/v2/__tests__/foldEctdPublishing.test.ts
+client/src/concept2cure/v2/__tests__/foldIvdCompleteness.test.ts
+client/src/concept2cure/v2/__tests__/foldPart11Console.test.ts
+client/src/concept2cure/v2/__tests__/foldRiskDesignControls.test.ts
+client/src/concept2cure/v2/__tests__/foldSetup.test.ts
+client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts
+client/src/concept2cure/v2/__tests__/insightsActualPlan.test.tsx
+client/src/concept2cure/v2/__tests__/insightsCanvasAccessible.test.tsx
+client/src/concept2cure/v2/__tests__/insightsCapabilityCounts.test.tsx
+client/src/concept2cure/v2/__tests__/insightsChartNoFixtures.test.ts
+client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx
+client/src/concept2cure/v2/__tests__/insightsExportProducesFile.test.tsx
+client/src/concept2cure/v2/__tests__/insightsFinalizeSigned.test.tsx
+client/src/concept2cure/v2/__tests__/insightsHeldBecause.test.ts
+client/src/concept2cure/v2/__tests__/insightsHonestCopy.test.ts
+client/src/concept2cure/v2/__tests__/insightsHonestCopy.test.tsx
+client/src/concept2cure/v2/__tests__/insightsLabelCurrencyMatrix.test.tsx
+client/src/concept2cure/v2/__tests__/insightsLifecycleCalendar.test.tsx
+client/src/concept2cure/v2/__tests__/insightsNoChatLookalike.test.tsx
+client/src/concept2cure/v2/__tests__/insightsNoPrediction.test.tsx
+client/src/concept2cure/v2/__tests__/insightsNotAna.test.tsx
+client/src/concept2cure/v2/__tests__/insightsOpenProgram.test.tsx
+client/src/concept2cure/v2/__tests__/insightsOrganizationScopeNote.test.tsx
+client/src/concept2cure/v2/__tests__/insightsPlanUnresolved.test.tsx
+client/src/concept2cure/v2/__tests__/insightsPortfolioTruncation.test.tsx
+client/src/concept2cure/v2/__tests__/insightsProjectScope.test.tsx
+client/src/concept2cure/v2/__tests__/insightsReadinessHonesty.test.tsx
+client/src/concept2cure/v2/__tests__/insightsReportsRunWhatTheyName.test.tsx
+client/src/concept2cure/v2/__tests__/insightsUnreadPlanIsNotAHigherPlan.test.tsx
+client/src/concept2cure/v2/__tests__/insightsViewOnly.test.tsx
+client/src/concept2cure/v2/__tests__/liveDriveDefaults.test.tsx
+client/src/concept2cure/v2/__tests__/moduleCatalogReconciliation.test.ts
+client/src/concept2cure/v2/__tests__/navTargets.test.tsx
+client/src/concept2cure/v2/__tests__/navigationReachability.test.ts
+client/src/concept2cure/v2/__tests__/projectCreationDoors.contract.test.ts
+client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx
+client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx
+client/src/concept2cure/v2/__tests__/registryModel.test.ts
+client/src/concept2cure/v2/__tests__/reportingContextIntegrity.test.tsx
+client/src/concept2cure/v2/__tests__/reportingCurrentSessionOwnership.test.tsx
+client/src/concept2cure/v2/__tests__/surfaceActions.test.ts
+client/src/concept2cure/v2/__tests__/surfaceContextIds.test.ts
+client/src/concept2cure/v2/__tests__/surfaceRouting.test.ts
+server/__tests__/routes/mdx-risk-accept-residual-signature.test.ts
+server/middleware/__tests__/core-project-record-gating.test.ts
+server/middleware/__tests__/engineering-risk-design-controls-gate.test.ts
+server/middleware/__tests__/ivd-board-under-diagnostics.test.ts
+server/middleware/__tests__/launch-scope-api-gate.test.ts
+server/middleware/__tests__/launch-scope-device-features.test.ts
+server/middleware/__tests__/vault-artifact-leaf-gate.test.ts
+server/routes/__tests__/csr-builder-retired-endpoints.test.ts
+server/routes/__tests__/deferred-data-runtime-role.pglite.test.ts
+server/routes/__tests__/insights-canvas-catalog.test.ts
+server/routes/__tests__/insights-canvas-device-section.test.ts
+server/routes/__tests__/insights-canvas-open-program.test.ts
+server/routes/__tests__/insights-canvas-portfolio-unavailable.test.ts
+server/routes/__tests__/insights-canvas-regional-filing.test.ts
+server/routes/__tests__/mdx-analytics-availability.test.ts
+server/services/ana-ri/__tests__/navigation-actions.test.ts
+server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts
+server/services/entitlements/__tests__/launch-scope.test.ts
+server/services/entitlements/__tests__/reporting-launch-claim.test.ts
+server/services/report-os/__tests__/device-portfolio.pglite.test.ts
+server/services/report-os/portfolio/__tests__/org-summary-concurrency.test.ts
+shared/constants/__tests__/mdx-project-features.test.ts
+shared/navigation/__tests__/demo-scripts-name-no-seeded-record.test.ts
+shared/navigation/__tests__/demo-scripts.test.ts
+shared/navigation/__tests__/navigation.test.ts
+shared/types/__tests__/onboarding-discovery-contract.test.ts
+tests/ci/launch-qualification-catalog.test.ts
+tests/concept2cure/design-system-surfaces-smoke.test.tsx
+tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx
+tests/concept2cure/module-shells-smoke.test.tsx
+tests/mdx-qms-labeling-search-analytics-routes.test.ts
+tests/schema-contract/catalog-module-claims.contract.test.ts
+tests/schema-contract/filings-catalog-retirement.contract.test.ts
+tests/ui/one-shell.test.ts
+tests/ui/shell-kit-lazy.test.ts
+tests/ui/surface-registry-coverage.test.ts
+
+# ── Re-run after the upstream merge (base 4323b9149) and F6, 2026-10-30 19:45-20:00 UTC ──
+# One run covers both folds: 222 files, 3,076 tests, 3,038 pass. The 38 that fail are upstream's and fail the same
+# way on a clean export of HEAD; the list and the HEAD run are in ../fold-f6-device-workstream/green.txt. A run at
+# 19:08 UTC had two red cases in launch-scope-device-features.test.ts: F6 was half-made then (the room's read was
+# still claimed by device-workstream, whose screen was gone). They are green here. The F4 cases, as printed:
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts > device-analytics is folded into Reporting & analytics > is in neither project scope list, the rail, a focus list nor the group tables, and no tour stops there
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts > device-analytics is folded into Reporting & analytics > keeps no screen of its own: no view, no registry entry for ⌘K, no kit id, no host publish
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts > device-analytics is folded into Reporting & analytics > lands on Reporting & analytics, whose overview reads the device section over the projects the reader can open
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts > device-analytics is folded into Reporting & analytics > leaves no client code, no organization-wide aggregate and no claim for the old route
+ ✓ client/src/concept2cure/v2/__tests__/foldDeviceAnalytics.test.ts > device-analytics is folded into Reporting & analytics > resolves the old id to Reporting & analytics from a link, an in-app move and AnA, with or without a project open
+ ✓ client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > Reporting & analytics carries the device section from its overview > a failed device read is said on the canvas
+ ✓ client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > Reporting & analytics carries the device section from its overview > on the canvas of an open project
+ ✓ client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > Reporting & analytics carries the device section from its overview > with no project open, beside the project picker
+ ✓ client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > the device section shows what the device read computed, and nothing else > draws nothing for a reader with no device project, or an overview without the section
+ ✓ client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > the device section shows what the device read computed, and nothing else > says a failed read failed, and draws no figure
+ ✓ client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > the device section shows what the device read computed, and nothing else > says when no AnA draft is recorded, rather than a rate of zero
+ ✓ client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > the device section shows what the device read computed, and nothing else > states each recorded status with its count, the pace and the acceptance rate
+ ✓ client/src/concept2cure/v2/__tests__/insightsDevicePortfolio.test.tsx > the device section shows what the device read computed, and nothing else > withholds only the rate when the drafts could not be read
+ ✓ server/middleware/__tests__/launch-scope-device-features.test.ts > the real registry with the device features in Projects (62a8d5e7) > claims no /api/mdx or /api/submission-ops root, nor a family no screen of it calls
+ ✓ server/middleware/__tests__/launch-scope-device-features.test.ts > the real registry with the device features in Projects (62a8d5e7) > refuses the retired device analytics family in production: no launch screen claims /api/mdx/analytics (fold F4, 2026-10-30)
+ ✓ server/middleware/__tests__/launch-scope-device-features.test.ts > the real registry with the device features in Projects (62a8d5e7) > serves every call a device screen names, under the gate production builds
+ ✓ server/middleware/__tests__/launch-scope-device-features.test.ts > the real registry with the device features in Projects (62a8d5e7) > the walk reaches each device screen's own hooks, and each names a call
+ ✓ server/routes/__tests__/insights-canvas-device-section.test.ts > the overview's device section > a failed device read is unavailable, with no detail and nothing else of the canvas withdrawn
+ ✓ server/routes/__tests__/insights-canvas-device-section.test.ts > the overview's device section > a failed portfolio read is still the 503 it was: the device section does not stand in for it
+ ✓ server/routes/__tests__/insights-canvas-device-section.test.ts > the overview's device section > is read even when the reader can open no project, and says so as the engine does
+ ✓ server/routes/__tests__/insights-canvas-device-section.test.ts > the overview's device section > is read over the reader's accessible projects, on the request's own connection
+ ✓ server/routes/__tests__/mdx-analytics-availability.test.ts > MDX analytics data availability > no longer serves the organization-wide kit aggregate, and reads nothing for it
+ ✓ server/routes/__tests__/mdx-analytics-availability.test.ts > MDX analytics data availability > permits genuine zero counts from an initialized source
+ ✓ server/routes/__tests__/mdx-analytics-availability.test.ts > MDX analytics data availability > reads positive tenant data on the pinned connection
+ ✓ server/routes/__tests__/mdx-analytics-availability.test.ts > MDX analytics data availability > reports 42703 as unavailable rather than zero counts
+ ✓ server/routes/__tests__/mdx-analytics-availability.test.ts > MDX analytics data availability > reports 42P01 as unavailable rather than zero counts
+ ✓ server/routes/__tests__/mdx-analytics-availability.test.ts > MDX analytics data availability > reports a missing request connection rather than borrowing a shared one
+ ✓ server/services/entitlements/__tests__/folded-module-grant-continuity.test.ts > the module gate, MODULE_ENFORCEMENT=enforce > serves insights's paths to an organization holding only device-analytics
+ ✓ server/services/entitlements/__tests__/launch-scope.test.ts > the folded device analytics > is in no scope list and no new grant: Reporting & analytics holds the device section (D2, fold F4, 2026-10-30)
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > an unreadable source is unavailable, never zero > any other drafts failure throws too: no partial section stands in for a failed read
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > an unreadable source is unavailable, never zero > refuses an identity it cannot trust before reading anything
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > an unreadable source is unavailable, never zero > the drafts store missing (42703) leaves the project figures and withholds only the rate
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > an unreadable source is unavailable, never zero > the drafts store missing (42P01) leaves the project figures and withholds only the rate
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > an unreadable source is unavailable, never zero > the programs read failing (42703) throws, so the section is unavailable rather than empty
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > an unreadable source is unavailable, never zero > the programs read failing (42P01) throws, so the section is unavailable rather than empty
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > the device section of the Reporting overview > builds the month window from the date it is given, across a year boundary
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > the device section of the Reporting overview > counts device projects the reader can open, by recorded status, and never a drug, deleted or other-tenant project
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > the device section of the Reporting overview > counts nothing of another tenant, even when its project id is named
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > the device section of the Reporting overview > gives a genuine zero as zero, and no rate where no AnA draft is recorded
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > the device section of the Reporting overview > paces recorded submissions over the 24 calendar months to now, oldest first
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > the device section of the Reporting overview > rates AnA drafts recorded against a device project the reader can open, and no other draft
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > the device section of the Reporting overview > reads only the projects the reader can open
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > the device section of the Reporting overview > runs as a role that cannot bypass row security
+ ✓ server/services/report-os/__tests__/device-portfolio.pglite.test.ts > the device section of the Reporting overview > says there is no device project when none the reader can open is a device project
+ ✓ tests/concept2cure/design-system-surfaces-smoke.test.tsx > design-system surface smoke tests > DocumentsPanel renders an empty doc list without error
+ ✓ tests/concept2cure/design-system-surfaces-smoke.test.tsx > design-system surface smoke tests > EngineeringSurface renders with null program
+ ✓ tests/concept2cure/design-system-surfaces-smoke.test.tsx > design-system surface smoke tests > EngineeringSurface renders with program context
+ ✓ tests/concept2cure/design-system-surfaces-smoke.test.tsx > design-system surface smoke tests > PostmarketSurface renders
+ ✓ tests/concept2cure/design-system-surfaces-smoke.test.tsx > design-system surface smoke tests > UdiSurface renders for a project
+ ✓ tests/concept2cure/design-system-surfaces-smoke.test.tsx > design-system surface smoke tests > UdiSurface renders with no project
+ ✓ tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX Files tab — root structure > renders all five filesystem roots on PathwayPanes(k510)
+ ✓ tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX rich-surface interactive smoke > Engineering: every risk-matrix cell click is handler-safe
+ ✓ tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX rich-surface interactive smoke > Postmarket: every button click is handler-safe
+ ✓ tests/concept2cure/mdx-surfaces-interactive-smoke.test.tsx > MDX rich-surface interactive smoke > UDI: every label-preview / format-picker click is handler-safe
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired device analytics > a fresh database replaying the whole catalogue set twice never holds device-analytics, and Reporting & analytics stays offered at standard
+ ✓ tests/schema-contract/catalog-module-claims.contract.test.ts > Retired device analytics > keeps a deployed row, its tier and its subscription, deprecated, across replay of every writer

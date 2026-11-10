@@ -1,38 +1,79 @@
-<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="_base.css"><style>
-.row { display:flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 8px 0; }
-.pill {
-  display:inline-flex; align-items: center; gap: 6px;
-  padding: 3px 10px; border-radius: 9999px;
-  font-family: var(--font-sans); font-size: 11px; font-weight: 500;
-  letter-spacing: 0.02em;
+<!doctype html><html><head><meta charset="utf-8"><title>Chips</title><link rel="stylesheet" href="_base.css"><style>
+/* Copied from client/src/concept2cure/v2/styles/app-v2.css, the D0 foundations block (chips). */
+.c2c-v2 .rd-chip {
+  display: inline-block; vertical-align: middle; padding: 2px 8px; border-radius: var(--radius-md);
+  font-size: var(--fs-caption); font-weight: 500; line-height: 16px; letter-spacing: 0; text-transform: none; white-space: nowrap;
+  background: var(--bg-100); color: var(--text-200);
 }
-.dot { width: 6px; height: 6px; border-radius: 9999px; }
-.p-draft { background: var(--bg-100); color: var(--ink-body); }
-.p-draft .dot { background: var(--ink-subtle); }
-.p-review { background: var(--warning-muted); color: #8a4b0c; }
-.p-review .dot { background: var(--warning); }
-.p-ready { background: var(--success-muted); color: #4e6638; }
-.p-ready .dot { background: var(--success); }
-.p-blocked { background: var(--error-muted); color: #7f2323; }
-.p-blocked .dot { background: var(--error); }
-.p-locked { background: var(--bg-200); color: var(--ink-body); }
-.p-locked .dot { background: var(--ink-muted); }
-.p-ai { background: var(--ai-muted); color: #2f5a86; }
-.p-ai .dot { background: var(--ai); }
-.p-pro { background: var(--accent-pro-000); color: var(--accent-pro-200); }
-.p-pro .dot { background: var(--accent-pro-100); }
-.lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-subtle); min-width: 70px; font-weight: 500; }
+.c2c-v2 .rd-chip::first-letter { text-transform: uppercase; }
+.c2c-v2 .rd-chip svg { display: inline-block; width: 12px; height: 12px; vertical-align: -2px; margin-right: 4px; }
+.c2c-v2 .rd-chip.rd-chip-sentence { white-space: normal; }
+.c2c-v2 .rd-chip.tone-ok   { background: var(--success-muted); color: var(--success); }
+.c2c-v2 .rd-chip.tone-warn { background: var(--warning-muted); color: var(--warning); }
+.c2c-v2 .rd-chip.tone-err  { background: var(--error-muted);   color: var(--error); }
+.c2c-v2 .rd-chip:is(.tone-ai, .tone-idle) { background: var(--bg-100); color: var(--text-200); }
+.c2c-v2.dark .rd-chip:is(:not([class*="tone-"]), .tone-ai, .tone-idle) { background: var(--bg-200); }
+
+/* ── specimen only ── */
+.rows { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+.row4 { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 8px 0; }
+.lbl { font-size: var(--fs-caption); font-weight: 500; color: var(--text-300); min-width: 112px; }
+.wrapbox { max-width: 240px; }
+.note { margin: 12px 0 0; font-size: var(--fs-small); color: var(--text-300); max-width: 68ch; }
 </style></head><body><div class="card">
-  <div class="row"><div class="lbl">Workflow</div>
-    <div class="pill p-draft"><div class="dot"></div>Drafting</div>
-    <div class="pill p-review"><div class="dot"></div>In review</div>
-    <div class="pill p-ready"><div class="dot"></div>Ready</div>
-    <div class="pill p-blocked"><div class="dot"></div>Blocked</div>
-    <div class="pill p-locked"><div class="dot"></div>Locked</div>
-  </div>
-  <div class="row"><div class="lbl">System</div>
-    <div class="pill p-ai"><div class="dot"></div>AnA 1.0 RI</div>
-    <div class="pill p-pro"><div class="dot"></div>Pro</div>
-    <div class="pill" style="background: var(--accent-subtle); color: var(--accent-main-200)"><div class="dot" style="background: var(--accent-main-100)"></div>Beta</div>
-  </div>
+<div class="panels">
+  <section class="c2c-v2 panel" aria-label="Light">
+    <div class="label">Light</div>
+    <div class="rows">
+      <div class="row4"><div class="lbl">Neutral</div>
+        <span class="rd-chip">Drafting</span>
+        <span class="rd-chip">Locked</span>
+        <span class="rd-chip">planning</span>
+      </div>
+      <div class="row4"><div class="lbl">Tone, where it means something</div>
+        <span class="rd-chip tone-ok">Approved</span>
+        <span class="rd-chip tone-warn">In review</span>
+        <span class="rd-chip tone-err">Blocked</span>
+      </div>
+      <div class="row4"><div class="lbl"><code>tone-ai</code>, <code>tone-idle</code>: neutral</div>
+        <span class="rd-chip tone-ai">active</span>
+        <span class="rd-chip tone-idle">Not started</span>
+      </div>
+      <div class="row4"><div class="lbl">With its icon</div>
+        <span class="rd-chip tone-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Frozen</span>
+        <span class="rd-chip tone-err"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>2 blockers</span>
+      </div>
+      <div class="row4"><div class="lbl">A sentence (<code>rd-chip-sentence</code>)</div>
+        <span class="wrapbox"><span class="rd-chip rd-chip-sentence">Waiting on the agency's answer to question 4</span></span>
+      </div>
+    </div>
+  </section>
+  <section class="c2c-v2 dark panel" aria-label="Dark">
+    <div class="label">Dark</div>
+    <div class="rows">
+      <div class="row4"><div class="lbl">Neutral</div>
+        <span class="rd-chip">Drafting</span>
+        <span class="rd-chip">Locked</span>
+        <span class="rd-chip">planning</span>
+      </div>
+      <div class="row4"><div class="lbl">Tone, where it means something</div>
+        <span class="rd-chip tone-ok">Approved</span>
+        <span class="rd-chip tone-warn">In review</span>
+        <span class="rd-chip tone-err">Blocked</span>
+      </div>
+      <div class="row4"><div class="lbl"><code>tone-ai</code>, <code>tone-idle</code>: neutral</div>
+        <span class="rd-chip tone-ai">active</span>
+        <span class="rd-chip tone-idle">Not started</span>
+      </div>
+      <div class="row4"><div class="lbl">With its icon</div>
+        <span class="rd-chip tone-ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Frozen</span>
+        <span class="rd-chip tone-err"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>2 blockers</span>
+      </div>
+      <div class="row4"><div class="lbl">A sentence (<code>rd-chip-sentence</code>)</div>
+        <span class="wrapbox"><span class="rd-chip rd-chip-sentence">Waiting on the agency's answer to question 4</span></span>
+      </div>
+    </div>
+  </section>
+</div>
+<p class="note">12px, weight 500, radius 6, sentence case. A chip that prints a raw value ("planning", "active") shows its first letter upper. Orange is not a status, so <code>tone-ai</code> is neutral. Colour always sits beside its words.</p>
 </div></body></html>

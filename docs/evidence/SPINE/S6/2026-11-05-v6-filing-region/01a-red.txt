@@ -1,0 +1,71 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ shared/constants/domain/__tests__/vault-spine-label.test.ts > the Vault header names the project's filing > an NDA project's vault reads NDA · 21 CFR 314, not IND · 21 CFR 312 2ms
+ ✓ shared/constants/domain/__tests__/vault-spine-label.test.ts > the Vault header names the project's filing > an IND and a BLA read as themselves 0ms
+ ✓ shared/constants/domain/__tests__/vault-spine-label.test.ts > the Vault header names the project's filing > a filing type the view does not list, or none, names the view and guesses no regulation 0ms
+ × shared/constants/domain/__tests__/vault-spine-label.test.ts > a device or diagnostic project's Vault header names its filing (F1) > the NeuroPanel-Dx 510(k) reads 510(k) · 21 CFR 807, not IVD / Diagnostics 6ms
+   → expected 'IVD / Diagnostics' to be '510(k) · 21 CFR 807' // Object.is equality
+ × shared/constants/domain/__tests__/vault-spine-label.test.ts > a device or diagnostic project's Vault header names its filing (F1) > a De Novo and a PMA read as themselves 1ms
+   → expected 'Medical Device' to be 'De Novo' // Object.is equality
+ × shared/constants/domain/__tests__/vault-spine-label.test.ts > a device or diagnostic project's Vault header names its filing (F1) > EU MDR and IVDR program types read as the taxonomy's CER and IVDR PE 1ms
+   → expected 'Medical Device' to be 'CER · EU MDR 2017/745 Art. 61' // Object.is equality
+ ✓ shared/constants/domain/__tests__/vault-spine-label.test.ts > a device or diagnostic project's Vault header names its filing (F1) > a segment is not a filing, and a filing the view does not list names the view 0ms
+ ✓ shared/constants/domain/__tests__/vault-spine-label.test.ts > a device or diagnostic project's Vault header names its filing (F1) > every label the taxonomy already gave is unchanged 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  shared/constants/domain/__tests__/vault-spine-label.test.ts > a device or diagnostic project's Vault header names its filing (F1) > the NeuroPanel-Dx 510(k) reads 510(k) · 21 CFR 807, not IVD / Diagnostics
+AssertionError: expected 'IVD / Diagnostics' to be '510(k) · 21 CFR 807' // Object.is equality
+
+Expected: "510(k) · 21 CFR 807"
+Received: "IVD / Diagnostics"
+
+ ❯ shared/constants/domain/__tests__/vault-spine-label.test.ts:40:44
+     38| describe("a device or diagnostic project's Vault header names its fili…
+     39|   it('the NeuroPanel-Dx 510(k) reads 510(k) · 21 CFR 807, not IVD / Di…
+     40|     expect(vaultSpineLabel('ivd', '510k')).toBe('510(k) · 21 CFR 807');
+       |                                            ^
+     41|     expect(vaultSpineLabel('device', '510k')).toBe('510(k) · 21 CFR 80…
+     42|     expect(vaultSpineLabel('ivd', '510(k)')).toBe('510(k) · 21 CFR 807…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  shared/constants/domain/__tests__/vault-spine-label.test.ts > a device or diagnostic project's Vault header names its filing (F1) > a De Novo and a PMA read as themselves
+AssertionError: expected 'Medical Device' to be 'De Novo' // Object.is equality
+
+Expected: "De Novo"
+Received: "Medical Device"
+
+ ❯ shared/constants/domain/__tests__/vault-spine-label.test.ts:46:50
+     44|
+     45|   it('a De Novo and a PMA read as themselves', () => {
+     46|     expect(vaultSpineLabel('device', 'de_novo')).toBe('De Novo');
+       |                                                  ^
+     47|     expect(vaultSpineLabel('ivd', 'de_novo')).toBe('De Novo');
+     48|     expect(vaultSpineLabel('device', 'pma')).toBe('PMA · 21 CFR 814');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  shared/constants/domain/__tests__/vault-spine-label.test.ts > a device or diagnostic project's Vault header names its filing (F1) > EU MDR and IVDR program types read as the taxonomy's CER and IVDR PE
+AssertionError: expected 'Medical Device' to be 'CER · EU MDR 2017/745 Art. 61' // Object.is equality
+
+Expected: "CER · EU MDR 2017/745 Art. 61"
+Received: "Medical Device"
+
+ ❯ shared/constants/domain/__tests__/vault-spine-label.test.ts:53:46
+     51|
+     52|   it("EU MDR and IVDR program types read as the taxonomy's CER and IVD…
+     53|     expect(vaultSpineLabel('device', 'mdr')).toBe('CER · EU MDR 2017/7…
+       |                                              ^
+     54|     expect(vaultSpineLabel('ivd', 'ivdr')).toBe('IVDR PE · EU IVDR 201…
+     55|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 5 passed (8)
+   Start at  14:07:33
+   Duration  874ms (transform 194ms, setup 128ms, import 99ms, tests 162ms, environment 0ms)
+

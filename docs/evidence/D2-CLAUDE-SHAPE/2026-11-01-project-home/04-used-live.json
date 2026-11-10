@@ -1,0 +1,13 @@
+{
+ "composerInMain": true,
+ "stepAfterClick": "Start a conversation in BX-204",
+ "draftSurvives": true,
+ "openIsGhost": 1,
+ "urlAfterOpen": "/concept2cure/document-authoring?program=24fd6124-6ff9-4ec8-8287-5aa23a49443b",
+ "editorTitle": "Title Page",
+ "errors": {
+  "console": [],
+  "pageErrors": [],
+  "failed": []
+ }
+}

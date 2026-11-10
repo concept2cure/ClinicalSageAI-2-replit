@@ -1,0 +1,6 @@
+MUTATION M35-ana-reaches-the-act in server/services/ana/AnaToolDefinitions.ts (on the final code and tests, 2026-11-09T13:46:16.913722Z): replaced [export const ALL_ANA_TOOLS_RAW: AnaTool[] = [] with [// settleHeldSend( would be reached here
+export const ALL_ANA_TOOLS_RAW: AnaTool[] = []
+ × server/services/ana/__tests__/ana-cannot-settle-held-send.test.ts > no AnA tool can settle a held send > no AnA or MCP source reaches the settlement 119ms
+      Tests  1 failed | 2 skipped (3)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 76572675832f8d7c10811adb8caf244b6e2a5b5848174dc24078c5890278dc62 (expected 76572675832f8d7c10811adb8caf244b6e2a5b5848174dc24078c5890278dc62)

@@ -102,3 +102,54 @@ export function artifactOrigin(row: {
   if (row.recordedSource === 'ana_document_studio' || (typeof row.model === 'string' && row.model.trim() !== '')) return 'ana';
   return null;
 }
+
+/**
+ * The organisation's review rules (founder decision P-117, 2026-11-10: "Those
+ * rules should be set by the client super admin in client security user
+ * settings"). They are stored in the organisation's settings, under `security`,
+ * written through the one governed settings writer with a reason, and read by
+ * the approval act (server/services/artifact-approval-act.ts) and the settings
+ * card (client/src/concept2cure/v2/onboarding/SessionPolicySetting.tsx).
+ *
+ * Review itself is not a setting: at least one independent reviewer is always
+ * required (P-95), and a reviewer is never an author or the signer (P-18).
+ */
+export const DEFAULT_INDEPENDENT_REVIEWERS = 1;
+export const MIN_INDEPENDENT_REVIEWERS = 1;
+export const MAX_INDEPENDENT_REVIEWERS = 5;
+/** P-116's rule, as the default: a one-person organisation may approve its own record, on the record. */
+export const DEFAULT_SOLE_MEMBER_SELF_APPROVAL = true;
+
+export interface ReviewPolicy {
+  /** How many independent reviewers must approve a version before it can be approved. */
+  independentReviewersRequired: number;
+  /** Whether the organisation's only member may approve, lock or sign their own record, recorded as unreviewed. */
+  soleMemberSelfApproval: boolean;
+}
+
+/** The organisation's effective review rules: the default where a value is unset or unreadable, held inside the bounds. */
+export function reviewPolicyOf(settings: unknown): ReviewPolicy {
+  const security = (settings as { security?: Record<string, unknown> } | null | undefined)?.security;
+  const required = security?.independentReviewersRequired;
+  const self = security?.soleMemberSelfApproval;
+  return {
+    independentReviewersRequired:
+      typeof required === 'number' && Number.isFinite(required)
+        ? Math.min(MAX_INDEPENDENT_REVIEWERS, Math.max(MIN_INDEPENDENT_REVIEWERS, Math.floor(required)))
+        : DEFAULT_INDEPENDENT_REVIEWERS,
+    soleMemberSelfApproval: typeof self === 'boolean' ? self : DEFAULT_SOLE_MEMBER_SELF_APPROVAL,
+  };
+}
+
+/** Why a settings write that names a review rule is refused, or null. A stored value is never clamped silently. */
+export function reviewPolicyRefusal(settingsUpdate: unknown): string | null {
+  const security = (settingsUpdate as { security?: unknown } | null | undefined)?.security;
+  if (security === null || typeof security !== 'object' || Array.isArray(security)) return null;
+  const { independentReviewersRequired: required, soleMemberSelfApproval: self } = security as Record<string, unknown>;
+  if (required !== undefined &&
+      !(Number.isInteger(required) && (required as number) >= MIN_INDEPENDENT_REVIEWERS && (required as number) <= MAX_INDEPENDENT_REVIEWERS)) {
+    return `Independent reviewers required must be a whole number from ${MIN_INDEPENDENT_REVIEWERS} to ${MAX_INDEPENDENT_REVIEWERS}.`;
+  }
+  if (self !== undefined && typeof self !== 'boolean') return 'Sole-member self-approval must be on or off.';
+  return null;
+}

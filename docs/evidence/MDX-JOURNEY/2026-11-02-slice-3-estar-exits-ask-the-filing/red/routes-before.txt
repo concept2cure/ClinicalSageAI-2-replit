@@ -1,0 +1,16 @@
+ × tests/routes/estar-export-governance.test.ts > the device exits ask whether the filing holds the document's text > /build refuses a package whose filed copy was rewritten, and builds nothing 8ms
+   → expected "vi.fn()" to be called with arguments: [ 2, …(2) ]
+ × tests/routes/estar-export-governance.test.ts > the device exits ask whether the filing holds the document's text > /build records what it compared, and which authored sections are not yet filed 4ms
+   → expected undefined to deeply equal { compared: true, …(2) }
+ × tests/routes/estar-export-governance.test.ts > the device exits ask whether the filing holds the document's text > /build says it compared nothing, and why, when no editing document is bound 3ms
+   → expected undefined to deeply equal { compared: false, …(3) }
+ × tests/routes/estar-export-governance.test.ts > the device exits ask whether the filing holds the document's text > /assemble reports nothing producible, and why, for a program whose filed copy was rewritten 23ms
+   → a rewritten filed copy read as an assemblable draft: expected 'content-package-draft' to be 'none' // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 16 passed (20)
+ × tests/routes/estar-filing-row-gate.test.ts > a filed copy that is not the document's text blocks the filing's gate (P-29.3) > the panel and the filing row both refuse "Can file now", naming the section 2ms
+   → expected "vi.fn()" to be called with arguments: [ 2, …(2) ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)

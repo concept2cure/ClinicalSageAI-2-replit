@@ -1,0 +1,7 @@
+# Chromium, before the fix (HEAD 05d8d4f472): navigate the launch surfaces, leaving each after 400 ms
+round 1: 8 navigations, each left after 400 ms -> session 200 35ms
+round 2: 16 navigations, each left after 400 ms -> session 200 22ms
+round 3: 24 navigations, each left after 400 ms -> session 200 31ms
+round 4: 32 navigations, each left after 400 ms -> session 200 15ms
+round 5: 40 navigations, each left after 400 ms -> session 200 52ms
+then the Vault, left to load: h1="Vault" failed requests=0 

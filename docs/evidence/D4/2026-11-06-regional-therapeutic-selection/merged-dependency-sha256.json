@@ -1,0 +1,5 @@
+{
+  "shared/schema.ts": "8c4fcbbc7501c84383f7a32f20163be274355065b350ae1e48aa1c6ef339e42c",
+  "migrations/20260701_rbm_patient_profiles.sql": "dadba8a1c436a414a3080f3e661f60d2ad56cdc0af7dcedb7657ea987f402f47",
+  "tests/schema-contract/rbm-patient-profile-identity.pglite.test.ts": "6710c53cdeced71b2ac4def91d68f850ed03cf71231e00b639870513e3c6c915"
+}

@@ -21,7 +21,10 @@ import { createHash } from 'node:crypto';
 import type express from 'express';
 import type { PoolClient } from 'pg';
 import { createJourneyDb, type JourneyDb } from '../../../tests/golden-journeys/harness';
-import { PREREQ, VAULT_DDL, AUTHORING_ACCESS_DDL, AUTHOR, PROGRAM, ORG, mint, makeApp, asToken, M25_SECTIONS } from './_authoring-canvas-fixture';
+import {
+  PREREQ, VAULT_DDL, AUTHORING_ACCESS_DDL, REVIEW_ACCESS_DDL, AUTHOR, PROGRAM, ORG, mint, makeApp, asToken, M25_SECTIONS,
+  releaseAnaDraft, appendAsAuthor,
+} from './_authoring-canvas-fixture';
 
 const h = vi.hoisted(() => ({
   db: null as unknown, pool: null as unknown, put: vi.fn(),
@@ -77,7 +80,7 @@ beforeAll(async () => {
   jdb = await createJourneyDb({
     // The current member and project anchor the authoring access gate reads
     // (authorizeAuthoringProgram, 0e4ccf46f): active user/org, one anchor, sharing.
-    prereqSql: PREREQ + AUTHORING_ACCESS_DDL + VAULT_DDL,
+    prereqSql: PREREQ + AUTHORING_ACCESS_DDL + REVIEW_ACCESS_DDL + VAULT_DDL,
     migrations: [
       'db/migrations/20260725_authoring_document_loop_tables.sql',
       'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
@@ -103,6 +106,8 @@ beforeAll(async () => {
       // Vault lifecycle read lists each version's round from review_routes.
       'migrations/20260731c_canonical_documents.sql',
       'migrations/20261023_review_routes.sql',
+      // The saved-document checks an AnA draft is released by (releaseAnaDraft) read the review store.
+      'db/migrations/20260730_authoring_subsystem_schema.sql',
     ],
   });
   h.db = jdb.db;
@@ -116,21 +121,24 @@ beforeAll(async () => {
   }));
   author = asToken(await mint(AUTHOR));
   const { default: router } = await import('../authoring.router');
-  app = makeApp(router);
-  viewerApp = makeApp(router, { role: 'viewer' });
+  app = makeApp(router, { dbClient: jdb.pool });
+  viewerApp = makeApp(router, { role: 'viewer', dbClient: jdb.pool });
 }, T);
 
 afterAll(async () => {
   await jdb?.close();
 });
 
+/** An AnA draft, released as production releases one before filing (_authoring-canvas-fixture.ts releaseAnaDraft). */
 async function draftDocument(title: string): Promise<string> {
   const res = await author(request(app).post('/api/authoring/docs/from-draft')).send({
     programId: PROGRAM, title, module: 'M2', sections: M25_SECTIONS, provenance: { source: 'ana' },
   });
   expect(res.status, JSON.stringify(res.body)).toBe(201);
+  await releaseAnaDraft(app, author, res.body.data);
   return res.body.data.doc.id;
 }
+const sectionRows = async (sql: string, args: unknown[]) => (await jdb.pool.query(sql, args)).rows as Array<{ id: string; content: string | null }>;
 
 /*
  * An org-wide (project-less) document, as a row written BEFORE PF-07 has one.
@@ -220,6 +228,40 @@ describe('POST /docs/:docId/file-to-vault', () => {
     const verdict = await verifyAuditChain(client, { tenantId: ORG });
     expect(verdict.ok, JSON.stringify(verdict)).toBe(true);
     expect(verdict.rowsChecked).toBeGreaterThanOrEqual(3);
+  });
+
+  // LX-10 (2026-11-01). The filing row recorded the document's version and a
+  // digest of its sections, never which revision of each it rendered, so a Vault
+  // rendition could not be walked back to who or what wrote each section.
+  it('names, for each filed section, the revision it rendered, its origin and its machine authors', async () => {
+    const docId = await draftDocument('Module 2.5 Clinical Overview — provenance filed');
+    const sections = (await jdb.pool.query(
+      `SELECT id::text AS id, code FROM authoring_sections WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index, created_at, id`,
+      [docId, ORG],
+    )).rows as Array<{ id: string; code: string }>;
+    const heads = (await jdb.pool.query(
+      `SELECT DISTINCT ON (section_id) section_id::text AS section_id, id::text AS id, origin, chain_sha256
+         FROM doc_revisions WHERE tenant_id = $1 AND section_id = ANY($2::uuid[])
+        ORDER BY section_id, created_at DESC, id DESC`,
+      [ORG, sections.map((x) => x.id)],
+    )).rows as Array<{ section_id: string; id: string; origin: string; chain_sha256: string }>;
+    expect(heads).toHaveLength(sections.length);
+
+    const res = await author(request(app).post(`/api/authoring/docs/${docId}/file-to-vault`)).send({ format: 'pdf' });
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    const row = (await jdb.pool.query(
+      `SELECT new_values FROM audit_logs WHERE tenant_id = $1 AND action = 'authoring.document.file_to_vault' AND record_id = $2`,
+      [ORG, docId],
+    )).rows[0] as { new_values: Record<string, unknown> | string };
+    const details = typeof row.new_values === 'string' ? JSON.parse(row.new_values) : row.new_values;
+    expect(details.sectionRevisions).toEqual(sections.map((sec) => {
+      const head = heads.find((x) => x.section_id === sec.id)!;
+      return {
+        // The filed text is the author's replacement: an unqualified AnA draft files only after one (bb999f25b6).
+        sectionId: sec.id, code: sec.code, revisionId: head.id, origin: head.origin, chainSha256: head.chain_sha256,
+        machineContributors: [], matchesFiledText: true,
+      };
+    }));
   });
 
   it('refuses 409 DOCUMENT_HAS_NO_PROGRAM for an org-wide document — nothing filed', async () => {
@@ -353,7 +395,7 @@ describe('Authoring refiling preserves retained Vault versions', () => {
     const docId = await draftDocument('Storage interleaving retains current filing');
     const first = await file(docId);
     expect(first.status).toBe(201);
-    await jdb.pool.query(`UPDATE authoring_sections SET content=content || '<p>New performance evidence.</p>' WHERE doc_id=$1`, [docId]);
+    await appendAsAuthor(app, author, sectionRows, docId, '<p>New performance evidence.</p>');
     const stored = h.put.getMockImplementation()!;
     const { placeVaultDocument } = await import('../../services/vault/vault-placement.service');
     h.put.mockImplementationOnce(async (opts: { bytes: Buffer }) => {
@@ -397,7 +439,7 @@ describe('Authoring refiling preserves retained Vault versions', () => {
     const before = await jdb.pool.query('SELECT * FROM vault.documents WHERE id=$1', [firstId]);
     const { placeVaultDocument } = await import('../../services/vault/vault-placement.service');
     const placements = vi.mocked(placeVaultDocument).mock.calls.length;
-    await jdb.pool.query(`UPDATE authoring_sections SET content=content || '<p>First revision.</p>' WHERE doc_id=$1`, [docId]);
+    await appendAsAuthor(app, author, sectionRows, docId, '<p>First revision.</p>');
     await jdb.pool.query('ALTER TABLE authoring_export_history RENAME TO authoring_export_history_gone');
     let failed: request.Response;
     try { failed = await file(docId); }
@@ -408,7 +450,7 @@ describe('Authoring refiling preserves retained Vault versions', () => {
     expect(retired.rows).toHaveLength(1);
     expect(retired.rows[0]).toMatchObject({ version: '2.0', supersedes_id: firstId });
     expect(retired.rows[0]).toHaveProperty('deleted_at', expect.anything());
-    await jdb.pool.query(`UPDATE authoring_sections SET content=content || '<p>Second revision.</p>' WHERE doc_id=$1`, [docId]);
+    await appendAsAuthor(app, author, sectionRows, docId, '<p>Second revision.</p>');
     const recovered = await file(docId);
     expect(recovered.status, JSON.stringify(recovered.body)).toBe(201);
     expect(recovered.body.data).toMatchObject({ version: '3.0', supersedesDocumentId: firstId,
@@ -471,6 +513,7 @@ describe('POST /docs/:docId/file-to-vault — handed-off items #9 and #13', () =
       programId: PROGRAM, title: 'Untyped AnA draft', sections: M25_SECTIONS, provenance: { source: 'ana' },
     });
     expect(created.status, JSON.stringify(created.body)).toBe(201);
+    await releaseAnaDraft(app, author, created.body.data);
     const res = await author(request(app).post(`/api/authoring/docs/${created.body.data.doc.id}/file-to-vault`)).send({ format: 'pdf' });
     expect(res.status, JSON.stringify(res.body)).toBe(201);
     // On the previous head the assumed module filed it as confirmed into module-2.

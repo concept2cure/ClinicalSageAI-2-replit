@@ -46,6 +46,7 @@ import { mapToEstar, type EstarType, type DeviceFlags } from './estar-mapper';
 import { mapToPma, type PmaSubmissionType } from '../pma/pma-mapper';
 import { mapToPreStar, type QSubType } from '../prestar/prestar-mapper';
 import { PRESTAR_COMPLETION_NOTE } from './estar-field-map';
+import { divergedSectionLabel, filedCopyDivergedSentence, type DivergedNode } from '../../c2c/filing-section-target';
 
 /** A canonical content leaf — shape shared by every readiness mapper. */
 export interface FilingLeaf {
@@ -209,6 +210,15 @@ export interface EstarFilingReadinessInput {
    * reads no clock; without it `versionTableStale` is reported true.
    */
   asOf?: string;
+  /**
+   * Sections whose FILED copy is not the text their document holds — the
+   * `rewritten` half of `governedDeviceFilingAgreement`, which the caller asks
+   * before reading the filing (P-29.3, docs/EXIT_ATTESTATION_DECISION_2026-10-18.md).
+   * The verdict is read from the filing and the submission is built from it, so
+   * a rewritten filed copy blocks. Absent or empty: the filing agrees, or was
+   * not compared (no governed document, or none bound to the editor).
+   */
+  filedCopyDiverged?: ReadonlyArray<DivergedNode>;
 }
 
 export interface EstarFilingReadinessResult {
@@ -241,6 +251,8 @@ export interface EstarFilingReadinessResult {
   templateVersionCurrent: boolean;
   /** The version table is older than the currency registry's verification window (or no as-of date was given). */
   versionTableStale: boolean;
+  /** Sections whose filed copy is not the document's text, as a refusal names them. Empty when none. */
+  filedCopyDiverged: string[];
   // Overall verdict.
   canFileNow: boolean;
   blockers: string[];
@@ -310,6 +322,8 @@ export function assessEstarFilingReadiness(
   }
   if (versionCurrency.blocker) blockers.push(versionCurrency.blocker);
   if (!requestSpecificAutomationQualified) blockers.push(PRESTAR_COMPLETION_NOTE);
+  const diverged = input.filedCopyDiverged ?? [];
+  if (diverged.length > 0) blockers.push(`Cannot file yet. ${filedCopyDivergedSentence(diverged)}`);
 
   return {
     catalogKey: input.catalogKey,
@@ -334,7 +348,9 @@ export function assessEstarFilingReadiness(
     vendoredTemplateVersion: versionCurrency.vendoredVersion,
     templateVersionCurrent: versionCurrency.current,
     versionTableStale,
-    canFileNow: eligible && content.ready && officialTemplateProducible && versionCurrency.current && requestSpecificAutomationQualified,
+    filedCopyDiverged: Array.from(new Set(diverged.map(divergedSectionLabel))),
+    canFileNow: eligible && content.ready && officialTemplateProducible && versionCurrency.current
+      && requestSpecificAutomationQualified && diverged.length === 0,
     blockers,
   };
 }

@@ -83,48 +83,10 @@ const firedFor = (
  * new rule was written against a question nobody asks.
  */
 const NOT_ASKED_YET: Readonly<Record<string, string>> = {
-  'xn_oncology_no_biomarker_strategy/protocol_development':
-    'asks none of: biomarker_strategy, companion_diagnostic, biomarker_enrichment',
-  'xn_oncology_no_biomarker_strategy/ind_submission':
-    'asks none of: biomarker_strategy, companion_diagnostic, biomarker_enrichment',
-  'xn_oncology_no_biomarker_strategy/nda_submission':
-    'asks none of: biomarker_strategy, companion_diagnostic, biomarker_enrichment',
-  'xn_orphan_without_natural_history/protocol_development':
-    'asks none of: natural_history, disease_natural_history',
-  'xn_orphan_without_natural_history/ind_submission':
-    'asks none of: natural_history, disease_natural_history',
-  'xn_orphan_without_natural_history/nda_submission':
-    'asks none of: natural_history, disease_natural_history',
-  'xn_orphan_without_natural_history/bla_submission':
-    'asks none of: natural_history, disease_natural_history',
-  'xn_global_trial_no_ethnic_bridging/protocol_development':
-    'asks none of: ethnic_bridging, ethnicity_factors',
-  'xn_global_trial_no_ethnic_bridging/ind_submission':
-    'asks none of: ethnic_bridging, ethnicity_factors',
-  'xn_phase3_no_interim/protocol_development':
-    'asks none of: interim_analysis, planned_interim',
-  'xn_high_risk_device_no_human_factors/device_510k':
-    'asks none of: human_factors_study, hfe_study',
-  'xn_high_risk_device_no_human_factors/device_pma':
-    'asks none of: human_factors_study, hfe_study',
-  'xn_iso_14971_no_post_production/risk_management':
-    'asks none of: risk_management_process, rm_standard',
-  'xn_iso_14971_no_post_production/device_510k':
-    'asks none of: risk_management_process, rm_standard',
-  'xn_iso_14971_no_post_production/device_pma':
-    'asks none of: risk_management_process, rm_standard',
-  'xn_stability_insufficient_for_shelf_life/stability_study':
-    'asks none of: long_term_data_months, stability_data_months',
-  'xn_stability_insufficient_for_shelf_life/nda_submission':
-    'asks none of: long_term_data_months, stability_data_months',
-  'xn_stability_insufficient_for_shelf_life/bla_submission':
-    'asks none of: long_term_data_months, stability_data_months',
-  'xn_biologic_no_immunogenicity/bla_submission':
-    'asks none of: product_type, molecule_type',
-  'xn_accelerated_approval_no_confirmatory/nda_submission':
-    'asks none of: regulatory_pathway, approval_pathway, accelerated_approval_basis',
-  'xn_rems_without_etasu/labeling':
-    'asks none of: etasu, rems_elements',
+  /* The CMC specification interview asks no shelf-life claim and no long-term
+     data. Dead before 2026-11-02 too, and hidden: the old ids were asked nowhere. */
+  'xn_stability_insufficient_for_shelf_life/cmc_specification':
+    'asks none of: proposed_shelf_life_months, long_term_data_available_months, stability_data_duration',
 };
 
 /**
@@ -139,6 +101,34 @@ const NOT_ASKED_YET: Readonly<Record<string, string>> = {
  * So the form is fixed: `asks none of: a, b, c`, and this verifies that the
  * flow really asks none of them. A reason that becomes false fails here.
  */
+/**
+ * Whether a written reason accounts for EVERY side of the rule that is dead.
+ *
+ * A reason used to be accepted whenever the fields it named were unasked, so
+ * `xn_orphan_without_natural_history` stood here as "asks none of:
+ * natural_history, disease_natural_history" — true — while its TRIGGERS were
+ * asked by none of the four flows it applies to either. A true but incomplete
+ * reason hid half of a dead rule, and 14 of the list's 21 entries were like it
+ * (2026-11-02). A dead trigger side must now be named as well as a dead
+ * mitigation side.
+ */
+function reasonExplains(
+  reason: string,
+  asked: Set<string>,
+  sides: { triggers: string[]; mitigations: string[]; triggerable: boolean; mitigable: boolean },
+): boolean {
+  const named = namedIn(reason);
+  const coversTriggers = sides.triggerable || sides.triggers.every(id => named.has(id));
+  const coversMitigations = sides.mitigable || sides.mitigations.every(id => named.has(id));
+  return reasonHolds(reason, asked) && coversTriggers && coversMitigations;
+}
+
+/** The field ids a written reason names. */
+function namedIn(reason: string): Set<string> {
+  const match = /^asks none of: (.+)$/.exec(reason.trim());
+  return new Set(match ? match[1].split(',').map(f => f.trim()).filter(Boolean) : []);
+}
+
 function reasonHolds(reason: string, asked: Set<string>): boolean {
   const match = /^asks none of: (.+)$/.exec(reason.trim());
   if (!match) return false;
@@ -170,7 +160,7 @@ function unreachableIn(rule: Declared, flow: string, askedBy: Map<string, Set<st
   const mitigable = mitigations.length === 0 || mitigations.some(id => asked.has(id));
   if (triggerable && mitigable) return [];
   const reason = NOT_ASKED_YET[`${rule.id}/${flow}`];
-  if (reason && reasonHolds(reason, asked)) return [];
+  if (reason && reasonExplains(reason, asked, { triggers, mitigations, triggerable, mitigable })) return [];
   const which = !triggerable
     ? `none of its triggers (${triggers.join(', ')})`
     : `none of its mitigations (${mitigations.join(', ')})`;
@@ -446,13 +436,13 @@ describe('the findings that were asserted at a sponsor who was never asked', () 
   it('no longer fire on the trigger alone', () => {
     /* Each of these was an answer a real interview takes, and each used to
        produce the finding by itself. */
-    expect(firedFor('nda_submission', { regulatory_pathway: 'accelerated approval' })).not.toContain(
+    expect(firedFor('nda_submission', { accelerated_pathway: ['accelerated_approval'] })).not.toContain(
       'xn_accelerated_approval_no_confirmatory',
     );
     expect(firedFor('ind_submission', { therapeutic_area: 'oncology' })).not.toContain(
       'xn_oncology_no_biomarker_strategy',
     );
-    expect(firedFor('ind_submission', { expedited_designations: 'orphan drug' })).not.toContain(
+    expect(firedFor('ind_submission', { orphan_designation: 'granted' })).not.toContain(
       'xn_orphan_without_natural_history',
     );
     expect(firedFor('ind_submission', { product_type: 'biologic' })).not.toContain(
@@ -486,7 +476,7 @@ describe('the findings that were asserted at a sponsor who was never asked', () 
   });
 
   it('still fire where the mitigating question IS asked and left blank', () => {
-    /* `rems_elements` IS asked, so a labeling programme that says a REMS is
+    /* `rems_elements` IS asked, so an NDA programme that says a REMS is
        required and leaves the elements empty is a real absence — and the rule
        must still work. This is the case that proves the repair narrowed the
        rules rather than disabling them. */
@@ -503,10 +493,26 @@ describe('the findings that were asserted at a sponsor who was never asked', () 
       firedFor('nda_submission', { rems_required: 'yes', rems_elements: 'Prescriber certification' }),
       'and it is silent once they say what the elements are',
     ).not.toContain('xn_rems_without_etasu');
-    /* And the same programme answered through `labeling`, which asks the
-       trigger and NOT the elements, is told nothing — the asymmetry this
-       repair is about. */
-    expect(fieldsAskedBy(definitionOf('labeling')).has('rems_elements')).toBe(false);
-    expect(firedFor('labeling', { rems_required: 'yes' })).not.toContain('xn_rems_without_etasu');
+    /* The labeling interview used to ask the trigger and NOT the elements, so
+       the same programme answered there was told nothing. It asks them now
+       (2026-11-02, S4), for a prescription drug or a biologic only. */
+    expect(fieldsAskedBy(definitionOf('labeling')).has('rems_elements')).toBe(true);
+    for (const said of ['yes', true]) {
+      expect(firedFor('labeling', { rems_required: said, product_type: 'rx_drug' })).toContain('xn_rems_without_etasu');
+    }
+    expect(
+      firedFor('labeling', { rems_required: 'yes', product_type: 'biosimilar', rems_elements: ['etasu', 'implementation_system'] }),
+    ).not.toContain('xn_rems_without_etasu');
+    expect(firedFor('labeling', { rems_required: 'yes', product_type: 'rx_drug', rems_elements: ['__other__'] })).not.toContain(
+      'xn_rems_without_etasu',
+    );
+    expect(
+      firedFor('labeling', { rems_required: 'yes', product_type: 'rx_drug', rems_elements: ['under_fda_discussion'] }),
+      'elements still being negotiated name none',
+    ).toContain('xn_rems_without_etasu');
+    for (const pt of ['medical_device', 'ivd', 'otc_drug']) {
+      expect(firedFor('labeling', { rems_required: 'yes', product_type: pt }), pt).not.toContain('xn_rems_without_etasu');
+    }
+    expect(firedFor('labeling', { rems_required: 'yes' }), 'no product type: fails closed').not.toContain('xn_rems_without_etasu');
   });
 });

@@ -17,7 +17,11 @@
  *     one transaction. There is no partially indexed document: an embedding
  *     or write failure leaves the prior state and the caller records the
  *     failure in the catalog's chunking ledger (chunk_status/chunk_error), so
- *     "not retrievable" is always a stated fact, never a silent gap.
+ *     "not retrievable" is always a stated fact, never a silent gap. Each
+ *     chunk is stored with the section it starts in (section_title,
+ *     section_hierarchy) and whether it is a table (chunk_type), from the
+ *     headings in the extracted text (document-section-structure.ts), or NULL
+ *     where the text carries none.
  *
  * Fails closed on oversized documents (beyond MAX_CHUNKS) instead of indexing
  * a truncated prefix that would present partial retrieval as coverage.
@@ -29,6 +33,7 @@ import { getTenantScope, runWithTenantScope, type TenantScope } from '../../db/t
 import { createScopedLogger } from '../../utils/logger.js';
 import { FeatureToggleService } from '../featureToggleService.js';
 import { pageForOffset, type PageSpan } from '../ocr/page-offsets.js';
+import { sectionsForChunks } from './document-section-structure.js';
 
 const logger = createScopedLogger('document-chunking');
 
@@ -62,6 +67,14 @@ export interface DocumentChunkOptions {
   maxChars?: number;
   /** Characters of trailing context repeated at the head of the next chunk. */
   overlapChars?: number;
+  /**
+   * Where the layout reader placed each table in the text, `[start, end)` (P-90,
+   * extractDocumentText's `layout.tables`). A chunk never crosses one: each table
+   * starts and ends its own chunks, so the chunker reads it as a table and names
+   * it by its caption, and a table longer than a chunk is cut between rows.
+   * Absent or empty, chunking is exactly what it was.
+   */
+  tableSpans?: ReadonlyArray<{ start: number; end: number }>;
 }
 
 const DEFAULT_MAX_CHARS = 4000;
@@ -79,30 +92,76 @@ export const MAX_CHUNKS = 500;
 export function chunkExtractedText(text: string, opts: DocumentChunkOptions = {}): DocumentTextChunk[] {
   const maxChars = Math.max(500, opts.maxChars ?? DEFAULT_MAX_CHARS);
   const overlap = Math.min(Math.max(0, opts.overlapChars ?? DEFAULT_OVERLAP), Math.floor(maxChars / 2));
-  const len = text.length;
-  if (len === 0) return [];
-
+  if (text.length === 0) return [];
+  const segments = tableSegments(text, opts.tableSpans);
+  if (!segments) return chunkRange(text, 0, text.length, { maxChars, overlap, byRow: false });
   const chunks: DocumentTextChunk[] = [];
-  let start = 0;
-  while (start < len) {
-    let end = Math.min(len, start + maxChars);
-    if (end < len) {
+  for (const seg of segments) {
+    for (const c of chunkRange(text, seg.start, seg.end, { maxChars, overlap, byRow: seg.table })) chunks.push({ ...c, index: chunks.length });
+  }
+  return chunks;
+}
+
+/**
+ * The text cut into runs at the tables' edges (P-90): each table its own run,
+ * the text between them in runs of their own. Whitespace between two runs joins
+ * the run before it, so every character is still in a chunk. Null when no table
+ * span falls inside the text, which leaves chunking as it was.
+ */
+function tableSegments(text: string, spans: DocumentChunkOptions['tableSpans']): Array<{ start: number; end: number; table: boolean }> | null {
+  const tables = (spans ?? [])
+    .filter((s) => Number.isSafeInteger(s.start) && Number.isSafeInteger(s.end) && s.start >= 0 && s.end <= text.length && s.end > s.start)
+    .slice().sort((a, b) => a.start - b.start)
+    .filter((s, i, all) => i === 0 || s.start >= all[i - 1].end);
+  if (tables.length === 0) return null;
+  const out: Array<{ start: number; end: number; table: boolean }> = [];
+  const push = (start: number, end: number, table: boolean) => {
+    if (end <= start) return;
+    const prev = out[out.length - 1];
+    if (prev && !text.slice(start, end).trim()) { prev.end = end; return; }
+    out.push({ start, end, table });
+  };
+  let at = 0;
+  for (const t of tables) {
+    push(at, t.start, false);
+    push(t.start, t.end, true);
+    at = t.end;
+  }
+  push(at, text.length, false);
+  // Whitespace before the first table, with no run before it, joins the table.
+  if (out.length > 1 && !text.slice(out[0].start, out[0].end).trim()) out.splice(0, 2, { ...out[1], start: out[0].start });
+  return out;
+}
+
+/**
+ * Chunks over `text[from, to)`, with offsets in the whole text. The rule the
+ * chunker has always used; `byRow` (a table's run) prefers a line break, so a
+ * long table is cut between rows, never inside a cell.
+ */
+function chunkRange(text: string, from: number, to: number, rule: { maxChars: number; overlap: number; byRow: boolean }): DocumentTextChunk[] {
+  const { maxChars, overlap, byRow } = rule;
+  const chunks: DocumentTextChunk[] = [];
+  let start = from;
+  while (start < to) {
+    let end = Math.min(to, start + maxChars);
+    if (end < to) {
       // Prefer to break at a paragraph, then a sentence, then a word — looking
       // back only within the second half of the chunk so a pathological text
       // with no boundaries still advances.
       const windowStart = start + Math.floor(maxChars / 2);
       const slice = text.slice(windowStart, end);
       const para = slice.lastIndexOf('\n\n');
+      const row = byRow ? slice.lastIndexOf('\n') : -1;
       const sentence = Math.max(slice.lastIndexOf('. '), slice.lastIndexOf('.\n'));
       const word = slice.lastIndexOf(' ');
-      const cut = para >= 0 ? para + 2 : sentence >= 0 ? sentence + 2 : word >= 0 ? word + 1 : -1;
+      const cut = para >= 0 ? para + 2 : row >= 0 ? row + 1 : sentence >= 0 ? sentence + 2 : word >= 0 ? word + 1 : -1;
       if (cut >= 0) end = windowStart + cut;
     }
     // codePointAt sees both halves when the cut falls just after a high
     // surrogate. Move inward so the chunk stays within maxChars in UTF-16.
     if (text.codePointAt(end - 1)! > 0xffff) end--;
     chunks.push({ index: chunks.length, text: text.slice(start, end), charStart: start, charEnd: end });
-    if (end >= len) break;
+    if (end >= to) break;
     start = Math.max(end - overlap, start + 1);
     // A safe end with zero overlap is already intact. With overlap, moving
     // inward keeps progress and coverage while never increasing the overlap.
@@ -246,8 +305,10 @@ export async function chunkAndEmbedDocument(args: {
   pageSpans?: PageSpan[];
   /** Embed the chunks (default true). False writes them for text search only, sending nothing out. */
   embed?: boolean;
+  /** The layout reader's tables (P-90): each becomes its own chunk. Absent, chunking is unchanged. */
+  tableSpans?: DocumentChunkOptions['tableSpans'];
 }): Promise<ChunkWriteResult> {
-  const chunks = chunkExtractedText(args.text);
+  const chunks = chunkExtractedText(args.text, { tableSpans: args.tableSpans });
   if (chunks.length === 0) {
     return { ok: false, chunkCount: 0, error: 'No extracted text to chunk.' };
   }
@@ -280,6 +341,11 @@ export async function chunkAndEmbedDocument(args: {
   const { vectors } = embedding;
   const embeddingError = embedding.error;
 
+  // The section each chunk starts in, and whether it is a table. Before
+  // 2026-10-25 the INSERT named none of these columns, so every passage
+  // reached the RAG reader with sectionTitle NULL whatever its document said.
+  const sections = sectionsForChunks(args.text, chunks);
+
   // vault.documents carries no organization_id; a document belongs to a tenant
   // through its program (regulatory_programs.organization_id), which is also
   // what the table's RLS policies resolve. Every statement below reaches the
@@ -310,11 +376,14 @@ export async function chunkAndEmbedDocument(args: {
       // Without a vector, the embedding columns are left out: the chunk is
       // found by text, and a database without pgvector accepts the row.
       const vec = vectors?.[i] ?? null;
+      const section = sections[i];
       const inserted = await client.query(
         `INSERT INTO vault.document_chunks
-           (document_id, chunk_index, chunk_text, char_start, char_end,
-            page_number, ${vec ? 'embedding, ' : ''}embedding_model, token_count, vectorized_at)
-         SELECT d.id, $2, $3, $4, $5, $6, ${vec ? '$10::vector, ' : ''}$7, $8, ${vec ? 'NOW()' : 'NULL'}
+           (document_id, chunk_index, chunk_text, char_start, char_end, page_number,
+            chunk_type, section_title, section_hierarchy,
+            ${vec ? 'embedding, ' : ''}embedding_model, token_count, vectorized_at)
+         SELECT d.id, $2, $3, $4, $5, $6, $10, $11, $12::text[],
+                ${vec ? '$13::vector, ' : ''}$7, $8, ${vec ? 'NOW()' : 'NULL'}
            FROM vault.documents d
            JOIN regulatory_programs p ON p.id = d.program_id
           WHERE d.id = $1 AND p.organization_id = $9`,
@@ -328,6 +397,9 @@ export async function chunkAndEmbedDocument(args: {
           vec ? CHUNK_EMBEDDING_MODEL : null,
           Math.ceil(c.text.length / 4),
           args.organizationId,
+          section.chunkType,
+          section.sectionTitle,
+          section.sectionHierarchy,
           ...(vec ? [vec] : []),
         ],
       );
@@ -392,10 +464,11 @@ export async function chunkDocumentForIngest(
   organizationId: number,
   text: string,
   pageSpans?: PageSpan[],
-  opts: { embed?: boolean } = {},
+  /** `tableSpans`: the layout reader's tables (P-90), so each is its own chunk; see DocumentChunkOptions. */
+  opts: { embed?: boolean; tableSpans?: DocumentChunkOptions['tableSpans'] } = {},
 ): Promise<void> {
   try {
-    const result = await chunkAndEmbedDocument({ documentId, organizationId, text, pageSpans, embed: opts.embed });
+    const result = await chunkAndEmbedDocument({ documentId, organizationId, text, pageSpans, embed: opts.embed, tableSpans: opts.tableSpans });
     await recordChunkOutcome({ documentId, organizationId, result });
     if (!result.ok) {
       logger.warn('Vault chunking failed — recorded on the catalog ledger', {

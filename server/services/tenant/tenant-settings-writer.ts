@@ -22,6 +22,7 @@ import type { RequestSqlClient } from '../../db/requestDb';
 import { writeChainedAuditRow } from '../auditService';
 import { ConnectorSettingRefusedError, claudeConnectorChanged } from '../../mcp/auth/connector-enablement';
 import { companyDocumentsAuditDetails } from '../company-documents/provenance';
+import { AggregateLearningRefusedError, assertRecordedLearningConsent, learningClassOf, learningContributionPolicyOf, recordPatternContribution, type LearningContributionPolicy } from '../intelligence/ana-failure-learning';
 
 export type Settings = Record<string, unknown>;
 
@@ -48,9 +49,21 @@ export function namesCompanyDocuments(value: unknown): boolean {
   return Object.prototype.hasOwnProperty.call(asSettings(value), 'companyDocuments');
 }
 
-/** Generic settings reads cannot substitute for the company library's project ACL. */
+export const DERIVATIVE_CUSTODY_NOT_A_GENERAL_SETTING = 'Manage derivative custody through the governed AI placement policy controls.';
+
+export class DerivativeCustodySettingRefusedError extends Error {
+  constructor() {
+    super(DERIVATIVE_CUSTODY_NOT_A_GENERAL_SETTING);
+    this.name = 'DerivativeCustodySettingRefusedError';
+  }
+}
+export class LearningContributionSettingRefusedError extends Error {
+  constructor() { super('Manage aggregate-learning contributions through the governed AI data-use controls.'); this.name = 'LearningContributionSettingRefusedError'; }
+}
+
+/** Generic settings reads cannot expose project-scoped libraries or derivative custody. */
 export function generalSettingsView(value: unknown): Settings {
-  return Object.fromEntries(Object.entries(asSettings(value)).filter(([key]) => key !== 'companyDocuments'));
+  return Object.fromEntries(Object.entries(asSettings(value)).filter(([key]) => !['companyDocuments', 'derivativeCustody', 'learningContributionPolicy'].includes(key)));
 }
 
 export class CompanyDocumentsSettingRefusedError extends Error {
@@ -68,7 +81,11 @@ export class CompanyDocumentsSettingRefusedError extends Error {
  * in an append-only chain can never be removed.
  */
 const VALUE_AUDITED: Readonly<Record<string, readonly string[]>> = {
-  security: ['mfaRequired', 'passwordPolicy', 'sessionTimeoutMinutes', 'maxConcurrentSessions', 'ipRestrictions'],
+  // independentReviewersRequired and soleMemberSelfApproval are the organisation's review rules (P-117).
+  security: [
+    'mfaRequired', 'passwordPolicy', 'sessionTimeoutMinutes', 'maxConcurrentSessions', 'ipRestrictions',
+    'independentReviewersRequired', 'soleMemberSelfApproval',
+  ],
   qmp: ['auditTrailRetentionDays'],
   // Whether the organisation's members may use the connector for Claude, set by
   // its owner or administrator (P1-47, ADR-0014 §10; mcp/auth/connector-enablement.ts).
@@ -176,6 +193,8 @@ export async function writeTenantSettings(req: Request, tenantId: number, change
     // cannot make the before/after comparison accidentally see the same value.
     const discoveryBefore = managedSnapshot(current.onboardingDiscovery);
     const companyDocumentsBefore = managedSnapshot(current.companyDocuments);
+    const derivativeCustodyBefore = managedSnapshot(current.derivativeCustody);
+    const learningPolicyBefore = managedSnapshot(current.learningContributionPolicy);
     const next = await change.next(current, tenant.tier || 'standard');
     // The connector for Claude has one door (P1-47 fix round, 2026-10-01,
     // IAM-24). A write from any other door that would change it, on, off, null
@@ -190,6 +209,10 @@ export async function writeTenantSettings(req: Request, tenantId: number, change
     // an AnA tool. Keep a stored discovery intact on resets and unrelated edits.
     assertManagedValue(discoveryBefore, next.onboardingDiscovery, change.discoveryDoor, () => new DiscoverySettingRefusedError());
     assertManagedValue(companyDocumentsBefore, next.companyDocuments, change.companyDocumentsDoor, () => new CompanyDocumentsSettingRefusedError());
+    // The dedicated placement writer holds its own settings lock and audit.
+    // Generic/admin/model settings mutations never acquire its custody authority.
+    assertManagedValue(derivativeCustodyBefore, next.derivativeCustody, false, () => new DerivativeCustodySettingRefusedError());
+    assertManagedValue(learningPolicyBefore, next.learningContributionPolicy, false, () => new LearningContributionSettingRefusedError());
     const [updated] = await rdb
       .update(organizations)
       .set({ settings: next })
@@ -244,4 +267,68 @@ export function overlaySettings(current: Settings, patch: Settings): Settings {
     out[key] = isPlainObject(existing) && isPlainObject(value) ? overlaySettings(existing, value) : value;
   }
   return out;
+}
+
+/** The route verifies fresh human reauthentication; this transaction rechecks persisted administration. */
+export async function writeLearningContributionPolicy(pool: {
+  connect(): Promise<RequestSqlClient & { release(error?: Error): void }>;
+}, organizationId: number, userId: number, raw: unknown): Promise<LearningContributionPolicy> {
+  const body = { ...asSettings(raw) };
+  if (Object.keys(body).some(key => !['enabled', 'expectedVersion', 'reasonForChange'].includes(key)) ||
+      typeof body.enabled !== 'boolean' || !Number.isSafeInteger(body.expectedVersion) || Number(body.expectedVersion) < 0 ||
+      typeof body.reasonForChange !== 'string' || body.reasonForChange.trim().length < 8 || body.reasonForChange.length > 2000) {
+    throw new AggregateLearningRefusedError(400);
+  }
+  const q = await pool.connect();
+  let commitAttempted = false, discard: Error | undefined;
+  try {
+    await q.query('BEGIN');
+    const org = await q.query("SELECT settings FROM organizations WHERE id=$1 AND status='active' FOR UPDATE", [organizationId]);
+    if (org.rows.length !== 1) throw new AggregateLearningRefusedError();
+    const { resolveSignerOrgRole } = await import('../part11/resolve-signer-role');
+    const role = await resolveSignerOrgRole(userId, organizationId, q);
+    if (!role || !['admin', 'owner'].includes(role)) throw new AggregateLearningRefusedError();
+    const settings = asSettings(org.rows[0].settings), previous = learningContributionPolicyOf(settings);
+    await assertRecordedLearningConsent(q, organizationId, previous);
+    if (previous.version !== body.expectedVersion) throw new AggregateLearningRefusedError(409);
+    const policy = { enabled: body.enabled, version: previous.version + 1 };
+    await q.query('UPDATE organizations SET settings=$2::jsonb WHERE id=$1', [organizationId,
+      JSON.stringify({ ...settings, learningContributionPolicy: policy })]);
+    await writeChainedAuditRow(q, { tenantId: organizationId, userId, action: 'ana_pattern.contribution_policy',
+      resourceType: 'aggregate_learning', resourceId: String(organizationId), reason: body.reasonForChange,
+      details: { previous, policy } });
+    commitAttempted = true;
+    await q.query('COMMIT');
+    return policy;
+  } catch (error) {
+    if (commitAttempted) {
+      discard = new Error('Aggregate learning policy commit acknowledgement unavailable');
+      throw new AggregateLearningRefusedError(503);
+    }
+    await q.query('ROLLBACK').catch(() => { discard = new Error('Aggregate learning policy rollback unavailable'); });
+    throw error;
+  } finally { q.release(discard); }
+}
+
+export async function writeLearningPatternContribution(pool: {
+  connect(): Promise<RequestSqlClient & { release(error?: Error): void }>;
+}, organizationId: number, userId: number, raw: unknown) {
+  const body = { ...asSettings(raw) }, entry = learningClassOf(body.classKey);
+  if (Object.keys(body).some(key => !['classKey', 'sourceAuditEventId', 'reasonForChange'].includes(key)) ||
+      typeof body.sourceAuditEventId !== 'string' || typeof body.reasonForChange !== 'string' ||
+      body.reasonForChange.trim().length < 8 || body.reasonForChange.length > 2000) throw new AggregateLearningRefusedError(400);
+  const q = await pool.connect();
+  let commitAttempted = false, discard: Error | undefined;
+  try {
+    await q.query('BEGIN');
+    const result = await recordPatternContribution(q, { organizationId, userId, classKey: entry.key,
+      sourceAuditEventId: body.sourceAuditEventId, reasonForChange: body.reasonForChange });
+    commitAttempted = true;
+    await q.query('COMMIT');
+    return result;
+  } catch (error) {
+    if (commitAttempted) { discard = new Error('Pattern contribution commit acknowledgement unavailable'); throw new AggregateLearningRefusedError(503); }
+    await q.query('ROLLBACK').catch(() => { discard = new Error('Pattern contribution rollback unavailable'); });
+    throw error;
+  } finally { q.release(discard); }
 }

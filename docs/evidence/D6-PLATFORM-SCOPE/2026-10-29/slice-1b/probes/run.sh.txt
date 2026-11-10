@@ -1,0 +1,10 @@
+#!/bin/bash
+# Run a .mts probe ($1) as the runtime role app_service against database $2 (RLS_ENFORCE=on); output to $3.
+DB=$2
+export DATABASE_URL="postgresql://c2c_rds_master:local-p72-pw@127.0.0.1:55474/$DB?sslmode=disable"
+export OWNER_URL="postgresql://postgres@127.0.0.1:55474/$DB?sslmode=disable"  # observer: the superuser, because FORCE holds the non-superuser owner
+export APP_DATABASE_URL="postgresql://app_service:local-p72-pw@127.0.0.1:55474/$DB?sslmode=disable"
+export APP_SERVICE_DB_PASSWORD=local-p72-pw RLS_ENFORCE=on NODE_ENV=test LOG_LEVEL=warn SKIP_DB_STARTUP_TEST=true
+export AUDIT_HMAC_KEY=laneC-probe-hmac-key-0123456789abcdef AUDIT_HMAC_SECRET=laneC-probe-tpl-secret-0123456789abcdef
+unset DATABASE_OWNER_URL TEST_DATABASE_URL AUDIT_ANCHOR_BUCKET
+cd /home/user/ClinicalSageAI-2-replit && timeout 300 node_modules/.bin/tsx "$1" > "$3" 2>&1; echo "probe exit $?" >> "$3"

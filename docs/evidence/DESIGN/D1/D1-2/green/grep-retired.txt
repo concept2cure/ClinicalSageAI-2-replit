@@ -1,0 +1,38 @@
+# Retired top-bar names after D1-2 (working tree on 2e4a9fe67), 2026-11-02T00:21Z
+# grep -rnE 'tb-cmdk|tb-org|tb-task|tb-proj|crumb-root|crumb-tier|ProjectChip|Search, jump, or run|No project open|Loading surface' client/src (.tsx .ts .css, generated ramp excluded) and tests/ e2e
+## markup and styles (no test files):
+client/src/concept2cure/v2/surfaces/EctdCompile.tsx:26: * downloadable backbone is the exact XML the server returned. No project open,
+client/src/concept2cure/v2/surfaces/TaskBoard.tsx:579:     (taskProjectFor) once that list has been read. No project open, no match, or
+client/src/concept2cure/v2/surfaces/TaskBoard.tsx:2001:            <div className="tb-field"><label htmlFor="tb-task-type">Task type</label><select id="tb-task-type" value={f.taskType} onChange={e => set('taskType', e.target.value)}>{Object.keys(TB_TYPE).map(t => <option key={t} value={t}>{TB_TYPE[t]}</option>)}</select></div>
+client/src/concept2cure/v2/surfaces/Vault.tsx:1960:    /* No project open: no tree, and the organization view is what is on screen
+client/src/concept2cure/v2/Shell.tsx:783: * (`ProjectChip`, deleted in D1-2), which named the project a second time beside the
+client/src/concept2cure/mdx/surfaces/SoftwareSurface.tsx:54:            {program ? ` · ${program.code}` : ' · No project open'}
+client/src/concept2cure/mdx/surfaces/OfficialEstarPanel.tsx:395:            title="No project open"
+(end)
+# None is top-bar markup or a rule: prose comments ('No project open,' in EctdCompile, TaskBoard, Vault), an element id (TaskBoard's `tb-task-type`, a form field's id, not a class), the MDX surfaces' own words, and TopBar's doc comment naming the deleted component.
+
+## the same names in tests (each asserts their absence, or is a comment about what went):
+client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx:516:/* ══════════════════════ No project open (PF-07) ════════════
+client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx:143:    expect(document.querySelector('.tb-org'), 'the top bar keeps no organisation label').toBeNull();
+client/src/concept2cure/v2/__tests__/shellChromeTruth.test.tsx:147:    expect(account.querySelector('.tb-org-chev')).toBeNull();
+client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx:35: *   - no `.tb-cmdk`, `.tb-org`, `.tb-proj`, `.tb-task`, no "Get help" in the bar;
+client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx:315:    for (const gone of ['.tb-cmdk', '.tb-org', '.tb-proj', '.tb-task', '.crumb-root', '.crumb-tier']) {
+client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx:381:    expect(bar.textContent).not.toMatch(/No project open|Open project/);
+client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx:618:    // Each name and every `-suffix` of it (`.tb-task-lbl`, `.tb-org-mark`, `.tb-proj[data-empty]`).
+client/src/concept2cure/v2/__tests__/shellQuietChrome.test.tsx:619:    for (const gone of ['tb-cmdk', 'tb-org', 'tb-task', 'tb-proj', 'crumb-root', 'crumb-tier']) {
+client/src/concept2cure/v2/__tests__/projectFeatureBreadcrumb.test.tsx:116:    expect(document.querySelector('.tb-proj')).toBeNull();
+client/src/concept2cure/v2/__tests__/topBarProject.test.tsx:21: * (`.tb-proj`) folded into that crumb (`.crumb-proj`), same name, title and click,
+client/src/concept2cure/v2/__tests__/topBarProject.test.tsx:23: * the dashed "No project open" chip went, and Projects is the sidebar's.
+client/src/concept2cure/v2/__tests__/topBarProject.test.tsx:65:    expect(bar.querySelector('.tb-proj')).toBeNull();
+client/src/concept2cure/v2/__tests__/topBarProject.test.tsx:80:  /* Rewritten for D1-2: the dashed "No project open" chip that opened Projects went with
+client/src/concept2cure/v2/__tests__/topBarProject.test.tsx:82:  it('with no project open, the bar shows no project button and no "No project open"', () => {
+client/src/concept2cure/v2/__tests__/topBarProject.test.tsx:84:    expect(bar.querySelector('.crumb-proj, .tb-proj')).toBeNull();
+client/src/concept2cure/v2/__tests__/topBarProject.test.tsx:85:    expect(bar.textContent).not.toMatch(/No project open|Choose one in Projects/);
+client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx:94:    // D1-2 (D1.md §D1.B step 4): the "No project open" chip went; with none open the bar
+client/src/concept2cure/v2/__tests__/shellSegmentFollowsProgram.test.tsx:97:    expect(barText()).not.toContain('No project open');
+
+## out of v2 (other apps' own sheets, untouched): client/src/concept2cure/pdev/app.css
+218:.pdev-tb-cmdk {
+224:.pdev-tb-cmdk .ico { color: var(--text-400); }
+225:.pdev-tb-cmdk .lbl { flex: 1; }
+226:.pdev-tb-cmdk .kbd {

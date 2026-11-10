@@ -1,0 +1,77 @@
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — recorded processing recovery > rereads recovered persisted text for the same source without sending a processing mutation 655ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — recorded processing recovery > shows persisted retry-needed processing instead of a premature extracted label 215ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — recorded processing recovery > keeps legacy unknown availability ineligible instead of inventing readable text 105ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — recorded processing recovery > shows a superseded source as historical even when its persisted text exists 113ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > offers only the shared chat candidates from its project-source picker 93ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > lists the project's real sources 77ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > says a document is readable only when its extraction succeeded 117ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > reports how many sources are actually usable 105ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > renders an honest empty state for a project with no sources 77ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room > distinguishes a failed read from an empty data room 69ms
+ × client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > searches the whole room on the server, by title and text, and lists its answer 450ms
+   → Unable to find an element with the text: csr.pdf. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > a pending source search does not report zero matches 415ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > a malformed source list is unavailable, not empty: null 74ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > a malformed source list is unavailable, not empty: {"sources":{}} 63ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > a malformed source list is unavailable, not empty: {"sources":[],"total":null} 64ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > offers a way to add sources 53ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > says how many pages OCR read for an upload a budget stopped 74ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > cannot pin a source whose text was never read 100ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > hands the pinned set to AnA 132ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — pinning sources as context > offers no pin action until something is pinned 65ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > reports the sections and documents a source is cited in 70ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > says plainly when nothing was written from a source 77ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > flags the sections written against content the source no longer has 69ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > shows nothing rather than a zero when the server sends no usage field 72ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > withholds a zero when the citation access scope is undefined 75ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — where a source is used > withholds a zero when the citation access scope is organization-wide 71ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":-1,"documents":0,"changedSections":0} 73ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":"0","documents":0,"changedSections":0} 75ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":0,"documents":1,"changedSections":0} 75ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":1,"documents":2,"changedSections":0} 67ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > does not manufacture usage from malformed accessible counts {"sections":1,"documents":1,"changedSections":2} 70ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > names the affected sections when a source has changed under them 73ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > shows no change banner when nothing is stale 61ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > two returned citations of one section are described as citations, not two sections 60ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > an unavailable or malformed change read preserves sources without implying no affected citations 78ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > an unavailable or malformed change read preserves sources without implying no affected citations 74ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — usage and changed-citation read verification > an unavailable or malformed change read preserves sources without implying no affected citations 76ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > counts a re-uploaded file once 75ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > shows what the catalog found: protocol, registry id, data cut-off, and a table's CDISC domain 75ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — data room counts > a full page shows the exact total and pages to the older sources 109ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > does not send project A’s unsent question from the same-mounted project B composer 583ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > retires draft, older pages, activity and dossier in B’s first commit before passive read resets 483ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > a later A visit is fresh and ignores an older-page reply from the first A visit 612ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > ignores late first-page threads, activity and dossier replies from an abandoned project 185ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > retires same-UUID state when the 'account' changes 231ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > retires same-UUID state when the 'organization' changes 173ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > a new sign-in of the same account retires unsent state even though the actor and project match 191ms
+ × client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > keeps one fenced workspace during pending adoption and creates one fresh adopted workspace 388ms
+   → Unable to find an accessible element with the role "textbox" and name `/Start a conversation in/`
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > preserves the exact composer and loaded history through stage/title changes and ordinary bearer refresh 930ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > keeps the remembered step while retiring global source pins after a project ownership change 210ms
+ × client/src/concept2cure/v2/__tests__/projectHomeQuality.test.tsx > a project's quality records on its Review step > counts this project's open CAPAs, open change controls, undispositioned product and its documents by status 476ms
+   → expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeQuality.test.tsx > a project's quality records on its Review step > says a read failed, for that record only, and never shows it as 0 193ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeQuality.test.tsx > a project's quality records on its Review step > opens Quality from its door 99ms
+ ✓ client/src/concept2cure/v2/__tests__/projectHomeQuality.test.tsx > a project's quality records on its Review step > is not offered when Quality is not in this release 95ms
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx > ProjectHome — source searches are completed reads > searches the whole room on the server, by title and text, and lists its answer
+TestingLibraryElementError: Unable to find an element with the text: csr.pdf. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeDataRoom.test.tsx:230:19
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx > keeps one fenced workspace during pending adoption and creates one fresh adopted workspace
+TestingLibraryElementError: Unable to find an accessible element with the role "textbox" and name `/Start a conversation in/`
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ composer client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx:99:31
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeOwnershipBoundary.test.tsx:257:18
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeQuality.test.tsx > a project's quality records on its Review step > counts this project's open CAPAs, open change controls, undispositioned product and its documents by status
+AssertionError: expected "vi.fn()" to be called with arguments: [ 'GET', …(1) ]
+ ❯ client/src/concept2cure/v2/__tests__/projectHomeQuality.test.tsx:69:62
+ Test Files  3 failed (3)
+      Tests  3 failed | 51 passed (54)

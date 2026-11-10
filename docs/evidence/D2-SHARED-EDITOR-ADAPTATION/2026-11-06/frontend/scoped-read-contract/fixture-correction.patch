@@ -1,0 +1,26 @@
+diff --git a/client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx b/client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx
+index 684b077731..25d4c4eb39 100644
+--- a/client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx
++++ b/client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx
+@@ -58,7 +58,7 @@ function mockApi() {
+   apiRequest.mockReset();
+   apiRequest.mockImplementation(async (method: string, url: string) => {
+     if (url.startsWith('/api/authoring/docs?')) {
+-      return ok({ documents: [{ id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', product_code: null, status: 'draft', updated_at: null, section_count: 1 }] });
++      return ok({ success: true, documents: [{ id: DOC, program_id: PID, title: 'Module 2.5 Clinical Overview', module: 'M2', product_code: null, status: 'draft', updated_at: null, section_count: 1 }] });
+     }
+     if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ success: true, document: { id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', status: 'draft', provenance: null } });
+     if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) {
+diff --git a/client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx b/client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx
+index 7fcb8e8546..e6d90123d9 100644
+--- a/client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx
++++ b/client/src/concept2cure/v2/__tests__/workbenchProjectFiles.test.tsx
+@@ -72,7 +72,7 @@ function mockApi(routes: Routes = {}) {
+   apiRequest.mockReset();
+   apiRequest.mockImplementation(async (method: string, url: string) => {
+     if (url.startsWith('/api/authoring/docs?')) {
+-      return ok({ documents: [{ id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', product_code: null, status: 'draft', updated_at: null, section_count: 1 }] });
++      return ok({ success: true, documents: [{ id: DOC, program_id: PID, title: 'Module 2.5 Clinical Overview', module: 'M2', product_code: null, status: 'draft', updated_at: null, section_count: 1 }] });
+     }
+     if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ success: true, document: { id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', status: 'draft', provenance: null } });
+     if (url === `/api/authoring/docs/${DOC}/citations`) return ok([]);

@@ -1,0 +1,7 @@
+MUTATION M21-check4-null-unsafe in server/services/submission-service/filed-sequence-baseline.ts (on the final code and tests, 2026-11-09T13:43:45.779051Z): replaced [        AND NOT (COALESCE(new_values::jsonb->>'source', '') = 'held-send-settlement' AND COALESCE(new_values::jsonb->>'status', '') = 'not-received')
+] with [        AND NOT (new_values::jsonb->>'source' = 'held-send-settlement' AND new_values::jsonb->>'status' = 'not-received')
+]
+ × server/services/submission-service/__tests__/sequence-retirement.pglite.test.ts > P-86: what keeps a sequence (the agency may hold it, or its number) > refuses a sequence recorded as transmitted to production before sends carried a binding 89ms
+      Tests  1 failed | 25 skipped (26)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 9d9b9646e91ce7005f7f6f757c4112940919fff441eb97b5e64941aa87d89155 (expected 9d9b9646e91ce7005f7f6f757c4112940919fff441eb97b5e64941aa87d89155)

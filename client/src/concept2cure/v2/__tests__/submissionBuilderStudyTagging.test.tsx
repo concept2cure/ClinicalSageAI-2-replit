@@ -4,10 +4,15 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
-const { apiRequest, auth } = vi.hoisted(() => ({ apiRequest: vi.fn(), auth: { revision: 1, actor: 7 } }));
+const { apiRequest, auth } = vi.hoisted(() => ({ apiRequest: vi.fn(),
+  auth: { revision: 1, actor: 7, user: null as { id: number; organizationId: number } | null } }));
 vi.mock('@/lib/queryClient', async (original) => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest }));
+// One account object while the account is the same, as authService holds it: the
+// company library's read session is current only while getUser() is that same
+// object (authoringCurrentRead.ts captureAuthoringSession), so a new object on
+// every call minted a new session on every render, and the Builder rendered forever.
 vi.mock('@/services/portal/authService', () => ({ authService: {
-  getUser: () => ({ id: auth.actor, organizationId: 4 }),
+  getUser: () => (auth.user?.id === auth.actor ? auth.user : (auth.user = { id: auth.actor, organizationId: 4 })),
   captureSessionReadGuard: () => { const revision = auth.revision; return { sameRevision: () => revision === auth.revision }; },
   on: () => () => {},
 } }));
@@ -39,7 +44,7 @@ async function edit() {
 const writes = () => apiRequest.mock.calls.filter(c => c[0] === 'PUT');
 const save = () => fireEvent.click(screen.getByRole('button', { name: 'Save study tagging' }));
 
-beforeEach(() => { apiRequest.mockReset(); stored = { ...LEAF }; auth.revision = 1; auth.actor = 7; });
+beforeEach(() => { apiRequest.mockReset(); stored = { ...LEAF }; auth.revision = 1; auth.actor = 7; auth.user = null; });
 afterEach(cleanup);
 
 describe('Builder study tagging on the existing leaf', () => {

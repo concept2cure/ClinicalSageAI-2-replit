@@ -19,6 +19,7 @@ import { authService } from '@/services/portal/authService';
 import { clearEditorTarget, setEditorTarget } from '../../editorTarget';
 import { publishShellProject } from '../../shellProject';
 import { __resetCeremonies, registerCeremonyOpen } from '../../ceremony';
+import { openEditorControl } from './workbenchAssemblyBuild.testSupport';
 
 const PROGRAM = '11111111-1111-4111-8111-111111111381';
 const CURRENT = '22222222-2222-4222-8222-222222222381';
@@ -95,8 +96,8 @@ async function mounted(overrides: Partial<DocumentWorkbenchProps> = {}) {
     onNav: vi.fn(), reloadDocs: vi.fn(async () => undefined), ...overrides };
   const view = render(<DocumentWorkbench {...props} />);
   await waitFor(() => expect(editor()?.textContent).toContain('Existing saved current work.'));
-  fireEvent.click(screen.getByTestId('vault-rail-open'));
-  const rail = await screen.findByRole('complementary', { name: 'Project files' });
+  fireEvent.click(openEditorControl('Vault'));
+  const rail = await screen.findByRole('complementary', { name: 'Vault' });
   fireEvent.click(await within(rail).findByRole('button', { name: /Exact retained Vault report/ }));
   return { ...view, rail, props };
 }

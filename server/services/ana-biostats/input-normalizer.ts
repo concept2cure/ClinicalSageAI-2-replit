@@ -15,6 +15,80 @@ import type {
   EndpointType,
   StudyType,
 } from './types';
+import { phaseNumber, phaseNumbers } from '../../../shared/clinical-phase';
+
+/** The four clinical phases the judgment rules are written against. */
+export type CanonicalPhase = 'I' | 'II' | 'III' | 'IV';
+
+/**
+ * A study phase as written, read as the phase the judgment rules compare.
+ *
+ * ── Why this exists (2026-10-31) ─────────────────────────────────────────────
+ * The judgment engine, the domain adapter and the SME router compare
+ * `input.phase === 'III'` / `'II'`, but no caller sends that: the bridge's
+ * design adapter sends "Phase III", the workbench "Phase 3", the presets
+ * "Phase III", AnA "3" or "2/3". So every phase rule was dead on every path —
+ * a Phase III design with no estimand was rated ADEQUATE on estimand clarity
+ * (score 70, the non-confirmatory branch) instead of INADEQUATE (40).
+ *
+ * The reading is `shared/clinical-phase.ts`'s, the one the CMC program stage
+ * and the Module 2 summaries already use, so the three cannot disagree about
+ * what a study is: "Phase 2", "Phase II", "2", "2b", "IIb" → II.
+ *
+ * A seamless or combined phase is read as its HIGHEST phase — "2/3" and
+ * "Phase II/III" → III, "1/2" → II. That is the conservative choice: a
+ * seamless Phase 2/3 study carries a confirmatory component, so it is held to
+ * the confirmatory rules rather than excused from them. The normalizer says so
+ * in a warning whenever it applies.
+ *
+ * Phase 4 / IV is recognised here because shared/clinical-phase reads only
+ * 1–3. Anything else (blank, "N/A", "pilot", "0") is undefined: no phase rule
+ * applies, and the normalizer warns that the phase was not recognised rather
+ * than guessing one.
+ *
+ * Idempotent: `canonicalPhase('III') === 'III'`. The engines call it at every
+ * rule because the bridge (biostatistics-bridge/bridge-service.ts) feeds the
+ * judgment engine the adapter's input directly, without this normalizer.
+ */
+export function canonicalPhase(raw: unknown): CanonicalPhase | undefined {
+  if (raw === null || raw === undefined) return undefined;
+  const text = String(raw).trim();
+  if (!text) return undefined;
+  const n = phaseNumber(text);
+  if (n !== null) return n === 3 ? 'III' : n === 2 ? 'II' : 'I';
+  return /\b(iv|4)[ab]?\b/i.test(text.replace(/phase|_|-/gi, ' ')) ? 'IV' : undefined;
+}
+
+/** The phase the judgment rules read, from any input — normalized or not. */
+export function phaseOf(input: { phase?: unknown }): CanonicalPhase | undefined {
+  return canonicalPhase(input.phase);
+}
+
+/** "Phase III" — the canonical phase as a reader writes it. */
+export function phaseDisplay(phase: unknown): string | undefined {
+  const p = canonicalPhase(phase);
+  return p ? `Phase ${p}` : undefined;
+}
+
+/** The warning that says how a stated phase was read, or none when it needs no comment. */
+function phaseWarning(raw: unknown): InputWarning | null {
+  if (raw === null || raw === undefined || String(raw).trim() === '') return null;
+  const canonical = canonicalPhase(raw);
+  if (!canonical) {
+    return {
+      field: 'phase',
+      message: `The phase "${String(raw).trim()}" is not one the engine recognises (I, II, III or IV), so no phase-specific rule was applied.`,
+      suggestion: 'State the phase as 1, 2, 3 or 4',
+    };
+  }
+  if (new Set(phaseNumbers(raw)).size > 1) {
+    return {
+      field: 'phase',
+      message: `The phase "${String(raw).trim()}" names more than one phase. It is judged as Phase ${canonical}, the stricter of them.`,
+    };
+  }
+  return null;
+}
 
 export class InputNormalizer {
 
@@ -96,6 +170,10 @@ export class InputNormalizer {
       this.validateStudyTypeSpecific(raw, warnings, errors);
     }
 
+    // How the stated phase is read by the phase rules — said when it needs saying.
+    const phaseNote = phaseWarning(raw.phase);
+    if (phaseNote) warnings.push(phaseNote);
+
     const normalizedInput: StatisticalInput = {
       projectId: raw.projectId,
       clientTrack: raw.clientTrack as ClientTrack ?? 'biotech_pharma',
@@ -123,6 +201,9 @@ export class InputNormalizer {
       contextDocumentId: raw.contextDocumentId,
       contextSectionRef: raw.contextSectionRef,
       indication: raw.indication,
+      /* Kept as the sponsor wrote it, so a governed document never restates a
+         "Phase 2/3" study as "Phase III". Every phase RULE reads it through
+         `phaseOf` above — the one reading, applied wherever a rule asks. */
       phase: raw.phase,
       numberOfGroups: raw.numberOfGroups ?? 2,
       followUpDuration: raw.followUpDuration,

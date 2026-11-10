@@ -114,6 +114,7 @@ export const WRITES: readonly WriteRoute[] = [
   { method: 'POST', path: `${LETTER}/no-response-required`, mode: 'write' },
   { method: 'POST', path: `${LETTER}/questions/:questionId/approve`, mode: 'write' },
   { method: 'POST', path: `${LETTER}/questions/:questionId/commitments`, mode: 'write' },
+  { method: 'POST', path: `${LETTER}/commitments`, mode: 'write' },
   { method: 'POST', path: `${P}/commitments/:commitmentId/fulfill`, mode: 'write' },
   { method: 'PATCH', path: `${LETTER}/questions/:questionId/owner`, mode: 'write' },
   { method: 'POST', path: `${LETTER}/response-package`, mode: 'write' },

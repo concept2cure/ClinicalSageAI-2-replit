@@ -1,0 +1,50 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/projectObjectiveRead.test.tsx > useProjectObjective: the objective of record, for the project page > reads the charter route for this project and gives the stated objective, its version, source and recorder 23ms
+   → useProjectObjective is not a function
+ × client/src/concept2cure/v2/__tests__/projectObjectiveRead.test.tsx > useProjectObjective: the objective of record, for the project page > says "none" when nothing is recorded, with whether this person may state it 3ms
+   → useProjectObjective is not a function
+ × client/src/concept2cure/v2/__tests__/projectObjectiveRead.test.tsx > useProjectObjective: the objective of record, for the project page > names the source honestly: a statement with no document, or the first of several sources 3ms
+   → useProjectObjective is not a function
+ × client/src/concept2cure/v2/__tests__/projectObjectiveRead.test.tsx > useProjectObjective: the objective of record, for the project page > fails, never "none", when the read fails or the answer is not an objectives record, and retries on request 3ms
+   → useProjectObjective is not a function
+ × client/src/concept2cure/v2/__tests__/projectObjectiveRead.test.tsx > useProjectObjective: the objective of record, for the project page > never shows one project's objective while another's is read 5ms
+   → useProjectObjective is not a function
+ × client/src/concept2cure/v2/__tests__/projectObjectiveRead.test.tsx > useProjectObjective: the objective of record, for the project page > reads nothing with no project 3ms
+   → useProjectObjective is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/projectObjectiveRead.test.tsx > useProjectObjective: the objective of record, for the project page > reads the charter route for this project and gives the stated objective, its version, source and recorder
+ FAIL  client/src/concept2cure/v2/__tests__/projectObjectiveRead.test.tsx > useProjectObjective: the objective of record, for the project page > says "none" when nothing is recorded, with whether this person may state it
+ FAIL  client/src/concept2cure/v2/__tests__/projectObjectiveRead.test.tsx > useProjectObjective: the objective of record, for the project page > names the source honestly: a statement with no document, or the first of several sources
+ FAIL  client/src/concept2cure/v2/__tests__/projectObjectiveRead.test.tsx > useProjectObjective: the objective of record, for the project page > fails, never "none", when the read fails or the answer is not an objectives record, and retries on request
+ FAIL  client/src/concept2cure/v2/__tests__/projectObjectiveRead.test.tsx > useProjectObjective: the objective of record, for the project page > never shows one project's objective while another's is read
+ FAIL  client/src/concept2cure/v2/__tests__/projectObjectiveRead.test.tsx > useProjectObjective: the objective of record, for the project page > reads nothing with no project
+TypeError: useProjectObjective is not a function
+ ❯ Probe client/src/concept2cure/v2/__tests__/projectObjectiveRead.test.tsx:46:16
+     44| let seen: ObjectiveRead[] = [];
+     45| function Probe({ pid }: { pid: string | null }) {
+     46|   const read = useProjectObjective(pid);
+       |                ^
+     47|   seen.push(read);
+     48|   const { retry: _retry, ...shown } = read as ObjectiveRead & { retry?…
+ ❯ Object.react_stack_bottom_frame node_modules/react-dom/cjs/react-dom-client.development.js:25904:20
+ ❯ renderWithHooks node_modules/react-dom/cjs/react-dom-client.development.js:7662:22
+ ❯ updateFunctionComponent node_modules/react-dom/cjs/react-dom-client.development.js:10166:19
+ ❯ beginWork node_modules/react-dom/cjs/react-dom-client.development.js:11778:18
+ ❯ runWithFiberInDEV node_modules/react-dom/cjs/react-dom-client.development.js:874:13
+ ❯ performUnitOfWork node_modules/react-dom/cjs/react-dom-client.development.js:17641:22
+ ❯ workLoopSync node_modules/react-dom/cjs/react-dom-client.development.js:17469:41
+ ❯ renderRootSync node_modules/react-dom/cjs/react-dom-client.development.js:17450:11
+ ❯ performWorkOnRoot node_modules/react-dom/cjs/react-dom-client.development.js:16583:35
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed (6)
+   Start at  21:01:57
+   Duration  2.10s (transform 230ms, setup 207ms, import 249ms, tests 56ms, environment 594ms)
+

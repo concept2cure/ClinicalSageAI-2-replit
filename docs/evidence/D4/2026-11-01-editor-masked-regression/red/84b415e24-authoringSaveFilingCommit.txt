@@ -1,0 +1,2244 @@
+
+ RUN  v4.1.7 /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/787f5dd9-ee05-54b6-8bf9-81340ad671c0/scratchpad/old
+
+stderr | client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx > the save confirmation carries whether the text reached the filing > says the text did not reach the filing, with the server’s reason
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx > the save confirmation carries whether the text reached the filing > says the text did not reach the filing, with the server’s reason 945ms
+   → Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_0_"
+  class="btn primary"
+  data-testid="save-section"
+  style="height: 30px;"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.75"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M3
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Nonclinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                3.2.S.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                General Information
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M3
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Nonclinical Overview"
+            >
+              Nonclinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              3.2.S.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <input
+              aria-describedby="_r_0_"
+              aria-label="Reason for change"
+              aria-required="true"
+              class="de-input"
+              data-testid="change-reason"
+              placeholder="Why this changed (at least 8 characters)"
+              style="height: 30px; width: 260px;"
+              value="Corrected the potency limit."
+            />
+            <span
+              aria-live="polite"
+              data-testid="change-reason-note"
+              id="_r_0_"
+              style="font-size: 11.5px; color: var(--text-400); max-width: 220px;"
+            >
+              Recorded with the revision.
+            </span>
+            <button
+              aria-describedby="_r_0_"
+              class="btn primary"
+              data-testid="save-section"
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                ...
+stderr | client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx > the save confirmation carries whether the text reached the filing > says the text was committed to the filing when the server says so
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx > the save confirmation carries whether the text reached the filing > says the text was committed to the filing when the server says so 499ms
+   → Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_c_"
+  class="btn primary"
+  data-testid="save-section"
+  style="height: 30px;"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.75"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M3
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Nonclinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                3.2.S.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                General Information
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M3
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Nonclinical Overview"
+            >
+              Nonclinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              3.2.S.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <input
+              aria-describedby="_r_c_"
+              aria-label="Reason for change"
+              aria-required="true"
+              class="de-input"
+              data-testid="change-reason"
+              placeholder="Why this changed (at least 8 characters)"
+              style="height: 30px; width: 260px;"
+              value="Corrected the potency limit."
+            />
+            <span
+              aria-live="polite"
+              data-testid="change-reason-note"
+              id="_r_c_"
+              style="font-size: 11.5px; color: var(--text-400); max-width: 220px;"
+            >
+              Recorded with the revision.
+            </span>
+            <button
+              aria-describedby="_r_c_"
+              class="btn primary"
+              data-testid="save-section"
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                ...
+stderr | client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx > the save confirmation carries whether the text reached the filing > names the filing section a part-of save went into
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx > the save confirmation carries whether the text reached the filing > names the filing section a part-of save went into 437ms
+   → Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_o_"
+  class="btn primary"
+  data-testid="save-section"
+  style="height: 30px;"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.75"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M3
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Nonclinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                3.2.S.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                General Information
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M3
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Nonclinical Overview"
+            >
+              Nonclinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              3.2.S.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <input
+              aria-describedby="_r_o_"
+              aria-label="Reason for change"
+              aria-required="true"
+              class="de-input"
+              data-testid="change-reason"
+              placeholder="Why this changed (at least 8 characters)"
+              style="height: 30px; width: 260px;"
+              value="Corrected the potency limit."
+            />
+            <span
+              aria-live="polite"
+              data-testid="change-reason-note"
+              id="_r_o_"
+              style="font-size: 11.5px; color: var(--text-400); max-width: 220px;"
+            >
+              Recorded with the revision.
+            </span>
+            <button
+              aria-describedby="_r_o_"
+              class="btn primary"
+              data-testid="save-section"
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                ...
+stderr | client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx > the save confirmation carries whether the text reached the filing > claims nothing about the filing when the server reported nothing
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(RichSectionEditor2) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx > the save confirmation carries whether the text reached the filing > claims nothing about the filing when the server reported nothing 380ms
+   → Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_14_"
+  class="btn primary"
+  data-testid="save-section"
+  style="height: 30px;"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.75"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M3
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Nonclinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                3.2.S.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                General Information
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M3
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Nonclinical Overview"
+            >
+              Nonclinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              3.2.S.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <input
+              aria-describedby="_r_14_"
+              aria-label="Reason for change"
+              aria-required="true"
+              class="de-input"
+              data-testid="change-reason"
+              placeholder="Why this changed (at least 8 characters)"
+              style="height: 30px; width: 260px;"
+              value="Corrected the potency limit."
+            />
+            <span
+              aria-live="polite"
+              data-testid="change-reason-note"
+              id="_r_14_"
+              style="font-size: 11.5px; color: var(--text-400); max-width: 220px;"
+            >
+              Recorded with the revision.
+            </span>
+            <button
+              aria-describedby="_r_14_"
+              class="btn primary"
+              data-testid="save-section"
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                [...
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx > the save confirmation carries whether the text reached the filing > says the text did not reach the filing, with the server’s reason
+TestingLibraryElementError: Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_0_"
+  class="btn primary"
+  data-testid="save-section"
+  style="height: 30px;"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.75"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M3
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Nonclinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                3.2.S.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                General Information
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M3
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Nonclinical Overview"
+            >
+              Nonclinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              3.2.S.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <input
+              aria-describedby="_r_0_"
+              aria-label="Reason for change"
+              aria-required="true"
+              class="de-input"
+              data-testid="change-reason"
+              placeholder="Why this changed (at least 8 characters)"
+              style="height: 30px; width: 260px;"
+              value="Corrected the potency limit."
+            />
+            <span
+              aria-live="polite"
+              data-testid="change-reason-note"
+              id="_r_0_"
+              style="font-size: 11.5px; color: var(--text-400); max-width: 220px;"
+            >
+              Recorded with the revision.
+            </span>
+            <button
+              aria-describedby="_r_0_"
+              class="btn primary"
+              data-testid="save-section"
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                ...
+ ❯ Object.getElementError ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ saveOnce client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx:113:25
+    111|     await waitFor(() => expect(canvasText()).toBe('Revised substance d…
+    112|     fireEvent.change(screen.getByTestId('change-reason'), { target: { …
+    113|     const save = screen.getByRole('button', { name: /Save/i }) as HTML…
+       |                         ^
+    114|     await waitFor(() => expect(save.disabled).toBe(false));
+    115|     fireEvent.click(save);
+ ❯ client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx:123:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx > the save confirmation carries whether the text reached the filing > says the text was committed to the filing when the server says so
+TestingLibraryElementError: Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_c_"
+  class="btn primary"
+  data-testid="save-section"
+  style="height: 30px;"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.75"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M3
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Nonclinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                3.2.S.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                General Information
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M3
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Nonclinical Overview"
+            >
+              Nonclinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              3.2.S.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <input
+              aria-describedby="_r_c_"
+              aria-label="Reason for change"
+              aria-required="true"
+              class="de-input"
+              data-testid="change-reason"
+              placeholder="Why this changed (at least 8 characters)"
+              style="height: 30px; width: 260px;"
+              value="Corrected the potency limit."
+            />
+            <span
+              aria-live="polite"
+              data-testid="change-reason-note"
+              id="_r_c_"
+              style="font-size: 11.5px; color: var(--text-400); max-width: 220px;"
+            >
+              Recorded with the revision.
+            </span>
+            <button
+              aria-describedby="_r_c_"
+              class="btn primary"
+              data-testid="save-section"
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                ...
+ ❯ Object.getElementError ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ saveOnce client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx:113:25
+    111|     await waitFor(() => expect(canvasText()).toBe('Revised substance d…
+    112|     fireEvent.change(screen.getByTestId('change-reason'), { target: { …
+    113|     const save = screen.getByRole('button', { name: /Save/i }) as HTML…
+       |                         ^
+    114|     await waitFor(() => expect(save.disabled).toBe(false));
+    115|     fireEvent.click(save);
+ ❯ client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx:130:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx > the save confirmation carries whether the text reached the filing > names the filing section a part-of save went into
+TestingLibraryElementError: Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_o_"
+  class="btn primary"
+  data-testid="save-section"
+  style="height: 30px;"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.75"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M3
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Nonclinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                3.2.S.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                General Information
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M3
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Nonclinical Overview"
+            >
+              Nonclinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              3.2.S.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <input
+              aria-describedby="_r_o_"
+              aria-label="Reason for change"
+              aria-required="true"
+              class="de-input"
+              data-testid="change-reason"
+              placeholder="Why this changed (at least 8 characters)"
+              style="height: 30px; width: 260px;"
+              value="Corrected the potency limit."
+            />
+            <span
+              aria-live="polite"
+              data-testid="change-reason-note"
+              id="_r_o_"
+              style="font-size: 11.5px; color: var(--text-400); max-width: 220px;"
+            >
+              Recorded with the revision.
+            </span>
+            <button
+              aria-describedby="_r_o_"
+              class="btn primary"
+              data-testid="save-section"
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                ...
+ ❯ Object.getElementError ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ saveOnce client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx:113:25
+    111|     await waitFor(() => expect(canvasText()).toBe('Revised substance d…
+    112|     fireEvent.change(screen.getByTestId('change-reason'), { target: { …
+    113|     const save = screen.getByRole('button', { name: /Save/i }) as HTML…
+       |                         ^
+    114|     await waitFor(() => expect(save.disabled).toBe(false));
+    115|     fireEvent.click(save);
+ ❯ client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx:140:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx > the save confirmation carries whether the text reached the filing > claims nothing about the filing when the server reported nothing
+TestingLibraryElementError: Found multiple elements with the role "button" and name `/Save/i`
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+<button
+  aria-describedby="_r_14_"
+  class="btn primary"
+  data-testid="save-section"
+  style="height: 30px;"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.75"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6 9 17l-5-5"
+    />
+  </svg>
+   
+  Save
+</button>
+
+Ignored nodes: comments, script, style
+<button
+  class="btn ghost authoring-oversight-action"
+  disabled=""
+  title="Open a document in its project before checking saved sources."
+  type="button"
+>
+  Check saved sources
+</button>
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="ed"
+    >
+      <aside
+        class="ed-tree"
+      >
+        <div
+          class="ed-tree-h"
+        >
+          <div
+            class="ed-tree-t"
+          >
+            Document tree
+          </div>
+          <div
+            class="ed-tree-m"
+          >
+            1 document · all
+          </div>
+          <div
+            style="display: flex; gap: 6px; margin-top: 8px;"
+          >
+            <select
+              aria-label="Filter documents by status"
+              class="c2c-input"
+              style="height: 28px; flex: 1 1 0%;"
+            >
+              <option
+                value="all"
+              >
+                all
+              </option>
+              <option
+                value="draft"
+              >
+                draft
+              </option>
+              <option
+                value="in_review"
+              >
+                in review
+              </option>
+              <option
+                value="approved"
+              >
+                approved
+              </option>
+              <option
+                value="frozen"
+              >
+                frozen
+              </option>
+            </select>
+          </div>
+        </div>
+        <div
+          class="ed-tree-scroll"
+        >
+          <div
+            class="ed-vol"
+          >
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="font-weight: 600;"
+            >
+              <span
+                class="ed-num"
+              >
+                M3
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                Nonclinical Overview
+              </span>
+              <span
+                class="rd-chip tone-idle"
+                style="margin-left: auto;"
+              >
+                1
+              </span>
+            </button>
+            <button
+              class="ed-tree-row"
+              data-active="true"
+              style="padding-left: 22px;"
+            >
+              <span
+                class="ed-num"
+              >
+                3.2.S.1
+              </span>
+              <span
+                class="ed-lbl"
+              >
+                General Information
+              </span>
+            </button>
+          </div>
+        </div>
+      </aside>
+      <section
+        class="ed-doc"
+      >
+        <header
+          class="ed-doc-h"
+        >
+          <div
+            class="ed-crumbs"
+          >
+            <span
+              class="sep-first"
+            >
+              M3
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="doc-title"
+              title="Nonclinical Overview"
+            >
+              Nonclinical Overview
+            </span>
+            <span
+              aria-hidden="true"
+              class="sep"
+            >
+              ›
+            </span>
+            <span
+              class="here"
+            >
+              3.2.S.1
+            </span>
+          </div>
+          <div
+            aria-label="Save and sign"
+            class="ed-doc-commit"
+            role="group"
+          >
+            <input
+              aria-describedby="_r_14_"
+              aria-label="Reason for change"
+              aria-required="true"
+              class="de-input"
+              data-testid="change-reason"
+              placeholder="Why this changed (at least 8 characters)"
+              style="height: 30px; width: 260px;"
+              value="Corrected the potency limit."
+            />
+            <span
+              aria-live="polite"
+              data-testid="change-reason-note"
+              id="_r_14_"
+              style="font-size: 11.5px; color: var(--text-400); max-width: 220px;"
+            >
+              Recorded with the revision.
+            </span>
+            <button
+              aria-describedby="_r_14_"
+              class="btn primary"
+              data-testid="save-section"
+              style="height: 30px;"
+            >
+              <svg
+                aria-hidden="true"
+                class="lucide lucide-check"
+                fill="none"
+                focusable="false"
+                height="1em"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.75"
+                viewBox="0 0 24 24"
+                [...
+ ❯ Object.getElementError ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ ../../../../../../home/user/ClinicalSageAI-2-replit/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ saveOnce client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx:113:25
+    111|     await waitFor(() => expect(canvasText()).toBe('Revised substance d…
+    112|     fireEvent.change(screen.getByTestId('change-reason'), { target: { …
+    113|     const save = screen.getByRole('button', { name: /Save/i }) as HTML…
+       |                         ^
+    114|     await waitFor(() => expect(save.disabled).toBe(false));
+    115|     fireEvent.click(save);
+ ❯ client/src/concept2cure/v2/__tests__/authoringSaveFilingCommit.test.tsx:146:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  22:24:36
+   Duration  7.10s (transform 3.09s, setup 242ms, import 3.84s, tests 2.27s, environment 595ms)
+

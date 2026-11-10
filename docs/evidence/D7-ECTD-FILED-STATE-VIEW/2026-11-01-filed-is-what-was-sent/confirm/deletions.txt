@@ -1,0 +1,44 @@
+# What this build removes, and what replaces each. 2026-11-02T02:30:05Z
+## Files deleted by this build
+(none)
+
+## Test cases whose it(...) line was removed (git diff HEAD -U0 | grep '^-  it(')
+-  it('names the sequences it folds and the ones it does not, with the reason', async () => {
+-  it('refuses a declared replace when no filed prior is on record, instead of shipping a replace of nothing', async () => {
+
+## Their replacements on the tree
+96:  it('names the sequences it includes and the ones it does not, with the reason in words, never a stored status', async () => {
+148:  it('refuses to assemble against a sent prior that nothing on record describes, instead of shipping a replace of nothing', async () => {
+# and the skip-with-reason of a declared replace with no filed prior at all stays pinned here:
+185:  it('the same sequence assembled for filing — as transmit assembles it — still refuses both acts', async () => {
+190:        'declared replace: no filed prior sequence is on record to act on',
+
+## User-facing sentences removed from the card (EctdFiledState.tsx) and from the named-prior refusal
+-  if (s.dispatchStatus === 'sent' || s.dispatchStatus === 'acknowledged') {
+-    return `${s.dispatchStatus}, but no filed compile with a leaf manifest is on record`;
+-  return s.dispatchStatus ? `${s.dispatchStatus}, not filed` : 'not sent';
+-  const folded = sequences.filter((s) => s.filed).map((s) => `${s.sequenceNumber} (${s.dispatchStatus})`);
+-  return [folded.length ? `Folds ${folded.join(', ')}.` : '', left.length ? `Not included: ${left.join(', ')}.` : ''].filter(Boolean).join(' ');
+-  return view.throughSequence ? `through sequence ${view.throughSequence}` : 'nothing on file';
+-          ? 'Nothing is on file: no sequence of this submission has been sent or acknowledged with a filed compile on record.'
+-          : `${count} ${count === 1 ? 'document is' : 'documents are'} on file, read from the leaf manifests of the filed sequences.`}
+-      `${named} is not on file for this organization: no compile of it with a leaf manifest was sent or ` +
+-        'acknowledged (a preview or rehearsal compile is not filed).',
+-     Without this predicate a sent sequence's rehearsal manifest was folded in
+-    `SELECT c.sequence_number, c.leaf_manifest
+-        AND s.dispatch_status IN ('sent', 'acknowledged')
+-      ORDER BY c.sequence_number ASC, c.compiled_at ASC NULLS FIRST, c.id ASC`,
+-  /** 'sent' or 'acknowledged' when filed; otherwise what it is (pending, failed, none). */
+-  const filedWithManifest = new Set(rows.map((r) => String(r.sequence_number ?? '')));
+
+## Their replacements on the tree
+client/src/concept2cure/v2/surfaces/EctdFiledState.tsx:87:  if (isUnrecorded(s)) return `${dispatchWords(s.dispatchStatus)}, but nothing on record says what it carried`;
+client/src/concept2cure/v2/surfaces/EctdFiledState.tsx:90:  return dispatchWords(s.dispatchStatus);
+client/src/concept2cure/v2/surfaces/EctdFiledState.tsx:95:  const folded = sequences.filter((s) => s.filed).map((s) => `${s.sequenceNumber} (${dispatchWords(s.dispatchStatus)})`);
+client/src/concept2cure/v2/surfaces/EctdFiledState.tsx:97:  return [folded.length ? `Includes ${folded.join(', ')}.` : '', left.length ? `Not included: ${left.join(', ')}.` : ''].filter(Boolean).join(' ');
+client/src/concept2cure/v2/surfaces/EctdFiledState.tsx:163:      : 'Nothing is on file: no sequence of this submission has been sent or acknowledged with a record of what it carried.';
+client/src/concept2cure/v2/surfaces/EctdFiledState.tsx:165:  return `${documents} on file${allSent ? ', read from what each sequence sent' : ''}.`;
+server/services/ectd/prior-sequence-loader.ts:113:      `${named} could not be found by its number: that lookup goes through a compile of the sequence made for ` +
+server/services/ectd/prior-sequence-loader.ts:297: *     sent, and nothing on record says what it carried. It adds no leaves; the
+
+## History search for earlier versions of what changed (git log --all --diff-filter=D): see what-already-exists.txt, 0 deleted paths for each pattern.

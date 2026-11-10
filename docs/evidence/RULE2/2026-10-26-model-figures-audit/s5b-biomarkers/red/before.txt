@@ -1,0 +1,177 @@
+# S5b biomarkers red: server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts on trunk 04fd70b23 (run in a private git-archive copy). 81 of 91 fail; the 10 controls pass.
+
+ ✓ server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > the six biomarker tools keep their stated results > 'classify_biomarker' reaches its engine with a stated basis 4ms
+ ✓ server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > the six biomarker tools keep their stated results > 'plan_biomarker_qualification' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > the six biomarker tools keep their stated results > 'design_cdx_codevelopment' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > the six biomarker tools keep their stated results > 'assess_biomarker_analytical_validation' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > the six biomarker tools keep their stated results > 'assess_biomarker_clinical_validation' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > the six biomarker tools keep their stated results > 'plan_enrichment_strategy' reaches its engine with a stated basis 1ms
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > 'classify_biomarker' keeps each boolean answer as stated > predictsDifferentialTreatmentEffect reads not_stated when omitted or null, and is refused when malformed 8ms
+   → expected { biomarkerName: 'HER2', …(14) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > 'classify_biomarker' keeps each boolean answer as stated > indicatesToxicity reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { biomarkerName: 'HER2', …(14) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > 'classify_biomarker' keeps each boolean answer as stated > measuredInUnaffectedIndividuals reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { biomarkerName: 'HER2', …(14) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > 'classify_biomarker' keeps each boolean answer as stated > changesWithExposure reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { biomarkerName: 'HER2', …(14) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > 'classify_biomarker' keeps each boolean answer as stated > confirmsDisease reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { biomarkerName: 'HER2', …(14) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > 'classify_biomarker' keeps each boolean answer as stated > measuredSerially reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { biomarkerName: 'HER2', …(14) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > 'plan_biomarker_qualification' keeps each boolean answer as stated > crossProgramUse reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { biomarkerName: 'KIM-1', …(13) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > 'plan_biomarker_qualification' keeps each boolean answer as stated > isGenomic reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { biomarkerName: 'KIM-1', …(13) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > 'plan_biomarker_qualification' keeps each boolean answer as stated > consortiumSponsored reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { biomarkerName: 'KIM-1', …(13) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > 'plan_biomarker_qualification' keeps each boolean answer as stated > singleDrugOnly reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { biomarkerName: 'KIM-1', …(13) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > 'design_cdx_codevelopment' keeps each boolean answer as stated > essentialForUse reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { therapeuticName: 'Drug X', …(12) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > 'design_cdx_codevelopment' keeps each boolean answer as stated > usedClinicalTrialAssay reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { therapeuticName: 'Drug X', …(12) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > 'design_cdx_codevelopment' keeps each boolean answer as stated > marketAssayDiffersFromCTA reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { therapeuticName: 'Drug X', …(12) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > 'assess_biomarker_analytical_validation' keeps each boolean answer as stated > interferenceTested reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { biomarkerName: 'Troponin I', …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > 'assess_biomarker_analytical_validation' keeps each boolean answer as stated > reportableRangeEstablished reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { biomarkerName: 'Troponin I', …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > 'assess_biomarker_analytical_validation' keeps each boolean answer as stated > robustnessDemonstrated reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { biomarkerName: 'Troponin I', …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > 'assess_biomarker_analytical_validation' keeps each boolean answer as stated > preanalyticalDocumented reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { biomarkerName: 'Troponin I', …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > 'assess_biomarker_analytical_validation' keeps each boolean answer as stated > multiSiteReproducibility reads not_stated when omitted or null, and is refused when malformed 10ms
+   → expected { biomarkerName: 'Troponin I', …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > 'assess_biomarker_clinical_validation' keeps each boolean answer as stated > clinicalUtilityDemonstrated reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { biomarkerName: 'HER2', …(15) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > 'assess_biomarker_clinical_validation' keeps each boolean answer as stated > cutoffPrespecified reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { biomarkerName: 'HER2', …(15) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > 'assess_biomarker_clinical_validation' keeps each boolean answer as stated > independentValidationSet reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { biomarkerName: 'HER2', …(15) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > 'plan_enrichment_strategy' keeps each boolean answer as stated > negativesExpectedToBenefit reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { biomarkerName: 'EGFR', …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > 'plan_enrichment_strategy' keeps each boolean answer as stated > effectConcentratedInPositives reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { biomarkerName: 'EGFR', …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > 'plan_enrichment_strategy' keeps each boolean answer as stated > characterizeNegatives reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { biomarkerName: 'EGFR', …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > 'plan_enrichment_strategy' keeps each boolean answer as stated > validatedAssayAvailable reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { biomarkerName: 'EGFR', …(8) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a malformed enum, count, percentage or prevalence is refused by field, never read > 'classify_biomarker' refuses 'assertedCategory' (case 1) 1ms
+   → classify_biomarker assertedCategory: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a malformed enum, count, percentage or prevalence is refused by field, never read > 'classify_biomarker' refuses 'intendedUse' (case 2) 1ms
+   → classify_biomarker intendedUse: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a malformed enum, count, percentage or prevalence is refused by field, never read > 'plan_biomarker_qualification' refuses 'category' (case 3) 1ms
+   → plan_biomarker_qualification category: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a malformed enum, count, percentage or prevalence is refused by field, never read > 'plan_biomarker_qualification' refuses 'couImpact' (case 4) 1ms
+   → plan_biomarker_qualification couImpact: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a malformed enum, count, percentage or prevalence is refused by field, never read > 'design_cdx_codevelopment' refuses 'assayModality' (case 5) 1ms
+   → design_cdx_codevelopment assayModality: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a malformed enum, count, percentage or prevalence is refused by field, never read > 'design_cdx_codevelopment' refuses 'deviceRiskClass' (case 6) 1ms
+   → design_cdx_codevelopment deviceRiskClass: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a malformed enum, count, percentage or prevalence is refused by field, never read > 'design_cdx_codevelopment' refuses 'therapeuticPhase' (case 7) 1ms
+   → design_cdx_codevelopment therapeuticPhase: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a malformed enum, count, percentage or prevalence is refused by field, never read > 'assess_biomarker_analytical_validation' refuses 'intendedUseStakes' (case 8) 1ms
+   → assess_biomarker_analytical_validation intendedUseStakes: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a malformed enum, count, percentage or prevalence is refused by field, never read > 'assess_biomarker_analytical_validation' refuses 'quantitative' (case 9) 1ms
+   → assess_biomarker_analytical_validation quantitative: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a malformed enum, count, percentage or prevalence is refused by field, never read > 'assess_biomarker_analytical_validation' refuses 'precisionCVPercent' (case 10) 1ms
+   → assess_biomarker_analytical_validation precisionCVPercent: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a malformed enum, count, percentage or prevalence is refused by field, never read > 'assess_biomarker_analytical_validation' refuses 'maxAcceptableCVPercent' (case 11) 1ms
+   → assess_biomarker_analytical_validation maxAcceptableCVPercent: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a malformed enum, count, percentage or prevalence is refused by field, never read > 'assess_biomarker_analytical_validation' refuses 'limitOfDetection' (case 12) 1ms
+   → assess_biomarker_analytical_validation limitOfDetection: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a malformed enum, count, percentage or prevalence is refused by field, never read > 'assess_biomarker_analytical_validation' refuses 'positivePercentAgreement' (case 13) 1ms
+   → assess_biomarker_analytical_validation positivePercentAgreement: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a malformed enum, count, percentage or prevalence is refused by field, never read > 'assess_biomarker_clinical_validation' refuses 'truePositives' (case 14) 1ms
+   → assess_biomarker_clinical_validation truePositives: expected { status: 'needs_parameters', …(1) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a malformed enum, count, percentage or prevalence is refused by field, never read > 'assess_biomarker_clinical_validation' refuses 'falsePositives' (case 15) 1ms
+   → assess_biomarker_clinical_validation falsePositives: expected { status: 'needs_parameters', …(1) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a malformed enum, count, percentage or prevalence is refused by field, never read > 'assess_biomarker_clinical_validation' refuses 'intendedUsePrevalence' (case 16) 1ms
+   → assess_biomarker_clinical_validation intendedUsePrevalence: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a malformed enum, count, percentage or prevalence is refused by field, never read > 'assess_biomarker_clinical_validation' refuses 'intendedUsePrevalence' (case 17) 1ms
+   → assess_biomarker_clinical_validation intendedUsePrevalence: expected { status: 'needs_parameters', …(1) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a malformed enum, count, percentage or prevalence is refused by field, never read > 'plan_enrichment_strategy' refuses 'category' (case 18) 1ms
+   → plan_enrichment_strategy category: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a malformed enum, count, percentage or prevalence is refused by field, never read > 'plan_enrichment_strategy' refuses 'biomarkerPositivePrevalence' (case 19) 1ms
+   → plan_enrichment_strategy biomarkerPositivePrevalence: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a malformed enum, count, percentage or prevalence is refused by field, never read > 'plan_enrichment_strategy' refuses 'biomarkerPositivePrevalence' (case 20) 1ms
+   → plan_enrichment_strategy biomarkerPositivePrevalence: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a malformed enum, count, percentage or prevalence is refused by field, never read > 'plan_enrichment_strategy' refuses 'biomarkerPositivePrevalence' (case 21) 1ms
+   → plan_enrichment_strategy biomarkerPositivePrevalence: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a malformed enum, count, percentage or prevalence is refused by field, never read > 'plan_enrichment_strategy' refuses 'screeningPoolSize' (case 22) 1ms
+   → plan_enrichment_strategy screeningPoolSize: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'classify_biomarker' asks for 'biomarkerName' (case 1) 1ms
+   → classify_biomarker biomarkerName: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'plan_biomarker_qualification' asks for 'category' (case 2) 1ms
+   → plan_biomarker_qualification category: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'design_cdx_codevelopment' asks for 'assayModality' (case 3) 2ms
+   → design_cdx_codevelopment assayModality: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'assess_biomarker_analytical_validation' asks for 'quantitative' (case 4) 1ms
+   → assess_biomarker_analytical_validation quantitative: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'assess_biomarker_analytical_validation' asks for 'inputs' (case 5) 1ms
+   → assess_biomarker_analytical_validation inputs: expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'assess_biomarker_clinical_validation' asks for 'falsePositives' (case 6) 1ms
+   → assess_biomarker_clinical_validation falsePositives: expected { status: 'needs_parameters', …(1) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'plan_enrichment_strategy' asks for 'biomarkerPositivePrevalence' (case 7) 1ms
+   → plan_enrichment_strategy biomarkerPositivePrevalence: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'classify_biomarker' 1ms
+   → expected 1347 to be less than or equal to 1024
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'plan_biomarker_qualification' 0ms
+   → expected 1258 to be less than or equal to 1024
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'design_cdx_codevelopment' 0ms
+   → expected 1294 to be less than or equal to 1024
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'assess_biomarker_analytical_validation' 0ms
+   → expected 1299 to be less than or equal to 1024
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'assess_biomarker_clinical_validation' 0ms
+   → expected 1281 to be less than or equal to 1024
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'plan_enrichment_strategy' 0ms
+   → expected 1420 to be less than or equal to 1024
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > requires quantitative, and names the inputs no function reads 1ms
+   → expected [ 'biomarkerName', …(2) ] to include 'quantitative'
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > classify_biomarker infers a category only when no unstated feature could change it > does not default a biomarker nobody described to prognostic 1ms
+   → expected { biomarkerName: 'X', …(14) } to match object { category: null, …(3) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > classify_biomarker infers a category only when no unstated feature could change it > leaves a disease-confirming marker open while a higher-precedence feature is unstated 0ms
+   → expected 'diagnostic' to be null
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > classify_biomarker infers a category only when no unstated feature could change it > names only the features whose answer could change it 1ms
+   → expected 'Marker changes in response to product…' to match /predictsDifferentialTreatmentEffect, …/
+ ✓ server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > classify_biomarker infers a category only when no unstated feature could change it > decides a category the stated features settle 0ms
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > classify_biomarker infers a category only when no unstated feature could change it > with every feature stated false, is prognostic and flags an intended use that contradicts it 1ms
+   → expected 'pharmacodynamic_response' to be 'prognostic' // Object.is equality
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > classify_biomarker infers a category only when no unstated feature could change it > says when an asserted predictive category has no stated interaction 0ms
+   → expected 'This category, used for patient selec…' to match /predictsDifferentialTreatmentEffect i…/
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > plan_biomarker_qualification chooses no pathway from unstated scope facts > leaves the pathway not assessed and names the facts 1ms
+   → expected 'drug_specific_submission' to be 'not_assessed' // Object.is equality
+ ✓ server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > plan_biomarker_qualification chooses no pathway from unstated scope facts > keeps a pathway the stated facts settle 0ms
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > plan_biomarker_qualification chooses no pathway from unstated scope facts > says when the impact tier was inferred, and when genomic status was not stated 0ms
+   → expected '' to match /COU impact tier inferred as LOW from …/
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > design_cdx_codevelopment decides no companion status, pathway or bridging from an unstated fact > leaves companion status, pathway and bridging undetermined when nothing decides them 1ms
+   → expected { therapeuticName: 'Drug X', …(12) } to match object { isCompanionDiagnostic: null, …(4) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > design_cdx_codevelopment decides no companion status, pathway or bridging from an unstated fact > says when the class was assumed, and reads a stated class alone 1ms
+   → expected '' to match /Class III is assumed for a companion …/
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > design_cdx_codevelopment decides no companion status, pathway or bridging from an unstated fact > does not call bridging required, or raise the filing finding, from an omitted difference 0ms
+   → expected true to be null
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > design_cdx_codevelopment decides no companion status, pathway or bridging from an unstated fact > does not call a Phase 3 bridging study mandatory while the CTA enrollment is unstated 0ms
+   → expected 'Market IVD differs from the CTA at Ph…' to match /usedClinicalTrialAssay is not stated/
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > assess_biomarker_analytical_validation passes nothing an unstated stakes level could fail > leaves a CV between the two defaults not evaluated, and readiness not assessed 1ms
+   → expected 'pass' to be 'not_evaluated' // Object.is equality
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > assess_biomarker_analytical_validation passes nothing an unstated stakes level could fail > decides a CV both defaults agree on, and says which limit was used 1ms
+   → expected { …(4) } to match object { status: 'pass', …(1) }
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > assess_biomarker_analytical_validation passes nothing an unstated stakes level could fail > does not say multi-site reproducibility was not demonstrated when it was not stated 1ms
+   → expected 'High-stakes (CDx) intended use but mu…' to match /whether multi-site reproducibility wa…/
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > assess_biomarker_analytical_validation passes nothing an unstated stakes level could fail > names an evidence fact left out 0ms
+   → expected 'Test common interferents (hemolysis, …' to match /^interferenceTested not stated\. /
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > assess_biomarker_clinical_validation leaves validity open while an unstated fact could establish it > is null, not false, with independence unstated, and says so 5ms
+   → expected false to be null
+ ✓ server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > assess_biomarker_clinical_validation leaves validity open while an unstated fact could establish it > keeps a stated false, and inadequate accuracy no answer could repair 1ms
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > assess_biomarker_clinical_validation leaves validity open while an unstated fact could establish it > does not say utility is not demonstrated when it was not stated 1ms
+   → expected 'Clinical VALIDITY (the test measures …' to match /Whether clinical utility is demonstra…/
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > plan_enrichment_strategy chooses no predictive design from unstated facts > leaves the design not assessed and names the facts 1ms
+   → expected 'stratified' to be 'not_assessed' // Object.is equality
+ ✓ server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > plan_enrichment_strategy chooses no predictive design from unstated facts > keeps a design every answer gives 0ms
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > plan_enrichment_strategy chooses no predictive design from unstated facts > names the design facts it was not given when every answer gives the design 1ms
+   → expected 'Predictive hypothesis not yet firmly …' to match / negativesExpectedToBenefit is not st…/
+ × server/services/ana/__tests__/biomarkers-unstated-inputs.test.ts > plan_enrichment_strategy chooses no predictive design from unstated facts > does not say no validated assay was reported when it was not stated 0ms
+   → expected 'Biomarker-positive-only enrollment re…' to match /whether one exists \(validatedAssayAv…/
+⎯⎯⎯⎯⎯⎯ Failed Tests 81 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  81 failed | 10 passed (91)

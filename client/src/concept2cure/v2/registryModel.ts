@@ -49,7 +49,7 @@ export const NAV_TIERS_V2 = [
 ];
 /** Surface → client-type rail group (mdx | biopharma | admin | both) */
 export const NAV_GROUP_OF: Record<string, string> = {
-  'device-workstream': 'mdx',
+  // No device-workstream: the device portfolio folded into Projects (D2, fold F6, 2026-10-30).
   labeling: 'mdx',
   'human-factors': 'mdx',
   'labeling-pi': 'biopharma',
@@ -151,8 +151,10 @@ export const NAV_GROUP_OF: Record<string, string> = {
  *    filter, and Home's "Your tasks", give the person's own.
  *  - Conversation: Home lists the person's recent conversations, and each
  *    project lists its own.
- * Risk-based monitoring and Biostatistics are work areas by the founder's model
- * but stay off the rail until each is in the launch catalog (Rule 2).
+ * Risk-based monitoring and Biostatistics are work areas by the founder's model. Biostatistics joined the rail on
+ * 2026-11-06, by the founder: "Our core modules are project management, Vault, CMC, biostatistics, RBM, submission
+ * center, tasking, and collaboration, and reporting … the left rail should be a navigation point for all of those
+ * entry points" (recorded in scripts/ci/one-product-baseline.json founderDecisions).
  *
  * `target` is the screen an entry opens when it is not its own id. `applies`
  * is a screen action the entry asks of that screen as it opens it, through the
@@ -169,7 +171,9 @@ export const RAIL_CORE = [
   { id: 'tasking', label: 'Tasks', icon: 'checkSquare', target: 'tasks', applies: { actionId: 'tasking.filter', params: { mine: 'false' } } satisfies SurfaceApplies },
   { id: 'communication-center', label: 'Communication', icon: 'messageSquare' },
   { id: 'vault', label: 'Vault', icon: 'vault' },
+  { id: 'submission-center', label: 'Submission Center', icon: 'rocket' },
   { id: 'cmc', label: 'CMC / Module 3', icon: 'beaker', group: 'work-areas' as const },
+  { id: 'biostatistics', label: 'Biostatistics', icon: 'sigma', group: 'work-areas' as const },
   { id: 'rbm', label: 'Risk-based monitoring', icon: 'activity', group: 'work-areas' as const },
   { id: 'quality', label: 'Quality', icon: 'shieldCheck', group: 'work-areas' as const },
   { id: 'insights', label: 'Reporting & analytics', icon: 'barChart', group: 'work-areas' as const },
@@ -215,8 +219,9 @@ export const SEGMENTS = [
        opened a "Not in this release" panel. Projects is where a client's work
        starts (docs/SURFACE_DECISIONS_2026-10-08.md, build step 6). */
     defaultSurface: 'projects',
+    /* 2026-10-30 (D2, fold F6): the device portfolio folded into Projects, the
+       default surface, which opens on the MDX filter from the old address. */
     focus: [
-      'device-workstream',
       'labeling',
       'human-factors',
       'precedent-intelligence',
@@ -638,8 +643,8 @@ export const SEGMENT_MODULES = {
     { label: 'MDX project workflows', items: ['projects'] },
     {
       label: 'Author & assemble',
+      // 2026-10-30 (D2, fold F6): the device portfolio folded into Projects, on every segment's rail (RAIL_CORE).
       items: [
-        'device-workstream',
         'device-510k',
         'device-pma',
         'device-cer',
@@ -673,7 +678,8 @@ export const SEGMENT_MODULES = {
       // sizing, Bayesian device sizing, MRMC, group-sequential operating
       // characteristics — were reachable only from the two pharma segments.
       // 2026-10-29: Risk management folded into Engineering evidence (fold F1c), which this segment lists under Evidence & data.
-      items: ['precedent-intelligence', 'device-analytics', 'device-postmarket', 'biostat-workbench', 'crl-library', 'global-ri', 'intelligence-catalog', 'deep-research'],
+      // 2026-10-30 (D2, fold F4): device analytics joined Reporting & analytics, a work area on every segment's rail (RAIL_CORE).
+      items: ['precedent-intelligence', 'device-postmarket', 'crl-library', 'global-ri', 'intelligence-catalog', 'deep-research'],
     },
     { label: 'Lifecycle & access', items: ['registrations', 'device-udi', 'market-access', 'change-assessment'] },
   ],
@@ -708,7 +714,7 @@ export const SEGMENT_MODULES = {
       // workbench is the surface that delivers the outcome
       // (docs/SURFACE_DECISIONS_2026-10-08.md).
       // 2026-10-29: Risk management folded into Engineering evidence (fold F1c), a device-engineering project feature.
-      items: ['precedent-intelligence', 'biostat-workbench', 'crl-library', 'global-ri', 'intelligence-catalog', 'deep-research'],
+      items: ['precedent-intelligence', 'crl-library', 'global-ri', 'intelligence-catalog', 'deep-research'],
     },
     { label: 'Lifecycle & access', items: ['registrations', 'market-access', 'change-assessment'] },
   ],
@@ -768,7 +774,6 @@ export const SEGMENT_MODULES = {
       label: 'Science & intelligence',
       items: [
         'biostatistics',
-        'biostat-workbench',
         'rbm',
         'clinical-ops',
         'safety-narrative',
@@ -813,7 +818,6 @@ export const SEGMENT_MODULES = {
       label: 'Science & intelligence',
       items: [
         'biostatistics',
-        'biostat-workbench',
         'rbm',
         'precedent-intelligence',
         'crl-library',
@@ -838,7 +842,7 @@ export const SEGMENT_MODULES = {
       // docs/SURFACE_DECISIONS_2026-10-08.md scraps as a place. That surface
       // stays listed until the change that removes it names the replacement
       // path for each of its entry points, as the working agreement requires.
-      items: ['biostatistics', 'biostat-workbench', 'global-ri', 'intelligence-catalog', 'deep-research'],
+      items: ['biostatistics', 'global-ri', 'intelligence-catalog', 'deep-research'],
     },
     { label: 'Review & govern', items: ['review', 'tasks', 'audit-trail'] },
   ],
@@ -967,8 +971,17 @@ export const DEEP_LINK_ALIASES: Record<string, string> = {
   features: 'apps',
   'ind-lifecycle': 'ind-checklist',
   // Legacy MDX links reach the existing device-filtered Projects view.
-  // The device-workstream screen retains its separate A2.10 parity work.
   mdx: 'projects',
+  /* The device workstream folded into Projects (D2, fold F6, 2026-10-30;
+     decision P-61 item 5; docs/evidence/D2-ONE-ANA/2026-10-30/fold-f6-device-workstream/).
+     The kit portfolio (mdx/surfaces/Overview.tsx) is gone: Projects with the MDX
+     filter counts the device portfolio on the server and shows each project's
+     last activity; the strip figures no engine computed (blocked, in flight)
+     are dropped. The Client Review Room is on the device project's Review step,
+     for that project. Old links, ⌘K hits and AnA's `device-workstream` target
+     land on filtered Projects, as `mdx` does; a subscription carries to
+     Projects (decision P-61 item 4). */
+  'device-workstream': 'projects',
   /* The device task workbench folded into Tasks (D2, 2026-10-29;
      docs/evidence/D2-ONE-ANA/2026-10-29/fold-device-tasks/). Tasks reads the
      same submission-ops work item by item, beside every other store, and marks
@@ -1051,6 +1064,16 @@ export const DEEP_LINK_ALIASES: Record<string, string> = {
      (decision P-61 item 4). It once aliased to `document-authoring`, while
      SURFACE_VIEWS routed the same id to the kit; now there is one meaning. */
   'device-submission': 'submission-center',
+  /* Device analytics joined Reporting & analytics (D2, fold F4, 2026-10-30;
+     decision P-61 item 3; docs/evidence/D2-ONE-ANA/2026-10-30/fold-f4-device-analytics/).
+     Its screen counted every program of the organization, drug programs
+     included, whether or not the reader could open them. Its three real figures
+     (status counts, the 24-month submission pace, the AnA draft acceptance rate)
+     are the device section of the Reporting overview, over the device projects
+     the reader can open (report-os/device-portfolio.ts). Old links, ⌘K hits and
+     AnA's `device-analytics` target land there; a subscription carries to it
+     (decision P-61 item 4, server/services/entitlements/folded-module-successors.ts). */
+  'device-analytics': 'insights',
   /* shared/navigation NAVIGATION_TARGETS reconciliation (README step 2, and
      the precondition for AnA Live Drive): these ten registry ids are what AnA
      navigates by — `navigate_to` refuses everything else — but they predate
@@ -1083,6 +1106,7 @@ export const ALIAS_APPLIES: Readonly<Record<string, SurfaceApplies>> = {
   dossier: { actionId: 'project-home.set-stage', params: { stage: 'author' } },
   'dossier-map': { actionId: 'project-home.set-stage', params: { stage: 'author' } },
   mdx: { actionId: 'projects.filter', params: { workstream: 'MDX' } },
+  'device-workstream': { actionId: 'projects.filter', params: { workstream: 'MDX' } },
   setup: { actionId: 'admin-console.open-tab', params: { tab: 'settings' } },
 };
 

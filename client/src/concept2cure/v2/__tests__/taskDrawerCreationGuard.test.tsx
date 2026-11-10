@@ -12,6 +12,7 @@ import { publishShellProject } from '../shellProject';
 import { surfaceLeaveRefusal } from '../navParams';
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
 import { getSurface } from '@shared/constants/ui-surface-registry';
+import { openEditorControl } from '../editor/__tests__/workbenchAssemblyBuild.testSupport';
 
 const mocks = vi.hoisted(() => ({ apiRequest: vi.fn(), onNav: vi.fn(), onDocCreated: vi.fn(),
   onSectionCreated: vi.fn(), onCheck: vi.fn(), toast: vi.fn(),
@@ -89,7 +90,10 @@ beforeEach(() => {
 afterEach(() => { cleanup(); authService.endSession(null); clearAuthToken(); delete window.C2C_PROJECT; sessionStorage.clear(); localStorage.clear(); });
 
 async function begin(kind: Kind, cancel = true) {
-  fireEvent.click(screen.getAllByRole('button', { name: kind === 'document' ? /New document/ : /New section/ })[0]);
+  /* D4-2: inside the editor, New document and New section are items of the bar's More menu. */
+  fireEvent.click(screen.queryByTestId('ed-more')
+    ? openEditorControl(kind === 'document' ? 'New document…' : 'New section…')
+    : screen.getAllByRole('button', { name: kind === 'document' ? /New document/ : /New section/ })[0]);
   const dialog = await screen.findByRole('dialog', { name: kind === 'document' ? 'New document' : 'New section' });
   if (kind === 'document') fireEvent.change(within(dialog).getByRole('textbox', { name: /Document title/ }), { target: { value: 'Created overview' } });
   else {

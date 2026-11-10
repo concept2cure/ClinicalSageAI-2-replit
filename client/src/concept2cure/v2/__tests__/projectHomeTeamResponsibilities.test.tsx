@@ -18,8 +18,12 @@ import { authService } from '@/services/portal/authService';
 import { ProjectHome } from '../surfaces/ProjectHome';
 import { useActiveSurfaceContext, type SurfaceContext } from '../surfaceContext';
 
-/* The team, the project's tasks and My work are on the Plan step (CLIENT_JOURNEY_2026-10-25.md, pass 3). */
-const openPlan = () => fireEvent.click(screen.getByRole('button', { name: 'Plan' }));
+/* D3-3 (2026-11-06): the team is the Team card in Project knowledge, on every step (it was a section of Plan). The
+   full roster, with the authority note and sharing, is the Team drawer the card's "Manage" opens. */
+async function openTeam() {
+  fireEvent.click(await screen.findByRole('button', { name: 'Manage team' }));
+  return screen.findByRole('dialog', { name: 'Team' });
+}
 
 const A = '11111111-1111-4111-8111-111111111111';
 const B = '22222222-2222-4222-8222-222222222222';
@@ -59,12 +63,12 @@ describe('ProjectHome sourced responsibility integration', () => {
     serve(data);
     const seen = { ctx: null as SurfaceContext | null };
     render(<><ProjectHome {...props} /><Probe seen={seen} /></>);
-    openPlan();
-    await screen.findByText('Alex Chen · Account #7');
-    expect(screen.getByText('Alex Chen · Account #8')).toBeTruthy();
-    expect(screen.getByText('Project lead', { exact: true })).toBeTruthy();
-    expect(screen.getByText('Sharing: Use')).toBeTruthy();
-    expect(screen.getByText(/do not grant universal editing or approval\/signing authority/)).toBeTruthy();
+    const team = within(await openTeam());
+    await team.findByText('Alex Chen · Account #7');
+    expect(team.getByText('Alex Chen · Account #8')).toBeTruthy();
+    expect(team.getByText('Project lead', { exact: true })).toBeTruthy();
+    expect(team.getByText('Sharing: Use')).toBeTruthy();
+    expect(team.getByText(/do not grant universal editing or approval\/signing authority/)).toBeTruthy();
     await waitFor(() => expect(seen.ctx?.facts?.team).toEqual([
       { entry_id: 'user:7', user_id: 7, identity: 'active_member', name: 'Alex Chen', role: 'lead',
         responsibilities: ['project_lead'], sharing_role: 'use', sources: ['program_lead', 'project_member'] },
@@ -85,7 +89,6 @@ describe('ProjectHome sourced responsibility integration', () => {
   ])('states $label as unavailable, never an empty roster or identity facts', async ({ body }) => {
     serve(body); const seen = { ctx: null as SurfaceContext | null };
     render(<><ProjectHome {...props} /><Probe seen={seen} /></>);
-    openPlan();
     await screen.findByText("Couldn't load the project team");
     expect(screen.queryByText('No recorded team members')).toBeNull();
     expect(screen.queryByText('Alex Chen · Account #7')).toBeNull();
@@ -95,30 +98,28 @@ describe('ProjectHome sourced responsibility integration', () => {
 
   it('distinguishes a verified empty roster from a failed read', async () => {
     serve(roster(A, [])); render(<ProjectHome {...props} />);
-    openPlan();
-    await screen.findByText('No recorded team members');
+    await screen.findByText('No recorded team members.');
+    expect(await within(await openTeam()).findByText('No recorded team members')).toBeTruthy();
     expect(screen.queryByText("Couldn't load the project team")).toBeNull();
   });
 });
 
 describe('ProjectHome team program-switch isolation', () => {
-  /* A different project opens on its own step, never the previous project's
-     (D2 A2.1, 2aace71d), so after a switch a person opens Plan again to see its team. */
+  /* A different project opens on its own step, never the previous project's (D2 A2.1, 2aace71d). The Team card is on
+     every step, so it shows the new project's team as soon as it is read, and "Reading the team…" until then. */
   it('hides the previous program roster immediately while its replacement loads', async () => {
     const pending = pendingRead(); serve(roster());
     const original = request.getMockImplementation()!;
     request.mockImplementation((method, path) => path === `/api/c2c/projects/${B}/team` ? pending.promise : original(method, path));
     const seen = { ctx: null as SurfaceContext | null };
     const view = render(<><ProjectHome {...props} /><Probe seen={seen} /></>);
-    openPlan();
     await screen.findByText('Alex Chen · Account #7');
     window.C2C_PROJECT = { id: B, title: 'Programme B' };
     view.rerender(<><ProjectHome {...props} /><Probe seen={seen} /></>);
     expect(screen.queryByText('Alex Chen · Account #7')).toBeNull();
     expect(seen.ctx?.facts?.team ?? null).toBeNull();
-    openPlan();
     expect(screen.queryByText('Alex Chen · Account #7')).toBeNull();
-    expect(screen.getByText('Loading team…')).toBeTruthy();
+    expect(screen.getByText('Reading the team…')).toBeTruthy();
     expect(seen.ctx?.facts?.team ?? null).toBeNull();
     await act(async () => pending.resolve(ok(roster(B, [member(9)]))));
     await screen.findByText('Alex Chen · Account #9');
@@ -131,10 +132,8 @@ describe('ProjectHome team program-switch isolation', () => {
     const original = request.getMockImplementation()!;
     request.mockImplementation((method, path) => path === `/api/c2c/projects/${A}/team` ? pending.promise : original(method, path));
     const view = render(<ProjectHome {...props} />);
-    openPlan();
     window.C2C_PROJECT = { id: B, title: 'Programme B' };
     view.rerender(<ProjectHome {...props} />);
-    openPlan();
     await screen.findByText('Alex Chen · Account #9');
     await act(async () => pending.resolve(ok(roster())));
     expect(screen.queryByText('Alex Chen · Account #7')).toBeNull();
@@ -151,7 +150,6 @@ describe('ProjectHome team summary and recovery', () => {
     serve(roster(A, [current, legacy]));
     const seen = { ctx: null as SurfaceContext | null };
     render(<><ProjectHome {...props} /><Probe seen={seen} /></>);
-    openPlan();
     await screen.findByText('Alex (account@example.test)');
     expect(screen.getByText('legacy@example.test', { exact: true })).toBeTruthy();
     await waitFor(() => expect(seen.ctx?.facts?.team).toHaveLength(2));
@@ -167,7 +165,6 @@ describe('ProjectHome team summary and recovery', () => {
       responsibilities: [], sources: ['project_member'] } as ProjectTeamMember));
     serve(roster(A, team)); const seen = { ctx: null as SurfaceContext | null };
     render(<><ProjectHome {...props} /><Probe seen={seen} /></>);
-    openPlan();
     await screen.findByText('Alex Chen · Account #13');
     await waitFor(() => expect(seen.ctx?.facts?.teamTotal).toBe(13));
     expect(seen.ctx?.facts?.teamTruncated).toBe(true);
@@ -180,7 +177,6 @@ describe('ProjectHome team summary and recovery', () => {
     request.mockImplementation((method, path) => path.endsWith('/team') && ++reads === 1
       ? Promise.resolve({ ...ok({}), ok: false, status: 503 }) : original(method, path));
     render(<ProjectHome {...props} />);
-    openPlan();
     const error = await screen.findByText("Couldn't load the project team");
     fireEvent.click(within(error.closest('[role="alert"]') as HTMLElement).getByRole('button', { name: 'Retry team' }));
     await screen.findByText('Alex Chen · Account #7');

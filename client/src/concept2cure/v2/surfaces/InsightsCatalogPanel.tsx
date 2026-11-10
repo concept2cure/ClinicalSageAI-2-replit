@@ -124,10 +124,11 @@ function TypeCard({
       ) : (
         <button
           type="button"
-          className="rl-card-run"
+          className="btn ghost rl-card-run"
           disabled={!canRun || busy || Boolean(unavailableReason)}
           onClick={() => onRun(type)}
           title={runControlTitle(canRun, unavailableReason)}
+          aria-label={`Run ${type.label}`}
         >
           {I.play} Run
         </button>
@@ -173,15 +174,7 @@ function PredictionAvailability({ types }: { types: LibraryReportType[] }) {
   </section>;
 }
 
-export function CatalogPanel({
-  types,
-  onRun,
-  canRun,
-  runUnavailableReason,
-  programLabel,
-  busy = false,
-  projectId,
-}: {
+interface CatalogPanelProps {
   types: LibraryReportType[];
   onRun: (t: LibraryReportType) => void;
   canRun: boolean;
@@ -189,7 +182,11 @@ export function CatalogPanel({
   programLabel: string | null;
   busy?: boolean;
   projectId?: number;
-}) {
+  /** The canvas's "Preview plan" switch, shown with the filters (D7 §D.4 step 6). */
+  planControl?: React.ReactNode;
+}
+
+export function CatalogPanel({ types, onRun, canRun, runUnavailableReason, programLabel, busy = false, projectId, planControl }: CatalogPanelProps) {
   const [q, setQ] = useState('');
   const [region, setRegion] = useState('');
   const [scope, setScope] = useState('');
@@ -250,6 +247,7 @@ export function CatalogPanel({
         <CatalogFilter label="Reporting role" value={persona} onChange={choosePersona} options={personas} />
         <CatalogFilter label="Data scope" value={scope} onChange={setScope} options={scopes} />
         <CatalogFilter label="Availability" value={state} onChange={setState} options={['available', 'locked', 'scope-required', 'filing-context-required', 'not-applicable', 'context-unavailable', 'disabled', 'unregistered', 'not-computed', 'prediction-unavailable']} />
+        {planControl}
       </div>
       <ReportingPersonaError profile={profile} />
 

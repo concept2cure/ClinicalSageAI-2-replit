@@ -172,7 +172,8 @@ describe('adding and finding a version in the Vault (VR-09)', () => {
     fireEvent.change(await screen.findByLabelText('Search this vault'), { target: { value: 'stability' } });
     await waitFor(() => expect(calls.some((u) => u.includes('/search?q=stability'))).toBe(true));
     expect(calls.some((u) => u.includes('includeSuperseded'))).toBe(false);
-    fireEvent.click(screen.getByLabelText('Include earlier versions'));
+    // D6-3: the scope toggle reads "Earlier versions" now (D6 §C.4 step 7).
+    fireEvent.click(screen.getByLabelText('Earlier versions'));
     await waitFor(() => expect(calls.some((u) => u.includes('includeSuperseded=true'))).toBe(true));
   });
 
@@ -197,7 +198,8 @@ describe('adding and finding a version in the Vault (VR-09)', () => {
     });
     render(<Vault {...props()} />);
     fireEvent.change(await screen.findByLabelText('Search this vault'), { target: { value: 'stability' } });
-    fireEvent.click(screen.getByLabelText('Include earlier versions'));
+    // D6-3: the scope toggle reads "Earlier versions" now (D6 §C.4 step 7).
+    fireEvent.click(screen.getByLabelText('Earlier versions'));
     const row = await screen.findByText(/v1\.0, earlier version/);
     fireEvent.click(row.closest('button')!);
     expect(await screen.findByText(/An earlier version\. The tree lists the current one/)).toBeTruthy();

@@ -13,14 +13,14 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { buildPrefixMap, NEVER_GATED } from '../api-prefix-map';
+import { buildPrefixMap, modulesForPath, NEVER_GATED } from '../api-prefix-map';
 import { LAUNCH_EXCLUDED_API, launchScopeApiVerdict } from '../launch-scope-api';
 
 const prefixMap = buildPrefixMap();
 const verdict = (p: string) => launchScopeApiVerdict(p, prefixMap, NEVER_GATED);
 
 /** The 79 upheld findings, as the sub-namespace the gate served. */
-const NOT_SERVED_AT_LAUNCH = [ // 75 since P-48 admitted four QMS records; 73 since two are device features' calls; 74 with /api/programs; 75 with /api/mdx/vault again (fold F3); 74 since eCTD Compile reads the vocabulary (fold ectd-publishing)
+const NOT_SERVED_AT_LAUNCH = [ // Remaining findings after admitted/reached callers; stored-run reproduction is pinned below.
   '/api/authoring-actions/authority-map',
   '/api/authoring-actions/body-aware-gaps',
   '/api/authoring-actions/compare-versions',
@@ -46,7 +46,6 @@ const NOT_SERVED_AT_LAUNCH = [ // 75 since P-48 admitted four QMS records; 73 si
   '/api/authoring-actions/section-expectations',
   '/api/authoring-actions/section-preflight',
   '/api/authoring-actions/seed-overlay-rules',
-  '/api/biostat-bridge/computation-runs',
   '/api/biostat-bridge/filing-placements',
   '/api/chat/actions',
   '/api/chat/health',
@@ -57,7 +56,7 @@ const NOT_SERVED_AT_LAUNCH = [ // 75 since P-48 admitted four QMS records; 73 si
   '/api/coauthor/templates',
   '/api/concept2cure/artifacts/export-pptx',
   '/api/concept2cure/projects/all',
-  '/api/concept2cure/reviews/pending',
+  /* /api/concept2cure/reviews/pending: served since 9357715132 (P-95, 2026-11-09), below. */
   '/api/conversation-os/artifacts',
   '/api/conversation-os/conversations',
   '/api/corpus/benchmark',
@@ -111,6 +110,7 @@ const STILL_SERVED = [
   '/api/authoring-actions/decisions',
   '/api/authoring-actions/module-preflight',
   '/api/biostat-bridge/designs',
+  '/api/biostat-bridge/computation-runs/12/reproduce',
   '/api/chat/threads',
   '/api/chat/upload',
   '/api/coauthor/documents',
@@ -118,6 +118,10 @@ const STILL_SERVED = [
   '/api/concept2cure/artifacts/export-pdf',
   '/api/concept2cure/projects',
   '/api/concept2cure/reviews/my-queue',
+  /* Upheld as unmapped on 2026-10-15: no screen read it. Since 9357715132 (P-95, 2026-11-09) the named
+     reviewer's requests are read from it by the Review screen (surfaces/ReviewRequests.tsx, mounted in
+     ReviewThreads.tsx) and by Your open work (OpenWork.tsx), and the review surface claims it exactly. */
+  '/api/concept2cure/reviews/pending',
   '/api/ectd/export',
   '/api/ectd/validate',
   /* Upheld as HIDDEN APP on 2026-10-15 (claimed by ectd-publishing alone); the
@@ -161,7 +165,7 @@ const STILL_SERVED = [
   '/api/tasks/templates',
 ];
 
-describe('the sub-namespaces the re-proof upheld (79, less the four P-48 admitted, the one a device feature calls and the one eCTD Compile reads) are not served at launch', () => {
+describe('the remaining sub-namespaces upheld by the re-proof are not served at launch', () => {
   it.each(NOT_SERVED_AT_LAUNCH)('%s', (path) => {
     expect(verdict(path)).not.toBe('launch');
     // Their children too: a claim covers what is under it.
@@ -182,6 +186,27 @@ describe('in any letter case: Express routes ignore it, so the verdict does too'
 describe('what a launch screen calls under those prefixes still is', () => {
   it.each(STILL_SERVED)('%s', (path) => {
     expect(verdict(path)).toBe('launch');
+  });
+});
+
+
+describe('stored-run reproduction reached by protocol statistics and Biostatistics', () => {
+  it('attributes the real computation route to both existing callers without claiming the bridge root', () => {
+    const path = '/api/biostat-bridge/computation-runs/12/reproduce';
+    expect(modulesForPath(path, prefixMap)).toEqual(new Set(['protocol-dev', 'biostatistics']));
+    expect(prefixMap.has('/api/biostat-bridge')).toBe(false);
+    expect(verdict(path)).toBe('launch');
+    expect(verdict(path.toUpperCase())).toBe('launch');
+  });
+
+  it.each([
+    '/api/biostat-bridge/filing-placements',
+    '/api/biostat-bridge/unrelated',
+    '/api/biostat-bridge/computation-runs-extra/12/reproduce',
+  ])('keeps the unrelated path %s outside launch', path => {
+    expect(modulesForPath(path, prefixMap)).toBeNull();
+    expect(verdict(path)).not.toBe('launch');
+    expect(verdict(path.toUpperCase())).not.toBe('launch');
   });
 });
 

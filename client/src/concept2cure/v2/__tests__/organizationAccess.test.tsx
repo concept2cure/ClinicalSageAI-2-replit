@@ -8,7 +8,8 @@ vi.mock('@/services/portal/authService', () => ({ useAuth: () => ({ user: owner,
 vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => ({ currentOrganization: { id: 7, name: 'Current' } }) }));
 vi.mock('../switchOrganization', async (original) => ({ ...(await original<typeof import('../switchOrganization')>()), switchOrganization: switchOrg }));
 import { clearAuthToken, setAuthToken } from '@/utils/authToken';
-import { TopBar } from '../Shell';
+import { Rail } from '../Shell';
+import { NavEntitlementsProvider } from '../navEntitlements';
 import { __resetCeremonies } from '../ceremony';
 import { registerCeremonyOpen } from '../ceremony';
 const reply = (body: unknown, status = 200) => ({ ok: status < 400, status, json: async () => body }) as Response;
@@ -25,7 +26,8 @@ beforeEach(() => {
   });
 });
 afterEach(() => { cleanup(); localStorage.clear(); clearAuthToken(); __resetCeremonies(); });
-const mount = () => render(<TopBar surface={{ id: 'projects', label: 'Projects' }} segment="biopharma" onSegment={vi.fn()} onPalette={vi.fn()} onNav={vi.fn()} />);
+// The control moved from the top bar to the sidebar's foot, beside the account (D1-1, D1.md §D1.A step 2).
+const mount = () => render(<NavEntitlementsProvider><Rail activeId="projects" onNav={vi.fn()} collapsed={false} setCollapsed={vi.fn()} segment="biopharma" setSegment={vi.fn()} /></NavEntitlementsProvider>);
 async function open() { mount(); fireEvent.click(screen.getByRole('button', { name: 'Organizations and invitations' })); await screen.findByRole('button', { name: 'Switch to Sponsor' }); }
 describe('membership consent and switching in the actual shell', () => {
   it('lets the recipient accept and decline persisted invitations without switching their session', async () => {

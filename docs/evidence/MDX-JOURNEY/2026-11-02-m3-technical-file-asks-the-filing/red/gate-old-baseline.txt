@@ -1,0 +1,2 @@
+[ci:filing-exit-agreement] FAIL — the baseline allows more than exists. Lower these entries (or remove them at 0) so the freed allowance cannot absorb a new door:
+  ✗ server/services/pathway-engines/mdr-ivdr/assemble-technical-file-from-core.ts: 0 now, baseline 1

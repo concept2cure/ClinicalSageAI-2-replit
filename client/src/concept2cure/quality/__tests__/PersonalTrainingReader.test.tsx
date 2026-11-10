@@ -68,6 +68,21 @@ describe('personal reading and acknowledgement in the controlled-document dialog
     expect(ceremonyOpen()).toBe(true);
   });
 
+  // C16: the reader is the product's drawer. Its acknowledgement is the footer's primary action, below the text it
+  // acknowledges however long that is, and Close is the header's.
+  it('reads in the one drawer, with the acknowledgement as its footer action', async () => {
+    H.apiRequest.mockResolvedValue(read());
+    mount();
+    await screen.findByText(/Keep the release record/);
+    const dialog = screen.getByRole('dialog', { name: 'Read and acknowledge' });
+    expect(dialog.className).toBe('de');
+    expect(dialog.parentElement!.className).toBe('de-bd');
+    expect(dialog.querySelector('.de-h-s')?.textContent).toBe('SOP-015 · Supplier controls · Revision 1.0 · Effective');
+    expect(dialog.querySelector('.de-body .qms-training-content')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Acknowledge this revision' }).closest('.de-f')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Close' }).className).toBe('de-x');
+  });
+
   it('allows a viewer to personally acknowledge without requesting a password or signature', async () => {
     let saved = false;
     H.apiRequest.mockImplementation(async (method: string) => {
@@ -387,6 +402,18 @@ describe('the version in force and the version approved for a later day', () => 
     expect(screen.getByText(reason)).toBeTruthy();
     expect(screen.queryByRole('checkbox')).toBeNull();
     expect(screen.queryByText(/Keep the release record/)).toBeNull();
+  });
+
+  it('opened from a training notice, starts on the version approved for a later day, and on the version in force when none waits', async () => {
+    H.apiRequest.mockResolvedValue(pending());
+    const view = render(<PersonalTrainingReader documentId={6} startOnSuccessor onAcknowledged={vi.fn()} onClose={vi.fn()} />);
+    expect(await screen.findByText('Qualify every new supplier by audit.')).toBeTruthy();
+    expect((screen.getByRole('radio', { name: `Takes effect ${EFFECTIVE_ON}: v2.0` }) as HTMLInputElement).checked).toBe(true);
+    view.unmount();
+    H.apiRequest.mockResolvedValue(read());
+    render(<PersonalTrainingReader documentId={6} startOnSuccessor onAcknowledged={vi.fn()} onClose={vi.fn()} />);
+    expect(await screen.findByText(/Keep the release record/)).toBeTruthy();
+    expect(screen.queryByRole('radio')).toBeNull();
   });
 
   it('opens a document whose next version is being drafted on the version in force', async () => {

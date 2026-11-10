@@ -158,7 +158,7 @@ describe('New Project wizard — an IND’s product type is chosen, not taken fr
     await toConfigure();
     fireEvent.change(productTypeSelect()!, { target: { value: 'drug' } });
     fireEvent.click(continueBtn());
-    expect(reviewValue('Recorded as')).toBe('IND · drug');
+    expect(reviewValue('Recorded as')).toBe('IND · Drug');
     const body = await create();
     expect(body.productType).toBe('drug');
   });
@@ -170,7 +170,7 @@ describe('New Project wizard — a filing type that fixes the class asks nothing
     expect(productTypeSelect()).toBeNull();
     expect(continueBtn().disabled).toBe(false);
     fireEvent.click(continueBtn());
-    expect(reviewValue('Recorded as')).toBe('NDA · drug');
+    expect(reviewValue('Recorded as')).toBe('NDA · Drug');
     const body = await create();
     expect(body.productType).toBe('drug');
   });

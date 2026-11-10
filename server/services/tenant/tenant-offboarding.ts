@@ -1146,6 +1146,7 @@ export const PURGE_RETAINED_RECORDS: Readonly<Record<string, string>> = Object.f
   "qms_job_roles": "Training requirement record (who was required to train on which controlled document, set by whom and when), retained with the qms_training_records receipts it gives meaning to; erased with them when QMS retention is decided.",
   "qms_job_role_members": "Training requirement record (who was required to train on which controlled document, set by whom and when), retained with the qms_training_records receipts it gives meaning to; erased with them when QMS retention is decided.",
   "qms_training_assignments": "Training requirement record (who was required to train on which controlled document, set by whom and when), retained with the qms_training_records receipts it gives meaning to; erased with them when QMS retention is decided.",
+  "csr_study_data": "Immutable sealed snapshots of a document's frozen study data contain subject-level clinical observations. Physical erasure requires governed retention review; a populated tenant is refused before any purge write; UPDATE and DELETE are refused by the 20261031 migration.",
   "submission_orchestrator_inputs": "Private immutable input snapshots and suspended outputs contain frozen submission and clinical content. Physical erasure requires governed retention review; a populated tenant is refused before any purge write.",
 });
 
@@ -1302,6 +1303,19 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
   // views; library views and precedent rows have no cascade and are reached
   // only here.
   'saved_precedent_queries',
+  // Folders a person makes in a project's Vault (S6, 20261106_document_folders_project_scope.sql)
+  // reference the project with no cascade, so a tenant holding one project folder failed the
+  // whole erasure at regulatory_programs with 23503. The legacy simple documents filed in those
+  // folders go first, then the folders (one DELETE removes a folder tree, parent_id included),
+  // then the project. Customer content (2026-11-08, ci:purge-coverage on a blank database).
+  'simple_document_versions',
+  'simple_documents',
+  'document_folders',
+  // The report-pack register (C-3, P-91, aadca02cc7): its runs and project links before the
+  // bundle they name. Customer content: which reports a tenant packs, for which projects.
+  'report_bundle_runs',
+  'report_bundle_projects',
+  'report_bundles',
   'regulatory_programs',
   'file_uploads',
   // Digital-twin simulations. Customer content: each row stores the tenant's

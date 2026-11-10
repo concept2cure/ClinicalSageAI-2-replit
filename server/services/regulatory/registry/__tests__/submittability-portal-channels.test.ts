@@ -244,3 +244,50 @@ describe('corrected device recipient identity cannot inherit a regional gateway'
     expect(getSubmittability(entry).tier).toBe('no_gateway');
   });
 });
+
+describe('UK medicinal trial preparation uses its combined IRAS route', () => {
+  it('declares a regional IRAS application without changing the saved display name', () => {
+    const entry = getApplicationType('UK_CTA')!;
+    expect(entry.displayName).toBe('Clinical Trial Authorisation (UK)');
+    expect(entry.submissionFormat).toBe('IRAS');
+    expect(entry.dossierStandard).toBe('regional');
+    expect(entry.defaultTaskBlueprint).toBe('uk_cta_tasks');
+    expect(entry.moduleAuthority).toMatch(/28 April 2026/);
+    expect(entry.moduleAuthority).toMatch(/initial.*submission date/i);
+    expect(entry.moduleAuthority).toMatch(/unassessed|not assessed/i);
+    expect(entry.description).toMatch(/MHRA.*REC|REC.*MHRA/);
+  });
+
+  it('names combined review as unconnected and leaves date and exceptional-route assessment open', () => {
+    const channel = submissionChannelFor(getApplicationType('UK_CTA')!);
+    expect(channel.kind).toBe('unconnected');
+    if (channel.kind !== 'unconnected') throw new Error('UK CTA inherited a regional medicines gateway.');
+    expect(channel.channel).toBe('Combined IRAS review (MHRA and REC)');
+    expect(channel.reason).toMatch(/28 April 2026/);
+    expect(channel.reason).toMatch(/initial.*submission date/i);
+    expect(channel.reason).toMatch(/advance written.*MHRA|written.*MHRA.*advance/i);
+    expect(channel.reason).toMatch(/unassessed|not assessed/i);
+    expect(channel.applicantStep).toMatch(/prepares? .*content/i);
+    expect(channel.applicantStep).toMatch(/no .*connector/i);
+    expect(channel.applicantStep).toMatch(/IRAS/);
+  });
+
+  it('reports the missing connector without claiming portal-only transmission or filing readiness', () => {
+    const entry = getApplicationType('UK_CTA')!;
+    const result = getSubmittability(entry);
+    expect(result.tier).toBe('no_gateway');
+    expect(result.channel).toBe('Combined IRAS review (MHRA and REC)');
+    expect(result.channelReason).toMatch(/no .*connector/i);
+    const report = buildSubmittabilityReport();
+    expect(report.gaps.map((row) => row.id)).toContain('UK_CTA');
+    expect(report.portalOnly.map((row) => row.id)).not.toContain('UK_CTA');
+  });
+
+  it('preserves the existing UK marketing and US IND routes', () => {
+    expect(getApplicationType('UK_MA')!.submissionFormat).toBe('eCTD');
+    expect(submissionChannelFor(getApplicationType('UK_MA')!).kind).toBe('gateway');
+    expect(submissionChannelFor(getApplicationType('US_IND')!)).toEqual({
+      kind: 'gateway', region: 'fda', name: 'esg',
+    });
+  });
+});

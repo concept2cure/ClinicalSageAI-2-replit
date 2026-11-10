@@ -13,7 +13,9 @@
  *     included, without inflating. It refuses on too many entries, too large a
  *     declared total, an entry over 1 MiB that claims more than 100:1, a name
  *     that is absolute or climbs out with `..`, an encrypted entry or an
- *     unknown method, and a directory it cannot read.
+ *     unknown method, and a directory it cannot read. It also refuses an entry
+ *     named one way in the directory and another where a reader looks: its
+ *     local header, or a Unicode Path extra field (see `assertOneName`).
  *  2. **What the archive does.** Declared sizes are written by whoever made
  *     the file, so they can lie. Each entry is inflated as a stream that is
  *     counted and thrown away, chunk by chunk, so memory stays at one chunk.
@@ -71,6 +73,8 @@ const LOCAL = 0x04034b50;
 const MAX_COMMENT = 0xffff;
 const STORED = 0;
 const DEFLATED = 8;
+/** Info-ZIP's Unicode Path extra field: a UTF-8 name a reader may use in place of the entry's own. */
+const UNICODE_PATH = 0x7075;
 
 const unreadable = () => new ArchiveLimitError('its directory could not be read');
 
@@ -159,10 +163,64 @@ export function inspectZip(buf: Buffer, limits: ZipLimits = DEFAULT_ZIP_LIMITS):
       localHeaderOffset: raw.local,
     };
     zip64Extra(buf, p + 46 + nameLength, extraLength, entry, raw);
+    assertOneName(buf, entry, buf.subarray(p + 46, p + 46 + nameLength), unicodePathOf(buf, p + 46 + nameLength, extraLength));
     entries.push(entry);
     p += 46 + nameLength + extraLength + commentLength;
   }
   return entries;
+}
+
+/** The name an entry's Unicode Path extra field gives it, or null when it has none. */
+function unicodePathOf(buf: Buffer, at: number, length: number): string | null {
+  const end = at + length;
+  for (let p = at; p + 4 <= end; p += 4 + buf.readUInt16LE(p + 2)) {
+    if (buf.readUInt16LE(p) !== UNICODE_PATH) continue;
+    const size = buf.readUInt16LE(p + 2);
+    need(buf, p + 4, size);
+    // A version byte and the CRC-32 of the name it stands for, then the name.
+    return size > 5 ? buf.toString('utf8', p + 9, p + 4 + size) : '';
+  }
+  return null;
+}
+
+/** An entry's local header, where its name and data start. */
+function localHeaderOf(buf: Buffer, e: ZipEntryInfo): { nameAt: number; nameLength: number; dataAt: number } {
+  need(buf, e.localHeaderOffset, 30);
+  if (buf.readUInt32LE(e.localHeaderOffset) !== LOCAL) throw unreadable();
+  const nameLength = buf.readUInt16LE(e.localHeaderOffset + 26);
+  const nameAt = e.localHeaderOffset + 30;
+  need(buf, nameAt, nameLength);
+  return { nameAt, nameLength, dataAt: nameAt + nameLength + buf.readUInt16LE(e.localHeaderOffset + 28) };
+}
+
+const shown = (name: string) => JSON.stringify(name.slice(0, 120));
+
+/**
+ * A ZIP names each entry in its central directory, which this module checks,
+ * and again in the entry's local header. JSZip, and the readers built on it
+ * (mammoth, exceljs), take the local header's name. They also take a Unicode
+ * Path extra field's name in place of either. A name checked in one place and
+ * read from another was never checked: until 2026-11-02, a ZIP whose directory
+ * said `ax` and whose local header said `/x` passed, and JSZip named its entry
+ * `/x` (docs/evidence/MR-10/2026-11-01-filed-sequence-reader/zip-local-name-probe.txt).
+ * So the local header must name the file as the directory does. The only
+ * difference allowed is a backslash for a slash, which some Windows tools
+ * write in one header only. A Unicode Path must be a safe name too. When the
+ * directory's name is plain ASCII, so nothing needed re-encoding, it must also
+ * be the same name.
+ */
+function assertOneName(buf: Buffer, e: ZipEntryInfo, central: Buffer, unicodePath: string | null): void {
+  const { nameAt, nameLength } = localHeaderOf(buf, e);
+  const slashes = (b: Buffer) => b.toString('latin1').replace(/\\/g, '/');
+  const local = buf.subarray(nameAt, nameAt + nameLength);
+  if (slashes(local) !== slashes(central)) {
+    throw new ArchiveLimitError(`it names one file two ways, ${shown(e.name)} in its directory and ${shown(local.toString('latin1'))} in the file's own header`);
+  }
+  if (unicodePath === null) return;
+  if (unsafeName(unicodePath)) throw new ArchiveLimitError(`it names a file outside itself (${shown(unicodePath)})`);
+  if (/^[\x20-\x7e]*$/.test(central.toString('latin1')) && unicodePath !== central.toString('latin1')) {
+    throw new ArchiveLimitError(`it names one file two ways, ${shown(e.name)} in its directory and ${shown(unicodePath)} in a Unicode path`);
+  }
 }
 
 /** A name that is absolute, names a drive, holds a NUL or climbs with `..`. */
@@ -207,9 +265,7 @@ function inflatedLength(data: Buffer, cap: number): Promise<number> {
 
 /** Where an entry's compressed bytes are, from its local header. */
 function dataOf(buf: Buffer, e: ZipEntryInfo): Buffer {
-  need(buf, e.localHeaderOffset, 30);
-  if (buf.readUInt32LE(e.localHeaderOffset) !== LOCAL) throw unreadable();
-  const start = e.localHeaderOffset + 30 + buf.readUInt16LE(e.localHeaderOffset + 26) + buf.readUInt16LE(e.localHeaderOffset + 28);
+  const start = localHeaderOf(buf, e).dataAt;
   need(buf, start, e.compressedSize);
   return buf.subarray(start, start + e.compressedSize);
 }

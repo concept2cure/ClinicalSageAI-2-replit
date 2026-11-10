@@ -6,7 +6,7 @@
  * none of them — WI's audit put it plainly: "reviewers/comments are API-only".
  * A review that can only be requested through an API is not a review anyone on
  * the study can ask for. The pane now requests a review (reviewer, role, due
- * date) and records a reviewer's disposition. The disposition is an electronic
+ * date), records a reviewer's disposition, and leaves and resolves comments. The disposition is an electronic
  * signature (ProtocolDevSigning.tsx): only the assigned user can sign it, so the
  * button is disabled, with the reason, for anyone else.
  *
@@ -155,10 +155,13 @@ function ReviewerRow({ r, onEdit }: { r: Row; onEdit?: ReviewPaneProps['onEdit']
 
 export function ReviewsTab({ doc, onEdit }: ReviewPaneProps) {
   const reviews = asRows(doc.reviews);
-  const allComments = reviews.flatMap((r) => asRows(r.comments));
+  const allComments = asRows(doc.reviewComments);
   const blocking = allComments.filter((c) => c.sev === 'blocking' && !c.resolved).length;
   const actions: PaneAction[] | undefined = onEdit
-    ? [{ label: 'Request a review', icon: 'plus', onAct: () => onEdit('review-request'), variant: 'outline' }]
+    ? [
+      { label: 'Request a review', icon: 'plus', onAct: () => onEdit('review-request'), variant: 'outline' },
+      { label: 'Leave a comment', icon: 'penLine', onAct: () => onEdit('review-comment'), variant: 'outline' },
+    ]
     : undefined;
 
   return (
@@ -178,6 +181,12 @@ export function ReviewsTab({ doc, onEdit }: ReviewPaneProps) {
               <span className="pg-badge" data-tone={PG.SEV_TONE[str(c.sev)]}>{PG.labelize(str(c.sev))}</span>
               <span className="pd-comment-sec">{str(c.sec)}</span>
               <span className="pd-comment-st">{c.resolved ? 'Resolved' : 'Open'}</span>
+              {onEdit && !c.resolved && (
+                <button type="button" className="pg-btn outline" aria-label={'Resolve comment: ' + str(c.text).slice(0, 60)}
+                  onClick={() => onEdit('comment-resolve', { id: Number(c.id), label: str(c.text).slice(0, 80) })}>
+                  <PG.Ic n="checkCircle" s={14} />Resolve
+                </button>
+              )}
             </div>
             <div className="pd-comment-t">{str(c.text)}</div>
           </div>))}</div>

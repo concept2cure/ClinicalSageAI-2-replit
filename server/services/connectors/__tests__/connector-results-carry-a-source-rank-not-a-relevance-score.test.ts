@@ -64,12 +64,18 @@ const CASES: Array<{ id: string; make: () => DataConnector; answer: unknown }> =
   {
     id: 'ema_epar',
     make: () => new EMAEPARConnector(),
+    /* EMA's JSON feeds, { data: [...] } (ema-epar-client.ts since 0a07f49d7c). This fetch answers the
+       medicines and documents feeds alike, so each record carries both shapes; filtering is local. */
     answer: {
-      content: ['EMEA/H/C/1', 'EMEA/H/C/2', 'EMEA/H/C/3'].map((productNumber) => ({
-        productNumber,
-        medicineName: productNumber,
+      data: ['EMEA/H/C/1', 'EMEA/H/C/2', 'EMEA/H/C/3'].map((ema_product_number) => ({
+        category: 'Human',
+        ema_product_number,
+        name_of_medicine: ema_product_number,
+        active_substance: 'pembrolizumab',
+        document_url: `https://www.ema.europa.eu/en/documents/${ema_product_number.replaceAll('/', '-')}.pdf`,
+        name: `EPAR ${ema_product_number}`,
+        type: 'assessment-report',
       })),
-      totalElements: 3,
     },
   },
 ];

@@ -1,0 +1,239 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 2: a page header never turns its text block’s width into a height > the text block wraps on a 420px floor, with a 0% basis that a column cannot stretch 39ms
+   → expected '1 1 420px' to be '1 1 0%' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 2: a page header never turns its text block’s width into a height > no stylesheet turns a page header into a column (Tasks’ ≤760px rule is gone) 27ms
+   → expected [ 'app-v2.css: .c2c-v2 .tb .ph' ] to deeply equal []
+ × client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 3: at phone width a table scrolls inside its card or section, never the page > one rule, at ≤640px, scrolls a table that is a direct child of a card, a card body or a work area’s section 8ms
+   → expected [ '[data-work-area] .pj-sec', …(1) ] to deeply equal ArrayContaining{…}
+ ✓ client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 3: at phone width a table scrolls inside its card or section, never the page > no other stylesheet keeps a second copy 22ms
+ × client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 4: on a touch screen every text area is 16px, so iOS does not zoom into it > .de-textarea: the last rule in app-v2.css that sizes it on a phone is the coarse-pointer 16px rule 12ms
+   → rules that size .de-textarea, in order:
+  (no @media) .c2c-v2 :is(.c2c-input, .de-input, .de-select, .de-textarea): expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 4: on a touch screen every text area is 16px, so iOS does not zoom into it > .landing-input: the last rule in app-v2.css that sizes it on a phone is the coarse-pointer 16px rule 6ms
+   → rules that size .landing-input, in order:
+  (no @media) .c2c-v2 :is(.landing-input, .pj-composer textarea, .ct-composer textarea): expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 4: on a touch screen every text area is 16px, so iOS does not zoom into it > .pj-composer textarea: the last rule in app-v2.css that sizes it on a phone is the coarse-pointer 16px rule 12ms
+   → rules that size .pj-composer textarea, in order:
+  (no @media) .c2c-v2 :is(.landing-input, .pj-composer textarea, .ct-composer textarea): expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 4: on a touch screen every text area is 16px, so iOS does not zoom into it > .ct-composer textarea: the last rule in app-v2.css that sizes it on a phone is the coarse-pointer 16px rule 5ms
+   → rules that size .ct-composer textarea, in order:
+  (no @media) .c2c-v2 :is(.landing-input, .pj-composer textarea, .ct-composer textarea): expected false to be true // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 4: on a touch screen every text area is 16px, so iOS does not zoom into it > nothing outranks it: no scoped rule in any sheet, and no rule in another sheet, sizes these fields 17ms
+ × client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 8: the drawer footer keeps each label on one line at 390 > a drawer button never breaks its label 1ms
+   → expected undefined to be 'nowrap' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 8: the drawer footer keeps each label on one line at 390 > at ≤640px the ghost button is as wide as its label and the primary takes the rest 1ms
+   → expected undefined to be '0 0 auto' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 8: the drawer footer keeps each label on one line at 390 > at ≤640px a footer too wide for one row wraps, rather than running past the screen 1ms
+   → expected [] to deeply equal [ 'wrap' ]
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 10 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 2: a page header never turns its text block’s width into a height > the text block wraps on a 420px floor, with a 0% basis that a column cannot stretch
+AssertionError: expected '1 1 420px' to be '1 1 0%' // Object.is equality
+
+Expected: "1 1 0%"
+Received: "1 1 420px"
+
+ ❯ client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts:95:41
+     93|     expect(first.map(where)).toHaveLength(1);
+     94|     expect(subjects(first[0].selector)).toEqual(expect.arrayContaining…
+     95|     expect(decl(first[0].body, 'flex')).toBe('1 1 0%');
+       |                                         ^
+     96|     expect(decl(first[0].body, 'min-width')).toBe('min(420px, 100%)');
+     97|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/10]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 2: a page header never turns its text block’s width into a height > no stylesheet turns a page header into a column (Tasks’ ≤760px rule is gone)
+AssertionError: expected [ 'app-v2.css: .c2c-v2 .tb .ph' ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "app-v2.css: .c2c-v2 .tb .ph",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts:101:60
+     99|   it('no stylesheet turns a page header into a column (Tasks’ ≤760px r…
+    100|     const columns = BLOCKS.filter((b) => decl(b.body, 'flex-direction'…
+    101|     expect(columns.map((b) => `${b.sheet}: ${b.prelude}`)).toEqual([]);
+       |                                                            ^
+    102|   });
+    103| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/10]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 3: at phone width a table scrolls inside its card or section, never the page > one rule, at ≤640px, scrolls a table that is a direct child of a card, a card body or a work area’s section
+AssertionError: expected [ '[data-work-area] .pj-sec', …(1) ] to deeply equal ArrayContaining{…}
+
+- Expected
++ Received
+
+- ArrayContaining [
+-   ".pj-card",
+-   ".pj-card-b",
+-   ".reg-card",
++ [
+    "[data-work-area] .pj-sec",
++   "[data-work-area] .pj-sec > .pj-card-b",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts:117:21
+    115|     expect(decl(rule.body, 'overflow-x')).toBe('auto');
+    116|     const parents = subjects(rule.selector).map((s) => /^(.*) > \.reg-…
+    117|     expect(parents).toEqual(expect.arrayContaining(['.pj-card', '.pj-c…
+       |                     ^
+    118|   });
+    119|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/10]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 4: on a touch screen every text area is 16px, so iOS does not zoom into it > .de-textarea: the last rule in app-v2.css that sizes it on a phone is the coarse-pointer 16px rule
+AssertionError: rules that size .de-textarea, in order:
+  (no @media) .c2c-v2 :is(.c2c-input, .de-input, .de-select, .de-textarea): expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts:133:106
+    131|     const sizing = APP.filter((r) => (r.media === null || coarse(r)) &…
+    132|     const last = sizing[sizing.length - 1];
+    133|     expect(last && coarse(last), `rules that size ${t}, in order:\n  $…
+       |                                                                                                          ^
+    134|     expect(decl(last.body, 'font-size')).toBe('16px');
+    135|     expect(decl(last.body, 'min-height'), 'the size only: .de-textarea…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/10]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 4: on a touch screen every text area is 16px, so iOS does not zoom into it > .landing-input: the last rule in app-v2.css that sizes it on a phone is the coarse-pointer 16px rule
+AssertionError: rules that size .landing-input, in order:
+  (no @media) .c2c-v2 :is(.landing-input, .pj-composer textarea, .ct-composer textarea): expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts:133:106
+    131|     const sizing = APP.filter((r) => (r.media === null || coarse(r)) &…
+    132|     const last = sizing[sizing.length - 1];
+    133|     expect(last && coarse(last), `rules that size ${t}, in order:\n  $…
+       |                                                                                                          ^
+    134|     expect(decl(last.body, 'font-size')).toBe('16px');
+    135|     expect(decl(last.body, 'min-height'), 'the size only: .de-textarea…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/10]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 4: on a touch screen every text area is 16px, so iOS does not zoom into it > .pj-composer textarea: the last rule in app-v2.css that sizes it on a phone is the coarse-pointer 16px rule
+AssertionError: rules that size .pj-composer textarea, in order:
+  (no @media) .c2c-v2 :is(.landing-input, .pj-composer textarea, .ct-composer textarea): expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts:133:106
+    131|     const sizing = APP.filter((r) => (r.media === null || coarse(r)) &…
+    132|     const last = sizing[sizing.length - 1];
+    133|     expect(last && coarse(last), `rules that size ${t}, in order:\n  $…
+       |                                                                                                          ^
+    134|     expect(decl(last.body, 'font-size')).toBe('16px');
+    135|     expect(decl(last.body, 'min-height'), 'the size only: .de-textarea…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/10]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 4: on a touch screen every text area is 16px, so iOS does not zoom into it > .ct-composer textarea: the last rule in app-v2.css that sizes it on a phone is the coarse-pointer 16px rule
+AssertionError: rules that size .ct-composer textarea, in order:
+  (no @media) .c2c-v2 :is(.landing-input, .pj-composer textarea, .ct-composer textarea): expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts:133:106
+    131|     const sizing = APP.filter((r) => (r.media === null || coarse(r)) &…
+    132|     const last = sizing[sizing.length - 1];
+    133|     expect(last && coarse(last), `rules that size ${t}, in order:\n  $…
+       |                                                                                                          ^
+    134|     expect(decl(last.body, 'font-size')).toBe('16px');
+    135|     expect(decl(last.body, 'min-height'), 'the size only: .de-textarea…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/10]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 8: the drawer footer keeps each label on one line at 390 > a drawer button never breaks its label
+AssertionError: expected undefined to be 'nowrap' // Object.is equality
+
+- Expected:
+"nowrap"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts:151:80
+    149|
+    150|   it('a drawer button never breaks its label', () => {
+    151|     expect(decl(rule('.c2c-v2 .de-btn', false)[0]?.body ?? '', 'white-…
+       |                                                                                ^
+    152|   });
+    153|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/10]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 8: the drawer footer keeps each label on one line at 390 > at ≤640px the ghost button is as wide as its label and the primary takes the rest
+AssertionError: expected undefined to be '0 0 auto' // Object.is equality
+
+- Expected:
+"0 0 auto"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts:155:84
+    153|
+    154|   it('at ≤640px the ghost button is as wide as its label and the prima…
+    155|     expect(decl(rule('.c2c-v2 .de-f .de-btn.ghost', true)[0]?.body ?? …
+       |                                                                                    ^
+    156|     expect(decl(rule('.c2c-v2 .de-f .de-btn.primary', true)[0]?.body ?…
+    157|     expect(decl(rule('.c2c-v2 .de-f .de-btn', true)[0]?.body ?? '', 'm…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/10]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts > fix 8: the drawer footer keeps each label on one line at 390 > at ≤640px a footer too wide for one row wraps, rather than running past the screen
+AssertionError: expected [] to deeply equal [ 'wrap' ]
+
+- Expected
++ Received
+
+- [
+-   "wrap",
+- ]
++ []
+
+ ❯ client/src/concept2cure/v2/__tests__/d0PhoneWidth.test.ts:162:20
+    160|   it('at ≤640px a footer too wide for one row wraps, rather than runni…
+    161|     const footer = rule('.c2c-v2 .de-f', true).map((r) => decl(r.body,…
+    162|     expect(footer).toEqual(['wrap']);
+       |                    ^
+    163|   });
+    164| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/10]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  10 failed | 2 passed (12)
+   Start at  03:39:05
+   Duration  795ms (transform 149ms, setup 138ms, import 121ms, tests 156ms, environment 0ms)
+

@@ -1,0 +1,38 @@
+{
+  "status": "frozen",
+  "focusedUnitResult": {
+    "exitCode": 0,
+    "files": 3,
+    "tests": 89,
+    "durationSeconds": 9.44,
+    "log": "focused-units.txt.gz"
+  },
+  "scopedLint": {
+    "exitCode": 0,
+    "errors": 0,
+    "warnings": {
+      "server/routes/__tests__/_unified-tasks-pglite-harness.ts": 0,
+      "server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts": 0,
+      "server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts": 0,
+      "server/routes/__tests__/unifiedTasks.routes.test.ts": 1,
+      "server/routes/unifiedTasks.routes.ts": 2
+    },
+    "log": "focused-lint.json.gz",
+    "baselineRouteLog": "baseline-route-lint.json.gz"
+  },
+  "intermediateFixtureCorrection": "The first run had two valid-project unit failures because the recording fixture tested the first expanded canonical-query binding as the organization. The actual query binds reviewer first; the fixture now tests the outer organization third from last and the project last. Actual PGlite policy cases passed. Redundant native-matrix unit assertions were removed to retain the existing file-size warning budget; private-parent and stale-role unit assertions remain.",
+  "checksNotRunByThisWorker": [
+    "native PostgreSQL",
+    "typecheck",
+    "build",
+    "gates"
+  ],
+  "sha256": {
+    "server/routes/unifiedTasks.routes.ts": "d619caa363a0fce59c001f6a5aa2a3ebfecffa497ea86b82c0bace50902eecd1",
+    "server/routes/__tests__/unifiedTasks.routes.test.ts": "34ffb5cb249d01a813f24f54a6c2549f7ac61c8a6fe91bb4f7708177b8d0418f",
+    "server/routes/__tests__/_unified-tasks-pglite-harness.ts": "ec162c04219d6827eeed43ea8da12cd1ff1fe583c76da3896ec1192451a94834",
+    "server/routes/__tests__/unifiedTasks-governed.pglite.integration.test.ts": "659d2afa630b6d53a6293873703d208aaf18df1ed73e95d32fff64f4af7fc328",
+    "server/routes/__tests__/route-task-guard-unified.pglite.integration.test.ts": "a27a0714cd1ce43d1a4d91def468309083d003e5d9674d30a374e3f432213acd"
+  },
+  "scope": "Existing unified POST creation route and truthful unit/PGlite fixtures only. Root owns the existing workspace helper export, native evidence and aggregate qualification."
+}

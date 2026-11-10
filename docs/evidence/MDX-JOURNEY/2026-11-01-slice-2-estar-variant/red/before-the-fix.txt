@@ -1,0 +1,10 @@
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingSignature.test.tsx > filing an eSTAR from the panel > opens a signature form instead of filing on the first click 109ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingSignature.test.tsx > filing an eSTAR from the panel > sends the artifact, the reason, the meaning and the credential — and no filing date 62ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingSignature.test.tsx > filing an eSTAR from the panel > will not offer an empty picker when nothing has been retained 23ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingSignature.test.tsx > filing an eSTAR from the panel > keeps the form open with the server's reason when the credential is refused 64ms
+ × client/src/concept2cure/mdx/__tests__/estarFilingSignature.test.tsx > the filing panel starts from the program's eSTAR variant > an IVD program's panel starts on the IVD form 5015ms
+ ✓ client/src/concept2cure/mdx/__tests__/estarFilingSignature.test.tsx > the filing panel starts from the program's eSTAR variant > with no variant passed it reads as a device, as before 19ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: an IVD project was assessed against the nIVD eSTAR: expected 'device' to be 'ivd' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)

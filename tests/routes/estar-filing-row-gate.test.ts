@@ -29,6 +29,10 @@ const h = vi.hoisted(() => ({
   events: vi.fn(async () => [{ id: 1, eventType: 'created', fromStatus: null, toStatus: 'draft', actorUserId: 9, detail: {}, occurredAt: '2026-10-30T00:00:00.000Z' }]),
   scope: vi.fn(async (_org: number, opts: { programId?: string }) => ({ scope: { programId: opts.programId }, source: 'governed_program' })),
   leaves: vi.fn(async () => [{ sectionCode: 'device-description', title: 'Device description', substantive: true }]),
+  /* P-29.3: whether the program's filing holds its editing documents' text.
+     Default: not applicable (nothing bound). */
+  agreement: vi.fn(async () => ({ documentId: 'doc-k510', bound: [] as string[], diverged: [] as unknown[], rewritten: [] as unknown[], unfiled: [] as string[],
+    reason: 'No document in the editor is bound to this filing, so there is no editing text to compare.' })),
 }));
 
 vi.mock('../../server/auth', () => ({ authMiddleware: (_req: any, _res: any, next: any) => next() }));
@@ -50,6 +54,7 @@ vi.mock('../../server/services/pathway-engines/estar/estar-content-leaves', asyn
   ...(await importOriginal<Record<string, unknown>>()),
   resolveDeviceContentScope: h.scope,
   loadDeviceContentLeaves: h.leaves,
+  governedDeviceFilingAgreement: h.agreement,
 }));
 vi.mock('../../server/services/pathway-engines/estar/estar-registration-service', async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
@@ -124,6 +129,26 @@ describe('GET /submissions/:id/readiness — the filing\'s own gate', () => {
     const r = await call('/submissions/:id/readiness', 'get', { params: { id: 'f-1' } });
     expect(r.status).toBe(403);
     expect(h.scope).not.toHaveBeenCalled();
+  });
+});
+
+describe('a filed copy that is not the document\'s text blocks the filing\'s gate (P-29.3)', () => {
+  it('the panel and the filing row both refuse "Can file now", naming the section', async () => {
+    const rewritten = [{ key: 'E1', filed: 'different', section: { id: 's-e1', code: 'E1' }, authoringDocId: 'ed-1' }];
+    h.agreement.mockResolvedValue({ documentId: 'doc-k510', bound: ['ed-1'], diverged: rewritten, rewritten, unfiled: [] } as never);
+    try {
+      const panel = await call('/filing-readiness', 'post', { body: { catalogKey: '510k', variant: 'device', useProjectContent: true, programId: PROGRAM } });
+      expect(panel.status).toBe(200);
+      expect(h.agreement).toHaveBeenCalledWith(2, PROGRAM, expect.anything());
+      expect(panel.body.filedCopyDiverged).toEqual(['E1']);
+      expect(panel.body.canFileNow).toBe(false);
+      expect(panel.body.blockers.some((b: string) => /^Cannot file yet\. The filed copy of section E1 is not the document's text\./.test(b))).toBe(true);
+      const row = await call('/submissions/:id/readiness', 'get', { params: { id: 'f-1' } });
+      expect(row.body.readiness).toEqual(panel.body);
+    } finally {
+      h.agreement.mockReset().mockImplementation(async () => ({ documentId: 'doc-k510', bound: [], diverged: [], rewritten: [], unfiled: [],
+        reason: 'No document in the editor is bound to this filing, so there is no editing text to compare.' }));
+    }
   });
 });
 

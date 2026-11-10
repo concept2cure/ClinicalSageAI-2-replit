@@ -1,0 +1,17 @@
+Information request.
+We have the following requests for information:
+1. Provide the batch analysis for the drug substance lots.
+2. Provide current letters of authorization for these drug master files:
+DMF 034567
+DMF 045678
+Reference ID: 5123456
+
+-- 1 of 2 --
+
+IND 123456
+Page 2
+3. Provide the stability data.
+Sincerely,
+Reference ID: 5123456
+
+-- 2 of 2 --

@@ -141,3 +141,98 @@ export async function admitAnaProjectScope(q: RequestSqlClient, input: AnaProjec
     throw new AnaProjectScopeError(503, 'ANA_PROJECT_ACCESS_UNAVAILABLE', 'Current project access could not be verified. AnA has not read its sources.');
   }
 }
+
+/**
+ * The projects AnA's reads may read for this person (F1, 2026-11-05): the projects the sharing policy admits the
+ * person to (getAccessibleReportProjectIds, the policy the Vault's organization view lists by,
+ * routes/artifacts-center-routes.ts). With a project open (projectId, or projectRef, a program uuid under the v2
+ * shell), that project is admitted first (admitAnaProjectScope) and the projects are narrowed to its sponsor's
+ * (narrowToSponsorOf, the Vault's own narrowing). A CRO works across authorized sponsor projects "without mixing
+ * sponsor data or permissions" (the founder, 2026-11-05). An id outside them reads as no row, so it is answered as a
+ * missing id is. A check that cannot run is a refusal with a code, never an empty scope.
+ *
+ * One implementation for AnA's tools (AnaToolExecutor.ts) and AnA's platform commands (ana-ri/command-executor.ts),
+ * which cannot import AnaToolExecutor (F1-C, 2026-11-05: moved here from AnaToolExecutor.ts).
+ */
+export interface ProjectReadScope { organizationId: number; userId: number; projectIds: number[] }
+/** Governed documents are keyed by program: the verified anchors (verifiedProgramAnchors) of the scope's projects. */
+export interface ProgramReadScope extends ProjectReadScope { programIds: string[]; anchorProjectIds: number[] }
+/** Why a scope could not be resolved: words to say and a code. */
+export interface ProjectScopeRefusal { error: string; code: string }
+/** Who is reading and the project open, as the server pinned them; never a project the model names. */
+export interface ProjectScopeContext { organizationId?: unknown; userId?: unknown; projectId?: unknown; projectRef?: unknown }
+
+export function isProjectScopeRefusal(scope: ProjectReadScope | ProjectScopeRefusal): scope is ProjectScopeRefusal {
+  return 'code' in scope;
+}
+
+/**
+ * ProgramReadAccessError (c2c/current-program-access.ts), known by the name its constructor sets. This module imports
+ * that one only dynamically: a static import would load it for every importer of this module, and a test that mocks it
+ * with a factory reaching this module would wait on itself.
+ */
+function isProgramReadAccessError(error: unknown): error is Error & { code: string } {
+  return error instanceof Error && error.name === 'ProgramReadAccessError' && typeof (error as { code?: unknown }).code === 'string';
+}
+
+export function projectScopeRefusalOf(error: unknown): ProjectScopeRefusal {
+  if (isProgramReadAccessError(error) || error instanceof AnaProjectScopeError) {
+    return { error: error.message, code: error.code };
+  }
+  return { error: 'Current project access could not be verified. No project data was supplied.', code: 'PROJECT_ACCESS_UNAVAILABLE' };
+}
+
+/** The refusal as a tool answers it. */
+export function projectScopeRefusal(error: unknown): string {
+  return JSON.stringify(projectScopeRefusalOf(error));
+}
+
+export async function resolveProjectReadScope(name: string, ctx: ProjectScopeContext): Promise<ProjectReadScope | ProjectScopeRefusal> {
+  const organizationId = Number(ctx.organizationId);
+  const userId = Number(ctx.userId);
+  if (!Number.isSafeInteger(userId) || userId <= 0) {
+    return { error: `${name} reads only the projects you can open, and no identified member is known. Nothing was read.`, code: 'PROJECT_ACTOR_REQUIRED' };
+  }
+  try {
+    const { getPool } = await import('../../db.js');
+    const { readCurrentProgramActor } = await import('../c2c/current-program-access.js');
+    const { getAccessibleReportProjectIds } = await import('../report-os/project-access.js');
+    const { narrowToSponsorOf } = await import('../artifact-registry-read.js');
+    const q = getPool();
+    const actor = await readCurrentProgramActor(q, { organizationId, userId });
+    const accessible = await getAccessibleReportProjectIds(organizationId, actor, q);
+    const open = await admitAnaProjectScope(q, { organizationId, userId, projectId: ctx.projectId, projectRef: ctx.projectRef });
+    if (open.projectId === null) return { organizationId, userId, projectIds: accessible };
+    return { organizationId, userId, projectIds: (await narrowToSponsorOf(organizationId, accessible, open.projectId)).projectIds };
+  } catch (error) {
+    return projectScopeRefusalOf(error);
+  }
+}
+
+export async function resolveProgramReadScope(name: string, ctx: ProjectScopeContext): Promise<ProgramReadScope | ProjectScopeRefusal> {
+  const scope = await resolveProjectReadScope(name, ctx);
+  if (isProjectScopeRefusal(scope)) return scope;
+  try {
+    const { getPool } = await import('../../db.js');
+    const { getCurrentAccessibleProgramScope, verifiedProgramAnchors } = await import('../c2c/current-program-access.js');
+    const q = getPool();
+    const identity = { organizationId: scope.organizationId, userId: scope.userId };
+    const allowed = new Set(scope.projectIds);
+    const anchors = verifiedProgramAnchors(q, identity, await getCurrentAccessibleProgramScope(q, identity))
+      .filter((anchor) => allowed.has(anchor.projectId));
+    return { ...scope, programIds: anchors.map((a) => a.programId), anchorProjectIds: anchors.map((a) => a.projectId) };
+  } catch (error) {
+    return projectScopeRefusalOf(error);
+  }
+}
+
+/** The scope, or the refusal as a tool answers it. */
+export async function projectReadScope(name: string, ctx: ProjectScopeContext): Promise<ProjectReadScope | string> {
+  const scope = await resolveProjectReadScope(name, ctx);
+  return isProjectScopeRefusal(scope) ? JSON.stringify(scope) : scope;
+}
+
+export async function programReadScope(name: string, ctx: ProjectScopeContext): Promise<ProgramReadScope | string> {
+  const scope = await resolveProgramReadScope(name, ctx);
+  return isProjectScopeRefusal(scope) ? JSON.stringify(scope) : scope;
+}

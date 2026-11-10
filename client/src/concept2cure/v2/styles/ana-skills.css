@@ -43,7 +43,7 @@
 
 /* ── A project's Skills card ───────────────────────────────────────────── */
 .c2c-v2 .pj-skills{display:flex;flex-direction:column;gap:8px;}
-.c2c-v2 .pj-skills-sub{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--text-400);margin-top:4px;}
+.c2c-v2 .pj-skills-sub{font-size:var(--fs-caption);font-weight:600;color:var(--text-400);margin-top:4px;}
 .c2c-v2 .pj-skills-item{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid var(--border);}
 .c2c-v2 .pj-skills-item:first-of-type{border-top:0;}
 .c2c-v2 .pj-skills-item-t{display:flex;flex-direction:column;gap:2px;min-width:0;}

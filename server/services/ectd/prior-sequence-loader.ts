@@ -2,12 +2,17 @@
  * Prior-sequence loader — reads a stored sequence leaf manifest back into the
  * lifecycle operator's PriorLeaf shape, tenant-scoped.
  *
- * This is the read half of the sequence-manifest feature (compile paths that
- * persist a leaf manifest onto ectd_compilations are the write half). Given an
- * application + a prior sequence number, it returns the state on file at the
- * agency through that sequence for the caller's organization — only compiles
- * that were sent or acknowledged — so a new sequence can be diffed against
- * exactly what shipped, without the caller hand-supplying every prior href.
+ * This is the read half of the sequence-manifest feature. Given an application
+ * + a prior sequence number, it returns the state on file at the agency through
+ * that sequence for the caller's organization, so a new sequence can be diffed
+ * against exactly what shipped, without the caller hand-supplying every prior
+ * href. Only sequences sent or acknowledged count, and each is read from what
+ * its transmit recorded it sent (the leaf manifest the transmit guard stamps on
+ * the transmittal row before the wire, submission-gateways/index.ts); a
+ * sequence sent before the guard kept that is read from its compiles
+ * (ectd_compilations.leaf_manifest), and labelled so. 2026-11-01 (F1, rows D7
+ * and D2): it read compiles only, so a leaf only a draft preview carried read as
+ * on file, and a sequence sent with no compile was missing.
  *
  * The pool is injected so the query is unit-testable with a stub; production
  * callers pass the app's pg pool. The organization filter is ALWAYS applied —
@@ -18,6 +23,7 @@
 
 import { manifestToPriorLeaves } from './sequence-manifest';
 import type { PriorLeaf } from './lifecycle-operator';
+import { canonicalRegionOf } from '../../../shared/regulatory/region-identity';
 
 /** Minimal pg-pool surface this loader needs. */
 export interface PoolLike {
@@ -58,6 +64,11 @@ export class PriorSequenceNotFoundError extends Error {
  * the AnA tool reported as every leaf `new`. loadLatestPriorManifest, its
  * application-number sibling with the same read and no production caller, was
  * removed with it; loadLatestPriorManifestBySubmission is the canonical read.
+ * Still finding the submission through a compile (2026-11-01, F1): a sequence
+ * sent with no compile on record, which the fold now reads from its transmit,
+ * is refused here. That fails closed; reading it is owed. The refusal says the
+ * lookup found nothing, never that the sequence is not on file, which the
+ * current view may show it is (F1 review).
  */
 export async function loadPriorSequenceManifest(
   pool: PoolLike,
@@ -95,9 +106,14 @@ export async function loadPriorSequenceManifest(
   const submissionIds = (filed?.rows ?? []).map((r) => Number(r.submission_id)).filter(Number.isInteger);
   const named = `sequence ${priorSequenceNumber} of application ${applicationNumber}`;
   if (submissionIds.length === 0) {
+    // True whether or not the agency holds it: this read cannot see a sequence
+    // sent with no compile, which the filed state reads from its send (F1
+    // review, 2026-11-01), so it never says the sequence is not on file.
     throw new PriorSequenceNotFoundError(
-      `${named} is not on file for this organization: no compile of it with a leaf manifest was sent or ` +
-        'acknowledged (a preview or rehearsal compile is not filed).',
+      `${named} could not be found by its number: that lookup goes through a compile of the sequence made for ` +
+        'filing, and none of this organization was sent or acknowledged (a preview or rehearsal compile is not ' +
+        'filed). Nothing was loaded. If it was sent with no compile, it can still be on file; read the prior state ' +
+        'from the submission it belongs to instead.',
     );
   }
   if (submissionIds.length > 1) {
@@ -189,50 +205,184 @@ export async function loadLatestPriorManifestBySubmission(
      holds, which a reviewer can see; the other way round, nobody can. */
   /* A REHEARSAL compile is never filed state (2026-09-23, W5/D7). It binds a
      sequence against earlier sequences that were never sent, for validation
-     only; if its sequence is later sent, what was sent is a separate compile.
-     Without this predicate a sent sequence's rehearsal manifest was folded in
-     as if the agency held it. */
-  const { priorSequenceNumber, leaves } = foldManifestRows(await readFiledManifestRows(pool, organizationId, submissionId, currentSequence));
+     only; if its sequence is later sent, what was sent is its transmit's
+     record (or, before that record was kept, a separate compile). Without this
+     predicate a sent sequence's rehearsal manifest was folded in as if the
+     agency held it.
+     WHAT WAS SENT, NOT WHAT WAS COMPILED (2026-11-01, F1, rows D7 and D2).
+     Every compile of a sent sequence was folded, previews made while it was a
+     draft included, so a leaf only a preview carried read as on file; and a
+     sequence sent with no compile was missing, so the next one bound against
+     an empty prior. Each sent sequence is now read from the leaf manifest its
+     transmit recorded (readFiledManifestRows).
+     NOTHING IS BOUND AGAINST A SENT SEQUENCE NO RECORD DESCRIBES (2026-11-01,
+     F1 review). A sequence sent before the guard kept its record, and never
+     compiled, has neither record. Leaving it out bound the next sequence against
+     a partial state: every leaf it filed came back absent (so 'new', with no
+     modified-file) or stale (a modified-file into a sequence it superseded), and
+     compile, freeze, dispatch and transmit all went ahead. A partial view is not
+     the view, so this refuses, naming it. The current view still lists it, as
+     not included (loadFiledStateBySubmission). */
+  const rows = await readFiledManifestRows(pool, organizationId, submissionId, currentSequence);
+  const unrecorded = rows.filter((r) => r.basis === 'none').map((r) => r.sequence_number);
+  if (unrecorded.length > 0) throw new Error(unrecordedRefusal(unrecorded));
+  const { priorSequenceNumber, leaves } = foldManifestRows(rows);
   return { priorSequenceNumber, leaves };
 }
 
+/** Why nothing is bound against a filed history with a sent sequence no record describes. */
+function unrecordedRefusal(sequences: string[]): string {
+  const one = sequences.length === 1;
+  const named = one
+    ? `Sequence ${sequences[0]} was`
+    : `Sequences ${sequences.slice(0, -1).join(', ')} and ${sequences[sequences.length - 1]} were`;
+  return (
+    `${named} sent to the agency, but nothing on record says what ${one ? 'it' : 'they'} carried: ` +
+    'no record of the send, and no compile. What is on file cannot be read, so nothing was bound against it.'
+  );
+}
+
 /**
- * The filed compiles of a submission, oldest sequence first: only those the
- * agency holds (above), strictly before `before` when it is given. The one
- * read both the lifecycle diff and the current view fold.
+ * Where a filed sequence's record of what it put on file comes from:
+ * 'transmit', the leaf manifest its transmit recorded it sent; 'compiles', its
+ * compiles, for a sequence sent before the transmit guard kept that record.
+ */
+export type FiledRecordBasis = 'transmit' | 'compiles';
+
+/** One row of the filed record: a sequence, the manifest it filed, and where that came from. */
+interface FiledRecordRow {
+  sequence_number: string;
+  /** Null only for basis 'none'. */
+  leaf_manifest: unknown;
+  /** 'none': sent, with neither a record of the send nor a compile; it adds no leaves. */
+  basis: FiledRecordBasis | 'none';
+}
+
+/**
+ * The filed record of a submission, oldest sequence first: for each sequence
+ * the agency holds (above), strictly before `before` when it is given, what it
+ * sent. The one read both the lifecycle diff and the current view fold; each
+ * row names its `basis`.
+ *
+ * What a sequence sent is the transmittal its own transmit attempt wrote: a row
+ * of this organization whose `metadata.dispatchBinding` names the sequence's
+ * `transmit_attempt_id`, its id and its `transmit_signature_action_id`, and
+ * which the sequence's own agency's gateway wrote (the row's `region` is the
+ * sequence's region, compared through canonicalRegionOf, the one resolver
+ * across the two vocabularies). The transmit guard stamps the binding and
+ * `metadata.leafManifest` before the wire, server-side, from the package it
+ * hands the gateway (submission-gateways/index.ts, 2026-11-01, F1).
+ * transmitSequence sends a sequence only through its region's gateway
+ * (transmitRouteFor), so a row of another agency binding it is not its send.
+ * A resend after a rejection takes a new attempt id, so the rejected send is
+ * not read.
+ *
+ * Why the agency and the signature (2026-11-01, F1 review). Before the guard
+ * stamped these keys, the EMA gateways stored a caller's metadata verbatim
+ * (`POST /api/mdx/gateways/:region/:gateway/transmit` takes any record), so a
+ * row written then can carry a binding and a manifest nobody sent. The one
+ * gateway that already set the binding itself, FDA ESG, wrote no manifest. So
+ * every row binding the attempt counts, with or without a manifest:
+ *   - exactly one, carrying a manifest: the sequence contributes it, and none
+ *     of its compiles (`basis: 'transmit'`);
+ *   - more than one: two records of one send cannot both be what was sent, and
+ *     choosing one is guessing what the agency holds. It throws, naming the
+ *     sequence, as an unreadable stored manifest does: a partial view is not
+ *     the view;
+ *   - none, or one with no manifest (sent before the guard kept the record):
+ *     the sequence keeps the earlier read, every non-rehearsal compile of it,
+ *     each row `basis: 'compiles'`. That read includes previews made while it
+ *     was a draft; nothing better is on record for it, and the view says so;
+ *   - and with no compile either, one row `basis: 'none'`, with no manifest:
+ *     sent, and nothing on record says what it carried. It adds no leaves; the
+ *     lifecycle read refuses it and the view lists it as not included.
+ *
+ * ectd_compilations.leaf_manifest is json and the transmittal's metadata is
+ * jsonb, so both sides are cast to json for the union.
  */
 async function readFiledManifestRows(
   pool: PoolLike,
   organizationId: number,
   submissionId: number,
   before: string | null,
-): Promise<Array<Record<string, unknown>>> {
+): Promise<FiledRecordRow[]> {
   const res = await pool.query(
-    `SELECT c.sequence_number, c.leaf_manifest
-       FROM ectd_compilations c
-       JOIN ectd_sequences s
-         ON s.submission_id = c.submission_id
-        AND s.sequence_number = c.sequence_number
-        AND s.organization_id = c.organization_id
-        AND s.deleted_at IS NULL
-      WHERE c.organization_id = $1
+    `WITH filed AS (
+       SELECT s.id, s.sequence_number, s.region, s.transmit_attempt_id, s.transmit_signature_action_id
+         FROM ectd_sequences s
+        WHERE s.organization_id = $1
+          AND s.submission_id = $2
+          AND s.deleted_at IS NULL
+          AND s.dispatch_status IN ('sent', 'acknowledged')
+          AND ($3::text IS NULL OR s.sequence_number < $3)
+     )
+     SELECT f.sequence_number, 'sequence' AS kind, f.region AS sequence_region, NULL::text AS transmittal_region,
+            NULL::json AS leaf_manifest, NULL::integer AS transmittal_id, NULL::timestamptz AS compiled_at, NULL::integer AS compilation_id
+       FROM filed f
+     UNION ALL
+     SELECT f.sequence_number, 'transmittal', f.region, t.region,
+            CASE WHEN jsonb_typeof(t.metadata -> 'leafManifest') = 'array' THEN (t.metadata -> 'leafManifest')::json END,
+            t.id, NULL::timestamptz, NULL::integer
+       FROM filed f
+       JOIN submission_transmittals t
+         ON t.organization_id = $1
+        AND lower(t.metadata -> 'dispatchBinding' ->> 'attemptId') = f.transmit_attempt_id::text
+        AND t.metadata -> 'dispatchBinding' ->> 'sequenceId' = f.id::text
+        AND t.metadata -> 'dispatchBinding' ->> 'signatureActionId' = f.transmit_signature_action_id
+     UNION ALL
+     SELECT c.sequence_number, 'compile', f.region, NULL::text, c.leaf_manifest::json, NULL::integer, c.compiled_at::timestamptz, c.id
+       FROM filed f
+       JOIN ectd_compilations c
+         ON c.organization_id = $1
         AND c.submission_id = $2
-        AND ($3::text IS NULL OR c.sequence_number < $3)
-        AND c.leaf_manifest IS NOT NULL
+        AND c.sequence_number = f.sequence_number
+      WHERE c.leaf_manifest IS NOT NULL
         AND c.compilation_type IS DISTINCT FROM 'rehearsal'
-        AND s.dispatch_status IN ('sent', 'acknowledged')
-      ORDER BY c.sequence_number ASC, c.compiled_at ASC NULLS FIRST, c.id ASC`,
+      ORDER BY sequence_number ASC, compiled_at ASC NULLS FIRST, compilation_id ASC NULLS FIRST, transmittal_id ASC NULLS FIRST`,
     [organizationId, submissionId, before],
   );
-  return res?.rows ?? [];
+  type Read = { region: unknown; sent: Array<Record<string, unknown>>; compiles: Array<Record<string, unknown>> };
+  const bySequence = new Map<string, Read>(); // ascending: the rows are
+  for (const row of res?.rows ?? []) {
+    const seq = String(row.sequence_number ?? '');
+    const read = bySequence.get(seq) ?? { region: row.sequence_region, sent: [], compiles: [] };
+    bySequence.set(seq, read);
+    if (row.kind === 'compile') read.compiles.push(row);
+    // Its own agency's gateway wrote it; an unknown region is never a match.
+    else if (row.kind === 'transmittal' && sameAgency(read.region, row.transmittal_region)) read.sent.push(row);
+  }
+  const rows: FiledRecordRow[] = [];
+  for (const [seq, read] of bySequence) {
+    if (read.sent.length > 1) {
+      throw new Error(
+        `Sequence ${seq} is bound to more than one transmittal of what it sent (${read.sent.map((t) => t.transmittal_id).join(', ')}); ` +
+          'what is on file cannot be read, so none of it was.',
+      );
+    }
+    const record = read.sent[0]?.leaf_manifest;
+    if (record != null) rows.push({ sequence_number: seq, leaf_manifest: record, basis: 'transmit' });
+    else if (read.compiles.length > 0) {
+      for (const c of read.compiles) rows.push({ sequence_number: seq, leaf_manifest: c.leaf_manifest, basis: 'compiles' });
+    } else rows.push({ sequence_number: seq, leaf_manifest: null, basis: 'none' });
+  }
+  return rows;
+}
+
+/** Whether a sequence's region and a transmittal's gateway region name one agency ('fda'/'fda', 'eu'/'ema'). */
+function sameAgency(sequenceRegion: unknown, transmittalRegion: unknown): boolean {
+  const ours = canonicalRegionOf(typeof sequenceRegion === 'string' ? sequenceRegion : null);
+  return ours !== undefined && ours === canonicalRegionOf(typeof transmittalRegion === 'string' ? transmittalRegion : null);
 }
 
 /** A sequence of the submission, and whether the agency holds it. */
 export interface SubmissionSequenceState {
   sequenceNumber: string;
-  /** 'sent' or 'acknowledged' when filed; otherwise what it is (pending, failed, none). */
+  /** 'sent' or 'acknowledged' when filed; otherwise what it is (pending, transmitting, rejected, or none). */
   dispatchStatus: string | null;
+  /** True when the fold read a record of what it sent (either basis). */
   filed: boolean;
+  /** Where that record came from (readFiledManifestRows); null when not filed. */
+  basis: FiledRecordBasis | null;
 }
 
 /**
@@ -240,8 +390,9 @@ export interface SubmissionSequenceState {
  * exactly as compile and transmit fold the prior state (gap 6.1,
  * docs/design/VEEVA_GAP_2026-10-22.md) — with no upper bound, and each leaf
  * naming the sequence that holds it and the act that put it there. Beside it,
- * every sequence of the submission and whether it is filed, so a reader is
- * told which sequences the view does not include.
+ * every sequence of the submission, whether it is filed, and what its record
+ * is read from (`basis`), so a reader is told which sequences the view does not
+ * include and which are read from compiles rather than from what was sent.
  *
  * Organization-scoped. A stored manifest that cannot be read throws, as it
  * does for compile: a partial current view is not the current view.
@@ -262,13 +413,20 @@ export async function loadFiledStateBySubmission(
       ORDER BY sequence_number ASC`,
     [organizationId, submissionId],
   );
-  const { priorSequenceNumber, leaves: onFile, history } = foldManifestRows(rows);
+  // A sent sequence no record describes adds no leaves and is not filed here;
+  // it is listed below as not included.
+  const recorded = rows.filter((r) => r.basis !== 'none');
+  const { priorSequenceNumber, leaves: onFile, history } = foldManifestRows(recorded);
   const leaves = onFile.map((leaf) => ({ ...leaf, history: history.get(leaf) ?? [] }));
-  const filedWithManifest = new Set(rows.map((r) => String(r.sequence_number ?? '')));
+  // A sequence's rows share one basis (readFiledManifestRows reads its
+  // compiles only when it has no transmit record).
+  const basisOf = new Map<string, FiledRecordBasis>();
+  for (const r of recorded) basisOf.set(r.sequence_number, r.basis === 'transmit' ? 'transmit' : 'compiles');
   const sequences = (seqs?.rows ?? []).map((r) => {
     const sequenceNumber = String(r.sequence_number ?? '');
     const dispatchStatus = r.dispatch_status == null ? null : String(r.dispatch_status);
-    return { sequenceNumber, dispatchStatus, filed: filedWithManifest.has(sequenceNumber) };
+    const basis = basisOf.get(sequenceNumber) ?? null;
+    return { sequenceNumber, dispatchStatus, filed: basis !== null, basis };
   });
   return { throughSequence: priorSequenceNumber || null, leaves, sequences };
 }
@@ -294,7 +452,7 @@ const MODIFIED_FILE = /^(?:\.\.\/)+([0-9A-Za-z._-]+)\/((?:[A-Za-z0-9_-][A-Za-z0-
  * transmit read `leaves` only; the history is for the current view.
  */
 function foldManifestRows(
-  rows: Array<Record<string, unknown>>,
+  rows: ReadonlyArray<{ sequence_number?: unknown; leaf_manifest?: unknown }>,
 ): { priorSequenceNumber: string; leaves: PriorLeaf[]; history: Map<PriorLeaf, FiledAct[]> } {
   const effective = new Map<string, PriorLeaf>();
   const acts = new Map<string, FiledAct[]>();

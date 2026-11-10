@@ -61,7 +61,7 @@ describe('assessComputerSystemValidation: softwareType and GxP impact', () => {
     expect(r.riskBasedScalingNote).not.toMatch(/GxP impact medium/);
     expect(r.riskBasedScalingNote).toMatch(/GxP impact not assessed/);
     expect(r.assurance.approach).toBe('undetermined');
-    expect(r.notAssessed).toEqual(['gxpImpact', 'directImpact', 'electronicSignatures']);
+    expect(r.notAssessed).toEqual(['gxpImpact', 'directImpact', 'electronicSignatures', 'electronicRecords']);
   });
 
   it('does not call e-signature controls inapplicable when nobody said whether e-signatures are used', () => {

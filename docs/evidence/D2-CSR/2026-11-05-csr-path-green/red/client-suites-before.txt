@@ -1,0 +1,12 @@
+# Trunk before this session (2026-11-05 01:11 UTC, HEAD 1aa22ba924): client CSR suites
+      Tests  8 failed | 226 passed (234)
+ FAIL  client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > does not block the document CSR source picker when optional package-run history is unavailable
+ FAIL  client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > does not expose the source picker after the document study-data read itself fails
+ FAIL  client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > permits retained document study data to build even when older package-run history fails
+ FAIL  client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx > tells the user when package history is malformed instead of pretending there are no runs
+ FAIL  client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > reviews the selected build section by section, with the ICH E3 labels, and approves against the content hash
+ FAIL  client/src/concept2cure/v2/__tests__/csrWorkflowProgramScope.test.tsx > CSR board program changes > reads the actual shell program and clears the previous study while the next program loads
+ FAIL  client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > a CSR the label does not name is caught by the server's refusal, and the panel opens instead of a reload
+ FAIL  client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx > the review decision for a CSR > asks for the scientific review before an approval, and sends the completed map with it
+ Test Files  4 failed | 15 passed (19)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯

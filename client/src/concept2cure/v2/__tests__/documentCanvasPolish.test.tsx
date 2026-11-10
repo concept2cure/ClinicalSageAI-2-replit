@@ -62,6 +62,7 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 
 import { DocumentCanvas } from '../editor/DocumentCanvas';
 import { clearEditorTarget } from '../editorTarget';
+import { openEditorControl } from '../editor/__tests__/workbenchAssemblyBuild.testSupport';
 
 const DOC = 'aaaaaaaa-0000-4000-8000-000000000003';
 const PID = '5ac45b38-a1d8-4a41-9488-fac39a57b852';
@@ -123,6 +124,15 @@ function Host() {
   );
 }
 
+/** The chip's Open, then the open document once its editor is up (D4-5b). */
+async function openDocument() {
+  await screen.findByText('Module 2.5 Clinical Overview — C2C-101');
+  fireEvent.click(screen.getByTestId('dc-open-editor'));
+  const expanded = await screen.findByTestId('dc-expanded');
+  await waitFor(() => expect(expanded.querySelector('.ed')).not.toBeNull());
+  return expanded;
+}
+
 beforeEach(() => {
   mockApi();
   nav.mockReset();
@@ -145,6 +155,7 @@ function definedClasses(css: string): Set<string> {
 }
 
 describe('DocumentCanvas — the class namespace is its own', () => {
+  // D4-5b: the chip's Open is the kit's `btn ghost small`; `small` is the kit's button size (app-v2.css), not a .dc name.
   it('shares no class name with the Design Controls surface, whose stylesheet also owns a “.dc” family', async () => {
     render(<Host />);
     const canvas = await screen.findByTestId('document-canvas');
@@ -160,18 +171,19 @@ describe('DocumentCanvas — the class namespace is its own', () => {
     }
     /* Classes the canvas deliberately reuses from the shared kit — a button
        is a button. The namespace rule is about the canvas's OWN names. */
-    const SHARED = new Set(['btn', 'primary', 'ghost', 'ico', 'req', 'half', 'c2c-input', 'scaf-note', 'nda-open', 'ed-back', 'ed-full-sec-body']);
+    const SHARED = new Set(['btn', 'primary', 'ghost', 'small', 'ico', 'req', 'half', 'c2c-input', 'scaf-note', 'nda-open', 'ed-back', 'ed-full-sec-body']);
     const collisions = Array.from(mine).filter(c => !SHARED.has(c) && designControls.has(c));
     expect(collisions).toEqual([]);
   });
 });
 
 describe('DocumentCanvas — keyboard', () => {
+  // D4-5b: the card became a chip, whose control reads "Open" (as Claude's artifact chip); it still names what it controls.
   it('names what the expand control does and what it controls, and moves focus into the region it opens', async () => {
     render(<Host />);
     await screen.findByText('Module 2.5 Clinical Overview — C2C-101');
     const open = screen.getByTestId('dc-open-editor');
-    expect((open.textContent || '').trim()).toBe('Open full editor');
+    expect((open.textContent || '').trim()).toBe('Open');
     expect(open.getAttribute('aria-expanded')).toBe('false');
     // aria-controls names the region, and that region exists once opened.
     const controls = open.getAttribute('aria-controls');
@@ -211,8 +223,7 @@ describe('DocumentCanvas — keyboard', () => {
     fireEvent.click(screen.getByTestId('dc-open-editor'));
     await screen.findByTestId('dc-expanded');
     await waitFor(() => expect(document.querySelector('.ed')).not.toBeNull());
-    const bar = document.querySelector('.ed-doc-actions') as HTMLElement;
-    fireEvent.click(within(bar).getByRole('button', { name: /^\s*History/ }));
+    fireEvent.click(openEditorControl('Versions'));
     await waitFor(() => expect(document.querySelector('aside.ed-comments')).not.toBeNull());
 
     (document.activeElement as HTMLElement | null)?.blur();
@@ -234,14 +245,16 @@ describe('DocumentCanvas — keyboard', () => {
     expect(within(expanded).getAllByRole('button', { name: /Back to conversation/ })).toHaveLength(1);
   });
 
+  // D4-5b: the card became a chip whose one control is Open (its four actions are in the open document); none traps.
   it('does not trap: every control in the collapsed card is reachable, and the card does not hold focus', async () => {
     render(<Host />);
     await screen.findByText('Module 2.5 Clinical Overview — C2C-101');
     const canvas = screen.getByTestId('document-canvas');
+    await waitFor(() => expect((screen.getByTestId('dc-open-editor') as HTMLButtonElement).disabled).toBe(false));
     const focusables = Array.from(
       canvas.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])'),
     );
-    expect(focusables.length).toBeGreaterThan(3);
+    expect(focusables).toContain(screen.getByTestId('dc-open-editor'));
     for (const el of focusables) {
       el.focus();
       expect(document.activeElement).toBe(el);
@@ -253,16 +266,17 @@ describe('DocumentCanvas — keyboard', () => {
 });
 
 describe('DocumentCanvas — the dialogs it opens are real dialogs', () => {
-  for (const [label, opener, title] of [
-    ['File to vault', 'dc-file-to-vault', 'File to vault'],
-    ['Send for review', 'dc-assign-review', 'Send for review'],
+  for (const [label, item, title] of [
+    ['File to vault', 'File to vault…', 'File to vault'],
+    ['Send for review', 'Send for review…', 'Send for review'],
   ] as const) {
+    // D4-5b: the card became a chip; the dialog opens from the open document's More menu, and focus returns to More.
     it(`${label}: labelled, modal, focus trapped while open, focus restored on close`, async () => {
       render(<Host />);
-      await screen.findByText('Module 2.5 Clinical Overview — C2C-101');
-      const trigger = screen.getByTestId(opener);
-      trigger.focus();
-      fireEvent.click(trigger);
+      const expanded = await openDocument();
+      const opener = within(screen.getByTestId('ed-more')).getAllByRole('button')[0];
+      opener.focus();
+      fireEvent.click(openEditorControl(item));
 
       const dlg = await screen.findByRole('dialog');
       expect(dlg.getAttribute('aria-modal')).toBe('true');
@@ -283,7 +297,9 @@ describe('DocumentCanvas — the dialogs it opens are real dialogs', () => {
 
       fireEvent.keyDown(document, { key: 'Escape' });
       await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-      expect(document.activeElement).toBe(screen.getByTestId(opener));
+      expect(document.activeElement).toBe(opener);
+      // The modal owned that Escape: the open document beneath it stays open.
+      expect(expanded.hasAttribute('hidden')).toBe(false);
     });
   }
 });
@@ -457,6 +473,7 @@ describe('DocumentCanvas — acts the server will refuse', () => {
     });
   }
 
+  // D4-5b: the card became a chip; both acts are in the open document's More menu, disabled there with the server's reason.
   it('disables File to vault and Send for review with the reason as described text', async () => {
     withAccess({
       fileToVault: { allowed: false, reason: 'Filing to the vault needs an Owner or Author grant on this document. Your grants on it: Reviewer.' },
@@ -465,19 +482,23 @@ describe('DocumentCanvas — acts the server will refuse', () => {
       esign: null,
     });
     render(<Host />);
-    await screen.findByText('Module 2.5 Clinical Overview — C2C-101');
-    const vault = screen.getByTestId('dc-file-to-vault') as HTMLButtonElement;
-    const assign = screen.getByTestId('dc-assign-review') as HTMLButtonElement;
-    await waitFor(() => expect(vault.disabled).toBe(true));
+    await openDocument();
+    await waitFor(() => expect(openEditorControl('File to vault…').getAttribute('aria-disabled')).toBe('true'));
+    const vault = openEditorControl('File to vault…');
+    const assign = openEditorControl('Send for review…');
     expect(describedBy(vault)).toMatch(/Owner or Author grant/);
-    expect(assign.disabled).toBe(true);
+    expect(assign.getAttribute('aria-disabled')).toBe('true');
     expect(describedBy(assign)).toMatch(/Your role: viewer/);
+    fireEvent.click(vault);
+    fireEvent.click(assign);
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
+  // D4-5b: the card became a chip; with no access in the read, both acts in the open document's More menu stay enabled.
   it('leaves them enabled when the document read returns no access', async () => {
     render(<Host />);
-    await screen.findByText('Module 2.5 Clinical Overview — C2C-101');
-    await waitFor(() => expect((screen.getByTestId('dc-file-to-vault') as HTMLButtonElement).disabled).toBe(false));
-    expect((screen.getByTestId('dc-assign-review') as HTMLButtonElement).disabled).toBe(false);
+    await openDocument();
+    await waitFor(() => expect(openEditorControl('File to vault…').getAttribute('aria-disabled')).toBeNull());
+    expect(openEditorControl('Send for review…').getAttribute('aria-disabled')).toBeNull();
   });
 });

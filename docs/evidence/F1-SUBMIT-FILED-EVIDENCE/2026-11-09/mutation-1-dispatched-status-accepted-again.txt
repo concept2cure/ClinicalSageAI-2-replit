@@ -1,0 +1,9 @@
+MUTATION 1-dispatched-status-accepted-again in server/routes/c2c/documents.ts (on the final code and tests, 2026-11-09T05:44:43.519024Z): replaced [      if (!isFiledDispatchStatus(row.dispatch_status)) {] with [      if (row.status !== 'dispatched' && !isFiledDispatchStatus(row.dispatch_status)) {]
+ × server/routes/c2c/__tests__/documents-project-scope.pglite.test.ts > a submit takes a sequence as evidence only once the agency has received it > refuses a dispatched sequence whose send is pending, and nothing changes 67ms
+ × server/routes/c2c/__tests__/documents-project-scope.pglite.test.ts > a submit takes a sequence as evidence only once the agency has received it > refuses a dispatched sequence whose send is transmitting, and nothing changes 24ms
+ × server/routes/c2c/__tests__/documents-project-scope.pglite.test.ts > a submit takes a sequence as evidence only once the agency has received it > refuses a dispatched sequence whose send is rejected, and nothing changes 19ms
+ × server/routes/c2c/__tests__/documents-project-scope.pglite.test.ts > a submit takes a sequence as evidence only once the agency has received it > refuses a dispatched sequence whose send is not recorded, and nothing changes 19ms
+ ✓ server/routes/c2c/__tests__/documents-project-scope.pglite.test.ts > a submit takes a sequence as evidence only once the agency has received it > takes a sequence the agency acknowledged, and records it as the filing 19ms
+      Tests  4 failed | 1 passed | 25 skipped (30)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 8cf7ef32765f26c980eea9277fa9d40637185122936ec0a5de1a3d5ffafe7c3f (expected 8cf7ef32765f26c980eea9277fa9d40637185122936ec0a5de1a3d5ffafe7c3f)

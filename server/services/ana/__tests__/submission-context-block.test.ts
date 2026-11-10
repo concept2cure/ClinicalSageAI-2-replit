@@ -43,7 +43,10 @@ describe('submissionContextBlockFor', () => {
     expect(block).toContain('`get_document_section_requirements`');
     expect(block).toContain('`draft_authoring_document`');
     expect(block).toContain('`batch_draft_sections`');
-    expect(block).toContain('`plan_ind_module_authoring`');
+    // Module 2.5 / 2.7 through the record-composed tools (Rule 2 audit S6).
+    expect(block).toContain('`draft_clinical_overview_m2_5`');
+    expect(block).toContain('`draft_clinical_summary_m2_7`');
+    expect(block).not.toContain('plan_ind_module_authoring');
     // The database-lock chain is an NDA/BLA sequence; an IND is not told it.
     expect(block).not.toContain('plan_submission_from_database_lock');
   });

@@ -42,6 +42,32 @@ describe('HeuristicContentClassifier', () => {
     expect(r.regulatory).toBe(false);
   });
 
+  // 2026-10-25: the card detector matched any 13–16 digits with spaces between
+  // them, so a row of a CSR table read as a card number, every document with a
+  // numeric table classified as PII, and production placement refused it.
+  it('does not read a row of a numeric table as a card number', async () => {
+    const rows = [
+      'Placebo 12 34 56 78 90 11 12 13',
+      'Subjects randomised 1 2 3 4 5 6 7 8 9 1 2 3 4 5',
+      'Visit 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16',
+    ];
+    for (const row of rows) {
+      const r = await clf.classify(row);
+      expect(r.matches.map(m => m.detector), row).not.toContain('credit_card');
+      expect(r.pii, row).toBe(false);
+    }
+  });
+
+  it('still detects a card number written as one, and only one that passes the Luhn check', async () => {
+    for (const card of ['4111 1111 1111 1111', '4111-1111-1111-1111', '4111111111111111', '378282246310005']) {
+      const r = await clf.classify(`Card on file ${card}.`);
+      expect(r.matches.map(m => m.detector), card).toContain('credit_card');
+      expect(r.pii, card).toBe(true);
+    }
+    const notLuhn = await clf.classify('Lot 4111 1111 1111 1112 released.');
+    expect(notLuhn.matches.map(m => m.detector)).not.toContain('credit_card');
+  });
+
   it('is deterministic (heuristic method, no model dependency)', async () => {
     const a = await clf.classify('SSN 123-45-6789');
     const b = await clf.classify('SSN 123-45-6789');

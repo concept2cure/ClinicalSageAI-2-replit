@@ -1,0 +1,31 @@
+{
+  "verdict": "approved bounded contract",
+  "baseline": "89b67685e582ff7a6f91487fa0877527f5ab6ea8",
+  "pin_source": "exact committed Git blob bytes",
+  "baseline_source_count": 21,
+  "baseline_sha256": {
+    "client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes.tsx": "46a8025705065400161b27eed4c243b1bb51c197d9d212544ecf821c3b247e87",
+    "client/src/concept2cure/mdx/pathway-tabs.css": "657e6ab14dac9e651f6dc0f3b72b8845a83ba4df27b2a43940b3b8eac173c8be",
+    "client/src/concept2cure/mdx/app.css": "62cca3606d3ce23a08a116559b571c5ccef2e953e58b842a346ad60601f71eb8",
+    "client/src/concept2cure/v2/useVaultUpload.ts": "bd24e2c28da897010dac7247de47d73c991cfe3befc57b915eaef1480e68890e",
+    "client/src/concept2cure/v2/vaultIngestReceipt.ts": "83af6a73aebfa765329bcd5d8d4b979c2a60502998dd357e7967e9fd915de00a",
+    "client/src/concept2cure/v2/vaultIngestTransport.ts": "420be6b1ca6c22ff5367a70aa484356ee62b1733b21de0675cebeaaaec030e8f",
+    "client/src/concept2cure/mdx/store/dossierStore.ts": "da488d82c39784ef5b2f415871ef079e45513d8b8aba973148d366a010bad415",
+    "client/src/concept2cure/mdx/hooks/useDossier.ts": "2d25a59d3a61391a63e20b3c934ae1152afa0146319c19cdd2a2841bf957b68c",
+    "client/src/concept2cure/mdx/types.ts": "b9397dba5b24fd39daed6825c6669f9d89b2052dda985352e55f2464dbce9643",
+    "client/src/concept2cure/v2/editor/authoringCurrentRead.ts": "eeb1c7f6670a9372216bbb844bc11f52632e74e127260a3e9a29d50586a657d7",
+    "client/src/concept2cure/v2/shellProject.ts": "b64eca13dbcf858eec808251e9d391e9cbbac43f6d4e1491cbd21e60d07497b7",
+    "client/src/services/portal/authService.tsx": "959331a8300594b1d1d7ff74fa75518310ccfded283b3a69564b9bad3aa56b54",
+    "client/src/concept2cure/v2/surfaces/submissionScopedRead.ts": "cf88132e99b052a174201d7f5588b4d3ff93eb4e2271979b682dacbdef56d519",
+    "client/src/concept2cure/v2/surfaces/riskRecordRead.ts": "31e92c9cd5b484d7e99c6c394f42f16f8d9aec3c973369b440c41898a64f402d",
+    "client/src/concept2cure/mdx/surfaces/OfficialEstarPanel.tsx": "a3a812fa89a36cc3cb60b29019af51f0465a50f9ea937e8c03bfdbc5bd214394",
+    "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.uploadReceipt.test.tsx": "629150ec97a0ade1649d91e475d219c2ffef19606f5f6a088f967d22f2691d5a",
+    "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.dropIdentity.test.tsx": "8d5545cd11b2b74ccf1c6e712b5485fc7f6ccc6dd632842ed516e5f007641aa6",
+    "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.readOnly.test.tsx": "9978529eb0a2a82d1b22df6fd045c483e40b8497c1262d70842c4622adadb0ae",
+    "client/src/concept2cure/mdx/surfaces/__tests__/DossierDrawer.history.test.tsx": "070029460def9556be04990f6b7727e34bff5c8938f8b3c55a61cb4ad9de4a65",
+    "client/src/concept2cure/v2/__tests__/riskRecordRead.test.tsx": "5d9d899af58761bd6703ad23904a4f3e7211661cc6a04d088bd4b42dd12e3ca9",
+    "client/src/concept2cure/v2/__tests__/_ingest-xhr-fake.ts": "d7c582159a4a99871d4ca8f823fa2410341dfcc24576ee084e8b15f41700d7ff"
+  },
+  "qualification_run_by_reviewer": false,
+  "production_or_test_edits_by_reviewer": false
+}

@@ -146,6 +146,19 @@ function noProjectContext(projectOpen: boolean) {
   };
 }
 
+/* What AnA is told when the project has no labeling document (M8, MDX journey,
+   2026-11-02). The record is started through AnA's create_labeling_document,
+   which takes the project only from its input, so the project's id travels
+   here; a role that cannot write is not offered it, as the screen offers it no
+   start. */
+function noLabelingDocumentContext(programId: string, canWrite: boolean) {
+  return {
+    summary: 'Labeling: this project has no labeling document yet, so there are no symbols or translations to show — the boards below are empty for that reason.' + (canWrite ? '' : " This user's role can read labeling, not start it."),
+    facts: { programId },
+    availableActions: canWrite ? [`Start this project's labeling document with create_labeling_document (program_id ${programId}), after asking which kind and language`] : [],
+  };
+}
+
 /* The symbol and translation reads are asked of the labeling document, so a
    404 there is that document, not the project. */
 const ON_DOCUMENT = { subject: 'this labeling document' };
@@ -166,6 +179,9 @@ const ON_DOCUMENT = { subject: 'this labeling document' };
    project open, or one with no project record id, nothing is read and the
    screen says which. The route refuses a project the organization does not
    own (404), which is shown as the failure it is. */
+/** What "Ask AnA to start it" sends: the kind and language are the user's to say. */
+const START_LABELING_ASK = 'Start the labeling document for this project. Ask me which kind it is (IFU, package insert, patient label, operator or service manual, quick reference or box label) and its language, then create it.';
+
 export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
   const EN = LABEL_ENUMS;
   const openProject = useShellProject();
@@ -344,14 +360,7 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
     }
     /* AnA is told a refusal as itself; only a genuine failure is "because of a failure". */
     if (docsLive.error) return unreadContext(docsRefusal, 'the labeling document', 'Labeling: ', 'Retry the labeling document read', 'The labeling store could not be read, so this screen is showing no label because of a failure, not because none exists.');
-    if (!docRow) {
-      return {
-        summary:
-          'Labeling: this project has no labeling document yet, so there are no symbols or ' +
-          'translations to show — the boards below are empty for that reason.',
-        availableActions: ['Create a labeling document for a device'],
-      };
-    }
+    if (!docRow) return noLabelingDocumentContext(programId, canWrite);
     const byStatus = trans.reduce<Record<string, number>>((acc, t) => {
       acc[t.status] = (acc[t.status] ?? 0) + 1;
       return acc;
@@ -539,11 +548,12 @@ export function Labeling({ onAsk, onNav }: SurfaceViewProps) {
           hint="This project's governed IFU and label documents could not be read, so none is shown. Sign in and retry, or check the service is reachable."
         />
       ) : !docRow ? (
-        <EmptyState
-          icon={I.fileText}
-          title="No labeling document yet"
-          hint="Create a device IFU, package insert, or patient label to author its symbols, UDI, translations and warnings here."
-        />
+        /* M8 (MDX journey, 2026-11-02): this said "Create a device IFU …" with
+           nothing to click, and no client code creates a labeling document.
+           The action is the conversation, as the screen's other Ask AnA is. */
+        <EmptyState icon={I.fileText} title="No labeling document yet"
+          hint={`A labeling document holds this project's IFU, package insert or patient label. ${canWrite ? 'Its symbols, UDI, translations and warnings are then authored here.' : 'Your role can read labeling, not start it.'}`}
+          action={canWrite ? { label: 'Ask AnA to start it', onAct: () => onAsk(START_LABELING_ASK) } : undefined} />
       ) : (
         <>
           <LabelingDocumentSignature status={docRow.status} sigs={sigs} />

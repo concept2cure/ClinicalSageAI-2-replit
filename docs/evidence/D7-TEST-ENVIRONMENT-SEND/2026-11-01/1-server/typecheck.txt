@@ -1,0 +1,7 @@
+# npm run -s typecheck (tsc --noEmit over client/src, server, shared, agents) on the FINAL working tree of this part, 2026-11-02T04:26:45Z
+# error TS count: 0
+
+real	5m21.083s
+user	5m57.250s
+sys	0m20.303s
+exit=0

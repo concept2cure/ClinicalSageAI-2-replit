@@ -1,0 +1,47 @@
+# Gates after both folds and the upstream merge (2026-10-30, ~19:50 UTC), on the shared working tree: npm run -s <gate>; exit code and the last lines.
+# Every gate the brief and the plan's checklist name passes, ci:sql-interpolation included.
+== ci:launch-scope: exit 0
+[ci:launch-scope] 8 apps · 42 surfaces · 12 modules · 31 surface files checked for fixture imports
+✅ launch scope is routable, registered, licensable and fixture-free
+== ci:launch-scope:selftest: exit 0
+✅ selftest: gate exits 1 and names Vault.tsx / SELFTEST_FAKE_ROWS on the seeded violation
+✅ selftest: gate exits 1 and names 'ectd-compile' when it is missing from the 20260810 keep-list
+✅ selftest: gate exits 1 and names only 'selftest-unregistered' (not the 'task-board' alias) as an ungated route
+✅ selftest: gate passes on the real tree
+== ci:launch-scope-api: exit 0
+ci:launch-scope-api: 592 API paths named by launch and shell screens; none refused. {"launch":542,"infrastructure":2,"never-gated":48}
+== ci:launch-scope-api:selftest: exit 0
+  ✓ keeps unrelated optional workbench imports outside that feature graph
+  ✓ an MDX feature with no component mapping fails closed
+
+selftest PASSED — the gate flags a launch screen that production would refuse.
+== ci:ana-surface-context: exit 0
+  published under. Ids, not files, are the unit AnA experiences: one file can serve
+  several, and a child can publish for a parent that has no call of its own
+  (70 surface file(s) hold a call).
+
+== ci:surface-discoverability: exit 0
+
+[ci:surface-discoverability] OK — 104 renderable surface(s): 79 in the Apps catalog, 25 declared contextual.
+
+== ci:migration-drop-safety: exit 0
+[ci:migration-drop-safety] OK — 459 migrations, 44 DROP(s), none re-created by the set; 8 constraint replacement(s) a later file redefines, all conditional, 2 reviewed exception(s); 20 dynamic DROP(s) in 20 file(s) (names unresolvable — data-bearing kinds gated, 2 reviewed).
+== ci:migration-set-order: exit 0
+[ci:migration-set-order] OK — 459 migrations, sweep last, tail uuid step → child scope → sweep, all present, no duplicates.
+== ci:migration-deploy-path: exit 0
+[ci:migration-deploy-path] OK — 102 baselined file(s) on no deploy path, none new.
+== check:catalog-copy: exit 0
+[ci:catalog-copy] OK — 105 catalog description(s) across 3 migration(s) read as product copy.
+== ci:undefined-css-classes: exit 0
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+== ci:unreferenced-modules: exit 0
+Unreferenced modules: 73 (baseline 73)
+
+OK: no new unreachable modules.
+== ci:program-ownership-single-source: exit 0
+[ci:program-ownership-single-source] OK — every program-ownership check calls programInOrganization (server/services/c2c/program-access.ts).
+== ci:sql-interpolation: exit 0
+  server/services/vault/vault-search.ts:204:19 supersededSql('d') <- ./vault-version-family.js
+  server/services/vault/vault-version-restore.ts:64:67 vaultBinaryAvailableSql('s') <- ../document-data-disposition/eligibility.js
+  server/services/vault/vault-version-restore.ts:134:15 vaultBinaryAvailableSql('s') <- ../document-data-disposition/eligibility.js
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1056 baselined interpolation(s) in 223 file(s); the baseline may only shrink.

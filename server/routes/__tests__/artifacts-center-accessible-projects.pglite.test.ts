@@ -64,6 +64,7 @@ import { ProgramReadAccessError } from '../../services/c2c/current-program-acces
 const P_OPEN = '11111111-1111-4111-8111-111111111111';
 const P_SHUT = '22222222-2222-4222-8222-222222222222';
 const P_THEIRS = '33333333-3333-4333-8333-333333333333';
+const P_OTHER = '44444444-4444-4444-8444-444444444444';
 
 beforeAll(async () => {
   h.pg = new PGlite();
@@ -71,7 +72,8 @@ beforeAll(async () => {
     CREATE TABLE users (id integer PRIMARY KEY, name text, email text);
     CREATE FUNCTION public.actor_name(integer) RETURNS TABLE(name text, email text)
       LANGUAGE sql STABLE AS 'SELECT name, email FROM users WHERE id = $1';
-    CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer NOT NULL, code text, name text, regulatory_program_id uuid);
+    CREATE TABLE client_workspaces (id integer PRIMARY KEY, organization_id integer NOT NULL, name text);
+    CREATE TABLE projects (id integer PRIMARY KEY, organization_id integer NOT NULL, code text, name text, regulatory_program_id uuid, client_workspace_id integer);
     CREATE TABLE concept2cure_artifacts (
       id serial PRIMARY KEY, artifact_id text, title text, metadata json, type text, category text,
       version integer, updated_at timestamp DEFAULT now(), project_id integer, content text, organization_id integer,
@@ -81,18 +83,21 @@ beforeAll(async () => {
     CREATE TABLE concept2cure_review_decisions (artifact_id integer, organization_id integer, decision text, version_reviewed integer);
     CREATE TABLE concept2cure_artifact_versions (id serial PRIMARY KEY, version integer);
     INSERT INTO users VALUES (7, 'R. Writer', 'r@x');
+    INSERT INTO client_workspaces VALUES (100, 1, 'Northwind Bio'), (101, 1, 'Contoso Pharma'), (200, 2, 'Their client');
     INSERT INTO projects VALUES
-      (10, 1, 'OPEN-1', 'A project the caller can open', '${P_OPEN}'),
-      (11, 1, 'SHUT-1', 'A project the caller cannot open', '${P_SHUT}'),
-      (12, 1, 'LEGACY-1', 'An open project with no program record', NULL),
-      (20, 2, 'THEIRS-9', 'Their secret program', '${P_THEIRS}');
+      (10, 1, 'OPEN-1', 'A project the caller can open', '${P_OPEN}', 100),
+      (11, 1, 'SHUT-1', 'A project the caller cannot open', '${P_SHUT}', 100),
+      (12, 1, 'LEGACY-1', 'An open project with no program record', NULL, NULL),
+      (13, 1, 'OTHER-1', 'Another sponsor''s open project', '${P_OTHER}', 101),
+      (20, 2, 'THEIRS-9', 'Their secret program', '${P_THEIRS}', 200);
     INSERT INTO concept2cure_artifacts (artifact_id, title, metadata, type, category, version, project_id, content, organization_id, status, updated_at, created_by_id) VALUES
       ('a-open',     'Clinical overview',         '{}', 'document', 'document', 2, 10, 'x', 1, 'review',   now() - interval '1 hour', 7),
       ('a-legacy',   'Legacy memo',               '{}', 'document', 'document', 1, 12, 'x', 1, 'draft',    now() - interval '2 hours', 7),
       ('a-shut',     'Private memo',              '{}', 'document', 'document', 1, 11, 'x', 1, 'draft',    now(), 7),
       ('a-archived', 'Withdrawn cover letter',    '{}', 'document', 'document', 1, 10, 'x', 1, 'archived', now(), 7),
       ('a-foreign',  'Filed under their id',      '{}', 'document', 'document', 1, 20, 'x', 1, 'draft',    now(), 7),
-      ('a-theirs',   'Their own artifact',        '{}', 'document', 'document', 1, 20, 'x', 2, 'draft',    now(), 7);
+      ('a-theirs',   'Their own artifact',        '{}', 'document', 'document', 1, 20, 'x', 2, 'draft',    now(), 7),
+      ('a-other',    'Another sponsor''s memo',    '{}', 'document', 'document', 1, 13, 'x', 1, 'draft',    now() - interval '3 hours', 7);
   `);
 });
 afterAll(async () => {
@@ -100,7 +105,7 @@ afterAll(async () => {
 });
 beforeEach(() => {
   h.sql = [];
-  h.accessible = [10, 12];
+  h.accessible = [10, 12, 13];
   h.actorError = null;
   h.listError = null;
   h.actorCalls = [];
@@ -126,8 +131,8 @@ describe('GET /api/artifacts-center — the projects the caller can open, and on
   it('lists every non-archived artifact of each open project, the legacy project with no program record included', async () => {
     const res = await request(app()).get('/api/artifacts-center');
     expect(res.status).toBe(200);
-    expect(ids(res.body)).toEqual(['a-legacy', 'a-open']);
-    expect(res.body.meta).toMatchObject({ scope: 'accessible-projects', total: 2, listed: 2, truncated: false });
+    expect(ids(res.body)).toEqual(['a-legacy', 'a-open', 'a-other']);
+    expect(res.body.meta).toMatchObject({ scope: 'accessible-projects', total: 3, listed: 3, truncated: false });
   });
 
   it('never lists a project the caller cannot open, an archived row, or a row under another organization’s project', async () => {
@@ -184,9 +189,41 @@ describe('GET /api/artifacts-center — the projects the caller can open, and on
     try {
       const res = await request(app()).get('/api/artifacts-center');
       expect(res.body.data).toHaveLength(200);
-      expect(res.body.meta).toMatchObject({ total: 207, listed: 200, truncated: true });
+      expect(res.body.meta).toMatchObject({ total: 208, listed: 200, truncated: true });
     } finally {
       await h.pg.exec(`DELETE FROM concept2cure_artifacts WHERE artifact_id LIKE 'bulk-%'`);
     }
+  });
+});
+
+/* F1, S6 V4 (2026-11-05): a CRO's sponsors never mix. Asked from inside a project, the organisation's governed
+   artifacts are that project's sponsor's projects' artifacts; across every project, each row names its sponsor. */
+describe("GET /api/artifacts-center — a CRO's sponsors never mix in one list", () => {
+  type Sponsored = Row & { client: { id: number; name: string } | null };
+  it('names each row’s sponsor, or none when its project has none', async () => {
+    const res = await request(app()).get('/api/artifacts-center');
+    const byId = new Map((res.body.data as Sponsored[]).map((r) => [r.id, r.client]));
+    expect(byId.get('a-open')).toEqual({ id: 100, name: 'Northwind Bio' });
+    expect(byId.get('a-other')).toEqual({ id: 101, name: 'Contoso Pharma' });
+    expect(byId.get('a-legacy')).toBeNull();
+    expect(res.body.meta.client).toBeUndefined();
+  });
+
+  it("from inside a project, lists only its sponsor's projects, and says whose", async () => {
+    const res = await request(app()).get(`/api/artifacts-center?sameClientAs=${P_OPEN}`);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(ids(res.body)).toEqual(['a-open']);
+    expect(res.body.meta).toMatchObject({ total: 1, client: { id: 100, name: 'Northwind Bio' } });
+    expect(JSON.stringify(res.body)).not.toContain('Contoso');
+  });
+
+  it('a project the caller cannot open, or another organisation’s, is not found; a malformed one is refused', async () => {
+    for (const pid of [P_SHUT, P_THEIRS]) {
+      const res = await request(app()).get(`/api/artifacts-center?sameClientAs=${pid}`);
+      expect(res.status, pid).toBe(404);
+      expect(res.body.data).toBeUndefined();
+    }
+    const bad = await request(app()).get('/api/artifacts-center?sameClientAs=not-a-project');
+    expect(bad.status).toBe(400);
   });
 });

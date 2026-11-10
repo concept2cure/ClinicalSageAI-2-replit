@@ -1,0 +1,25 @@
+# P-92 C1 ESLint, each file now and trunk's copy of it (origin/concept2cure-v2), counted by rule. The ratchet (check-pushed-lint-warnings.mjs) refuses any increase.
+# Final counts on the committed code:
+server/services/submission-gateways/fda-esg-receipts.ts now: 0 {}
+server/services/submission-service/submission-service.ts now: 7 {"max-lines":1,"complexity":4,"max-lines-per-function":2}
+server/routes/submissions.ts now: 1 {"max-lines":1}
+server/services/submission-service/filed-sequence-baseline.ts now: 0 {}
+
+# Now against trunk, with the ratchet rules' findings listed:
+== server/services/submission-gateways/fda-esg-receipts.ts
+now:  0 {}
+base: 0 {}
+== server/services/submission-service/submission-service.ts
+now:  7 {"max-lines":1,"complexity":4,"max-lines-per-function":2}
+base: 7 {"max-lines":1,"complexity":4,"max-lines-per-function":2}
+== server/routes/submissions.ts
+now:  1 {"max-lines":1}
+base: 1 {"max-lines":1}
+== server/services/submission-service/filed-sequence-baseline.ts
+now:  0 {}
+base: 0 {}
+== server/services/submission-service/__tests__/held-send-settlement.pglite.test.ts
+now:  0 {}
+== server/services/submission-service/__tests__/sequence-validated-honesty.pglite.test.ts
+now:  0 {}
+base: 0 {}

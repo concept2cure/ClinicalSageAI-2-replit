@@ -1,0 +1,34 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > does not offer another study’s same-filename source as predecessor 31ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > finds the correct study even when a second study has the same filename 22ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > does not infer a successor when the incoming study is unmatched 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > does not equate two unresolved study references 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > binds the complete project scope as well as study identity 16ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > captures two studies’ same filename independently, then revises only its own study 161ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > reuses current bytes without changing the original upload, capturer or title 101ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > captures unmatched scope without retiring the same-named study source 80ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > captures multiple known scope without retiring the same-named study source 73ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > captures later unmatched scope without retiring the same-named study source 70ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > captures no study scope without retiring the same-named study source 89ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > declines two same-study filename candidates without guessing the newest 50ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > never reactivates superseded bytes or creates a current clone of them 104ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > cannot revive unresolved retired bytes after a study is registered 25ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > matches identical bytes only within the explicitly selected study 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > an audit failure rolls back retirement and the new source together 78ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > a failed study lookup refuses capture rather than recording an unrelated source 16ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > rechecks membership after waiting for the capture reservation 9ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > requires the recorded original upload and never accepts a guessed byte binding 15ms
+
+ Test Files  1 passed (1)
+      Tests  19 passed (19)
+   Start at  08:59:38
+   Duration  4.66s (transform 863ms, setup 94ms, import 1.46s, tests 2.88s, environment 0ms)
+

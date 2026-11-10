@@ -22,6 +22,7 @@
  *
  * Pure: the caller loads the excerpts the save already verified.
  */
+import { createHash } from 'node:crypto';
 import { figureFoundAt, figuresIn, indexNumbers, type FigureKind } from '../ana/answer-check-figures.js';
 import { canonNumber, numbersInText } from '../ana/answer-check-sources.js';
 
@@ -80,8 +81,8 @@ function indexExcerpts(excerpts: CitedExcerpt[]) {
   return excerpts.map((e) => ({ excerpt: e, index: indexNumbers(numbersInText(e.text, '', e.documentId, false)) }));
 }
 
-/** Check every figure of a section's readable text against the cited excerpts. */
-export function checkSectionFigures(sectionText: string, excerpts: CitedExcerpt[]): SectionFigureCheck {
+/** Every figure of a section's readable text, found in the cited excerpts or not, in reading order. */
+function figureFindings(sectionText: string, excerpts: CitedExcerpt[]): FigureFinding[] {
   const indexed = indexExcerpts(excerpts);
   const findings: FigureFinding[] = [];
   for (const fig of figuresIn(sectionText)) {
@@ -97,6 +98,12 @@ export function checkSectionFigures(sectionText: string, excerpts: CitedExcerpt[
     }
     findings.push(finding);
   }
+  return findings;
+}
+
+/** Check every figure of a section's readable text against the cited excerpts. */
+export function checkSectionFigures(sectionText: string, excerpts: CitedExcerpt[]): SectionFigureCheck {
+  const findings = figureFindings(sectionText, excerpts);
   const unverified = findings.filter((f) => f.status === 'unverified');
   const found = findings.filter((f) => f.status === 'found');
   const kept = [...unverified, ...found];
@@ -159,4 +166,104 @@ export function figureSpansInContent(content: string, check: SectionFigureCheck 
     });
   }
   return spans;
+}
+
+/* ── P-89: AN UNVERIFIED FIGURE IS NOT SEALED UNNOTICED ──────────────────────
+ *
+ * The founder, 2026-11-01 (docs/LAUNCH_DEFINITION_OF_DONE.md P-89): an approval
+ * or a seal is refused while the document states a figure its cited sources do
+ * not hold, unless the signer acknowledges each one.
+ *
+ * Why it is computed again at signing, from the text being signed, and not read
+ * from the save's record: `provenance.projectSourceReferences[].figures` is the
+ * check of the text AS SAVED. Nothing re-runs it on an edit, and it carries no
+ * content hash, so a corrected figure would still read unverified and a number
+ * typed in afterwards would never have been checked. The signature attests to
+ * the current text, so the current text is what is checked.
+ *
+ * Its scope is the checker's own: sections that cite saved project sources. A
+ * figure in a section that cites nothing is not compared with anything, so the
+ * checker has no "unverified" to say about it (that is written down in P-89).
+ */
+
+/** Why a figure is listed. */
+export type UnverifiedFigureReason =
+  /** The cited excerpts were read again and do not hold it. */
+  | 'not_in_cited_source'
+  /** The section's cited sources no longer verify (withdrawn, superseded, changed), so nothing could be checked. */
+  | 'source_unavailable';
+
+/** One figure an approval or a seal would carry unchecked (P-89). */
+export interface UnverifiedFigureAtSigning {
+  /** Stable for this text: the section, the figure, and which occurrence of it. */
+  key: string;
+  sectionId: string;
+  sectionCode: string;
+  sectionTitle: string;
+  text: string;
+  kind: FigureKind;
+  reason: UnverifiedFigureReason;
+}
+
+/** A section as signed: its id, code, title and readable text. */
+export interface SigningSection { id: string; code: string; title: string; text: string }
+
+/** A saved source group read again now: its excerpts, or null when its sources no longer verify. */
+export interface SigningSourceGroup { sectionCode: string; excerpts: CitedExcerpt[] | null }
+
+/**
+ * Every figure the signed text states that its section's cited sources do not
+ * hold, or could not be checked against. Pure. A section is checked once, even
+ * when two saved groups name its code; it is listed by the first group that
+ * names it, which is the save's own order.
+ */
+export function unverifiedFiguresAtSigning(
+  sections: ReadonlyArray<SigningSection>,
+  groups: ReadonlyArray<SigningSourceGroup>,
+): UnverifiedFigureAtSigning[] {
+  const out: UnverifiedFigureAtSigning[] = [];
+  const checked = new Set<string>();
+  for (const group of groups) {
+    for (const section of sections) {
+      if (section.code !== group.sectionCode || checked.has(section.id)) continue;
+      checked.add(section.id);
+      const listed = group.excerpts
+        ? figureFindings(section.text, group.excerpts).filter((f) => f.status === 'unverified')
+        : figuresIn(section.text).map((f) => ({ text: f.text, kind: f.kind }));
+      const reason: UnverifiedFigureReason = group.excerpts ? 'not_in_cited_source' : 'source_unavailable';
+      const seen = new Map<string, number>();
+      for (const f of listed) {
+        const occurrence = (seen.get(f.text) ?? 0) + 1;
+        seen.set(f.text, occurrence);
+        out.push({
+          key: `${section.id}#${occurrence}:${f.text}`,
+          sectionId: section.id, sectionCode: section.code, sectionTitle: section.title,
+          text: f.text, kind: f.kind, reason,
+        });
+      }
+    }
+  }
+  return out;
+}
+
+/** The digest of what was acknowledged: the listed keys, sorted, hashed. Recorded with the act. */
+export function figureAcknowledgementDigest(items: ReadonlyArray<UnverifiedFigureAtSigning>): string {
+  const keys = items.map((i) => i.key).sort();
+  return createHash('sha256').update(JSON.stringify(keys)).digest('hex');
+}
+
+/**
+ * Whether the signer acknowledged exactly what the text now holds. 'clear' when
+ * nothing is unverified; 'acknowledged' only when every listed key is sent, and
+ * nothing else is; otherwise 'refused'. A list from an earlier text does not
+ * stand for this one: a changed figure, or a new one, is a new key.
+ */
+export function figureAcknowledgementVerdict(
+  items: ReadonlyArray<UnverifiedFigureAtSigning>,
+  acknowledged: unknown,
+): 'clear' | 'acknowledged' | 'refused' {
+  if (items.length === 0) return 'clear';
+  if (!Array.isArray(acknowledged) || !acknowledged.every((k) => typeof k === 'string')) return 'refused';
+  const sent = new Set(acknowledged as string[]);
+  return sent.size === items.length && items.every((i) => sent.has(i.key)) ? 'acknowledged' : 'refused';
 }

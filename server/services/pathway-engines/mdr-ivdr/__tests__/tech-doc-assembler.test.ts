@@ -474,3 +474,119 @@ describe('assembleTechDoc — a V&V plan or protocol is not V&V evidence', () =>
     }
   });
 });
+
+/*
+ * 2026-11-01 (F1, W5 residual F(2), device titles). Two kinds of device title left a required
+ * slot empty:
+ *   1. A word that only begins with 'plan' was read as a plan, in two places.
+ *      The token matcher that replaced the case-insensitive substring match on
+ *      2026-09-23 (2364f546dd) skips a CER / PER phrase whose next word begins
+ *      with 'plan', so 'Clinical evaluation – plantar fasciitis orthosis' (the
+ *      substring match filed it) and the Vault title
+ *      'Clinical_Evaluation_Plantar_Insole_v2' left the CER slot empty, and a
+ *      'planar array' performance evaluation the PER slot. The V&V plan guard
+ *      added on 2026-10-05 (e6f80d7577), when title phrases replaced
+ *      codeStarts('4', '5'), used titleHas('plan', 'protocol'), whose last
+ *      token may run on, so a 'plantar insole' biocompatibility report was
+ *      left out of V&V as a test plan. Both now exempt the closed list
+ *      'plantar', 'planar', 'plane', 'planes'. Every other word that begins
+ *      with 'plan' is still a plan: 'plans', 'planning', 'planned', and a plan
+ *      with a file-name tail glued on ('Planv2' → planv, 'planrev3',
+ *      'plandraft'). Skipping one only leaves a slot unfilled.
+ *   2. A mixed-case IFU ('IfU', 'iFU', 'eIfU', 'deviceIfU') was split at its
+ *      lower-to-upper transition ('If' + 'U') by the token matcher of
+ *      2364f546dd and left the IFU slot empty; the substring match had filed
+ *      it. It is now the IFU at the start of a word or after a lower-case
+ *      letter — never inside one ('Gifu', 'bifurcation', 'Shifu'), and not
+ *      where its 'U' starts a camel-case word ('IfUpdated', 'checkIfUnchanged').
+ *      It is a word of its own, so a capitalised word glued after it keeps its
+ *      slot ('IfuGSPR', as before this change), and a plan glued after it is
+ *      read as a plan ('IFUPLAN_Biocompatibility', as 'IFU_PLAN_…' was).
+ */
+describe("assembleTechDoc — 'plantar', 'planar' and 'plane' are not plans; a mixed-case IFU is the IFU", () => {
+  const slotsOf = (regulation: 'mdr' | 'ivdr', sectionCode: string, title: string) =>
+    assembleTechDoc({ leaves: [leaf({ sectionCode, title })], regulation }).sections.filter((s) => s.leafIndices.length > 0).map((s) => s.id);
+
+  it('a CER or PER title on a plantar, planar or plane device fills the CER / PER slot', () => {
+    for (const t of ['Clinical evaluation – plantar fasciitis orthosis', 'Clinical_Evaluation_Plantar_Insole_v2', 'Clinical evaluation planar X-ray detector', 'Clinical evaluation plane-wave ultrasound'])
+      expect(slotsOf('mdr', 'x', t), t).toContain('clinical-evaluation');
+    for (const t of ['Performance evaluation – planar array immunoassay', 'Performance_Evaluation_Planar_Waveguide_Assay'])
+      expect(slotsOf('ivdr', 'x', t), t).toContain('performance-evaluation');
+  });
+
+  it('a V&V report on a plantar, planar or plane subject fills the V&V slot; planned changes do not', () => {
+    for (const t of ['Biocompatibility – plantar insole (ISO 10993)', 'Design verification – planar detector', 'Bench test summary – plane of section', 'Design verification – sagittal and coronal planes'])
+      expect(slotsOf('mdr', '4.2.1', t), t).toEqual(['preclinical-clinical']);
+    expect(slotsOf('mdr', '4.2.1', 'Electrical safety – planned changes')).not.toContain('preclinical-clinical');
+  });
+
+  it('a plan in any of its word forms is still not the CER or the PER', () => {
+    for (const t of ['Clinical evaluation plan', 'Clinical evaluation plans', 'Clinical_evaluation_planning', 'Clinical evaluation planned update', 'Clinical evaluationplanned'])
+      expect(slotsOf('mdr', 'x', t), t).not.toContain('clinical-evaluation');
+    expect(slotsOf('ivdr', 'x', 'Performance evaluation planned update')).not.toContain('performance-evaluation');
+  });
+
+  it("a plan with a file-name tail glued on ('Planv2', 'planrev3', 'plandraft') is still a plan, in the CER, PER and V&V slots", () => {
+    for (const t of ['Clinical_Evaluation_Planv2', 'Clinical evaluation planv1.0', 'Clinical-Evaluation-Planrev3', 'Clinical_evaluation_plandraft', 'Clinical evaluationplanv2'])
+      expect(slotsOf('mdr', 'x', t), t).not.toContain('clinical-evaluation');
+    expect(slotsOf('ivdr', 'x', 'Performance_Evaluation_Planv2')).not.toContain('performance-evaluation');
+    for (const t of ['Design_verification_Planv2', 'Biocompatibility_Planv1', 'Bench_test_planrev2', 'Bench_test_protocolv2'])
+      expect(slotsOf('mdr', '4.2.1', t), t).not.toContain('preclinical-clinical');
+  });
+
+  // 2026-11-01 (adversarial re-check): the exemption cleared the word after
+  // the phrase, and NOT_THE_PLAN never read the plan word that came later.
+  it('the plan for a plantar, planar or plane device is still not the CER or the PER', () => {
+    for (const t of ['Clinical_Evaluation_Plantar_Insole_Plan_v2', 'Clinical evaluation – plantar fasciitis orthosis – plan', 'Clinical evaluation planar detector plan v2', 'Clinical evaluation – plane wave probe – plan'])
+      expect(slotsOf('mdr', 'x', t), t).not.toContain('clinical-evaluation');
+    for (const t of ['Performance_Evaluation_Planar_Array_Plan', 'Performance evaluation – planes – planning'])
+      expect(slotsOf('ivdr', 'x', t), t).not.toContain('performance-evaluation');
+    const titles = [
+      'Device_description', 'IFU_EN_rev3', 'Design_and_manufacturing', 'GSPR_Checklist', 'Risk_management_file',
+      'Bench_Test_Report_v3', 'Clinical_Evaluation_Plantar_Insole_Plan_v2', 'PMS_plan',
+    ];
+    const r = assembleTechDoc({ leaves: titles.map((title, i) => leaf({ sectionCode: `1.${i + 1}`, title })), regulation: 'mdr' });
+    expect(r.summary.missingRequired).toEqual(['clinical-evaluation']);
+    expect(r.summary.ready).toBe(false);
+  });
+
+  it('a Vault-built MDR set whose CER and V&V titles are glued plans is not ready', () => {
+    const titles = [
+      'Device_description', 'IFU_EN_rev3', 'Design_and_manufacturing', 'GSPR_Checklist', 'Risk_management_file',
+      'Design_verification_Planv2', 'Clinical_Evaluation_Planv2', 'PMS_plan',
+    ];
+    const r = assembleTechDoc({ leaves: titles.map((title, i) => leaf({ sectionCode: `1.${i + 1}`, title })), regulation: 'mdr' });
+    expect(r.summary.missingRequired).toEqual(['preclinical-clinical', 'clinical-evaluation']);
+    expect(r.summary.ready).toBe(false);
+  });
+
+  it('a mixed-case IFU fills the IFU slot', () => {
+    for (const t of ['iFU_v3', 'IfU_EN_rev3', 'IfU', 'IfUs', 'eIfU', 'eIfU_DE', 'e-IfU', 'deviceIfU', 'EIfU'])
+      expect(slotsOf('mdr', '1.14', t), t).toEqual(['manufacturer-information']);
+  });
+
+  it("i-f-u inside a word, or an 'If' before a camel-case 'U…' word, is not the IFU", () => {
+    for (const t of ['Gifu_site_audit', 'GIFU_SITE_AUDIT', 'Bifurcation_stent_bench_report', 'bifurcation', 'Shifu', 'IfUpdated_notes', 'checkIfUnchanged', 'WhatIfUsed'])
+      expect(slotsOf('mdr', '1.14', t), t).not.toContain('manufacturer-information');
+  });
+
+  it('a capitalised word glued after an IFU keeps its own slot, as before this change', () => {
+    expect(slotsOf('mdr', '1.14', 'IfuGSPR')).toEqual(['manufacturer-information', 'gspr']);
+    expect(slotsOf('mdr', '1.14', 'ifuPMSPlan')).toEqual(['manufacturer-information', 'pms-plan']);
+  });
+
+  it('a plan glued to an IFU is read as a plan, as when it is spelt apart', () => {
+    for (const t of ['IFUPLAN_Biocompatibility', 'IfUPLAN_Biocompatibility', 'IFU_PLAN_Biocompatibility'])
+      expect(slotsOf('mdr', '4.2.1', t), t).toEqual(['manufacturer-information']);
+  });
+
+  it('a Vault-built MDR set with a mixed-case IFU and a plantar-device CER is ready', () => {
+    const titles = [
+      'Device_description', 'IfU_EN_rev3', 'Design_and_manufacturing', 'GSPR_Checklist', 'Risk_management_file',
+      'Bench_Test_Report_v3', 'Clinical_Evaluation_Plantar_Fasciitis_Insole', 'PMS_plan',
+    ];
+    const r = assembleTechDoc({ leaves: titles.map((title, i) => leaf({ sectionCode: `1.${i + 1}`, title })), regulation: 'mdr' });
+    expect(r.summary.missingRequired).toEqual([]);
+    expect(r.summary.ready).toBe(true);
+  });
+});

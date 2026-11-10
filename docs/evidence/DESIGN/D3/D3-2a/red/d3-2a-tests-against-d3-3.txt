@@ -1,0 +1,39 @@
+D3-2a's tests run against the D3-3 source (git stash of: client/src/concept2cure/v2/styles/project-home-v2.css client/src/concept2cure/v2/styles/surface-text-ramp.css client/src/concept2cure/v2/surfaces/ProjectCoreWork.tsx client/src/concept2cure/v2/surfaces/ProjectHome.tsx client/src/concept2cure/v2/surfaces/ProjectRecordedContext.tsx client/src/concept2cure/v2/surfaces/ProjectRecords.tsx client/src/concept2cure/v2/surfaces/ProjectSide.tsx ), tests kept:
+      Tests  36 failed | 30 passed (66)
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > bounds each recorded list with shown and total counts and escapes saved text
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > distinguishes a verified absent profile from a profile with no recorded fields
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > keeps HTTP 403 unavailable and retries the actual same scoped read
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > keeps HTTP 503 unavailable and retries the actual same scoped read
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > makes no profile request for a foreign current tenant selection
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > reads one scoped profile for both cards and identifies its recorded source
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > shows Memory and Instructions as closed disclosures of one card
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > states loading without an absence claim and permits an unselected workspace to bind the actual saved parent
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but absent profile field answer as unavailable
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but false success answer as unavailable
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but foreign actor answer as unavailable
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but foreign organization answer as unavailable
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but foreign program answer as unavailable
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but foreign workspace answer as unavailable
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but invalid anchor answer as unavailable
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but invented missing confidence answer as unavailable
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile in the existing project side cards > withholds a successful but malformed risk row answer as unavailable
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after account changes
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after organization changes
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after program changes
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after program-roundtrip changes
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after role changes
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after token-only changes
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > drops a delayed old profile after workspace changes
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > preserves a pending profile read through canonical same-account bearer refresh
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > refuses a retained retry handler after a bearer account switch before another render
+ FAIL  client/src/concept2cure/v2/__tests__/ProjectRecordedContext.test.tsx > recorded profile response ownership > withdraws a loaded profile immediately when the selected workspace changes
+ FAIL  client/src/concept2cure/v2/__tests__/projectCoreWork.test.tsx > the project’s work areas, as direct doors > is a "Work areas" card whose rows carry an icon, and whose last row is the one passed after them
+ FAIL  client/src/concept2cure/v2/__tests__/projectCoreWork.test.tsx > the project’s work areas, as direct doors > waits for the project’s track before naming an area, and still offers the row passed after them
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeConversations.test.tsx > ProjectHome — conversations > the composer comes first in the main column; the readiness figure is on the Filing card in the aside
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeRecords.test.tsx > ProjectHome — records in this project > lists the open project’s records, read from that project
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeReportsDoor.test.tsx > Project home: a door to this project's reports > the project offers it beside its facts, named for the job and the place
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — Project knowledge is the same on every step > About, Filing, Team, then What AnA knows and Records, on all six steps
+ FAIL  client/src/concept2cure/v2/__tests__/projectHomeStages.test.tsx > Project home — Project knowledge is the same on every step > the Filing card's readiness figure opens Author, where its detail is
+ FAIL  client/src/concept2cure/v2/__tests__/projectRecords.test.tsx > ProjectRecords > is one "Records" card whose stores are closed disclosures, each summary saying its count
+ FAIL  client/src/concept2cure/v2/__tests__/projectSideNotRead.test.tsx > Project knowledge: no selected project > offers no profile absence claim or request without a current project
+ Test Files  8 failed (8)

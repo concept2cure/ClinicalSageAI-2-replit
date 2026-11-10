@@ -1,0 +1,23 @@
+#!/bin/bash
+# swapn.sh <log> <path> <replacement> [<path> <replacement> ...] -- <command...>
+# Puts each replacement in place of its repo path, runs the command (cwd = repo) into <log>,
+# restores every file byte for byte and checks each sha256. A replacement of "HEAD" means git show HEAD:<path>.
+set -u
+R=/home/user/ClinicalSageAI-2-replit; LOG=$1; shift
+declare -a PATHS BKS SHAS
+D=$(mktemp -d /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/6396cbd4-d9c3-52f8-9173-e7fd431e4774/scratchpad/laneC/bk.XXXXXX)
+i=0
+while [ "$1" != "--" ]; do
+  P=$1; REPL=$2; shift 2
+  cp -p "$R/$P" "$D/$i"; SHAS[$i]=$(sha256sum "$R/$P" | cut -c1-64); PATHS[$i]=$P
+  if [ "$REPL" = HEAD ]; then (cd $R && git show "HEAD:$P") > "$R/$P"; else cp "$REPL" "$R/$P"; fi
+  i=$((i+1))
+done
+shift
+(cd $R && timeout 600 "$@") > "$LOG" 2>&1; rc=$?
+bad=0
+for j in $(seq 0 $((i-1))); do
+  cp -p "$D/$j" "$R/${PATHS[$j]}"; after=$(sha256sum "$R/${PATHS[$j]}" | cut -c1-64)
+  [ "${SHAS[$j]}" = "$after" ] && echo "restored ${PATHS[$j]} $after" || { echo "RESTORE MISMATCH ${PATHS[$j]}"; bad=1; }
+done
+rm -rf "$D"; echo "command exit $rc"; exit $bad

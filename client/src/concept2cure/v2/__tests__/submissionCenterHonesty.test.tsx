@@ -42,7 +42,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -86,7 +86,8 @@ const FDA_PROFILE = {
     { number: '1.9', title: 'Optional annex', required: false, description: 'Not required' },
   ],
   forms: [
-    { name: 'Form 356h', formId: 'FDA-356h', required: true, description: 'Application to market' },
+    { name: 'Form 356h', formId: 'FDA-356h', required: true, requiredFor: ['nda', 'bla', 'anda'], description: 'Application to market' },
+    { name: 'Form 1571', formId: 'FDA-1571', required: true, requiredFor: ['ind'], description: 'IND application' },
   ],
   specificRequirements: ['Submit via ESG with a WebTrader or AS2 account.'],
   validationRules: [
@@ -185,87 +186,54 @@ describe('SubmissionCenter — the per-sequence gate over an unread submission l
   });
 });
 
-describe('SubmissionCenter — the lead action over an unread sequence list', () => {
-  it('does not offer "Plan the submission" while the sequences are still loading', async () => {
+/* D7-A1 (2026-11-09) deleted the AnswerLead (D7.md §A.4 step 4): its action is the Planner and Sequences tabs, always
+ * present, and its headline is the page header's one sentence. Finding 2 now lives in that sentence: it must never
+ * count an unread list, nor call an unread list empty. The last case of the pair is the over-correction guard. */
+describe("SubmissionCenter — the page's state sentence over an unread sequence list", () => {
+  const state = () => screen.getByTestId('sc-state').textContent ?? '';
+
+  it('says the sequences are loading while they are, and counts nothing', async () => {
     serve({ submissions: () => rows([SUBMISSION]), sequences: pending });
     mount();
 
-    // The lead renders as soon as the submission is known; its sequence read is
-    // deliberately never allowed to settle.
-    await screen.findByText(/Loading this submission/i);
-
-    expect(
-      screen.queryByRole('button', { name: 'Plan the submission' }),
-      'an unknown count is not a known zero',
-    ).toBeNull();
-    // It still offers a way forward — the workspace that reports the read
-    // itself, named without claiming what is in it.
-    expect(screen.getByRole('button', { name: 'Open the Sequences workspace' })).toBeTruthy();
+    await waitFor(() => expect(state()).toMatch(/Loading its sequences…$/));
+    expect(state(), 'an unknown count is not a known zero').not.toMatch(/No sequence yet|\d+ sequences?:/);
+    // A way forward stays: the workspace that reports the read itself.
+    expect(screen.getByRole('tab', { name: 'Sequences' })).toBeTruthy();
   });
 
-  it('does not offer "Plan the submission" — or route to the Planner — when the sequence read failed', async () => {
+  it('says the sequences could not be read when the read failed, never that there are none', async () => {
     serve({ submissions: () => rows([SUBMISSION]), sequences: failed });
     mount();
 
-    await screen.findByText(/couldn't be loaded right now/i);
-    expect(
-      screen.queryByRole('button', { name: 'Plan the submission' }),
-      'a failed read is not a zero-sequence submission',
-    ).toBeNull();
-
-    // The destination matters as much as the label: the old onClick sent the
-    // reader to the Planner on this exact state.
-    fireEvent.click(screen.getByRole('button', { name: 'Open the Sequences workspace' }));
+    await waitFor(() => expect(state()).toMatch(/Its sequences could not be read\.$/));
+    expect(state(), 'a failed read is not a zero-sequence submission').not.toMatch(/No sequence yet/);
+    fireEvent.click(screen.getByRole('tab', { name: 'Sequences' }));
     expect(await screen.findByText(/Couldn't load the sequences/i)).toBeTruthy();
-    expect(
-      /AnA builds the sequence plan from the region profile/i.test(body()),
-      'a failed read must not open the Planner',
-    ).toBe(false);
   });
 
-  /**
-   * Over-correction guard: planning from zero is the whole point of the control
-   * when zero is the TRUE, settled count. Both the label and the route have to
-   * survive the fix.
-   */
-  it('still offers "Plan the submission" and opens the Planner on a settled zero-sequence read', async () => {
+  /** Over-correction guard: on a settled zero-sequence read, zero is the truth and is said; the Planner is a tab. */
+  it('says there is no sequence yet on a settled zero-sequence read, and the Planner opens', async () => {
     serve({ submissions: () => rows([SUBMISSION]), sequences: () => rows([]) });
     mount();
 
-    const plan = await screen.findByRole('button', { name: 'Plan the submission' });
-    // The body is allowed to state the count here, because it is known.
-    expect(/0 eCTD sequences tracked yet/i.test(body())).toBe(true);
-
-    fireEvent.click(plan);
-    // The Planner view rendered. Assert on its stable card subtitle, not the
-    // intro blurb: that prose was (correctly) reworded upstream from "AnA builds
-    // the sequence plan…" — an over-claim, since the button only opens the chat
-    // rail — to "AnA can draft… as a proposal in conversation." Reaching the
-    // Planner is the behaviour under test; the wording of its blurb is not, and
-    // this suite's own contract is to not assert on source prose.
+    await waitFor(() => expect(state()).toMatch(/, original\. No sequence yet\.$/));
+    fireEvent.click(screen.getByRole('tab', { name: 'Planner' }));
     expect(await screen.findByText(/planning · region profiles/i)).toBeTruthy();
   });
 
-  it('offers the sequences when this submission has them', async () => {
+  it('counts the sequences and names the latest when this submission has them', async () => {
     serve({
       submissions: () => rows([SUBMISSION]),
       sequences: () =>
         rows([
-          {
-            id: 31,
-            submissionId: 7,
-            sequenceNumber: '0000',
-            type: 'original',
-            region: 'fda',
-            status: 'draft',
-            validationStatus: null,
-          },
+          { id: 31, submissionId: 7, sequenceNumber: '0000', type: 'original', region: 'fda', status: 'draft', validationStatus: null },
+          { id: 32, submissionId: 7, sequenceNumber: '0001', type: 'amendment', region: 'fda', status: 'assembling', validationStatus: null },
         ]),
     });
     mount();
 
-    expect(await screen.findByRole('button', { name: 'Open the sequences' })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Plan the submission' })).toBeNull();
+    await waitFor(() => expect(state()).toMatch(/, original\. 2 sequences: 0001, assembling\.$/));
   });
 });
 
@@ -340,5 +308,33 @@ describe('SubmissionCenter — the Planner over a region profile', () => {
     expect(body()).not.toMatch(/General investigational plan/);
     // Nor is a non-required section presented as required.
     expect(body()).not.toMatch(/Optional annex/);
+  });
+
+  /* J4 human test, 2026-11-06 (docs/evidence/HUMAN-TEST/J4/): an IND's Planner
+     listed "356h · FDA Form 356h (required)", the marketing-application form.
+     Forms are scoped by `requiredFor` exactly as Module 1 headings are. */
+  it('lists only the agency forms THIS application type files', async () => {
+    serve({ submissions: () => rows([SUBMISSION]) });
+    await openPlanner();
+    expect(await screen.findByText(/Required Module 1 for/i)).toBeTruthy();
+    expect(body()).toMatch(/FDA-356h/);
+    expect(body()).not.toMatch(/FDA-1571/);
+  });
+});
+
+/* J4 human test, 2026-11-06 (docs/evidence/HUMAN-TEST/J4/): at 390 px a sequence
+   row ("0000 · Original sequence · FDA (US) · Assembling · Validated · Draft") is
+   one no-wrap flex line, so its label column was squeezed to one character per line. */
+describe('SubmissionCenter — a sequence row wraps at a phone’s width', () => {
+  it('the row wraps and its label keeps a readable minimum width', async () => {
+    const css = (await import('node:fs')).readFileSync('client/src/concept2cure/v2/styles/submission-v2.css', 'utf8');
+    expect(css).toMatch(/\.sc-subrow\s*\{[^}]*flex-wrap:\s*wrap/);
+    expect(css).toMatch(/\.sc-subrow\s+\.sp-row-b\s*\{[^}]*min-width:\s*\d+px/);
+  });
+  it('a table wider than its card scrolls inside the card, not the whole page', async () => {
+    const css = (await import('node:fs')).readFileSync('client/src/concept2cure/v2/styles/submission-v2.css', 'utf8');
+    expect(css).toMatch(/\.sc-page\s+\.pj-card-b-flush\s*\{[^}]*overflow-x:\s*auto/);
+    // The submission picker sized itself to its longest title (599 px at 390).
+    expect(css).toMatch(/\.sc-subpick\s*\{[^}]*max-width:\s*100%/);
   });
 });

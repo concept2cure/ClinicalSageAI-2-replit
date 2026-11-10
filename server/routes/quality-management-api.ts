@@ -246,7 +246,7 @@ router.post('/batch-validate', authMiddleware, requireOrganizationContext, async
           })
         )
         .min(1),
-      metadata: z.record(z.any()).optional(),
+      metadata: z.record(z.string(), z.any()).optional(),
     });
 
     const validationResult = batchValidationSchema.safeParse(req.body);
@@ -510,7 +510,7 @@ router.post('/plans', authMiddleware, requireOrganizationContext, requireEditorA
       status: z.enum(['draft', 'active', 'archived']).default('draft'),
       allowWaivers: z.boolean().default(false),
       cerTypeId: z.number().optional(),
-      metadata: z.record(z.any()).optional(),
+      metadata: z.record(z.string(), z.any()).optional(),
     });
 
     const validationResult = qmpSchema.safeParse(req.body);
@@ -591,7 +591,7 @@ router.patch('/plans/:id', authMiddleware, requireOrganizationContext, requireEd
       status: z.enum(['draft', 'active', 'archived']).optional(),
       allowWaivers: z.boolean().optional(),
       cerTypeId: z.number().optional(),
-      metadata: z.record(z.any()).optional(),
+      metadata: z.record(z.string(), z.any()).optional(),
     });
 
     const validationResult = qmpUpdateSchema.safeParse(req.body);

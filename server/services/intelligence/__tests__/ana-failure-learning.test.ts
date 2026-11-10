@@ -15,6 +15,7 @@ import {
   binIntent,
   normalizeForFingerprint,
   buildFingerprint,
+  learningClassOf, learningContributionPolicyOf, LEARNING_CLASSES, extractFailurePatterns, getSuggestedCorrections,
 } from '../ana-failure-learning';
 
 describe('sanitizeSummary', () => {
@@ -32,6 +33,27 @@ describe('sanitizeSummary', () => {
     expect(sanitizeSummary(null)).toBeNull();
     expect(sanitizeSummary(undefined)).toBeNull();
     expect(sanitizeSummary('   ')).toBeNull();
+  });
+});
+
+describe('reviewed aggregate vocabulary cannot carry donor prose', () => {
+  it('defaults to opt-out and accepts only the managed policy shape', () => {
+    expect(learningContributionPolicyOf({})).toEqual({ enabled: false, version: 0 });
+    expect(learningContributionPolicyOf({ learningContributionPolicy: { enabled: true, version: 2 } })).toEqual({ enabled: true, version: 2 });
+    for (const raw of [null, { enabled: true, version: 0 }, { enabled: true, version: 1, cohortMinimum: 1 }, { enabled: true, version: 1, donorText: 'PRIVATE_DONOR_CANARY' }]) {
+      expect(() => learningContributionPolicyOf({ learningContributionPolicy: raw })).toThrow('Nothing was shared.');
+    }
+  });
+  it('maps only three server-defined classes to generic guidance', () => {
+    expect(LEARNING_CLASSES).toHaveLength(3);
+    for (const entry of LEARNING_CLASSES) expect(learningClassOf(entry.key)).toBe(entry);
+    for (const raw of ['PRIVATE_DONOR_CANARY', { key: 'independent_review', text: 'PRIVATE_DONOR_CANARY' }, null]) {
+      expect(() => learningClassOf(raw)).toThrow('Nothing was shared.');
+    }
+  });
+  it('keeps legacy shared correction promotion and advice held', async () => {
+    expect(await extractFailurePatterns({ minTenantCount: 1 })).toMatchObject({ promoted: 0, holdReason: 'deidentification_and_human_promotion_required' });
+    expect(await getSuggestedCorrections({ agency: 'fda', documentType: 'cer', intent: 'draft' })).toEqual([]);
   });
 });
 

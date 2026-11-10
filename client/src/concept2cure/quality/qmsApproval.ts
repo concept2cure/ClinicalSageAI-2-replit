@@ -21,6 +21,8 @@
  * @module client/src/concept2cure/quality/qmsApproval
  */
 import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { stableStringify } from '@shared/canonical-json';
+import type { C2CFormConfig } from '../v2/C2CForm';
 
 const NOTHING_SIGNED = 'Nothing was signed.';
 /** The server's sentence, ending once with "Nothing was signed." (the ceremony's refusals already do). */
@@ -30,6 +32,77 @@ function refusedSigning(message: string): Error {
 import type { EsigSignedManifest } from '../_shared/components/EsignModal';
 
 export type QmsApprovalTarget = { kind: 'document' | 'change' | 'document-retire'; id: number };
+
+export interface LearningAdministrationView {
+  policy: { enabled: boolean; version: number };
+  classes: Array<{ key: string; label: string; count: number }>;
+  sources: Array<{ id: string; recordedAt: string }>;
+  library: Array<{ name: string; receipt: { schemaVersion: 1; libraryVersionId: string; artifactSha256: string; signatureHash: string } }>;
+}
+const learningRecord = (value: unknown): Record<string, any> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, any> : {};
+const LEARNING_CLASS_KEYS = ['source_identity_check', 'cross_section_consistency', 'independent_review'];
+const LEARNING_UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
+const LEARNING_SHA = /^[a-f0-9]{64}$/;
+export interface LearningReviewView {
+  artifact: { kind: 'aggregate_learning_v1'; libraryVersionId: string; classKey: string; agency: string;
+    documentType: string; cohortMinimum: number; tenantCount: number; eventCount: number };
+  artifactSha256: string; instructions: string;
+}
+function validLearningReviewScope(a: Record<string, any>): boolean {
+  return a.kind === 'aggregate_learning_v1' && LEARNING_UUID.test(a.libraryVersionId) && LEARNING_CLASS_KEYS.includes(a.classKey) &&
+    ['fda', 'ema', 'pmda', 'mhra', 'hc', 'swissmedic', 'other'].includes(a.agency) &&
+    ['protocol', 'ib', 'cmc', 'labeling', 'cer', 'response_letter', 'meeting_minutes', 'section', 'briefing_package', 'other'].includes(a.documentType);
+}
+function validLearningReviewCounts(a: Record<string, any>): boolean {
+  return a.cohortMinimum === 3 && Number.isSafeInteger(a.tenantCount) && a.tenantCount >= 3 && Number.isSafeInteger(a.eventCount) && a.eventCount >= a.tenantCount;
+}
+export function learningReviewViewOf(value: unknown): LearningReviewView | { unavailable: true } | null {
+  if (value == null) return null;
+  const raw = learningRecord(value), a = learningRecord(raw.artifact);
+  if (raw.unavailable || !validLearningReviewScope(a) || !validLearningReviewCounts(a) ||
+      !LEARNING_SHA.test(raw.artifactSha256) || typeof raw.instructions !== 'string') return { unavailable: true };
+  return { artifact: { kind: 'aggregate_learning_v1', libraryVersionId: a.libraryVersionId, classKey: a.classKey, agency: a.agency,
+    documentType: a.documentType, cohortMinimum: a.cohortMinimum, tenantCount: a.tenantCount, eventCount: a.eventCount },
+  artifactSha256: raw.artifactSha256, instructions: raw.instructions };
+}
+export async function verifyLearningReviewHash(view: LearningReviewView): Promise<boolean> {
+  if (!globalThis.crypto?.subtle) return false;
+  const digest = await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(stableStringify(view.artifact)));
+  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('') === view.artifactSha256;
+}
+export function learningAdministrationViewOf(value: unknown): LearningAdministrationView | null {
+  if (value === undefined) return { policy: { enabled: false, version: 0 }, classes: [], sources: [], library: [] };
+  const raw = learningRecord(value), policy = learningRecord(raw.policy);
+  if (typeof policy.enabled !== 'boolean' || !Number.isSafeInteger(policy.version) || policy.version < 0 ||
+      ![raw.classes, raw.sources, raw.library].every(Array.isArray)) return null;
+  if (raw.classes.some((item: any) => !LEARNING_CLASS_KEYS.includes(item?.key) || typeof item.label !== 'string' ||
+      !Number.isSafeInteger(item.count) || item.count < 0) || raw.sources.some((item: any) => !LEARNING_UUID.test(item?.id) || !Number.isFinite(Date.parse(item.recordedAt)))) return null;
+  const library = raw.library.map((item: any) => ({ name: item?.name, receipt: learningRecord(item?.receipt) }));
+  if (library.some((item: any) => typeof item.name !== 'string' || item.receipt.schemaVersion !== 1 ||
+      !LEARNING_UUID.test(item.receipt.libraryVersionId) || !LEARNING_SHA.test(item.receipt.artifactSha256) || !LEARNING_SHA.test(item.receipt.signatureHash))) return null;
+  return { policy: { enabled: policy.enabled, version: policy.version },
+    classes: raw.classes.map(({ key, label, count }: any) => ({ key, label, count })),
+    sources: raw.sources.map(({ id, recordedAt }: any) => ({ id, recordedAt })),
+    library: library.map(({ name, receipt }: any) => ({ name, receipt: { schemaVersion: 1, libraryVersionId: receipt.libraryVersionId,
+      artifactSha256: receipt.artifactSha256, signatureHash: receipt.signatureHash } })) };
+}
+export function learningAdministrationFields(action: string, data: LearningAdministrationView): C2CFormConfig['fields'] | null {
+  if (action === 'learning_policy') return [{ key: 'enabled', label: 'Contribute controlled pattern classes', type: 'select',
+    default: data.policy.enabled ? 'yes' : 'no', options: [{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }] }];
+  if (action === 'learning_contribute') return [
+    { key: 'classKey', label: 'Pattern class', type: 'select', required: true, options: data.classes.map(c => ({ value: c.key, label: `${c.label} (${c.count} current contributions)` })) },
+    { key: 'sourceAuditEventId', label: 'Your recorded correction', type: 'select', required: true, options: data.sources.map(s => ({ value: s.id, label: `Recorded ${s.recordedAt}` })) }];
+  return action === 'learning_install' ? [{ key: 'libraryVersionId', label: 'Reviewed library version', type: 'select', required: true,
+    options: data.library.map(item => ({ value: item.receipt.libraryVersionId, label: item.name })) }] : null;
+}
+export function learningAdministrationBody(action: string, values: Record<string, string>, data?: LearningAdministrationView): Record<string, unknown> | null {
+  if (action === 'learning_policy') return { enabled: values.enabled === 'yes', expectedVersion: data?.policy.version };
+  if (action === 'learning_contribute') return { classKey: values.classKey, sourceAuditEventId: values.sourceAuditEventId };
+  if (action !== 'learning_install') return null;
+  const item = data?.library.find(entry => entry.receipt.libraryVersionId === values.libraryVersionId);
+  if (!item) throw new Error('INVALID_INPUT');
+  return { libraryVersionId: item.receipt.libraryVersionId, expectedArtifactSha256: item.receipt.artifactSha256 };
+}
 
 /** The signed route for each target kind, relative to /api/mdx/qms. */
 const SIGNED_PATH: Record<QmsApprovalTarget['kind'], (id: number) => string> = {
@@ -54,6 +127,9 @@ export async function postQmsApproval(
   input: { reason: string; password: string; totp?: string },
   /** For a document approval: the day it is effective from (YYYY-MM-DD, not before today), bound in the signature (CAT2-19). */
   effectiveDate?: string,
+  learningReview?: { expectedArtifactSha256: string; invariantAccepted: true },
+  /** For a change: the digest of the content the approver read (the register's `content_digest`). */
+  expectedContentDigest?: string,
 ): Promise<EsigSignedManifest> {
   const res = await apiRequest('POST', `/api/mdx/qms/${SIGNED_PATH[target.kind](target.id)}`, {
     password: input.password,
@@ -61,6 +137,8 @@ export async function postQmsApproval(
     meaning: SIGNED_MEANING[target.kind].stored,
     reason: input.reason,
     ...(target.kind === 'document' && effectiveDate ? { effectiveDate } : {}),
+    ...(target.kind === 'change' && learningReview ? { learningReview } : {}),
+    ...(target.kind === 'change' && expectedContentDigest ? { expectedContentDigest } : {}),
   });
   const json = (await res.json().catch(() => null)) as {
     meta?: { signature?: { signedAt?: string; boundPayloadDigest?: string } };

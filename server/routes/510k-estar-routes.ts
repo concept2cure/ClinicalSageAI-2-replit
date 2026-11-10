@@ -64,12 +64,19 @@ import {
   type FilingLeaf,
 } from '../services/pathway-engines/estar/estar-filing-readiness';
 import {
+  governedDeviceFilingAgreement,
   loadDeviceContentLeaves,
   loadAuthoredDeviceSections,
   resolveDeviceContentScope,
   sectionsToEditorJson,
   type AuthoredDeviceSection,
+  type LoadDeviceContentLeavesOptions,
 } from '../services/pathway-engines/estar/estar-content-leaves';
+import {
+  divergedSectionLabel,
+  filedCopyDivergedSentence,
+  type FilingAgreementForFiling,
+} from '../services/c2c/filing-section-target';
 import { PMA_SUBMISSION_TYPES } from '../services/pathway-engines/pma/pma-mapper';
 import { and, eq } from 'drizzle-orm';
 import { requestDb, requestPgClient } from '../db/requestDb';
@@ -482,6 +489,59 @@ async function buildZipBuffer(
 }
 
 /**
+ * Does the filing this exit is about to read still hold the document's text?
+ * (P-29.3, docs/EXIT_ATTESTATION_DECISION_2026-10-18.md.)
+ *
+ * Asked of the scope the exit's own content load takes, so the filing compared
+ * is the filing read: the governed document of `scope.programId`, of the same
+ * `docTypes`, on the same client. A legacy scope reads `cerv2_510k_sections`,
+ * which is not the filing and which no editing document binds, so it is not
+ * applicable and answers null. A failed read throws; the exit reports it.
+ */
+async function filingAgreementForScope(
+  organizationId: number,
+  scope: LoadDeviceContentLeavesOptions,
+): Promise<FilingAgreementForFiling | null> {
+  if (!scope.programId) return null;
+  return governedDeviceFilingAgreement(organizationId, scope.programId, { client: scope.client, docTypes: scope.docTypes });
+}
+
+/** What an exit records of the question: on its response, and in its export's governed metadata. */
+function filingAgreementRecord(a: FilingAgreementForFiling) {
+  return {
+    compared: a.reason === undefined,
+    documentId: a.documentId,
+    unfiled: a.unfiled,
+    ...(a.reason ? { reason: a.reason } : {}),
+  };
+}
+
+/**
+ * /build's half of P-29.3: the 409 to send when a filed copy was rewritten,
+ * else what to record. Only `different` refuses, as at the seals
+ * (authoring.router.ts filingBlocksSeal): a section authored and never filed is
+ * already absent from the package and from its readiness, and is reported.
+ */
+async function draftPackageFilingCheck(organizationId: number, scope: LoadDeviceContentLeavesOptions) {
+  let agreement: FilingAgreementForFiling | null;
+  try {
+    agreement = await filingAgreementForScope(organizationId, scope);
+  } catch (error) {
+    logger.error('estar build filing agreement read failed', { err: error instanceof Error ? error.message : String(error) });
+    return { refusal: { status: 500, body: { error: 'FILING_AGREEMENT_UNAVAILABLE',
+      message: "Whether the filed copy holds the document's text could not be checked, so nothing was built. Try again." } } };
+  }
+  if (agreement && agreement.rewritten.length > 0) {
+    return { refusal: { status: 409, body: {
+      error: 'FILING_DIVERGED',
+      message: `Nothing was built. ${filedCopyDivergedSentence(agreement.rewritten)}`,
+      diverged: Array.from(new Set(agreement.rewritten.map(divergedSectionLabel))),
+    } } };
+  }
+  return { record: agreement ? filingAgreementRecord(agreement) : undefined };
+}
+
+/**
  * POST /api/510k/estar/build
  * body: { meta, content, attachments[] }
  * returns: zip file stream with FDA-named PDFs + attachments/
@@ -529,6 +589,8 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
   let authoredSections: AuthoredDeviceSection[] = [];
   /** Which store answered the content load; 'client_payload' when none was read. */
   let deviceContentSource = 'client_payload';
+  /** What was asked of the filing before building from it (P-29.3); absent when no filing was read. */
+  let filingAgreement: ReturnType<typeof filingAgreementRecord> | undefined;
 
   if (content === undefined && useProjectContent) {
     // A program anchor reads ITS governed document (the rows the editor saves
@@ -551,6 +613,11 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
           ' — author section content before exporting a draft package.',
       });
     }
+    const filingCheck = await draftPackageFilingCheck(orgId, scope);
+    if (filingCheck.refusal) {
+      return res.status(filingCheck.refusal.status).json({ ...filingCheck.refusal.body, deviceContentSource: source });
+    }
+    filingAgreement = filingCheck.record;
     family = draftPackageFamilyFor(source, docType);
     authoredSections = sections;
     content = sectionsToEditorJson(sections);
@@ -649,6 +716,7 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
       deviceContentSource,
       sectionsAuthored: authoredSections.length,
       sectionsRendered,
+      ...(filingAgreement ? { filingAgreement } : {}),
       officialEstarPdf: false,
       programId: anchor.programUuid ?? undefined,
       // null = the check did not run; never read as 0 errors.
@@ -685,6 +753,7 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
         packageFamily: family,
         sectionsAuthored: authoredSections.length,
         sectionsRendered,
+        ...(filingAgreement ? { filingAgreement } : {}),
       });
     }
 
@@ -716,6 +785,7 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
       packageFamily: family,
       sectionsAuthored: authoredSections.length,
       sectionsRendered,
+      ...(filingAgreement ? { filingAgreement } : {}),
     });
   } catch (error: any) {
     logger.error('governed export failure', { err: error instanceof Error ? error.message : String(error) });
@@ -929,7 +999,7 @@ const officialSchema = z.object({
   type: z.enum(ESTAR_TYPES),
   variant: z.enum(ESTAR_VARIANTS),
   /** Canonical field values to write into the official eSTAR AcroForm. */
-  data: z.record(z.unknown()).default({}),
+  data: z.record(z.string(), z.unknown()).default({}),
   flatten: z.boolean().optional(),
   /**
    * Fill from the org's governed records (estar-administrative-data): governed
@@ -958,7 +1028,7 @@ const officialSchema = z.object({
         fileName: z.string().min(1).max(200).optional(),
         source: z.discriminatedUnion('kind', [
           z.object({ kind: z.literal('authored_section'), sectionCode: z.string().min(1) }),
-          z.object({ kind: z.literal('vault_document'), documentId: z.string().uuid() }),
+          z.object({ kind: z.literal('vault_document'), documentId: z.string().guid() }),
         ]),
       }),
     )
@@ -1337,7 +1407,7 @@ const assembleSchema = z.object({
   /** Narrow the authored-content load to one LEGACY document's sections. */
   documentId: z.coerce.number().int().positive().optional(),
   /** Read the GOVERNED device document of this regulatory program instead. */
-  programId: z.string().uuid().optional(),
+  programId: z.string().guid().optional(),
   /** Target market for the readiness overlay (optional). */
   market: z.string().min(1).optional(),
 });
@@ -1821,7 +1891,7 @@ const filingReadinessSchema = z.object({
   useProjectContent: z.boolean().optional(),
   documentId: z.coerce.number().int().positive().optional(),
   /** With useProjectContent: read the GOVERNED device document of this program. */
-  programId: z.string().uuid().optional(),
+  programId: z.string().guid().optional(),
   qSubType: z
     .enum([
       'pre_submission',
@@ -1882,6 +1952,8 @@ async function assessFilingReadinessFor(
         : null;
     const contentLeaves = content ? await loadDeviceContentLeaves(organizationId!, content.scope) : [];
     const effectiveLeaves = [...(leaves as FilingLeaf[]), ...contentLeaves];
+    // P-29.3: the verdict is read from the filing; is it still the document's text?
+    const filingAgreement = content ? await filingAgreementForScope(organizationId!, content.scope) : null;
 
     // Resolve official-template producibility from the single source of truth. The
     // PreSTAR family shares one template across variants; marketing pathways use
@@ -1907,6 +1979,7 @@ async function assessFilingReadinessFor(
          superseded blocks filing instead of reporting "Can file now". */
       vendoredTemplateVersion: descriptorFor(entry.programType, templateVariant)?.version,
       asOf: new Date().toISOString().slice(0, 10),
+      filedCopyDiverged: filingAgreement?.rewritten,
     });
 
     if (!result) {
@@ -1917,6 +1990,7 @@ async function assessFilingReadinessFor(
       body: {
         ...result,
         ...(content ? { deviceContentSource: content.source } : {}),
+        ...(filingAgreement ? { filingAgreement: filingAgreementRecord(filingAgreement) } : {}),
       },
     };
   } catch (error: any) {
@@ -1965,7 +2039,7 @@ const createSubmissionSchema = z.object({
   catalogKey: z.string().min(1),
   variant: z.enum(['device', 'ivd']).optional(),
   title: z.string().max(500).nullish(),
-  qSubmissionId: z.string().uuid().nullish(),
+  qSubmissionId: z.string().guid().nullish(),
   notes: z.string().max(2000).nullish(),
   /** Attach the filing to a project so tracking joins the PM spine. */
   projectId: z.coerce.number().int().positive().nullish(),
@@ -1989,7 +2063,7 @@ const advanceSubmissionSchema = z
     status: z.enum(ESTAR_SUBMISSION_STATUSES),
     fdaTrackingNumber: z.string().max(64).nullish(),
     decision: z.string().max(40).nullish(),
-    filedArtifactDocumentId: z.string().uuid().optional(),
+    filedArtifactDocumentId: z.string().guid().optional(),
   })
   .and(governedSignatureSchema.partial())
   .superRefine((v, ctx) => {

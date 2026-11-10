@@ -1,0 +1,1220 @@
+{
+  "$comment": "The one plan's ledger (docs/design/ONE_DESIGN_PLAN.md, founder decision P-78, 2026-10-31). Read by scripts/ci/check-one-design-plan.mjs in .husky/pre-push. Changes only under 'Plan: PLAN' with a 'Founder-Decision: P-<n>' trailer.",
+  "decision": "P-78",
+  "decisions": [
+    "P-78",
+    "P-79",
+    "P-80",
+    "P-81",
+    "P-82",
+    "P-83",
+    "P-84",
+    "P-85",
+    "P-86",
+    "P-87",
+    "P-88",
+    "P-89",
+    "P-90",
+    "P-91",
+    "P-92",
+    "P-93",
+    "P-94",
+    "P-95",
+    "P-96",
+    "P-97",
+    "P-98",
+    "P-99",
+    "P-100",
+    "P-101",
+    "P-102",
+    "P-103",
+    "P-104",
+    "P-105",
+    "P-106",
+    "P-107",
+    "P-108",
+    "P-109",
+    "P-110",
+    "P-111",
+    "P-112"
+  ],
+  "alwaysAllowed": [
+    "**/__tests__/**",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.test.mjs",
+    "**/*.spec.ts",
+    "tests/**",
+    "docs/evidence/**",
+    ".design/**"
+  ],
+  "planFiles": [
+    "docs/design/ONE_DESIGN_PLAN.md",
+    "docs/design/one-design-plan.json",
+    "scripts/ci/check-one-design-plan.mjs",
+    "scripts/ci/check-one-design-plan.selftest.mjs",
+    "CLAUDE.md",
+    "AGENTS.md",
+    ".github/copilot-instructions.md",
+    ".github/COPILOT_INSTRUCTIONS.md",
+    "design-system/CLAUDE.md",
+    "docs/design/THE_PROGRAM_2026-11-01.md"
+  ],
+  "packages": [
+    {
+      "id": "D0",
+      "title": "Foundations: canonical header, card, buttons, segmented control, empty state, inspector, artifact panel, composer",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "design-system/**",
+        "client/index.html",
+        "client/src/index.css",
+        "client/src/concept2cure/v2/styles/**",
+        "client/src/concept2cure/v2/ui/**",
+        "client/src/concept2cure/v2/AnswerLead.tsx",
+        "client/src/concept2cure/v2/C2CForm.tsx",
+        "client/src/concept2cure/v2/icons.tsx",
+        "client/src/concept2cure/v2/dataConnect.tsx",
+        "client/src/concept2cure/v2/useDialog.tsx",
+        "client/src/concept2cure/v2/Toast*.tsx"
+      ]
+    },
+    {
+      "id": "D1",
+      "title": "Shell, Home and the conversation",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "client/src/concept2cure/v2/Shell.tsx",
+        "client/src/concept2cure/v2/V2App.tsx",
+        "client/src/concept2cure/v2/TaskTray.tsx",
+        "client/src/concept2cure/v2/OpenWork.tsx",
+        "client/src/concept2cure/v2/Notification*.tsx",
+        "client/src/concept2cure/v2/palette*.ts",
+        "client/src/concept2cure/v2/Ana*.tsx",
+        "client/src/concept2cure/v2/ana*.ts",
+        "client/src/concept2cure/v2/surfaces/Home*.tsx",
+        "client/src/concept2cure/v2/surfaces/Conversation*.tsx",
+        "client/src/concept2cure/v2/surfaces/AnaCommand.tsx",
+        "client/src/concept2cure/v2/surfaces/AnaVerbs.tsx",
+        "client/src/concept2cure/v2/surfaces/AnaDocContext.tsx",
+        "client/src/concept2cure/v2/styles/**",
+        "client/src/concept2cure/v2/surfaces/Surfaces.tsx",
+        "client/src/concept2cure/v2/workDock.ts",
+        "client/src/concept2cure/v2/surfaceViews.ts"
+      ]
+    },
+    {
+      "id": "D2",
+      "title": "Projects: grid of cards, search, quiet filters, New project",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "client/src/concept2cure/v2/surfaces/Projects.tsx",
+        "client/src/concept2cure/v2/surfaces/ProjectPortfolioFilters.tsx",
+        "client/src/concept2cure/v2/surfaces/ProjectClientFilter.tsx",
+        "client/src/concept2cure/v2/surfaces/projectIntakeRequest.ts",
+        "client/src/concept2cure/v2/styles/**"
+      ]
+    },
+    {
+      "id": "D3",
+      "title": "The project page: composer, Project knowledge, quiet stages, work-area doors",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "client/src/concept2cure/v2/surfaces/Project*.tsx",
+        "client/src/concept2cure/v2/surfaces/project*.ts",
+        "client/src/concept2cure/v2/surfaces/MarketBlockers.tsx",
+        "client/src/concept2cure/v2/fixtures/project-home-data.*",
+        "client/src/concept2cure/v2/styles/**"
+      ]
+    },
+    {
+      "id": "D4",
+      "title": "The canvas and the editor: artifact panel beside the conversation, quiet editor with an inspector (one editor)",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "client/src/concept2cure/v2/editor/**",
+        "client/src/concept2cure/v2/surfaces/Authoring*.tsx",
+        "client/src/concept2cure/v2/surfaces/authoring*.ts",
+        "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "client/src/concept2cure/v2/surfaces/DocJourney.tsx",
+        "client/src/concept2cure/v2/surfaces/Review*.tsx",
+        "client/src/concept2cure/v2/authoringHandoff.ts",
+        "client/src/concept2cure/v2/AuthoringHandoffNotice.tsx",
+        "client/src/concept2cure/v2/styles/**"
+      ]
+    },
+    {
+      "id": "D5",
+      "title": "Work areas I: CMC / Module 3 and Biostatistics",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "client/src/concept2cure/v2/surfaces/Cmc*.tsx",
+        "client/src/concept2cure/v2/surfaces/cmc*.ts",
+        "client/src/concept2cure/v2/surfaces/cmc*.tsx",
+        "client/src/concept2cure/v2/surfaces/Biostat*.tsx",
+        "client/src/concept2cure/v2/surfaces/biostat*.ts",
+        "client/src/concept2cure/v2/surfaces/biostat*.tsx",
+        "client/src/concept2cure/v2/surfaces/adaptiveMonitoring*.tsx",
+        "client/src/concept2cure/v2/engineResultHtml.ts",
+        "client/src/concept2cure/v2/styles/**"
+      ]
+    },
+    {
+      "id": "D6",
+      "title": "Work areas II: Tasks, Communication, Vault",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "client/src/concept2cure/v2/surfaces/Task*.tsx",
+        "client/src/concept2cure/v2/surfaces/task*.ts",
+        "client/src/concept2cure/v2/surfaces/CollabLauncher.tsx",
+        "client/src/concept2cure/v2/fixtures/task-board-data.ts",
+        "client/src/concept2cure/v2/surfaces/Communication*.tsx",
+        "client/src/concept2cure/v2/surfaces/HaMeetings.tsx",
+        "client/src/concept2cure/v2/surfaces/Agency*.tsx",
+        "client/src/concept2cure/v2/surfaces/agency*.ts",
+        "client/src/concept2cure/v2/surfaces/Vault*.tsx",
+        "client/src/concept2cure/v2/surfaces/vault*.ts",
+        "client/src/concept2cure/v2/styles/**"
+      ]
+    },
+    {
+      "id": "D7",
+      "title": "Work areas III: Submission Center, Quality, Risk-based monitoring, Reporting & analytics",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "client/src/concept2cure/v2/surfaces/Submission*.tsx",
+        "client/src/concept2cure/v2/surfaces/submission*.ts",
+        "client/src/concept2cure/v2/surfaces/Ectd*.tsx",
+        "client/src/concept2cure/v2/surfaces/Sequence*.tsx",
+        "client/src/concept2cure/v2/surfaces/Dispatch*.tsx",
+        "client/src/concept2cure/v2/surfaces/Quality*.tsx",
+        "client/src/concept2cure/v2/surfaces/Rbm*.tsx",
+        "client/src/concept2cure/v2/surfaces/rbm*.ts",
+        "client/src/concept2cure/v2/surfaces/rbm*.tsx",
+        "client/src/concept2cure/v2/surfaces/Insights*.tsx",
+        "client/src/concept2cure/v2/surfaces/insights*.ts",
+        "client/src/concept2cure/v2/surfaces/insights*.tsx",
+        "client/src/concept2cure/v2/surfaces/Compliance*.tsx",
+        "client/src/concept2cure/v2/styles/**",
+        "client/src/concept2cure/quality/**"
+      ]
+    },
+    {
+      "id": "R1",
+      "title": "Reach: every server capability with no UI caller reached in its package's screen, or retired by founder decision",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "**"
+      ]
+    },
+    {
+      "id": "F1",
+      "title": "Repairs: defects in shipped behaviour; no new screen, mount or table",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "**"
+      ]
+    },
+    {
+      "id": "L1",
+      "title": "Launch rows D1\u2013D10 (docs/LAUNCH_DEFINITION_OF_DONE.md)",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "**"
+      ]
+    },
+    {
+      "id": "DATA",
+      "title": "Demo data",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "scripts/demo/**",
+        "data/seeds/**",
+        "docs/evidence/DEMO/**",
+        "package.json"
+      ]
+    },
+    {
+      "id": "S1",
+      "title": "Spine 1: the project and its objective (P-79, P-80): the charter's objectives section is the objective of record; AnA's project intelligence reads it",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "client/src/concept2cure/v2/surfaces/Project*.tsx",
+        "client/src/concept2cure/v2/surfaces/project*.ts",
+        "client/src/concept2cure/v2/surfaces/Projects.tsx",
+        "server/routes/concept2cure.ts",
+        "server/routes/c2c/**",
+        "shared/constants/**",
+        "migrations/**",
+        "db/migrations/**",
+        "scripts/db/migration-set.mjs",
+        "shared/schema/**",
+        "server/routes/client-intelligence.ts",
+        "server/services/ana-context-router.ts",
+        "server/routes/charters.ts",
+        "shared/schema/project-charter.ts",
+        "server/services/client-intelligence-memory.ts",
+        "server/services/lumen-context/intelligence-prefix.ts",
+        "server/routes/c2c/projects.ts",
+        "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "server/services/c2c/charter-objectives.ts"
+      ]
+    },
+    {
+      "id": "S2",
+      "title": "Spine 2: the data room catalog, immutable, with lineage in perpetuity (P-79)",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "server/services/clinical-regulatory-evidence/**",
+        "server/routes/clinical-regulatory-evidence-routes.ts",
+        "server/services/data-room-retrieval.ts",
+        "shared/data-room-processing-status.ts",
+        "server/routes/data-lineage.ts",
+        "server/routes/decision-lineage*.ts",
+        "server/services/ana/lineage-*.ts",
+        "server/services/ana/drafting-source-lineage.ts",
+        "server/services/ana/document-catalog*.ts",
+        "server/services/vault/**",
+        "server/routes/vault-ingest.ts",
+        "client/src/concept2cure/lineage/**",
+        "client/src/concept2cure/v2/editor/DataRoom*.tsx",
+        "client/src/concept2cure/v2/editor/Source*.tsx",
+        "client/src/concept2cure/v2/surfaces/VaultDataRoomFiling.tsx",
+        "client/src/concept2cure/v2/surfaces/VaultCatalogRecord.tsx",
+        "migrations/**",
+        "db/migrations/**",
+        "scripts/db/migration-set.mjs",
+        "shared/schema/**"
+      ]
+    },
+    {
+      "id": "S3",
+      "title": "Spine 3: protocol (hypothesis, endpoints) to evidence (biostatistics, safety), computed by the engines (P-79)",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "server/services/study-design/**",
+        "server/services/protocol-*/**",
+        "server/services/biostatistics-*/**",
+        "server/services/ana-biostats/**",
+        "server/services/biostat-*.ts",
+        "server/services/cdisc/**",
+        "server/services/csr/**",
+        "server/services/pharmacovigilance/**",
+        "server/routes/biostat*.ts",
+        "server/routes/ana-biostats*.ts",
+        "server/routes/study-design*.ts",
+        "server/routes/protocol*.ts",
+        "client/src/concept2cure/v2/surfaces/ProtocolDev*.tsx",
+        "client/src/concept2cure/v2/surfaces/Biostat*.tsx",
+        "client/src/concept2cure/v2/surfaces/biostat*.ts*",
+        "client/src/concept2cure/v2/surfaces/SafetyNarrative.tsx",
+        "client/src/concept2cure/v2/editor/StudyData*.tsx",
+        "migrations/**",
+        "db/migrations/**",
+        "scripts/db/migration-set.mjs",
+        "shared/schema/**"
+      ]
+    },
+    {
+      "id": "S4",
+      "title": "Spine 4: AnA the writer and the project's memory: narrates with citations, takes direction, asks the right questions, pushes back, remembers the project and the person (P-79, P-81); Anna runtime epic: controlled skills, independent read-only workers, scoped rules and decision gates (P-104)",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "server/services/ana/**",
+        "server/routes/ana*.ts",
+        "server/routes/ana-ri/**",
+        "client/src/concept2cure/components/ana/**",
+        "client/src/concept2cure/v2/editor/DraftAlternatives.tsx",
+        "client/src/concept2cure/v2/editor/Ana*.tsx",
+        "client/src/concept2cure/v2/editor/ana*.ts",
+        "client/src/concept2cure/v2/editor/citation*.ts",
+        "server/services/memory/**",
+        "server/services/memory-*.ts",
+        "server/services/client-intelligence-memory.ts",
+        "server/services/intelligence/**",
+        "server/services/ana-ri/**",
+        "server/routes/mdx-ana-memory.ts",
+        "server/services/ana-context-router.ts",
+        "server/services/lumen-context-builder.ts",
+        "server/services/ana-wisdom-engine.ts",
+        "server/services/ana-capability-registry.ts",
+        "server/services/ai-gateway/**",
+        "server/services/connectors/**",
+        "server/services/working-memory.ts",
+        "server/services/ana-session-bootstrap.ts",
+        "server/services/vault/document-catalog-document.ts",
+        "server/services/vault/document-catalog-actor-reads.ts",
+        "db/migrations/20260520_ana_failure_learning.sql",
+        "server/services/vault/vault-ingest.service.ts",
+        "shared/ana/skills.ts",
+        "server/services/account-skill-bundles.ts",
+        "client/src/concept2cure/v2/surfaces/AdminSkillForms.ts",
+        "client/src/concept2cure/v2/SkillStudioParts.tsx",
+        "client/src/concept2cure/v2/SkillStudio.tsx",
+        "server/services/ai-governance/approved-models.ts",
+        "server/eval/pq/**",
+        "scripts/ops/verify-pq-claims.ts",
+        "scripts/ops/lib/pq-claim-verification.mjs",
+        "scripts/build-server.mjs",
+        "Dockerfile.optimized",
+        ".dockerignore",
+        "server/routes/deep-research.ts",
+        "server/routes/knowledge-base.ts",
+        "client/src/concept2cure/v2/surfaces/AdminSettings.tsx",
+        "client/src/concept2cure/v2/surfaces/GatewayAccountsSetting.tsx",
+        "client/src/concept2cure/v2/surfaces/DeepResearch.tsx",
+        "server/services/security/field-encryption.ts",
+        "server/services/observability/redaction.ts",
+        "server/services/tenant/tenant-settings-writer.ts",
+        "server/routes/ai-placement-policy.ts",
+        "server/eval/localai/**",
+        "server/routes/authoring.router.ts",
+        "server/services/authoring/peer-review.ts",
+        "server/services/authoring/workflow-import-governance.ts",
+        "server/services/authoring/authoring-from-draft.ts",
+        "server/services/authoring/authoring-draft-tool.ts",
+        "shared/authoring/peer-review.ts",
+        "client/src/concept2cure/v2/surfaces/ReviewDecisionDialog.tsx",
+        "client/src/concept2cure/v2/surfaces/usePeerReviewDecision.ts",
+        "client/src/concept2cure/v2/surfaces/authoringPeerReview.ts",
+        "server/routes/regulatory-intelligence.ts",
+        "server/services/intelligence/ana-failure-learning.ts",
+        "client/src/concept2cure/v2/surfaces/AdminSkills.tsx",
+        "server/services/digest/proactive-digest.ts",
+        "server/services/digest/digest-heartbeat.ts",
+        "server/services/automation/scheduled-jobs.ts",
+        "server/services/tasking/create-task.ts",
+        "shared/ana/turn-timeline.ts",
+        "client/src/concept2cure/v2/AnaActivity.tsx",
+        "client/src/concept2cure/v2/AnaWorkPanel.tsx",
+        "client/src/concept2cure/v2/AnaWorkSections.tsx",
+        "client/src/concept2cure/v2/anaWorkModel.ts",
+        "client/src/concept2cure/v2/TurnSummary.tsx",
+        "client/src/concept2cure/v2/turnSummaryRows.ts",
+        "client/src/concept2cure/v2/useAgentActivity.ts",
+        "client/src/concept2cure/v2/surfaces/ConversationThread.tsx",
+        "client/src/concept2cure/v2/WhatAnaRemembers.tsx",
+        "server/routes/client-intelligence.ts",
+        "server/mcp/tools/runtime.ts",
+        "server/services/projects/schedule-of-events/service.ts",
+        "server/jobs/scheduleOfEventsSweep.ts",
+        "server/services/tasking/task-planning.ts",
+        "server/services/qms/change-approval-signature.ts",
+        "server/services/qms/changeControl.service.ts",
+        "server/services/qms/controlled-document-service.ts",
+        "server/services/c2c/charter-objectives.ts",
+        "server/routes/mdx-qms.ts",
+        "client/src/concept2cure/quality/ChangeControl.tsx",
+        "client/src/concept2cure/quality/qmsApproval.ts",
+        "client/src/concept2cure/quality/changeData.ts",
+        "client/src/concept2cure/quality/changeHooks.ts",
+        "server/services/ectd/assess-dispatch-readiness.ts",
+        "server/services/ectd/leaf-document-resolver.ts",
+        "server/services/chat-thread-helpers.ts",
+        "server/routes/chat/send-message.ts",
+        "server/routes/chat/threads.ts",
+        "server/routes/cortex-unified.ts",
+        "server/services/authoring/authoring-documents.ts",
+        "server/services/authoring/authoring-create-outcome.ts"
+      ]
+    },
+    {
+      "id": "S5",
+      "title": "Spine 5: eCTD 3.2.2 and 4.0 assembly, validation and filing, Module 1 for US, EU, JP, CA, AU (P-79)",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "server/services/ectd/**",
+        "server/services/submission-gateways/**",
+        "server/routes/ectd*.ts",
+        "server/routes/ind-lifecycle*.ts",
+        "server/routes/ind-lifecycle/**",
+        "server/routes/submission*.ts",
+        "server/routes/submissionCenter.routes.ts",
+        "shared/regulatory/**",
+        "services/regulatory/**",
+        "client/src/concept2cure/v2/surfaces/Ectd*.tsx",
+        "client/src/concept2cure/v2/surfaces/Submission*.tsx",
+        "client/src/concept2cure/v2/surfaces/submission*.ts",
+        "client/src/concept2cure/v2/surfaces/DispatchReadiness.tsx",
+        "client/src/concept2cure/v2/surfaces/NewSubmissionForm.tsx",
+        "migrations/**",
+        "db/migrations/**",
+        "scripts/db/migration-set.mjs",
+        "shared/schema/**",
+        "server/services/submission-service/submission-service.ts",
+        "server/services/part11/signature-persistence.ts",
+        "server/routes/c2c/actions.ts"
+      ]
+    },
+    {
+      "id": "S6",
+      "title": "Spine 6: Vault at Veeva parity, on the existing Vault (P-79)",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "server/services/vault/**",
+        "server/routes/vault*.ts",
+        "server/integrations/veeva-vault/**",
+        "client/src/concept2cure/v2/surfaces/Vault*.tsx",
+        "client/src/concept2cure/v2/surfaces/vault*.ts",
+        "client/src/concept2cure/v2/useVaultUpload.ts",
+        "client/src/concept2cure/v2/vault*.ts",
+        "migrations/**",
+        "db/migrations/**",
+        "scripts/db/migration-set.mjs",
+        "shared/schema/**"
+      ]
+    },
+    {
+      "id": "S7",
+      "title": "Spine 7: CMC: Module 3 composition and study-conduct data capture, one work area (P-79)",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "server/services/cmc/**",
+        "server/api/cmc/**",
+        "server/routes/cmc-*.ts",
+        "shared/constants/cmc-*.ts",
+        "server/services/ana/*cmc*",
+        "client/src/concept2cure/v2/surfaces/Cmc*.tsx",
+        "client/src/concept2cure/v2/surfaces/cmc*.ts*",
+        "migrations/**",
+        "db/migrations/**",
+        "scripts/db/migration-set.mjs",
+        "shared/schema/**"
+      ]
+    },
+    {
+      "id": "S8",
+      "title": "Spine 8: risk-based monitoring over the project's study data (P-79)",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "server/services/rbm/**",
+        "server/routes/mdx-rbm*.ts",
+        "client/src/concept2cure/v2/surfaces/Rbm*.tsx",
+        "client/src/concept2cure/v2/surfaces/rbm*.ts*",
+        "migrations/**",
+        "db/migrations/**",
+        "scripts/db/migration-set.mjs",
+        "shared/schema/**"
+      ]
+    },
+    {
+      "id": "S9",
+      "title": "Spine 9: team on licensed seats, each person's due work, extract commitments, the project's goals and schedule (P-81)",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "server/services/tasking/**",
+        "server/routes/c2c/tasks.ts",
+        "server/services/seat-licensing.ts",
+        "server/services/licensing/**",
+        "server/routes/c2c/project-sharing.ts",
+        "server/services/project-sharing-access.ts",
+        "shared/project-sharing.ts",
+        "server/services/ha-interactions/**",
+        "server/routes/commitment-fulfil-route.ts",
+        "server/routes/c2c/agency-responses.ts",
+        "server/services/ana-capability-registry.ts",
+        "server/services/ai-governance/risk-tiers.ts",
+        "server/services/ana/notifications-study-memory-tool-defs.ts",
+        "server/services/ana/deadline-radar.ts",
+        "server/routes/protocol-milestones.ts",
+        "server/routes/project-schedule-of-events.ts",
+        "client/src/concept2cure/v2/surfaces/Task*.tsx",
+        "client/src/concept2cure/v2/surfaces/task*.ts*",
+        "client/src/concept2cure/v2/surfaces/Commitment*.tsx",
+        "client/src/concept2cure/v2/surfaces/ProjectTeam*.tsx",
+        "client/src/concept2cure/v2/surfaces/ProjectPlan.tsx",
+        "client/src/concept2cure/v2/surfaces/PlanAssign.tsx",
+        "client/src/concept2cure/v2/TaskTray.tsx",
+        "migrations/**",
+        "db/migrations/**",
+        "scripts/db/migration-set.mjs",
+        "shared/schema/**",
+        "server/routes/taskManagement.routes.ts",
+        "server/routes/unifiedTasks.routes.ts",
+        "server/routes/taskBoard.routes.ts",
+        "server/services/unifiedTaskService.ts",
+        "server/services/ana-ri/command-executor.ts",
+        "server/jobs/taskDueSweep.ts"
+      ]
+    },
+    {
+      "id": "S10",
+      "title": "Spine 10: the agency's communications back into the project: letters, questions to Respond, commitments to tasks (P-81)",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "client/src/concept2cure/v2/surfaces/AgencyInbox.tsx",
+        "client/src/concept2cure/v2/surfaces/CommunicationCenter*.tsx",
+        "client/src/concept2cure/v2/surfaces/Company*Correspondence*.tsx",
+        "client/src/concept2cure/v2/surfaces/HaqManager.tsx",
+        "client/src/concept2cure/v2/surfaces/ProjectRespond.tsx",
+        "server/routes/regulatory-correspondence*.ts",
+        "server/services/company-documents/**",
+        "server/routes/c2c/agency-responses.ts",
+        "server/routes/c2c/communication-center.ts",
+        "server/services/ha-interactions/**",
+        "server/services/submission-gateways/**",
+        "migrations/**",
+        "db/migrations/**",
+        "scripts/db/migration-set.mjs",
+        "shared/schema/**",
+        "server/services/agency-responses/**",
+        "shared/agency/**",
+        "client/src/concept2cure/v2/surfaces/AgencyResponses*.tsx",
+        "client/src/concept2cure/v2/surfaces/LetterQuestion*.tsx",
+        "server/routes/orchestration.ts",
+        "server/services/orchestration/pre-submission-gate-verdict.ts",
+        "server/services/clinical-regulatory-evidence/retained-source-context.ts"
+      ]
+    },
+    {
+      "id": "S11",
+      "title": "Spine 11: the program plan: the project's pyramid with per-project progress, owners, back-scheduled due dates, critical path, content plan, Plan step, portfolio (P-82)",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "services/regulatory/**",
+        "server/routes/pyramid.routes.ts",
+        "server/routes/charters.ts",
+        "shared/schema/project-charter.ts",
+        "server/routes/project-hierarchy.ts",
+        "server/services/ind-lifecycle/**",
+        "server/services/market-specs/**",
+        "server/services/c2c/project-portfolio.ts",
+        "server/services/tasking/**",
+        "server/routes/c2c/tasks.ts",
+        "client/src/concept2cure/v2/surfaces/ProjectPlan.tsx",
+        "client/src/concept2cure/v2/surfaces/Pyramid*.tsx",
+        "client/src/concept2cure/v2/surfaces/PlanAssign.tsx",
+        "client/src/concept2cure/v2/surfaces/ProjectSectionTracking.tsx",
+        "client/src/concept2cure/v2/fixtures/pyramid-data.ts",
+        "client/src/concept2cure/v2/styles/pyramid-v2.css",
+        "client/src/concept2cure/v2/surfaces/Projects.tsx",
+        "client/src/concept2cure/v2/surfaces/Insights*.tsx",
+        "migrations/**",
+        "db/migrations/**",
+        "scripts/db/migration-set.mjs",
+        "shared/schema/**"
+      ]
+    },
+    {
+      "id": "S12",
+      "title": "Spine 12: work projects (CMC, biostatistics, RBM, data management, clin pharm, nonclinical) and their deliverables mapped downstream, versioned with lineage, with change flags (P-83); a CMC or Quality work project manages its own smaller tasks inside its work area (P-111)",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "server/services/project-rollup-service.ts",
+        "server/routes/project-hierarchy.ts",
+        "server/services/c2c/program-project-anchor.ts",
+        "server/routes/c2c/projects.ts",
+        "server/services/ana/changePropagationTools.ts",
+        "server/services/cmc/**",
+        "server/api/cmc/**",
+        "server/services/ana-biostats/**",
+        "server/services/rbm/**",
+        "server/services/clinical-regulatory-evidence/**",
+        "server/services/ana/drafting-source-lineage.ts",
+        "server/routes/data-lineage.ts",
+        "services/regulatory/**",
+        "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
+        "client/src/concept2cure/v2/surfaces/ProjectCoreWork.tsx",
+        "client/src/concept2cure/v2/surfaces/Project*.tsx",
+        "client/src/concept2cure/v2/surfaces/Cmc*.tsx",
+        "client/src/concept2cure/v2/surfaces/Biostat*.tsx",
+        "client/src/concept2cure/v2/surfaces/Rbm*.tsx",
+        "client/src/concept2cure/v2/editor/**",
+        "migrations/**",
+        "db/migrations/**",
+        "scripts/db/migration-set.mjs",
+        "shared/schema/**",
+        "client/src/concept2cure/quality/**",
+        "client/src/concept2cure/v2/surfaces/Quality*.tsx",
+        "server/services/qms/**",
+        "server/services/capa-mdr/**",
+        "server/services/tasking/**",
+        "server/services/unified-work/**",
+        "shared/schema.ts"
+      ]
+    },
+    {
+      "id": "PLAN",
+      "title": "The plan and its gate (founder decision only)",
+      "status": "open",
+      "dependsOn": [],
+      "paths": [
+        "**"
+      ]
+    }
+  ],
+  "approvedAdditions": [
+    {
+      "kind": "integration",
+      "name": "docling-serve",
+      "package": "L1",
+      "decision": "P-90",
+      "where": "docker-compose.yml, service \"docling\" (profile ingestion)",
+      "scope": "RULE 2 gateway/connector scope: a self-hosted document reader on the deployment's own network; no document text leaves the deployment"
+    },
+    {
+      "kind": "table",
+      "name": "public.report_bundles",
+      "package": "L1",
+      "decision": "P-91",
+      "where": "public schema, organization_id INTEGER NOT NULL; one migration in C2C_MIGRATION_FILES before the final sweep pair, IF NOT EXISTS-guarded",
+      "scope": "replaces the project_memory_entries bundle:<uuid> path, deleted in the same change (C3-BUNDLE-REGISTER.md)"
+    },
+    {
+      "kind": "table",
+      "name": "public.report_bundle_runs",
+      "package": "L1",
+      "decision": "P-91",
+      "where": "public schema, organization_id INTEGER NOT NULL; one migration in C2C_MIGRATION_FILES before the final sweep pair, IF NOT EXISTS-guarded",
+      "scope": "replaces the project_memory_entries bundle:<uuid> path, deleted in the same change (C3-BUNDLE-REGISTER.md)"
+    },
+    {
+      "kind": "table",
+      "name": "public.report_bundle_projects",
+      "package": "L1",
+      "decision": "P-91",
+      "where": "public schema, organization_id INTEGER NOT NULL; one migration in C2C_MIGRATION_FILES before the final sweep pair, IF NOT EXISTS-guarded",
+      "scope": "replaces the project_memory_entries bundle:<uuid> path, deleted in the same change (C3-BUNDLE-REGISTER.md)"
+    }
+  ],
+  "completesRequired": true,
+  "architectureEpics": [
+    {
+      "id": "anna-runtime",
+      "decision": "P-104",
+      "title": "Extend the existing Anna runtime \u2014 Multi-Agent Architecture Spec v0.5",
+      "source": "docs/design/MULTI-AGENT-ARCHITECTURE-SPEC-20261106-v0.5.pdf \u00a7\u00a71\u201332",
+      "sourceSha256": "4564aff5d1da81520ed187abf5d5f20be11f74c7d407244bba33d685229b36c4",
+      "supersededSource": "MULTI-AGENT-ARCHITECTURE-SPEC-20261105.md (v0.4, \u00a7\u00a71\u201315, unchanged in v0.5); superseded by v0.5 on the founder's correction of 2026-11-08 (P-105)",
+      "ownerDecision": "P-105",
+      "owner": "session_01KZK3jgtmQBgNepqLjXjS3k (sole owner; other packages keep their file holds)",
+      "planSection": "docs/design/ONE_DESIGN_PLAN.md \u00a71d",
+      "status": "acceptance_pending",
+      "newFilesApproved": false,
+      "accountTarget": "client_owned_only_for_client_filings; retain historical sender identity; no migration claimed",
+      "milestones": [
+        {
+          "phase": 0,
+          "packages": [
+            "S4",
+            "S9",
+            "S11",
+            "S5",
+            "S6"
+          ],
+          "gate": "Expanded \u00a714.4 spike: independent verification, custody, exact-byte approval, tenant isolation, correction/hard gate, tier routing, derivative round-trip",
+          "status": "acceptance_pending"
+        },
+        {
+          "phase": 1,
+          "packages": [
+            "S2",
+            "S4",
+            "S6"
+          ],
+          "gate": "Provenance end-to-end; seeded bad citation rejected",
+          "status": "queued"
+        },
+        {
+          "phase": 2,
+          "packages": [
+            "D4",
+            "S4",
+            "S6"
+          ],
+          "gate": "CSR cannot lock with unverified claims or blockers",
+          "status": "queued"
+        },
+        {
+          "phase": 3,
+          "packages": [
+            "S3",
+            "S4"
+          ],
+          "gate": "Exact fixture TLF; independent QC catches seeded cell change",
+          "status": "queued"
+        },
+        {
+          "phase": 4,
+          "packages": [
+            "S7",
+            "S12"
+          ],
+          "gate": "Exact CMC batch/stability tables; OOS flagged",
+          "status": "queued"
+        },
+        {
+          "phase": 5,
+          "packages": [
+            "S8",
+            "S3",
+            "S9"
+          ],
+          "gate": "QNS workflow; seeded site thresholds; reproducible reports",
+          "status": "queued"
+        },
+        {
+          "phase": 6,
+          "packages": [
+            "S6",
+            "S4",
+            "S9"
+          ],
+          "gate": "Effective templates/training; inspection export; scoped learning and cohort/promotion controls",
+          "status": "queued"
+        },
+        {
+          "phase": 7,
+          "packages": [
+            "S5",
+            "S10",
+            "S9"
+          ],
+          "gate": "Validated package/client grant/hash approval; ACK watch; sourced correspondence; clean-file readiness",
+          "status": "queued"
+        },
+        {
+          "phase": 8,
+          "packages": [
+            "D4",
+            "S2",
+            "S4",
+            "S5",
+            "S10"
+          ],
+          "gate": "Provenanced eSTAR/predicate/CER factory fixtures on proven spine",
+          "status": "queued"
+        }
+      ],
+      "deliverySlices": [
+        {
+          "name": "context_instruction_precedence",
+          "commit": "93b6f1a5",
+          "status": "component_verified",
+          "testsPassed": 3
+        },
+        {
+          "name": "correspondence_blocker_verdict",
+          "commit": "91dcd2ea",
+          "status": "component_verified",
+          "testsPassed": 37
+        },
+        {
+          "name": "connector_error_custody",
+          "commit": "1033d183",
+          "status": "component_verified",
+          "testsPassed": 40
+        },
+        {
+          "name": "selected_source_sensitivity_boundary",
+          "status": "component_verified",
+          "suitesPassed": 12,
+          "testsPassed": 238,
+          "scope": "selected Vault source classifications; complete classification and derivative routing pending",
+          "commit": "af8723e7"
+        },
+        {
+          "name": "shared_learning_containment",
+          "status": "component_verified",
+          "testsPassed": 31,
+          "scope": "unsafe sharing held; reviewed promotion not implemented",
+          "commit": "3ad2bb07"
+        },
+        {
+          "name": "agency_requirement_writer_tenant_policy",
+          "status": "component_verified",
+          "testsPassed": 11,
+          "scope": "writer-only agency requirements and no-policy runtime RLS quarantine of ownerless legacy failure_patterns; creator replay proved; reviewed promotion remains held",
+          "commit": "3ad2bb07"
+        },
+        {
+          "name": "independent_exact_quotation_check",
+          "status": "component_verified",
+          "suitesPassed": 5,
+          "testsPassed": 149,
+          "scope": "selected source spans match exactly; semantic claim support and full spike remain unassessed",
+          "commit": "c08aba5c"
+        },
+        {
+          "name": "fresh_vault_upload_sensitivity_default",
+          "status": "component_verified",
+          "scope": "fresh missing classification defaults to CONFIDENTIAL T2; check-in/retry classifications preserved; existing upload UI matches; historical classes unchanged",
+          "commit": "a717cfe4",
+          "testSuitesPassed": 7,
+          "testsPassed": 182
+        },
+        {
+          "name": "atomic_account_canon_fact_and_event",
+          "package": "F1",
+          "status": "implemented_component_verified",
+          "scope": "existing account-canon.ts mutation and immutable event commit or roll back together",
+          "commit": "852eb1287",
+          "testsPassed": 15
+        },
+        {
+          "name": "authority_account_recheck_after_archive",
+          "package": "F1",
+          "status": "implemented_component_verified",
+          "scope": "current org/gateway/environment authority fingerprint rechecked after archive awaits and immediately before transport; mode/sender/rotation/deletion changes refuse without fallback",
+          "commit": "026c0e96f",
+          "testsPassed": 54
+        },
+        {
+          "name": "sourced_mandatory_skill_policy_bindings",
+          "package": "S4",
+          "status": "implemented_component_verified",
+          "scope": "sourced mandatory approval rules in existing Skills store/runtime/UI; project-mandatory envelope only check_dossier_consistency, not every tool or complete RuleRecord runtime",
+          "commit": "4852aa78b",
+          "runtimeTestsPassed": 78,
+          "uiTestsPassed": 10
+        },
+        {
+          "name": "qualified_model_pin_capability",
+          "package": "S4",
+          "status": "implemented_component_verified",
+          "scope": "strict concrete registry/provider/version and task-scoped PQ reference/hash checked before dispatch and output release; no model substitution, unverified streaming or demo output; all actual entries remain pending",
+          "verification": {
+            "build": "passed",
+            "packagingChecksPassed": 8,
+            "plainNodePqClaims": {
+              "pending": 16,
+              "passed": 0
+            },
+            "consolidatedSuitesPassed": 28,
+            "consolidatedTestsPassed": 599,
+            "lintErrors": 0,
+            "netAddedLintWarnings": 0,
+            "committedSecrets": "passed",
+            "canonicalCompiler": {
+              "errors": 0,
+              "baseline": 0,
+              "publicationGate": "mandatory_pre_push"
+            }
+          },
+          "commit": "e6a7c391c"
+        },
+        {
+          "name": "client_administration_credential_vault",
+          "package": "S4",
+          "status": "implemented_component_verified",
+          "scope": "fourteen metadata-only cards: all nine existing credential-required connectors, three LLM providers and PRS/FDA portal storage-only; client-admin reauth, scoped encrypted grants, expiry/rotation/revoke/atomic audit, active standing rechecked after use audit, fresh tenant SDK/embedding authority with no platform fallback; upload actor pinned to authenticated session",
+          "commit": "e6a7c391c",
+          "verification": {
+            "consolidatedSuitesPassed": 28,
+            "consolidatedTestsPassed": 599,
+            "build": "passed",
+            "packagingChecksPassed": 8,
+            "lintErrors": 0,
+            "netAddedLintWarnings": 0,
+            "committedSecrets": "passed",
+            "canonicalCompiler": {
+              "errors": 0,
+              "baseline": 0,
+              "publicationGate": "mandatory_pre_push"
+            },
+            "credentialCompatibilityTestsPassed": 51,
+            "administrationTestsPassed": 22
+          },
+          "commits": [
+            "e6a7c391c",
+            "5992db35e"
+          ]
+        },
+        {
+          "name": "agency_credential_reason_redaction",
+          "package": "F1",
+          "status": "implemented_component_verified",
+          "commit": "1458f32d3",
+          "scope": "new and prior held secrets, including multiline variants, removed from stored gateway account reasons and the same safe writer reason used in chained audit; unreadable prior credentials can still be cleared safely",
+          "serviceTestsPassed": 21,
+          "routeTestsPassed": 8
+        },
+        {
+          "name": "qualification_tenant_binding_all_phases",
+          "package": "F1",
+          "status": "implemented_component_verified",
+          "scope": "One verified tenant/programme and placement authority governs generation, extraction, IA and RAG qualification phases before any provider call.",
+          "commit": "e464ee0ce",
+          "verification": {
+            "componentTestsPassed": 107
+          }
+        },
+        {
+          "name": "correspondence_evidence_and_reviewed_blocker_lifecycle",
+          "package": "F1",
+          "status": "implemented_component_verified",
+          "scope": "Matched source spans/digest and server human review attribution; only current confirmed objective issues open publish blockers; reject/resolve cleans only associated blockers transactionally.",
+          "commit": "649303b43",
+          "verification": {
+            "componentSuitesPassed": 11,
+            "componentTestsPassed": 228,
+            "explicitSkippedCases": 7
+          }
+        },
+        {
+          "name": "governed_evidence_verification_invalidation",
+          "package": "F1",
+          "status": "implemented_component_verified",
+          "scope": "Strict attributable evidence review bound to exact material-content hash; material edits invalidate verification and audit atomically.",
+          "commit": "649303b43",
+          "verification": {
+            "componentTestsPassed": 42
+          }
+        },
+        {
+          "name": "tenant_derivative_custody_dispatch_roundtrip",
+          "package": "S4",
+          "status": "implementation_in_progress",
+          "scope": "Extend existing crypto/storage/settings/policy/gateway/drafting/Admin files: explicit-span minimal derivative, tenant KMS AES-GCM custody, reauthenticated exact-payload attestation, current policy/source/actor admission, nonstream derivative-only dispatch and deterministic local token reinjection verification. Raw T3 remains local; no fabricated model PQ or custody deployment evidence."
+        },
+        {
+          "name": "actual_correction_to_scoped_rule_lifecycle",
+          "package": "S4",
+          "status": "implemented_component_verified",
+          "scope": "Actual human correction source audit and versioned tenant/project rule lifecycle, mandatory hard gates, explicit conflicts, supersession and visible human controls; no private-user rule without owner isolation.",
+          "commit": "b8cee0745",
+          "verification": {
+            "runtimeSuitesPassed": 8,
+            "runtimeTestsPassed": 161,
+            "uiTestsPassed": 37,
+            "nativeNextTaskPromptAssembly": "passed; no semantic model inference asserted"
+          }
+        },
+        {
+          "name": "durable_independent_checks_before_authoring_release",
+          "package": "S4",
+          "status": "implemented_component_verified",
+          "scope": "Immutable AnA genesis requires current content/source-bound deterministic checker receipt and assigned-human disposition before freeze/sign/workflow release; existing authoring ledger and review UI, no mutable provenance authority.",
+          "commit": "e464ee0ce",
+          "verification": {
+            "canonicalAndMountedAuthoringTestsPassed": 120,
+            "sourceAndEmptyRefusalRegressionsPassed": 3,
+            "reviewUiBrowserChecksPassed": 7,
+            "checkerVersion": "saved-record-independent-v2"
+          }
+        },
+        {
+          "name": "derivative_to_existing_editor_generation_provenance",
+          "package": "S4",
+          "status": "implemented_component_verified",
+          "scope": "Existing draft_authoring_document accepts approved derivative reference only; actual nested generation ledger/hash/served identity verifies inside canonical authoring create transaction before linking draft to editor, not parent-model attribution.",
+          "commit": "e464ee0ce",
+          "verification": {
+            "reachTestsPassed": 128,
+            "sharedSaveRegressionTestsPassed": 4,
+            "boundary": "synthetic immutable transport premise in canonical-save fixture; private gateway minting tested separately"
+          }
+        },
+        {
+          "name": "private_profile_database_owner_wall",
+          "package": "F1",
+          "status": "implemented_component_verified",
+          "scope": "Repair existing private intelligence and relational profile creators with restrictive owner-and-tenant RLS and verified request account stamping/clearing; real non-bypass PostgreSQL proof before private RuleRecord writes.",
+          "commit": "fd0421456",
+          "verification": {
+            "targetedTestsPassed": 167,
+            "canonicalMigrationsPerReplay": 462,
+            "canonicalReplaysPassed": 2,
+            "nativeExistingRlsTestsPassed": 49,
+            "runtimeRole": "NOSUPERUSER NOBYPASSRLS; FORCE RLS; no private CRUD yet"
+          }
+        },
+        {
+          "name": "source_authority_across_parent_child_and_embedding",
+          "package": "S4",
+          "status": "implemented_component_verified",
+          "scope": "Private runtime source authority accumulates persisted classification across parent and child reads and rechecks exact current source after credential awaits; unknown history remains T3 and public JSON cannot lower it.",
+          "commit": "e464ee0ce",
+          "verification": {
+            "focusedSuitesPassed": 4,
+            "focusedTestsPassed": 78,
+            "actualArtifactParentTestsPassed": 36,
+            "scope": "actual Vault/artifact readers plus selected-source checkpoints; other history conservatively unassessed T3"
+          }
+        },
+        {
+          "name": "alignment_digest_and_attributable_system_repair_tasks",
+          "package": "S4",
+          "status": "implemented_component_verified",
+          "scope": "Existing digest heartbeat and scheduler consume verified rule versions, deliver content-minimal communications and create idempotent explicitly system-attributed review tasks plus atomic chained audit; no fabricated human and no automatic repair closure.",
+          "commit": "e464ee0ce",
+          "verification": {
+            "digestAndUnchangedTaskAuditSuitesPassed": 7,
+            "testsPassed": 111,
+            "boundary": "tenant/project verified rule versions only; private alignment remains separate"
+          }
+        },
+        {
+          "name": "subagent_team_view_and_measured_progress",
+          "package": "S4",
+          "status": "implemented_component_verified",
+          "scope": "Default-off toggle in existing conversation UI; worker assignment/status, measured milestone progress and qualified time estimate when available, AnA assessment and project-objective connection; hidden view does not stop execution or recording.",
+          "commit": "a2f9264a5",
+          "verification": {
+            "browserChecksPassed": 18,
+            "uiComponentTestsPassed": 121,
+            "boundary": "Actual durable service fixtures and authenticated HTTP; no live qualified provider execution."
+          }
+        },
+        {
+          "name": "immutable_scoped_peer_coordination",
+          "package": "S4",
+          "status": "implemented_component_verified",
+          "scope": "Same-project authorized peers share a scoped board and bounded messages; append-only assignment/message/proposal/decision/revision/disposition authority is durable before broadcast, idempotent and reconstructable. Lossy live mirror is only a projection; workers cannot waive verification/sign/transmit gates.",
+          "commit": "a2f9264a5",
+          "verification": {
+            "runtimeTestsPassed": 20,
+            "privateNativeFixtureTestsPassed": 34,
+            "sdkBoundaryTestsPassed": 24,
+            "boundary": "Actual SQL/AES and registered workers with scripted transport, plus separate actual SDK payload seam; no live PQ claim."
+          }
+        },
+        {
+          "name": "project_objective_monitor_and_orchestration",
+          "package": "S4",
+          "status": "implemented_component_verified",
+          "scope": "Reconcile existing project objectives, task dependencies, evidence, authoring review and filing gates across runs for CSR/CTD/IND/registrations; distinguish task completion from verified content and filing release, surface blockers and human decisions.",
+          "commit": "a2f9264a5",
+          "verification": {
+            "focusedTestsPassed": 158,
+            "boundary": "Canonical charter/task/dependency head binding and bounded non-authorizing filing observation; final release always checks current canonical gates."
+          }
+        },
+        {
+          "name": "legacy_global_wisdom_quarantine",
+          "package": "F1",
+          "status": "implemented_component_verified",
+          "scope": "e464ee0ce holds every unreviewed global wisdom promotion/read/reinforcement path and quarantines historical rows with FORCE RLS/no policies; 59 focused tests, canonical 462/462 replay and native runtime on/off/unset switch denial pass. Tenant-local learning remains."
+        },
+        {
+          "name": "private_user_rule_lifecycle",
+          "package": "S4",
+          "status": "implemented_component_verified",
+          "scope": "Owner-protected private profile subtree, actual private correction sources and hash-only shared audit, expected-version human lifecycle, project>tenant>user precedence with hard gates at every scope; existing user-profile API and What AnA remembers drawer, including private prompt/record/peer isolation.",
+          "commit": "a2f9264a5",
+          "verification": {
+            "nativeOwnerProfileTestsPassed": 30,
+            "genericContextOmissionTestsPassed": 11,
+            "browserChecksPassed": 10,
+            "uiAndTelemetryTestsPassed": 45,
+            "latestKeyRotationTestsPassed": 34,
+            "boundary": "Protected turns only; current owner/source/key/capture required; automatic private reflection held; no retroactive cleanup claim for immutable pre-boundary legacy records."
+          }
+        },
+        {
+          "name": "reviewed_aggregate_pattern_contribution",
+          "package": "S4",
+          "status": "implemented_component_verified",
+          "scope": "Extend existing contribution setting, append-only tenant-local class/count events and QMS exact-artifact signature/version controls. Enum-only aggregate candidates require server cohort and current opt-in; no free text, source values, reversible maps or historical wisdom bypass. Existing quarantines stay closed.",
+          "commit": "a2f9264a5",
+          "verification": {
+            "focusedTestsPassed": 260,
+            "nativeQmsTestsPassed": 16,
+            "postDeployRlsTestsPassed": 49,
+            "boundary": "Closed-vocabulary class/count cohorts, actual human QMS exact-artifact review, explicit tenant installation; legacy raw wisdom remains quarantined. No formal DP claim."
+          }
+        }
+      ],
+      "hardDependencies": [
+        {
+          "name": "qualified_local_model",
+          "status": "unresolved",
+          "evidence": "server/services/ai-governance/approved-models.ts local-default remains a placeholder without pinned weights, high-risk approval or passed PQ"
+        },
+        {
+          "name": "approved_reversible_derivative_pipeline",
+          "status": "deployment_evidence_required",
+          "evidence": "Explicit-span tenant-KMS custody, exact-payload human attestation, private derivative dispatch and deterministic reinjection implemented with synthetic boundary tests. Actual customer key grants/locality, real provider PQ and deployed acceptance remain unproven."
+        },
+        {
+          "name": "expanded_spike",
+          "status": "acceptance_pending",
+          "evidence": "No full \u00a714.4 + \u00a7\u00a719/23/26 fixture pass; component tests do not enable downstream phases"
+        }
+      ],
+      "userDirections": [
+        {
+          "date": "2026-11-06",
+          "instruction": "We need the ability to have pinned to qualified models, not placeholders.",
+          "implementation": "Strict concrete provider/model pin and actual task-scoped PQ evidence verification; no fabricated qualification."
+        },
+        {
+          "date": "2026-11-06",
+          "instruction": "Client Administration secure vault cards for external account credentials and client-owned Claude, OpenAI and Kimi API keys.",
+          "implementation": "Extend existing encrypted connector and gateway account stores; admin reauthentication, scoped grants, expiry/rotation/revocation, write-only capture and tenant-specific deterministic SDK use."
+        },
+        {
+          "date": "2026-11-06",
+          "instruction": "You have a significant amount of work to do still. Make sure all the work that you have done is pushed onto the canonical branch and then get back to the work that you need to do and finish.",
+          "implementation": "Prior release verified as ancestor of canonical head; continue independent executable controls and complete real product wiring while preserving separate model/deployment qualification requirements."
+        },
+        {
+          "date": "2026-11-06",
+          "instruction": "Show sub-agent work and progress subtly in the user interface, with AnA as player-coach and central project manager.",
+          "implementation": "Extend existing project/run/task/timeline/audit and conversation controls; no new source files or parallel product surface. Source checks and human/independent gates address fallible model proposals; zero-hallucination guarantees are not asserted."
+        },
+        {
+          "date": "2026-11-06",
+          "instruction": "Sub-agents must know peer progress and communicate within the team; regulatory decisions, choices and records must be immutable.",
+          "implementation": "Extend existing project/run/task/timeline/audit and conversation controls; no new source files or parallel product surface. Source checks and human/independent gates address fallible model proposals; zero-hallucination guarantees are not asserted."
+        },
+        {
+          "date": "2026-11-06",
+          "instruction": "The team view must toggle off and on, default off, with an expected time to completion when supported.",
+          "implementation": "Extend existing project/run/task/timeline/audit and conversation controls; no new source files or parallel product surface. Source checks and human/independent gates address fallible model proposals; zero-hallucination guarantees are not asserted."
+        },
+        {
+          "date": "2026-11-06",
+          "instruction": "AnA must continuously monitor and orchestrate the whole project and its objectives across workstreams for CTD, CSR, IND and registrations.",
+          "implementation": "Extend existing project/run/task/timeline/audit and conversation controls; no new source files or parallel product surface. Source checks and human/independent gates address fallible model proposals; zero-hallucination guarantees are not asserted."
+        }
+      ],
+      "continuationPublicationVerification": {
+        "consolidatedSuitesPassed": 54,
+        "consolidatedTestsPassed": 1195,
+        "productionBuild": "passed",
+        "packagingChecksPassed": 8,
+        "packagedRegistryPending": 16,
+        "packagedRegistryPassed": 0,
+        "lintErrors": 0,
+        "netLintWarningChange": -14,
+        "committedSecrets": "passed",
+        "compiler": {
+          "errors": 0,
+          "baseline": 0,
+          "mode": "canonical_full_program_incremental",
+          "mergedTree": "d516901b9 plus documentation-only P-104 continuation"
+        },
+        "nativeExistingRlsTestsPassed": 49,
+        "nativePrivateOwnerAndPoolTestsPassed": 19,
+        "browserChecksPassed": 22,
+        "nativeBrowserControlsPassed": 9,
+        "countsOverlap": "Component and consolidated counts are not additive."
+      }
+    }
+  ]
+}

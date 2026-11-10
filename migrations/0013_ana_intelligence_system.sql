@@ -6,7 +6,7 @@
 --   2. ana_outcome_log — Success/failure tracking for compounding intelligence
 --   3. ana_project_capabilities — Per-project capability tracking
 --   4. user_intelligence_profiles — Per-user context (User.md / CLAUDE.local.md)
---   5. ana_platform_wisdom — Cross-client anonymized wisdom (Level 1 intelligence)
+--   5. ana_platform_wisdom — Quarantined legacy global wisdom; no runtime sharing
 --   6. ana_scoped_rules — Path-scoped rules for smart context loading
 --   7. ana_client_objectives — Company + project objectives tracking
 --
@@ -138,6 +138,58 @@ CREATE TABLE IF NOT EXISTS user_intelligence_profiles (
 
 CREATE INDEX IF NOT EXISTS user_intel_profiles_org_idx ON user_intelligence_profiles(organization_id);
 
+-- CREATE TABLE does not reconcile a pre-existing substrate's missing unique
+-- identity. Both the ordinary profile upsert and private rule row lock require
+-- exactly one row per owner/organization. Preserve all data; duplicates require
+-- explicit reconciliation rather than selecting or deleting an arbitrary row.
+DO $private_identity$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_index i
+    WHERE i.indrelid='public.user_intelligence_profiles'::regclass
+      AND i.indisunique AND i.indisvalid AND i.indnkeyatts=2
+      AND i.indpred IS NULL AND i.indexprs IS NULL
+      AND ((pg_get_indexdef(i.indexrelid,1,true)='user_id' AND pg_get_indexdef(i.indexrelid,2,true)='organization_id')
+        OR (pg_get_indexdef(i.indexrelid,1,true)='organization_id' AND pg_get_indexdef(i.indexrelid,2,true)='user_id'))
+  ) THEN
+    CREATE UNIQUE INDEX user_intel_profiles_user_org_idx
+      ON public.user_intelligence_profiles(user_id,organization_id);
+  END IF;
+END
+$private_identity$;
+
+-- Private per-account context: tenant membership and platform role never admit
+-- another owner's profile. Restrictive policy ANDs with every permissive policy,
+-- including later generic tenant policies. The canonical deploy replays this
+-- creator, so ENABLE/FORCE and expressions converge on existing installations.
+ALTER TABLE public.user_intelligence_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_intelligence_profiles FORCE ROW LEVEL SECURITY;
+DO $private_owner$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polrelid = 'public.user_intelligence_profiles'::regclass AND polname = 'user_intelligence_profiles_owner_boundary') THEN
+    CREATE POLICY user_intelligence_profiles_owner_boundary ON public.user_intelligence_profiles
+      AS RESTRICTIVE FOR ALL TO PUBLIC
+      USING (organization_id = NULLIF(current_setting('app.current_tenant_id', true), '')::integer AND user_id = NULLIF(current_setting('app.current_account_id', true), '')::integer)
+      WITH CHECK (organization_id = NULLIF(current_setting('app.current_tenant_id', true), '')::integer AND user_id = NULLIF(current_setting('app.current_account_id', true), '')::integer);
+  END IF;
+  IF EXISTS (SELECT 1 FROM pg_policy WHERE polrelid = 'public.user_intelligence_profiles'::regclass AND polname = 'user_intelligence_profiles_owner_boundary' AND polpermissive) THEN
+    RAISE EXCEPTION 'Private profile owner boundary must be restrictive';
+  END IF;
+  ALTER POLICY user_intelligence_profiles_owner_boundary ON public.user_intelligence_profiles TO PUBLIC
+    USING (organization_id = NULLIF(current_setting('app.current_tenant_id', true), '')::integer AND user_id = NULLIF(current_setting('app.current_account_id', true), '')::integer)
+    WITH CHECK (organization_id = NULLIF(current_setting('app.current_tenant_id', true), '')::integer AND user_id = NULLIF(current_setting('app.current_account_id', true), '')::integer);
+  -- A matching owner can use the table even before the generic RLS sweep.
+  IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polrelid = 'public.user_intelligence_profiles'::regclass AND polname = 'user_intelligence_profiles_owner_access') THEN
+    CREATE POLICY user_intelligence_profiles_owner_access ON public.user_intelligence_profiles FOR ALL TO PUBLIC
+      USING (organization_id = NULLIF(current_setting('app.current_tenant_id', true), '')::integer AND user_id = NULLIF(current_setting('app.current_account_id', true), '')::integer)
+      WITH CHECK (organization_id = NULLIF(current_setting('app.current_tenant_id', true), '')::integer AND user_id = NULLIF(current_setting('app.current_account_id', true), '')::integer);
+  END IF;
+  ALTER POLICY user_intelligence_profiles_owner_access ON public.user_intelligence_profiles TO PUBLIC
+    USING (organization_id = NULLIF(current_setting('app.current_tenant_id', true), '')::integer AND user_id = NULLIF(current_setting('app.current_account_id', true), '')::integer)
+    WITH CHECK (organization_id = NULLIF(current_setting('app.current_tenant_id', true), '')::integer AND user_id = NULLIF(current_setting('app.current_account_id', true), '')::integer);
+END
+$private_owner$;
+
 -- ============================================================
 -- 5. ANA PLATFORM WISDOM
 -- ============================================================
@@ -161,6 +213,14 @@ CREATE TABLE IF NOT EXISTS ana_platform_wisdom (
   created_at TIMESTAMP NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
+
+-- Historical global rows may encode tenant-specific free-text dimensions.
+-- Counts and is_active never attest de-identification or named QMS approval.
+-- No runtime policies: FORCE RLS quarantines reads and writes, including when
+-- tenant enforcement is disabled or a platform role string is supplied. Only
+-- privileged maintenance retains access; no legacy row is automatically cleared.
+ALTER TABLE public.ana_platform_wisdom ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ana_platform_wisdom FORCE ROW LEVEL SECURITY;
 
 CREATE INDEX IF NOT EXISTS ana_wisdom_category_idx ON ana_platform_wisdom(category);
 CREATE INDEX IF NOT EXISTS ana_wisdom_regulatory_idx ON ana_platform_wisdom(regulatory_body);

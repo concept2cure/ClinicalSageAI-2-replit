@@ -1,0 +1,42 @@
+{
+  "success": true,
+  "data": {
+    "version": 1,
+    "docId": "e4518a32-5216-4a8a-b34b-f495cbe79fc3",
+    "programId": "6c89e2c1-2d76-4356-80cb-001821956b5a",
+    "record": {
+      "eventId": "f610c42c-4167-4ada-8305-b0af9a4231a6",
+      "recordedAt": "2026-11-06T20:05:37.241Z",
+      "manifest": {
+        "version": 1,
+        "programId": "6c89e2c1-2d76-4356-80cb-001821956b5a",
+        "fingerprint": "d1d66350b1832f5295d0454f5547310ce73ee9115be2884c8f124d05193d7983",
+        "entries": [
+          {
+            "source": {
+              "kind": "data-room",
+              "sourceId": 159,
+              "expectedChecksum": "cb3256f5b1f7f527b352681a9aa5e461dec18067743122ff06228ab2966a1c33"
+            },
+            "title": "Nonconformance: NC-PROJECT-QUALITY-20261106",
+            "contentHash": "cb3256f5b1f7f527b352681a9aa5e461dec18067743122ff06228ab2966a1c33",
+            "extractedTextSha256": "cb3256f5b1f7f527b352681a9aa5e461dec18067743122ff06228ab2966a1c33",
+            "version": null,
+            "disposition": null,
+            "originalFileAvailable": false,
+            "span": {
+              "start": 0,
+              "end": 866,
+              "totalChars": 866,
+              "sha256": "cb3256f5b1f7f527b352681a9aa5e461dec18067743122ff06228ab2966a1c33"
+            }
+          }
+        ],
+        "limitations": [
+          "Selected references record assembly intent, not citation support, model consumption, scientific qualification or filing approval.",
+          "Eligible extracted data was retained for a source whose original file is unavailable."
+        ]
+      }
+    }
+  }
+}

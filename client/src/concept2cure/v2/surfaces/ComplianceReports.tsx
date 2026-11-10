@@ -27,6 +27,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { apiCall, apiErrorText } from '../apiCall';
 import { EmptyState, ErrorState } from '../dataConnect';
+import { getSurfaceMeta } from '../registryModel';
 import { parseReportData } from './complianceReportData';
 import {
   INTEGRITY_REPORT_ID, UNREADABLE_RESULT,
@@ -44,7 +45,7 @@ const CATALOG_PATH = '/api/audit/reports';
 const muted: React.CSSProperties = { fontSize: 12, color: 'var(--text-400)' };
 const tagStyle: React.CSSProperties = {
   display: 'inline-block', fontSize: 10.5, padding: '1px 7px', borderRadius: 999,
-  border: '1px solid var(--border)', color: 'var(--text-300)', whiteSpace: 'nowrap',
+  border: '1px solid var(--border)', color: 'var(--text-300)', maxWidth: '100%', overflowWrap: 'anywhere',
 };
 const noticeStyle: React.CSSProperties = {
   display: 'flex', gap: 8, alignItems: 'flex-start', padding: '10px 12px', margin: '0 0 14px',
@@ -139,15 +140,19 @@ export function ComplianceReports({ onNav }: SurfaceViewProps) {
   usePublishSurfaceContext('compliance-reports', anaContext);
 
   return (
-    <div className="page-inner">
-      <div className="ph">
+    <div className="page-inner" data-work-area="compliance-reports">
+      {/* The work area's back link (D7 §D.4 step 9): these reports are reached
+          from Reporting & analytics, and the way back names it. It replaces the
+          "Reporting & analytics" eyebrow, which named the place without going
+          there. */}
+      {onNav && <button type="button" className="pj-back" onClick={() => onNav('insights')}>{I.left} {getSurfaceMeta('insights').label}</button>}
+      <header className="ph">
         <div>
-          <div className="ph-eyebrow">Reporting & analytics</div>
-          <h1 className="ph-title">Audit & compliance reports</h1>
-          <div className="ph-sub">Deterministic reports drawn from the organisation's own records, sealed and recorded on the audit trail when run.</div>
+          <h1 className="ph-title">{getSurfaceMeta('compliance-reports').label}</h1>
+          <p className="ph-sub">Deterministic reports drawn from the organisation's own records, sealed and recorded on the audit trail when run.</p>
         </div>
-        {onNav && <button type="button" className="btn ghost small" onClick={() => onNav('setup')}>Company letterhead &amp; legal documents</button>}
-      </div>
+        {onNav && <div className="ph-acts"><button type="button" className="btn ghost" onClick={() => onNav('setup')}>Company letterhead &amp; legal documents</button></div>}
+      </header>
       {st.state === 'loading' && <EmptyState busy icon={I.scroll} title="Loading the report catalog…" />}
       {st.state === 'error' && (
         <ErrorState title="Couldn’t load the report catalog" message={st.message} retry={() => void load()} />

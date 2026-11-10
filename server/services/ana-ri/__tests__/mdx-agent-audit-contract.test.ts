@@ -174,7 +174,8 @@ import {
 import {
   predicateCandidateSetStatus,
   seMatrixPatch,
-  correspondenceIngest,
+  MDX_COMMAND_HANDLERS_PHASE3,
+  MDX_COMMAND_METADATA_PHASE3,
 } from '../mdx-command-handlers-phase3';
 import {
   postMarketDocumentUpdate,
@@ -332,25 +333,6 @@ const PROBES: Probe[] = [
     },
   },
   {
-    tool: 'correspondence.ingest',
-    expectedAction: 'agent.ana.correspondence.ingest',
-    invoke: () => {
-      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-        ok: true,
-        status: 201,
-        json: async () => ({ data: { id: 'corr-1' }, issues: [], downstreamActions: [] }),
-      }));
-      process.env.ANA_SERVICE_TOKEN = 'test-svc';
-      return correspondenceIngest(CTX, {
-        ...yes,
-        projectId: 99,
-        submissionId: 'K251102',
-        subject: 'FDA AI letter',
-        summary: 'received today; please ingest the attached letter',
-      });
-    },
-  },
-  {
     tool: 'post_market.document.update',
     expectedAction: 'agent.ana.post_market.document.update',
     invoke: () =>
@@ -456,3 +438,11 @@ describe('AnA-MDX audit contract — every tool emits one agent.ana.* audit row'
     );
   });
 });
+
+describe('correspondence.ingest is retired (P-39 step 3, 2026-10-30)', () => {
+  it('is neither a handler nor a command AnA is offered: a person records the letter in the project inbox', () => {
+    expect(Object.keys(MDX_COMMAND_HANDLERS_PHASE3)).not.toContain('correspondence.ingest');
+    expect(MDX_COMMAND_METADATA_PHASE3.map((m) => m.name)).not.toContain('correspondence.ingest');
+  });
+});
+

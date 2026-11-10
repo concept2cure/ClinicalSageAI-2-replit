@@ -1,0 +1,19 @@
+# railLicenseGating.test.tsx: red at HEAD for a reason outside D1-1 (its mountRail waits on toHaveBeenCalledWith('GET', NAV_URL) with two arguments; apiRequest is now called with four). To show D1-1's one-line change to it (line 247) is right, the suite was run on a scratch copy of the working tree with ONLY that wait relaxed to 'some call is GET NAV_URL' (scratch-only, not in the tree).
+# 1) with D1-1's query (.rail-scroll .rail-nav): exit 0
+railLicenseGating.test.tsx > Rail licence gating > renders no lock at all when the navigation fetch fails
+railLicenseGating.test.tsx > Rail licence gating > renders no lock when the server answers resolved:false
+railLicenseGating.test.tsx > Rail licence gating > locks a tier-gated module, keeps it activatable, and routes to plans
+railLicenseGating.test.tsx > Rail licence gating > leaves an entitled module completely alone
+railLicenseGating.test.tsx > Rail licence gating > shows no locks for the master-admin owner grant
+railLicenseGating.test.tsx > Rail licence gating > never locks a destination the catalog has no row for
+railLicenseGating.test.tsx > Rail licence gating > states the real reason for a tier lock in the accessible name
+railLicenseGating.test.tsx > Rail licence gating > states the real reason for a disabled lock in the accessible name
+railLicenseGating.test.tsx > Rail licence gating > states the real reason for a industry lock in the accessible name
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+
+# 2) with HEAD's query (.rail-nav) on D1-1's sources, -t 'never locks a destination': exit 1 — the first .rail-nav is now the actions group
+railLicenseGating.test.tsx > Rail licence gating > never locks a destination the catalog has no row for
+   → Unable to find an accessible element with the role "button" and name "Home"
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 skipped (9)

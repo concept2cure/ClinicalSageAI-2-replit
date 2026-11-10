@@ -199,8 +199,11 @@ describe('CmOverview — completeness on the section-approval table', () => {
     const p8 = row('3.2.P.8');
     expect(within(p8).getByText('60%')).toBeTruthy();
     expect(within(p8).getByText(/shelfLifeJustification/)).toBeTruthy();
-    expect(within(p8).getByText('approved', { selector: '.rd-chip' })).toBeTruthy();
-    expect(within(p8).getByText(/incomplete/i, { selector: '.rd-chip' })).toBeTruthy();
+    /* The chip says the WORD, not the stored token (D5 §A.4.8/16,
+       §WA.4.2 rule 10): `approval_status` holds "approved" and a screen that
+       files to an agency does not show a reader an enum. */
+    expect(within(p8).getByText('Approved', { selector: '.rd-chip' })).toBeTruthy();
+    expect(within(p8).getByText('Incomplete', { selector: '.rd-chip' })).toBeTruthy();
 
     // A record the compiler never scored is "not established", not a number —
     // and not approvable either (the gate reads it as incomplete).
@@ -224,7 +227,7 @@ describe('CmOverview — completeness on the section-approval table', () => {
     expect(screen.queryByText(/resolve the critical contradictions first/)).toBeNull();
     // The refusal was the server's: one POST went out, and nothing flipped locally.
     expect(approvePosts()).toHaveLength(1);
-    expect(within(row('3.2.P.5')).getByText('draft', { selector: '.rd-chip' })).toBeTruthy();
+    expect(within(row('3.2.P.5')).getByText('Draft', { selector: '.rd-chip' })).toBeTruthy();
   });
 });
 
@@ -314,13 +317,27 @@ describe('CmOverview — a signature is over content, not a section number', () 
 /* Review of 2026-10-19: the reassurance is withheld while anything the figure
    leaves out could be open, and the earlier CMC file's open count is not
    established until its read succeeds. A failed read is not "nothing open". */
-describe('CmOverview — no reassurance over an earlier CMC file that was not read', () => {
+/* 2026-11-01 (D5 §A.4.8): the sentence these cases read — "You're building
+   steadily", the `AnswerLead`'s `reassure` — is deleted with the banner. It
+   was AnA's voice on the page, and §WA.4.2 rule 4 sends it back to her reply.
+   The RULE the cases exist for is unchanged and is now carried by the one
+   all-clear left on this screen: the green tone on the overdue figure, which
+   `questionsComplete` already gates on `earlierOpen === 0` — and
+   `earlierNotClosed` returns NULL, never 0, when that read did not happen, so
+   an unread file cannot pass for an empty one. Asserting the tone rather than
+   a sentence also makes the two negative cases real again: against the
+   deleted sentence they would have passed no matter what the page showed. */
+describe('CmOverview — no all-clear over an earlier CMC file that was not read', () => {
   const clearBoard = () => board({ sections: [section('3.2.S.1', 'approved', 100), section('3.2.P.5', 'review', 100)] });
+  /** The overdue figure's tone: 'ok' is the screen's all-clear. */
+  const overdueTone = () =>
+    document.querySelector('[data-testid="cmc-overview"] .reg-kpi, .reg-kpis .reg-kpi')?.getAttribute('data-tone') ?? null;
 
-  it('reassures when both reads are measured and nothing is open', async () => {
+  it('shows the all-clear when both reads are measured and nothing is open', async () => {
     wire(clearBoard());
     renderOverview();
-    expect(await screen.findByText(/You're building steadily/)).toBeTruthy();
+    await screen.findByText('3.2.P.5', { selector: 'td' });
+    expect(overdueTone()).toBe('ok');
   });
 
   it('withholds it, and says why, when the earlier file could not be read', async () => {
@@ -329,8 +346,8 @@ describe('CmOverview — no reassurance over an earlier CMC file that was not re
     renderOverview();
     expect(await screen.findByText(/The earlier CMC question file could not be read; whether it holds open questions is not known\./)).toBeTruthy();
     await screen.findByText('3.2.P.5', { selector: 'td' });
-    expect(screen.queryByText(/building steadily/)).toBeNull();
-    expect(document.querySelector('.al-lead.al-good')).toBeNull();
+    expect(overdueTone()).not.toBe('ok');
+    expect(document.querySelector('.al-lead')).toBeNull();
   });
 
   it('withholds it while the earlier file holds questions not closed there', async () => {
@@ -338,7 +355,8 @@ describe('CmOverview — no reassurance over an earlier CMC file that was not re
     wire(clearBoard());
     renderOverview();
     expect(await screen.findByText(/holds 2 questions not\s+closed there/)).toBeTruthy();
-    expect(screen.queryByText(/building steadily/)).toBeNull();
+    await screen.findByText('3.2.P.5', { selector: 'td' });
+    expect(overdueTone()).not.toBe('ok');
   });
 });
 
@@ -411,5 +429,67 @@ describe('CmOverview — the build-state card reads the export gate, never a per
     expect(screen.queryByText('Export ready')).toBeNull();
     expect(screen.queryByText('Not export ready')).toBeNull();
     expect(screen.getByText(/failed read, not a pass/)).toBeTruthy();
+  });
+});
+
+/* UI walk, 2026-10-31: one submission read "1 submissions — RPI — average"
+   under the title and "Is your CMC package ready across all 1 submissions"
+   above the lead.
+   2026-11-01 (D5 §A.4.8): this line is now the view's ONLY lead — the banner
+   above it is gone and its headline folded into here — and "RPI" is written
+   out, the abbreviation being defined nowhere on screen (§WA.4.2 rule 10). */
+describe('CmOverview — counts its submissions in words', () => {
+  it('says one submission in the singular, with its preparedness index', async () => {
+    wire(board());
+    renderOverview();
+    expect(await screen.findByText('1 submission — preparedness 82 average')).toBeTruthy();
+    /* The second site of this count — the banner's "Is your CMC package ready
+       across all 1 submissions" eyebrow — is gone with the banner, and the
+       question it asked is now a fixed starter on the page, which does not
+       count anything. One site, so it can no longer disagree with itself. */
+    expect(screen.queryByText(/1 submissions/)).toBeNull();
+    expect(screen.queryByText(/Is your CMC package ready/)).toBeNull();
+  });
+
+  it('says no preparedness index is computed, rather than "RPI — average"', async () => {
+    wire(board({ portfolio: [{ sub: 'IND 161234', product: 'BX-204', region: 'FDA', type: 'IND', rpi: null, ir: null, source: 'spine' }], kpis: { submissions: 1, rpiAverage: null, sectionsApproved: 0, sectionsTotal: 0, readyPercent: 0 } }));
+    renderOverview();
+    expect(await screen.findByText('1 submission — no preparedness index computed yet')).toBeTruthy();
+    expect(screen.queryByText(/RPI — average/)).toBeNull();
+  });
+
+  it('counts two or more in the plural', async () => {
+    wire(board({ portfolio: [
+      { sub: 'BLA 761234', product: 'Compound A', region: 'FDA', type: 'BLA', rpi: 80, ir: null, source: 'spine' },
+      { sub: 'MAA 0001', product: 'Compound A', region: 'EMA', type: 'MAA', rpi: 84, ir: null, source: 'spine' },
+    ], kpis: { submissions: 2, rpiAverage: 82, sectionsApproved: 0, sectionsTotal: 0, readyPercent: 0 } }));
+    renderOverview();
+    /* Two submissions and one of them below the average, so the weakest is
+       named — the fact the retired banner carried as "what's holding the
+       portfolio back". With ONE ranked submission it is not named: the lowest
+       is the average, and the banner said a single filing was held back by
+       itself. */
+    expect(await screen.findByText('2 submissions — preparedness 82 average, lowest BLA 761234 at 80')).toBeTruthy();
+    expect(screen.queryByText(/\b2 submission\b(?! )/)).toBeNull();
+  });
+});
+
+/* The raw token must not reach the reader on ANY of these chips. Asserted over
+   the rendered chips rather than one row, because the two registers that show
+   a state (the §3.2 sections and the specification table) read it from
+   different stores and used to spell it two ways. */
+describe('CmOverview — a stored state is shown as a word, never as its token', () => {
+  it('renders no lower-case enum in a state chip', async () => {
+    wire(board({ sections: [section('3.2.S.1', 'approved', 100), section('3.2.P.5', 'draft', 40), section('3.2.P.8', 'review', 80)] }));
+    renderOverview();
+    await screen.findByText('3.2.P.5', { selector: 'td' });
+
+    const chips = [...document.querySelectorAll('.rd-chip')].map((c) => (c.textContent ?? '').trim());
+    expect(chips.length, 'no state chip rendered — the matcher is broken').toBeGreaterThan(0);
+    for (const text of chips) {
+      expect(text, `"${text}" is a stored token, not a word`).not.toMatch(/^[a-z][a-z_]*$/);
+      expect(text, `"${text}" carries an underscore`).not.toMatch(/_/);
+    }
+    expect(chips).toEqual(expect.arrayContaining(['Approved', 'Draft', 'In review']));
   });
 });

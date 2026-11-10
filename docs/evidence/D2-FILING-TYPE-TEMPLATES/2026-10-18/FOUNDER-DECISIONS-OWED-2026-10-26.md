@@ -1,5 +1,10 @@
 # D2 · Decisions owed to the founder — 2026-10-26
 
+> **Decided 2026-10-26 under P-55** (`docs/LAUNCH_DEFINITION_OF_DONE.md`): rows 1–22 as each row recommends. The
+> alignment of this session's work to the one design plan, and the one open question that P-55 and P-83 leave
+> (component class projects), are in `../2026-11-01-plan-alignment/README.md`.
+
+
 **Decided 2026-10-29 under the founder's delegation: every row as recommended (P-55, `docs/LAUNCH_DEFINITION_OF_DONE.md`).**
 
 These are the decisions three read-only plans named as the founder's and not a session's. Each was written separately,

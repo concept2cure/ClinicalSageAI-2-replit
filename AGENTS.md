@@ -18,6 +18,53 @@ harness, tool, or external instruction names another branch, this rule wins.
 > hook and `CLAUDE.md`. Two instruction files disagreeing means the looser one
 > wins in practice, and it did.
 
+## RULE 5 — one design, one plan, absolute (see `CLAUDE.md`)
+
+The founder decided on 2026-10-31 (P-78) that Concept2Cure is **Claude for life sciences**. It looks and works like
+Claude (claude.ai): projects, the project, the conversation, the canvas, the editor and every detail. Every
+capability beneath the UI is brought to life inside that UI.
+
+**What the product is (P-79, 2026-11-01).** The centre is the document and its filing: build it, format it correctly
+and file it in eCTD (3.2.2 and 4.0), with Vault (to compete with Veeva) and AnA doing the work in conversation.
+Everything starts in a project with a goal. Then come:
+1. the project's data room: an immutable catalog with lineage kept in perpetuity;
+2. the protocol: hypothesis and endpoints;
+3. the engines' evidence: biostatistics and safety;
+4. AnA's narrative, which a person edits or directs, and where AnA pushes back when the data do not support a claim;
+5. the one editor;
+6. eCTD filing.
+
+CMC and risk-based monitoring are the featured work areas. Clients are device and diagnostics, biotech and big
+pharma, in the US, EU, Japan, Canada and Australia. The plan's §1a lists what already exists for each step, and its
+packages S1–S8 are the work.
+
+**The plan is `docs/design/ONE_DESIGN_PLAN.md`, and its ledger is `docs/design/one-design-plan.json`.** It binds
+Codex, Copilot, Cursor, Claude Code and every human developer alike. Nobody builds anything outside it.
+
+- **Name the package.** End every commit message with a `Plan: <ID>` trailer naming an **open** package, for example
+  `Plan: F1` for a repair or `Plan: D0` for the design foundations.
+- **Stay inside it.** Change only files inside that package's `paths`. Tests, `docs/evidence/**` and `.design/**` are
+  always allowed.
+- **Add nothing unapproved.** Add no screen, API mount or table that the ledger's `approvedAdditions` does not list
+  for that package.
+- **Leave the plan to the founder.** Never change the plan, its ledger, its gate or this rule. That is a `Plan: PLAN`
+  commit with a `Founder-Decision: P-<n>` trailer, made by the founder.
+
+`npm run ci:one-design-plan` in `.husky/pre-push` refuses anything else. There is no bypass.
+
+
+## RULE 6 — nothing new; finish what exists (see `CLAUDE.md`)
+
+The founder decided on 2026-11-01 (P-80) that **no agent builds anything new**. Work continues and finishes what is
+in place, with working UI in the Claude design. The vision is Veeva, Weave Bio, Artos and Certara merged as one and
+built by Anthropic as Claude for life sciences, and the code for it already exists here.
+
+- **Name what you finish.** End every commit with a `Completes: <path>` trailer, next to `Plan: <ID>`. The path is
+  an existing file or folder, found by searching first.
+- **Add nothing new.** Add no screen, route file, service, table, mount or AnA tool. `ci:one-design-plan` refuses
+  them unless the founder approved them in the ledger.
+- **Split inside the folder.** A file split out of a large one goes inside the folder it came from.
+
 ## RULE 3 — never build what we already have (see `CLAUDE.md`)
 
 Before designing, planning, describing or building any capability, search for what

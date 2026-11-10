@@ -1,0 +1,64 @@
+{
+ "api": [
+  {
+   "m": "POST",
+   "u": "/api/authoring/docs",
+   "s": 201,
+   "msg": "Document created successfully"
+  }
+ ],
+ "errors": [],
+ "planTitle": "What this filing needs",
+ "doors": [
+  "CV",
+  "All projects",
+  "Project settings",
+  "Plan",
+  "Evidence",
+  "Author",
+  "Review",
+  "Submit",
+  "Respond",
+  "See which PMA modules are written",
+  "Prepare a Pre-Sub for FDA",
+  "Build the risk file and design-control trace",
+  "Build the usability engineering file",
+  "Add this work’s sources on Evidence",
+  "Record the clinical studies behind this filing",
+  "Write this work’s documents on Author",
+  "Write the label and IFU",
+  "Export the PMA package",
+  "Answer the agency on Respond",
+  "Check each label’s UDI",
+  "Run post-market surveillance and CAPA",
+  "Refresh sharing",
+  "Grant sharing",
+  "See all tasks in Tasks",
+  "Biostatistics",
+  "See this project’s reports in Reporting & analytics"
+ ],
+ "assemblyDoorCandidates": [
+  "Export the PMA package"
+ ],
+ "assemblyUrl": "/concept2cure/device-pma?program=2393bb28-c5a9-4943-a6d6-cb83634d48f0",
+ "assemblyHeading": "",
+ "assemblyButtons": [
+  "Export PMA package (draft)",
+  "Generate official eSTAR (PDF)"
+ ],
+ "homeCopyOffered": 1,
+ "outlineCodes": [
+  "A",
+  "A.1",
+  "A.2",
+  "A.3",
+  "A.4",
+  "A.5",
+  "A.6",
+  "A.7",
+  "B",
+  "B.1",
+  "B.2",
+  "B.3"
+ ]
+}

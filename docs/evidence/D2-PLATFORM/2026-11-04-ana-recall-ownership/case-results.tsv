@@ -1,0 +1,38 @@
+case	baseline	patched
+completed project context is cached with objective and intelligence intact	pass	pass
+healthy empty organization context is cached as a successful empty result	pass	pass
+the existing sixty-second TTL expires without extending on reads	pass	pass
+missing organization still queries nothing	pass	pass
+organization and project scopes and different organizations do not share a result	pass	pass
+number and matching string keep the existing project-key equivalence	pass	pass
+normalized program reference still differs from its leading numeric characters	pass	pass
+overlapping reads for organization share one source recall	fail	pass
+overlapping reads for 42 share one source recall	fail	pass
+overlapping reads for 7abb1c22-1234-4abc-8def-0123456789ab share one source recall	fail	pass
+invalidating an in-flight client prevents retired text returning or caching	fail	pass
+invalidating an in-flight project prevents retired text returning or caching	fail	pass
+invalidating an in-flight objective prevents retired text returning or caching	fail	pass
+invalidating an in-flight wisdom prevents retired text returning or caching	fail	pass
+late client cannot replace a newer successful snapshot	fail	pass
+late project cannot replace a newer successful snapshot	fail	pass
+late objective cannot replace a newer successful snapshot	fail	pass
+invalidation during project resolution does not start dependent source reads	fail	pass
+two successive invalidations cannot revive either retired attempt	fail	pass
+an invalidated malformed source cannot delete the replacement cache	fail	pass
+failed replacement recall cannot make an older result current again	fail	pass
+explicit whitespace "   " never reuses warm organization recall	fail	pass
+explicit whitespace "\\t" never reuses warm organization recall	fail	pass
+explicit whitespace "\\n" never reuses warm organization recall	fail	pass
+a whitespace-project result cannot suppress later organization recall	fail	pass
+invalidating whitespace-project scope does not delete the organization snapshot	fail	pass
+omitted and existing empty-string sentinels still mean organization context	pass	pass
+invalidating one project leaves another project and organization snapshot intact	pass	pass
+organization-only invalidation preserves the existing project-specific semantics	pass	pass
+invalidation remains isolated between organizations with the same project reference	fail	pass
+cache size remains bounded to 200 completed entries	pass	pass
+evicted pending read cannot reinsert itself or evict a newer entry	fail	pass
+timeout keeps healthy context, clears the pending entry, and permits recovery	pass	pass
+the dependent recalls share the original three-second deadline	pass	pass
+invalidation of stalled recall preserves the deadline and withholds retired partial context	pass	pass
+malformed wisdom fails visibly without caching failure or logging raw source error details	fail	pass
+source rejection retains healthy project objective and is retried next turn	pass	pass

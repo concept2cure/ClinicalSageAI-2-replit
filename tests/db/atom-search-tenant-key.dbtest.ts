@@ -23,6 +23,12 @@
  * The cases drive the service the way every route now does: inside the tenant
  * scope the auth boundary opens, with the key from currentTenantOrgUuid.
  * Only the query embedding is stubbed; the model is not what is under test.
+ *
+ * Since F1 (2026-11-05) a search also names the projects it may rank
+ * (projectIds), so each tenant's atoms are artifact atoms of its fixture
+ * project, and every call carries a scope: the key refusals below are proved
+ * with a scope present, not by its absence
+ * (docs/evidence/F1/2026-11-05-evidence-retrieval-scope/).
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { getPool } from '../../server/db/runtime';
@@ -39,6 +45,7 @@ import {
   ORG_B,
   FIXTURE_ORGS,
   owner,
+  ids,
   provisionTwoTenantFixture,
   teardownTwoTenantFixture,
 } from './two-tenant-fixture';
@@ -54,13 +61,22 @@ function vec(cos: number): string {
 const QUERY = 'nephrotoxicity signal';
 const QUERY_VECTOR = JSON.parse(vec(1)) as number[];
 const uuidOf: Record<'A' | 'B', string> = { A: '', B: '' };
+const projectOf: Record<'A' | 'B', number> = { A: 0, B: 0 };
 
+/** An artifact of the tenant's fixture project, and its atom. */
 async function atom(org: number, k: number, cos: number, label: string) {
+  const projectId = projectOf[org === ORG_A ? 'A' : 'B'];
+  const artifactId = `${TAG}-tk-${label}-${k}`;
+  await owner.query(
+    `INSERT INTO concept2cure_artifacts (artifact_id, project_id, organization_id, type, category, title, content)
+     VALUES ($1,$2,$3,'document','clinical',$4,'fixture')`,
+    [artifactId, projectId, org, `${TAG} artifact ${label} ${k}`],
+  );
   await owner.query(
     `INSERT INTO lumen_data_atoms
        (organization_id, source_type, source_id, atom_type, title, content, status, embedding, created_at, updated_at)
-     VALUES ($1,'document',$2,'finding',$3,$4,'active',$5::vector, now(), now())`,
-    [org, `${TAG}-tk-${label}-${k}`, `${TAG} ${label} ${k}`, `${label}: a ${QUERY} in ${TAG}`, vec(cos)],
+     VALUES ($1,'artifact',$2,'finding',$3,$4,'active',$5::vector, now(), now())`,
+    [org, artifactId, `${TAG} ${label} ${k}`, `${label}: a ${QUERY} in ${TAG}`, vec(cos)],
   );
 }
 
@@ -105,6 +121,8 @@ beforeAll(async () => {
     [FIXTURE_ORGS],
   );
   for (const o of orgs.rows) uuidOf[o.id === ORG_A ? 'A' : 'B'] = o.uuid;
+  projectOf.A = Number(ids.A.projects);
+  projectOf.B = Number(ids.B.projects);
 
   // Tenant B's atoms score HIGHER than tenant A's, so any search that is not
   // held to tenant A surfaces B's first.
@@ -118,13 +136,16 @@ afterAll(async () => {
   vi.restoreAllMocks();
   if (owner) {
     await owner.query(`DELETE FROM lumen_data_atoms WHERE source_id LIKE $1`, [`${TAG}-tk-%`]);
+    await owner.query(`DELETE FROM concept2cure_artifacts WHERE artifact_id LIKE $1`, [`${TAG}-tk-%`]);
   }
   await teardownTwoTenantFixture();
 });
 
 describe("an atom search runs under the session's tenant key", () => {
   it('serves tenant A its own atoms (positive control)', async () => {
-    const rows = await asTenantA(() => service(getPool()).searchHybrid(QUERY, { limit: 5, organizationUuid: uuidOf.A }));
+    const rows = await asTenantA(() =>
+      service(getPool()).searchHybrid(QUERY, { limit: 5, organizationUuid: uuidOf.A, projectIds: [projectOf.A] }),
+    );
     expect(titles(rows).join('\n')).not.toMatch(/tenant-B/);
     expect(rows.length).toBeGreaterThan(0);
   });
@@ -134,7 +155,9 @@ describe("an atom search runs under the session's tenant key", () => {
     const calls = atomSearchCalls(pool as never);
     let out: unknown;
     try {
-      out = await asTenantA(() => service(pool).searchHybrid(QUERY, { limit: 5, organizationUuid: uuidOf.B }));
+      out = await asTenantA(() =>
+        service(pool).searchHybrid(QUERY, { limit: 5, organizationUuid: uuidOf.B, projectIds: [projectOf.B] }),
+      );
     } catch (err) {
       out = err;
     }
@@ -148,7 +171,9 @@ describe("an atom search runs under the session's tenant key", () => {
     const calls = atomSearchCalls(pool as never);
     let out: unknown;
     try {
-      out = await asTenantA(() => service(pool).searchHybrid(QUERY, { limit: 5, organizationUuid: undefined as never }));
+      out = await asTenantA(() =>
+        service(pool).searchHybrid(QUERY, { limit: 5, organizationUuid: undefined as never, projectIds: [projectOf.A] }),
+      );
     } catch (err) {
       out = err;
     }
@@ -165,7 +190,10 @@ describe("an atom search runs under the session's tenant key", () => {
   it('on that degraded path, a key naming another tenant is still refused', async () => {
     let out: unknown;
     try {
-      out = await asTenantA(() => service(getPool()).searchHybrid(QUERY, { limit: 5, organizationUuid: uuidOf.B }), null);
+      out = await asTenantA(
+        () => service(getPool()).searchHybrid(QUERY, { limit: 5, organizationUuid: uuidOf.B, projectIds: [projectOf.B] }),
+        null,
+      );
     } catch (err) {
       out = err;
     }
@@ -180,8 +208,11 @@ describe("an atom search runs under the session's tenant key", () => {
 
   it('outside any scope the key is the only boundary, and it holds on a connection RLS does not filter', async () => {
     // The owner connection bypasses RLS: only the query's own org filter stands
-    // between tenant A's key and tenant B's better-scoring atoms.
-    const rows = await service(owner as never).searchHybrid(QUERY, { limit: 10, organizationUuid: uuidOf.A });
+    // between tenant A's key and tenant B's better-scoring atoms, even with
+    // tenant B's project named in the scope.
+    const rows = await service(owner as never).searchHybrid(QUERY, {
+      limit: 10, organizationUuid: uuidOf.A, projectIds: [projectOf.A, projectOf.B],
+    });
     expect(titles(rows).join('\n')).not.toMatch(/tenant-B/);
     expect(rows.length).toBeGreaterThan(0);
   });

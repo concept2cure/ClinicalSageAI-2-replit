@@ -100,7 +100,12 @@ export function libraryDetail(
 
 export function orgSkillDto(r: OrgSkillRecord): OrgSkillDto {
   return {
+    ...(r.libraryReceipt ? { libraryReceipt: { schemaVersion: 1 as const, libraryVersionId: r.libraryReceipt.libraryVersionId,
+      artifactSha256: r.libraryReceipt.artifactSha256, signatureHash: r.libraryReceipt.signatureHash } } : {}),
     id: r.id,
+    policyBindings: r.policyBindings ?? [],
+    standingRule: r.standingRuleRecord ?? null,
+    sourceAuditEventId: r.sourceAuditEventId ?? null,
     bundleId: r.bundleId,
     key: orgSkillKey(r.bundleId),
     name: r.name,

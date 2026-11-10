@@ -9,7 +9,8 @@ import {
 export type AssignmentFailure = { kind: 'unavailable' | 'refused' | 'unconfirmed' | 'retired'; message: string };
 export type AssignmentRead = { kind: 'confirmed'; data: TaskAssignmentRoster } | AssignmentFailure;
 export type AssignmentWrite = { kind: 'confirmed'; data: TaskAssignmentResult } | AssignmentFailure;
-export type AutomaticAssignmentAnswer = { kind: 'confirmed'; assigneeId: number } | AssignmentFailure;
+/** `unchanged`: the route assigned nothing and refused nothing (an empty batch). */
+export type AutomaticAssignmentAnswer = { kind: 'confirmed'; assigneeId: number } | { kind: 'unchanged' } | AssignmentFailure;
 const object = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null;
 
 export function taskAssignmentHeaders(scope: TaskAssignmentScope, isCurrent: () => boolean): Record<string, string> | null {
@@ -86,8 +87,31 @@ export async function autoAssignSavedTask(meta: TaskAssignmentMeta, actorHeaders
 
 function automaticAnswer(body: unknown, taskId: string): AutomaticAssignmentAnswer {
   if (!object(body) || body.success !== true || !Array.isArray(body.data)) return failure('POST');
-  if (body.count === 0 && body.data.length === 0) return { kind: 'refused', message: 'The saved task was not assigned. Refresh assignment to check eligible members before retrying.' };
+  /* An empty batch is the route's answer when workload-balanced assignment chose
+     the member who already has the task (task-assignment.ts `mutate` returns
+     null for it), and equally when nobody could take it or it left the
+     assignable states meanwhile. It was reported as a refusal in all three, so
+     auto-assigning an already-assigned task read as a failure. It is not a
+     success either: the caller re-reads the assignment to say which it was. */
+  if (body.count === 0 && body.data.length === 0) return { kind: 'unchanged' };
   const row = body.data[0];
   return body.count === 1 && body.data.length === 1 && object(row) && row.taskId === taskId && taskAssignmentId(row.assigneeId)
     ? { kind: 'confirmed', assigneeId: row.assigneeId } : failure('POST');
+}
+
+/**
+ * Whether an automatic assignment that changed nothing left the task with the
+ * member the server's workload rule picks. The route answers an empty batch
+ * both when that member already has the task and when nobody could take it or
+ * it left the assignable states (`automaticAnswer` above). A
+ * fresh read that shows the same assignee, at the same version, still
+ * assignable and still on the eligible list rules out the other two: an
+ * eligible list always yields a pick, and an unassignable task changes state.
+ * Returns that member's label, or null when the answer cannot be told apart.
+ */
+export function unchangedHolder(before: TaskAssignmentMeta, after: TaskAssignmentRoster): string | null {
+  const m = after.meta;
+  if (!m.canAssign || before.assigneeId === null || m.assigneeId !== before.assigneeId ||
+      m.assignmentVersion !== before.assignmentVersion) return null;
+  return after.data.find(row => row.id === String(m.assigneeId))?.label ?? null;
 }

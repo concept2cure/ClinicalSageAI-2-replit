@@ -45,7 +45,7 @@ describe('Projects client filter uses the authorized server projection', () => {
     const select = await screen.findByRole('combobox', { name: 'Client' });
     await screen.findByText('Project B');
     fireEvent.change(select, { target: { value: '11' } });
-    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/c2c/projects?clientWorkspaceId=11'));
+    await waitFor(() => expect(apiRequest.mock.calls.some(c => c[0] === 'GET' && c[1] === '/api/c2c/projects?clientWorkspaceId=11')).toBe(true));
     await waitFor(() => expect(screen.queryByText('Project B')).toBeNull());
     expect(screen.getByText('Project A')).toBeTruthy();
     fireEvent.change(select, { target: { value: 'all' } });
@@ -87,7 +87,7 @@ describe('Projects client filter uses the authorized server projection', () => {
     expect(resolved.ok).toBe(true);
     if (!resolved.ok) throw new Error(resolved.error);
     act(() => { expect(applySurfaceAction(resolved.directive, vi.fn()).status).toBe('applied'); });
-    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', '/api/c2c/projects?clientWorkspaceId=11'));
+    await waitFor(() => expect(apiRequest.mock.calls.some(c => c[0] === 'GET' && c[1] === '/api/c2c/projects?clientWorkspaceId=11')).toBe(true));
     expect(screen.getByRole('combobox', { name: 'Client' })).toHaveProperty('value', '11');
   });
 

@@ -23,6 +23,9 @@ interface LegalHold {
   active: boolean;
   targetLabel?: string | null;
   targetProjectLabel?: string | null;
+  /** Who placed and lifted it, as the server names them; null when it names no one. */
+  placedByName?: string | null;
+  liftedByName?: string | null;
 }
 interface Props { describeFailure: (error: string, status: number) => string }
 interface ProgramChoice { id: string; name: string; code?: string }
@@ -34,8 +37,9 @@ const isActor = (v: unknown) => v === null || Number.isInteger(v);
 const isNullableText = (v: unknown) => v === null || typeof v === 'string';
 const isScopedTarget = (h: LegalHold) => (h.scope === 'program' && typeof h.programId === 'string' && h.documentId === null)
   || (h.scope === 'document' && typeof h.documentId === 'string' && h.programId === null);
-const isTargetLabels = (h: LegalHold) => (h.targetLabel === undefined || isNullableText(h.targetLabel))
-  && (h.targetProjectLabel === undefined || isNullableText(h.targetProjectLabel));
+const isOptionalText = (v: unknown) => v === undefined || isNullableText(v);
+/** The names the server adds beside the ids: the target's, and the people who placed and lifted it. */
+const isLabels = (h: LegalHold) => [h.targetLabel, h.targetProjectLabel, h.placedByName, h.liftedByName].every(isOptionalText);
 
 function isHold(v: unknown): v is LegalHold {
   if (!v || typeof v !== 'object') return false;
@@ -45,7 +49,7 @@ function isHold(v: unknown): v is LegalHold {
     && isDate(h.placedAt) && (h.liftedAt === null || isDate(h.liftedAt))
     && isActor(h.placedBy) && isActor(h.liftedBy) && isNullableText(h.liftReason)
     && h.active === (h.liftedAt === null)
-    && isScopedTarget(h) && isTargetLabels(h);
+    && isScopedTarget(h) && isLabels(h);
 }
 function isList(v: unknown): v is ListPayload {
   const holds = (v as ListPayload | null)?.holds;
@@ -176,16 +180,19 @@ function PlaceHoldForm({ scope, describeFailure, onCancel, onSaved }: Props & {
   return <C2CForm config={config} onCancel={() => { if (!locked.current) onCancel(); }} onSubmit={(v) => { void save(v); }} onFieldChange={(key, value) => { if (key === 'programId') setProjectId(value); setError(undefined); }} />;
 }
 
+/** The person, as the server names them; the account number only when it names no one. */
+const who = (name: string | null | undefined, id: number | null) => (name ? name : `user #${id ?? '—'}`);
+
 function HoldRow({ hold: h, onLift }: { hold: LegalHold; onLift: (h: LegalHold) => void }) {
   const name = h.targetLabel || `${h.scope === 'program' ? 'Project' : 'Document'} name unavailable`;
   return (
     <div className="txw-row" data-testid={`legal-hold-${h.id}`}>
-      <div className="txw-row-l">{h.reference}<small>{h.scope === 'program' ? 'Project' : 'Document version'} · {name}{h.scope === 'document' && h.targetProjectLabel ? ` · ${h.targetProjectLabel}` : ''}<br />Placed by user #{h.placedBy ?? '—'} on {new Date(h.placedAt).toLocaleString()}</small></div>
+      <div className="txw-row-l">{h.reference}<small>{h.scope === 'program' ? 'Project' : 'Document version'} · {name}{h.scope === 'document' && h.targetProjectLabel ? ` · ${h.targetProjectLabel}` : ''}<br />Placed by {who(h.placedByName, h.placedBy)} on {new Date(h.placedAt).toLocaleString()}</small></div>
       <div className="txw-row-r">
         <b>{h.active ? 'Active' : 'Lifted'}</b>
         <span className="txw-help">Reason: {h.reason}</span>
         {h.active ? <div><button type="button" className="btn ghost small" aria-label={`Lift hold ${h.reference}`} onClick={() => onLift(h)}>Lift hold</button></div>
-          : <span className="txw-help">Lifted by user #{h.liftedBy ?? '—'} on {new Date(h.liftedAt!).toLocaleString()}. Reason: {h.liftReason ?? '—'}</span>}
+          : <span className="txw-help">Lifted by {who(h.liftedByName, h.liftedBy)} on {new Date(h.liftedAt!).toLocaleString()}. Reason: {h.liftReason ?? '—'}</span>}
       </div>
     </div>
   );

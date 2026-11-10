@@ -1,0 +1,115 @@
+{
+  "recordedAt": "2026-11-06T22:43:36.166334+00:00",
+  "package": "F1",
+  "scope": "Read-only incoming7a Quality current-record, task source-owner/project and saved-report freshness integration",
+  "incomingRange": "e5a1536fa0f94a609f93a9871bd579446854330c..7a23ed73ca342c1dad1e44ab7cc841e3e40e2b2f",
+  "before": {
+    "capturedAt": "2026-11-06T22:41:48.648192+00:00",
+    "head": "e802750f45765e2900f7da8db672f2b8b67ee346",
+    "incomingRange": "e5a1536fa0f94a609f93a9871bd579446854330c..7a23ed73ca342c1dad1e44ab7cc841e3e40e2b2f",
+    "testFiles": [
+      "server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts",
+      "server/services/report-os/__tests__/quality-evidence-report-freshness.test.ts",
+      "server/services/report-os/__tests__/quality-evidence-report-scope.pglite.test.ts",
+      "server/services/report-os/__tests__/quality-evidence-report.test.ts",
+      "server/services/report-os/__tests__/quality-saved-report-access.pglite.test.ts",
+      "server/services/report-os/__tests__/run-history-native-refresh.pglite.test.ts",
+      "server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts",
+      "server/services/tasking/__tests__/source-task-quality-project.test.ts",
+      "server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts"
+    ],
+    "sourceInputs": {
+      "server/routes/ana-ri/stream.ts": "70f11b2db9a7e6b44cea5d27e5a98fdf65772af9b51d95c0622218370080bcce",
+      "server/services/ai-gateway/gateway.ts": "8f8c5a384f083ff5d955ce26fd7b0525018c9c4bba68608f1615bb7096257109",
+      "server/services/ai-gateway/providers/clients.ts": "78cfd28032513f305a662a8391095f1768221abe3ec265eeabea4b39dda8367e",
+      "server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts": "46ca133dd0332d0f13d467839a546f6c3115c8c3120c05e6a5a7ace7a5920b2a",
+      "server/services/clinical-regulatory-evidence/record-source.ts": "0b00d5991962f08654dbfb10af7e46e08536f8b97a121adff26d372ce50e63a5",
+      "server/services/clinical-regulatory-evidence/retained-source-context.ts": "331beee77add448d370ca847ac1f5f806b6cdef6765743f73702b42a5d53d061",
+      "server/services/clinical-regulatory-evidence/source-read-access.ts": "b66457fe8ffd19f5b6bc157cd8cc32f6f330a340ff621d4da94999c9d3869585",
+      "server/services/qms/project-evidence.ts": "65f44625fce257a3b079becb81d0c07aa82c2c584fdd5f7f1b220d314c1c5dbc",
+      "server/services/report-os/__tests__/quality-evidence-report-freshness.test.ts": "8a4250c38bfd353a3f5a7b621860a3ba0b35df916387b17b8568ab35527371fa",
+      "server/services/report-os/__tests__/quality-evidence-report-scope.pglite.test.ts": "d5fca2e07bf98e7221c911ca2f75c590a94c3fb906c6510360d35a3189261a23",
+      "server/services/report-os/__tests__/quality-evidence-report.test.ts": "c9d6bea12cccc53a0640159aab56a280cae71781d075316d5ecbd7cb8a25919a",
+      "server/services/report-os/__tests__/quality-saved-report-access.pglite.test.ts": "8767c8f7c6248180129fc90f9c5c3180afb8a9030ea552ec795321ed0eeebcf3",
+      "server/services/report-os/__tests__/run-history-native-refresh.pglite.test.ts": "fdbe63714d01c348e9c301ebc5add6ad6e14242965e6cabd547d9e60414ceaf7",
+      "server/services/report-os/project-access.ts": "14fda044477c19e4903efd888bdd175a1e2ba2207d6633d15c58a2c65d2eafcf",
+      "server/services/report-os/render/quality-evidence.ts": "48064fb34e5e34f5c3984841d33fb9c1d078b2f5f2b2f62e24573b1db6fa6807",
+      "server/services/report-os/research-compliance-report-providers.ts": "bd30947b5569db20bcedd031c261a48ebf377ccc48c3a9d30001b26cde9fb067",
+      "server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts": "5db9ec7fb9ac48b887d10c063fa54565401834472a33dd3fcf7df37337108268",
+      "server/services/tasking/__tests__/source-task-quality-project.test.ts": "b816cc4bd187a360e8a22093dabeaa964a1f382977fcf9911be4c2186fc524a6",
+      "server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts": "41cab57be6e85c962b0e8ec1b620e898532d2786a9bc1292af751675ab796068",
+      "server/services/tasking/source-task.ts": "cb89b42ce1c13a3a9cb44d58d6c2bd34a51f833a3a0085e3b41c08e1a016680d"
+    },
+    "nativeAndSdkGuardsUnchangedByIncoming": true
+  },
+  "after": {
+    "capturedAt": "2026-11-06T22:43:36.166334+00:00",
+    "head": "e802750f45765e2900f7da8db672f2b8b67ee346",
+    "sourceInputs": {
+      "server/routes/ana-ri/stream.ts": "70f11b2db9a7e6b44cea5d27e5a98fdf65772af9b51d95c0622218370080bcce",
+      "server/services/ai-gateway/gateway.ts": "8f8c5a384f083ff5d955ce26fd7b0525018c9c4bba68608f1615bb7096257109",
+      "server/services/ai-gateway/providers/clients.ts": "78cfd28032513f305a662a8391095f1768221abe3ec265eeabea4b39dda8367e",
+      "server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts": "46ca133dd0332d0f13d467839a546f6c3115c8c3120c05e6a5a7ace7a5920b2a",
+      "server/services/clinical-regulatory-evidence/record-source.ts": "0b00d5991962f08654dbfb10af7e46e08536f8b97a121adff26d372ce50e63a5",
+      "server/services/clinical-regulatory-evidence/retained-source-context.ts": "331beee77add448d370ca847ac1f5f806b6cdef6765743f73702b42a5d53d061",
+      "server/services/clinical-regulatory-evidence/source-read-access.ts": "b66457fe8ffd19f5b6bc157cd8cc32f6f330a340ff621d4da94999c9d3869585",
+      "server/services/qms/project-evidence.ts": "65f44625fce257a3b079becb81d0c07aa82c2c584fdd5f7f1b220d314c1c5dbc",
+      "server/services/report-os/__tests__/quality-evidence-report-freshness.test.ts": "8a4250c38bfd353a3f5a7b621860a3ba0b35df916387b17b8568ab35527371fa",
+      "server/services/report-os/__tests__/quality-evidence-report-scope.pglite.test.ts": "d5fca2e07bf98e7221c911ca2f75c590a94c3fb906c6510360d35a3189261a23",
+      "server/services/report-os/__tests__/quality-evidence-report.test.ts": "c9d6bea12cccc53a0640159aab56a280cae71781d075316d5ecbd7cb8a25919a",
+      "server/services/report-os/__tests__/quality-saved-report-access.pglite.test.ts": "8767c8f7c6248180129fc90f9c5c3180afb8a9030ea552ec795321ed0eeebcf3",
+      "server/services/report-os/__tests__/run-history-native-refresh.pglite.test.ts": "fdbe63714d01c348e9c301ebc5add6ad6e14242965e6cabd547d9e60414ceaf7",
+      "server/services/report-os/project-access.ts": "14fda044477c19e4903efd888bdd175a1e2ba2207d6633d15c58a2c65d2eafcf",
+      "server/services/report-os/render/quality-evidence.ts": "48064fb34e5e34f5c3984841d33fb9c1d078b2f5f2b2f62e24573b1db6fa6807",
+      "server/services/report-os/research-compliance-report-providers.ts": "bd30947b5569db20bcedd031c261a48ebf377ccc48c3a9d30001b26cde9fb067",
+      "server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts": "5db9ec7fb9ac48b887d10c063fa54565401834472a33dd3fcf7df37337108268",
+      "server/services/tasking/__tests__/source-task-quality-project.test.ts": "b816cc4bd187a360e8a22093dabeaa964a1f382977fcf9911be4c2186fc524a6",
+      "server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts": "41cab57be6e85c962b0e8ec1b620e898532d2786a9bc1292af751675ab796068",
+      "server/services/tasking/source-task.ts": "cb89b42ce1c13a3a9cb44d58d6c2bd34a51f833a3a0085e3b41c08e1a016680d"
+    }
+  },
+  "changedInputs": [],
+  "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --maxWorkers=1 --no-file-parallelism server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts server/services/report-os/__tests__/quality-evidence-report-freshness.test.ts server/services/report-os/__tests__/quality-evidence-report-scope.pglite.test.ts server/services/report-os/__tests__/quality-evidence-report.test.ts server/services/report-os/__tests__/quality-saved-report-access.pglite.test.ts server/services/report-os/__tests__/run-history-native-refresh.pglite.test.ts server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts server/services/tasking/__tests__/source-task-quality-project.test.ts server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts",
+  "exitCode": 0,
+  "result": {
+    "suitesPassed": 9,
+    "testsPassed": 147,
+    "durationSeconds": 54.95,
+    "perFileObservedPasses": {
+      "server/services/report-os/__tests__/quality-saved-report-access.pglite.test.ts": 18,
+      "server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts": 50,
+      "server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts": 11,
+      "server/services/clinical-regulatory-evidence/__tests__/native-catalogue-current-records.pglite.test.ts": 7,
+      "server/services/report-os/__tests__/quality-evidence-report-scope.pglite.test.ts": 9,
+      "server/services/report-os/__tests__/quality-evidence-report.test.ts": 19,
+      "server/services/tasking/__tests__/source-task-quality-project.test.ts": 14,
+      "server/services/report-os/__tests__/quality-evidence-report-freshness.test.ts": 17,
+      "server/services/report-os/__tests__/run-history-native-refresh.pglite.test.ts": 2
+    }
+  },
+  "sourceConflictRisk": "No conflict or direct captured-native/SDK guard change in incoming slice. Source/report admission interfaces compose with existing artifact/current-project access.",
+  "findings": [
+    "Current native record drift produces explicit stale-catalogue refusal; genuinely denied/missing objects remain opaque and are omitted without exposing private identity.",
+    "Report collection revisits earlier project collections and verifies access afterward; it detects observed drift without claiming an atomic multi-project snapshot.",
+    "Saved-report/history native and authored-object admission caches are per report, so unchanged actor/project anchors do not preserve a revoked or moved native parent across history entries.",
+    "CAPA task reconciliation rechecks same-tenant source owner/lifecycle/due date plus unique current project and actor for every desired/close-only plan; stale plans preserve prior tasks.",
+    "Canonical native snapshots remain native facts, distinct from original files, approval, evidence support or model qualification. Human-readable rendering reuses existing Authoring plain-text/semantic mark handling while sealed receipts stay intact.",
+    "Existing captured native source dispatch guard and final SDK guards are unchanged by this incoming delta. The earlier 250-test combined cohort was intentionally not repeated."
+  ],
+  "productionTestRunnerEdits": false,
+  "rawLog": {
+    "path": "quality-source-report-task-green.txt.gz",
+    "originalScratchPath": "/workspace/scratch/shared-editor-incoming7a-2026-11-06-green.txt",
+    "rawBytes": 69082,
+    "rawSha256": "3d381345c1809de4a87044182f564d1393ba393b497b7ce72f20d94fe12aa629",
+    "compressedBytes": 6515,
+    "compressedSha256": "02b9c8af5cc67f0ae6e61c3ad790c461234bdd9e44c883a248b36d56f764b8af",
+    "encoding": "gzip, mtime0",
+    "readCommand": "gzip -dc quality-source-report-task-green.txt.gz"
+  },
+  "limits": [
+    "Focused component/PGlite tests, not native PostgreSQL concurrency or full deployment/RLS qualification.",
+    "No real model/provider call, approval or model-qualification result claimed.",
+    "This cohort overlaps prior evidence and is not additive. Root owns final whole-source compiler/build/publication."
+  ]
+}

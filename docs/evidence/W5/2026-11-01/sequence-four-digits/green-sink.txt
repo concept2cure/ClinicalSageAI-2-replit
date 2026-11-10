@@ -1,0 +1,21 @@
+
+ RUN  v4.1.7 <repo>
+
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > refuses a delete that carries a sourcePath, naming the leaf (the AnA tool mapping) 39ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > refuses a delete in a follow-up sequence that names no modified-file 8ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > packages a backbone-only delete with a modified-file: no file, no checksum line, no href, no checksum 72ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — a delete leaf never ships bytes > refuses any delete in sequence 0000, where nothing is on file to withdraw 12ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — the sequence is the four-digit eCTD sequence > refuses sequence "0" before any leaf is read 7ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — the sequence is the four-digit eCTD sequence > refuses sequence "1" before any leaf is read 7ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — the sequence is the four-digit eCTD sequence > refuses sequence "00001" before any leaf is read 17ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — the sequence is the four-digit eCTD sequence > refuses sequence "0x01" before any leaf is read 4ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — the sequence is the four-digit eCTD sequence > refuses sequence " 0000" before any leaf is read 4ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — the sequence is the four-digit eCTD sequence > refuses sequence "" before any leaf is read 4ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — the sequence is the four-digit eCTD sequence > refuses sequence undefined before any leaf is read 5ms
+ ✓ server/services/submission-gateways/__tests__/delete-leaf-sink.test.ts > packageEctdSubmission — the sequence is the four-digit eCTD sequence > still packages a four-digit sequence 36ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  22:44:44
+   Duration  1.25s (transform 538ms, setup 76ms, import 714ms, tests 220ms, environment 0ms)
+

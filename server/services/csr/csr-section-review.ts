@@ -21,6 +21,7 @@
  * signature after workflow-source-import; nothing here changes those gates.
  */
 import { createHash } from 'node:crypto';
+import { hasUnresolvedPlaceholders } from '../csr-builder.js';
 
 export interface CsrReviewQueryable {
   query(text: string, params?: unknown[]): Promise<{ rows: Record<string, unknown>[] }>;
@@ -77,6 +78,21 @@ export function effectiveReviewState(row: {
   const current = typeof row.contentHash === 'string' && row.reviewedContentHash === row.contentHash;
   if (current) return { state: recorded, staleApproval: false };
   return { state: 'draft', staleApproval: recorded === 'approved' };
+}
+
+/** The persisted-review read contract. A stored approval/hash pair is not
+ * proof that the bytes retained in csr_section_outputs still match it.
+ * Used by both the launch-scoped sections API and the ICH E3 headings board;
+ * the writable review transition also checks SHA-256 independently. */
+export function effectiveSavedCsrReviewState(row: {
+  content?: unknown; contentHash?: unknown; reviewStatus?: unknown; reviewedContentHash?: unknown;
+}): { state: CsrSectionReviewState; staleApproval: boolean; integrityFailure?: true } {
+  const content = typeof row.content === 'string' ? row.content : null;
+  const hash = typeof row.contentHash === 'string' ? row.contentHash : '';
+  const intact = content !== null && !!content.trim() && HASH.test(hash) &&
+    createHash('sha256').update(content, 'utf8').digest('hex') === hash;
+  if (!intact) return { state: 'draft', staleApproval: false, integrityFailure: true };
+  return effectiveReviewState(row);
 }
 
 export function csrSectionReviewView(row: Record<string, unknown>): CsrSectionReviewView {
@@ -152,13 +168,31 @@ function assertReviewable(row: Record<string, unknown>, input: CsrSectionReviewI
     throw new CsrSectionReviewError('CSR_SECTION_HASH_MISMATCH', 409,
       `Saved CSR section ${input.sectionNumber} does not match its recorded content hash. Nothing was recorded.`);
   }
+  // This is an intermediate review, not an authorization to approve an
+  // incomplete template as scientific text. The same placeholder detector
+  // is used by the CSR builder's output-integrity and release gates.
+  if (input.decision !== 'send_back' && hasUnresolvedPlaceholders(content)) {
+    throw new CsrSectionReviewError('CSR_SECTION_DATA_PLACEHOLDER', 409,
+      `CSR section ${input.sectionNumber} still contains unresolved source-data placeholders. Complete its text before submitting it for review.`);
+  }
   if (row.content_hash !== input.expectedContentHash) {
     throw new CsrSectionReviewError('CSR_SECTION_CHANGED', 409,
       `CSR section ${input.sectionNumber} was redrafted since it was opened. Reload it and review the current text.`);
   }
-  if (input.decision === 'approve' && Number(row.requested_by) === input.reviewerId) {
-    throw new CsrSectionReviewError('CSR_REVIEWER_IS_REQUESTER', 409,
-      'The person who requested this build cannot approve its sections. Ask another reviewer.');
+  if (input.decision === 'approve') {
+    // A legacy job may have a NULL requester. Number(null) === 0, so the
+    // previous equality-only test could silently treat independence as
+    // established. No identified requester => no defensible independent
+    // approval; retain the draft/review for explicit reconciliation.
+    const requester = Number(row.requested_by);
+    if (!Number.isSafeInteger(requester) || requester <= 0) {
+      throw new CsrSectionReviewError('CSR_REVIEW_REQUESTER_MISSING', 409,
+        'The saved CSR job has no identified requester. Independent review cannot be established.');
+    }
+    if (requester === input.reviewerId) {
+      throw new CsrSectionReviewError('CSR_REVIEWER_IS_REQUESTER', 409,
+        'The person who requested this build cannot approve its sections. Ask another reviewer.');
+    }
   }
 }
 
@@ -177,10 +211,11 @@ export async function decideCsrSectionReview(q: CsrReviewQueryable, input: CsrSe
             reviewed_content_hash = content_hash
       WHERE id = $4 AND organization_id = $5 AND content_hash = $6
         AND review_status = $7 AND reviewed_content_hash IS NOT DISTINCT FROM $8
+        AND content = $9
       RETURNING section_number, content_hash, review_status, reviewer_id, review_decided_at,
                 review_reason, reviewed_content_hash`,
     [to, input.reviewerId, reason, row.id, input.organizationId, input.expectedContentHash,
-      row.review_status, row.reviewed_content_hash ?? null],
+      row.review_status, row.reviewed_content_hash ?? null, row.content],
   );
   if (rows.length !== 1) {
     throw new CsrSectionReviewError('CSR_SECTION_CHANGED', 409,

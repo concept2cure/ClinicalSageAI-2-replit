@@ -29,7 +29,9 @@
  * Submission Readiness's own detail, imported from DispatchReadiness.tsx (F10,
  * P-33: the one dispatch verdict per sequence, shown inside Submit). Submit no
  * longer has a door to a second readiness screen; that screen draws this same
- * list and detail.
+ * list and detail. On Submit a blocked market first says what must close, one
+ * plain sentence per thing with its act (MarketBlockers.tsx, 2026-10-31), and
+ * keeps that detail, rule ids and all, behind "Rule detail".
  *
  * "Add a market" opens the Submission Center's New submission form with the
  * open project named (FILING_SPINE.md F9; the form takes the project, F20).
@@ -48,7 +50,8 @@ import { MarketApplicationNumber } from './MarketApplicationNumber';
 import { STEP_DOORS } from '../projectDoors';
 import { getSurfaceMeta } from '../registryModel';
 import { mdxProjectPlan, PATHWAY_FEATURES, type MdxWorkflowProject } from './ProjectMdxWorkflow';
-import { MarketGateDetail } from './DispatchReadiness';
+import { MarketBlockers } from './MarketBlockers';
+import { enumWords } from './projectWords';
 import {
   awaitingOwnReleaseSignature,
   programTypeLabel,
@@ -206,7 +209,7 @@ const SUB_ROW_TONE: Record<string, string> = { ai: 'acc', ok: 'ok', idle: 'idle'
 export interface CenterTarget {
   submissionId?: number;
   sequenceId?: number;
-  ws: 'validation' | 'sequences' | 'portfolio' | 'builder' | 'dispatch';
+  ws: 'validation' | 'sequences' | 'portfolio' | 'builder' | 'dispatch' | 'shadow-review';
   /** Open New submission on arrival ("Add a market"). */
   newSubmission?: boolean;
   /** In the Builder: open the placement form at, or mark the leaf at, a section (F18). */
@@ -271,7 +274,7 @@ function MarketRow({ m, onRetry, onOpen, detail, number }: {
         <span className="pj-file-status" data-s={SUB_ROW_TONE[SUB_STATUS_TONE[s.status] ?? 'idle'] ?? 'idle'}>
           {SUB_STATUS_LABEL[s.status] ?? s.status}
         </span>
-        {s.lifecycleStage && <span className="pj-file-m" data-testid="pj-market-stage">{s.lifecycleStage} stage</span>}
+        {s.lifecycleStage && <span className="pj-file-m" data-testid="pj-market-stage">{enumWords(s.lifecycleStage)} stage</span>}
       </div>
       <div className="pj-file-n">{s.title}{s.productName ? ` · ${s.productName}` : ''}</div>
       {sequence && <div className="pj-file-m">{sequenceLine(sequence, m.read.state === 'verdict' ? m.read.assessment : null)}</div>}
@@ -281,7 +284,7 @@ function MarketRow({ m, onRetry, onOpen, detail, number }: {
         <span className="pj-mkt-verdict-ic" aria-hidden="true">{v.icon}</span>
         <span><span className="pj-sr">{name}: </span>{v.text}</span>
         {v.failed && (
-          <button type="button" className="btn ghost pj-mkt-btn" onClick={retry} aria-label={`Retry the verdict for ${name}`}>
+          <button type="button" className="btn small" onClick={retry} aria-label={`Retry the verdict for ${name}`}>
             Retry
           </button>
         )}
@@ -294,7 +297,7 @@ function MarketRow({ m, onRetry, onOpen, detail, number }: {
           "Open", with the market only in its accessible name). */}
       {onOpen && (
         <div className="pj-mkt-acts">
-          <button type="button" className="btn ghost pj-mkt-btn" onClick={() => onOpen(m)}>
+          <button type="button" className="btn small" onClick={() => onOpen(m)}>
             {STEP_DOORS.marketSequence(name)} {I.right}
           </button>
         </div>
@@ -325,10 +328,12 @@ const FORBIDDEN_WORDS = 'Your role does not include reading submissions, so this
 /** The project's markets as a list, with its loading, refused, failed and
  *  empty states. The Submit tab and Submission Readiness (F18) both draw it,
  *  each with MarketGateDetail under every row (F10). */
-export function MarketsBody({ markets, onOpen, center, startHint, detail, number }: {
+export function MarketsBody({ markets, onOpen, center, startHint, empty, detail, number }: {
   markets: ProgramMarkets; onOpen: ((m: ProgramMarket) => void) | null; center: boolean;
   /** Said after "No market for this project yet": how one is started from here. */
   startHint?: string;
+  /** The empty state's own words, where "no market" is not true of the project (a device filing). */
+  empty?: { title: string; hint: string };
   detail?: (m: ProgramMarket) => React.ReactNode;
   /** Each market's own application number (P-44); drawn by the project's Submit tab. */
   number?: (m: ProgramMarket) => React.ReactNode;
@@ -350,8 +355,8 @@ export function MarketsBody({ markets, onOpen, center, startHint, detail, number
   if (markets.markets.length === 0) {
     const start = startHint ?? (center ? ' Add a market to start one.' : '');
     return (
-      <EmptyState icon={I.rocket} title="No market for this project yet"
-        hint={`A market is one submission: an application to one agency.${start}${others ? ` ${others}` : ''}`} />
+      <EmptyState icon={I.rocket} title={empty?.title ?? 'No market for this project yet'}
+        hint={`${empty?.hint ?? `A market is one submission: an application to one agency.${start}`}${others ? ` ${others}` : ''}`} />
     );
   }
   return (
@@ -400,7 +405,7 @@ function FeatureDoor({ surface, label, unavailable, onNav, available }: {
 }) {
   if (!available(surface)) return unavailable ? <span className="sec-sub" data-testid="pj-mkt-door-unavailable">{unavailable}</span> : null;
   return (
-    <button type="button" className="btn ghost pj-mkt-btn" onClick={() => onNav(surface)}>
+    <button type="button" className="btn small" onClick={() => onNav(surface)}>
       {label} {I.right}
     </button>
   );
@@ -475,25 +480,11 @@ export function ProjectMarkets({ markets, onNav, available, ectdFiling, deviceFi
               below shows its sequence's readiness itself, and its acts open
               that sequence (F10, P-33). Slice 24's door opened a second screen
               that drew this same list. */}
-          {/* eCTD compile, opened from the project, compiles the submission
-              of the project's own application type; each sequence's Dispatch
-              tab opens it on that sequence (F14), which is how another
-              market's sequence is compiled. It builds an FDA/EMA eCTD
-              backbone only, which is not how a 510(k), De Novo or PMA is
-              filed, so a device or diagnostic project, or one not yet read,
-              is not offered it. */}
-          {ectdFiling && available('ectd-compile') && (
-            <button type="button" className="btn ghost pj-mkt-btn" onClick={() => onNav('ectd-compile')}>
-              Compile and download {I.right}
-            </button>
-          )}
-          {featureDoors(usInd, project, deviceFiling).map((door) => (
-            <FeatureDoor key={door.surface} {...door} onNav={onNav} available={available} />
-          ))}
+          {/* First and ghost: on the project page orange is for send only (D3-4, D3.md §4.7 Submit item 1). */}
           {center && ectdFiling && !deviceFiling && (
             <>
               {/* Said before the form, not by a 403 after it (Part 11 review, 2026-10-15). */}
-              <button type="button" className="btn primary pj-mkt-btn" disabled={canChange === false}
+              <button type="button" className="btn ghost small" disabled={canChange === false}
                 aria-describedby={canChange === false ? 'pj-mkt-add-why' : undefined}
                 onClick={() => openSubmissionCenter(onNav, { ws: 'portfolio', newSubmission: true })}>
                 {I.plus} Add a market
@@ -503,9 +494,24 @@ export function ProjectMarkets({ markets, onNav, available, ectdFiling, deviceFi
               )}
             </>
           )}
+          {/* eCTD compile, opened from the project, compiles the submission
+              of the project's own application type; each sequence's Dispatch
+              tab opens it on that sequence (F14), which is how another
+              market's sequence is compiled. It builds an FDA/EMA eCTD
+              backbone only, which is not how a 510(k), De Novo or PMA is
+              filed, so a device or diagnostic project, or one not yet read,
+              is not offered it. */}
+          {ectdFiling && available('ectd-compile') && (
+            <button type="button" className="btn small" onClick={() => onNav('ectd-compile')}>
+              Compile and download {I.right}
+            </button>
+          )}
+          {featureDoors(usInd, project, deviceFiling).map((door) => (
+            <FeatureDoor key={door.surface} {...door} onNav={onNav} available={available} />
+          ))}
           {/* The Submission Center reads the open project, so it opens on this one. */}
           {center && (
-            <button type="button" className="btn ghost pj-mkt-btn" onClick={() => openSubmissionCenter(onNav, { ws: 'portfolio' })}>
+            <button type="button" className="btn small" onClick={() => openSubmissionCenter(onNav, { ws: 'portfolio' })}>
               {STEP_DOORS.everySequence} {I.right}
             </button>
           )}
@@ -513,13 +519,22 @@ export function ProjectMarkets({ markets, onNav, available, ectdFiling, deviceFi
       </div>
       {deviceFiling && <p className="pj-mkt-note">Device and diagnostic projects file on their own pathways. Adding an eCTD market is unavailable here.</p>}
       <MarketsBody markets={markets} center={center} onOpen={center ? (m) => openSubmissionCenter(onNav, marketTarget(m)) : null}
-        startHint={deviceFiling ? ' Existing submissions appear here when recorded to this project.' : undefined}
-        detail={(m) => <MarketGateDetail m={m} onNav={onNav} center={center} />}
+        /* A 510(k) to FDA is this project's filing, so "No market for this project yet" told a device tester it had
+           none (human test J1, 2026-11-06). Its documents are assembled with the action above; what is missing is a
+           submission record, which only the Submission Center records. */
+        empty={deviceFiling ? DEVICE_NO_SUBMISSION : undefined}
+        detail={(m) => <MarketBlockers m={m} onNav={onNav} center={center} />}
         number={(m) => <MarketApplicationNumber submissionId={m.submission.id} canChange={canChange}
           onChanged={() => markets.retryMarket(m.submission.id)} />} />
     </section>
   );
 }
+
+/** A device or diagnostic project's empty Submit list, in words true of it. */
+export const DEVICE_NO_SUBMISSION = {
+  title: 'No submission recorded to this project yet',
+  hint: 'This filing is assembled from its approved documents with the action above, not as an eCTD sequence. A submission recorded to this project in the Submission Center is listed here.',
+};
 
 /** The board read the Review tab makes, as the header line counts it. */
 export interface ReviewCountRead {
@@ -540,7 +555,7 @@ function reviewWords(r: ReviewCountRead, retry: (fn: () => void) => () => void):
     return (
       <span className="pj-status-item" data-tone="warn" role="alert">
         <span aria-hidden="true">{I.alertTriangle}</span> Reviews could not be read
-        <button type="button" className="btn ghost pj-mkt-btn" onClick={retry(r.retry)} aria-label="Retry reading the reviews">Retry</button>
+        <button type="button" className="btn small" onClick={retry(r.retry)} aria-label="Retry reading the reviews">Retry</button>
       </span>
     );
   }
@@ -551,14 +566,32 @@ function reviewWords(r: ReviewCountRead, retry: (fn: () => void) => () => void):
   return <span className="pj-status-item" data-tone="idle" data-testid="pj-status-reviews">{count} in review</span>;
 }
 
+/** One market's verdict in the header line. With `onOpen` it is a button that opens
+ *  the Submit step at that market's gates (2026-10-31: "Dispatch blocked · 4 blockers"
+ *  was words with nowhere to go). */
+function MarketStatusItem({ m, onOpen }: { m: ProgramMarket; onOpen?: (submissionId: number) => void }) {
+  const v = marketVerdict(m.read);
+  const name = marketName(m.submission);
+  const words = <><span aria-hidden="true">{v.icon}</span> <b>{name}</b> {v.text}</>;
+  if (!onOpen) return <span className="pj-status-item" data-tone={v.tone}>{words}</span>;
+  return (
+    <button type="button" className="pj-status-item pj-status-open" data-tone={v.tone} data-testid="pj-status-market"
+      onClick={() => onOpen(m.submission.id)}>
+      {words}<span className="pj-sr">. Open it on Submit</span> <span className="pj-status-go" aria-hidden="true">{I.right}</span>
+    </button>
+  );
+}
+
 /** The line under the project header: each market's verdict and the number
  *  of documents in review, from the same reads the Submit and Review tabs
  *  show. Nothing in it is computed beyond counting rows the server returned. */
-export function ProjectStatusLine({ markets, reviews, documentClass = null, regionalApplication = null }: {
+export function ProjectStatusLine({ markets, reviews, documentClass = null, regionalApplication = null, onOpenMarket }: {
   markets: ProgramMarkets; reviews: ReviewCountRead;
   /** A filing document class has no market to wait for: "No market yet" would promise one. */
   documentClass?: FilingDocumentClass | null;
   regionalApplication?: RegionalDeviceApplicationClass | null;
+  /** Opens the Submit step at this market's gates. Without it the verdict is words only. */
+  onOpenMarket?: (submissionId: number) => void;
 }) {
   const { list } = markets;
   const lineRef = React.useRef<HTMLDivElement>(null);
@@ -579,20 +612,13 @@ export function ProjectStatusLine({ markets, reviews, documentClass = null, regi
     marketItems = (
       <span className="pj-status-item" data-tone="warn" role="alert">
         <span aria-hidden="true">{I.alertTriangle}</span> Markets could not be read
-        <button type="button" className="btn ghost pj-mkt-btn" onClick={retry(markets.retryList)} aria-label="Retry reading the markets">Retry</button>
+        <button type="button" className="btn small" onClick={retry(markets.retryList)} aria-label="Retry reading the markets">Retry</button>
       </span>
     );
   } else if (markets.markets.length === 0) {
     marketItems = <span className="pj-status-item" data-tone="idle">{documentClass ? 'Authored here, not sequenced' : 'No market yet'}</span>;
   } else {
-    marketItems = markets.markets.map((m) => {
-      const v = marketVerdict(m.read);
-      return (
-        <span key={m.submission.id} className="pj-status-item" data-tone={v.tone}>
-          <span aria-hidden="true">{v.icon}</span> <b>{marketName(m.submission)}</b> {v.text}
-        </span>
-      );
-    });
+    marketItems = markets.markets.map((m) => <MarketStatusItem key={m.submission.id} m={m} onOpen={onOpenMarket} />);
   }
   return (
     <div className="pj-status" role="group" data-testid="pj-status-line" aria-label="Where this filing stands" ref={lineRef} tabIndex={-1}>

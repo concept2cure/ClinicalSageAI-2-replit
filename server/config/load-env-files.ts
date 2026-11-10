@@ -27,6 +27,12 @@ import { config as dotenvConfig } from 'dotenv';
 
 export const ENV_FILES = ['.env.local', '.env'] as const;
 
-for (const path of ENV_FILES) {
-  dotenvConfig({ path, override: false, quiet: true });
+// Codespaces credentials are injected by the host's secret scope. A stale
+// .env.local / .env copied from an older local session must not supply a
+// different Neon branch or an accidental demo provider when a secret is absent.
+// This also makes direct `tsx server/index.ts` obey the same rule as npm dev.
+if (process.env.C2C_CODESPACE !== '1' && process.env.CODESPACES !== 'true') {
+  for (const path of ENV_FILES) {
+    dotenvConfig({ path, override: false, quiet: true });
+  }
 }

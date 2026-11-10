@@ -1,0 +1,13 @@
+ × client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > limits the headline to accessible projects, names each hit’s project, and downloads through that project 278ms
+   → expected "vi.fn()" to be called with arguments: [ 'GET', …(4) ]
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > a failed library search leaves its result unverified 276ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > a page short of the total says how many are shown 1ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > an accessible empty search makes no claim about every project 172ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > a contradictory successful response is a failed read, never a zero-match claim 150ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > an unverified search scope undefined cannot establish zero matches 129ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > library search (critique 15) > an unverified search scope organization-wide cannot establish zero matches 132ms
+ × client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > a CRO's sponsors never mix in one list > inside a project, the library is its sponsor's projects, and the headline names the sponsor once 117ms
+   → expected "vi.fn()" to be called with arguments: [ 'GET', …(4) ]
+ × client/src/concept2cure/v2/__tests__/vaultLibrarySearch.test.tsx > a CRO's sponsors never mix in one list > across every project, each row says whose project it is 11ms
+   → expected [ 'BX-302', 'BX-301' ] to deeply equal [ 'BX-302 · Northwind Bio', …(1) ]
+      Tests  3 failed | 6 passed (9)

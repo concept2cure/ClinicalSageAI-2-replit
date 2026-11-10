@@ -1,0 +1,37 @@
+EXP stated, phase 2, no approved therapy => {"fast_track":true,"breakthrough_therapy":true,"accelerated_approval":true,"priority_review":true,"rmat":false}
+EXP adequate therapy, early clinical => {"fast_track":false,"breakthrough_therapy":false,"accelerated_approval":false,"priority_review":false,"rmat":false}
+EXP landscape omitted => THROWS TypeError   Cannot read properties of undefined (reading 'replace')
+EXP evidence omitted, landscape adequate => {"fast_track":false,"breakthrough_therapy":false,"accelerated_approval":false,"priority_review":false,"rmat":false}
+EXP indication 'Serious' => {"fast_track":false,"breakthrough_therapy":false,"accelerated_approval":false,"priority_review":false,"rmat":false}
+MTG purpose 'EOP2' => undefined
+MTG phase omitted => "Submit meeting request 2-4 months before"
+ORPH prevalence 30,000, no source => {"fda":true,"ema":true}
+ORPH prevalence 30,000 with source => {"fda":true,"ema":true}
+ORPH US prevalence null => {"fda":false,"ema":true}
+ORPH US prevalence 250,000 sourced => {"fda":false,"ema":true}
+ORPH seriousness omitted => {"fda":true}
+ORPH EU prevalence exactly 5, sourced => {"fda":true,"ema":false}
+ORPH 2 therapies + any rationale text, sourced => {"fda":true,"ema":true}
+ORPH prevalence '30000' => {"fda":true,"ema":true}
+ORPH isSerious 'false' => {"fda":true,"ema":true}
+ORPH clinicalRationale omitted => THROWS TypeError   Cannot read properties of undefined (reading 'length')
+505 all stated same as RLD => {"rec":"505j","alt":["505b2"]}
+505 only activeIngredient known => {"rec":"505b1","alt":[]}
+505 RLD omitted, dosage form change => {"rec":"505b1","alt":[]}
+505 routeChange 'false' => {"rec":"505b2","alt":["suitability_petition"]}
+505 activeIngredient omitted => {"rec":"505j","alt":["505b2"]}
+ROLL nothing stated => undefined
+ROLL fastTrack false only => undefined
+ROLL fastTrack 'false' => "false"
+ROLL status omitted => THROWS TypeError   Cannot destructure property 'fastTrack' of 'expeditedDesignationStatus' as it is undefined.
+GLOB market 'USA' => THROWS TypeError   Cannot read properties of undefined (reading 'expeditedPathways')
+GLOB markets omitted => THROWS TypeError   Cannot read properties of undefined (reading 'map')
+
+# Added by the adversarial review, run on trunk f75de861e (engine unchanged since 96ae110e8):
+EXP productType 'biosimilar' => {"fast_track":true,"breakthrough_therapy":true,"accelerated_approval":true,"priority_review":true,"rmat":false}
+EXP cell_therapy, adequate therapy => {"fast_track":false,"breakthrough_therapy":true,"accelerated_approval":false,"priority_review":false,"rmat":true} | fast track: Adequate existing therapy available — unmet medical need criterion not satisfied.
+EXP combination_product => {"fast_track":true,"breakthrough_therapy":true,"accelerated_approval":true,"priority_review":true,"rmat":false}
+ORPHAN isSerious only => EMA eligible true | The condition must be life-threatening, seriously debilitating, or serious and chronic
+ORPHAN productType 'vaccine', US 30,000 => FDA eligible true
+ORPHAN productType 'diagnostic', US 30,000 => FDA eligible true
+ORPHAN stated not serious, not life-threatening, not debilitating => EMA eligible false (correct: both limbs need a qualifying condition)

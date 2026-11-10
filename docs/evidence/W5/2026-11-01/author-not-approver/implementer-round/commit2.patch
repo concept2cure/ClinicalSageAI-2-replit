@@ -1,0 +1,295 @@
+diff --git a/server/services/__tests__/contradiction-engine.test.ts b/server/services/__tests__/contradiction-engine.test.ts
+--- a/server/services/__tests__/contradiction-engine.test.ts
++++ b/server/services/__tests__/contradiction-engine.test.ts
+@@ -595,11 +595,47 @@
+     expect(authority.level).toBe('requires-confirmation');
+   });
+ 
+-  test('approval requires reviewer role', () => {
+-    const authority = getAuthorityForAction('approve-artifact');
+-    expect(authority.requiresReviewerApproval).toBe(true);
+-    expect(authority.allowedActorRoles).toContain('reviewer');
+-    expect(authority.allowedActorRoles).toContain('approver');
++  // 2026-11-01 (F1): approve and lock are electronic signatures decided by the
++  // signed act (server/services/artifact-approval-act.ts: its role table, the
++  // review quorum and, under decision P-18, separation of duties). This map's
++  // entries for them held their own role lists, which disagreed with that
++  // table for admin, ra_lead, qa_lead and submission_lead, and gated nothing.
++  // They now admit no role. (This replaces 'approval requires reviewer role',
++  // which pinned the stale list.)
++  test.each(['approve-artifact', 'lock-artifact'] as const)('%s admits no role through this map', (action) => {
++    const authority = getAuthorityForAction(action);
++    expect(authority.level).toBe('forbidden');
++    expect(authority.allowedActorRoles).toBeUndefined();
++    expect(authority.blockedReason).toMatch(/artifact-approval-act\.ts/);
++    expect(authority.blockedReason).toMatch(/P-18/);
++    for (const role of [undefined, 'admin', 'approver', 'reviewer', 'ra_lead', 'qa_lead', 'submission_lead']) {
++      expect(isActorAuthorized(authority, role)).toEqual({ authorized: false, reason: authority.blockedReason });
++    }
++  });
++
++  // The fallback for an unlisted action carries a blockedReason but no role
++  // list, and isActorAuthorized admitted every role, a missing one included.
++  test('an action the map does not list is refused for every role', () => {
++    const authority = getAuthorityForAction('some-unlisted-action' as any);
++    for (const role of [undefined, 'admin', 'approver', 'ra_lead', 'viewer']) {
++      const check = isActorAuthorized(authority, role);
++      expect(check.authorized).toBe(false);
++      expect(check.reason).toBe('Unknown governed action: some-unlisted-action');
++    }
++  });
++
++  // What the callers ask (authoring-actions promote-to-review and
++  // judge-dossier-ready, contradiction-resolution-bridge, the decision
++  // lifecycle) answers as it did before the repair above.
++  test.each([
++    ['promote-to-review', undefined, true], ['promote-to-review', 'author', true],
++    ['judge-dossier-ready', 'submission_lead', true], ['judge-dossier-ready', 'ra_lead', false],
++    ['judge-dossier-ready', undefined, false], ['judge-module-ready', 'ra_lead', true],
++    ['explain-preflight-results', undefined, true], ['prepare-correction-draft', 'viewer', true],
++    ['prepare-harmonization-suggestion', undefined, true], ['create-contradiction-consequence', 'author', true],
++    ['execute-multi-object-correction', 'admin', false],
++  ] as const)('%s for %s: authorized %s, as before', (action, role, authorized) => {
++    expect(isActorAuthorized(getAuthorityForAction(action), role).authorized).toBe(authorized);
+   });
+ 
+   test('contradiction consequence requires confirmation', () => {
+diff --git a/server/services/artifact-approval-act.ts b/server/services/artifact-approval-act.ts
+--- a/server/services/artifact-approval-act.ts
++++ b/server/services/artifact-approval-act.ts
+@@ -5,7 +5,11 @@
+  * writers of approved_version_id:
+  *   - the status route, PUT /projects/:projectId/artifacts/:artifactId/status,
+  *     review → approved (server/routes/c2c/artifacts.ts), which owned it inline;
+- *   - authoring-actions approve-artifact (server/routes/authoring-actions.ts).
++ *   - AnA's update_artifact_status, signed
++ *     (server/services/ana-ri/ana-signed-artifact-act.ts).
++ * 2026-11-01 (F1): the second act was named here as authoring-actions
++ * approve-artifact, which was removed on 2026-10-01 (see that note below).
++ * Both acts commit through server/services/artifact-signed-act.ts.
+  *
+  * 2026-09-23 (W5/D7, residual repair, round 3): moved here unchanged from the
+  * status route, with the route's role table, so promote_artifact and the AnA
+diff --git a/shared/types/decision-architecture.ts b/shared/types/decision-architecture.ts
+--- a/shared/types/decision-architecture.ts
++++ b/shared/types/decision-architecture.ts
+@@ -216,6 +216,18 @@
+ }
+ 
+ /**
++ * 2026-11-01 (F1): approve and lock are electronic signatures, decided only by
++ * the signed act. Their entries below held role lists of their own, which
++ * disagreed with that act's role table (ARTIFACT_STATUS_ROLE_PERMISSIONS) for
++ * admin, ra_lead, qa_lead and submission_lead, and gated nothing; they now
++ * admit no role. The union keeps both actions as labels.
++ */
++const DECIDED_BY_THE_SIGNED_ACT =
++  'Approving or locking an artifact is an electronic signature, decided only by the signed act in ' +
++  'server/services/artifact-approval-act.ts (its role table, the review quorum, and separation of duties ' +
++  'under the P-18 signing policy). This map admits no role for it.';
++
++/**
+  * The canonical authority boundary map.
+  * This is the source of truth for what AnA can and cannot do.
+  */
+@@ -318,24 +330,24 @@
+   {
+     action: 'approve-artifact',
+     authority: {
+-      level: 'requires-reviewer-approval',
++      level: 'forbidden',
+       requiresHumanConfirmation: true,
+       requiresReviewerApproval: true,
+       requiresEscalation: false,
+-      allowedActorRoles: ['reviewer', 'approver', 'ra_lead', 'qa_lead'],
++      blockedReason: DECIDED_BY_THE_SIGNED_ACT,
+     },
+-    description: 'Approve artifact (requires reviewer-role sign-off)',
++    description: 'Approve artifact (an electronic signature, decided only by the signed approval act)',
+   },
+   {
+     action: 'lock-artifact',
+     authority: {
+-      level: 'requires-reviewer-approval',
++      level: 'forbidden',
+       requiresHumanConfirmation: true,
+       requiresReviewerApproval: true,
+       requiresEscalation: false,
+-      allowedActorRoles: ['approver', 'ra_lead', 'qa_lead', 'submission_lead'],
++      blockedReason: DECIDED_BY_THE_SIGNED_ACT,
+     },
+-    description: 'Lock artifact for submission (requires approver-role sign-off)',
++    description: 'Lock artifact for submission (an electronic signature, decided only by the signed lock act)',
+   },
+ 
+   // ── Higher-level judgments — requires escalation ──
+@@ -395,12 +407,15 @@
+ 
+ /**
+  * Check if an actor role satisfies the authority requirement.
++ * 2026-11-01 (F1): an authority with a blockedReason admits no role. The
++ * fallback above for an unlisted action has one and no role list, and was
++ * admitted for every role, a missing one included.
+  */
+ export function isActorAuthorized(
+   authority: AuthorityRequirement,
+   actorRole?: string
+ ): { authorized: boolean; reason?: string } {
+-  if (authority.level === 'forbidden') {
++  if (authority.level === 'forbidden' || authority.blockedReason) {
+     return { authorized: false, reason: authority.blockedReason || 'Action is forbidden for automated execution' };
+   }
+   if (authority.level === 'autonomous-read') {
+diff --git a/tests/resolution/e2e-authoring-workflow.test.ts b/tests/resolution/e2e-authoring-workflow.test.ts
+--- a/tests/resolution/e2e-authoring-workflow.test.ts
++++ b/tests/resolution/e2e-authoring-workflow.test.ts
+@@ -230,17 +230,18 @@
+     expect(decision.status).toBe('recommended');
+   });
+ 
+-  it('Step 7b: review → approved (approve-artifact)', () => {
++  // 2026-11-01 (F1): approve and lock are decided only by the signed act (server/services/artifact-approval-act.ts); the map's entries admit no role.
++  it('Step 7b: review → approved (approve-artifact) is not decided by this map', () => {
+     const authority = getAuthorityForAction('approve-artifact');
+-    expect(authority.level).toBe('requires-reviewer-approval');
++    expect(authority.level).toBe('forbidden');
+ 
+     const check = isActorAuthorized(authority, 'reviewer');
+-    expect(check.authorized).toBe(true);
++    expect(check.authorized).toBe(false);
+   });
+ 
+-  it('Step 7c: approved → locked (lock-artifact)', () => {
++  it('Step 7c: approved → locked (lock-artifact) is not decided by this map', () => {
+     const authority = getAuthorityForAction('lock-artifact');
+-    expect(authority.level).toBe('requires-reviewer-approval');
++    expect(authority.level).toBe('forbidden');
+   });
+ 
+   it('Step 7d: locked → submission_ready (judge-dossier-ready)', () => {
+diff --git a/tests/resolution/governed-promotion-pipeline.test.ts b/tests/resolution/governed-promotion-pipeline.test.ts
+--- a/tests/resolution/governed-promotion-pipeline.test.ts
++++ b/tests/resolution/governed-promotion-pipeline.test.ts
+@@ -242,15 +242,16 @@
+     expect(authority.requiresHumanConfirmation).toBe(true);
+   });
+ 
+-  it('approve-artifact requires reviewer approval', () => {
++  // 2026-11-01 (F1): approve and lock are decided only by the signed act (server/services/artifact-approval-act.ts); the map's entries admit no role.
++  it('approve-artifact is not decided by this map', () => {
+     const authority = getAuthorityForAction('approve-artifact');
+-    expect(authority.level).toBe('requires-reviewer-approval');
++    expect(authority.level).toBe('forbidden');
+     expect(authority.requiresReviewerApproval).toBe(true);
+   });
+ 
+-  it('lock-artifact requires reviewer approval', () => {
++  it('lock-artifact is not decided by this map', () => {
+     const authority = getAuthorityForAction('lock-artifact');
+-    expect(authority.level).toBe('requires-reviewer-approval');
++    expect(authority.level).toBe('forbidden');
+   });
+ 
+   it('judge-module-ready requires escalation', () => {
+diff --git a/tests/resolution/promotion-lifecycle.test.ts b/tests/resolution/promotion-lifecycle.test.ts
+--- a/tests/resolution/promotion-lifecycle.test.ts
++++ b/tests/resolution/promotion-lifecycle.test.ts
+@@ -86,10 +86,10 @@
+ 
+     // promote-to-review: requires-confirmation
+     expect(levels[0]).toBe('requires-confirmation');
+-    // approve-artifact: requires-reviewer-approval
+-    expect(levels[1]).toBe('requires-reviewer-approval');
+-    // lock-artifact: requires-reviewer-approval
+-    expect(levels[2]).toBe('requires-reviewer-approval');
++    // approve-artifact and lock-artifact: forbidden through this map.
++    // 2026-11-01 (F1): approve and lock are decided only by the signed act (server/services/artifact-approval-act.ts); the map's entries admit no role.
++    expect(levels[1]).toBe('forbidden');
++    expect(levels[2]).toBe('forbidden');
+     // judge-dossier-ready: requires-escalation
+     expect(levels[3]).toBe('requires-escalation');
+   });
+@@ -100,22 +100,23 @@
+ // ═══════════════════════════════════════════════════════════════════════════════
+ 
+ describe('Approve Artifact (review → approved)', () => {
+-  it('requires reviewer approval authority', () => {
++  // 2026-11-01 (F1): approve and lock are decided only by the signed act (server/services/artifact-approval-act.ts); the map's entries admit no role.
++  it('is not decided by this map', () => {
+     const authority = getAuthorityForAction('approve-artifact');
+-    expect(authority.level).toBe('requires-reviewer-approval');
++    expect(authority.level).toBe('forbidden');
+     expect(authority.requiresReviewerApproval).toBe(true);
+   });
+ 
+-  it('reviewer role is authorized', () => {
++  it('reviewer role is not authorized through this map', () => {
+     const authority = getAuthorityForAction('approve-artifact');
+     const check = isActorAuthorized(authority, 'reviewer');
+-    expect(check.authorized).toBe(true);
++    expect(check.authorized).toBe(false);
+   });
+ 
+-  it('approver role is authorized', () => {
++  it('approver role is not authorized through this map', () => {
+     const authority = getAuthorityForAction('approve-artifact');
+     const check = isActorAuthorized(authority, 'approver');
+-    expect(check.authorized).toBe(true);
++    expect(check.authorized).toBe(false);
+   });
+ 
+   it('creates decision + receipt on successful approval', () => {
+@@ -145,9 +146,9 @@
+ // ═══════════════════════════════════════════════════════════════════════════════
+ 
+ describe('Lock Artifact (approved → locked)', () => {
+-  it('requires reviewer approval authority', () => {
++  it('is not decided by this map', () => {
+     const authority = getAuthorityForAction('lock-artifact');
+-    expect(authority.level).toBe('requires-reviewer-approval');
++    expect(authority.level).toBe('forbidden');
+   });
+ 
+   it('boundary service requires all decisions resolved for approved → locked', () => {
+diff --git a/tests/unit/decision-architecture.test.ts b/tests/unit/decision-architecture.test.ts
+--- a/tests/unit/decision-architecture.test.ts
++++ b/tests/unit/decision-architecture.test.ts
+@@ -178,19 +178,20 @@
+     expect(auth.requiresHumanConfirmation).toBe(true);
+   });
+ 
+-  it('approve-artifact requires reviewer approval', () => {
++  // 2026-11-01 (F1): approve and lock are decided only by the signed act (server/services/artifact-approval-act.ts); the map's entries admit no role.
++  it('approve-artifact admits no role through this map', () => {
+     const auth = getAuthorityForAction('approve-artifact');
+-    expect(auth.level).toBe('requires-reviewer-approval');
++    expect(auth.level).toBe('forbidden');
+     expect(auth.requiresReviewerApproval).toBe(true);
+-    expect(auth.allowedActorRoles).toContain('reviewer');
+-    expect(auth.allowedActorRoles).toContain('approver');
++    expect(auth.allowedActorRoles).toBeUndefined();
++    expect(auth.blockedReason).toContain('artifact-approval-act.ts');
+   });
+ 
+-  it('lock-artifact requires reviewer approval with restricted roles', () => {
++  it('lock-artifact admits no role through this map', () => {
+     const auth = getAuthorityForAction('lock-artifact');
+-    expect(auth.level).toBe('requires-reviewer-approval');
+-    expect(auth.allowedActorRoles).toContain('approver');
+-    expect(auth.allowedActorRoles).toContain('submission_lead');
++    expect(auth.level).toBe('forbidden');
++    expect(auth.allowedActorRoles).toBeUndefined();
++    expect(auth.blockedReason).toContain('artifact-approval-act.ts');
+   });
+ 
+   it('judge-module-ready requires escalation', () => {
+@@ -246,7 +247,8 @@
+   });
+ 
+   it('actor role unknown returns blocked with reason', () => {
+-    const auth = getAuthorityForAction('approve-artifact');
++    // A role-listed action (approve-artifact lists none since 2026-11-01, F1).
++    const auth = getAuthorityForAction('judge-dossier-ready');
+     const result = isActorAuthorized(auth);
+     expect(result.authorized).toBe(false);
+     expect(result.reason).toContain('Requires one of');

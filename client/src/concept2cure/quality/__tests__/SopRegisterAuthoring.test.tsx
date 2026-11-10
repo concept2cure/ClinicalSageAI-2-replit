@@ -3,6 +3,13 @@ import * as React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
+/** D7-B item 6: a register row shows its next step and "More"; the rest open in the row (SopRegisterRow.tsx). */
+function openMore(scope: HTMLElement = document.body) {
+  for (const b of within(scope).queryAllByRole('button', { name: /^More actions for / })) {
+    if (b.getAttribute('aria-expanded') !== 'true') fireEvent.click(b);
+  }
+}
+
 const H = vi.hoisted(() => ({ docs: [] as unknown[], request: vi.fn(), refresh: vi.fn(), ask: vi.fn(), nav: vi.fn(), workbench: null as unknown }));
 const PROGRAM = '40000000-0000-4000-8000-000000000001';
 const DOCUMENT = '40000000-0000-4000-8000-000000000002';
@@ -73,6 +80,13 @@ describe('QMS controls reach the canonical authoring workbench', () => {
     expect(H.request).toHaveBeenCalledWith('GET','/api/mdx/qms/documents/9/editor');
     expect(H.request.mock.calls.some(([,path])=>path.includes('/4/'))).toBe(false);
   });
+  it('opens the training reader, not the editor, for a training notice (qmsIntent read)',async()=>{
+    H.request.mockImplementation(async()=>response({id:9,doc_number:'SOP-009',title:'Training target',doc_type:'sop',version:'2.0',status:'effective',authoring_document_id:DOCUMENT}));
+    render(<QualityApp onNavigate={H.nav} qmsDocumentId="9" qmsIntent="read" />);
+    expect(await screen.findByRole('dialog',{name:'Read and acknowledge'})).toBeTruthy();
+    expect(screen.queryByTestId('canonical-workbench')).toBeNull();
+    expect(H.request.mock.calls.some(([,path])=>String(path).endsWith('/editor'))).toBe(false);
+  });
   it('preserves a refused exact notification target without opening a different register row',async()=>{
     H.request.mockRejectedValue(new Error('The selected controlled document was not found.'));
     render(<QualityApp qmsDocumentId="9" />);
@@ -80,6 +94,16 @@ describe('QMS controls reach the canonical authoring workbench', () => {
     expect(screen.queryByTestId('canonical-workbench')).toBeNull();
     expect(H.request.mock.calls.every(([,path])=>path==='/api/mdx/qms/documents/9')).toBe(true);
     expect(screen.getByRole('button',{name:'Try again'})).toBeTruthy();
+  });
+  // C15: a document that is not there is said as such, with no Try again that cannot change it.
+  it('says a notification target that is not there was not found, and offers no Try again',async()=>{
+    H.request.mockResolvedValue(response(null,404));
+    render(<QualityApp qmsDocumentId="9" />);
+    const failed=await screen.findByTestId('qms-target-failed');
+    expect(failed.textContent).toMatch(/This controlled document was not found in your organization/);
+    expect(within(failed).queryByRole('button',{name:'Try again'})).toBeNull();
+    fireEvent.click(within(failed).getByRole('button',{name:'Dismiss this message'}));
+    expect(screen.queryByTestId('qms-target-failed')).toBeNull();
   });
   it('queues a new notification target while the current canonical editing copy remains open',async()=>{
     H.request.mockImplementation(async(method:string,path:string)=>path.endsWith('/editor')?response({...editor,qmsDocument:{id:Number(path.split('/').at(-2)),status:'draft'}}):
@@ -115,7 +139,9 @@ describe('QMS controls reach the canonical authoring workbench', () => {
   });
   it('passes the selected library template to the create route', async () => {
     renderRegister();
-    fireEvent.click(screen.getByRole('button', { name: /Standard operating procedure/ }));
+    // D7-B: the template is chosen in New controlled document's template field (was a library card).
+    fireEvent.click(screen.getByRole('button', { name: 'New controlled document' }));
+    fireEvent.change(within(screen.getByRole('dialog')).getByLabelText('Template'), { target: { value: 'sop' } });
     await completeForm('Create and open', 'Controlled procedure');
     await screen.findByTestId('canonical-workbench');
     expect(H.request).toHaveBeenCalledWith('POST', '/api/mdx/qms/documents', expect.objectContaining({ templateKey: 'sop', docType: 'sop' }));
@@ -138,9 +164,35 @@ describe('QMS controls reach the canonical authoring workbench', () => {
     await screen.findByTestId('canonical-workbench');
     expect(H.request).toHaveBeenCalledWith('GET', '/api/mdx/qms/documents/4/editor');
     fireEvent.click(screen.getByRole('button', { name: 'Open Vault' })); expect(H.nav).toHaveBeenCalledWith('vault');
+    // C5: the one editor owns its asks inside Quality, so it keeps its unsaved-work decision and its document,
+    // section and saved-version origin; a host onAsk would bypass both (product-editor-ask-leaves-quality).
+    expect((H.workbench as { onAsk?: unknown }).onAsk).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Back to Quality register' }));
     expect(screen.queryByTestId('canonical-workbench')).toBeNull(); expect(H.refresh).toHaveBeenCalled();
     expect(H.ask).not.toHaveBeenCalled();
+  });
+  // C5, found walking it: a legacy entry past draft has its text inline and no editing copy. "Open" reads that text
+  // where it lives; the editor has nothing to open and would answer "no editing copy" with a Try again that cannot help.
+  // This proves the door (the reader, not the editor). The reader's own read and render of the text is pinned in
+  // PersonalTrainingReader.test.tsx and SopRegisterPersonalTraining.test.tsx, for a signed-in reader.
+  it('says an editor read refused for this role as that, and offers the controlled text in the reader', async () => {
+    H.request.mockImplementation(async (method: string, url: string) => (method === 'GET' && url.endsWith('/editor')
+      ? { ok: false, status: 403, json: async () => ({ error: 'Not permitted', code: 'FORBIDDEN' }) }
+      : response(null)));
+    renderRegister(); fireEvent.click(screen.getByRole('button', { name: 'SOP-004' }));
+    const refused = await screen.findByRole('alert');
+    expect(refused.textContent).toMatch(/Your role cannot do this/);
+    expect(within(refused).queryByRole('button', { name: 'Try again' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Read its controlled text' }));
+    expect(screen.getByRole('dialog', { name: 'Read and acknowledge' })).toBeTruthy();
+    // The editor's refusal gave way to the reader (this suite has no signed-in reader, so the reader says so itself).
+    expect(screen.queryByText(/Your role cannot do this/)).toBeNull();
+  });
+  it('opens a legacy entry under review to its inline controlled text, not to an editor with no copy', () => {
+    H.docs = [{ ...DRAFT, status: 'in_review', authoringDocumentId: null }];
+    renderRegister(); fireEvent.click(screen.getByRole('button', { name: 'SOP-004' }));
+    expect(screen.queryByTestId('canonical-workbench')).toBeNull();
+    expect(screen.getByRole('dialog', { name: 'Read and acknowledge' })).toBeTruthy();
   });
   it('binds an unbound legacy draft explicitly before opening its new editing copy', async () => {
     H.docs = [{ ...DRAFT, authoringDocumentId: null }];
@@ -159,7 +211,7 @@ describe('QMS controls reach the canonical authoring workbench', () => {
   });
   it('creates and opens a controlled revision through the real revision route', async () => {
     H.docs = [{ ...DRAFT, status: 'effective' }];
-    renderRegister(); fireEvent.click(screen.getByRole('button', { name: /Revise/ }));
+    renderRegister(); openMore(); fireEvent.click(screen.getByRole('button', { name: /Revise/ }));
     const dialog = screen.getByRole('dialog');
     fireEvent.change(within(dialog).getByLabelText('Reason'), { target: { value: 'Update the procedure after periodic review.' } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Create revision' }));
@@ -169,7 +221,7 @@ describe('QMS controls reach the canonical authoring workbench', () => {
   });
   it('recovers a legacy effective registry entry with explicit program/template instead of claiming previous authored content', async () => {
     H.docs = [{...DRAFT,status:'effective',authoringDocumentId:null}];
-    renderRegister(); fireEvent.click(screen.getByRole('button',{name:/Revise/}));
+    renderRegister(); openMore(); fireEvent.click(screen.getByRole('button',{name:/Revise/}));
     expect(screen.getByRole('dialog',{name:'Start authored revision'}).textContent).toMatch(/no authored content is claimed/);
     fireEvent.change(screen.getByLabelText('Template'),{target:{value:'sop'}});
     await completeForm('Create revision and open');
@@ -201,18 +253,18 @@ describe('QMS controls reach the canonical authoring workbench', () => {
   });
   it('the Quality shell forwards navigation and holds its tabs while the workbench is open', async () => {
     render(<QualityApp onAskAna={H.ask} onNavigate={H.nav} />);
-    expect(screen.getByRole('tablist', { name: 'Quality surfaces' })).toBeTruthy();
+    expect(screen.getByRole('tablist', { name: 'Quality registers' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'SOP-004' }));
     await screen.findByTestId('canonical-workbench');
-    expect(screen.queryByRole('tablist', { name: 'Quality surfaces' })).toBeNull();
+    expect(screen.queryByRole('tablist', { name: 'Quality registers' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Open Vault' })); expect(H.nav).toHaveBeenCalledWith('vault');
     fireEvent.click(screen.getByRole('button', { name: 'Back to Quality register' }));
-    await waitFor(() => expect(screen.getByRole('tablist', { name: 'Quality surfaces' })).toBeTruthy());
+    await waitFor(() => expect(screen.getByRole('tablist', { name: 'Quality registers' })).toBeTruthy());
   });
   it('opens retained signed sections through the versions service as read-only content', async () => {
     H.request.mockResolvedValue(response([{ version: '1.0', approved_at: '2026-10-10T12:00:00Z',
       sections: [{ id: 'section-1', code: '1', title: 'Purpose', content: '<p>Signed purpose.</p>', orderIndex: 1 }] }]));
-    renderRegister(); fireEvent.click(screen.getByRole('button', { name: 'View version history of SOP-004' }));
+    renderRegister(); openMore(); fireEvent.click(screen.getByRole('button', { name: 'View version history of SOP-004' }));
     expect(await screen.findByTestId('saved-snapshot-content')).toHaveProperty('textContent', '<p>Signed purpose.</p>');
     expect(H.request).toHaveBeenCalledWith('GET', '/api/mdx/qms/documents/4/versions');
     const dialog = screen.getByRole('dialog', { name: 'Version history of SOP-004' });
@@ -223,7 +275,7 @@ describe('QMS controls reach the canonical authoring workbench', () => {
   });
   it('does not present an unreadable history as no signed versions', async () => {
     H.request.mockRejectedValue(new Error('You do not have permission to view this authored document.'));
-    renderRegister(); fireEvent.click(screen.getByRole('button', { name: 'View version history of SOP-004' }));
+    renderRegister(); openMore(); fireEvent.click(screen.getByRole('button', { name: 'View version history of SOP-004' }));
     await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/permission to view/));
     expect(screen.queryByText('No document versions recorded yet.')).toBeNull();
     expect(screen.queryByTestId('saved-snapshot-content')).toBeNull();

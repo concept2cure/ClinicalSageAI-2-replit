@@ -1,0 +1,46 @@
+{
+  "normal_gates_passed": true,
+  "typescript_errors": 0,
+  "push_result": "rejected concurrent ref compare-and-swap, exit1; no source accepted",
+  "push_log": "source-push-race-4.txt",
+  "canonical_base": "e87e63deec77b3e8d2e7d6606b845331c5914d8d",
+  "incoming_commits": 8,
+  "incoming_paths": 27,
+  "clean_merge": true,
+  "production_changes": [
+    "server/routes/mdx-client-review.ts",
+    "server/services/ocr/extractDocumentText.ts"
+  ],
+  "client_runtime_changes": [],
+  "server_checks": {
+    "passed": 13,
+    "suites": 2,
+    "failures": 0,
+    "skipped": 0,
+    "exit_code": 0,
+    "log": "race-4-server-tests.txt"
+  },
+  "server_audit_verifier_build": {
+    "exit_code": 0,
+    "log": "race-4-server-build.txt"
+  },
+  "retained_client_qualification": {
+    "tests": 618,
+    "suites": 45,
+    "full_build_exit_code": 0,
+    "browser_flows": 8,
+    "browser_inputs": 36,
+    "prior_publication_inputs": 128
+  },
+  "current_publication_inputs": 150,
+  "input_mismatches": [],
+  "independent_preservation_review": {
+    "reviewer": "device_feedback_contract",
+    "verdict": "approved; no additional client or browser rerun justified",
+    "canonical_table_rows_retained_verbatim": 341,
+    "unresolved_conflicts": 0,
+    "source_delta": "only expected five client paths relative to current canonical"
+  },
+  "next_push": "pending every normal gate",
+  "rejected_candidate": "e1bd54781fecfa2c315e1ed496a2ba83608219c7"
+}

@@ -1,0 +1,25 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/comparability-studies",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "projectId": "d06d5469-1d74-47a1-9758-50093a1aa994",
+      "title": "OQ comparability 20261110020703",
+      "type": "process",
+      "product": "Scale",
+      "status": "draft"
+    }
+  },
+  "response": {
+    "status": 409,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 16,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": "The project named is not one of this organisation’s projects, so the record was not filed under it."
+    }
+  }
+}

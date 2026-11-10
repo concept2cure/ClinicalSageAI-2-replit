@@ -1,0 +1,33 @@
+ ✓ client/src/concept2cure/v2/__tests__/labelingPiControlsWork.test.tsx > deriveLabelStage — the ladder reads the sections, not a useState > reports Negotiation when any section carries an agency edit 1ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingPiControlsWork.test.tsx > deriveLabelStage — the ladder reads the sections, not a useState > reports Approved only when every live section is approved 0ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingPiControlsWork.test.tsx > deriveLabelStage — the ladder reads the sections, not a useState > reports FDA labeling review when a section is in review 0ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingPiControlsWork.test.tsx > deriveLabelStage — the ladder reads the sections, not a useState > asserts nothing about a label that has no sections 0ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingPiControlsWork.test.tsx > LabelingPI — the document bar > heads the label with the product the org recorded, not a hardcoded molecule 57ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingPiControlsWork.test.tsx > LabelingPI — the document bar > PDF reaches the renderer with the label assembled from the rows on screen 163ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingPiControlsWork.test.tsx > LabelingPI — the document bar > Word reaches the DOCX renderer 49ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingPiControlsWork.test.tsx > LabelingPI — the agency negotiation > "View full redline" renders the sponsor-vs-agency diff 85ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingPiControlsWork.test.tsx > LabelingPI — the agency negotiation > refuses to accept agency text without an audited reason — nothing is sent 70ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingPiControlsWork.test.tsx > LabelingPI — the agency negotiation > accepts the agency text, carrying the reason, and re-reads the label 75ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingPiControlsWork.test.tsx > LabelingPI — the format tabs are three documents, not one > EU SmPC reads the org’s own QRD statuses instead of re-showing the US label 43ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingPiControlsWork.test.tsx > LabelingPI — the format tabs are three documents, not one > SPL builds from the stored label once product identity is supplied 63ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingViewerHidesWrites.test.tsx > a viewer > is offered no write control: no Approve, no Advance, no Add translation 179ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingViewerHidesWrites.test.tsx > a viewer > is told the screen is view only, and the translations are still shown 35ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingViewerHidesWrites.test.tsx > an editor, and a session that does not say > an editor is offered Approve, Advance and Add translation 69ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingViewerHidesWrites.test.tsx > an editor, and a session that does not say > a session with no permissions array is offered them: the server decides (canGovernedWrite) 54ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > a project the organization does not own (404) is said as itself, to the reader and to AnA 133ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > an ownership check that could not run (503) is said as itself, to the reader and to AnA 27ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > the module gate (403 MODULE_NOT_LICENSED) is said as itself, to the reader and to AnA 17ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > launch scope (403 LAUNCH_SCOPE) is said as itself, to the reader and to AnA 16ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > a role refusal (403) is said as itself, to the reader and to AnA 14ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > a signature the act requires (428) is said as itself, to the reader and to AnA 13ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > the check that could not run is tried again, and its answer is drawn 38ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the labeling document says why it was not read > a genuine failure (500) is still a failed read 7ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the symbol and translation reads say why they were not read > a document not in this organization (404) is said as itself on both panels 23ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the symbol and translation reads say why they were not read > the module gate (403 MODULE_NOT_LICENSED) on the translations is said as itself 19ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingRefusalNotFailedRead.test.tsx > Labeling — the symbol and translation reads say why they were not read > a genuine failure (500) of the translations is still a failed read 16ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingEmptyStateHasItsAction.test.tsx > no labeling document yet > offers a writer the action it describes, which asks AnA to start the record 143ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingEmptyStateHasItsAction.test.tsx > no labeling document yet > does not describe a create the screen itself offers 12ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingEmptyStateHasItsAction.test.tsx > no labeling document yet > offers a viewer no start, and says why 16ms
+ ✓ client/src/concept2cure/v2/__tests__/labelingEmptyStateHasItsAction.test.tsx > no labeling document yet > tells AnA the same: a writer can have it started, a viewer cannot 15ms
+ Test Files  4 passed (4)
+      Tests  31 passed (31)

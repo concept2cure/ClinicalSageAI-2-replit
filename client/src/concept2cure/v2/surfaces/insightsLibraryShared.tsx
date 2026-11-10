@@ -17,11 +17,11 @@ import { RUN_STATUS_LABEL, SCHEDULE_DELIVERY_NOTE, SCHEDULE_SWEEP_NOTE } from '.
 /** The library panels, and the order a client meets them. */
 export type LibraryView = 'catalog' | 'runs' | 'schedules' | 'bundles';
 
-export const LIBRARY_VIEWS: ReadonlyArray<{ id: LibraryView; label: string; icon: React.ReactNode }> = [
-  { id: 'catalog', label: 'Report catalog', icon: I.grid },
-  { id: 'runs', label: 'Run history', icon: I.history },
-  { id: 'schedules', label: 'Schedules', icon: I.calendar },
-  { id: 'bundles', label: 'Bundles', icon: I.layers },
+export const LIBRARY_VIEWS: ReadonlyArray<{ id: LibraryView; label: string }> = [
+  { id: 'catalog', label: 'Catalog' },
+  { id: 'runs', label: 'Run history' },
+  { id: 'schedules', label: 'Schedules' },
+  { id: 'bundles', label: 'Bundles' },
 ];
 
 /** A catalog row as the canvas models it (see Insights.tsx `ReportType`). */

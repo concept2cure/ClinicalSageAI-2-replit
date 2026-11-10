@@ -42,6 +42,7 @@ vi.mock('../release-signature-status', async (importOriginal) => ({
 }));
 
 import { assessSequenceDispatchReadiness, readinessOptionsForSequence } from '../assess-dispatch-readiness';
+import { coverCurrentLeaves } from '../../shadow-review/__tests__/review-covers-current-leaves';
 import { CLINICAL_HOLD_NOT_ASSESSED_NOTE } from '../ind-program-findings';
 
 let harness: IndPgliteDb;
@@ -109,7 +110,12 @@ async function recordSafetyReport(submissionId: number, opts: { deadline: string
   );
 }
 
-const assess = (sequenceId: number) => assessSequenceDispatchReadiness({ sequenceId, organizationId: ORG, asOf: AS_OF });
+// The completed review seeded with each sequence is over the leaves as they stand
+// when the suite assesses (2026-10-25): this suite is about the structural gate.
+const assess = async (sequenceId: number) => {
+  await coverCurrentLeaves({ query: q }, sequenceId, ORG);
+  return assessSequenceDispatchReadiness({ sequenceId, organizationId: ORG, asOf: AS_OF });
+};
 type Assessment = Awaited<ReturnType<typeof assess>>;
 const byCode = (a: Assessment, code: string) => a.readiness.findings.filter((f) => f.code === code);
 const structural = (a: Assessment) => a.gates.find((g) => g.key === 'structural')!;
@@ -334,5 +340,21 @@ describe('what P-33 did not carry stays uncarried', () => {
     expect(rows.every((r: { checksum: string | null }) => r.checksum === null)).toBe(true);
     const a = await assess(sequenceId);
     expect(a.gate.cleared, a.gate.blockers.join(' | ')).toBe(true);
+  });
+});
+
+/* F1 repair B (re-plan step 8, 2026-11-08): readiness answers only for a live
+   sequence. The sequence read had no deleted_at filter, so a sequence the filed
+   baseline's removal of drafts had taken out (filed-sequence-baseline.ts) could
+   still be assessed, and reported ready, to AnA, MCP and the IND route. */
+describe('a removed sequence has no dispatch readiness (F1 repair B)', () => {
+  it('a complete amendment, once removed, is answered as not found, by its number, never as ready', async () => {
+    const sequenceId = await seedSequence(await seedSubmission(), '0002', 'amendment');
+    await placeCompleteAmendment(sequenceId);
+    expect((await assess(sequenceId)).gate.cleared).toBe(true);
+    await q('UPDATE ectd_sequences SET deleted_at = now() WHERE id = $1', [sequenceId]);
+    await expect(assessSequenceDispatchReadiness({ sequenceId, organizationId: ORG, asOf: AS_OF })).rejects.toMatchObject({
+      code: 'NOT_FOUND', message: 'Sequence 0002 was removed from this submission, so it has no dispatch readiness.',
+    });
   });
 });

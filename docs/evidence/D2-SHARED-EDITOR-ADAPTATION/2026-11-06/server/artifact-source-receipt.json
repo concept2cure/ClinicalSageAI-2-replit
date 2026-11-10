@@ -1,0 +1,100 @@
+{
+  "observedAt": "2026-11-06T18:32:52.741311+00:00",
+  "baseCommit": "e533082d6386416fce4857a64f5168631c3791e9",
+  "branch": "concept2cure-v2",
+  "runtime": "v22.23.4",
+  "scope": "Actual HTTP/JWT/PGlite qualification for the existing artifact workflow-source bridge; test-only ownership, Plan F1",
+  "testFile": "server/routes/__tests__/artifact-workflow-source.test.ts",
+  "results": {
+    "red": {
+      "files": 1,
+      "tests": 32,
+      "failed": 20,
+      "passed": 12,
+      "exitCode": 1,
+      "cause": "Before artifact selector parser/dispatch wiring, valid artifact previews returned400 SOURCE_REQUIRED. Shared source types and unwired adapter helper were already present.",
+      "limits": "Three additional cases and exact status assertions on seven boundary cases were added after this RED. It is not a claim that all final35 cases were executed against old production."
+    },
+    "firstWiredRun": {
+      "tests": 35,
+      "passed": 34,
+      "failed": 1,
+      "cause": "Fixture viewer POST omitted mandatory expectedFingerprint, so request validation correctly returned400 before permission403. Fixture corrected to retain the verified copy fingerprint; no product change."
+    },
+    "green": {
+      "files": 1,
+      "tests": 35,
+      "passed": 35,
+      "failed": 0,
+      "exitCode": 0,
+      "durationSeconds": 51.26
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 0,
+      "maxWarnings": 0,
+      "exitCode": 0
+    },
+    "diffCheck": "passed"
+  },
+  "command": "NODE_OPTIONS=--max-old-space-size=4096 PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH npx --no-install vitest run --config vitest.config.ts --maxWorkers=1 --fileParallelism=false server/routes/__tests__/artifact-workflow-source.test.ts --reporter=verbose",
+  "lintCommand": "NODE_OPTIONS=--max-old-space-size=4096 PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH npx --no-install eslint server/routes/__tests__/artifact-workflow-source.test.ts --max-warnings=0",
+  "proof": [
+    "Exact legacy text ID and retained current-head version; preview without authoring writes; unbound draft, genesis origin and no inherited approval/signature; actual editor PATCH and edited-copy reuse.",
+    "Foreign tenant/project/unbound identity and retired/empty/mismatching source refusals; current private access and viewer write revocation; unavailable sharing-policy read; malformed selectors.",
+    "Metadata/citations/content/version/lineage/provenance-event drift; successive versions create distinct copies.",
+    "Explicit current-head snapshot with raw/unrecorded/recognized CMC hashes, no fabricated version; unknown origin requires independent adoption.",
+    "Known AI metadata, historical versus current-version model attribution, invalid span rejection, dated accepted-machine span JSON roundtrip, persisted source revalidation and model-qualification release hold.",
+    "Escaped literal structured source representation and actual canonical keep_data/remove_data eligibility SQL."
+  ],
+  "sourceInputsBeforeFinalRun": {
+    "observedAt": "2026-11-06T18:31:24.941119+00:00",
+    "files": {
+      "shared/authoring/source-import.ts": "bfc71c40d79bd909e8b3ab7134dbe110ae6b2fd2be6aaca934ffe550712fd35e",
+      "server/services/authoring/artifact-workflow-source.ts": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+      "server/services/authoring/authoring-source-import.ts": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+      "server/services/authoring/workflow-source-import.ts": "9f3c25ff1c6be493edd440706a2ac046f15791cc5fda23fc9ac96ac142273a31",
+      "server/services/authoring/import-source-references.ts": "b4a9a3f3395681d54f616bf98976c8db4285ed208c4a3946b2a77791be18478b",
+      "server/services/authoring/workflow-import-governance.ts": "7253f5c51e335529bc5bef414048ef563982b4916f586877d672c96b8377a0c4",
+      "server/routes/__tests__/artifact-workflow-source.test.ts": "12766c63c5cc8bd5301b448f3f6dbe1a5fccef706b43d236aafb3d0484d96541"
+    }
+  },
+  "sourceFingerprintsAfterFinalRun": {
+    "shared/authoring/source-import.ts": "bfc71c40d79bd909e8b3ab7134dbe110ae6b2fd2be6aaca934ffe550712fd35e",
+    "server/services/authoring/artifact-workflow-source.ts": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+    "server/services/authoring/authoring-source-import.ts": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+    "server/services/authoring/workflow-source-import.ts": "9f3c25ff1c6be493edd440706a2ac046f15791cc5fda23fc9ac96ac142273a31",
+    "server/services/authoring/import-source-references.ts": "b4a9a3f3395681d54f616bf98976c8db4285ed208c4a3946b2a77791be18478b",
+    "server/services/authoring/workflow-import-governance.ts": "7253f5c51e335529bc5bef414048ef563982b4916f586877d672c96b8377a0c4",
+    "server/routes/__tests__/artifact-workflow-source.test.ts": "12766c63c5cc8bd5301b448f3f6dbe1a5fccef706b43d236aafb3d0484d96541"
+  },
+  "sourceInputsUnchanged": true,
+  "logs": {
+    "shared-editor-artifact-source-red.txt": {
+      "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/server/shared-editor-artifact-source-red.txt",
+      "rawBytes": 26333,
+      "rawSha256": "b620d9b01e128e58dbbe8e976621c7020f16cc2c23826b592a079e81510cd2a2"
+    },
+    "shared-editor-artifact-source-fixture-red.txt": {
+      "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/server/shared-editor-artifact-source-fixture-red.txt",
+      "rawBytes": 14149,
+      "rawSha256": "48923e78c9e908e20ef6fe0803ab6741f4f21c5d846d14bf61f02e2bc8d7c16a"
+    },
+    "shared-editor-artifact-source-green.txt": {
+      "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/server/shared-editor-artifact-source-green.txt",
+      "rawBytes": 13201,
+      "rawSha256": "71aa1ae6050a26b00b0391f2ce645efbc89107904bfbcf6e7c06aa1c306f492a"
+    },
+    "shared-editor-artifact-source-lint.txt": {
+      "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/server/shared-editor-artifact-source-lint.txt",
+      "rawBytes": 0,
+      "rawSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "limits": [
+    "Minimal existing-store source fixture with canonical Authoring migrations and actual SQL admission; does not prove full migration provisioning, production RLS, PostgreSQL concurrency, deployment or live model/agency acceptance.",
+    "An environment restart interrupted the first attempt before results; that attempt confers no acceptance.",
+    "Positive source-copy editing is not regulatory approval, model qualification or release permission.",
+    "No production/source ownership beyond the previously approved binary/Vault changes; no full typecheck/build or commits by this test scope."
+  ]
+}

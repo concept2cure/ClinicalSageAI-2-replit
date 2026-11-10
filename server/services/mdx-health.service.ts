@@ -121,7 +121,7 @@ const PROBED_TABLES: Array<{ name: string; role: string; required: boolean }> = 
   { name: 'public.q_sub_questions',               role: 'PreSubManager detail',                        required: true  },
   { name: 'public.q_sub_commitments',             role: 'PreSubManager detail + RIM recs',             required: true  },
   { name: 'public.q_sub_meetings',                role: 'PreSubManager detail + milestones',           required: true  },
-  { name: 'public.cerv2_510k_sections',           role: 'eSTAR list, PMA modules, CER sections',       required: true  },
+  { name: 'public.cerv2_510k_sections',           role: 'eSTAR list, CER sections',                    required: true  },
   /* Optional enrichment — degrades panels but doesn't block beta. */
   { name: 'public.safety_signals',                role: 'CerSurface signals table',                    required: false },
   { name: 'public.literature_entries',            role: 'CerSurface literature corpus + insights',     required: false },

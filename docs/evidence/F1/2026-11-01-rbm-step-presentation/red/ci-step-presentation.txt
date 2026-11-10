@@ -1,0 +1,25 @@
+ci:step-presentation FAILED — 20 finding(s):
+  MISSING  add_ctq_factor: no `present` block: its steps would read "Ran a step"
+  MISSING  approve_rbm_assessment: no `present` block: its steps would read "Ran a step"
+  MISSING  approve_rbm_plan: no `present` block: its steps would read "Ran a step"
+  MISSING  assess_site_risk: no `present` block: its steps would read "Ran a step"
+  MISSING  create_monitoring_action: no `present` block: its steps would read "Ran a step"
+  MISSING  define_kri: no `present` block: its steps would read "Ran a step"
+  MISSING  draft_monitoring_plan: no `present` block: its steps would read "Ran a step"
+  MISSING  evaluate_kris_qtls: no `present` block: its steps would read "Ran a step"
+  MISSING  generate_rbm_plan: no `present` block: its steps would read "Ran a step"
+  MISSING  generate_rbm_report: no `present` block: its steps would read "Ran a step"
+  MISSING  get_rbm_attention: no `present` block: its steps would read "Ran a step"
+  MISSING  prioritize_monitoring_queries: no `present` block: its steps would read "Ran a step"
+  MISSING  raise_monitoring_signal: no `present` block: its steps would read "Ran a step"
+  MISSING  record_kri_reading: no `present` block: its steps would read "Ran a step"
+  MISSING  run_central_monitoring: no `present` block: its steps would read "Ran a step"
+  MISSING  run_rbm_assessment: no `present` block: its steps would read "Ran a step"
+  MISSING  scan_patient_profiles: no `present` block: its steps would read "Ran a step"
+  MISSING  set_qtl: no `present` block: its steps would read "Ran a step"
+  MISSING  triage_signal: no `present` block: its steps would read "Ran a step"
+  MISSING  update_monitoring_action: no `present` block: its steps would read "Ran a step"
+
+Each in-scope tool needs a `present` block in server/services/ana/tool-authorization.register.json with a verb
+and a source from shared/ana/step-verbs.ts. See the header of scripts/ci/check-step-presentation.mjs.
+exit 1

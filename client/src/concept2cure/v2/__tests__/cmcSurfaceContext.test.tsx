@@ -96,9 +96,41 @@ describe('CMC publishes what the screen is showing', () => {
     expect(seen!.facts?.tabLabel).toBe('Overview');
     expect(seen!.summary).toMatch(/Overview tab of the CMC Module 3 operating system/);
 
-    fireEvent.click(screen.getByRole('button', { name: /Stability/ }));
+    /* Stability is in the Study records half (D5 §A.3), so the journey is the
+       half and then the tab — and the half is DERIVED from the open tab, so
+       choosing it lands on that half's first view. */
+    fireEvent.click(screen.getByRole('button', { name: 'Study records' }));
+    await waitFor(() => expect(seen!.facts?.tabLabel).toBe('Substance & product'));
+    fireEvent.click(screen.getByRole('tab', { name: 'Stability' }));
     await waitFor(() => expect(seen!.facts?.tabLabel).toBe('Stability'));
     expect(seen!.summary).toMatch(/Stability tab/);
+    /* And the sentence the retired "What to do now" band printed is published
+       for this tab, so the page's first starter can answer it (D5 §A.5). */
+    expect(seen!.facts?.whatToDoHere).toMatch(/Register each study/);
+  });
+
+});
+
+/* The two halves of the CMC work area (D5 §A.3). Their own block: these drive
+   the frame rather than the context channel above, and keeping them there put
+   that describe past the 100-line cap. */
+describe('CMC opens on one of its two halves', () => {
+  it('comes back to the tab you left in the other half', async () => {
+    /* One piece of state, the tab; the half is read off it. So switching away
+       and back does not reset the view (D5 §A.6 item 2). */
+    wire({ success: true, data: null });
+    renderCmc();
+    await waitFor(() => expect(seen).not.toBeNull());
+
+    fireEvent.click(screen.getByRole('button', { name: 'Study records' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Batch records' }));
+    await waitFor(() => expect(seen!.facts?.tabLabel).toBe('Batch records'));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Module 3' }));
+    await waitFor(() => expect(seen!.facts?.tabLabel).toBe('Overview'));
+    /* Study records reopens on Batch records, not on the half's first tab. */
+    fireEvent.click(screen.getByRole('button', { name: 'Study records' }));
+    await waitFor(() => expect(seen!.facts?.tabLabel).toBe('Batch records'));
   });
 
   it('gives AnA a vocabulary for driving the screen', async () => {
@@ -290,3 +322,30 @@ describe('CMC tells AnA the Module 3 question figures it shows, and only those',
   });
 });
 
+
+/**
+ * The ask row carries a name a screen reader can reach (coordinator, 2026-11-02).
+ *
+ * `CmStarters` rendered `<div className="sp-starters" data-layout="row"
+ * aria-label="Ask AnA">`. An `aria-label` on a `<div>` with no role is ignored
+ * by assistive technology — the element has no accessible name at all, so the
+ * row of starters is an unlabelled group of buttons. The Reporting session
+ * found the identical shape on the Insights canvas, where
+ * `insightsCanvasAccessible.test.tsx` catches it; CMC had no such case, which
+ * is why the same defect could be written here and not be noticed.
+ *
+ * `getByRole('group', { name: 'Ask AnA' })` is the assertion rather than a
+ * class query precisely because it resolves the name the way a reader's
+ * software does: with the role absent, the query cannot find the element even
+ * though the attribute is on it.
+ */
+describe('CMC — the ask row is named for a screen reader', () => {
+  it('exposes the starters as a group with an accessible name', async () => {
+    wire({ success: true, data: {} });
+    renderCmc();
+    const row = await screen.findByRole('group', { name: 'Ask AnA' });
+    expect(row.classList.contains('sp-starters')).toBe(true);
+    // And it is the row of starters, not an empty landmark.
+    expect(row.querySelectorAll('button.sp-starter').length).toBeGreaterThan(0);
+  });
+});

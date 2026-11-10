@@ -1,0 +1,157 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/csr/__tests__/csr-study-data-list.pglite.test.ts
+{
+  "timestamp": "2026-11-02T03:22:20.607Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-02T03:22:20.608Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/csr/__tests__/csr-study-data-list.pglite.test.ts
+{
+  "timestamp": "2026-11-02T03:22:20.609Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/csr/__tests__/csr-study-data-list.pglite.test.ts
+[database] Database connection successful
+
+ × server/services/csr/__tests__/csr-study-data-list.pglite.test.ts > the study data a document is reviewed against > the CSR document lists the study data frozen for it, as before, saying so 23ms
+   → expected [ [ …(2) ] ] to deeply equal [ [ …(2) ] ]
+ × server/services/csr/__tests__/csr-study-data-list.pglite.test.ts > the study data a document is reviewed against > a working copy imported from a CSR build lists the study data that build was drafted from 5ms
+   → expected [] to deeply equal [ [ …(2) ] ]
+ ✓ server/services/csr/__tests__/csr-study-data-list.pglite.test.ts > the study data a document is reviewed against > a build in another organization, or study data in another project, is never listed 5ms
+ ✓ server/services/csr/__tests__/csr-study-data-list.pglite.test.ts > the study data a document is reviewed against > a document with neither lists nothing 3ms
+stdout | server/services/__tests__/csr-builder-no-provider.test.ts
+{
+  "timestamp": "2026-11-02T03:22:25.242Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-02T03:22:25.244Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/__tests__/csr-builder-no-provider.test.ts
+{
+  "timestamp": "2026-11-02T03:22:25.244Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/__tests__/csr-builder-no-provider.test.ts
+[database] Database connection successful
+
+ × server/services/__tests__/csr-builder-no-provider.test.ts > the gateway's fixed demo-mode reply is not saved as an AI draft 20ms
+   → expected 'ai' to be 'template' // Object.is equality
+ × server/services/__tests__/csr-builder-no-provider.test.ts > any deterministic reply is refused the same way, whatever model it names 4ms
+   → expected 'ai' to be 'template' // Object.is equality
+ ✓ server/services/__tests__/csr-builder-no-provider.test.ts > a provider's draft is still accepted as an AI draft 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/csr-builder-no-provider.test.ts > the gateway's fixed demo-mode reply is not saved as an AI draft
+AssertionError: expected 'ai' to be 'template' // Object.is equality
+
+Expected: "template"
+Received: "ai"
+
+ ❯ server/services/__tests__/csr-builder-no-provider.test.ts:26:26
+     24|   complete.mockResolvedValueOnce({ content: FIXED, provider: 'anthropi…
+     25|   const drafted = await draftCSRSectionWithProvenance(section(), reque…
+     26|   expect(drafted.source).toBe('template');
+       |                          ^
+     27|   expect(drafted.model).toBeNull();
+     28|   expect(drafted.tokenCost).toBe(0);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/__tests__/csr-builder-no-provider.test.ts > any deterministic reply is refused the same way, whatever model it names
+AssertionError: expected 'ai' to be 'template' // Object.is equality
+
+Expected: "template"
+Received: "ai"
+
+ ❯ server/services/__tests__/csr-builder-no-provider.test.ts:36:26
+     34|   complete.mockResolvedValueOnce({ content: 'Fixed introduction text.'…
+     35|   const drafted = await draftCSRSectionWithProvenance(section(), reque…
+     36|   expect(drafted.source).toBe('template');
+       |                          ^
+     37|   expect(drafted.lineage).toMatchObject({ rejectedModelDraft: { reason…
+     38| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/csr/__tests__/csr-study-data-list.pglite.test.ts > the study data a document is reviewed against > the CSR document lists the study data frozen for it, as before, saying so
+AssertionError: expected [ [ …(2) ] ] to deeply equal [ [ …(2) ] ]
+
+- Expected
++ Received
+
+  [
+    [
+      "33333333-0000-4000-8000-000000000001",
+-     "this-document",
++     undefined,
+    ],
+  ]
+
+ ❯ server/services/csr/__tests__/csr-study-data-list.pglite.test.ts:65:51
+     63|   it('the CSR document lists the study data frozen for it, as before, …
+     64|     const list = await listCsrStudyData(q(), scope, CSR_DOC);
+     65|     expect(list.map(e => [e.studyDataId, e.via])).toEqual([[FROZEN, 't…
+       |                                                   ^
+     66|     expect(list[0].sources).toEqual([receipt]);
+     67|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/csr/__tests__/csr-study-data-list.pglite.test.ts > the study data a document is reviewed against > a working copy imported from a CSR build lists the study data that build was drafted from
+AssertionError: expected [] to deeply equal [ [ …(2) ] ]
+
+- Expected
++ Received
+
+- [
+-   [
+-     "33333333-0000-4000-8000-000000000001",
+-     "imported-build",
+-   ],
+- ]
++ []
+
+ ❯ server/services/csr/__tests__/csr-study-data-list.pglite.test.ts:71:51
+     69|   it('a working copy imported from a CSR build lists the study data th…
+     70|     const list = await listCsrStudyData(q(), scope, WORKING_COPY);
+     71|     expect(list.map(e => [e.studyDataId, e.via])).toEqual([[FROZEN, 'i…
+       |                                                   ^
+     72|     expect(list[0].sources).toEqual([receipt]);
+     73|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 3 passed (7)
+   Start at  03:22:18
+   Duration  7.60s (transform 2.42s, setup 137ms, import 4.40s, tests 2.57s, environment 0ms)
+

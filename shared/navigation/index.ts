@@ -52,6 +52,13 @@ export interface NavigationTarget {
   /** Logical grouping (module/area) for discovery. */
   group: string;
   /**
+   * A global screen that shows ONE program when one is open or named, and its
+   * own view across programs when none is: the Vault, global since 2026-11-06.
+   * Its scope says the screen opens with no program; this says a program named
+   * for it is still opened there (see programNeedOf).
+   */
+  programOptional?: boolean;
+  /**
    * The token the chat client applies as `action.path`. Defaults to `id`; set
    * explicitly only when the client path differs from the canonical id.
    */
@@ -116,10 +123,17 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   // ── Project-scoped tabs (require an active project) ──
   { id: 'project-home', label: 'Project Home', description: 'The active project overview / home.', scope: 'project', group: 'project' },
   { id: 'regulatory-workspace', label: 'Regulatory Workspace', description: 'The canonical project workspace (AnA + canvas).', scope: 'project', group: 'project' },
-  { id: 'documents', label: 'Documents', description: 'The project document list.', scope: 'project', group: 'project' },
+  // An alias of `vault` (registryModel DEEP_LINK_ALIASES), so it takes the Vault's program rule too (programOptional,
+  // below): "open BX-301's documents" opens BX-301's, where global alone dropped the program named.
+  { id: 'documents', label: 'Documents', description: 'The Vault\'s document list, which `documents` opens: the open project\'s, or, with no project open, the governed documents across your projects. Name a project to open that project\'s documents.', scope: 'global', group: 'project', programOptional: true },
   { id: 'review', label: 'Review', description: 'The review / readiness surface for the project.', scope: 'project', group: 'project' },
   { id: 'submissions', label: 'Submissions', description: 'The project submissions surface.', scope: 'project', group: 'project' },
-  { id: 'vault', label: 'Vault', description: 'The project document vault.', scope: 'project', group: 'project' },
+  // Global since 2026-11-06, by the founder: "Vault … should be accessible all the time, not just from within the
+  // project, but on the left rail." With a project open it is that project's vault; with none, Vault's own view of the
+  // governed documents across the projects the person can open (Vault.tsx, the organization view).
+  // programOptional: "take me to BX-301's Vault" still opens BX-301's. Global alone dropped the program named, and AnA
+  // said she had opened it over the organization view (self-drive-regressions.test.ts, 4b).
+  { id: 'vault', label: 'Vault', description: 'The document vault: the open project\'s, or, with no project open, the governed documents across your projects. Name a project to open that project\'s vault.', scope: 'global', group: 'project', programOptional: true },
   { id: 'section-workspace', label: 'Section Workspace', description: 'The CTD section authoring workspace.', scope: 'project', group: 'project', params: [{ name: 'sectionCode', required: false, description: 'CTD section code to open, e.g. "3.2.P.8".' }] },
   { id: 'csr-workflow', label: 'CSR Workflow', description: 'The clinical study report workflow.', scope: 'project', group: 'project' },
   { id: 'ind-checklist', label: 'IND forms', description: 'The IND checklist and Forms 1571, 1572 and 3674.', scope: 'project', group: 'project' },
@@ -133,7 +147,7 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'labeling', label: 'Labeling', description: 'The labeling workstream (documents, symbols, translations).', scope: 'project', group: 'module' },
   { id: 'risk', label: 'Risk Management', description: 'The risk workstream (register, matrix, controls).', scope: 'project', group: 'module' },
   { id: 'shadow-review', label: 'Shadow review', description: 'The simulated-reviewer surface — predicts Refuse-to-File / Complete-Response risk under a chosen regulator lens (FDA, EMA, PMDA, MDR/IVDR notified body) before filing.', scope: 'project', group: 'module' },
-  { id: 'tasking', label: 'Tasks', description: 'The task board / list / kanban.', scope: 'project', group: 'module' },
+  { id: 'tasking', label: 'Tasks', description: 'The task board / list / kanban.', scope: 'global', group: 'module' },
   { id: 'submission-gateway', label: 'Submission Gateway', description: 'The submission gateway (transmittals, validation).', scope: 'project', group: 'module' },
   // A launch-catalog Submission Center screen that no target reached, so AnA
   // could not get to it at all; its compile controls are wave 7 actions.
@@ -161,7 +175,9 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
       ],
     }],
   },
-  { id: 'quality', label: 'Quality', description: 'The quality management surface (SOP register, controlled documents).', scope: 'project', group: 'module' },
+  { id: 'quality', label: 'Quality', description: 'The quality management surface (SOP register, controlled documents).', scope: 'global', group: 'module' },
+  // Risk-based monitoring, a launch app and a rail work area since P-76 (2026-10-30); it had no target, so AnA and the tour could not open it.
+  { id: 'rbm', label: 'Risk-based monitoring', description: 'Risk-based quality management of the project\'s study (ICH E6(R3)): the risk assessment, KRIs and QTLs, central monitoring, site risk and the monitoring plan, each score computed deterministically and each approval signed.', scope: 'global', group: 'module' },
   {
     id: 'authoring', label: 'Authoring', description: 'The unified document authoring editor.', scope: 'project', group: 'module',
     params: [{ name: 'authoringDocType', required: false, description: 'Document type to author (drives the editor template).' }],
@@ -181,7 +197,6 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   // by AnA. It was the one project surface `navigate_to` could not reach.
   { id: 'communication-center', label: 'Communication', description: 'The agency-communication hub for the project — the FDA loop, the agency inbox, meetings and commitments, and authority profiles.', scope: 'project', group: 'module' },
   { id: 'mission-control', label: 'Mission control', description: 'The portfolio mission-control board — every program and its cross-program status.', scope: 'global', group: 'global' },
-  { id: 'biostat-workbench', label: 'Biostatistics workbench', description: 'The biostatistics workbench — reviewer-risk assessment plus the deterministic design engines (assurance, group-sequential, sample size, multiplicity, and more).', scope: 'global', group: 'module' },
   { id: 'filing-strategy', label: 'Filing strategy', description: 'The filing-strategy workspace — filing-sequence optimization, agency divergence, and prediction calibration.', scope: 'project', group: 'module' },
   { id: 'safety-narrative', label: 'Safety narratives', description: 'The safety-narrative workbench — the SAE case worklist with the ICH E3 §16 narrative composer and expedited-reporting clocks.', scope: 'project', group: 'module' },
   { id: 'crl-library', label: 'FDA CRL library', description: 'The FDA Complete-Response-Letter evidence library — deficiency findings by discipline and severity across the corpus.', scope: 'global', group: 'module' },
@@ -193,7 +208,8 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
 
   // ── Device & diagnostics workstream (all render via MdxSurfaceHost; program
   // scope comes from the project in context when one is open) ──
-  { id: 'device-workstream', label: 'Device portfolio', description: 'The device portfolio overview — project cards and portfolio health KPIs.', scope: 'global', group: 'module' },
+  /* The device portfolio folded into Projects with its MDX filter (D2, fold F6, 2026-10-30; P-61 item 5); the handle resolves there (DEEP_LINK_ALIASES), as `mdx` does. */
+  { id: 'device-workstream', label: 'Device projects', description: 'Projects filtered to medical device and diagnostics projects, with each project\'s pathway, stage, readiness and last activity (the device portfolio folded into it). Open a project for its workflow and its Client Review Room.', scope: 'global', group: 'module' },
   { id: 'device-510k', label: '510(k) and eSTAR', description: 'The 510(k) pathway workspace — predicate intelligence, the substantial-equivalence matrix, and eSTAR sections.', scope: 'global', group: 'module' },
   { id: 'device-pma', label: 'PMA', description: 'The PMA pathway workspace — premarket-approval modules for the project in context.', scope: 'global', group: 'module' },
   { id: 'device-cer', label: 'Clinical evaluation (CER)', description: 'The CER pathway workspace for clinical evaluation under EU MDR.', scope: 'global', group: 'module' },
@@ -214,7 +230,8 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'device-validation', label: 'Device filing readiness', description: 'Submission Center: every tracked device filing. A filing\'s blockers are its own eSTAR filing readiness, on its pathway screen (the organization-wide blocker list retired).', scope: 'global', group: 'module' },
   /* The device submission packages folded into Submission Center (D2, fold F5 item 1, 2026-10-30; P-61 item 1); the handle resolves there (DEEP_LINK_ALIASES). */
   { id: 'device-submission', label: 'Device filings', description: 'Submission Center: every tracked device filing, with each draft\'s readiness and each filing\'s history (the device submission-packages screen folded into it).', scope: 'global', group: 'module' },
-  { id: 'device-analytics', label: 'Device analytics', description: 'Device analytics panels.', scope: 'global', group: 'module' },
+  /* Device analytics joined Reporting & analytics (D2, fold F4, 2026-10-30; P-61 item 3); the handle resolves there (DEEP_LINK_ALIASES). */
+  { id: 'device-analytics', label: 'Device analytics', description: 'Reporting & analytics: the device projects you can open, by recorded status, with their submission pace and AnA draft acceptance rate (device analytics joined it).', scope: 'global', group: 'module' },
 
   // ── Pharmaceutical development (the PDEV kit; `pdev` itself is above) ──
   { id: 'pdev-cmc', label: 'PDEV CMC workstream', description: 'The CMC workstream of the PDEV → IND program.', scope: 'global', group: 'module' },
@@ -228,6 +245,22 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   // ── Analysis & authoring tools ──
   { id: 'batch-draft', label: 'Batch draft', description: 'Parallel section drafting over the eCTD Co-Author document spine (running a batch stays a human click).', scope: 'global', group: 'module' },
   {
+    /* `scope: 'global'`, and it stays global. I set it to 'project' on
+       2026-11-09 so a project-less visit could not seed a pharma-oncology
+       preset for a device organisation, and REVERTED it the same day after
+       driving the rail in a real browser: a project-scoped target with nothing
+       open resolves to Projects (routing.ts destinationFor), and
+       reopenLastProject only helps an account that has opened a project
+       before. In a fresh session — a demo — clicking Biostatistics landed on
+       Projects and the work area never opened. The founder found it that way.
+
+       The founder's words authorising the rail entry are "the left rail should
+       be a navigation point for all of those entry points", and a navigation
+       point that opens Projects is not one. "Everything starts with a project"
+       is served by what the screen does with no project — it reads the
+       organisation's own client type for its preset and says what it is
+       looking at — not by refusing to open. The preset defect is fixed where it
+       lives, in defaultPresetFor (surfaces/Biostatistics.tsx). */
     id: 'biostatistics', label: 'Biostatistics designer', description: 'The deterministic biostatistics design engine — sample size, power, and governed statistical documents.', scope: 'global', group: 'module',
     // Consumed by the surface on mount: it loads THAT persisted study design
     // (cdisc_prm_studies.study_id) through the biostatistics bridge and seeds
@@ -271,6 +304,20 @@ const TARGETS_BY_ID: ReadonlyMap<string, NavigationTarget> = new Map(
 /** Look up a navigation target by id. */
 export function findNavigationTarget(id: string): NavigationTarget | undefined {
   return TARGETS_BY_ID.get(id);
+}
+
+/**
+ * Whether a screen shows one program. 'required': a project screen, which with
+ * none open is an "open a program" state, so AnA asks which before moving.
+ * 'optional': a global screen that shows the program open or named, and its
+ * own view across programs with none (programOptional). 'none': the program
+ * plays no part. An unknown id is 'none'; resolveNavigation refuses it anyway.
+ */
+export function programNeedOf(targetId: string): 'required' | 'optional' | 'none' {
+  const target = TARGETS_BY_ID.get(targetId);
+  if (!target) return 'none';
+  if (target.scope === 'project') return 'required';
+  return target.programOptional ? 'optional' : 'none';
 }
 
 /** All navigable target ids (e.g. for prompt/catalog injection or validation). */

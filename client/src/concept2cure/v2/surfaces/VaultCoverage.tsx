@@ -10,7 +10,7 @@
  * an existing document there (the page's own filing call, which the server
  * records in the audit trail).
  */
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import { I } from '../icons';
 import { useVaultCanWrite } from './VaultViewOnly';
 
@@ -23,7 +23,8 @@ export type VaultCoverageShape =
       covered: number;
     }
   | { state: 'unavailable'; reason: string }
-  | { state: 'not_applicable'; reason: string };
+  /** `outlineInLibrary`: a filing with its own outline, whose required sections the Library marks (S6). */
+  | { state: 'not_applicable'; reason: string; outlineInLibrary?: true };
 
 /** A document a person may file at a missing section. */
 export interface CoverageDocument {
@@ -37,6 +38,10 @@ interface Props {
   onUpload: () => void;
   onFileHere: (docId: string, target: { folderId: string; ctdSection: string }) => void;
   busy: boolean;
+  /** Start with the sections listed: the Required documents view is this list (D6 §C.4 step 5). */
+  defaultOpen?: boolean;
+  /** Open the filing's own outline, in the Library, for a filing the Vault does not count (S6). */
+  onShowOutline?: () => void;
 }
 
 function provenanceLine(p: Extract<VaultCoverageShape, { state: 'available' }>['provenance']): string {
@@ -62,7 +67,7 @@ function MissingSection({
   onUpload,
   onFileHere,
   busy,
-}: { code: string; moduleCode: string } & Omit<Props, 'coverage'>) {
+}: { code: string; moduleCode: string } & Omit<Props, 'coverage' | 'defaultOpen'>) {
   const [docId, setDocId] = useState('');
   // The gap is stated to every reader; uploading and filing into it only to a role the routes admit.
   const canWrite = useVaultCanWrite();
@@ -71,12 +76,13 @@ function MissingSection({
     <div className="vd-dr-row" data-testid={`vault-coverage-missing-${code}`}>
       <span className="vd-dr-kind">{code}</span>
       <span className="vd-dr-name">No confirmed document</span>
-      <button className="vd-dr-toggle" onClick={onUpload} disabled={busy}>
+      <button type="button" className="btn ghost small" onClick={onUpload} disabled={busy}>
         {I.upload} Upload
       </button>
       {documents.length > 0 && (
         <>
           <select
+            className="c2c-input vd-cov-pick"
             aria-label={`Document to file at ${code}`}
             value={docId}
             onChange={(e) => setDocId(e.target.value)}
@@ -90,7 +96,8 @@ function MissingSection({
             ))}
           </select>
           <button
-            className="vd-dr-toggle"
+            type="button"
+            className="btn ghost small"
             disabled={busy || !docId}
             onClick={() => onFileHere(docId, { folderId: `module-${moduleCode.replace(/^m/, '')}`, ctdSection: code })}
           >
@@ -102,40 +109,53 @@ function MissingSection({
   );
 }
 
-export function VaultCoverage({ coverage, documents, onUpload, onFileHere, busy }: Props) {
-  const [open, setOpen] = useState(false);
-  if (!coverage) return null;
-  if (coverage.state !== 'available') {
+export function VaultCoverage({ coverage, documents, onUpload, onFileHere, busy, defaultOpen = false, onShowOutline }: Props) {
+  const [open, setOpen] = useState(defaultOpen);
+  const headingId = useId();
+  /* A section of the Required documents view (D6 §C.4 step 11): the heading,
+     the server's count as its count, the list toggle as its action. */
+  const head = (sub: React.ReactNode, acts?: React.ReactNode) => (
+    <div className="pj-sec-h">
+      <h2 id={headingId}>Vault coverage</h2>
+      <span className="sec-sub">{sub}</span>
+      {acts ? <div className="pj-sec-acts">{acts}</div> : null}
+    </div>
+  );
+  if (!coverage) {
+    /* An older server sends no figure. Nothing was read, so nothing is claimed. */
     return (
-      <div className="vd-dr" data-testid="vault-coverage">
-        <div className="vd-dr-head">
-          <span className="vd-dr-title">{I.folder} Vault coverage</span>
-          <span className="vd-dr-meta">
-            {coverage.state === 'unavailable' ? `Not shown. ${coverage.reason}` : coverage.reason}
-          </span>
-        </div>
-      </div>
+      <section className="pj-sec" data-testid="vault-coverage" aria-labelledby={headingId}>
+        {head('This project’s Vault read carried no required-sections list.')}
+      </section>
+    );
+  }
+  if (coverage.state !== 'available') {
+    /* A filing with its own outline (a device or diagnostic filing, S6): its required sections are the Library's. */
+    const outline = coverage.state === 'not_applicable' && coverage.outlineInLibrary && onShowOutline
+      ? <button type="button" className="btn ghost small" onClick={onShowOutline}>Show the outline in the Library</button>
+      : undefined;
+    return (
+      <section className="pj-sec" data-testid="vault-coverage" aria-labelledby={headingId}>
+        {head(coverage.state === 'unavailable' ? `Not shown. ${coverage.reason}` : coverage.reason, outline)}
+      </section>
     );
   }
   return (
-    <div className="vd-dr" data-testid="vault-coverage">
-      <div className="vd-dr-head">
-        <span className="vd-dr-title">{I.folder} Vault coverage</span>
-        <span className="vd-dr-meta">
-          Required sections: <b>{coverage.covered}</b> of <b>{coverage.required}</b> have a confirmed document
-        </span>
-        {coverage.required > 0 && (
-          <button className="vd-dr-toggle" onClick={() => setOpen((o) => !o)}>
+    <section className="pj-sec" data-testid="vault-coverage" aria-labelledby={headingId}>
+      {head(
+        <>Required sections: <b>{coverage.covered}</b> of <b>{coverage.required}</b> have a confirmed document</>,
+        coverage.required > 0 ? (
+          <button type="button" className="btn ghost small" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
             {open ? 'Hide sections' : 'Show sections'}
           </button>
-        )}
-      </div>
+        ) : null,
+      )}
       <div className="vd-dr-empty">{provenanceLine(coverage.provenance)}</div>
       {open && (
-        <div className="vd-dr-rows">
+        <div className="vd-dr-rows vd-cov-rows">
           {coverage.modules.map((m) => (
             <React.Fragment key={m.code}>
-              <div className="vd-dr-row">
+              <div className="vd-dr-row vd-cov-mod">
                 <span className="vd-dr-kind">{m.code.toUpperCase()}</span>
                 <span className="vd-dr-name">{m.name}</span>
                 <span className="vd-dr-detail">
@@ -158,6 +178,6 @@ export function VaultCoverage({ coverage, documents, onUpload, onFileHere, busy 
           ))}
         </div>
       )}
-    </div>
+    </section>
   );
 }

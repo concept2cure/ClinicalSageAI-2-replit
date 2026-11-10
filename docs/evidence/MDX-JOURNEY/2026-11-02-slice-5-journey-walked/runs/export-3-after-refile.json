@@ -1,0 +1,23 @@
+{
+ "api": [
+  {
+   "s": 200,
+   "body": {
+    "filingAgreement": {
+     "compared": true,
+     "documentId": "doc_8672da1da35f4a088c89d44328dba424",
+     "unfiled": []
+    },
+    "deviceContentSource": "governed_program"
+   }
+  }
+ ],
+ "said": [
+  "Downloaded Class_II_510k_content-package-draft.zip · 0 formatting errors, 1 warnings to fix before submitting",
+  "Predicate intelligence is not reachable for this tenant. Live K-number candidates appear here once the shadow service is reachable; until then the reduced openFDA clearance lookup below is the only source.",
+  "Reduced openFDA fallback unavailable — openFDA device/510k.json unreachable: fetch failed",
+  "Could not load predicate candidates\nTry again",
+  "Could not load substantial-equivalence rows\nTry again",
+  "No tracked filings yet\nSelect a submission type and run a filing-readiness assessment; tracking becomes available once it has one.\nServes the eSTAR submission record (FDA 510(k) / De Novo)"
+ ]
+}

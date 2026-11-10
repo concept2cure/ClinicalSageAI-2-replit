@@ -1,0 +1,39 @@
+# Review rerun of red 2: the new test against D2.md §1.4 item 10's literal projection (no blank handling), from a scratch copy
+# npx vitest run --config vitest.config.ts --maxWorkers=2 --dir <scratch>/literal
+# exit 1
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ ../../..<scratch>/literal/server/x/__tests__/card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > reads a stated description, indication, agency and filing type as stored, in the list 16ms
+ ✓ ../../..<scratch>/literal/server/x/__tests__/card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > reads the same four facts in the creator’s 201 projection 12ms
+ × ../../..<scratch>/literal/server/x/__tests__/card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > answers null for an absent or blank description or indication, never a default 14ms
+   → expected { …(17) } to have property "indication" with value null
+ ✓ ../../..<scratch>/literal/server/x/__tests__/card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > is additive: every key the card carried before is still there, with its value 5ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../..<scratch>/literal/server/x/__tests__/card-facts.pglite.test.ts > the portfolio card carries the project’s description and filing > answers null for an absent or blank description or indication, never a default
+AssertionError: expected { …(17) } to have property "indication" with value null
+
+- Expected:
+null
+
++ Received:
+"   "
+
+ ❯ ../../..<scratch>/literal/server/x/__tests__/card-facts.pglite.test.ts:118:20
+    116|     const maa = cards.find(row => row.id === MAA)!;
+    117|     expect(device).toHaveProperty('description', null);
+    118|     expect(device).toHaveProperty('indication', null);
+       |                    ^
+    119|     expect(device).toMatchObject({ agency: 'FDA', program_type: '510k'…
+    120|     expect(maa).toHaveProperty('description', null);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  21:25:20
+   Duration  4.54s (transform 470ms, setup 125ms, import 943ms, tests 3.10s, environment 0ms)
+

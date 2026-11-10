@@ -78,7 +78,8 @@ export const CLASSIFY_EXPEDITED_REPORTING: AnaTool = {
         },
         description:
           'The specific seriousness criteria met. Including "death" or "life_threatening" ' +
-          'triggers the SHORTER 7-day SUSAR clock in development.',
+          'triggers the SHORTER 7-day SUSAR clock in development. If omitted or empty, an expedited ' +
+          'development case gets no clock: 7 versus 15 days is not assessed.',
       },
       expectedness: {
         type: 'string',
@@ -105,13 +106,14 @@ export const CLASSIFY_EXPEDITED_REPORTING: AnaTool = {
         type: 'boolean',
         description:
           'Whether the case arises from an interventional clinical trial under an IND/CTA ' +
-          '(forces SUSAR/development reporting rules even if stage is "both").',
+          '(forces SUSAR/development reporting rules even if stage is "both"). Required when ' +
+          'stage is "both", where it chooses the rule set.',
       },
       occurredInEU: {
         type: 'boolean',
         description:
           'Whether the case occurred in the EEA. Relevant for the EU 90-day clock on ' +
-          'NON-serious EEA-origin postmarketing cases.',
+          'NON-serious EEA-origin postmarketing cases; if omitted, that EU obligation is not assessed.',
       },
     },
     required: ['stage', 'serious', 'expectedness', 'relatedness', 'region'],
@@ -194,7 +196,8 @@ export const ASSESS_PV_CAUSALITY: AnaTool = {
         type: 'boolean',
         description:
           'Whether the available information is sufficient and non-contradictory to assess ' +
-          'causality at all. If false, WHO-UMC returns "unassessable/unclassifiable".',
+          'causality at all. If false, WHO-UMC returns "unassessable/unclassifiable". If omitted, ' +
+          'no WHO-UMC category is assigned (not_assessed).',
       },
     },
     required: [],
@@ -229,11 +232,15 @@ export const PLAN_AGGREGATE_SAFETY_REPORT: AnaTool = {
       },
       marketed: {
         type: 'boolean',
-        description: 'Whether the product is marketed somewhere in the world (drives PBRER/PADER).',
+        description:
+          'Whether the product is marketed somewhere in the world (drives PBRER/PADER). If omitted, ' +
+          'the stage alone selects the reports.',
       },
       inDevelopment: {
         type: 'boolean',
-        description: 'Whether the product is still in active clinical development (drives the DSUR).',
+        description:
+          'Whether the product is still in active clinical development (drives the DSUR). If omitted, ' +
+          'the stage alone selects the reports.',
       },
       region: {
         type: 'string',
@@ -250,13 +257,14 @@ export const PLAN_AGGREGATE_SAFETY_REPORT: AnaTool = {
         type: 'boolean',
         description:
           'Whether the product is on the EU Reference Dates (EURD) list. If true, the EURD DLP and ' +
-          'frequency override the default schedule.',
+          'frequency override the default schedule. If omitted, the EU PBRER cadence is not assessed.',
       },
       withinFirstThreeYearsUS: {
         type: 'boolean',
         description:
-          'Whether the product is within the first 3 years of US approval. If true (default), the ' +
-          'PADER cadence is quarterly (30 days after each quarter); otherwise annual (60 days).',
+          'Whether the product is within the first 3 years of US approval. If true, the PADER ' +
+          'cadence is quarterly (30 days after each quarter); if false, annual (60 days). If ' +
+          'omitted, the PADER cadence is not assessed.',
       },
     },
     required: ['stage', 'region'],
@@ -311,7 +319,7 @@ export const DETECT_SAFETY_SIGNAL: AnaTool = {
         description:
           'Whether the event is a Designated/Important Medical Event (DME/IME). If true, the ' +
           'minimum-count requirement is lowered (a>=1 instead of a>=3) because DMEs warrant ' +
-          'review even with very few cases.',
+          'review even with very few cases. If omitted, 1-2 cases are not assessed.',
       },
     },
     required: ['a', 'b', 'c', 'd'],
@@ -368,11 +376,15 @@ export const ASSESS_SIGNAL_PRIORITY: AnaTool = {
       },
       vulnerablePopulation: {
         type: 'boolean',
-        description: 'Whether a vulnerable population (paediatric, pregnancy, elderly) is affected (escalates priority).',
+        description:
+          'Whether a vulnerable population (paediatric, pregnancy, elderly) is affected (escalates priority). ' +
+          'If omitted, it counts as 0 or 2 points and the tier is given only when it is the same either way.',
       },
       designatedMedicalEvent: {
         type: 'boolean',
-        description: 'Whether the reaction is a Designated Medical Event (DME), which is prioritised irrespective of disproportionality strength.',
+        description:
+          'Whether the reaction is a Designated Medical Event (DME), which is prioritised irrespective of disproportionality strength. ' +
+          'If omitted, it counts as 0 or 2 points and the tier is given only when it is the same either way.',
       },
     },
     required: ['strengthOfEvidence', 'seriousness', 'novelty', 'publicHealthImpact', 'preventability'],
@@ -414,11 +426,15 @@ export const DESIGN_PV_SYSTEM: AnaTool = {
       },
       newActiveSubstance: {
         type: 'boolean',
-        description: 'Whether the product is a new active substance / first-in-class (mandates an RMP with additional PV activities).',
+        description:
+          'Whether the product is a new active substance / first-in-class (mandates an RMP with additional PV activities). ' +
+          'If omitted, the RMP need is not assessed unless another stated fact requires it.',
       },
       hasImportantRisks: {
         type: 'boolean',
-        description: 'Whether the product has important identified/potential risks or missing information requiring an RMP.',
+        description:
+          'Whether the product has important identified/potential risks or missing information requiring an RMP. ' +
+          'If omitted, the RMP need is not assessed unless another stated fact requires it.',
       },
       estimatedAnnualICSRVolume: {
         type: 'number',
@@ -428,7 +444,8 @@ export const DESIGN_PV_SYSTEM: AnaTool = {
         type: 'boolean',
         description:
           'Whether the company holds (or is applying for) an EU marketing authorisation. If false, ' +
-          'QPPV/PSMF may not yet be legally mandated but are prerequisites for an EU MA application.',
+          'QPPV/PSMF may not yet be legally mandated but are prerequisites for an EU MA application. ' +
+          'If omitted, not assessed (null).',
       },
       portfolioSize: {
         type: 'number',

@@ -6,7 +6,8 @@
  *   POST   /api/csr/jobs                  — enqueue + kick off worker
  *   GET    /api/csr/jobs?programId&runId  — the builds bound to one retained run,
  *                                            newest first (the Submission Center
- *                                            CSR card, 2026-10-30)
+ *                                            CSR card, 2026-10-30); a failed one
+ *                                            carries why, in plain words (`failure`)
  *   GET    /api/csr/jobs/:jobId           — org-scoped status read
  *   GET    /api/csr/jobs/:jobId/sections  — org-scoped section listing
  *   GET    /api/csr/jobs/:jobId/headings  — the canonical ICH E3 tree with each
@@ -14,6 +15,7 @@
  *                                            (csr-headings.ts; the CSR card's section
  *                                            review, D2/W1 2026-10-30)
  *   POST   /api/csr/jobs/:jobId/cancel    — terminal cancel transition
+ *   POST   /api/csr/jobs/:jobId/resume    — resume a failed build, as the same build
  *   POST   /api/csr/jobs/:jobId/sections/:sectionNumber/review
  *                                          — record one section review decision
  *                                            (submit | approve | send_back), as the
@@ -44,6 +46,7 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { createHash } from 'node:crypto';
 import { and, desc, eq, notInArray, sql } from 'drizzle-orm';
 
 import { db } from '../db';
@@ -54,8 +57,11 @@ import {
   type CSRBuildRequest,
 } from '../services/csr-builder.js';
 import {
+  csrBuildFailureText,
+  csrLiveBuild,
   getCSRBuildJobStatus,
   getCSRSectionOutputs,
+  resumeCSRBuildInBackground,
 } from '../services/csr/csr-job-runner.js';
 import { createScopedLogger } from '../utils/logger.js';
 import { CsrScopeError, parseCsrScopeId, requireCsrJobAccess, resolveCsrScope } from '../services/csr/project-scope';
@@ -63,7 +69,7 @@ import { CsrAuthoringContextError } from '../services/csr/cortex-authoring-conte
 import {
   CsrSectionReviewError,
   decideCsrSectionReview,
-  effectiveReviewState,
+  effectiveSavedCsrReviewState,
   type CsrReviewDecision,
 } from '../services/csr/csr-section-review';
 import { queryableFromDrizzle } from '../db/drizzle-queryable';
@@ -195,7 +201,7 @@ async function evidenceSourceRefusal(
     if (err instanceof CsrAuthoringContextError) {
       return refuse(err.status, err.code, 'The retained run’s clinical tables could not be read for this build.');
     }
-    log.error('CSR evidence source check failed', { err: err instanceof Error ? err.message : String(err), organizationId });
+    log.error('CSR evidence source check failed', { code: 'CSR_SOURCE_CHECK_INTERNAL_ERROR', organizationId });
     return refuse(503, 'CSR_EVIDENCE_UNAVAILABLE', 'The retained run’s clinical tables could not be verified.');
   }
 }
@@ -268,7 +274,7 @@ router.post('/', async (req: Request, res: Response) => {
       return res.status(err.status).json({ error: err.message, code: err.code });
     }
     log.error('Failed to enqueue CSR build job', {
-      err: err instanceof Error ? err.message : String(err),
+      code: 'CSR_INTERNAL_ERROR',
       organizationId,
     });
     return res.status(500).json({ error: 'Failed to enqueue CSR build job' });
@@ -302,18 +308,25 @@ router.get('/', async (req: Request, res: Response) => {
     if (scope.projectId === undefined) return res.status(400).json({ code: 'CSR_PROJECT_REQUIRED', error: 'Select a project to list its CSR builds.' });
     const rows = await database.select({
       id: csrBuildJobs.id, studyId: csrBuildJobs.studyId, status: csrBuildJobs.status,
-      progress: csrBuildJobs.progress, updatedAt: csrBuildJobs.updatedAt,
+      progress: csrBuildJobs.progress, updatedAt: csrBuildJobs.updatedAt, error: csrBuildJobs.error,
     }).from(csrBuildJobs).where(and(
       eq(csrBuildJobs.organizationId, organizationId), eq(csrBuildJobs.projectId, scope.projectId),
       sql`${csrBuildJobs.studyInfoSnapshot} -> 'evidenceSource' ->> 'runId' = ${runId}`,
     )).orderBy(desc(csrBuildJobs.updatedAt), desc(csrBuildJobs.id)).limit(25);
+    // A failed build says why it stopped, in plain words from its receipt's typed reason (csrBuildFailureText);
+    // the receipt's stored message is never sent.
     return res.json({ jobs: rows.map(row => ({
       jobId: row.id, studyId: row.studyId, status: row.status, progress: row.progress,
       updatedAt: row.updatedAt instanceof Date ? row.updatedAt.toISOString() : String(row.updatedAt),
+      failure: row.status === 'failed' ? csrBuildFailureText(row.error) : null,
+      // What a drafting build is writing now, for the person watching it (csr-job-runner.ts csrLiveBuild): the
+      // heading, how far the build is and the prose so far. Unsaved, unchecked work in progress, to this project's
+      // readers only; null when the build is not drafting or another process runs it.
+      writing: row.status === 'drafting' ? csrLiveBuild(row.id) : null,
     })) });
   } catch (err) {
     if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
-    log.error('Failed to list CSR builds for a run', { err: err instanceof Error ? err.message : String(err), organizationId });
+    log.error('Failed to list CSR builds for a run', { code: 'CSR_BUILD_LIST_INTERNAL_ERROR', organizationId });
     return res.status(500).json({ error: 'Failed to list CSR builds' });
   }
 });
@@ -344,7 +357,7 @@ router.get('/:jobId', async (req: Request, res: Response) => {
   } catch (err) {
     if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
     log.error('Failed to read CSR build job status', {
-      err: err instanceof Error ? err.message : String(err),
+      code: 'CSR_INTERNAL_ERROR',
       organizationId,
       jobId,
     });
@@ -378,14 +391,40 @@ router.get('/:jobId/sections', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Job not found' });
     }
 
+    // A reviewer reading one heading should not need to download a 119-section
+    // build (which can be enormous). Preserve the existing all-sections response
+    // when no sectionNumber is specified, but fail closed on a bad or missing
+    // selected section instead of claiming a verified draft.
+    const sectionNumber = req.query.sectionNumber;
+    if (sectionNumber !== undefined && (typeof sectionNumber !== 'string' ||
+        !/^\d+(\.\d+)*$/.test(sectionNumber))) {
+      return res.status(400).json({ code: 'CSR_SECTION_NUMBER_INVALID', error: 'Choose an exact ICH E3 heading.' });
+    }
     const sections = await getCSRSectionOutputs(jobId, organizationId);
-    // The review state a reader should see: an approval of since-redrafted
-    // text reads as a draft (csr-section-review.ts effectiveReviewState).
-    return res.json({ sections: sections.map(section => ({ ...section, review: effectiveReviewState(section) })) });
+    const selected = typeof sectionNumber === 'string'
+      ? sections.filter(section => section.sectionNumber === sectionNumber)
+      : sections;
+    if (typeof sectionNumber === 'string' && selected.length !== 1) {
+      return res.status(404).json({ code: 'CSR_SECTION_NOT_SAVED', error: 'No saved draft exists for this heading.' });
+    }
+    if (typeof sectionNumber === 'string') {
+      const saved = selected[0];
+      if (typeof saved.content !== 'string' || !saved.content.trim() ||
+          typeof saved.contentHash !== 'string' ||
+          createHash('sha256').update(saved.content, 'utf8').digest('hex') !== saved.contentHash) {
+        return res.status(409).json({
+          code: 'CSR_SECTION_INTEGRITY_FAILED',
+          error: 'The saved CSR section does not match its recorded content hash. Reconcile the build before review.',
+        });
+      }
+    }
+    // The current saved body and hash must be inspectable before a human
+    // decides on this exact version. No signature or approval is inferred.
+    return res.json({ sections: selected.map(section => ({ ...section, review: effectiveSavedCsrReviewState(section) })) });
   } catch (err) {
     if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
     log.error('Failed to read CSR section outputs', {
-      err: err instanceof Error ? err.message : String(err),
+      code: 'CSR_INTERNAL_ERROR',
       organizationId,
       jobId,
     });
@@ -415,7 +454,7 @@ router.get('/:jobId/headings', async (req: Request, res: Response) => {
     return res.json({ headings: buildHeadings(getICHE3Structure(), outputs) });
   } catch (err) {
     if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
-    log.error('Failed to read CSR headings', { err: err instanceof Error ? err.message : String(err), organizationId, jobId });
+    log.error('Failed to read CSR headings', { code: 'CSR_HEADINGS_INTERNAL_ERROR', organizationId, jobId });
     return res.status(500).json({ error: 'Failed to read the build’s headings' });
   }
 });
@@ -423,6 +462,43 @@ router.get('/:jobId/headings', async (req: Request, res: Response) => {
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/csr/jobs/:jobId/cancel — terminal cancel transition
 // ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/csr/jobs/:jobId/resume — resume a failed build, as the same build
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * A build that stopped (a rate limit that did not lift, a refused key, a provider that did not answer) is resumed
+ * rather than replaced: the runner keeps every section it saved and drafts the headings that have no saved text.
+ * It matters because a CSR document takes its imported sections from one build (workflow-source-import.ts): once a
+ * document holds the first build's sections, a second build's are refused. Only a failed build is resumed; the
+ * runner claims it with its own conditional update, so two presses run one resume.
+ */
+router.post('/:jobId/resume', async (req: Request, res: Response) => {
+  const jobId = parseJobIdParam(req.params.jobId);
+  if (jobId == null) return res.status(400).json({ error: 'Valid numeric job id required' });
+  const organizationId = resolveOrganizationId(req);
+  if (organizationId == null) return res.status(401).json({ error: 'Organization context required' });
+  try {
+    // 404 for a build that does not exist or is another organization's, as cancel answers.
+    if (!await requireCsrJobWriteAccess(organizationId, jobId, resolveUserId(req) ?? 0)) return res.status(404).json({ error: 'Job not found' });
+    // The recorded status, not the derived one: a build recorded complete whose saved output fails its integrity
+    // check reads as failed elsewhere, and the runner would not take it.
+    const [row] = await requireDb().select({ status: csrBuildJobs.status }).from(csrBuildJobs)
+      .where(and(eq(csrBuildJobs.id, jobId), eq(csrBuildJobs.organizationId, organizationId))).limit(1);
+    if (!row) return res.status(404).json({ error: 'Job not found' });
+    if (row.status !== 'failed') {
+      return res.status(409).json({ code: 'CSR_BUILD_NOT_RESUMABLE', status: row.status,
+        error: `This build is ${row.status} and cannot be resumed. Only a build that stopped before it finished is resumed.` });
+    }
+    resumeCSRBuildInBackground(jobId);
+    return res.status(202).json({ jobId, status: 'queued', resumed: true });
+  } catch (err) {
+    if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
+    log.error('Failed to resume CSR build job', { code: 'CSR_INTERNAL_ERROR', organizationId });
+    return res.status(500).json({ error: 'Failed to resume CSR build job' });
+  }
+});
 
 router.post('/:jobId/cancel', async (req: Request, res: Response) => {
   const jobId = parseJobIdParam(req.params.jobId);
@@ -494,7 +570,7 @@ router.post('/:jobId/cancel', async (req: Request, res: Response) => {
   } catch (err) {
     if (err instanceof CsrScopeError) return res.status(err.status).json({ error: err.message, code: err.code });
     log.error('Failed to cancel CSR build job', {
-      err: err instanceof Error ? err.message : String(err),
+      code: 'CSR_INTERNAL_ERROR',
       organizationId,
       jobId,
     });
@@ -537,7 +613,7 @@ router.post('/:jobId/sections/:sectionNumber/review', async (req: Request, res: 
       return res.status(err.status).json({ error: err.message, code: err.code });
     }
     log.error('Failed to record CSR section review', {
-      err: err instanceof Error ? err.message : String(err), organizationId, jobId, sectionNumber,
+      code: 'CSR_INTERNAL_ERROR', organizationId, jobId, sectionNumber,
     });
     return res.status(500).json({ error: 'The review decision was not recorded' });
   }

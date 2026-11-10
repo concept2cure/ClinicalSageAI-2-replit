@@ -1,28 +1,86 @@
-<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="_base.css"><style>
-.grid2 { display:grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.card2 {
-  background: white; border: 1px solid var(--border-subtle);
-  border-radius: 12px; padding: 16px;
-  box-shadow: var(--shadow-xs);
-  transition: all 200ms var(--ease);
+<!doctype html><html><head><meta charset="utf-8"><title>Cards</title><link rel="stylesheet" href="_base.css"><style>
+/* Copied from client/src/concept2cure/v2/styles/app-v2.css, the D0 foundations block (cards). */
+.c2c-v2 :is(.pj-card, .reg-card) {
+  display: flex; flex-direction: column; min-width: 0; text-align: left;
+  background: var(--bg-000); border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 16px;
 }
-.card2:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
-.ttl { font-family: var(--font-sans); font-size: 13px; font-weight: 600; color: var(--ink); }
-.sub { font-size: 12px; color: var(--ink-muted); margin-top: 4px; line-height: 1.5; }
-.meta { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-subtle); margin-top: 12px; font-weight: 500; }
-.row { display:flex; justify-content:space-between; align-items: flex-start; }
-.chip { display:inline-flex; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 500; background: var(--success-muted); color: #4e6638; letter-spacing: 0.02em;}
+.c2c-v2 :is(button.pj-card, a.pj-card, .pj-card[role="button"]) {
+  cursor: pointer; transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.c2c-v2 :is(button.pj-card, a.pj-card, .pj-card[role="button"]):hover { background: var(--bg-050); border-color: var(--border-strong); }
+.c2c-v2 .pj-card-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 10px; padding: 0; border: 0; background: none; }
+.c2c-v2 .pj-card-h :is(.t, h3) { margin: 0; font-size: var(--fs-body); font-weight: 600; line-height: 1.4; color: var(--text-100); }
+.c2c-v2 .pj-card-h :is(.s, .sec-sub) { font-size: var(--fs-small); color: var(--text-300); }
+.c2c-v2 .pj-card-h-go { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-small); font-weight: 500; color: var(--text-300); white-space: nowrap; }
+.c2c-v2 .pj-card-h-go:hover { color: var(--text-100); }
+.c2c-v2 .pj-card-h-go svg { width: 14px; height: 14px; }
+.c2c-v2 .pj-card-t { font-size: var(--fs-body); font-weight: 600; line-height: 1.4; color: var(--text-100); }
+.c2c-v2 .pj-card-m, .c2c-v2 .pj-card-note, .c2c-v2 .pj-card-body { margin: 2px 0 0; font-size: var(--fs-small); line-height: 1.5; color: var(--text-300); }
+.c2c-v2 .pj-card-r { display: flex; justify-content: space-between; gap: 8px; font-size: var(--fs-caption); color: var(--text-300); font-variant-numeric: tabular-nums; }
+.c2c-v2 .pj-card-f { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
+.c2c-v2 :is(.pj-card-blk, .pj-card-ok) { display: inline-flex; align-items: center; gap: 5px; font-size: var(--fs-caption); }
+.c2c-v2 .pj-card-blk { color: var(--warning); } .c2c-v2 .pj-card-ok { color: var(--success); }
+/* Copied from app-v2.css (chips), for the status in the card. */
+.c2c-v2 .rd-chip {
+  display: inline-block; vertical-align: middle; padding: 2px 8px; border-radius: var(--radius-md);
+  font-size: var(--fs-caption); font-weight: 500; line-height: 16px; letter-spacing: 0; text-transform: none; white-space: nowrap;
+  background: var(--bg-100); color: var(--text-200);
+}
+.c2c-v2 .rd-chip::first-letter { text-transform: uppercase; }
+.c2c-v2 .rd-chip.tone-ok   { background: var(--success-muted); color: var(--success); }
+.c2c-v2 .rd-chip.tone-warn { background: var(--warning-muted); color: var(--warning); }
+.c2c-v2.dark .rd-chip:is(:not([class*="tone-"]), .tone-ai, .tone-idle) { background: var(--bg-200); }
+
+/* ── specimen only ──
+   Hover shown at rest: the declarations are the clickable card's `:hover` rule above, unchanged. */
+.c2c-v2 .pj-card.is-hover { background: var(--bg-050); border-color: var(--border-strong); }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 8px; }
+.lbl { margin: 0 0 6px; font-size: var(--fs-caption); font-weight: 500; color: var(--text-300); }
+.note { margin: 12px 0 0; font-size: var(--fs-small); color: var(--text-300); max-width: 68ch; }
 </style></head><body><div class="card">
-  <div class="grid2">
-    <div class="card2">
-      <div class="row"><div class="ttl">Section 2.5 — clinical overview</div><div class="chip">Ready</div></div>
-      <div class="sub">Module 2 · CTD · NDA 212345 · last edited by J. Chen 4 min ago</div>
-      <div class="meta">Updated · 21 Apr 2026</div>
+<div class="panels">
+  <section class="c2c-v2 panel" aria-label="Light">
+    <div class="label">Light</div>
+    <div class="grid2">
+      <div>
+        <div class="lbl">A card, at rest</div>
+        <div class="pj-card">
+          <div class="pj-card-h"><span class="t">Section 2.5, clinical overview</span><span class="rd-chip tone-ok">ready</span></div>
+          <div class="pj-card-m">Module 2 · NDA 212345 · last edited by J. Chen 4 minutes ago</div>
+          <div class="pj-card-f"><span class="pj-card-ok"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Approved 21 Apr 2026</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="lbl">Clickable, hover</div>
+        <button class="pj-card is-hover" type="button">
+          <span class="pj-card-h"><span class="t">510(k) precedent search</span><span class="pj-card-h-go">Open<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span></span>
+          <span class="pj-card-m">12 predicates found across FDA 2019–2024 · 3 clearances pending review</span>
+          <span class="pj-card-f"><span class="rd-chip tone-warn">in review</span><span class="pj-card-blk">2 sources not yet cited</span></span>
+        </button>
+      </div>
     </div>
-    <div class="card2">
-      <div class="row"><div class="ttl">510(k) precedent search</div><div class="chip" style="background: var(--warning-muted); color: #8a4b0c">In review</div></div>
-      <div class="sub">12 predicates found across FDA 2019–2024 · 3 clearances pending review</div>
-      <div class="meta">AnA · 10 sources cited</div>
+  </section>
+  <section class="c2c-v2 dark panel" aria-label="Dark">
+    <div class="label">Dark</div>
+    <div class="grid2">
+      <div>
+        <div class="lbl">A card, at rest</div>
+        <div class="pj-card">
+          <div class="pj-card-h"><span class="t">Section 2.5, clinical overview</span><span class="rd-chip tone-ok">ready</span></div>
+          <div class="pj-card-m">Module 2 · NDA 212345 · last edited by J. Chen 4 minutes ago</div>
+          <div class="pj-card-f"><span class="pj-card-ok"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Approved 21 Apr 2026</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="lbl">Clickable, hover</div>
+        <button class="pj-card is-hover" type="button">
+          <span class="pj-card-h"><span class="t">510(k) precedent search</span><span class="pj-card-h-go">Open<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span></span>
+          <span class="pj-card-m">12 predicates found across FDA 2019–2024 · 3 clearances pending review</span>
+          <span class="pj-card-f"><span class="rd-chip tone-warn">in review</span><span class="pj-card-blk">2 sources not yet cited</span></span>
+        </button>
+      </div>
     </div>
-  </div>
+  </section>
+</div>
+<p class="note">12px radius, a hairline, 16px padding, no shadow and no header band. A clickable card answers hover with a fill and a stronger hairline. It does not move.</p>
 </div></body></html>

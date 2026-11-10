@@ -77,12 +77,15 @@ export function sealCoverage() {
  */
 export async function verifyAuditEventsChainSeals(
   client: PoolClient,
+  opts: { organizationId?: number } = {},
 ): Promise<ChainSealReport> {
+  // One organisation's rows only, when named: the integrity sweep checks each in its own scope (P-72 slice 1b).
   const res = await client.query(
     `SELECT organization_id, record_hash, previous_hash, sequence_number, hmac_seal
        FROM audit_events
-      WHERE record_hash IS NOT NULL
+      WHERE record_hash IS NOT NULL AND ($1::int IS NULL OR organization_id = $1::int)
       ORDER BY organization_id ASC, sequence_number ASC`,
+    [opts.organizationId ?? null],
   );
 
   // Group sealed rows per org, reconstructing each row's previousHash from the

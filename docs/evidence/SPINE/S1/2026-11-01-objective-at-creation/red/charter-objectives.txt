@@ -1,0 +1,273 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stdout | server/services/c2c/__tests__/charter-objectives.pglite.test.ts
+{
+  "timestamp": "2026-11-01T21:01:41.940Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-01T21:01:41.942Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/c2c/__tests__/charter-objectives.pglite.test.ts
+{
+  "timestamp": "2026-11-01T21:01:41.942Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/c2c/__tests__/charter-objectives.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/c2c/__tests__/charter-objectives.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/c2c/__tests__/charter-objectives.pglite.test.ts
+{
+  "timestamp": "2026-11-01T21:01:41.972Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the project objective of record > has none before anything is recorded 12ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the project objective of record > starts the charter from the program's classification and records version 1 40ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the project objective of record > records a change as the next version on the hash chain, keeping the old one in the history 20ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the project objective of record > records nothing when the content is the same 9ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the project objective of record > keeps another organisation's project apart 2ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the project objective of record > refuses to start a charter for a program it cannot classify, and writes nothing 6ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the project objective of record > refuses a change to a locked objective 7ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the project objective of record > cannot rewrite or remove its audit trail 7ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the project objective of record > gives AnA the objective, its criteria and its sources 5ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the project objective of record > refuses a body with no reason, or a source address that is not http 1ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > ind at FDA is a IND charter for FDA 0ms
+ × server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > ind at us is a IND charter for FDA 8ms
+   → This project's charter cannot be started: the project records no a primary agency the charter knows. Complete the project's details first.
+ × server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > cta at EU is a CTA charter for EMA 1ms
+   → This project's charter cannot be started: the project records no an application type the charter knows, no a primary agency the charter knows. Complete the project's details first.
+ × server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > cta at EMA is a CTA charter for EMA 1ms
+   → This project's charter cannot be started: the project records no an application type the charter knows. Complete the project's details first.
+ × server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > jnda at PMDA is a JNDA charter for PMDA 3ms
+   → This project's charter cannot be started: the project records no an application type the charter knows. Complete the project's details first.
+ × server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > csr at ICH / Global is a CSR charter for ICH 1ms
+   → This project's charter cannot be started: the project records no an application type the charter knows, no a primary agency the charter knows. Complete the project's details first.
+ × server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > mdr at EU / Notified Body is a MDR charter for EMA 0ms
+   → This project's charter cannot be started: the project records no an application type the charter knows, no a primary agency the charter knows. Complete the project's details first.
+ × server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > cer at EU / Notified Body is a CER charter for EMA 1ms
+   → This project's charter cannot be started: the project records no an application type the charter knows, no a primary agency the charter knows. Complete the project's details first.
+ × server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > ind_amendment at FDA is a IND_AMENDMENT charter for FDA 0ms
+   → This project's charter cannot be started: the project records no an application type the charter knows. Complete the project's details first.
+ × server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > ninsho at Registered certification body is a NINSHO charter for JP_RCB 0ms
+   → This project's charter cannot be started: the project records no an application type the charter knows, no a primary agency the charter knows. Complete the project's details first.
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > nda at Health Canada is a NDA charter for HealthCanada 0ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > 510k at FDA is a 510K charter for FDA 0ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > refuses biologic at FDA by name: it records no application type the charter knows 0ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > refuses other at FDA by name: it records no application type the charter knows 0ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > refuses cta at Swissmedic by name: it records no primary agency the charter knows 0ms
+ ✓ server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > refuses ind at null by name: it records no primary agency the charter knows 0ms
+stderr | server/routes/__tests__/charter-objectives-routes.pglite.test.ts > the project objective routes > refuses a version with no reason, without echoing the text
+{
+  "timestamp": "2026-11-01T21:01:50.549Z",
+  "level": "warn",
+  "message": "[charter-objectives] Invalid objectives payload",
+  "context": {
+    "issues": [
+      {
+        "code": "invalid_type",
+        "expected": "string",
+        "received": "undefined",
+        "path": [
+          "reason"
+        ],
+        "message": "Required"
+      }
+    ]
+  }
+}
+
+ ✓ server/routes/__tests__/charter-objectives-routes.pglite.test.ts > the project objective routes > refuses to record a project's objective for someone the project does not admit, and writes nothing 46ms
+ ✓ server/routes/__tests__/charter-objectives-routes.pglite.test.ts > the project objective routes > refuses a version with no reason, without echoing the text 8ms
+ ✓ server/routes/__tests__/charter-objectives-routes.pglite.test.ts > the project objective routes > records it for an admitted project, from its program, pinned to that program 44ms
+ ✓ server/routes/__tests__/charter-objectives-routes.pglite.test.ts > the project objective routes > reads it back for an admitted reader, and refuses one the project does not admit 12ms
+ × server/routes/__tests__/charter-objectives-routes.pglite.test.ts > the project objective routes > records the objective of a project whose filing the charter did not classify before: a CTA in the EU 13ms
+   → {"success":false,"error":"CHARTER_CLASSIFICATION_MISSING","message":"This project's charter cannot be started: the project records no an application type the charter knows, no a primary agency the charter knows. Complete the project's details first."}: expected 409 to be 200 // Object.is equality
+ × server/routes/__tests__/charter-objectives-routes.pglite.test.ts > the project objective routes > says who recorded the current version and each version before it, by name where the tenant may name them 9ms
+   → expected { content: { …(3) }, version: 1, …(4) } to match object { version: 1, updatedBy: 7, …(2) }
+(7 matching properties omitted from actual)
+ × server/routes/__tests__/charter-objectives-routes.pglite.test.ts > the project objective routes > tells the reader whether they may record a new version: yes for a writer, no for a reader the project admits only to read 7ms
+   → expected undefined to be true // Object.is equality
+ × server/routes/__tests__/charter-objectives-routes.pglite.test.ts > the project objective routes > says a locked objective cannot be changed, even by a writer 14ms
+   → expected { charterId: 1, …(2) } to match object { canChange: false, current: { …(1) } }
+(11 matching properties omitted from actual)
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 13 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/charter-objectives-routes.pglite.test.ts > the project objective routes > records the objective of a project whose filing the charter did not classify before: a CTA in the EU
+AssertionError: {"success":false,"error":"CHARTER_CLASSIFICATION_MISSING","message":"This project's charter cannot be started: the project records no an application type the charter knows, no a primary agency the charter knows. Complete the project's details first."}: expected 409 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 409
+
+ ❯ server/routes/__tests__/charter-objectives-routes.pglite.test.ts:121:46
+    119|   it("records the objective of a project whose filing the charter did …
+    120|     const r = await request(app()).put(`/api/charters/by-project/${CTA…
+    121|     expect(r.status, JSON.stringify(r.body)).toBe(200);
+       |                                              ^
+    122|     expect(r.body.meta).toEqual({ version: 1, unchanged: false });
+    123|     const charter = (await h.pg.query('SELECT submission_type, regulat…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/13]⎯
+
+ FAIL  server/routes/__tests__/charter-objectives-routes.pglite.test.ts > the project objective routes > says who recorded the current version and each version before it, by name where the tenant may name them
+AssertionError: expected { content: { …(3) }, version: 1, …(4) } to match object { version: 1, updatedBy: 7, …(2) }
+(7 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "locked": false,
+-   "recordedBy": "Rae Writer",
+    "updatedBy": 7,
+    "version": 1,
+  }
+
+ ❯ server/routes/__tests__/charter-objectives-routes.pglite.test.ts:130:33
+    128|     const r = await request(app()).get(`/api/charters/by-project/${PRO…
+    129|     expect(r.status).toBe(200);
+    130|     expect(r.body.data.current).toMatchObject({ version: 1, updatedBy:…
+       |                                 ^
+    131|     expect(r.body.data.history.map((e: { recordedBy: string }) => e.re…
+    132|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/13]⎯
+
+ FAIL  server/routes/__tests__/charter-objectives-routes.pglite.test.ts > the project objective routes > tells the reader whether they may record a new version: yes for a writer, no for a reader the project admits only to read
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/routes/__tests__/charter-objectives-routes.pglite.test.ts:136:40
+    134|   it('tells the reader whether they may record a new version: yes for …
+    135|     const writer = await request(app()).get(`/api/charters/by-project/…
+    136|     expect(writer.body.data.canChange).toBe(true);
+       |                                        ^
+    137|     const reader = await request(app()).get(`/api/charters/by-project/…
+    138|     expect(reader.status).toBe(200);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/13]⎯
+
+ FAIL  server/routes/__tests__/charter-objectives-routes.pglite.test.ts > the project objective routes > says a locked objective cannot be changed, even by a writer
+AssertionError: expected { charterId: 1, …(2) } to match object { canChange: false, current: { …(1) } }
+(11 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "canChange": false,
+    "current": {
+-     "locked": true,
++     "content": {
++       "objective": "Show C2C-101 is safe and tolerable at the proposed doses, and open the IND.",
++       "sources": [
++         {
++           "kind": "protocol",
++           "locator": "Section 2",
++           "title": "Protocol C2C-101-201",
++           "url": null,
++         },
++       ],
++       "successCriteria": null,
++     },
++     "contentHash": "977af4a2708fd4e285d22de252fdea9a3b543b4f92f96f04490eb894130671ac",
++     "status": "draft",
++     "updatedAt": "2026-11-01T21:01:50.561Z",
++     "updatedBy": 7,
++     "version": 1,
+    },
+  }
+
+ ❯ server/routes/__tests__/charter-objectives-routes.pglite.test.ts:148:27
+    146|     try {
+    147|       const r = await request(app()).get(`/api/charters/by-project/${P…
+    148|       expect(r.body.data).toMatchObject({ canChange: false, current: {…
+       |                           ^
+    149|     } finally {
+    150|       await h.pg.exec("UPDATE charter_sections SET read_only = false W…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/13]⎯
+
+ FAIL  server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > ind at us is a IND charter for FDA
+CharterObjectivesRefusal: This project's charter cannot be started: the project records no a primary agency the charter knows. Complete the project's details first.
+ ❯ charterClassification server/services/c2c/charter-objectives.ts:114:11
+    112|     .filter(Boolean);
+    113|   if (missing.length) {
+    114|     throw new CharterObjectivesRefusal(409, 'CHARTER_CLASSIFICATION_MI…
+       |           ^
+    115|       `This project's charter cannot be started: the project records n…
+    116|   }
+ ❯ server/services/c2c/__tests__/charter-objectives.pglite.test.ts:158:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { status: 409, code: 'CHARTER_CLASSIFICATION_MISSING' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/13]⎯
+
+ FAIL  server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > cta at EU is a CTA charter for EMA
+ FAIL  server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > csr at ICH / Global is a CSR charter for ICH
+ FAIL  server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > mdr at EU / Notified Body is a MDR charter for EMA
+ FAIL  server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > cer at EU / Notified Body is a CER charter for EMA
+ FAIL  server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > ninsho at Registered certification body is a NINSHO charter for JP_RCB
+CharterObjectivesRefusal: This project's charter cannot be started: the project records no an application type the charter knows, no a primary agency the charter knows. Complete the project's details first.
+ ❯ charterClassification server/services/c2c/charter-objectives.ts:114:11
+    112|     .filter(Boolean);
+    113|   if (missing.length) {
+    114|     throw new CharterObjectivesRefusal(409, 'CHARTER_CLASSIFICATION_MI…
+       |           ^
+    115|       `This project's charter cannot be started: the project records n…
+    116|   }
+ ❯ server/services/c2c/__tests__/charter-objectives.pglite.test.ts:158:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { status: 409, code: 'CHARTER_CLASSIFICATION_MISSING' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/13]⎯
+
+ FAIL  server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > cta at EMA is a CTA charter for EMA
+ FAIL  server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > jnda at PMDA is a JNDA charter for PMDA
+ FAIL  server/services/c2c/__tests__/charter-objectives.pglite.test.ts > the charter's classification of a program > ind_amendment at FDA is a IND_AMENDMENT charter for FDA
+CharterObjectivesRefusal: This project's charter cannot be started: the project records no an application type the charter knows. Complete the project's details first.
+ ❯ charterClassification server/services/c2c/charter-objectives.ts:114:11
+    112|     .filter(Boolean);
+    113|   if (missing.length) {
+    114|     throw new CharterObjectivesRefusal(409, 'CHARTER_CLASSIFICATION_MI…
+       |           ^
+    115|       `This project's charter cannot be started: the project records n…
+    116|   }
+ ❯ server/services/c2c/__tests__/charter-objectives.pglite.test.ts:158:12
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { status: 409, code: 'CHARTER_CLASSIFICATION_MISSING' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/13]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  13 failed | 21 passed (34)
+   Start at  21:01:39
+   Duration  11.32s (transform 1.42s, setup 116ms, import 4.38s, tests 6.24s, environment 0ms)
+

@@ -345,6 +345,41 @@ export interface BiostatDocumentProvenance {
   engineVersion: string;
 }
 
+/** A requested context, not proof. The statistical save resolves it again on
+ * the canonical authoring transaction before retaining any source claim. */
+export type StatisticalDocumentBasis =
+  | { kind: 'worked_example'; label: string }
+  | { kind: 'study_design'; studyId: string; designInputsSha256: string; sizingRunId?: number };
+
+export interface StatisticalAuthoringOrigin {
+  version: 1;
+  organizationId: number;
+  programId: string;
+  projectId: number;
+  documentType: StatisticalDocumentType;
+  basis: StatisticalDocumentBasis;
+  /** This is a server computation and deterministic template, not an LLM
+   * receipt, a clinical observation, human adoption or filing approval. */
+  computation: BiostatDocumentProvenance & {
+    execution: 'server_recomputed'; method: 'ana-biostats:quickCompute';
+    inputsSha256: string; outputsSha256: string;
+  };
+  contentSha256: string;
+  design: null | {
+    studyId: string; studyRef: number; updatedAt: string | null;
+    snapshot: import('../study-design/study-design-types').StudyDesign;
+    snapshotSha256: string; adaptedInputs: StatisticalInput;
+    adaptedInputsSha256: string; storedAdaptedInputsSha256: string; calculationInputs: 'matches_design' | 'modified';
+  };
+  sizingRun: { state: 'none' | 'not_applicable' } | {
+    state: 'recorded'; runId: number; recordedAt: string; purpose: string;
+    method: string; engine: string; engineVersion: string;
+    inputs: unknown; inputsSha256: string; outputs: unknown; outputsSha256: string;
+    inputsMatchCalculation: boolean; outputsMatchCalculation: boolean;
+    engineVersionMatches: boolean;
+  };
+}
+
 export interface DocumentMetadata {
   clientTrack: ClientTrack;
   regulatoryBody?: RegulatoryBody;

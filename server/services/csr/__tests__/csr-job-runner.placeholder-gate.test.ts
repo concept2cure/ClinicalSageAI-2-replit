@@ -127,13 +127,18 @@ function makeFakeDb(job: Record<string, unknown>, retained: SavedOutput[] = []) 
       };
     },
   };
-  return { db, inserted, persisted, jobUpdates, job };
+  // This fixture tests output/placeholder behavior. The dedicated attempt
+  // suite evaluates conditional predicates and transactional rollback.
+  const transactional = Object.assign(db, {
+    transaction: async <T>(fn: (tx: typeof db) => Promise<T>): Promise<T> => fn(db),
+  });
+  return { db: transactional, inserted, persisted, jobUpdates, job };
 }
 
 let fake: ReturnType<typeof makeFakeDb>;
 vi.mock('../../../db', () => ({ get db() { return fake.db; } }));
 
-import { runCSRBuildJob } from '../csr-job-runner';
+import { csrBuildFailureText, csrLiveBuild, runCSRBuildJob } from '../csr-job-runner';
 
 function makeJob(): Record<string, unknown> {
   return {
@@ -160,6 +165,117 @@ beforeEach(() => {
 
 const sectionDraft = (number: string, content: string) => ({ number, content, source: 'template', model: null, tokenCost: 0, lineage: null });
 const progressValues = () => fake.jobUpdates.filter(update => typeof update.progress === 'number').map(update => update.progress);
+
+describe('runCSRBuildJob — requester identity is mandatory', () => {
+  it.each([null, 0, -1])('refuses a queued job with requestedBy=%s without model work or rewriting sections', async requestedBy => {
+    const retained = [{ sectionNumber: '13', content: 'Previously saved, unapproved section.' }];
+    fake = makeFakeDb({ ...makeJob(), requestedBy }, retained);
+    await runCSRBuildJob(42);
+    expect(fake.job).toMatchObject({
+      status: 'failed',
+      error: { reason: 'requester_missing', code: 'CSR_BUILD_REQUESTER_MISSING' },
+    });
+    expect(draftMock).not.toHaveBeenCalled();
+    expect(fake.persisted.map(r => r.content)).toContain('Previously saved, unapproved section.');
+  });
+});
+
+// Walked 2026-11-10: a build drafted 68 of 69 headings and ended "failed at 98%: §12.4.1 has no saved text". The
+// model had answered; a guard refused its draft, and a heading with no template then has nothing to save, so the
+// reason left with the unsaved row. A person could not tell a refused draft from a provider that never answered.
+describe('runCSRBuildJob — a heading that ends with no text says why', () => {
+  it('keeps the refusal reason of a draft that was not saved, without the figure it refused', async () => {
+    fake = makeFakeDb(makeJob());
+    draftMock.mockResolvedValueOnce({ number: '13', content: '', source: 'template', model: null, tokenCost: 0,
+      lineage: { rejectedModelDraft: { reason: 'unreconciled_figures', statistics: [{ kind: 'number', text: '12.5' }] } } });
+    await runCSRBuildJob(42);
+    expect(fake.job).toMatchObject({ status: 'failed',
+      error: { reason: 'missing_section_outputs', sections: ['13'], refused: { 13: 'unreconciled_figures' } } });
+    expect(JSON.stringify(fake.job.error)).not.toContain('12.5');
+    const text = csrBuildFailureText(fake.job.error);
+    expect(text).toMatch(/§13 has no saved text/);
+    expect(text).toMatch(/§13.*figure.*not saved/i);
+  });
+
+  it('a heading with no text and no recorded refusal reads as before', async () => {
+    fake = makeFakeDb(makeJob());
+    draftMock.mockResolvedValueOnce({ number: '13', content: '', source: 'template', model: null, tokenCost: 0, lineage: null });
+    await runCSRBuildJob(42);
+    expect(fake.job).toMatchObject({ status: 'failed', error: { reason: 'missing_section_outputs', sections: ['13'] } });
+    expect((fake.job.error as Record<string, unknown>).refused).toBeUndefined();
+    expect(csrBuildFailureText(fake.job.error)).toBe('Not complete: §13 has no saved text. The sections already saved are kept.');
+  });
+
+  it('a drafting call the provider will not answer stops the build on that heading with its typed code', async () => {
+    fake = makeFakeDb(makeJob());
+    draftMock.mockRejectedValueOnce(Object.assign(new Error('CSR_DRAFTING_KEY_REFUSED'), { code: 'CSR_DRAFTING_KEY_REFUSED' }));
+    await runCSRBuildJob(42);
+    expect(fake.job).toMatchObject({ status: 'failed', error: { code: 'CSR_DRAFTING_KEY_REFUSED', section: '13' } });
+    expect(csrBuildFailureText(fake.job.error)).toMatch(/refused this deployment’s API key.*stopped at §13/);
+  });
+
+  it('a receipt naming an unknown reason or a malformed heading states nothing it cannot stand behind', () => {
+    const text = csrBuildFailureText({ reason: 'missing_section_outputs', sections: ['13'],
+      refused: { 13: 'DROP TABLE', 'x; y': 'unreconciled_figures', 14: 'some_new_reason' } });
+    expect(text).toBe('Not complete: §13 has no saved text. The sections already saved are kept.');
+  });
+});
+
+// What a running build is writing now, for the person watching it (the founder, 2026-11-10). Held in memory while
+// the build runs: the heading, how far the build is, and the prose so far, without the claims block that follows it.
+describe('runCSRBuildJob — what the build is writing now', () => {
+  it('names the heading, counts the headings written, carries the prose as it arrives, and is gone when the build ends', async () => {
+    fake = makeFakeDb(makeJob());
+    const during: unknown[] = [];
+    draftMock.mockImplementationOnce(async (section: { number: string }, _request: unknown, context: { live: { start(): void; text(chunk: string): void } }) => {
+      during.push(csrLiveBuild(42));
+      context.live.start();
+      context.live.text('The benefit and risk are ');
+      context.live.text('discussed here.\n\n```csr-claims\n[{"table":"x"');
+      during.push(csrLiveBuild(42));
+      context.live.start();
+      during.push(csrLiveBuild(42));
+      return sectionDraft(section.number, 'Discussion text with no placeholder.');
+    });
+    await runCSRBuildJob(42);
+    expect(during[0]).toMatchObject({ number: '13', written: 0, total: 1, text: '' });
+    expect((during[0] as { title: string }).title).toMatch(/Discussion/);
+    expect(during[1]).toMatchObject({ number: '13', text: 'The benefit and risk are discussed here.' });
+    expect(during[2]).toMatchObject({ text: '' });
+    expect(csrLiveBuild(42)).toBeNull();
+    expect(fake.job.status).toBe('complete');
+  });
+
+  it('is gone when the build fails, and a build that is not running has none', async () => {
+    fake = makeFakeDb(makeJob());
+    draftMock.mockRejectedValueOnce(Object.assign(new Error('CSR_DRAFTING_KEY_REFUSED'), { code: 'CSR_DRAFTING_KEY_REFUSED' }));
+    await runCSRBuildJob(42);
+    expect(csrLiveBuild(42)).toBeNull();
+    expect(csrLiveBuild(999)).toBeNull();
+  });
+});
+
+describe('runCSRBuildJob — sensitive error text is never persisted', () => {
+  it('stores a safe generic receipt for an SDK/SQL failure that contains clinical details', async () => {
+    fake = makeFakeDb(makeJob());
+    draftMock.mockRejectedValueOnce(new Error('Patient SYN-004 DOB and postgresql://owner:password@host/db'));
+    await runCSRBuildJob(42);
+    expect(fake.job).toMatchObject({ status: 'failed', error: { message: 'CSR_BUILD_STEP_FAILED' } });
+    expect(JSON.stringify(fake.job.error)).not.toMatch(/SYN-004|DOB|password|host\/db/);
+  });
+
+  it('preserves a stable CSR refusal code while dropping its untrusted message', async () => {
+    fake = makeFakeDb(makeJob());
+    draftMock.mockRejectedValueOnce(Object.assign(new Error('Untrusted subject SYN-004'), {
+      code: 'CSR_SOURCE_CHANGED',
+    }));
+    await runCSRBuildJob(42);
+    expect(fake.job).toMatchObject({ status: 'failed', error: {
+      code: 'CSR_SOURCE_CHANGED', message: 'CSR_SOURCE_CHANGED',
+    } });
+    expect(JSON.stringify(fake.job.error)).not.toContain('SYN-004');
+  });
+});
 
 describe('runCSRBuildJob — requested saved-output coverage', () => {
   it.each(['', ' \n\t '])('refuses completion when the requested draft has no usable content (%j)', async content => {

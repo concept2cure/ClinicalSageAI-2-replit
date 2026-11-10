@@ -1,0 +1,3 @@
+$ node scripts/ci/check-design-system-compliance.mjs   # in a git-archive export of bfa9c6869
+[design-system] OK — no icon-library, spring/bounce or inline <style> violations on live concept2cure surfaces.
+exit 0

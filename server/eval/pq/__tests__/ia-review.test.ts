@@ -2,12 +2,31 @@ import { createHash } from 'node:crypto';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import rawBank from '../ia-review-cases.json';
-import { captureIaReview, validateIaReviewBank, IA_REVIEW_DIMENSIONS, type IaReviewBank } from '../ia-review.js';
+import { captureIaReview as captureScopedIaReview, validateIaReviewBank, IA_REVIEW_DIMENSIONS, type IaReviewBank } from '../ia-review.js';
 import { preflightIaReview, runIaReview } from '../run-pq.js';
 import { APPROVED_MODELS } from '../../../services/ai-governance/approved-models.js';
 import { ANA_INTELLIGENT_AWARENESS } from '../../../services/ana-ri/personality-core.js';
+import { getTenantScope } from '../../../db/tenantStore.js';
+import type { EvaluationScope } from '../../rag/qualification-corpus.js';
+
+const admission = vi.hoisted(() => ({ organizationUuid: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  programId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', resolve: vi.fn(), verify: vi.fn() }));
+vi.mock('../rag-phase', async importOriginal => ({ ...await importOriginal<typeof import('../rag-phase')>(),
+  defaultRagDependencies: async (evaluateModel: unknown) => ({ evaluateModel, resolveOrganizationId: admission.resolve,
+    verifyScope: admission.verify, readDocument: vi.fn(), retrieve: vi.fn() }) }));
+beforeEach(() => {
+  admission.resolve.mockReset().mockResolvedValue(7);
+  admission.verify.mockReset().mockImplementation(async (scope: EvaluationScope) => {
+    if (scope.organizationId !== 7 || scope.organizationUuid !== admission.organizationUuid || scope.programId !== admission.programId) {
+      throw new Error('Unverified organization/programme binding');
+    }
+  });
+});
+const scope = (): EvaluationScope => ({ organizationId: 7, organizationUuid: admission.organizationUuid, programId: admission.programId });
+const captureIaReview = (bank: IaReviewBank, entry: Parameters<typeof captureScopedIaReview>[1], gateway: Parameters<typeof captureScopedIaReview>[2]) =>
+  captureScopedIaReview(bank, entry, gateway, scope());
 
 const bank = rawBank as IaReviewBank;
 const entry = APPROVED_MODELS.find(m => m.id === 'claude-opus-4')!;
@@ -169,11 +188,32 @@ describe('pinned IA capture is actual output and pending human review', () => {
 });
 
 describe('existing PQ runner supplemental mode', () => {
+  it('refuses missing or unverified scope before IA capture', async () => {
+    const evaluateModel = vi.fn();
+    await expect(runIaReview({ modelId: entry.id, gateway: { evaluateModel } })).rejects.toThrow(/organization UUID and programme/);
+    await expect(runIaReview({ modelId: entry.id, gateway: { evaluateModel }, organizationUuid: admission.organizationUuid,
+      programId: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd' })).rejects.toThrow('QUALIFICATION_SCOPE_UNAVAILABLE');
+    expect(evaluateModel).not.toHaveBeenCalled();
+  });
+
+  it('binds all IA turns and follow-ups to the admitted credential and placement tenant', async () => {
+    const evaluateModel = vi.fn(async (_model: string, request: { organizationId?: string | number; projectId?: string | number }) => {
+      expect(request).toMatchObject({ organizationId: 7, projectId: admission.programId });
+      expect(getTenantScope()).toMatchObject({ tenantId: '7', orgUuid: admission.organizationUuid, role: null });
+      return provider('Actual test response; no expertise claim.');
+    });
+    await runIaReview({ modelId: entry.id, gateway: { evaluateModel }, organizationUuid: admission.organizationUuid, programId: admission.programId });
+    expect(evaluateModel).toHaveBeenCalledTimes(39);
+    expect(admission.resolve).toHaveBeenCalledOnce();
+    expect(admission.verify).toHaveBeenCalledOnce();
+  });
+
   it('writes a separate transcript record that cannot claim to be passed PQ evidence', async () => {
     const directory = mkdtempSync(path.join(os.tmpdir(), 'ana-ia-review-'));
     directories.push(directory);
     const evaluateModel = vi.fn().mockResolvedValue(provider('Actual captured stub output; expertise not graded.'));
-    const result = await runIaReview({ modelId: entry.id, record: true, outDir: directory, gateway: { evaluateModel } });
+    const result = await runIaReview({ modelId: entry.id, record: true, outDir: directory, gateway: { evaluateModel },
+      organizationUuid: admission.organizationUuid, programId: admission.programId });
     const record = JSON.parse(readFileSync(result.recordPath!, 'utf8'));
     expect(evaluateModel).toHaveBeenCalledTimes(39);
     expect(record.kind).toBe('ia-review-capture');
@@ -183,6 +223,7 @@ describe('existing PQ runner supplemental mode', () => {
     expect(record.bankSha256).toBe(hash(readFileSync(path.resolve('server/eval/pq/ia-review-cases.json'), 'utf8')));
     expect(record.cases.every((c: { reviewer: { status: string } }) => c.reviewer.status === 'pending')).toBe(true);
     expect(record.sources).toHaveLength(20);
+    expect(record.evaluationScope).toEqual(scope());
   });
 
   it('refuses an unknown model before dispatch', async () => {
@@ -201,6 +242,6 @@ describe('existing PQ runner supplemental mode', () => {
     expect(result.credentialPresence.OPENAI_API_KEY).toBe(true);
     expect(result.credentialPresence.ANTHROPIC_API_KEY).toBe(false);
     expect(JSON.stringify(result)).not.toContain('secret-value');
-    expect(result.protocol.status).toBe('draft');
+    expect(result.protocol.status).toBe('approved');
   });
 });

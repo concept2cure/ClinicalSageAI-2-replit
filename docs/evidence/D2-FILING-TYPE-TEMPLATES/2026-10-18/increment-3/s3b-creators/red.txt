@@ -1,0 +1,13 @@
+# 3b slice 3 (b): RED, the creators' cases against submission-service.ts BEFORE edits 1-3 (HEAD cd0e27b9b), 2026-11-08T22:10:45Z
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > no creator writes a submission into a project that is not an application > the transactional creator refuses a clinical study report project, as the standalone one does
+   → promise resolved "undefined" instead of rejecting
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > no creator writes a submission into a project that is not an application > the standalone creator refuses a regional device preparation project
+   → promise resolved "{ id: 7, auditTrail: { …(1) } }" instead of rejecting
+ × server/services/submission-service/__tests__/class-project-never-an-application.test.ts > no creator writes a submission into a project that is not an application > the transactional creator refuses a regional device preparation project
+   → promise resolved "undefined" instead of rejecting
+ ✓ server/services/submission-service/__tests__/class-project-never-an-application.test.ts > no creator writes a submission into a project that is not an application > the IND project still takes its IND
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: promise resolved "undefined" instead of rejecting
+AssertionError: promise resolved "{ id: 7, auditTrail: { …(1) } }" instead of rejecting
+AssertionError: promise resolved "undefined" instead of rejecting
+      Tests  3 failed | 1 passed (4)

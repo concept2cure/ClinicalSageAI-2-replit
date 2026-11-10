@@ -1,0 +1,18 @@
+# The orchestrator's two probes with ONLY their schema amended (the columns the fold reads, and an empty submission_transmittals),
+# run against the tree after the F1 review fixes, 2026-11-02T01:32:10Z. This is the probes' own scenario: sequences sent before
+# the transmit guard kept a record of what each send carried (every sequence filed before this change).
+# Expected: phantom-leaf still REPRODUCED for such a sequence (basis 'compiles': labelled, not fixed, nothing better is on record);
+# sent-without-compile case 1 REFUSED: the view lists 0000 as not included, and the lifecycle read throws rather than bind 0001
+# against an empty prior (defect (b) no longer silent on the filing path). The probe's own catch prints the refusal and exits 1.
+
+## phantom-leaf (schema only)
+$ npx tsx docs/evidence/D7-ECTD-FILED-STATE-VIEW/2026-11-01-filed-is-what-was-sent/1-server/probes/phantom-leaf.legacy-schema.probe.mts
+on file per the fold: ["draft-only.pdf","general.pdf"]
+DEFECT REPRODUCED: draft-only.pdf, carried only by an earlier preview of the sent sequence, is reported as on file at the agency.
+exit=0
+
+## sent-without-compile (schema only)
+$ npx tsx docs/evidence/D7-ECTD-FILED-STATE-VIEW/2026-11-01-filed-is-what-was-sent/1-server/probes/sent-without-compile.legacy-schema.probe.mts
+Error: Sequence 0000 was sent to the agency, but nothing on record says what it carried: no record of the send, and no compile. What is on file cannot be read, so nothing was bound against it.
+exit=1
+

@@ -1,0 +1,42 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/part11/signatures/by-target?target=ectd-sequence%3A2",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 25,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": [
+        {
+          "id": 6,
+          "document_id": null,
+          "version_id": null,
+          "signed_target": "ectd-sequence:2",
+          "signature_type": "governed-action",
+          "signature_purpose": "OQ-004 step 08: e-signature to freeze sequence 0000 for validation",
+          "signer_id": 2,
+          "signer_name": "OQ Signer",
+          "signer_title": null,
+          "signer_email": "oq-signer@validation.local",
+          "signature_meaning": "approval",
+          "signature_hash": "7c44a5d9d12de789c7596f7f59d8be0ee0025c4d74dee78493eff574797f9e69",
+          "binding_basis": "ectd-sequence-leaf-manifest-sha256",
+          "second_factor_verified": true,
+          "is_valid": true,
+          "signed_at": "2026-11-10T02:05:30.604Z",
+          "ip_address": "127.0.0.1",
+          "approvals_recorded": null,
+          "approvals_required": null,
+          "interim_approval": false
+        }
+      ]
+    }
+  }
+}

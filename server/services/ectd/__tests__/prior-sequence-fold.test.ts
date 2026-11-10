@@ -71,7 +71,8 @@ function stubPool() {
       );
       const limit = sql.match(/limit\s+(\d+)/i);
       if (limit) rows = rows.slice(0, Number(limit[1]));
-      return { rows };
+      // Compile rows, as the fold's read names them (F1 review, 2026-11-01).
+      return { rows: rows.map((r) => ({ kind: 'compile', ...r })) };
     },
   };
   return { pool, seen };
@@ -202,7 +203,8 @@ describe('the fold follows each act to the leaf it names', () => {
   ];
   const pool: PoolLike = {
     async query() {
-      return { rows: [{ sequence_number: '0000', leaf_manifest: SEQ_A }, { sequence_number: '0001', leaf_manifest: SEQ_B }] };
+      // Compile rows, as the fold's read names them (F1 review, 2026-11-01).
+      return { rows: [{ kind: 'compile', sequence_number: '0000', leaf_manifest: SEQ_A }, { kind: 'compile', sequence_number: '0001', leaf_manifest: SEQ_B }] };
     },
   };
   const load = () => loadLatestPriorManifestBySubmission(pool, { organizationId: ORG, submissionId: SUBMISSION, currentSequence: '0002' });

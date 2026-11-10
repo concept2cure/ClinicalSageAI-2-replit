@@ -5,8 +5,9 @@
  *
  * What is pinned:
  *   · collapsed: the record is READ (GET /docs/:id, /sections), not the
- *     draft's inline text — title, type, project, provenance, first section
- *     through AuthoredHtml, section count, the four actions;
+ *     draft's inline text — title, type, project, provenance, the count
+ *     drafted and Open; since D4-5b a chip, whose first section and four
+ *     actions are in the open document;
  *   · "Open full editor" mounts DocumentWorkbench for the SAME docId, in
  *     place (no navigation); "Back to conversation" collapses it and the
  *     workbench stays mounted (hidden) so its state survives;
@@ -52,6 +53,7 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 
 import { DocumentCanvas } from '../editor/DocumentCanvas';
 import { clearEditorTarget, peekEditorTarget } from '../editorTarget';
+import { openEditorControl } from '../editor/__tests__/workbenchAssemblyBuild.testSupport';
 
 const DOC = 'aaaaaaaa-0000-4000-8000-000000000001';
 const PID = '5ac45b38-a1d8-4a41-9488-fac39a57b852';
@@ -123,12 +125,14 @@ beforeEach(() => {
   nav.mockReset();
   clearEditorTarget();
 });
+afterEach(() => { try { localStorage.removeItem('c2c.editor.outline'); } catch { /* none */ } });
 afterEach(() => {
   cleanup();
   clearEditorTarget();
 });
 
 describe('DocumentCanvas — collapsed', () => {
+  // D4-5b: the card became a chip; the first section and the four actions are read and reached in the open document.
   it('renders the record: title, type, project name and phase, provenance, first section, count, actions', async () => {
     render(<Host />);
     const canvas = await screen.findByTestId('document-canvas');
@@ -137,28 +141,19 @@ describe('DocumentCanvas — collapsed', () => {
     expect(await within(canvas).findByText(/C2C-101 anti-IL-23p19 mAb · Planning/)).toBeTruthy();
     // Provenance names the model the store recorded and this conversation.
     expect(screen.getByTestId('dc-provenance').textContent).toBe('Drafted by AnA in this conversation · model claude-fable-5-1');
-    // The first section, rendered through AuthoredHtml — as elements, from the record.
-    // (Scoped to the section's article: the outline names every section too.)
-    const firstSection = within(canvas).getByRole('article', { name: /2\.5\.1 Product Development Rationale/ });
-    expect(within(firstSection).getByText(/humanized IgG1 monoclonal antibody/)).toBeTruthy();
-    // Not the second one's BODY, until asked (the outline names every section).
-    expect(within(canvas).queryByText('Subcutaneous administration.')).toBeNull();
     expect(screen.getByTestId('dc-progress').textContent).toBe('2 of 3 sections drafted');
-    // The four actions.
-    expect(screen.getByTestId('dc-open-editor')).toBeTruthy();
-    expect(screen.getByTestId('dc-file-to-vault')).toBeTruthy();
-    expect(screen.getByTestId('dc-assign-review')).toBeTruthy();
-    expect(screen.getByTestId('place-into-filing-stub').getAttribute('data-doc')).toBe(DOC);
-    // Type and status come from the row, not the stream.
-    expect(within(canvas).getByText(/Document · Clinical overview · M2 · draft/)).toBeTruthy();
-  });
-
-  it('"Show all" reveals every section, with an honest "Not drafted yet" for an empty one', async () => {
-    render(<Host />);
-    const btn = await screen.findByRole('button', { name: /Show all 3 sections/ });
-    fireEvent.click(btn);
-    const third = await screen.findByRole('article', { name: /2\.5\.3 Overview of Clinical Pharmacology/ });
-    expect(within(third).getByText('Not drafted yet.')).toBeTruthy();
+    // Type, module and status come from the row, not the stream: the chip's meta line.
+    const facts = Array.from(canvas.querySelectorAll('.dcv-meta > span')).map(s => s.textContent);
+    expect(facts.slice(0, 3)).toEqual(['Clinical overview', 'M2', 'Draft']);
+    // The four actions: Open on the chip; the other three in the open document.
+    fireEvent.click(screen.getByTestId('dc-open-editor'));
+    const expanded = await screen.findByTestId('dc-expanded');
+    // The first section, from the record, in the open document's editor; not the second one's body.
+    await waitFor(() => expect(expanded.querySelector('.tiptap')?.textContent).toContain('humanized IgG1 monoclonal antibody'));
+    expect(expanded.textContent).not.toContain('Subcutaneous administration.');
+    expect(openEditorControl('File to vault…').getAttribute('aria-disabled')).toBeNull();
+    expect(openEditorControl('Send for review…').getAttribute('aria-disabled')).toBeNull();
+    expect(within(expanded).getByTestId('place-into-filing-stub').getAttribute('data-doc')).toBe(DOC);
   });
 
   it('a failed read is an error with a retry, never an empty document', async () => {
@@ -180,10 +175,12 @@ describe('DocumentCanvas — collapsed', () => {
     expect(screen.getByTestId('dc-no-program').textContent).toContain('Not filed under a project');
   });
 
-  it('"Edit in Authoring" carries the document identity and the return route on the editor channel', async () => {
+  it('"Open full width" carries the document identity and the return route on the editor channel', async () => {
     render(<Host />);
     await screen.findByText('Module 2.5 Clinical Overview — C2C-101');
-    fireEvent.click(screen.getByTestId('dc-edit-in-authoring'));
+    // D4-5: the card's "Edit in the editor" became the open document's "Open full width".
+    fireEvent.click(screen.getByTestId('dc-open-editor'));
+    fireEvent.click(await screen.findByTestId('dc-edit-in-authoring'));
     const target = peekEditorTarget();
     expect(target).not.toBeNull();
     expect(target!.docId).toBe(DOC);
@@ -205,6 +202,10 @@ describe('DocumentCanvas — converts into the full editor in place', () => {
     expect(expanded.hasAttribute('hidden')).toBe(false);
     // The workbench, pinned: its tree names THIS document and its editor holds THIS section.
     await waitFor(() => expect(document.querySelector('.ed')).not.toBeNull());
+    // Beside the conversation the outline opens closed (D4-4); its toggle in the bar shows it.
+    const outline = within(expanded).getByTestId('ed-outline-toggle');
+    expect(outline.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(outline);
     expect(await screen.findByRole('button', { name: /^2\.5\.1\s*Product Development Rationale/ })).toBeTruthy();
     await waitFor(() => expect((document.querySelector('.rse-body .tiptap')?.textContent ?? '')).toContain('humanized IgG1'));
     // No navigation happened.
@@ -253,17 +254,19 @@ describe('DocumentCanvas — converts into the full editor in place', () => {
     await screen.findByText('Module 2.5 Clinical Overview — C2C-101');
     fireEvent.click(screen.getByTestId('dc-open-editor'));
     const expanded = await screen.findByTestId('dc-expanded');
-    await within(expanded).findByRole('button', { name: /Draft with AnA/ });
-    // The workbench's own AnA rail is not offered in a conversation host.
-    expect(within(expanded).queryByRole('button', { name: /^AnA(\s|$)/ })).toBeNull();
-    fireEvent.click(within(expanded).getByRole('button', { name: /Draft with AnA/ }));
+    await within(expanded).findByTestId('ed-ana');
+    // The workbench's own way to the conversation is not offered in a conversation host.
+    expect(within(expanded).queryByRole('button', { name: 'Show the conversation' })).toBeNull();
+    fireEvent.click(openEditorControl('Draft with AnA', 'ana'));
     const composer = screen.getByLabelText('Reply to AnA') as HTMLTextAreaElement;
-    await waitFor(() => expect(composer.value).toMatch(/^Draft 2\.5\.1 Product Development Rationale/));
+    // The person's words only; the section travels in the saved origin (2026-11-09).
+    await waitFor(() => expect(composer.value).toBe('Draft this section from the linked section evidence.'));
     expect(within(expanded).queryByLabelText('AnA — document authoring')).toBeNull();
   });
 });
 
 describe('DocumentCanvas — accessibility smoke', () => {
+  // D4-5b: the card became a chip; Send for review opens from the open document's More menu, modal and labelled.
   it('is a labelled region whose controls have names, and the dialogs it opens are modal and labelled', async () => {
     render(<Host />);
     const canvas = await screen.findByTestId('document-canvas');
@@ -276,7 +279,9 @@ describe('DocumentCanvas — accessibility smoke', () => {
     }
     expect(screen.getByTestId('dc-open-editor').getAttribute('aria-expanded')).toBe('false');
 
-    fireEvent.click(screen.getByTestId('dc-assign-review'));
+    fireEvent.click(screen.getByTestId('dc-open-editor'));
+    await within(await screen.findByTestId('dc-expanded')).findByTestId('ed-more');
+    fireEvent.click(openEditorControl('Send for review…'));
     const dlg = await screen.findByRole('dialog');
     expect(dlg.getAttribute('aria-modal')).toBe('true');
     expect(document.getElementById(dlg.getAttribute('aria-labelledby')!)?.textContent).toBe('Send for review');
@@ -299,5 +304,66 @@ describe('DocumentCanvas — a failed program read says so (GE-H-2, 2026-09-28)'
     render(<Host />);
     await waitFor(() => expect(screen.getByText(/Project details could not be read/)).toBeTruthy());
     expect(screen.queryByText(/Reading the project…/)).toBeNull();
+  });
+});
+
+/* D4-5 (D4.md §D4.A): the document in the conversation has one bar, the editor's. The canvas drew its own above it,
+   "Back to conversation", the title, the project and an Esc chip, and the editor's bar sat under it. The way back,
+   "Open full width" and the status are now in the editor's one bar; Escape still closes. */
+describe('one bar for the document in the conversation (D4-5)', () => {
+  it('the expanded document has one bar, which carries the way back, the status and "Open full width"', async () => {
+    render(<Host />);
+    await screen.findByText('Module 2.5 Clinical Overview — C2C-101');
+    fireEvent.click(screen.getByTestId('dc-open-editor'));
+    const expanded = await screen.findByTestId('dc-expanded');
+    await waitFor(() => expect(expanded.querySelector('.ed')).not.toBeNull());
+    expect(expanded.getAttribute('data-placement')).toBe('inline');
+    expect(expanded.querySelectorAll('.dcv-bar')).toHaveLength(1);
+    expect(expanded.querySelector('.dcv-bar-hint')).toBeNull();
+    const bar = within(expanded).getByTestId('ed-bar');
+    const back = within(bar).getByTestId('dc-back');
+    expect(back.getAttribute('aria-label')).toBe('Back to conversation');
+    expect(back.getAttribute('aria-keyshortcuts')).toBe('Escape');
+    expect(within(bar).getByTestId('dc-status')).toBeTruthy();
+    fireEvent.click(within(bar).getByRole('button', { name: 'Open full width' }));
+    expect(peekEditorTarget()?.returnTo).toEqual({ surface: 'conversation-thread', conversationId: 'thread-1' });
+    expect(nav).toHaveBeenCalledWith('document-authoring');
+  });
+
+  it('the card no longer carries "Edit in the editor": "Open full width" is in the open document', async () => {
+    render(<Host />);
+    await screen.findByText('Module 2.5 Clinical Overview — C2C-101');
+    expect(screen.queryByText(/Edit in the editor/)).toBeNull();
+    expect(screen.queryByTestId('dc-edit-in-authoring')).toBeNull();
+  });
+});
+
+/* D4-5b (D4.md §D4.I): under AnA's turn the document is a chip, as Claude shows an artifact: an icon, the title, one
+   line of kind and state, and Open. The card carried an uppercase kind line, the outline, the first section, "Show
+   all" and four actions; the work happens in the open document, where each of those is reached once. */
+describe('the document under the turn is a chip (D4-5b)', () => {
+  it('one row of icon, title, meta and Open, with the progress, the project and where it came from', async () => {
+    render(<Host />);
+    const title = await screen.findByText('Module 2.5 Clinical Overview — C2C-101');
+    const card = title.closest('.dcv-card') as HTMLElement;
+    expect(card.querySelector('.dcv-row .dcv-ic')).not.toBeNull();
+    expect(card.querySelector('.dcv-row .dcv-head .dcv-meta')).not.toBeNull();
+    expect(within(card).getByTestId('dc-progress')).toBeTruthy();
+    expect(within(card).getByTestId('dc-provenance')).toBeTruthy();
+    for (const gone of ['.dcv-kind', '.dcv-body', '.dcv-actions', '.dcv-outline']) expect(card.querySelector(gone)).toBeNull();
+    expect(within(card).queryByTestId('dc-file-to-vault')).toBeNull();
+    expect(within(card).queryByTestId('dc-assign-review')).toBeNull();
+    const open = within(card).getByTestId('dc-open-editor');
+    expect(open.textContent?.trim()).toBe('Open');
+    expect(open.className).toBe('btn ghost small');
+    expect(open.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(open);
+    await waitFor(() => expect(open.getAttribute('aria-expanded')).toBe('true'));
+  });
+
+  it('a document filed under no project says so in the chip', async () => {
+    render(<Host programId={null} />);
+    await screen.findByText('Module 2.5 Clinical Overview — C2C-101');
+    expect(screen.getByTestId('dc-no-program').closest('.dcv-meta')).not.toBeNull();
   });
 });

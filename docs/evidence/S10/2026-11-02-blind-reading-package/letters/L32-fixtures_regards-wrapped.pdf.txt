@@ -1,0 +1,24 @@
+DEPARTMENT OF HEALTH AND HUMAN SERVICES
+Food and Drug Administration
+Silver Spring, MD 20993
+IND 123456
+INFORMATION REQUEST
+Dear Dr. Example:
+We have the following requests for information:
+1. Provide the batch analysis data for the drug substance lots.
+2. Justify the proposed acceptance criterion for impurity B.
+3. Provide the dissolution method development report.
+Reference ID: 5123456
+
+-- 1 of 2 --
+
+IND 123456
+Page 2
+4. Your stability report omits the 6-month pull. With
+regards to the impurity profile, provide the chromatograms.
+5. Clarify the storage condition on the label.
+6. Provide the container closure data.
+Sincerely,
+Reference ID: 5123456
+
+-- 2 of 2 --

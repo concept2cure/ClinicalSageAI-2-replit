@@ -1,0 +1,80 @@
+[
+ {
+  "name": "v1-normal",
+  "said": [
+   "Uploaded files"
+  ],
+  "retryOffered": false,
+  "errors": {
+   "console": [],
+   "pageErrors": [],
+   "failed": []
+  }
+ },
+ {
+  "name": "v1-real-404",
+  "said": [
+   "Couldn't load the project vaultThis project wasn’t found in your organization. Open a project from Projects."
+  ],
+  "retryOffered": false,
+  "errors": {
+   "console": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+   ],
+   "pageErrors": [],
+   "failed": [
+    "404 GET /api/c2c/projects/00000000-0000-4000-8000-00000000abcd",
+    "404 GET /api/c2c/project-vault/00000000-0000-4000-8000-00000000abcd"
+   ]
+  }
+ },
+ {
+  "name": "v1-injected-not-licensed",
+  "said": [
+   "Not enabled for your organizationThis feature is not enabled for your organization, so the project vault was not read."
+  ],
+  "retryOffered": false,
+  "errors": {
+   "console": [
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+   ],
+   "pageErrors": [],
+   "failed": [
+    "403 GET /api/c2c/project-vault/f935c59e-4749-4547-941e-13d66a850538"
+   ]
+  }
+ },
+ {
+  "name": "v1-injected-out-of-release",
+  "said": [
+   "Not in this releaseThis part of the product is not in this release, so the project vault was not read."
+  ],
+  "retryOffered": false,
+  "errors": {
+   "console": [
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+   ],
+   "pageErrors": [],
+   "failed": [
+    "403 GET /api/c2c/project-vault/f935c59e-4749-4547-941e-13d66a850538"
+   ]
+  }
+ },
+ {
+  "name": "v1-injected-library-not-licensed",
+  "said": [
+   "This feature is not enabled for your organization, so the library was not read.",
+   "Uploaded files"
+  ],
+  "retryOffered": false,
+  "errors": {
+   "console": [
+    "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+   ],
+   "pageErrors": [],
+   "failed": [
+    "403 GET /api/c2c/project-vault/search?q=protocol&limit=50"
+   ]
+  }
+ }
+]

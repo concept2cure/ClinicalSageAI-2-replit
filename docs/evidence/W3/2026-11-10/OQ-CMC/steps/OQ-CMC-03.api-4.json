@@ -1,0 +1,48 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/analytical-methods",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "methodCode": "AM-20261110020703",
+      "title": "RP-HPLC Assay",
+      "purpose": "assay",
+      "analyte": "BX-701",
+      "matrix": "drug substance",
+      "technique": "HPLC",
+      "projectId": "808060af-b01c-4b94-b24f-58138b33098d"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 23,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 1,
+        "organizationId": 2,
+        "projectId": "808060af-b01c-4b94-b24f-58138b33098d",
+        "methodCode": "AM-20261110020703",
+        "title": "RP-HPLC Assay",
+        "purpose": "assay",
+        "analyte": "BX-701",
+        "matrix": "drug substance",
+        "technique": "HPLC",
+        "status": "development",
+        "ichQ2Parameters": null,
+        "systemSuitability": null,
+        "acceptance_criteria": null,
+        "robustness_data": null,
+        "validationDate": null,
+        "developedBy": null,
+        "validatedBy": null,
+        "createdAt": "2026-11-10T02:07:04.573Z",
+        "updatedAt": "2026-11-10T02:07:04.573Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

@@ -51,10 +51,22 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 }
 
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
+import { openEditorControl } from '../editor/__tests__/workbenchAssemblyBuild.testSupport';
 
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => payload } as Response);
 const fail = (status: number) => ({ ok: false, status, json: async () => ({ error: 'nope' }) } as Response);
 const never = () => new Promise<Response>(() => {});
+/** The list as GET /api/authoring/docs answers a project read (authoring-document-read.ts): success, and each row's program_id. */
+const scopedList = (url: string, body: { success?: boolean; documents: object[] }) => {
+  const programId = new URLSearchParams(url.split('?')[1]).get('programId');
+  return programId === null ? body : { success: true, ...body, documents: body.documents.map(row => ({ program_id: programId, ...row })) };
+};
+/** GET /api/c2c/documents as server/routes/c2c/documents.ts answers it: each row's project_id, and `scope` lists only that part. */
+const c2cDocuments = (url: string, home: object[], market: object[] = []) => {
+  const query = new URLSearchParams(url.split('?')[1]);
+  const rows = query.get('scope') === 'market' ? market : query.get('scope') === 'home' ? home : [...home, ...market];
+  return { documents: rows.map(row => ({ ...row, project_id: query.get('projectId') })) };
+};
 
 const DOCS = {
   success: true,
@@ -69,6 +81,16 @@ const SECTIONS = {
   ],
 };
 
+/** A project with no governed filing whose D1 is an unbound draft, as authoring-document-read.ts and c2c/documents.ts answer it. */
+const UNFILED_PROJECT = '11111111-1111-4111-8111-111111111111';
+const UNFILED = { ...DOCS, documents: [{ ...DOCS.documents[0], c2c_document_id: null }] };
+function unfiledRead(method: string, url: string): Response | undefined {
+  if (method !== 'GET') return undefined;
+  if (url.startsWith('/api/authoring/docs?')) return ok(scopedList(url, UNFILED));
+  if (url.split('?')[0] === '/api/authoring/docs/D1') return ok({ success: true, document: { ...UNFILED.documents[0], client_program_id: UNFILED_PROJECT } });
+  return url.startsWith('/api/c2c/documents?') ? ok({ documents: [] }) : undefined;
+}
+
 function props() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return { surface: { id: 'document-authoring', label: 'Authoring' } as any, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biotech' };
@@ -79,7 +101,7 @@ function wire(route: Route) {
   apiRequest.mockImplementation(async (method: string, url: string) => {
     const r = route(method, String(url ?? ''));
     if (r) return r;
-    if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
+    if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(scopedList(url, DOCS));
     if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
     return ok({ success: true, revisions: [], comments: [], sources: [] });
   });
@@ -122,7 +144,8 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
   it('the History rail says it is reading, never "No prior revisions", while its read is in flight', async () => {
     wire((m, u) => (m === 'GET' && /\/api\/authoring\/sections\/S1\/history/.test(u) ? never() : undefined));
     render(<DocumentAuthoring {...props()} />);
-    fireEvent.click(await screen.findByRole('button', { name: /History/ }));
+    await screen.findByTestId('ed-more');
+    fireEvent.click(openEditorControl('Versions'));
     await waitFor(() => expect(text()).toMatch(/Reading revision history/));
     expect(text()).not.toMatch(/No prior revisions/);
   });
@@ -142,9 +165,15 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
   it('the filing outline does not call every part "not started" while the sections read has failed', async () => {
     (window as any).C2C_PROJECT = { id: '11111111-1111-4111-8111-111111111111' };
     try {
+      // D1 is the filing's editing copy, as the list and the header (authoring-document-read.ts) both say.
+      const filed = { ...DOCS.documents[0], c2c_document_id: 'F1' };
       wire((m, u) => {
+        if (m === 'GET' && u.startsWith('/api/authoring/docs?')) return ok(scopedList(u, { ...DOCS, documents: [filed] }));
+        if (m === 'GET' && u.split('?')[0] === '/api/authoring/docs/D1') {
+          return ok({ success: true, document: { ...filed, client_program_id: '11111111-1111-4111-8111-111111111111' } });
+        }
         if (m === 'GET' && u.startsWith('/api/c2c/documents?projectId=')) {
-          return ok({ documents: [{ id: 'F1', doc_type: 'nda', agency: 'fda', title: 'NDA 2026', rule_pack_version: '1', status: 'draft', readiness: 0 }] });
+          return ok(c2cDocuments(u, [{ id: 'F1', doc_type: 'nda', agency: 'fda', title: 'NDA 2026', rule_pack_version: '1', status: 'draft', readiness: 0 }]));
         }
         if (m === 'GET' && u === '/api/c2c/documents/F1/outline') {
           return ok({
@@ -179,7 +208,7 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
       wire((m, u) => {
         if (m === 'GET' && u.startsWith('/api/authoring/docs?')) return ok({ success: true, documents: [] });
         if (m === 'GET' && u.startsWith('/api/c2c/documents?projectId=')) {
-          return ok({ documents: [{ id: 'F1', doc_type: 'ind', agency: 'fda', title: 'IND 2026', rule_pack_version: '1', status: 'draft', readiness: 0 }] });
+          return ok(c2cDocuments(u, [{ id: 'F1', doc_type: 'ind', agency: 'fda', title: 'IND 2026', rule_pack_version: '1', status: 'draft', readiness: 0 }]));
         }
         if (m === 'GET' && u === '/api/c2c/documents/F1/outline') {
           return ok({
@@ -207,7 +236,7 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
       wire((m, u) => {
         if (m === 'GET' && u.startsWith('/api/authoring/docs?')) return never();
         if (m === 'GET' && u.startsWith('/api/c2c/documents?projectId=')) {
-          return ok({ documents: [{ id: 'F1', doc_type: 'ind', agency: 'fda', title: 'IND 2026', rule_pack_version: '1', status: 'draft', readiness: 0 }] });
+          return ok(c2cDocuments(u, [{ id: 'F1', doc_type: 'ind', agency: 'fda', title: 'IND 2026', rule_pack_version: '1', status: 'draft', readiness: 0 }]));
         }
         if (m === 'GET' && u === '/api/c2c/documents/F1/outline') {
           return ok({
@@ -260,7 +289,8 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
         source: { id: 5, title: 'protocol-v2.pdf', checksum: 'sha-1', extractionStatus: 'extracted', mimeType: 'application/pdf' },
       };
       apiRequest.mockImplementation(async (method: string, url: string) => {
-        if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
+        const unfiled = unfiledRead(method, url);
+        if (unfiled) return unfiled;
         if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1/sections') return ok({ ...SECTIONS, sections: [{ ...SECTIONS.sections[0], citation_count: 1 }] });
         if (method === 'GET' && url === '/api/authoring/sections/S1/sources') return ok({ sources: [citation] });
         if (method === 'DELETE') {
@@ -270,7 +300,8 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
         return ok({ success: true, revisions: [], comments: [], sources: [] });
       });
       render(<DocumentAuthoring {...props()} />);
-      fireEvent.click(await screen.findByRole('button', { name: /Sources/ }));
+      await screen.findByTestId('ed-more');
+      fireEvent.click(openEditorControl(/^Sources/));
       fireEvent.click(await screen.findByText('Remove'));
       await waitFor(() => expect(text()).toMatch(/a frozen citation is immutable/));
     } finally {
@@ -306,10 +337,11 @@ describe('DocumentAuthoring — unsettled reads are not rendered as facts', () =
         if (m === 'GET' && u.split('?')[0] === '/api/authoring/docs/D1/sections') return ok(TWO);
         if (m === 'GET' && u === '/api/authoring/sections/S1/sources') return slowS1;
         if (m === 'GET' && u === '/api/authoring/sections/S2/sources') return ok({ sources: [] });
-        return undefined;
+        return unfiledRead(m, u);
       });
       render(<DocumentAuthoring {...props()} />);
-      fireEvent.click(await screen.findByRole('button', { name: /Sources/ }));
+      await screen.findByTestId('ed-more');
+      fireEvent.click(openEditorControl(/^Sources/));
       fireEvent.click(await screen.findByRole('button', { name: /Manufacture/ }));
       await waitFor(() => expect(text()).toMatch(/Manufacture/));
       await waitFor(() => expect(apiRequest.mock.calls.some((c) => c[1] === '/api/authoring/sections/S2/sources')).toBe(true));

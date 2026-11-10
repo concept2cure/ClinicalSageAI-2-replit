@@ -52,6 +52,21 @@ describe('computeInitialRun — one readiness verdict', () => {
     expect(q.results).toHaveLength(0);
   });
 
+  /* Seen in the running app, 2026-11-08 (docs/evidence/DESIGN/D7/2026-11-08-reporting-rewalk/): C2C-101's
+     page said "4 critical gaps outstanding" while its Executive Readiness Digest said 23. The critical
+     gap messages were cut to four (`.slice(0, 4)`) BEFORE they were pushed to criticalBlockers, and the
+     canvas lead and the portfolio rollup count criticalBlockers.length, so any project with more than
+     four read as four. The visible blocker list keeps its first four; the count keeps every one. */
+  it('counts every critical gap, while the blocker list a reader sees keeps the first four', async () => {
+    q.results.push([], [{ metadata: { registryId: 'US_IND' } }], [], []);
+    const run = await computeInitialRun(1, 'project', '1');
+    const gaps = (run.summary.regulatory as { gaps: Array<{ severity: string }> }).gaps;
+    const critical = gaps.filter((gap) => gap.severity === 'critical').length;
+    expect(critical, 'the case needs more than four critical gaps').toBeGreaterThan(4);
+    expect(run.criticalBlockers).toHaveLength(critical);
+    expect(run.blockers.filter((b) => run.criticalBlockers.includes(b)).length).toBeLessThanOrEqual(4);
+  });
+
   it('never calls one approved artifact a compliance assurance check', async () => {
     q.results.push([{ status: 'approved', count: 1 }], [{ metadata: {} }]);
     const run = await computeInitialRun(1, 'project', '1');
@@ -83,5 +98,34 @@ describe('computeInitialRun — one readiness verdict', () => {
     expect(readiness?.status).toBe('missing');
     expect(readiness?.blocker).toMatch(/evaluated per project, not for a program scope/);
     expect(run.confidence).toBeNull();
+  });
+});
+
+/* A filing document class (a clinical study report, a supplement, a meeting
+   package) is a document, not an application, and has no submission
+   readiness. The digest judged its registry entry as an application's: a
+   submission_readiness row of gaps, a package manifest and a score the
+   portfolio showed as the member's readiness (3b slice 3, 2026-11-01). */
+describe('computeInitialRun — a document is not judged as an application', () => {
+  it.each([
+    { registryId: 'ICH_CSR', words: 'a clinical study report' },
+    { registryId: 'US_NDA_SUPP', words: 'a Prior Approval Supplement' },
+  ])('$registryId: submission readiness is not computed, and the digest says why', async ({ registryId, words }) => {
+    q.results.push([{ status: 'approved', count: 2 }], [{ metadata: { registryId } }]);
+    const run = await computeInitialRun(1, 'project', '1');
+    const readiness = run.providers.filter((p) => p.provider === 'submission_readiness');
+    expect(readiness).toHaveLength(1);
+    expect(readiness[0].status).toBe('missing');
+    expect(readiness[0].blocker).toBe(
+      `Submission readiness not computed: ${words} is a document rather than an application; its completion is the approved or locked share of its governed outline, on its project's dossier.`,
+    );
+    expect(run.providers.map((p) => p.provider)).not.toContain('regional_package_manifest');
+    expect(run.summary.regulatory).toBeUndefined();
+  });
+
+  it('an IND project is still evaluated against its registry entry', async () => {
+    q.results.push([], [{ metadata: { registryId: 'US_IND' } }], [], []);
+    const run = await computeInitialRun(1, 'project', '1');
+    expect(run.summary.regulatory).toMatchObject({ registryId: 'US_IND' });
   });
 });

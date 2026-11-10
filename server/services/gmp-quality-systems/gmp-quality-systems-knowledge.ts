@@ -3,9 +3,11 @@
  * ─────────────────────────────────────────────────────────────────────
  *
  * Pure, closed-form, reproducible regulatory-science engine. NO LLM, NO
- * network, NO database. The one import from another service is
- * ComputationRefusal, thrown when a required input is missing or cannot be
- * used, so that AnA relays it as needs_parameters. Every output is a
+ * network, NO database. Its imports from other services are the shared
+ * stated-input readers, refuseUnlessStated and ComputationRefusal, thrown when
+ * a required input is missing or any input is malformed, so that AnA relays it
+ * as needs_parameters. A true/false fact left out stays not_stated (Rule 2
+ * S5c). Every output is a
  * deterministic function of its inputs and the citation-backed knowledge
  * tables encoded in this module and its sibling citation registry
  * (`gmp-quality-systems-citations.ts`, same service, same purity contract).
@@ -41,7 +43,16 @@
 
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 
-import { ComputationRefusal } from '../ana-biostats/computation-engine.js';
+import { ComputationRefusal, refuseUnlessStated } from '../ana-biostats/computation-engine.js';
+import {
+  allOf,
+  anyOf,
+  booleanInputStates,
+  statedBoolean,
+  statedNumber,
+  statedOneOf,
+  unstated,
+} from '../immunogenicity/immunogenicity-reference.js';
 import { cites } from './gmp-quality-systems-citations.js';
 import type { Citation } from './gmp-quality-systems-citations.js';
 
@@ -64,43 +75,25 @@ export interface Recommendation {
   citations: Citation[];
 }
 
-/** Deterministic rounding to a fixed number of decimals. */
-function round(value: number, decimals: number): number {
-  const factor = Math.pow(10, decimals);
-  return Math.round(value * factor) / factor;
-}
-
 /** Clamp a number into [min, max]. */
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
 
 /** Whether a fact was left out (undefined or null). Absent and false are different facts. */
-function unstated(value: unknown): boolean {
-  return value === undefined || value === null;
-}
+type BooleanState = boolean | 'not_stated';
 
-/** Three-valued OR: true if any fact is true, false only when every one is stated, else undefined (not assessed). */
-function anyOf(...facts: Array<boolean | null | undefined>): boolean | undefined {
-  if (facts.some((f) => f === true)) return true;
-  return facts.some(unstated) ? undefined : false;
-}
-
-/** Three-valued AND: false if any stated fact is not true, true only when every one is true, else undefined. */
-function allOf(...facts: Array<boolean | null | undefined>): boolean | undefined {
-  if (facts.some((f) => !unstated(f) && f !== true)) return false;
-  return facts.some(unstated) ? undefined : true;
-}
-
-/** Refuse a required enum input that is missing or not one the engine knows; never substitute a default. */
-function refuseUnknown(field: string, value: unknown, allowed: readonly string[]): never {
-  throw new ComputationRefusal(
-    unstated(value) ? 'missing_input' : 'invalid_input',
-    unstated(value)
-      ? `${field} is required (one of ${allowed.join(', ')}).`
-      : `${field} must be one of ${allowed.join(', ')} (got ${JSON.stringify(value)}).`,
-    field,
-  );
+/** Refuse, naming each, required text and enums missing or unknown; never a default. */
+function requireStated(fn: string, params: object, text: string[], enums: Record<string, readonly string[]> = {}): void {
+  const v = params as Record<string, unknown>;
+  refuseUnlessStated(fn, [
+    ...text.map((field) => ({
+      field, value: v[field], ok: typeof v[field] === 'string' && (v[field] as string).trim() !== '', expected: 'non-empty text',
+    })),
+    ...Object.entries(enums).map(([field, allowed]) => ({
+      field, value: v[field], ok: allowed.includes(v[field] as string), expected: `one of ${allowed.join(', ')}`,
+    })),
+  ], 'assessed');
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -129,11 +122,13 @@ export type DataLifecycleStage =
   | 'retrieval'
   | 'destruction';
 
+const RECORD_FORMATS = ['paper', 'hybrid', 'electronic'] as const;
 /** How the record is captured / stored. */
-export type RecordFormat = 'paper' | 'hybrid' | 'electronic';
+export type RecordFormat = (typeof RECORD_FORMATS)[number];
 
+const RECORD_TYPES = ['static', 'dynamic'] as const;
 /** Whether the electronic record is static or dynamic (FDA DI guidance Q2). */
-export type RecordType = 'static' | 'dynamic';
+export type RecordType = (typeof RECORD_TYPES)[number];
 
 /** Per-attribute control state supplied by the caller. */
 export interface AlcoaControlState {
@@ -166,9 +161,9 @@ export interface AssessDataIntegrityParams {
   dataDescription: string;
   /** Format of the record. */
   recordFormat: RecordFormat;
-  /** For electronic records, static or dynamic. */
+  /** For electronic records, static or dynamic; left out, not_stated. */
   recordType?: RecordType;
-  /** Lifecycle stages in scope (defaults to the full lifecycle). */
+  /** Lifecycle stages in scope; left out, all seven are listed. */
   lifecycleStages?: DataLifecycleStage[];
   /** Whether the data directly impacts a batch-release / safety decision. */
   impactsBatchRelease?: boolean;
@@ -176,7 +171,7 @@ export interface AssessDataIntegrityParams {
   impactsPatientSafety?: boolean;
   /** Control state per attribute / audit trail. */
   controls?: AlcoaControlState;
-  /** GxP area (defaults to GMP). */
+  /** GxP area. Not read: the assessment is the same for every area. */
   gxpArea?: 'gmp' | 'glp' | 'gcp' | 'gdp' | 'gvp';
 }
 
@@ -201,7 +196,7 @@ export interface AuditTrailFinding {
 
 export interface DataLifecycleRisk {
   stage: DataLifecycleStage;
-  inherentRisk: RiskBand;
+  inherentRisk: RiskBand | 'not_assessed';
   keyControls: string[];
   citations: Citation[];
 }
@@ -209,15 +204,18 @@ export interface DataLifecycleRisk {
 export interface DataIntegrityAssessment {
   dataDescription: string;
   recordFormat: RecordFormat;
-  recordType: RecordType | 'n/a';
-  dataCriticality: RiskBand;
+  recordType: RecordType | 'n/a' | 'not_stated';
+  dataCriticality: RiskBand | 'not_assessed';
   criticalityRationale: string;
   alcoaFindings: AlcoaAttributeFinding[];
   attributesSatisfied: number;
   attributesAtRisk: AlcoaAttribute[];
   auditTrail: AuditTrailFinding;
   lifecycleRisks: DataLifecycleRisk[];
-  overallDataIntegrityRisk: RiskBand;
+  /** not_assessed unless every answer to the unstated facts gives one band (overallRiskRange). */
+  overallDataIntegrityRisk: RiskBand | 'not_assessed';
+  overallRiskRange: { min: RiskBand; max: RiskBand };
+  inputStates: Record<string, BooleanState>;
   recommendations: Recommendation[];
   citations: Citation[];
   determinismNote: string;
@@ -396,10 +394,6 @@ function riskIndex(r: RiskBand): number {
   return RISK_ORDER.indexOf(r);
 }
 
-function maxRisk(a: RiskBand, b: RiskBand): RiskBand {
-  return riskIndex(a) >= riskIndex(b) ? a : b;
-}
-
 function escalateRisk(r: RiskBand, steps: number): RiskBand {
   const idx = clamp(riskIndex(r) + steps, 0, RISK_ORDER.length - 1);
   return RISK_ORDER[idx];
@@ -412,26 +406,43 @@ function escalateRisk(r: RiskBand, steps: number): RiskBand {
 export function assessDataIntegrity(
   params: AssessDataIntegrityParams,
 ): DataIntegrityAssessment {
+  // 2026-11-02 (S5c): unstated impacts read as 'medium', an untyped electronic record as dynamic
+  // and an unstated control as satisfied in the overall risk; an unknown stage was dropped.
+  requireStated('assessDataIntegrity', params, ['dataDescription'], { recordFormat: RECORD_FORMATS });
+  const stages = LIFECYCLE_RISK_SPECS.map((s) => s.stage);
+  const scope: unknown = params.lifecycleStages;
+  const ctl: unknown = params.controls;
+  if (!unstated(scope) && !(Array.isArray(scope) && scope.every((s) => stages.includes(s)))) {
+    throw new ComputationRefusal('invalid_input', `lifecycleStages must be a list of ${stages.join(', ')}.`, 'lifecycleStages');
+  }
+  if (!unstated(ctl) && (typeof ctl !== 'object' || Array.isArray(ctl))) {
+    throw new ComputationRefusal('invalid_input', 'controls must be an object of true/false states.', 'controls');
+  }
   const controls: AlcoaControlState = params.controls ?? {};
-  const recordType: RecordType | 'n/a' =
-    params.recordFormat === 'electronic' ? params.recordType ?? 'dynamic' : 'n/a';
+  const known = (k: keyof AlcoaControlState): boolean | 'unknown' => statedBoolean(`controls.${k}`, controls[k]) ?? 'unknown';
+  const inputStates = booleanInputStates(params, ['impactsBatchRelease', 'impactsPatientSafety']);
+  for (const k of [...ALCOA_SPECS.map((s) => s.controlKey), 'auditTrailEnabled', 'auditTrailReviewed'] as const) {
+    const s = known(k);
+    inputStates[`controls.${k}`] = s === 'unknown' ? 'not_stated' : s;
+  }
+  const statedType = statedOneOf('recordType', params.recordType, RECORD_TYPES);
+  const recordType = params.recordFormat === 'electronic' ? statedType ?? 'not_stated' : 'n/a';
 
-  // ── Data criticality (MHRA §4) ───────────────────────────────────────────
-  let criticality: RiskBand = 'low';
+  // ── Data criticality (MHRA §4): a band only when the stated facts settle it ──
+  const safety = statedBoolean('impactsPatientSafety', params.impactsPatientSafety);
+  const release = statedBoolean('impactsBatchRelease', params.impactsBatchRelease);
+  const band = (s: boolean, r: boolean): RiskBand => (s ? 'critical' : r ? 'high' : 'medium');
+  const critFloor = band(safety === true, release === true);
+  const critCeiling = band(safety !== false, release !== false);
+  const criticality = critFloor === critCeiling ? critFloor : 'not_assessed';
   const reasons: string[] = [];
-  if (params.impactsPatientSafety === true) {
-    criticality = maxRisk(criticality, 'critical');
-    reasons.push('directly impacts patient safety');
-  }
-  if (params.impactsBatchRelease === true) {
-    criticality = maxRisk(criticality, 'high');
-    reasons.push('supports a batch-release / disposition decision');
-  }
-  if (reasons.length === 0) {
-    criticality = 'medium';
-    reasons.push(
-      'no direct safety/release impact specified — treated as medium pending confirmation',
-    );
+  if (safety === true) reasons.push('directly impacts patient safety');
+  if (release === true) reasons.push('supports a batch-release / disposition decision');
+  if (criticality === 'not_assessed') {
+    const open = ['impactsPatientSafety', 'impactsBatchRelease'].filter((k) => inputStates[k] === 'not_stated');
+    reasons.push(`not assessed (${critFloor} to ${critCeiling}): ${open.join(', ')} not stated`);
+  } else if (reasons.length === 0) {
+    reasons.push('stated not to support batch release or affect patient safety directly — rated medium');
   }
   // Hybrid and paper records carry higher inherent integrity risk than fully
   // validated electronic records (PIC/S PI 041 maturity model).
@@ -444,8 +455,7 @@ export function assessDataIntegrity(
   // ── ALCOA+ per-attribute findings ────────────────────────────────────────
   const alcoaFindings: AlcoaAttributeFinding[] = ALCOA_SPECS.map(
     (spec: AlcoaSpec): AlcoaAttributeFinding => {
-      const raw = controls[spec.controlKey];
-      const satisfied: boolean | 'unknown' = raw === undefined ? 'unknown' : raw;
+      const satisfied = known(spec.controlKey);
       const gap =
         satisfied === false
           ? `Control "${spec.label}" is not in place: ${spec.expectation}`
@@ -472,14 +482,15 @@ export function assessDataIntegrity(
 
   // ── Audit-trail review (FDA DI Q7 / Annex 11 cl.9) ───────────────────────
   const auditTrailRequired = params.recordFormat !== 'paper';
-  const atEnabled: boolean | 'unknown' =
-    controls.auditTrailEnabled === undefined ? 'unknown' : controls.auditTrailEnabled;
-  const atReviewed: boolean | 'unknown' =
-    controls.auditTrailReviewed === undefined ? 'unknown' : controls.auditTrailReviewed;
+  const atEnabled = known('auditTrailEnabled');
+  const atReviewed = known('auditTrailReviewed');
+  const direct = anyOf(safety, release);
   const reviewFrequency =
-    criticality === 'critical' || criticality === 'high'
+    direct === true
       ? 'With each record and prior to final approval (e.g. at batch release)'
-      : 'Periodic review on a risk-based frequency defined in procedure';
+      : direct === false
+        ? 'Periodic review on a risk-based frequency defined in procedure'
+        : 'Not assessed: batch-release and patient-safety impact not stated';
   const atGaps: string[] = [];
   if (auditTrailRequired && atEnabled === false) {
     atGaps.push(
@@ -509,9 +520,7 @@ export function assessDataIntegrity(
   };
 
   // ── Lifecycle risk mapping ───────────────────────────────────────────────
-  const stagesInScope: DataLifecycleStage[] =
-    params.lifecycleStages ??
-    LIFECYCLE_RISK_SPECS.map((s: LifecycleRiskSpec): DataLifecycleStage => s.stage);
+  const stagesInScope: DataLifecycleStage[] = params.lifecycleStages ?? stages;
 
   const lifecycleRisks: DataLifecycleRisk[] = LIFECYCLE_RISK_SPECS.filter(
     (s: LifecycleRiskSpec): boolean => stagesInScope.includes(s.stage),
@@ -520,26 +529,27 @@ export function assessDataIntegrity(
     if (params.recordFormat === 'paper' || params.recordFormat === 'hybrid') {
       risk = escalateRisk(risk, 1);
     }
-    if (criticality === 'critical') {
-      risk = escalateRisk(risk, 1);
-    }
+    // Stated patient-safety impact (critical data) raises each stage one band.
+    const raised = escalateRisk(risk, 1);
     return {
       stage: s.stage,
-      inherentRisk: risk,
+      inherentRisk: safety === undefined && raised !== risk ? 'not_assessed' : safety ? raised : risk,
       keyControls: s.keyControls,
       citations: cites(s.citationKeys),
     };
   });
 
-  // ── Overall data integrity risk ──────────────────────────────────────────
-  let overall: RiskBand = criticality;
-  if (attributesAtRisk.length > 0) {
-    overall = escalateRisk(overall, attributesAtRisk.length >= 3 ? 2 : 1);
-  }
-  if (atGaps.length > 0) {
-    overall = escalateRisk(overall, 1);
-  }
-  overall = clampRisk(overall);
+  // ── Overall risk: a band only when every reading of the unstated facts gives it ──
+  const flip = (b: boolean | 'unknown'): boolean | undefined => (b === 'unknown' ? undefined : !b);
+  const atDeficient = auditTrailRequired ? anyOf(flip(atEnabled), flip(atReviewed)) : false;
+  const unknownAttributes = alcoaFindings.filter((f) => f.satisfied === 'unknown').length;
+  const overallFor = (crit: RiskBand, atRisk: number, deficient: boolean): RiskBand =>
+    escalateRisk(crit, (atRisk === 0 ? 0 : atRisk >= 3 ? 2 : 1) + (deficient ? 1 : 0));
+  const overallRiskRange = {
+    min: overallFor(critFloor, attributesAtRisk.length, atDeficient === true),
+    max: overallFor(critCeiling, attributesAtRisk.length + unknownAttributes, atDeficient !== false),
+  };
+  const overall = overallRiskRange.min === overallRiskRange.max ? overallRiskRange.min : 'not_assessed';
 
   // ── Recommendations ──────────────────────────────────────────────────────
   const recommendations: Recommendation[] = [];
@@ -564,11 +574,12 @@ export function assessDataIntegrity(
       citations: cites(['pics_pi041_maturity', 'fda_di_static_dynamic']),
     });
   }
-  if (auditTrailRequired && (atEnabled !== true || atReviewed !== true)) {
+  if (atDeficient !== false) {
     recommendations.push({
-      recommendation:
-        'Enable and routinely review the audit trail; for critical data review it with each ' +
-        'record and before batch release.',
+      recommendation: atDeficient
+        ? 'Enable and routinely review the audit trail; for critical data review it with each ' +
+          'record and before batch release.'
+        : 'Confirm whether the audit trail is enabled and reviewed (not stated).',
       rationale:
         'Audit-trail review is the principal detective control for unauthorised or ' +
         'unjustified changes to critical GMP data.',
@@ -597,6 +608,8 @@ export function assessDataIntegrity(
     auditTrail,
     lifecycleRisks,
     overallDataIntegrityRisk: overall,
+    overallRiskRange,
+    inputStates,
     recommendations,
     citations: cites([
       'fda_di_alcoa',
@@ -612,25 +625,15 @@ export function assessDataIntegrity(
   };
 }
 
-function clampRisk(r: RiskBand): RiskBand {
-  return RISK_ORDER[clamp(riskIndex(r), 0, RISK_ORDER.length - 1)];
-}
-
 // ════════════════════════════════════════════════════════════════════════════
 // SECTION 2 — CAPA DESIGN (ICH Q10)
 // ════════════════════════════════════════════════════════════════════════════
 
-export type CapaSourceType =
-  | 'deviation'
-  | 'complaint'
-  | 'oos'
-  | 'recall'
-  | 'audit_finding'
-  | 'inspection_observation'
-  | 'nonconformance'
-  | 'trend'
-  | 'change'
-  | 'near_miss';
+const CAPA_SOURCES = [
+  'deviation', 'complaint', 'oos', 'recall', 'audit_finding',
+  'inspection_observation', 'nonconformance', 'trend', 'change', 'near_miss',
+] as const;
+export type CapaSourceType = (typeof CAPA_SOURCES)[number];
 
 export type RootCauseMethod = '5-whys' | 'ishikawa' | 'fmea' | 'fault-tree' | 'is-is-not';
 
@@ -651,7 +654,7 @@ export interface DesignCapaParams {
   systemic?: boolean;
   /** Whether distributed product is potentially affected. */
   productImpact?: boolean;
-  /** Optional caller-suggested root-cause method (overrides default selection). */
+  /** Optional caller-suggested root-cause method (overrides the rule-based selection). */
   preferredRootCauseMethod?: RootCauseMethod;
 }
 
@@ -663,7 +666,8 @@ export interface CapaAction {
 }
 
 export interface RootCausePlan {
-  method: RootCauseMethod;
+  /** 'undetermined' while an unstated fact could change the rule's pick. */
+  method: RootCauseMethod | 'undetermined';
   methodLabel: string;
   whenToUse: string;
   steps: string[];
@@ -690,11 +694,12 @@ export interface CapaPlan {
   alternativeRootCauseMethods: RootCauseMethod[];
   actions: CapaAction[];
   effectivenessChecks: EffectivenessCheck[];
-  /** null until severity is assessed. */
+  /** null until severity is stated (an inferred high could be critical). */
   recommendedTargetDays: number | null;
   closureConditions: string[];
   /** Inputs the plan depends on that were not supplied. */
   notAssessed: Array<keyof DesignCapaParams>;
+  inputStates: Record<string, BooleanState>;
   citations: Citation[];
   determinismNote: string;
 }
@@ -785,22 +790,17 @@ const ROOT_CAUSE_SPECS: RootCauseSpec[] = [
   },
 ];
 
-function selectRootCauseMethod(params: DesignCapaParams): RootCauseMethod {
-  if (params.preferredRootCauseMethod !== undefined) {
-    return params.preferredRootCauseMethod;
+/** 'undetermined' while an unstated fact could change the pick (until 2026-11-02 a count read as 1, systemic and recurring as false). */
+function selectRootCauseMethod(params: DesignCapaParams): RootCauseMethod | 'undetermined' {
+  if (!unstated(params.preferredRootCauseMethod)) return params.preferredRootCauseMethod as RootCauseMethod;
+  const factors = params.contributingFactorCount as number;
+  const fmea = anyOf(params.systemic, params.recurring, unstated(factors) ? undefined : factors >= 4);
+  if (fmea !== false) return fmea ? 'fmea' : 'undetermined';
+  if (params.source === 'recall' || params.source === 'oos') {
+    if (unstated(params.severity)) return 'undetermined';
+    if (params.severity === 'high' || params.severity === 'critical') return 'fault-tree';
   }
-  const factors = params.contributingFactorCount ?? (params.systemic === true ? 4 : 1);
-  const highSeverity = params.severity === 'high' || params.severity === 'critical';
-  if (params.systemic === true || params.recurring === true || factors >= 4) {
-    return 'fmea';
-  }
-  if (highSeverity && (params.source === 'recall' || params.source === 'oos')) {
-    return 'fault-tree';
-  }
-  if (factors >= 2) {
-    return 'ishikawa';
-  }
-  return '5-whys';
+  return factors >= 2 ? 'ishikawa' : '5-whys';
 }
 
 /**
@@ -812,6 +812,11 @@ export function designCAPA(params: DesignCapaParams): CapaPlan {
   // printed "failure appears isolated; no product impact identified" for facts
   // nobody supplied. Those are now said to be not assessed, and the formality
   // and target timeline they decide are left undetermined.
+  requireStated('designCAPA', params, ['problemDescription'], { source: CAPA_SOURCES });
+  const inputStates = booleanInputStates(params, ['recurring', 'systemic', 'productImpact']);
+  statedOneOf('severity', params.severity, RISK_ORDER);
+  statedOneOf('preferredRootCauseMethod', params.preferredRootCauseMethod, ROOT_CAUSE_SPECS.map((s) => s.method));
+  statedNumber('contributingFactorCount', params.contributingFactorCount, (n) => Number.isInteger(n) && n >= 0, 'a whole number ≥ 0');
   const severityBasis: CapaPlan['severityBasis'] = !unstated(params.severity)
     ? 'stated'
     : params.productImpact === true
@@ -833,17 +838,17 @@ export function designCAPA(params: DesignCapaParams): CapaPlan {
           : 'streamlined';
 
   const method = selectRootCauseMethod(params);
-  const spec =
-    ROOT_CAUSE_SPECS.find((s: RootCauseSpec): boolean => s.method === method) ??
-    ROOT_CAUSE_SPECS[0];
+  const spec = ROOT_CAUSE_SPECS.find((s: RootCauseSpec): boolean => s.method === method);
 
-  const rootCause: RootCausePlan = {
-    method: spec.method,
-    methodLabel: spec.label,
-    whenToUse: spec.whenToUse,
-    steps: spec.steps,
-    citations: cites(spec.citationKeys),
-  };
+  const rootCause: RootCausePlan = spec
+    ? { method: spec.method, methodLabel: spec.label, whenToUse: spec.whenToUse, steps: spec.steps, citations: cites(spec.citationKeys) }
+    : {
+        method: 'undetermined',
+        methodLabel: 'Not determined',
+        whenToUse: 'The rule needs facts not stated (notAssessed); state them or preferredRootCauseMethod.',
+        steps: [],
+        citations: cites(['q10_capa', 'q9_tools']),
+      };
 
   const alternativeRootCauseMethods: RootCauseMethod[] = ROOT_CAUSE_SPECS.filter(
     (s: RootCauseSpec): boolean => s.method !== method,
@@ -871,7 +876,7 @@ export function designCAPA(params: DesignCapaParams): CapaPlan {
   const problemStatement =
     `Problem: ${params.problemDescription} (source: ${params.source}). ` +
     severityText +
-    (params.recurring === true ? '; event is RECURRING' : '') +
+    (params.recurring === true ? '; event is RECURRING' : unstated(params.recurring) ? '; recurrence not stated' : '') +
     extentText +
     productImpactText;
 
@@ -924,18 +929,21 @@ export function designCAPA(params: DesignCapaParams): CapaPlan {
       acceptanceCriterion: 'Documented adherence; training completed and verified for affected staff.',
     },
   ];
-  if (params.systemic === true || params.recurring === true) {
+  const spreads = anyOf(params.systemic, params.recurring);
+  if (spreads !== false) {
     effectivenessChecks.push({
       metric: 'Effectiveness of preventive action across analogous areas',
       method: 'Verification that the change was deployed to all identified similar processes.',
-      timing: 'At 6 months post-implementation.',
+      timing: spreads
+        ? 'At 6 months post-implementation.'
+        : 'At 6 months post-implementation, if the failure is systemic or recurring (not stated).',
       acceptanceCriterion: 'All analogous processes updated; no related events in similar areas.',
     });
   }
 
   // Recommended timeline (commensurate with risk)
   const recommendedTargetDays =
-    severity === 'critical' ? 30 : severity === 'high' ? 45 : severity === 'medium' ? 60 : severity === 'low' ? 90 : null;
+    severityBasis !== 'stated' ? null : severity === 'critical' ? 30 : severity === 'high' ? 45 : severity === 'medium' ? 60 : 90;
 
   const closureConditions: string[] = [
     'Root cause identified and supported by objective evidence.',
@@ -965,6 +973,7 @@ export function designCAPA(params: DesignCapaParams): CapaPlan {
     recommendedTargetDays,
     closureConditions,
     notAssessed,
+    inputStates,
     citations: cites([
       'q10_capa',
       'q10_effectiveness',
@@ -1014,7 +1023,7 @@ export interface ClassifyDeviationParams {
   recurring?: boolean;
   /** Whether the affected product is marketed in the US (field-alert relevance). */
   usMarketed?: boolean;
-  /** Number of batches potentially affected. */
+  /** Number of batches potentially affected. Not read: the result is the same without it. */
   batchesAffected?: number;
 }
 
@@ -1050,6 +1059,7 @@ export interface DeviationClassification {
   qualityUnitDispositionRequired: boolean | 'undetermined';
   /** Facts the classification, impact and reporting depend on that were not stated. */
   notAssessed: Array<keyof ClassifyDeviationParams>;
+  inputStates: Record<string, BooleanState>;
   citations: Citation[];
   determinismNote: string;
 }
@@ -1151,7 +1161,7 @@ function reportingFor(
   recall: boolean | undefined,
   notStated: string[],
 ): RegulatoryReportingTrigger {
-  const open = `${notStated.join(', ')} not stated; reassess when they are known.`;
+  const open = (facts: string[]): string => `${facts.join(', ')} not stated; reassess when they are known.`;
   return {
     fieldAlertReportEvaluation: fieldAlert ?? 'undetermined',
     fieldAlertRationale:
@@ -1160,9 +1170,9 @@ function reportingFor(
           'evaluation of a Field Alert Report for an NDA/ANDA product (21 CFR 314.81(b)(1)) — ' +
           'submit within 3 working days of becoming aware if criteria are met.'
         : fieldAlert === false
-          ? 'Field Alert Report not triggered on the current information (not distributed and/or no ' +
+          ? 'Field Alert Report not triggered on the current information (not US-marketed, not distributed and/or no ' +
             'confirmed quality defect); reassess if new information emerges.'
-          : `Field Alert Report evaluation undetermined: ${open}`,
+          : `Field Alert Report evaluation undetermined: ${open(notStated)}`,
     recallEvaluation: recall ?? 'undetermined',
     recallRationale:
       recall === true
@@ -1171,7 +1181,7 @@ function reportingFor(
           '21 CFR Part 7 if a recall is warranted.'
         : recall === false
           ? 'Recall evaluation not triggered on the current information; document the rationale.'
-          : `Recall evaluation undetermined: ${open}`,
+          : `Recall evaluation undetermined: ${open(notStated.filter((k) => k !== 'usMarketed'))}`,
     citations: cites(['cfr211_198', 'cfr211_192', 'q10_capa']),
   };
 }
@@ -1190,16 +1200,16 @@ export function classifyGMPDeviation(
   // direct CQA / safety impact identified … Batch may proceed". An unknown area
   // is now refused; the class is 'undetermined' while an unstated fact could
   // escalate it, product impact is null until assessed, and notAssessed lists
-  // the facts.
-  const areaSpec =
-    DEVIATION_AREA_SPECS.find((s: DeviationAreaSpec): boolean => s.area === params.area) ??
-    refuseUnknown('area', params.area, DEVIATION_AREA_SPECS.map((s: DeviationAreaSpec): string => s.area));
-  const notAssessed = (['patientSafetyImpact', 'outOfSpecConfirmed', 'recurring', 'batchDistributed'] as const).filter(
-    (k) => unstated(params[k]),
-  );
+  // the facts. 2026-11-02: an omitted usMarketed no longer reads as true.
+  requireStated('classifyGMPDeviation', params, ['description'], { area: DEVIATION_AREA_SPECS.map((s) => s.area) });
+  const inputStates = booleanInputStates(params, [
+    'batchDistributed', 'sterileProduct', 'outOfSpecConfirmed', 'patientSafetyImpact', 'recurring', 'usMarketed']);
+  const areaSpec = DEVIATION_AREA_SPECS.find((s: DeviationAreaSpec): boolean => s.area === params.area) as DeviationAreaSpec;
+  const notAssessed = (['patientSafetyImpact', 'outOfSpecConfirmed', 'recurring', 'batchDistributed', 'usMarketed'] as const)
+    .filter((k) => unstated(params[k]));
 
-  // The unstated facts that can escalate the class (batchDistributed only bears on reporting).
-  const escalators = notAssessed.filter((k) => k !== 'batchDistributed');
+  // The unstated facts that can escalate the class (batchDistributed and usMarketed only bear on reporting).
+  const escalators = notAssessed.filter((k) => k !== 'batchDistributed' && k !== 'usMarketed');
 
   const rationale: string[] = [`Area "${params.area}" baseline classification: ${areaSpec.baseClass}.`];
   const floor = deviationClassFor(params, areaSpec, (f) => f === true, rationale);
@@ -1232,9 +1242,8 @@ export function classifyGMPDeviation(
   const productImpact = productImpactFor(potentiallyImpacted, escalators);
 
   // Reporting triggers
-  const usMarketed = params.usMarketed !== false; // default to true (conservative)
   const fieldAlert = allOf(
-    usMarketed,
+    params.usMarketed,
     anyOf(params.batchDistributed, params.outOfSpecConfirmed),
     anyOf(isCritical, params.outOfSpecConfirmed, params.patientSafetyImpact),
   );
@@ -1255,6 +1264,7 @@ export function classifyGMPDeviation(
     requiresCapa: requiresCapa ?? 'undetermined',
     qualityUnitDispositionRequired: anyOf(potentiallyImpacted, atLeastMajor) ?? 'undetermined',
     notAssessed,
+    inputStates,
     citations: cites([
       'cfr211_100',
       'cfr211_192',
@@ -1301,8 +1311,9 @@ export interface AssessApiGmpParams {
 export interface GmpStringencyProfile {
   step: ApiStepType;
   stepLabel: string;
-  gmpStringency: 'minimal_gmp' | 'partial_gmp' | 'full_gmp' | 'full_gmp_enhanced';
-  stringencyLevel: number; // 1..4 increasing
+  /** not_assessed, the level null, while an unstated isCriticalStep could raise it. */
+  gmpStringency: 'minimal_gmp' | 'partial_gmp' | 'full_gmp' | 'full_gmp_enhanced' | 'not_assessed';
+  stringencyLevel: number | null; // 1..4 increasing
   expectation: string;
   citations: Citation[];
 }
@@ -1314,9 +1325,10 @@ export interface ProcessControlExpectation {
 }
 
 export interface ChangeControlGuidance {
-  classification: 'significant' | 'minor';
-  requiresRevalidation: boolean;
-  requiresRegulatoryNotification: boolean;
+  /** not_assessed (the needs null) while an unstated fact could decide it. */
+  classification: 'significant' | 'minor' | 'not_assessed';
+  requiresRevalidation: boolean | null;
+  requiresRegulatoryNotification: boolean | null;
   steps: string[];
   citations: Citation[];
 }
@@ -1329,6 +1341,7 @@ export interface ApiGmpAssessment {
   criticalProcessControls: ProcessControlExpectation[];
   changeControl: ChangeControlGuidance;
   qualityUnitExpectation: string;
+  inputStates: Record<string, BooleanState>;
   citations: Citation[];
   determinismNote: string;
 }
@@ -1407,45 +1420,50 @@ const API_STEP_SPECS: ApiStepSpec[] = [
  * change-control guidance.
  */
 export function assessAPIGMP(params: AssessApiGmpParams): ApiGmpAssessment {
-  const spec =
-    API_STEP_SPECS.find((s: ApiStepSpec): boolean => s.step === params.step) ??
-    API_STEP_SPECS[0];
+  // 2026-11-02 (S5c): an unknown or missing step was assessed as starting-material
+  // production, and unstated critical-step or significance facts read as false.
+  requireStated('assessAPIGMP', params, [], { step: API_STEP_SPECS.map((s: ApiStepSpec) => s.step) });
+  const inputStates = booleanInputStates(params, ['isCriticalStep', 'sterileApi', 'changeIsSignificant']);
+  const spec = API_STEP_SPECS.find((s: ApiStepSpec): boolean => s.step === params.step) as ApiStepSpec;
 
-  let level = spec.level;
-  let stringency = spec.stringency;
+  // A critical step below level 4 rises one level; unstated there, the level is not assessed.
+  const critical = statedBoolean('isCriticalStep', params.isCriticalStep);
+  const raised = spec.level < 4 ? critical : false;
+  const level = raised ? spec.level + 1 : spec.level;
   let expectation = spec.expectation;
-  if (params.isCriticalStep === true && level < 4) {
-    level = clamp(level + 1, 1, 4);
-    stringency = level >= 4 ? 'full_gmp_enhanced' : 'full_gmp';
+  if (raised) {
     expectation +=
       ' This step is identified as a CRITICAL process step, warranting enhanced control, ' +
       'tighter in-process limits, and validation emphasis.';
+  } else if (raised === undefined) {
+    expectation += ' Whether it is a critical step is not stated (isCriticalStep); if it is, stringency rises one level.';
   }
   if (params.sterileApi === true) {
     expectation +=
       ' For a sterile API, additional ICH Q7 §18 / Annex 1 contamination-control and ' +
       'sterility-assurance expectations apply to the relevant steps.';
+  } else if (unstated(params.sterileApi)) {
+    expectation += ' Whether the API is sterile is not stated (sterileApi).';
   }
 
   const stringencyProfile: GmpStringencyProfile = {
     step: spec.step,
     stepLabel: spec.label,
-    gmpStringency: stringency,
-    stringencyLevel: level,
+    gmpStringency: raised === undefined ? 'not_assessed' : raised ? (level >= 4 ? 'full_gmp_enhanced' : 'full_gmp') : spec.stringency,
+    stringencyLevel: raised === undefined ? null : level,
     expectation,
     citations: cites(['q7_intro_gmp_increases', 'q7_table1']),
   };
 
   // Critical process controls scale with stringency level.
-  const criticalProcessControls: ProcessControlExpectation[] = [];
-  criticalProcessControls.push({
-    control: 'Definition of API starting material',
-    expectation:
-      'Clearly define and justify the API starting material; full GMP begins at its introduction.',
-    citations: cites(['q7_intro_gmp_increases', 'q7_table1']),
-  });
-  if (level >= 3) {
-    criticalProcessControls.push(
+  const controlsAt = (atLevel: number): ProcessControlExpectation[] => [
+    {
+      control: 'Definition of API starting material',
+      expectation:
+        'Clearly define and justify the API starting material; full GMP begins at its introduction.',
+      citations: cites(['q7_intro_gmp_increases', 'q7_table1']),
+    },
+    ...(atLevel < 3 ? [] : [
       {
         control: 'Critical process parameters (CPPs) & in-process controls (IPCs)',
         expectation:
@@ -1467,10 +1485,8 @@ export function assessAPIGMP(params: AssessApiGmpParams): ApiGmpAssessment {
           'carryover and cleaning between campaigns.',
         citations: cites(['q7_critical_steps', 'q7_quality_unit']),
       },
-    );
-  }
-  if (level >= 4) {
-    criticalProcessControls.push(
+    ]),
+    ...(atLevel < 4 ? [] : [
       {
         control: 'Release testing against API specification',
         expectation:
@@ -1484,28 +1500,35 @@ export function assessAPIGMP(params: AssessApiGmpParams): ApiGmpAssessment {
           'Establish a stability programme to support retest/expiry dates for the released API.',
         citations: cites(['q7_quality_unit']),
       },
-    );
+    ]),
+  ];
+  const criticalProcessControls = controlsAt(level);
+  if (raised === undefined) {
+    for (const c of controlsAt(level + 1).slice(criticalProcessControls.length)) {
+      criticalProcessControls.push({ ...c, expectation: `If this is a critical process step (not stated): ${c.expectation}` });
+    }
   }
 
-  // Change control
-  const significant =
-    params.changeIsSignificant === true || params.isCriticalStep === true || level >= 4;
-  const changeControl: ChangeControlGuidance = {
-    classification: significant ? 'significant' : 'minor',
-    requiresRevalidation: significant,
-    requiresRegulatoryNotification: significant,
+  // A critical or level-4 step makes a change significant; else changeIsSignificant decides.
+  const changeControlFor = (significant: boolean | undefined): ChangeControlGuidance => ({
+    classification: significant === undefined ? 'not_assessed' : significant ? 'significant' : 'minor',
+    requiresRevalidation: significant ?? null,
+    requiresRegulatoryNotification: significant ?? null,
     steps: [
       'Initiate a formal change control and define the change, scope, and justification.',
       'Assess impact on product quality and the control strategy using quality risk management.',
       'Classify the change (minor vs significant) and determine revalidation needs.',
-      significant
-        ? 'For significant changes affecting registered details, evaluate regulatory ' +
-          'notification/approval before implementation.'
-        : 'For minor changes, document the assessment; regulatory notification may not be required.',
+      significant === undefined
+        ? 'Significance not assessed: a fact that decides it is not stated (inputStates).'
+        : significant
+          ? 'For significant changes affecting registered details, evaluate regulatory ' +
+            'notification/approval before implementation.'
+          : 'For minor changes, document the assessment; regulatory notification may not be required.',
       'Quality-unit review and approval before implementation; verify effectiveness afterwards.',
     ],
     citations: cites(['q7_change_control', 'q10_change_mgmt', 'q9_formality']),
-  };
+  });
+  const changeControl = changeControlFor(anyOf(params.changeIsSignificant, critical, spec.level >= 4));
 
   return {
     step: params.step,
@@ -1520,6 +1543,7 @@ export function assessAPIGMP(params: AssessApiGmpParams): ApiGmpAssessment {
     qualityUnitExpectation:
       'An independent quality unit reviews and approves quality-related documents and ' +
       'releases/rejects intermediates and APIs (ICH Q7 §2.2).',
+    inputStates,
     citations: cites([
       'q7_intro_gmp_increases',
       'q7_table1',
@@ -1544,7 +1568,8 @@ export type SterilisationApproach =
   | 'sterile_filtration_aseptic'
   | 'aseptic_processing';
 
-export type AsepticBarrier = 'open_cleanroom' | 'rabs' | 'isolator';
+const ASEPTIC_BARRIERS = ['open_cleanroom', 'rabs', 'isolator'] as const;
+export type AsepticBarrier = (typeof ASEPTIC_BARRIERS)[number];
 
 export interface DesignSterileControlsParams {
   /** Product / process description. */
@@ -1557,9 +1582,9 @@ export interface DesignSterileControlsParams {
   barrier?: AsepticBarrier;
   /** Whether lyophilisation (freeze-drying) is part of the process. */
   lyophilised?: boolean;
-  /** Annual number of aseptic filling lines/shifts (context for APS scheduling). */
+  /** Annual number of aseptic filling lines/shifts. Not read: the plan is the same without it. */
   fillingLines?: number;
-  /** Number of operators requiring qualification (context for APS). */
+  /** Number of operators requiring qualification. Not read: the plan is the same without it. */
   operatorCount?: number;
 }
 
@@ -1587,7 +1612,8 @@ export interface MediaFillPlan {
 }
 
 export interface SterilisationDecision {
-  selectedApproach: SterilisationApproach;
+  /** not_assessed while an unstated heatStable or filterable could change it. */
+  selectedApproach: SterilisationApproach | 'not_assessed';
   approachLabel: string;
   rationale: string;
   sterilityAssuranceLevel: string;
@@ -1599,11 +1625,12 @@ export interface SterileControlStrategy {
   contaminationControlStrategySummary: string;
   sterilisation: SterilisationDecision;
   grades: CleanroomGrade[];
-  recommendedBarrier: AsepticBarrier;
+  recommendedBarrier: AsepticBarrier | 'not_assessed';
   barrierRationale: string;
   environmentalMonitoring: EnvironmentalMonitoringPlan[];
   mediaFill: MediaFillPlan;
   lyophilisationNote: string | null;
+  inputStates: Record<string, BooleanState>;
   recommendations: Recommendation[];
   citations: Citation[];
   determinismNote: string;
@@ -1657,6 +1684,16 @@ function selectSterilisation(params: DesignSterileControlsParams): Sterilisation
       citations: cites(['annex1_sterilisation']),
     };
   }
+  // 2026-11-02 (S5c): an unstated heatStable or filterable read as false.
+  if (params.heatStable !== false || unstated(params.filterable)) {
+    return {
+      selectedApproach: 'not_assessed',
+      approachLabel: 'Not assessed',
+      rationale: `${params.heatStable === false ? 'filterable' : 'heatStable'} not stated; the approach follows from it.`,
+      sterilityAssuranceLevel: 'Not assessed.',
+      citations: cites(['annex1_sterilisation']),
+    };
+  }
   if (params.filterable === true) {
     return {
       selectedApproach: 'sterile_filtration_aseptic',
@@ -1686,9 +1723,9 @@ function selectSterilisation(params: DesignSterileControlsParams): Sterilisation
 
 function selectBarrier(
   params: DesignSterileControlsParams,
-  approach: SterilisationApproach,
-): { barrier: AsepticBarrier; rationale: string } {
-  if (params.barrier !== undefined) {
+  approach: SterilisationDecision['selectedApproach'],
+): { barrier: AsepticBarrier | 'not_assessed'; rationale: string } {
+  if (params.barrier) {
     return {
       barrier: params.barrier,
       rationale:
@@ -1704,6 +1741,9 @@ function selectBarrier(
         'background, Grade A for any open critical steps); advanced barriers are less critical ' +
         'because sterility is assured terminally.',
     };
+  }
+  if (params.heatStable !== false) {
+    return { barrier: 'not_assessed', rationale: 'Not assessed: it follows the sterilisation approach (heatStable not stated).' };
   }
   // Aseptic processing — Annex 1 strongly favours isolators / RABS.
   return {
@@ -1723,6 +1763,9 @@ function selectBarrier(
 export function designSterileControls(
   params: DesignSterileControlsParams,
 ): SterileControlStrategy {
+  requireStated('designSterileControls', params, ['productDescription']);
+  const inputStates = booleanInputStates(params, ['heatStable', 'filterable', 'lyophilised']);
+  statedOneOf('barrier', params.barrier, ASEPTIC_BARRIERS);
   const sterilisation = selectSterilisation(params);
   const barrierSel = selectBarrier(params, sterilisation.selectedApproach);
 
@@ -1780,7 +1823,9 @@ export function designSterileControls(
         'and the lyophiliser sterilisation and integrity must be controlled (Annex 1 2022 ' +
         'lyophiliser provisions, applicable from 25 Aug 2024). Media fills should simulate the ' +
         'lyophilisation cycle (including vacuum/partial-stopper steps).'
-      : null;
+      : unstated(params.lyophilised)
+        ? 'Not assessed: lyophilised not stated.'
+        : null;
 
   const recommendations: Recommendation[] = [
     {
@@ -1793,7 +1838,7 @@ export function designSterileControls(
       citations: cites(['annex1_ccs', 'q9_principles']),
     },
   ];
-  if (sterilisation.selectedApproach !== 'terminal_moist_heat' && params.heatStable !== true) {
+  if (params.heatStable === false) {
     recommendations.push({
       recommendation:
         'Document the justification for not using terminal sterilisation (the method of choice) ' +
@@ -1804,11 +1849,8 @@ export function designSterileControls(
       citations: cites(['annex1_sterilisation']),
     });
   }
-  if (
-    (sterilisation.selectedApproach === 'aseptic_processing' ||
-      sterilisation.selectedApproach === 'sterile_filtration_aseptic') &&
-    barrierSel.barrier === 'open_cleanroom'
-  ) {
+  // Not heat-stable: aseptic processing, with or without filtration.
+  if (params.heatStable === false && barrierSel.barrier === 'open_cleanroom') {
     recommendations.push({
       recommendation:
         'Reconsider barrier technology: for aseptic processing Annex 1 favours isolators or RABS ' +
@@ -1834,6 +1876,7 @@ export function designSterileControls(
     environmentalMonitoring,
     mediaFill,
     lyophilisationNote,
+    inputStates,
     recommendations,
     citations: cites([
       'annex1_ccs',
@@ -1917,6 +1960,7 @@ export interface CsvAssessment {
   riskBasedScalingNote: string;
   /** Inputs the assessment depends on that were not stated. */
   notAssessed: Array<keyof AssessCsvParams>;
+  inputStates: Record<string, BooleanState>;
   citations: Citation[];
   determinismNote: string;
 }
@@ -2046,15 +2090,13 @@ export function assessComputerSystemValidation(params: AssessCsvParams): CsvAsse
   // 'medium', printed as "GxP impact medium" and used to pick the approach; and
   // an unstated electronicSignatures made the e-signature controls not
   // applicable. The first is now refused, the others are 'undetermined'.
-  const spec =
-    GAMP_CATEGORY_SPECS.find(
-      (s: GampCategorySpec): boolean => s.softwareType === params.softwareType,
-    ) ??
-    refuseUnknown(
-      'softwareType',
-      params.softwareType,
-      GAMP_CATEGORY_SPECS.map((s: GampCategorySpec): string => s.softwareType),
-    );
+  // 2026-11-02: so is an unstated electronicRecords, which read as true.
+  requireStated('assessComputerSystemValidation', params, ['systemDescription'], {
+    softwareType: GAMP_CATEGORY_SPECS.map((s: GampCategorySpec): string => s.softwareType),
+  });
+  const inputStates = booleanInputStates(params, ['electronicRecords', 'electronicSignatures', 'directImpact', 'supplierAssessed']);
+  const statedImpact = statedOneOf('gxpImpact', params.gxpImpact, RISK_ORDER);
+  const spec = GAMP_CATEGORY_SPECS.find((s: GampCategorySpec): boolean => s.softwareType === params.softwareType) as GampCategorySpec;
 
   const gampClassification: GampClassification = {
     category: spec.category,
@@ -2065,17 +2107,22 @@ export function assessComputerSystemValidation(params: AssessCsvParams): CsvAsse
   };
 
   // GxP impact as stated, or inferred as high from stated direct impact (documented); else not assessed.
-  const gxpImpact: RiskBand | undefined = params.gxpImpact ?? (params.directImpact === true ? 'high' : undefined);
-  const gxpImpactText = !unstated(params.gxpImpact)
+  const gxpImpact: RiskBand | undefined = statedImpact ?? (params.directImpact === true ? 'high' : undefined);
+  const gxpImpactText = statedImpact
     ? `${gxpImpact}`
     : gxpImpact === undefined
       ? 'not assessed'
       : 'high (inferred from direct impact; not assessed)';
-  const assurance = assuranceFor(spec.category, gxpImpact, params.directImpact);
-  const notAssessed = (['gxpImpact', 'directImpact', 'electronicSignatures'] as const).filter((k) => unstated(params[k]));
+  // The approach reads a stated impact only: an inferred high could be critical.
+  const assurance = assuranceFor(spec.category, statedImpact, params.directImpact);
+  const notAssessed = (['gxpImpact', 'directImpact', 'electronicSignatures', 'electronicRecords'] as const).filter(
+    (k) => unstated(params[k]),
+  );
 
   // Part 11 controls
-  const hasERecords = params.electronicRecords !== false;
+  const hasERecords: boolean | 'undetermined' = unstated(params.electronicRecords)
+    ? 'undetermined'
+    : params.electronicRecords === true;
   const hasESig: boolean | 'undetermined' = unstated(params.electronicSignatures)
     ? 'undetermined'
     : params.electronicSignatures === true;
@@ -2157,7 +2204,8 @@ export function assessComputerSystemValidation(params: AssessCsvParams): CsvAsse
       whenRequired:
         params.supplierAssessed === true
           ? 'Performed — leverage supplier development & testing to reduce duplication.'
-          : 'Recommended to enable leveraging of supplier activities (esp. Category 3/4).',
+          : `${unstated(params.supplierAssessed) ? 'Not stated whether one exists. ' : ''}` +
+            'Recommended to enable leveraging of supplier activities (esp. Category 3/4).',
       citations: cites(['gamp5_riskbased', 'gamp5_csa']),
     },
     {
@@ -2193,6 +2241,7 @@ export function assessComputerSystemValidation(params: AssessCsvParams): CsvAsse
       `GAMP Category ${spec.category}, GxP impact ${gxpImpactText} → ${assurance.approachLabel}. ` +
       'Critical-thinking and supplier leveraging reduce duplicated effort on lower-risk features.',
     notAssessed,
+    inputStates,
     citations: cites([
       'gamp5_categories',
       'gamp5_riskbased',
