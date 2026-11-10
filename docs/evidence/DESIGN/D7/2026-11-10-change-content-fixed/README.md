@@ -45,7 +45,9 @@ of "not found".
   Those are the states in which the assessment is written. The states are bound as a parameter
   (`status = ANY($3::text[])`), so the statement interpolates fewer values. The `ci:sql-interpolation` baseline for
   the file drops from 8 to 6.
-- The route reads the change when the guarded update matches nothing:
+- When the guarded update matches nothing, the route asks `changeEditRefusal` in the same service, which reads the
+  change. The refusal lives in the service so that the route stays under the repository's 1,500-line ceiling, which
+  the first push crossed (1,509 lines):
   - absent: 404, as before;
   - present: **409 `QMS_CHANGE_CONTENT_FIXED`**, carrying the change's state. The words say the state. For an approved,
     implementing, verifying or closed change, they add that its content "is what its approval signed". They end

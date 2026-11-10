@@ -320,6 +320,24 @@ export async function updateChange(orgId: number, id: number, p: {
   return rows[0] ?? null;
 }
 
+/**
+ * Why an edit matched no change: null when the organization has no such change (the route's 404), or the refusal of a
+ * change past assessment (409 QMS_CHANGE_CONTENT_FIXED), which names its state and says nothing was saved. Until
+ * 2026-11-10 a refused edit answered "not found".
+ */
+export async function changeEditRefusal(orgId: number, id: number, client: RequestSqlClient = pool): Promise<{
+  message: string; details: { code: 'QMS_CHANGE_CONTENT_FIXED'; status: string };
+} | null> {
+  const existing = await getChange(orgId, id, client);
+  if (!existing) return null;
+  const signed = ['approved', 'in_implementation', 'verification', 'closed'].includes(existing.status);
+  return {
+    message: `This change is ${String(existing.status).replace(/_/g, ' ')}, so its content is fixed`
+      + `${signed ? ': it is what its approval signed' : ''}. Nothing was saved. To amend it, raise a new change request.`,
+    details: { code: 'QMS_CHANGE_CONTENT_FIXED', status: existing.status },
+  };
+}
+
 interface ChangeTransitionActor {
   userId?: number | null; effectivenessReview?: string | null;
 }
