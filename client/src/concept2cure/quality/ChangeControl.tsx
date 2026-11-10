@@ -161,7 +161,7 @@ function ChangeControlSession({
     | { kind: 'advance'; change: ChangeControlRow }
     | { kind: 'link'; change: ChangeControlRow }
     | { kind: 'assess'; change: ChangeControlRow }
-    | { kind: 'document'; templateKey: string }
+    | { kind: 'document' }
     | null
   >(null);
   /** The server's refusal of the open drawer's write, shown in the drawer. */
@@ -368,29 +368,27 @@ function ChangeControlSession({
       </section>
 
       <section className="pj-sec qms-sec" aria-labelledby="qcc-forms-h">
+        {/* One door (C10): "New controlled document", the SOP register's own setup, offering the library's change-control
+            templates to choose from. Until 2026-11-10 a button per template stood here, a gallery by another name. */}
         <div className="pj-sec-h">
           <h2 id="qcc-forms-h">Change-control documents and forms</h2>
-          <span className="sec-sub">Created as controlled drafts in the SOP register</span>
-        </div>
-        <div className="qcc-forms">
-            {tpl.templates == null && (tpl.error
-              ? <EmptyState tone="error" title="The Quality system library could not be read" hint={tpl.error}
-                  retry={tpl.refresh} read={tpl.failure} readWhat="the Quality system library" />
-              : <EmptyState title="Loading the Quality system library…" busy />)}
-          {/* Each opens "New controlled document" with its template (D7-B: a quiet
-              button per form, not a card per document type). */}
-          {changeForms.map((f) => (
-            <button
-              key={f.key}
-              type="button"
-              className="btn ghost small"
-              title={`${f.description} Created as a draft with its standard change-control sections.`}
-              onClick={() => openDrawer({ kind: 'document', templateKey: f.key })}
-            >
-              {f.numberPrefix ? `${f.label} (${f.numberPrefix})` : f.label}
+          <span className="sec-sub">
+            {changeForms.length > 0
+              ? `From the change-control templates (${changeForms.map((f) => f.label).join(', ')}), created as controlled drafts in the SOP register`
+              : 'Created as controlled drafts in the SOP register'}
+          </span>
+          <div className="pj-sec-acts">
+            <button type="button" className="btn ghost small" disabled={tpl.templates == null}
+              title="Create a controlled draft from a change-control template, in the SOP register"
+              onClick={() => openDrawer({ kind: 'document' })}>
+              New controlled document
             </button>
-          ))}
+          </div>
         </div>
+        {tpl.templates == null && (tpl.error
+          ? <EmptyState tone="error" title="The Quality system library could not be read" hint={tpl.error}
+              retry={tpl.refresh} read={tpl.failure} readWhat="the Quality system library" />
+          : <EmptyState title="Loading the Quality system library…" busy />)}
       </section>
       <C2CToast msg={toast} />
       {drawer?.kind === 'raise' && (
@@ -519,8 +517,7 @@ function ChangeControlSession({
       )}
       {drawer?.kind === 'document' && (
         <NewControlledDocumentForm
-          templates={allTemplates}
-          initialKey={drawer.templateKey}
+          templates={changeForms}
           onCancel={() => setDrawer(null)}
           onNavigate={onNavigate}
           onCreated={(id) => {

@@ -302,20 +302,25 @@ describe('Change control — governed actions reach their routes', () => {
     expect(asked).toEqual([]);
   });
 
-  it('the forms gallery is the server library, and a card opens the create form', () => {
+  // C10: one door, "New controlled document", offering the library's change-control templates; no button per template.
+  it('opens the one New controlled document door with the change-control templates to choose from', () => {
     renderLog();
     expect(screen.queryByText('Impact-assessment form')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: /Change-control procedure/ }));
+    expect(screen.queryByRole('button', { name: /Change-control procedure|Change-request form/ })).toBeNull();
+    fireEvent.click(within(screen.getByRole('region', { name: 'Change-control documents and forms' })).getByRole('button', { name: 'New controlled document' }));
     const d = drawer(/New controlled document/);
-    expect(within(d).getByText('Template: Change-control procedure')).toBeTruthy();
+    const options = Array.from((within(d).getByLabelText(/^Template/) as HTMLSelectElement).options).map((o) => o.textContent);
+    expect(options).toEqual(['Standard controlled-document sections', 'Change-request form (CC-)', 'Change-control procedure (SOP-CC-)']);
+    fireEvent.change(within(d).getByLabelText(/^Template/), { target: { value: 'change_control_sop' } });
     expect((within(d).getByLabelText(/Document type/) as HTMLSelectElement).value).toBe('sop');
     expect(asked).toEqual([]);
   });
 
-  it('creates a gallery document with the selected program and reason, then opens its bound editing copy', async () => {
+  it('creates a change-control document with the selected program and reason, then opens its bound editing copy', async () => {
     renderLog();
-    fireEvent.click(screen.getByRole('button', { name: /Change-control procedure/ }));
+    fireEvent.click(within(screen.getByRole('region', { name: 'Change-control documents and forms' })).getByRole('button', { name: 'New controlled document' }));
     const d = drawer(/New controlled document/);
+    fireEvent.change(within(d).getByLabelText(/^Template/), { target: { value: 'change_control_sop' } });
     await waitFor(() => expect((within(d).getByLabelText('Project') as HTMLSelectElement).value).toBe(PROGRAM));
     expect((within(d).getByRole('button', { name: 'Create and open' }) as HTMLButtonElement).disabled).toBe(true);
     expect(H.apiRequest.mock.calls.some(([method]) => method === 'POST')).toBe(false);
