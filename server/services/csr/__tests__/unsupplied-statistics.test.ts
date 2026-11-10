@@ -83,6 +83,21 @@ describe('findUnclaimedNumbers (evidence-bound sections)', () => {
     expect(findUnclaimedNumbers('section 11.5% of patients', known).map(f => f.text)).toEqual(['11.5']);
   });
 
+  // Walked 2026-11-10: the builder tells the model to head a section with its canonical ICH E3 title, and §12.4.1's
+  // title is "Listing of Individual Laboratory Measurements by Patient (16.2.8) and Each Abnormal Laboratory Value
+  // (14.3.4)". The scan read those part numbers as the figures 16.2, 0.8, 14.3 and 0.4, so a draft that obeyed the
+  // instruction was refused, and every whole-report build ended "failed at 98%: §12.4.1 has no saved text".
+  it('reads a number with two or more points as a report part, with or without a word before it', () => {
+    const title = 'Listing of Individual Laboratory Measurements by Patient (16.2.8) and Each Abnormal Laboratory Value (14.3.4)';
+    expect(findUnclaimedNumbers(title, known)).toEqual([]);
+    expect(findUnclaimedNumbers('The listings are in 16.2.8 and 12.4.2.1.', known)).toEqual([]);
+  });
+  it('still refuses a one-point number, a percentage on a part number and a figure beside a part number', () => {
+    expect(findUnclaimedNumbers('Values of 16.2 and 14.3 were seen (16.2.8).', known).map(f => f.text)).toEqual(['16.2', '14.3']);
+    expect(findUnclaimedNumbers('16.2.8% of patients', known).length).toBeGreaterThan(0);
+    expect(findUnclaimedNumbers('In 16.2.8, 13 patients are listed.', known).map(f => f.text)).toEqual(['13']);
+  });
+
   it.each([
     ['<0.001', 'p=0.001'], ['0.001', 'p<0.001'], ['>0.999', 'p≥0.999'],
     ['-2.50', 'The difference was 2.50.'], ['2.50', 'The difference was 2.5.'],
