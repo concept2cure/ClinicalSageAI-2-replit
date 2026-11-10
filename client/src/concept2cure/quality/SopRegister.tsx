@@ -307,8 +307,15 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
             title="The controlled-document register could not be read"
             message={reg.error}
             retry={reg.refresh}
+            read={reg.failure}
+            readWhat="the controlled-document register"
             testId="sop-register-failed"
           />
+        )}
+        {/* The library a new document is built from: why "New controlled document" waits, said once (C4). */}
+        {tpl.templates == null && tpl.error && (
+          <EmptyState tone="error" title="The Quality system library could not be read" hint={tpl.error}
+            retry={tpl.refresh} read={tpl.failure} readWhat="the Quality system library" testId="sop-templates-failed" />
         )}
         {regUnread && !regFailed && <EmptyState title="Loading the register…" busy />}
         {!regUnread && visible.length === 0 && (
@@ -332,12 +339,12 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
       </section>
 
       {/* ── Periodic review, training, expiry: one column of quiet sections (C1). ── */}
-      <PeriodicReviewPanel rows={reviewDue} unread={reviewUnread} failed={reviewFailed} error={rev.error}
+      <PeriodicReviewPanel rows={reviewDue} unread={reviewUnread} failed={reviewFailed} error={rev.error} read={rev.failure}
         retry={() => { rev.refresh?.(); }} registerEmpty={registerEmpty}
         canOpen={(id) => docs.some((x) => x.id === id)}
         onOpen={(id) => { const d = docs.find((x) => x.id === id); if (d) openDocument(d); }} onRecord={recordReview.start} />
 
-      <TrainingCoverage rows={training} unread={trainUnread} failed={trainFailed} error={trainComp.error}
+      <TrainingCoverage rows={training} unread={trainUnread} failed={trainFailed} error={trainComp.error} read={trainComp.failure}
         refresh={trainComp.refresh} figure={coverageFigure}
         canOpen={canOpen} onOpen={openReader} />
       <TrainingExpiry assigned={trainComp.summary ? trainComp.summary.assigned : null} />

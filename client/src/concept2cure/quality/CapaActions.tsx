@@ -61,7 +61,7 @@ export function CapaActions({ capa, onChanged }: { capa: CapaRow; onChanged: (co
         <span className="qcc-detail-title">Action items</span>
       </div>
       {read.error ? (
-        <ErrorState title="The action items could not be read" message={read.error} retry={read.refresh} testId="capa-actions-failed" />
+        <ErrorState title="The action items could not be read" message={read.error} retry={read.refresh} read={read.failure} readWhat="this CAPA's action list" testId="capa-actions-failed" />
       ) : actions === null ? (
         read.loading ? <EmptyState title="Loading the action items…" busy />
           : <ErrorState title="The action items could not be read" message="The server did not return the action items." retry={read.refresh} testId="capa-actions-failed" />

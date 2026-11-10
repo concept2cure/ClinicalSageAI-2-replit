@@ -36,7 +36,9 @@ vi.mock('../changeHooks', async () => {
   return { useChangeSummary: () => ({ summary: FIXTURE_SUMMARY, loading: false, error: null }) };
 });
 vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ name: 'R. Approver' }) }));
-vi.mock('@/lib/queryClient', () => ({
+// C4: the shared failure panel (ErrorState) redacts internals through this module, so keep the real one underneath.
+vi.mock('@/lib/queryClient', async (original) => ({
+  ...(await original<typeof import('@/lib/queryClient')>()),
   apiRequest: (...a: unknown[]) => H.apiRequest(...a),
   serverMessage: (p: { error?: string } | null) => p?.error ?? null,
 }));
