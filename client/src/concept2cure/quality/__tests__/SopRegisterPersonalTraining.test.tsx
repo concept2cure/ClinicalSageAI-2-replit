@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import * as React from 'react';
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 const H = vi.hoisted(() => ({
   apiRequest: vi.fn(), refresh: vi.fn(), trainRefresh: vi.fn(), onAsk: vi.fn(),
@@ -9,13 +9,14 @@ const H = vi.hoisted(() => ({
   trainingRows: [] as Array<{ documentId: number; doc: string; current: number | null; of: number | null; lastCycle: string; eligible?: boolean; unavailableReason?: string; documentVersion?: string;
     assignment?: 'assigned' | 'not_assigned' | 'no_active_assignees'; me?: { assigned: boolean; countsNow: boolean } | null }>,
   summary: null as null | Record<string, unknown>,
+  docOverride: null as null | Record<string, unknown>,
 }));
 const documentRow = {
   id: 6, docNumber: 'SOP-015', title: 'Supplier controls', docType: 'sop', category: null,
   version: '1.0', status: 'effective', effectiveDate: '2026-09-01', nextReviewDate: null, updatedAt: null,
 };
 vi.mock('../hooks', () => ({
-  useSopRegister: () => ({ docs: [documentRow], loading: false, error: null, refresh: H.refresh }),
+  useSopRegister: () => ({ docs: [H.docOverride ?? documentRow], loading: false, error: null, refresh: H.refresh }),
   useSopTemplates: () => ({ templates: [], loading: false, error: null }),
   useReviewDue: () => ({ rows: [], loading: false, error: null, refresh: vi.fn() }),
   useTrainingCompliance: () => ({
@@ -131,6 +132,16 @@ describe('the existing Quality register personal training handoff', () => {
     mount();
     // D7-B: the coverage tile became the training section's figure, with the same words.
     expect(screen.getByTestId('qms-coverage-figure').textContent).toBe('The coverage summary could not be read.');
+  });
+
+  // C5: "Open" is the one editor on every row; "Read and acknowledge" only where the server takes an acknowledgement.
+  it('offers no acknowledgement on a document type that carries no read-and-understood training, and opens it in the editor', () => {
+    H.docOverride = { ...documentRow, docType: 'form', docNumber: 'FORM-002', title: 'Change request form' };
+    mount();
+    expect(screen.queryByRole('button', { name: 'Read and acknowledge' })).toBeNull();
+    const row = screen.getByText('Change request form', { selector: '.qms-title' }).closest('.qms-row') as HTMLElement;
+    expect(within(row).getAllByRole('button').map((b) => b.textContent)).toEqual(['FORM-002', 'Open', 'More']);
+    H.docOverride = null;
   });
 
   it('closes the selected reader immediately when the authenticated organization changes', async () => {

@@ -113,7 +113,7 @@ function ReviewRow({ row: r, canOpen, onOpen, onRecord }: {
         className="qms-review-open"
         aria-label={`Open ${r.docNumber} ${r.title} for its periodic review (${r.overdue ? `overdue since ${formatDate(r.nextReviewDate)}` : `due ${formatDate(r.nextReviewDate)}`})`}
         aria-describedby={described}
-        title="Open the document to read it."
+        title="Open the controlled document"
         disabled={!canOpen}
         onClick={() => onOpen(r.id)}
       >

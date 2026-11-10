@@ -242,4 +242,20 @@ describe('the round in the register and its sheet (RR4, §2.12)', () => {
     fireEvent.click(within(panel).getByTestId('qms-route-resend'));
     expect(await screen.findByTestId('qms-route-form')).toBeTruthy();
   });
+
+// C5: a reviewer's or approver's notice for a controlled document opens the review route at their turn.
+describe("a review route's notice opens the route, not the editor (C5)", () => {
+  it('opens the route sheet for the reviewer whose turn it is', async () => {
+    mockApi();
+    H.me = { id: '5', name: 'Rae Reviewer', roles: ['member'] };
+    const routed = { ...DOC, status: 'in_review', reviewRoute: ROUTED };
+    H.docs = [routed];
+    answers['GET /api/mdx/qms/documents/21'] = () => ok({ data: { id: 21, doc_number: 'SOP-021', title: 'Deviation handling', doc_type: 'sop',
+      category: null, version: '1.0', status: 'in_review', effective_date: null, next_review_date: null, updated_at: null,
+      authoring_document_id: 'a1b2', review_route: ROUTED } });
+    render(<div className="c2c-v2"><SopRegister onAsk={vi.fn()} filter="all" onFilterChange={vi.fn()} qmsDocumentId="21" qmsTargetRequest={1} /></div>);
+    expect(await screen.findByTestId('qms-route-panel')).toBeTruthy();
+    expect(screen.queryByTestId('canonical-workbench')).toBeNull();
+  });
+});
 });
