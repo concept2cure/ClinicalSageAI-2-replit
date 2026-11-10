@@ -1,0 +1,21 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/module3-os/compile/e248f0a4-9bcf-401f-8aa6-be835e6646b6",
+    "anonymous": false,
+    "identity": null,
+    "body": {}
+  },
+  "response": {
+    "status": 409,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 19,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "code": "CMC_MODALITY_NOT_ESTABLISHED",
+      "error": "Whether this project's drug substance is a small molecule is not established — the record states neither a manufacturing route nor a biological origin. Module 3 is composed only for a small-molecule substance, and that is not a question this platform will answer by assumption. Record the manufacturing route on the drug substance, and the source organism or cell line where one is used, then compile again.",
+      "hint": "Author its quality content in Document editor & authoring, keep the evidence in Vault (DMS), and file it through the Submission center."
+    }
+  }
+}

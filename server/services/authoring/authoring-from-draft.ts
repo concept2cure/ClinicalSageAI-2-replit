@@ -36,6 +36,7 @@ import { columnState, type Queryable } from './authoring-evidence';
 import { sanitizeAuthoringSectionHtml, sanitizeMachineDraftSectionHtml } from './authoring-html-sanitizer';
 import { workflowCopySectionContent } from './workflow-copy-content';
 import type { CompanyCorrespondenceOrigin } from '../../../shared/company-correspondence';
+import type { StatisticalAuthoringOrigin } from '../ana-biostats/types';
 import {
   grantCreatorOwnership,
   insertDocumentTx,
@@ -58,6 +59,9 @@ export const PROVENANCE_SOURCES: readonly ProvenanceSource[] = ['ana', 'seed', '
 
 /** What `authoring_documents.provenance` holds (migrations/20260921_authoring_document_provenance.sql). */
 export interface DocumentProvenance {
+  /** Server-recomputed statistical draft and its transaction-verified basis.
+   * Public draft provenance cannot supply calculation or stored-run proof. */
+  statisticalSource?: StatisticalAuthoringOrigin;
   /** Server-verified nested generation, separate from the parent conversation. */
   generatedDerivative?: { requestId: string; derivativeId: string; payloadSha256: string; outputSha256: string;
     storedHtmlSha256: string; provider: string; model: string; resolvedModel: string; sourceBinding: DerivativeSourceBinding };
@@ -143,7 +147,7 @@ export interface DocumentProvenance {
   recordedAt: string;
 }
 
-export type ProvenanceInput = Omit<DocumentProvenance, 'recordedAt' | 'projectSourceReferences' | 'importSource' | 'companyCorrespondence' | 'generatedDerivative'>;
+export type ProvenanceInput = Omit<DocumentProvenance, 'recordedAt' | 'projectSourceReferences' | 'importSource' | 'companyCorrespondence' | 'generatedDerivative' | 'statisticalSource'>;
 
 /* `model` is NOT here, and that is the point of round 15's change at this door:
    a caller cannot name the model that wrote the draft. It is dropped like any
@@ -370,6 +374,9 @@ async function verifySourcesInsideSave(q: Queryable, ctx: CreateContext, program
 }
 
 export interface CreateDocumentFromDraftOptions {
+  /** Existing statistical integration resolves the actual design/run on the
+   * canonical create transaction, never from public provenance. */
+  statisticalSource?: { reserve: (q: Queryable) => Promise<StatisticalAuthoringOrigin> };
   /** Trusted internal lookup only; the durable gateway row supplies authority. */
   generatedDerivative?: {
     receipt: { requestId: string; provider: string; model: string; resolvedModel?: string; contentSha256: string };
@@ -482,13 +489,13 @@ function storedDraftContents(input: CreateDocumentFromDraftInput, provenance: Do
 
 function draftedSectionSeeds(input: CreateDocumentFromDraftInput, contents: string[], provenance: DocumentProvenance,
   options: CreateDocumentFromDraftOptions | undefined, workflowImport: WorkflowImportOrigin | null): SectionSeed[] {
-  const machine = provenance.source === 'ana' || workflowImport != null;
-  const authorId = workflowImport ? WORKFLOW_IMPORT_AUTHOR_ID : ANA_MACHINE_AUTHOR_ID;
+  const machine = provenance.source === 'ana' || workflowImport != null || options?.statisticalSource != null;
+  const authorId = workflowImport || options?.statisticalSource ? WORKFLOW_IMPORT_AUTHOR_ID : ANA_MACHINE_AUTHOR_ID;
   const contributors = machine ? [{ id: authorId, name: MACHINE_AUTHOR_IDS[authorId] }] : [];
   return input.sections.map((section, i) => ({
     code: section.code, title: section.title, content: contents[i], orderIndex: i,
     changeReason: options?.verifiedImport?.reason ?? options?.changeReason ?? CHANGE_REASON[provenance.source],
-    metadata: { provenance, drafted: true, ...(provenance.source === 'ana' ? { independentCheck: { required: true, version: 1 } } : {}),
+    metadata: { provenance, drafted: true, ...(provenance.source === 'ana' || options?.statisticalSource ? { independentCheck: { required: true, version: 1 } } : {}),
       ...(workflowImport ? { workflowSourceOrigin: workflowImport.sectionOrigins.find(origin => origin.code === section.code) ?? null } : {}) },
     contributors,
     lineage: {
@@ -525,6 +532,15 @@ async function reserveCorrespondence(q: Queryable, ctx: CreateContext, input: Cr
   provenance.companyCorrespondence = globalThis.structuredClone(options.companyCorrespondence.origin);
 }
 
+async function annotateDraftGovernance(ctx: CreateContext, provenance: DocumentProvenance,
+  workflowImport: WorkflowImportOrigin | null, options?: CreateDocumentFromDraftOptions) {
+  /* Read a named turn before the creation transaction. A missing store or a
+     malformed reference cannot abort the write while its verdict is checked. */
+  if (provenance.source === 'ana' && !options?.generatedDerivative) Object.assign(provenance, await governedWriteOf(ctx.pool, ctx.tenantId, provenance.turnId));
+  if (workflowImport) Object.assign(provenance, { governedWrite: 'unverified', governedWriteWhy: 'Workflow source authorship and model qualification are retained as recorded; this import is not human adoption.' });
+  if (options?.statisticalSource) Object.assign(provenance, { governedWrite: 'unverified', governedWriteWhy: 'Server-computed statistical planning draft and deterministic template; independent scientific review is required. This is not human adoption or an approved model receipt.' });
+}
+
 export async function createDocumentFromDraft(
   ctx: CreateContext,
   input: CreateDocumentFromDraftInput,
@@ -554,12 +570,7 @@ export async function createDocumentFromDraft(
   if (!parsedProvenance.ok) return { kind: 'refused', status: 400, error: parsedProvenance.error };
   const workflowImport = workflowOriginFor(options);
   const provenance = draftProvenance(parsedProvenance.value, input, workflowImport);
-  /* What the governed-write rule says of this prose, read from the turn record
-     the draft names — before `insertDocumentTx` opens its transaction, so a
-     missing store or a malformed reference cannot abort the write it is being
-     checked for. A seed or an import is a person's act and carries no verdict. */
-  if (provenance.source === 'ana' && !options?.generatedDerivative) Object.assign(provenance, await governedWriteOf(ctx.pool, ctx.tenantId, provenance.turnId));
-  if (workflowImport) Object.assign(provenance, { governedWrite: 'unverified', governedWriteWhy: 'Workflow source authorship and model qualification are retained as recorded; this import is not human adoption.' });
+  await annotateDraftGovernance(ctx, provenance, workflowImport, options);
   // A machine draft keeps no image: a model's image is never an uploaded
   // figure (item 18, 2026-10-05). An import or seed keeps its figures.
   const storedContent = storedDraftContents(input, provenance, workflowImport);
@@ -580,12 +591,20 @@ export async function createDocumentFromDraft(
 
   const inserted = await insertDocumentTx(
     ctx,
-    draftRowSpec(docId, input, resolvedBinding, provenance, workflowImport),
+    { ...draftRowSpec(docId, input, resolvedBinding, provenance, workflowImport),
+      ...(options?.statisticalSource ? { isolation: 'serializable' as const } : {}) },
     draftedSectionSeeds(input, storedContent, provenance, options, workflowImport),
     async client => {
       await authorizeAuthoringProgram(client, { tenantId: ctx.tenantId, actor: ctx.actor, programId: input.programId });
       await reserveCorrespondence(client, ctx, input, provenance, options);
       await verifySourcesInsideSave(client, ctx, input.programId, selectedSources, provenance);
+      if (options?.statisticalSource) {
+        if (provenance.source !== 'import' || storedContent.length !== 1) throw new DraftSourceVerificationError();
+        const origin = await options.statisticalSource.reserve(client);
+        if (origin.organizationId !== ctx.tenantId || origin.programId !== input.programId ||
+            origin.documentType !== input.documentType || origin.contentSha256 !== derivativeTextSha(storedContent[0])) throw new DraftSourceVerificationError();
+        provenance.statisticalSource = globalThis.structuredClone(origin);
+      }
       if (options?.verifiedImport) {
         if (provenance.source !== 'import') throw new Error('Verified import requires import provenance');
         await options.verifiedImport.reserve(client);

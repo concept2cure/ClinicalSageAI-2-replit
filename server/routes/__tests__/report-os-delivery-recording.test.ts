@@ -416,7 +416,7 @@ function bundleOf(...runIds: number[]) {
     scopeType: 'project', scopeId: '12', status: 'completed', confidence: 80, blockers: [], createdAt: '2026-09-30T12:00:00.000Z',
   });
   const bundle = { bundleId: BUNDLE_ID, organizationId: 7, name: 'Board pack', createdAt: '2026-09-30T12:00:00.000Z', projectIds: [12], runIds, items: runIds.map(item) };
-  h.tables.project_memory_entries = [[{ title: `bundle:${BUNDLE_ID}`, content: JSON.stringify({ bundleRecord: bundle }), createdAt: new Date() }]];
+  h.tables.report_bundles = [[{ id: BUNDLE_ID, record: bundle, createdAt: new Date().toISOString() }]]; // its row in report_bundles (P-91)
 }
 
 describe('POST /deliveries external_pdf_export recognises the signature a run was finalized under (P1-44b)', () => {

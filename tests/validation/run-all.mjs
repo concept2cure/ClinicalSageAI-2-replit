@@ -1,13 +1,15 @@
 /**
- * Execute every OQ protocol in order (OQ-001 … OQ-006, OQ-008) against the
- * running server and print the roll-up. Exit 1 if any protocol recorded a fail.
+ * Execute every OQ protocol in order (OQ-001 … OQ-008) against the running
+ * server and print the roll-up. Exit 1 if any protocol recorded a fail.
  *
  *   npm run validation:oq            # all of them
  *   npm run validation:oq -- qms     # one app
  *
- * OQ-007 (Reporting & analytics) has no protocol or runner yet, which is why
- * the list below skips from qms to cmc: "OQ-001…007" in decision P-28 names a
- * set that is not complete.
+ * The list is the eight launch apps in protocol order. `reporting` is OQ-007
+ * (Reporting & analytics, docs/validation/OQ-007-REPORTING-ANALYTICS.md), which
+ * had no protocol or runner until 2026-11-10; until then the list skipped from
+ * qms to cmc, and "OQ-001…007" in decision P-28 named a set that was not
+ * complete.
  */
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
@@ -15,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 import { BASE_URL, passwordLogin, runCredential } from './lib/harness.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const APPS = ['projects', 'vault', 'authoring', 'submission-center', 'submission-readiness', 'qms', 'cmc'];
+const APPS = ['projects', 'vault', 'authoring', 'submission-center', 'submission-readiness', 'qms', 'reporting', 'cmc'];
 const chosen = process.argv.slice(2).filter((a) => APPS.includes(a));
 const list = chosen.length ? chosen : APPS;
 

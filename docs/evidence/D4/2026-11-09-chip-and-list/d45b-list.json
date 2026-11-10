@@ -1,0 +1,46 @@
+[
+ {
+  "case": "list-1440-light",
+  "documentsButton": {
+   "cls": "btn ghost small",
+   "text": "Documents"
+  },
+  "list": {
+   "scopeClass": "cdl-scope seg",
+   "pressedText": "This conversation",
+   "pressed": {
+    "bg": "rgb(250, 249, 245)",
+    "color": "rgb(20, 20, 19)",
+    "weight": "500"
+   },
+   "other": {
+    "bg": "rgba(0, 0, 0, 0)",
+    "color": "rgb(100, 98, 92)",
+    "weight": "500"
+   },
+   "accent200": "#ad5132"
+  }
+ },
+ {
+  "case": "list-1440-dark",
+  "documentsButton": {
+   "cls": "btn ghost small",
+   "text": "Documents"
+  },
+  "list": {
+   "scopeClass": "cdl-scope seg",
+   "pressedText": "This conversation",
+   "pressed": {
+    "bg": "rgb(61, 61, 58)",
+    "color": "rgb(250, 249, 245)",
+    "weight": "500"
+   },
+   "other": {
+    "bg": "rgba(0, 0, 0, 0)",
+    "color": "rgb(176, 174, 165)",
+    "weight": "500"
+   },
+   "accent200": "#e8916f"
+  }
+ }
+]

@@ -3,6 +3,7 @@
  * Protocol: docs/validation/OQ-002-VAULT.md. Requirements: docs/validation/URS-002-VAULT.md.
  */
 import { createRun, helpers } from '../../lib/harness.mjs';
+import { organisationChainVerdict } from '../../lib/chain-verdict.mjs';
 import { createProgram, ingestPdf, makePdfBuffer, sha256 } from '../../lib/fixtures.mjs';
 import { runFilingAndCompareSteps } from './steps-filing-compare.mjs';
 import { runAnnotationSteps } from './steps-annotations.mjs';
@@ -182,14 +183,15 @@ await step(
     id: 'OQ-VAULT-08',
     urs: ['URS-VAULT-008'],
     title: 'The hash-chained audit log verifies after the governed writes',
-    action: 'GET /api/c2c/actions/verify-chain',
-    expected: 'ok:true — the audit_logs chain is intact after ingest and filing',
+    action: 'GET /api/audit/reports/audit-trail-integrity',
+    expected: 'the attestation reports the audit_logs hash chain intact after ingest and filing',
+    note: 'v0.17: read from the Audit trail integrity attestation (tests/validation/lib/chain-verdict.mjs); GET /api/c2c/actions/verify-chain is claimed by no launch surface and is refused 403 LAUNCH_SCOPE where unattributed paths are refused, as in production.',
     dependsOn: ['OQ-VAULT-07'],
   },
   async ({ api, expect }) => {
-    const v = await api('GET', '/api/c2c/actions/verify-chain');
-    expect(v.status === 200 && v.json?.ok === true, `verify-chain expected ok, got ${v.status}`, v.json);
-    return `verify-chain ${JSON.stringify(v.json).slice(0, 160)}`;
+    const v = await organisationChainVerdict(api);
+    expect(v.intact, `the audit_logs hash chain expected intact, got ${v.status} ${v.code ?? v.row?.verdict}`, v);
+    return `audit_logs hash chain ${v.row.verdict}, ${v.row.rows_checked} rows checked (${v.exportId}): ${String(v.row.detail).slice(0, 160)}`;
   },
 );
 
@@ -223,9 +225,10 @@ await step(
     kind: 'unscripted',
     urs: ['URS-VAULT-009'],
     title: 'Vault surface renders the data room with the document',
-    action: 'Open /concept2cure/vault with the program selected',
+    action: 'Open /concept2cure/vault with the program selected; open its Uploads tab',
     expected: 'The data room renders and the document title is visible',
     dependsOn: ['OQ-VAULT-03'],
+    note: 'v0.16: since 2e4a9fe677 (2026-11-01, "Vault opens on its library") the Vault opens on the filing\'s binder, the required documents in their CTD folders, and an uploaded file is on the Uploads tab. Until v0.15 the step expected the upload on the first view.',
     // The surface reads GET /api/c2c/project-vault/:id, which OQ-VAULT-04 shows
     // answers 500 on this installation (IQ-DEV-001); attribute from the log.
     attributeEnvFromLog: true,
@@ -233,6 +236,7 @@ await step(
   async (ctx) => {
     await ctx.newPage({ id: state.programId, name: state.programName });
     await ctx.goto('/concept2cure/vault');
+    await ctx.page.getByRole('tab', { name: /^Uploads/ }).click();
     await ctx.expectText(state.docTitle);
     await ctx.screenshot();
     return 'data room shows the document';

@@ -69,7 +69,7 @@ const anchorCalls = () => apiRequest.mock.calls.filter((c) => c[0] === 'POST' &&
 
 async function openAnchor(waitForForm = true) {
   render(<SubmissionCenter onAsk={vi.fn()} />);
-  await waitFor(() => expect(document.body.textContent).toContain('Where BX-204 (NDA 212345) stands'));
+  await waitFor(() => expect(screen.getByRole('combobox', { name: 'Submission to work on' })).toHaveProperty('value', '3'));
   fireEvent.click(await screen.findByRole('button', { name: 'Anchor to a project' }));
   // The projects offered are read when the control opens (GET …/program-anchor).
   if (waitForForm) await screen.findByLabelText('Project');
@@ -117,7 +117,7 @@ describe('a submission with no project is anchored from its header', () => {
   it('a submission that has a project offers no anchor control', async () => {
     subs = [{ ...ANCHORED }, { ...LEGACY }];
     render(<SubmissionCenter onAsk={vi.fn()} />);
-    await waitFor(() => expect(document.body.textContent).toContain('Where BX-256 IND stands'));
+    await waitFor(() => expect(screen.getByTestId('sc-state').textContent).toMatch(/^IND · /));
     expect(screen.queryByRole('button', { name: 'Anchor to a project' })).toBeNull();
     expect(document.body.textContent).not.toContain('This submission is not anchored to a project');
   });

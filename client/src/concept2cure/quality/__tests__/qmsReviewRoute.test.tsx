@@ -21,6 +21,13 @@ import * as React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
+/** D7-B item 6: a register row shows its next step and "More"; the rest open in the row (SopRegisterRow.tsx). */
+function openMore(scope: HTMLElement = document.body) {
+  for (const b of within(scope).queryAllByRole('button', { name: /^More actions for / })) {
+    if (b.getAttribute('aria-expanded') !== 'true') fireEvent.click(b);
+  }
+}
+
 const H = vi.hoisted(() => ({
   docs: null as unknown[] | null,
   apiRequest: vi.fn(),
@@ -99,7 +106,7 @@ function mockApi() {
   });
 }
 const renderRegister = () => render(<div className="c2c-v2"><SopRegister onAsk={vi.fn()} filter="all" onFilterChange={vi.fn()} /></div>);
-const rowOf = (n: string) => (Array.from(document.querySelectorAll('.qms-row')) as HTMLElement[]).find((r) => r.textContent?.includes(n))!;
+const rowOf = (n: string) => (Array.from(document.querySelectorAll('tbody.qms-doc')) as HTMLElement[]).find((r) => r.textContent?.includes(n))!;
 const posted = (method: string, url: string) => calls.find((c) => c.method === method && c.url === url);
 
 beforeEach(() => { answers = {}; H.signed = []; H.refresh.mockReset(); H.me = { id: '7', name: 'Sam Sender', roles: ['member'] }; mockApi(); });
@@ -138,7 +145,8 @@ describe('Send for review names the route (RR4, §2.7)', () => {
       route: { reviewers: [5], approvers: [8], order: 'parallel', reviewDueDate: '2099-01-03', approvalDueDate: '2099-01-05' },
     });
     await waitFor(() => expect(H.refresh).toHaveBeenCalled());
-    expect(screen.getByRole('status').textContent).toMatch(/SOP-021 was sent for review on its route/);
+    // C3: the confirmation is the register's toast, a polite status beside the page's other status regions.
+    expect(screen.getByText(/SOP-021 was sent for review on its route/).closest('[role="status"]')).toBeTruthy();
   });
 
   it('says the server’s refusal and keeps the form open', async () => {
@@ -163,6 +171,7 @@ describe('the round in the register and its sheet (RR4, §2.12)', () => {
     const row = rowOf('SOP-021');
     expect(within(row).getByTestId('qms-route-line').textContent).toBe('Waiting for Rae Reviewer.');
     expect(within(row).queryByRole('button', { name: /^.*Approve$/ })).toBeNull();
+    openMore(row);
     fireEvent.click(within(row).getByTestId('qms-route-open'));
     const panel = await screen.findByTestId('qms-route-panel');
     expect(within(panel).getByTestId('qms-route-member-5').textContent).toContain('Rae Reviewer · reviewer · Waiting for their review');
@@ -211,6 +220,7 @@ describe('the round in the register and its sheet (RR4, §2.12)', () => {
     renderRegister();
     const row = rowOf('SOP-021');
     expect(within(row).getByTestId('qms-route-line').textContent).toBe('Your turn: approve.');
+    openMore(row);
     fireEvent.click(within(row).getByTestId('qms-route-open'));
     const panel = await screen.findByTestId('qms-route-panel');
     expect(within(panel).getByTestId('qms-route-member-5').textContent).toMatch(/Rae Reviewer · reviewer · Reviewed · meaning: reviewed · 2026-10-29 10:00:00 UTC/);
@@ -226,10 +236,39 @@ describe('the round in the register and its sheet (RR4, §2.12)', () => {
     expect(legacy.textContent).toContain('Not assigned to one person.');
     expect(within(legacy).getByRole('button', { name: /Approve/ })).toBeTruthy();
     expect(within(rowOf('SOP-022')).getByRole('alert').textContent).toBe('Reviewers could not be read.');
+    openMore(legacy);
     fireEvent.click(within(legacy).getByTestId('qms-route-open'));
     const panel = await screen.findByTestId('qms-route-panel');
     expect(within(panel).getByTestId('qms-route-legacy').textContent).toMatch(/not assigned to one person/);
     fireEvent.click(within(panel).getByTestId('qms-route-resend'));
     expect(await screen.findByTestId('qms-route-form')).toBeTruthy();
   });
+
+// C5: a reviewer's or approver's notice for a controlled document opens the review route at their turn.
+describe("a review route's notice opens the route, not the editor (C5)", () => {
+  const SINGLE_READ = { id: 21, doc_number: 'SOP-021', title: 'Deviation handling', doc_type: 'sop', category: null, version: '1.0',
+    status: 'in_review', effective_date: null, next_review_date: null, updated_at: null, authoring_document_id: 'a1b2' };
+  it('opens the route sheet for the reviewer whose turn it is', async () => {
+    mockApi();
+    H.me = { id: '5', name: 'Rae Reviewer', roles: ['member'] };
+    const routed = { ...DOC, status: 'in_review', reviewRoute: ROUTED };
+    H.docs = [routed];
+    // The single read as the server sends it: GET /qms/documents/:id carries no review route (review C5-1). The
+    // turn is the register row's.
+    answers['GET /api/mdx/qms/documents/21'] = () => ok({ data: SINGLE_READ });
+    render(<div className="c2c-v2"><SopRegister onAsk={vi.fn()} filter="all" onFilterChange={vi.fn()} qmsDocumentId="21" qmsTargetRequest={1} /></div>);
+    expect(await screen.findByTestId('qms-route-panel')).toBeTruthy();
+  });
+
+  it('opens the document, not the route, for someone whose turn it is not', async () => {
+    mockApi();
+    H.me = { id: '8', name: 'Ann Approver', roles: ['member'] };
+    H.docs = [{ ...DOC, status: 'in_review', reviewRoute: ROUTED }];
+    answers['GET /api/mdx/qms/documents/21'] = () => ok({ data: SINGLE_READ });
+    render(<div className="c2c-v2"><SopRegister onAsk={vi.fn()} filter="all" onFilterChange={vi.fn()} qmsDocumentId="21" qmsTargetRequest={1} /></div>);
+    // The register gives way to the editor for the document (its editing copy read), and no route sheet opens.
+    await waitFor(() => expect(screen.queryByRole('region', { name: 'Controlled documents' })).toBeNull());
+    expect(screen.queryByTestId('qms-route-panel')).toBeNull();
+  });
+});
 });

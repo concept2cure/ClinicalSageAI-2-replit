@@ -1,0 +1,12 @@
+{
+  "label": "rate-limited-complete",
+  "startedAt": "2026-11-10T01:37:20.824Z",
+  "jobId": 6,
+  "status": "complete",
+  "progress": 100,
+  "failure": null,
+  "waitedMs": 228884,
+  "onScreen": null,
+  "screenshot": "screens/rate-limited-complete.png",
+  "finishedAt": "2026-11-10T01:41:31.819Z"
+}

@@ -1,0 +1,27 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/documents/eb4f6bcf-fb93-4725-9249-25af8a0022ef/annotations",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "kind": "comment",
+      "body": "Page 2?",
+      "anchor": {
+        "kind": "page",
+        "page": 2
+      }
+    }
+  },
+  "response": {
+    "status": 422,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 27,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": "PAGE_OUT_OF_RANGE",
+      "message": "This version has 1 pages."
+    }
+  }
+}

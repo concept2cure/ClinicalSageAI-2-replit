@@ -18,6 +18,10 @@ const h = vi.hoisted(() => ({
   database: null as unknown,
   launch: vi.fn(async () => ({ jobId: 41, status: 'queued' })),
   evidence: vi.fn(),
+  resume: vi.fn(),
+}));
+vi.mock('../../services/csr/csr-job-runner.js', async (original) => ({
+  ...(await original<typeof import('../../services/csr/csr-job-runner.js')>()), resumeCSRBuildInBackground: h.resume,
 }));
 vi.mock('../../db', () => ({ get db() { return h.database; } }));
 vi.mock('../../db/requestDb.js', () => ({ requestPgClient: () => ({}) }));
@@ -74,7 +78,7 @@ beforeAll(async () => {
     VALUES (7, 11, 1, '11.4.1', $1, $2)`, [TEXT, sha(TEXT)]);
 });
 afterAll(async () => { await pg?.close(); });
-beforeEach(() => { h.launch.mockClear(); h.evidence.mockReset(); });
+beforeEach(() => { h.launch.mockClear(); h.evidence.mockReset(); h.resume.mockClear(); });
 
 const build = (over: Record<string, unknown> = {}) => request(app).post('/api/csr/jobs')
   .send({ programId: PROGRAM, studyInfo, evidenceSource: { programId: PROGRAM, runId: RUN, studyId: 'LMN-201-201' }, ...over });
@@ -119,6 +123,43 @@ describe('POST /api/csr/jobs bound to a retained run', () => {
     expect(res.status).toBe(400);
     expect(res.body).toEqual({ error: 'CSR_EVIDENCE_SELECTION_INVALID', code: 'CSR_EVIDENCE_SELECTION_INVALID' });
     expect(h.launch).toHaveBeenCalledOnce();
+  });
+});
+
+// Walked 2026-11-10: a CSR document takes its imported sections from one build. A build that stopped part-way
+// (a rate limit, a key) could only be followed by a NEW build, whose sections that document then refuses
+// ("This document holds sections imported from CSR build 1"). The runner has always been able to resume a failed
+// build, keeping what it saved; nothing reached it.
+describe('POST /api/csr/jobs/:jobId/resume — a stopped build is resumed as the same build', () => {
+  const bound = JSON.stringify({ studyInfo, evidenceSource: { programId: PROGRAM, runId: '0b9f3c1e-6a4d-4b7e-9c2a-5d1e8f7a6b77', studyId: 'LMN-201-201' } });
+  beforeAll(async () => {
+    await pg.query(`INSERT INTO csr_build_jobs (id, organization_id, project_id, study_id, status, study_info_snapshot, requested_by, error)
+      VALUES (61, 7, 11, 'NCT05330182', 'failed', $1, 5, $2), (62, 8, 11, 'NCT05330182', 'failed', $1, 5, NULL)`,
+    [bound, JSON.stringify({ code: 'CSR_DRAFTING_RATE_LIMITED', message: 'CSR_DRAFTING_RATE_LIMITED', section: '9.8' })]);
+  });
+
+  it('hands a failed build back to the runner and answers with the same build', async () => {
+    const res = await request(app).post('/api/csr/jobs/61/resume').send({});
+    expect(res.status).toBe(202);
+    expect(res.body).toEqual({ jobId: 61, status: 'queued', resumed: true });
+    expect(h.resume).toHaveBeenCalledExactlyOnceWith(61);
+    expect(h.launch).not.toHaveBeenCalled();
+  });
+
+  it('refuses a build that did not fail, by name, and resumes nothing', async () => {
+    for (const [id, status] of [[1, 'complete'], [4, 'drafting'], [2, 'queued']] as const) {
+      const res = await request(app).post(`/api/csr/jobs/${id}/resume`).send({});
+      expect(res.status, status).toBe(409);
+      expect(res.body).toMatchObject({ code: 'CSR_BUILD_NOT_RESUMABLE', status });
+    }
+    expect(h.resume).not.toHaveBeenCalled();
+  });
+
+  it('does not find another organization\'s build, a build that does not exist, or a malformed id', async () => {
+    expect((await request(app).post('/api/csr/jobs/62/resume').send({})).status).toBe(404);
+    expect((await request(app).post('/api/csr/jobs/9999/resume').send({})).status).toBe(404);
+    expect((await request(app).post('/api/csr/jobs/abc/resume').send({})).status).toBe(400);
+    expect(h.resume).not.toHaveBeenCalled();
   });
 });
 

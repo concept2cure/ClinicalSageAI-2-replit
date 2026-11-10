@@ -1,0 +1,846 @@
+{
+  "protocolId": "OQ-007",
+  "protocolTitle": "Operational Qualification — Reporting & analytics",
+  "app": "REPORTING",
+  "appLabel": "Reporting & analytics",
+  "status": "DRAFT — UNSIGNED (automated execution; human review and signature outstanding)",
+  "executedBy": "automated runner tests/validation/oq/reporting/run.mjs",
+  "executedAt": "2026-11-10T03:35:45.244Z",
+  "finishedAt": "2026-11-10T03:39:23.029Z",
+  "environment": {
+    "baseUrl": "http://localhost:5200",
+    "node": "v22.23.4",
+    "chromium": "/opt/pw-browsers/chromium",
+    "playwrightCore": "1.63.0",
+    "git": {
+      "branch": "concept2cure-v2",
+      "commit": "644657a825165ff86a2053d932add6e70db3b8ce"
+    },
+    "testUser": "oq-runner@validation.local",
+    "authentication": "password+totp",
+    "organizationId": "2",
+    "readyz": {
+      "status": 503,
+      "body": {
+        "ready": false,
+        "failed": [
+          "ana"
+        ],
+        "dependencies": {
+          "database": "ok",
+          "schema": "ok",
+          "ana": "down",
+          "storage": "ok",
+          "virusScan": "skipped",
+          "redis": "skipped",
+          "worker": "skipped"
+        },
+        "schemaState": "ready",
+        "anaState": "no_provider",
+        "capabilityRegistry": "seeded",
+        "anaDetail": "No AI provider is configured. Set ANTHROPIC_API_KEY (or AI_BEDROCK_ENABLED / AI_VERTEX_ENABLED) — without one, every AnA turn returns 503 GATEWAY_UNAVAILABLE. OPENAI_API_KEY or KIMI_API_KEY alone answer chat but not regulatory drafting, which only an approvedForHighRisk model may serve."
+      }
+    }
+  },
+  "counts": {
+    "pass": 17,
+    "fail": 0,
+    "deviation": 1,
+    "not-executed": 0
+  },
+  "steps": [
+    {
+      "id": "OQ-RPT-01",
+      "title": "Anonymous access refused",
+      "urs": [
+        "URS-RPT-001"
+      ],
+      "kind": "scripted",
+      "action": "without Authorization: GET /api/report-os/runs, GET /api/insights-canvas/overview, GET /api/audit/reports",
+      "expected": "HTTP 401/403 each",
+      "status": "pass",
+      "observed": "/api/report-os/runs 401; /api/insights-canvas/overview 401; /api/audit/reports 401",
+      "startedAt": "2026-11-10T03:35:45.742Z",
+      "finishedAt": "2026-11-10T03:35:46.504Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-RPT-01.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/report-os/runs",
+          "status": 401
+        },
+        {
+          "file": "steps/OQ-RPT-01.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/insights-canvas/overview",
+          "status": 401
+        },
+        {
+          "file": "steps/OQ-RPT-01.api-3.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/audit/reports",
+          "status": 401
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-RPT-02",
+      "title": "The release serves the paths the two surfaces call and refuses the rest",
+      "urs": [
+        "URS-RPT-002"
+      ],
+      "kind": "scripted",
+      "action": "as the run identity: GET the canvas bootstrap, the run history, the bundles, the schedules and the compliance catalog; then GET /api/report-os/scopes, /api/report-os/taxonomy and /api/insights/quality",
+      "expected": "the five served 200; the three no launch screen calls 403 LAUNCH_SCOPE",
+      "status": "pass",
+      "observed": "served: 5 × 200; refused: 3 × 403 LAUNCH_SCOPE",
+      "startedAt": "2026-11-10T03:35:46.504Z",
+      "finishedAt": "2026-11-10T03:35:48.912Z",
+      "evidence": [
+        "steps/OQ-RPT-02.launch-scope.json"
+      ],
+      "api": [
+        {
+          "file": "steps/OQ-RPT-02.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/report-os/runs",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-RPT-02.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/report-os/bundles",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-RPT-02.api-3.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/insights-canvas/overview",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-RPT-02.api-4.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/insights/subscriptions",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-RPT-02.api-5.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/audit/reports",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-RPT-02.api-6.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/report-os/scopes",
+          "status": 403
+        },
+        {
+          "file": "steps/OQ-RPT-02.api-7.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/report-os/taxonomy",
+          "status": 403
+        },
+        {
+          "file": "steps/OQ-RPT-02.api-8.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/insights/quality",
+          "status": 403
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-RPT-03",
+      "title": "The catalog, and a run an engine computed",
+      "urs": [
+        "URS-RPT-004",
+        "URS-RPT-005"
+      ],
+      "kind": "prerequisite",
+      "action": "GET /api/insights-canvas/overview; POST /api/report-os/runs for a type the catalog marks runnable, as the canvas sends it; GET /runs/:id/rendered",
+      "expected": "201 with the run and its snapshot; the run is the run identity's, not final; the rendered report says a finalize would be admitted",
+      "status": "pass",
+      "observed": "run 23 (research_admin.scorecard, account scope) completed; 54 types in the catalog, 1 tried",
+      "startedAt": "2026-11-10T03:35:48.912Z",
+      "finishedAt": "2026-11-10T03:35:49.903Z",
+      "evidence": [
+        "steps/OQ-RPT-03.runs-tried.json"
+      ],
+      "api": [
+        {
+          "file": "steps/OQ-RPT-03.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/insights-canvas/overview",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-RPT-03.api-2.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/report-os/runs",
+          "status": 201
+        },
+        {
+          "file": "steps/OQ-RPT-03.api-3.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/report-os/runs/23/rendered",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-RPT-04",
+      "title": "A run request carries no figure",
+      "urs": [
+        "URS-RPT-004"
+      ],
+      "kind": "scripted",
+      "action": "POST the same run with status \"final\", a confidence, blockers and a summary in the body; read its seal",
+      "expected": "201; the stored run carries the engine's status and confidence, not the request's, and none of the supplied content; it is not sealed",
+      "status": "pass",
+      "observed": "run 24 completed, confidence null (the engine's); nothing supplied was stored; sealed: false",
+      "startedAt": "2026-11-10T03:35:49.904Z",
+      "finishedAt": "2026-11-10T03:35:50.484Z",
+      "evidence": [
+        "steps/OQ-RPT-04.supplied-and-stored.json"
+      ],
+      "api": [
+        {
+          "file": "steps/OQ-RPT-04.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/report-os/runs",
+          "status": 201
+        },
+        {
+          "file": "steps/OQ-RPT-04.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/report-os/runs/24/seal",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-RPT-05",
+      "title": "A type no engine computes is not run",
+      "urs": [
+        "URS-RPT-004"
+      ],
+      "kind": "scripted",
+      "action": "POST a run for a catalog type marked not computed, for a prediction type and for an unknown type, over the run identity's own program",
+      "expected": "422 REPORT_TYPE_NOT_COMPUTED; 422 PREDICTION_NOT_A_RUN; 404; the run history total unchanged",
+      "status": "pass",
+      "observed": "usa_fda.pma_submission_readiness 422 REPORT_TYPE_NOT_COMPUTED; prediction.regulatory_forecast 422 PREDICTION_NOT_A_RUN; unknown type 404; runs 23 → 23",
+      "startedAt": "2026-11-10T03:35:50.484Z",
+      "finishedAt": "2026-11-10T03:35:51.843Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-RPT-05.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/report-os/runs?limit=1",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-RPT-05.api-2.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/report-os/runs",
+          "status": 422
+        },
+        {
+          "file": "steps/OQ-RPT-05.api-3.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/report-os/runs",
+          "status": 422
+        },
+        {
+          "file": "steps/OQ-RPT-05.api-4.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/report-os/runs",
+          "status": 404
+        },
+        {
+          "file": "steps/OQ-RPT-05.api-5.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/report-os/runs?limit=1",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-RPT-06",
+      "title": "Another organisation's run and project are not found",
+      "urs": [
+        "URS-RPT-003"
+      ],
+      "kind": "scripted",
+      "action": "with another organisation's run id: GET the run, its rendered report, its seal and its export; then POST a run over that organisation's project tracking record, over its program, and over its account",
+      "expected": "the four reads 404; the run over its project 404; over its program 409 PROGRAM_NOT_ANCHORED (the answer for a program with no tracking record here); over its account 403 REPORT_ACCOUNT_SCOPE_MISMATCH; no run created",
+      "status": "pass",
+      "observed": "run 1 of another organisation: 4 reads 404; a run over its project 404, its program 409 PROGRAM_NOT_ANCHORED, its account 403 REPORT_ACCOUNT_SCOPE_MISMATCH; runs 23 → 23",
+      "startedAt": "2026-11-10T03:35:51.843Z",
+      "finishedAt": "2026-11-10T03:35:54.267Z",
+      "evidence": [
+        "steps/OQ-RPT-06.tenancy.json"
+      ],
+      "api": [
+        {
+          "file": "steps/OQ-RPT-06.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/report-os/runs?limit=1",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-RPT-06.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/report-os/runs/1",
+          "status": 404
+        },
+        {
+          "file": "steps/OQ-RPT-06.api-3.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/report-os/runs/1/rendered",
+          "status": 404
+        },
+        {
+          "file": "steps/OQ-RPT-06.api-4.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/report-os/runs/1/seal",
+          "status": 404
+        },
+        {
+          "file": "steps/OQ-RPT-06.api-5.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/report-os/runs/1/export.pdf",
+          "status": 404
+        },
+        {
+          "file": "steps/OQ-RPT-06.api-6.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/report-os/runs",
+          "status": 404
+        },
+        {
+          "file": "steps/OQ-RPT-06.api-7.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/report-os/runs",
+          "status": 409
+        },
+        {
+          "file": "steps/OQ-RPT-06.api-8.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/report-os/runs",
+          "status": 403
+        },
+        {
+          "file": "steps/OQ-RPT-06.api-9.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/report-os/runs?limit=1",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-RPT-07",
+      "title": "A read-only member reads the run history and creates no run",
+      "urs": [
+        "URS-RPT-005"
+      ],
+      "kind": "scripted",
+      "action": "as the viewer (OQ_VIEWER): GET /api/report-os/runs; POST the run request",
+      "expected": "the read 200; the write 403; the run history total unchanged",
+      "status": "pass",
+      "observed": "the viewer's read 200; the write 403; runs 23 → 23",
+      "startedAt": "2026-11-10T03:35:54.267Z",
+      "finishedAt": "2026-11-10T03:35:55.708Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-RPT-07.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/report-os/runs?limit=1",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-RPT-07.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/report-os/runs",
+          "status": 200,
+          "identity": "oq-viewer@validation.local"
+        },
+        {
+          "file": "steps/OQ-RPT-07.api-3.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/report-os/runs",
+          "status": 403,
+          "identity": "oq-viewer@validation.local"
+        },
+        {
+          "file": "steps/OQ-RPT-07.api-4.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/report-os/runs?limit=1",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-RPT-08",
+      "title": "CREDENTIALED: a finalize is refused without its reason, its meaning, the signer's credential, independence, authority or an admissible report",
+      "urs": [
+        "URS-RPT-006"
+      ],
+      "kind": "scripted",
+      "action": "as the signer: finalize with no reason, with no meaning, with a wrong password, with the password and no authenticator code; as the run identity (the run's requester): an approval; as a member with no signing authority (OQ_MEMBER): an approval; as the signer: a run whose report is not admissible as final",
+      "expected": "400 REASON_REQUIRED; 400 MEANING_REQUIRED; 401 REAUTH_PASSWORD_INVALID; 401 REAUTH_TOTP_REQUIRED (when a second factor is enrolled); 403 SEPARATION_OF_DUTIES; the member 403; the inadmissible run 409 with its reasons; the run still not final, not sealed, no signature row",
+      "status": "pass",
+      "observed": "no reason 400 REASON_REQUIRED; no meaning 400 MEANING_REQUIRED; a wrong password 401 REAUTH_PASSWORD_INVALID; the password with no authenticator code 401 REAUTH_TOTP_REQUIRED; an approval by the run's requester 403 SEPARATION_OF_DUTIES; the member 403 AUTH_004; an inadmissible report 409 (Cannot mark final: this report type requires a confidence, and none was computed for this run.); run 23 still completed, sealed: false, 0 signature rows",
+      "startedAt": "2026-11-10T03:35:55.708Z",
+      "finishedAt": "2026-11-10T03:38:16.849Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-RPT-08.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/report-os/runs/23/finalize",
+          "status": 400,
+          "identity": "oq-signer@validation.local"
+        },
+        {
+          "file": "steps/OQ-RPT-08.api-2.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/report-os/runs/23/finalize",
+          "status": 400,
+          "identity": "oq-signer@validation.local"
+        },
+        {
+          "file": "steps/OQ-RPT-08.api-3.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/report-os/runs/23/finalize",
+          "status": 401,
+          "identity": "oq-signer@validation.local"
+        },
+        {
+          "file": "steps/OQ-RPT-08.api-4.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/report-os/runs/23/finalize",
+          "status": 401,
+          "identity": "oq-signer@validation.local"
+        },
+        {
+          "file": "steps/OQ-RPT-08.api-5.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/report-os/runs/23/finalize",
+          "status": 403
+        },
+        {
+          "file": "steps/OQ-RPT-08.api-6.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/report-os/runs/23/finalize",
+          "status": 403,
+          "identity": "oq-member@validation.local"
+        },
+        {
+          "file": "steps/OQ-RPT-08.api-7.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/report-os/runs",
+          "status": 201
+        },
+        {
+          "file": "steps/OQ-RPT-08.api-8.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/report-os/runs/25/finalize",
+          "status": 409,
+          "identity": "oq-signer@validation.local"
+        },
+        {
+          "file": "steps/OQ-RPT-08.api-9.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/report-os/runs/23/seal",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-RPT-08.api-10.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/part11/signatures/by-target?target=report-run%3A23",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-RPT-08.api-11.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/report-os/runs/23",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 2
+    },
+    {
+      "id": "OQ-RPT-09",
+      "title": "CREDENTIALED: the signer finalizes the run; it is sealed and signed once",
+      "urs": [
+        "URS-RPT-006",
+        "URS-RPT-007"
+      ],
+      "kind": "scripted",
+      "action": "as the signer: POST /runs/:id/finalize {reason, meaning:\"approval\", reauth:{password, totp?}}; read the run and the signatures by target; finalize again",
+      "expected": "200: status final, seal {algorithm sha256, contentHash (64 hex), sealedAt}, signature {signatureId, signedAt, meaning approval}; the run reads final; exactly one signature row by the signer, meaning approval, bound to the seal, valid, second factor verified when enrolled; the second finalize 409 RUN_ALREADY_FINAL and still one row",
+      "status": "pass",
+      "observed": "finalized by oq-signer@validation.local (user 2), not the requester; seal sha256 f24511c39ff9…, signature 49, meaning approval; one row; second finalize 409 RUN_ALREADY_FINAL",
+      "startedAt": "2026-11-10T03:38:16.849Z",
+      "finishedAt": "2026-11-10T03:39:00.626Z",
+      "evidence": [
+        "steps/OQ-RPT-09.signature-rows.json"
+      ],
+      "api": [
+        {
+          "file": "steps/OQ-RPT-09.api-1.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/report-os/runs/23/finalize",
+          "status": 200,
+          "identity": "oq-signer@validation.local"
+        },
+        {
+          "file": "steps/OQ-RPT-09.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/report-os/runs/23",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-RPT-09.api-3.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/part11/signatures/by-target?target=report-run%3A23",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-RPT-09.api-4.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/report-os/runs/23/finalize",
+          "status": 409,
+          "identity": "oq-signer@validation.local"
+        },
+        {
+          "file": "steps/OQ-RPT-09.api-5.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/part11/signatures/by-target?target=report-run%3A23",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-RPT-10",
+      "title": "The seal verifies",
+      "urs": [
+        "URS-RPT-008"
+      ],
+      "kind": "scripted",
+      "action": "GET /runs/:id/seal; GET /runs/:id/rendered; GET the seal of the run OQ-RPT-04 left unfinalized",
+      "expected": "sealed: true with the finalize's content hash; verdict intact with every check ok (audit chain, stored seal, stored document, signature); the signer's printed name, the time and the meaning approval; the reason; the rendered report is the sealed one; the unfinalized run reads sealed: false, not-verifiable",
+      "status": "pass",
+      "observed": "verdict intact, 4 checks ok (audit-chain, stored-seal, stored-document, signature); signed by OQ Signer at 2026-11-10T03:38:30.617Z, meaning approval; run 25 (not final) reads sealed: false, not-verifiable",
+      "startedAt": "2026-11-10T03:39:00.626Z",
+      "finishedAt": "2026-11-10T03:39:01.721Z",
+      "evidence": [
+        "steps/OQ-RPT-10.seal.json"
+      ],
+      "api": [
+        {
+          "file": "steps/OQ-RPT-10.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/report-os/runs/23/seal",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-RPT-10.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/report-os/runs/23/rendered",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-RPT-10.api-3.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/report-os/runs?limit=50",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-RPT-10.api-4.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/report-os/runs/25/seal",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-RPT-11",
+      "title": "The export carries the SHA-256 of the bytes sent, and is on the audit trail",
+      "urs": [
+        "URS-RPT-009"
+      ],
+      "kind": "scripted",
+      "action": "GET /runs/:id/export.pdf, read as bytes; compute SHA-256 of the body; read the audit ledger",
+      "expected": "200 application/pdf, a %PDF body; the X-Export-Sha256 header equals the SHA-256 of the body; the ledger lists the finalization and the export against the run",
+      "status": "pass",
+      "observed": "40832 bytes, attachment; filename=\"report-run-23.pdf\"; X-Export-Sha256 = sha256(body) = 4309cd159d00…; ledger: Report Os Run Exported, Report Os Run Finalized, Report Os Run Created",
+      "startedAt": "2026-11-10T03:39:01.721Z",
+      "finishedAt": "2026-11-10T03:39:06.811Z",
+      "evidence": [
+        "steps/OQ-RPT-11.export.json",
+        "steps/OQ-RPT-11.ledger-rows.json"
+      ],
+      "api": [
+        {
+          "file": "steps/OQ-RPT-11.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/audit-trail/ledger?limit=200",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-RPT-12",
+      "title": "The reporting library's reads",
+      "urs": [
+        "URS-RPT-010"
+      ],
+      "kind": "ad-hoc",
+      "action": "GET /api/report-os/runs; GET /api/report-os/bundles; GET /api/insights/subscriptions",
+      "expected": "each 200; the run history lists the finalized run as final",
+      "status": "pass",
+      "observed": "runs 24 (run 23 final); bundles 0; schedules 0",
+      "startedAt": "2026-11-10T03:39:06.811Z",
+      "finishedAt": "2026-11-10T03:39:07.639Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-RPT-12.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/report-os/runs?limit=100",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-RPT-12.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/report-os/bundles",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-RPT-12.api-3.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/insights/subscriptions",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-RPT-13",
+      "title": "The compliance catalog is listed for a member; a run is the readers'",
+      "urs": [
+        "URS-RPT-011"
+      ],
+      "kind": "scripted",
+      "action": "as the run identity (an admin): GET /api/audit/reports; as a member (OQ_MEMBER): GET the catalog, then GET /api/audit/reports/access-review",
+      "expected": "the seven reports listed, canRun true for the admin; the member reads the catalog with canRun false and the run is refused 403 AUDIT_READ_RESTRICTED",
+      "status": "pass",
+      "observed": "8 reports; admin canRun true; member canRun false and the run 403 AUDIT_READ_RESTRICTED",
+      "startedAt": "2026-11-10T03:39:07.639Z",
+      "finishedAt": "2026-11-10T03:39:08.742Z",
+      "evidence": [],
+      "api": [
+        {
+          "file": "steps/OQ-RPT-13.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/audit/reports",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-RPT-13.api-2.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/audit/reports",
+          "status": 200,
+          "identity": "oq-member@validation.local"
+        },
+        {
+          "file": "steps/OQ-RPT-13.api-3.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/audit/reports/access-review",
+          "status": 403,
+          "identity": "oq-member@validation.local"
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-RPT-14",
+      "title": "A compliance report is sealed, and a saved one verifies until it is changed",
+      "urs": [
+        "URS-RPT-012"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/audit/reports/electronic-signatures; compute SHA-256 of the data; find the report finalization (OQ-RPT-09) in the register; POST /api/audit/export/verify with the saved export; then with one character of the data changed",
+      "expected": "200 with data, a manifest (kind compliance-report, the organisation, dataHash, signingKeyId) and a signature; dataHash = SHA-256 of the data = the X-Report-Data-Hash header; the register lists the finalization, valid, its bound digest the seal's content hash; the saved export verifies; the changed one does not. With no signing key: 503 REPORT_SIGNING_UNAVAILABLE and nothing sent, recorded as a deviation",
+      "status": "pass",
+      "observed": "sealed (export COMPLIANCE-REPORT-1794281949008-2870f27e, key jwt-secret-fallback); dataHash = sha256(data) = header; the register lists the finalization of run 23 (signature 49, bound to the seal); the saved export verifies; one changed character does not (Data hash mismatch — export data has been modified)",
+      "startedAt": "2026-11-10T03:39:08.742Z",
+      "finishedAt": "2026-11-10T03:39:09.545Z",
+      "evidence": [
+        "steps/OQ-RPT-14.manifest.json"
+      ],
+      "api": [
+        {
+          "file": "steps/OQ-RPT-14.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/audit/reports/electronic-signatures",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-RPT-14.api-2.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/audit/export/verify",
+          "status": 200
+        },
+        {
+          "file": "steps/OQ-RPT-14.api-3.json",
+          "method": "POST",
+          "url": "http://localhost:5200/api/audit/export/verify",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-RPT-15",
+      "title": "The integrity report says what it verified and what it could not",
+      "urs": [
+        "URS-RPT-013"
+      ],
+      "kind": "scripted",
+      "action": "GET /api/audit/reports/audit-trail-integrity; read its verdicts section and its overall chain statement",
+      "expected": "the audit_logs hash chain row reads intact over at least one row; every row that is not intact says why; when any check could not run, the overall statement is not ok: true. With no signing key: 503, recorded as a deviation",
+      "status": "pass",
+      "observed": "audit_logs hash chain intact over 1045 rows; 2 of 3 checks not verified (audit_events linkage; audit_logs HMAC seals), each with its reason; overall ok: null (2 of 3 checks could not verify.)",
+      "startedAt": "2026-11-10T03:39:09.545Z",
+      "finishedAt": "2026-11-10T03:39:09.834Z",
+      "evidence": [
+        "steps/OQ-RPT-15.verdicts.json"
+      ],
+      "api": [
+        {
+          "file": "steps/OQ-RPT-15.api-1.json",
+          "method": "GET",
+          "url": "http://localhost:5200/api/audit/reports/audit-trail-integrity",
+          "status": 200
+        }
+      ],
+      "consoleErrors": [],
+      "note": null,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-RPT-16",
+      "title": "The catalog states the plan, and what each report needs",
+      "urs": [
+        "URS-RPT-014"
+      ],
+      "kind": "scripted",
+      "action": "from the canvas bootstrap (OQ-RPT-03): the organisation's tier, and each type's requiredTier and entitled; then, for a type above the plan if there is one, POST a run",
+      "expected": "the tier was read; every type is entitled exactly when the tier covers its requiredTier; a type above the plan is refused 403 with its feature and requiredTier. On an organisation whose plan covers every type the refusal is not observable, recorded as a deviation",
+      "status": "deviation",
+      "observed": {
+        "tier": "enterprise",
+        "types": 54
+      },
+      "startedAt": "2026-11-10T03:39:09.834Z",
+      "finishedAt": "2026-11-10T03:39:09.884Z",
+      "evidence": [
+        "steps/OQ-RPT-16.at-failure.png"
+      ],
+      "api": [],
+      "consoleErrors": [],
+      "note": null,
+      "deviationReason": "partly executed — the organisation is on the enterprise plan, which covers all 54 types, and each type's entitled flag follows its requiredTier. No type is above the plan, so the 403 plan refusal was not observed. Observe it with an organisation on a lower plan.",
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-RPT-17",
+      "title": "The Reporting & analytics surface renders its views and the run history",
+      "urs": [
+        "URS-RPT-015"
+      ],
+      "kind": "unscripted",
+      "action": "Open /concept2cure/insights; read the heading and the Reporting views tabs; open Run history",
+      "expected": "The heading \"Reporting & analytics\"; the tabs Reports, Catalog, Run history, Schedules and Bundles; the Run history table lists the report that was run; screenshots of both views",
+      "status": "pass",
+      "observed": "heading and tabs (Reports, Catalog, Run history, Schedules, Bundles) rendered; Run history: 24 matching reports · 1–24 shown; first row for the report: \"Research Administration Scorecard Organization Organization-wide records Computed Not measured Nov 10, 2026, 03:35 AM Open\"",
+      "startedAt": "2026-11-10T03:39:09.884Z",
+      "finishedAt": "2026-11-10T03:39:16.570Z",
+      "evidence": [
+        "steps/OQ-RPT-17.reports.png",
+        "steps/OQ-RPT-17.run-history.png"
+      ],
+      "api": [],
+      "consoleErrors": [],
+      "note": null,
+      "browser429": 0,
+      "rateLimitRetries": 0
+    },
+    {
+      "id": "OQ-RPT-18",
+      "title": "The Audit & compliance reports surface renders the catalog",
+      "urs": [
+        "URS-RPT-015"
+      ],
+      "kind": "unscripted",
+      "action": "Open /concept2cure/compliance-reports; read the heading and the catalog",
+      "expected": "The heading \"Audit & compliance reports\"; the catalog names the user access review, the e-signature register and the audit trail integrity attestation; screenshot",
+      "status": "pass",
+      "observed": "heading and the report catalog rendered (User access review, Audit trail integrity attestation, the e-signature register)",
+      "startedAt": "2026-11-10T03:39:16.570Z",
+      "finishedAt": "2026-11-10T03:39:22.932Z",
+      "evidence": [
+        "steps/OQ-RPT-18.png"
+      ],
+      "api": [],
+      "consoleErrors": [],
+      "note": null,
+      "browser429": 0,
+      "rateLimitRetries": 0
+    }
+  ]
+}

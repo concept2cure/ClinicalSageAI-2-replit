@@ -80,7 +80,7 @@ beforeAll(async () => {
       title text,order_index int DEFAULT 0,created_at timestamptz DEFAULT now());
     CREATE TABLE authoring_reviews(id uuid PRIMARY KEY,doc_id uuid,tenant_id int,review_status text,reviewed_snapshot_hash text,review_binding_basis text,reviewed_at timestamptz);
     CREATE TABLE submissions(id int PRIMARY KEY,organization_id int,program_id uuid,project_id int);
-    CREATE TABLE ectd_sequences(id int PRIMARY KEY,organization_id int,submission_id int,validation_status text,status text,updated_at timestamptz);
+    CREATE TABLE ectd_sequences(id int PRIMARY KEY,organization_id int,submission_id int,validation_status text,status text,updated_at timestamptz,deleted_at timestamptz);
     CREATE TABLE submission_leaves(id int PRIMARY KEY,organization_id int,sequence_id int,sha256 text,md5 text,updated_at timestamptz,deleted_at timestamptz);
     CREATE TABLE ana_runs(id text PRIMARY KEY,organization_id int,project_id text,status text,created_at timestamptz DEFAULT now(),heartbeat_at timestamptz DEFAULT now());
   `);
@@ -174,6 +174,25 @@ describe('canonical gate observation adapters',()=>{
     expect(H.science).toHaveBeenCalledWith(executor,expect.objectContaining({organizationId:7,actor:{id:'99',email:'reviewer@example.test'}}));
     expect(H.dispatch).toHaveBeenCalledWith({organizationId:7,sequenceId:1});expect(H.query).not.toHaveBeenCalled();
     expect(JSON.stringify(service.projectMonitorForTeam(observed))).not.toContain('reviewer@example.test');
+  });
+
+  /* F1 (2026-11-09; the coordinating session's assignment after repair B): a removed sequence is not a filing head.
+     projectFilingHeads read every sequence of the project, removed ones included, so a project whose only sequence
+     was removed was assessed from it: blocked or satisfied before repair B, 'unavailable' after it, never "no filing
+     target". */
+  it('a project whose only sequence was removed has no filing target, and nothing is assessed from it',async()=>{
+    await database.query('UPDATE ectd_sequences SET deleted_at=now() WHERE id=1');
+    const observed=await runWithTenantScope({tenantId:'7',accountId:99,role:'member',source:'test'},()=>service.readProjectObjectiveMonitor(7,11,context()));
+    expect(observed.observation?.checks.filing).toEqual({state:'not_assessed',unresolved:null,codes:['FILING_TARGET_REQUIRED']});
+    expect(H.dispatch).not.toHaveBeenCalled();
+  });
+
+  it('a removed sequence’s leaves are not filing heads either: changing one leaves the monitor’s input heads as they were',async()=>{
+    await database.query('UPDATE ectd_sequences SET deleted_at=now() WHERE id=1');
+    const before=await service.reconcileProjectObjectiveMonitor(7,11,context());
+    await database.query('UPDATE submission_leaves SET sha256=$1 WHERE id=1',['e'.repeat(64)]);
+    const after=await service.reconcileProjectObjectiveMonitor(7,11,context());
+    expect(after.inputHeadHash).toBe(before.inputHeadHash);
   });
 
   it('refuses changed source heads during a canonical multi-connection gate observation',async()=>{

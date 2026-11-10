@@ -1,0 +1,42 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "program": "6065271c-d4b0-4936-aad1-02855423a738",
+  "startedAt": "2026-11-09T13:29:56.041Z",
+  "steps": [
+    {
+      "name": "a task is added in the work project",
+      "status": 200
+    },
+    {
+      "name": "the subtask is filed with its parent and listed under it, one level only",
+      "parentTaskId": 258426
+    },
+    {
+      "name": "a parent from another project is refused, nothing written",
+      "status": 409,
+      "body": {
+        "success": false,
+        "code": "PARENT_TASK_REFUSED",
+        "error": "A subtask goes under a task of the same project that is not itself a subtask. Nothing was created."
+      }
+    },
+    {
+      "name": "the same at 390 dark",
+      "hScroll": 0
+    }
+  ],
+  "requests": [
+    {
+      "post": "/api/tasks/tasks (subtask)",
+      "status": 200,
+      "projectId": 20,
+      "parentTaskId": 258426
+    },
+    {
+      "post": "/api/tasks/tasks (foreign parent)",
+      "status": 409,
+      "code": "PARENT_TASK_REFUSED"
+    }
+  ],
+  "finishedAt": "2026-11-09T13:30:02.740Z"
+}

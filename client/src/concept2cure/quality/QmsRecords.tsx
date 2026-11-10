@@ -22,15 +22,15 @@ import { I } from '../v2/icons';
 import { useFetchJson } from '../mdx/hooks/useFetchJson';
 import { registerRowMinWidth } from './registerGrid';
 import { listOf } from './qmsList';
-import { Kpi } from './Kpi';
 import { C2CForm } from '../v2/C2CForm';
 import { EmptyState, ErrorState } from '../v2/dataConnect';
+import { C2CToast, useToast } from '../v2/toast';
 import { useCapasBySource } from './capaSources';
 import { useRegisterContext } from './registerContext';
 import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
 import { useAuthUser } from '@/services/portal/authService';
 import type { QmsRecordTab } from './qmsRecordData';
-import { type Column, type RecordRegisterContext, type RowAction, type RegisterConfig, type SignedStep, plural } from './qmsRegisterKit';
+import { type Column, type RecordRegisterContext, type RowAction, type RegisterConfig, type SignedStep, inSentence } from './qmsRegisterKit';
 
 /** How many rows AnA is passed; the count says when there are more. */
 const MAX_FACT_ROWS = 100;
@@ -46,7 +46,8 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
   const rows = React.useMemo(() => listOf<R>(read.data), [read.data]);
   const [drawer, setDrawer] = React.useState<{ kind: 'create' } | { kind: 'row'; row: R; action: RowAction<R> } | null>(null);
   const [refusal, setRefusal] = React.useState<string | null>(null);
-  const [notice, setNotice] = React.useState<string | null>(null);
+  /* A write's outcome is a toast (C3): it was a grey line inside the table, lost when the register re-read. */
+  const [toast, fire] = useToast();
   const writing = React.useRef(false);
   const [openId, setOpenId] = React.useState<R['id'] | null>(null);
   /* Bumped by every write, so an open detail re-reads what the write changed. */
@@ -70,6 +71,7 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
   const grid = config.grid + (config.capaSourceKind ? ' 120px' : '') + ' 230px';
   const rowMin = registerRowMinWidth(grid);
 
+  const headId = React.useId();
   const open = (d: NonNullable<typeof drawer>) => { setRefusal(null); setDrawer(d); };
   /* A row action that signs hands its decision to the EsignModal; one that submits writes now. */
   const submitRow = (row: R, action: RowAction<R>, v: Record<string, string>) => {
@@ -88,7 +90,7 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
     try {
       const text = await write();
       setDrawer(null);
-      setNotice(text);
+      fire(text);
       setVersion((n) => n + 1);
       read.refresh();
     } catch (err) {
@@ -100,7 +102,9 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
 
   /* No list in the body is a failed read, not an empty register. */
   const failed = !read.loading && (read.error != null || (read.data != null && rows === null));
-  const loaded = rows !== null && !read.loading;
+  /* A re-read keeps the rows it has on screen (C3, records-5): until 2026-11-10 every write blanked the register to
+     "Loading the register…" and unmounted the open detail, with its confirmation. */
+  const loaded = rows !== null;
 
   /* What AnA is told: the register as read, or that it is loading or failed. A
      failed read is never passed on as an empty register. */
@@ -118,57 +122,37 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
 
   return (
     <>
-      <div className="qms-head">
-        <div>
-          <div className="qms-eyebrow">Quality records</div>
-          <h1 className="qms-h1">{config.title}</h1>
-          <div className="qms-sub">{config.sub}</div>
+      {/* One section (D7-B): the register's name, its figures as one line, its one create.
+          The tab's own title, its "Ask AnA" (the starter row's first starter sends the same
+          prompt) and its tiles went on 2026-11-06; the figures keep their unread arm. */}
+      <section className="pj-sec qms-sec" aria-labelledby={headId}>
+        <div className="pj-sec-h">
+          <h2 id={headId}>{config.title}</h2>
+          {/* Said once (C1, C4): an unread or failed register is said by its own line below, never here too. */}
+          {loaded && !failed && rows.length > 0 && <span className="sec-sub" data-testid="qms-record-figures">
+                {config.kpis(rows, today).map((k, i) => <React.Fragment key={k.label}>{i ? ' · ' : ''}{k.label}: <span data-tone={k.tone === 'err' || k.tone === 'warn' ? k.tone : undefined}>{k.val}</span></React.Fragment>)}
+              </span>}
+          <div className="pj-sec-acts">
+            <button type="button" className="btn primary small" onClick={() => open({ kind: 'create' })}>{config.createLabel}</button>
+          </div>
         </div>
-        <div className="qms-actions">
-          <button className="qms-btn ghost" title="Sends this request to AnA; nothing in the register changes" onClick={() => onAsk(config.ask)}>
-            {I.sparkles} Ask AnA
-          </button>
-          <button className="qms-btn primary" onClick={() => open({ kind: 'create' })}>
-            {I.plus} {config.createLabel}
-          </button>
-        </div>
-      </div>
-
-      <div className="qms-kpis">
-        {loaded ? (
-          config.kpis(rows, today).map((k) => <Kpi key={k.label} {...k} />)
-        ) : (
-          <EmptyState
-            title={`${config.title} totals are unavailable`}
-            hint="The counts appear once the register loads."
-            testId="qms-record-kpis-absent"
+        {failed && (
+          <ErrorState
+            title={`The ${inSentence(config.title)} register could not be read`}
+            message={read.error ?? 'The server did not return a list.'}
+            retry={read.refresh}
+            read={read.failure}
+            readWhat={`the ${inSentence(config.title)} register`}
+            testId="qms-record-failed"
           />
         )}
-      </div>
-
-      <section className="qms-sec">
-        <div className="qms-sec-head">
-          <h2>Register</h2>
-          {loaded && <span className="meta">{plural(rows.length, config.noun)}</span>}
-        </div>
-        <div className="qms-table">
+        {!failed && !loaded && <EmptyState title="Loading the register…" busy />}
+        {loaded && rows.length === 0 && <EmptyState title={`No ${config.noun[1]} recorded yet.`} />}
+        {loaded && rows.length > 0 && <div className="qms-table">
           <div className="qms-thead" style={{ gridTemplateColumns: grid, minWidth: rowMin }}>
             {columns.map((c) => <div key={c.label}>{c.label}</div>)}
             <div />
           </div>
-          {notice && <div className="qms-empty" role="status" data-tone="ok">{notice}</div>}
-          {failed && (
-            <ErrorState
-              title={`The ${config.title.toLowerCase()} register could not be read`}
-              message={read.error ?? 'The server did not return a list.'}
-              retry={read.refresh}
-              testId="qms-record-failed"
-            />
-          )}
-          {!failed && !loaded && <div className="qms-empty" role="status">Loading the register…</div>}
-          {loaded && rows.length === 0 && (
-            <div className="qms-empty">No {config.noun[1]} recorded yet.</div>
-          )}
           {loaded && rows.map((r) => (
             <React.Fragment key={r.id}>
             <div className="qms-row" style={{ gridTemplateColumns: grid, minWidth: rowMin }}>
@@ -190,12 +174,13 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
               </div>
             </div>
             {config.detail && openId === r.id && (
-              <div className="qcc-detail" key={`${r.id}:${version}`}>{config.detail.render(r, read.refresh)}</div>
+              <div className="qcc-detail" key={`${r.id}:${version}`}>{config.detail.render(r, (text) => { if (text) fire(text); read.refresh(); })}</div>
             )}
             </React.Fragment>
           ))}
-        </div>
+        </div>}
       </section>
+      <C2CToast msg={toast} />
 
       {drawer?.kind === 'create' && (
         <C2CForm
@@ -224,7 +209,7 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
           onClose={() => setSigning(null)}
           onSign={async (input) => {
             const manifest = await signing.post(input);
-            setNotice(signing.done);
+            fire(signing.done);
             setVersion((n) => n + 1);
             read.refresh();
             return manifest;

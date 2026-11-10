@@ -17,7 +17,10 @@
  *   plan_lifecycle_management         — integrated ICH Q12 lifecycle plan
  *
  * Handlers live in AnaToolExecutor.ts (registerToolHandler) and dynamic-import
- * the matching post-approval-knowledge module.
+ * the matching post-approval-knowledge module. An omitted or null true/false input
+ * stays not_stated (inputStates in the result) and is never read as true or false;
+ * a result it could change is null and is listed in undecided. A malformed value is
+ * refused by field (Rule 2 S5d, 2026-11-09).
  *
  * @module server/services/ana/postApprovalTools
  */
@@ -25,7 +28,7 @@
 import type { AnaTool } from '../ai-gateway/types';
 
 const DETERMINISTIC_NOTE =
-  'Deterministic — identical input always yields identical output. No LLM, no network. ' +
+  'Deterministic: no LLM, no network. ' +
   'Report the returned reporting categories and regulatory citations verbatim — do NOT ' +
   'reinterpret citations, re-grade the change category, or substitute your own regulatory ' +
   'judgment. If a parameter is missing or invalid, relay the validation error and ask the user for the correct value.';
@@ -47,16 +50,21 @@ const DOSSIER_ELEMENT_TYPE_ENUM = [
   'analytical_procedure', 'container_closure', 'control_strategy_element', 'shelf_life', 'facility_site',
 ];
 
+/** What an omitted or null true/false input means; a malformed one is refused by field. */
+const UNDECIDED = ' Omitted or null stays not_stated, and a result it could change is null (see undecided).';
+
 const CHANGE_RISK_SCHEMA = {
   type: 'object',
-  description: 'Optional risk qualifiers that refine the change classification.',
+  description:
+    'Risk qualifiers the change classification turns on. Each one omitted stays not_stated: a risk tier, category ' +
+    'or variation type it could change is null, with the facts named in undecided.',
   properties: {
-    affectsCqa: { type: 'boolean', description: 'Does the change affect a critical quality attribute?' },
-    affectsControlStrategy: { type: 'boolean', description: 'Does the change affect the control strategy?' },
-    sterileProcess: { type: 'boolean', description: 'Does the change touch a sterile process?' },
-    withinDesignSpace: { type: 'boolean', description: 'Is the change within an approved design space (ICH Q8)?' },
-    priorKnowledge: { type: 'boolean', description: 'Is there substantial prior knowledge supporting the change?' },
-    magnitude: { type: 'string', enum: MAGNITUDE_ENUM, description: 'Caller-supplied change magnitude.' },
+    affectsCqa: { type: 'boolean', description: 'Does the change affect a critical quality attribute?' + UNDECIDED },
+    affectsControlStrategy: { type: 'boolean', description: 'Does the change affect the control strategy?' + UNDECIDED },
+    sterileProcess: { type: 'boolean', description: 'Does the change touch a sterile process?' + UNDECIDED },
+    withinDesignSpace: { type: 'boolean', description: 'Is the change within an approved design space (ICH Q8)?' + UNDECIDED },
+    priorKnowledge: { type: 'boolean', description: 'Is there substantial prior knowledge supporting the change?' + UNDECIDED },
+    magnitude: { type: 'string', enum: MAGNITUDE_ENUM, description: 'Caller-supplied change magnitude; the top-level magnitude when omitted.' },
   },
 };
 
@@ -75,18 +83,19 @@ export const CLASSIFY_POST_APPROVAL_CHANGE: AnaTool = {
     'regulation and distribution rule, whether comparability is likely required, ' +
     'recommended ICH Q12 tools, and citations. Cites 21 CFR 314.70, the FDA ' +
     '"Changes to an Approved NDA or ANDA" guidance, SUPAC guidances, and the EU ' +
-    'Variations Regulation (EC) No 1234/2008. ' + DETERMINISTIC_NOTE,
+    'Variations Regulation (EC) No 1234/2008. A result an unstated fact could change is null, the facts named. ' +
+    DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
     properties: {
       changeArea: { type: 'string', enum: CHANGE_AREA_ENUM, description: 'The area of manufacturing/quality the change affects.' },
-      description: { type: 'string', description: 'Free-text description of the change (context).' },
-      modality: { type: 'string', enum: MODALITY_ENUM, description: 'Product modality — affects the default reporting category.' },
-      magnitude: { type: 'string', enum: MAGNITUDE_ENUM, description: 'Magnitude qualifier for the change.' },
-      solidOralProduct: { type: 'boolean', description: 'Whether this is a solid oral dosage form (drives SUPAC applicability).' },
-      modifiedRelease: { type: 'boolean', description: 'Whether the product is modified-release (SUPAC-MR).' },
+      description: { type: 'string', description: 'Free-text description of the change. Not read: it does not change the result.' },
+      modality: { type: 'string', enum: MODALITY_ENUM, description: 'Product modality — affects the default reporting category. Omitted or null: small molecule, said in warnings.' },
+      magnitude: { type: 'string', enum: MAGNITUDE_ENUM, description: 'Magnitude qualifier for the change. Omitted or null: scored as moderate, said in warnings.' },
+      solidOralProduct: { type: 'boolean', description: 'Whether this is a solid oral dosage form (drives SUPAC applicability).' + UNDECIDED },
+      modifiedRelease: { type: 'boolean', description: 'Whether the product is modified-release (SUPAC-MR).' + UNDECIDED },
       risk: CHANGE_RISK_SCHEMA,
-      biologicLicense: { type: 'boolean', description: 'Whether the product is licensed under a BLA (affects reporting rules).' },
+      biologicLicense: { type: 'boolean', description: 'Whether the product is licensed under a BLA (affects reporting rules).' + UNDECIDED },
     },
     required: ['changeArea'],
   },
@@ -111,8 +120,8 @@ export const ASSESS_ESTABLISHED_CONDITIONS: AnaTool = {
   input_schema: {
     type: 'object',
     properties: {
-      developmentApproach: { type: 'string', enum: DEV_APPROACH_ENUM, description: 'Development approach — "enhanced" = QbD (design space, enhanced control strategy).' },
-      modality: { type: 'string', enum: MODALITY_ENUM, description: 'Product modality.' },
+      developmentApproach: { type: 'string', enum: DEV_APPROACH_ENUM, description: 'Development approach — "enhanced" = QbD (design space, enhanced control strategy). Omitted or null: minimal, said in guidance.' },
+      modality: { type: 'string', enum: MODALITY_ENUM, description: 'Product modality. Omitted or null: small molecule, said in guidance.' },
       elements: {
         type: 'array',
         description: 'Dossier elements to classify as established conditions vs supportive information.',
@@ -121,10 +130,10 @@ export const ASSESS_ESTABLISHED_CONDITIONS: AnaTool = {
           properties: {
             elementType: { type: 'string', enum: DOSSIER_ELEMENT_TYPE_ENUM, description: 'Type of dossier element.' },
             name: { type: 'string', description: 'Name/label of the element.' },
-            parameterRange: { type: 'boolean', description: 'Is the element expressed as a parameter range rather than a fixed value?' },
-            cqaImpact: { type: 'boolean', description: 'Does the element impact a critical quality attribute?' },
-            controlledDownstream: { type: 'boolean', description: 'Is the element otherwise controlled by a downstream test?' },
-            withinDesignSpace: { type: 'boolean', description: 'Is the element governed within an approved design space?' },
+            parameterRange: { type: 'boolean', description: 'Is the element expressed as a parameter range rather than a fixed value? Not read: it does not change the result.' },
+            cqaImpact: { type: 'boolean', description: 'Does the element impact a critical quality attribute?' + UNDECIDED },
+            controlledDownstream: { type: 'boolean', description: 'Is the element otherwise controlled by a downstream test?' + UNDECIDED },
+            withinDesignSpace: { type: 'boolean', description: 'Is the element governed within an approved design space?' + UNDECIDED },
           },
           required: ['elementType', 'name'],
         },
@@ -156,23 +165,23 @@ export const DESIGN_PACMP: AnaTool = {
       plannedChangeArea: { type: 'string', enum: CHANGE_AREA_ENUM, description: 'The area of the planned change.' },
       plannedChangeDescription: { type: 'string', description: 'Description of the planned change.' },
       modality: { type: 'string', enum: MODALITY_ENUM, description: 'Product modality.' },
-      currentCategoryIfNoProtocol: { type: 'string', enum: US_CATEGORY_ENUM, description: 'The US reporting category that would apply WITHOUT a protocol.' },
+      currentCategoryIfNoProtocol: { type: 'string', enum: US_CATEGORY_ENUM, description: 'The US reporting category that would apply WITHOUT a protocol. Omitted or null: classified from the risk facts, or null while they leave it open.' },
       proposedReducedCategory: { type: 'string', enum: US_CATEGORY_ENUM, description: 'The proposed reduced US reporting category after protocol execution.' },
       tests: {
         type: 'array',
-        description: 'Planned tests / studies and acceptance criteria.',
+        description: 'Planned tests / studies and acceptance criteria. Omitted or null: the engine\'s default panel for the change area, said in warnings.',
         items: {
           type: 'object',
           properties: {
             attribute: { type: 'string', description: 'Quality attribute being tested.' },
             test: { type: 'string', description: 'Test method.' },
             acceptanceCriterion: { type: 'string', description: 'Acceptance criterion.' },
-            cqa: { type: 'boolean', description: 'Is this attribute a CQA?' },
+            cqa: { type: 'boolean', description: 'Is this attribute a CQA?' + UNDECIDED },
           },
           required: ['attribute', 'test', 'acceptanceCriterion'],
         },
       },
-      includeStability: { type: 'boolean', description: 'Whether a stability commitment should be included.' },
+      includeStability: { type: 'boolean', description: 'Whether a stability commitment should be included. Omitted or null stays not_stated, and none is included unless the change area needs one (said in warnings).' },
       risk: CHANGE_RISK_SCHEMA,
     },
     required: ['plannedChangeArea', 'plannedChangeDescription'],
@@ -199,7 +208,7 @@ export const PLAN_ANNUAL_REPORT: AnaTool = {
       productName: { type: 'string', description: 'Product name (context).' },
       reportingPeriod: { type: 'string', description: 'Annual report reporting period (context).' },
       modality: { type: 'string', enum: MODALITY_ENUM, description: 'Product modality.' },
-      biologicLicense: { type: 'boolean', description: 'True when the product is licensed under a BLA (21 CFR 601.12(d) annual report); false for an NDA. Absent, a biologic, vaccine or cell/gene therapy modality is taken as licensed.' },
+      biologicLicense: { type: 'boolean', description: 'True when the product is licensed under a BLA (21 CFR 601.12(d) annual report); false for an NDA. Omitted or null stays not_stated, and a biologic, vaccine or cell/gene therapy modality is taken as licensed (said in guidance).' },
       changes: {
         type: 'array',
         description: 'Implemented changes to classify for annual-report inclusion.',
@@ -208,15 +217,15 @@ export const PLAN_ANNUAL_REPORT: AnaTool = {
           properties: {
             changeArea: { type: 'string', enum: CHANGE_AREA_ENUM, description: 'Area of the change.' },
             description: { type: 'string', description: 'Description of the change.' },
-            assertedCategory: { type: 'string', enum: US_CATEGORY_ENUM, description: 'Category the sponsor asserts for the change.' },
+            assertedCategory: { type: 'string', enum: US_CATEGORY_ENUM, description: 'Category the sponsor asserts for the change. Omitted or null: the change is listed in notDetermined unless its facts settle the category.' },
             modality: { type: 'string', enum: MODALITY_ENUM, description: 'Modality for this change, if different.' },
             magnitude: { type: 'string', enum: MAGNITUDE_ENUM, description: 'Magnitude qualifier.' },
           },
           required: ['changeArea', 'description'],
         },
       },
-      stabilityProtocolOngoing: { type: 'boolean', description: 'Whether a stability protocol/commitment is ongoing.' },
-      includePlcmDocument: { type: 'boolean', description: 'Whether to include the ICH Q12 PLCM document structure.' },
+      stabilityProtocolOngoing: { type: 'boolean', description: 'Whether a stability protocol/commitment is ongoing. Omitted or null stays not_stated, and the stability update gives both answers.' },
+      includePlcmDocument: { type: 'boolean', description: 'Whether to include the ICH Q12 PLCM document structure. Omitted or null stays not_stated, and it is not included (said in guidance).' },
     },
     required: [],
   },
@@ -236,17 +245,18 @@ export const ASSESS_POSTAPPROVAL_COMPARABILITY: AnaTool = {
     'downstream / formulation / analytical / fill-finish), CQA impact, analytical ' +
     'coverage, and available clinical data. Returns the recommended analytical and ' +
     'functional/biological comparability attributes and whether clinical bridging ' +
-    'is needed. Cites ICH Q5E and the FDA comparability guidances. ' + DETERMINISTIC_NOTE,
+    'is needed; any of these an unstated fact could change is null, with the facts named. Cites ICH Q5E ' +
+    'and the FDA comparability guidances. ' + DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
     properties: {
       changeArea: { type: 'string', enum: CHANGE_AREA_ENUM, description: 'Area of the change.' },
       modality: { type: 'string', enum: MODALITY_ENUM, description: 'Product modality (biologics drive ICH Q5E comparability).' },
       changeDescription: { type: 'string', description: 'Description of the change.' },
-      changeStage: { type: 'string', enum: ['upstream', 'downstream', 'formulation', 'analytical', 'fill_finish'], description: 'Stage of manufacturing the change affects.' },
-      affectsCqa: { type: 'boolean', description: 'Does the change affect a critical quality attribute?' },
-      analyticalCoverageComplete: { type: 'boolean', description: 'Is analytical characterization coverage complete?' },
-      clinicalDataAvailable: { type: 'boolean', description: 'Is clinical data available to support comparability?' },
+      changeStage: { type: 'string', enum: ['upstream', 'downstream', 'formulation', 'analytical', 'fill_finish'], description: 'Stage of manufacturing the change affects. Omitted or null: inferred from the change area, said in warnings.' },
+      affectsCqa: { type: 'boolean', description: 'Does the change affect a critical quality attribute (the same fact as risk.affectsCqa)?' + UNDECIDED },
+      analyticalCoverageComplete: { type: 'boolean', description: 'Is analytical characterization coverage complete? Not assumed complete.' + UNDECIDED },
+      clinicalDataAvailable: { type: 'boolean', description: 'Is clinical data available to support comparability?' + UNDECIDED },
       risk: CHANGE_RISK_SCHEMA,
     },
     required: ['changeArea'],
@@ -272,12 +282,12 @@ export const PLAN_LIFECYCLE_MANAGEMENT: AnaTool = {
     type: 'object',
     properties: {
       productName: { type: 'string', description: 'Product name (context).' },
-      modality: { type: 'string', enum: MODALITY_ENUM, description: 'Product modality.' },
-      developmentApproach: { type: 'string', enum: DEV_APPROACH_ENUM, description: 'Development approach (minimal vs enhanced/QbD).' },
+      modality: { type: 'string', enum: MODALITY_ENUM, description: 'Product modality. Omitted or null: small molecule, said in notes.' },
+      developmentApproach: { type: 'string', enum: DEV_APPROACH_ENUM, description: 'Development approach (minimal vs enhanced/QbD). Omitted or null: minimal, said in notes.' },
       marketedRegions: {
         type: 'array',
         items: { type: 'string', enum: ['US', 'EU', 'global'] },
-        description: 'Regions where the product is marketed.',
+        description: 'Regions where the product is marketed. Omitted or null: global, said in notes.',
       },
       plannedChanges: {
         type: 'array',
@@ -302,7 +312,7 @@ export const PLAN_LIFECYCLE_MANAGEMENT: AnaTool = {
           properties: {
             changeArea: { type: 'string', enum: CHANGE_AREA_ENUM, description: 'Area of the historical change.' },
             description: { type: 'string', description: 'Description.' },
-            reportedCategory: { type: 'string', enum: US_CATEGORY_ENUM, description: 'Category under which it was reported.' },
+            reportedCategory: { type: 'string', enum: US_CATEGORY_ENUM, description: 'Category under which it was reported. Omitted or null: counted as not determined unless the change area settles it.' },
             yearImplemented: { type: 'number', description: 'Year implemented.' },
           },
           required: ['changeArea'],

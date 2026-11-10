@@ -6,7 +6,7 @@ const apiRequest = vi.hoisted(() => vi.fn());
 const session = vi.hoisted(() => ({ organizationId: '37' }));
 vi.mock('@/lib/queryClient', async (original) => ({ ...await original<typeof import('@/lib/queryClient')>(), apiRequest }));
 vi.mock('@/utils/authToken', () => ({ getJwtOrgId: () => session.organizationId, getAuthToken: () => 'test-token', getOrgId: () => '99' }));
-import { SessionPolicySetting } from '../SessionPolicySetting';
+import { ReviewPolicySetting, SessionPolicySetting } from '../SessionPolicySetting';
 import { ApiRequestError } from '@/lib/queryClient';
 
 const json = (status: number, body: unknown) => new Response(JSON.stringify(body), { status });
@@ -133,5 +133,72 @@ describe('session policy remains bound to the original workspace', () => {
     render(<SessionPolicySetting />);
     await waitFor(() => expect(screen.queryByRole('spinbutton')).toBeNull());
     expect(apiRequest).not.toHaveBeenCalled();
+  });
+});
+
+describe("the organisation's review rules (P-117)", () => {
+  const reviewers = () => screen.getByRole('spinbutton', { name: 'Independent reviewers required' });
+  const selfApproval = () => screen.getByRole('checkbox', { name: 'Allow a sole member to approve their own document' });
+  const reasonBox = () => screen.getByRole('textbox', { name: 'Reason for review rules change' });
+  const echo = async (method: string, _url: string, body?: unknown) => method === 'GET' ? json(200, payload) : json(200, { success: true, settings: (body as { settings: unknown }).settings });
+
+  it('shows the platform defaults when the organisation has set nothing: one reviewer, self-approval allowed', async () => {
+    render(<ReviewPolicySetting />);
+    expect(await screen.findByRole('spinbutton', { name: 'Independent reviewers required' })).toHaveProperty('value', '1');
+    expect(selfApproval()).toHaveProperty('checked', true);
+  });
+
+  it('shows what the organisation stored', async () => {
+    apiRequest.mockResolvedValue(json(200, { success: true, settings: { security: { independentReviewersRequired: 3, soleMemberSelfApproval: false } } }));
+    render(<ReviewPolicySetting />);
+    expect(await screen.findByRole('spinbutton', { name: 'Independent reviewers required' })).toHaveProperty('value', '3');
+    expect(selfApproval()).toHaveProperty('checked', false);
+  });
+
+  it('sends the two rules and the reason to the JWT organization through the governed settings door', async () => {
+    apiRequest.mockImplementation(echo);
+    render(<ReviewPolicySetting />);
+    await screen.findByRole('spinbutton', { name: 'Independent reviewers required' });
+    fireEvent.change(reviewers(), { target: { value: '2' } });
+    fireEvent.click(selfApproval());
+    fireEvent.change(reasonBox(), { target: { value: 'Two reviewers per SOP-014' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save review rules' }));
+    await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('PATCH', '/api/organizations/37/settings', {
+      settings: { security: { independentReviewersRequired: 2, soleMemberSelfApproval: false } },
+      reason: 'Two reviewers per SOP-014',
+    }));
+    expect(await screen.findByText(/review rules saved with your reason/i)).toBeTruthy();
+  });
+
+  it('makes no change without a reason, or with a reviewer count outside the limits', async () => {
+    apiRequest.mockImplementation(echo);
+    render(<ReviewPolicySetting />);
+    await screen.findByRole('spinbutton', { name: 'Independent reviewers required' });
+    fireEvent.change(reviewers(), { target: { value: '0' } });
+    fireEvent.change(reasonBox(), { target: { value: 'No review' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save review rules' }));
+    expect(await screen.findByText(/whole number of reviewers from 1 to 5/i)).toBeTruthy();
+    fireEvent.change(reviewers(), { target: { value: '2' } });
+    fireEvent.change(reasonBox(), { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save review rules' }));
+    expect(apiRequest.mock.calls.some(([method]) => method === 'PATCH')).toBe(false);
+  });
+
+  it('shows no rules after a failed read, and never claims a save the server refused', async () => {
+    apiRequest.mockRejectedValueOnce(new Error('Database unavailable')).mockImplementation(async (method: string) => {
+      if (method === 'GET') return json(200, payload);
+      throw new ApiRequestError('The change could not be recorded. Nothing was changed.', 500, { message: 'The change could not be recorded. Nothing was changed.' });
+    });
+    render(<ReviewPolicySetting />);
+    const retry = await screen.findByRole('button', { name: 'Retry review rules' });
+    expect(screen.queryByRole('spinbutton')).toBeNull();
+    fireEvent.click(retry);
+    await screen.findByRole('spinbutton', { name: 'Independent reviewers required' });
+    fireEvent.change(reviewers(), { target: { value: '2' } });
+    fireEvent.change(reasonBox(), { target: { value: 'Two reviewers' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save review rules' }));
+    expect(await screen.findByText('The change could not be recorded. Nothing was changed.')).toBeTruthy();
+    expect(screen.queryByText(/review rules saved/i)).toBeNull();
+    expect(reviewers()).toHaveProperty('value', '2');
   });
 });

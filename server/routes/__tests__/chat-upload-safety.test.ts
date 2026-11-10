@@ -22,7 +22,7 @@ import request from 'supertest';
 
 const m = vi.hoisted(() => ({
   poolQuery: vi.fn(),
-  createSource: vi.fn(),
+  captureClientSource: vi.fn(),
   scanBuffer: vi.fn(),
 }));
 
@@ -43,7 +43,7 @@ vi.mock('../../services/enhancedEmbeddingService.js', () => ({
   getEmbeddingService: vi.fn(() => ({ embedAtom: vi.fn().mockResolvedValue(undefined) })),
 }));
 vi.mock('../../services/clinical-regulatory-evidence/evidence-spine.service.js', () => ({
-  createSource: (...a: unknown[]) => m.createSource(...a),
+  captureClientSource: (...a: unknown[]) => m.captureClientSource(...a),
   findSourceByChecksum: vi.fn(async () => null),
   findSupersededCandidate: vi.fn(async () => null),
   createSupersedingSource: vi.fn(async () => ({ source: { id: 41 } })),
@@ -98,7 +98,7 @@ const wroteAnything = () => m.poolQuery.mock.calls.some(([s]) => /INSERT INTO/i.
 beforeEach(() => {
   vi.clearAllMocks();
   m.poolQuery.mockResolvedValue({ rows: [] });
-  m.createSource.mockResolvedValue({ id: 41 });
+  m.captureClientSource.mockResolvedValue({ source: { id: 41 }, reused: false, supersededId: null });
   m.scanBuffer.mockResolvedValue({ scanned: true, clean: true });
 });
 

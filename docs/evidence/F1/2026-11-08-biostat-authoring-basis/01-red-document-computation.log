@@ -1,0 +1,131 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a design the engine declines to size > answers 422 with the engine’s own sentence, not 500
+{
+  "timestamp": "2026-11-08T17:14:04.556Z",
+  "level": "error",
+  "message": "[ana-biostats] Compute error",
+  "context": {
+    "err": "Agreement (kappa) sample size is not supported: the published methods (Donner & Eliasziw 1992; Flack et al. 1988) need the null kappa and the marginal rating prevalence, which this engine does not take as inputs."
+  }
+}
+
+stderr | server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a design the engine declines to size > names the field it needs, so a form can mark the control
+{
+  "timestamp": "2026-11-08T17:14:04.572Z",
+  "level": "error",
+  "message": "[ana-biostats] Compute error",
+  "context": {
+    "err": "Diagnostic-accuracy sizing needs the expected sensitivity (sensitivity); none was given, and none is assumed."
+  }
+}
+
+stderr | server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a design the engine declines to size > carries no figure of any kind with the refusal
+{
+  "timestamp": "2026-11-08T17:14:04.576Z",
+  "level": "error",
+  "message": "[ana-biostats] Compute error",
+  "context": {
+    "err": "Agreement (kappa) sample size is not supported: the published methods (Donner & Eliasziw 1992; Flack et al. 1988) need the null kappa and the marginal rating prevalence, which this engine does not take as inputs."
+  }
+}
+
+stderr | server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a design the engine declines to size > reports the refusal the same way on /api/ana-biostats/compute-enhanced
+{
+  "timestamp": "2026-11-08T17:14:04.580Z",
+  "level": "error",
+  "message": "[ana-biostats] Enhanced compute error",
+  "context": {
+    "err": "Agreement (kappa) sample size is not supported: the published methods (Donner & Eliasziw 1992; Flack et al. 1988) need the null kappa and the marginal rating prevalence, which this engine does not take as inputs."
+  }
+}
+
+stderr | server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a design the engine declines to size > reports the refusal the same way on /api/ana-biostats/compare
+{
+  "timestamp": "2026-11-08T17:14:04.593Z",
+  "level": "error",
+  "message": "[ana-biostats] Compare error",
+  "context": {
+    "err": "Agreement (kappa) sample size is not supported: the published methods (Donner & Eliasziw 1992; Flack et al. 1988) need the null kappa and the marginal rating prevalence, which this engine does not take as inputs."
+  }
+}
+
+stderr | server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a session with no tenant > is told the organization context is required, with a 403 rather than a 500
+{
+  "timestamp": "2026-11-08T17:14:04.605Z",
+  "level": "error",
+  "message": "[ana-biostats] Document generation error",
+  "context": {
+    "err": "Organization context required"
+  }
+}
+
+ ✓ server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a design the engine declines to size > answers 422 with the engine’s own sentence, not 500 28ms
+ ✓ server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a design the engine declines to size > names the field it needs, so a form can mark the control 6ms
+ ✓ server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a design the engine declines to size > carries no figure of any kind with the refusal 4ms
+ ✓ server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a design the engine declines to size > reports the refusal the same way on /api/ana-biostats/compute-enhanced 4ms
+ ✓ server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a design the engine declines to size > reports the refusal the same way on /api/ana-biostats/compare 13ms
+ ✓ server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a design the engine declines to size > is still sized for multiplicity, which does not depend on the endpoint type 3ms
+ ✓ server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a design the engine CAN size still computes > answers 200 with the deterministic result 5ms
+ ✓ server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a session with no tenant > is told the organization context is required, with a 403 rather than a 500 3ms
+ × server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a statistical document is based on a server computation > generates from the submitted inputs without accepting a computed-result receipt 9ms
+   → expected 400 to be 200 // Object.is equality
+ × server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a statistical document is based on a server computation > does not turn a caller-edited result into engine-generated evidence 8ms
+   → expected 99999 to be 64 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a statistical document is based on a server computation > generates from the submitted inputs without accepting a computed-result receipt
+AssertionError: expected 400 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 400
+
+ ❯ server/routes/__tests__/ana-biostats-refusal-is-422.test.ts:154:24
+    152|       documentType: 'sample_size_rationale', input: BASE,
+    153|     });
+    154|     expect(res.status).toBe(200);
+       |                        ^
+    155|     expect(res.body.provenance.computationResults.sampleSize.perGroup)…
+    156|     expect(res.body.provenance.computationInputs.effectSize).toBe(0.5);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/routes/__tests__/ana-biostats-refusal-is-422.test.ts > a statistical document is based on a server computation > does not turn a caller-edited result into engine-generated evidence
+AssertionError: expected 99999 to be 64 // Object.is equality
+
+- Expected
++ Received
+
+- 64
++ 99999
+
+ ❯ server/routes/__tests__/ana-biostats-refusal-is-422.test.ts:169:72
+    167|     });
+    168|     expect(res.status).toBe(200);
+    169|     expect(res.body.provenance.computationResults.sampleSize.perGroup)…
+       |                                                                        ^
+    170|     expect(JSON.stringify(res.body)).not.toContain('99999');
+    171|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 8 passed (10)
+   Start at  09:14:03
+   Duration  675ms (transform 253ms, setup 63ms, import 323ms, tests 85ms, environment 0ms)
+

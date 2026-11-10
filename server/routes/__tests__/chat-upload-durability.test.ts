@@ -23,7 +23,7 @@ const m = vi.hoisted(() => ({
   recordArtifactProvenance: vi.fn(),
   findSourceByChecksum: vi.fn(),
   findSupersededCandidate: vi.fn(),
-  createSource: vi.fn(),
+  captureClientSource: vi.fn(),
   createSupersedingSource: vi.fn(),
   writeUploadRetrievalAtom: vi.fn(),
   resolveVaultView: vi.fn(),
@@ -72,7 +72,7 @@ vi.mock('../../services/provenance/artifact-provenance', () => ({
 vi.mock('../../services/clinical-regulatory-evidence/evidence-spine.service.js', () => ({
   findSourceByChecksum: m.findSourceByChecksum,
   findSupersededCandidate: m.findSupersededCandidate,
-  createSource: m.createSource,
+  captureClientSource: m.captureClientSource,
   createSupersedingSource: m.createSupersedingSource,
 }));
 vi.mock('../../services/chat-uploads/upload-retrieval-atom.js', () => ({
@@ -137,7 +137,7 @@ function expectNoConsequences() {
   expect(queries.every(sql => /^\s*SELECT\b/i.test(sql))).toBe(true);
   for (const entrypoint of [
     m.extractDocumentText, m.resolveGovernedContext, m.recordArtifactProvenance,
-    m.findSourceByChecksum, m.findSupersededCandidate, m.createSource,
+    m.findSourceByChecksum, m.findSupersededCandidate, m.captureClientSource,
     m.createSupersedingSource, m.writeUploadRetrievalAtom, m.classifyForFiling, m.processCapturedSource,
   ]) expect(entrypoint).not.toHaveBeenCalled();
 }
@@ -167,7 +167,7 @@ beforeEach(() => {
   });
   m.findSourceByChecksum.mockResolvedValue(null);
   m.findSupersededCandidate.mockResolvedValue(null);
-  m.createSource.mockResolvedValue({ id: 41 });
+  m.captureClientSource.mockResolvedValue({ source: { id: 41 }, reused: false, supersededId: null });
   m.createSupersedingSource.mockResolvedValue({ source: { id: 41 } });
   m.resolveVaultView.mockResolvedValue('ctd');
   m.resolveOrgVaultView.mockResolvedValue('ctd');
@@ -249,10 +249,10 @@ describe('original-byte storage is required before canonical upload consequences
       `uploads/org-5/${res.body.fileId}`, CHECKSUM, 's3', 'obj-1',
     ]);
     expect(m.storeDelete).not.toHaveBeenCalled();
-    expect(m.createSource).toHaveBeenCalledWith(5, expect.objectContaining({
+    expect(m.captureClientSource).toHaveBeenCalledWith(5, expect.objectContaining({
       clientProgramId: PROGRAM_ID, checksum: CHECKSUM, ingestionStatus: 'ingested',
       extractionStatus: 'pending', storedArtifactRef: `uploads/org-5/${res.body.fileId}`,
-    }));
+    }), { text: ORIGINAL.toString('utf8') });
     expect(m.writeUploadRetrievalAtom).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
       sourceId: 'cre_source:41', text: ORIGINAL.toString('utf8'), tags: ['source', 'chat_upload', `program:${PROGRAM_ID}`],
     }));
@@ -264,7 +264,7 @@ describe('original-byte storage is required before canonical upload consequences
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ status: 'ready', sourceId: null, dataRoom: { recorded: false }, extractionMethod: 'utf8' });
     expect(m.events).toEqual(['scan', 'store-object', 'mkdir', 'write-file', 'database-write', 'extract']);
-    expect(m.createSource).not.toHaveBeenCalled();
+    expect(m.captureClientSource).not.toHaveBeenCalled();
     expect(m.writeUploadRetrievalAtom).not.toHaveBeenCalled();
   });
 
@@ -318,12 +318,14 @@ describe('one record per uploaded file (document store consolidation step 3)', (
     expect(res.body).toMatchObject({ status: 'ready', sourceId: 41, dataRoom: { recorded: true } });
     expect(res.body).not.toHaveProperty('artifactId');
     expectNoArtifactCopy();
-    expect(m.createSource).toHaveBeenCalledOnce();
-    const params = m.createSource.mock.calls[0][1];
+    expect(m.captureClientSource).toHaveBeenCalledOnce();
+    const params = m.captureClientSource.mock.calls[0][1];
     expect(params, 'the source is not the same record a UUID upload into that program writes')
       .toMatchObject({ clientProgramId: PROGRAM_ID, clientWorkspaceId: null, checksum: CHECKSUM });
     expect(params.metadata).not.toHaveProperty('artifactId');
-    expect(m.findSourceByChecksum).toHaveBeenCalledWith(5, CHECKSUM, expect.objectContaining({ clientProgramId: PROGRAM_ID, clientWorkspaceId: null }));
+    expect(m.captureClientSource).toHaveBeenCalledWith(5, expect.objectContaining({
+      checksum: CHECKSUM, clientProgramId: PROGRAM_ID, clientWorkspaceId: null,
+    }), { text: ORIGINAL.toString('utf8') });
     expect(m.writeUploadRetrievalAtom).toHaveBeenCalledOnce();
     expect(m.writeUploadRetrievalAtom).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
       sourceId: 'cre_source:41', tags: ['source', 'chat_upload', `program:${PROGRAM_ID}`],
@@ -337,7 +339,7 @@ describe('one record per uploaded file (document store consolidation step 3)', (
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ sourceId: 41, dataRoom: { recorded: true } });
     expectNoArtifactCopy();
-    expect(m.createSource.mock.calls[0][1]).toMatchObject({ clientProgramId: null, clientWorkspaceId: 12 });
+    expect(m.captureClientSource.mock.calls[0][1]).toMatchObject({ clientProgramId: null, clientWorkspaceId: 12 });
     expect(m.writeUploadRetrievalAtom).toHaveBeenCalledOnce();
     expect(m.writeUploadRetrievalAtom).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({
       sourceId: 'cre_source:41', tags: ['source', 'chat_upload'],
@@ -369,8 +371,8 @@ describe('capture processing is separate from upload availability', () => {
       expect(res.body).toMatchObject({ status: 'ready', sourceId: 41, dataRoom: {
         recorded: true, readable: false, processing: { ok: false, processed: false, status, reasonCode: 'SAFE_REASON' },
       } });
-      expect(m.createSource).toHaveBeenCalledOnce();
-      expect(m.createSource.mock.calls[0][1].extractionStatus).toBe('pending');
+      expect(m.captureClientSource).toHaveBeenCalledOnce();
+      expect(m.captureClientSource.mock.calls[0][1].extractionStatus).toBe('pending');
     });
 
   it('does not deny a committed capture when processing unexpectedly rejects', async () => {
@@ -386,12 +388,13 @@ describe('capture processing is separate from upload availability', () => {
     { projectId: PROGRAM_ID, programId: PROGRAM_ID, workspaceId: null },
     { projectId: 'proj_12', programId: null, workspaceId: 12 },
   ])('retries a duplicate canonical source within its original scope ($projectId)', async scope => {
-    m.findSourceByChecksum.mockResolvedValue({ id: 16, provenance: { fileUploadId: 'file_original' }, is_current: true });
+    m.captureClientSource.mockResolvedValue({ source: { id: 16, provenance: { fileUploadId: 'file_original' }, isCurrent: true },
+      reused: true, supersededId: null });
     m.processCapturedSource.mockResolvedValue({ ok: true, processed: true, status: 'completed' });
     const res = await upload(scope.projectId);
     expect(res.status).toBe(200);
     expect(res.body.sourceId).toBe(16);
-    expect(m.createSource).not.toHaveBeenCalled();
+    expect(m.captureClientSource).toHaveBeenCalledOnce();
     expect(m.createSupersedingSource).not.toHaveBeenCalled();
     expect(m.processCapturedSource).toHaveBeenCalledWith(5, 16, expect.objectContaining({
       bytes: ORIGINAL, programId: scope.programId, expectedWorkspaceId: scope.workspaceId,
@@ -401,13 +404,25 @@ describe('capture processing is separate from upload availability', () => {
     expect(input).not.toHaveProperty('storagePath');
   });
 
-  it('reports a historical duplicate as stale without recreating or rebinding it', async () => {
-    m.findSourceByChecksum.mockResolvedValue({ id: 16, is_current: false });
-    m.processCapturedSource.mockResolvedValue({ ok: false, processed: false, status: 'stale_source', reasonCode: 'SOURCE_NOT_CURRENT' });
+  it('refuses a historical duplicate without processing or rebinding it', async () => {
+    m.captureClientSource.mockRejectedValue({ name: 'SourceCaptureError', status: 409,
+      code: 'SOURCE_CAPTURE_RETIRED', sourceId: 16, message: 'Read the retained capture or use the current source.' });
     const res = await upload(PROGRAM_ID);
-    expect(res.body).toMatchObject({ sourceId: 16, dataRoom: { recorded: true, readable: false,
-      processing: { status: 'stale_source', reasonCode: 'SOURCE_NOT_CURRENT' } } });
-    expect(m.createSource).not.toHaveBeenCalled();
+    expect(res.status).toBe(409);
+    expect(res.body).toMatchObject({ sourceId: 16, code: 'SOURCE_CAPTURE_RETIRED' });
+    expect(res.body).not.toHaveProperty('status');
+    expect(m.processCapturedSource).not.toHaveBeenCalled();
+    expect(m.writeUploadRetrievalAtom).not.toHaveBeenCalled();
     expect(m.createSupersedingSource).not.toHaveBeenCalled();
+  });
+
+  it('preserves an unconfirmed commit result without claiming a failed or completed capture', async () => {
+    m.captureClientSource.mockRejectedValue({ name: 'SourceCaptureError', status: 503,
+      code: 'SOURCE_CAPTURE_COMMIT_UNCONFIRMED', sourceId: 17, message: 'Check the project’s Data Room before trying again.' });
+    const res = await upload(PROGRAM_ID);
+    expect(res.status).toBe(503);
+    expect(res.body).toMatchObject({ sourceId: 17, code: 'SOURCE_CAPTURE_COMMIT_UNCONFIRMED' });
+    expect(res.body).not.toHaveProperty('status');
+    expect(m.processCapturedSource).not.toHaveBeenCalled();
   });
 });

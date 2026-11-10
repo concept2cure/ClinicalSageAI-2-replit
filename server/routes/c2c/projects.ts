@@ -23,7 +23,10 @@ import { randomUUID } from 'crypto';
 import { pool } from '../../db.js';
 import { readProjectActivity } from '../../services/c2c/project-activity.js';
 import { readDossier, readDossierFigures, readDossierSupporting, type DossierFigure } from '../../services/c2c/dossier-read.js';
-import { requestPgClient } from '../../db/requestDb';
+import { requestConnectable, requestPgClient, type RequestSqlClient } from '../../db/requestDb';
+import { requireCurrentProgramAccess } from '../../services/c2c/current-program-access';
+import { requireProjectAdmission, ProjectAdmissionRefusal } from './project-access';
+import { writeChainedAuditRow } from '../../services/auditService';
 import type { PoolClient } from 'pg';
 import {
   scaffoldProjectDocuments,
@@ -32,6 +35,7 @@ import {
 import {
   ProgramAnchorUnavailableError,
   requireProgramProjectAnchor,
+  WORK_KINDS, WorkProjectRefusal, ensureWorkProjectUnderAnchor, isWorkKind, programOfProject, type WorkProjectResult,
 } from '../../services/c2c/program-project-anchor.js';
 import {
   canCreateProgram,
@@ -85,6 +89,7 @@ import { lockDocumentDispositionProgram } from '../../services/document-data-dis
 import { readRecordedUploadLineage } from '../../services/document-data-disposition/recorded-lineage.js';
 import { loadUploadedFile, sha256Hex, UploadedFileError, type UploadedFile } from '../../services/ana/uploaded-file-access.js';
 import { supersededSql } from '../../services/vault/vault-version-family.js';
+import { folderLabel } from '../../services/vault/vault-filing.service.js';
 import { documentAgencyFor, marketOfferGivenOutline, type FilingOffer, type MarketInput } from '../../services/regulatory/market-support.js';
 import { installProjectRouteAccess, requireProjectRouteAccess, requireProjectCreationAccess, withProjectWriteReservation, sendProjectAccessFailure } from './project-route-access';
 import { getCurrentAccessibleProgramScope, requireProgramScopeStillCurrent, verifiedProgramAnchors, ProgramReadAccessError } from '../../services/c2c/current-program-access';
@@ -660,6 +665,90 @@ function objectiveAuditDetails(recorded: RecordedObjectives | null): Record<stri
   } : {};
 }
 
+// ── POST /api/c2c/projects with { parentProjectId, workKind } — a work project ─────────────────────────────────────
+//
+// A work project (CMC, a study's biostatistics, its risk-based monitoring…; founder decisions P-83, P-109, with the
+// coordinating session's rulings of 2026-11-09) is a child of its filing project: `parent_project_id` is the
+// program's anchor row or one of its descendants, and it carries no program of its own (PF-08 keeps one anchor row
+// per program). Canonical intake stays the one creator (A2.9): this is a branch inside it, not a second door, and the
+// row is written by the anchor module's one `projects` writer. The program, quota, pathway, workspace and scaffold
+// steps are a program's and do not apply; the work project takes its parent's workspace and priority.
+//
+// Body: { parentProjectId, name, workKind } (P-83's kinds). In one transaction: a current editor of the
+// organization, the program (read from the parent's root) admitted for writing, the parent within that program's
+// anchor tree, the row, and its chained audit row. 201 when added; 200 with created:false when that parent already
+// has a work project of that name and kind. 400 on a malformed body, 403 for a role that cannot create a project,
+// 404 when the parent is not a project of a program this person may change, 409 below the hierarchy's last level.
+
+const isWorkProjectIntake = (body: unknown): boolean => {
+  const b = (body ?? {}) as Record<string, unknown>;
+  return b.parentProjectId !== undefined || b.workKind !== undefined;
+};
+
+interface WorkProjectIntake { parentId: number; name: string; workKind: (typeof WORK_KINDS)[number] }
+
+function workProjectIntake(body: Record<string, unknown>): WorkProjectIntake | null {
+  const raw = body.parentProjectId;
+  const parentId = typeof raw === 'number' ? raw : typeof raw === 'string' && /^\d+$/.test(raw) ? Number(raw) : NaN;
+  const name = typeof body.name === 'string' ? body.name.trim() : '';
+  if (!Number.isSafeInteger(parentId) || parentId <= 0 || !name || name.length > 200 || !isWorkKind(body.workKind)) return null;
+  return { parentId, name, workKind: body.workKind };
+}
+
+async function recordWorkProject(req: Request, client: RequestSqlClient, orgId: number, userId: number,
+  input: WorkProjectIntake): Promise<WorkProjectResult & { programId: string }> {
+  await requireProjectCreationAccess(client, orgId, userId, true);
+  const programId = await programOfProject(client, orgId, input.parentId);
+  if (!programId) throw new WorkProjectRefusal(404, 'PARENT_NOT_IN_PROGRAM', 'The parent is not a program\'s project or one of its work projects.');
+  const access = await requireCurrentProgramAccess(client, { organizationId: orgId, userId, programId, forShare: true });
+  await requireProjectAdmission(req, String(access.projectId), true, { executor: client, programId, forShare: true });
+  const result = await ensureWorkProjectUnderAnchor({ client, orgId, userId, anchorProjectId: access.projectId, ...input });
+  if (result.created) {
+    await writeChainedAuditRow(client, { tenantId: orgId, userId, action: 'project.work_project.create',
+      resourceType: 'projects', resourceId: String(result.projectId),
+      reason: `Work project "${input.name}" (${input.workKind}) added under project ${input.parentId}`,
+      details: { programId, parentId: input.parentId, anchorProjectId: access.projectId, workKind: input.workKind,
+        depth: result.depth, path: result.path } });
+  }
+  return { ...result, programId };
+}
+
+function sendWorkProjectFailure(res: Response, error: unknown): Response {
+  if (error instanceof ProgramReadAccessError) return sendProjectAccessFailure(res, error);
+  if (error instanceof WorkProjectRefusal || error instanceof ProjectAdmissionRefusal) {
+    return res.status(error.status).json({ error: error.code, message: error.message });
+  }
+  logger.error('Work project not added', { err: error });
+  return res.status(500).json({ error: 'WORK_PROJECT_NOT_ADDED', message: 'The work project and its audit record were not recorded.' });
+}
+
+async function addWorkProjectThroughIntake(req: Request, res: Response, orgId: number, userId: number): Promise<Response> {
+  const input = workProjectIntake((req.body ?? {}) as Record<string, unknown>);
+  if (!input) return res.status(400).json({ error: 'INVALID_WORK_PROJECT', message: `A work project needs its parent project, a name of 1 to 200 characters and one of: ${WORK_KINDS.join(', ')}.` });
+  const client = await requestConnectable(req).connect();
+  let committing = false;
+  let discard: Error | undefined;
+  try {
+    await client.query('BEGIN');
+    const result = await recordWorkProject(req, client, orgId, userId, input);
+    committing = true;
+    await client.query('COMMIT');
+    return res.status(result.created ? 201 : 200).json({ data: { ...result, name: input.name, workKind: input.workKind },
+      meta: { created: result.created, organizationId: orgId, actorUserId: userId } });
+  } catch (error) {
+    if (committing) {
+      discard = error instanceof Error ? error : new Error('Work project commit was not acknowledged');
+      return res.status(503).json({ error: 'WORK_PROJECT_OUTCOME_UNKNOWN', message: 'Whether the work project was added could not be confirmed. Read the project before trying again.' });
+    }
+    await client.query('ROLLBACK').catch((rollbackError: unknown) => {
+      discard = rollbackError instanceof Error ? rollbackError : new Error('Work project rollback was not acknowledged');
+    });
+    return sendWorkProjectFailure(res, error);
+  } finally {
+    client.release(discard);
+  }
+}
+
 // ── POST /api/c2c/projects ────────────────────────────────────────────────────
 //
 // Create a real regulatory program from the v2 New-Project wizard. Persists to
@@ -704,6 +793,8 @@ router.post('/', async (req: Request, res: Response) => {
   try {
     await requireProjectCreationAccess(pool, orgId, userId);
   } catch (err) { return sendProjectAccessFailure(res, err); }
+  // A work project under this program's project (S12): the same door, its own branch (below).
+  if (isWorkProjectIntake(req.body)) return addWorkProjectThroughIntake(req, res, orgId, userId);
 
   let workspaceInput: ReturnType<typeof projectWorkspaceInput>;
   try { workspaceInput = projectWorkspaceInput(req); }
@@ -1312,14 +1403,25 @@ router.get('/:id/evidence', async (req: Request, res: Response) => {
   try {
     if (!(await programInOrganization(pool, req.params.id, orgId))) return send404(res);
 
+    /* A data-room capture the project uses (S2) carries what it is now: its project, whether a later
+       capture replaced it, and its stored grade. Read under the organization, never another's capture. */
     const { rows } = await pool.query(
       `SELECT
          e.id, e.evidence_kind, e.evidence_ref, e.title, e.meta,
-         e.pinned_by, e.pinned_at, e.reason
+         e.pinned_by, e.pinned_at, e.reason,
+         CASE WHEN s.id IS NULL THEN NULL ELSE jsonb_build_object(
+           'sourceId', s.id, 'projectId', s.client_program_id, 'projectName', rp.name,
+           'isCurrent', s.is_current IS NOT FALSE, 'checksum', s.checksum,
+           'grade', s.grade, 'gradeScore', s.grade_score, 'gradedAt', s.graded_at,
+           'extractionStatus', s.extraction_status) END AS data_room
        FROM c2c_project_pinned_evidence e
+       LEFT JOIN cre_evidence_sources s
+         ON e.evidence_kind = 'data_room' AND e.evidence_ref ~ '^[0-9]{1,10}$'
+        AND s.id = e.evidence_ref::int AND s.organization_id = $2 AND s.deleted_at IS NULL
+       LEFT JOIN regulatory_programs rp ON rp.id = s.client_program_id
        WHERE e.project_id = $1
        ORDER BY e.pinned_at DESC`,
-      [req.params.id],
+      [req.params.id, orgId],
     );
 
     return res.json({ evidence: rows });
@@ -1338,6 +1440,35 @@ router.get('/:id/evidence', async (req: Request, res: Response) => {
 
 // ── POST /api/c2c/projects/:id/evidence ──────────────────────────────────────
 
+/**
+ * The title of a data-room capture a project may use, or null once the refusal is sent: it must be a
+ * current capture in the person's catalog for this project (S2). One answer for absent and inaccessible.
+ */
+async function dataRoomPinTitle(
+  res: Response,
+  p: { orgId: number; userId: number; programId: string; evidenceRef: string },
+): Promise<string | null> {
+  if (!/^[0-9]{1,10}$/.test(p.evidenceRef)) { send400(res, 'evidenceRef must be a data-room source id.'); return null; }
+  try {
+    const { catalogProgramIds } = await import('../../services/clinical-regulatory-evidence/data-room-search.js');
+    const allowed = await catalogProgramIds({ organizationId: p.orgId, userId: p.userId }, p.programId);
+    const found = await pool.query(
+      `SELECT title, is_current FROM cre_evidence_sources
+        WHERE id = $1 AND organization_id = $2 AND source_type = 'client_document' AND deleted_at IS NULL
+          AND client_program_id::text = ANY($3::text[])`,
+      [Number(p.evidenceRef), p.orgId, allowed],
+    );
+    const src = found.rows[0];
+    if (!src) { res.status(404).json({ error: 'SOURCE_NOT_FOUND', message: 'No captured file with this id is in your data catalog for this project.' }); return null; }
+    if (src.is_current === false) { res.status(409).json({ error: 'SOURCE_SUPERSEDED', message: 'A later capture replaced this file. Use the current one.' }); return null; }
+    return String(src.title ?? `Source ${p.evidenceRef}`);
+  } catch (err: unknown) {
+    if (err instanceof ProgramReadAccessError) sendProjectAccessFailure(res, err);
+    else serverError(res, logger, 'checking the data-room source', err, { programId: p.programId });
+    return null;
+  }
+}
+
 router.post('/:id/evidence', async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
   const orgId  = resolveOrgId(req);
@@ -1355,9 +1486,19 @@ router.post('/:id/evidence', async (req: Request, res: Response) => {
     return send400(res, 'evidenceKind, evidenceRef, and title are required');
   }
 
-  const VALID_KINDS = new Set(['artifact','vault_doc','rim_precedent','guidance']);
+  const VALID_KINDS = new Set(['artifact','vault_doc','rim_precedent','guidance','data_room']);
   if (!VALID_KINDS.has(evidenceKind)) {
     return send400(res, `evidenceKind must be one of: ${[...VALID_KINDS].join(', ')}`);
+  }
+
+  /* "Use in this project" (S2): a data-room capture is used only when it is a current capture
+     in the person's catalog for this project (their accessible projects of this sponsor). The
+     title is the capture's own, never the request's. One answer for absent and inaccessible. */
+  let pinTitle = title;
+  if (evidenceKind === 'data_room') {
+    const checked = await dataRoomPinTitle(res, { orgId, userId, programId: String(req.params.id), evidenceRef: String(evidenceRef) });
+    if (checked === null) return;
+    pinTitle = checked;
   }
 
   try {
@@ -1368,7 +1509,7 @@ router.post('/:id/evidence', async (req: Request, res: Response) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        ON CONFLICT (project_id, evidence_kind, evidence_ref) DO NOTHING
        RETURNING *`,
-      [req.params.id, evidenceKind, evidenceRef, title, meta ?? null, userId, reason ?? null],
+      [req.params.id, evidenceKind, String(evidenceRef), pinTitle, meta ?? null, userId, reason ?? null],
       );
       if (result.rows.length) await writeProgramAudit(q, { orgId, userId, programId: String(req.params.id),
         action: 'c2c.project.evidence.pin', details: { evidenceKind, evidenceRef, reason: reason ?? null } });
@@ -1393,11 +1534,13 @@ router.delete('/:id/evidence/:evId', async (req: Request, res: Response) => {
       const result = await q.query(
       `DELETE FROM c2c_project_pinned_evidence
        WHERE id = $1 AND project_id = $2
-       RETURNING id`,
+       RETURNING id, evidence_kind, evidence_ref`,
       [req.params.evId, req.params.id],
       );
       if (result.rows.length) await writeProgramAudit(q, { orgId, userId, programId: String(req.params.id),
-        action: 'c2c.project.evidence.unpin', details: { evidenceId: String(req.params.evId) } });
+        action: 'c2c.project.evidence.unpin', details: {
+          evidenceId: String(req.params.evId), evidenceKind: result.rows[0].evidence_kind, evidenceRef: result.rows[0].evidence_ref,
+        } });
       return result;
     });
     if (del.rows.length === 0) return send404(res);
@@ -1769,7 +1912,10 @@ router.get('/:id/conversation-files', async (req: Request, res: Response) => {
 // real `total`. With none of them the answer is what it was: the newest 200,
 // superseded included. An unreadable filter is a 400, never a wider list.
 
-type ShapeableSource = EvidenceSourceRow & { snippet?: string | null; charCount?: number | null; pageCount?: number | null; studyRef?: number | null };
+type ShapeableSource = EvidenceSourceRow & {
+  snippet?: string | null; charCount?: number | null; pageCount?: number | null; studyRef?: number | null;
+  projectName?: string | null; studyName?: string | null;
+};
 type EvidenceSourceRow = import('../../services/clinical-regulatory-evidence/types.js').EvidenceSource;
 type SourceUsageSummary = { sourceId: number; sections: number; documents: number; changedSections: number };
 
@@ -1800,7 +1946,33 @@ function shapeSource(s: ShapeableSource, usage: Map<number, SourceUsageSummary>)
     charCount: s.charCount ?? null,
     pageCount: s.pageCount ?? null,
     catalog: catalogSummary(s, meta),
+    ...catalogPlacement(s, meta),
   };
+}
+
+/**
+ * Where a source sits and where it came from (S2): its project and study, the CTD section and Vault
+ * folder the classifier proposed, and its lineage (version, the capture it revises).
+ */
+function catalogPlacement(s: ShapeableSource, meta: Record<string, any>) {
+  const dossier = (meta.dossier ?? {}) as Record<string, any>;
+  return {
+    projectId: s.clientProgramId ?? null,
+    projectName: s.projectName ?? null,
+    studyName: s.studyName ?? null,
+    ctdSection: typeof dossier.ctdSection === 'string' ? dossier.ctdSection : null,
+    suggestedFolder: typeof dossier.suggestedFolder === 'string' ? dossier.suggestedFolder : null,
+    suggestedFolderLabel: dossierFolderLabel(dossier),
+    version: s.version ?? null,
+    previousVersionId: (s as { previousVersionId?: number | null }).previousVersionId ?? null,
+  };
+}
+
+/** The reader's name of the Vault folder the classifier proposed, in the view it proposed it for; null when unknown. */
+function dossierFolderLabel(dossier: Record<string, any> | undefined): string | null {
+  const folder = typeof dossier?.suggestedFolder === 'string' ? dossier.suggestedFolder : null;
+  if (!folder || typeof dossier?.view !== 'string') return null;
+  try { return folderLabel(dossier.view as never, folder) || null; } catch { return null; }
 }
 
 /**
@@ -1854,8 +2026,47 @@ function sourceFileFacts(meta: Record<string, any>, prov: Record<string, unknown
   };
 }
 
+/** A row's grade, or null when it has none or none could be computed. */
+function gradeOf(grades: Map<number, unknown> | null, id: number): unknown {
+  return grades?.get(id) ?? null;
+}
+
+/** What the answer adds for the catalog and for grades that could not be computed. */
+function catalogAnswer(catalog: boolean, grades: Map<number, unknown> | null, programIds: string[] | null | undefined, facets: unknown) {
+  return {
+    ...(grades === null ? { gradesUnavailable: true } : {}),
+    ...(catalog ? { scope: 'catalog', catalogProjects: programIds?.length ?? 0, facets } : {}),
+  };
+}
+
+/** Point a room query at the person's catalog for this project; false when it narrows to a project outside it. */
+async function scopeToCatalog(
+  query: { programIds?: string[] | null; project?: string | null },
+  identity: { organizationId: number; userId: number | undefined },
+  programId: string,
+  catalogProgramIds: (identity: { organizationId: number; userId: number | undefined }, programId: string) => Promise<string[]>,
+): Promise<boolean> {
+  query.programIds = await catalogProgramIds(identity, programId);
+  return !query.project || query.programIds.includes(query.project);
+}
+
+/** Every row's grade; a grade that cannot be computed leaves the room readable and says so, never a guessed grade. */
+async function gradeOrUnavailable(
+  gradeSources: typeof import('../../services/clinical-regulatory-evidence/data-room-grade.js').gradeSources,
+  rows: ShapeableSource[],
+  programId: string,
+) {
+  try {
+    return await gradeSources(pool, rows.map((s) => ({ ...s, organizationId: Number(s.organizationId) })));
+  } catch (err: unknown) {
+    logger.warn('data room grades unavailable', { programId, err: err instanceof Error ? err.message : String(err) });
+    return null;
+  }
+}
+
 router.get('/:id/sources', async (req: Request, res: Response) => {
   const orgId = resolveOrgId(req);
+  const userId = resolveUserId(req) ?? undefined;
   if (!orgId) return send403(res);
 
   try {
@@ -1864,9 +2075,10 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
     const { listClientDocuments } = await import(
       '../../services/clinical-regulatory-evidence/evidence-spine.service.js'
     );
-    const { searchDataRoom, parseDataRoomQuery, DataRoomQueryError } = await import(
+    const { searchDataRoom, parseDataRoomQuery, DataRoomQueryError, catalogProgramIds } = await import(
       '../../services/clinical-regulatory-evidence/data-room-search.js'
     );
+    const { gradeSources } = await import('../../services/clinical-regulatory-evidence/data-room-grade.js');
 
     const programId = String(req.params.id);
     let query;
@@ -1879,11 +2091,17 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
     /* Superseded sources stay in the list unless current=true: the authoring
        canvas and sources rail read this route too, and each carries isCurrent,
        so a reader that counts can count once. */
-    const { total, currentTotal, sources } = await searchDataRoom(orgId, query, { userId: resolveUserId(req) ?? undefined });
+    /* scope=catalog (S2, 2026-11-06): the catalog across the person's projects of this
+       project's sponsor, from the verified accessible set; never a project the request names. */
+    const catalog = req.query.scope === 'catalog';
+    if (catalog && !(await scopeToCatalog(query, { organizationId: orgId, userId: userId }, programId, catalogProgramIds))) {
+      return send404(res);
+    }
+    const { total, currentTotal, sources, facets } = await searchDataRoom(orgId, query, { userId: userId });
     const truncated = (query.offset ?? 0) + sources.length < total;
     const unscoped =
       req.query.includeUnscoped === 'true'
-        ? await listClientDocuments(pool, orgId, { userId: resolveUserId(req) ?? undefined, includeUnscoped: true, limit: 50 })
+        ? await listClientDocuments(pool, orgId, { userId: userId, includeUnscoped: true, limit: 50 })
             // `includeUnscoped` with no scope returns ONLY ownerless rows, but
             // filter defensively so a future change to that query can never
             // leak another project's documents into this list.
@@ -1900,10 +2118,12 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
     const usage = await summarizeSourceUsage(
       pool, orgId,
       [...sources, ...unscoped].map((s) => s.id),
-      { userId: resolveUserId(req) ?? undefined },
+      { userId: userId },
     );
 
-    const shape = (s: ShapeableSource) => shapeSource(s, usage);
+    // Every row's grade: a deterministic engine over recorded facts, stored when they change (S2).
+    const grades = await gradeOrUnavailable(gradeSources, [...sources, ...unscoped], programId);
+    const shape = (s: ShapeableSource) => ({ ...shapeSource(s, usage), grade: gradeOf(grades, s.id) });
 
     return res.json({
       projectId: programId,
@@ -1914,6 +2134,7 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
       page: { limit: query.limit, offset: query.offset },
       window: { shown: sources.length, truncated },
       usageScope: 'accessible-citations',
+      ...catalogAnswer(catalog, grades, query.programIds, facets),
     });
   } catch (err: unknown) {
     if (err instanceof ProgramReadAccessError || err instanceof SourceReadAccessError) return sendProjectAccessFailure(res, new ProgramReadAccessError(err.status, err.code, err.message), true);
@@ -1924,6 +2145,10 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
 // ════════════════════════════════════════════════════════════════════════════
 // GET /:id/source-changes — what in this project was written against superseded
 // content
+//
+// `changes`: data-room citations. `vaultChanges` (S12): sections drafted from a
+// Vault version that a later approved version replaced (vault-citation-changes.ts).
+// `vaultFeeds` (S12 gap 5): every Vault-fed section, current or replaced.
 //
 // Every citation in this project still carrying a checksum its source no longer
 // has. That is a fact recorded at cite time
@@ -1950,8 +2175,20 @@ router.get('/:id/source-changes', async (req: Request, res: Response) => {
       '../../services/clinical-regulatory-evidence/source-usage.service.js'
     );
     const changes = await listChangedSourceUsages(pool, orgId, { userId: resolveUserId(req) ?? undefined, programId: String(req.params.id) });
+    /* S12 (P-83, P-109): sections drafted from a Vault version that a later approved version replaced. */
+    const { listVaultFamilies, listVaultFedSections, replacedVaultCitations } = await import(
+      '../../services/clinical-regulatory-evidence/vault-citation-changes.js'
+    );
+    /* One read: every Vault-fed section with its standing (S12 gap 5, the program's map), and its replaced half. */
+    const vaultFeeds = await listVaultFedSections(pool, orgId, { userId: resolveUserId(req) ?? undefined, programId: String(req.params.id) });
+    const vaultChanges = replacedVaultCitations(vaultFeeds);
 
-    return res.json({ projectId: String(req.params.id), changes, count: changes.length });
+    /* The program's current Vault families (S12 gap 5, slice 2): a work project's family picker, and the re-check of
+       an assignment on every read. */
+    const families = await listVaultFamilies(pool, orgId, String(req.params.id));
+
+    return res.json({ projectId: String(req.params.id), changes, count: changes.length, vaultChanges, vaultCount: vaultChanges.length,
+      vaultFeeds, vaultFeedCount: vaultFeeds.length, vaultFamilies: families.families, vaultFamiliesTruncated: families.truncated });
   } catch (err: unknown) {
     if (err instanceof ProgramReadAccessError || err instanceof SourceReadAccessError) return sendProjectAccessFailure(res, new ProgramReadAccessError(err.status, err.code, err.message), true);
     return serverError(res, logger, 'loading the source changes', err, { programId: String(req.params.id) });

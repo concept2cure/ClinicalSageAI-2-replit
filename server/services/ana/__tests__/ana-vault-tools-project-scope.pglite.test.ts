@@ -61,7 +61,7 @@ import { executeAgenticLoop, getToolHandler, type ToolContext } from '../AnaTool
 import * as gatewayModule from '../../ai-gateway/gateway';
 import type { AnaGatewayResponse } from '../../ai-gateway/types';
 import { approvedToolHandler as approvedHandler } from './support/approved-tool-handler';
-import { getTenantScope, runWithTenantScope } from '../../../db/tenantStore';
+import { asRequestOwner, ownerScopedClient } from './support/request-owner';
 import { captureCurrentRunSourceGate, createRunSourceAuthority, runWithSourceAuthority } from '../../ai-gateway/model-call-scope';
 import { loadToolSkillGates } from '../governed-tool-gate';
 
@@ -74,22 +74,10 @@ const P_A2 = '22222222-2222-4222-8222-222222222222';
 const P_B = '33333333-3333-4333-8333-333333333333';
 const P_PRIV = '44444444-4444-4444-8444-444444444444';
 const P_THEIRS = '55555555-5555-4555-8555-555555555555';
-// PGlite is one session. Serialize only the request-client lease operation so
-// each actual GUC check sees its own verified fixture owner during concurrency.
-let ownerLease: Promise<void> = Promise.resolve();
-const fixtureSql: RequestSqlClient = { query(sql, params) {
-  const scope = getTenantScope();
-  const result = ownerLease.then(async () => {
-    await h.pg.query("SELECT set_config('app.current_tenant_id',$1,false),set_config('app.current_account_id',$2,false)",
-      [scope?.tenantId ?? '', scope?.accountId == null ? '' : String(scope.accountId)]);
-    return h.pg.query<Record<string, unknown>>(sql, params);
-  });
-  ownerLease = result.then(() => {}, () => {}); return result;
-} };
-function asFixtureOwner<T>(ctx: Pick<ToolContext, 'organizationId' | 'userId'> | undefined, work: () => Promise<T>): Promise<T> {
-  if (!ctx?.organizationId || !ctx.userId) return work();
-  return runWithTenantScope({ tenantId: String(ctx.organizationId), accountId: ctx.userId, source: 'request' }, work);
-}
+// PGlite is one session: the request client sets each caller's own verified owner
+// per statement, one at a time, so concurrent checks never see each other's (support/request-owner.ts).
+const fixtureSql: RequestSqlClient = ownerScopedClient((sql, params) => h.pg.query<Record<string, unknown>>(sql, params));
+const asFixtureOwner = asRequestOwner;
 function approvedToolHandler(name: string) {
   const handler = approvedHandler(name); if (!handler) return undefined;
   return (input: Record<string, unknown>, ctx?: ToolContext) => asFixtureOwner(ctx, () => handler(input, ctx));
@@ -115,7 +103,8 @@ beforeAll(async () => {
     CREATE TABLE user_intelligence_profiles (id serial PRIMARY KEY,user_id integer,organization_id integer,
       workflow_preferences jsonb DEFAULT '{}',UNIQUE(user_id,organization_id));
     CREATE TABLE audit_logs (id uuid PRIMARY KEY,tenant_id integer,user_id integer,record_id text,table_name text,
-      action text,new_values jsonb,occurred_at timestamptz DEFAULT now());
+      action text,new_values jsonb,occurred_at timestamptz DEFAULT now(),actor_id integer,target text,payload_hash text,
+      sha256_chain text,hmac_seal text,old_values json,ip_address text,user_agent text,reason text);
     CREATE TABLE concept2cure_review_assignments (organization_id integer, artifact_id integer, reviewer_id integer, status text);
     CREATE TABLE concept2cure_artifacts (id serial PRIMARY KEY, artifact_id text, organization_id integer, project_id integer,
       title text, type text DEFAULT 'document', category text DEFAULT 'document', ctd_section text,
@@ -238,7 +227,7 @@ describe('actual artifact reads issue private current-source routing checkpoints
     await runWithSourceAuthority(createRunSourceAuthority(actor), async () => {
       expect(await run('read_vault_document', { artifact_id: 'a-a2', max_chars: 1 }, INSIDE_A)).toMatchObject({ ok: true });
       const checkpoint = captureCurrentRunSourceGate(actor)!;
-      expect(checkpoint.tiers).toEqual([3]); await checkpoint.recheck();
+      expect(checkpoint.tiers).toEqual([1, 3]); await checkpoint.recheck();
       try {
         // The legacy stored content_hash/version are deliberately unchanged.
         await h.pg.query("UPDATE concept2cure_artifacts SET content=$1 WHERE artifact_id='a-a2'", [original.rows[0].content + ' changed outside the excerpt']);

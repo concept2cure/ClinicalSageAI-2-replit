@@ -1,0 +1,2730 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/routes/__tests__/chat-upload-durability.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts
+{
+  "timestamp": "2026-11-08T17:03:08.966Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts
+{
+  "timestamp": "2026-11-08T17:03:09.255Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T17:03:09.256Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts
+{
+  "timestamp": "2026-11-08T17:03:09.256Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'UUID project' > refuses mkdir failure before metadata, extraction, capture, audit or retrieval
+{
+  "timestamp": "2026-11-08T17:03:20.054Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — original bytes could not be stored",
+  "context": {
+    "fileId": "file_1794157400053_urelnu",
+    "reason": "ENOSPC private-storage:/private/original e6a3830259502233e842b5c72604805ea22f480ddc3816867b03ae01ef48335b"
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'UUID project' > refuses writeFile failure before metadata, extraction, capture, audit or retrieval
+{
+  "timestamp": "2026-11-08T17:03:20.066Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — original bytes could not be stored",
+  "context": {
+    "fileId": "file_1794157400066_48vdhp",
+    "reason": "ENOSPC private-storage:/private/original e6a3830259502233e842b5c72604805ea22f480ddc3816867b03ae01ef48335b"
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'UUID project' > refuses when the byte store cannot take the bytes, before the disk, metadata or capture
+{
+  "timestamp": "2026-11-08T17:03:20.072Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — original bytes could not be stored",
+  "context": {
+    "fileId": "file_1794157400072_bi8y4w",
+    "reason": "AccessDenied s3://private-bucket/e6a3830259502233e842b5c72604805ea22f480ddc3816867b03ae01ef48335b"
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'UUID project' > refuses when the byte store records other bytes than it was given
+{
+  "timestamp": "2026-11-08T17:03:20.077Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — original bytes could not be stored",
+  "context": {
+    "fileId": "file_1794157400077_1thsj6",
+    "reason": "The byte store recorded different bytes than the upload received."
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'numeric workspace' > refuses mkdir failure before metadata, extraction, capture, audit or retrieval
+{
+  "timestamp": "2026-11-08T17:03:20.082Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — original bytes could not be stored",
+  "context": {
+    "fileId": "file_1794157400081_y2naxn",
+    "reason": "ENOSPC private-storage:/private/original e6a3830259502233e842b5c72604805ea22f480ddc3816867b03ae01ef48335b"
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'numeric workspace' > refuses writeFile failure before metadata, extraction, capture, audit or retrieval
+{
+  "timestamp": "2026-11-08T17:03:20.086Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — original bytes could not be stored",
+  "context": {
+    "fileId": "file_1794157400086_ukhh1k",
+    "reason": "ENOSPC private-storage:/private/original e6a3830259502233e842b5c72604805ea22f480ddc3816867b03ae01ef48335b"
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'numeric workspace' > refuses when the byte store cannot take the bytes, before the disk, metadata or capture
+{
+  "timestamp": "2026-11-08T17:03:20.089Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — original bytes could not be stored",
+  "context": {
+    "fileId": "file_1794157400089_w8w1pi",
+    "reason": "AccessDenied s3://private-bucket/e6a3830259502233e842b5c72604805ea22f480ddc3816867b03ae01ef48335b"
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'numeric workspace' > refuses when the byte store records other bytes than it was given
+{
+  "timestamp": "2026-11-08T17:03:20.093Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — original bytes could not be stored",
+  "context": {
+    "fileId": "file_1794157400093_zscb6j",
+    "reason": "The byte store recorded different bytes than the upload received."
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'conversation without a project' > refuses mkdir failure before metadata, extraction, capture, audit or retrieval
+{
+  "timestamp": "2026-11-08T17:03:20.097Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — original bytes could not be stored",
+  "context": {
+    "fileId": "file_1794157400097_vi41p0",
+    "reason": "ENOSPC private-storage:/private/original e6a3830259502233e842b5c72604805ea22f480ddc3816867b03ae01ef48335b"
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'conversation without a project' > refuses writeFile failure before metadata, extraction, capture, audit or retrieval
+{
+  "timestamp": "2026-11-08T17:03:20.102Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — original bytes could not be stored",
+  "context": {
+    "fileId": "file_1794157400101_o4rton",
+    "reason": "ENOSPC private-storage:/private/original e6a3830259502233e842b5c72604805ea22f480ddc3816867b03ae01ef48335b"
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'conversation without a project' > refuses when the byte store cannot take the bytes, before the disk, metadata or capture
+{
+  "timestamp": "2026-11-08T17:03:20.107Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — original bytes could not be stored",
+  "context": {
+    "fileId": "file_1794157400107_z0jsrg",
+    "reason": "AccessDenied s3://private-bucket/e6a3830259502233e842b5c72604805ea22f480ddc3816867b03ae01ef48335b"
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'conversation without a project' > refuses when the byte store records other bytes than it was given
+{
+  "timestamp": "2026-11-08T17:03:20.110Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — original bytes could not be stored",
+  "context": {
+    "fileId": "file_1794157400110_bwtq9j",
+    "reason": "The byte store recorded different bytes than the upload received."
+  }
+}
+
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'UUID project' > refuses mkdir failure before metadata, extraction, capture, audit or retrieval 27ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'UUID project' > refuses writeFile failure before metadata, extraction, capture, audit or retrieval 6ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'UUID project' > refuses when the byte store cannot take the bytes, before the disk, metadata or capture 5ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'UUID project' > refuses when the byte store records other bytes than it was given 4ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'numeric workspace' > refuses mkdir failure before metadata, extraction, capture, audit or retrieval 5ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'numeric workspace' > refuses writeFile failure before metadata, extraction, capture, audit or retrieval 4ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'numeric workspace' > refuses when the byte store cannot take the bytes, before the disk, metadata or capture 3ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'numeric workspace' > refuses when the byte store records other bytes than it was given 3ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'conversation without a project' > refuses mkdir failure before metadata, extraction, capture, audit or retrieval 6ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'conversation without a project' > refuses writeFile failure before metadata, extraction, capture, audit or retrieval 6ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'conversation without a project' > refuses when the byte store cannot take the bytes, before the disk, metadata or capture 3ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > 'conversation without a project' > refuses when the byte store records other bytes than it was given 2ms
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > preserves UUID-project capture with the original digest and bytes, only after storage
+{
+  "timestamp": "2026-11-08T17:03:20.205Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157400112_kfbzcs",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > preserves UUID-project capture with the original digest and bytes, only after storage
+{
+  "timestamp": "2026-11-08T17:03:20.206Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"resolveVaultFilingContext\" export is defined on the \"../../services/vault/vault-filing.service.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > preserves UUID-project capture with the original digest and bytes, only after storage
+{
+  "timestamp": "2026-11-08T17:03:20.206Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157400112_kfbzcs",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > preserves UUID-project capture with the original digest and bytes, only after storage
+{
+  "timestamp": "2026-11-08T17:03:20.207Z",
+  "level": "info",
+  "message": "[chat-upload] Project-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1794157400112_kfbzcs",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > preserves conversation upload without claiming a project source
+{
+  "timestamp": "2026-11-08T17:03:20.213Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157400213_ax2tqu",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > still refuses flagged bytes before storage or any downstream consequence
+{
+  "timestamp": "2026-11-08T17:03:20.216Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected by virus scanner",
+  "context": {
+    "filename": "protocol.txt",
+    "declaredMime": "text/plain",
+    "signature": "private-scanner-signature"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > one record per uploaded file (document store consolidation step 3) > a numeric-workspace upload writes one data-room source, in its program, and no concept2cure_artifacts row
+{
+  "timestamp": "2026-11-08T17:03:20.221Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157400221_iskw6z",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > one record per uploaded file (document store consolidation step 3) > a numeric-workspace upload writes one data-room source, in its program, and no concept2cure_artifacts row
+{
+  "timestamp": "2026-11-08T17:03:20.222Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"resolveVaultFilingContext\" export is defined on the \"../../services/vault/vault-filing.service.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > one record per uploaded file (document store consolidation step 3) > a numeric-workspace upload writes one data-room source, in its program, and no concept2cure_artifacts row
+{
+  "timestamp": "2026-11-08T17:03:20.222Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157400221_iskw6z",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > one record per uploaded file (document store consolidation step 3) > a numeric-workspace upload writes one data-room source, in its program, and no concept2cure_artifacts row
+{
+  "timestamp": "2026-11-08T17:03:20.222Z",
+  "level": "info",
+  "message": "[chat-upload] Project-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1794157400221_iskw6z",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > one record per uploaded file (document store consolidation step 3) > a numeric project with no single live program keeps its workspace scope and still writes no artifact copy
+{
+  "timestamp": "2026-11-08T17:03:20.226Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157400226_icolvo",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > one record per uploaded file (document store consolidation step 3) > a numeric project with no single live program keeps its workspace scope and still writes no artifact copy
+{
+  "timestamp": "2026-11-08T17:03:20.226Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"resolveVaultFilingContext\" export is defined on the \"../../services/vault/vault-filing.service.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > one record per uploaded file (document store consolidation step 3) > a numeric project with no single live program keeps its workspace scope and still writes no artifact copy
+{
+  "timestamp": "2026-11-08T17:03:20.226Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157400226_icolvo",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > one record per uploaded file (document store consolidation step 3) > a numeric project with no single live program keeps its workspace scope and still writes no artifact copy
+{
+  "timestamp": "2026-11-08T17:03:20.226Z",
+  "level": "info",
+  "message": "[chat-upload] Project-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1794157400226_icolvo",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": null,
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports persisted readable processing for completed
+{
+  "timestamp": "2026-11-08T17:03:20.230Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157400230_7onmsf",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports persisted readable processing for completed
+{
+  "timestamp": "2026-11-08T17:03:20.230Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"resolveVaultFilingContext\" export is defined on the \"../../services/vault/vault-filing.service.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports persisted readable processing for completed
+{
+  "timestamp": "2026-11-08T17:03:20.230Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157400230_7onmsf",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports persisted readable processing for completed
+{
+  "timestamp": "2026-11-08T17:03:20.230Z",
+  "level": "info",
+  "message": "[chat-upload] Project-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1794157400230_7onmsf",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports persisted readable processing for already_complete
+{
+  "timestamp": "2026-11-08T17:03:20.234Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157400234_oeoydb",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports persisted readable processing for already_complete
+{
+  "timestamp": "2026-11-08T17:03:20.234Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"resolveVaultFilingContext\" export is defined on the \"../../services/vault/vault-filing.service.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports persisted readable processing for already_complete
+{
+  "timestamp": "2026-11-08T17:03:20.234Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157400234_oeoydb",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports persisted readable processing for already_complete
+{
+  "timestamp": "2026-11-08T17:03:20.234Z",
+  "level": "info",
+  "message": "[chat-upload] Project-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1794157400234_oeoydb",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > preserves UUID-project capture with the original digest and bytes, only after storage 101ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > preserves conversation upload without claiming a project source 3ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > still refuses flagged bytes before storage or any downstream consequence 3ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > original-byte storage is required before canonical upload consequences > still checks project ownership before storing original bytes 2ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > one record per uploaded file (document store consolidation step 3) > a numeric-workspace upload writes one data-room source, in its program, and no concept2cure_artifacts row 4ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > one record per uploaded file (document store consolidation step 3) > a numeric project with no single live program keeps its workspace scope and still writes no artifact copy 4ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports persisted readable processing for completed 4ms
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for extraction_failed
+{
+  "timestamp": "2026-11-08T17:03:20.238Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157400238_r92p0w",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for extraction_failed
+{
+  "timestamp": "2026-11-08T17:03:20.238Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"resolveVaultFilingContext\" export is defined on the \"../../services/vault/vault-filing.service.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for extraction_failed
+{
+  "timestamp": "2026-11-08T17:03:20.238Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157400238_r92p0w",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for extraction_failed
+{
+  "timestamp": "2026-11-08T17:03:20.238Z",
+  "level": "info",
+  "message": "[chat-upload] Project-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1794157400238_r92p0w",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retryable_failure
+{
+  "timestamp": "2026-11-08T17:03:20.241Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157400241_1dwkv8",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retryable_failure
+{
+  "timestamp": "2026-11-08T17:03:20.241Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"resolveVaultFilingContext\" export is defined on the \"../../services/vault/vault-filing.service.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retryable_failure
+{
+  "timestamp": "2026-11-08T17:03:20.241Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157400241_1dwkv8",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retryable_failure
+{
+  "timestamp": "2026-11-08T17:03:20.241Z",
+  "level": "info",
+  "message": "[chat-upload] Project-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1794157400241_1dwkv8",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for blocked
+{
+  "timestamp": "2026-11-08T17:03:20.244Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157400243_xv1m27",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for blocked
+{
+  "timestamp": "2026-11-08T17:03:20.244Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"resolveVaultFilingContext\" export is defined on the \"../../services/vault/vault-filing.service.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for blocked
+{
+  "timestamp": "2026-11-08T17:03:20.244Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157400243_xv1m27",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for blocked
+{
+  "timestamp": "2026-11-08T17:03:20.244Z",
+  "level": "info",
+  "message": "[chat-upload] Project-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1794157400243_xv1m27",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for stale_source
+{
+  "timestamp": "2026-11-08T17:03:20.246Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157400246_zpc2ip",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for stale_source
+{
+  "timestamp": "2026-11-08T17:03:20.247Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"resolveVaultFilingContext\" export is defined on the \"../../services/vault/vault-filing.service.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for stale_source
+{
+  "timestamp": "2026-11-08T17:03:20.247Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157400246_zpc2ip",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for stale_source
+{
+  "timestamp": "2026-11-08T17:03:20.247Z",
+  "level": "info",
+  "message": "[chat-upload] Project-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1794157400246_zpc2ip",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for busy
+{
+  "timestamp": "2026-11-08T17:03:20.249Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157400249_gdqowg",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for busy
+{
+  "timestamp": "2026-11-08T17:03:20.250Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"resolveVaultFilingContext\" export is defined on the \"../../services/vault/vault-filing.service.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for busy
+{
+  "timestamp": "2026-11-08T17:03:20.250Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157400249_gdqowg",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for busy
+{
+  "timestamp": "2026-11-08T17:03:20.250Z",
+  "level": "info",
+  "message": "[chat-upload] Project-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1794157400249_gdqowg",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retry_not_due
+{
+  "timestamp": "2026-11-08T17:03:20.252Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157400252_rs1h89",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retry_not_due
+{
+  "timestamp": "2026-11-08T17:03:20.252Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"resolveVaultFilingContext\" export is defined on the \"../../services/vault/vault-filing.service.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retry_not_due
+{
+  "timestamp": "2026-11-08T17:03:20.252Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157400252_rs1h89",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retry_not_due
+{
+  "timestamp": "2026-11-08T17:03:20.252Z",
+  "level": "info",
+  "message": "[chat-upload] Project-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1794157400252_rs1h89",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retry_exhausted
+{
+  "timestamp": "2026-11-08T17:03:20.255Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157400254_ktkmcv",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retry_exhausted
+{
+  "timestamp": "2026-11-08T17:03:20.255Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"resolveVaultFilingContext\" export is defined on the \"../../services/vault/vault-filing.service.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retry_exhausted
+{
+  "timestamp": "2026-11-08T17:03:20.255Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157400254_ktkmcv",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retry_exhausted
+{
+  "timestamp": "2026-11-08T17:03:20.255Z",
+  "level": "info",
+  "message": "[chat-upload] Project-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1794157400254_ktkmcv",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > does not deny a committed capture when processing unexpectedly rejects
+{
+  "timestamp": "2026-11-08T17:03:20.260Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157400260_sb3xis",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > does not deny a committed capture when processing unexpectedly rejects
+{
+  "timestamp": "2026-11-08T17:03:20.260Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"resolveVaultFilingContext\" export is defined on the \"../../services/vault/vault-filing.service.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > does not deny a committed capture when processing unexpectedly rejects
+{
+  "timestamp": "2026-11-08T17:03:20.260Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157400260_sb3xis",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > does not deny a committed capture when processing unexpectedly rejects
+{
+  "timestamp": "2026-11-08T17:03:20.261Z",
+  "level": "warn",
+  "message": "[chat-upload] Captured upload processing unavailable",
+  "context": {
+    "sourceId": 41,
+    "err": "private processing storage /private/original"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > does not deny a committed capture when processing unexpectedly rejects
+{
+  "timestamp": "2026-11-08T17:03:20.261Z",
+  "level": "info",
+  "message": "[chat-upload] Project-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1794157400260_sb3xis",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > retries a duplicate canonical source within its original scope ('11111111-1111-1111-1111-111111111111')
+{
+  "timestamp": "2026-11-08T17:03:20.263Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157400263_1vlukn",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > retries a duplicate canonical source within its original scope ('11111111-1111-1111-1111-111111111111')
+{
+  "timestamp": "2026-11-08T17:03:20.263Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"resolveVaultFilingContext\" export is defined on the \"../../services/vault/vault-filing.service.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > retries a duplicate canonical source within its original scope ('11111111-1111-1111-1111-111111111111')
+{
+  "timestamp": "2026-11-08T17:03:20.263Z",
+  "level": "info",
+  "message": "[chat-upload] Upload resolved to an existing source identity",
+  "context": {
+    "fileId": "file_1794157400263_1vlukn",
+    "sourceId": 16,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > retries a duplicate canonical source within its original scope ('11111111-1111-1111-1111-111111111111')
+{
+  "timestamp": "2026-11-08T17:03:20.264Z",
+  "level": "info",
+  "message": "[chat-upload] Project-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1794157400263_1vlukn",
+    "sourceId": 16,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > retries a duplicate canonical source within its original scope ('proj_12')
+{
+  "timestamp": "2026-11-08T17:03:20.266Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157400266_4wvv7s",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > retries a duplicate canonical source within its original scope ('proj_12')
+{
+  "timestamp": "2026-11-08T17:03:20.266Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"resolveVaultFilingContext\" export is defined on the \"../../services/vault/vault-filing.service.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > retries a duplicate canonical source within its original scope ('proj_12')
+{
+  "timestamp": "2026-11-08T17:03:20.266Z",
+  "level": "info",
+  "message": "[chat-upload] Upload resolved to an existing source identity",
+  "context": {
+    "fileId": "file_1794157400266_4wvv7s",
+    "sourceId": 16,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > retries a duplicate canonical source within its original scope ('proj_12')
+{
+  "timestamp": "2026-11-08T17:03:20.266Z",
+  "level": "info",
+  "message": "[chat-upload] Project-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1794157400266_4wvv7s",
+    "sourceId": 16,
+    "atomId": 81,
+    "programId": null,
+    "embeddedChars": 41,
+    "extractedChars": 41,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > refuses a historical duplicate without processing or rebinding it
+{
+  "timestamp": "2026-11-08T17:03:20.269Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157400269_rekz8n",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > refuses a historical duplicate without processing or rebinding it
+{
+  "timestamp": "2026-11-08T17:03:20.269Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"resolveVaultFilingContext\" export is defined on the \"../../services/vault/vault-filing.service.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > preserves an unconfirmed commit result without claiming a failed or completed capture
+{
+  "timestamp": "2026-11-08T17:03:20.271Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157400271_e9m1gv",
+    "method": "utf8",
+    "chars": 41
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > preserves an unconfirmed commit result without claiming a failed or completed capture
+{
+  "timestamp": "2026-11-08T17:03:20.272Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"resolveVaultFilingContext\" export is defined on the \"../../services/vault/vault-filing.service.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > reports persisted readable processing for already_complete 4ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for extraction_failed 3ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retryable_failure 3ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for blocked 3ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for stale_source 3ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for busy 3ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retry_not_due 3ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > keeps stored capture available without readable claim for retry_exhausted 5ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > does not deny a committed capture when processing unexpectedly rejects 3ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > retries a duplicate canonical source within its original scope ('11111111-1111-1111-1111-111111111111') 3ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > retries a duplicate canonical source within its original scope ('proj_12') 3ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > refuses a historical duplicate without processing or rebinding it 2ms
+ ✓ server/routes/__tests__/chat-upload-durability.test.ts > capture processing is separate from upload availability > preserves an unconfirmed commit result without claiming a failed or completed capture 3ms
+(node:48) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | tests/routes/chat-upload-source-identity.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/chat-upload-source-identity.test.ts
+{
+  "timestamp": "2026-11-08T17:03:21.161Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts
+{
+  "timestamp": "2026-11-08T17:03:21.213Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T17:03:21.214Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts
+{
+  "timestamp": "2026-11-08T17:03:21.214Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts
+Loaded 0 academic documents
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > creates one client_document source and returns its id
+{
+  "timestamp": "2026-11-08T17:03:23.917Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157403828_4or6ry",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > creates one client_document source and returns its id
+{
+  "timestamp": "2026-11-08T17:03:23.964Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157403828_4or6ry",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a numeric project upload to the workspace
+{
+  "timestamp": "2026-11-08T17:03:23.968Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157403967_7t8t0f",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a numeric project upload to the workspace
+{
+  "timestamp": "2026-11-08T17:03:23.970Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157403967_7t8t0f",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a UUID-keyed program upload instead of rejecting it
+{
+  "timestamp": "2026-11-08T17:03:23.972Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157403971_cdelf4",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a UUID-keyed program upload instead of rejecting it
+{
+  "timestamp": "2026-11-08T17:03:23.973Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157403971_cdelf4",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > records that the document was stored, and hands what it read to the processor that commits it
+{
+  "timestamp": "2026-11-08T17:03:23.975Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157403974_biqrj1",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > records that the document was stored, and hands what it read to the processor that commits it
+{
+  "timestamp": "2026-11-08T17:03:23.975Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157403974_biqrj1",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > carries the upload back to its bytes and its file_uploads row
+{
+  "timestamp": "2026-11-08T17:03:23.979Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157403978_avypow",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > carries the upload back to its bytes and its file_uploads row
+{
+  "timestamp": "2026-11-08T17:03:23.979Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157403978_avypow",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload
+{
+  "timestamp": "2026-11-08T17:03:23.981Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157403980_84qq1l",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload
+{
+  "timestamp": "2026-11-08T17:03:23.981Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157403980_84qq1l",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload
+{
+  "timestamp": "2026-11-08T17:03:23.982Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157403981_s1b18m",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload
+{
+  "timestamp": "2026-11-08T17:03:23.982Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157403981_s1b18m",
+    "sourceId": 1,
+    "supersededId": null
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > resolves an existing identity instead of creating a second one
+{
+  "timestamp": "2026-11-08T17:03:23.983Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157403983_lm1a28",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > resolves an existing identity instead of creating a second one
+{
+  "timestamp": "2026-11-08T17:03:23.984Z",
+  "level": "info",
+  "message": "[chat-upload] Upload resolved to an existing source identity",
+  "context": {
+    "fileId": "file_1794157403983_lm1a28",
+    "sourceId": 777,
+    "supersededId": null
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > skips identity resolution when the org does not resolve to a numeric id
+{
+  "timestamp": "2026-11-08T17:03:23.985Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157403984_7am04p",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → a Data Room source belongs to a project (PF-02, PF-07) > with no project open, the file stays a conversation file: no Data Room source (PF-07)
+{
+  "timestamp": "2026-11-08T17:03:23.990Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157403989_1q8xla",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → a Data Room source belongs to a project (PF-02, PF-07) > resolves identity within the project, never across the organization (PF-07 / VR-10)
+{
+  "timestamp": "2026-11-08T17:03:23.991Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157403990_5dsm1y",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → a Data Room source belongs to a project (PF-02, PF-07) > resolves identity within the project, never across the organization (PF-07 / VR-10)
+{
+  "timestamp": "2026-11-08T17:03:23.991Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157403990_5dsm1y",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → a Data Room source belongs to a project (PF-02, PF-07) > resolves identity within the project, never across the organization (PF-07 / VR-10)
+{
+  "timestamp": "2026-11-08T17:03:23.992Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157403992_1f3smv",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → a Data Room source belongs to a project (PF-02, PF-07) > resolves identity within the project, never across the organization (PF-07 / VR-10)
+{
+  "timestamp": "2026-11-08T17:03:23.993Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157403992_1f3smv",
+    "sourceId": 4243,
+    "supersededId": null
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → a Data Room source belongs to a project (PF-02, PF-07) > a project-scoped source that cannot be written answers 503 — never 200 "ready" (PF-07)
+{
+  "timestamp": "2026-11-08T17:03:23.994Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157403993_kjbf97",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stderr | tests/routes/chat-upload-source-identity.test.ts > chat upload → a Data Room source belongs to a project (PF-02, PF-07) > a project-scoped source that cannot be written answers 503 — never 200 "ready" (PF-07)
+{
+  "timestamp": "2026-11-08T17:03:23.994Z",
+  "level": "error",
+  "message": "[chat-upload] Canonical source identity not created for upload",
+  "context": {
+    "err": "cre tables missing",
+    "fileId": "file_1794157403993_kjbf97",
+    "orgId": 5
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records the version the document declares, and where it read it
+{
+  "timestamp": "2026-11-08T17:03:23.996Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157403995_gkhkav",
+    "method": "utf8",
+    "chars": 68
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records the version the document declares, and where it read it
+{
+  "timestamp": "2026-11-08T17:03:23.996Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157403995_gkhkav",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > reads the version off the filename when the document declares none
+{
+  "timestamp": "2026-11-08T17:03:23.997Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157403996_1rzh4j",
+    "method": "utf8",
+    "chars": 24
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > reads the version off the filename when the document declares none
+{
+  "timestamp": "2026-11-08T17:03:23.997Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157403996_1rzh4j",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records an UNKNOWN version as unknown — not as 1, not as a date
+{
+  "timestamp": "2026-11-08T17:03:23.998Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157403998_zl9wuy",
+    "method": "utf8",
+    "chars": 54
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records an UNKNOWN version as unknown — not as 1, not as a date
+{
+  "timestamp": "2026-11-08T17:03:23.999Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157403998_zl9wuy",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > declines to pick when the document declares two different versions
+{
+  "timestamp": "2026-11-08T17:03:24.000Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157404000_27x6qz",
+    "method": "utf8",
+    "chars": 46
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > declines to pick when the document declares two different versions
+{
+  "timestamp": "2026-11-08T17:03:24.001Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157404000_27x6qz",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > carries the determination onto a superseding upload too
+{
+  "timestamp": "2026-11-08T17:03:24.002Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157404001_u5w8hh",
+    "method": "utf8",
+    "chars": 20
+  }
+}
+
+stdout | tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > carries the determination onto a superseding upload too
+{
+  "timestamp": "2026-11-08T17:03:24.002Z",
+  "level": "info",
+  "message": "[chat-upload] Upload superseded an existing source identity",
+  "context": {
+    "fileId": "file_1794157404001_u5w8hh",
+    "sourceId": 4242,
+    "supersededId": 300
+  }
+}
+
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > creates one client_document source and returns its id 140ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a numeric project upload to the workspace 4ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > scopes a UUID-keyed program upload instead of rejecting it 3ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > records that the document was stored, and hands what it read to the processor that commits it 4ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > carries the upload back to its bytes and its file_uploads row 2ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > hashes the raw bytes, so identity survives a re-upload 3ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > resolves an existing identity instead of creating a second one 1ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → canonical source identity > skips identity resolution when the org does not resolve to a numeric id 1ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → a Data Room source belongs to a project (PF-02, PF-07) > refuses a project the organization does not hold — another org’s, a missing or a deleted one — before anything is written 2ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → a Data Room source belongs to a project (PF-02, PF-07) > refuses a numeric project of another organization the same way — 404, nothing written (PF-03) 1ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → a Data Room source belongs to a project (PF-02, PF-07) > with no project open, the file stays a conversation file: no Data Room source (PF-07) 1ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → a Data Room source belongs to a project (PF-02, PF-07) > resolves identity within the project, never across the organization (PF-07 / VR-10) 3ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → a Data Room source belongs to a project (PF-02, PF-07) > a project-scoped source that cannot be written answers 503 — never 200 "ready" (PF-07) 2ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records the version the document declares, and where it read it 1ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > reads the version off the filename when the document declares none 1ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > records an UNKNOWN version as unknown — not as 1, not as a date 2ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > declines to pick when the document declares two different versions 1ms
+ ✓ tests/routes/chat-upload-source-identity.test.ts > chat upload → source version is observed, never invented (L21) > carries the determination onto a superseding upload too 1ms
+(node:69) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T17:03:24.790Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > creates a client_document source carrying its upload provenance 10ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > records ingestion and extraction status instead of leaving them pending 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > records a failed extraction honestly rather than as extracted 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > still defaults to pending when a caller says nothing 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > resolves a re-upload of the same bytes to the existing identity 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > returns the earliest identity when duplicates already exist 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > does not resolve one tenant's file to another tenant's identity 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > resolves identity within one project: the same bytes in two projects are two sources (PF-07 / VR-10) 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > finds nothing for an unknown or empty checksum 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > does not match a different source type when one is requested 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > scopes a source to a UUID-keyed program 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > canonical source identity (real Postgres) > rejects an invalid status rather than writing it 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > data room listing (real Postgres) > returns only the requested program's documents 50ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > data room listing (real Postgres) > never returns another tenant's documents for the same program id 47ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > data room listing (real Postgres) > does not widen to the whole tenant when a scope matches nothing 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > data room listing (real Postgres) > returns ownerless documents only when asked, and never mixes them in 72ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > data room listing (real Postgres) > refuses a numeric workspace without an authoritative programme 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > data room listing (real Postgres) > lists only client documents, not CSRs or letters 45ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > context builder — resolving selected sources to readable uploads (real Postgres) > resolves a selected source back to the upload its bytes live in 6ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > context builder — resolving selected sources to readable uploads (real Postgres) > preserves the requested order and de-duplicates 8ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > context builder — resolving selected sources to readable uploads (real Postgres) > does not resolve another tenant's source 12ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > context builder — resolving selected sources to readable uploads (real Postgres) > skips a source that has no readable upload 5ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > context builder — resolving selected sources to readable uploads (real Postgres) > returns the readable subset of a mixed selection 6ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/canonical-source-identity.pglite.integration.test.ts > context builder — resolving selected sources to readable uploads (real Postgres) > ignores malformed ids without querying 0ms
+(node:81) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T17:03:27.537Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > source versioning — a citation stops calling itself current > a cited source that is superseded reports SUPERSEDED, not current 66ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > source versioning — a citation stops calling itself current > refuses to fork a lineage: a source can be superseded only once 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > source versioning — a citation stops calling itself current > does not retire a source belonging to another tenant 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > findSupersededCandidate — declines to guess > finds the single current same-name document in the project 14ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > findSupersededCandidate — declines to guess > returns null when TWO documents in the project share the name 18ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > findSupersededCandidate — declines to guess > returns null with no project scope — a filename alone is not identity 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > findSupersededCandidate — declines to guess > does not offer an already-superseded source as a candidate 14ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > the version column carries what was observed, and nothing else (L21) > round-trips a declared version into cre_evidence_sources.version 11ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > the version column carries what was observed, and nothing else (L21) > leaves the column NULL when the caller records no version 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > the version column carries what was observed, and nothing else (L21) > carries the version across a supersession without renumbering it 13ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > SourceRef.version reports a label it can carry, or none > reports an integer label as that integer 14ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > SourceRef.version reports a label it can carry, or none > reports a dotted label as NOT RECORDED rather than truncating it 49ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-versioning.pglite.integration.test.ts > SourceRef.version reports a label it can carry, or none > reports an absent version as absent 39ms
+(node:93) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | tests/routes/chat-upload-wiring.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/chat-upload-wiring.test.ts
+{
+  "timestamp": "2026-11-08T17:03:30.571Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts
+{
+  "timestamp": "2026-11-08T17:03:30.636Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T17:03:30.637Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts
+{
+  "timestamp": "2026-11-08T17:03:30.637Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts
+Loaded 0 academic documents
+
+stderr | tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > receives the bytes a real multipart request sends
+{
+  "timestamp": "2026-11-08T17:03:33.215Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > receives the bytes a real multipart request sends
+{
+  "timestamp": "2026-11-08T17:03:33.252Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157413216_nfm6hx",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > receives the bytes a real multipart request sends
+{
+  "timestamp": "2026-11-08T17:03:33.262Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157413216_nfm6hx",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > records the real byte length, not zero
+{
+  "timestamp": "2026-11-08T17:03:33.272Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > records the real byte length, not zero
+{
+  "timestamp": "2026-11-08T17:03:33.272Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157413272_2vmc4t",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts > an upload with no bytes fails closed > refuses a request carrying no file rather than recording a phantom document
+{
+  "timestamp": "2026-11-08T17:03:33.281Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — no file bytes received",
+  "context": {
+    "hasFile": false,
+    "contentType": "application/json"
+  }
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts > an upload with no bytes fails closed > writes nothing at all when it refuses
+{
+  "timestamp": "2026-11-08T17:03:33.287Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — no file bytes received",
+  "context": {
+    "hasFile": false,
+    "contentType": "application/json"
+  }
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts > an upload with no bytes fails closed > does not accept a filename and size in place of a file
+{
+  "timestamp": "2026-11-08T17:03:33.290Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload rejected — no file bytes received",
+  "context": {
+    "hasFile": false,
+    "contentType": "application/json"
+  }
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives different documents different checksums
+{
+  "timestamp": "2026-11-08T17:03:33.293Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives different documents different checksums
+{
+  "timestamp": "2026-11-08T17:03:33.294Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157413293_l9r5nk",
+    "method": "utf8",
+    "chars": 20
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives different documents different checksums
+{
+  "timestamp": "2026-11-08T17:03:33.295Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157413293_l9r5nk",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+ ✓ tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > receives the bytes a real multipart request sends 70ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > the multipart parser is actually mounted > records the real byte length, not zero 6ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > an upload with no bytes fails closed > refuses a request carrying no file rather than recording a phantom document 7ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > an upload with no bytes fails closed > writes nothing at all when it refuses 6ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > an upload with no bytes fails closed > does not accept a filename and size in place of a file 3ms
+stderr | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives different documents different checksums
+{
+  "timestamp": "2026-11-08T17:03:33.298Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "csr.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives different documents different checksums
+{
+  "timestamp": "2026-11-08T17:03:33.299Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157413298_yuduwc",
+    "method": "utf8",
+    "chars": 44
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives different documents different checksums
+{
+  "timestamp": "2026-11-08T17:03:33.299Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157413298_yuduwc",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives identical bytes the same checksum regardless of filename
+{
+  "timestamp": "2026-11-08T17:03:33.303Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "first-name.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives identical bytes the same checksum regardless of filename
+{
+  "timestamp": "2026-11-08T17:03:33.304Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157413304_m5wuve",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives identical bytes the same checksum regardless of filename
+{
+  "timestamp": "2026-11-08T17:03:33.305Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157413304_m5wuve",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives identical bytes the same checksum regardless of filename
+{
+  "timestamp": "2026-11-08T17:03:33.308Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "renamed-copy.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives identical bytes the same checksum regardless of filename
+{
+  "timestamp": "2026-11-08T17:03:33.308Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157413308_1nebj1",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives identical bytes the same checksum regardless of filename
+{
+  "timestamp": "2026-11-08T17:03:33.308Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157413308_1nebj1",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > is a SHA-256 over the bytes, independently reproducible
+{
+  "timestamp": "2026-11-08T17:03:33.313Z",
+  "level": "warn",
+  "message": "[upload-safety] Virus scan bypassed (non-production)",
+  "context": {
+    "filename": "protocol.txt",
+    "reason": "clamav_not_configured"
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > is a SHA-256 over the bytes, independently reproducible
+{
+  "timestamp": "2026-11-08T17:03:33.314Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157413313_30z5qv",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stdout | tests/routes/chat-upload-wiring.test.ts > content identity comes from content > is a SHA-256 over the bytes, independently reproducible
+{
+  "timestamp": "2026-11-08T17:03:33.314Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157413313_30z5qv",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+ ✓ tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives different documents different checksums 10ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > content identity comes from content > gives identical bytes the same checksum regardless of filename 9ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > content identity comes from content > is a SHA-256 over the bytes, independently reproducible 8ms
+ ✓ tests/routes/chat-upload-wiring.test.ts > the parser enforces its limits > rejects a file type outside the allowlist with 415, not 500 3ms
+(node:110) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | tests/routes/chat-upload-to-memory.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | tests/routes/chat-upload-to-memory.test.ts
+{
+  "timestamp": "2026-11-08T17:03:34.565Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | tests/routes/chat-upload-to-memory.test.ts
+{
+  "timestamp": "2026-11-08T17:03:34.626Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T17:03:34.626Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts
+{
+  "timestamp": "2026-11-08T17:03:34.626Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | tests/routes/chat-upload-to-memory.test.ts
+Loaded 0 academic documents
+
+stdout | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > writes a text file’s real content into the embedded memory atom of its Data Room source, and no artifact copy
+{
+  "timestamp": "2026-11-08T17:03:36.959Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157416923_z704aa",
+    "method": "utf8",
+    "chars": 69
+  }
+}
+
+stdout | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > writes a text file’s real content into the embedded memory atom of its Data Room source, and no artifact copy
+{
+  "timestamp": "2026-11-08T17:03:36.969Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157416923_z704aa",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stdout | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > writes a text file’s real content into the embedded memory atom of its Data Room source, and no artifact copy
+{
+  "timestamp": "2026-11-08T17:03:36.971Z",
+  "level": "info",
+  "message": "[chat-upload] Project-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1794157416923_z704aa",
+    "sourceId": 4242,
+    "atomId": 4242,
+    "programId": null,
+    "embeddedChars": 69,
+    "extractedChars": 69,
+    "truncated": false
+  }
+}
+
+stdout | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > does NOT store a filename placeholder when extraction yields real text
+{
+  "timestamp": "2026-11-08T17:03:36.977Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157416975_26lgot",
+    "method": "utf8",
+    "chars": 44
+  }
+}
+
+stdout | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > does NOT store a filename placeholder when extraction yields real text
+{
+  "timestamp": "2026-11-08T17:03:36.978Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157416975_26lgot",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stderr | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > embeds NOTHING when extraction yields no text — the placeholder is not the document
+{
+  "timestamp": "2026-11-08T17:03:36.980Z",
+  "level": "warn",
+  "message": "[chat-upload] Upload text extraction failed (non-fatal)",
+  "context": {
+    "err": "No text could be read from the file.",
+    "fileId": "file_1794157416979_axggcf"
+  }
+}
+
+stdout | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > embeds NOTHING when extraction yields no text — the placeholder is not the document
+{
+  "timestamp": "2026-11-08T17:03:36.981Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157416979_axggcf",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stdout | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > reports extraction status for an org-scoped upload (no project, no Data Room source)
+{
+  "timestamp": "2026-11-08T17:03:36.982Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157416982_yce78i",
+    "method": "utf8",
+    "chars": 40
+  }
+}
+
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > writes a text file’s real content into the embedded memory atom of its Data Room source, and no artifact copy 53ms
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > does NOT store a filename placeholder when extraction yields real text 4ms
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > embeds NOTHING when extraction yields no text — the placeholder is not the document 2ms
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > reports extraction status for an org-scoped upload (no project, no Data Room source) 2ms
+(node:110) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > OCRs an uploaded image and stores the recognised text in memory
+{
+  "timestamp": "2026-11-08T17:03:37.294Z",
+  "level": "info",
+  "message": "[tesseract-ocr] OCR completed",
+  "context": {
+    "languages": "eng",
+    "chars": 24,
+    "confidence": 95,
+    "durationMs": 87
+  }
+}
+
+stdout | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > OCRs an uploaded image and stores the recognised text in memory
+{
+  "timestamp": "2026-11-08T17:03:37.294Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157416989_nllts7",
+    "method": "image-ocr",
+    "chars": 23
+  }
+}
+
+stdout | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > OCRs an uploaded image and stores the recognised text in memory
+{
+  "timestamp": "2026-11-08T17:03:37.295Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157416989_nllts7",
+    "sourceId": 4242,
+    "supersededId": null
+  }
+}
+
+stdout | tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > OCRs an uploaded image and stores the recognised text in memory
+{
+  "timestamp": "2026-11-08T17:03:37.295Z",
+  "level": "info",
+  "message": "[chat-upload] Project-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1794157416989_nllts7",
+    "sourceId": 4242,
+    "atomId": 77,
+    "programId": null,
+    "embeddedChars": 23,
+    "extractedChars": 23,
+    "truncated": false
+  }
+}
+
+ ✓ tests/routes/chat-upload-to-memory.test.ts > chat upload → extraction → project memory (e2e) > OCRs an uploaded image and stores the recognised text in memory 313ms
+(node:132) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/routes/__tests__/chat-upload-extraction-coverage.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/chat-upload-extraction-coverage.test.ts
+{
+  "timestamp": "2026-11-08T17:03:38.270Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/chat-upload-extraction-coverage.test.ts
+{
+  "timestamp": "2026-11-08T17:03:38.322Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T17:03:38.322Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-extraction-coverage.test.ts
+{
+  "timestamp": "2026-11-08T17:03:38.323Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/chat-upload-extraction-coverage.test.ts
+Loaded 0 academic documents
+
+stdout | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > a page_budget read reports its coverage and indexedWholeFile false
+{
+  "timestamp": "2026-11-08T17:03:40.710Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157420696_svy8db",
+    "method": "pdf-ocr",
+    "chars": 72
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > a page_budget read reports its coverage and indexedWholeFile false
+{
+  "timestamp": "2026-11-08T17:03:40.711Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"resolveVaultFilingContext\" export is defined on the \"../../services/vault/vault-filing.service.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > a page_budget read reports its coverage and indexedWholeFile false
+{
+  "timestamp": "2026-11-08T17:03:40.712Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157420696_svy8db",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > a page_budget read reports its coverage and indexedWholeFile false
+{
+  "timestamp": "2026-11-08T17:03:40.712Z",
+  "level": "info",
+  "message": "[chat-upload] Project-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1794157420696_svy8db",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 72,
+    "extractedChars": 72,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > a time_budget read reports its coverage and indexedWholeFile false
+{
+  "timestamp": "2026-11-08T17:03:40.723Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157420722_kl211e",
+    "method": "pdf-ocr",
+    "chars": 72
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > a time_budget read reports its coverage and indexedWholeFile false
+{
+  "timestamp": "2026-11-08T17:03:40.723Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"resolveVaultFilingContext\" export is defined on the \"../../services/vault/vault-filing.service.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > a time_budget read reports its coverage and indexedWholeFile false
+{
+  "timestamp": "2026-11-08T17:03:40.723Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157420722_kl211e",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > a time_budget read reports its coverage and indexedWholeFile false
+{
+  "timestamp": "2026-11-08T17:03:40.724Z",
+  "level": "info",
+  "message": "[chat-upload] Project-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1794157420722_kl211e",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 72,
+    "extractedChars": 72,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > a ocr_failed read reports its coverage and indexedWholeFile false
+{
+  "timestamp": "2026-11-08T17:03:40.728Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157420727_6il5va",
+    "method": "pdf-ocr",
+    "chars": 72
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > a ocr_failed read reports its coverage and indexedWholeFile false
+{
+  "timestamp": "2026-11-08T17:03:40.728Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"resolveVaultFilingContext\" export is defined on the \"../../services/vault/vault-filing.service.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > a ocr_failed read reports its coverage and indexedWholeFile false
+{
+  "timestamp": "2026-11-08T17:03:40.728Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157420727_6il5va",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > a ocr_failed read reports its coverage and indexedWholeFile false
+{
+  "timestamp": "2026-11-08T17:03:40.728Z",
+  "level": "info",
+  "message": "[chat-upload] Project-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1794157420727_6il5va",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 72,
+    "extractedChars": 72,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > the upload extraction runs under the automatic budget
+{
+  "timestamp": "2026-11-08T17:03:40.732Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157420732_57d9py",
+    "method": "pdf-ocr",
+    "chars": 72
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > the upload extraction runs under the automatic budget
+{
+  "timestamp": "2026-11-08T17:03:40.732Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"resolveVaultFilingContext\" export is defined on the \"../../services/vault/vault-filing.service.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > the upload extraction runs under the automatic budget
+{
+  "timestamp": "2026-11-08T17:03:40.732Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157420732_57d9py",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > the upload extraction runs under the automatic budget
+{
+  "timestamp": "2026-11-08T17:03:40.733Z",
+  "level": "info",
+  "message": "[chat-upload] Project-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1794157420732_57d9py",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 72,
+    "extractedChars": 72,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > a complete OCR read reports its coverage and stays indexedWholeFile true
+{
+  "timestamp": "2026-11-08T17:03:40.738Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157420737_kw0smp",
+    "method": "pdf-ocr",
+    "chars": 72
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > a complete OCR read reports its coverage and stays indexedWholeFile true
+{
+  "timestamp": "2026-11-08T17:03:40.738Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"resolveVaultFilingContext\" export is defined on the \"../../services/vault/vault-filing.service.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > a complete OCR read reports its coverage and stays indexedWholeFile true
+{
+  "timestamp": "2026-11-08T17:03:40.738Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157420737_kw0smp",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > a complete OCR read reports its coverage and stays indexedWholeFile true
+{
+  "timestamp": "2026-11-08T17:03:40.738Z",
+  "level": "info",
+  "message": "[chat-upload] Project-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1794157420737_kw0smp",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 72,
+    "extractedChars": 72,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > a read without coverage reports extractionCoverage null
+{
+  "timestamp": "2026-11-08T17:03:40.742Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157420742_992ez3",
+    "method": "pdf-ocr",
+    "chars": 72
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > a read without coverage reports extractionCoverage null
+{
+  "timestamp": "2026-11-08T17:03:40.742Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"resolveVaultFilingContext\" export is defined on the \"../../services/vault/vault-filing.service.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > a read without coverage reports extractionCoverage null
+{
+  "timestamp": "2026-11-08T17:03:40.743Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157420742_992ez3",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > a read without coverage reports extractionCoverage null
+{
+  "timestamp": "2026-11-08T17:03:40.743Z",
+  "level": "info",
+  "message": "[chat-upload] Project-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1794157420742_992ez3",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 72,
+    "extractedChars": 72,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > a conversation upload (no project) still reports its coverage
+{
+  "timestamp": "2026-11-08T17:03:40.746Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157420746_1zxd0k",
+    "method": "pdf-ocr",
+    "chars": 72
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > CONTROL: a read without coverage keeps indexedWholeFile true
+{
+  "timestamp": "2026-11-08T17:03:40.749Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157420749_t4xh0b",
+    "method": "pdf-ocr",
+    "chars": 72
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > CONTROL: a read without coverage keeps indexedWholeFile true
+{
+  "timestamp": "2026-11-08T17:03:40.749Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"resolveVaultFilingContext\" export is defined on the \"../../services/vault/vault-filing.service.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > CONTROL: a read without coverage keeps indexedWholeFile true
+{
+  "timestamp": "2026-11-08T17:03:40.749Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157420749_t4xh0b",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > CONTROL: a read without coverage keeps indexedWholeFile true
+{
+  "timestamp": "2026-11-08T17:03:40.749Z",
+  "level": "info",
+  "message": "[chat-upload] Project-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1794157420749_t4xh0b",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 72,
+    "extractedChars": 72,
+    "truncated": false
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > CONTROL: an EXTRACTION_PARTIAL processing result is passed through to dataRoom.processing
+{
+  "timestamp": "2026-11-08T17:03:40.757Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157420757_x2rlo3",
+    "method": "pdf-ocr",
+    "chars": 72
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > CONTROL: an EXTRACTION_PARTIAL processing result is passed through to dataRoom.processing
+{
+  "timestamp": "2026-11-08T17:03:40.757Z",
+  "level": "warn",
+  "message": "[data-room-processing] Data Room classification failed (non-fatal)",
+  "context": {
+    "err": "[vitest] No \"resolveVaultFilingContext\" export is defined on the \"../../services/vault/vault-filing.service.js\" mock. Did you forget to return it from \"vi.mock\"?\nIf you need to partially mock a module, you can use \"importOriginal\" helper inside:\n"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > CONTROL: an EXTRACTION_PARTIAL processing result is passed through to dataRoom.processing
+{
+  "timestamp": "2026-11-08T17:03:40.758Z",
+  "level": "info",
+  "message": "[chat-upload] Upload created a canonical source identity",
+  "context": {
+    "fileId": "file_1794157420757_x2rlo3",
+    "sourceId": 41,
+    "supersededId": null
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > CONTROL: an EXTRACTION_PARTIAL processing result is passed through to dataRoom.processing
+{
+  "timestamp": "2026-11-08T17:03:40.758Z",
+  "level": "info",
+  "message": "[chat-upload] Project-scoped upload embedded into retrieval corpus",
+  "context": {
+    "fileId": "file_1794157420757_x2rlo3",
+    "sourceId": 41,
+    "atomId": 81,
+    "programId": "11111111-1111-1111-1111-111111111111",
+    "embeddedChars": 72,
+    "extractedChars": 72,
+    "truncated": false
+  }
+}
+
+ ✓ server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > a page_budget read reports its coverage and indexedWholeFile false 40ms
+ ✓ server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > a time_budget read reports its coverage and indexedWholeFile false 6ms
+ ✓ server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > a ocr_failed read reports its coverage and indexedWholeFile false 5ms
+ ✓ server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > the upload extraction runs under the automatic budget 5ms
+ ✓ server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > a complete OCR read reports its coverage and stays indexedWholeFile true 5ms
+ ✓ server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > a read without coverage reports extractionCoverage null 4ms
+ ✓ server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > a conversation upload (no project) still reports its coverage 3ms
+ ✓ server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > CONTROL: a read without coverage keeps indexedWholeFile true 3ms
+ ✓ server/routes/__tests__/chat-upload-extraction-coverage.test.ts > upload response — extractionCoverage and indexedWholeFile (B5) > CONTROL: an EXTRACTION_PARTIAL processing result is passed through to dataRoom.processing 9ms
+(node:149) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/routes/__tests__/chat-upload-safety.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/chat-upload-safety.test.ts
+{
+  "timestamp": "2026-11-08T17:03:41.726Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/chat-upload-safety.test.ts
+{
+  "timestamp": "2026-11-08T17:03:41.802Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T17:03:41.802Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-safety.test.ts
+{
+  "timestamp": "2026-11-08T17:03:41.802Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/chat-upload-safety.test.ts
+Loaded 0 academic documents
+
+stdout | server/routes/__tests__/chat-upload-safety.test.ts > chat evidence upload runs assertUploadSafe before anything is stored > stores and raw-text reads enrollment.csv through the real multipart route after clean scanning
+{
+  "timestamp": "2026-11-08T17:03:44.677Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157424632_k3gzxc",
+    "method": "utf8",
+    "chars": 19
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-safety.test.ts > chat evidence upload runs assertUploadSafe before anything is stored > stores and raw-text reads enrollment.tsv through the real multipart route after clean scanning
+{
+  "timestamp": "2026-11-08T17:03:44.688Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157424687_50rq3h",
+    "method": "utf8",
+    "chars": 19
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-safety.test.ts > chat evidence upload runs assertUploadSafe before anything is stored > stores and raw-text reads resource.json through the real multipart route after clean scanning
+{
+  "timestamp": "2026-11-08T17:03:44.693Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157424692_zih244",
+    "method": "utf8",
+    "chars": 27
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-safety.test.ts > chat evidence upload runs assertUploadSafe before anything is stored > stores and raw-text reads define.xml through the real multipart route after clean scanning
+{
+  "timestamp": "2026-11-08T17:03:44.697Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157424697_0ezdat",
+    "method": "utf8",
+    "chars": 43
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-safety.test.ts > chat evidence upload runs assertUploadSafe before anything is stored > refuses a PDF declared under a .json name before scan/storage
+{
+  "timestamp": "2026-11-08T17:03:44.701Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected: declared type does not match the file name",
+  "context": {
+    "filename": "data.json",
+    "declaredMime": "application/pdf",
+    "reason": "a .json file must be declared as application/json or text/json or text/plain"
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-safety.test.ts > chat evidence upload runs assertUploadSafe before anything is stored > refuses a PDF declared under a .xml name before scan/storage
+{
+  "timestamp": "2026-11-08T17:03:44.705Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected: declared type does not match the file name",
+  "context": {
+    "filename": "data.xml",
+    "declaredMime": "application/pdf",
+    "reason": "a .xml file must be declared as application/xml or text/xml or text/plain"
+  }
+}
+
+ ✓ server/routes/__tests__/chat-upload-safety.test.ts > chat evidence upload runs assertUploadSafe before anything is stored > stores and raw-text reads enrollment.csv through the real multipart route after clean scanning 75ms
+ ✓ server/routes/__tests__/chat-upload-safety.test.ts > chat evidence upload runs assertUploadSafe before anything is stored > stores and raw-text reads enrollment.tsv through the real multipart route after clean scanning 6ms
+ ✓ server/routes/__tests__/chat-upload-safety.test.ts > chat evidence upload runs assertUploadSafe before anything is stored > stores and raw-text reads resource.json through the real multipart route after clean scanning 5ms
+ ✓ server/routes/__tests__/chat-upload-safety.test.ts > chat evidence upload runs assertUploadSafe before anything is stored > stores and raw-text reads define.xml through the real multipart route after clean scanning 4ms
+ ✓ server/routes/__tests__/chat-upload-safety.test.ts > chat evidence upload runs assertUploadSafe before anything is stored > refuses a PDF declared under a .json name before scan/storage 4ms
+ ✓ server/routes/__tests__/chat-upload-safety.test.ts > chat evidence upload runs assertUploadSafe before anything is stored > refuses a PDF declared under a .xml name before scan/storage 3ms
+stderr | server/routes/__tests__/chat-upload-safety.test.ts > chat evidence upload runs assertUploadSafe before anything is stored > refuses a PDF declared under a .tsv name before scan/storage
+{
+  "timestamp": "2026-11-08T17:03:44.708Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected: declared type does not match the file name",
+  "context": {
+    "filename": "data.tsv",
+    "declaredMime": "application/pdf",
+    "reason": "a .tsv file must be declared as text/tab-separated-values or text/plain"
+  }
+}
+
+stdout | server/routes/__tests__/chat-upload-safety.test.ts > chat evidence upload runs assertUploadSafe before anything is stored > a text file named and declared as text is stored (control)
+{
+  "timestamp": "2026-11-08T17:03:44.713Z",
+  "level": "info",
+  "message": "[chat-upload] Upload text extracted",
+  "context": {
+    "fileId": "file_1794157424712_1u3ry7",
+    "method": "utf8",
+    "chars": 15
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-safety.test.ts > chat evidence upload runs assertUploadSafe before anything is stored > HTML sent as report.pdf is refused — the name binds the type — and nothing is written
+{
+  "timestamp": "2026-11-08T17:03:44.718Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected: declared type does not match the file name",
+  "context": {
+    "filename": "report.pdf",
+    "declaredMime": "text/html",
+    "reason": "a .pdf file must be declared as application/pdf"
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-safety.test.ts > chat evidence upload runs assertUploadSafe before anything is stored > in production a file the scanner could not scan is refused (503) and nothing is written
+{
+  "timestamp": "2026-11-08T17:03:44.723Z",
+  "level": "error",
+  "message": "[upload-safety] Upload rejected: virus scanner unavailable in production",
+  "context": {
+    "filename": "protocol.txt",
+    "declaredMime": "text/plain",
+    "reason": "no CLAMAV_HOST"
+  }
+}
+
+stderr | server/routes/__tests__/chat-upload-safety.test.ts > chat evidence upload runs assertUploadSafe before anything is stored > a flagged file is refused with no signature name echoed
+{
+  "timestamp": "2026-11-08T17:03:44.727Z",
+  "level": "warn",
+  "message": "[upload-safety] Upload rejected by virus scanner",
+  "context": {
+    "filename": "protocol.txt",
+    "declaredMime": "text/plain",
+    "signature": "Eicar-Test-Signature"
+  }
+}
+
+ ✓ server/routes/__tests__/chat-upload-safety.test.ts > chat evidence upload runs assertUploadSafe before anything is stored > refuses a PDF declared under a .tsv name before scan/storage 3ms
+ ✓ server/routes/__tests__/chat-upload-safety.test.ts > chat evidence upload runs assertUploadSafe before anything is stored > a text file named and declared as text is stored (control) 4ms
+ ✓ server/routes/__tests__/chat-upload-safety.test.ts > chat evidence upload runs assertUploadSafe before anything is stored > HTML sent as report.pdf is refused — the name binds the type — and nothing is written 6ms
+ ✓ server/routes/__tests__/chat-upload-safety.test.ts > chat evidence upload runs assertUploadSafe before anything is stored > in production a file the scanner could not scan is refused (503) and nothing is written 4ms
+ ✓ server/routes/__tests__/chat-upload-safety.test.ts > chat evidence upload runs assertUploadSafe before anything is stored > a flagged file is refused with no signature name echoed 4ms
+
+ Test Files  8 passed (8)
+      Tests  121 passed (121)
+   Start at  09:03:06
+   Duration  38.33s (transform 10.24s, setup 132ms, import 31.97s, tests 5.14s, environment 1ms)
+

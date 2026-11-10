@@ -77,7 +77,8 @@ vi.mock('../../../services/audit/chain.js', () => ({
 const createSubmissionTx = vi.fn(async () => ({ id: 3101 }));
 vi.mock('../../../services/submission-service/submission-service.js', () => ({
   createSubmissionTx: (...a: unknown[]) => createSubmissionTx(...(a as [])),
-}));
+  // c88d892390: ensureSubmissionSpine refuses a market it cannot resolve or verify with a typed SubmissionError.
+  SubmissionError: class extends Error { constructor(public code: string, message: string) { super(message); this.name = 'SubmissionError'; } } }));
 
 import projectsRouter from '../projects';
 
@@ -495,7 +496,7 @@ describe('POST /api/c2c/projects — canonical submission spine', () => {
     query
       .mockResolvedValueOnce({ rows: [] })                                            // BEGIN
       .mockResolvedValueOnce({ rows: [{ id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' }] }) // program INSERT
-      .mockResolvedValueOnce({ rows: [{ id: 55 }] })                                  // anchored-spine SELECT → this program's spine
+      .mockResolvedValueOnce({ rows: [{ id: 55, primary_region: 'fda' }] })           // anchored-spine SELECT → this program's spine, in its market (c88d892390)
       .mockResolvedValueOnce(ANCHOR[0]).mockResolvedValueOnce(ANCHOR[1]).mockResolvedValueOnce(ANCHOR[2]).mockResolvedValueOnce(ANCHOR[3]) // anchor (P-19)
       .mockResolvedValueOnce({ rows: [] })                                            // audit_logs INSERT
       .mockResolvedValueOnce({ rows: [] })                                            // COMMIT

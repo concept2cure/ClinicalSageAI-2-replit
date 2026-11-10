@@ -1,0 +1,12 @@
+  "message": "[cmc-analytical-method-source] Analytical-method source read failed — reporting as not evaluable",
+ × tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > quality_specifications is scoped to the caller tenant, and only to it > lets the owning tenant approve its own row 1783ms
+   → expected 409 to be 200 // Object.is equality
+  "message": "[cmc-analytical-method-source] Analytical-method source read failed — reporting as not evaluable",
+ × tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > approve fails closed when the record vanishes mid-transaction > returns 404 and records no signature when the UPDATE matches no row 1637ms
+   → an approval over a vanished record must not read as success: expected 409 to be 404 // Object.is equality
+  "message": "[cmc-analytical-method-source] Analytical-method source read failed — reporting as not evaluable",
+  "message": "[cmc-analytical-method-source] Analytical-method source read failed — reporting as not evaluable",
+ × tests/schema-contract/cmc-specification-tenant-scope.contract.test.ts > approve fails closed when the record vanishes mid-transaction > still approves normally while the seam is armed for another row 1647ms
+   → expected 409 to be 200 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  3 failed | 16 passed (19)

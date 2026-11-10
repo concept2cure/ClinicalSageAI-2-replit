@@ -109,6 +109,14 @@ export const AUTHORING_ACCESS_DDL = `
   INSERT INTO project_visibility_settings VALUES (42,${ORG},'org_public'),(43,${ORG},'org_public');
 `;
 
+/** What the saved-document review routes read beyond AUTHORING_ACCESS_DDL: the
+ * organization's billing standing (migrations/0003_billing_stripe.sql), here a
+ * paying one. The review store is db/migrations/20260730_authoring_subsystem_schema.sql,
+ * in the suite's own migration list. */
+export const REVIEW_ACCESS_DDL = `
+  ALTER TABLE organizations ADD COLUMN IF NOT EXISTS payment_status text NOT NULL DEFAULT 'active';
+`;
+
 /** The vault store as the ingest INSERT and the placement UPDATE write it. */
 export const VAULT_DDL = `
   CREATE SCHEMA IF NOT EXISTS vault;
@@ -208,6 +216,63 @@ export const M25_SECTIONS = [
   { code: '2.5.2', title: 'Overview of Biopharmaceutics', content: '<p>Oral bioavailability was <strong>62%</strong> across two formulations.</p><ul><li>Fasted</li><li>Fed</li></ul>' },
   { code: '2.5.3', title: 'Overview of Clinical Pharmacology', content: '<p>Exposure increased dose-proportionally from 10 to 80 mg.</p>' },
 ];
+
+/** A person's own text under each M25_SECTIONS heading: none of AnA's clauses, and no figure without a citation. */
+export const AUTHORED_M25_SECTIONS = [
+  { code: '2.5.1', title: 'Product Development Rationale', content: '<p>The author states the development rationale recorded in the target product profile.</p>' },
+  { code: '2.5.2', title: 'Overview of Biopharmaceutics', content: '<p>The author summarises the biopharmaceutic studies the clinical modules list.</p>' },
+  { code: '2.5.3', title: 'Overview of Clinical Pharmacology', content: '<p>The author summarises the clinical pharmacology studies and the doses they covered.</p>' },
+];
+
+type As = (req: request.Test) => request.Test;
+
+/** The editor's own save, as a person makes it (PATCH /sections/:id), one section at a time. */
+export async function saveSectionsAsAuthor(app: express.Express, as: As, sections: ReadonlyArray<{ id: string; content: string }>,
+  changeReason = 'The author replaced the AnA draft with their own text before release.'): Promise<void> {
+  for (const section of sections) {
+    const saved = await as(request(app).patch(`/api/authoring/sections/${section.id}`)).send({ content: section.content, changeReason });
+    expect(saved.status, JSON.stringify(saved.body)).toBe(200);
+  }
+}
+
+/** The saved-document independent checks, run as production runs them (POST
+ * /documents/:id/review, run_independent_checks): a current receipt, no open hard finding. */
+export async function runIndependentChecks(app: express.Express, as: As, docId: string): Promise<void> {
+  const read = await as(request(app).get(`/api/authoring/documents/${docId}/reviews`));
+  expect(read.status, JSON.stringify(read.body)).toBe(200);
+  const checked = await as(request(app).post(`/api/authoring/documents/${docId}/review`))
+    .send({ action: 'run_independent_checks', expectedSnapshotHash: read.body.reviewContext.snapshotHash });
+  expect(checked.status, JSON.stringify(checked.body)).toBe(200);
+  expect(checked.body.independentCheck).toMatchObject({ standing: 'current', hardBlockCount: 0 });
+}
+
+/**
+ * An AnA draft brought to release the way production brings one. Since
+ * b8cee0745c an AnA genesis is held until a current saved-document independent
+ * check with no open hard finding (workflow-import-governance.ts
+ * assertIndependentCheckRelease); since bb999f25b6 its stored machine words also
+ * need retained qualified generation, which an HTTP draft cannot carry, or a
+ * person's recorded replacement (assertOrdinaryMachineRelease). So the author
+ * replaces each section with AUTHORED_M25_SECTIONS through the editor's save,
+ * then runs the checks. Nothing is seeded and no gate is skipped. The app binds
+ * the request database client (makeApp `dbClient`): the review routes read through it.
+ */
+export async function releaseAnaDraft(app: express.Express, as: As,
+  draft: { doc: { id: string }; sections: ReadonlyArray<{ id: string; code: string }> }): Promise<void> {
+  const authored = new Map(AUTHORED_M25_SECTIONS.map(section => [section.code, section.content]));
+  await saveSectionsAsAuthor(app, as, draft.sections.map(section => ({ id: section.id,
+    content: authored.get(section.code) ?? '<p>The author wrote this section from the study records.</p>' })));
+  await runIndependentChecks(app, as, draft.doc.id);
+}
+
+/** A person's later revision of every section (appending `html`), saved and re-checked as a refiling requires. */
+export async function appendAsAuthor(app: express.Express, as: As,
+  rows: (sql: string, args: unknown[]) => Promise<Array<{ id: string; content: string | null }>>, docId: string, html: string): Promise<void> {
+  const sections = await rows('SELECT id::text AS id, content FROM authoring_sections WHERE doc_id = $1 ORDER BY order_index, created_at, id', [docId]);
+  await saveSectionsAsAuthor(app, as, sections.map(section => ({ id: section.id, content: `${section.content ?? ''}${html}` })),
+    'The author revised the document before refiling it.');
+  await runIndependentChecks(app, as, docId);
+}
 
 
 /** Reusable real-ledger acceptance checks, driven by each canonical Authoring
@@ -380,6 +445,7 @@ function registerIndependentAuditFailureCase(fixture: {
     await expect(independentReviewServices.runAuthoringIndependentCheck(failed, { tenantId: ORG, actorId: AUTHOR.id,
       documentId: doc.id, expectedSnapshotHash: current.reviewContext.snapshotHash }, { ipAddress: '127.0.0.1', userAgent: 'audit-failure-fixture' })).rejects.toThrow();
     expect((await fixture.connection.query("SELECT 1 FROM authoring_audit_trail WHERE doc_id=$1 AND operation_type LIKE 'INDEPENDENT_CHECK_%'", [doc.id])).rows).toHaveLength(0);
+    // tenant-isolation-safe: an assertion that NO audit row exists for this document; scoped to one tenant it would pass over a row written under the wrong one
     expect((await fixture.connection.query("SELECT 1 FROM audit_logs WHERE new_values->>'docId'=$1 AND action LIKE 'authoring.section.INDEPENDENT_CHECK_%'", [doc.id])).rows).toHaveLength(0);
   });
 }

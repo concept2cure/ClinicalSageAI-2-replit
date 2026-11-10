@@ -1,0 +1,89 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:38) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > does not offer another study’s same-filename source as predecessor
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > finds the correct study even when a second study has the same filename
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > does not infer a successor when the incoming study is unmatched
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > does not equate two unresolved study references
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > binds the complete project scope as well as study identity
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > captures two studies’ same filename independently, then revises only its own study
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > reuses current bytes without changing the original upload, capturer or title
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > captures unmatched scope without retiring the same-named study source
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > captures multiple known scope without retiring the same-named study source
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > captures later unmatched scope without retiring the same-named study source
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > captures no study scope without retiring the same-named study source
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > declines two same-study filename candidates without guessing the newest
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture retains historical bytes and exact identity > never reactivates superseded bytes or creates a current clone of them
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture retains historical bytes and exact identity > cannot revive unresolved retired bytes after a study is registered
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture retains historical bytes and exact identity > matches identical bytes only within the explicitly selected study
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture admission and commit outcomes fail closed > an audit failure rolls back retirement and the new source together
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture admission and commit outcomes fail closed > a failed study lookup refuses capture rather than recording an unrelated source
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture admission and commit outcomes fail closed > rechecks membership after waiting for the capture reservation
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture admission and commit outcomes fail closed > requires the recorded original upload and never accepts a guessed byte binding
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture admission and commit outcomes fail closed > a retained deleted capture cannot be replaced by a fresh current identity for its bytes
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture admission and commit outcomes fail closed > a project use share permits reading but cannot capture a file
+ ↓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > capture admission and commit outcomes fail closed > a lost commit acknowledgement preserves uncertainty and a retry resolves the committed identity
+ × server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the canonical program reservation remains a required admission > refuses a program that disappears at its row lock before any source insert 62ms
+   → expected [ Array(1) ] to have a length of +0 but got 1
+ × server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the canonical program reservation remains a required admission > reports an unavailable program row lock separately from a missing program 11ms
+   → expected Error: injected ownership store failure to match object { status: 503, …(1) }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the canonical program reservation remains a required admission > refuses a program that disappears at its row lock before any source insert
+AssertionError: expected [ Array(1) ] to have a length of +0 but got 1
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts:320:20
+    318|       .rejects.toMatchObject({ status: 404, code: 'PROJECT_NOT_FOUND' …
+    319|     finally { intercept = undefined; }
+    320|     expect(writes).toHaveLength(0);
+       |                    ^
+    321|     expect(await states(title)).toHaveLength(0);
+    322|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the canonical program reservation remains a required admission > reports an unavailable program row lock separately from a missing program
+AssertionError: expected Error: injected ownership store failure to match object { status: 503, …(1) }
+
+- Expected
++ Received
+
+- {
+-   "code": "PROJECT_ACCESS_UNAVAILABLE",
+-   "status": 503,
++ Error {
++   "message": "injected ownership store failure",
+  }
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts:330:100
+    328|       if (/FROM regulatory_programs\b/.test(sql) && /FOR SHARE/.test(s…
+    329|     };
+    330|     try { await expect(spine.captureClientSource(ORG, params, { text: …
+       |                                                                                                    ^
+    331|       .rejects.toMatchObject({ status: 503, code: 'PROJECT_ACCESS_UNAV…
+    332|     finally { intercept = undefined; }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 22 skipped (24)
+   Start at  10:07:37
+   Duration  3.07s (transform 662ms, setup 64ms, import 1.21s, tests 1.59s, environment 0ms)
+

@@ -223,6 +223,7 @@ beforeAll(async () => {
       'db/migrations/20260807_unified_tasks_soft_delete.sql',
       // The review route columns the Drizzle model names (RR1a).
       'migrations/20261023_review_routes.sql',
+      'migrations/20261109_unified_tasks_parent_task.sql', // P-111: unified_tasks.parent_task_id, which the Drizzle model names
     ],
   });
   h.db = jdb.db;
@@ -419,8 +420,9 @@ describe('comments: one write path, attributed, and in the one ledger', () => {
     expect(c).toBeTruthy();
     // author_name is COALESCE(user_name, created_by). With only the thin write
     // that shipped, user_name was always NULL and every comment in the UI was
-    // attributed to a raw actor id.
-    expect(c.author_name).toBe(REVIEWER.email);
+    // attributed to a raw actor id. Since 1e341685f2 user_name is the name on
+    // the person's user record, the email only when none is recorded.
+    expect(c.author_name).toBe(REVIEWER.name);
     expect(c.author_email).toBe(REVIEWER.email);
     expect(c.created_by).toBe(REVIEWER.id);
   }, T);

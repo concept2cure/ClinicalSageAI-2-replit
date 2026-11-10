@@ -91,9 +91,11 @@ import { readShellProject, publishShellProject } from '../shellProject';
 import { usePaletteProjects, type PaletteProject } from '../paletteProjects';
 import { useDialog } from '../useDialog';
 import { VaultFolderEdit, type FolderEditMode } from './VaultFolderEdit';
-import { cabinetFolderOptions, indentedLabel, newFolderParentOf, personFolderOf, type CabinetFolder } from './vaultFolders';
+import { cabinetFolderOptions, folderParentOf, openFolderMatches, indentedLabel, newFolderParentOf, personFolderOf, type CabinetFolder } from './vaultFolders';
+import { VaultPlanWork } from './VaultPlanWork';
 import { locateVaultDocument, takeVaultTarget, vaultTargetIsFor, VAULT_TARGET_EVENT, type TakenVaultTarget } from '../vaultTarget';
 import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason, type ImportSource } from '../editor/SourceImportDialog';
+import { DataRoomSourcesPanel, takeVaultCatalogAsk } from '../editor/DataRoomSourcesPanel';
 import { artifactImportId } from '@shared/authoring/source-import';
 import { VaultSourceBuildAction } from '../editor/VaultSourceBuildAction';
 import '../styles/project-home-v2.css';
@@ -1216,6 +1218,7 @@ export function findVaultArtifactLeaf(
 
 const NO_PROGRAM_OPEN = 'No project is open, so there is no vault here yet — open a project first.';
 
+
 /* ── The work area's views (D6 §C.3–C.4 step 5) ──
    One Vault, its library first. What a DMS keeps beside the library (what came
    in, what is required, the governed artifacts, the seals and fixity) is a view
@@ -1223,9 +1226,13 @@ const NO_PROGRAM_OPEN = 'No project is open, so there is no vault here yet — o
    view stays mounted and the inactive ones are `hidden`: a fixity result, a
    seal's verdict or a staged upload is not lost by looking at another view, and
    the reads each panel makes on mount are the ones it always made. */
-type VaultView = 'library' | 'uploads' | 'required' | 'artifacts' | 'seals';
+type VaultView = 'library' | 'catalog' | 'uploads' | 'required' | 'artifacts' | 'seals';
 const VAULT_VIEWS: ReadonlyArray<{ id: VaultView; label: string }> = [
   { id: 'library', label: 'Library' },
+  /* The data catalog (S2, the founder 2026-11-06): every captured file across the person's projects
+     of this sponsor, organized by study, kind, CTD section and folder, each graded. The project's
+     Data room panel (editor/DataRoomSourcesPanel.tsx), opened on "All my projects". */
+  { id: 'catalog', label: 'Data catalog' },
   { id: 'uploads', label: 'Uploads' },
   { id: 'required', label: 'Required documents' },
   { id: 'artifacts', label: 'Governed artifacts' },
@@ -1375,7 +1382,10 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
   const confirmSuggested = useConfirmSuggested(projectId ?? null, () => setVaultEpoch((n) => n + 1));
   const canWrite = useVaultCanWrite();
   /* The view on screen (D6 §C.4 step 5); the library first. */
-  const [view, setView] = useState<VaultView>('library');
+  const [view, setView] = useState<VaultView>(() => (takeVaultCatalogAsk() ? 'catalog' : 'library'));
+  /* The catalog grades every row it reads: it is read once the person opens it, then kept like every view. */
+  const [catalogOpened, setCatalogOpened] = useState(false);
+  React.useEffect(() => { if (view === 'catalog') setCatalogOpened(true); }, [view]);
   const viewIds = useId();
   /* Below 1280px the record is a drawer opened from a row; below 1024px the
      structure tree is one too (D6 §C.3). */
@@ -1854,7 +1864,8 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
     },
     'vault.open-folder': (params) => {
       const wanted = (params.folder ?? '').trim().toLowerCase();
-      if (!wanted) return { ok: false, reason: 'No folder named.' };
+      const exactId = (params.folderId ?? '').trim();
+      if (!wanted && !exactId) return { ok: false, reason: 'No folder named.' };
       if (!projectId) return { ok: false, reason: NO_PROGRAM_OPEN };
       // Not-ready, not failed: the bus holds the directive and re-attempts on
       // this surface's ready signal below — the navigate→act gap.
@@ -1873,12 +1884,12 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
         }
       };
       walk(tree, []);
-      const exact = found.filter((f) => f.folder.label.toLowerCase() === wanted);
-      const contains = exact.length
-        ? exact
-        : found.filter((f) => f.folder.label.toLowerCase().includes(wanted));
+      // An exact binder heading (the plan's "Open in Vault", S6 step 3) or tree id, else the folder's name.
+      const contains = openFolderMatches(found, exactId, wanted);
       if (contains.length === 0) {
-        return { ok: false, reason: `No folder named "${params.folder}" in this vault.` };
+        return { ok: false, reason: exactId
+          ? `This project's Vault has no folder for ${exactId.replace(/^bn:/, '')} (its binder holds no such heading).`
+          : `No folder named "${params.folder}" in this vault.` };
       }
       if (contains.length > 1) {
         return {
@@ -2219,11 +2230,13 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
   const folderMade = (folderId: string) => {
     /* The folder it was made in is opened, so the new folder shows beneath it. */
     const parent = folderEdit?.kind === 'create' && folderEdit.parentId ? `cab-${folderEdit.parentId}` : null;
+    /* A removed folder is gone: the list returns to the folder it was in, or the cabinet. */
+    const removedFrom = folderEdit?.kind === 'remove' ? (folderParentOf(cabinet, `cab-${folderEdit.folderId}`) || null) : undefined;
     setExpanded((e) => ({ ...e, cabinet: true, ...(parent ? { [parent]: true } : {}) }));
     setFolderEdit(null);
     setVaultEpoch((n) => n + 1);
     setView('library');
-    setActiveFolder(`cab-${folderId}`);
+    setActiveFolder(removedFrom === undefined ? `cab-${folderId}` : removedFrom ? `cab-${removedFrom}` : 'cabinet');
     leaveFind();
   };
   const headerParts = vaultHeaderParts(vault);
@@ -2823,6 +2836,19 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
                 Rename
               </button>
             ) : null}
+            {!searching && folder && canWrite && projectId && personFolderOf(folder.id) ? (
+              <>
+                <button type="button" className="sp-ask" data-testid="vault-move-folder"
+                  onClick={() => setFolderEdit({ kind: 'move', folderId: personFolderOf(folder.id)!, name: folder.label,
+                    parentId: folderParentOf(cabinet, folder.id) })}>
+                  Move
+                </button>
+                <button type="button" className="sp-ask" data-testid="vault-remove-folder"
+                  onClick={() => setFolderEdit({ kind: 'remove', folderId: personFolderOf(folder.id)!, name: folder.label })}>
+                  Remove
+                </button>
+              </>
+            ) : null}
             {searching && (
               <span className="vd-here">
                 {appliedView ? <>View &ldquo;{appliedView.label}&rdquo;{viewChanged ? ' (changed)' : ''} · </> : null}
@@ -2854,13 +2880,22 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
               Searching…
             </div>
           )}
+          {!searching && folder && folder.id.startsWith('cab') && (cabinet as CabinetFolder | null)?.binder ? (
+            /* Where the binder's folders come from: the filing's outline, by name and version. */
+            <div className="vd-d-idx" data-testid="vault-binder-source">
+              Binder from the filing’s outline: {(cabinet as CabinetFolder).binder!.label} · version {(cabinet as CabinetFolder).binder!.version}
+            </div>
+          ) : null}
           {!searching && folder && folder.id.startsWith('cab') && (cabinet as CabinetFolder | null)?.note ? (
             /* Said plainly: this filing or region has no binder template yet. */
             <div className="scaf-note" role="status" data-testid="vault-binder-note">{(cabinet as CabinetFolder).note}</div>
           ) : null}
+          {!searching && projectId && folder && folder.id.startsWith('cab-bn:') ? (
+            <VaultPlanWork projectId={projectId} treeFolderId={folder.id} onOpenPlan={onNav ? () => onNav('project-home') : undefined} />
+          ) : null}
           {folderEdit && projectId ? (
             <VaultFolderEdit
-              key={folderEdit.kind === 'rename' ? folderEdit.folderId : `new-${folderEdit.parentId}`}
+              key={folderEdit.kind === 'create' ? `new-${folderEdit.parentId}` : `${folderEdit.kind}-${folderEdit.folderId}`}
               projectId={projectId}
               mode={folderEdit}
               folders={cabinetFolders}
@@ -3061,8 +3096,16 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
     </>
   );
 
+  const catalogView = !catalogOpened ? null : projectId ? (
+    <DataRoomSourcesPanel key={projectId} programId={projectId} initialScope="catalog" onAsk={onAsk} onNav={onNav}
+      onOpenDocument={(docId) => { if (readOwner.current()) openImportedDocument(docId, projectId, onNav); }} />
+  ) : (
+    <p className="sec-sub" role="status">{NO_PROGRAM_OPEN} The data catalog lists every captured file across your projects of that project&rsquo;s sponsor.</p>
+  );
+
   const viewBodies: Record<VaultView, React.ReactNode> = {
     library: libraryView,
+    catalog: catalogView,
     uploads: uploadsView,
     required: requiredView,
     artifacts: artifactsView,
@@ -3070,7 +3113,7 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
   };
 
   const page = (
-    <div className="page-inner vd vd-wrap" data-work-area="vault">
+    <div className="page-inner vd-wrap" data-work-area="vault">
       {/* Back to the project (D5 §WA.4.2 rule 2); it replaces "Open project". */}
       <ProjectBack onNav={onNav} />
       <header className="ph">

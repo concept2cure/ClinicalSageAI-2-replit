@@ -1,0 +1,17 @@
+== deploy-migrate on the local clinicalsage database (installed before 2026-10-13), first run
+  ✓ applied: migrations/0014_report_os_foundation.sql
+✅ Schema migration complete — safe to roll services.
+== second run
+  ✓ applied: migrations/0014_report_os_foundation.sql
+✅ Schema migration complete — safe to roll services.
+== blank database: provision-test-db.sh (install-fresh, then deploy-migrate)
+  ✓ applied: migrations/0014_report_os_foundation.sql
+✅ Schema migration complete — safe to roll services.
+provision exit=0
+== blank database: deploy-migrate replay
+  ✓ applied: migrations/0014_report_os_foundation.sql
+✅ Schema migration complete — safe to roll services.
+replay exit=0
+== after: report_program_group_projects on both databases (relrowsecurity, force, tenant_isolation_policy, organization_id nullable)
+c2c_uw_blank|t|t|1|NO
+clinicalsage|t|t|1|NO

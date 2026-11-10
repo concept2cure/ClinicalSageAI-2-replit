@@ -26,7 +26,7 @@ const MARKET_REGISTRY = {
 
 const PATHWAY_KNOWLEDGE = {
   kind: 'record',
-  id: 'server/services/regulatory-strategy/regulatory-strategy-knowledge.ts',
+  id: 'server/services/regulatory-strategy/regulatory-strategy-reference.ts',
   label: 'Global pathway registry behind the pathway comparison: authority, application type, timelines and data differences per market',
 } as const;
 

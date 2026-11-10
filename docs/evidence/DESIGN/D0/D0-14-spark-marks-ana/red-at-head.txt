@@ -1,0 +1,20 @@
+ × client/src/concept2cure/v2/__tests__/answerLeadSpark.test.tsx > D0.md §8.1: the spark marks an AnA action, and only that > AnswerLead draws no icon on its action unless given one 39ms
+   → expected SVGSVGElement{ …(2), [Symbol(impl)]: SVGSVGElementImpl{ …(33), …(2) } } to be null
+ × client/src/concept2cure/v2/__tests__/answerLeadSpark.test.tsx > D0.md §8.1: the spark marks an AnA action, and only that > every literal lead action carries the spark exactly when it asks AnA 333ms
+   → expected [ …(14) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
++   "surfaces/BiopharmaSpecialty.tsx:394 drafts.length ? 'Draft the extrapolation rationale' : 'Check: asks AnA, no spark",
++   "surfaces/BiopharmaSpecialty.tsx:633 topPending ? 'Draft the designation narrative' : 'Review the: asks AnA, no spark",
++   "surfaces/BiopharmaSpecialty.tsx:918 highChg.length ? 'Classify the change against ICH Q12' : (ne: asks AnA, no spark",
++   "surfaces/BiopharmaSpecialty.tsx:1213 highPrr ? 'Adjudicate this signal now' : (agg ? 'Continue th: asks AnA, no spark",
++   "surfaces/CrlLibrary.tsx:488 'Ask AnA about these findings': asks AnA, no spark",
++   "surfaces/DesignControlsTrace.tsx:480 'Close the ' + firstGap.id + ' gap': asks AnA, no spark",
++   "surfaces/DesignControlsTrace.tsx:481 'Draft the design review minutes': asks AnA, no spark",
++   "surfaces/HumanFactors.tsx:591 'Draft the HFE/UE report': asks AnA, no spark",
++   "surfaces/IndLifecycle.tsx:1275 !R.assessed
++   "surfaces/NdaCockpit.tsx:567 filingState === 'assessed-with-findings'
++   "surfaces/PrecedentEngine.tsx:871 'Draft this argument with AnA': asks AnA, no spark",
++   "surfaces/RiskRegister.tsx:876 'Draft RMF conclusion': asks AnA, no spark",
++   "surfaces/SafetyNarrative.tsx:419 lead.next: asks AnA, no spark",
++   "surfaces/SourceTracer.tsx:276 changed.length ? 'Review sections on changed sources' : 'Ana: asks AnA, no spark",
+      Tests  2 failed (2)

@@ -1,0 +1,60 @@
+# Mutation 2 (receipt-environment-branch): remove the environment branch in resolveReceiptSequence (a test receipt files the sequence again)
+# File: server/services/submission-gateways/fda-esg-receipts.ts   Run: 2026-11-02T04:13:41Z
+# Expected: fda-esg-receipts.pglite.test.ts: the test environment's receipt settles the claim to 'sent' / 'rejected', not 'pending'
+#
+# REPLACED:
+#     const next = environment !== 'production' ? 'pending' : status === 'received' ? 'sent' : 'rejected';
+# WITH:
+#     const next = status === 'received' ? 'sent' : 'rejected';
+
+## The mutation, as applied (diff of the file against its unmutated copy)
+diff --git aa/server/services/submission-gateways/fda-esg-receipts.ts bb/server/services/submission-gateways/fda-esg-receipts.ts
+index cef85d639..fba319c58 100644
+--- aa/server/services/submission-gateways/fda-esg-receipts.ts
++++ bb/server/services/submission-gateways/fda-esg-receipts.ts
+@@ -112,7 +112,7 @@ async function resolveReceiptSequence(client: { query: (sql: string, args?: unkn
+   // FDA's, and the sequence can still be filed (submission-service.ts
+   // toDispatchStatus). `!==`, so an environment that is neither files nothing.
+   const environment = (transmittal.metadata?.as2 as Partial<ReceiptBinding> | undefined)?.environment;
+-  const next = environment !== 'production' ? 'pending' : status === 'received' ? 'sent' : 'rejected';
++  const next = status === 'received' ? 'sent' : 'rejected';
+   if (receipt) {
+     const sequence = (await client.query(`SELECT id FROM ectd_sequences WHERE id=$1 AND organization_id=$2
+       AND status='dispatched' AND deleted_at IS NULL FOR UPDATE`, [binding.sequenceId, organizationId])).rows[0];
+
+## Command: npx vitest run server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts
+## Exit: 1
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > records exact receipt bytes/audit and resolves only the retained matching sequence claim 218ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > records a verified receipt while keeping a newer signature claim explicitly unreconciled 77ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > never guesses a legacy sequence binding by its number 76ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > uses a tied authenticated refusal only for rejected transport state, never center acknowledgement 69ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > reconciles a retained synchronous agency rejection without authorizing its signature again 107ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses a positive receipt that conflicts with a retained rejected transmittal 63ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > cannot resolve a newer attempt with the same signature using re-encoded original receipt bytes 108ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses wrong message without changing receipt, sequence or audit 59ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses wrong MIC without changing receipt, sequence or audit 58ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses wrong tenant without changing receipt, sequence or audit 22ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > refuses wrong viewer without changing receipt, sequence or audit 56ms
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > actual agency-signed MDN ingestion and governed scope/atomicity > rolls back receipt and sequence changes together if the canonical audit fails 61ms
+ × server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > a receipt from the agency's test environment (F1, row D7) > a test environment's positive receipt records the receipt and settles the claim to pending, never sent 73ms
+   → a test receipt filed the sequence: expected { dispatch_status: 'sent', …(2) } to deeply equal { dispatch_status: 'pending', …(2) }
+ × server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > a receipt from the agency's test environment (F1, row D7) > a test environment's refusal settles the claim to pending, never rejected 68ms
+   → the test environment's refusal was recorded as FDA's: expected 'rejected' to be 'pending' // Object.is equality
+ ✓ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > a receipt from the agency's test environment (F1, row D7) > a test receipt for an attempt whose claim was released and whose signature was voided moves no sequence and spends nothing 61ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 13 passed (15)
+ FAIL  server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > a receipt from the agency's test environment (F1, row D7) > a test environment's positive receipt records the receipt and settles the claim to pending, never sent
+AssertionError: a test receipt filed the sequence: expected { dispatch_status: 'sent', …(2) } to deeply equal { dispatch_status: 'pending', …(2) }
+- Expected
++ Received
+-   "dispatch_status": "pending",
++   "dispatch_status": "sent",
+ ❯ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts:140:70
+ FAIL  server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > a receipt from the agency's test environment (F1, row D7) > a test environment's refusal settles the claim to pending, never rejected
+AssertionError: the test environment's refusal was recorded as FDA's: expected 'rejected' to be 'pending' // Object.is equality
+ ❯ server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts:154:107
+
+## Restore
+sha256 before mutation: 0f760fb38e81bf473ed264e0103c15c29e4c56eebf0744dbc17020b5542eb507
+sha256 after restore:   0f760fb38e81bf473ed264e0103c15c29e4c56eebf0744dbc17020b5542eb507
+restored byte for byte: True

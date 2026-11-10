@@ -29,14 +29,24 @@ const h = vi.hoisted(() => {
   const state = { log: [] as string[], sigFail: null as unknown, qc: [] as unknown[], qcAfter: null as unknown[] | null, qcReads: 0, batchDeviations: null as unknown };
   /* The locked row each ceremony evaluates its precondition on: the Q2 package
      for a method, the report for a process-validation record, the justification
-     for a comparability assessment. Without them those three answer 409 and
-     never reach the signature, which is the point of the preconditions. */
+     for a comparability assessment, and — since the ICH Q2 approval gate — the
+     analytical method a specification's limits are measured by. Without them
+     those ceremonies answer 409 and never reach the signature, which is the
+     point of the preconditions.
+
+     `test_methods` names a method and `project_id` addresses a project, so the
+     method register below resolves it to a validated row. The gate refuses a
+     method it cannot resolve as readily as one it finds unfit (services/cmc/
+     analytical-method-source.ts, `specificationMethodVerdict`); which status
+     it answers for each case is
+     specification-approve-method-gate.test.ts. */
   const ROW = {
-    id: 9, status: 'draft', approval_status: 'draft', project_id: null, tenant_id: '7',
+    id: 9, status: 'draft', approval_status: 'draft', project_id: 'c0ffee00-0000-4000-8000-000000000001', tenant_id: '7',
     organization_id: 7, batch_number: 'B-9', release_status: null,
     ich_q2_parameters: { characteristics: ['Specificity', 'Accuracy'] },
     validation_report: 'PV-RPT-011',
     justification: 'Comparable on every attribute against the pre-change criteria.',
+    test_methods: { method: 'SE-HPLC' },
   };
   const client = {
     query: async (sql: string) => {
@@ -47,6 +57,14 @@ const h = vi.hoisted(() => {
          fails closed, which is the right behaviour and the wrong test. */
       if (/FROM users u/.test(sql)) {
         return { rows: [{ name: 'QA Signer', email: 'signer@example.test', title: 'QA Head' }], rowCount: 1 };
+      }
+      /* The analytical method register, which the specification approval's
+         ICH Q2 precondition resolves its named method against. */
+      if (/FROM cmc_source_objects/.test(sql)) {
+        return {
+          rows: [{ sourceKey: 'method:1', sourcePayload: { methodName: 'SE-HPLC', validationStatus: 'validated' }, isMethod: true }],
+          rowCount: 1,
+        };
       }
       if (/FROM qc_testing/.test(sql)) {
         state.qcReads += 1;
@@ -282,12 +300,12 @@ describe.each(CASES)('CMC $name requires a signer with signing authority', (c) =
  * who declares a meaning that contradicts the disposition is refused before any
  * password is checked: substituting one would record what they did not sign.
  */
-describe('CMC batch release: the signature means what the disposition is', () => {
-  const release = (body: Record<string, unknown>) =>
-    request(app)
-      .post('/api/cmc/batch-records/9/release')
-      .send({ releasedBy: 'QA Head', releaseTesting: { assay: 'pass' }, reason: REASON, reauth: { password: GOOD }, ...body });
+const release = (body: Record<string, unknown>) =>
+  request(app)
+    .post('/api/cmc/batch-records/9/release')
+    .send({ releasedBy: 'QA Head', releaseTesting: { assay: 'pass' }, reason: REASON, reauth: { password: GOOD }, ...body });
 
+describe('CMC batch release: the signature means what the disposition is', () => {
   it.each([
     ['approved', 'release'],
     ['conditional', 'responsibility'],
@@ -347,6 +365,9 @@ describe('CMC batch release: the signature means what the disposition is', () =>
     expect(JSON.stringify(res.body.data.releaseEvaluation)).not.toContain('made up');
   });
 
+});
+
+describe('CMC batch release: evidence and authority remain current through reauthentication', () => {
   it('results that change while the signer re-authenticates refuse the signature, and nothing is signed', async () => {
     h.qcAfter = [qcRow({ pass_fail_status: 'fail' })];
     const res = await release({ decision: 'approved' });
@@ -356,6 +377,59 @@ describe('CMC batch release: the signature means what the disposition is', () =>
     expect(persistGovernedActionSignature).not.toHaveBeenCalled();
   });
 
+  it('an unchanged pass/review status does not conceal changed QC content during reauthentication', async () => {
+    h.qcAfter = [qcRow({ test_results: { value: '100.7' } })];
+    const res = await release({ decision: 'approved' });
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(res.body.code).toBe('EVIDENCE_CHANGED');
+    expect(h.log).toContain('ROLLBACK');
+    expect(h.log).not.toContain('DOMAIN');
+    expect(recordGovernedAction).not.toHaveBeenCalled();
+    expect(persistGovernedActionSignature).not.toHaveBeenCalled();
+  });
+
+  it('a deviation opened while the signer reauthenticates blocks full release under the final batch lock', async () => {
+    verifyReauth.mockImplementationOnce(async () => {
+      h.batchDeviations = [{ status: 'open', reference: 'DEV-NEW' }];
+      return { ok: true };
+    });
+    const res = await release({ decision: 'approved' });
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(res.body.code).toBe('RELEASE_EVIDENCE');
+    expect(res.body.error).toMatch(/1 open deviation/);
+    expect(h.log).toContain('ROLLBACK');
+    expect(h.log).not.toContain('DOMAIN');
+    expect(recordGovernedAction).not.toHaveBeenCalled();
+    expect(persistGovernedActionSignature).not.toHaveBeenCalled();
+  });
+
+  it('refuses lost signing authority after reauthentication and before any release or signature write', async () => {
+    verifyReauth.mockImplementationOnce(async () => {
+      signerRole.value = 'viewer';
+      return { ok: true };
+    });
+    const res = await release({ decision: 'approved' });
+    expect(res.status, JSON.stringify(res.body)).toBe(403);
+    expect(res.body.error).toBe('ESIGNATURE_NO_AUTHORITY');
+    expect(h.log).toContain('ROLLBACK');
+    expect(h.log).not.toContain('DOMAIN');
+    expect(recordGovernedAction).not.toHaveBeenCalled();
+    expect(persistGovernedActionSignature).not.toHaveBeenCalled();
+  });
+
+  it.each(['conditional', 'rejected'])('rechecking deviations preserves the existing %s disposition policy', async decision => {
+    verifyReauth.mockImplementationOnce(async () => {
+      h.batchDeviations = { open: 1 };
+      return { ok: true };
+    });
+    const res = await release({ decision });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(persistGovernedActionSignature.mock.calls[0][1].payload.meaning).toBe('responsibility');
+  });
+
+});
+
+describe('CMC batch release: declared meaning matches the disposition', () => {
   it("refuses a declared 'release' on a rejected batch before re-authentication, and writes nothing", async () => {
     const res = await release({ decision: 'rejected', meaning: 'release' });
     expect(res.status, JSON.stringify(res.body)).toBe(400);

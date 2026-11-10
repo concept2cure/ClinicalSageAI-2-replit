@@ -1,0 +1,104 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | client/src/concept2cure/v2/__tests__/newProjectWizardObjective.test.tsx > New project — the objective > is labelled optional and held to the server's 4,000 characters
+An update to NewProjectWizardSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to NewProjectWizardSession inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/newProjectWizardObjective.test.tsx > New project — the objective > is labelled optional and held to the server's 4,000 characters
+An update to WizardFilingSetup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/newProjectWizardObjective.test.tsx > New project — the objective > is labelled optional and held to the server's 4,000 characters 271ms
+   → expected -1 to be 4000 // Object.is equality
+ × client/src/concept2cure/v2/__tests__/newProjectWizardObjective.test.tsx > New project — the objective > shows it on the review and sends it with the create, in one write 269ms
+   → expected { name: 'HLV-334 — IND', …(10) } to match object { Object (objective) }
+(11 matching properties omitted from actual)
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardObjective.test.tsx > New project — the objective > sends none when none is stated 239ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardObjective.test.tsx > New project — the objective > says a refused objective in the server's own words, and opens no project 204ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardObjective.test.tsx > New project — the objective > is labelled optional and held to the server's 4,000 characters
+AssertionError: expected -1 to be 4000 // Object.is equality
+
+- Expected
++ Received
+
+- 4000
++ -1
+
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardObjective.test.tsx:70:29
+     68|     fireEvent.click(screen.getByRole('button', { name: /^continue$/i }…
+     69|     const field = screen.getByRole('textbox', { name: 'Objective (opti…
+     70|     expect(field.maxLength).toBe(4000);
+       |                             ^
+     71|   });
+     72|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/newProjectWizardObjective.test.tsx > New project — the objective > shows it on the review and sends it with the create, in one write
+AssertionError: expected { name: 'HLV-334 — IND', …(10) } to match object { Object (objective) }
+(11 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "objective": "Show HLV-334 is safe at the proposed doses, and open the IND.",
++   "clientWorkspaceId": 21,
++   "indication": undefined,
++   "name": "HLV-334 — IND",
++   "primaryAgency": "FDA",
++   "productName": "HLV-334 — IND",
++   "productType": "drug",
++   "programType": "ind",
++   "riskBasedMonitoring": false,
++   "submissionTypeId": "us_ind",
++   "targetSubmissionDate": null,
++   "teamMembers": [],
+  }
+
+ ❯ client/src/concept2cure/v2/__tests__/newProjectWizardObjective.test.tsx:77:30
+     75|     expect(shown).toBe(OBJECTIVE);
+     76|     await vi.waitFor(() => expect(createCall()).toBeTruthy());
+     77|     expect(createCall()![2]).toMatchObject({ objective: OBJECTIVE });
+       |                              ^
+     78|     await vi.waitFor(() => expect(onNav).toHaveBeenCalledWith('project…
+     79|     expect(charterWrite()).toBeUndefined();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  14:02:29
+   Duration  2.64s (transform 869ms, setup 107ms, import 1.10s, tests 986ms, environment 348ms)
+

@@ -20,7 +20,6 @@
     "migrations/0010_biostats_signal_engine.sql",
     "migrations/0011_ai_threads_title.sql",
     "migrations/0012_project_charter_timeline.sql",
-    "migrations/0014_report_os_foundation.sql",
     "migrations/0015_document_artifact_bridge.sql",
     "migrations/0016_module3_workflow_convergence.sql",
     "migrations/0017_module3_project_id_fix.sql",

@@ -239,10 +239,26 @@ describe('explicit malformed target selectors fail before OCR or database access
     ['missing project', { projectId: undefined, projectRef: null }], ['missing project reference', { projectId: null, projectRef: null }],
     ['string project', { projectId: '1' }], ['zero project', { projectId: 0 }],
     ['fraction project', { projectId: 1.5 }], ['overflow project', { projectId: 2_147_483_648 }],
-    ['negative organization', { organizationId: -1 }], ['fraction organization', { organizationId: 1.5 }],
-    ['overflow organization', { organizationId: 2_147_483_648 }], ['string organization', { organizationId: '1001' }],
+    ['overflow organization', { organizationId: 2_147_483_648 }],
   ])('refuses %s honestly', async (_label, ctx) => {
     await refuses('INVALID_VERIFICATION_TARGET', {}, { ...context(), ...ctx });
+    expect(state.pool.query).not.toHaveBeenCalled();
+  });
+
+  // Since P-104 (4852aa78) the standing-rule gate runs before every tool and refuses a tenant that is not a
+  // positive safe integer before it reads anything, so these never reach the verifier's own selector check.
+  it.each([
+    ['negative organization', { organizationId: -1 }], ['fraction organization', { organizationId: 1.5 }],
+    ['string organization', { organizationId: '1001' }],
+  ])('refuses %s before the verifier runs', async (_label, ctx) => {
+    const before = await snapshot();
+    const result = await run({ expected_text: TEXT }, { ...context(), ...ctx });
+    expect(result).toMatchObject({ success: false, error: 'SKILL_POLICY_UNAVAILABLE', tool: 'verify_docx_against_source' });
+    expect(result.message).toMatch(/Nothing was run/);
+    expect(result.target).toBeUndefined();
+    expect(result.sealEligible).toBeUndefined();
+    expect(state.extract).not.toHaveBeenCalled();
+    expect(await snapshot()).toEqual(before);
     expect(state.pool.query).not.toHaveBeenCalled();
   });
 });

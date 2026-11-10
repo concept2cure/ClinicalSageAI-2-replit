@@ -1,0 +1,12 @@
+> concept2cure-riai@1.0.0 ci:internals-in-copy
+> node scripts/ci/check-internals-in-copy.mjs
+❌ Internal identifiers in user-visible copy.
+   client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx:746  [table name]
+     coauthor_documents
+   The reader of these surfaces is a regulatory director. A route name tells
+   them nothing they can act on, and the internal shape of a governed system is
+   an information-disclosure finding in a regulated product, not a cosmetic one.
+   (BIOPHARMA_WORK_ORDER.md guardrail 3; BP-W0-5.)
+   Name the CAPABILITY, not the endpoint:
+     "GET /api/cmc/stability-studies didn't respond."
+     → "The stability register didn't respond."

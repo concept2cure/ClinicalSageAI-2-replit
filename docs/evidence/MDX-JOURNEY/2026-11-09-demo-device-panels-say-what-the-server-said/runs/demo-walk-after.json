@@ -1,0 +1,45 @@
+{
+ "home": {
+  "bad": [],
+  "errs": [],
+  "alarming": []
+ },
+ "k510": {
+  "bad": [
+   "503 /api/predicate-intelligence/candidates?program_id=5decbec5-a8f8-4837-8a3a-5e90b1acbb71 {\"error\":\"Predicate Intelligence not configured\",\"code\":\"PREDICATE_INTELLIGENCE_NOT_CONFIGURED\",\"detail\":\"REVIEW_ADMIN_TOKEN is not set\"}",
+   "503 /api/predicate-intelligence/se-matrix?program_id=5decbec5-a8f8-4837-8a3a-5e90b1acbb71 {\"error\":\"Predicate Intelligence not configured\",\"code\":\"PREDICATE_INTELLIGENCE_NOT_CONFIGURED\",\"detail\":\"REVIEW_ADMIN_TOKEN is not set\"}"
+  ],
+  "errs": [],
+  "alarming": [
+   "Reduced openFDA fallback unavailable — openFDA device/510k.json unreachable: fetch failed",
+   "Financial certification or disclosure (21 CFR Part 54), where clinical data are relied on"
+  ]
+ },
+ "editor": {
+  "bad": [],
+  "errs": [],
+  "alarming": []
+ },
+ "labeling": {
+  "bad": [],
+  "errs": [],
+  "alarming": []
+ },
+ "engineering": {
+  "bad": [],
+  "errs": [],
+  "alarming": []
+ },
+ "udi": {
+  "bad": [],
+  "errs": [],
+  "alarming": []
+ },
+ "diagnostics": {
+  "bad": [
+   "404 /api/ivdr/gspr-checklist/5decbec5-a8f8-4837-8a3a-5e90b1acbb71/matrix {\"error\":\"No GSPR assessment found for this project\",\"code\":\"IVDR_GSPR_NOT_FOUND\"}"
+  ],
+  "errs": [],
+  "alarming": []
+ }
+}

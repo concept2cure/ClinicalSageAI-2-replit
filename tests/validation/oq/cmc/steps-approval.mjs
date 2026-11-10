@@ -3,13 +3,15 @@
  * its reason, its authority, its re-authentication, its bound digest, what the
  * signer read — the contradiction lifecycle, and the final-export gate.
  */
+import { createHash } from 'node:crypto';
 import { step, state } from './context.mjs';
 import { COMPILE_STEPS } from './steps-compile.mjs';
-import { requireSigner } from '../../lib/credentials.mjs';
+import { requireIdentity, requireSigner } from '../../lib/credentials.mjs';
 import {
   approveSection, completenessOf, dataOf, errCode, errDetail,
-  isSectionSignatureRow, postAsSigner, signatureRowsFor,
+  isSectionSignatureRow, postAsSigner, signatureRowsFor, SECTION_BINDING_BASIS,
 } from './signed-acts.mjs';
+import { canonicalJson } from '../../lib/qms-digest.mjs';
 
 const REASON = 'Reviewed against the executed batch record and the certificate of analysis.';
 
@@ -51,17 +53,20 @@ await step(
     action: 'as a member without signing authority: approve a section',
     expected: '403 ESIGNATURE_NO_AUTHORITY; no signature row',
     dependsOn: ['OQ-CMC-06'],
+    note: 'v0.11: the approval is the member\'s (OQ_MEMBER). Until v0.10 it was sent with the run session, an organisation admin, which holds signing authority.',
   },
-  async ({ api, expect, deviation }) => {
-    if (!process.env.OQ_MEMBER_EMAIL) {
-      deviation('not executed — OQ_MEMBER_EMAIL / _PASSWORD not supplied; an identity without signing authority is needed to observe the refusal.');
-    }
+  async ({ apiAs, api, expect, deviation, baseUrl }) => {
+    const member = await requireIdentity({ deviation, expect }, baseUrl, 'OQ_MEMBER', 'an identity without signing authority is needed to observe the refusal.');
     const key = state.sectionKeys[0];
-    const r = await api('POST', `/api/cmc/module3-os/sections/${state.projectId}/${encodeURIComponent(key)}/approve`, {
+    const target = `cmc_module3_section:${state.projectId}/${key}`;
+    const before = (await signatureRowsFor(api, target)).rows.length;
+    const r = await apiAs(member.session)('POST', `/api/cmc/module3-os/sections/${state.projectId}/${encodeURIComponent(key)}/approve`, {
       reason: REASON, meaning: 'approval', reauth: { password: 'not-reached' },
     });
-    expect(r.status === 403, `expected 403, got ${r.status}`, r.json);
-    return `403 ${errCode(r)}`;
+    expect(r.status === 403 && errCode(r) === 'ESIGNATURE_NO_AUTHORITY', `expected 403 ESIGNATURE_NO_AUTHORITY, got ${r.status} ${errCode(r)}`, r.json);
+    const after = (await signatureRowsFor(api, target)).rows.length;
+    expect(after === before, `a signature row was written (${before} → ${after})`);
+    return `the member's approval 403 ${errCode(r)}; signature rows ${before} → ${after}`;
   },
 );
 
@@ -112,25 +117,40 @@ await step(
     id: 'OQ-CMC-14',
     urs: ['URS-CMC-007'],
     title: 'The bound digest is a digest of the stored section version',
-    action: 'read the approved version snapshot and compare its §11.70 digest with the signature row’s',
-    expected: 'the signature row carries a sha256 bound digest over the stored snapshot',
+    action: 'as the runtime role (DATABASE_URL_RUNTIME, the organisation set as the server sets it): read the signature row\'s bound digest and the approved version\'s stored snapshot; recompute the §11.70 digest',
+    expected: 'the signature row carries a sha256 bound digest, basis cmc-module3-section-version-sha256, equal to sha256 of the canonical JSON of {organizationId, projectId, sectionKey, versionNumber, approvedVersionId, snapshot}',
     dependsOn: ['OQ-CMC-13'],
+    note: 'v0.11: no product read serves the bound digest (GET /api/part11/signatures/by-target does not return bound_payload_digest) or the stored snapshot (there is no versions route), so the step reads both as the runtime role, under row-level security, and recomputes the digest with the product\'s recipe (server/api/cmc/module3OperatingSystemRoutes.ts, the section approval; canonicalJson from tests/validation/lib/qms-digest.mjs). Until v0.10 it read the digest from the by-target read and a versions route, neither of which serves it.',
   },
-  async ({ api, expect, attach }) => {
-    const row = state.signatureRow;
-    const digest = String(row?.bound_payload_digest ?? row?.boundPayloadDigest ?? '');
-    const versions = await api(
-      'GET',
-      `/api/cmc/module3-os/sections/${state.projectId}/${encodeURIComponent(state.approvedKey)}/versions`,
-    );
-    attach('version-snapshot.json', versions.json ?? {});
-    /* The digest is sha256 over the canonical JSON of the snapshot the approval
-       transaction wrote (server/api/cmc/module3OperatingSystemRoutes.ts), so a
-       recomputation needs that stored snapshot. Where the read route does not
-       serve it the step records what it could and could not compare, rather
-       than claiming a match it did not compute. */
-    expect(/^[0-9a-f]{64}$/.test(digest), 'the signature row carries no sha256 bound digest', row);
-    return `signature digest ${digest.slice(0, 16)}…; version read ${versions.status}`;
+  async ({ api, expect, attach, deviation }) => {
+    const connectionString = process.env.DATABASE_URL_RUNTIME;
+    if (!connectionString) deviation('not executed — DATABASE_URL_RUNTIME (the non-owner runtime role) not supplied; no product read serves the bound digest or the stored snapshot.');
+    const session = await api('GET', '/api/v1/auth/session');
+    const orgId = Number(session.json?.user?.organizationId ?? session.json?.user?.organization_id);
+    expect(Number.isInteger(orgId) && orgId > 0, 'the run session names no organisation', session.json);
+    const { default: pg } = await import('pg');
+    const client = new pg.Client({ connectionString });
+    await client.connect();
+    let sig;
+    let version;
+    try {
+      await client.query("SELECT set_config('app.current_tenant_id', $1, false)", [String(orgId)]);
+      sig = (await client.query('SELECT id, bound_payload_digest, binding_basis FROM electronic_signatures WHERE id = $1', [state.signatureRow.id])).rows[0];
+      version = (await client.query('SELECT id, organization_id, project_id, version_number, snapshot_json FROM cmc_module3_section_versions WHERE id = $1', [state.approvedVersionId])).rows[0];
+    } finally {
+      await client.end();
+    }
+    expect(Boolean(sig && version), `the runtime role read signature ${sig ? 'found' : 'missing'}, version ${version ? 'found' : 'missing'}`);
+    const inputs = {
+      organizationId: version.organization_id, projectId: version.project_id, sectionKey: state.approvedKey,
+      versionNumber: version.version_number, approvedVersionId: version.id, snapshot: version.snapshot_json,
+    };
+    const recomputed = createHash('sha256').update(canonicalJson(inputs)).digest('hex');
+    attach('digest-recomputation.json', { signatureId: sig.id, bindingBasis: sig.binding_basis, stored: sig.bound_payload_digest, recomputed, inputs });
+    expect(sig.binding_basis === SECTION_BINDING_BASIS, `binding basis ${sig.binding_basis}`, sig);
+    expect(/^[0-9a-f]{64}$/.test(String(sig.bound_payload_digest)), 'the signature row carries no sha256 bound digest', sig);
+    expect(recomputed === sig.bound_payload_digest, `recomputed ${recomputed} ≠ stored ${sig.bound_payload_digest}`, inputs);
+    return `signature ${sig.id}: stored ${sig.bound_payload_digest.slice(0, 16)}… = recomputed over version ${version.id} (v${version.version_number})`;
   },
 );
 
@@ -227,8 +247,16 @@ await step(
        which: a gate that opened here would be the defect D2 2026-10-05 fixed. */
     expect(gate.status === 409, `expected 409 with sections unapproved, got ${gate.status}`, gate.json);
     const detail = String(errDetail(gate) || errCode(gate) || JSON.stringify(gate.json));
-    expect(/approv/i.test(detail), 'the refusal does not name the unapproved sections', detail);
-    return `409: ${detail.slice(0, 200)}`;
+    /* v0.12: the gate's sentence names one blocker, the first in its own precedence (final-export-gate.ts, since
+       2026-09-05), and `data` carries every blocker's count. Until v0.11 the step looked for "approv" in the
+       sentence, which names missing approvals only when nothing ahead of them is open. The step now reads the
+       unapproved sections from `data` and requires the sentence to name a blocker `data` confirms. */
+    const d = gate.json?.data ?? {};
+    const unapproved = Number(d.totalSections) - Number(d.approvedSections);
+    expect(unapproved > 0, 'the refusal does not count the unapproved sections', d);
+    const sentenceNames = Number(d.sectionsWithoutProvenance) > 0 ? /source lineage/i : /approv/i;
+    expect(sentenceNames.test(detail), 'the refusal sentence names no blocker its data confirms', detail);
+    return `409: ${unapproved} of ${d.totalSections} sections unapproved, ${d.sectionsWithoutProvenance} without source lineage; sentence: ${detail.slice(0, 160)}`;
   },
 );
 

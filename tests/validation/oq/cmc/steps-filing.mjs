@@ -4,7 +4,7 @@
  * engines.
  */
 import { step, state, stamp, FOREIGN_PROJECT_ID } from './context.mjs';
-import { requireSigner } from '../../lib/credentials.mjs';
+import { requireIdentity, requireSigner } from '../../lib/credentials.mjs';
 import { dataOf, errCode, postAsSigner } from './signed-acts.mjs';
 import { APPROVAL_STEPS } from './steps-approval.mjs';
 
@@ -27,7 +27,9 @@ await step(
     const signer = state.signer ?? (await requireSigner(ctx, ctx.baseUrl));
     const submissions = await api('GET', '/api/submissions');
     const rows = dataOf(submissions);
-    const own = (Array.isArray(rows) ? rows : []).find((s) => String(s.projectId ?? s.project_id) === String(state.projectId));
+    /* v0.12: a submission names its programme as `programId` (GET /api/submissions). Until v0.11 the step matched
+       `projectId`, which no row carries, so it never found the spine the programme's creation had made. */
+    const own = (Array.isArray(rows) ? rows : []).find((s) => String(s.programId ?? s.projectId ?? s.project_id) === String(state.projectId));
     if (!own) {
       deviation('not executed — the programme has no submission spine to place into; the IND filing path (OQ-SUBC) creates it.', rows);
     }
@@ -38,17 +40,32 @@ await step(
 
     const idempotencyKey = `oq-cmc-place-${stamp}`;
     const reason = 'Placing the approved Module 3 into sequence 0001 for filing.';
-    const place = await postAsSigner(ctx, signer, `/api/cmc/module3-os/place-into-submission/${state.projectId}`, {
-      sequenceId, reason, idempotencyKey,
-    });
+    /* v0.12: the route requires the submission with the sequence (module3OperatingSystemRoutes.ts); until v0.11
+       the step sent the sequence alone and would have been answered 400. */
+    state.submissionId = own.id;
+    const target = { submissionId: own.id, sequenceId, reason, idempotencyKey };
+    const place = await postAsSigner(ctx, signer, `/api/cmc/module3-os/place-into-submission/${state.projectId}`, target);
     attach('placement.json', place.json ?? {});
+    /* The placement refuses, before any write, unless the final-export gate passes. The reference records compose
+       sections the compiler scores incomplete, which cannot be approved, so this fixture never clears the gate.
+       The refusal is the designed answer and is recorded with the gate's own counts; the positive placement is
+       not observed, which is a deviation and never a pass. */
+    const gate = place.json?.data ?? {};
+    if (place.status === 409 && Number(gate.approvedSections) < Number(gate.totalSections)) {
+      const refusedLeaves = leafCount(await api('GET', `/api/submissions/sequences/${sequenceId}/leaves`));
+      expect(refusedLeaves === 0, `the refused placement wrote ${refusedLeaves} leaf/leaves`, place.json);
+      deviation(
+        `not executed — the placement was refused 409 by the final-export gate (${gate.approvedSections} of ${gate.totalSections} sections approved, ` +
+          `${gate.sectionsWithoutProvenance} without source lineage) and wrote no leaf, which is the designed answer. The reference records do not compose ` +
+          'a Module 3 whose every section can be approved, so the positive placement and its idempotent retry were not observed. A fixture for it is owed.',
+        { status: place.status, error: place.json?.error, approvedSections: gate.approvedSections, totalSections: gate.totalSections, leaves: refusedLeaves },
+      );
+    }
     expect(place.status === 200, `the placement expected 200, got ${place.status}`, place.json);
     const placed = leafCount(await api('GET', `/api/submissions/sequences/${sequenceId}/leaves`));
     expect(placed > 0, 'the placement wrote no leaf', place.json);
 
-    const retry = await postAsSigner(ctx, signer, `/api/cmc/module3-os/place-into-submission/${state.projectId}`, {
-      sequenceId, reason, idempotencyKey,
-    });
+    const retry = await postAsSigner(ctx, signer, `/api/cmc/module3-os/place-into-submission/${state.projectId}`, target);
     const after = leafCount(await api('GET', `/api/submissions/sequences/${sequenceId}/leaves`));
     expect(after === placed, `the retry wrote further leaves: ${placed} → ${after}`, { placed, after });
     return `placed ${placed} leaf/leaves; retry ${retry.status} with ${after} leaves still`;
@@ -60,19 +77,22 @@ await step(
     id: 'OQ-CMC-20',
     urs: ['URS-CMC-011'],
     title: 'Placement requires the regulatory-author role',
-    action: 'as a member without that role: place',
+    action: 'as the viewer, who holds no regulatory-author role: place',
     expected: '403; no leaf written',
-    dependsOn: ['OQ-CMC-19'],
+    dependsOn: ['OQ-CMC-13'],
+    note: 'v0.11: the placement is the member\'s (OQ_MEMBER). Until v0.10 it was sent with the run session. v0.12: the placement is the viewer\'s (OQ_VIEWER). An organisation member holds the regulatory-author role (ORG_ROLE_FUNCTIONAL_GRANTS, server/middleware/auth.ts), so OQ_MEMBER passed the role and was answered by the export gate (409); the viewer is the identity without it. The step depends on the approval (OQ-CMC-13), not on a completed placement: the role is refused before the target is read, and the step needs only the sequence OQ-CMC-19 creates.',
   },
-  async ({ api, expect, deviation }) => {
-    if (!process.env.OQ_MEMBER_EMAIL) {
-      deviation('not executed — OQ_MEMBER_EMAIL / _PASSWORD not supplied; an identity without the regulatory-author role is needed to observe the refusal.');
-    }
-    const r = await api('POST', `/api/cmc/module3-os/place-into-submission/${state.projectId}`, {
-      sequenceId: state.sequenceId, reason: 'Attempting a placement without the role.',
+  async ({ api, apiAs, expect, deviation, baseUrl }) => {
+    if (!state.sequenceId) deviation('not executed — OQ-CMC-19 created no sequence to place into.');
+    const viewer = await requireIdentity({ deviation, expect }, baseUrl, 'OQ_VIEWER', 'an identity without the regulatory-author role is needed to observe the refusal.');
+    const before = leafCount(await api('GET', `/api/submissions/sequences/${state.sequenceId}/leaves`));
+    const r = await apiAs(viewer.session)('POST', `/api/cmc/module3-os/place-into-submission/${state.projectId}`, {
+      submissionId: state.submissionId, sequenceId: state.sequenceId, reason: 'Attempting a placement without the role.',
     });
     expect([401, 403].includes(r.status), `expected 403, got ${r.status}`, r.json);
-    return `${r.status} ${errCode(r) ?? ''}`.trim();
+    const after = leafCount(await api('GET', `/api/submissions/sequences/${state.sequenceId}/leaves`));
+    expect(after === before, `the refused placement wrote leaves: ${before} → ${after}`, { before, after });
+    return `${r.status} ${errCode(r) ?? ''}; leaves ${before} → ${after}`.trim();
   },
 );
 
@@ -136,8 +156,10 @@ await step(
     const signer = state.signer ?? (await requireSigner(ctx, ctx.baseUrl));
     const batchId = state.records?.batchRecord;
     expect(Boolean(batchId), 'the prerequisite recorded no batch', state.records);
+    /* v0.11: the release states its decision, which the route has required since before this protocol
+       (batchRecordRoutes.ts, approved | rejected | conditional); v0.10 sent none and was answered 400. */
     const noResults = await postAsSigner(ctx, signer, `/api/cmc/batch-records/${batchId}/release`, {
-      reason: 'Releasing before any QC result is recorded.', meaning: 'approval',
+      reason: 'Releasing before any QC result is recorded.', meaning: 'approval', decision: 'approved',
     });
     expect(noResults.status === 409, `a release with no QC result expected 409, got ${noResults.status}`, noResults.json);
     const already = await api('POST', '/api/cmc/batch-records', {
@@ -153,15 +175,21 @@ await step(
     id: 'OQ-CMC-23',
     urs: ['URS-CMC-013'],
     title: 'Editing an approved specification withdraws the approval, with the reason recorded',
-    action: 'approve a specification, then widen its limits without a reason, then with one',
-    expected: '422 without a reason; with one, the edit lands and the approval is withdrawn',
+    action: 'as the signer, validate the specification\'s analytical method on its register; approve the specification; then widen its limits without a reason, then with one',
+    expected: 'the method validated 200; the approval 200; 422 without a reason; with one, the edit lands and the approval is withdrawn',
     dependsOn: ['OQ-CMC-03'],
+    note: 'v0.11: since d9060a85e2 (2026-11-08, F1) and P-110 item 1 (2026-11-09) a specification is approved only when the method it names is in the project\'s register and validated, or shown suitable, under signature; the step validates OQ-CMC-03\'s method through the register\'s signed Validate act first. Until v0.10 the approval was the first act.',
   },
   async (ctx) => {
     const { api, expect } = ctx;
     const signer = state.signer ?? (await requireSigner(ctx, ctx.baseUrl));
     const specId = state.records?.specification;
-    expect(Boolean(specId), 'the prerequisite recorded no specification', state.records);
+    const methodId = state.records?.analyticalMethod;
+    expect(Boolean(specId && methodId), 'the prerequisite recorded no specification or method', state.records);
+    const validated = await postAsSigner(ctx, signer, `/api/cmc/analytical-methods/${methodId}/validate`, {
+      reason: 'ICH Q2(R2) validation package reviewed and accepted.', meaning: 'approval',
+    });
+    expect(validated.status === 200, `the method validation expected 200, got ${validated.status}`, validated.json);
     const approve = await postAsSigner(ctx, signer, `/api/cmc/specifications/${specId}/approve`, {
       reason: 'Limits justified by the batch history in the development report.', meaning: 'approval',
     });
@@ -176,7 +204,7 @@ await step(
     const read = await api('GET', `/api/cmc/specifications/${specId}`);
     const status = dataOf(read).approvalStatus ?? dataOf(read).approval_status;
     expect(status !== 'approved', `the edit kept the approval (${status})`, read.json);
-    return `approved 200; edit with no reason 422; with a reason 200 and the approval withdrawn (${status})`;
+    return `method validated 200; approved 200; edit with no reason 422; with a reason 200 and the approval withdrawn (${status})`;
   },
 );
 

@@ -4,11 +4,21 @@
  *
  * A pure, closed-form, fully reproducible reasoning engine for structured
  * benefit-risk (B-R) assessment of medicinal products. NO LLM. NO network.
- * NO database. The one import from another service is refuseUnlessStated,
- * which throws ComputationRefusal when an input that decides the output is not
- * stated, so that AnA relays it as needs_parameters. Every output is a
- * deterministic function of the inputs and the citation-backed knowledge tables
- * defined here.
+ * NO database. Its imports from other services are the shared input readers
+ * (refuseUnlessStated and ComputationRefusal; statedBoolean, statedNumber,
+ * statedOneOf and booleanInputStates), which refuse an input that decides the
+ * output and was not stated, or was malformed, so that AnA relays it as
+ * needs_parameters. Every output is a deterministic function of the inputs and
+ * the citation-backed knowledge tables defined here and in the sibling
+ * benefit-risk-reference.ts.
+ *
+ * Rule 2 S5d (2026-11-09): an omitted or null true/false input reads as
+ * not_stated (inputStates) and is never read as true or false. A verdict,
+ * weight, net balance or conclusion that an unstated fact could change is null
+ * or says it is not assessed, and names the facts (undecided). A malformed value
+ * is refused by field. An omitted grade that a score still uses (magnitude,
+ * severity, reversibility, uncertainty) keeps its middle value and is named in
+ * methodNotes.
  *
  * The engine encodes the structured B-R methodologies that regulators expect a
  * sponsor to apply and document in a marketing application (Module 2.5.6 of the
@@ -56,155 +66,35 @@
  * @module server/services/benefit-risk/benefit-risk-knowledge
  */
 
-import { refuseUnlessStated } from '../ana-biostats/computation-engine';
+import { ComputationRefusal, refuseUnlessStated, type RequiredInputCheck } from '../ana-biostats/computation-engine';
+import {
+  booleanInputStates,
+  conclusions,
+  listed,
+  oneOfInput,
+  shown,
+  statedBoolean,
+  statedList,
+  statedNumber,
+  statedOneOf,
+  statedText,
+} from '../immunogenicity/immunogenicity-reference';
+import {
+  CITATIONS, CONDITION_SEVERITY_RANK, audienceCautions, audienceFormat, audienceFraming, audienceLabel,
+  audienceMustInclude, defaultBenefitWeight, deriveMagnitude, uncertaintyImpactProse, worseUncertainty, defaultRiskFrequencyWeight, describeBenefitEndpoint, describeConditionCourse,
+  describeConditionSeverity, evidenceSourceProse, evidenceSourceUncertaintyFloor, frequencyToProseFda, magnitudeScore,
+  reversibilityMultiplier, severityScore, uncertaintyDefaultDescription, uncertaintyMitigation, uncertaintyPenalty,
+  uncertaintySourceLabel, weightingGuidanceText, type Citation,
+} from './benefit-risk-reference';
+
+export type { Citation } from './benefit-risk-reference';
 
 /* ════════════════════════════════════════════════════════════════════════════
  * SECTION 0 — Shared vocabulary, citation registry, and helper primitives
  * ════════════════════════════════════════════════════════════════════════════ */
 
-/** A single regulatory citation with a stable identifier. */
-export interface Citation {
-  readonly id: string;
-  readonly source: string;
-  readonly reference: string;
-  readonly year: number;
-}
-
-/**
- * Canonical citation registry. Every citation surfaced by the engine is drawn
- * from this table so that wording is identical across all six functions. The
- * keys are stable identifiers used internally; the `reference` strings are the
- * verbatim text callers must report.
- */
-interface CitationRegistry {
-  readonly [key: string]: Citation;
-}
-
-const CITATIONS: CitationRegistry = {
-  FDA_BR_FRAMEWORK_2023: {
-    id: 'FDA_BR_FRAMEWORK_2023',
-    source: 'FDA Guidance for Industry',
-    reference:
-      'FDA, "Benefit-Risk Assessment for New Drug and Biological Products: ' +
-      'Guidance for Industry" (final guidance, September 2023)',
-    year: 2023,
-  },
-  FDA_PDUFA_VI: {
-    id: 'FDA_PDUFA_VI',
-    source: 'PDUFA Reauthorization Performance Goals',
-    reference:
-      'PDUFA VI Commitment Letter (FY2018-2022), Section I.J — Enhancement ' +
-      'and Modernization of the FDA Drug Safety System and Benefit-Risk Assessment',
-    year: 2017,
-  },
-  FDA_PDUFA_VII: {
-    id: 'FDA_PDUFA_VII',
-    source: 'PDUFA Reauthorization Performance Goals',
-    reference:
-      'PDUFA VII Commitment Letter (FY2023-2027), Section I — Patient-Focused ' +
-      'Drug Development and Benefit-Risk Assessment in Regulatory Decision-Making',
-    year: 2021,
-  },
-  FDA_BR_FRAMEWORK_GRID: {
-    id: 'FDA_BR_FRAMEWORK_GRID',
-    source: 'FDA Benefit-Risk Framework',
-    reference:
-      'FDA Benefit-Risk Assessment Framework grid: Analysis of Condition, ' +
-      'Current Treatment Options, Benefit, Risk and Risk Management → Conclusions',
-    year: 2023,
-  },
-  EMA_BR_METHODOLOGY: {
-    id: 'EMA_BR_METHODOLOGY',
-    source: 'EMA Benefit-Risk Methodology Project',
-    reference:
-      'EMA, "Benefit-Risk Methodology Project" Work Packages 1-4 ' +
-      '(EMA/549682/2010; final report 2012)',
-    year: 2012,
-  },
-  EMA_EFFECTS_TABLE: {
-    id: 'EMA_EFFECTS_TABLE',
-    source: 'EMA Assessment Report Template',
-    reference:
-      'EMA effects table — standardized tabulation of favourable and ' +
-      'unfavourable effects (CHMP assessment report template; EPAR benefit-risk section)',
-    year: 2014,
-  },
-  PROACT_URL: {
-    id: 'PROACT_URL',
-    source: 'PrOACT-URL Framework',
-    reference:
-      'Hammond, Keeney & Raiffa, adapted by EMA — PrOACT-URL: Problem, ' +
-      'Objectives, Alternatives, Consequences, Trade-offs, Uncertainty, ' +
-      'Risk attitude, Linked decisions',
-    year: 2012,
-  },
-  IMI_PROTECT_BRAT: {
-    id: 'IMI_PROTECT_BRAT',
-    source: 'IMI PROTECT Benefit-Risk',
-    reference:
-      'IMI PROTECT Work Package 5, "Recommendations for the methodology and ' +
-      'visualisation techniques to be used in the assessment of benefit and risk ' +
-      'of medicines" (2013); BRAT framework, Coplan et al., Clin Pharmacol Ther 2011',
-    year: 2013,
-  },
-  ICH_M4E_R2: {
-    id: 'ICH_M4E_R2',
-    source: 'ICH Harmonised Guideline',
-    reference:
-      'ICH M4E(R2), Common Technical Document for the Registration of ' +
-      'Pharmaceuticals — Clinical Overview, §2.5.6 Benefits and Risks Conclusions (2016)',
-    year: 2016,
-  },
-  CIOMS_IV: {
-    id: 'CIOMS_IV',
-    source: 'CIOMS Working Group IV',
-    reference:
-      'CIOMS Working Group IV, "Benefit-Risk Balance for Marketed Drugs: ' +
-      'Evaluating Safety Signals" (Geneva, 1998)',
-    year: 1998,
-  },
-  CIOMS_VI: {
-    id: 'CIOMS_VI',
-    source: 'CIOMS Working Group VI',
-    reference:
-      'CIOMS Working Group VI, "Management of Safety Information from Clinical ' +
-      'Trials" (Geneva, 2005)',
-    year: 2005,
-  },
-  MCDA_SWING: {
-    id: 'MCDA_SWING',
-    source: 'Multi-Criteria Decision Analysis methodology',
-    reference:
-      'Mussen, Salek & Walker, "A quantitative approach to benefit-risk ' +
-      'assessment of medicines" — MCDA with swing weighting (Pharmacoepidemiol ' +
-      'Drug Saf 2007); EMA MCDA pilot, PROTECT WP5',
-    year: 2007,
-  },
-  FDA_PFDD: {
-    id: 'FDA_PFDD',
-    source: 'FDA Patient-Focused Drug Development',
-    reference:
-      'FDA PFDD Guidance Series (Guidances 1-4, 2018-2023) on collecting and ' +
-      'submitting patient experience data to inform benefit-risk assessment',
-    year: 2023,
-  },
-  ICH_E2C_R2: {
-    id: 'ICH_E2C_R2',
-    source: 'ICH Harmonised Guideline',
-    reference:
-      'ICH E2C(R2), Periodic Benefit-Risk Evaluation Report (PBRER) — ' +
-      'integrated benefit-risk evaluation for marketed products (2012)',
-    year: 2012,
-  },
-  EMA_RMP_GVP_V: {
-    id: 'EMA_RMP_GVP_V',
-    source: 'EMA Good Pharmacovigilance Practices',
-    reference:
-      'EMA GVP Module V — Risk Management Systems (Rev 2, 2017); risk ' +
-      'minimisation measures feeding the benefit-risk balance',
-    year: 2017,
-  },
-};
+// The citation registry, the score tables and the fixed texts are in
+// benefit-risk-reference.ts (moved unchanged 2026-11-09, Rule 2 S5d).
 
 /** Resolve a citation by id; deterministic, throws on unknown id. */
 function cite(id: string): Citation {
@@ -249,6 +139,102 @@ function norm(text: string | undefined, fallback: string): string {
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
+ * Input readers (Rule 2 S5d, 2026-11-09). Omitted or null is not stated; a
+ * value of the wrong kind is refused by field, never read as another value.
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/** A true/false input: true, false or not_stated. */
+type BooleanState = boolean | 'not_stated';
+
+/** A conclusion an unstated fact leaves open: the facts it turns on, and what it could be. */
+export interface Undecided {
+  readonly conclusion: string;
+  readonly decidingFacts: string[];
+  readonly couldBe: Array<string | number | boolean>;
+}
+
+/** A stated list of texts; each entry must be text. */
+function statedTexts(field: string, value: unknown): string[] | undefined {
+  return statedList(field, value)?.map((v: unknown, i: number): string => {
+    if (typeof v === 'string') return v;
+    throw new ComputationRefusal('invalid_input', `${field}[${i}] must be text (got ${shown(v)}).`, `${field}[${i}]`);
+  });
+}
+
+/** One entry of a list of objects, as a record of its fields. */
+function statedItem(field: string, value: unknown): Record<string, unknown> {
+  if (typeof value === 'object' && value !== null && !Array.isArray(value)) return value as Record<string, unknown>;
+  throw new ComputationRefusal('invalid_input', `${field} must be an object (got ${shown(value)}).`, field);
+}
+
+/** A required list, for refuseUnlessStated. */
+function listInput(field: string, value: unknown): RequiredInputCheck {
+  return { field, value, ok: Array.isArray(value), expected: 'a list' };
+}
+
+/** A required value from a fixed vocabulary. */
+function requiredOneOf<T extends string>(field: string, value: unknown, allowed: readonly T[]): T {
+  refuseUnlessStated('benefit-risk', [oneOfInput(field, value, allowed)], 'assessed');
+  return value as T;
+}
+
+/** Readers for one entry of a list of objects; each refuses a malformed field by its path. */
+interface Reader {
+  text(k: string): string | undefined;
+  oneOf<T extends string>(k: string, allowed: readonly T[]): T | undefined;
+  need<T extends string>(k: string, allowed: readonly T[]): T;
+  bool(k: string): boolean | undefined;
+  num(k: string, ok: (n: number) => boolean, rule: string): number | undefined;
+  texts(k: string): string[] | undefined;
+}
+
+/** The entries of a stated list of objects (none when omitted or null), each with its readers. */
+function entries(field: string, value: unknown): Reader[] {
+  return (statedList(field, value) ?? []).map((v: unknown, i: number): Reader => {
+    const o = statedItem(`${field}[${i}]`, v);
+    const at = (k: string): string => `${field}[${i}].${k}`;
+    return {
+      text: (k) => statedText(at(k), o[k]),
+      oneOf: (k, allowed) => statedOneOf(at(k), o[k], allowed),
+      need: (k, allowed) => requiredOneOf(at(k), o[k], allowed),
+      bool: (k) => statedBoolean(at(k), o[k]),
+      num: (k, ok, rule) => statedNumber(at(k), o[k], ok, rule),
+      texts: (k) => statedTexts(at(k), o[k]),
+    };
+  });
+}
+
+/** A weight from 0 to 1. */
+const unitWeight = (n: number): boolean => n >= 0 && n <= 1;
+
+const MAGNITUDES = ['negligible', 'low', 'moderate', 'high', 'very_high'] as const;
+const UNCERTAINTIES = ['low', 'moderate', 'high'] as const;
+const SEVERITIES = ['mild', 'moderate', 'severe', 'life_threatening', 'fatal'] as const;
+const REVERSIBILITIES = ['fully_reversible', 'partially_reversible', 'irreversible'] as const;
+const FREQUENCIES = ['very_common', 'common', 'uncommon', 'rare', 'very_rare'] as const;
+const ENDPOINT_TYPES = ['mortality', 'irreversible_morbidity', 'symptom', 'function', 'surrogate', 'biomarker'] as const;
+const CONDITION_SEVERITIES = ['mild', 'moderate', 'serious', 'severe', 'life_threatening'] as const;
+const CONDITION_COURSES = ['acute', 'chronic', 'progressive', 'relapsing', 'episodic'] as const;
+const TREATMENT_STATUSES = ['approved', 'off_label', 'supportive_care', 'none'] as const;
+const EFFECT_DIRECTIONS = ['favourable', 'unfavourable'] as const;
+const EVIDENCE_SOURCES = ['pivotal_rct', 'supportive_rct', 'meta_analysis', 'observational', 'indirect', 'modeling'] as const;
+const CRITERION_TYPES = ['benefit', 'risk'] as const;
+const WEIGHTING_APPROACHES = ['qualitative', 'swing_weighting', 'mcda'] as const;
+const UNCERTAINTY_SOURCE_TYPES = [
+  'data_quality', 'extrapolation', 'rare_events', 'indirect_evidence', 'surrogate_endpoint', 'missing_data',
+  'external_validity', 'subgroup', 'long_term', 'comparator',
+] as const;
+const AFFECTED_SIDES = ['benefit', 'risk', 'both'] as const;
+const BR_AUDIENCES = ['label', 'advisory_committee', 'prescriber', 'patient', 'payer', 'regulator_internal'] as const;
+
+/** The methodNotes line naming each omitted grade a score used at its middle value. */
+function defaultsNote(defaulted: readonly string[]): string[] {
+  return defaulted.length === 0
+    ? []
+    : [`Not stated, so scored at the middle value (a default, not a finding): ${defaulted.join('; ')}.`];
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
  * Shared ordinal scales used across the engine
  * ──────────────────────────────────────────────────────────────────────────── */
 
@@ -273,62 +259,6 @@ export type BRVerdict =
   | 'favourable_with_conditions'
   | 'indeterminate'
   | 'unfavourable';
-
-interface OrdinalMap {
-  readonly [key: string]: number;
-}
-
-/** Numeric anchors for magnitude levels (0..1), used for deterministic scoring. */
-const MAGNITUDE_SCORE: OrdinalMap = {
-  negligible: 0.05,
-  low: 0.25,
-  moderate: 0.5,
-  high: 0.75,
-  very_high: 0.95,
-};
-
-/** Numeric anchors for severity levels (0..1). */
-const SEVERITY_SCORE: OrdinalMap = {
-  mild: 0.15,
-  moderate: 0.4,
-  severe: 0.7,
-  life_threatening: 0.9,
-  fatal: 1.0,
-};
-
-/** Numeric anchors for reversibility (multiplier on harm weight). */
-const REVERSIBILITY_MULTIPLIER: OrdinalMap = {
-  fully_reversible: 0.6,
-  partially_reversible: 0.85,
-  irreversible: 1.0,
-};
-
-/** Numeric anchors for uncertainty (penalty applied to confidence). */
-const UNCERTAINTY_PENALTY: OrdinalMap = {
-  low: 0.05,
-  moderate: 0.18,
-  high: 0.35,
-};
-
-function magnitudeScore(level: MagnitudeLevel): number {
-  const v = MAGNITUDE_SCORE[level];
-  return v === undefined ? 0.5 : v;
-}
-
-function severityScore(level: SeverityLevel): number {
-  const v = SEVERITY_SCORE[level];
-  return v === undefined ? 0.5 : v;
-}
-
-function reversibilityMultiplier(level: ReversibilityLevel): number {
-  const v = REVERSIBILITY_MULTIPLIER[level];
-  return v === undefined ? 1.0 : v;
-}
-
-function uncertaintyPenalty(level: UncertaintyLevel): number {
-  const v = UNCERTAINTY_PENALTY[level];
-  return v === undefined ? 0.18 : v;
-}
 
 /* ════════════════════════════════════════════════════════════════════════════
  * SECTION 1 — FDA Benefit-Risk Assessment Framework grid
@@ -398,94 +328,16 @@ export interface FdaBrFrameworkResult {
   readonly framework: 'FDA Benefit-Risk Assessment Framework';
   readonly rows: FdaFrameworkRow[];
   readonly integratedAssessmentNarrative: string;
-  readonly unmetNeedConsidered: boolean;
-  readonly severityContextScore: number;
+  /** null while unmetMedicalNeed is not stated and the treatment options supplied do not settle it. */
+  readonly unmetNeedConsidered: boolean | null;
+  /** null while conditionSeverity is not stated. */
+  readonly severityContextScore: number | null;
+  /** Each true/false input: true, false or not_stated. */
+  readonly inputStates: Record<string, BooleanState>;
+  /** The conclusions an unstated fact leaves open. */
+  readonly undecided: Undecided[];
   readonly citations: Citation[];
   readonly methodNotes: string[];
-}
-
-const CONDITION_SEVERITY_RANK: OrdinalMap = {
-  mild: 0.2,
-  moderate: 0.45,
-  serious: 0.65,
-  severe: 0.8,
-  life_threatening: 1.0,
-};
-
-function describeConditionSeverity(
-  severity: StructureBenefitRiskFrameworkParams['conditionSeverity'],
-): string {
-  switch (severity) {
-    case 'life_threatening':
-      return 'life-threatening condition; tolerance for risk and uncertainty is correspondingly higher';
-    case 'severe':
-      return 'severe condition with substantial impact on survival or daily functioning';
-    case 'serious':
-      return 'serious condition associated with meaningful morbidity if untreated';
-    case 'moderate':
-      return 'moderate condition; risk tolerance is calibrated to symptom and functional burden';
-    case 'mild':
-      return 'mild condition; tolerance for serious risk is low and the safety bar is high';
-    default:
-      return 'condition severity not specified; risk tolerance cannot be anchored to disease burden';
-  }
-}
-
-function describeConditionCourse(
-  course: StructureBenefitRiskFrameworkParams['conditionCourse'],
-): string {
-  switch (course) {
-    case 'acute':
-      return 'acute course — benefit and risk are evaluated over a short, defined treatment window';
-    case 'chronic':
-      return 'chronic course — cumulative and long-term risks weigh more heavily because of prolonged exposure';
-    case 'progressive':
-      return 'progressive course — delay or denial of an effective therapy itself carries a risk of irreversible decline';
-    case 'relapsing':
-      return 'relapsing course — durability of benefit and risk across repeated treatment cycles is material';
-    case 'episodic':
-      return 'episodic course — intermittent exposure changes the relevant time-horizon for harms';
-    default:
-      return 'disease course not specified';
-  }
-}
-
-function describeBenefitEndpoint(
-  endpoint: KeyBenefitClaim['endpointType'],
-): string {
-  switch (endpoint) {
-    case 'mortality':
-      return 'mortality endpoint — the most clinically important category of benefit';
-    case 'irreversible_morbidity':
-      return 'prevention of irreversible morbidity — high clinical importance';
-    case 'function':
-      return 'functional endpoint — directly meaningful to how a patient feels and functions';
-    case 'symptom':
-      return 'symptomatic endpoint — patient-relevant but generally below survival/irreversible-morbidity in the hierarchy';
-    case 'surrogate':
-      return 'surrogate endpoint — clinical benefit is inferred and carries added uncertainty about translation to outcomes';
-    case 'biomarker':
-      return 'biomarker endpoint — requires explicit justification that it predicts clinical benefit';
-    default:
-      return 'endpoint type not specified';
-  }
-}
-
-function frequencyToProseFda(freq: KeyRiskItem['frequency']): string {
-  switch (freq) {
-    case 'very_common':
-      return 'very common (≥1/10)';
-    case 'common':
-      return 'common (≥1/100 to <1/10)';
-    case 'uncommon':
-      return 'uncommon (≥1/1,000 to <1/100)';
-    case 'rare':
-      return 'rare (≥1/10,000 to <1/1,000)';
-    case 'very_rare':
-      return 'very rare (<1/10,000) — typically detectable only post-marketing';
-    default:
-      return 'frequency not characterized';
-  }
 }
 
 /**
@@ -497,8 +349,34 @@ function frequencyToProseFda(freq: KeyRiskItem['frequency']): string {
 export function structureBenefitRiskFramework(
   params: StructureBenefitRiskFrameworkParams,
 ): FdaBrFrameworkResult {
-  const productName = norm(params.productName, 'the investigational product');
-  const indication = norm(params.indication, 'the proposed indication');
+  // 2026-11-09 (S5d): an omitted unmet need beside an approved option read "Effective alternatives exist", an omitted
+  // manageable "Considered manageable", an omitted severity "of lower severity"; 'false' or 'Severe' was misread.
+  const productName = norm(statedText('productName', params.productName), 'the investigational product');
+  const indication = norm(statedText('indication', params.indication), 'the proposed indication');
+  const conditionSeverity = statedOneOf('conditionSeverity', params.conditionSeverity, CONDITION_SEVERITIES);
+  const conditionCourse = statedOneOf('conditionCourse', params.conditionCourse, CONDITION_COURSES);
+  const populationDescriptor = statedText('populationDescriptor', params.populationDescriptor);
+  const unmetStated = statedBoolean('unmetMedicalNeed', params.unmetMedicalNeed);
+  const treatmentList = statedList('currentTreatments', params.currentTreatments);
+  const treatments: TreatmentOption[] = entries('currentTreatments', treatmentList).map((t: Reader) => ({
+    name: t.text('name') ?? '', status: t.oneOf('status', TREATMENT_STATUSES), limitations: t.text('limitations'),
+  }));
+  const benefits: KeyBenefitClaim[] = entries('keyBenefits', params.keyBenefits).map((b: Reader) => ({
+    description: b.text('description') ?? '', endpointType: b.oneOf('endpointType', ENDPOINT_TYPES),
+    magnitude: b.oneOf('magnitude', MAGNITUDES), uncertainty: b.oneOf('uncertainty', UNCERTAINTIES),
+  }));
+  const risks: KeyRiskItem[] = entries('keyRisks', params.keyRisks).map((r: Reader) => ({
+    description: r.text('description') ?? '', severity: r.oneOf('severity', SEVERITIES),
+    reversibility: r.oneOf('reversibility', REVERSIBILITIES), frequency: r.oneOf('frequency', FREQUENCIES),
+    uncertainty: r.oneOf('uncertainty', UNCERTAINTIES), manageable: r.bool('manageable'),
+  }));
+  const rmTools = statedTexts('riskManagementTools', params.riskManagementTools) ?? [];
+  const inputStates: Record<string, BooleanState> = {
+    unmetMedicalNeed: unmetStated ?? 'not_stated',
+    ...Object.fromEntries(risks.map((r: KeyRiskItem, i: number) => [`keyRisks[${i}].manageable`, r.manageable ?? 'not_stated'])),
+  };
+  const undecided: Undecided[] = [];
+  const defaulted: string[] = [];
   const methodNotes: string[] = [];
   const citationIds: string[] = [
     'FDA_BR_FRAMEWORK_2023',
@@ -510,48 +388,67 @@ export function structureBenefitRiskFramework(
   // ── Row 1: Analysis of Condition ──────────────────────────────────────────
   const conditionEvidence: string[] = [];
   conditionEvidence.push(`Indication under review: ${indication}.`);
-  conditionEvidence.push(describeConditionSeverity(params.conditionSeverity));
-  conditionEvidence.push(describeConditionCourse(params.conditionCourse));
-  if (params.populationDescriptor) {
-    conditionEvidence.push(`Affected population: ${norm(params.populationDescriptor, 'not specified')}.`);
+  conditionEvidence.push(describeConditionSeverity(conditionSeverity));
+  conditionEvidence.push(describeConditionCourse(conditionCourse));
+  if (populationDescriptor) {
+    conditionEvidence.push(`Affected population: ${norm(populationDescriptor, 'not specified')}.`);
   }
-  const severityRank =
-    params.conditionSeverity !== undefined
-      ? CONDITION_SEVERITY_RANK[params.conditionSeverity] ?? 0.5
-      : 0.5;
+  const severityRank = conditionSeverity !== undefined ? CONDITION_SEVERITY_RANK[conditionSeverity] ?? 0.5 : null;
   const conditionConclusion =
-    severityRank >= 0.65
-      ? 'The condition is serious or life-threatening, which raises the acceptable level of risk and uncertainty in the benefit-risk judgment.'
-      : 'The condition is of lower severity, which sets a higher safety bar and lowers tolerance for serious or irreversible harms.';
+    severityRank === null
+      ? 'Not assessed: the condition severity was not stated (conditionSeverity), so the acceptable level of risk and uncertainty is not anchored to disease burden.'
+      : severityRank >= 0.65
+        ? 'The condition is serious or life-threatening, which raises the acceptable level of risk and uncertainty in the benefit-risk judgment.'
+        : 'The condition is of lower severity, which sets a higher safety bar and lowers tolerance for serious or irreversible harms.';
 
   // ── Row 2: Current Treatment Options ──────────────────────────────────────
   const treatmentEvidence: string[] = [];
-  const treatments = params.currentTreatments ?? [];
   if (treatments.length === 0) {
     treatmentEvidence.push('No current treatment options were supplied for analysis.');
   } else {
     for (const t of treatments) {
-      const status = t.status ?? 'approved';
       const lim = t.limitations ? ` Limitation: ${norm(t.limitations, 'not specified')}.` : '';
-      treatmentEvidence.push(`${norm(t.name, 'unnamed option')} (${status}).${lim}`);
+      treatmentEvidence.push(`${norm(t.name, 'unnamed option')} (${t.status ?? 'status not stated'}).${lim}`);
     }
   }
-  const unmetNeed =
-    params.unmetMedicalNeed === true ||
-    treatments.length === 0 ||
-    treatments.every((t: TreatmentOption) => (t.status ?? 'approved') === 'none' || (t.status ?? 'approved') === 'supportive_care');
-  if (unmetNeed) {
+  // The list shows an unmet need when it is stated and empty, or every option is absent or supportive only. A stated
+  // approved or off-label option says nothing either way; an option of unstated status leaves the list undecided.
+  const listShowsUnmet: boolean | undefined =
+    treatmentList === undefined
+      ? false
+      : treatments.length === 0
+        ? true
+        : treatments.some((t: TreatmentOption) => t.status === 'approved' || t.status === 'off_label')
+          ? false
+          : treatments.every((t: TreatmentOption) => t.status === 'none' || t.status === 'supportive_care')
+            ? true
+            : undefined;
+  const unmetNeed: boolean | null =
+    unmetStated === true || listShowsUnmet === true ? true : unmetStated === false && listShowsUnmet === false ? false : null;
+  if (unmetNeed === true) {
     treatmentEvidence.push(
       'An unmet medical need is present: available options are absent, supportive only, or materially limited.',
     );
+  } else if (unmetNeed === null) {
+    const open = [
+      ...(unmetStated === undefined ? ['unmetMedicalNeed'] : []),
+      // An option of unstated status decides nothing once a stated approved or off-label option settles the list.
+      ...(listShowsUnmet === false
+        ? []
+        : treatments.flatMap((t: TreatmentOption, i: number) => (t.status === undefined ? [`currentTreatments[${i}].status`] : []))),
+    ];
+    treatmentEvidence.push(`Whether an unmet medical need exists was not stated (${listed(open)}).`);
+    undecided.push({ conclusion: 'unmetNeedConsidered', decidingFacts: open, couldBe: [true, false] });
   }
-  const treatmentConclusion = unmetNeed
-    ? 'Because available therapy is inadequate, a meaningful incremental benefit can justify a higher level of risk.'
-    : 'Effective alternatives exist; the product must show a favourable benefit-risk profile relative to, not merely in addition to, the current standard of care.';
+  const treatmentConclusion =
+    unmetNeed === true
+      ? 'Because available therapy is inadequate, a meaningful incremental benefit can justify a higher level of risk.'
+      : unmetNeed === false
+        ? 'Effective alternatives exist; the product must show a favourable benefit-risk profile relative to, not merely in addition to, the current standard of care.'
+        : 'Not assessed: whether available therapy is adequate was not stated, so the level of risk an incremental benefit can justify is not anchored to it.';
 
   // ── Row 3: Benefit ────────────────────────────────────────────────────────
   const benefitEvidence: string[] = [];
-  const benefits = params.keyBenefits ?? [];
   if (benefits.length === 0) {
     benefitEvidence.push('No key benefits were supplied; the Benefit row cannot be substantiated.');
   } else {
@@ -565,11 +462,13 @@ export function structureBenefitRiskFramework(
   }
   // deterministic aggregate benefit score
   let benefitAgg = 0;
-  for (const b of benefits) {
+  benefits.forEach((b: KeyBenefitClaim, i: number) => {
+    if (b.magnitude === undefined) defaulted.push(`keyBenefits[${i}].magnitude (moderate)`);
+    if (b.uncertainty === undefined) defaulted.push(`keyBenefits[${i}].uncertainty (certainty 0.82)`);
     const m = magnitudeScore(b.magnitude ?? 'moderate');
     const u = b.uncertainty ? 1 - uncertaintyPenalty(b.uncertainty) : 0.82;
     benefitAgg += m * u;
-  }
+  });
   const benefitScore = benefits.length > 0 ? round(benefitAgg / benefits.length, 3) : 0;
   const benefitConclusion =
     benefits.length === 0
@@ -582,7 +481,6 @@ export function structureBenefitRiskFramework(
 
   // ── Row 4: Risk and Risk Management ───────────────────────────────────────
   const riskEvidence: string[] = [];
-  const risks = params.keyRisks ?? [];
   if (risks.length === 0) {
     riskEvidence.push('No key risks were supplied; the safety profile is uncharacterized in this grid.');
   } else {
@@ -590,25 +488,47 @@ export function structureBenefitRiskFramework(
       const sev = r.severity ? ` Severity: ${r.severity}.` : '';
       const rev = r.reversibility ? ` Reversibility: ${r.reversibility}.` : '';
       const freq = ` Frequency: ${frequencyToProseFda(r.frequency)}.`;
-      const mng = r.manageable === false ? ' Not readily manageable.' : ' Considered manageable with stated measures.';
+      const mng =
+        r.manageable === false
+          ? ' Not readily manageable.'
+          : r.manageable === true
+            ? ' Considered manageable with stated measures.'
+            : ' Manageability not stated.';
       riskEvidence.push(`${norm(r.description, 'unspecified risk')} —${sev}${rev}${freq}${mng}`);
     }
   }
-  const rmTools = params.riskManagementTools ?? [];
   if (rmTools.length > 0) {
     riskEvidence.push(`Risk management tools proposed: ${rmTools.map((s: string) => norm(s, 'unnamed')).join('; ')}.`);
   } else {
     riskEvidence.push('No specific risk-management tools were proposed; routine pharmacovigilance and labeling are assumed.');
   }
-  // deterministic aggregate risk score
-  let riskAgg = 0;
-  for (const r of risks) {
-    const s = severityScore(r.severity ?? 'moderate');
-    const rev = reversibilityMultiplier(r.reversibility ?? 'partially_reversible');
-    const manage = r.manageable === false ? 1.0 : 0.8;
-    riskAgg += s * rev * manage;
-  }
-  const riskScore = risks.length > 0 ? round(riskAgg / risks.length, 3) : 0;
+  // deterministic aggregate risk score, on each answer to an unstated manageable (the score falls as more are true)
+  risks.forEach((r: KeyRiskItem, i: number) => {
+    if (r.severity === undefined) defaulted.push(`keyRisks[${i}].severity (moderate)`);
+    if (r.reversibility === undefined) defaulted.push(`keyRisks[${i}].reversibility (partially_reversible)`);
+  });
+  const riskScoreOn = (unstatedManageable: boolean): number => {
+    let riskAgg = 0;
+    for (const r of risks) {
+      const s = severityScore(r.severity ?? 'moderate');
+      const rev = reversibilityMultiplier(r.reversibility ?? 'partially_reversible');
+      const manage = (r.manageable ?? unstatedManageable) === false ? 1.0 : 0.8;
+      riskAgg += s * rev * manage;
+    }
+    return risks.length > 0 ? round(riskAgg / risks.length, 3) : 0;
+  };
+  const riskLow = riskScoreOn(true);
+  const riskHigh = riskScoreOn(false);
+  const riskScore: number | null = riskLow === riskHigh ? riskLow : null;
+  const manageabilityOpen = risks.flatMap((r: KeyRiskItem, i: number) =>
+    r.manageable === undefined ? [`keyRisks[${i}].manageable`] : [],
+  );
+  const riskBand = (score: number): string =>
+    score >= 0.6
+      ? 'The principal risks are serious and/or irreversible; effective risk management is essential to a favourable conclusion.'
+      : score >= 0.35
+        ? 'The risks are of moderate concern and appear addressable through labeling and routine pharmacovigilance.'
+        : 'The identified risks are limited in severity and reversibility and are readily manageable.';
   // riskScore is 0 both when risks are genuinely minimal AND when NO risks were
   // characterized; only the latter must not read as a favourable safety finding.
   // An uncharacterized safety profile is a non-determination, not "readily
@@ -616,11 +536,12 @@ export function structureBenefitRiskFramework(
   const riskConclusion =
     risks.length === 0
       ? 'No risks were characterized on the supplied evidence; the safety profile is not established and no risk determination can be made.'
-      : riskScore >= 0.6
-        ? 'The principal risks are serious and/or irreversible; effective risk management is essential to a favourable conclusion.'
-        : riskScore >= 0.35
-          ? 'The risks are of moderate concern and appear addressable through labeling and routine pharmacovigilance.'
-          : 'The identified risks are limited in severity and reversibility and are readily manageable.';
+      : riskBand(riskLow) === riskBand(riskHigh)
+        ? riskBand(riskLow)
+        : `Not assessed: the risk conclusion turns on whether ${listed(manageabilityOpen)} holds, which was not stated.`;
+  if (riskScore === null) {
+    undecided.push({ conclusion: 'riskWeight', decidingFacts: manageabilityOpen, couldBe: [riskLow, riskHigh] });
+  }
 
   const rows: FdaFrameworkRow[] = [
     {
@@ -646,7 +567,15 @@ export function structureBenefitRiskFramework(
   ];
 
   // Integrated narrative — deterministic composition of the four rows.
-  const net = round(benefitScore - riskScore, 3);
+  const netOf = (risk: number): number => round(benefitScore - risk, 3);
+  const netBand = (net: number): string =>
+    net >= 0.2
+      ? 'the weight of benefit clearly exceeds the weight of risk'
+      : net >= 0.0
+        ? 'benefit modestly exceeds risk, with the margin sensitive to risk management'
+        : net >= -0.2
+          ? 'benefit and risk are closely balanced and the conclusion is sensitive to uncertainty'
+          : 'the weight of risk exceeds the demonstrated benefit on the supplied evidence';
   let netPhrase: string;
   // A directional balance requires BOTH sides characterized. With either side
   // empty, net is an artefact of a zero score (an uncharacterized dimension),
@@ -660,21 +589,27 @@ export function structureBenefitRiskFramework(
           ? 'no benefit was characterized'
           : 'no risk was characterized';
     netPhrase = `the overall balance cannot be determined on the supplied evidence, because ${missing}`;
-  } else if (net >= 0.2) {
-    netPhrase = 'the weight of benefit clearly exceeds the weight of risk';
-  } else if (net >= 0.0) {
-    netPhrase = 'benefit modestly exceeds risk, with the margin sensitive to risk management';
-  } else if (net >= -0.2) {
-    netPhrase = 'benefit and risk are closely balanced and the conclusion is sensitive to uncertainty';
+  } else if (netBand(netOf(riskHigh)) === netBand(netOf(riskLow))) {
+    netPhrase = netBand(netOf(riskLow));
   } else {
-    netPhrase = 'the weight of risk exceeds the demonstrated benefit on the supplied evidence';
+    netPhrase = `the overall balance is not determined, because it turns on ${listed(manageabilityOpen)}, which was not stated`;
+    undecided.push({
+      conclusion: 'overallBalance',
+      decidingFacts: manageabilityOpen,
+      couldBe: [netBand(netOf(riskHigh)), netBand(netOf(riskLow))],
+    });
   }
+  const weights =
+    riskScore === null
+      ? `benefit weight ${benefitScore}, risk weight from ${riskLow} to ${riskHigh} and net from ${netOf(riskHigh)} to ` +
+        `${netOf(riskLow)} as ${listed(manageabilityOpen)} is answered`
+      : `benefit weight ${benefitScore}, risk weight ${riskScore}, net ${netOf(riskScore)}`;
 
   const integratedAssessmentNarrative =
     `For ${productName} in ${indication}, the FDA Benefit-Risk Framework integrates the four ` +
     `dimensions as follows. ${conditionConclusion} ${treatmentConclusion} On the evidence supplied, ` +
     `${benefitConclusion.toLowerCase().replace(/\.$/, '')}, while ${riskConclusion.toLowerCase().replace(/\.$/, '')}. ` +
-    `Taken together (benefit weight ${benefitScore}, risk weight ${riskScore}, net ${net}), ${netPhrase}. ` +
+    `Taken together (${weights}), ${netPhrase}. ` +
     `This framework summary is the structured input to the regulatory benefit-risk decision; ` +
     `it is not itself the decision.`;
 
@@ -686,6 +621,7 @@ export function structureBenefitRiskFramework(
     'Benefit/risk weights are deterministic ordinal aggregations intended to organize the evidence; ' +
       'they do not replace expert regulatory judgment and are not probability estimates.',
   );
+  methodNotes.push(...defaultsNote(defaulted));
 
   return {
     productName,
@@ -694,7 +630,9 @@ export function structureBenefitRiskFramework(
     rows,
     integratedAssessmentNarrative,
     unmetNeedConsidered: unmetNeed,
-    severityContextScore: round(severityRank, 3),
+    severityContextScore: severityRank === null ? null : round(severityRank, 3),
+    inputStates,
+    undecided,
     citations: citeAll(citationIds),
     methodNotes,
   };
@@ -767,65 +705,6 @@ export interface EffectsTableResult {
   readonly methodNotes: string[];
 }
 
-function evidenceSourceProse(src: EffectInput['evidenceSource']): string {
-  switch (src) {
-    case 'pivotal_rct':
-      return 'pivotal randomized controlled trial (highest weight)';
-    case 'supportive_rct':
-      return 'supportive randomized controlled trial';
-    case 'meta_analysis':
-      return 'meta-analysis of randomized trials';
-    case 'observational':
-      return 'observational study (residual confounding possible)';
-    case 'indirect':
-      return 'indirect/network comparison (added uncertainty)';
-    case 'modeling':
-      return 'modeling or simulation (extrapolation beyond observed data)';
-    default:
-      return 'evidence source not specified';
-  }
-}
-
-/** Map an evidence source to a baseline uncertainty floor. */
-function evidenceSourceUncertaintyFloor(src: EffectInput['evidenceSource']): UncertaintyLevel {
-  switch (src) {
-    case 'pivotal_rct':
-    case 'meta_analysis':
-      return 'low';
-    case 'supportive_rct':
-      return 'moderate';
-    case 'observational':
-    case 'indirect':
-    case 'modeling':
-      return 'high';
-    default:
-      return 'moderate';
-  }
-}
-
-/** Derive an ordinal magnitude from a numeric absolute difference, normalized. */
-function deriveMagnitude(effect: EffectInput): MagnitudeLevel {
-  if (effect.magnitude) return effect.magnitude;
-  if (effect.treatmentValue !== undefined && effect.controlValue !== undefined) {
-    const base = Math.abs(effect.controlValue) > 1e-9 ? Math.abs(effect.controlValue) : 1;
-    const rel = Math.abs(effect.treatmentValue - effect.controlValue) / base;
-    if (rel >= 0.5) return 'very_high';
-    if (rel >= 0.25) return 'high';
-    if (rel >= 0.1) return 'moderate';
-    if (rel >= 0.03) return 'low';
-    return 'negligible';
-  }
-  return 'moderate';
-}
-
-/** Combine the worse (higher) of two uncertainty levels. */
-function worseUncertainty(a: UncertaintyLevel, b: UncertaintyLevel): UncertaintyLevel {
-  const rank: OrdinalMap = { low: 0, moderate: 1, high: 2 };
-  const inv: UncertaintyLevel[] = ['low', 'moderate', 'high'];
-  const r = Math.max(rank[a] ?? 1, rank[b] ?? 1);
-  return inv[r] ?? 'moderate';
-}
-
 function buildEffectsRow(effect: EffectInput): EffectsTableRow {
   const name = norm(effect.name, 'unnamed effect');
   const unit = norm(effect.unit, '—');
@@ -872,6 +751,28 @@ function buildEffectsRow(effect: EffectInput): EffectsTableRow {
   };
 }
 
+/** One stated effect, refused by field when malformed. */
+function readEffect(e: Reader): EffectInput {
+  const finite = (k: string): number | undefined => e.num(k, Number.isFinite, 'a finite number');
+  return {
+    name: e.text('name') ?? '', direction: e.need('direction', EFFECT_DIRECTIONS), treatmentValue: finite('treatmentValue'),
+    controlValue: finite('controlValue'), unit: e.text('unit'), ciLow: finite('ciLow'), ciHigh: finite('ciHigh'),
+    magnitude: e.oneOf('magnitude', MAGNITUDES), uncertainty: e.oneOf('uncertainty', UNCERTAINTIES),
+    evidenceSource: e.oneOf('evidenceSource', EVIDENCE_SOURCES), reference: e.text('reference'),
+  };
+}
+
+/** The omitted grades a row used at their middle value. */
+function effectDefaults(effect: EffectInput, i: number): string[] {
+  return [
+    ...(effect.magnitude === undefined && (effect.treatmentValue === undefined || effect.controlValue === undefined)
+      ? [`effects[${i}].magnitude (moderate: no ordinal judgment or treatment and control values)`]
+      : []),
+    ...(effect.uncertainty === undefined ? [`effects[${i}].uncertainty (moderate)`] : []),
+    ...(effect.evidenceSource === undefined ? [`effects[${i}].evidenceSource (uncertainty floor moderate)`] : []),
+  ];
+}
+
 /**
  * Build an EMA-style effects table: the standardized tabulation of favourable
  * and unfavourable effects, each with magnitude, units, confidence interval,
@@ -879,10 +780,12 @@ function buildEffectsRow(effect: EffectInput): EffectsTableRow {
  * benefit-risk section of an EMA assessment report / EPAR.
  */
 export function buildEffectsTable(params: BuildEffectsTableParams): EffectsTableResult {
-  const productName = norm(params.productName, 'the product');
-  const indication = norm(params.indication, 'the indication');
-  const comparator = norm(params.comparator, 'comparator / placebo');
-  const effects = params.effects ?? [];
+  // 2026-11-09 (S5d): 'Favourable' was tabulated as unfavourable, '12' subtracted, and no list gave an empty table.
+  refuseUnlessStated('buildEffectsTable', [listInput('effects', params.effects)], 'tabulated');
+  const productName = norm(statedText('productName', params.productName), 'the product');
+  const indication = norm(statedText('indication', params.indication), 'the indication');
+  const comparator = norm(statedText('comparator', params.comparator), 'comparator / placebo');
+  const effects = entries('effects', params.effects).map(readEffect);
 
   const favourable: EffectsTableRow[] = [];
   const unfavourable: EffectsTableRow[] = [];
@@ -915,6 +818,7 @@ export function buildEffectsTable(params: BuildEffectsTableParams): EffectsTable
     overall = 'high';
   }
 
+  const defaulted = effects.flatMap(effectDefaults);
   const methodNotes: string[] = [
     'Effects are grouped into favourable and unfavourable per the EMA effects-table convention; ' +
       'each row records magnitude, unit, treatment vs comparator values, confidence interval, ' +
@@ -923,6 +827,7 @@ export function buildEffectsTable(params: BuildEffectsTableParams): EffectsTable
       'deterministically from the relative difference between treatment and comparator values.',
     'Overall evidence quality is set to the worst (highest) uncertainty present, consistent with ' +
       'a conservative regulatory reading.',
+    ...defaultsNote(defaulted),
   ];
 
   return {
@@ -988,17 +893,21 @@ export interface AssessBenefitRiskBalanceParams {
 export interface BalanceDriver {
   readonly factor: string;
   readonly direction: 'supports_benefit' | 'supports_risk';
-  readonly contribution: number;
+  /** null for a risk whose mitigation was not stated. */
+  readonly contribution: number | null;
   readonly rationale: string;
 }
 
 export interface BenefitRiskBalanceResult {
   readonly productName: string;
   readonly indication: string;
-  readonly verdict: BRVerdict;
+  /** null unless every answer to the unstated facts (undecided) gives the same verdict. */
+  readonly verdict: BRVerdict | null;
   readonly benefitWeight: number;
-  readonly riskWeight: number;
-  readonly netBalance: number;
+  /** null while a risk's mitigation is not stated. */
+  readonly riskWeight: number | null;
+  /** null while unmetMedicalNeed or a risk's mitigation is not stated. */
+  readonly netBalance: number | null;
   readonly confidence: number;
   readonly drivers: BalanceDriver[];
   readonly keyBenefitsSummary: string[];
@@ -1007,45 +916,40 @@ export interface BenefitRiskBalanceResult {
   readonly populationConsiderations: string[];
   readonly structuredConclusion: string;
   readonly conditionsForFavourable: string[];
+  /** Each true/false input: true, false or not_stated. */
+  readonly inputStates: Record<string, BooleanState>;
+  /** The conclusions an unstated fact leaves open. */
+  readonly undecided: Undecided[];
   readonly citations: Citation[];
   readonly methodNotes: string[];
 }
 
-/** Default importance weight by benefit endpoint type (clinical hierarchy). */
-function defaultBenefitWeight(endpoint: KeyBenefitClaim['endpointType']): number {
-  switch (endpoint) {
-    case 'mortality':
-      return 1.0;
-    case 'irreversible_morbidity':
-      return 0.9;
-    case 'function':
-      return 0.75;
-    case 'symptom':
-      return 0.6;
-    case 'surrogate':
-      return 0.45;
-    case 'biomarker':
-      return 0.35;
-    default:
-      return 0.6;
-  }
+/** The verdict for a net balance and confidence (fixed, deterministic thresholds). */
+function verdictFor(net: number, confidence: number, bothSides: boolean): BRVerdict {
+  // Both sides must be characterized for a directional verdict. Guarding only
+  // empty benefits let benefits-with-no-risks reach 'favourable' (riskWeight 0
+  // → high net) against an uncharacterized safety profile — a favourable
+  // determination the evidence does not support. Empty EITHER side ⇒ indeterminate.
+  if (!bothSides) return 'indeterminate';
+  if (net >= 0.18 && confidence >= 0.65) return 'favourable';
+  if (net >= 0.05) return 'favourable_with_conditions';
+  if (net > -0.1) return 'indeterminate';
+  return 'unfavourable';
 }
 
-/** Default importance weight by risk frequency (more common → more weight). */
-function defaultRiskFrequencyWeight(freq: KeyRiskItem['frequency']): number {
-  switch (freq) {
-    case 'very_common':
-      return 1.0;
-    case 'common':
-      return 0.8;
-    case 'uncommon':
-      return 0.55;
-    case 'rare':
-      return 0.4;
-    case 'very_rare':
-      return 0.3;
+/** The verdict in words, for the structured conclusion. */
+function verdictPhraseFor(verdict: BRVerdict): string {
+  switch (verdict) {
+    case 'favourable':
+      return 'favourable';
+    case 'favourable_with_conditions':
+      return 'favourable conditional on the stated risk management and remaining-uncertainty actions';
+    case 'indeterminate':
+      return 'not determinable as clearly favourable on the supplied evidence (closely balanced)';
+    case 'unfavourable':
+      return 'unfavourable';
     default:
-      return 0.6;
+      return 'indeterminate';
   }
 }
 
@@ -1058,12 +962,31 @@ function defaultRiskFrequencyWeight(freq: KeyRiskItem['frequency']): number {
 export function assessBenefitRiskBalance(
   params: AssessBenefitRiskBalanceParams,
 ): BenefitRiskBalanceResult {
-  const productName = norm(params.productName, 'the product');
-  const indication = norm(params.indication, 'the indication');
-  const benefits = params.benefits ?? [];
-  const risks = params.risks ?? [];
-  const mitigations = params.riskMitigations ?? [];
-  const specialPopulations = params.specialPopulations ?? [];
+  // 2026-11-09 (S5d): an omitted unmet need or mitigation read as false and the verdict was given anyway; 'true',
+  // 'large' or 'heavy' was read as false, 0.5 or NaN.
+  refuseUnlessStated('assessBenefitRiskBalance', [listInput('benefits', params.benefits), listInput('risks', params.risks)], 'weighed');
+  const productName = norm(statedText('productName', params.productName), 'the product');
+  const indication = norm(statedText('indication', params.indication), 'the indication');
+  const conditionSeverity = statedOneOf('conditionSeverity', params.conditionSeverity, CONDITION_SEVERITIES);
+  const unmetStated = statedBoolean('unmetMedicalNeed', params.unmetMedicalNeed);
+  const weight = 'a number from 0 to 1';
+  const benefits: WeightedBenefit[] = entries('benefits', params.benefits).map((b: Reader) => ({
+    name: b.text('name') ?? '', magnitude: b.need('magnitude', MAGNITUDES), uncertainty: b.oneOf('uncertainty', UNCERTAINTIES),
+    endpointType: b.oneOf('endpointType', ENDPOINT_TYPES), weight: b.num('weight', unitWeight, weight), population: b.text('population'),
+  }));
+  const risks: WeightedRisk[] = entries('risks', params.risks).map((r: Reader) => ({
+    name: r.text('name') ?? '', severity: r.need('severity', SEVERITIES), reversibility: r.oneOf('reversibility', REVERSIBILITIES),
+    frequency: r.oneOf('frequency', FREQUENCIES), uncertainty: r.oneOf('uncertainty', UNCERTAINTIES), mitigated: r.bool('mitigated'),
+    weight: r.num('weight', unitWeight, weight), population: r.text('population'),
+  }));
+  const mitigations = statedTexts('riskMitigations', params.riskMitigations) ?? [];
+  const specialPopulations = statedTexts('specialPopulations', params.specialPopulations) ?? [];
+  const inputStates: Record<string, BooleanState> = {
+    unmetMedicalNeed: unmetStated ?? 'not_stated',
+    ...Object.fromEntries(risks.map((r: WeightedRisk, i: number) => [`risks[${i}].mitigated`, r.mitigated ?? 'not_stated'])),
+  };
+  const defaulted: string[] = [];
+  const undecided: Undecided[] = [];
 
   const drivers: BalanceDriver[] = [];
   const keyBenefitsSummary: string[] = [];
@@ -1072,7 +995,9 @@ export function assessBenefitRiskBalance(
   // ── Benefit weight ────────────────────────────────────────────────────────
   let benefitNumer = 0;
   let benefitDenom = 0;
-  for (const b of benefits) {
+  benefits.forEach((b: WeightedBenefit, i: number) => {
+    if (b.weight === undefined && b.endpointType === undefined) defaulted.push(`benefits[${i}].endpointType (weight 0.6)`);
+    if (b.uncertainty === undefined) defaulted.push(`benefits[${i}].uncertainty (moderate)`);
     const w = b.weight !== undefined ? clamp(b.weight, 0, 1) : defaultBenefitWeight(b.endpointType);
     const m = magnitudeScore(b.magnitude);
     const certainty = b.uncertainty ? 1 - uncertaintyPenalty(b.uncertainty) : 0.82;
@@ -1092,63 +1017,94 @@ export function assessBenefitRiskBalance(
         `Endpoint ${b.endpointType ?? 'unspecified'} weighted ${round(w, 2)}; magnitude ${b.magnitude} ` +
         `discounted for ${b.uncertainty ?? 'moderate'} uncertainty.`,
     });
-  }
+  });
   const benefitWeight = benefitDenom > 0 ? round(benefitNumer / benefitDenom, 3) : 0;
 
-  // ── Risk weight ───────────────────────────────────────────────────────────
-  let riskNumer = 0;
-  let riskDenom = 0;
-  for (const r of risks) {
+  // ── Risk weight, on each answer to an unstated mitigation (it falls as more are true) ──
+  const riskTerms = risks.map((r: WeightedRisk, i: number) => {
+    if (r.weight === undefined && r.frequency === undefined) defaulted.push(`risks[${i}].frequency (weight 0.6)`);
+    if (r.reversibility === undefined) defaulted.push(`risks[${i}].reversibility (partially_reversible)`);
+    if (r.uncertainty === undefined) defaulted.push(`risks[${i}].uncertainty (moderate)`);
     const w = r.weight !== undefined ? clamp(r.weight, 0, 1) : defaultRiskFrequencyWeight(r.frequency);
     const s = severityScore(r.severity);
     const rev = reversibilityMultiplier(r.reversibility ?? 'partially_reversible');
-    const mitigationFactor = r.mitigated === true ? 0.7 : 1.0;
-    const contribution = round(w * s * rev * mitigationFactor, 4);
-    riskNumer += contribution;
-    riskDenom += w;
+    return { r, w, harm: w * s * rev };
+  });
+  const contributionOf = (harm: number, mitigated: boolean): number => round(harm * (mitigated ? 0.7 : 1.0), 4);
+  /** The risk weight on one answer to each unstated mitigation (risks[i]). */
+  const riskWeightFor = (answer: (i: number) => boolean): number => {
+    let riskNumer = 0;
+    let riskDenom = 0;
+    riskTerms.forEach((t: { r: WeightedRisk; w: number; harm: number }, i: number) => {
+      riskNumer += contributionOf(t.harm, t.r.mitigated ?? answer(i));
+      riskDenom += t.w;
+    });
+    return riskDenom > 0 ? round(riskNumer / riskDenom, 3) : 0;
+  };
+  const riskWeightOn = (unstatedMitigated: boolean): number => riskWeightFor(() => unstatedMitigated);
+  riskTerms.forEach((t: { r: WeightedRisk; w: number; harm: number }, i: number) => {
+    const r = t.r;
     keyRisksSummary.push(
       `${norm(r.name, 'unnamed risk')}: severity ${r.severity}, reversibility ${r.reversibility ?? 'partially_reversible'}` +
         (r.frequency ? `, frequency ${r.frequency}` : '') +
-        (r.mitigated === true ? ', mitigated' : '') +
+        (r.mitigated === true ? ', mitigated' : r.mitigated === undefined ? ', mitigation not stated' : '') +
         (r.population ? `, population ${norm(r.population, 'overall')}` : '') + '.',
     );
     drivers.push({
       factor: `Risk: ${norm(r.name, 'unnamed risk')}`,
       direction: 'supports_risk',
-      contribution,
+      contribution: r.mitigated === undefined ? null : contributionOf(t.harm, r.mitigated),
       rationale:
-        `Severity ${r.severity}, ${r.reversibility ?? 'partially_reversible'}, frequency weight ${round(w, 2)}` +
-        (r.mitigated === true ? '; reduced ~30% by mitigation.' : '; no mitigation credit applied.'),
+        `Severity ${r.severity}, ${r.reversibility ?? 'partially_reversible'}, frequency weight ${round(t.w, 2)}` +
+        (r.mitigated === true
+          ? '; reduced ~30% by mitigation.'
+          : r.mitigated === false
+            ? '; no mitigation credit applied.'
+            : `; mitigation not stated (risks[${i}].mitigated), so its contribution is not given.`),
     });
-  }
-  const riskWeight = riskDenom > 0 ? round(riskNumer / riskDenom, 3) : 0;
+  });
+  const mitigationOpen = riskTerms.flatMap((t: { r: WeightedRisk; w: number }, i: number) =>
+    t.r.mitigated === undefined && t.w > 0 ? [`risks[${i}].mitigated`] : [],
+  );
+  const riskLow = riskWeightOn(true);
+  const riskHigh = riskWeightOn(false);
+  const riskWeight: number | null = riskLow === riskHigh ? riskLow : null;
+  if (riskWeight === null) undecided.push({ conclusion: 'riskWeight', decidingFacts: mitigationOpen, couldBe: [riskLow, riskHigh] });
 
   // ── Net balance, adjusted for unmet need / condition severity ─────────────
-  let net = benefitWeight - riskWeight;
-  const severityRank =
-    params.conditionSeverity !== undefined
-      ? CONDITION_SEVERITY_RANK[params.conditionSeverity] ?? 0.5
-      : 0.5;
+  const severityRank = conditionSeverity !== undefined ? CONDITION_SEVERITY_RANK[conditionSeverity] ?? 0.5 : 0.5;
+  if (conditionSeverity === undefined) defaulted.push('conditionSeverity (no severity credit)');
   // Higher disease severity / unmet need raises risk tolerance (additive credit
   // to net, bounded), reflecting FDA framework "Analysis of Condition" logic.
   const severityCredit = round((severityRank - 0.5) * 0.3, 4);
-  const unmetCredit = params.unmetMedicalNeed === true ? 0.08 : 0;
-  net = round(net + severityCredit + unmetCredit, 3);
+  const netOn = (unmet: boolean, risk: number): number => round(benefitWeight - risk + severityCredit + (unmet ? 0.08 : 0), 3);
+  const netBest = netOn(unmetStated ?? true, riskLow);
+  const netWorst = netOn(unmetStated ?? false, riskHigh);
+  const net: number | null = netBest === netWorst ? netBest : null;
+  const netOpen = [...(unmetStated === undefined ? ['unmetMedicalNeed'] : []), ...mitigationOpen];
+  if (net === null) undecided.push({ conclusion: 'netBalance', decidingFacts: netOpen, couldBe: [netWorst, netBest] });
   if (severityCredit !== 0) {
     drivers.push({
       factor: 'Disease severity context',
       direction: severityCredit >= 0 ? 'supports_benefit' : 'supports_risk',
       contribution: Math.abs(severityCredit),
       rationale:
-        `Condition severity (${params.conditionSeverity ?? 'unspecified'}) adjusts risk tolerance by ${severityCredit}.`,
+        `Condition severity (${conditionSeverity ?? 'unspecified'}) adjusts risk tolerance by ${severityCredit}.`,
     });
   }
-  if (unmetCredit > 0) {
+  if (unmetStated === true) {
     drivers.push({
       factor: 'Unmet medical need',
       direction: 'supports_benefit',
-      contribution: unmetCredit,
+      contribution: 0.08,
       rationale: 'Inadequate existing therapy raises the acceptable level of risk for an incremental benefit.',
+    });
+  } else if (unmetStated === undefined) {
+    drivers.push({
+      factor: 'Unmet medical need',
+      direction: 'supports_benefit',
+      contribution: null,
+      rationale: 'Not stated (unmetMedicalNeed): a stated true adds a 0.08 credit, a stated false none.',
     });
   }
 
@@ -1166,32 +1122,34 @@ export function assessBenefitRiskBalance(
   const avgPenalty = penaltyCount > 0 ? penaltyAcc / penaltyCount : 0.18;
   const confidence = round(clamp(1 - avgPenalty, 0, 1), 3);
 
-  // ── Verdict (deterministic thresholds) ────────────────────────────────────
-  let verdict: BRVerdict;
-  // Both sides must be characterized for a directional verdict. Guarding only
-  // empty benefits let benefits-with-no-risks reach 'favourable' (riskWeight 0
-  // → high net) against an uncharacterized safety profile — a favourable
-  // determination the evidence does not support. Empty EITHER side ⇒ indeterminate.
-  if (benefits.length === 0 || risks.length === 0) {
-    verdict = 'indeterminate';
-  } else if (net >= 0.18 && confidence >= 0.65) {
-    verdict = 'favourable';
-  } else if (net >= 0.05) {
-    verdict = 'favourable_with_conditions';
-  } else if (net > -0.1) {
-    verdict = 'indeterminate';
-  } else {
-    verdict = 'unfavourable';
+  // ── Verdict: the same on every answer to the unstated facts, or none ──────
+  // The verdict rises with net, and net with each unstated fact answered true, so
+  // the best and worst answers bound every other.
+  const bothSides = benefits.length > 0 && risks.length > 0;
+  const verdictBest = verdictFor(netBest, confidence, bothSides);
+  const verdictWorst = verdictFor(netWorst, confidence, bothSides);
+  const verdict: BRVerdict | null = verdictBest === verdictWorst ? verdictBest : null;
+  if (verdict === null) {
+    // couldBe holds the verdicts the answers give: a verdict between the bounds that no answer reaches is left out.
+    // Past 12 unstated facts (4,096 answers) it is every verdict from the worst to the best.
+    const order: BRVerdict[] = ['unfavourable', 'indeterminate', 'favourable_with_conditions', 'favourable'];
+    const between = order.slice(order.indexOf(verdictWorst), order.indexOf(verdictBest) + 1);
+    const facts = Object.fromEntries(netOpen.map((k: string) => [k, undefined])) as Record<string, boolean | undefined>;
+    const verdictOn = (a: Record<string, boolean>): BRVerdict =>
+      verdictFor(netOn(unmetStated ?? a.unmetMedicalNeed, riskWeightFor((i: number) => a[`risks[${i}].mitigated`] ?? true)), confidence, bothSides);
+    const given = netOpen.length <= 12 ? conclusions(facts, verdictOn) : between;
+    undecided.push({ conclusion: 'verdict', decidingFacts: netOpen, couldBe: between.filter((v: BRVerdict) => given.includes(v)) });
   }
 
   // ── Mitigation impact ─────────────────────────────────────────────────────
   const mitigatedRisks = risks.filter((r: WeightedRisk) => r.mitigated === true);
   const mitigationImpact =
-    mitigations.length === 0 && mitigatedRisks.length === 0
+    (mitigations.length === 0 && mitigatedRisks.length === 0
       ? 'No risk-mitigation measures were credited; the balance rests on the intrinsic safety profile and labeling.'
       : `Risk mitigation (${mitigations.map((s: string) => norm(s, 'measure')).join('; ') || 'measures applied'}) ` +
         `reduces the weighted impact of ${mitigatedRisks.length} of ${risks.length} key risk(s) and is ` +
-        `load-bearing for the conclusion where the net margin is narrow.`;
+        `load-bearing for the conclusion where the net margin is narrow.`) +
+    (mitigationOpen.length > 0 ? ` Whether ${listed(mitigationOpen)} holds was not stated.` : '');
 
   // ── Population considerations ─────────────────────────────────────────────
   const populationConsiderations: string[] = [];
@@ -1224,10 +1182,15 @@ export function assessBenefitRiskBalance(
 
   // ── Conditions for a favourable conclusion ────────────────────────────────
   const conditionsForFavourable: string[] = [];
+  if (verdict === null) {
+    conditionsForFavourable.push(`State ${listed(netOpen)}: the verdict turns on ${netOpen.length > 1 ? 'them' : 'it'}.`);
+  }
   if (verdict === 'favourable_with_conditions' || verdict === 'indeterminate') {
     conditionsForFavourable.push('Confirm the durability and magnitude of the principal benefit in the target population.');
-    if (mitigatedRisks.length < risks.length) {
+    if (risks.some((r: WeightedRisk) => r.mitigated === false)) {
       conditionsForFavourable.push('Strengthen risk minimisation for the serious/irreversible risks not yet credited as mitigated.');
+    } else if (mitigationOpen.length > 0) {
+      conditionsForFavourable.push(`State whether ${listed(mitigationOpen)} holds; if not, strengthen risk minimisation for it.`);
     }
     if (confidence < 0.65) {
       conditionsForFavourable.push('Reduce key uncertainties (precision of estimates, generalizability) before a firm favourable conclusion.');
@@ -1238,25 +1201,20 @@ export function assessBenefitRiskBalance(
   }
 
   // ── Structured conclusion ─────────────────────────────────────────────────
-  const verdictPhrase = (() => {
-    switch (verdict) {
-      case 'favourable':
-        return 'favourable';
-      case 'favourable_with_conditions':
-        return 'favourable conditional on the stated risk management and remaining-uncertainty actions';
-      case 'indeterminate':
-        return 'not determinable as clearly favourable on the supplied evidence (closely balanced)';
-      case 'unfavourable':
-        return 'unfavourable';
-      default:
-        return 'indeterminate';
-    }
-  })();
   const topBenefit = keyBenefitsSummary.length > 0 ? keyBenefitsSummary[0] : 'no benefit specified';
   const topRisk = keyRisksSummary.length > 0 ? keyRisksSummary[0] : 'no risk specified';
+  const weights =
+    `(benefit weight ${benefitWeight}, risk weight ${riskWeight ?? 'not determined'}, net ` +
+    `${net ?? `from ${netWorst} to ${netBest}`}, confidence ${confidence})`;
+  const opening =
+    verdict === null
+      ? `The benefit-risk balance of ${productName} in ${indication} is not determined on the stated inputs: it turns ` +
+        `on ${listed(netOpen)}, which ${netOpen.length > 1 ? 'were' : 'was'} not stated. With ${netOpen.length > 1 ? 'each' : 'it'} ` +
+        `answered in the product's favour it is ${verdictPhraseFor(verdictBest)}; otherwise ${verdictPhraseFor(verdictWorst)} ${weights}. `
+      : `The benefit-risk balance of ${productName} in ${indication} is ${verdictPhraseFor(verdict)} ${weights}. ` +
+        (netOpen.length > 0 ? `The verdict is the same on every answer to ${listed(netOpen)}, which ${netOpen.length > 1 ? 'were' : 'was'} not stated. ` : '');
   const structuredConclusion =
-    `The benefit-risk balance of ${productName} in ${indication} is ${verdictPhrase} ` +
-    `(benefit weight ${benefitWeight}, risk weight ${riskWeight}, net ${net}, confidence ${confidence}). ` +
+    opening +
     `The conclusion is driven principally by the favourable effect "${topBenefit}" set against the ` +
     `unfavourable effect "${topRisk}". ${mitigationImpact} ` +
     `This is a structured integrative judgment, not a substitute for the regulatory authority's decision.`;
@@ -1268,6 +1226,7 @@ export function assessBenefitRiskBalance(
     'Disease severity and unmet need apply a bounded additive credit to the net balance, reflecting the ' +
       'FDA framework principle that acceptable risk rises with disease seriousness and inadequacy of alternatives.',
     'Verdict thresholds are fixed and deterministic; identical inputs reproduce the identical verdict.',
+    ...defaultsNote(defaulted),
   ];
 
   return {
@@ -1285,6 +1244,8 @@ export function assessBenefitRiskBalance(
     populationConsiderations,
     structuredConclusion,
     conditionsForFavourable,
+    inputStates,
+    undecided,
     citations: citeAll(['ICH_M4E_R2', 'CIOMS_IV', 'FDA_BR_FRAMEWORK_2023', 'EMA_BR_METHODOLOGY', 'EMA_RMP_GVP_V']),
     methodNotes,
   };
@@ -1355,35 +1316,6 @@ export interface ValueTreeResult {
   readonly methodNotes: string[];
 }
 
-function weightingGuidanceText(
-  approach: 'qualitative' | 'swing_weighting' | 'mcda',
-): string {
-  switch (approach) {
-    case 'qualitative':
-      return (
-        'Qualitative weighting: criteria are ranked and discussed without numerical weights. ' +
-        'Appropriate for an initial structured assessment or when stakeholders are unwilling to ' +
-        'commit to numeric trade-offs. Transparent but does not yield a single integrated score.'
-      );
-    case 'swing_weighting':
-      return (
-        'Swing weighting: stakeholders rank the "swing" from worst to best on each criterion, assign ' +
-        '100 points to the most important swing, and score the rest relative to it; weights are then ' +
-        'normalized to sum to 1. This captures both the importance of a criterion and the range of ' +
-        'outcomes on it, and is the recommended elicitation method for MCDA value trees.'
-      );
-    case 'mcda':
-      return (
-        'Multi-criteria decision analysis (MCDA): each alternative is scored on every criterion, scores ' +
-        'are combined with normalized swing weights into a single weighted value, and sensitivity analysis ' +
-        'tests robustness to the weights. Yields a fully quantitative, auditable benefit-risk score but ' +
-        'requires defensible value functions and weight elicitation.'
-      );
-    default:
-      return 'Weighting approach not specified.';
-  }
-}
-
 /**
  * Design a PrOACT-URL / IMI PROTECT BRAT value tree: decision objective →
  * benefit and risk criteria → outcome measures, with a recommended weighting
@@ -1392,17 +1324,25 @@ function weightingGuidanceText(
  * normalized swing weights are computed.
  */
 export function designValueTree(params: DesignValueTreeParams): ValueTreeResult {
-  const productName = norm(params.productName, 'the product');
-  const indication = norm(params.indication, 'the indication');
+  // 2026-11-09 (S5d): type 'Benefit' dropped the criterion, rank '1' was ranked, 'MCDA' gave "not specified".
+  refuseUnlessStated('designValueTree', [listInput('criteria', params.criteria)], 'structured');
+  const productName = norm(statedText('productName', params.productName), 'the product');
+  const indication = norm(statedText('indication', params.indication), 'the indication');
   const decisionObjective = norm(
-    params.decisionObjective,
+    statedText('decisionObjective', params.decisionObjective),
     `Determine the benefit-risk balance of ${productName} in ${indication}`,
   );
-  const approach = params.weightingApproach ?? 'swing_weighting';
-  const criteria = params.criteria ?? [];
+  const approachStated = statedOneOf('weightingApproach', params.weightingApproach, WEIGHTING_APPROACHES);
+  const approach = approachStated ?? 'swing_weighting';
+  const criteria: ValueTreeCriterionInput[] = entries('criteria', params.criteria).map((c: Reader) => ({
+    name: c.text('name') ?? '', type: c.need('type', CRITERION_TYPES), outcomeMeasure: c.text('outcomeMeasure'),
+    unit: c.text('unit'), subCriteria: c.texts('subCriteria'),
+    importanceRank: c.num('importanceRank', (n: number) => Number.isInteger(n) && n >= 1, 'a whole number of at least 1'),
+  }));
+  const alternativesStated = statedTexts('alternatives', params.alternatives);
   const alternatives =
-    params.alternatives && params.alternatives.length > 0
-      ? params.alternatives.map((a: string) => norm(a, 'alternative'))
+    alternativesStated && alternativesStated.length > 0
+      ? alternativesStated.map((a: string) => norm(a, 'alternative'))
       : [productName, 'comparator / standard of care', 'no treatment'];
 
   // Split benefit and risk criteria preserving input order.
@@ -1524,6 +1464,10 @@ export function designValueTree(params: DesignValueTreeParams): ValueTreeResult 
       'stakeholder weight elicitation.',
     'A value tree organizes the decision; quantitative integration (MCDA) is optional and must be paired ' +
       'with sensitivity analysis on both scores and weights.',
+    ...(approachStated === undefined ? ['No weighting approach was stated; swing weighting is recommended by default.'] : []),
+    ...(alternativesStated && alternativesStated.length > 0
+      ? []
+      : ['No alternatives were stated; the product, the comparator / standard of care and no treatment are listed by default.']),
   ];
 
   return {
@@ -1610,112 +1554,6 @@ export interface BRUncertaintyResult {
   readonly methodNotes: string[];
 }
 
-function uncertaintySourceLabel(type: UncertaintySourceType): string {
-  switch (type) {
-    case 'data_quality':
-      return 'Data quality / risk of bias';
-    case 'extrapolation':
-      return 'Extrapolation beyond studied conditions';
-    case 'rare_events':
-      return 'Rare serious adverse events (limited exposure)';
-    case 'indirect_evidence':
-      return 'Indirect / network evidence';
-    case 'surrogate_endpoint':
-      return 'Surrogate endpoint translation';
-    case 'missing_data':
-      return 'Missing data / dropout';
-    case 'external_validity':
-      return 'External validity / generalizability';
-    case 'subgroup':
-      return 'Subgroup heterogeneity';
-    case 'long_term':
-      return 'Long-term efficacy and safety';
-    case 'comparator':
-      return 'Comparator relevance';
-    default:
-      return 'Uncertainty source';
-  }
-}
-
-function uncertaintyDefaultDescription(type: UncertaintySourceType): string {
-  switch (type) {
-    case 'data_quality':
-      return 'Internal validity may be limited by design or conduct issues (randomization, blinding, ascertainment).';
-    case 'extrapolation':
-      return 'Conclusions are extended beyond the populations, doses, or durations actually studied.';
-    case 'rare_events':
-      return 'The trial exposure is too small to characterize low-frequency serious harms; absence of evidence is not evidence of absence.';
-    case 'indirect_evidence':
-      return 'Comparisons rely on indirect or network evidence rather than head-to-head randomized data.';
-    case 'surrogate_endpoint':
-      return 'Benefit rests on a surrogate whose link to clinical outcomes is incompletely established.';
-    case 'missing_data':
-      return 'Incomplete follow-up or missing outcomes could bias both efficacy and safety estimates.';
-    case 'external_validity':
-      return 'The studied population may not represent the real-world indicated population.';
-    case 'subgroup':
-      return 'The balance may differ across subgroups, and subgroup estimates are imprecise.';
-    case 'long_term':
-      return 'Durability of benefit and emergence of late harms are not yet characterized.';
-    case 'comparator':
-      return 'The comparator may not reflect the relevant standard of care, affecting the incremental balance.';
-    default:
-      return 'An uncertainty affecting the benefit-risk estimate.';
-  }
-}
-
-function uncertaintyMitigation(type: UncertaintySourceType): string {
-  switch (type) {
-    case 'data_quality':
-      return 'Sensitivity analyses excluding higher-risk-of-bias data; confirmatory trial if pivotal evidence is affected.';
-    case 'extrapolation':
-      return 'Restrict the indication/label to the studied conditions, or generate confirmatory data in the extrapolated setting.';
-    case 'rare_events':
-      return 'Post-authorisation safety study (PASS), registry, and enhanced pharmacovigilance powered for rare events.';
-    case 'indirect_evidence':
-      return 'Head-to-head randomized comparison or a well-conducted real-world comparative effectiveness study.';
-    case 'surrogate_endpoint':
-      return 'Confirmatory outcome trial, or post-marketing requirement to verify clinical benefit.';
-    case 'missing_data':
-      return 'Pre-specified multiple-imputation and tipping-point analyses; minimize loss to follow-up.';
-    case 'external_validity':
-      return 'Real-world evidence and broader-population studies; pragmatic trial.';
-    case 'subgroup':
-      return 'Pre-specified subgroup analyses with interaction tests; adequately powered subgroup data.';
-    case 'long_term':
-      return 'Long-term extension study and post-authorisation safety/efficacy surveillance.';
-    case 'comparator':
-      return 'Add the current standard-of-care comparator arm or an external comparator with calibration.';
-    default:
-      return 'Targeted evidence generation to reduce the specific uncertainty.';
-  }
-}
-
-function uncertaintyImpactProse(
-  affects: ResolvedUncertaintySource['affects'],
-  level: UncertaintyLevel | 'not_stated',
-): string {
-  if (affects === 'not_stated') {
-    return 'The affected side of the balance was not stated, so the impact on benefit or risk was not assessed.';
-  }
-  const side =
-    affects === 'benefit'
-      ? 'reduces confidence in the demonstrated benefit'
-      : affects === 'risk'
-        ? 'reduces confidence in the characterized risk (harms may be under- or over-stated)'
-        : 'reduces confidence in both benefit and risk estimates';
-  if (level === 'not_stated') {
-    return `This ${side}; its level was not stated, so its impact on the balance is not graded.`;
-  }
-  const strength =
-    level === 'high'
-      ? 'materially — potentially decisive for a narrowly balanced conclusion'
-      : level === 'moderate'
-        ? 'moderately — relevant where the net margin is small'
-        : 'modestly — unlikely to overturn a clear conclusion';
-  return `This ${side}; impact is judged ${strength}.`;
-}
-
 /**
  * Assess the uncertainty surrounding a benefit-risk conclusion: enumerate the
  * sources (data quality, extrapolation, rare events, indirect evidence, etc.),
@@ -1724,9 +1562,16 @@ function uncertaintyImpactProse(
  * "Uncertainty" element and the FDA framework's uncertainty discipline.
  */
 export function assessBRUncertainty(params: AssessBRUncertaintyParams): BRUncertaintyResult {
-  const productName = norm(params.productName, 'the product');
-  const indication = norm(params.indication, 'the indication');
-  const sourcesIn = params.sources ?? [];
+  // 2026-11-09 (S5d): level 'High' read as not stated, type 'bias' as a generic source, margin '0.3' as none.
+  refuseUnlessStated('assessBRUncertainty', [listInput('sources', params.sources)], 'assessed');
+  const productName = norm(statedText('productName', params.productName), 'the product');
+  const indication = norm(statedText('indication', params.indication), 'the indication');
+  const netBalanceEstimate = statedNumber('netBalanceEstimate', params.netBalanceEstimate,
+    (n: number) => Number.isFinite(n), 'a finite number');
+  const sourcesIn: UncertaintySourceInput[] = entries('sources', params.sources).map((x: Reader) => ({
+    type: x.need('type', UNCERTAINTY_SOURCE_TYPES), description: x.text('description'),
+    affects: x.oneOf('affects', AFFECTED_SIDES), level: x.oneOf('level', UNCERTAINTIES),
+  }));
 
   const sources: ResolvedUncertaintySource[] = [];
   let highCount = 0;
@@ -1734,11 +1579,9 @@ export function assessBRUncertainty(params: AssessBRUncertaintyParams): BRUncert
   let notStatedCount = 0;
   let worst: UncertaintyLevel = 'low';
   for (const s of sourcesIn) {
-    // An omitted (or unrecognised) level is not stated, never 'moderate'.
-    const level: UncertaintyLevel | 'not_stated' =
-      s.level === 'low' || s.level === 'moderate' || s.level === 'high' ? s.level : 'not_stated';
-    const affects: ResolvedUncertaintySource['affects'] =
-      s.affects === 'benefit' || s.affects === 'risk' || s.affects === 'both' ? s.affects : 'not_stated';
+    // An omitted level is not stated, never 'moderate'; an unrecognised one was refused above.
+    const level: UncertaintyLevel | 'not_stated' = s.level ?? 'not_stated';
+    const affects: ResolvedUncertaintySource['affects'] = s.affects ?? 'not_stated';
     if (level === 'high') highCount += 1;
     if (level === 'moderate') moderateCount += 1;
     if (level === 'not_stated') {
@@ -1766,10 +1609,7 @@ export function assessBRUncertainty(params: AssessBRUncertaintyParams): BRUncert
   // Neither a margin nor a source is assumed: without both it is not assessed.
   // An unstated level can only add to the counts, so it leaves standing a
   // 'fragile' that the stated levels reach, and nothing else.
-  const margin =
-    typeof params.netBalanceEstimate === 'number' && Number.isFinite(params.netBalanceEstimate)
-      ? Math.abs(params.netBalanceEstimate)
-      : null;
+  const margin = netBalanceEstimate !== undefined ? Math.abs(netBalanceEstimate) : null;
   const notAssessedBecause: string[] = [];
   if (margin === null) notAssessedBecause.push('no net benefit-risk margin was stated');
   if (sourcesIn.length === 0) notAssessedBecause.push('no uncertainty source was stated');
@@ -1969,152 +1809,10 @@ export interface BRCommunicationResult {
   readonly consistencyRequirement: string;
   /** Inputs the core message names as not stated: keyBenefitMessages, keyRiskMessages. */
   readonly notStated: string[];
+  /** Each true/false input: true, false or not_stated. */
+  readonly inputStates: Record<string, BooleanState>;
   readonly citations: Citation[];
   readonly methodNotes: string[];
-}
-
-function audienceLabel(a: BRAudience): string {
-  switch (a) {
-    case 'label':
-      return 'Product label / prescribing information';
-    case 'advisory_committee':
-      return 'Advisory committee';
-    case 'prescriber':
-      return 'Prescribers / healthcare professionals';
-    case 'patient':
-      return 'Patients and caregivers';
-    case 'payer':
-      return 'Payers / HTA bodies';
-    case 'regulator_internal':
-      return 'Internal regulatory review team';
-    default:
-      return 'Audience';
-  }
-}
-
-function audienceFraming(a: BRAudience, patientData: boolean): string {
-  switch (a) {
-    case 'label':
-      return (
-        'Frame the balance through the indication, Warnings/Precautions, and Adverse Reactions sections; ' +
-        'state benefit precisely in terms of the studied endpoint and population, and present risks at the ' +
-        'frequency and severity supported by the data. Avoid promotional or comparative claims not supported by adequate evidence.'
-      );
-    case 'advisory_committee':
-      return (
-        'Frame as a transparent, structured benefit-risk story: analysis of condition and unmet need, the ' +
-        'magnitude and certainty of benefit, the seriousness and manageability of risk, key uncertainties, and ' +
-        'the specific questions on which the committee\'s advice is sought. Present both favourable and ' +
-        'unfavourable evidence even-handedly.'
-      );
-    case 'prescriber':
-      return (
-        'Frame around the clinical decision: which patients benefit most, what to monitor, how to manage and ' +
-        'mitigate the principal risks, and how the product compares to alternatives in practice.'
-      );
-    case 'patient':
-      return (
-        'Frame in plain language around what the treatment can do, what it cannot do, the chance and ' +
-        'seriousness of common and serious harms, and what to watch for — using absolute frequencies (natural ' +
-        'frequencies, e.g. "x in 1,000") rather than relative risks.' +
-        (patientData
-          ? ' Incorporate patient-experience/PFDD data on which outcomes patients value most.'
-          : '')
-      );
-    case 'payer':
-      return (
-        'Frame around incremental benefit versus the relevant comparator, the population in whom benefit is ' +
-        'greatest, and the budget/risk-management implications; align with the HTA evidence requirements.'
-      );
-    case 'regulator_internal':
-      return (
-        'Frame using the full structured framework (FDA grid or EMA effects table plus PrOACT-URL), with all ' +
-        'evidence, uncertainties, and the integrated reasoning documented for the administrative record.'
-      );
-    default:
-      return 'Frame the benefit-risk balance appropriately for the audience.';
-  }
-}
-
-function audienceFormat(a: BRAudience): string {
-  switch (a) {
-    case 'label':
-      return 'Structured prescribing information per regional template (US PI / EU SmPC).';
-    case 'advisory_committee':
-      return 'Sponsor briefing document + slide deck with effects table and forest/value-tree visuals.';
-    case 'prescriber':
-      return 'Concise benefit-risk summary, educational materials, and (where applicable) DHPC.';
-    case 'patient':
-      return 'Plain-language leaflet / patient information using icon arrays and natural frequencies.';
-    case 'payer':
-      return 'Value dossier with comparative benefit-risk and subgroup analyses.';
-    case 'regulator_internal':
-      return 'Assessment report (Module 2.5.6 / EPAR benefit-risk section).';
-    default:
-      return 'Audience-appropriate format.';
-  }
-}
-
-function audienceMustInclude(a: BRAudience): string[] {
-  switch (a) {
-    case 'label':
-      return [
-        'Indication and population precisely matching the evidence',
-        'Serious risks with frequency and management in Warnings/Precautions',
-        'No unsupported comparative or superiority claims',
-      ];
-    case 'advisory_committee':
-      return [
-        'Even-handed presentation of favourable and unfavourable evidence',
-        'Explicit statement of key uncertainties and what would change the conclusion',
-        'The specific questions posed to the committee',
-      ];
-    case 'prescriber':
-      return [
-        'Patient-selection guidance',
-        'Monitoring and risk-mitigation steps',
-        'Absolute (not only relative) effect sizes',
-      ];
-    case 'patient':
-      return [
-        'Natural-frequency presentation of benefits and harms',
-        'Plain language, no jargon',
-        'What to watch for and when to seek care',
-      ];
-    case 'payer':
-      return [
-        'Incremental benefit vs relevant comparator',
-        'Subgroup / enriched-population analyses',
-        'Risk-management and budget implications',
-      ];
-    case 'regulator_internal':
-      return [
-        'Complete structured framework with all evidence and uncertainties',
-        'Traceable reasoning to the decision',
-        'Risk management plan linkage',
-      ];
-    default:
-      return ['Audience-appropriate content'];
-  }
-}
-
-function audienceCautions(a: BRAudience): string[] {
-  switch (a) {
-    case 'label':
-      return ['Do not overstate benefit or understate risk', 'Keep claims within the studied evidence'];
-    case 'advisory_committee':
-      return ['Avoid selective presentation of favourable data', 'Disclose all material uncertainties'];
-    case 'prescriber':
-      return ['Avoid relative-risk-only framing that exaggerates benefit'];
-    case 'patient':
-      return ['Avoid technical jargon and relative-risk-only framing', 'Avoid alarming or minimizing language'];
-    case 'payer':
-      return ['Do not extrapolate beyond the evidenced population'];
-    case 'regulator_internal':
-      return ['Maintain an auditable, reproducible record'];
-    default:
-      return [];
-  }
 }
 
 /**
@@ -2135,25 +1833,33 @@ export function planBRCommunication(params: PlanBRCommunicationParams): BRCommun
     ok: typeof params.verdict === 'string' && BR_VERDICTS.includes(params.verdict),
     expected: `the benefit-risk conclusion is the sponsor's: one of ${BR_VERDICTS.join(', ')}`,
   }], 'planned');
-  const productName = norm(params.productName, 'the product');
-  const indication = norm(params.indication, 'the indication');
+  const PFDD_NOT_STATED =
+    ' Whether patient-experience/PFDD data are available was not stated (patientExperienceDataAvailable); ' +
+    'if they are, incorporate them on which outcomes patients value most.';
+  // 2026-11-09 (S5d): an omitted PFDD fact read as false unsaid, 'false' as include, 'Patients' as "Audience".
+  const productName = norm(statedText('productName', params.productName), 'the product');
+  const indication = norm(statedText('indication', params.indication), 'the indication');
   const verdict = params.verdict as BRVerdict;
-  const patientData = params.patientExperienceDataAvailable === true;
-  const includeVisual = params.includeVisualSummary !== false;
-  const stated = (messages: readonly string[] | undefined): string[] =>
-    (messages ?? []).map((m: string) => norm(m, '')).filter((m: string) => m.length > 0);
-  const benefitMessages = stated(params.keyBenefitMessages);
-  const riskMessages = stated(params.keyRiskMessages);
+  const inputStates = booleanInputStates(params, ['includeVisualSummary', 'patientExperienceDataAvailable']);
+  const patientData = statedBoolean('patientExperienceDataAvailable', params.patientExperienceDataAvailable);
+  const includeVisualStated = statedBoolean('includeVisualSummary', params.includeVisualSummary);
+  const includeVisual = includeVisualStated !== false;
+  const stated = (field: string, messages: unknown): string[] =>
+    (statedTexts(field, messages) ?? []).map((m: string) => norm(m, '')).filter((m: string) => m.length > 0);
+  const benefitMessages = stated('keyBenefitMessages', params.keyBenefitMessages);
+  const riskMessages = stated('keyRiskMessages', params.keyRiskMessages);
+  const audiencesStated = statedList('audiences', params.audiences)?.map((a: unknown, i: number): BRAudience =>
+    requiredOneOf(`audiences[${i}]`, a, BR_AUDIENCES));
 
   const audiences: BRAudience[] =
-    params.audiences && params.audiences.length > 0
-      ? [...params.audiences]
+    audiencesStated && audiencesStated.length > 0
+      ? [...audiencesStated]
       : ['label', 'advisory_committee', 'prescriber', 'patient', 'payer', 'regulator_internal'];
 
   const audiencePlans: AudienceCommunicationPlan[] = audiences.map((a: BRAudience) => ({
     audience: a,
     audienceLabel: audienceLabel(a),
-    framing: audienceFraming(a, patientData),
+    framing: audienceFraming(a, patientData === true) + (a === 'patient' && patientData === undefined ? PFDD_NOT_STATED : ''),
     recommendedFormat: audienceFormat(a),
     mustInclude: audienceMustInclude(a),
     cautions: audienceCautions(a),
@@ -2243,6 +1949,8 @@ export function planBRCommunication(params: PlanBRCommunicationParams): BRCommun
     'A single core benefit-risk message is generated and all audience plans are required to be consistent with ' +
       'it, preventing benefit overstatement or risk understatement across channels.',
     'Outputs are deterministic functions of the inputs and the audience set.',
+    ...(audiencesStated && audiencesStated.length > 0 ? [] : ['No audiences were stated; all six are planned by default.']),
+    ...(includeVisualStated === undefined ? ['includeVisualSummary was not stated; the visual summary is included by default.'] : []),
   ];
 
   return {
@@ -2254,6 +1962,7 @@ export function planBRCommunication(params: PlanBRCommunicationParams): BRCommun
     coreBenefitRiskMessage,
     consistencyRequirement,
     notStated,
+    inputStates,
     citations: citeAll(['FDA_BR_FRAMEWORK_2023', 'FDA_PFDD', 'EMA_EFFECTS_TABLE', 'IMI_PROTECT_BRAT', 'CIOMS_VI']),
     methodNotes,
   };

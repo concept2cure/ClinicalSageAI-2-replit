@@ -76,6 +76,7 @@ export function learningPromotionOf(metadata: unknown): LearningPromotion | null
 
 /** A current persisted curator grant is additional to the ordinary QMS signing gate. */
 export async function assertCurrentLearningCurator(client: SignatureDbClient, userId: number): Promise<void> {
+  // tenant-isolation-safe: a platform role grant is not a tenant's; curating shared learning is a platform act. The read is the authenticated signer's own grant and account status (users is the global identity table), keyed by userId.
   const grant = await client.query(`SELECT g.id FROM platform_role_grants g JOIN users u ON u.id=g.user_id
     WHERE g.user_id=$1 AND g.revoked_at IS NULL AND LOWER(g.role)=ANY($2::text[]) AND u.status='active'
     FOR SHARE OF u`, [userId, ['super_admin', 'platform_admin']]);

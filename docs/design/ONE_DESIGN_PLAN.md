@@ -158,9 +158,10 @@ It is shown in the project's Plan step. Package S11.
 Work projects (CMC, biostatistics, risk-based monitoring and others) are projects of their own under the product
 program. Their deliverables are mapped to the downstream documents they feed (P-83, the study's §7a). Package S12.
 
-## 1d. Anna runtime — extend the existing product (founder decision P-104, 2026-11-06)
+## 1d. Anna runtime — extend the existing product (founder decisions P-104, 2026-11-06, and P-105, 2026-11-08)
 
-The founder supplied **Multi-Agent Architecture Spec v0.5, 2026-11-06**, §§1–32, and directed:
+The founder supplied **Multi-Agent Architecture Spec v0.5, 2026-11-06**, §§1–32
+(`docs/design/MULTI-AGENT-ARCHITECTURE-SPEC-20261106-v0.5.pdf`, in the repository from 2026-11-08), and directed:
 
 > "Study the attached document, align to the current roadmap, and add the attached plan to the current roadmap,
 > and you own this end to end. This is your assignment to build all of this in a very sophisticated way, not by
@@ -173,6 +174,56 @@ still required before its downstream phase starts. Existing packages remain open
 file, service, tool, screen, route, mount, table, dependency or model is approved by this decision. If a requirement
 cannot be met by extending the existing objects, record that precise dependency in this epic before implementing
 it. No work silently weakens isolation, signatures, launch scope, model qualification or a fail-closed gate.
+
+**The current specification and one owner (P-105, 2026-11-08).**
+
+- **The specification.** On 2026-11-08 the founder first supplied v0.4 (2026-11-05, §§1–15), then corrected it:
+  *"there's a newer version … v0.5, from November 6 … supersedes v0.4 … this is the current plan."* The source of
+  record is now in the repository: `docs/design/MULTI-AGENT-ARCHITECTURE-SPEC-20261106-v0.5.pdf` (52 pages,
+  sha256 `4564aff5d1da81520ed187abf5d5f20be11f74c7d407244bba33d685229b36c4`). Its change note says §§1–15 are
+  unchanged from v0.4. v0.4 is superseded and is not a second backlog.
+- **The owner.** The founder: *"you own all of the attached alone."*
+  - The epic has one owner: the Claude Code session `session_01KZK3jgtmQBgNepqLjXjS3k`.
+  - It replaces the 2026-11-06 Anna architecture lead, and no other session takes an epic slice.
+  - Other packages' holders keep their file holds for their own work (§4.6). An epic slice asks for a held file in
+    `COORDINATION.md`.
+- **Coverage.** The table below maps every section of v0.5 onto this epic. The owner read the whole PDF to build it,
+  §§16–32 included.
+
+| v0.5 section | Where it lives in this epic |
+|---|---|
+| §1 principles (provenance, deterministic/LLM split, drafter ≠ checker, stateless workers, escalation) | RULE 2; the audit below; "Where the code corrects the spec": the workers stay read-only, not writable sandboxes |
+| §§2–3 data model, worker contracts, roster, orchestrator loop | Mapped onto the existing tenant keys, artifact versions, lineage and task records, and onto `sub-agent*.ts` and `agentic-workflow-tools.ts`; no duplicate Project/Atom/Task store |
+| §4 document factories | Phases 2 and 8; a document type is data in the one editor (RULE 4) |
+| §5 biostatistics, §6 CMC / Module 3, §7 lab/QNS and RBM | Phases 3, 4 and 5. P-101 keeps the SAP in the editor, and P-28's composition boundary holds |
+| §8 canvas, audit and Part 11 | Phase 2, in the one editor |
+| §9 QMS | Phase 6 |
+| §10 publishing, submission and correspondence | Phase 7, on the one sequence path (P-103) |
+| §11 stack and build order | The milestones below, phases 0–8. The stack is a suggestion, not an admission (RULE 6) |
+| §12 topology (Vault, RIM, LIMS, tasking, communications, reporting) | The existing S6, S5, S3/S8, S9 and S10 packages and Reporting (D7): one object model, the existing one |
+| §13.1 runtime components, §13.5 decision rights | The six-component audit below; P-104's decision rights |
+| §§13.2–13.4 build vs leverage | Suggested vendors only: no new integration without an `approvedAdditions` entry |
+| §§14.1–14.2 options A, B and C | Go/no-go below: A is the target, C the honest fallback, and B the integration surface (the D8 connector) |
+| §14.3 audit, §14.4 spike | The audit below, and check 1 of the expanded spike |
+| §14.5 risks and open questions | Isolation is spike check 4, and the fixture gates are the evaluation harness. **Decided by P-107 (2026-11-08):** internal first, with customer reach per capability after its phase gate and PQ; cost and latency caps per document type from measured spike runs (2× p95, stop and ask at the cap; until measured, 60 s interactive and 30 min background); internal dispositions inside the validation package by risk (GAMP 5 / CSA) |
+| §15 plan-only hand-off | Superseded by P-104's build instruction |
+| §16 the AnA pattern: vault cards, scoped connectors, approval cards, discretion, decision rights and audit | "Trust (§§16–19)" below |
+| §17 custody with the client: tenant isolation, client-owned authority accounts, credential delegation, exact-content approval, client-visible audit, roles and offboarding, one vault for many authorities | "Account decision reconciled" below; phase 6 (support access, offboarding export) and phase 7 (authority onboarding, exact-byte approval). §17's verify-before-external-use notes on ESG, eSTAR and CDER Direct stand: no authority is enabled by a label |
+| §18 why it wins | Rationale, nothing to build |
+| §19 trust build implications | Spike checks 2 (custody canary), 3 (one-byte approval invalidation) and 4 (tenant-scoped audit) |
+| §20 how AnA learns: typed memory, correction → rule, L1/L2/L3 escalation, alignment synthesis, trust repair | "Continuous evolution (§§20–23)" below |
+| §21 rules at user, tenant and project scope: RuleRecord, precedence, the visible ledger, the digest, isolation, repair as Deviation/CAPA | "Continuous evolution" below; phase 6 |
+| §22 why it wins | Rationale, nothing to build |
+| §23 evolution build implications | Spike check 5; the conflict resolver, digest, correspondence-derived project rules and ledger edit/revoke follow in phase 6 |
+| §24 data locality: tiers T0–T3, lanes A/B/C, the tenant policy ceiling, evaluation-gated routing | "Locality (§§24–26)" below |
+| §25 why it wins | Rationale, nothing to build |
+| §26 locality build implications | Spike checks 6 (tier tagging and routing) and 7 (derivative round-trip) |
+| §27 three kinds of learning: client content never crosses, de-identified patterns cross through a cohort gate, craft compounds globally; the promotion pipeline and its invariant | "Learning boundaries (§§27–29)" below |
+| §28 why it wins | Rationale, nothing to build |
+| §29 learning build implications | Phase 6, after the spike's walls |
+| §30 agency feedback: the corpus, objective vs subjective coding, the clean-file review, the three-scope loop, source discipline | "Agency feedback (§§30–32)" below; phase 7 |
+| §31 why it wins | Rationale, nothing to build |
+| §32 feedback build implications | Phase 7: human-confirmed coding, the clean-file review as a ready-state gate ("insufficient pattern history" when sparse), deficiency and RTF/RTA metrics |
 
 **Account decision reconciled.** `server/services/submission-gateways/gateway-accounts.ts` implements the founder's
 2026-10-01 choice of platform or client accounts, with no row defaulting to platform. The supplied §17.2 now directs
@@ -370,8 +421,8 @@ not imply that these later gates have already passed.
 
 Each row is **queued for v0.5 acceptance** until its stated fixture is run and recorded. A file's existence or an
 older local test does not mark this row green. The two-week spike is a maximum investigation window, not a delay
-before coding; a failed check is a Finding with a named dependency. The lead owns sequencing and integration,
-package owners retain their current file holds, and independent review checks each merged slice.
+before coding; a failed check is a Finding with a named dependency. The epic's owner (P-105) owns sequencing and
+integration, package owners retain their current file holds, and independent review checks each merged slice.
 
 | §11 phase / milestone | Existing packages and implementation home | Required acceptance evidence |
 |---|---|---|
@@ -379,7 +430,7 @@ package owners retain their current file holds, and independent review checks ea
 | **1 — Evidence and atom verification** (§§2–3) | **S2/S4/S6**: `clinical-regulatory-evidence/`, `data-room-retrieval.ts`, `ana/drafting-source-lineage.ts`, Vault and citation services. | Provenance survives ingest/retrieval/draft; seeded incorrect citation fails exact document/page/span check. Deterministic outputs pin code/data hashes and can be recomputed. No unverified atom is presented as verified. |
 | **2 — Canvas and one CSR, full gate flow** (§§4,8) | **D4/S4/S6**, existing editor, CSR and governed artifact lifecycle. | Locked protocol contract and effective template precede drafting; unverified claims/open blocker prevent lock. Human accept/reject hunks, version hashes, review/signature segregation and provenance cards work in the existing editor. |
 | **3 — Deterministic biostatistics** (§5) | **S3/S4**, `biostatistics-bridge/`, `ana-biostats/`, `csr/`, `cdisc/`; P-101 keeps SAP in the one editor. | Synthetic ADaM + SAP reproduces TLF cell-for-cell; independently programmed QC catches a seeded cell change; protocol/SAP estimand mismatch raises a Finding. Narrative uses only verified computed values. |
-| **4 — CMC / Module 3** (§6) | **S7/S12**, existing `cmc/` and downstream provenance. | Fixture batch/stability tables match expected cells; OOS is explicitly flagged; QOS and Module 3 share atoms and method references. Existing US small-molecule IND composition boundary stays enforced until separately changed. |
+| **4 — CMC / Module 3** (§6) | **S7/S12**, existing `cmc/` and downstream provenance. | Fixture batch/stability tables match expected cells; OOS is explicitly flagged; QOS and Module 3 share atoms and method references. Existing US small-molecule IND composition boundary stays enforced until separately changed. **Phase 4's acceptance was met 2026-11-08 (`6e7ed6073`, `05adc9e78`); the module's remaining CMC scope is §6a below, under P-113.** |
 | **5 — Lab/QNS and RBM** (§7) | **S8/S3/S9**, existing lab/study data and `rbm/`, tasking. | Immutable feed/versioned LOINC/UCUM normalization; QNS recollection/SLA/escalation; seeded deteriorating site crosses QNS/query-aging thresholds in the correct periods. Repeated reports reproduce identical numbers. |
 | **6 — QMS, inspection and governed learning** (§§9,17,20–23,27–29) | **S6/S4/S9**, existing Vault controlled documents, audit, QMS and tenant export/purge paths. | Ineffective template and untrained approver refused; inspection pack exports audit/training/deviation/CAPA/provenance. Support access is approved/logged; offboarding exports open-format client content without secrets and revokes grants under the contractual retention schedule. Rule conflict/edit/revoke/promotion and alignment digest are auditable. Cohort/promotion checks below precede shared learning. |
 | **7 — Publishing, client-account transmission, correspondence and clean-file review** (§§10,17,30–32) | **S5/S10/S9**, existing eCTD/sequence, gateways, agency responses and task clocks. | Clean sequence passes external validation seam; broken link blocks. Exact-byte approval and client-owned scoped grant required to transmit; missing ACK3 creates a Watch task. Full-letter classification extracts all items/dates with spans; humans confirm clocks/subjective coding. Clean-file report is required before ready; confirmed objective deficiencies block, sparse subjective history says “insufficient pattern history”. Track deficiencies/submission, RTF/RTA and review rounds per tenant. |
@@ -388,6 +439,42 @@ package owners retain their current file holds, and independent review checks ea
 The later-phase QMS work prepares cohort controls before phase 7 feedback intelligence; it does not allow letters or
 reviewer identities into a shared pool. Existing launch rows D1–D10 remain the deployment criteria. Vendor onboarding,
 agency test accounts, customer IQ/OQ and model PQ remain explicit dependencies; this epic claims no certification.
+
+### 6a. All of CMC in the CMC module (founder decision P-113, 2026-11-09)
+
+The founder, in the CMC session: *"All possible CMC data and tests and studies and needs and more across all of
+chemical, manufacturing and controls; must be part of this special module. Using all types of AI and machine learn
+and testing … study what all advanced current market offerings are doing in this exact space and add that to their
+roadmap for cmc. And I think there should be a sub-project management feature dedicated just for cmc but connected
+to the parent project management module."*
+
+**The study is `docs/evidence/S7/2026-11-09-cmc-scope-market-and-roadmap/`**: the inventory by path of what exists
+(57 CMC services, 19 canonical record kinds, 9 signed registers, 15 composed sections), the external study of
+QbDVision, Weave Bio, DDi, Veeva Vault RIM, the CPV platforms, the Rockwell-led Digital CMC Consortium and the
+published ML work, with its sources and the caution that almost all vendor material is marketing. **P-113** in
+`docs/LAUNCH_DEFINITION_OF_DONE.md` is the decision. Nothing below is a new screen, rail entry, card or editor
+(RULES 4 and 5); each item names the existing file it completes (RULE 6).
+
+**What already exists, so the roadmap is not read as new.** On specification control, stability with ICH Q1E and
+poolability, batch analyses, process capability (Cpk/Ppk), change classification, cross-register contradictions,
+Module 3 composition with lineage-derived drift, the 2.3 sharing Module 3's atoms, and a §11.50 signed-act layer
+with outcomes, this module is at or ahead of what the vendor material describes. The roadmap is what it does
+**not** hold.
+
+| Tier | Work | Completes |
+|---|---|---|
+| **A** — extends an existing register; no addition | Nitrosamine risk assessment; ICH Q3D elemental impurities; ICH Q3C residual solvents; photostability (Q1B); in-use and reconstitution stability; post-approval stability commitments; method transfer and co-validation; extractables and leachables as studies; cleaning and shipping validation as validation kinds; supplier qualification; batch genealogy; the OOS/OOT investigation lifecycle | `cmc/impurity-assessment.ts`, `cmc/stability-source.ts`, `cmc/analytical-method-source.ts`, `cmc/contradiction-lifecycle.ts`, the material-spec, container-closure, batch and process-validation registers |
+| **B** — compose what is already judged | **3.2.A.1** facilities and equipment; **3.2.A.2** adventitious agents (from `substance-modality.ts`); **3.2.A.3** novel excipients (from `materialSpec.novelExcipient`); **3.2.R** US regional (from `us-ind-regional.ts`) | `module3Composer.ts` — the judgements exist and no section composes from them |
+| **C** — three new records, each needing its own `approvedAdditions` entry and design | 1. **Manufacturing sites and equipment** — today a free-text `manufacturingSite`, named in every 3.2.S.2.1 and 3.2.P.3.1. 2. **QTPP, CQA and CPP as records** — `qbd-analyzer.ts` derives them at read time and QTPP exists nowhere, so the control strategy has no governed object at its centre. 3. **Established conditions and the PACMP (ICH Q12)** — nothing records what was filed as an established condition | the register family; `cmc/qbd-analyzer.ts` reads records and keeps deriving where none is recorded; `cmc/supac-classifier.ts` and `cmc-change-control-service.ts` |
+| **AI/ML** — inside RULE 2, which is unchanged | 1. **Document and instrument intake** (a CoA, an executed batch record, a stability table, a validation report) as *proposed* records a person confirms — the founder's "data entry points", and the largest practical win. 2. **"What a reviewer will ask"** — a ranking layer over the deterministic contradiction sweep, showing its basis and corpus, never a verdict. 3. **Early degradation signal** beside `stability-trending.ts`, which stays the sole authority on shelf life. 4. **Specification-setting proposals** from batch history, with `process-capability.ts` keeping the arithmetic. 5. **Narrative drafting** — exists | the existing extraction path, `cmc-impact-contradiction-engine.ts`, `cmc/stability-trending.ts`, `cmc/process-capability.ts`, `cmc/module3-narrative-builder.ts` |
+| **Strategic** | **FDA PQ/CMC alignment.** Its Phase 1 domains — drug product, drug substance, quality specification, batch analysis, stability — are this module's five strongest registers, which already hold that data as records with lineage. The work is a mapping to the HL7 FHIR Implementation Guide, not a data project. Not an operational requirement yet, so it is an export beside the existing composition | `cmc/module3-compile.ts` and the register readers |
+| **Designed for, not built against** | **ICH M4Q(R2)** — a January 2026 FDA draft, Level 1, not for implementation, 2027 adoption reported and disputed. Two consequences: a Description–Manufacture–Control–Storage projection beside the composer's section-per-CTD-node shape, and QTPP/CQA-as-records becoming a filing requirement rather than an improvement | — |
+| **S12** | The CMC work project's **own plan**: a deliverable's owner, due date and dependencies, which have nowhere to live today because a CMC deliverable is the set of records of one source type in one project (`docs/evidence/S12/2026-11-09-deliverable-feeds/`). This is what makes the critical path to a filing date answerable. The task list itself is **P-111**, already decided and routed to S12, with this lane holding the CMC area's screens | `cmc/section-drift.ts` `projectDeliverableFeeds`, `ProjectCoreWork.tsx`, `unified_tasks` |
+
+**Not approved** (P-113): formulation or molecular ML (ZoomLab, Schrödinger, digital twins), outside P-28 and the
+spine; and matching the AI-authoring vendors feature for feature, because they draft prose into documents while
+this module composes Module 3 from governed records with lineage — which is the direction FDA's own programme is
+moving, and the wrong advantage to spend.
 
 ### Expanded spike — executable acceptance contract
 
@@ -411,7 +498,7 @@ agency test accounts, customer IQ/OQ and model PQ remain explicit dependencies; 
    frontier payload; tokens remain. The mapping stays tenant-local; deterministic merge restores the exact seeded
    text and local verification checks the result. Missing attestation/map, wrong tenant or policy blocks the call.
 
-**Go/no-go.** Native Anna remains the implementation target (Option A). The lead records each check's command,
+**Go/no-go.** Native Anna remains the implementation target (Option A). The epic's owner records each check's command,
 fixture, result and unresolved Finding in this plan's progress log, linked to the actual test output/commit. No
 fabricated green status, provider call or fixture coverage. If the spike fails, keep the existing copilot experience
 honestly limited (Option C); do not market orchestration as qualified. External MCP (Option B) stays an integration
@@ -587,6 +674,26 @@ Each session records what it delivered here, under its package, while the coordi
 facts only: commits by SHA, evidence by path, what was found, and what is next. It changes no package's scope,
 status or ownership; closing a package stays §3 step 5.
 
+#### S2 — the data catalog across projects, graded, used in a project (2026-11-06 to 2026-11-10)
+
+The founder, 2026-11-06: see the data room as a catalog organized into folders and buckets, graded, and subscribed
+to by a project; AnA in control of it. 2026-11-10: "I can not see the data catalog / data room from anywhere in the
+UI": the 2026-11-06 commits had been refused by the pre-push gates and never pushed, and the catalog sat four clicks
+deep. Evidence and the "What already exists" survey: `docs/evidence/SPINE/S2/2026-11-06/README.md`.
+
+| Step | Commits | Where a person sees it |
+|---|---|---|
+| 1. The catalog across projects | `7a2cfe34` (S2: `data-room-search.ts` reads the person's accessible projects of the open project's sponsor, with facets by project, study, kind, CTD section, Vault folder), `1b4d3c12` (R1: `GET /api/c2c/projects/:id/sources?scope=catalog`) | Vault → **Data catalog** (`cef3d557`, S6); the project page's Data room → **Open the data catalog** (`08927463`, R1); Project files → Data room → All my projects |
+| 2. The grade | `7a2cfe34` (`data-room-grade.ts`: provenance, integrity with the Vault copy's fixity, currency, processing, verification by a person, CDISC conformance for datasets; stored on the capture, `migrations/20261106_data_room_grade.sql`), `c04ba737` (a native record graded by its snapshot and its register) | each item's *Grade A–D · score*, its basis criterion by criterion |
+| 3. Use in this project | `1b4d3c12` (the pinned-evidence routes take `data_room`, checked against the person's catalog, audited), `c04ba737` (the panel) | **Use in this project** / **Remove**; the project's Data room lists **Used in this project** first |
+| 3b. Used data feeds the CSR | "S3: the CSR's study-data chooser lists first the data this project uses" (S3: the CSR document's study-data chooser lists the Vault source of a used capture first, "used in this project"; walked on the CDISC pilot CSR) | the CSR editor's "Build from the study's data" chooser |
+| 4. AnA over it | "S4: AnA reads the data catalog with its grades, and files a data-room capture into the Vault" (S4: `list_project_documents` with `catalog: true` reads the catalog, its grades and what the project uses; `file_chat_upload_to_vault` with `source_id` files a capture through the data room's filing; AnA proposes "Use in this project", the person confirms). Not run in a live conversation: no model key where it was built | in AnA's answers |
+
+**Next** (the README's "Not done yet"): AnA's step 4 walked in a conversation with a model key; whether a used
+capture of another project may be assembled into, or filed for, this project's documents (a governance decision for
+the founder); a sponsor chooser for the Data catalog with no project open (S6's open item). Evidence of 2026-11-10:
+"S2: the walk of the CSR example and AnA's tools, recorded".
+
 #### S4 / S10 — Anna runtime v0.5, first bounded controls (2026-11-06, P-104)
 
 **What already exists.** The six-component audit and completion contracts are in §1d. These changes extend those
@@ -724,6 +831,79 @@ acceptance remain separately tracked; no incomplete path is described as accepte
 The new batch is committed locally and merged with canonical work; publication and final merged gates follow.
 Counts in this section overlap broader suites and must not be summed. All 16 real model PQ entries remain pending.
 
+#### S4 / F1 — Anna runtime: the epic's own red on trunk (2026-11-08, P-105 owner `session_01KZK3jgtmQBgNepqLjXjS3k`)
+
+Evidence: `docs/evidence/SPINE/S4/2026-11-08-anna-trunk-red/README.md`.
+
+- **Found.** Since `4852aa78`/`a2f9264a`, every AnA tool reads standing rules and fails closed. Old fixtures cannot
+  answer that read, so 144 of the 366 suites reaching AnA's tools refused before their subject ran. A local probe
+  recorded the swallowed errors: 906 non-member, 273 owner-scope and 241 project-not-found.
+- **Delivered.** All commits are on `concept2cure-v2`.
+  - `e739190890`: the stub pool gets the real gate's empty-rule snapshot, and there is one shared declaration for
+    hand-built stubs.
+  - `fd52dceb45`: every loop round dispatches with its tenant (`ci:ai-tenant-binding` green).
+  - `02d0bad57a`: one declaration, not four copies.
+  - `c55704def0`: production serves the credential vault, the placement setting and the private-rule ledger
+    (`ci:launch-scope-api` green).
+  - `df385e5984`: a project AnA cannot use is refused as that, and eight real-database suites meet the independent
+    check.
+- **Result.** Of the 144 gate-refused suites, 127 pass on the merged tree. No suite moved from passing to failing, and
+  the gate's own suites pass unchanged.
+- **Delivered later the same day.**
+  - `ci:step-presentation` is green. Two import cuts were made and no tool was reclassified: `b7eec7bf34` (the
+    statistical document save) and `b4c57f5a27` (the run stopper). `run-control.ts` then went over the size ceiling,
+    and its session-end half was split, inside `ana/`, into `run-session-end.ts` (`0525fb31ae`).
+  - Two product regressions, each proven red then green: AnA drive kept the Vault's program and stopped searching a
+    Vault with none open (`105a28e291`); a missing embedding key is now reported as such (`271838332f`).
+  - Harnesses the product had left behind, each update keeping the suite's intent:
+    - the executor and tools, 17 suites (`0d6e906a3a`);
+    - the stream route, 16 suites (`e1e672f400`);
+    - group E, 6 suites (`41d32ca4b4`);
+    - figure reconciliation (`4a98f8d330`);
+    - upload tenancy (`bae9a11ef2`).
+  - The release-gate fixtures (group B) now build `audit_logs` as production does, and no gate was loosened
+    (`fb7be60ea1`).
+  - Proof tier: `chat-thread-access` (`5944bf4275`) and `authoring-review-audit-comment` (`fb7be60ea1`).
+  - A parallel merge broke two drive cases, and they were reconciled with the product (`0da9fae4b8`). `documents`, now
+    global, keeps a named program as `vault` does, and a Vault search with none open still asks first, because
+    `Vault.tsx` refuses it.
+  - Secret scan: all eight hits are test canaries, placeholder DSNs or a local probe's key, each recorded in
+    `.gitleaksignore` with its reason (`887c4d9402`). The full-history scan, run as CI runs it, finds none.
+- **Next.** The expanded §14.4 spike (Phase 0).
+
+#### S4 — Anna runtime Phase 0: the expanded spike, joined run (2026-11-09, P-105 owner `session_01KZK3jgtmQBgNepqLjXjS3k`)
+
+Evidence: `docs/evidence/SPINE/S4/2026-11-09-spike-joined-run/README.md`, with `results.json`.
+
+- **Run.** All seven checks were run together on `64e3346363`, and nothing failed.
+  - Ordinary config: 32 files, 768 tests.
+  - Real database: 6 files, 97 tests.
+  - `poolInstrumentation` on the real database: 30 tests.
+
+  The real database was built as CI builds it: a blank database, then `install-fresh` and `deploy-migrate`, then
+  `app_service` as the runtime role.
+- **Added**, each shown failing first:
+  - check 4: the rules and memory stores isolate tenants as the runtime role (`ec177edd06`);
+  - check 1: rework and rejection are rebuilt from the decision audit (`d4b82abc94`);
+  - check 2: a credential use is audited by grant, revision and purpose, never its value (`64e3346363`);
+  - check 2: the tenant's export carries a vault-captured card but neither its key nor the stored ciphertext
+    (`4d99bddc52`);
+  - check 1: a child's transmit, signature, filing and version overwrite are refused by name (`ce1451297c`).
+  - check 2: one canary makes one real model request through the tenant's own client, and is only in that request's
+    Authorization header: not its body, the result, a refused key's error, the log, the audit or the export
+    (`2c54da8f34`).
+- **Verdict: acceptance pending.** Every check has named open items in the evidence. Some are test-only, for S4. One
+  is RIM's (check 3, reapproval after the one-byte change). Some are product decisions for the founder:
+  - a "never again" trigger;
+  - a version for the placement policy;
+  - content-aware classification;
+  - automatic de-identification;
+  - qualified local weights.
+
+  No check is marked passed in full.
+- **Next.** Two S4 test-only items remain: a joined child → parent merge → lock case, and the canary in a whole turn (the
+  assembled prompt bundle and the turn record). Then the founder's decisions on the product items.
+
 #### R1 — Reach (session `session_01QoxbLdKp1MgbXvCfgSkkJr`)
 
 **Delivered**
@@ -819,6 +999,54 @@ Counts in this section overlap broader suites and must not be summed. All 16 rea
   - It gained a verified way to show §11.1 and §11.4 live without freezing.
 - **Blocked**: drafting, the scientific review of drafted text, e-sign and placement. They need a model key, which
   this environment does not have.
+
+- **Demo-day UI sweep** (2026-11-06), `f05919e54`, `docs/evidence/D2-CSR/2026-11-06-demo-day-ui-sweep/`.
+  - Every screen was walked as author, reviewer and approver, with no page error.
+  - The AI paths reach the provider.
+  - The founder's "model not approved" in the Codespace was a key that never reached the app. The Codespace
+    session fixed its start script (`11b191038`).
+  - The docked composer's overflow was fixed by the design lead.
+
+**DATA: the Lumen demonstration data** (2026-11-06 to 11-10, at the founder's request: "faux seeded demo examples …
+RBM, QMS and more; Vault … and tasking too")
+
+- **Tasks, review, information request, sequence and reports**, `4fad016a5`:
+  - LMN-201's board has 16 tasks across every column, with a critical path;
+  - the Investigator's Brochure is out for review;
+  - a FICTIONAL FDA information request sits in Communication and Respond;
+  - LMN-201 has sequence 0000;
+  - four computed reports have run.
+- **Quality** `dff867c6f`, **risk-based monitoring** `91d6a97da`, **Vault** `893451f02`:
+  - every Quality register;
+  - RBM: RACT, KRIs, QTLs, signals, the plan and site actions;
+  - 25 synthetic documents filed, reviewed, approved and sealed.
+
+  All through the screens' own routes, and idempotent.
+- **Task owners by role and a third person**, `893451f02`; **a named demonstration organisation** in
+  `seed-admin.mjs`, `98e664c40`.
+- **Not finished, handed over:**
+  - the founder's Lumen account in the Codespace (design agreed with the Codespace session: identities only from
+    secrets);
+  - the Vault re-filing on each run;
+  - the QMS approver designation;
+  - the biotech/mdx QMS signer 409;
+  - two RBM product defects;
+  - the CSR study's package identity.
+
+  Each is in `docs/evidence/DEMO/2026-11-10-lumen-data-handoff/README.md`.
+- **The Lumen account in the Codespace** (2026-11-10, the founder: "Make sure it's set up in the Codespace"),
+  `92f589838`.
+  - The Codespace creates "Lumen Bioscience (demo)" with its lead, reviewer and approver. The people come from
+    Codespaces secrets, with fictional defaults.
+  - It seeds the Lumen pack there first, and "Demo access" lands on it.
+  - The Vault seed now records an artifact's review before its approval (P-95).
+  - Run end to end against a fresh local database; `codespaces:doctor:test` 50/50.
+- **"Demo access" chooses who** (2026-11-10, the founder: "a selection of users … tied to demo accounts and various
+  scenarios and according to role … this must work in Codespace"), `2a3cb63a6`.
+  - The login's existing button gains "Sign in as": every demo person, grouped by account and labelled by role.
+  - The Codespace supplies the list from its two rosters (`VITE_DEMO_ACCOUNTS`).
+  - Signed in through it in the running app as two people, one in each account.
+- **The Vault seed no longer re-files on each run** (2026-11-10): it reads each document's own filing record.
 
 **Finding shared with the design lead**
 
@@ -1142,7 +1370,7 @@ like Veeva … templates and folders for the full IND pyramid of potential filin
 and regions … Anna needs to have autonomous control over all of this, agentically."* Evidence:
 `docs/evidence/SPINE/S6/2026-11-06/` (README with "What already exists", before/after screenshots, walks, audit rows).
 
-**Delivered: step 1 of 4, plus most of step 2** (S6 `b3abbe5b`, `daaaae1d`; R1 `061fc4a8`, `3c7cd5eb`).
+**Delivered 2026-11-06: step 1 of 4, plus most of step 2** (S6 `b3abbe5b`, `daaaae1d`; R1 `061fc4a8`, `3c7cd5eb`).
 
 - **Folders a person makes.** `public.document_folders` (it existed, reached only by the uncalled legacy `/api/folders`)
   gains `program_id` and `parent_key` (`migrations/20261106_document_folders_project_scope.sql`, additive, in the set
@@ -1159,28 +1387,47 @@ and regions … Anna needs to have autonomous control over all of this, agentica
   (`uf:12`). A row filed to a module preset shows at its CTD heading. With no pack, the folders stop at module level
   and the cabinet says why (`note`).
 
-**Not done, for the next session** (holds released in `.design/claude-convergence/COORDINATION.md`):
+**Continued 2026-11-10: steps 2–4 landed, and a multi-tenant repair** (the founder: "the UI doesn't reflect all the
+Vault features yet … this is a multi tenant environment").
 
-1. **Step 2's walk.** Projects exist for it on a fresh Codespace only if made again: NDA, MAA, EU MDR and EU IVDR were
-   created through `POST /api/c2c/projects` (`clientWorkspaceId` required when several workspaces exist). The app
-   refuses a J-NDA (PMDA requires eCTD 4.0) and a Health Canada NDS (no outline), so neither binder can be shown in a
-   project yet; the J-NDA pack exists. Shoot each binder; restart the app first (the leaf's folder label fix in
-   `filingCabinet`, `nameLeafFolders`, is not yet seen in the running app; the record pane read `uf:5`).
-2. **Step 3, the pyramid in Vault.** Design settled, not built: extend `vault.open-folder`
-   (`shared/navigation/surface-actions.ts`, handler in `Vault.tsx`) with an exact `folderId` resolved to the nearest
-   binder heading; in `Pyramid.tsx` `PyTaskSheet` add "Open in Vault" beside each Document-binding code (wired in
-   `PyramidProject.tsx` through `applySurfaceAction`, Plan: S11); in the Vault, read
-   `GET /api/v1/pyramids/by-project/:id` once and list under a binder folder the tasks whose `ctd` codes fall in it.
-3. **Step 4, AnA.** Extend `place_project_document` (`server/services/ana/document-catalog-tool-defs.ts`,
-   `document-placement-tools.ts`, Plan: S4) so `folder_id` names a binder heading or a person's folder, and add an
-   input that makes a folder through `createProgramFolder` with AnA's provenance (`anaToolProvenance`); let
-   `list_project_documents` return the folder index. A document AnA places stays a suggestion a person confirms.
-4. **Duplicates to converge:** the legacy `/api/folders` route (`server/routes/folder-management.js`) writes the same
-   table with no project; retire it onto `project-vault.ts` with its contract test
-   (`server/__tests__/security/tenant-isolation-folders.contract.test.ts`).
-5. **Running the gates here:** `ci:typecheck-no-regression` does not complete on a 15 GB machine with the app running;
-   stop the app before `git push`. `ci:check-css-selector-shadowing` is red on trunk (`journey-v2.css`,
-   `protocol-dev-editing.css`), not from this work.
+- **Step 2, walked** (`walk-binders.cjs`): an IND, NDA, MAA, 510(k), EU MDR and EU IVDR project each open on their own
+  binder, now **first in the tree** (it was below every authored document's draft outline), with the outline and its
+  version named. An EU MDR file no longer lists the empty US "510(k) submissions" and "PMA submissions" folders.
+  The record pane names a binder or person's folder, not its id. (R1 `844b7de191`, S6 `d208ba8f68`.)
+- **Step 3, the pyramid in Vault** (S6 `d208ba8f68`, R1 `844b7de191`, S11 `a36449dd90`): a binder folder lists the plan
+  tasks bound to it with their status (`VaultPlanWork.tsx`, from `GET /api/v1/pyramids/by-project/:id`); a plan task's
+  CTD binding opens its binder folder in the Vault (`vault.open-folder` takes an exact `folderId`). Walked both ways.
+- **Step 4, AnA** (S6 `c80d21ae3b`, S4 `7d918fe90e`): `list_project_documents` returns the project's folders;
+  `place_project_document` files into any of them and can make a folder first (`new_folder`), through the Vault's
+  governed writer with AnA's provenance. Her filing stays a suggestion a person confirms. Run live on the database
+  under RLS (`ana-step4-live.txt`); not walked through a conversation here, which has no model key.
+- **Multi-tenant repair** (F1 `9d01cdb37b`): the organization-wide `/api/folders` route listed, renamed and deleted
+  folders by organization alone, so once projects had folders a CRO member (a viewer included) could see another
+  sponsor's project folder names, or rename or delete one with no audit row. It now never reaches a project's folders.
+  Shown red first. Project folders are reached only through the project's Vault route, under that project's access.
+
+**Continued 2026-11-10, second pass** (the founder: "Fix all and then prepare for GA"):
+
+- **A person's folder is moved and removed**: Move and Remove beside Rename; POST
+  `/:id/folders/:folderId/move` and `/remove`. Remove takes only an empty folder. Found live: with no person in the
+  database scope, row security hid a folder's file and it counted as empty; removal now refuses unless the database
+  confirms the session can read the project's documents. Walked (`walk-folder-moves.cjs`).
+- **Search's folder filter** takes binder headings and people's folders; it refused all but presets.
+- **Two trunk reds repaired** (F1): `.qms-rowacts` declared twice (`ci:check-css-selector-shadowing`);
+  `project-settings.pglite.test.ts` injected its failures on a connection the route no longer takes (38 of 38 now).
+- **Readiness for GA** is written down in `docs/evidence/SPINE/S6/2026-11-06/GA-READINESS.md`: what is proven in this
+  lane (154 server files / 2,683 tests, 76 client files / 850 tests, the two-tenant row-security check on
+  `document_folders`), and the 18 blockers `ga-readiness-report.mjs` reports (8 of 42 ready), none of which this lane
+  can close: deploy secrets and switches, licences, model qualification, and the founder's rows D1, D9, D10.
+
+**Open, for the next session:**
+
+1. AnA over folders walked in a conversation, once a model key is present.
+2. A J-NDA or Health Canada NDS project is refused at intake, so those binders cannot be shown in a project.
+3. Org-level folders (`/api/folders`) have no UI and no caller: keep or retire is a founder decision.
+4. Search selects send one value per filter (several arrive through a saved view); the library search's project
+   filter (`programId=`) is never sent.
+5. Stop the app before `git push` (the full typecheck runs out of memory beside it on 15 GB).
 
 #### L1 (row D2) — CSR drafting with the person in control, and the running-app walk of its screens (session `session_01T2wooCZu46W7msw4TJuuzr`)
 
@@ -1338,6 +1585,77 @@ first.
    and Respond use the calm section pattern, and Respond lists Commitments from the page's one read. This includes Tasks and approvals on Plan, the Tasks handoff opening Plan, and
    Module completion without the ring.
 
+#### F1 — the project page's walk findings, closed (session `session_01QoxbLcnW5jPvJSjjKQtvTA`, 2026-11-10)
+
+The D3-4 session's acceptance walk handed four findings to other owners. None of their files is held, so this
+session took them under F1.
+- **The inbox's "Draft response with AnA" is a quiet button**, `d4a3934b7`,
+  `docs/evidence/F1/2026-11-10-inbox-draft-button-quiet/`. The list is one component in Communication, the HAQ
+  manager and Respond, and it put a filled orange button on every open letter. It is now `cc-btn sm` like its
+  neighbours. It was red on trunk and is green (42 tests); in the running app each view keeps one orange.
+- **"install-fresh refuses `ctd_cross_references`" does not reproduce on trunk.**
+  `docs/evidence/F1/2026-11-10-install-fresh-ctd-cross-references/`: on an empty database the install and then
+  deploy-migrate both exit 0, and the table is policied through `csr_studies`. The report fits a partial install
+  with pgvector absent. No code change.
+- **Already fixed on trunk, by others:** Tasks hands a project task to Plan (`stage: 'plan'` in
+  `TaskBoard.tsx` `publishNativeTaskHome`), and the `documents` alias follows Vault (`projectDestination`,
+  `projectCreationDoors.contract`: 32 of 32 pass).
+- **Left with its owner:** the demo seed's Lumen pack recorded on other projects' data rooms (DATA).
+
+#### L1 (row D4) — the validation package re-executed at head for GA (session session_01QoxbLcnW5jPvJSjjKQtvTA, 2026-11-10)
+
+Record: `docs/evidence/W3/2026-11-10/README.md`; dispositions: `docs/validation/VSR-001-VALIDATION-SUMMARY-REPORT.md`
+§21. Nothing was added to the product and no product file was changed.
+- **Executed on a fresh installation** (`c2c_oq_w3_20261110`), RLS enforced as `app_service`, launch scope enforced,
+  unattributed API paths refused as in production, no AI provider, a development build. IQ-001: 12 pass, 0 fail,
+  3 deviation.
+- **First execution**, at `83e61866d3` (`673987be66`): OQ 99 pass, 26 fail, 6 deviation, 31 not executed of 162.
+  Every failure classified (`cea8c9976f`).
+- **Whole-package re-execution**, server at `97a0fec5cf` (`1907e5c241`): 143 / 8 / 8 / 3. The eight classified, four
+  protocols revised and re-run (`cf2706d5cf`).
+- **Final: 170 pass, 0 fail, 8 deviation, 2 not executed, of 180 steps**, over eight protocols. All 34 failures of the
+  two executions were a step overtaken by a recorded decision or a runner defect. No product regression was found.
+- **OQ-007, Reporting & analytics**, the seventh launch app, which had no URS or protocol (`445c79bf90`):
+  `docs/validation/URS-008-REPORTING-ANALYTICS.md`, `docs/validation/OQ-007-REPORTING-ANALYTICS.md`,
+  `tests/validation/oq/reporting/`. 17 pass, 0 fail, 1 deviation.
+- **TM-001** regenerated: 132 requirements, 120 pass, 4 partial, 0 fail, 6 open, 2 uncovered. RA-001 v0.25 assesses
+  Reporting (`4c7ded950c`).
+- **D4 stays red.** The package is unsigned and is not ready for signature. It still needs: execution on a production
+  build with the audit signing, seal and anchor keys; an AI provider (PQ-passed) for two steps; three fixtures (a
+  critical CMC contradiction, a Module 3 whose every section can be approved, an organisation on a lower plan); the
+  URS revisions for the requirements withdrawn from this release (URS-PROJ-007, URS-AUTH-014's organisation store,
+  URS-SRDY-004 and -005, URS-QMS-011 and URS-QMS-012's plan half), through change control; PQ; review and the system
+  owner's signature.
+
+#### D3 — The project page, D3-4 (session `session_01FTWcmXm7At3ZXBE5VWn6oS`, from 2026-11-08, P-107 item 7)
+
+- **D3-4, the step bodies**, `d50c5f07e`, `docs/evidence/DESIGN/D3/D3-4/`. It completes the six items of the
+  hand-off by path; nothing new.
+  - Plan holds the one Tasks and approvals, by due date, with the status in words. A Tasks handoff opens Plan.
+  - Evidence gains Protocol from the lifted records read.
+  - Author's Module completion is led by the figure line, with no ring.
+  - Submit's doors are small, and "Add a market" is ghost.
+  - Respond lists the commitments to the agency, and its Fulfil opens the existing dialog.
+- 36 cases were red on trunk's source and are green. 918 of 919 project tests pass; the failure is trunk's own
+  `projectHomeStageCss`.
+- D3 §6 was walked whole in the running app: C2C-101 and the NeuroPanel-Dx 510(k), at 1440 and 390, light and dark,
+  every step, with no failed request.
+- The walk found and fixed:
+  - a Tasks handoff dropped under React.StrictMode;
+  - module rows whose count was cut off;
+  - overflow and sub-44px touch targets at 390;
+  - the Filing card's broken label.
+- Also fixed in D3's tests, both red on trunk: the Vault-door tests now follow the founder's `5144702d21`, and a
+  biotech-plan fixture follows `3d9879dfc`.
+- **Found, for other owners** (COORDINATION.md row):
+  - `install-fresh.mjs` refuses `ctd_cross_references` (no RLS policy);
+  - the demo seed writes the Lumen pack's GMP deviations into other projects' data rooms;
+  - `AgencyInbox.tsx`'s orange draft button;
+  - `TaskBoard.tsx`'s `stage: 'review'`;
+  - the `documents` alias still sends a no-project visit to Projects.
+
+**Next:** S12, work projects (P-83, §1c), in the same files.
+
 #### F1 — saved conversation handoffs (Codex continuation, 2026-11-06)
 
 **Delivered**
@@ -1454,6 +1772,552 @@ COORDINATION.md, row "Codespace setup".
    When it lands, set the Lumen organisation's idle window too: `c2c_set_idle_window <founder email> 120`.
 4. **No real model output has been seen in a Codespace.** No session had a key. The founder's first run, with both
    keys, is the qualification.
+
+#### D7-D — Reporting & analytics on the work-area pattern, with its F1 repairs (session `session_011HLkYCajohxJ4HxpcfSiU6`, lane L11)
+
+**What already exists.** The surfaces are `client/src/concept2cure/v2/surfaces/Insights.tsx` (`insights`),
+`InsightsCatalogPanel.tsx`, `insightsLibraryShared.tsx` and `ComplianceReports.tsx` (`compliance-reports`), with
+`styles/insights-v2.css`. The digest renderer is `server/services/report-os/render/render.ts`. Nothing new was added:
+no screen, route, service, table or component file.
+
+- **D7-D steps 1–9, as `.design/claude-convergence/D7.md` §D.4 lists them** (2026-11-02):
+  - `f58089a336`: steps 1–2, one column and the page header;
+  - `209a8964bf`: steps 3 and 5, the find row on `.c2c-input` (a plain search field, not the composer's look, P-91)
+    and a quiet result;
+  - `fc9dbb57a7` and `81faf1bda2`: steps 6–7, Preview plan as a `.seg` in the Catalog, and `.tabs`;
+  - `002ab41e13`: steps 4 and 8, starters, the HS-1008-1 facts as the sub's second sentence, packs as `.pj-card`s,
+    and the not-computed list as a disclosure;
+  - `44f574f70e`: step 9, Audit & compliance reports' back link.
+
+  Dated notes in D7.md §D.4 record each place where the build differs from the spec: steps 3, 4, 6 and 10.
+- **Running-app evidence** (`e124af0812`, `a9dbe72512`): `docs/evidence/DESIGN/D7/2026-11-02-reporting/`. It is a
+  git-archive copy of `9bd593c346` on its own port, captured at 1440 and 390, light and dark: 16 captures with
+  probes. §D.6 holds:
+  - one column;
+  - the find field after the header;
+  - one orange fill;
+  - no page overflow and no script errors;
+  - the readiness sentence never says "ready" with a gap open.
+- **What the running app found, fixed:**
+  - `9bd593c346`: an unnamed back link, Find dropping under the field at 390, 19 orange Run buttons in the
+    Catalog, and a basis tag widening Audit & compliance reports by 4px at 390;
+  - `7ce21a6c8f`: Export PDF was a second primary;
+  - `854bceccd5` (F1): packs are offered by the project's filing type, so an IND is no longer offered the BLA pack,
+    and the page says why;
+  - `4f9966c841` (F1): the digest printed a raw `not_ready` and made its own wording. It now speaks through
+    `shared/regulatory/readiness-statement` and shows a "Critical gaps" tile.
+- **ProjectBack convergence** (2026-11-08):
+  - `23238cd9ad` (D0): `ProjectBack` takes the `name` its screen read, rebuilding the coordinator's unpushed
+    `c4fcb90a7`. `dataConnect.tsx` is the coordinator's hold ("change only through D0"), so the change is D0's,
+    as that session designed and approved it, and the release is noted in COORDINATION.md;
+  - `eac4aaff16`: ReportingHead now uses it, with insightsOpenProgram red before and green after.
+
+  This closes Reporting's half of D0-7.
+- **Other repairs:**
+  - `ef94805978` (F1): finalize's signing-authority test;
+  - `66819a2460` (F1): the lineage-trace test's stale argument list;
+  - `66ce445d7b`: D6 evidence corrected, five loose queries and not a regression;
+  - `f49c747814`: P-91 recorded.
+- **Found, and handed on:**
+  - The device readiness scorecard (`server/services/market-specs/device-readiness-scorecard.ts:58`) uses the same
+    five words with no critical-gap rule, and AnA receives its level raw (`AnaToolExecutor.ts:10594`). Routed to
+    the MDX journey session (`01P6GW…`).
+  - CMC's `CmStarters` puts `aria-label` on a role-less `div`.
+- **Next:**
+  - C-3, the report-pack register tables (P-91, `Plan: L1`). They need `scripts/db/migration-set.mjs` and the RULE 1
+    replay and drop-safety work, shown red first. It is not started, because the coordinator's file hold can't be
+    asked for while it is unavailable.
+  - Re-walk Reporting in the running app at the current head. The ProjectBack switch has jsdom evidence only.
+- **Update, 2026-11-08 (later the same day):**
+  - **C-3 landed** (`Plan: L1`, P-91): `aadca02cc7` and `17315d82fd`, with evidence
+    `docs/evidence/L1-C3-REPORT-BUNDLE-REGISTER/2026-11-08/`.
+    - `public.report_bundles`, `report_bundle_runs` and `report_bundle_projects` replace the `bundle:<uuid>`
+      memory path, which is deleted.
+    - A blank database built by install-fresh plus deploy-migrate applies it twice, and
+      `tests/db/report-pack-export.dbtest.ts` passes 8 of 8 as `app_service`.
+    - **Missed, and fixed by the coordinator:** the three tables were not in the tenant purge list
+      (`PURGE_CHILD_TABLES`), so `ci:purge-coverage` went red. The fix is `360d4de53d`, pushing at the time of
+      writing. A new org-keyed table goes into that list in the same commit, and `ci:purge-coverage` is run on a
+      blank database before the push.
+  - **Running-app re-walk** (`aaec73f581`, `docs/evidence/DESIGN/D7/2026-11-08-reporting-rewalk/`). The shared
+    back link and the Bundles tab hold. It **found** the page saying "4 critical gaps outstanding" beside a digest
+    that said 23. That is fixed in `c37e5c8f6b` (F1, red first): the orchestrator cut the critical list to four
+    before it was counted. All 24 captures at `c9e45ef009` pass.
+  - **Two stale tests, red on trunk since `98661f418b`** (the assurance pack gained an engine):
+    - `b29a5b1d66`, suggestion-service;
+    - `e67f9fe798`, insights-canvas-catalog.
+
+    Each is shown red with the engine removed.
+  - **Next:**
+    - Nothing open in D7-D's steps.
+    - The Bundles screen's "Choose legal companions for ZIP" is reached but was not walked to an export.
+- **Update, 2026-11-09:**
+  - **The Bundles actions, walked in the running app** (`docs/evidence/DESIGN/D7/2026-11-09-bundles-zip-walk/`).
+    - It **found** five buttons that `9bd593c346` had left unstyled: the two Export PDFs, the legal-companion
+      chooser and the two stationery buttons. They are fixed in `f4c27a3495` (D7, red first), each now
+      `btn ghost rl-card-run`.
+    - At 390 the open chooser pushed the page sideways by 10px. Its one-line primary ZIP button was the cause. Fixed
+      in `61498ef0bf` (D7): the chooser's fieldset may shrink, and a button in it may wrap. The walk at that commit
+      measures 0 at 1440 and 390, with no script errors.
+  - **Next:**
+    - Nothing open in D7-D's steps.
+    - A ZIP export with a legal original selected is not walked: this database has no legal original to select.
+      `tests/db/report-pack-export.dbtest.ts` covers the export on real PostgreSQL.
+  - **S11 step 6b, the global schedule in Reporting & analytics** (`Plan: S11`: `c0729896d7`, `3707064475`; evidence
+    `docs/evidence/SPINE/S11/2026-11-09-global-schedule/`).
+    - One row per project the reader can open, on one shared axis, sorted by target date: the work, the filing, the
+      agency's clock dashed to its goal, the next phase, and today.
+    - It is read from the portfolio line's batch read, which now also carries the filing, start and clock. Nothing is
+      computed in Reporting.
+    - It is reached by "When does each project file?" and the find field, on every plan.
+    - Red first: the route test 2 of 28, and the new client test 9 of 9. Green: 62 files, 633 tests. Type check 0.
+    - Walked at 1440 and 390, light and dark, over five projects (four created through the API). It **found** the
+      review clock painted solid, in the Plan step too, and fixed it in `3707064475`.
+  - **Reporting used in the running app** (`docs/evidence/DESIGN/D7/2026-11-09-reporting-use-walk/`). The walk ran a
+    report from the Catalog, exported, finalized, opened Run history, bundled a pack and scheduled. It found five defects,
+    each fixed red first:
+    1. Finalize was offered on a run the gate always refuses, and refused only after the password. `b2d51f911c` (F1):
+       the rendered read returns `finalEligibility`, and the reason stands in Finalize's place.
+    2. Run history answered 500 on a database installed before 2026-10-13: `0014_report_os_foundation.sql` was on no
+       deploy path. `22256c6750` and `76c6f63c3a` (L1) put it in the set. It was proved on the earlier-installed
+       database and on a blank one, each replayed.
+    3. A schedule showed a type id and a database id. `e710bc3d3f` (D7).
+    4. Twenty Catalog buttons were each named "Run", and the same for Open and Pause. `8a1feba597` (D7).
+    5. Run history and Schedules overflowed the page at 390. `2135d3f9dd` (D7).
+  - **A finalize that succeeds, walked** (the Research Administration Scorecard, the one report here a finalize admits).
+    It found two more defects:
+    6. The signature's meaning was a stored token on the screen and in the PDF, with a raw ISO time in the PDF.
+       `39d5f74d32` (D7) and `0e5706a308` (F1): the dialog's meaning names, and the canonical manifestation time.
+    7. A reopened sealed run showed no seal line. `e8e3c63093` (D7): it shows the line when its seal verifies.
+    8. Opening your own Account panel reset Reporting with an "original account" notice. `52f0b562b9` (D7) fixes the
+       words. The same-account reload belongs to the shared session hook and `authService.refreshUser`, and is routed
+       to their holders.
+  - **The pack ZIP's legal chooser, walked with a registered original:** it refuses a letter whose Vault version is not
+    yet approved, and says why. Approving it through Vault and the ZIP with it are not walked.
+  - **The production pre-deploy step** for 0014 is written into the evidence and pointed at from
+    `docs/runbooks/protected-release-setup.md` (`3964cb4b64`, `f681dfb1a8`).
+  - **Held, not pushed:** all of the above, at the coordinating session's request, until its demo freeze lifts after
+    23:00 UTC. 0014's preflight would stop a Codespace start on a group membership whose group and project disagree.
+
+#### L1 (rows D7, D6) — prior filings read back as filed state, and archive names checked where they are read (session `session_01Gx2fiwvxaXi6mQgddPqMaG`, 2026-11-01 to 2026-11-02)
+
+**Delivered**
+
+- **A sequence filed elsewhere reads back as filed state** (MR-10 Stage 9, slice 1). `90f1c747`, with three
+  consumer tests repaired in `013250f8`. `server/services/legacy-importer/filed-sequence-reader.ts` reads an eCTD
+  3.2.2 sequence from its bytes: `index.xml`, the regional backbone, `index-md5.txt` and every checksum. It produces
+  the leaf manifest the platform's own compiles store (`SequenceLeafManifestEntry`). A round-trip test shows that
+  manifest folds through `loadFiledStateBySubmission` into the same filed state as the platform's own sequences.
+  `detector.ts` was converged onto it, and filename guesses stay suggestions. Evidence:
+  `docs/evidence/MR-10/2026-11-01-filed-sequence-reader/`; design:
+  `docs/design/FILED_SEQUENCE_READER_2026-11-01.md`.
+- **Three independent reviews, and every finding fixed.**
+  - First round: 35 findings, fixed in `7e7fae33` (33 of 37 new cases failed first).
+  - Second round: fixed in `24694d13`. 16 of 18 cases failed first; one hung until killed.
+  - Draft review: the last of 24 confirmed issues fixed in `be491687`. A grouped-form pointer
+    (`../../nda999999/…`) must climb through this application's own folder.
+
+  Each new guard was removed in turn and turned a test red.
+- **The upload guard checks each zip name where its readers read it** (row D6, SEC-17 follow-up), `ab29caae`.
+  `server/services/archive/safeZip.ts` checked the central directory's name, but JSZip reads the local header's
+  name and a Unicode Path field's. So a crafted zip naming `/x` passed. It is now refused at every caller. Evidence:
+  `docs/evidence/D6/2026-11-02-zip-names-checked-where-read/`.
+
+**Found, for other owners**
+
+- **P-99 (RIM).** `readFiledSequenceArchive` already re-derives a sequence's leaf manifest from its exact bytes,
+  deterministically, refusing what it cannot verify. Re-deriving an unrecorded sent sequence from its kept bytes can
+  reach it rather than build a second reader (RULE 3).
+- **Trunk is red on 2026-11-08** (CI run `42515637919` at `c88d89239`):
+  - 20 Lint guardrails;
+  - every test shard;
+  - integration tests;
+  - the secret scan;
+  - the tenant-purge ratchet.
+
+  Among them, `ci:audit-logs-fixture` names four fixtures whose `audit_logs` lacks the audit writer's columns, so
+  their governed writes roll back:
+  - `rbm-approval-signature.pglite.test.ts`;
+  - `regulatory-correspondence-project-scope.test.ts`;
+  - `governedActionApprovalTenantPinned.test.ts`;
+  - `ana-vault-tools-project-scope.pglite.test.ts`.
+
+**Next, and what it waits on**
+
+- **Stage 9's next steps wait on founder decisions:**
+  - where an imported prior filing is recorded (a migration);
+  - whether the Vault admits `.zip` (decided 2026-11-09: it does, P-112);
+  - whether the ICH and regional DTDs are vendored for validation.
+
+  The reader holds no file now.
+- **Not examined:** duplicate names in a zip directory (`safeZip.ts`, "Not done here").
+
+#### F1 / S10 / S5 — RIM: what the agency holds is what was sent, and the queued filing work (session `session_011e42DEAR2U6W51Mjvgfgbt`, 2026-11-01 to 2026-11-09; updated after repairs A to C)
+
+**Delivered**
+
+- **What the agency holds is what was sent** (F1 slice 1, rows D7 and D2). `090f62af1`, with `72f2a942d`. It was pushed
+  as `33aa3f08a..72f2a942d` with every pre-push gate passing.
+  - The transmit guard (`server/services/submission-gateways/index.ts`) stamps the dispatch binding and the leaf
+    manifest of the package it sends, server-side and before the wire, on the transmittal row it already writes.
+  - The fold (`server/services/ectd/prior-sequence-loader.ts`) reads each filed sequence from the one transmittal its
+    attempt binds.
+  - A caller can no longer put a forged binding or manifest on a row.
+  - Older sends read from their compiles, labelled as such. A sent sequence with neither record is refused, by name, on
+    the filing path.
+  - No migration and no new file. Evidence: `docs/evidence/D7-ECTD-FILED-STATE-VIEW/2026-11-01-filed-is-what-was-sent/`.
+- **A stale Submission Center test** (F1). `28b287602`: it now pins the market-support read's method and path. It had
+  been stale since `c3794c8fe`. Evidence: `docs/evidence/D7-SUBMISSION-CENTER-NEW-FROM-PROJECT-TEST/2026-11-02/`.
+- **S10, the blind second reading** of the letter splitter's 177 questions in 49 letters.
+  - The package is `a0b2b6701` (`docs/evidence/S10/2026-11-02-blind-reading-package/`).
+  - The coordinating session's reading is `3bc851c5b` (`docs/evidence/S10/2026-11-02-blind-reading/`).
+- **Founder decision P-106 recorded:** the ten uncalled IND lifecycle routes are retired.
+- **The designs for the work queued below** are filed in `docs/evidence/RIM/2026-11-08-designs/`. Each was critiqued
+  and revised, with the founder's and the coordinator's answers appended.
+- **A send to the agency's test environment is not a filing** (F1 slice 2, row D7). `eac69256c`, pushed as
+  `3b246e848..8b8052539` with every pre-push gate passing.
+  - A staging send or a staging MDN leaves the sequence 'pending'. The production send of that sequence files it with
+    a fresh signature, and the fold reads the production transmittal.
+  - A staging failure after the wire voids its signature and only then releases the claim.
+  - The client names where the package goes, in words, and says a test send is not a filing.
+  - Four review lenses ran on 2026-11-08. One fail-closed defect was fixed: a void that failed still released the
+    claim.
+  - No migration and no new non-test file. Evidence: `docs/evidence/D7-TEST-ENVIRONMENT-SEND/2026-11-01/`.
+- **A transmit signature names the environment it was given for** (F1, row D7). `facc62cba`. A signature given for a
+  test send can no longer authorize a filing, and one naming no environment is refused (21 CFR 11.50, 11.70).
+  Evidence: `docs/evidence/D7-TEST-ENVIRONMENT-SEND/2026-11-08-signature-environment/`.
+- **3b slice 3 (b) and (c)** (the filing-types session's edits, applied by RIM). (b) `63e51b02e`: a regional device
+  project is refused at the submission creators. (c) `61ab17676`, with `7429f6391` for the size ceiling: compile,
+  status and validate refuse a project that is not an application with 422 `ECTD_NOT_APPLICABLE`, and a project that
+  filed keeps its filed-state view, read-only (P-97). Evidence: `docs/evidence/D2-FILING-TYPE-TEMPLATES/2026-10-18/
+  increment-3/s3b-creators/` and `s3c-doors/`.
+- **Repairs A to C** (F1, row D7), each red first with mutations:
+  - A, one live sequence per number. `2c0b4c8fe`, with `8b77f2dd3`. `createSequence` locks the submission in a
+    transaction and refuses a number a live sequence holds, and a removed sequence no longer moves through a
+    transition. Proved on real PostgreSQL under RLS, races included. Evidence: `docs/evidence/D7-SEQUENCE-NUMBER-ONCE/2026-11-08/`.
+  - B, readiness only for a live sequence. `cec19b461`. A removed sequence is answered not found, by its number, never
+    as ready. Evidence: `docs/evidence/D7-READINESS-LIVE-SEQUENCE/2026-11-08/`.
+  - C, the IND routes answer the service's own status. `0f5db6192`. `fail` maps through `SUBMISSION_ERROR_STATUS`;
+    its four-code copy, which answered 16 refusals 500, is deleted. Evidence: `docs/evidence/D7-IND-ROUTE-STATUS/2026-11-09/`.
+  - Every one was pushed with every pre-push gate passing (`3bf14573d..1744ec925`, `1744ec925..0f5db6192`).
+
+**Found**
+
+- **No git hooks in this session's container (2026-10-18 to 2026-11-02).** `core.hooksPath` was empty, so pushes from
+  it skipped `.husky/pre-push`. Hooks were installed on 2026-11-02. The seven ungated commits, `0308ee257` to
+  `408b0b481`, were checked by the coordinating session: nothing broken.
+- **A compile of a sequence already sent silently lifts slice 1's refusal.** `server/routes/ectd-compile.ts` has no
+  check that the sequence was sent. The P-99 design's first commit closes it.
+- **The corrected R1 inventory's two "probable" callers of the IND diff and manifest PDF routes are false matches.**
+  `IndLifecycle.tsx` posts only letter and report PDFs. The record is
+  `docs/evidence/RIM/2026-11-08-designs/p87-p106-ind-routes-caller-check.txt`.
+- **The splitter.** An oracle run of trunk's G3 over 1,261 inputs found 3,288 violations of its verbatim contract. The
+  blind reading found four classes for S10 to fix red first.
+- **A void kept only in the tamper-proof log was reported as 'voided'.** Gate 1 reads only the chained row, so such a
+  signature stayed in force. This was fixed in slice 2 for every refused step.
+- **A transmit signature was not bound to its environment.** The sign payload carried `{intent, meaning}` only. Fixed
+  in `facc62cba` (above).
+- **The project monitor counts a removed sequence as a filing head** (`server/services/projects/schedule-of-events/
+  service.ts`, `projectFilingHeads`). After repair B such a project reads 'unavailable' rather than "no filing
+  target". The one-line patch is with the coordinating session.
+- **`gateway-selection.test.ts` has been red on trunk since `5c5b89836`.** Its pool mock refuses `connect()`. This is
+  reported to the coordinating session.
+
+**Next, in order** (the coordinating session's order of 2026-11-02, with P-103 and P-106 added; slice 2 is done)
+
+1. F1, in the coordinating session's order of 2026-11-08: P-93, P-94, P-86, P-92 with P-99, then P-96. P-93's four
+   open questions went to the coordinating session on 2026-11-09; the build proceeds on its design's defaults.
+   - P-86 is carried under L1, as the founder's record files it (launch row D7). Its C1, the signed retirement and
+     the database's removal guard, landed on 2026-11-09, and so did C2 (the door and its precheck) and C3 (on screen,
+     at the foot of the Dispatch tab), after D7-A2 (`docs/evidence/D7-SEQUENCE-RETIREMENT/2026-11-09/`). Owed: C1b,
+     and a walk of a test-sent 0000 where staging credentials exist.
+2. P-87 with P-106 (R1).
+3. P-103, the submission-ops package routes.
+4. S10.
+
+3b slice 3 and repairs A to C are done (above).
+7. S9 with P-88.
+8. P-104's client-owned authority accounts for S5.
+
+Several decided designs still have open questions with the founder and the coordinator; each design lists them.
+
+#### D5 / S7 / F1 — CMC and Biostatistics work areas; the figure engines measured (session `session_01GJidg5q1KFNfFT2VZyjcqw`, 2026-11-01 to 2026-11-02)
+
+**What already exists (RULE 3).** `CmcModule.tsx` with its nine tabs and 21 register forms, `Biostatistics.tsx`,
+`BiostatWorkbench.tsx` with 29 deterministic engines, `biostatBridge.tsx`, `biostatEngineResult.tsx`, the §WA
+work-area pattern (D5-0) and the labelled-figure lexicon with its seven consumers. Nothing below is a new screen,
+route, service, table or AnA tool; one file was split and one shared component adopted.
+
+| Slice | Commit / evidence | Verification and limit |
+|---|---|---|
+| D5-0, D5-1, D5-2 | `943b78cb7`, `94f24dba0`, `97c66423f`; `docs/evidence/DESIGN/D5/2026-11-01/` | The work-area pattern in CSS, then CMC onto it: tile groups retired, one state vocabulary (`cmcStateWord`), halves and starters. |
+| D5-3a | `cac363bfb`; `docs/evidence/DESIGN/D5/2026-11-01/` | Biostatistics' frame and the document as an artifact. Measured at 1440: orange fills 4 → 1, uppercase 81 → 0, sideways scroll +8px → 0. |
+| D5-3b | `e0534a80f`; `docs/evidence/DESIGN/D5/2026-11-02-d5-3b/` | The design assessment and the governed documents. Walked against a REAL design seeded through `POST /api/study-design/persist`: 137 subjects, 90% power, "Inadequate", 4 of 10 checks; gates EST-001/PWR-003/PWR-006/MTH-001/MIS-002/POP-001 moved from printed text into each row's `title`, the input record likewise. Both governed writes still open their reason form. |
+| D5-4 | `2505ca402`; `docs/evidence/DESIGN/D5/2026-11-02-d5-4/` | The design calculators as a work area. Filled primaries 4 → 1 (the chosen engine of 29 was one of them); `.pj-card` inside the work area 4 → 0; one input height. Assurance computed 0.771146 live. |
+| D5 shared back link and ask-row name | `428795100` | `ProjectBack` (D0-7) replaces two private copies; `role="group"` on CMC's and Biostatistics' ask rows — an `aria-label` on a role-less div has no accessible name. Each shown red on exactly that mutation. |
+| F1 — the labelled-figure lexicon | `docs/evidence/F1/2026-11-01-labelled-figure-lexicon/` | Recall over 15 PubMed phase-III abstracts, on a committed re-runnable corpus: 20% → 47% of governed sentences. One false positive removed (`\bOR\b` under `/i` read the English "or" as an odds ratio). The table split to `intelligence/labelled-figures.ts`; all seven consumers unmoved. |
+| F1 — two figure engines, measured not converged | `dac3acbbc`; `docs/evidence/F1/2026-11-02-two-figure-engines/` | The arm/event frame the lexicon lacks already exists: `truth-engine/clinical-claims/` (8,476 lines) models study, population, arm, measure, scope, endpoint, effect type, scale, interval. Three callers reach it; `POST /api/submissions/:id/consistency` does not, and reads the narrow lexicon over the same input. Per sentence the lexicon labels 47%, the claims engine frames 0% and SEES 91%; fed whole documents, 3 framed and 428 unframed. **Routing the check at the claims engine today would report LESS, not more** — it refuses without a frame, correctly. Convergence is a RULE 3 decision and was not taken. |
+
+**Found, not fixed.**
+1. **A GxP screen promises a refusal that does not happen.** The Specifications tab says "A limit whose method is
+   not validated cannot be approved" and renders a banner saying the same. `POST /api/cmc/specifications/:id/approve`
+   checks not-found, already-approved, signing authority, re-authentication, reason and the ledger — never method
+   validation; the banner disables nothing. `noMethod` is `!method`, i.e. "no method name was typed", not "the named
+   method is not validated": a specification naming a method whose register row is still `development` passes.
+2. **The spec → method → result chain is joined by free text**, not by reference: `qc_testing.test_method` is text,
+   `qc_testing.specifications` is JSON, `qc_specifications.testParameters[].testMethod` is a string. Hence the
+   capability engine must refuse when criterion *strings* disagree, and a spec revision does not flag the results
+   judged against the old limit.
+3. **No CMC data is read out of a document.** No extraction, LIMS, ELN or instrument integration;
+   `certificate_of_analysis` is a text reference. `source-evidence.ts` records provenance to a Vault version, it does
+   not ingest. Every register row is typed, or committed from AnA's guided interview.
+4. **This container was a week stale**, so 18 CMC suites failed to load on `z.string().guid` (a zod 4 API) against an
+   installed zod 3.25.76 while the lockfile said 4.6.7 (`76adba84d`). `npm ci` fixed it; the repository was never
+   broken. 1,714 server and 374 client CMC/biostat tests pass at `bc5a34030`.
+
+**Continued 2026-11-08/09 — found item 1 fixed, and roadmap phase 4 accepted.**
+
+| Slice | Commit / evidence | Verification and limit |
+|---|---|---|
+| F1 — the method gate the screen promised (found item 1 above) | `7092a0b80`; `docs/evidence/F1/2026-11-08-specification-method-gate/` | `POST /api/cmc/specifications/:id/approve` now refuses a limit whose analytical procedure is not shown fit, **before** the signer's password. `specificationMethodVerdict` refuses only what it knows is unfit: `METHOD_NOT_NAMED`, `METHOD_NOT_FIT` (a status in neither `METHOD_VALIDATED` nor `METHOD_SUITABLE`, named with its status), `METHOD_NOT_IN_REGISTER`, `METHOD_NOT_VERIFIABLE` (an unreadable register is an outage, not the signer's data being wrong). The ICH Q2 vocabulary moved to the module that owns the field it reads, so the Q2 check and the approval gate cannot disagree about what "validated" means. Two screen strings corrected: the banner counted "no validated method" over a condition that is "no method recorded". Shown red on the route with the gate removed — **all three refusals returned 200**, the defect exactly as shipped. |
+| F1 — the ceremony stays at the signed write | in `7092a0b80` | `ci:sign-ceremony` refused two attempts to extract the approve handler's preamble, and it was right to: `checkSigningAuthority` and `verifyReauth` are both in the handler, authority first, with only the approvability read extracted. Two tests pin the order a status code cannot — the approvability check back inside the transaction still answers 409, and authority after the password still answers 403; only those assertions go red. The complexity the extraction was buying came from naming the handler's tenant read instead (`signingTenantOf`, which keeps this route's deliberate `Number()`-not-`parseInt` reading: a malformed tenant `'7abc'` is refused, not read as tenant 7). |
+| S7 — the 2.3 cites Module 3's records and procedures (phase 4 clause 3) | `05adc9e78`; `docs/evidence/S7/2026-11-08-qos-shares-module3-atoms/` | `ComposedSection` carries the atoms (`lineage`) and the `method` register rows (`structuredPayload.sourceObjects`); the QOS builder received the sections and dropped both, keeping only `inputSectionKeys`, which names sections rather than records. So a figure in 3.2 could be traced and the same figure in 2.3 could not, and the QOS closed with "Full data and analytical methods are provided in Module 3" — printed whether or not a procedure was recorded, naming none, while the composed *Analytical Methods* table reached the 2.3 by no route at all. Both are now **derived from the sections the builder is given, never read again**, so the 2.3's records are the 3.2's by construction; `loadProjectAnalyticalMethods` was deliberately not used, because two reads that agree today are two sources of truth. Six mutations, including the two shipped rules themselves. |
+| S7 — phase 4's acceptance fixture (clauses 1, 2 and 4) | `6e7ed6073`; `docs/evidence/S7/2026-11-08-phase4-acceptance-fixture/` | One named small-molecule US IND, payloads built by the **real write-through mappers**, with every cell of both batch and both stability tables asserted whole-table by equality. OOS is flagged in the tables (`declared pass — the recorded result is OUTSIDE its recorded acceptance criterion`; `out of specification (computed)`; `OUTSIDE`) and in all four narratives, which count the comparisons, name the failing point, withhold the stability conclusion, file the 24-month claim as unsigned, and decline to report a trend from three points. The QOS shares that fixture's eleven atoms and its one procedure under both headings. The P-28 boundary is admitted once and refused four ways. Five mutations red. |
+
+**Found, 2026-11-08/09.**
+5. **A hand-written canonical payload is not what the registers write.** The acceptance fixture's first draft recorded
+   `storageCondition` and `timePoints` directly and §3.2.S.7 came back 0% complete, missing
+   `drugSubstanceTimePoints` and `drugSubstanceStorageCondition` — side-scoped keys only `mapStabilityPayload` emits,
+   and only for a study whose recorded scope covers that side. Every fixture payload now goes through the real
+   mapper, so a mapper that stops emitting a key fails the acceptance run too.
+6. **A reference-standard qualification is excluded from the batch series twice**, at the write
+   (`mapQcTestingPayload` stores `isBatchAnalysis: false`) and at the read (`isBatchAnalysisFor`'s vocabulary check).
+   Either alone suffices for this fixture, so removing only the read-time check leaves the acceptance run green. The
+   read-time check governs rows written before the write-time rule existed, so both are kept; recorded rather than
+   presented as a passing mutation.
+
+**Continued 2026-11-09 — the demo seeded and walked, and four defects the running product showed.**
+
+The three demo slices and the D0 adoption were tested against the real engines and not against a running product.
+They then were: `npm run dev` on this container, the real database, the real seed as the signed-in account, and the
+screens opened at 1440 and 390.
+
+| Slice | Commit / evidence | Verification and limit |
+|---|---|---|
+| S7 — the D0 refused-read rule in CMC | `b672bc5b6`; `docs/evidence/D0/2026-11-09-cmc-refused-read/` | Six panels, the export-readiness chip and the Overview meta line (which said "could not be read" above a panel saying "not enabled for your organization"), plus `CmcRegisterLinks.tsx`. Two panels deliberately unchanged: `meta.sectionsUnreadable` / `portfolioUnreadable` arrive on a **200** board, so there is no refused read to classify. 47 cases; 25 red before. **Found, not fixed:** these panels carry no retry CONTROL — a real retry needs a refetch on `DataState`, which is D0's shared primitive. |
+| DATA — the demo records what the sections read | `2480efeb7`, `179dcac46`, `5e5ad0a01`, `67e590b44`; `docs/evidence/S7/2026-11-09-demo-cmc-*` | The analytical procedures its specifications name (without which every demo specification became unapprovable the moment the morning's gate landed), the drug substance and drug product, the release results that ARE §3.2.S.4.4 / §3.2.P.5.4, and C2C-201 — a fictional small molecule, the one demo programme whose Module 3 this product composes. |
+| S7 / F1 — what the live run found | `aa4ba6461`, `67e590b44`, `1f0cca737`; `docs/evidence/S7/2026-11-09-demo-cmc-live-run/`, `…-specification-per-attribute/`, `…-cmc-walk-c2c201/` | Four defects, two mine and two shipped; the two shipped ones are fixed. See below. |
+| PLAN — P-113, all of CMC in the CMC module | `018981146`; `docs/evidence/S7/2026-11-09-cmc-scope-market-and-roadmap/` | The founder's direction of 2026-11-09, recorded with the study it rests on: the inventory by path (57 CMC services, 19 record kinds, 9 signed registers, 15 composed sections), the external study of QbDVision, Weave Bio, DDi, Veeva Vault RIM, the CPV platforms, the Rockwell-led Digital CMC Consortium and the published ML work, and the three-tier gap list. The roadmap is §6a above. **Two inventory findings it turns on:** CQAs and CPPs are *inferred* by `qbd-analyzer.ts` at read time and QTPP exists nowhere, so the control strategy has no governed object at its centre; and no section outside 3.2.S and 3.2.P is composed although the judgements behind 3.2.A.1, A.2, A.3 and 3.2.R all exist. **The strategic finding:** FDA PQ/CMC's Phase 1 domains are this module's five strongest registers, already held as records with lineage, so alignment is a mapping rather than a data project. |
+| F1 — a capability index read as a tail probability it did not carry | `b66a12868`; `docs/evidence/F1/2026-11-09-capability-presumes-normality/` | Found by P-113's market study. `(USL − x̄) / 3σ` is a tail probability only for an approximately normal series, and the presumption was unstated — while the CMC case where it fails is the common one: an impurity with a one-sided upper limit, bounded at zero, right-skewed near the limit of quantitation, where the index is **optimistic** and the number reaches §3.2.S.4.5 / §3.2.P.5.6 and the CPV report. The shape is measured and stated now: skewness is called material only when \|G1\| exceeds twice its own standard error, which self-scales with n, and a series too short to estimate it is reported as **not assessed** rather than as normal. The note names the **direction**, which is the actionable half — a tail toward the limit is optimistic, away from it conservative. **The index and the verdict are unchanged**; moving to ISO 22514-2's non-normal percentile families would change filed values and is in §6a's roadmap instead. Five mutations red. A second suite proves the caveat reaches §3.2.S.4's narrative, because the first draft of that claim rested on reading `module3Composer.ts` rather than on a test. |
+| S12 — a work project's deliverables, read by deliverable (P-83) | `1b370577e`, `bbe7dfd60`; `docs/evidence/S12/2026-11-09-deliverable-feeds/` | `projectDeliverableFeeds` answers, per deliverable: records held, when one last changed, the §3.2 sections they feed (from `sectionsFedBy`, the write-through's own impact map) and which are out of date **because of that deliverable**. **RULE 3 correction:** `THE_PROGRAM_2026-11-01` §7a's "what is missing" list is wrong for CMC on one of its four items — the stale flag exists and is stronger than a flag (`cmc_section_lineage` + `findSectionDrift`, derived, not a flag). Attribution needed drift reasons to carry their source type, so a reader is never told their specifications are stale because a batch record changed; `describeDrift` and both its callers are unchanged byte for byte. A failed read reports itself. 8 cases, 3 mutations red. `ci:sql-interpolation` refused the first shape and the fix was tighter than the baseline: the lineage read is a function whose filter is typed as the two literals it may be, so the gate's "fixed allowlist in code" is the compiler's now, and the file went 1 → 0. **Not supplied, each needing a decision rather than a commit:** the owner and due date per deliverable (no column for either — a CMC deliverable is the set of records of one source type in one project, so recording them is a new table, which RULE 6 reserves), and the program's map across projects (`project-rollup-service.ts`'s). The API handler lands with its caller; the project page is another session's file. |
+| F1 — a register edit answered 200 for a field it does not record | `c900e79c6`; `docs/evidence/F1/2026-11-09-register-edit-unrecorded-field/` | Finding 7 below, answered: this lane owns the register routes. All 15 edits in `api/cmc/routes.ts` refuse such a body **400**, naming the fields they could not record and the ones they do, before the record is read and with nothing written. 400 and not 409 because a misspelled field is a wrong request, not a conflict with the record's state. The guard throws the refusal `respondWriteError` already understands, so no handler gained a branch. 32 cases in 3 files; four mutations red, including the shipped 200 reproduced (*"expected 200 to be 400"*). **Still open in the same shape:** the creates (seven are service functions shared with the interview commit projector, so the guard belongs inside `createX`), `comparability-studies` (reads `req.body.*` with no schema at all), and `batchRecordRoutes.ts` / `specificationRoutes.ts`, which build their own UPDATE from a field map and refuse only the all-unknown case. |
+| J5-13 — closed | `1f0cca737`; `docs/evidence/S7/2026-11-09-cmc-walk-c2c201/` | "21 section(s) composed, 13 with recorded data", then the screens: the build board refusing the export gate in its own words and saying "Not swept yet — no count is claimed"; the Specifications table listing six attributes each with its own procedure; and the morning's approval gate refusing a real §11.50 signature with `409 METHOD_NOT_FIT`, named on screen in the server's words. No console errors, no horizontal scroll at either width. |
+
+**Found by running it, 2026-11-09.**
+7. **A write reported as made, and not made.** The seeder sent `shelfLifeClaim`, the name the COMPOSER reads; the
+   register's column is `shelf_life`. The route parses its body with a Zod schema that strips unknown keys, so it
+   answered 200 having changed nothing, three times. The step now reads its write back and fails if the value is not
+   there. **For the register's owner:** every register body is parsed `.partial().parse()`, so no caller can tell an
+   applied edit from an ignored one. *2026-11-09, answered in this lane (`c900e79c6`): the register routes are this
+   lane's files, and all 15 edits now refuse such a body 400. The creates and two other routes remain, listed above.*
+8. **§3.2.S.4 filed the drug PRODUCT's limit as the drug substance's** (fixed, `aa4ba6461`'s parent). It read the
+   first specification source carrying a criteria object, whatever material it was for. My own phase 4 acceptance
+   fixture was passing this by source order, so the case asserts both orders.
+9. **The register records one row per ATTRIBUTE; both sections read one criteria object** (fixed, `aa4ba6461`).
+   Six recorded attributes, one filed, labelled `release`/`shelf`. Each row now carries its own procedure and that
+   procedure's recorded status, or says `not in the method register`.
+10. **Completeness is not material-scoped** (NOT fixed). One generic collector over every matched source, so
+    §3.2.S.4 reads `acceptanceCriteria` as available when only a drug-product specification exists. Closing it needs
+    a side-scoped mapper field (which would report every specification already on file as missing it) or a per-type
+    scope on `SectionRule`. Recorded in the test rather than asserted away.
+
+**What is next.** S12 — work projects and their deliverables mapped downstream with lineage and change flags
+(P-83) — is this lane's remaining named package. The D0 adoption and J5-13 are done (above).
+
+**Open for the founder**, three, all written up with options in the evidence: the free-text spec → method → result
+chain (found item 2); that **no form can record a method as suitable**, so the `METHOD_SUITABLE` branch
+`q2Expectation` relies on is unreachable and only a validated method lets a limit be approved
+(`docs/evidence/S7/2026-11-09-demo-cmc-methods/`); and that **a terse manufacturing route reads as a small
+molecule**, so an under-described biologic is admitted into small-molecule composition
+(`docs/evidence/S7/2026-11-09-demo-cmc-materials/`). Also: the free-text spec → method → result chain (found item 2 above), written up with options in
+`docs/evidence/F1/2026-11-08-specification-method-gate/`; the recommendation is to reference the register row by id,
+which is additive and needs no backfill to be correct.
+
+#### F1 / L1 — the MDX journey: the device and diagnostics client's path (session `session_01P6GWSvLLKKNQMXXpyki7Yq`, 2026-11-01 to 2026-11-09)
+
+**What already exists.** The study and its order of work are in `.design/client-journey/MDX_JOURNEY_2026-11-01.md`
+(`68bbca15c4`), which lists every existing device screen, route, engine and outline by path, and records defects
+M1–M22. Each repair below extends an existing file; none adds a screen, mount or table.
+
+- **Delivered**, all on `concept2cure-v2`, evidence under `docs/evidence/MDX-JOURNEY/`:
+  - **The device screens keep their promises.** M1 and M2 (`4bef8ac4f5`), M5 (`be46895c97`), M6(c) (`8d4aef6de5`)
+    and M10 (`f96370ece4`). M11 (`9d4e87c70d`), which also found M12 not to be a defect. M8 (`67e23b8cd1`) and M17
+    (`1322eddcee`).
+  - **Every eSTAR and EU exit asks whether the filing holds the document's text (P-29.3).** Slice 3 (`8c30fa2c97`)
+    covers `/build`, the official eSTAR's attachments, and the readiness and assembly verdicts. M3's server half
+    (`e05eb3d4ac`) covers the EU technical file.
+  - **A new project's home filing can get its editing copy again**, found walking the journey (`bda1d5aed1`). Since
+    `31a5453861` no screen could create it, for any client type.
+  - **The journey walked in the running app.** The 510(k) journey (`afd222802e`) and the PMA and EU IVDR journeys
+    (`2e53a15c9f`): from New project to a section written into each filing, and the package exported with the filing
+    compared.
+  - **M18** (`d2d2750ca5`, `71417d75ac`). The PMA screen's modules are the project's own PMA document, scored by the
+    PMA mapper. They had been the organization's legacy 510(k) sections, so a project with no PMA document showed
+    every module "complete".
+  - **M19** (`2a84c3d268`). The PMA mapper places a lettered leaf by its 814.20 key, never by its title. An approved
+    SSED had counted modules 2, 4 and 5 present with C, F and G empty, in every verdict that reads the mapper.
+  - **M20** (`ae5483338b`, `f06b6de374`, `2b4e32d9bd`). The PMA trial cards read only the project's linked study. They
+    had bound another product's study by name. The card that counted protocol deviations as "AE rate" is now
+    "Serious deviations".
+- **Re-walked on the merged trunk**, 2026-11-09. 510(k): New project (201), the doors, the editing copy, B1 saved into
+  the filing, and the export (200, `filingAgreement.compared: true`). The device lane's suites, 107 files and 1,099
+  tests, pass (`docs/evidence/MDX-JOURNEY/2026-11-02-m20-pma-trial-cards-linked-study/green/device-lane-on-trunk.txt`).
+- **Found, and left where it belongs.**
+  - M3's UI half: the IVDR door's screen asks AnA to assemble, and offers only an FDA 510(k) eSTAR. It needs a
+    sequence a device project does not have (R1, founder question 1).
+  - M7 (De Novo has no door) and M13 (the CDRH Portal) are founder questions.
+  - M14, M15 and M22 are the editor's and the project home's.
+  - The 390 px clipping is the coordinator's.
+  - M16 is P-60's question.
+  - M21: the draft package is named after its class and type, not its project.
+  - Without `REVIEW_ADMIN_TOKEN`, the 510(k) screen's predicate and SE panels read "Could not load", because
+    predicate intelligence answers 503 "not configured".
+- **Delivered later the same day** (2026-11-09):
+  - **The device readiness scorecard** (`3995432d01`, `docs/evidence/F1/2026-11-09-device-scorecard-nothing-shown-is-not-nearly-ready/`),
+    the coordinator's F1 item of 2026-11-02. An applicable dimension that is not started or not assessed caps the
+    level at `in_progress`. Before, one module of six not started scored 90, `nearly_ready`, which AnA's
+    `build_device_blueprint` returned as is. Open for the founder: whether "nearly ready" may be said while a
+    required set is only partial.
+  - **Two device panels say what the server said** (`3630a6e136`,
+    `docs/evidence/MDX-JOURNEY/2026-11-09-demo-device-panels-say-what-the-server-said/`). Found by seeding the demo's
+    `mdx` pack (NeuroPanel-Dx) on the merged trunk and opening its seven screens. Predicate intelligence "not
+    configured" (503, now with a code) and "no GSPR assessment yet" (404 `IVDR_GSPR_NOT_FOUND`) had each read
+    "Could not load", with a retry that could not help. Re-walked live, no such panel is left.
+- **P-114** (`0875ddf041`), decided under the founder's delegation of 2026-11-09:
+  - item 1 landed: a partly present required set caps the scorecard at `in_progress` (`d3cc97ded2`);
+  - M21 landed: device packages are named after the project (`062f76960f`, with live evidence on the demo's
+    NeuroPanel-Dx).
+- **Found:** the demo's `mdx` pack authors its 510(k) documents unbound to the project's filing, so the seeded export
+  refuses (422) until a section is written into the filing. The live path works (editing copy, then B1, then export:
+  200).
+- **Next**, after the demo:
+  - the `mdx` pack writes into the filing;
+  - P-114's items 2–5: the design file's records (M16), the EU technical file per project (M3), the De Novo doors
+    (M7), and the IVD 510(k) outline (M6(a)).
+
+#### L1 / F1 — The lead: the CSR demo path, the Codespace click-through, and the founder's rail and Vault decisions (session `session_011DpxUyQmE1enma4gTjcfBy`, 2026-11-06 to 2026-11-10)
+
+Facts only; no package's scope, status or ownership changes here. Committed under P-100, as P-107 item 6 allows.
+
+**Where testers run it (L1).**
+- `docker-compose.beta.yml` and the self-host `docker-compose.yml` now run:
+  - TLS on their database;
+  - a provision step;
+  - the self-hosted embeddings lane;
+  - `SETUP_TOKEN` for the first administrator;
+  - loopback-only ports (`27720c8221`, `1847807cb0`).
+- `scripts/db/provision.mjs` skips install-fresh over a complete database.
+- Walked from empty volumes in production mode, through sign-in with an emailed code
+  (`docs/evidence/HUMAN-TEST/2026-11-06-beta-stack/`).
+
+**AnA's CSR path, up to the model** (`docs/evidence/HUMAN-TEST/ANA-CSR/2026-11-06/`). No model key reached the
+session, so no model output was produced or claimed.
+
+| Commit | What it does |
+|---|---|
+| `1d129897b4` | The conversation pins `draft_authoring_document`, so a drafted document reaches the canvas. |
+| `9d7624d9fd` | The CSR builder's title page and synopsis print one field per line (the PDF's title page ran on). |
+| `0e18147b2b` | A refused key, an account with no credit or quota, and a model the account cannot use each say so: `PROVIDER_KEY_REFUSED`, `PROVIDER_ACCOUNT_REFUSED`. |
+| `5aa8aae4d3` | With only an OpenAI key, the refusal names the providers approved for drafting. |
+| `ad3d977314` | A refused turn offers no next steps. |
+| `dbc080553c` | The conversation docked beside the CSR fits its column. |
+| `c0181112ad`, `839efe9471` | Two layout fixes: the editor's filings line, and the protocol head at 390 px. |
+
+**The founder's decisions of 2026-11-06, as said in the session.**
+- Vault is reachable from the rail at all times. With no project open, it lists the projects' Vaults. The editor's
+  "Project files" is "Vault".
+- Biostatistics is a rail work area. The founder's words are recorded in `scripts/ci/one-product-baseline.json`
+  `founderDecisions` as `rail:biostatistics` (`5144702d21`, `adb1c00cba`). P-107 item 1 confirms it.
+- The Vault change broke two contract tests, `projectCreationDoors.contract` and `projectDestination`. The project
+  page's session repaired them (`d50c5f07e9`, `aeedd1b86e`). All 46 pass on trunk at 2026-11-10.
+
+**The Codespace click-through** (`docs/evidence/HUMAN-TEST/CLICK-THROUGH/2026-11-06/`, with its rerun scripts,
+`0a617f4cd4`, `0ca1f5f4`).
+- **Ran on:** the founder's Codespace data, built here by `.devcontainer`'s own scripts. The CSR study preparation
+  passed.
+- **Fixed:** Manage billing (`1f97ae5495`, `3a473d045e`).
+- **Landed elsewhere:** the demo organisation now signs out after 120 idle minutes, not 15 (`fe3bdced33`, the
+  Codespace session). The Lumen organisation follows when R1's founder-organisation change lands.
+- **Open:**
+  - the CSR study's filing identity, for the inspection copy (sent to R1's DATA; no change for it found on trunk at
+    2026-11-10);
+  - RBM's "Generate from RACT" 409, not yet checked.
+- **Coverage is incomplete.** The last run's results were lost when the container was replaced. Rerun it to the end.
+
+**Started for the founder's Vault and data request** (2026-11-06; the surveys' "What already exists" is in each
+session's brief). Each records its own progress here; as reported to this session:
+- `session_01QoxbLZMScz1c2iFESBLn9J`, **S6**: step 1 landed (`b3abbe5b`, `daaaae1d`; R1 `061fc4a8`, `3c7cd5eb`).
+  A project's Vault has "New folder", Rename and "Move to…", each audited. Its cabinet is the filing's binder from the
+  active rule pack. Steps 2 to 4 landed 2026-11-10 (`d208ba8f68`, `844b7de191`, `a36449dd90`, `c80d21ae3b`,
+  `7d918fe90e`, `f9643421e9`, `84004c287e`): IND, NDA, MAA, 510(k), EU MDR and EU IVDR each open on their own binder; a
+  binder folder lists the plan tasks that feed it; AnA files into folders as suggestions a person confirms (not walked
+  in a conversation: no model key). With it, `9d01cdb37b` stops `/api/folders` reaching another sponsor's project
+  folders.
+- `session_01QoxbLdTrwYyiaSgLDxgHQJ`, **S2**: landed (`c15afd47`..`07a1c645`). Vault has a "Data catalog" tab with
+  a grade A to D per item and its basis, and "Use in this project". Open: the CSR study-data chooser putting used items
+  first (S3), and AnA over the catalog.
+- **S12** (work projects) was declined by `01QoxbLcnW…`. Under P-107 item 7 it is with a project-page session, after
+  D3-4 (`d50c5f07e9`).
+
+**Open for the founder:**
+- `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` as Codespaces secrets. No model output has been seen in a Codespace;
+- the PQ decision for production drafting (every model is `pending`);
+- whether the client types read "medical device and diagnostics, biotech, pharma, CROs/consultants".
+
+#### L1 (row D1) — ready to run on AWS: re-measured at head, the WAF, cheaper readiness (session `session_01QoxbLaF89iYd7wC96owa7t`, 2026-11-10)
+
+**What already exists.**
+- Work order: `docs/work-orders/MR-03-first-deploy-staging-to-production.md`. Stages 1–4 had landed.
+- Infrastructure: `terraform/` (one stack, two roots, tested modules), `deploy-aws.yml` (staging, promote, rollback) and
+  `provision-database.yml`.
+- CI's image jobs.
+- P-11, the WAF, decided but never built.
+
+**Delivered**
+- **Re-measured at head.** Evidence: `docs/evidence/D1/2026-11-10-aws-readiness/`.
+  - Terraform: 121/121 offline tests pass, every root validates, and the deploy preflight proof holds.
+  - The deploy contracts pass.
+  - On GitHub: the production image boot, blank-DB provisioning, boot smoke, Security Scan and Codespace jobs pass.
+- **P-11, the WAF**, `4e697a5381`: an `aws_wafv2_web_acl` on the distribution.
+  - The IP-reputation and known-bad-inputs groups block, and a per-IP rate rule blocks.
+  - The common rule set counts for two weeks; its 8 KB body rule counts on every path.
+  - The region precondition is in, and the Trivy exception is deleted.
+  - Red 11/1 failed, then green 15/15.
+- **OPS-22**, `5e8a7317ce` and `37d030e109`'s chain: `/readyz` runs its database query and Vault-store probe at most once
+  per 5 s, and in production the public body is `{ ready }` alone. Green 81/81.
+- **OPS-29**, `8a5eb16b27`: the metrics token is compared in constant time.
+- **MR-03**, `999efec84a`: re-confirmed at head, with the founder's first-apply checklist in order.
+
+**What blocks a deploy, in order**
+1. **Trunk CI is red**, and `deploy-aws.yml` runs only a SHA whose whole `ci.yml` run passed. The MR-02 lanes own it:
+   - Secret scan: 8 findings, 3 credentials live;
+   - Lint;
+   - Integration;
+   - Test: 447 of 79,560 failing.
+2. **The founder's inputs**, listed in MR-03's 2026-11-10 checklist:
+   - accounts, region, domain and certificates;
+   - SMTP;
+   - the Anthropic key, and its placement entry (B4);
+   - error reporting (NEW-3);
+   - Vault retention;
+   - revoking the live credentials;
+   - the apply.
+
+**Next, engineering, no founder input**
+- Wire `READYZ_TOKEN` into the task definition and the smoke test.
+- MR-03 Stage 6 (OPS-17).
+- Stage 7 steps 2–4 and 8.
+- Switch the common rule set to block two weeks after the first apply.
 
 ## 4. How everyone works
 

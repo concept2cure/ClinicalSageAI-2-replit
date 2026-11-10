@@ -28,14 +28,16 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type { CsrIntoDocumentOutcome, CsrIntoDocumentReceipt } from '@shared/authoring/source-import';
 import { GOVERNED_REASON_MAX, GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
-import { apiCall, apiErrorText } from '../apiCall';
+import { apiCall, apiErrorText, type ApiResult } from '../apiCall';
 import { I } from '../icons';
-import { CsrHeadingReview, CsrNarrativeBuild, type CsrBoardHeading } from './CsrBuildProgress';
+import { CSR_PROSE_STYLE, CsrHeadingReview, CsrNarrativeBuild, type CsrBoardHeading } from './CsrBuildProgress';
 import { CsrAssemblyControl } from './CsrAssemblyControl';
 
 const JOBS = '/api/csr/jobs';
 /** How often the list is re-read while a build of the run is still running. */
 export const BUILD_POLL_MS = 5_000;
+/** How often it is re-read while a build says what it is writing: the text on screen should move as it is written. */
+export const LIVE_POLL_MS = 2_000;
 /** The csr_build_jobs statuses that end a build (migrations/20260628_csr_job_state.sql). */
 const ENDED = new Set(['complete', 'failed', 'cancelled']);
 /** Matches the persisted csr_build_jobs.status check constraint. */
@@ -44,11 +46,23 @@ const BUILD_STATUSES = new Set(['queued', 'loading_data', 'drafting', 'tabulatin
 
 /** One row of GET /api/csr/jobs?programId&runId (csr-jobs.ts). `failure` is why a failed build stopped, in plain
  * words the server chose from its recorded receipt (csr-job-runner.ts csrBuildFailureText); null otherwise. */
-interface RunBuild { jobId: number; studyId: string; status: string; progress: number; updatedAt: string; failure?: string | null }
+interface RunBuild { jobId: number; studyId: string; status: string; progress: number; updatedAt: string; failure?: string | null; writing?: LiveWriting | null }
+
+/** What a drafting build is writing now (server csr-job-runner.ts csrLiveBuild): the heading, how many headings are
+ * written, and the prose so far. Work in progress: not yet checked against the study's tables, and not saved. */
+interface LiveWriting { number: string; title: string; text: string; written: number; total: number }
+
+function isLiveWriting(value: unknown): value is LiveWriting {
+  const row = value as Partial<LiveWriting> | null;
+  return !!row && typeof row === 'object' && typeof row.number === 'string' && /^\d+(?:\.\d+)*$/.test(row.number)
+    && typeof row.title === 'string' && typeof row.text === 'string'
+    && Number.isInteger(row.written) && Number.isInteger(row.total) && Number(row.written) >= 0 && Number(row.total) >= Number(row.written);
+}
 
 const HEADING_STATES: ReadonlyArray<CsrBoardHeading['state']> = ['not_drafted', 'draft', 'in_review', 'approved'];
 
-function isBuild(value: unknown): value is RunBuild {
+/** A build row as the list has always sent it; its live writing, when it has one, is checked by isBuild. */
+function isBuildRow(value: unknown): value is RunBuild {
   const row = value as Partial<RunBuild> | null;
   // The whole response controls clinical review/import/assembly navigation.
   // Reject a partial or malformed record rather than presenting an invented
@@ -59,6 +73,11 @@ function isBuild(value: unknown): value is RunBuild {
     && Number.isInteger(row.progress) && Number(row.progress) >= 0 && Number(row.progress) <= 100
     && typeof row.updatedAt === 'string' && Number.isFinite(Date.parse(row.updatedAt))
     && (row.failure === undefined || row.failure === null || typeof row.failure === 'string');
+}
+
+function isBuild(value: unknown): value is RunBuild {
+  if (!isBuildRow(value)) return false;
+  return value.writing == null || isLiveWriting(value.writing);
 }
 
 /** One heading of GET /api/csr/jobs/:jobId/headings; a malformed row refuses the whole read. */
@@ -93,7 +112,9 @@ function useRunBuilds(programId: string, runId: string, focus: number | null) {
       const jobs = result.body?.jobs;
       if (result.ok && Array.isArray(jobs) && jobs.every(isBuild)) {
         setState({ scope, builds: jobs, error: null });
-        if (jobs.some(job => !ENDED.has(job.status))) timer = setTimeout(() => setReload(value => value + 1), BUILD_POLL_MS);
+        if (jobs.some(job => !ENDED.has(job.status))) {
+          timer = setTimeout(() => setReload(value => value + 1), jobs.some(job => job.writing) ? LIVE_POLL_MS : BUILD_POLL_MS);
+        }
       } else setState({ scope, builds: null, error: apiErrorText(result, 'The CSR builds of this run could not be listed.') });
     });
     return () => { live = false; if (timer) clearTimeout(timer); };
@@ -120,7 +141,7 @@ export function CsrRunBuilds({ programId, runId, documentId, focus, onDocumentCh
     {error && <p role="alert">{error}</p>}
     {!error && builds === null && <p role="status">Loading the CSR builds of this run…</p>}
     {!error && builds?.length === 0 && <p>No CSR build has been started from this study data.</p>}
-    {!error && selected && <BuildOnCard key={selected.jobId} build={selected} programId={programId} documentId={documentId} onDocumentChanged={onDocumentChanged} />}
+    {!error && selected && <BuildOnCard key={selected.jobId} build={selected} programId={programId} documentId={documentId} onBuildChanged={retry} onDocumentChanged={onDocumentChanged} />}
   </section>;
 }
 
@@ -142,28 +163,38 @@ function BuildPicker({ builds, selected, onChoose, onReload }: {
 function useBuildHeadings(jobId: number, updatedAt: string) {
   const [refresh, setRefresh] = useState(0);
   const scope = `${jobId}::${updatedAt}::${refresh}`;
-  const [state, setState] = useState<{ scope: string; headings: CsrBoardHeading[] | null; error: string | null }>({
-    scope, headings: null, error: null,
+  // `decided` is the job and the count of review decisions the headings on screen were read for.
+  const decided = `${jobId}::${refresh}`;
+  const [state, setState] = useState<{ scope: string; decided: string; headings: CsrBoardHeading[] | null; error: string | null }>({
+    scope, decided, headings: null, error: null,
   });
   useEffect(() => {
     let active = true;
-    setState({ scope, headings: null, error: null });
+    // While a build drafts, its row changes each time a heading is saved. The list stays on screen while it is read
+    // again: emptied each time, it blinked out every few seconds and closed any saved text a person had opened
+    // (2026-11-10). After a review decision it is still emptied, so no superseded approval state is shown.
+    setState(current => current.decided === decided && current.headings
+      ? { ...current, scope, error: null }
+      : { scope, decided, headings: null, error: null });
     void apiCall<{ headings?: unknown }>('GET', `${JOBS}/${jobId}/headings`).then(result => {
       if (!active) return;
       const headings = result.body?.headings;
       if (result.ok && Array.isArray(headings) && headings.every(isHeading)) {
-        setState({ scope, headings, error: null });
+        setState({ scope, decided, headings, error: null });
       } else {
-        setState({ scope, headings: null, error: apiErrorText(result, 'The build’s sections could not be read for review.') });
+        setState({ scope, decided, headings: null, error: apiErrorText(result, 'The build’s sections could not be read for review.') });
       }
     }).catch(() => {
-      if (active) setState({ scope, headings: null, error: 'The build’s sections could not be read for review.' });
+      if (active) setState({ scope, decided, headings: null, error: 'The build’s sections could not be read for review.' });
     });
     return () => { active = false; };
-  }, [jobId, scope]);
+  }, [jobId, scope, decided]);
   const current = state.scope === scope;
   return {
-    headings: current ? state.headings : null,
+    // The headings read for this job and these decisions stay through the render in which the build's row has
+    // moved on and the effect above has not yet run: without them the list is taken down for that render, and
+    // every heading a person had opened closes.
+    headings: current || state.decided === decided ? state.headings : null,
     error: current ? state.error : null,
     reload: useCallback(() => setRefresh(value => value + 1), []),
   };
@@ -186,6 +217,18 @@ function readReceipt(body: unknown, documentId: string, preview: boolean): CsrIn
     && Object.prototype.hasOwnProperty.call(OUTCOME, s.outcome) && typeof s.placeholder === 'boolean') ? r as CsrIntoDocumentReceipt : null;
 }
 
+/** Keep the recorded refusal, with the existing project/document route for a different cut. */
+function importFailure(result: ApiResult, fallback: string): string {
+  const message = apiErrorText(result, fallback);
+  const code = (result.body as { error?: unknown } | null)?.error;
+  if (!result.ok && result.status === 409
+    && (code === 'IMPORT_TARGET_BOUND_TO_OTHER_BUILD' || code === 'IMPORT_TARGET_STUDY_DATA_MISMATCH')) {
+    return `${message} For a different data cut, go to Project → New document → Clinical Study Report. ` +
+      'Freeze that cut for the new document, then build and import there. Collaborators should open this existing CSR.';
+  }
+  return message;
+}
+
 /** The preview read on opening, then the write against that preview's fingerprint. */
 function useImportIntoDocument(programId: string, documentId: string, jobId: number, sectionNumbers: string[]) {
   const [preview, setPreview] = useState<CsrIntoDocumentReceipt | null>(null);
@@ -200,7 +243,7 @@ function useImportIntoDocument(programId: string, documentId: string, jobId: num
       .then(result => {
         if (!live) return;
         const read = result.ok ? readReceipt(result.body, documentId, true) : null;
-        if (read) setPreview(read); else setError(apiErrorText(result, 'What this import would write could not be read. Nothing was imported.'));
+        if (read) setPreview(read); else setError(importFailure(result, 'What this import would write could not be read. Nothing was imported.'));
       });
     return () => { live = false; };
   }, [programId, documentId, jobId, key]);
@@ -210,7 +253,7 @@ function useImportIntoDocument(programId: string, documentId: string, jobId: num
     const result = await apiCall('POST', IMPORT, { programId, source, targetDocumentId: documentId, expectedFingerprint: preview.fingerprint, reason });
     setBusy(false);
     const read = result.ok ? readReceipt(result.body, documentId, false) : null;
-    if (read) setDone(read); else setError(apiErrorText(result, 'The import was not confirmed. Reload the document before importing again.'));
+    if (read) setDone(read); else setError(importFailure(result, 'The import was not confirmed. Reload the document before importing again.'));
     return read;
   };
   return { preview, done, error, busy, write };
@@ -274,14 +317,64 @@ function ImportIntoDocument({ programId, documentId, jobId, sectionNumbers, onCl
   </section>;
 }
 
-function BuildOnCard({ build, programId, documentId, onDocumentChanged }: {
-  build: RunBuild; programId: string; documentId: string; onDocumentChanged?: () => void;
+/**
+ * The heading a drafting build is writing now, in the build's own place in the CSR document (RULE 4): which heading,
+ * how many are written, and its prose as the model writes it. The founder, 2026-11-10: "I want to see it happening,
+ * or in the background, I want to see that it's progressing, and then I want to see the result." The result is the
+ * heading's row in the section review below, once its figures are checked and it is saved.
+ */
+function LiveDraft({ writing }: { writing: LiveWriting }) {
+  const text = useRef<{ scrollTop: number; scrollHeight: number } | null>(null);
+  // Follow the newest line, as a person reading along would.
+  useEffect(() => { if (text.current) text.current.scrollTop = text.current.scrollHeight; }, [writing.text]);
+  return <div style={{ display: 'grid', gap: 4 }}>
+    <p role="status">Writing §{writing.number} {writing.title} · {writing.written} of {writing.total} headings written</p>
+    {/* A thin ink bar on a quiet track. The native element draws an empty bar as a mid-grey slab that reads as full. */}
+    <div role="progressbar" aria-label="Headings written" aria-valuemin={0} aria-valuemax={writing.total} aria-valuenow={writing.written}
+      style={{ height: 4, borderRadius: 'var(--radius-sm)', background: 'var(--bg-200)', overflow: 'hidden' }}>
+      <div style={{ height: '100%', width: `${writing.total > 0 ? (100 * writing.written) / writing.total : 0}%`, background: 'var(--text-100)' }} />
+    </div>
+    <pre ref={element => { text.current = element; }} aria-label={`Text being written for §${writing.number}`} style={CSR_PROSE_STYLE}>
+      {writing.text || 'Reading the study’s tables and what ICH E3 asks of this heading…'}
+    </pre>
+    <p style={{ margin: 0, fontSize: 'var(--fs-small)', color: 'var(--text-300)' }}>This text is being written now. It is saved only after every figure in it is checked against the study’s tables.</p>
+  </div>;
+}
+
+/**
+ * A failed build is resumed, not replaced (POST /api/csr/jobs/:jobId/resume): the same build drafts the headings
+ * that have no saved text and keeps the rest. A CSR document takes its imported sections from one build, so a new
+ * build's sections would be refused by a document that already holds this one's (2026-11-10).
+ */
+function ResumeBuild({ jobId, onResumed }: { jobId: number; onResumed: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const resume = async () => {
+    setBusy(true); setError(null);
+    const result = await apiCall('POST', `${JOBS}/${jobId}/resume`, {});
+    setBusy(false);
+    if (result.ok) onResumed();
+    else setError(apiErrorText(result, 'This build could not be resumed.'));
+  };
+  return <>
+    <p style={{ margin: 0 }}>
+      <button type="button" className="btn" disabled={busy} onClick={() => void resume()}>{busy ? 'Resuming…' : `Resume build ${jobId}`}</button>
+      {' '}It drafts the headings that have no saved text and keeps the rest.
+    </p>
+    {error && <p role="alert">{error}</p>}
+  </>;
+}
+
+function BuildOnCard({ build, programId, documentId, onBuildChanged, onDocumentChanged }: {
+  build: RunBuild; programId: string; documentId: string; onBuildChanged: () => void; onDocumentChanged?: () => void;
 }) {
   const { headings, error, reload } = useBuildHeadings(build.jobId, build.updatedAt);
   const [importing, setImporting] = useState<string[] | null>(null);
   return <div style={{ display: 'grid', gap: 4 }}>
     <p role="status">CSR build {build.jobId} · {build.status} · {build.progress}% · last updated {new Date(build.updatedAt).toLocaleString()}</p>
+    {build.writing && <LiveDraft writing={build.writing} />}
     {build.status === 'failed' && <p role="alert">{build.failure?.trim() || 'This build stopped before it finished. No reason was recorded.'}</p>}
+    {build.status === 'failed' && <ResumeBuild jobId={build.jobId} onResumed={onBuildChanged} />}
     {error && <p role="alert">{error}{' '}
       <button type="button" className="btn ghost" onClick={reload}>Retry reading sections</button>
     </p>}

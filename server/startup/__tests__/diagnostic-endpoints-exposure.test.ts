@@ -17,6 +17,8 @@
  * test controls who is asking.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import express from 'express';
 import request from 'supertest';
 import type { NextFunction, Request, Response } from 'express';
@@ -110,6 +112,25 @@ describe('GET /api/metrics', () => {
   it('an anonymous caller is refused (401)', async () => {
     const r = await request(app()).get('/api/metrics');
     expect(r.status).toBe(401);
+  });
+
+  // MR-03 OPS-29: a wrong token as long as the right one is refused, and the comparison
+  // runs in constant time. Timing cannot be measured reliably in a unit test, so the second
+  // case reads the source: `===` on the token is what leaked how much of a guess was right.
+  it('a wrong scrape token of the same length is refused', async () => {
+    const wrong = SCRAPE_TOKEN.slice(0, -1) + (SCRAPE_TOKEN.endsWith('x') ? 'y' : 'x');
+    expect(wrong).toHaveLength(SCRAPE_TOKEN.length);
+    const r = await request(app()).get('/api/metrics').set('Authorization', `Bearer ${wrong}`);
+    expect(r.status).not.toBe(200);
+    expect(r.text).not.toContain('process_uptime_seconds');
+  });
+
+  it('compares the scrape token in constant time, never with ===', () => {
+    const source = readFileSync(join(__dirname, '..', 'operator-endpoints.ts'), 'utf8');
+    const body = source.slice(source.indexOf('export function requireMetricsAuth('));
+    const guard = body.slice(0, body.indexOf('return next();'));
+    expect(guard).not.toMatch(/===\s*metricsToken|metricsToken\s*===/);
+    expect(source).toMatch(/timingSafeEqual/);
   });
 });
 

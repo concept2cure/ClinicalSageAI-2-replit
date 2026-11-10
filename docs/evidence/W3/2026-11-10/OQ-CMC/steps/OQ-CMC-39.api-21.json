@@ -1,0 +1,98 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/control-strategy",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "projectId": "808060af-b01c-4b94-b24f-58138b33098d",
+      "scope": "both"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 43,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "projectId": "808060af-b01c-4b94-b24f-58138b33098d",
+        "organizationId": 2,
+        "scope": "both",
+        "cqas": [
+          {
+            "name": "Assay (stability-indicating)",
+            "source": "stability_indicator",
+            "materialType": "drug_product",
+            "ichBasis": [
+              "ICH Q1A(R2)",
+              "ICH Q6A"
+            ],
+            "methodLinked": true
+          }
+        ],
+        "cpps": [],
+        "controlElements": [
+          {
+            "controlType": "release_test",
+            "description": "Release test for Assay (stability-indicating) on drug product.",
+            "targetCqa": "Assay (stability-indicating)",
+            "acceptanceCriterion": "Per current specification",
+            "performedBy": "OQ edit probe (rev 2)",
+            "ichBasis": [
+              "ICH Q1A(R2)",
+              "ICH Q6A"
+            ],
+            "justification": "Assay (stability-indicating) is identified as a CQA via stability indicator; controlled by validated method \"OQ edit probe (rev 2)\" (development)."
+          },
+          {
+            "controlType": "stability_monitoring",
+            "description": "Long-term and accelerated stability monitoring program (PROPOSED TEMPLATE — not derived from recorded project data).",
+            "acceptanceCriterion": "Within registered specification at every time point through proposed shelf life",
+            "performedBy": "Stability program",
+            "ichBasis": [
+              "ICH Q1A(R2)",
+              "ICH Q1E"
+            ],
+            "justification": "Stability studies are recorded for this project, but no long-term/accelerated study condition was matched; the storage conditions shown are generic ICH Q1A(R2) template values, not the recorded program. Proposed conditions are 25C/60%RH long-term and 40°C / 75% RH accelerated per ICH Q1A(R2); they must be confirmed against the project's actual stability program before use."
+          }
+        ],
+        "stabilityMonitoring": {
+          "longTermCondition": "25C/60%RH",
+          "acceleratedCondition": "40°C / 75% RH",
+          "testParameters": [
+            "assay"
+          ],
+          "timePoints": [
+            "0",
+            "12",
+            "3",
+            "6",
+            "24"
+          ],
+          "ichBasis": [
+            "ICH Q1A(R2)",
+            "ICH Q1E"
+          ],
+          "derivedFrom": "ich_default",
+          "note": "Stability studies are recorded for this project, but no long-term/accelerated study condition was matched; the storage conditions shown are generic ICH Q1A(R2) template values, not the recorded program."
+        },
+        "gaps": [
+          "No stability studies recorded — ICH Q1A(R2) stability program not defined.",
+          "No drug substance specifications recorded — raw material control strategy incomplete.",
+          "No manufacturing processes recorded — CPP list is empty."
+        ],
+        "citations": [
+          "ICH Q10",
+          "ICH Q1A(R2)",
+          "ICH Q1E",
+          "ICH Q6A",
+          "ICH Q8(R2)",
+          "ICH Q9"
+        ],
+        "generatedAt": "2026-11-10T02:09:05.783Z"
+      }
+    }
+  }
+}

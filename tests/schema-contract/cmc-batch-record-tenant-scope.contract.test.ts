@@ -207,6 +207,20 @@ beforeEach(async () => {
   await pg.exec(BASE_DDL);
   await pg.exec(TENANT_COLUMN_DDL);
   await pg.exec(parityBatchDdl());
+  // Since 77d8fb1183 a batch edit writes its audit row on the tenant's chain in
+  // the edit's own transaction (services/cmc/register-edit-audit.ts), so the
+  // owner's update needs the trail production has: audit_logs as its columns
+  // are typed there (actor_id integer, as _filing-write-harness.ts has it) and
+  // the chain-order migration from the deployed set, applied as written.
+  await pg.exec(`CREATE TABLE audit_logs (
+    id text PRIMARY KEY, tenant_id integer, user_id integer, action text,
+    table_name text, record_id text, actor_id integer, target text,
+    target_type text, target_id text, reason text, payload_hash text,
+    ana_action_id text, sha256_chain text,
+    occurred_at timestamptz DEFAULT now(), hmac_seal text,
+    old_values json, new_values json, ip_address text, user_agent text
+  );`);
+  await pg.exec(read('migrations/20260921_audit_logs_chain_seq.sql'));
   // Since 88f27b53d a release is signed over the batch's recorded QC results
   // (services/cmc/batch-release-evidence.ts) by the session's own account. The
   // columns those two reads select, and one reviewed passing result per batch
@@ -215,7 +229,8 @@ beforeEach(async () => {
     INSERT INTO users (id, name, email) VALUES (42, 'QA Signer', 'qa-signer@example.invalid');
     CREATE TABLE qc_testing (id SERIAL PRIMARY KEY, organization_id INTEGER NOT NULL, project_id TEXT,
       batch_number TEXT, sample_id TEXT, test_method TEXT, test_results JSONB, specifications JSONB,
-      pass_fail_status TEXT, reviewed_by INTEGER);`);
+      pass_fail_status TEXT, reviewed_by INTEGER, sample_type TEXT, analyst INTEGER,
+      test_date TIMESTAMP, release_date TIMESTAMP, certificate_of_analysis TEXT, updated_at TIMESTAMP DEFAULT now());`);
   await pg.query(
     `INSERT INTO qc_testing (organization_id, project_id, batch_number, sample_id, test_method, pass_fail_status, reviewed_by)
      VALUES (1, $1, $2, 'S-1', 'Assay', 'pass', 42), (1, $1, $3, 'S-2', 'Assay', 'pass', 42)`,
@@ -319,6 +334,11 @@ describe('cmc_batch_records is scoped to the caller organization, and only to it
       .send({ productName: 'Owned product rev B' });
     expect(res.status).toBe(200);
     expect((await batchRow(ownedId)).product_name).toBe('Owned product rev B');
+    // The edit is on the owner's chain, and only there (77d8fb1183).
+    const trail = await h.holder.pg.query<{ tenant_id: number; record_id: string }>(
+      `SELECT tenant_id, record_id FROM audit_logs WHERE sha256_chain IS NOT NULL`,
+    );
+    expect(trail.rows).toEqual([{ tenant_id: 1, record_id: ownedId }]);
   }, 60_000);
 });
 

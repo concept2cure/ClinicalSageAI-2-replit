@@ -1,0 +1,44 @@
+{
+  "apiErrors": [],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "at-rest",
+      "section": {
+        "left": 16,
+        "right": 374
+      },
+      "detail": {
+        "left": 28,
+        "right": 354
+      },
+      "more": {
+        "left": 28,
+        "right": 354
+      },
+      "tableScrollLeft": 0,
+      "docScroll": 0
+    },
+    {
+      "name": "table-scrolled",
+      "section": {
+        "left": 16,
+        "right": 374
+      },
+      "detail": {
+        "left": 16,
+        "right": 342
+      },
+      "more": {
+        "left": 16,
+        "right": 342
+      },
+      "tableScrollLeft": 300,
+      "docScroll": 0
+    },
+    {
+      "name": "w13-detail-390",
+      "ok": true
+    }
+  ]
+}

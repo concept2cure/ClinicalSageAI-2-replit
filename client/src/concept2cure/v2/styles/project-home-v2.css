@@ -5,11 +5,13 @@
    title and one "New project", one quiet toolbar row, then a grid of calm cards.
    `projects` is registered `full: true` (surfaceViews.ts), and `.page-full` on
    the shell is `display:flex; padding:0`, so this claims the row, scrolls
-   itself, and carries D0's page measure: content at most 1120px, centred, with
-   D0's page padding (32/40/96, 24 at ≤1023px, 16 at ≤640px). `min-width:0` so a
-   wide list can shrink rather than push the flex row past the viewport. */
+   itself, and carries `.page-inner`'s frame (D0.md §8.6): a 1120px page, padding
+   included, centred, so the title starts where every sibling's does (32/40/96,
+   24 at ≤1023px, 16 at ≤640px). It read the 1120 as the content's width, which put
+   its title 28px left of its siblings at 1440. `min-width:0` so a wide list can
+   shrink rather than push the flex row past the viewport. */
 .c2c-v2 .pj-index { flex: 1; min-width: 0; overflow-y: auto;
-  padding: 32px max(40px, calc((100% - 1120px) / 2)) 96px; }
+  padding: 32px max(40px, calc((100% - 1120px) / 2 + 40px)) 96px; }
 @media (max-width: 1023px) { .c2c-v2 .pj-index { padding: 24px 24px 80px; } }
 @media (max-width: 640px)  { .c2c-v2 .pj-index { padding: 20px 16px 72px; } }
 
@@ -415,7 +417,15 @@
    journey-v2.css owns that class for the Program journey's stage cells, and
    two global rules on one class merge (flex, padding and min-width leaked
    both ways). */
-.c2c-v2 .pj-stagebody{display:flex;flex-direction:column;gap:20px;min-width:0;}
+.c2c-v2 .pj-stagebody{display:flex;flex-direction:column;gap:32px;min-width:0;}
+/* The step bodies (D3-4, D3.md §4.7): their rows are app-v2.css's .pj block; these are the parts only they have. */
+/* Tasks and approvals: the status in words at the row's right, the warning tone and its icon only when blocked. */
+.c2c-v2 .pj-work-status{display:inline-flex;align-items:center;gap:4px;flex-shrink:0;font-size:var(--fs-small);color:var(--text-300);}
+.c2c-v2 .pj-work-status[data-blocked]{color:var(--warning);}
+.c2c-v2 .pj-overdue{display:inline-flex;align-items:center;gap:4px;color:var(--warning);}
+.c2c-v2 :is(.pj-work-status, .pj-overdue) svg{width:14px;height:14px;flex-shrink:0;}
+.c2c-v2 :is(.pj-work-count, .pj-retry){margin-top:8px;}
+
 /* Two or more doors in one section header. */
 .c2c-v2 .pj-sec-acts{display:inline-flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;}
 /* A module with no document of this project to open: a row, not a link, so
@@ -465,20 +475,6 @@
 .c2c-v2 .pj-mkt-verdict-ic{display:inline-flex;}
 .c2c-v2 .pj-mkt-verdict-ic svg{width:14px;height:14px;}
 .c2c-v2 .pj-mkt-btn{font-size:12px;padding:4px 12px;}
-/* New project's filing tabs (Pharma & Biotech, Medical Devices, Diagnostics & IVD, Cross-Cutting Documents) are 661px
-   wide; at 390 the last two were cut off, unreachable, so a diagnostics company could not open its own tab on a phone
-   (human test J1, 2026-11-06). The row scrolls sideways in place. `.rpk-tabs` is app-v2.css's; scoped here to the
-   wizard, whose sheet this is. */
-.c2c-v2 .npw .rpk-tabs { overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
-.c2c-v2 .npw .rpk-tabs > * { flex-shrink: 0; }
-
-/* At 390 a section's actions ran past the page's edge ("See every sequence in Submission Center" on the Submit step,
-   human test J1, 2026-11-06). On a phone the head wraps and its actions wrap under the heading. */
-@media (max-width: 640px) {
-  .c2c-v2 .pj .pj-sec-h { flex-wrap: wrap; }
-  .c2c-v2 .pj .pj-sec-acts { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; max-width: 100%; }
-  .c2c-v2 .pj .pj-sec-acts > .btn { white-space: normal; max-width: 100%; }
-}
 .c2c-v2 .pj-mkt-note{margin:4px 0 0;font-size:11.5px;line-height:1.5;color:var(--text-300);}
 .c2c-v2 .pj-mkt-blockers{margin:4px 0 2px;padding-left:18px;font-size:11.5px;line-height:1.5;color:var(--text-200);}
 .c2c-v2 .pj-mkt-acts{display:flex;justify-content:flex-end;margin-top:6px;}
@@ -496,6 +492,10 @@
 .c2c-v2 .pj-status{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;margin:0 0 16px;font-size:12px;color:var(--text-300);}
 .c2c-v2 .pj-status-item{display:inline-flex;flex-wrap:wrap;align-items:center;gap:5px;}
 .c2c-v2 .pj-status-item svg{width:13px;height:13px;}
+/* In the Filing card the market's line is a row like the others: its words wrap and its chevron stays at the right,
+   on the first line (it fell to a line of its own, walked 2026-11-08, D3-4). */
+.c2c-v2 [aria-labelledby="pj-filing-h"] .pj-status-open{flex-wrap:nowrap;align-items:flex-start;width:100%;text-align:left;}
+.c2c-v2 [aria-labelledby="pj-filing-h"] .pj-status-open .pj-status-go{margin-left:auto;flex-shrink:0;}
 .c2c-v2 .pj-status-item b{font-weight:600;color:var(--text-200);}
 .c2c-v2 .pj-status-item[data-tone=ok]{color:var(--success);}
 .c2c-v2 .pj-status-item[data-tone=blocked]{color:var(--error);}
@@ -510,8 +510,35 @@
 .c2c-v2 :is(.pj-work-area, .pj-k-row) > svg{flex:0 0 14px;width:14px;height:14px;color:var(--text-300);}
 .c2c-v2 .pj-work-area-ic{display:inline-flex;color:var(--text-300);}
 .c2c-v2 .pj-work-area-ic svg{width:16px;height:16px;}
+/* The project's work projects (S12), under its work areas in the same card: a quiet list, its add a ghost door. */
+.c2c-v2 .pj-work-projects{margin-top:10px;padding-top:10px;border-top:1px solid var(--border-subtle);}
+.c2c-v2 .pj-work-projects-h{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.c2c-v2 .pj-work-projects-h h4{margin:0;font-size:var(--fs-small);font-weight:500;color:var(--text-200);}
+.c2c-v2 .pj-work-projects-l{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;}
+/* A work project's tasks at the top of its work area (P-111): set apart from the area's own header below it. */
+.c2c-v2 .pj-work-project-bound{margin:0 0 20px;padding-bottom:14px;border-bottom:1px solid var(--border-subtle);}
+/* A task's subtasks (P-111 item 4): one level, indented under it with a quiet rule. */
+.c2c-v2 .pj-work-project-subtasks{margin:4px 0 2px 14px;padding-left:10px;border-left:1px solid var(--border-subtle);}
+.c2c-v2 .pj-work-project-bound .pj-work-projects-l li > button{align-self:flex-start;}
+.c2c-v2 .pj-work-projects-l li{display:flex;flex-direction:column;gap:0;min-width:0;}
+.c2c-v2 .pj-work-project-n{font-size:var(--fs-small);color:var(--text-100);overflow-wrap:anywhere;}
+/* A work project that opens on its work area is a row like the areas above it, its name over its kind and owner. */
+.c2c-v2 .pj-work-project-door .pj-work-area-l{display:flex;flex-direction:column;gap:0;}
+/* A work project's owner and due date (S12): the Plan's assignment line and its Assign, under the row; the line opens
+   the row's own text here, so it takes no leading separator. */
+.c2c-v2 .pj-work-project-own{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin-top:4px;}
+.c2c-v2 .pj-work-project-own > .pj-plan-assigned{margin-left:0;}
+.c2c-v2 .pj-work-project-own > .pj-plan-assigned::before{content:none;}
+/* The Vault document it produces (S12 gap 5): its picker wraps under the row and never widens it past the page. */
+.c2c-v2 .pj-work-project-family{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;min-width:0;max-width:100%;}
+.c2c-v2 .pj-work-project-family > select{min-width:0;max-width:100%;}
+/* Inside the work projects section, this filing's sections drafted from the Vault (S12 gap 5): no heading of its own. */
+.c2c-v2 .pj-vault-feeds{margin-top:10px;padding-top:10px;border-top:1px solid var(--border-subtle);}
 .c2c-v2 :is(.pj-work-area-l, .pj-k-row-l){flex:1;min-width:0;overflow-wrap:anywhere;}
-.c2c-v2 .pj-k-row-v{font-weight:500;color:var(--text-100);white-space:nowrap;}
+/* The label keeps its words whole and the value wraps beside it: "Commitments" broke as "Commitme / nts" beside
+   "4 open · next due Mar 1, 2027" (walked 2026-11-08, D3-4). */
+.c2c-v2 .pj-k-row-l{flex:0 1 auto;min-width:min-content;overflow-wrap:normal;}
+.c2c-v2 .pj-k-row-v{flex:1 1 auto;min-width:0;font-weight:500;color:var(--text-100);text-align:right;}
 /* What AnA knows (D3-2a, D3.md §4.8 item 5): saved text keeps its line breaks and never overflows the card. */
 .c2c-v2 .pj-knows{overflow-wrap:anywhere;}
 .c2c-v2 .pj-knows-t{white-space:pre-wrap;overflow-wrap:anywhere;}
@@ -528,7 +555,7 @@
 .c2c-v2 .pj-respond{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:16px;}
 .c2c-v2 .pj-respond-step{display:flex;flex-direction:column;align-items:flex-start;gap:8px;}
 .c2c-v2 .pj-respond-pick{width:100%;max-width:480px;}
-.c2c-v2 .pj-respond-t{margin:0;font-size:13px;font-weight:600;color:var(--text-100);}
+.c2c-v2 .pj-respond-t{margin:0;font-size:var(--fs-section);font-weight:600;color:var(--text-100);}
 
 /* Plan (CLIENT_JOURNEY_2026-10-25 pass 3): what the filing needs, by phase.
    Each phase opens to its deliverables, which are the IND library's entries. */
@@ -556,6 +583,8 @@
 @media(max-width:600px){.c2c-v2 .pj-core-work-controls select{flex:1 1 100%;}.c2c-v2 .pj-core-work-controls button{width:100%;}}
 /* A door names its job in a sentence, so it wraps rather than overflow (as .pj-sec-acts does). */
 .c2c-v2 .pj-plan-door>button{height:auto;min-height:32px;padding-top:6px;padding-bottom:6px;white-space:normal;text-align:left;}
+/* D0's touch target holds here too (D3.md §6 item 14): the door's own height above outranked it. */
+@media (pointer: coarse){.c2c-v2 .pj-plan-door>button{min-height:44px;}}
 /* The device workstreams sit in the step body, whose gap spaces them. */
 .c2c-v2 .pj-plan-device>section{margin:0;}
 @media(max-width:600px){.c2c-v2 .pj-plan-phase>summary{flex-wrap:wrap;gap:2px 8px;}.c2c-v2 .pj-plan-phase-n{width:100%;padding-left:20px;}.c2c-v2 .pj-plan-assigned{display:block;margin-left:0;}.c2c-v2 .pj-plan-assigned::before{content:none;}}

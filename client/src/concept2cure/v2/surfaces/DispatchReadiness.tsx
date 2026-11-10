@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { I } from '../icons';
 import { PedigreeBadge } from '../intelligence/Intelligence';
-import { EmptyState, hasKeys, useLiveData } from '../dataConnect';
+import { EmptyState, hasKeys, ProjectBack, useLiveData } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { useSurfaceAvailable } from '../surfaceAvailable';
 import { readShellProject, shellProgramId } from '../shellProject';
@@ -373,15 +373,15 @@ export function DispatchReadiness({ onNav }: SurfaceViewProps) {
   );
   usePublishSurfaceContext('dispatch-readiness', anaContext);
 
-  /* the surface's identity — shown in every state */
+  /* the surface's identity — shown in every state. D7-A2 step 11: the catalog name (P-33) for both arms, on the
+     work-area header; the kicker that described the gate goes, and its account is the foot's disclosure. */
   const head = (
-    <div className="dr2-head">
-      <div className="dr2-eyebrow">
-        <span className="dr2-kicker">{regionalApplication ? 'AnA · document preparation' : 'AnA · dispatch gate · proven, not generated'}</span>
+    <header className="ph">
+      <div>
+        <h1 className="ph-title">Submission readiness</h1>
+        {programId && <p className="ph-sub">{label} · {regionalApplication ? 'document preparation only' : <>each market&apos;s latest sequence, as the server gates it</>}</p>}
       </div>
-      <h1 className="dr2-title">{regionalApplication ? 'Submission readiness' : 'Cleared to dispatch?'}</h1>
-      {programId && <div className="dr2-sub">{label} · {regionalApplication ? 'document preparation only' : <>each market&apos;s latest sequence, as the server gates it</>}</div>}
-    </div>
+    </header>
   );
 
   let body: React.ReactNode;
@@ -409,17 +409,19 @@ export function DispatchReadiness({ onNav }: SurfaceViewProps) {
   }
 
   return (
-    <div className="dr2">
+    <div className="page-inner" data-work-area="dispatch-readiness">
+      <ProjectBack onNav={onNav} />
       {head}
       {body}
-      {!regionalApplication && <div className="dr2-foot">
+      {!regionalApplication && <details className="pj-more dr2-foot">
+        <summary>How the gate is computed</summary>
         <PedigreeBadge level="deterministic_registry" />
-        <span className="dr2-foot-note">
-          Every gate input is computed from server state — a client cannot pass{' '}
-          <span className="mono">validationErrors:0</span> to talk the gate down. The AI dispatch-QC task advises; this gate{' '}
-          <b>enforces</b>. Freeze, dispatch and transmit each stay behind a Part 11 e-signature, on the sequence&apos;s Dispatch tab.
-        </span>
-      </div>}
+        <p className="dr2-foot-note">
+          Every gate input is computed from server state, so a client cannot report zero validation errors to talk the
+          gate down. The AI dispatch-QC task advises; this gate enforces. Freeze, dispatch and transmit each stay behind a
+          Part 11 e-signature, on the sequence&apos;s Dispatch tab.
+        </p>
+      </details>}
     </div>
   );
 }

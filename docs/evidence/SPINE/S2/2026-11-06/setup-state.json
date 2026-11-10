@@ -1,0 +1,31 @@
+{
+  "a": "792029a1-fcb7-493d-a65b-b5117d11783b",
+  "b": "9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4",
+  "captures": [
+    {
+      "name": "zx-201-protocol-synopsis.txt",
+      "sourceId": 158,
+      "project": "792029a1-fcb7-493d-a65b-b5117d11783b"
+    },
+    {
+      "name": "zx-201-adsl-extract.csv",
+      "sourceId": 159,
+      "project": "792029a1-fcb7-493d-a65b-b5117d11783b"
+    },
+    {
+      "name": "zx-201-statistical-analysis-plan.txt",
+      "sourceId": 160,
+      "project": "792029a1-fcb7-493d-a65b-b5117d11783b"
+    },
+    {
+      "name": "zx-102-clinical-study-report-synopsis.txt",
+      "sourceId": 161,
+      "project": "9760ec8c-39c9-4c48-8d1a-b0c4a649b0f4"
+    },
+    {
+      "name": "zx-201-statistical-analysis-plan.txt",
+      "sourceId": 162,
+      "project": "792029a1-fcb7-493d-a65b-b5117d11783b"
+    }
+  ]
+}

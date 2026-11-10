@@ -56,7 +56,7 @@ const NOT_SERVED_AT_LAUNCH = [ // Remaining findings after admitted/reached call
   '/api/coauthor/templates',
   '/api/concept2cure/artifacts/export-pptx',
   '/api/concept2cure/projects/all',
-  '/api/concept2cure/reviews/pending',
+  /* /api/concept2cure/reviews/pending: served since 9357715132 (P-95, 2026-11-09), below. */
   '/api/conversation-os/artifacts',
   '/api/conversation-os/conversations',
   '/api/corpus/benchmark',
@@ -118,6 +118,10 @@ const STILL_SERVED = [
   '/api/concept2cure/artifacts/export-pdf',
   '/api/concept2cure/projects',
   '/api/concept2cure/reviews/my-queue',
+  /* Upheld as unmapped on 2026-10-15: no screen read it. Since 9357715132 (P-95, 2026-11-09) the named
+     reviewer's requests are read from it by the Review screen (surfaces/ReviewRequests.tsx, mounted in
+     ReviewThreads.tsx) and by Your open work (OpenWork.tsx), and the review surface claims it exactly. */
+  '/api/concept2cure/reviews/pending',
   '/api/ectd/export',
   '/api/ectd/validate',
   /* Upheld as HIDDEN APP on 2026-10-15 (claimed by ectd-publishing alone); the

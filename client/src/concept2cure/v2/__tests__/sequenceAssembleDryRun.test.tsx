@@ -88,7 +88,7 @@ describe('Dispatch tab: assemble a test package', () => {
   it('POSTs the sequence assemble route and shows the server blockers verbatim', async () => {
     serve(() => raw(ASSEMBLED));
     render(<DispatchWorkspace sub={SUB} seq={SEQ} onGoverned={vi.fn()} />);
-    await waitFor(() => expect(text()).toMatch(/Dispatch blocked/));
+    await waitFor(() => expect(text()).toMatch(/Not yet\. /));
     expect(text()).toMatch(/test package/i);
     expect(text()).toMatch(/Nothing is sent/);
 
@@ -109,7 +109,7 @@ describe('Dispatch tab: assemble a test package', () => {
     let release: (r: Response) => void = () => undefined;
     serve(() => new Promise<Response>((r) => { release = r; }));
     render(<DispatchWorkspace sub={SUB} seq={SEQ} onGoverned={vi.fn()} />);
-    await waitFor(() => expect(text()).toMatch(/Dispatch blocked/));
+    await waitFor(() => expect(text()).toMatch(/Not yet\. /));
     fireEvent.click(assembleButton());
     await waitFor(() => expect((screen.getByRole('button', { name: /Assembling the test package/ }) as HTMLButtonElement).disabled).toBe(true));
     fireEvent.click(screen.getByRole('button', { name: /Assembling the test package/ }));
@@ -122,7 +122,7 @@ describe('Dispatch tab: assemble a test package', () => {
   it('an empty blocker list is not shown as ready to send', async () => {
     serve(() => raw({ ...ASSEMBLED, unresolvedLeaves: [], unfinalized: 0, transmitBlockers: [] }));
     render(<DispatchWorkspace sub={SUB} seq={SEQ} onGoverned={vi.fn()} />);
-    await waitFor(() => expect(text()).toMatch(/Dispatch blocked/));
+    await waitFor(() => expect(text()).toMatch(/Not yet\. /));
     fireEvent.click(assembleButton());
     await waitFor(() => expect(text()).toMatch(/assembled and discarded/));
     expect(text()).toContain('The server found nothing in the placed leaves that would stop transmission.');
@@ -143,7 +143,7 @@ describe('Dispatch tab: a test package that failed or was refused', () => {
       throw new ApiRequestError('The service is temporarily unavailable.', 503, { error: 'The service is temporarily unavailable.' });
     });
     render(<DispatchWorkspace sub={SUB} seq={SEQ} onGoverned={vi.fn()} />);
-    await waitFor(() => expect(text()).toMatch(/Dispatch blocked/));
+    await waitFor(() => expect(text()).toMatch(/Not yet\. /));
     fireEvent.click(assembleButton());
     await waitFor(() => expect(text()).toMatch(/Whether the test package was assembled could not be confirmed/));
     expect(text()).toMatch(/Check the sequence's audit trail before assembling again/);
@@ -155,7 +155,7 @@ describe('Dispatch tab: a test package that failed or was refused', () => {
       throw new TypeError('Failed to fetch');
     });
     render(<DispatchWorkspace sub={SUB} seq={SEQ} onGoverned={vi.fn()} />);
-    await waitFor(() => expect(text()).toMatch(/Dispatch blocked/));
+    await waitFor(() => expect(text()).toMatch(/Not yet\. /));
     fireEvent.click(assembleButton());
     await waitFor(() => expect(text()).toContain('Whether the test package was assembled could not be confirmed. Check the sequence'));
     expect(text()).not.toMatch(/No test package was assembled|Failed to fetch/);
@@ -174,7 +174,7 @@ describe('Dispatch tab: a test package that failed or was refused', () => {
       );
     });
     render(<DispatchWorkspace sub={SUB} seq={SEQ} onGoverned={vi.fn()} />);
-    await waitFor(() => expect(text()).toMatch(/Dispatch blocked/));
+    await waitFor(() => expect(text()).toMatch(/Not yet\. /));
     fireEvent.click(assembleButton());
     await waitFor(() => expect(text()).toMatch(/No test package was assembled — Leaf 3.2.S.4.1 resolves outside the staging root/));
     expect(text()).toContain('The audit entry for this refusal could not be written.');
@@ -183,7 +183,7 @@ describe('Dispatch tab: a test package that failed or was refused', () => {
   it('a role refusal says nothing about a refusal audit entry', async () => {
     serve(() => raw({ error: { code: 'FORBIDDEN', message: 'Your role cannot assemble this sequence.' } }, 403));
     render(<DispatchWorkspace sub={SUB} seq={SEQ} onGoverned={vi.fn()} />);
-    await waitFor(() => expect(text()).toMatch(/Dispatch blocked/));
+    await waitFor(() => expect(text()).toMatch(/Not yet\. /));
     fireEvent.click(assembleButton());
     await waitFor(() => expect(text()).toMatch(/No test package was assembled/));
     expect(text()).not.toMatch(/refusal audit entry/);
@@ -195,7 +195,7 @@ describe('Dispatch tab: a test package that failed or was refused', () => {
       auditTrail: { persisted: true, chained: true },
     }, 422));
     render(<DispatchWorkspace sub={SUB} seq={SEQ} onGoverned={vi.fn()} />);
-    await waitFor(() => expect(text()).toMatch(/Dispatch blocked/));
+    await waitFor(() => expect(text()).toMatch(/Not yet\. /));
     fireEvent.click(assembleButton());
     await waitFor(() => expect(text()).toContain('Sequence 0001 has no leaves to assemble. Place at least one document first.'));
     expect(text()).toMatch(/No test package was assembled/);
@@ -209,7 +209,7 @@ describe('Dispatch tab: a test package that failed or was refused', () => {
       auditTrail: { persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', message: 'The 21 CFR Part 11 audit entry for this transition could not be written. The action itself completed. This has been logged for follow-up.' },
     }));
     render(<DispatchWorkspace sub={SUB} seq={SEQ} onGoverned={vi.fn()} />);
-    await waitFor(() => expect(text()).toMatch(/Dispatch blocked/));
+    await waitFor(() => expect(text()).toMatch(/Not yet\. /));
     fireEvent.click(assembleButton());
     await waitFor(() => expect(text()).toContain('The 21 CFR Part 11 audit entry for this transition could not be written.'));
   });

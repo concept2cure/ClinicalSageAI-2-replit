@@ -1,0 +1,50 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/cmc/module3-os/contradictions/808060af-b01c-4b94-b24f-58138b33098d",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 31,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": [
+        {
+          "id": "0f1e2dff-4694-4fa9-bea8-02a78bb54252",
+          "severity": "high",
+          "contradictionType": "method_validation_gap",
+          "details": "1 analytical method(s) lack validated status: RP-HPLC Assay. Specifications reference these methods.",
+          "impactedSections": [
+            "3.2.S.4",
+            "3.2.P.5"
+          ],
+          "requiredReviewers": [
+            "Analytical Lead",
+            "Method Validation Scientist"
+          ],
+          "status": "open",
+          "updatedAt": "2026-11-10T02:07:31.506Z"
+        }
+      ],
+      "meta": {
+        "lastSweep": {
+          "at": "2026-11-10T02:07:31.785Z",
+          "by": "1",
+          "examined": {
+            "batches": 1,
+            "methods": 1,
+            "stability": 1,
+            "comparability": 0,
+            "specifications": 1
+          },
+          "found": 1
+        }
+      }
+    }
+  }
+}

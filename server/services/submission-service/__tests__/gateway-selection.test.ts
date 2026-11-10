@@ -52,7 +52,7 @@ vi.mock('../../../db', () => {
   const textOf = (q: any): string => (q?.queryChunks ?? []).map((c: any) => (Array.isArray(c?.value) ? c.value.join('') : '?')).join('');
   const execute = async (q: any) => {
     const t = textOf(q);
-    if (t.includes('c2c_ana_actions')) return { rows: [{ id: 'sig-1', payload: { intent: 'transmit', meaning: 'release' } }] };
+    if (t.includes('c2c_ana_actions')) return { rows: [{ id: 'sig-1', payload: { intent: 'transmit', meaning: 'release', environment: 'staging' } }] };
     if (t.includes('electronic_signatures')) return { rows: [{ bound_payload_digest: 'd', binding_basis: 'ectd-sequence-leaf-manifest-sha256', superseded_by: null, is_valid: true, verification_status: 'valid' }] };
     return { rows: [] };
   };
@@ -69,7 +69,8 @@ vi.mock('../../../db', () => {
       if (/FROM regulatory_programs/.test(text)) return { rowCount: 1, rows: [{ application_number: rows.applicationNumber }] };
       return { rowCount: 0, rows: [] };
     },
-    connect: async () => { throw new Error('not expected'); },
+    // 5c5b89836: a pre-wire refusal records TRANSMIT_BLOCKED in its own transaction (recordBlockedSequenceTransmit).
+    connect: async () => ({ query: (text: string) => pool.query(text), release: () => undefined }),
   };
   return { db: { select, execute }, pool };
 });

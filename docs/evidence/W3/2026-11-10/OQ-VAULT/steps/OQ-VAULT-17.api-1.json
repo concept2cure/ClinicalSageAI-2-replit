@@ -1,0 +1,79 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/c2c/project-vault/8c05d32c-f5b2-4a79-87d5-ddd208dfb428/documents/3064d186-b75f-4332-a8c8-34c3e99a3aa3/compare?against=9181592b-4d08-464c-8116-8215e43147e3",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 32,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "from": {
+          "id": "9181592b-4d08-464c-8116-8215e43147e3",
+          "version": "1.0",
+          "contentHash": "beb917aa389b56c8ec0a6fcbeb20b2e50e986902dca39ed58a7cd198e94990d6",
+          "fileSize": 611,
+          "fileName": "OQ-002-Protocol-20261110020007.pdf",
+          "createdAt": "2026-11-10T02:00:10.313Z",
+          "uploader": "oq-runner@validation.local",
+          "current": false
+        },
+        "to": {
+          "id": "3064d186-b75f-4332-a8c8-34c3e99a3aa3",
+          "version": "2.0",
+          "contentHash": "c6044ebd792c00eb0dd613a87a392b802b46ce950c9178df875d6aa9999bcd3f",
+          "fileSize": 622,
+          "fileName": "next-version.pdf",
+          "createdAt": "2026-11-10T02:00:56.863Z",
+          "uploader": "oq-runner@validation.local",
+          "current": true
+        },
+        "sameBytes": false,
+        "details": [
+          {
+            "field": "fileName",
+            "from": "OQ-002-Protocol-20261110020007.pdf",
+            "to": "next-version.pdf"
+          }
+        ],
+        "text": {
+          "available": true,
+          "identical": false,
+          "truncated": false,
+          "counts": {
+            "added": 1,
+            "removed": 1,
+            "unchanged": 2
+          },
+          "hunks": [
+            {
+              "kind": "removed",
+              "lines": [
+                "OQ-002 Protocol 20261110020007"
+              ]
+            },
+            {
+              "kind": "added",
+              "lines": [
+                "OQ-002 Protocol 20261110020007 revision 2"
+              ]
+            },
+            {
+              "kind": "same",
+              "lines": [
+                "",
+                "-- 1 of 1 --"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+}

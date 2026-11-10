@@ -1,0 +1,4 @@
+PASS: all 14 exported declarations, signatures, bodies and leading comments are byte-identical to f9631c065af8760d8b879232385fb94663d19a24.
+Only the numerical-helper import and private planSection/unstatedClaims callsites changed.
+Rechecked after the entity/representation/unit repair and the 233-test passing run.
+The saved-evidence source file was unchanged by the subsequent generic composite-unit correction.

@@ -35,6 +35,9 @@ export interface TextFacts {
   /** Every registry identifier found, in document order, de-duplicated. */
   registryIds: Finding[];
   protocolNumber: Finding | null;
+  /** Present when the title pages name more than one distinct protocol. Keep
+   * the first fact above for existing readers, but never hide later scope. */
+  protocolNumbers?: Finding[];
   /** ISO dates (YYYY-MM-DD). */
   documentDate: Finding | null;
   dataCutDate: Finding | null;
@@ -105,13 +108,20 @@ function labelled(text: string, rule: string, re: RegExp, valueOf: (m: RegExpExe
 /** Every text fact the rules find. Pure; the same text gives the same facts. */
 export function findTextFacts(text: string | null): TextFacts {
   if (!text) return { registryIds: [], protocolNumber: null, documentDate: null, dataCutDate: null };
+  const protocols: Finding[] = [];
+  const seenProtocols = new Set<string>();
+  for (const match of text.slice(0, TITLE_SCAN).matchAll(
+    /\bProtocol\s+(?:No\.?|Number|ID|Identifier|Code)\s*[:#]?\s*([A-Z0-9][A-Z0-9._/-]{2,30}[A-Z0-9])/gi,
+  )) {
+    const value = match[1];
+    if (seenProtocols.has(value.toUpperCase())) continue;
+    seenProtocols.add(value.toUpperCase());
+    protocols.push({ value, rule: 'labelled protocol number', offset: match.index ?? 0, matched: match[0].slice(0, 120) });
+  }
   return {
     registryIds: registryIds(text),
-    protocolNumber: labelled(
-      text, 'labelled protocol number',
-      /\bProtocol\s+(?:No\.?|Number|ID|Identifier|Code)\s*[:#]?\s*([A-Z0-9][A-Z0-9._/-]{2,30}[A-Z0-9])/i,
-      m => m[1],
-    ),
+    protocolNumber: protocols[0] ?? null,
+    ...(protocols.length > 1 ? { protocolNumbers: protocols } : {}),
     documentDate: labelled(
       text, 'labelled document date',
       new RegExp(`\\b(?:Document|Version|Report|Issue|Release)\\s+Date\\s*[:\\-]?\\s*${DATE}`, 'i'),
@@ -165,15 +175,19 @@ export async function matchStudy(
   programId: string,
   facts: TextFacts,
 ): Promise<{ studyRef: number | null; candidates: Array<{ id: number; studyId: string; protocolId: string }> }> {
-  const keys = [facts.protocolNumber?.value, ...facts.registryIds.map(f => f.value)].filter((k): k is string => Boolean(k));
+  const protocolKeys = [...new Set((facts.protocolNumbers ?? (facts.protocolNumber ? [facts.protocolNumber] : []))
+    .map(f => f.value.toUpperCase()))];
+  const keys = [...new Set([...protocolKeys, ...facts.registryIds.map(f => f.value.toUpperCase())])];
   if (keys.length === 0) return { studyRef: null, candidates: [] };
   const { rows } = await exec.query(
     `SELECT id, study_id, protocol_id FROM cdisc_prm_studies
       WHERE tenant_id = $1 AND program_id = $2
         AND (upper(protocol_id) = ANY($3::text[]) OR upper(study_id) = ANY($3::text[]))
       ORDER BY id LIMIT 3`,
-    [orgId, programId, keys.map(k => k.toUpperCase())],
+    [orgId, programId, keys],
   );
   const candidates = rows.map(r => ({ id: Number(r.id), studyId: String(r.study_id), protocolId: String(r.protocol_id) }));
-  return { studyRef: candidates.length === 1 ? candidates[0].id : null, candidates };
+  // A second explicitly named protocol is multi-study context even if that
+  // protocol has not yet been entered in this project's study register.
+  return { studyRef: candidates.length === 1 && protocolKeys.length <= 1 ? candidates[0].id : null, candidates };
 }

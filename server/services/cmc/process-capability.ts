@@ -25,6 +25,26 @@
  * marked preliminary — the sampling error on a capability index from a
  * handful of batches is large, and the section must say so.
  *
+ * ── The distribution it presumes, said out loud (2026-11-09) ─────────────────
+ * (USL − x̄) / 3σ converts a margin into a tail probability ONLY if the series
+ * is approximately normal. That presumption was unstated, and the CMC case
+ * where it fails is the common one: an impurity or degradation product has a
+ * one-sided upper limit, is bounded below at zero, and is usually right-skewed
+ * near the limit of quantitation. There the normal-theory index is OPTIMISTIC
+ * — it understates the chance of exceeding the limit — and that number reaches
+ * §3.2.S.4.5 / §3.2.P.5.6 justification of specification and the CPV report.
+ *
+ * So the shape is measured and stated. The index and the verdict are NOT
+ * changed: moving to ISO 22514-2's non-normal percentile method changes filed
+ * numbers, which is a methodological decision and not a session's.
+ *
+ * `skewness` is the adjusted Fisher–Pearson coefficient G1, and it is called
+ * material only when |G1| exceeds twice its own standard error — which
+ * self-scales with n, so a short series cannot trip it and is reported as "not
+ * assessed" rather than as normal. Found while studying the external market
+ * for P-113, where a CPV source noted that Cpk cannot be estimated for
+ * non-normal data and Ppk on percentiles is used instead.
+ *
  * @module server/services/cmc/process-capability
  */
 import type { ParsedAcceptanceCriterion } from './recorded-stability';
@@ -75,6 +95,14 @@ export interface ProcessCapabilityAssessed {
   excludedBatches: string[];
   /** True under 25 batches: the index is stated with its sampling caveat. */
   preliminary: boolean;
+  /**
+   * Sample skewness (adjusted Fisher–Pearson G1), or null when the series is
+   * too short for the estimate to mean anything. Null is "not assessed", never
+   * "symmetric".
+   */
+  skewness: number | null;
+  /** True when |G1| exceeds twice its standard error: the index's normal-theory reading does not hold. */
+  materiallySkewed: boolean;
   /** Against the conventional grades: ≥ 1.33 capable, ≥ 1.00 marginal, below not capable; any OOS batch is not capable. */
   verdict: CapabilityVerdict;
   notes: string[];
@@ -87,6 +115,67 @@ export const MINIMUM_BATCHES = 6;
 export const PRELIMINARY_BELOW = 25;
 /** d₂ for subgroups of two — the moving-range constant. */
 const D2_MOVING_RANGE = 1.128;
+/** Below this, G1's standard error is wider than any skew it could report. */
+export const SKEWNESS_NEEDS_BATCHES = 8;
+
+/**
+ * The adjusted Fisher–Pearson standardized moment coefficient, and its own
+ * standard error — the conventional pair, so "material" is a comparison the
+ * data supports rather than a threshold chosen here.
+ */
+function skewnessOf(values: number[], mean: number, sd: number): { g1: number; se: number } | null {
+  const n = values.length;
+  if (n < SKEWNESS_NEEDS_BATCHES || sd === 0) return null;
+  const m3 = values.reduce((a, v) => a + ((v - mean) / sd) ** 3, 0);
+  const g1 = (n / ((n - 1) * (n - 2))) * m3;
+  const se = Math.sqrt((6 * n * (n - 1)) / ((n - 2) * (n + 1) * (n + 3)));
+  return { g1, se };
+}
+
+/**
+ * What a skew does to the index, given which side the limit is on.
+ *
+ * A tail pointing TOWARD the limit is understated by the normal-theory
+ * formula, so the index reads better than the process is. A tail pointing away
+ * from it is the reverse. Saying only "this is skewed" would leave the reader
+ * to work out which, and the two have opposite consequences for a filing.
+ */
+/**
+ * What the series' shape says about the index, in one sentence, or null.
+ *
+ * Never silent on the normal-theory presumption: an unmeasurable shape is
+ * reported as not assessed, which is not the same claim as symmetric.
+ */
+function distributionNote(
+  shape: { g1: number; se: number } | null,
+  materiallySkewed: boolean,
+  n: number,
+  limits: { lower: number | null; upper: number | null },
+): string | null {
+  if (shape === null) {
+    return (
+      `The distribution was not assessed: ${n} batches are too few to estimate skewness, so whether the indices’ ` +
+      'normal-theory reading holds is unknown rather than confirmed.'
+    );
+  }
+  if (!materiallySkewed) return null;
+  return (
+    'Cp/Cpk/Pp/Ppk presume an approximately normal distribution, and this series is not: skewness ' +
+    `${round(shape.g1, 2)} against a standard error of ${round(shape.se, 2)}. Read the index with the ` +
+    `distribution — ${skewDirectionNote(shape.g1, limits)}`
+  );
+}
+
+function skewDirectionNote(
+  g1: number,
+  limits: { lower: number | null; upper: number | null },
+): string {
+  const towardLimit = (g1 > 0 && limits.upper !== null) || (g1 < 0 && limits.lower !== null);
+  return towardLimit
+    ? 'its tail runs toward the limit, so the index is OPTIMISTIC — the real chance of exceeding the ' +
+      'specification is higher than the index implies.'
+    : 'its tail runs away from the limit, so the index is CONSERVATIVE on this side.';
+}
 
 const CITATION =
   'ICH Q6A (specifications); capability indices per ISO 22514-2 and the individuals/moving-range convention (Montgomery, Introduction to Statistical Quality Control)';
@@ -170,6 +259,10 @@ export function assessProcessCapability(
   if (excludedBatches.length > 0) {
     notes.push(`${excludedBatches.length} result(s) were not numeric and are excluded: ${excludedBatches.join(', ')}.`);
   }
+  const shape = skewnessOf(values, mean, sdOverall);
+  const materiallySkewed = shape !== null && Math.abs(shape.g1) > 2 * shape.se;
+  const shapeNote = distributionNote(shape, materiallySkewed, n, { lower, upper });
+  if (shapeNote) notes.push(shapeNote);
   if (Math.abs(cpk - ppk) > 0.25) {
     notes.push('Cpk and Ppk differ by more than 0.25: batch-to-batch variation exceeds the within-process estimate, which points to a drifting or shifting process rather than random scatter.');
   }
@@ -188,6 +281,8 @@ export function assessProcessCapability(
     batchesOutOfSpecification,
     excludedBatches,
     preliminary,
+    skewness: shape === null ? null : round(shape.g1, 4),
+    materiallySkewed,
     verdict,
     notes,
     citation: CITATION,

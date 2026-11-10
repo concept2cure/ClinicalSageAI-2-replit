@@ -1,0 +1,7 @@
+MUTATION c3-validate-reason-ignored in client/src/concept2cure/v2/surfaces/EctdCompile.tsx (on the final code and tests, 2026-11-08T22:36:40.441203Z): replaced [  return notApplicableReason(status, body) ?? `Validation didn’t run (HTTP ${status}).`;] with [  return `Validation didn’t run (HTTP ${status}).`;]
+ × client/src/concept2cure/v2/__tests__/ectdModuleReadiness.test.tsx > a project that is not an application is not compiled as an eCTD sequence > validation says the reason, not an HTTP status 300ms
+      Tests  1 failed | 6 skipped (7)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  client/src/concept2cure/v2/__tests__/ectdModuleReadiness.test.tsx > a project that is not an application is not compiled as an eCTD sequence > validation says the reason, not an HTTP status
+AssertionError: expected 'Compile & Export eCTDABC-123 · IND-42…' not to match /HTTP 422/
+restored sha256 fe41e1bc3479c449dcac6103d53e1f6d415ef963d271aff4d8ee493d95fa3937 (expected fe41e1bc3479c449dcac6103d53e1f6d415ef963d271aff4d8ee493d95fa3937)

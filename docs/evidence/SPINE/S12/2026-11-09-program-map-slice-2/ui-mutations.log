@@ -1,0 +1,27 @@
+MUTATION: assignedFamily ignores a truncated list (says gone)
+ × client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the program map beside the work projects (S12 gap 5) > names the Vault document a work project is assigned to produce, re-checked on read, and never
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+Expected: "The assigned Vault document (DS-SPEC) could not be checked."
+Received: "The assigned Vault document (DS-SPEC) is no longer in this project’s Vault."
+      Tests  1 failed | 7 passed (8)
+
+MUTATION: the picker is offered to a person who may not write
+ × client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the program map beside the work projects (S12 gap 5) > names the Vault document a work project is assigned to produce, re-checked on read, and never
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+- Expected:
++ Received:
+      Tests  1 failed | 7 passed (8)
+
+MUTATION: the picker starts at Not named, whatever is assigned
+ × client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the program map beside the work projects (S12 gap 5) > names the Vault document a work project is assigned to produce, re-checked on read, and never
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+- Expected
++ Received
+      Tests  1 failed | 7 passed (8)
+
+MUTATION: the picker does not say a cut list is partial
+ × client/src/concept2cure/v2/__tests__/projectWorkProjects.test.tsx > the program map beside the work projects (S12 gap 5) > names the Vault document a work project is assigned to produce, re-checked on read, and never
+   → Unable to find an element by: [data-testid="pj-work-project-family-partial"]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+TestingLibraryElementError: Unable to find an element by: [data-testid="pj-work-project-family-partial"]
+

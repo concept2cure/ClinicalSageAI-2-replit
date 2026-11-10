@@ -7,7 +7,8 @@
  */
 import { step, state, BROWSERLESS } from './context.mjs';
 import { requireSigner } from '../../lib/credentials.mjs';
-import { dataOf, errCode, errDetail, postAsSigner } from './signed-acts.mjs';
+import { serverIsDevelopment } from '../../lib/harness.mjs';
+import { completeUnapprovedKey, dataOf, errCode, errDetail, postAsSigner, runReauth } from './signed-acts.mjs';
 import { FILING_STEPS } from './steps-filing.mjs';
 
 await step(
@@ -137,14 +138,15 @@ await step(
     const called = await api('GET', `/api/cmc/drug-substances?projectId=${state.projectId}`);
     expect(called.status === 200, `a claimed path expected 200, got ${called.status}`, called.json);
     /* The probe has to be a path NO entry of the surface registry claims.
-       /api/cmc/variations/classify — what the third smoke run probed — is
-       claimed (shared/constants/ui-surface-registry.ts, the cmc entry), so
-       its 400 was body validation and said nothing about launch scope;
-       the step recorded that 400 as a pass. The CMC entry lists one prefix
-       per register plus the module3-os segments, and `/api/cmc/projects` is
-       not among them, so the process-capability read under it is the
-       unattributed path LAUNCH_SCOPE_API_UNATTRIBUTED decides. */
-    const unclaimed = await api('GET', `/api/cmc/projects/${state.projectId}/process-capability`);
+       /api/cmc/variations/classify (the third smoke run's probe) and
+       /api/cmc/projects/:id/process-capability (the probe until v0.11) are
+       both claimed today, so each was served and said nothing about launch
+       scope. At 97a0fec5cf every route the core CMC router registers is
+       claimed (launchScopeApiVerdict, services/entitlements/launch-scope-api.ts:
+       66 of 66 `launch`), so no served route is left to probe. The surface
+       does not claim the root: /api/cmc/unclaimed-probe names no register, the
+       verdict for it is `unmapped`, and the gate answers before routing. */
+    const unclaimed = await api('GET', '/api/cmc/unclaimed-probe');
     const catalog = await api('GET', '/api/module-subscriptions/catalog');
     const enforced = catalog.json?.launchScope?.enforced === true;
     attach('launch-scope.json', { launchScopeEnforced: enforced, unclaimedStatus: unclaimed.status, unclaimedBody: unclaimed.json ?? null });
@@ -155,17 +157,10 @@ await step(
         { launchScopeEnforced: enforced, unclaimedStatus: unclaimed.status },
       );
     }
-    if (unclaimed.status !== 403) {
-      /* Scope is enforced and the path is still served: that is
-         LAUNCH_SCOPE_API_UNATTRIBUTED=report, an explicit deployment choice to
-         record unclaimed paths rather than refuse them (moduleEntitlementGate
-         `refusedByLaunchScope`). Said as what it is, not read as a pass. */
-      deviation(
-        `partly executed — launch scope is enforced and a claimed path is served (200), but the unclaimed path answered ${unclaimed.status}: ` +
-          'this deployment sets LAUNCH_SCOPE_API_UNATTRIBUTED=report, which records an unclaimed path instead of refusing it. Set it to enforce to observe the refusal.',
-        { launchScopeEnforced: enforced, unclaimedStatus: unclaimed.status },
-      );
-    }
+    /* v0.12: no deviation here. Until v0.11 a served probe was recorded as "this deployment sets
+       LAUNCH_SCOPE_API_UNATTRIBUTED=report", a posture the step never read: on 2026-11-10 the server ran
+       enforce and the probe was served because it was claimed. An unclaimed path that is not refused under
+       enforced launch scope is a failure, with what was answered. */
     expect(
       unclaimed.status === 403 && errCode(unclaimed) === 'LAUNCH_SCOPE',
       `an unclaimed path expected 403 LAUNCH_SCOPE, got ${unclaimed.status} ${errCode(unclaimed) ?? ''}`.trim(),
@@ -195,11 +190,13 @@ await step(
        control. A run outside the W3 posture therefore cannot observe it, and
        says so rather than reporting the development behaviour as a pass — the
        first smoke run of this protocol read `invalid_request` here and called
-       it a failure of the control, which it was not. */
-    if (errCode(inline) !== 'INLINE_CMC_SOURCES_REFUSED') {
+       it a failure of the control, which it was not. Since v0.11 the deviation
+       is recorded only on a server that says it is a development build
+       (serverIsDevelopment); anywhere else a missing refusal is a failure. */
+    if (errCode(inline) !== 'INLINE_CMC_SOURCES_REFUSED' && (await serverIsDevelopment(ctx.baseUrl))) {
       ctx.deviation(
-        `not executed — this server allows inline cmcSources (it answered ${inline.status} ${errCode(inline)}), which is the documented development behaviour. ` +
-          'The refusal is a production control; observe it under the W3 posture.',
+        `not executed — this is a development server (its CSP is report-only), which allows inline cmcSources (it answered ${inline.status} ${errCode(inline)}), the documented development behaviour. ` +
+          'The refusal is a production control; observe it on a production build.',
         inline.json,
       );
     }
@@ -270,7 +267,8 @@ await step(
   },
   async (ctx) => {
     const { api, expect, deviation } = ctx;
-    const key = state.sectionKeys.find((k) => k !== state.approvedKey) ?? state.sectionKeys[0];
+    const key = completeUnapprovedKey(state.sections, state.approvedKey);
+    if (!key) deviation('not executed — the compile left no complete section beside the approved one, so a self-approval would meet the completeness refusal first.', state.sectionKeys);
     const path = `/api/cmc/module3-os/sections/${state.projectId}/${encodeURIComponent(key)}/approve`;
 
     /* The authorship-meaning refusal comes FIRST in the route, before the
@@ -302,7 +300,7 @@ await step(
     /* The run identity recorded every register row in OQ-CMC-03, so its own
        approval is exactly the self-approval the control refuses. */
     const self = await api('POST', path, {
-      reason: 'Approving the section whose records I entered myself.', meaning: 'approval', reauth: { password: authorPassword },
+      reason: 'Approving the section whose records I entered myself.', meaning: 'approval', reauth: await runReauth(),
     });
     expect(self.status === 403, `a self-approval expected 403, got ${self.status}`, self.json);
     expect(errCode(self) === 'SEPARATION_OF_DUTIES', `expected SEPARATION_OF_DUTIES, got ${errCode(self)}`, self.json);

@@ -1,0 +1,5 @@
+MUTATION M26-readiness-hold-dropped in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T14:28:48.640311Z): replaced [  return resendRefusal(seq.dispatchStatus) ?? (await releasedSendHold(asQueryable(pool), organizationId, seq.id, seq.sequenceNumber));] with [  return resendRefusal(seq.dispatchStatus);]
+ × server/services/submission-service/__tests__/released-send-resend-hold.pglite.test.ts > a send released as not received that FDA's receipt shows it received is not sent again (P-92 §3.3) > the transmit precheck says so before anyone signs; a release FDA has not contradicted is not held 320ms
+      Tests  1 failed | 1 skipped (2)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 c3dee5720ab3fe3960c6d2f81e72ca98b5136d30bb807bd28e08c7a837efc79d (expected c3dee5720ab3fe3960c6d2f81e72ca98b5136d30bb807bd28e08c7a837efc79d)

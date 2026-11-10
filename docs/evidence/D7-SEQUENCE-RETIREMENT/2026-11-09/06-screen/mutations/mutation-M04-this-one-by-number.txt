@@ -1,0 +1,5 @@
+MUTATION M04-this-one-by-number in client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx (on the final code and tests, 2026-11-09T11:40:09.887246Z): replaced [if (bound === sequenceId) return ' (this one)';] with [if (t.metadata?.sequence === sequenceNumber) return ' (this one)';]
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T3 — a transmission is marked by the sequence it is bound to > this one, another sequence of the same number, an unbound row of this number, and another number 241ms
+      Tests  1 failed | 22 skipped (23)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 c72ed2473e0ca751e687cbfc78db972a985f921a1c8a3346f40c8fbb9767c18d (expected c72ed2473e0ca751e687cbfc78db972a985f921a1c8a3346f40c8fbb9767c18d)

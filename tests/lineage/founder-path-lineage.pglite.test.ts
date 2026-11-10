@@ -208,6 +208,8 @@ const MIGRATIONS = [
   // gained users.sessions_ended_at (P0-4b); without it every signature is
   // refused REAUTH_ACCOUNT_STATE_UNKNOWN, fail-closed.
   'migrations/20261001_users_sessions_ended_at.sql',
+  // organizations.payment_status: sending a document for review reads the organisation's standing (P-95's review hop).
+  'migrations/0003_billing_stripe.sql',
   'migrations/20260527_mutation_primitives.sql',
   // The governed-action ledger's open command vocabulary, as the deploy set
   // applies it after 20260527: the approval signature records command
@@ -262,6 +264,9 @@ const MIGRATIONS = [
   'db/migrations/20260730_authoring_runtime_ddl.sql',
   'db/migrations/20260730_authoring_comments_router_columns.sql',
   'db/migrations/20260727_authoring_object_permissions.sql',
+  // authoring_reviews and the rest of the authoring subsystem, as the durable applier lays them down: sending the
+  // document for review (P-95's seal hop) writes its review rows there, and the independent check rides on them.
+  'db/migrations/20260730_authoring_subsystem_schema.sql',
   'migrations/20260726_authoring_citation_source_usage.sql',
   'db/migrations/20260803_document_span_lineage.sql',
   'migrations/20260907_span_lineage_accepted_machine_draft.sql',
@@ -278,6 +283,24 @@ const MIGRATIONS = [
      records). Without this store the walk's draft can record no model at all,
      which is the honest outcome for an unfiled turn -- so the walk files one. */
   'migrations/20260926_ana_turn_records.sql',
+  /* The Quality registers. Every first page of a project's Data Room reconciles the project's native Quality
+     records into the catalogue first (f4c230dfac, record-source.ts syncQualityProjectSources), and fails closed
+     503 QUALITY_SOURCE_PROJECTION_UNAVAILABLE when it cannot read them. The walk's org records none, so this is
+     the empty-register read production makes, on the registers' real files in the deploy set's order. */
+  'migrations/20260504_capa_mdr.sql',
+  'db/migrations/20260724_qms_change_control_store.sql',
+  'migrations/20260511_qms_and_labeling.sql',
+  'db/migrations/20261014_qms_controlled_authoring_content.sql',
+  'migrations/20261029d_nonconforming_products_program_key.sql',
+  'migrations/20261029l_qms_change_controls_program_key.sql',
+  'migrations/20261029g_qc_deviations.sql',
+  'migrations/20261029h_capa_source_deviation.sql',
+  'migrations/20261029g_qms_job_roles_and_training_assignments.sql',
+  /* The Data Room's grade (c15afd47ca): each capture is graded from what the Vault records about it (its catalog
+     record and state), and the grade is stored on the capture. */
+  'migrations/20260905_document_catalog.sql',
+  'migrations/20261008e_document_catalog_attribution.sql',
+  'migrations/20261106_data_room_grade.sql',
   // Submission Center: the governed sign, the dispatch gate's review store, the transmittal ledger.
   'migrations/20260604_shadow_review.sql',
   'migrations/20261015_shadow_review_waiver.sql', // P-34: a failed run records its failure_code
@@ -323,6 +346,8 @@ const MIGRATIONS = [
   'db/migrations/20260807_unified_tasks_soft_delete.sql',
   // The review route header (RR1a): every lifecycle sign-off reads the record's route standing.
   'migrations/20261023_review_routes.sql',
+  // unified_tasks.parent_task_id (P-111), which the Drizzle task model names: the review route's task insert writes it.
+  'migrations/20261109_unified_tasks_parent_task.sql',
 ] as const;
 /**
  * Columns the walk's database cannot get from a migration file:

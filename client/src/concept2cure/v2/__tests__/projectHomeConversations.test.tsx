@@ -94,15 +94,17 @@ describe('ProjectHome — conversations', () => {
   });
 
   /* D3-2a (2026-11-06): the readiness figure is the Filing card's first row in Project knowledge, on every step; its
-     detail (and, until D3-4, its ring) is on Author beside the modules it measures. */
+     detail leads Module completion on Author, with no ring (D3-4). */
   it('the composer comes first in the main column; the readiness figure is on the Filing card in the aside', async () => {
     route('ok');
     const { container } = render(<ProjectHome {...props()} />);
     const filing = await screen.findByRole('region', { name: 'Filing' });
     expect(filing.closest('.pj-side'), 'the Filing card is in Project knowledge').toBeTruthy();
     expect(within(filing).getByRole('button', { name: /Dossier readiness/ })).toBeTruthy();
-    await waitFor(() => expect(container.querySelector('.pj-map-ring')).toBeTruthy());
-    expect(container.querySelector('.pj-side .pj-map-ring'), 'no ring in the aside').toBeNull();
+    /* D3-4: the drawn ring is gone everywhere; the figure's detail leads Module completion on Author. */
+    await waitFor(() => expect(container.querySelector('[data-testid="pj-dossier"]')).toBeTruthy());
+    expect(container.querySelector('.pj-map-ring'), 'no ring on the page').toBeNull();
+    expect(container.querySelector('[data-testid="pj-dossier"]')?.closest('section[aria-labelledby="pj-modules-h"]'), 'the figure leads Module completion').toBeTruthy();
     // Claude's project page (founder, 2026-11-01; RULE 4): the conversation first, then the steps.
     const convo = container.querySelector('.pj-convo')!;
     expect(convo.closest('.pj-main'), 'composer in the main column').toBeTruthy();

@@ -1,0 +1,3 @@
+# Reporting fixtures, 2026-11-10 (setup/fixtures-reporting.mjs)
+foreign tracking record: project 15 in organisation 1
+foreign report run: report_runs 1 in organisation 1, written as the database owner

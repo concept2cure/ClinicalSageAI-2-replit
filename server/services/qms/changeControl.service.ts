@@ -24,6 +24,7 @@ import { AGENCIES, DOCUMENT_TYPES, AggregateLearningRefusedError, LEARNING_COHOR
 import { learningPromotionOf, type LearningPromotion, type ReviewedLearningArtifact } from './change-approval-signature';
 import { runWithSystemTenantScope } from '../../db/tenantStore';
 import { withTenantConnection } from '../../db/withTenantConnection';
+import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership';
 
 /** Fixed aggregate projection only. Tenant/source identities are counted inside SQL and never returned. */
 type LearningCohortBins = Pick<ReviewedLearningArtifact, 'classKey' | 'agency' | 'documentType'>;
@@ -276,6 +277,17 @@ export async function getChange(orgId: number, id: number, client: RequestSqlCli
   return rows[0] ? { ...rows[0], learning_review: learningReviewView(rows[0]) } : null;
 }
 
+/**
+ * The states in which a change's content may still be edited: proposed and under assessment. From approval on, the
+ * content is what the approver's signature binds (change-approval-signature.ts computeQmsChangeContentDigest: title,
+ * description, type, classification, risk, reason, impact assessment, implementation plan, target date, document), so
+ * it is fixed, and amending an approved change is a new change request.
+ *
+ * Until 2026-11-10 every state but closed, cancelled and rejected took an edit: an approved, implementing or verifying
+ * change's assessment, plan, title or target could be rewritten under its approval signature, and nothing said so.
+ */
+export const CHANGE_EDITABLE_STATES = ['proposed', 'under_assessment'] as const;
+
 export async function updateChange(orgId: number, id: number, p: {
   title?: string; description?: string | null; changeType?: string; classification?: string;
   riskLevel?: string | null; reason?: string | null; impactAssessment?: string | null;
@@ -284,7 +296,8 @@ export async function updateChange(orgId: number, id: number, p: {
 }, client: RequestSqlClient = pool): Promise<ChangeControlRow | null> {
   // Build a COALESCE-guarded partial update (only provided fields change).
   const sets: string[] = [];
-  const args: unknown[] = [];
+  /* The id, the organization and the editable states are bound first, so the statement names them as $1-$3. */
+  const args: unknown[] = [id, orgId, [...CHANGE_EDITABLE_STATES]];
   const add = (col: string, val: unknown) => { args.push(val); sets.push(`${col} = $${args.length}`); };
   if (p.title !== undefined) add('title', p.title);
   if (p.description !== undefined) add('description', p.description);
@@ -298,14 +311,45 @@ export async function updateChange(orgId: number, id: number, p: {
   if (p.qmsDocumentId !== undefined) add('qms_document_id', p.qmsDocumentId);
   if (p.assessedBy !== undefined) add('assessed_by', p.assessedBy);
   if (sets.length === 0) return getChange(orgId, id, client);
-  args.push(id, orgId);
   const { rows } = await queryRowsClient(client).query<ChangeControlRow>(
-    `UPDATE qms_change_controls SET ${sets.join(', ')}, updated_at = now()
-      WHERE id = $${args.length - 1} AND organization_id = $${args.length} AND deleted_at IS NULL
+    `UPDATE qms_change_controls SET ${sets.join(', ')}, updated_at = clock_timestamp()
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL AND status = ANY($3::text[])
       RETURNING *`,
     args,
   );
   return rows[0] ?? null;
+}
+
+/**
+ * Why an edit matched no change: null when the organization has no such change (the route's 404), or the refusal of a
+ * change past assessment (409 QMS_CHANGE_CONTENT_FIXED), which names its state and says nothing was saved. Until
+ * 2026-11-10 a refused edit answered "not found".
+ */
+export async function changeEditRefusal(orgId: number, id: number, client: RequestSqlClient = pool): Promise<{
+  message: string; details: { code: 'QMS_CHANGE_CONTENT_FIXED'; status: string };
+} | null> {
+  const existing = await getChange(orgId, id, client);
+  if (!existing) return null;
+  const signed = ['approved', 'in_implementation', 'verification', 'closed'].includes(existing.status);
+  return {
+    message: `This change is ${String(existing.status).replace(/_/g, ' ')}, so its content is fixed`
+      + `${signed ? ': it is what its approval signed' : ''}. Nothing was saved. To amend it, raise a new change request.`,
+    details: { code: 'QMS_CHANGE_CONTENT_FIXED', status: existing.status },
+  };
+}
+
+interface ChangeTransitionActor {
+  userId?: number | null; effectivenessReview?: string | null;
+}
+
+async function requiredWorkForTransition(client: RequestSqlClient, orgId: number, change: ChangeControlRow,
+  to: ChangeState, actor: ChangeTransitionActor): Promise<RequiredChangeWork[]> {
+  if (to !== 'closed') return [];
+  if (!Number.isSafeInteger(actor.userId) || Number(actor.userId) <= 0
+      || typeof actor.effectivenessReview !== 'string' || !actor.effectivenessReview.trim()) {
+    throw new InvalidChangeTransitionError('Closing a change requires the verifier and a recorded effectiveness review.');
+  }
+  return requiredWorkForClosure(client, orgId, change);
 }
 
 /**
@@ -316,10 +360,14 @@ export async function updateChange(orgId: number, id: number, p: {
  * Throws InvalidChangeTransitionError for an illegal move and
  * ChangeApprovalRequiresSignatureError for 'approved'.
  */
-export async function transitionChange(orgId: number, id: number, to: ChangeState, actor: {
-  userId?: number | null; effectivenessReview?: string | null;
-}, client: RequestSqlClient = pool): Promise<(ChangeControlRow & { from_status: ChangeState }) | null> {
-  const change = await getChange(orgId, id, client);
+export async function transitionChange(orgId: number, id: number, to: ChangeState, actor: ChangeTransitionActor,
+  client: RequestSqlClient = pool): Promise<(ChangeControlRow & { from_status: ChangeState }) | null> {
+  // Keep PostgreSQL's full timestamp precision for the compare-and-set. A
+  // JavaScript Date truncates microseconds and is not an exact row revision.
+  const { rows: current } = await queryRowsClient(client).query<ChangeControlRow & { record_revision: string }>(
+    `SELECT *, updated_at::text AS record_revision FROM qms_change_controls
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`, [id, orgId]);
+  const change = current[0];
   if (!change) return null;
   const from = change.status as ChangeState;
   const allowed = CHANGE_TRANSITIONS[from] ?? [];
@@ -340,8 +388,10 @@ export async function transitionChange(orgId: number, id: number, to: ChangeStat
     throw new ChangeApprovalRequiresSignatureError();
   }
 
+  const requirements = await requiredWorkForTransition(client, orgId, change, to, actor);
+
   // State-specific stamps.
-  const sets: string[] = ['status = $1', 'updated_at = now()'];
+  const sets: string[] = ['status = $1', 'updated_at = clock_timestamp()'];
   const args: unknown[] = [to];
   const add = (col: string, val: unknown) => { args.push(val); sets.push(`${col} = $${args.length}`); };
   switch (to) {
@@ -357,15 +407,53 @@ export async function transitionChange(orgId: number, id: number, to: ChangeStat
     default:
       break;
   }
-  args.push(id, orgId);
+  args.push(id, orgId, from, change.record_revision);
+  const where = [
+    `id = $${args.length - 3}`, `organization_id = $${args.length - 2}`, 'deleted_at IS NULL',
+    `status = $${args.length - 1}`, `updated_at::text = $${args.length}`,
+  ];
+  if (to === 'closed') {
+    const bind = (value: unknown) => { args.push(value); return `$${args.length}`; };
+    const verifier = bind(actor.userId), roles = bind([...GOVERNED_WRITE_ROLES]);
+    // The HTTP/AnA editor gate ran before this read/decision interval. Hold
+    // the same current writer role and active actor/organization through the
+    // actual closure statement; a caller-supplied actor number is not authority.
+    where.push(`EXISTS (SELECT ou.user_id FROM organization_users ou
+      JOIN users u ON u.id=ou.user_id JOIN organizations o ON o.id=ou.organization_id
+      WHERE ou.organization_id=qms_change_controls.organization_id AND ou.user_id=${verifier}
+        AND LOWER(BTRIM(ou.role))=ANY(${roles}::text[]) AND u.status='active' AND o.status='active'
+      FOR SHARE OF ou,u,o)`);
+    // The set of required links is part of the decision. Link writers also
+    // update the parent, so a writer waiting on this row cannot append a new
+    // requirement after the close or erase one behind its verifier.
+    const links = bind(requirements.map(requirement => requirement.linkId));
+    where.push(`ARRAY(SELECT l.id FROM qms_change_links l WHERE l.organization_id=qms_change_controls.organization_id
+      AND l.change_id=qms_change_controls.id AND l.relationship='requires' AND l.removed_at IS NULL ORDER BY l.id) = ${links}::int[]`);
+    for (const requirement of requirements) {
+      const target = bind(requirement.targetId), reference = bind(requirement.reference);
+      if (requirement.kind === 'capa') {
+        const program = bind(requirement.programId);
+        where.push(`(SELECT COUNT(*) FROM capa_records c JOIN regulatory_programs p ON p.id::text=c.program_id
+          WHERE p.organization_id=qms_change_controls.organization_id AND c.capa_code=${reference}
+            AND (qms_change_controls.program_id IS NULL OR c.program_id=qms_change_controls.program_id::text))=1`);
+        where.push(`EXISTS (SELECT c.id FROM capa_records c JOIN regulatory_programs p ON p.id::text=c.program_id
+          WHERE p.organization_id=qms_change_controls.organization_id AND c.id=${target}::uuid
+            AND c.capa_code=${reference} AND c.program_id=${program} AND c.state='closed_effective' FOR SHARE OF c)`);
+      } else {
+        where.push(`EXISTS (SELECT d.id FROM qc_deviations d WHERE d.organization_id=qms_change_controls.organization_id
+          AND d.id=${target}::int AND d.deviation_number=${reference} AND d.status='closed' FOR SHARE OF d)`);
+      }
+    }
+  }
   const { rows } = await queryRowsClient(client).query<ChangeControlRow>(
     `UPDATE qms_change_controls SET ${sets.join(', ')}
-      WHERE id = $${args.length - 1} AND organization_id = $${args.length} AND deleted_at IS NULL
+      WHERE ${where.join(' AND ')}
       RETURNING *`,
     args,
   );
   // The state it left, for the audit row of the move (the row returned is the new one).
-  return rows[0] ? { ...rows[0], from_status: from } : null;
+  if (!rows[0]) throw new InvalidChangeTransitionError('The change, required work or verifier authority changed while this move was being recorded. Reload it and verify the current records and permissions.');
+  return { ...rows[0], from_status: from };
 }
 
 /** Soft-delete a change (and, via ON DELETE CASCADE on hard-delete only, its
@@ -418,15 +506,60 @@ export async function listLinksForChanges(orgId: number, changeIds: number[], cl
  */
 const LINK_TARGET_BY_REF: Partial<Record<string, string>> = {
   deviation: `SELECT 1 FROM qc_deviations WHERE organization_id = $1 AND deviation_number = $2 LIMIT 1`,
-  capa: `SELECT 1 FROM capa_records c JOIN regulatory_programs p ON p.id::text = c.program_id
-          WHERE p.organization_id = $1 AND c.capa_code = $2 LIMIT 1`,
   supplier: `SELECT 1 FROM qms_suppliers WHERE organization_id = $1 AND deleted_at IS NULL
               AND (supplier_code = $2 OR supplier_name = $2) LIMIT 1`,
 };
 const DOCUMENT_BY_ID = `SELECT 1 FROM qms_documents WHERE organization_id = $1 AND id = $2 AND deleted_at IS NULL LIMIT 1`;
 
-async function refuseUnresolvedTarget(client: RequestSqlClient, orgId: number, p: { linkType: string; linkedRef: string; linkedId?: number | null }): Promise<void> {
+async function capaLinkTargets(client: RequestSqlClient, orgId: number, reference: string, programId: string | null) {
+  return (await queryRowsClient(client).query<{ id: string; state: string; program_id: string }>(
+    `SELECT c.id,c.state,c.program_id FROM capa_records c JOIN regulatory_programs p ON p.id::text=c.program_id
+      WHERE p.organization_id=$1 AND c.capa_code=$2 AND ($3::text IS NULL OR c.program_id=$3::text)
+      ORDER BY c.id LIMIT 2`, [orgId, reference, programId])).rows;
+}
+
+interface RequiredChangeWork {
+  linkId: number; kind: 'capa' | 'deviation'; targetId: string | number; reference: string; programId?: string;
+}
+
+async function requiredWorkForClosure(client: RequestSqlClient, orgId: number, change: ChangeControlRow): Promise<RequiredChangeWork[]> {
+  const links = (await listLinks(orgId, change.id, client)).filter(link => link.relationship === 'requires').sort((a, b) => a.id - b.id);
+  const work: RequiredChangeWork[] = [];
+  for (const link of links) {
+    if (link.link_type === 'capa') {
+      const targets = await capaLinkTargets(client, orgId, link.linked_ref, change.program_id);
+      if (link.linked_id != null || targets.length !== 1 || targets[0].state !== 'closed_effective') {
+        throw new InvalidChangeTransitionError(`Required CAPA ${link.linked_ref} must resolve to one CAPA in this change's programme and be closed effective before the change can close.`);
+      }
+      work.push({ linkId: link.id, kind: 'capa', targetId: targets[0].id, reference: link.linked_ref, programId: targets[0].program_id });
+    } else if (link.link_type === 'deviation') {
+      const { rows } = await queryRowsClient(client).query<{ id: number; status: string }>(
+        `SELECT id,status FROM qc_deviations WHERE organization_id=$1 AND deviation_number=$2
+          AND ($3::int IS NULL OR id=$3::int) ORDER BY id LIMIT 2`, [orgId, link.linked_ref, link.linked_id]);
+      if (rows.length !== 1 || rows[0].status !== 'closed') {
+        throw new InvalidChangeTransitionError(`Required deviation ${link.linked_ref} must have its signed closure recorded before the change can close.`);
+      }
+      work.push({ linkId: link.id, kind: 'deviation', targetId: rows[0].id, reference: link.linked_ref });
+    } else {
+      // A business reference, document ID or note does not identify an
+      // accepted validation result or the exact SOP revision this change
+      // requires. In particular, an arbitrary released predecessor is not
+      // proof that a change's required document revision was implemented.
+      throw new InvalidChangeTransitionError(`Completion of required ${link.link_type} ${link.linked_ref} cannot be verified from this link. The link does not identify an accepted result or exact released revision, so the change cannot close while it is required.`);
+    }
+  }
+  return work;
+}
+
+async function refuseUnresolvedTarget(client: RequestSqlClient, orgId: number, changeId: number, p: { linkType: string; linkedRef: string; linkedId?: number | null }): Promise<void> {
   const q = queryRowsClient(client);
+  if (p.linkType === 'capa') {
+    const change = await getChange(orgId, changeId, client);
+    const targets = change ? await capaLinkTargets(client, orgId, p.linkedRef, change.program_id) : [];
+    if (p.linkedId != null || targets.length !== 1) {
+      throw new ChangeLinkRefusedError(`CAPA ${p.linkedRef} must resolve to exactly one record in this change's programme (or one unique organization record for an unassigned change). Nothing was linked.`);
+    }
+  }
   const byRef = LINK_TARGET_BY_REF[p.linkType];
   if (byRef && (await q.query(byRef, [orgId, p.linkedRef])).rows.length === 0) {
     throw new ChangeLinkRefusedError(`No ${p.linkType} ${p.linkedRef} is recorded in this organisation. Link a record from its register. Nothing was linked.`);
@@ -441,17 +574,21 @@ export async function addLink(orgId: number, changeId: number, p: {
   linkType: string; linkedRef: string; linkedLabel?: string | null; linkedId?: number | null;
   relationship?: string; note?: string | null; createdBy?: number | null;
 }, client: RequestSqlClient = pool): Promise<ChangeLinkRow> {
-  await refuseUnresolvedTarget(client, orgId, p);
+  await refuseUnresolvedTarget(client, orgId, changeId, p);
   const { rows } = await queryRowsClient(client).query<ChangeLinkRow>(
-    `INSERT INTO qms_change_links (
+    `WITH changed AS (
+       UPDATE qms_change_controls SET updated_at=clock_timestamp()
+        WHERE id=$2 AND organization_id=$1 AND deleted_at IS NULL AND status NOT IN ('closed','cancelled','rejected') RETURNING id
+     ) INSERT INTO qms_change_links (
        organization_id, change_id, link_type, linked_ref, linked_label, linked_id, relationship, note, created_by
-     ) VALUES ($1,$2,$3,$4,$5,$6,COALESCE($7,'references'),$8,$9)
+     ) SELECT $1,changed.id,$3,$4,$5,$6,COALESCE($7,'references'),$8,$9 FROM changed
      RETURNING *`,
     [
       orgId, changeId, p.linkType, p.linkedRef, p.linkedLabel ?? null, p.linkedId ?? null,
       p.relationship ?? null, p.note ?? null, p.createdBy ?? null,
     ],
   );
+  if (!rows[0]) throw new ChangeLinkRefusedError('A link can be added only to a current, nonterminal change in this organization. Nothing was linked.');
   return rows[0];
 }
 
@@ -463,8 +600,14 @@ export async function addLink(orgId: number, changeId: number, p: {
 export async function removeLink(orgId: number, changeId: number, linkId: number,
   removal: { removedBy: number; reason: string }, client: RequestSqlClient = pool): Promise<boolean> {
   const { rows } = await queryRowsClient(client).query(
-    `UPDATE qms_change_links SET removed_at = NOW(), removed_by = $4, removal_reason = $5
-      WHERE id = $1 AND change_id = $2 AND organization_id = $3 AND removed_at IS NULL RETURNING id`,
+    `WITH changed AS (
+       UPDATE qms_change_controls SET updated_at=clock_timestamp()
+        WHERE id=$2 AND organization_id=$3 AND deleted_at IS NULL AND status NOT IN ('closed','cancelled','rejected')
+          AND EXISTS (SELECT 1 FROM qms_change_links WHERE id=$1 AND change_id=$2 AND organization_id=$3 AND removed_at IS NULL)
+        RETURNING id
+     ) UPDATE qms_change_links SET removed_at = NOW(), removed_by = $4, removal_reason = $5
+      WHERE id = $1 AND change_id = $2 AND organization_id = $3 AND removed_at IS NULL
+        AND EXISTS (SELECT 1 FROM changed) RETURNING id`,
     [linkId, changeId, orgId, removal.removedBy, removal.reason],
   );
   return rows.length > 0;

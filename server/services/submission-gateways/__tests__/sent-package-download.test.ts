@@ -57,6 +57,7 @@ vi.mock('../../storage', async (orig) => {
 vi.mock('../../auditService', () => ({ default: { logAction: h.logAction } }));
 
 import gatewayRouter from '../../../routes/mdx-submission-gateway';
+import { pool } from '../../../db';
 import { StorageIntegrityError } from '../../storage/storage-provider';
 
 const BYTES = Buffer.from('PK\u0003\u0004 the exact package FDA received');
@@ -66,7 +67,8 @@ const KEPT = { storageVersionId: '22222222-2222-4222-8222-222222222222', provide
 
 function app() {
   const a = express();
-  a.use((req, _res, next) => { (req as any).user = { id: 777, organizationId: 99, role: 'member' }; next(); });
+  // The auth boundary binds the request's pinned client (establishRequestTenantScope); here it is the db stub.
+  a.use((req, _res, next) => { (req as any).user = { id: 777, organizationId: 99, role: 'member' }; (req as any).dbClient = { query: pool.query }; next(); });
   a.use('/api/mdx', gatewayRouter);
   return a;
 }

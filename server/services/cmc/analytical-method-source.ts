@@ -77,6 +77,25 @@ type Pool = ReturnType<typeof getPool>;
 export const METHOD_SOURCE_TYPE = 'method';
 
 /**
+ * What a recorded validation status MEANS — the one vocabulary.
+ *
+ * These two sets were declared inside `ich-compliance-q2.ts`, which is a
+ * consumer of this module's `AnalyticalMethodRecord`. The specification
+ * approval gate needs the same reading ("is this procedure fit to measure the
+ * limit against?"), and a second copy of the vocabulary is how two surfaces of
+ * one product come to disagree about whether a method is validated. They live
+ * with the record whose field they interpret; Q2 imports them.
+ */
+export const METHOD_VALIDATED = new Set(['validated', 'verified', 'transferred']);
+/** Statuses that show a procedure is suitable for its use without full validation. */
+export const METHOD_SUITABLE = new Set(['qualified', 'suitable', 'suitability confirmed', 'phase-appropriate', 'phase appropriate', 'fit for purpose']);
+
+/** A recorded status, compared the one way: trimmed and lower-cased. */
+export function methodStatusKey(status: unknown): string {
+  return String(status ?? '').trim().toLowerCase();
+}
+
+/**
  * An analytical method normalized to the field names the ICH / QbD / control
  * strategy rules consume.
  */
@@ -96,6 +115,18 @@ export interface AnalyticalMethodRecord {
   validationStatus: string;
   /** False when no validation status is recorded for this method at all. */
   validationStatusRecorded: boolean;
+  /**
+   * Who signed the validation act and when, as the register recorded them —
+   * '' when the payload carries neither.
+   *
+   * P-110 (2026-11-09) reads these: a status in `METHOD_SUITABLE` is honoured
+   * only when they are present, because suitability is a signed act. Nothing
+   * but the ceremony writes these two columns — `withoutSignatureFields`
+   * strips them from every create and edit body — so their presence is what
+   * distinguishes a signed outcome from a word typed into a register.
+   */
+  validationSignedBy: string;
+  validationSignedAt: string;
   specificityData: unknown;
   linearityData: unknown;
   accuracyData: unknown;
@@ -158,6 +189,8 @@ export function normalizeMethodPayload(
     purpose: pickText(payload, ['purpose']),
     validationStatus,
     validationStatusRecorded: validationStatus !== '',
+    validationSignedBy: pickText(payload, ['validatedBy', 'validated_by']),
+    validationSignedAt: pickText(payload, ['validationDate', 'validation_date']),
     specificityData: pickValue(payload, ['specificity_data', 'specificityData']),
     linearityData: pickValue(payload, ['linearity_data', 'linearityData']),
     accuracyData: pickValue(payload, ['accuracy_data', 'accuracyData']),
@@ -251,4 +284,155 @@ export async function loadProjectAnalyticalMethods(
       reason: `analytical method source read failed: ${detail}`,
     };
   }
+}
+
+/**
+ * May this specification be approved, as far as its analytical method goes?
+ *
+ * ── The defect this closes ───────────────────────────────────────────────────
+ * The Specifications tab told a CMC user, in two places, that "a limit whose
+ * method is not validated cannot be approved (ICH Q2)". Nothing refused it.
+ * `POST /api/cmc/specifications/:id/approve` checked not-found, already-
+ * approved, signing authority, re-authentication, reason and the ledger, and
+ * never looked at the method; the screen's own `noMethod` was `!method` — "no
+ * method name was typed" — so a specification naming a method whose register
+ * row was still `development` passed the warning entirely. A gate that is
+ * stated and not enforced is worse than no gate: it is read as having been
+ * applied.
+ *
+ * ── What it refuses, and the one thing it does not ──────────────────────────
+ * An approved specification is a filed commitment, so the bar is that the
+ * product can SHOW the limit's procedure is fit — not merely that it has not
+ * been shown unfit:
+ *
+ *   - no method named at all → REFUSED. A release limit with no procedure to
+ *     measure it cannot be approved by anyone's reading of ICH Q6A.
+ *   - the named method is not in the register → REFUSED. A compendial
+ *     procedure is not an exception: the register records and verifies one
+ *     like any other, and `verified` and `transferred` are statuses this
+ *     vocabulary already carries for exactly that.
+ *   - the register could not be read → REFUSED, as an outage and not a data
+ *     fault, in its own words. A limit is not approved on a procedure nobody
+ *     could verify.
+ *   - a recorded status that is neither validated nor shown suitable
+ *     (`development`, `retired`), or no status at all → REFUSED, naming the
+ *     method and its status.
+ *
+ * The one thing it does NOT refuse is a status in `METHOD_SUITABLE`
+ * (`qualified`, `phase-appropriate`, `fit for purpose`). That is deliberate
+ * and it is this repository's own ICH Q2 reading: `q2Expectation` in
+ * `ich-compliance-q2.ts` makes suitability sufficient before phase 3, and a
+ * phase-1 IND's specifications are routinely approved on qualified methods.
+ * Refusing them would block legitimate early-phase work in the name of a rule
+ * ICH does not impose there.
+ *
+ * `validated` is reachable only through the register's signed Validate action
+ * — the method form refuses a self-declared one
+ * (`refusesUngovernedQualification`) — so this gate rests on a governed act,
+ * not on a dropdown.
+ *
+ * The name is matched exactly, trimmed and lower-cased, and never by
+ * substring: a refusal over the WRONG method would be a false block on a
+ * governed act, and certainty is the right bar for one.
+ */
+export type SpecificationMethodVerdict =
+  | { approve: true; note: string }
+  | {
+      approve: false;
+      code: 'METHOD_NOT_NAMED' | 'METHOD_NOT_FIT' | 'METHOD_NOT_IN_REGISTER' | 'METHOD_NOT_VERIFIABLE';
+      message: string;
+    };
+
+export function specificationMethodVerdict(
+  methodName: string | null | undefined,
+  source: AnalyticalMethodSourceResult,
+): SpecificationMethodVerdict {
+  const named = String(methodName ?? '').trim();
+  if (!named) {
+    return {
+      approve: false,
+      code: 'METHOD_NOT_NAMED',
+      message:
+        'This specification names no analytical method, so there is no procedure its limits are measured by. ' +
+        'Record the method on the specification, then approve it.',
+    };
+  }
+
+  if (!source.available) {
+    return {
+      approve: false,
+      code: 'METHOD_NOT_VERIFIABLE',
+      message:
+        `The analytical method register could not be read, so "${named}" could not be checked (${source.reason}). ` +
+        'A limit is not approved on a procedure nobody could verify; try again once the register is readable.',
+    };
+  }
+
+  const wanted = named.toLowerCase();
+  const match = source.methods.find((m) => m.methodName.trim().toLowerCase() === wanted);
+  if (!match) {
+    return {
+      approve: false,
+      code: 'METHOD_NOT_IN_REGISTER',
+      message:
+        `"${named}" is not recorded in this project's analytical method register, so there is nothing to show it ` +
+        'is fit to measure this limit. Record the method — a compendial procedure is recorded and verified like ' +
+        'any other — then approve the specification.',
+    };
+  }
+  if (!match.validationStatusRecorded) {
+    return {
+      approve: false,
+      code: 'METHOD_NOT_FIT',
+      message:
+        `The analytical method "${match.methodName}" records no validation status, so nothing shows it is fit to ` +
+        'measure this limit (ICH Q2). Validate it on the method register, which records the status under signature.',
+    };
+  }
+
+  const key = methodStatusKey(match.validationStatus);
+  if (METHOD_VALIDATED.has(key)) {
+    return { approve: true, note: `"${named}" is recorded as ${match.validationStatus}` };
+  }
+  /* ── P-110 item 1 (2026-11-09): suitability is a signed act ────────────────
+     Decided by the coordinating session under the founder's delegation of
+     2026-11-08, on this lane's own finding: the gate honoured a suitable
+     status, and no form could record one, so in practice every limit needed a
+     fully validated method. The decision opens suitability through the
+     existing signed act and REFUSES the unsigned word — "a word typed into a
+     GxP register must not unlock an approval that validation reaches only by
+     signature" — including as an interim.
+
+     So the words are read from the signature, not from the string. The two
+     signature columns are written by `qualifyRegisterRecord` and by nothing
+     else, which is what makes their presence the test.
+
+     `METHOD_VALIDATED` above is unchanged: `validated` was already reachable
+     only through that act, and the decision speaks to suitability's words. */
+  if (METHOD_SUITABLE.has(key)) {
+    if (match.validationSignedBy && match.validationSignedAt) {
+      return {
+        approve: true,
+        note: `"${named}" is recorded as ${match.validationStatus} under signature`,
+      };
+    }
+    return {
+      approve: false,
+      code: 'METHOD_NOT_FIT',
+      message:
+        `The analytical method "${match.methodName}" is recorded as ${match.validationStatus}, but that is a word ` +
+        'in the register and not a signed act: nothing on this record says who attested the procedure is fit, or ' +
+        'when. Suitability is recorded by the method register\u2019s Validate action, which signs for either full ' +
+        'validation or suitability for the phase (ICH Q2(R2), Q14; 21 CFR 312.23(a)(7)). Sign it there, then ' +
+        'approve the limit.',
+    };
+  }
+  return {
+    approve: false,
+    code: 'METHOD_NOT_FIT',
+    message:
+      `The analytical method "${match.methodName}" is recorded as ${match.validationStatus}, which is neither ` +
+      'validated nor shown suitable, so a limit measured by it cannot be approved (ICH Q2). Validate the method, ' +
+      'or record the status that shows it is suitable for this use.',
+  };
 }

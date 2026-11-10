@@ -1,0 +1,18 @@
+The mutation: signedStateHeld narrowed to the first signed value, which is what
+a single `signedValue` parameter amounts to.
+
+-  const all = typeof signedValues === 'string' ? [signedValues] : signedValues;
++  const all = typeof signedValues === 'string' ? [signedValues] : [signedValues[0]];
+
+$ npx vitest run client/src/concept2cure/v2/__tests__/cmcRegisterForms.test.ts
+
+ × a register that signs two states round-trips either one > round-trips a phase-appropriate method 14ms
+   → expected 'development' to be 'phase-appropriate'
+
+      Tests  1 failed | 95 passed (96)
+
+Reverted. 96 passed.
+
+'development' is what the drawer sent on Save, and the server refuses an
+unsigned reversal out of a governed word, so the live result was 409 — the
+Karl Fischer method in the demo data could not be edited at all.

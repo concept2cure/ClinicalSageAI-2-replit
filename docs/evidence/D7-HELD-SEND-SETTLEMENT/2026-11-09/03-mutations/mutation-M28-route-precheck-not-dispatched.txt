@@ -1,0 +1,5 @@
+MUTATION M28-route-precheck-not-dispatched in server/routes/submissions.ts (on the final code and tests, 2026-11-09T13:44:53.094597Z): replaced [    if (parsed.data.step === 'held-send-settlement') {] with [    if (false) {]
+ × server/routes/__tests__/submissions-held-send-settlement.test.ts > the settlement precheck, answered at the route > sends the step, the outcome, the kind and the document to its own function, never to precheckGovernedStep 38ms
+      Tests  1 failed | 12 skipped (13)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 ddda88c8bda5fb8adec2d24f7e00bc68989a2d0395e45ed998cb042a71ead517 (expected ddda88c8bda5fb8adec2d24f7e00bc68989a2d0395e45ed998cb042a71ead517)

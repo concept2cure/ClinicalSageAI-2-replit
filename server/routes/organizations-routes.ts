@@ -8,6 +8,7 @@ import {
 } from '@shared/schema';
 import { eq, count, inArray } from 'drizzle-orm';
 import { authMiddleware } from '../auth';
+import { reviewPolicyRefusal } from '@shared/artifact-governance';
 import { recordAuditRow } from '../services/audit/audit-write-outcome';
 import { staffCrossOrgScope } from '../middleware/staffCrossOrgScope';
 import { holdsPlatformRole } from '../middleware/requirePlatformAdmin';
@@ -541,6 +542,9 @@ router.patch('/:id/settings', validateOrgOwnership, requireOrgAdmin, staffAcross
     // requireOrgAdmin admits an administrator, so a body naming it is refused
     // whole, before anything is read (P1-49 fix round); the writer below
     // refuses any change to it from this door as well.
+    // A review rule outside its bounds is refused, never stored and clamped (P-117).
+    const reviewRefusal = reviewPolicyRefusal(settingsUpdate);
+    if (reviewRefusal) return res.status(400).json({ success: false, error: reviewRefusal });
     const managedRefusal = namedManagedSettingsRefusal(settingsUpdate);
     if (managedRefusal) return res.status(403).json({ success: false, error: managedRefusal });
 

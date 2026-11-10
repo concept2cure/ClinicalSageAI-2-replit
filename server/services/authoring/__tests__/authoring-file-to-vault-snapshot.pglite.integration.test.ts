@@ -10,6 +10,7 @@ import {
 import type { AuthoringPool } from '../authoring-documents';
 import type { AuthoringAuditContext, AuthoringAuditEntry, Queryable } from '../authoring-evidence';
 import type { CanonicalStoreDb } from '../../regulatory/canonicalDocumentStore';
+import { AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
 import { sectionsDigest, type ExportSectionRow } from '../authoring-export';
 import { normalizeTemplateSpec } from '../../../../shared/templates/template-spec';
 import type { CompanyDocumentProfile } from '../../../../shared/company-documents';
@@ -43,6 +44,14 @@ let pool: AuthoringPool;
 beforeAll(async () => {
   harness = await createDispositionHarness();
   await harness.pg.exec(readFileSync(new URL('../../../../db/migrations/20260725_authoring_audit_trail.sql',import.meta.url),'utf8'));
+  /* Release reads the independent-check ledger from both sides, authoring_audit_trail and the chained audit_logs
+     (workflow-import-governance.ts, independentLedger), ordered by audit_logs.chain_seq, and any read error is refused
+     as INDEPENDENT_CHECK_REQUIRED. With no audit_logs here every filing was refused, 32 of 32 (found by RIM,
+     2026-11-09). The table is the writer's own DDL plus migrations/20260921_audit_logs_chain_seq.sql itself (the column, its
+     sequence and the trigger that assigns it), as production has it; the shared DDL lacks the column. With the trail
+     writer mocked the ledger is empty, so this document needs no independent check. */
+  await harness.pg.exec(AUDIT_LOGS_PGLITE_DDL);
+  await harness.pg.exec(readFileSync(new URL('../../../../migrations/20260921_audit_logs_chain_seq.sql', import.meta.url), 'utf8'));
   await harness.pg.exec(`
     ALTER TABLE authoring_documents ADD COLUMN title text, ADD COLUMN module text,
       ADD COLUMN version text, ADD COLUMN created_by text, ADD COLUMN created_at timestamptz DEFAULT now(),
@@ -122,10 +131,13 @@ async function workingDraft(): Promise<WorkingDraft> {
   // Not a CSR: a CSR's filing also needs its scientific-review receipt
   // (csr-scientific-review.ts), which workflow-import-governance.pglite.test.ts
   // holds to its refusal. This suite is about the filed snapshot.
+  // Not AnA-drafted either: since bb999f25b6 (2026-11-06) an AnA draft's release also needs its retained creation
+  // receipt (WORKFLOW_ORIGIN_UNVERIFIED), which draft-source-identity.pglite.integration.test.ts holds. A person wrote
+  // this one.
   await f.pg.query(`INSERT INTO authoring_documents
     (id,tenant_id,status,title,module,client_program_id,version,created_by,provenance)
     VALUES ($1,$2,'draft','Working clinical overview','M2',$3,'1.0','author@example.test',$4)`,
-  [docId, f.org, f.program, JSON.stringify({ source: 'ana', moduleDefaulted: true })]);
+  [docId, f.org, f.program, JSON.stringify({ source: 'manual', moduleDefaulted: true })]);
   for (let i = 0; i < sections.length; i++) {
     const s = sections[i];
     await f.pg.query(`INSERT INTO authoring_sections (id,doc_id,tenant_id,code,title,content,order_index)
@@ -259,7 +271,7 @@ describe('file-to-Vault preserves current document and admission identity', () =
     ['version', 'UPDATE authoring_documents SET version=$3 WHERE id=$1 AND tenant_id=$2', '2.0'],
     ['author', 'UPDATE authoring_documents SET created_by=$3 WHERE id=$1 AND tenant_id=$2', 'other@example.test'],
     ['creation timestamp', 'UPDATE authoring_documents SET created_at=$3 WHERE id=$1 AND tenant_id=$2', '2026-01-01T10:00:00Z'],
-    ['provenance', 'UPDATE authoring_documents SET provenance=$3 WHERE id=$1 AND tenant_id=$2', JSON.stringify({ source: 'manual', moduleDefaulted: true })],
+    ['provenance', 'UPDATE authoring_documents SET provenance=$3 WHERE id=$1 AND tenant_id=$2', JSON.stringify({ source: 'manual', moduleDefaulted: false })],
     ['locale', 'UPDATE authoring_documents SET locale=$3 WHERE id=$1 AND tenant_id=$2', 'ja-JP'],
     ['product', 'UPDATE authoring_documents SET product_code=$3 WHERE id=$1 AND tenant_id=$2', 'NEW-PRODUCT'],
     ['template', 'UPDATE authoring_documents SET template_id=$3 WHERE id=$1 AND tenant_id=$2', randomUUID()],

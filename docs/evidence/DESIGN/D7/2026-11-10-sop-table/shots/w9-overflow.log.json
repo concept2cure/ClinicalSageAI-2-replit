@@ -1,0 +1,40 @@
+{
+  "apiErrors": [],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "wide",
+      "wide": []
+    },
+    {
+      "name": "doc",
+      "docSW": 390,
+      "docCW": 390,
+      "bodySW": 390,
+      "scrollers": [
+        {
+          "tag": "DIV",
+          "cls": "sp-starters",
+          "sw": 717,
+          "cw": 358
+        },
+        {
+          "tag": "DIV",
+          "cls": "tabs",
+          "sw": 908,
+          "cw": 358
+        },
+        {
+          "tag": "TABLE",
+          "cls": "reg-tbl qms-reg",
+          "sw": 871,
+          "cw": 358
+        }
+      ]
+    },
+    {
+      "name": "w9-overflow",
+      "ok": true
+    }
+  ]
+}

@@ -1,0 +1,682 @@
+# red: the final d0Primitives.test.ts against HEAD b391bfad2's stylesheets (git archive of client/src/concept2cure/v2/styles, read through D0_PRIMITIVES_STYLES).
+# The ratchet check reads the working tree's foundationsRetiredRatchet.test.ts, which already holds sp-primary, so it passes here; its own red is foundationsRetiredRatchet-sp-primary-at-49.txt.
+# D0_PRIMITIVES_STYLES=<export>/client/src/concept2cure/v2/styles npx vitest run --maxWorkers=1 client/src/concept2cure/v2/__tests__/d0Primitives.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > the regulation line is --text-300, in its one rule 43ms
+   → expected 'var(--text-400)' to be 'var(--text-300)' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > no v2 stylesheet has a rule whose subject is a tone class alone 29ms
+   → expected [ Array(6) ] to deeply equal []
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > the chip draws tone-ok from its own rule in app-v2.css 10ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > the chip draws tone-warn from its own rule in app-v2.css 11ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > the chip draws tone-err from its own rule in app-v2.css 13ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > the chip draws tone-ai from its own rule in app-v2.css 11ms
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > the chip draws tone-idle from its own rule in app-v2.css 8ms
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > the chip draws tone-dim from its own rule in app-v2.css 9ms
+   → rules for .rd-chip.tone-dim: expected [] to have a length of 1 but got +0
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .cro-pipe-n.tone-ok keeps what the bare rule showed, in misc-surfaces-v2.css 3ms
+   → .cro-pipe-n.tone-ok background: expected undefined to be 'var(--success-muted)' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .cro-pipe-n.tone-warn keeps what the bare rule showed, in misc-surfaces-v2.css 2ms
+   → .cro-pipe-n.tone-warn background: expected undefined to be 'var(--warning-muted)' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .cro-pipe-n.tone-idle keeps what the bare rule showed, in misc-surfaces-v2.css 2ms
+   → .cro-pipe-n.tone-idle background: expected undefined to be 'var(--idle-muted)' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .cro-pipe-n.tone-ai keeps what the bare rule showed, in misc-surfaces-v2.css 1ms
+   → .cro-pipe-n.tone-ai background: expected undefined to be 'var(--ai-muted)' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .hf-mit.tone-ok keeps what the bare rule showed, in coverage-v2.css 2ms
+   → .hf-mit.tone-ok background: expected undefined to be 'var(--success-muted)' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .hf-mit.tone-err keeps what the bare rule showed, in coverage-v2.css 3ms
+   → .hf-mit.tone-err background: expected undefined to be 'var(--error-muted)' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .hf-mit.tone-idle keeps what the bare rule showed, in coverage-v2.css 3ms
+   → .hf-mit.tone-idle background: expected undefined to be 'var(--idle-muted)' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .hf-gate.tone-idle keeps what the bare rule showed, in coverage-v2.css 3ms
+   → .hf-gate.tone-idle background: expected undefined to be 'var(--idle-muted)' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .hf-el-dot.tone-idle keeps what the bare rule showed, in coverage-v2.css 7ms
+   → .hf-el-dot.tone-idle background: expected undefined to be 'var(--idle-muted)' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .rv-wf-tag.tone-err keeps what the bare rule showed, in coverage-v2.css 7ms
+   → .rv-wf-tag.tone-err background: expected undefined to be 'var(--error-muted)' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .dr2-find.tone-idle keeps what the bare rule showed, in coverage-v2.css 2ms
+   → .dr2-find.tone-idle background: expected undefined to be 'var(--idle-muted)' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .eng-blocker-dot.tone-err keeps what the bare rule showed, in app-v2.css 5ms
+   → .eng-blocker-dot.tone-err color: expected undefined to be 'var(--error)' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .eng-blocker-dot.tone-warn keeps what the bare rule showed, in app-v2.css 5ms
+   → .eng-blocker-dot.tone-warn color: expected undefined to be 'var(--warning)' // Object.is equality
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > the two the review names already have theirs: .sc-verdict.tone-warn and .pdev-sev-dot.tone-warn 2ms
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > nothing styles an error-toned empty state: a failure renders ErrorState 56ms
+   → expected [ …(2) ] to deeply equal []
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 5: .sp-primary is the canonical primary > the base (32px) lists .sp-primary 5ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 5: .sp-primary is the canonical primary > the icon (16px) lists .sp-primary 1ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 5: .sp-primary is the canonical primary > the fill lists .sp-primary 1ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 5: .sp-primary is the canonical primary > the fill on hover lists .sp-primary 0ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 5: .sp-primary is the canonical primary > the coarse-pointer height lists .sp-primary 0ms
+   → expected false to be true // Object.is equality
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 5: .sp-primary is the canonical primary > no other sheet gives .sp-primary chrome: it keeps its row layout, and its grey disabled state 10ms
+   → expected [ …(2) ] to deeply equal [ Array(1) ]
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 5: .sp-primary is the canonical primary > nothing moves it on hover, in any sheet 32ms
+   → expected [ Array(1) ] to deeply equal []
+ ✓ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 5: .sp-primary is the canonical primary > the retired-name ratchet holds its uses 0ms
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 10: admin uses the canonical button and segmented control > of its button rules, only the small size is left 1ms
+   → expected [ '.adm-access .btn', …(4) ] to deeply equal [ '.adm-access .btn.small' ]
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 10: admin uses the canonical button and segmented control > it draws no segmented chrome: only the header row places the track 1ms
+   → expected [ …(4) ] to deeply equal [ Array(1) ]
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 10: admin uses the canonical button and segmented control > the 28px item covers admin's .seg-btn, scoped to admin 5ms
+   → .c2c-v2 .adm-access .seg-btn in .c2c-v2 :is(.seg-b, .ml-seg-btn): expected 0 to be greater than 0
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 10: admin uses the canonical button and segmented control > hover covers admin's .seg-btn, scoped to admin 12ms
+   → .c2c-v2 .adm-access .seg-btn:hover in .c2c-v2 :is(.seg-b, .ml-seg-btn):hover: expected 0 to be greater than 0
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 10: admin uses the canonical button and segmented control > the active item covers admin's .seg-btn, scoped to admin 7ms
+   → .c2c-v2 .adm-access .seg-btn.on in .c2c-v2 :is(.seg-b, .ml-seg-btn):is(.on, [data-on], [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"]): expected 0 to be greater than 0
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 10: admin uses the canonical button and segmented control > the dark active item covers admin's .seg-btn, scoped to admin 4ms
+   → .c2c-v2.dark .adm-access .seg-btn.on in .c2c-v2.dark :is(.seg-b, .ml-seg-btn):is(.on, [data-on], [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"]): expected 0 to be greater than 0
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 10: admin uses the canonical button and segmented control > the inset focus ring covers admin's .seg-btn, scoped to admin 6ms
+   → .c2c-v2 .adm-access .seg-btn:focus-visible in .c2c-v2 :is(.tab, .reg-tab, .sc-ws, .cc-tab, .seg-b, .ml-seg-btn):focus-visible: expected 0 to be greater than 0
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 11: a card header wraps, so a long subtitle drops below the title > .pj-card-h has flex-wrap: wrap, in its one rule 27ms
+   → expected [] to deeply equal [ 'app-v2.css: .c2c-v2 .pj-card-h' ]
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 16: nothing here under the 12px floor, and no dead chip tone > journey-v2.css .c2c-v2 .de-err (the form error line) is var(--fs-caption) 1ms
+   → expected [ '11.5px' ] to deeply equal [ 'var(--fs-caption)' ]
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 16: nothing here under the 12px floor, and no dead chip tone > app-v2.css .c2c-v2 .c2c-error-ref (the support handle line) is var(--fs-caption) 5ms
+   → expected [ '11px' ] to deeply equal [ 'var(--fs-caption)' ]
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 16: nothing here under the 12px floor, and no dead chip tone > app-v2.css .c2c-v2 .c2c-error-ref code (the support handle) is var(--fs-caption) 5ms
+   → expected [ '11px' ] to deeply equal [ 'var(--fs-caption)' ]
+ × client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 16: nothing here under the 12px floor, and no dead chip tone > no stylesheet names .rd-chip.tone-flight 2ms
+   → expected [ Array(1) ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 36 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > the regulation line is --text-300, in its one rule
+AssertionError: expected 'var(--text-400)' to be 'var(--text-300)' // Object.is equality
+
+Expected: "var(--text-300)"
+Received: "var(--text-400)"
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:137:42
+    135|     const lines = BLOCKS.filter((b) => full(b.prelude).some((s) => cla…
+    136|     expect(lines.map((b) => `${b.sheet}: ${b.prelude}`)).toEqual(['app…
+    137|     expect(decl(lines[0].body, 'color')).toBe('var(--text-300)');
+       |                                          ^
+    138|   });
+    139|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > no v2 stylesheet has a rule whose subject is a tone class alone
+AssertionError: expected [ Array(6) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "app-v2.css: .c2c-v2 .tone-ok",
++   "app-v2.css: .c2c-v2 .tone-ai",
++   "app-v2.css: .c2c-v2 .tone-warn",
++   "app-v2.css: .c2c-v2 .tone-idle",
++   "app-v2.css: .c2c-v2 .tone-dim",
++   "app-v2.css: .c2c-v2 .tone-err",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:142:18
+    140|   it('no v2 stylesheet has a rule whose subject is a tone class alone'…
+    141|     const bare = BLOCKS.filter((b) => full(b.prelude).some((s) => BARE…
+    142|     expect(bare).toEqual([]);
+       |                  ^
+    143|   });
+    144|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > the chip draws tone-dim from its own rule in app-v2.css
+AssertionError: rules for .rd-chip.tone-dim: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:156:75
+    154|   it.each(Object.entries(CHIP))('the chip draws tone-%s from its own r…
+    155|     const own = APP_FLAT.filter((r) => full(r.selector).includes(`.c2c…
+    156|     expect(own.map((r) => r.selector), `rules for .rd-chip.tone-${tone…
+       |                                                                           ^
+    157|     expect([decl(own[0].body, 'background'), decl(own[0].body, 'color'…
+    158|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .cro-pipe-n.tone-ok keeps what the bare rule showed, in misc-surfaces-v2.css
+AssertionError: .cro-pipe-n.tone-ok background: expected undefined to be 'var(--success-muted)' // Object.is equality
+
+- Expected:
+"var(--success-muted)"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:182:63
+    180|     for (const [prop, value] of Object.entries(want)) {
+    181|       const last = own.filter((b) => decl(b.body, prop) !== undefined)…
+    182|       expect(last && decl(last.body, prop), `${sel} ${prop}`).toBe(val…
+       |                                                               ^
+    183|     }
+    184|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .cro-pipe-n.tone-warn keeps what the bare rule showed, in misc-surfaces-v2.css
+AssertionError: .cro-pipe-n.tone-warn background: expected undefined to be 'var(--warning-muted)' // Object.is equality
+
+- Expected:
+"var(--warning-muted)"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:182:63
+    180|     for (const [prop, value] of Object.entries(want)) {
+    181|       const last = own.filter((b) => decl(b.body, prop) !== undefined)…
+    182|       expect(last && decl(last.body, prop), `${sel} ${prop}`).toBe(val…
+       |                                                               ^
+    183|     }
+    184|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .cro-pipe-n.tone-idle keeps what the bare rule showed, in misc-surfaces-v2.css
+AssertionError: .cro-pipe-n.tone-idle background: expected undefined to be 'var(--idle-muted)' // Object.is equality
+
+- Expected:
+"var(--idle-muted)"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:182:63
+    180|     for (const [prop, value] of Object.entries(want)) {
+    181|       const last = own.filter((b) => decl(b.body, prop) !== undefined)…
+    182|       expect(last && decl(last.body, prop), `${sel} ${prop}`).toBe(val…
+       |                                                               ^
+    183|     }
+    184|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .cro-pipe-n.tone-ai keeps what the bare rule showed, in misc-surfaces-v2.css
+AssertionError: .cro-pipe-n.tone-ai background: expected undefined to be 'var(--ai-muted)' // Object.is equality
+
+- Expected:
+"var(--ai-muted)"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:182:63
+    180|     for (const [prop, value] of Object.entries(want)) {
+    181|       const last = own.filter((b) => decl(b.body, prop) !== undefined)…
+    182|       expect(last && decl(last.body, prop), `${sel} ${prop}`).toBe(val…
+       |                                                               ^
+    183|     }
+    184|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .hf-mit.tone-ok keeps what the bare rule showed, in coverage-v2.css
+AssertionError: .hf-mit.tone-ok background: expected undefined to be 'var(--success-muted)' // Object.is equality
+
+- Expected:
+"var(--success-muted)"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:182:63
+    180|     for (const [prop, value] of Object.entries(want)) {
+    181|       const last = own.filter((b) => decl(b.body, prop) !== undefined)…
+    182|       expect(last && decl(last.body, prop), `${sel} ${prop}`).toBe(val…
+       |                                                               ^
+    183|     }
+    184|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .hf-mit.tone-err keeps what the bare rule showed, in coverage-v2.css
+AssertionError: .hf-mit.tone-err background: expected undefined to be 'var(--error-muted)' // Object.is equality
+
+- Expected:
+"var(--error-muted)"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:182:63
+    180|     for (const [prop, value] of Object.entries(want)) {
+    181|       const last = own.filter((b) => decl(b.body, prop) !== undefined)…
+    182|       expect(last && decl(last.body, prop), `${sel} ${prop}`).toBe(val…
+       |                                                               ^
+    183|     }
+    184|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .hf-mit.tone-idle keeps what the bare rule showed, in coverage-v2.css
+AssertionError: .hf-mit.tone-idle background: expected undefined to be 'var(--idle-muted)' // Object.is equality
+
+- Expected:
+"var(--idle-muted)"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:182:63
+    180|     for (const [prop, value] of Object.entries(want)) {
+    181|       const last = own.filter((b) => decl(b.body, prop) !== undefined)…
+    182|       expect(last && decl(last.body, prop), `${sel} ${prop}`).toBe(val…
+       |                                                               ^
+    183|     }
+    184|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .hf-gate.tone-idle keeps what the bare rule showed, in coverage-v2.css
+AssertionError: .hf-gate.tone-idle background: expected undefined to be 'var(--idle-muted)' // Object.is equality
+
+- Expected:
+"var(--idle-muted)"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:182:63
+    180|     for (const [prop, value] of Object.entries(want)) {
+    181|       const last = own.filter((b) => decl(b.body, prop) !== undefined)…
+    182|       expect(last && decl(last.body, prop), `${sel} ${prop}`).toBe(val…
+       |                                                               ^
+    183|     }
+    184|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .hf-el-dot.tone-idle keeps what the bare rule showed, in coverage-v2.css
+AssertionError: .hf-el-dot.tone-idle background: expected undefined to be 'var(--idle-muted)' // Object.is equality
+
+- Expected:
+"var(--idle-muted)"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:182:63
+    180|     for (const [prop, value] of Object.entries(want)) {
+    181|       const last = own.filter((b) => decl(b.body, prop) !== undefined)…
+    182|       expect(last && decl(last.body, prop), `${sel} ${prop}`).toBe(val…
+       |                                                               ^
+    183|     }
+    184|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .rv-wf-tag.tone-err keeps what the bare rule showed, in coverage-v2.css
+AssertionError: .rv-wf-tag.tone-err background: expected undefined to be 'var(--error-muted)' // Object.is equality
+
+- Expected:
+"var(--error-muted)"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:182:63
+    180|     for (const [prop, value] of Object.entries(want)) {
+    181|       const last = own.filter((b) => decl(b.body, prop) !== undefined)…
+    182|       expect(last && decl(last.body, prop), `${sel} ${prop}`).toBe(val…
+       |                                                               ^
+    183|     }
+    184|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .dr2-find.tone-idle keeps what the bare rule showed, in coverage-v2.css
+AssertionError: .dr2-find.tone-idle background: expected undefined to be 'var(--idle-muted)' // Object.is equality
+
+- Expected:
+"var(--idle-muted)"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:182:63
+    180|     for (const [prop, value] of Object.entries(want)) {
+    181|       const last = own.filter((b) => decl(b.body, prop) !== undefined)…
+    182|       expect(last && decl(last.body, prop), `${sel} ${prop}`).toBe(val…
+       |                                                               ^
+    183|     }
+    184|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .eng-blocker-dot.tone-err keeps what the bare rule showed, in app-v2.css
+AssertionError: .eng-blocker-dot.tone-err color: expected undefined to be 'var(--error)' // Object.is equality
+
+- Expected:
+"var(--error)"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:182:63
+    180|     for (const [prop, value] of Object.entries(want)) {
+    181|       const last = own.filter((b) => decl(b.body, prop) !== undefined)…
+    182|       expect(last && decl(last.body, prop), `${sel} ${prop}`).toBe(val…
+       |                                                               ^
+    183|     }
+    184|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > .eng-blocker-dot.tone-warn keeps what the bare rule showed, in app-v2.css
+AssertionError: .eng-blocker-dot.tone-warn color: expected undefined to be 'var(--warning)' // Object.is equality
+
+- Expected:
+"var(--warning)"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:182:63
+    180|     for (const [prop, value] of Object.entries(want)) {
+    181|       const last = own.filter((b) => decl(b.body, prop) !== undefined)…
+    182|       expect(last && decl(last.body, prop), `${sel} ${prop}`).toBe(val…
+       |                                                               ^
+    183|     }
+    184|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 1: the empty state, and tone fills that belong to their owners > nothing styles an error-toned empty state: a failure renders ErrorState
+AssertionError: expected [ …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "app-v2.css: .c2c-v2 .c2c-empty-state.tone-error",
++   "app-v2.css: .c2c-v2 .c2c-empty-state.tone-error .c2c-empty-ic",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:201:18
+    199|       return c.includes('c2c-empty-state') && c.includes('tone-error');
+    200|     }))).map((b) => `${b.sheet}: ${b.prelude}`);
+    201|     expect(dead).toEqual([]);
+       |                  ^
+    202|     const source = readFileSync(resolve(__dirname, '../dataConnect.tsx…
+    203|     expect(source).toMatch(/if \(tone === 'error'\) \{\s*return \(\s*<…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 5: .sp-primary is the canonical primary > the base (32px) lists .sp-primary
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 5: .sp-primary is the canonical primary > the icon (16px) lists .sp-primary
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 5: .sp-primary is the canonical primary > the fill lists .sp-primary
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 5: .sp-primary is the canonical primary > the fill on hover lists .sp-primary
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 5: .sp-primary is the canonical primary > the coarse-pointer height lists .sp-primary
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:222:76
+    220|     expect(found, 'one canonical rule').toHaveLength(1);
+    221|     const members = full(found[0].selector);
+    222|     expect(members.some((s) => /^\.c2c-v2 \.sp-primary(?![\w-])/.test(…
+       |                                                                            ^
+    223|   });
+    224|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 5: .sp-primary is the canonical primary > no other sheet gives .sp-primary chrome: it keeps its row layout, and its grey disabled state
+AssertionError: expected [ …(2) ] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+  [
+    "journey-v2.css: .c2c-v2 .sp-primary",
++   "journey-v2.css: .c2c-v2 .sp-primary",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:228:60
+    226|     const own = BLOCKS.filter((b) => b.sheet !== 'app-v2.css' && split…
+    227|     const resting = own.filter((b) => splitTop(b.prelude).every((s) =>…
+    228|     expect(resting.map((b) => `${b.sheet}: ${b.prelude}`)).toEqual(['j…
+       |                                                            ^
+    229|     expect(props(resting[0].body).sort()).toEqual(['flex-shrink', 'whi…
+    230|     const states = own.filter((b) => !resting.includes(b));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 5: .sp-primary is the canonical primary > nothing moves it on hover, in any sheet
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "journey-v2.css: .c2c-v2 .sp-primary:hover",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:239:19
+    237|     const lifts = BLOCKS.filter((b) => full(b.prelude).some((s) => /\.…
+    238|       .map((b) => `${b.sheet}: ${b.prelude}`);
+    239|     expect(lifts).toEqual([]);
+       |                   ^
+    240|   });
+    241|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 10: admin uses the canonical button and segmented control > of its button rules, only the small size is left
+AssertionError: expected [ '.adm-access .btn', …(4) ] to deeply equal [ '.adm-access .btn.small' ]
+
+- Expected
++ Received
+
+  [
++   ".adm-access .btn",
+    ".adm-access .btn.small",
++   ".adm-access .btn:hover",
++   ".adm-access .btn.primary",
++   ".adm-access .btn.ghost",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:253:43
+    251|   it('of its button rules, only the small size is left', () => {
+    252|     const buttons = ADMIN.filter((b) => full(b.prelude).some((s) => cl…
+    253|     expect(buttons.map((b) => b.prelude)).toEqual(['.adm-access .btn.s…
+       |                                           ^
+    254|     expect(props(buttons[0].body).sort()).toEqual(['font-size', 'paddi…
+    255|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 10: admin uses the canonical button and segmented control > it draws no segmented chrome: only the header row places the track
+AssertionError: expected [ …(4) ] to deeply equal [ Array(1) ]
+
+- Expected
++ Received
+
+  [
+    ".adm-access .section-head .seg { margin-left }",
++   ".adm-access .seg { display; gap; padding; background; border-radius }",
++   ".adm-access .seg-btn { border; background; cursor; padding; border-radius; font-size; color; font-family }",
++   ".adm-access .seg-btn[data-on] { background; color; box-shadow }",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:259:77
+    257|   it('it draws no segmented chrome: only the header row places the tra…
+    258|     const segs = ADMIN.filter((b) => full(b.prelude).some((s) => class…
+    259|     expect(segs.map((b) => `${b.prelude} { ${props(b.body).join('; ')}…
+       |                                                                             ^
+    260|   });
+    261|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 10: admin uses the canonical button and segmented control > the 28px item covers admin's .seg-btn, scoped to admin
+AssertionError: .c2c-v2 .adm-access .seg-btn in .c2c-v2 :is(.seg-b, .ml-seg-btn): expected 0 to be greater than 0
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:277:62
+    275|     const admin = member.replace('.seg-b', '.adm-access .seg-btn');
+    276|     const alias = full(found[0].selector).filter((s) => s.includes('.s…
+    277|     expect(alias.length, `${admin} in ${found[0].selector}`).toBeGreat…
+       |                                                              ^
+    278|     /* Scoped: an unscoped .seg-btn would reach mdx's segmented button…
+    279|     expect(alias.every((s) => s.includes('.adm-access .seg-btn'))).toB…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 10: admin uses the canonical button and segmented control > hover covers admin's .seg-btn, scoped to admin
+AssertionError: .c2c-v2 .adm-access .seg-btn:hover in .c2c-v2 :is(.seg-b, .ml-seg-btn):hover: expected 0 to be greater than 0
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:277:62
+    275|     const admin = member.replace('.seg-b', '.adm-access .seg-btn');
+    276|     const alias = full(found[0].selector).filter((s) => s.includes('.s…
+    277|     expect(alias.length, `${admin} in ${found[0].selector}`).toBeGreat…
+       |                                                              ^
+    278|     /* Scoped: an unscoped .seg-btn would reach mdx's segmented button…
+    279|     expect(alias.every((s) => s.includes('.adm-access .seg-btn'))).toB…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 10: admin uses the canonical button and segmented control > the active item covers admin's .seg-btn, scoped to admin
+AssertionError: .c2c-v2 .adm-access .seg-btn.on in .c2c-v2 :is(.seg-b, .ml-seg-btn):is(.on, [data-on], [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"]): expected 0 to be greater than 0
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:277:62
+    275|     const admin = member.replace('.seg-b', '.adm-access .seg-btn');
+    276|     const alias = full(found[0].selector).filter((s) => s.includes('.s…
+    277|     expect(alias.length, `${admin} in ${found[0].selector}`).toBeGreat…
+       |                                                              ^
+    278|     /* Scoped: an unscoped .seg-btn would reach mdx's segmented button…
+    279|     expect(alias.every((s) => s.includes('.adm-access .seg-btn'))).toB…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 10: admin uses the canonical button and segmented control > the dark active item covers admin's .seg-btn, scoped to admin
+AssertionError: .c2c-v2.dark .adm-access .seg-btn.on in .c2c-v2.dark :is(.seg-b, .ml-seg-btn):is(.on, [data-on], [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"]): expected 0 to be greater than 0
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:277:62
+    275|     const admin = member.replace('.seg-b', '.adm-access .seg-btn');
+    276|     const alias = full(found[0].selector).filter((s) => s.includes('.s…
+    277|     expect(alias.length, `${admin} in ${found[0].selector}`).toBeGreat…
+       |                                                              ^
+    278|     /* Scoped: an unscoped .seg-btn would reach mdx's segmented button…
+    279|     expect(alias.every((s) => s.includes('.adm-access .seg-btn'))).toB…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[26/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 10: admin uses the canonical button and segmented control > the inset focus ring covers admin's .seg-btn, scoped to admin
+AssertionError: .c2c-v2 .adm-access .seg-btn:focus-visible in .c2c-v2 :is(.tab, .reg-tab, .sc-ws, .cc-tab, .seg-b, .ml-seg-btn):focus-visible: expected 0 to be greater than 0
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:277:62
+    275|     const admin = member.replace('.seg-b', '.adm-access .seg-btn');
+    276|     const alias = full(found[0].selector).filter((s) => s.includes('.s…
+    277|     expect(alias.length, `${admin} in ${found[0].selector}`).toBeGreat…
+       |                                                              ^
+    278|     /* Scoped: an unscoped .seg-btn would reach mdx's segmented button…
+    279|     expect(alias.every((s) => s.includes('.adm-access .seg-btn'))).toB…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[27/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 11: a card header wraps, so a long subtitle drops below the title > .pj-card-h has flex-wrap: wrap, in its one rule
+AssertionError: expected [] to deeply equal [ 'app-v2.css: .c2c-v2 .pj-card-h' ]
+
+- Expected
++ Received
+
+- [
+-   "app-v2.css: .c2c-v2 .pj-card-h",
+- ]
++ []
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:287:59
+    285|   it('.pj-card-h has flex-wrap: wrap, in its one rule', () => {
+    286|     const header = BLOCKS.filter((b) => full(b.prelude).some((s) => su…
+    287|     expect(header.map((b) => `${b.sheet}: ${b.prelude}`)).toEqual(['ap…
+       |                                                           ^
+    288|     expect(decl(header[0].body, 'flex-wrap')).toBe('wrap');
+    289|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[28/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 16: nothing here under the 12px floor, and no dead chip tone > journey-v2.css .c2c-v2 .de-err (the form error line) is var(--fs-caption)
+AssertionError: expected [ '11.5px' ] to deeply equal [ 'var(--fs-caption)' ]
+
+- Expected
++ Received
+
+  [
+-   "var(--fs-caption)",
++   "11.5px",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:300:57
+    298|   it.each(SIZED)('%s %s (%s) is var(--fs-caption)', (name, sel) => {
+    299|     const sized = ruleFor(name, sel).filter((b) => decl(b.body, 'font-…
+    300|     expect(sized.map((b) => decl(b.body, 'font-size'))).toEqual(['var(…
+       |                                                         ^
+    301|   });
+    302|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[29/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 16: nothing here under the 12px floor, and no dead chip tone > app-v2.css .c2c-v2 .c2c-error-ref (the support handle line) is var(--fs-caption)
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 16: nothing here under the 12px floor, and no dead chip tone > app-v2.css .c2c-v2 .c2c-error-ref code (the support handle) is var(--fs-caption)
+AssertionError: expected [ '11px' ] to deeply equal [ 'var(--fs-caption)' ]
+
+- Expected
++ Received
+
+  [
+-   "var(--fs-caption)",
++   "11px",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:300:57
+    298|   it.each(SIZED)('%s %s (%s) is var(--fs-caption)', (name, sel) => {
+    299|     const sized = ruleFor(name, sel).filter((b) => decl(b.body, 'font-…
+    300|     expect(sized.map((b) => decl(b.body, 'font-size'))).toEqual(['var(…
+       |                                                         ^
+    301|   });
+    302|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[30/36]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/d0Primitives.test.ts > fix 16: nothing here under the 12px floor, and no dead chip tone > no stylesheet names .rd-chip.tone-flight
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "misc-surfaces-v2.css: .rd-chip.tone-flight",
++ ]
+
+ ❯ client/src/concept2cure/v2/__tests__/d0Primitives.test.ts:304:115
+    302|
+    303|   it('no stylesheet names .rd-chip.tone-flight', () => {
+    304|     expect(BLOCKS.filter((b) => /\.tone-flight(?![\w-])/.test(b.prelud…
+       |                                                                                                                   ^
+    305|   });
+    306| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[31/36]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  36 failed | 7 passed (43)
+   Start at  04:49:52
+   Duration  1.32s (transform 195ms, setup 129ms, import 250ms, tests 371ms, environment 0ms)
+
+exit 1

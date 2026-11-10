@@ -29,7 +29,7 @@ import { must, findDemo, sha256, connectSigner, makeMultiPagePdfBuffer } from '.
 import { PROVENANCE, MANUFACTURER, DEVICE, PROGRAM_NAME, INTENDED_USE, inDays, DOSSIER, AUTHORING, SOPS } from './mdx-content.mjs';
 import { PACK, T, SIGNER_ABSENT, CHANGE_NUMBER, rowsOf, latin1, probe, finding } from './mdx-shared.mjs';
 import { qmsDocs, seedQms } from './mdx-qms.mjs';
-import { makeTally } from './biotech-shared.mjs';
+import { makeTally, pastReview } from './biotech-shared.mjs';
 import { ensureTasks } from './work-areas.mjs';
 
 /** NeuroPanel-Dx's 510(k) work on the task board (fictional device; planning values). */
@@ -198,10 +198,12 @@ const reviewerOf = (signer, identity) =>
     ? { id: Number(signer.userId), name: signer.session.user?.displayName ?? signer.email, email: signer.email }
     : { id: Number(identity.userId), name: identity.email, email: identity.email };
 
-async function ensureReviewRequested({ api }, docId, reviewer) {
-  const reviews = must(await api('GET', `/api/authoring/documents/${docId}/reviews`), 200, 'list reviews').reviews ?? [];
+export async function ensureReviewRequested({ api }, doc, reviewer) {
+  const reviews = must(await api('GET', `/api/authoring/documents/${doc.id}/reviews`), 200, 'list reviews').reviews ?? [];
   if (reviews.some((x) => x.reviewer_email === reviewer.email)) return false;
-  must(await api('POST', `/api/authoring/documents/${docId}/request-review`, { reviewers: [reviewer], route: { reviewDueDate: inDays(7) }, reason: 'Demo: send the 510(k) Summary for review' }), [200, 201], 'request review');
+  // A previous run took it past review; the server refuses a request on it (AUTHORING_DOCUMENT_IMMUTABLE).
+  if (pastReview(doc.status)) return false;
+  must(await api('POST', `/api/authoring/documents/${doc.id}/request-review`, { reviewers: [reviewer], route: { reviewDueDate: inDays(7) }, reason: 'Demo: send the 510(k) Summary for review' }), [200, 201], 'request review');
   return true;
 }
 
@@ -233,7 +235,8 @@ async function submitAndFreezeSummary({ api, run }, doc, reviewer, signer) {
   // Independent review: the server refuses the author as their own reviewer
   // (REVIEWER_IS_AUTHOR), so without a second person review and freeze wait.
   if (!signer) return `review and freeze not executed — ${SIGNER_ABSENT}`;
-  const requested = await ensureReviewRequested({ api }, doc.id, reviewer);
+  const requested = await ensureReviewRequested({ api }, doc, reviewer);
+  const review = await signReview({ run }, doc, signer);
   let workflow = 'existing';
   if (doc.status === 'DRAFT') {
     must(await api('POST', `/api/authoring/docs/${doc.id}/submit`, { workflow_steps: [{ role: 'QA', approver_email: reviewer.email }] }), [200, 201], 'submit to workflow');
@@ -241,7 +244,24 @@ async function submitAndFreezeSummary({ api, run }, doc, reviewer, signer) {
   }
   const wf = must(await api('GET', `/api/authoring/docs/${doc.id}/workflow`), 200, 'read workflow');
   run.record('authoring.summaryReview', { reviewer: reviewer.email, requestedThisRun: requested, workflow, step: wf.steps?.[0] ? { role: wf.steps[0].role, status: wf.steps[0].status } : null });
-  return `review → ${reviewer.email} (${workflow}); ${await freezeSummary({ api, run }, doc, signer)}`;
+  return `review → ${reviewer.email} (${workflow}, ${review}); ${await freezeSummary({ api, run }, doc, signer)}`;
+}
+
+const REVIEW_INTENT = 'Reviewed: the 510(k) Summary v1.0 matches the dossier documents in the Vault and 21 CFR 807.92.';
+
+/** P-95 (docs/LAUNCH_DEFINITION_OF_DONE.md, clarified 2026-11-09): a document is approved only after its review is
+ *  complete, so the requested reviewer signs the review (REVIEWER) on its route before anyone approves. A freeze
+ *  signed REVIEWER seals the text but does not complete the route; only the review signature does. */
+async function signReview({ run }, doc, signer) {
+  if (doc.status === 'APPROVED') return 'already approved on a previous run';
+  const sigs = must(await signer.api('GET', `/api/authoring/docs/${doc.id}/signatures`), 200, 'list signatures').signatures ?? [];
+  const mine = sigs.find((s) => s.signer_email === signer.email && s.meaning === 'REVIEWER' && s.reason === REVIEW_INTENT);
+  if (mine) return `review already signed by ${signer.email}`;
+  must(await signer.api('POST', `/api/authoring/docs/${doc.id}/e-sign`, {
+    password: signer.password, meaning: 'REVIEWER', intent: REVIEW_INTENT,
+  }), 200, 'sign the review');
+  run.record('authoring.summaryReviewSigned', { executed: true, signer: signer.email, meaning: 'REVIEWER' });
+  return `review signed by ${signer.email}`;
 }
 
 /** A freeze is a signature (DP-35), so the second signer, the QA reviewer, seals v1.0 for approval as REVIEWER. */
@@ -322,7 +342,7 @@ async function seedAuthoring(ctx, programId, signer) {
   await run.step('Authoring: Cybersecurity and Interoperability Summary (review requested)', async () => {
     out.cyber = await ensureAuthoringDoc(ctx, AUTHORING.cyber, programId);
     // Independent review needs a second person (REVIEWER_IS_AUTHOR otherwise).
-    if (signer) await ensureReviewRequested(ctx, out.cyber.id, reviewer);
+    if (signer) await ensureReviewRequested(ctx, out.cyber, reviewer);
     run.record('authoring.cyber', { id: out.cyber.id, title: out.cyber.title, status: out.cyber.status || 'DRAFT', created: out.cyber.created, boundToProgram: out.cyber.bound, sections: out.cyber.sections.map((s) => s.code), reviewRequestedFrom: signer ? reviewer.email : null });
     return `${out.cyber.id} (${out.cyber.sections.length} sections), ${signer ? `review → ${reviewer.email}` : `review ${SIGNER_ABSENT}`}`;
   });

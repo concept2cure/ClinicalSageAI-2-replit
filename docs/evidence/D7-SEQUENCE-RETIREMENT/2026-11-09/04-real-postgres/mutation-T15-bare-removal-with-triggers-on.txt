@@ -1,0 +1,7 @@
+MUTATION T15 in tests/db/sequence-number-once.dbtest.ts (2026-11-09T08:15:17.202146Z): the removed-0000 case lays its removed row with triggers ON (the SET LOCAL session_replication_role line deleted), on the real database with the guard applied.
+ × tests/db/sequence-number-once.dbtest.ts > a sequence number is used once in a submission (F1 repair A) > a removed 0000 does not hold its number 8754ms
+   → SEQUENCE_REMOVAL_UNRECORDED: sequence 0000 of submission 17 (organization 18) is removed only by a signed retirement or a signed declaration of sequences filed elsewhere, recorded in the same transaction (21 CFR Part 11 §11.10(e), §11.50) — refused.
+      Tests  1 failed | 3 skipped (4)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+error: SEQUENCE_REMOVAL_UNRECORDED: sequence 0000 of submission 17 (organization 18) is removed only by a signed retirement or a signed declaration of sequences filed elsewhere, recorded in the same transaction (21 CFR Part 11 §11.10(e), §11.50) — refused.
+restored sha256 499509781f403eae9db926594016342f02e76b3d11d12e99340db45a60bd8e94 (expected 499509781f403eae9db926594016342f02e76b3d11d12e99340db45a60bd8e94)

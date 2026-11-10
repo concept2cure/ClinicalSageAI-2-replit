@@ -1,0 +1,5 @@
+MUTATION M24-T7-agreeing-refusal-contradicts in server/services/submission-gateways/fda-esg-receipts.ts (on the final code and tests, 2026-11-09T13:44:07.492436Z): replaced [if (outcome === 'not-received' && status === 'received') return 'not-received';] with [if (outcome === 'not-received') return 'not-received';]
+ × server/services/submission-gateways/__tests__/fda-esg-receipts.pglite.test.ts > P-92 T7: a late FDA receipt after a signed settlement > after a release, FDA's refusal agrees with it: recorded, no sequence moves, no resend hold 135ms
+      Tests  1 failed | 18 skipped (19)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 039d6b13181040d8b556c095a5ec7b8e27fc02fbfdd9bf72293c2ba6ed1f5a93 (expected 039d6b13181040d8b556c095a5ec7b8e27fc02fbfdd9bf72293c2ba6ed1f5a93)

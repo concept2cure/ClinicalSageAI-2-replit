@@ -26,6 +26,7 @@ import { LanguageSwitcher } from '@/components/i18n/LanguageSwitcher';
 
 import { computeRedirect, parseSsoHandoff, parseSsoMfaHandoff, verifyDemoAccessReadiness } from '../../auth/redirectUtils';
 import { OrganizationSso } from './OrganizationSso';
+import { DemoAccountPicker, parseDemoAccounts } from './DemoAccounts';
 import { takeSignOutReason, type SessionEndReason } from '../../../utils/sessionEnd';
 import brandIcon from '../../../assets/concept2cure-icon.svg';
 import styles from './styles.module.css';
@@ -266,25 +267,28 @@ export const Concept2CureLogin: React.FC = () => {
      seeded by DEMO_USER_EMAIL). 2026-10-15: both buttons posted one person's
      personal address; with no identity configured there is now no button. */
   const devLoginEmail = String(import.meta.env.VITE_DEV_LOGIN_EMAIL ?? '').trim();
+  /* The demo people "Demo access" may sign in as (DemoAccounts.tsx). The configured identity stays the default. */
+  const demoAccounts = useMemo(() => parseDemoAccounts(import.meta.env.VITE_DEMO_ACCOUNTS), []);
+  const [demoEmail, setDemoEmail] = useState(devLoginEmail || demoAccounts[0]?.email || '');
 
   /* Handlers — preserved verbatim from ZenLogin to keep capability parity */
 
   const handleDemoAccess = useCallback(async () => {
-    if (!devLoginEmail) return;
+    if (!demoEmail) return;
     setIsLoading(true);
     setError(null);
     try {
       const res = await fetch('/api/auth/dev-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: devLoginEmail }),
+        body: JSON.stringify({ email: demoEmail }),
       });
       const data = await res.json();
       if (data.success && data.accessToken) {
         // Demo Access means a usable, populated demonstration, not merely a
         // valid JWT. Never persist this session until its current organization,
         // accessible project and Tasking read are verified.
-        const readiness = await verifyDemoAccessReadiness(data.accessToken, data.user, devLoginEmail);
+        const readiness = await verifyDemoAccessReadiness(data.accessToken, data.user, demoEmail);
         if (!readiness.ready) {
           setError({ message: readiness.message || 'Demo environment is not ready.' });
           return;
@@ -307,7 +311,7 @@ export const Concept2CureLogin: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [devLoginEmail]);
+  }, [demoEmail]);
 
   const handleLogin = useCallback(async () => {
     if (!validateEmail(email)) {
@@ -582,9 +586,13 @@ export const Concept2CureLogin: React.FC = () => {
                 {t('action.signIn')}
               </button>
 
-              {isDev && devLoginEmail && (
+              {isDev && demoEmail && (
                 <>
                   <div className={styles.demoDivider}>{t('action.devOnly')}</div>
+                  {demoAccounts.length > 1 && (
+                    <DemoAccountPicker accounts={demoAccounts} value={demoEmail} onChange={setDemoEmail} disabled={isLoading}
+                      classes={{ field: styles.field, label: styles.label, input: styles.input }} />
+                  )}
                   <button
                     type="button"
                     className={styles.demo}

@@ -16,7 +16,7 @@ import { readFileSync } from 'node:fs';
 import { AUDIT_LOGS_PGLITE_DDL } from '../../../db/pglite-harness';
 import * as nativeDb from '../../../db.js';
 import { runWithTenantScope } from '../../../db/tenantStore';
-import { createRunSourceAuthority, runWithSourceAuthority, captureCurrentRunSourceGate } from '../../../services/ai-gateway/model-call-scope';
+import { createRunSourceAuthority, runWithSourceAuthority, captureCurrentRunSourceGate, CONVERSATION_DEFAULT_TIER } from '../../../services/ai-gateway/model-call-scope';
 import { openRunCoordination, readRunCoordination, coordinationSha256, type CoordinationPool, type WorkerCoordinationHandle } from '../../../services/ana/run-events';
 import { runOwnerInstance } from '../../../services/ana/run-control';
 import * as runControl from '../../../services/ana/run-control';
@@ -259,7 +259,7 @@ async function nativeRun(cancel: boolean, {pg,pool,queryFailures}: Awaited<Retur
   const messagesCommitted = new Promise<void>(resolve => { exchanged = resolve; });
   const route = vi.spyOn(h.gateway, 'route').mockImplementation(async (request: GatewayRequest) => {
     const id = String(request.runId), count = nextNativeModelCall(calls, id);
-    const gate = captureCurrentRunSourceGate(request); if (!gate) throw new Error('Native source authority missing'); expect(gate.tiers).toContain(3);
+    const gate = captureCurrentRunSourceGate(request); if (!gate) throw new Error('Native source authority missing'); expect(gate.tiers).toContain(CONVERSATION_DEFAULT_TIER);
     await request.beforeDispatch?.(); await gate.recheck(); checkpointCalls.push(count);
     const isA = JSON.stringify(request.messages[1]).includes('Native worker A');
     let use: { name: string; input: Record<string, unknown> } | null = null;

@@ -56,6 +56,7 @@ import {
   assertComplaintTransition,
   assertMdrTransition,
   assertActionTransition,
+  InvalidTransitionError,
 } from './stateMachine';
 
 
@@ -811,6 +812,20 @@ export interface TransitionCapaInput {
   effectivenessCheckResult?: Record<string, unknown> | null;
 }
 
+function isClosedCapa(state: string): boolean {
+  return state === 'closed_effective' || state === 'closed_not_effective';
+}
+
+function assertCapaEffectivenessResult(from: string, input: TransitionCapaInput): void {
+  const effectiveness = input.effectivenessCheckResult;
+  if (!effectiveness || typeof effectiveness !== 'object' || Array.isArray(effectiveness)
+      || effectiveness.outcome !== (input.to === 'closed_effective' ? 'effective' : 'not_effective')
+      || typeof effectiveness.narrative !== 'string' || !effectiveness.narrative.trim()) {
+    throw new InvalidTransitionError('capa_record', from, input.to,
+      'Closing a CAPA requires an effectiveness check with a narrative and an outcome matching the requested closure.');
+  }
+}
+
 async function transitionCapaTx(
   organizationId: number,
   id: string,
@@ -820,24 +835,35 @@ async function transitionCapaTx(
   if (!current) throw new NotFoundError(`CAPA ${id} not found`);
   assertCapaTransition(current.state as CapaState, input.to);
 
+  // The shared lifecycle already calls implementation complete only when all
+  // action items are done. Recheck at effectiveness and effective closure too:
+  // legacy rows may have reached those states without this prerequisite.
+  if (['action_implemented', 'effectiveness_check', 'closed_effective'].includes(input.to)
+      && current.actions.some(action => action.state !== 'done')) {
+    throw new InvalidTransitionError('capa_record', current.state, input.to,
+      'Every action item must be done before the CAPA is implemented, checked for effectiveness or closed effective.');
+  }
+
+  const closing = isClosedCapa(input.to);
+  const effectiveness = input.effectivenessCheckResult;
+  if (closing) assertCapaEffectivenessResult(current.state, input);
+
   const now = new Date();
   const update: Partial<CapaRecord> = {
     state: input.to,
     updatedAt: now,
     updatedBy: input.actor ?? null,
   };
-  if (input.to === 'closed_effective' || input.to === 'closed_not_effective') {
+  if (closing) {
     update.closedAt = now;
     update.closedBy = input.actor ?? null;
-    if (input.effectivenessCheckResult !== undefined) {
-      update.effectivenessCheckResult = input.effectivenessCheckResult ?? null;
-    }
+    update.effectivenessCheckResult = { ...effectiveness, verifiedBy: input.actor, verifiedAt: now.toISOString() };
   }
 
   const [row] = await capaContext().db.update(capaRecords).set(update).where(eq(capaRecords.id, id)).returning();
 
   const kind: VigilanceEventKind =
-    input.to === 'closed_effective' || input.to === 'closed_not_effective'
+    closing
       ? 'capa_closed'
       : input.to === 'effectiveness_check'
       ? 'capa_effectiveness_verified'
@@ -855,7 +881,7 @@ async function transitionCapaTx(
     payload: {
       from: current.state,
       to: input.to,
-      effectiveness: input.effectivenessCheckResult ?? null,
+      effectiveness: update.effectivenessCheckResult ?? null,
     },
     reason: input.reason ?? null,
   });
@@ -883,6 +909,10 @@ async function addCapaActionTx(
   // Verify the parent CAPA belongs to the org.
   const parent = await getCapaRecordTx(organizationId, input.capaId);
   if (!parent) throw new NotFoundError(`CAPA ${input.capaId} not found`);
+  if (isClosedCapa(parent.state)) {
+    throw new InvalidTransitionError('capa_record', parent.state, 'add_action',
+      'A closed CAPA cannot receive another action. Reopen an ineffective CAPA before recording further work.');
+  }
 
   const [{ next }] = await capaContext().db
     .select({ next: sql<number>`coalesce(max(${capaActions.n}), 0) + 1` })
@@ -922,6 +952,17 @@ export interface UpdateCapaActionInput {
   reason?: string | null;
 }
 
+function hasCapaCompletionEvidence(evidence: unknown): boolean {
+  return Array.isArray(evidence) && evidence.length > 0 && evidence.every(ref => {
+    if (typeof ref === 'string') return ref.trim().length > 0;
+    if (!ref || typeof ref !== 'object' || Array.isArray(ref)) return false;
+    return ['id', 'label', 'uri', 'url'].some(key => {
+      const value = (ref as Record<string, unknown>)[key];
+      return typeof value === 'string' ? value.trim().length > 0 : key === 'id' && typeof value === 'number' && Number.isSafeInteger(value) && value > 0;
+    });
+  });
+}
+
 async function transitionCapaActionTx(
   organizationId: number,
   actionId: string,
@@ -938,12 +979,25 @@ async function transitionCapaActionTx(
   const ctx = rows[0];
   if (!ctx) throw new NotFoundError(`Action ${actionId} not found`);
   await assertProgramAccess(organizationId, ctx.programId);
+  const [parent] = await capaContext().db.select({ state: capaRecords.state }).from(capaRecords)
+    .where(and(eq(capaRecords.id, ctx.action.capaId), eq(capaRecords.programId, ctx.programId))).for('update');
+  if (!parent) throw new NotFoundError('CAPA not found.');
+  if (isClosedCapa(parent.state)) {
+    throw new InvalidTransitionError('capa_action', ctx.action.state, input.to,
+      'Actions on a closed CAPA cannot change. Reopen an ineffective CAPA before recording further work.');
+  }
   const [currentAction] = await capaContext().db.select().from(capaActions)
     .where(and(eq(capaActions.id, actionId), eq(capaActions.capaId, ctx.action.capaId))).for('update');
   if (!currentAction) throw new NotFoundError('Action not found.');
   ctx.action = currentAction;
 
   assertActionTransition(ctx.action.state as ActionState, input.to);
+
+  const evidence = input.evidenceRefs === undefined ? ctx.action.evidenceRefs : input.evidenceRefs;
+  if (input.to === 'done' && !hasCapaCompletionEvidence(evidence)) {
+    throw new InvalidTransitionError('capa_action', ctx.action.state, input.to,
+      'Completing an action requires recorded evidence of completion.');
+  }
 
   const now = new Date();
   const update: Partial<CapaAction> = {

@@ -1,0 +1,84 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/vault/__tests__/vault-folders.test.ts
+{
+  "timestamp": "2026-11-08T18:49:11.274Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T18:49:11.275Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-folders.test.ts
+{
+  "timestamp": "2026-11-08T18:49:11.275Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/vault-folders.test.ts
+[database] Database connection successful
+
+ ✓ server/services/vault/__tests__/vault-folders.test.ts > the folder index > replaces the module presets the binder holds, and keeps the others 2ms
+ ✓ server/services/vault/__tests__/vault-folders.test.ts > the folder index > admits binder headings, presets and a person’s folders, and nothing else 1ms
+ ✓ server/services/vault/__tests__/vault-folders.test.ts > the folder index > shows a module preset’s row at its CTD heading, or at the module when the binder has no deeper one 1ms
+ ✓ server/services/vault/__tests__/vault-folders.test.ts > the folder index > names a heading by number, and records a CTD section only for a CTD-numbered heading 0ms
+ ✓ server/services/vault/__tests__/vault-folders.test.ts > the folder index > without a binder, is the view’s presets as before 1ms
+ ✓ server/services/vault/__tests__/vault-folders.test.ts > a folder name > is required, bounded and has no path separator 1ms
+(node:38) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/vault/__tests__/vault-folder-export.test.ts
+{
+  "timestamp": "2026-11-08T18:49:12.145Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T18:49:12.146Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/vault/__tests__/vault-folder-export.test.ts
+{
+  "timestamp": "2026-11-08T18:49:12.146Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/vault/__tests__/vault-folder-export.test.ts
+[database] Database connection successful
+
+ ✓ server/services/vault/__tests__/vault-folder-export.test.ts > folder export planning > includes confirmed and suggested filings while excluding Unfiled rows with an old folder id 3ms
+ ✓ server/services/vault/__tests__/vault-folder-export.test.ts > folder export planning > refuses a planned document that disappears instead of silently exporting only the remainder 1ms
+ ✓ server/services/vault/__tests__/vault-folder-export.test.ts > folder export planning > treats an all-Unfiled selection as empty even when folder ids remain 1ms
+(node:46) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/vaultFolders.test.ts > vaultFolders > lists every fileable folder at its depth, never a review queue 2ms
+ ✓ client/src/concept2cure/v2/surfaces/__tests__/vaultFolders.test.ts > vaultFolders > knows a person’s folder and where a new folder goes 0ms
+
+ Test Files  3 passed (3)
+      Tests  11 passed (11)
+   Start at  10:49:09
+   Duration  2.63s (transform 756ms, setup 83ms, import 1.98s, tests 20ms, environment 0ms)
+

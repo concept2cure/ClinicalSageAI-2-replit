@@ -252,7 +252,15 @@ export function useIvdGsprMatrix(projectId: string | null): UseIvdGsprResult {
   const url = projectId
     ? `/api/ivdr/gspr-checklist/${encodeURIComponent(projectId)}/matrix`
     : null;
-  const { data, loading, error, refresh } = useFetchJson<GsprMatrixPayload>(url);
+  const { data, loading, error, failure, refresh } = useFetchJson<GsprMatrixPayload>(url);
+  /* 404 IVDR_GSPR_NOT_FOUND is the server saying this project has no GSPR
+     assessment yet: an empty matrix, said with the screen's own empty hint.
+     It read "Could not load GSPR chapters", with a retry that cannot change
+     the answer, on every device project before its matrix was started
+     (found walking the demo's NeuroPanel-Dx, 2026-11-09). */
+  if (failure?.status === 404 && failure.code === 'IVDR_GSPR_NOT_FOUND') {
+    return { rows: [], overallPercent: null, loading, error: null, refresh };
+  }
   if (!data || !data.chapters) {
     return { rows: null, overallPercent: null, loading, error, refresh };
   }

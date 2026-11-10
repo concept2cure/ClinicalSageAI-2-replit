@@ -55,12 +55,20 @@ const SNAPSHOT = {
   predictivePower: 0.64,
 };
 
+/* The server's own envelope for one plan: the plan's fields NESTED under
+   `plan`, with `snapshots` and `decisions` beside it
+   (GET /api/biostat/adaptive/:planId). This fixture was flat until 2026-11-09
+   and so was the type it was written against, which is why neither caught the
+   header rendering "Plan undefined" on a real server
+   (adaptivePlanEnvelope.test.tsx). */
 const PLAN = {
-  id: 12,
-  title: 'ABC-301 adaptive plan',
-  designType: 'group_sequential',
-  spendingFunction: 'obrien_fleming',
-  maxSampleSize: 640,
+  plan: {
+    id: 12,
+    title: 'ABC-301 adaptive plan',
+    designType: 'group_sequential',
+    spendingFunction: 'obrien_fleming',
+    maxSampleSize: 640,
+  },
   snapshots: [SNAPSHOT],
   decisions: [],
 };

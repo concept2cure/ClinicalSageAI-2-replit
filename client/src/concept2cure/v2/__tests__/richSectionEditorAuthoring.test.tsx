@@ -18,7 +18,7 @@
  */
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import { RichSectionEditor } from '../editor/RichSectionEditor';
 
@@ -38,6 +38,10 @@ describe('RichSectionEditor — authoring affordances (BP-W1-1)', () => {
        it existed. An exact-equality assertion on the label makes the copy
        unimprovable, which is not what this test is for: it exists to prove the
        ribbon OFFERS sub/superscript, and it still does. */
+    /* D4-6 (D4.md §D4.D): sub/superscript and symbols live in row 2, "More formatting", which opens on
+       request. They are still offered, with the same names and shortcuts. */
+    expect(screen.queryByRole('button', { name: /^superscript/i })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /^more formatting/i }));
     expect(screen.getByRole('button', { name: /^superscript/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /^subscript/i })).toBeTruthy();
     expect(screen.getByLabelText('Insert symbol')).toBeTruthy();

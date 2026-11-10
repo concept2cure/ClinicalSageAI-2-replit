@@ -1,0 +1,119 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/cmc/module3-os/sections/51e1fef6-b4ad-4a31-92b6-da93122fd087/3.1",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 32,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "sectionKey": "3.1",
+        "sectionPath": "3.1",
+        "title": "Quality — Table of Contents",
+        "approvalState": "approved",
+        "approvedVersionId": "55c0cbe2-9557-45b0-9fe4-e84e839a5c39",
+        "stale": false,
+        "staleReason": null,
+        "compiledHash": "569691abec4296636f1befe67d9e754de974799b92d477e00c77d672c4b9e790",
+        "updatedAt": "2026-11-10T02:54:00.625Z",
+        "completeness": 100,
+        "missingInputs": [],
+        "narrative": "This section provides a table of contents and introductory overview for Module 3 — Quality. The drug substance is BX-701 5 mg film-coated tablet. The drug product is formulated as a Film-coated tablet. Detailed information on the drug substance and drug product is provided in subsections 3.2.S and 3.2.P respectively.",
+        "tables": [
+          {
+            "title": "Module 3 — Table of Contents",
+            "headers": [
+              "Section",
+              "Title"
+            ],
+            "rows": [
+              [
+                "3.2.S.1",
+                "General Information"
+              ],
+              [
+                "3.2.S.2",
+                "Manufacture (Drug Substance)"
+              ],
+              [
+                "3.2.S.3",
+                "Characterisation"
+              ],
+              [
+                "3.2.S.4",
+                "Control of Drug Substance"
+              ],
+              [
+                "3.2.S.5",
+                "Reference Standards (Drug Substance)"
+              ],
+              [
+                "3.2.S.6",
+                "Container Closure System (Drug Substance)"
+              ],
+              [
+                "3.2.S.7",
+                "Stability (Drug Substance)"
+              ],
+              [
+                "3.2.P.1",
+                "Description and Composition"
+              ],
+              [
+                "3.2.P.2",
+                "Pharmaceutical Development"
+              ],
+              [
+                "3.2.P.3",
+                "Manufacture (Drug Product)"
+              ],
+              [
+                "3.2.P.4",
+                "Control of Excipients"
+              ],
+              [
+                "3.2.P.5",
+                "Control of Drug Product"
+              ],
+              [
+                "3.2.P.6",
+                "Reference Standards (Drug Product)"
+              ],
+              [
+                "3.2.P.7",
+                "Container Closure System (Drug Product)"
+              ],
+              [
+                "3.2.P.8",
+                "Stability (Drug Product)"
+              ]
+            ]
+          }
+        ],
+        "tablesUnknown": false,
+        "markdown": "## Quality — Table of Contents\n\nThis section provides a table of contents and introductory overview for Module 3 — Quality. The drug substance is BX-701 5 mg film-coated tablet. The drug product is formulated as a Film-coated tablet. Detailed information on the drug substance and drug product is provided in subsections 3.2.S and 3.2.P respectively.\n\n### Module 3 — Table of Contents\n\n| Section | Title |\n| --- | --- |\n| 3.2.S.1 | General Information |\n| 3.2.S.2 | Manufacture (Drug Substance) |\n| 3.2.S.3 | Characterisation |\n| 3.2.S.4 | Control of Drug Substance |\n| 3.2.S.5 | Reference Standards (Drug Substance) |\n| 3.2.S.6 | Container Closure System (Drug Substance) |\n| 3.2.S.7 | Stability (Drug Substance) |\n| 3.2.P.1 | Description and Composition |\n| 3.2.P.2 | Pharmaceutical Development |\n| 3.2.P.3 | Manufacture (Drug Product) |\n| 3.2.P.4 | Control of Excipients |\n| 3.2.P.5 | Control of Drug Product |\n| 3.2.P.6 | Reference Standards (Drug Product) |\n| 3.2.P.7 | Container Closure System (Drug Product) |\n| 3.2.P.8 | Stability (Drug Product) |",
+        "lineage": [
+          {
+            "sourceType": "drug_product",
+            "sourceKey": "drug_product:2",
+            "sourceHashAtCompile": "d0b05ecbce69be1c8d567a8aa195de94cbb23239bd0ef6a61c0238a82b5996f8",
+            "changedSinceCompile": false
+          },
+          {
+            "sourceType": "drug_substance",
+            "sourceKey": "drug_substance:5",
+            "sourceHashAtCompile": "3baed39a021b5fa8bf5ebb55d7cce5a516243887236121a8604411d77509f42e",
+            "changedSinceCompile": false
+          }
+        ]
+      }
+    }
+  }
+}

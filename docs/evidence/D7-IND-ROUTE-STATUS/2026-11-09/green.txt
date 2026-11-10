@@ -1,0 +1,3 @@
+# GREEN: every IND lifecycle route test, every test importing its router or shared.ts, after repair C, 2026-11-09T00:37:31Z
+ Test Files  72 passed (72)
+      Tests  828 passed (828)

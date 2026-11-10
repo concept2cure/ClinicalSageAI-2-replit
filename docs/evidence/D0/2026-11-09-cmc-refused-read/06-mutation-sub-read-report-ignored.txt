@@ -1,0 +1,4 @@
+ × client/src/concept2cure/v2/__tests__/cmcRefusalNotFailedRead.test.tsx > what a 200 board reports about its own sub-reads is not a refusal > an unreadable section store is still a failed read, in the board’s own words 5016ms
+   → expected null to be truthy
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 46 passed (47)

@@ -1,0 +1,3 @@
+client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx base 5 now 5
+client/src/concept2cure/v2/__tests__/submissionCenterCreate.test.tsx base 1 now 1
+docs/evidence/DESIGN/D7/2026-11-09-start-sequence-plain/capture.cjs base 0 now 0

@@ -71,6 +71,11 @@ const DOC = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
 const SEC = 'ssssssss-ssss-4sss-8sss-ssssssssssss';
 const REASON = 'Ready for medical review before the pre-IND package.';
 const ok = (payload: unknown, status = 200) => ({ ok: status < 400, status, json: async () => payload }) as Response;
+/** The list as GET /api/authoring/docs answers a project read (authoring-document-read.ts): success, and each row's program_id. */
+const scopedList = (url: string, body: { success?: boolean; documents: object[] }) => {
+  const programId = new URLSearchParams(url.split('?')[1]).get('programId');
+  return programId === null ? body : { success: true, ...body, documents: body.documents.map(row => ({ program_id: programId, ...row })) };
+};
 
 /** The task ledger as the mock server holds it. */
 let ledger: Array<Record<string, unknown>> = [];
@@ -80,7 +85,7 @@ function mockApi() {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string, body?: Record<string, unknown>) => {
     if (url.startsWith('/api/authoring/docs?')) {
-      return ok({ documents: [{ id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', product_code: null, status: 'draft', updated_at: null, section_count: 1 }] });
+      return ok(scopedList(url, { documents: [{ id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', product_code: null, status: 'draft', updated_at: null, section_count: 1 }] }));
     }
     if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ success: true, document: { id: DOC, title: 'Module 2.5 Clinical Overview', module: 'M2', status: 'draft', provenance: null } });
     if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) {

@@ -8,6 +8,9 @@
  * that was read and holds nothing, two tiles still spoke as if something had
  * been assessed: "Under review 0 — None in review" and "Review overdue 0 —
  * All current". A QA lead on a new tenant read a compliant register.
+ *
+ * D7-B (2026-11-06) replaced the four tiles with one sentence above the
+ * register's rows; the same honesty holds there.
  */
 import React from 'react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
@@ -41,27 +44,20 @@ const EMPTY: Record<string, Route> = {
   [DOCS]: { status: 200, body: { data: [], meta: { count: 0 } } },
   [TEMPLATES]: { status: 200, body: { data: [], meta: { count: 0 } } },
   [REVIEW]: { status: 200, body: { data: [], meta: { count: 0, withinDays: 120 } } },
-  [TRAINING]: { status: 200, body: { data: [], meta: { count: 0 } } },
+  [TRAINING]: { status: 200, body: { data: [], meta: { count: 0, summary: { documents: 0, assigned: 0, notAssigned: 0, noActiveAssignees: 0, unavailable: 0, averageCurrentPct: null } } } },
+  ['/api/mdx/qms/training/expiring']: { status: 200, body: { data: [] } },
 };
 function mount() {
   return render(<SopRegister onAsk={() => {}} filter="all" onFilterChange={() => {}} />);
 }
 
-/** The KPI tile whose label is `label`. */
-function tile(label: string): HTMLElement {
-  const lbl = screen.getByText(label, { selector: '.qms-kpi .lbl' });
-  return lbl.closest('.qms-kpi') as HTMLElement;
-}
-const tileVal = (label: string) => tile(label).querySelector('.val')?.textContent?.trim() ?? '';
-const tileSub = (label: string) => tile(label).querySelector('.sub')?.textContent?.trim() ?? '';
+/** The register's figures: one sentence above its rows (D7-B; D5 §WA rule 7, "a count is the section's .sec-sub"). */
+const figures = () => screen.queryByTestId('qms-register-figures')?.textContent?.trim() ?? null;
+const register = () => screen.getByRole('region', { name: 'Controlled documents' });
 
-/** Wait until the four reads have settled (no tile still says Loading). */
+/** Wait until the register's read has settled. */
 async function settled() {
-  await waitFor(() => {
-    for (const l of ['Effective documents', 'Review overdue', 'Acknowledgement coverage']) {
-      expect(tileSub(l)).not.toBe('Loading…');
-    }
-  });
+  await waitFor(() => expect(screen.queryByText('Loading the register…')).toBeNull());
 }
 
 afterEach(() => {
@@ -71,33 +67,34 @@ afterEach(() => {
 });
 
 describe('SopRegister — a register read and empty', () => {
-  it('does not call it "All current", and states no overdue count', async () => {
+  it('does not call it all current, and states no overdue count', async () => {
     stubReads(EMPTY);
     mount();
     await settled();
-    expect(tileVal('Review overdue')).toBe('—');
-    expect(tileSub('Review overdue')).toBe('Nothing in the register to review');
-    expect(screen.queryByText('All current')).toBeNull();
+    // An empty register is one quiet line (D5 §WA): no figures, so nothing vacuous.
+    expect(figures()).toBeNull();
+    expect(register().textContent).toMatch('No controlled documents in the register yet.');
+    expect(register().textContent).not.toMatch(/overdue|all current/i);
+    // C2: and nowhere else on the tab: the review and expiry sections under an empty register claim nothing either.
+    expect(document.body.textContent).not.toMatch(/\d+ overdue|none overdue|due within|No one's training has lapsed/i);
+    expect(screen.getByText('No controlled documents yet, so none is due for review.')).toBeTruthy();
+    // The expiry section's own line under an empty organization (its all-clear branch actually runs here).
+    expect(await screen.findByText('No document is assigned for training yet.')).toBeTruthy();
   });
 
-  it('says the register is empty rather than "None in review"', async () => {
+  it('says the register is empty rather than "none in review"', async () => {
     stubReads(EMPTY);
     mount();
     await settled();
-    expect(tileSub('Under review')).toBe('Nothing in the register yet');
-    expect(screen.queryByText('None in review')).toBeNull();
+    expect(register().textContent).not.toMatch(/in review/i);
   });
 });
 
 describe('SopRegister — a register with documents keeps its real figures', () => {
   const DOC = { id: 1, docNumber: 'SOP-001', title: 'Document control', docType: 'sop', status: 'effective', version: '1.0', nextReviewDate: '2099-01-01' };
-  it('says "All current" and "None in review" when documents exist and none is due or in review', async () => {
+  it('counts the documents by status and says none is overdue for review when documents exist and none is due', async () => {
     stubReads({ ...EMPTY, [DOCS]: { status: 200, body: { data: [DOC], meta: { count: 1 } } } });
     mount();
-    await settled();
-    await waitFor(() => expect(tileVal('Effective documents')).toBe('1'));
-    expect(tileVal('Review overdue')).toBe('0');
-    expect(tileSub('Review overdue')).toBe('All current');
-    expect(tileSub('Under review')).toBe('None in review');
+    await waitFor(() => expect(figures()).toBe('1 controlled document: 1 in force; none overdue for review.'));
   });
 });

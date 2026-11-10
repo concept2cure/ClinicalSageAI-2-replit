@@ -1,0 +1,491 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > never falls back to the global pool for 'schedule read' without a request executor
+{
+  "timestamp": "2026-11-09T09:51:43.820Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] loading schedule of events failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > never falls back to the global pool for 'generation' without a request executor
+{
+  "timestamp": "2026-11-09T09:51:43.823Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] generating schedule of events failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > never falls back to the global pool for 'amendment' without a request executor
+{
+  "timestamp": "2026-11-09T09:51:43.826Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] saving amend failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > never falls back to the global pool for 'health review' without a request executor
+{
+  "timestamp": "2026-11-09T09:51:43.828Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] saving review failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > never falls back to the global pool for 'goal reset' without a request executor
+{
+  "timestamp": "2026-11-09T09:51:43.830Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] saving reset failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > never falls back to the global pool for 'unified work' without a request executor
+{
+  "timestamp": "2026-11-09T09:51:43.832Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] loading unified work failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses malformed request executor {}
+{
+  "timestamp": "2026-11-09T09:51:43.834Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] loading schedule of events failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses malformed request executor {"query":"not callable"}
+{
+  "timestamp": "2026-11-09T09:51:43.836Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] loading schedule of events failed",
+  "context": {
+    "err": "Request-scoped database context is required",
+    "correlationId": null,
+    "code": "REQUEST_DB_CONTEXT_REQUIRED"
+  }
+}
+
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > passes the server actor and request executor for 'schedule read' 17ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > passes the server actor and request executor for 'generation' 9ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > passes the server actor and request executor for 'amendment' 3ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > passes the server actor and request executor for 'health review' 3ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > passes the server actor and request executor for 'goal reset' 3ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > passes the server actor and request executor for 'unified work' 20ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > uses the numeric session fallback when upstream supplies req.user.id 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > uses the authoritative exact-digit tenant organization over a conflicting legacy tenantId 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > retains the tenantId fallback when tenantContext has no organizationId property 3ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses authoritative organizationId=null instead of falling back to tenantId 3ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses authoritative organizationId=undefined instead of falling back to tenantId 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > never falls back to the global pool for 'schedule read' without a request executor 3ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > never falls back to the global pool for 'generation' without a request executor 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > never falls back to the global pool for 'amendment' without a request executor 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > never falls back to the global pool for 'health review' without a request executor 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > never falls back to the global pool for 'goal reset' without a request executor 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > never falls back to the global pool for 'unified work' without a request executor 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses malformed request executor {} 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses malformed request executor {"query":"not callable"} 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses invalid governed actor undefined despite a cached admin role 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses invalid governed actor null despite a cached admin role 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses invalid governed actor 0 despite a cached admin role 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses invalid governed actor -1 despite a cached admin role 4ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses invalid governed actor 1.5 despite a cached admin role 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses invalid governed actor "41junk" despite a cached admin role 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses invalid governed actor 2147483648 despite a cached admin role 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses invalid governed actor 9007199254740992 despite a cached admin role 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > does not truncate invalid organization context 0 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > does not truncate invalid organization context -1 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > does not truncate invalid organization context 7.5 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > does not truncate invalid organization context "7junk" 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > does not truncate invalid organization context "7.5" 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > does not truncate invalid organization context 2147483648 1ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > does not truncate invalid organization context 9007199254740992 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > does not hide an invalid authoritative tenant context behind a valid tenantId 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses invalid project identity 0 before admission or work 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses invalid project identity proj_0 before admission or work 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses invalid project identity 2147483648 before admission or work 1ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses invalid project identity 9007199254740992 before admission or work 1ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses invalid project identity proj_9007199254740992 before admission or work 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses invalid project identity 12abc before admission or work 1ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses invalid project identity 12.5 before admission or work 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses invalid project identity -12 before admission or work 1ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses retired current membership before 'schedule read', regardless of cached role 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses retired current membership before 'generation', regardless of cached role 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses retired current membership before 'amendment', regardless of cached role 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses retired current membership before 'health review', regardless of cached role 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses retired current membership before 'goal reset', regardless of cached role 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses retired current membership before 'unified work', regardless of cached role 1ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses current private-project denial before 'schedule read' 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses current private-project denial before 'generation' 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses current private-project denial before 'amendment' 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses current private-project denial before 'health review' 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses current private-project denial before 'goal reset' 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses current private-project denial before 'unified work' 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > refuses a canonical actor result belonging to a different request identity 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > keeps unavailable current admission distinct from absent schedule data 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > current schedule caller admission and executor forwarding > does not convert a failed sharing read into an empty or denied schedule 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > program UUID admission reuses the canonical unique anchor scope > passes the exact request executor and normalized UUID for 'schedule read' 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > program UUID admission reuses the canonical unique anchor scope > passes the exact request executor and normalized UUID for 'generation' 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > program UUID admission reuses the canonical unique anchor scope > passes the exact request executor and normalized UUID for 'unified work' 13ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > program UUID admission reuses the canonical unique anchor scope > maps a missing anchor to generic PROGRAM_UNANCHORED without using the lowest row 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > program UUID admission reuses the canonical unique anchor scope > maps a ambiguous anchor to generic PROGRAM_UNANCHORED without using the lowest row 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > program UUID admission reuses the canonical unique anchor scope > preserves a canonical UUID refusal status 403 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > program UUID admission reuses the canonical unique anchor scope > preserves a canonical UUID refusal status 404 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > program UUID admission reuses the canonical unique anchor scope > preserves a canonical UUID refusal status 503 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > program UUID admission reuses the canonical unique anchor scope > refuses a mismatched or invalid canonical UUID tuple 0 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > program UUID admission reuses the canonical unique anchor scope > refuses a mismatched or invalid canonical UUID tuple 1 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > program UUID admission reuses the canonical unique anchor scope > refuses a mismatched or invalid canonical UUID tuple 2 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > program UUID admission reuses the canonical unique anchor scope > refuses a mismatched or invalid canonical UUID tuple 3 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > browser input supplies schedule intent, never execution authority > ignores payload actor/executor/job authority for 'generation' 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > browser input supplies schedule intent, never execution authority > ignores payload actor/executor/job authority for 'amendment' 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > browser input supplies schedule intent, never execution authority > ignores payload actor/executor/job authority for 'health review' 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > browser input supplies schedule intent, never execution authority > ignores payload actor/executor/job authority for 'goal reset' 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > browser input supplies schedule intent, never execution authority > cannot supply a missing session actor or request executor through the body 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > browser input supplies schedule intent, never execution authority > preserves the service edit refusal after read admission for 'generation' 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > browser input supplies schedule intent, never execution authority > preserves the service edit refusal after read admission for 'amendment' 1ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > browser input supplies schedule intent, never execution authority > preserves the service edit refusal after read admission for 'health review' 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > browser input supplies schedule intent, never execution authority > preserves the service edit refusal after read admission for 'goal reset' 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > browser input supplies schedule intent, never execution authority > preserves service refusal 'PROJECT_NOT_ACTIVE' without reading a success schedule 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > browser input supplies schedule intent, never execution authority > preserves service refusal 'PROJECT_ACCESS_UNAVAILABLE' without reading a success schedule 2ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > browser input supplies schedule intent, never execution authority > refuses composed unified-work prose after actor is revoked during loading 8ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > browser input supplies schedule intent, never execution authority > refuses composed unified-work prose after private access is revoked during loading 7ms
+ ✓ server/routes/__tests__/project-schedule-admission.test.ts > browser input supplies schedule intent, never execution authority > does not expose an earlier unified-work result after the unique program anchor changes 10ms
+stderr | server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > keeps unexpected generation failures internal (conflict-shaped code: false)
+{
+  "timestamp": "2026-11-09T09:51:44.795Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] generating schedule of events failed",
+  "context": {
+    "err": "Unexpected storage failure",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+stderr | server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > keeps unexpected generation failures internal (conflict-shaped code: true)
+{
+  "timestamp": "2026-11-09T09:51:44.800Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] generating schedule of events failed",
+  "context": {
+    "err": "Unexpected storage failure",
+    "correlationId": null,
+    "code": "SCHEDULE_REVIEW_REQUIRED"
+  }
+}
+
+stderr | server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > keeps an unexpected project-type storage failure internal instead of inventing an absent project
+{
+  "timestamp": "2026-11-09T09:51:44.802Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] generating schedule of events failed",
+  "context": {
+    "err": "project type lookup lost its connection",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > resolves the numeric ident 12 org-scoped 16ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > resolves the numeric ident proj_12 org-scoped 3ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > never truncates a regulatory_programs UUID to its leading digits 3ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > 400s any digit-prefixed junk ident before a single query is issued 2ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > GET /projects/:id/schedule-of-events — ident parsing > 404s a project outside the caller org without revealing it exists 3ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > reads the schedule of the project the program is anchored to 3ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > reads the unified work of the anchored project 24ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > answers an unresolved program with a named 409 and reads nothing 3ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > never generates a schedule for an unanchored program 9ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > program UUID → anchored project (schedule and unified work) > unavailable canonical admission is a 503, never "no project record" 4ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > forwards the trimmed caller reason after the existing organization gate 3ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > does not invent a reason from undefined 2ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > does not invent a reason from "" 2ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > does not invent a reason from "   " 8ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > does not invent a reason from 42 2ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > returns the actionable preservation conflict as 409 2ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > keeps unexpected generation failures internal (conflict-shaped code: false) 4ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > keeps unexpected generation failures internal (conflict-shaped code: true) 3ms
+stderr | server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > refuses missing organization context before invoking generation
+{
+  "timestamp": "2026-11-09T09:51:44.805Z",
+  "level": "error",
+  "message": "[project-schedule-of-events] generating schedule of events failed",
+  "context": {
+    "err": "Organization context required",
+    "correlationId": null,
+    "code": null
+  }
+}
+
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > keeps an unexpected project-type storage failure internal instead of inventing an absent project 3ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > refuses missing organization context before invoking generation 2ms
+ ✓ server/routes/__tests__/project-schedule-of-events.test.ts > POST /projects/:id/schedule-of-events/generate — preservation contract > refuses a project outside the organization before invoking generation 2ms
+stdout | server/routes/__tests__/request-db-context-ended-request.test.ts
+{
+  "timestamp": "2026-11-09T09:51:45.882Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T09:51:45.883Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/request-db-context-ended-request.test.ts
+{
+  "timestamp": "2026-11-09T09:51:45.883Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/request-db-context-ended-request.test.ts
+[database] Database connection successful
+
+stderr | server/routes/__tests__/request-db-context-ended-request.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/__tests__/request-db-context-ended-request.test.ts
+{
+  "timestamp": "2026-11-09T09:51:46.062Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/request-db-context-ended-request.test.ts
+{
+  "timestamp": "2026-11-09T09:51:50.744Z",
+  "level": "info",
+  "message": "[startup:auth-boundary] Default-deny auth boundary mounted on /api",
+  "context": {
+    "modeAtBoot": "warn"
+  }
+}
+
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > doc-list (/api/mdx/qms/documents), boundary warn 30ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > change-list (/api/mdx/qms/changes), boundary warn 8ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > doc-review-due (/api/mdx/qms/documents/review-due), boundary warn 6ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > training-compliance (/api/mdx/qms/training/compliance), boundary warn 6ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > unread-count (/api/mdx/notifications/unread-count), boundary warn 5ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > unified work (/api/concept2cure/projects/5f0c2a41-7a8e-4d1b-9c55-1e2f3a4b5c6d/unified-work), boundary warn 6ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > doc-list (/api/mdx/qms/documents), boundary enforce 4ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > change-list (/api/mdx/qms/changes), boundary enforce 5ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > doc-review-due (/api/mdx/qms/documents/review-due), boundary enforce 6ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > training-compliance (/api/mdx/qms/training/compliance), boundary enforce 5ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > unread-count (/api/mdx/notifications/unread-count), boundary enforce 4ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller waits for is served on its tenant-scoped request connection > unified work (/api/concept2cure/projects/5f0c2a41-7a8e-4d1b-9c55-1e2f3a4b5c6d/unified-work), boundary enforce 5ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > doc-list (/api/mdx/qms/documents): the client left at standing read 1, in the /api boundary (authenticateToken) 59ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > doc-list (/api/mdx/qms/documents): the client left at standing read 2, in the global /api gate (authMiddleware), after the client was bound 54ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > change-list (/api/mdx/qms/changes): the client left at standing read 2, in the global /api gate 54ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > doc-review-due (/api/mdx/qms/documents/review-due): the client left at standing read 1, in the /api boundary 53ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > training-compliance (/api/mdx/qms/training/compliance): the client left at standing read 1, in the /api boundary 53ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > unread-count (/api/mdx/notifications/unread-count): the client left at standing read 1, in the /api boundary 53ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a read the caller cancels during authentication is not reported as a missing request context > loading unified work (/api/concept2cure/projects/5f0c2a41-7a8e-4d1b-9c55-1e2f3a4b5c6d/unified-work): the client left at standing read 3, in the mount's own authenticateToken 54ms
+ ✓ server/routes/__tests__/request-db-context-ended-request.test.ts > a route with no scope installer still names the defect > REQUEST_DB_CONTEXT_REQUIRED, logged as a failure 3ms
+stderr | server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the work view the Review tab reads now lists the review on the program’s project
+{
+  "timestamp": "2026-11-09T09:51:53.660Z",
+  "level": "error",
+  "message": "[unified-work-view] unified work source could not be read",
+  "context": {
+    "table": "project_tasks",
+    "reason": "42P01: relation \"project_tasks\" does not exist"
+  }
+}
+
+stderr | server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the work view the Review tab reads now lists the review on the program’s project
+{
+  "timestamp": "2026-11-09T09:51:53.662Z",
+  "level": "error",
+  "message": "[unified-work-view] unified work source could not be read",
+  "context": {
+    "table": "c2c_project_work_items",
+    "reason": "42P01: relation \"c2c_project_work_items\" does not exist"
+  }
+}
+
+stderr | server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the work view the Review tab reads now lists the review on the program’s project
+{
+  "timestamp": "2026-11-09T09:51:53.664Z",
+  "level": "error",
+  "message": "[unified-work-view] unified work source could not be read",
+  "context": {
+    "table": "estar_submissions",
+    "reason": "42P01: relation \"estar_submissions\" does not exist"
+  }
+}
+
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > projectForTaskSource — the project a new task is recorded on > a task raised on a Vault version’s lifecycle record: its program’s project, in the caller’s organisation only (RR1a) 247ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > projectForTaskSource — the project a new task is recorded on > a review raised on an authoring document: its program’s project record 2ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > projectForTaskSource — the project a new task is recorded on > only within the caller’s organisation 2ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > projectForTaskSource — the project a new task is recorded on > nothing for a document with no program, an unanchored program, another source kind or a malformed id 3ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > is on the applier, before the tenant sweeps, and drops nothing 1ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the walk’s task 19 is recorded on TOLV’s project; nothing else moves 16ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > Rule 1: a second deploy changes nothing 19ms
+ ✓ server/services/tasking/__tests__/task-project.pglite.test.ts > 20261008d — the existing review tasks get their project > the work view the Review tab reads now lists the review on the program’s project 20ms
+stdout | server/services/tasking/__tests__/task-project-admission.test.ts
+{
+  "timestamp": "2026-11-09T09:51:54.353Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T09:51:54.354Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/tasking/__tests__/task-project-admission.test.ts
+{
+  "timestamp": "2026-11-09T09:51:54.354Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/tasking/__tests__/task-project-admission.test.ts
+[database] Database connection successful
+
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > explicit workflow project identity > refuses undefined before any database work 3ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > explicit workflow project identity > refuses null before any database work 1ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > explicit workflow project identity > refuses "" before any database work 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > explicit workflow project identity > refuses "3" before any database work 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > explicit workflow project identity > refuses 0 before any database work 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > explicit workflow project identity > refuses -1 before any database work 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > explicit workflow project identity > refuses 1.5 before any database work 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > explicit workflow project identity > refuses null before any database work 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > explicit workflow project identity > refuses null before any database work 1ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > explicit workflow project identity > refuses 2147483648 before any database work 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > explicit workflow project identity > admits the actual positive integer without coercing it 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > retains actor, parent, workspace and visibility, then asks the existing edit policy on the same client 2ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > does not invent a workspace for an actual unscoped project 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > rejects mismatched or malformed workspace claim 72 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > rejects mismatched or malformed workspace claim "" 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > rejects mismatched or malformed workspace claim "wrong" 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > rejects mismatched or malformed workspace claim 0 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > rejects mismatched or malformed workspace claim "1e3" 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > rejects mismatched or malformed workspace claim "71.0" 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > rejects a claimed client workspace on a project whose actual workspace is null 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > refuses an actual workspace not retained in the same organization 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > uses the fresh role rather than an earlier editor claim 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > refuses missing or foreign parents without asking another project policy 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > retains and refuses a archived parent 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > retains and refuses a deleted parent 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor, actual project and workspace > refuses read-only sharing instead of treating read access as a write grant 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > workspace retention shared with workspace-only unified intake > retains an owned workspace and its normalized matching claim on the caller transaction 1ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > workspace retention shared with workspace-only unified intake > preserves a missing workspace without a query or an invented relationship 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > workspace retention shared with workspace-only unified intake > refuses malformed selected workspace 0 before SQL 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > workspace retention shared with workspace-only unified intake > refuses malformed selected workspace -1 before SQL 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > workspace retention shared with workspace-only unified intake > refuses malformed selected workspace 1.5 before SQL 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > workspace retention shared with workspace-only unified intake > refuses malformed selected workspace "71" before SQL 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > workspace retention shared with workspace-only unified intake > refuses malformed selected workspace 2147483648 before SQL 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > workspace retention shared with workspace-only unified intake > refuses a mismatched claim before querying another workspace 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > workspace retention shared with workspace-only unified intake > refuses a missing or foreign workspace 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > workspace retention shared with workspace-only unified intake > maps a failed workspace query to a sanitized unavailable refusal 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor admission for unfiled work > retains current active write membership without a project or workspace lookup 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor admission for unfiled work > refuses fresh role "viewer" without relying on a claimed write role 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor admission for unfiled work > refuses fresh role "guest" without relying on a claimed write role 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor admission for unfiled work > refuses fresh role "" without relying on a claimed write role 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor admission for unfiled work > maps revoked current membership to the existing sanitized denial 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > current actor admission for unfiled work > refuses an unavailable current actor read without exposing its database detail 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > admission uncertainty stays distinct from permission denial > sanitizes an unavailable current membership read 1ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > admission uncertainty stays distinct from permission denial > maps a positively revoked membership to a known denial 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > admission uncertainty stays distinct from permission denial > does not turn an unavailable sharing check into permission to write 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > admission uncertainty stays distinct from permission denial > refuses malformed actual workspace 0 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > admission uncertainty stays distinct from permission denial > refuses malformed actual workspace "71" 0ms
+ ✓ server/services/tasking/__tests__/task-project-admission.test.ts > admission uncertainty stays distinct from permission denial > refuses malformed actual workspace 1.5 0ms
+stdout | server/services/unified-work/__tests__/unified-work-view.test.ts
+{
+  "timestamp": "2026-11-09T09:51:55.084Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T09:51:55.085Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/unified-work/__tests__/unified-work-view.test.ts
+{
+  "timestamp": "2026-11-09T09:51:55.085Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/unified-work/__tests__/unified-work-view.test.ts
+[database] Database connection successful
+
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > status normalization across the three systems > maps project_tasks vocabulary 1ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > status normalization across the three systems > maps work-item vocabulary (resolved and closed are both done) 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > status normalization across the three systems > treats a filing awaiting additional info as BLOCKED, not merely in flight 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > priority normalization > passes through the shared scale 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > priority normalization > maps correspondence severities onto the shared scale 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > priority normalization > returns null for unknown/absent rather than inventing a priority 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > row adapters > flags a blocked task and a critical-to-quality task as blocking 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > row adapters > routes correspondence work items into their own lane 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > row adapters > does not treat a resolved work item as blocking even with a blockerType 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > row adapters > maps a filing awaiting agency info to a blocking item with its decision clock 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > row adapters > gives every source a globally unique composite id 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > merge + ordering > puts blockers first, then soonest due, with undated last 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > merge + ordering > is a stable, deterministic comparator 6ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > merge + ordering > handles the empty case without inventing anything 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > board dependency blockers > does not count a completed board task with retained dependencies as blocking 1ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > board dependency blockers > does not count a cancelled board task with retained dependencies as blocking 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > board dependency blockers > retains an active blocker for 'blocked' / dependencies [] / critical path false 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > board dependency blockers > retains an active blocker for 'pending' / dependencies [ 'TASK-PREDECESSOR' ] / critical path false 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > board dependency blockers > retains an active blocker for 'in-progress' / dependencies [] / critical path true 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > board dependency blockers > rolls up active blockers without completed or cancelled dependency history 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > summary roll-up > counts by status and by source 0ms
+ ✓ server/services/unified-work/__tests__/unified-work-view.test.ts > summary roll-up > adapts canonical board tasks (unified_tasks) into the shared shape 1ms
+
+ Test Files  6 passed (6)
+      Tests  203 passed (203)
+   Start at  09:51:42
+   Duration  12.91s (transform 4.63s, setup 126ms, import 3.58s, tests 8.53s, environment 0ms)
+

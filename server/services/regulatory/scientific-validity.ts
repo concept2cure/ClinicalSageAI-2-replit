@@ -10,7 +10,13 @@
  *   - IVDR 2017/746 Annex XIII Part A §1.2.1 — demonstration of scientific validity
  *   - IVDR Annex I §9.1(a) — scientific validity as the first performance pillar
  *   - Evidence hierarchy adapted from GRADE / Oxford CEBM levels.
+ *
+ * 2026-11-08: an item's directlyOnTarget and source are required, and neither was checked. An omitted
+ * directlyOnTarget read as false (the item dropped from the score), 'false' (text) read as true, an unknown source
+ * scored nothing, and evidence that was not a list crashed. Each is refused by field (ComputationRefusal).
  */
+
+import { ComputationRefusal, refuseUnlessStated } from '../ana-biostats/computation-engine';
 
 /** Sources of scientific-validity evidence, strongest → weakest. */
 export const EVIDENCE_SOURCES = [
@@ -69,6 +75,22 @@ export interface ScientificValidityResult {
 export function assessScientificValidity(
   input: ScientificValidityInput
 ): ScientificValidityResult {
+  const evidence: unknown = input?.evidence;
+  if (!Array.isArray(evidence)) {
+    throw new ComputationRefusal(
+      evidence === undefined || evidence === null ? 'missing_input' : 'invalid_input',
+      'assessScientificValidity: evidence is required: a list of { source, reference, directlyOnTarget } items (got ' +
+        JSON.stringify(evidence) + ').',
+      'evidence',
+    );
+  }
+  refuseUnlessStated('assessScientificValidity', evidence.flatMap((e: unknown, i: number) => {
+    const item = (e ?? {}) as Partial<Record<string, unknown>>;
+    return [
+      { field: `evidence[${i}].source`, value: item.source, ok: (EVIDENCE_SOURCES as readonly unknown[]).includes(item.source), expected: 'one of ' + EVIDENCE_SOURCES.join(', ') },
+      { field: `evidence[${i}].directlyOnTarget`, value: item.directlyOnTarget, ok: typeof item.directlyOnTarget === 'boolean', expected: 'true or false' },
+    ];
+  }), 'assessed');
   const onTarget = input.evidence.filter(e => e.directlyOnTarget);
   const gaps: string[] = [];
 

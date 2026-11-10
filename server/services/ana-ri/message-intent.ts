@@ -97,7 +97,6 @@ export const APP_ENRICHMENT_MAP: Record<string, string[]> = {
   'device-cer': ['device', 'safety', 'claims'],
   'safety': ['safety'],
   'safety-narrative': ['safety'],
-  'biostat-workbench': ['biostatistics'],
   'biostatistics': ['biostatistics', 'readiness'],
   'vault': ['ectd'],
   'ectd-coauthor': ['ectd'],

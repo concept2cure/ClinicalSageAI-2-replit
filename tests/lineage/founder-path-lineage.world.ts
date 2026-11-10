@@ -203,6 +203,8 @@ export interface World {
   app: express.Express;
   asAuthor: (r: request.Test) => request.Test;
   asApprover: (r: request.Test) => request.Test;
+  /** The QA reviewer: signs the review an approval follows (P-95). */
+  asReviewer: (r: request.Test) => request.Test;
   k: Keys;
   /** Temp directories and environment variables a hop set, undone by close(). */
   tmpDirs: string[];
@@ -235,6 +237,8 @@ function prerequisites(): string {
     'notification_preferences',
     // The tasks a review route assigns (RR1a); 20261023_review_routes adds its route columns.
     'unified_tasks',
+    // The quality management plan and its children: Quality registers the Data Room's first page reads (f4c230dfac).
+    'quality_management_plans', 'ctq_factors', 'qmp_section_gating', 'qmp_traceability_matrix',
   ]);
   // extractTableDdl copies a table's body only. The cascade is what PF-08 is
   // about, so the real key comes verbatim from the same file.
@@ -381,6 +385,7 @@ export async function buildWorld(h: Holder, migrations: readonly string[], testO
     app,
     asAuthor: asToken(await mint(AUTHOR)),
     asApprover: asToken(await mint(APPROVER)),
+    asReviewer: asToken(await mint(REVIEWER)),
     k: {},
     tmpDirs: [],
     envBefore: {},

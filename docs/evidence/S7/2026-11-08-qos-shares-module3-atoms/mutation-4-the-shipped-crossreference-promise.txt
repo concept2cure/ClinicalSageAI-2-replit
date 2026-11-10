@@ -1,0 +1,8 @@
+ × server/services/__tests__/m2-qos-shares-module3-atoms-and-methods.test.ts > the QOS narrative says which procedures, or that none is recorded > lists the procedures and their status instead of promising them 14ms
+   → expected 'MODULE 2.3 — QUALITY OVERALL SUMMARY\…' to contain 'Analytical procedures: HPLC-UV assay …'
+ × server/services/__tests__/m2-qos-shares-module3-atoms-and-methods.test.ts > the QOS narrative says which procedures, or that none is recorded > says no analytical procedure is recorded rather than cross-referring to Module 3 4ms
+   → expected 'MODULE 2.3 — QUALITY OVERALL SUMMARY\…' to contain 'No analytical procedure is recorded i…'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'MODULE 2.3 — QUALITY OVERALL SUMMARY\…' to contain 'Analytical procedures: HPLC-UV assay …'
+AssertionError: expected 'MODULE 2.3 — QUALITY OVERALL SUMMARY\…' to contain 'No analytical procedure is recorded i…'
+      Tests  2 failed | 12 passed (14)

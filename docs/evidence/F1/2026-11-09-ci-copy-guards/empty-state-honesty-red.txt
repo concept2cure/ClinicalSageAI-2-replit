@@ -1,0 +1,14 @@
+> concept2cure-riai@1.0.0 ci:empty-state-honesty
+> node scripts/ci/check-empty-state-honesty.mjs
+❌ Clearance copy selected by an EMPTY collection.
+   client/src/concept2cure/v2/surfaces/ProtocolDevPanes.tsx:320
+     when `(collection)` is empty → "'No trend signal over the window the trend engine reads.'"
+   client/src/concept2cure/v2/surfaces/TaskBoard.tsx:303
+     when `(collection)` is empty → "'no action'"
+   An empty findings set is not a finding of "none". This copy is chosen BY the
+   collection being empty, so it says "we found nothing" in a state that means
+   "we have not looked". (BIOPHARMA_WORK_ORDER.md standing checklist.)
+   Use the four-state discriminator instead:
+     client/src/concept2cure/v2/assessmentState.ts — assessmentState/mayReassure
+   Clearance requires positive evidence that an assessment RAN, passed as its own
+   input; never derived from findingCount === 0.

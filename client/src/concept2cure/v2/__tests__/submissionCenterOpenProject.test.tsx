@@ -98,22 +98,24 @@ describe('Submission Center — with a project open', () => {
     expect(screen.queryByRole('button', { name: 'Open BX-990 NDA' })).toBeNull();
   });
 
+  // D7-A1 (2026-11-09): the scope sentence became the back link (whose submissions) and the toggle's label (how many
+  // others the server left out).
   it('says whose submissions these are and how many others the server left out', async () => {
     serve();
     render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
-    const line = await screen.findByTestId('sc-scope');
-    await waitFor(() => expect(line.textContent).toMatch(/3 other submissions in your organization are not shown/));
-    expect(line.textContent).toMatch(/Submissions of ONC-221, the open project\./);
+    expect(await screen.findByRole('button', { name: /ONC-221$/ })).toBeTruthy();
+    const toggle = await screen.findByTestId('sc-scope');
+    await waitFor(() => expect(toggle.textContent).toBe("Show the organization's submissions (3 more)"));
   });
 
   it('shows every submission of the organization on request, and can go back', async () => {
     serve();
     render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
-    fireEvent.click(await screen.findByRole('button', { name: "Show all of the organization's submissions" }));
+    fireEvent.click(await screen.findByRole('button', { name: "Show the organization's submissions (3 more)" }));
     await screen.findByRole('button', { name: 'Open BX-990 NDA' });
     expect(urls()).toContain('/api/submissions');
-    expect(screen.getByTestId('sc-scope').textContent).toMatch(/Every submission in your organization\./);
-    fireEvent.click(screen.getByRole('button', { name: "Show only ONC-221's submissions" }));
+    expect(screen.getByTestId('sc-scope').textContent).toBe("Show this project's submissions");
+    fireEvent.click(screen.getByRole('button', { name: "Show this project's submissions" }));
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Open BX-990 NDA' })).toBeNull());
   });
 
@@ -121,11 +123,8 @@ describe('Submission Center — with a project open', () => {
     serve({ notOffered: undefined });
     render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
     await screen.findByRole('button', { name: 'Open ONC-221 IND' });
-    const line = screen.getByTestId('sc-scope').textContent ?? '';
-    expect(line).toMatch(/Submissions of ONC-221, the open project\./);
-    expect(line).not.toMatch(/not shown|no other submissions/);
-    // The way to the others stays: their number is unknown, not zero.
-    expect(screen.getByRole('button', { name: "Show all of the organization's submissions" })).toBeTruthy();
+    // The way to the others stays, with no number: their number is unknown, not zero.
+    expect(screen.getByTestId('sc-scope').textContent).toBe("Show the organization's submissions");
   });
 
   it('creates the submission in the open project: no programme picker, the project named', async () => {
@@ -176,28 +175,26 @@ describe('Submission Center — the open project, as the review found it', () =>
   it('keeps keyboard focus on the scope toggle in both directions', async () => {
     serve();
     render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
-    const showAll = await screen.findByRole('button', { name: "Show all of the organization's submissions" });
+    const showAll = await screen.findByRole('button', { name: "Show the organization's submissions (3 more)" });
     showAll.focus();
     fireEvent.click(showAll);
-    const showOnly = await screen.findByRole('button', { name: "Show only ONC-221's submissions" });
+    const showOnly = await screen.findByRole('button', { name: "Show this project's submissions" });
     // The same element, relabelled — not a new button with focus left on <body>.
     expect(showOnly).toBe(showAll);
     expect(document.activeElement).toBe(showOnly);
     fireEvent.click(showOnly);
-    const back = await screen.findByRole('button', { name: "Show all of the organization's submissions" });
+    const back = await screen.findByRole('button', { name: "Show the organization's submissions (3 more)" });
     expect(document.activeElement).toBe(back);
   });
 
-  it('a project known only by its id is "the open project" once, not twice', async () => {
+  it('a project known only by its id is named "Project" by its back link, and the toggle needs no name', async () => {
     (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT = { id: PID };
     serve({ projects: [] });
     render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
     await screen.findByRole('button', { name: 'Open ONC-221 IND' });
-    const line = screen.getByTestId('sc-scope').textContent ?? '';
-    expect(line).toMatch(/Submissions of the open project\./);
-    expect(line).not.toMatch(/the open project, the open project/);
-    fireEvent.click(screen.getByRole('button', { name: "Show all of the organization's submissions" }));
-    expect(await screen.findByRole('button', { name: "Show only the open project's submissions" })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /Project$/ })).toBeTruthy();
+    fireEvent.click(screen.getByTestId('sc-scope'));
+    expect(await screen.findByRole('button', { name: "Show this project's submissions" })).toBeTruthy();
   });
 
   it('a failed scoped read does not call the list the organization’s', async () => {
@@ -212,7 +209,7 @@ describe('Submission Center — the open project, as the review found it', () =>
     serve();
     render(<SubmissionCenter onAsk={vi.fn()} onNav={vi.fn()} />);
     await screen.findByRole('button', { name: 'Open ONC-221 IND' });
-    await waitFor(() => expect(screen.getByTestId('sc-scope').textContent).toMatch(/3 other submissions/));
+    await waitFor(() => expect(screen.getByTestId('sc-scope').textContent).toMatch(/\(3 more\)/));
     await waitFor(() => expect(registeredSurfaceId()).toBe('submission-center'));
     const resolved = resolveSurfaceAction('submissions.select-submission', { submission: 'BX-990 NDA' });
     if (!resolved.ok) throw new Error(resolved.error);
@@ -223,7 +220,7 @@ describe('Submission Center — the open project, as the review found it', () =>
     expect(outcome.status).toBe('failed');
     expect(outcome.reason).toMatch(/among the open project's submissions \(ONC-221\)/);
     expect(outcome.reason).toMatch(/3 other submissions of the organization are not listed here/);
-    expect(outcome.reason).toMatch(/Show all of the organization's submissions/);
+    expect(outcome.reason).toMatch(/Show the organization's submissions/);
     expect(outcome.reason).not.toMatch(/in this portfolio/);
   });
 });

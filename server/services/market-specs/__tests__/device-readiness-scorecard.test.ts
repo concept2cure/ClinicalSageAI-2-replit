@@ -141,3 +141,63 @@ describe('readiness scorecard — a class the engine could not determine is not 
     expect(scorecardFromBlueprint(bp).dimensions.find((d) => d.id === 'classification')?.status).toBe('ready');
   });
 });
+
+/* The coordinator's F1 item (2026-11-02), found by Reporting: the level was the
+   score's band alone, so with six applicable modules one module not started
+   still scored 90, 'nearly_ready', and AnA's build_device_blueprint said so.
+   The regulatory evaluator (server/services/regulatory/readinessEvaluator.ts)
+   answers 'nearly_ready' only when no gap is critical; a required piece that is
+   not started, or that nothing has assessed, is critical there. So it caps the
+   level at 'in_progress' here, below 'nearly_ready'. The score is unchanged:
+   it is the share shown. */
+describe('readiness scorecard — a dimension with nothing shown is never nearly ready', () => {
+  const ready = (id: string) => ({ id, label: id.toUpperCase(), applicable: true, ready: true });
+  const fiveReady = ['rmf', 'cer', 'usability', 'software', 'labeling'].map(ready);
+
+  it('one required module of six not started: 90, in progress, and the gap is named', () => {
+    const sc = computeDeviceReadinessScorecard({
+      classificationKnown: true,
+      requirements: { present: 5, total: 5 },
+      evidence: [...fiveReady, { id: 'pms', label: 'PMS plan', applicable: true, ready: false }],
+    });
+    expect(sc.score).toBe(90);
+    expect(sc.level).toBe('in_progress');
+    expect(sc.topGaps).toContain('PMS plan is not started.');
+  });
+
+  it('one module whose required set turns on an unstated fact: not assessed, in progress', () => {
+    const sc = computeDeviceReadinessScorecard({
+      classificationKnown: true,
+      requirements: { present: 5, total: 5 },
+      evidence: [...fiveReady, { id: 'sw', label: 'Software', applicable: true, missingFacts: ['IEC 62304 class'] }],
+    });
+    expect(sc.score).toBe(90);
+    expect(sc.level).toBe('in_progress');
+  });
+
+  it('the risk class not determined, everything else shown: 90, in progress', () => {
+    const sc = computeDeviceReadinessScorecard({
+      classificationKnown: false,
+      requirements: { present: 5, total: 5 },
+      evidence: fiveReady,
+    });
+    expect(sc.score).toBe(90);
+    expect(sc.level).toBe('in_progress');
+  });
+
+  /* P-114 (2026-11-09, decided under the founder's delegation): "nearly ready"
+     is never said while a required item is missing, partly present included.
+     This case pinned 'nearly_ready' until then. */
+  it('a required set only partly present is in progress too, and 100 with no gap is ready', () => {
+    const partial = computeDeviceReadinessScorecard({
+      classificationKnown: true,
+      requirements: { present: 4, total: 5 },
+      evidence: [...fiveReady, { id: 'pms', label: 'PMS plan', applicable: true, present: 1, total: 2 }],
+    });
+    expect(partial.dimensions.every((d) => d.status !== 'not_started' && d.status !== 'not_assessed')).toBe(true);
+    expect(partial.score).toBeGreaterThanOrEqual(80);
+    expect(partial.level).toBe('in_progress');
+    const done = computeDeviceReadinessScorecard({ classificationKnown: true, requirements: { present: 5, total: 5 }, evidence: fiveReady });
+    expect(done).toMatchObject({ score: 100, level: 'ready', topGaps: [] });
+  });
+});

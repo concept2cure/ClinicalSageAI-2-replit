@@ -56,7 +56,9 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   apiRequest,
 }));
 const viewer = vi.hoisted(() => ({ roles: ['admin'] as string[] }));
-vi.mock('@/services/portal/authService', () => ({
+// a2f9264a5d: WhatAnaRemembers keys its owner read to authService's session, so keep the real module.
+vi.mock('@/services/portal/authService', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/services/portal/authService')>()),
   useAuth: () => ({ user: { firstName: 'Ada', lastName: 'Rowe', displayName: 'Ada Rowe', roles: viewer.roles }, logout: vi.fn() }),
 }));
 const tenant = vi.hoisted(() => ({
@@ -268,10 +270,11 @@ describe('at phone width, choosing an item closes the drawer (§D1.A step 7)', (
   it('the notice a choice raises is still seen once the drawer closes (it sits beside the rail, not in it)', async () => {
     viewport(true);
     const { rail, setCollapsed } = mountRail({ activeId: 'projects' });
-    // Vault with no project open lands on Projects and says why (Rail.open).
-    fireEvent.click(within(rail.querySelector('.rail-scroll') as HTMLElement).getByRole('button', { name: 'Vault' }));
+    // A project screen with no project open lands on Projects and says why (Rail.open). Vault is global
+    // since 5144702d21 (founder, 2026-11-06), so CMC / Module 3, still scope 'project', raises the notice.
+    fireEvent.click(within(rail.querySelector('.rail-scroll') as HTMLElement).getByRole('button', { name: 'CMC / Module 3' }));
     expect(setCollapsed).toHaveBeenLastCalledWith(true);
-    const notice = await screen.findByText('Open a project to see its Vault. Choose one in Projects.');
+    const notice = await screen.findByText('Open a project to see its CMC / Module 3. Choose one in Projects.');
     // At ≤640px the collapsed rail is display:none, so a notice inside it would not be drawn.
     expect(rail.contains(notice)).toBe(false);
   });

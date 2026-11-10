@@ -12,6 +12,9 @@ vi.mock('../../vault/document-catalog.service', () => ({ loadDocumentForActor: s
 vi.mock('../../c2c/current-program-access', async original => (
   (await import('./support/source-read-tool-fixture.js')).syntheticProgramAccessMock(await original<Record<string, unknown>>())
 ));
+// Not a standing-rule suite: its stub sqlClient has no rule store (see _standing-rule-fixture.ts).
+vi.mock('../governed-tool-gate.js', async orig =>
+  (await import('./_standing-rule-fixture')).withNoStandingRules(await orig()));
 import { getToolHandler } from '../AnaToolExecutor';
 
 interface Slot {

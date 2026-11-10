@@ -1,0 +1,24 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "phase": "reach",
+  "startedAt": "2026-11-10T01:16:19.948Z",
+  "steps": [
+    {
+      "name": "1440: the project page's \"Open the data catalog\" opens Vault on the Data catalog, graded",
+      "text": "This project All my projects The data catalog: every captured file you can open, organized by project, study, kind, CTD section and Vault folder, each with its grade. Refresh sources Search the data room catalogue Every captured file across your 3 projects of this sponsor, each graded from what the system records about it. Organize by Newest first Project Study Kind CTD section Vault folder Any project [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) (30) [Demo · MDX] NeuroPan"
+    },
+    {
+      "name": "1440: the Vault's Data catalog tab, from its own tabs"
+    },
+    {
+      "name": "390: the project page's \"Open the data catalog\" opens Vault on the Data catalog, graded",
+      "text": "This project All my projects The data catalog: every captured file you can open, organized by project, study, kind, CTD section and Vault folder, each with its grade. Refresh sources Search the data room catalogue Every captured file across your 3 projects of this sponsor, each graded from what the system records about it. Organize by Newest first Project Study Kind CTD section Vault folder Any project [Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND) (30) [Demo · MDX] NeuroPan"
+    },
+    {
+      "name": "390: the Vault's Data catalog tab, from its own tabs"
+    }
+  ],
+  "apiErrors": [],
+  "ok": true,
+  "finishedAt": "2026-11-10T01:16:47.419Z"
+}

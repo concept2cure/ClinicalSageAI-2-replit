@@ -1,0 +1,7 @@
+## Without the savepoint (the failure is caught, but the transaction it aborted is not rolled back)
+ × lists the other source normally, and the native one as unverifiable with its reason, its details withheld 86ms
+   → Current project access could not be verified. No project data was supplied.
+ ✓ lists both normally when the native source verifies 87ms
+ ✓ a denied native source is still omitted, never disclosed as unverifiable 79ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 2 passed (3)

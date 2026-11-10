@@ -29,6 +29,10 @@ function exactArgs(): RenderExportArgs {
       programId: program, contentHash: 'a'.repeat(64), span, ...draftSourceIdentityForText(source().extractedText, span) }] }] };
   return a;
 }
+/** Since bb999f25b6 an AnA draft with no retained creation receipt is held at release. The saved evidence is
+ * reverified first (authoring-export.ts), so this refusal, not SOURCE_REFERENCES_UNAVAILABLE, shows it verified. */
+const heldAfterSourceCheck = (a: RenderExportArgs) =>
+  expect(renderAuthoringExport(a)).rejects.toMatchObject({ code: 'WORKFLOW_ORIGIN_UNVERIFIED' });
 beforeEach(() => { vi.clearAllMocks(); m.load.mockResolvedValue(source()); });
 describe('new source-linked Authoring renditions reverify their saved evidence', () => {
   it.each([null, { ...source(), disposition: 'remove_data' }, { ...source(), disposition: 'supersede' },
@@ -41,7 +45,7 @@ describe('new source-linked Authoring renditions reverify their saved evidence',
   it('keeps valid retained data usable and verifies through the caller executor', async () => {
     m.load.mockResolvedValue({ ...source(), originalFileAvailable: false, disposition: 'keep_data' });
     const a = args();
-    expect((await renderAuthoringExport(a)).fileContent.toString()).toContain('Draft findings.');
+    await heldAfterSourceCheck(a);
     expect(m.load).toHaveBeenCalledWith(sourceId, 7, { includeText: true, executor: a.executor, programId: program, currentOnly: true });
   });
   it('does not invent source qualification for legacy or manually authored documents', async () => {
@@ -66,7 +70,7 @@ describe('new source-linked Authoring renditions reverify their saved evidence',
   it('retains untouched V2 and eligible original-unavailable text without storing a second text copy', async () => {
     m.load.mockResolvedValue({ ...source(), originalFileAvailable: false, disposition: 'keep_data' });
     const a = exactArgs(); const before = JSON.stringify(a.doc.provenance);
-    expect((await renderAuthoringExport(a)).fileContent.toString()).toContain('Draft findings.');
+    await heldAfterSourceCheck(a);
     expect(JSON.stringify(a.doc.provenance)).toBe(before);
     expect(before).not.toContain(source().extractedText);
   });
@@ -89,7 +93,7 @@ describe('new source-linked Authoring renditions reverify their saved evidence',
   it('preserves legacy original-byte/length semantics without manufacturing extraction identity', async () => {
     m.load.mockResolvedValue({ ...source(), extractedText: 'Xxact study evidence' });
     const a = args(); const original = JSON.stringify(a.doc.provenance);
-    expect((await renderAuthoringExport(a)).fileContent.toString()).toContain('Draft findings.');
+    await heldAfterSourceCheck(a);
     expect(JSON.stringify(a.doc.provenance)).toBe(original); expect(original).not.toContain('extractedTextSha256');
   });
   it('privately snapshots direct verifier input and actor before its first asynchronous source load', async () => {

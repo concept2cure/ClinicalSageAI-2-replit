@@ -1,0 +1,5 @@
+MUTATION M05-E4-kept-answer-ignored in server/services/submission-gateways/fda-esg-receipts.ts (on the final code and tests, 2026-11-09T13:40:39.112251Z): replaced [if (t.status === 'received' || t.verifiedReceipt || !['pending', 'in_transit', 'rejected'].includes(t.status)) {] with [if (false) {]
+ × server/services/submission-service/__tests__/held-send-settlement.pglite.test.ts > P-92 T4: what keeps a held send from being settled, in words, with nothing changed > E4: FDA's verified answer already kept refuses both outcomes, and points at recording it 398ms
+      Tests  1 failed | 30 skipped (31)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 039d6b13181040d8b556c095a5ec7b8e27fc02fbfdd9bf72293c2ba6ed1f5a93 (expected 039d6b13181040d8b556c095a5ec7b8e27fc02fbfdd9bf72293c2ba6ed1f5a93)

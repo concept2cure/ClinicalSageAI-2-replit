@@ -1,0 +1,13 @@
+# Red at 27b901c49 (before the change): #54
+# npx vitest run server/routes/c2c/__tests__/documents-project-scope.pglite.test.ts -t 'received it'
+ × server/routes/c2c/__tests__/documents-project-scope.pglite.test.ts > a submit takes a sequence as evidence only once the agency has received it > refuses a dispatched sequence whose send is pending, and nothing changes
+   → {"actionId":"act_1","status":"submitted","filing":{"sequence":{"sequenceId":31,"sequenceNumber":"0001","region":"us","status":"dispatched","dispatchStatus":"pending"}}}: expected 200 to be 409 // Object.is equality
+ × server/routes/c2c/__tests__/documents-project-scope.pglite.test.ts > a submit takes a sequence as evidence only once the agency has received it > refuses a dispatched sequence whose send is transmitting, and nothing changes
+   → {"actionId":"act_1","status":"submitted","filing":{"sequence":{"sequenceId":32,"sequenceNumber":"0002","region":"us","status":"dispatched","dispatchStatus":"transmitting"}}}: expected 200 to be 409 // Object.is equality
+ × server/routes/c2c/__tests__/documents-project-scope.pglite.test.ts > a submit takes a sequence as evidence only once the agency has received it > refuses a dispatched sequence whose send is rejected, and nothing changes
+   → {"actionId":"act_1","status":"submitted","filing":{"sequence":{"sequenceId":33,"sequenceNumber":"0003","region":"us","status":"dispatched","dispatchStatus":"rejected"}}}: expected 200 to be 409 // Object.is equality
+ × server/routes/c2c/__tests__/documents-project-scope.pglite.test.ts > a submit takes a sequence as evidence only once the agency has received it > refuses a dispatched sequence whose send is not recorded, and nothing changes
+   → {"actionId":"act_1","status":"submitted","filing":{"sequence":{"sequenceId":34,"sequenceNumber":"0004","region":"us","status":"dispatched","dispatchStatus":null}}}: expected 200 to be 409 // Object.is equality
+ ✓ server/routes/c2c/__tests__/documents-project-scope.pglite.test.ts > a submit takes a sequence as evidence only once the agency has received it > takes a sequence the agency acknowledged, and records it as the filing
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 1 passed | 25 skipped (30)

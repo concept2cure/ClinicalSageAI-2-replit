@@ -1,0 +1,10 @@
+# Green at 785f56d73 + this change, 2026-11-09T06:36:14Z
+# npx vitest run server/services/submission-service server/services/ectd server/services/submission-gateways server/__tests__/routes/submission-filed-baseline.pglite.test.ts server/services/audit server/services/__tests__/auditService* server/mcp server/services/ana/__tests__/submission-center-tools.test.ts server/routes/__tests__/submissions server/routes/ind-lifecycle
+ ✓ server/services/submission-gateways/__tests__/gateway-accounts.test.ts > what the organisation sees > every gateway × environment, platform by default, with whether it can send
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > hmac posture: seal only, no envelope, and an absent envelope is "unsigned"
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > kms posture: the envelope is written BESIDE the seal and both verify
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > kms posture: a tampered envelope, or one from another org, fails closed
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > a stored envelope with the posture downgraded to hmac is "failed", never accepted
+ ✓ server/services/ectd/__tests__/sign-payload-kms-seam.test.ts > sign-payload-seal × CONCEPT2CURE_SIGNER_MODE > a malformed posture throws (the boot gate, seen from the seam)
+ Test Files  310 passed | 2 skipped (312)
+      Tests  3846 passed | 6 skipped (3852)

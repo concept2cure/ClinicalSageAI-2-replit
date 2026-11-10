@@ -10,17 +10,35 @@ const FIELD_STYLE: React.CSSProperties = { display: 'grid', minWidth: 0, gap: 'v
 const CONTROL_STYLE: React.CSSProperties = { width: '100%', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box' };
 const DETAIL_STYLE: React.CSSProperties = { minWidth: 0, gridTemplateColumns: 'minmax(0, 1fr)', overflowWrap: 'anywhere' };
 
+type PlanRow = NonNullable<AssemblyBuildController['plan']>['rows'][number];
+
+/**
+ * What the build will do to one section, in the preview (J3 R9). A saved section is kept as it is and a missing one
+ * is added with the template's stored text; `row.content` is that text either way. AnA prepares a candidate only for
+ * a draftable section that is empty once built (useAuthoringAssemblyBuild.ts), so the AnA line says which.
+ */
+export function assemblyRowWords(row: PlanRow, withAna: boolean): { what: string; ana: string | null } {
+  const hasText = row.content.trim() !== '';
+  const what = row.disposition === 'preserve'
+    ? (hasText ? 'Kept as saved, with its text' : 'Kept as saved; it has no text yet')
+    : (hasText ? "Added, with the template's stored text" : 'Added empty; scientific content is missing');
+  const ana = !withAna ? null
+    : !row.aiDraftable ? `AnA drafting is unavailable: ${row.aiDraftableReason}`
+      : hasText ? 'It holds text, so AnA prepares no candidate for it.' : 'AnA prepares a candidate for it, for you to review.';
+  return { what, ana };
+}
+
 function AssemblyPlanRows({ controller }: { controller: AssemblyBuildController }) {
   const plan = controller.plan;
   if (!plan) return null;
   return <div className="ed-source-detail" style={DETAIL_STYLE} data-testid="assembly-plan">
     <strong>{plan.templateName} · {plan.rows.length} selected section{plan.rows.length === 1 ? '' : 's'}</strong>
     {plan.limitations.length > 0 && <ul>{plan.limitations.map((limit, i) => <li key={i}>{limit}</li>)}</ul>}
-    <ol>{plan.rows.map(row => <li key={row.code}>
-      <strong>{row.code} {row.title}</strong> · {row.disposition === 'preserve' ? 'Preserve existing section and text' : row.content.trim() ? 'Append stored template text' : 'Append empty section; scientific content is missing'}
-      {controller.withAna && <p>{row.aiDraftable ? 'AnA can prepare a candidate only if this saved section is empty.' : `AnA drafting is unavailable: ${row.aiDraftableReason}`}</p>}
+    <ol>{plan.rows.map(row => { const words = assemblyRowWords(row, controller.withAna); return <li key={row.code}>
+      <strong>{row.code} {row.title}</strong> · {words.what}
+      {words.ana && <p>{words.ana}</p>}
       {row.gaps.length > 0 && <ul>{row.gaps.map((gap, i) => <li key={i}>{gap}</li>)}</ul>}
-    </li>)}</ol>
+    </li>; })}</ol>
     {plan.gaps.length > 0 && <><strong>Completion gaps</strong><ul>{plan.gaps.map((gap, i) => <li key={i}>{gap}</li>)}</ul></>}
   </div>;
 }

@@ -9,11 +9,11 @@ import { APP_ENRICHMENT_MAP, KNOWN_APPS, detectAppMention } from '../message-int
 
 describe('detectAppMention', () => {
   it('resolves an alias at the start (the pre-menu form) to the app id and strips it', () => {
-    expect(detectAppMention('@biostats check the power for arm B')).toEqual({ appId: 'biostat-workbench', remainingText: 'check the power for arm B' });
+    expect(detectAppMention('@biostats check the power for arm B')).toEqual({ appId: 'biostatistics', remainingText: 'check the power for arm B' });
   });
 
   it('resolves a label in the middle of a sentence (the menu form)', () => {
-    expect(detectAppMention('please ask @Biostatistics workbench about the interim')).toEqual({ appId: 'biostat-workbench', remainingText: 'please ask about the interim' });
+    expect(detectAppMention('please ask @Biostatistics workbench about the interim')).toEqual({ appId: 'biostatistics', remainingText: 'please ask about the interim' });
   });
 
   it('is null for unknown handles and plain text', () => {

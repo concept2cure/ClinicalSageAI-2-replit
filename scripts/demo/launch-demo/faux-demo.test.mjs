@@ -93,7 +93,10 @@ function fakeApplication({ organization = identity, otherType = false, missingTe
       assert.equal(body.get('programId'), 'p1');
       const kind = body.get('documentType');
       const code = String(body.get('documentCode'));
-      const expected = code.includes('PROTOCOL') ? 'PROTOCOL' : code.includes('-SAP-') ? 'SAP' : 'OTHER';
+      // The pack's own taxonomy (packs/faux.mjs): protocol, SAP, the two TLFs as
+      // REPORT since 8fb6535a5, and every other source OTHER.
+      const expected = code.includes('PROTOCOL') ? 'PROTOCOL' : code.includes('-SAP-') ? 'SAP'
+        : code.includes('-TL-F-') ? 'REPORT' : 'OTHER';
       assert.equal(kind, expected, 'use the existing Data Room taxonomy for the source type');
       const upload = body.get('file');
       assert.ok(upload && typeof upload.arrayBuffer === 'function');
@@ -708,6 +711,19 @@ test('ambiguous task titles cannot silently reuse another task in the same proje
     /malformed or duplicate task titles/);
   assert.ok(app.state.calls.slice(before).every(c => c.method === 'GET'));
   assert.equal(app.state.tasks.length, 4);
+});
+
+// 2026-11-10: an SOP that becomes effective gives each member a "Read and acknowledge" task of the same title. The guard
+// read every title on the board as the seed's key, so a re-run stopped on two people's acknowledgements, which are not
+// the seed's tasks at all. Only the seed's own titles must be unique.
+test('two people\'s same-titled tasks that are not the seed\'s do not stop a re-run', async () => {
+  const app = fakeApplication();
+  await seed({ api: app.api, identity: app.identity, run: app.run() });
+  const ack = { ...app.state.tasks[0], title: 'Read and acknowledge SOP-001 v1.0' };
+  app.state.tasks.push({ ...ack, taskId: 'ack-ana' }, { ...ack, taskId: 'ack-ava' });
+  const before = app.state.tasks.length;
+  await seed({ api: app.api, identity: app.identity, run: app.run() });
+  assert.equal(app.state.tasks.length, before, 'the re-run finds its own tasks and creates none');
 });
 
 test('the existing Task Board reread confirms each created task and its exact authoring document', async () => {

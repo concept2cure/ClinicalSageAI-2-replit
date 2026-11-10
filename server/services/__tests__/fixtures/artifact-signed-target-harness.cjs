@@ -2,7 +2,8 @@
 // Executes complete production modules, separation of duties included. Drizzle
 // expression construction, schema, signer identity and the audit writer are
 // explicit doubles. SQL predicates and rollback execute on SQLite; PostgreSQL
-// FOR UPDATE/SHARE are recorded only.
+// FOR UPDATE/SHARE are recorded only. The review quorum is P-95's: a review is
+// required, and the fixture's head (placed in CTD 2.5) needs two reviewers.
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const assert=require('node:assert/strict'),crypto=require('node:crypto');
 const {DatabaseSync}=require('node:sqlite');const ts=require('typescript');
@@ -25,13 +26,19 @@ function load(tree,file,doubles){
  return exp;
 }
 const columns={
- concept2cure_artifacts:`id integer primary key, artifact_id text, organization_id integer, project_id integer, version integer, status text, content text, content_hash text, approved_version_id integer, published_version_id integer, title text, ctd_section text, template_id text, created_by_id integer, updated_at text, locked_at text, locked_by_id integer, published_at text`,
+ // type: shared/schema.ts concept2cureArtifacts.type, text NOT NULL. The quorum reads
+ // it with ctd_section for the review floor (reviewFloor, P-95 Q2, 4eb094196f).
+ concept2cure_artifacts:`id integer primary key, artifact_id text, organization_id integer, project_id integer, type text not null, version integer, status text, content text, content_hash text, approved_version_id integer, published_version_id integer, title text, ctd_section text, template_id text, created_by_id integer, updated_at text, locked_at text, locked_by_id integer, published_at text`,
  concept2cure_artifact_versions:`id integer primary key autoincrement, artifact_id integer, organization_id integer, version integer, content text, content_hash text, change_description text, created_by_id integer, UNIQUE(artifact_id,organization_id,version)`,
  concept2cure_signatures:`id integer primary key autoincrement, organization_id integer, signature_id text, artifact_id integer, artifact_version_id integer, signature_type text, signature_purpose text, signature_meaning text, signer_id integer, signer_name text, signer_email text, signer_role text, authentication_method text, authentication_timestamp text, second_factor_verified integer, signature_hash text, signature_manifest text, ip_address text, device_info text, status text, signed_at text`,
  concept2cure_submission_snapshots:`id integer primary key autoincrement, snapshot_id text, artifact_id integer, organization_id integer, version_id integer, approved_version_id integer, published_version_id integer, content_hash text, title text, ctd_section text, template_id text, action_type text, actor_id integer, actor_name text, actor_email text, actor_role text, attestation_text text, signature_meaning text, metadata text`,
  concept2cure_review_assignments:`id integer primary key, artifact_id integer, organization_id integer, reviewer_id integer, review_round integer, status text`,
  concept2cure_review_decisions:`id integer primary key, assignment_id integer, artifact_id integer, organization_id integer, reviewer_id integer, review_round integer, decision text, version_reviewed integer`,
  audit_fixture:`id integer primary key autoincrement, payload text`,action_fixture:`id integer primary key autoincrement, payload text`,
+ // The quorum asks whether the signer is the organisation's only member (P-116, isSoleMember).
+ organization_users:`id integer primary key autoincrement, organization_id integer, user_id integer`,
+ // The organisation's review rules are read from its settings (P-117, organizationReviewPolicy).
+ organizations:`id integer primary key, settings text`,
 };
 const schema={};for(const [name,table] of Object.entries({concept2cureArtifacts:'concept2cure_artifacts',concept2cureArtifactVersions:'concept2cure_artifact_versions',concept2cureSignatures:'concept2cure_signatures',concept2cureSubmissionSnapshots:'concept2cure_submission_snapshots'}))schema[name]=new Proxy({table},{get:(o,k)=>k==='table'?o.table:{table:o.table,column:snake(k)}});
 const qcol=c=>`"${c.column}"`;
@@ -48,13 +55,22 @@ async function runCase(tree,c){
  // default pool, are never the artifact's path: each double throws if reached.
  const unreached=what=>()=>{throw new Error('separation-of-duties reached '+what+' on the artifact path');};
  const sod=load(tree,'server/services/governance/separation-of-duties.ts',{'../../db.js':{pool:{query:unreached('the default pool')}},
+  '../../../shared/artifact-governance':load(tree,'shared/artifact-governance.ts',{}),
   '../qms/controlled-text-authorship.js':{QmsControlledTextAuthorshipInvalid:class extends Error{},qmsControlledTextAuthorIds:unreached('the QMS authorship reader')},
   '../cmc/register-operators.js':{readSectionRecordOperators:unreached('the CMC register reader'),unattributedRecordsRefusal:unreached('the CMC register refusal')}});
- const review=load(tree,'server/services/artifact-approval-act.ts',{'./ectd/package-content-fingerprint':{artifactApproval:()=>({filable:true})},'./contradiction-engine-service':{contradictionEngineService:{checkPromotionBlocked:async()=>({blocked:false,blockingFindings:[],warningFindings:[]})}},'./governance/separation-of-duties':sod});
- const head={id:101,artifactId:'artifact_owned',organizationId:7,projectId:3,version:3,status:c.status==='locked'?'approved':'review',content:'Evidence — αβγ\nDose is 2 mg; not 20 mg.',approvedVersionId:c.status==='locked'?3:null,publishedVersionId:null,title:'Clinical overview',ctdSection:'2.5',templateId:'clinical-template',createdById:300,updatedAt:new Date(timestamp)};
+ // The act module also renders P-95 Q2's move increment through Drizzle
+ // (moveVoidsReview, moveArtifactToSection; 4eb094196f, 7656b4a013). A move is
+ // never the signed act's path: these doubles let the module load and throw if reached.
+ const moveOnly=what=>()=>{throw new Error('the signed act reached '+what+', which only a move uses');};
+ const review=load(tree,'server/services/artifact-approval-act.ts',{'./ectd/package-content-fingerprint':{artifactApproval:()=>({filable:true})},'./contradiction-engine-service':{contradictionEngineService:{checkPromotionBlocked:async()=>({blocked:false,blockingFindings:[],warningFindings:[]})}},'./governance/separation-of-duties':sod,
+  'drizzle-orm':{sql:Object.assign(moveOnly('drizzle sql'),{identifier:moveOnly('sql.identifier'),raw:moveOnly('sql.raw')})},'drizzle-orm/pg-core':{PgDialect:class{sqlToQuery(){moveOnly('PgDialect.sqlToQuery')();}}},'../../shared/schema':schema});
+ const head={id:101,artifactId:'artifact_owned',organizationId:7,projectId:3,type:'markdown',version:3,status:c.status==='locked'?'approved':'review',content:'Evidence — αβγ\nDose is 2 mg; not 20 mg.',approvedVersionId:c.status==='locked'?3:null,publishedVersionId:null,title:'Clinical overview',ctdSection:'2.5',templateId:'clinical-template',createdById:300,updatedAt:new Date(timestamp)};
  head.contentHash=hash(head.content);patch(head,c.initialHead);
  const ver={id:401,artifactId:101,organizationId:7,version:3,content:head.content,contentHash:hash(head.content),createdById:300,changeDescription:'Persisted draft'};patch(ver,c.initialVersion);
  insert('concept2cure_artifacts',head);if(!c.missingVersion)insert('concept2cure_artifact_versions',ver);
+ // Organisation 7 has the signer and reviewers: someone to be independent of, so P-116's sole-member path is not taken.
+ for(const user_id of [777,700,701,702])insert('organization_users',{organization_id:7,user_id});
+ insert('organizations',{id:7,settings:c.organizationSettings??null});
  const input={artifact:revive(db.prepare('SELECT * FROM concept2cure_artifacts').get()),version:c.missingVersion?null:revive(db.prepare('SELECT * FROM concept2cure_artifact_versions').get()),status:c.status||'approved',previousStatus:c.status==='locked'?'approved':'review',organizationId:7,userId:777,userRole:'admin',attestationText:'I approve the reviewed document.',reason:'Reviewed',secondFactorVerified:true,ipAddress:null};
  input.updateData=review.artifactStatusUpdate(input.artifact,input.previousStatus,input.status,input.userId);
  patch(input.artifact,c.cachedHead);if(input.version)patch(input.version,c.cachedVersion);patch(input,c.input);
@@ -66,6 +82,11 @@ async function runCase(tree,c){
   insert('concept2cure_review_assignments',{id:1,artifact_id:101,organization_id:7,reviewer_id:700,review_round:2,status:c.quorum==='pending'?'pending':'completed'});
   if(c.quorum!=='missing')insert('concept2cure_review_decisions',{id:1,assignment_id:1,artifact_id:101,organization_id:7,reviewer_id:c.quorum==='wrongReviewer'?701:700,review_round:2,decision:c.quorum==='reject'?'reject':'approve',version_reviewed:c.quorum==='stale'?2:3});
   if(c.quorum==='newRound')insert('concept2cure_review_assignments',{id:2,artifact_id:101,organization_id:7,reviewer_id:701,review_round:3,status:'pending'});
+  // A second reviewer, 702, approved the current version; every quorum variant
+  // above still concerns reviewer 700. 'single' omits the second: one reviewer
+  // is enough for a placed document (P-116; two were required under P-95 Q2).
+  if(c.quorum!=='single'){insert('concept2cure_review_assignments',{id:3,artifact_id:101,organization_id:7,reviewer_id:702,review_round:2,status:'completed'});
+   insert('concept2cure_review_decisions',{id:2,assignment_id:3,artifact_id:101,organization_id:7,reviewer_id:702,review_round:2,decision:'approve',version_reviewed:3});}
  }
  const snap=()=>JSON.stringify(Object.fromEntries(Object.keys(columns).map(t=>[t,db.prepare(`SELECT * FROM ${t} ORDER BY id`).all()])));
  const before=snap();

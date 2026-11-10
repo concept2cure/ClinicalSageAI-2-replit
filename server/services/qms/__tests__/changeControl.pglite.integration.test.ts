@@ -22,8 +22,8 @@ let pglite: PGlite;
 // (and the seed) expect { rows, rowCount }.
 const pool = {
   query: async (sql: string, params?: unknown[]) => {
-    const r = await pglite.query(sql, params as unknown[]);
-    return { rows: r.rows as unknown[], rowCount: (r as { affectedRows?: number }).affectedRows ?? (r.rows as unknown[]).length };
+    const r = await pglite.query<Record<string, unknown>>(sql, params);
+    return { rows: r.rows, rowCount: r.affectedRows ?? r.rows.length };
   },
 };
 vi.mock('../../../db', () => ({ pool: { query: (sql: string, params?: unknown[]) => pool.query(sql, params) } }));
@@ -45,8 +45,8 @@ async function loadSeedQuality(): Promise<SeedFn> {
 
 // Minimal faithful DDL (mirrors the real migrations; FK-free like the store).
 const DDL = `
-CREATE TABLE organizations (id serial PRIMARY KEY, name text);
-CREATE TABLE users (id serial PRIMARY KEY, email text);
+CREATE TABLE organizations (id serial PRIMARY KEY, name text, status text NOT NULL DEFAULT 'active');
+CREATE TABLE users (id serial PRIMARY KEY, email text, status text NOT NULL DEFAULT 'active');
 CREATE TABLE organization_users (organization_id int, user_id int, role text);
 
 CREATE TABLE qms_documents (
@@ -85,8 +85,10 @@ CREATE TABLE qms_change_links (
 
 -- The registers a link names a record in (MR-12 Stage 8), reduced to the columns the check reads.
 CREATE TABLE regulatory_programs (id uuid PRIMARY KEY, organization_id int NOT NULL);
-CREATE TABLE capa_records (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), program_id text NOT NULL, capa_code text NOT NULL);
-CREATE TABLE qc_deviations (id serial PRIMARY KEY, organization_id int NOT NULL, deviation_number text NOT NULL);
+CREATE TABLE capa_records (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), program_id text NOT NULL, capa_code text NOT NULL,
+  state text NOT NULL DEFAULT 'open');
+CREATE TABLE qc_deviations (id serial PRIMARY KEY, organization_id int NOT NULL, deviation_number text NOT NULL,
+  status text NOT NULL DEFAULT 'open');
 CREATE TABLE qms_suppliers (id serial PRIMARY KEY, organization_id int NOT NULL, supplier_name text NOT NULL,
   supplier_code text, deleted_at timestamptz);
 `;
@@ -106,6 +108,7 @@ beforeAll(async () => {
   const seedQuality = await loadSeedQuality();
   await seedQuality(pool, { org: { id: ORG }, admin: { id: 10 } });
 });
+
 afterAll(async () => {
   await pglite.close();
 });
@@ -288,5 +291,174 @@ describe('controlled lifecycle against real SQL', () => {
     expect(await svc.deleteChange(ORG, change.id, client)).toBe(false);
     const retained = await pglite.query<{ deleted_at: string | null }>('SELECT deleted_at FROM qms_change_controls WHERE id = $1', [change.id]);
     expect(retained.rows[0].deleted_at).not.toBeNull();
+  });
+});
+
+let sequence = 0;
+const PROGRAM = '11111111-1111-4111-8111-111111111111';
+const OTHER_PROGRAM = '33333333-3333-4333-8333-333333333333';
+async function verification(programId?: string) {
+  const change = await svc.createChange(ORG, { changeNumber: `CC-CLOSE-${++sequence}`, title: 'Closure requirement',
+    proposedBy: 10, programId });
+  await pglite.query("UPDATE qms_change_controls SET status='verification', implemented_at=now() WHERE id=$1", [change.id]);
+  return change;
+}
+const close = (id: number, client?: RequestSqlClient) => svc.transitionChange(ORG, id, 'closed', {
+  userId: 11, effectivenessReview: 'The approved acceptance criteria were met.',
+}, client);
+
+/* The approval signature binds the change's content (change-approval-signature.ts computeQmsChangeContentDigest).
+   Until 2026-11-10 updateChange rewrote it in approved, in_implementation and verification. */
+describe('content is editable until approval', () => {
+  it.each(['proposed', 'under_assessment'])('edits a change that is %s', async (status) => {
+    const change = await svc.createChange(ORG, { changeNumber: `CC-EDIT-${++sequence}`, title: 'Editable', proposedBy: 10 });
+    await pglite.query('UPDATE qms_change_controls SET status=$2 WHERE id=$1', [change.id, status]);
+    const row = await svc.updateChange(ORG, change.id, { impactAssessment: 'Assessed.', implementationPlan: 'Planned.' });
+    expect(row).toMatchObject({ status, impact_assessment: 'Assessed.', implementation_plan: 'Planned.' });
+  });
+
+  it.each(['approved', 'in_implementation', 'verification', 'closed', 'rejected', 'cancelled'])(
+    'refuses an edit to a change that is %s, and leaves its content as it was', async (status) => {
+      const change = await svc.createChange(ORG, { changeNumber: `CC-EDIT-${++sequence}`, title: 'As approved',
+        impactAssessment: 'As approved.', implementationPlan: 'As approved.', proposedBy: 10 });
+      await pglite.query('UPDATE qms_change_controls SET status=$2 WHERE id=$1', [change.id, status]);
+      expect(await svc.updateChange(ORG, change.id, { title: 'Rewritten', implementationPlan: 'Rewritten after approval.' })).toBeNull();
+      expect(await svc.getChange(ORG, change.id)).toMatchObject({ status, title: 'As approved', impact_assessment: 'As approved.', implementation_plan: 'As approved.' });
+    });
+});
+
+describe('change closure requires an admitted verifier and effectiveness review', () => {
+  it.each([undefined, null, '', '   '])('requires a recorded effectiveness review: %j', async effectivenessReview => {
+    const change = await verification();
+    await expect(svc.transitionChange(ORG, change.id, 'closed', { userId: 11, effectivenessReview }))
+      .rejects.toBeInstanceOf(svc.InvalidChangeTransitionError);
+    expect(await svc.getChange(ORG, change.id)).toMatchObject({ status: 'verification', closed_at: null, verified_at: null });
+  });
+
+  it('does not record anonymous closure', async () => {
+    const change = await verification();
+    await expect(svc.transitionChange(ORG, change.id, 'closed', { effectivenessReview: 'Effective.' }))
+      .rejects.toBeInstanceOf(svc.InvalidChangeTransitionError);
+  });
+
+  it.each(['role', 'membership', 'account', 'organization'])('holds closure when the verifier loses current %s admission', async kind => {
+    const change = await verification();
+    const before = await svc.getChange(ORG, change.id);
+    if (kind === 'role') await pglite.query("UPDATE organization_users SET role='viewer' WHERE organization_id=1 AND user_id=11");
+    if (kind === 'membership') await pglite.query('DELETE FROM organization_users WHERE organization_id=1 AND user_id=11');
+    if (kind === 'account') await pglite.query("UPDATE users SET status='inactive' WHERE id=11");
+    if (kind === 'organization') await pglite.query("UPDATE organizations SET status='inactive' WHERE id=1");
+    try {
+      await expect(close(change.id)).rejects.toBeInstanceOf(svc.InvalidChangeTransitionError);
+      expect(await svc.getChange(ORG, change.id)).toEqual(before);
+    } finally {
+      if (kind === 'membership') await pglite.query("INSERT INTO organization_users VALUES (1,11,'member')");
+      if (kind === 'role') await pglite.query("UPDATE organization_users SET role='member' WHERE organization_id=1 AND user_id=11");
+      if (kind === 'account') await pglite.query("UPDATE users SET status='active' WHERE id=11");
+      if (kind === 'organization') await pglite.query("UPDATE organizations SET status='active' WHERE id=1");
+    }
+  });
+
+});
+
+describe('change closure checks its declared required work', () => {
+  it('only a required native deviation blocks closure; a descriptive reference does not', async () => {
+    const required = await verification();
+    const referenced = await verification();
+    await svc.addLink(ORG, required.id, { linkType: 'deviation', linkedRef: 'DEV-2026-900', relationship: 'requires' });
+    await svc.addLink(ORG, referenced.id, { linkType: 'deviation', linkedRef: 'DEV-2026-900', relationship: 'references' });
+    await expect(close(required.id)).rejects.toMatchObject({ message: expect.stringMatching(/DEV-2026-900|requir/i) });
+    await expect(close(referenced.id)).resolves.toMatchObject({ status: 'closed' });
+    // A cancelled record does not attest completion of a specifically required investigation.
+    await pglite.query("UPDATE qc_deviations SET status='cancelled' WHERE deviation_number='DEV-2026-900'");
+    await expect(close(required.id)).rejects.toBeInstanceOf(svc.InvalidChangeTransitionError);
+    await pglite.query("UPDATE qc_deviations SET status='closed' WHERE deviation_number='DEV-2026-900'");
+    await expect(close(required.id)).resolves.toMatchObject({ status: 'closed' });
+  });
+
+  it('does not treat a failed CAPA effectiveness check as completed required work', async () => {
+    const change = await verification(PROGRAM);
+    await svc.addLink(ORG, change.id, { linkType: 'capa', linkedRef: 'CAPA-2026-0001', relationship: 'requires' });
+    await pglite.query("UPDATE capa_records SET state='closed_not_effective' WHERE program_id=$1", [PROGRAM]);
+    await expect(close(change.id)).rejects.toBeInstanceOf(svc.InvalidChangeTransitionError);
+    await pglite.query("UPDATE capa_records SET state='closed_effective' WHERE program_id=$1", [PROGRAM]);
+    await expect(close(change.id)).resolves.toMatchObject({ status: 'closed' });
+  });
+
+  it('resolves a CAPA code inside the change programme and refuses an ambiguous organization-only code', async () => {
+    await pglite.query('INSERT INTO regulatory_programs VALUES ($1,1)', [OTHER_PROGRAM]);
+    await pglite.query(`INSERT INTO capa_records (program_id,capa_code,state) VALUES ($1,'CAPA-2026-0001','open')`, [OTHER_PROGRAM]);
+    const scoped = await verification(PROGRAM);
+    const other = await verification(OTHER_PROGRAM);
+    const unscoped = await verification();
+    await svc.addLink(ORG, scoped.id, { linkType: 'capa', linkedRef: 'CAPA-2026-0001', relationship: 'requires' });
+    await expect(close(scoped.id)).resolves.toMatchObject({ status: 'closed' });
+    await svc.addLink(ORG, other.id, { linkType: 'capa', linkedRef: 'CAPA-2026-0001', relationship: 'requires' });
+    await expect(close(other.id)).rejects.toBeInstanceOf(svc.InvalidChangeTransitionError);
+    await expect(svc.addLink(ORG, unscoped.id, { linkType: 'capa', linkedRef: 'CAPA-2026-0001' }))
+      .rejects.toBeInstanceOf(svc.ChangeLinkRefusedError);
+  });
+
+  it('does not treat a live document status or typed validation reference as exact accepted completion', async () => {
+    const change = await verification();
+    const doc = (await pglite.query<{ id: number }>(`INSERT INTO qms_documents
+      (organization_id,doc_number,title,doc_type,status) VALUES (1,'SOP-CLOSURE','Prerequisite','sop','review') RETURNING id`)).rows[0];
+    await svc.addLink(ORG, change.id, { linkType: 'sop', linkedRef: 'SOP-CLOSURE', linkedId: doc.id, relationship: 'requires' });
+    await expect(close(change.id)).rejects.toBeInstanceOf(svc.InvalidChangeTransitionError);
+    await pglite.query("UPDATE qms_documents SET status='effective' WHERE id=$1", [doc.id]);
+    await expect(close(change.id)).rejects.toMatchObject({ message: expect.stringMatching(/cannot be verified/i) });
+    const unresolved = await verification();
+    await svc.addLink(ORG, unresolved.id, { linkType: 'validation', linkedRef: 'VP-UNVERIFIED', relationship: 'requires' });
+    await expect(close(unresolved.id)).rejects.toMatchObject({ message: expect.stringMatching(/validat|completion/i) });
+  });
+
+});
+
+describe('change closure refuses stale requirements and later mutation', () => {
+  it('rechecks native prerequisite state in the same statement that records closure', async () => {
+    const change = await verification();
+    const deviation = (await pglite.query<{ id: number }>(`INSERT INTO qc_deviations
+      (organization_id,deviation_number,status) VALUES (1,'DEV-RACE','closed') RETURNING id`)).rows[0];
+    await svc.addLink(ORG, change.id, { linkType: 'deviation', linkedRef: 'DEV-RACE', linkedId: deviation.id, relationship: 'requires' });
+    let changed = false;
+    const client: RequestSqlClient = { query: async (sql, params) => {
+      if (!changed && /UPDATE qms_change_controls/.test(sql)) {
+        changed = true;
+        // Fault injection at the storage boundary; the native deviation
+        // lifecycle itself deliberately offers no reopen from signed closed.
+        await pglite.query("UPDATE qc_deviations SET status='open' WHERE id=$1", [deviation.id]);
+      }
+      return pool.query(sql, params);
+    } };
+    await expect(close(change.id, client)).rejects.toBeInstanceOf(svc.InvalidChangeTransitionError);
+    expect(await svc.getChange(ORG, change.id)).toMatchObject({ status: 'verification', closed_at: null });
+  });
+
+  /* An interleaved content edit is no longer possible in verification (CHANGE_EDITABLE_STATES): the content is what the
+     approval signed. That is pinned below, in "content is editable until approval". */
+  it.each(['state', 'link'])('refuses a stale closure after an interleaved %s change', async kind => {
+    const change = await verification();
+    let changed = false;
+    const client: RequestSqlClient = { query: async (sql, params) => {
+      if (!changed && /UPDATE qms_change_controls/.test(sql)) {
+        changed = true;
+        if (kind === 'state') await svc.transitionChange(ORG, change.id, 'in_implementation', { userId: 12 });
+        if (kind === 'link') await svc.addLink(ORG, change.id, { linkType: 'validation', linkedRef: 'VP-LATE', relationship: 'requires' });
+      }
+      return pool.query(sql, params);
+    } };
+    await expect(close(change.id, client)).rejects.toBeInstanceOf(svc.InvalidChangeTransitionError);
+    expect((await svc.getChange(ORG, change.id))?.closed_at).toBeNull();
+  });
+
+  it('does not attach or erase a requirement after closure', async () => {
+    const change = await verification();
+    const link = await svc.addLink(ORG, change.id, { linkType: 'other', linkedRef: 'Background context', relationship: 'references' });
+    await close(change.id);
+    await expect(svc.addLink(ORG, change.id, { linkType: 'validation', linkedRef: 'VP-LATE', relationship: 'requires' }))
+      .rejects.toBeInstanceOf(svc.ChangeLinkRefusedError);
+    expect(await svc.removeLink(ORG, change.id, link.id, { removedBy: 11, reason: 'Changed after closure' })).toBe(false);
+    expect(await svc.listLinks(ORG, change.id)).toHaveLength(1);
+    expect(await svc.updateChange(ORG, change.id, { implementationPlan: 'Changed after closure' })).toBeNull();
   });
 });

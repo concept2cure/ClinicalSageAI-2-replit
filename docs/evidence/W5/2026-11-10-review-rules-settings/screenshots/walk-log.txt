@@ -1,0 +1,9 @@
+as read: reviewers=1 selfApproval=true
+shot 01-review-rules-as-read.png @ /concept2cure/admin-console
+zero reviewers: Enter a whole number of reviewers from 1 to 5 and a reason of at least 3 characters.
+shot 02-zero-reviewers-refused.png @ /concept2cure/admin-console
+saved: Review rules saved with your reason in the audit trail. They apply to every approval from now on; approvals already recorded stand.
+shot 03-two-reviewers-saved.png @ /concept2cure/admin-console
+after reload: reviewers=2 selfApproval=false
+shot 04-after-reload.png @ /concept2cure/admin-console
+settings writes: ["PATCH /api/organizations/68/settings -> 200"]

@@ -27,28 +27,11 @@
   -webkit-font-smoothing: antialiased;
 }
 
-/* ─── Topbar ───────────────────────────────────────────────────── */
-.qms-topbar {
-  display: flex; align-items: center; gap: 12px;
-  padding: 0 20px; height: 48px; flex: 0 0 48px;
-  background: var(--background); border-bottom: 1px solid var(--border-subtle);
-  font-size: 12px;
-}
-.qms-crumbs { display: flex; align-items: center; gap: 6px; color: var(--text-300); font-weight: 500; }
-.qms-crumbs .here { color: var(--text-100); font-weight: 600; }
-.qms-crumbs .sep { color: var(--text-400); }
-.qms-spacer { flex: 1; }
-.qms-tb-btn {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 5px 10px; border-radius: 7px;
-  font-size: 12px; color: var(--text-300); font-weight: 500;
-  transition: background 200ms var(--ease), color 200ms var(--ease);
-}
-.qms-tb-btn:hover { background: var(--bg-100); color: var(--text-100); }
-
 /* ─── Page ─────────────────────────────────────────────────────── */
-.qms-page { flex: 1; overflow-y: auto; min-height: 0; padding: 22px 28px 60px; }
-.qms-page-inner { max-width: 1240px; margin: 0 auto; min-width: 0; }
+/* The page's gutters and width are D0's `.page-inner` (max 1120; D7-B): the
+   inner carries that class while no document is open, so `.qms-page` adds none. */
+.qms-page { flex: 1; overflow-y: auto; min-height: 0; }
+.qms-page-inner { min-width: 0; }
 .qms-shell[data-editing] .qms-page { padding: 0; overflow: hidden; }
 .qms-shell[data-editing] .qms-page-inner { max-width: none; height: 100%; }
 .qms-workbench { height: 100%; min-height: 0; min-width: 0; }
@@ -70,20 +53,10 @@
 .qms-signed-version summary { cursor: pointer; font-weight: 600; }
 .qms-signed-version h3 { font-size: 14px; margin: 16px 0 8px; }
 
-/* ─── Header ───────────────────────────────────────────────────── */
-.qms-head { display: flex; align-items: flex-start; gap: 20px; margin-bottom: 22px; }
-.qms-head > div:first-child { flex: 1; min-width: 0; }
-.qms-eyebrow { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-300); font-weight: 600; margin-bottom: 6px; }
-.qms-h1 { font-family: var(--font-serif); font-size: 24px; font-weight: 600; letter-spacing: -0.01em; color: var(--text-100); margin: 0 0 6px; }
-.qms-sub { font-size: 12.5px; color: var(--text-300); max-width: 760px; }
-.qms-actions { display: flex; gap: 8px; flex: 0 0 auto; }
-/* At phone width the actions go under the title (J5-10, 2026-11-06): kept
-   beside it, they squeezed the description to one word a line at 390px and
-   pushed "New controlled document" off the screen. */
+/* ─── Section heads inside the tabs (D7-B) ─────────────────────────
+   The tab's own head, eyebrow and serif title went to the one `.ph` header
+   in App.tsx. Phone: section heads wrap rather than push the page sideways. */
 @media (max-width: 640px) {
-  .qms-head { flex-wrap: wrap; }
-  .qms-head > div:first-child { flex: 1 1 100%; }
-  .qms-actions { flex: 1 1 100%; flex-wrap: wrap; }
   .qms-sec-head { flex-wrap: wrap; row-gap: 4px; }
   .qms-sec-head h2 { white-space: normal; }
 }
@@ -97,40 +70,15 @@
 .qms-btn.ghost:hover { background: var(--bg-100); color: var(--text-100); }
 .qms-btn.primary { background: var(--accent-strong); color: var(--accent-on-strong); }
 
-/* ─── KPIs ─────────────────────────────────────────────────────── */
-.qms-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
-.qms-kpi { background: var(--background); border: 1px solid var(--bg-200); border-radius: 10px; padding: 13px 15px; }
-.qms-kpi .lbl { font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-300); font-weight: 600; margin-bottom: 6px; }
-.qms-kpi .val { font-size: 22px; font-weight: 600; color: var(--text-100); font-variant-numeric: tabular-nums; }
-.qms-kpi .val .unit { font-size: 13px; color: var(--text-300); margin-left: 3px; font-weight: 500; }
-.qms-kpi .sub { font-size: 11.5px; color: var(--text-300); margin-top: 4px; }
-.qms-kpi[data-tone="err"] .val { color: var(--error); }
-.qms-kpi[data-tone="warn"] .val { color: var(--warning); }
-
 /* ─── Sections ─────────────────────────────────────────────────── */
 .qms-sec { margin-bottom: 26px; }
 .qms-sec-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; }
-.qms-sec-head h2 { font-family: var(--font-serif); font-size: 16px; font-weight: 600; color: var(--text-100); margin: 0; white-space: nowrap; }
-.qms-sec-head .meta { font-size: 11.5px; color: var(--text-300); }
+.qms-sec-head h2 { font-size: var(--fs-section); font-weight: 600; line-height: 1.4; color: var(--text-100); margin: 0; white-space: nowrap; }
+.qms-sec-head .meta { font-size: var(--fs-small); color: var(--text-300); }
 .qms-sec-head .spacer { flex: 1; }
 .qms-link { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-300); font-weight: 500; transition: color 200ms var(--ease); }
 .qms-link:hover { color: var(--accent-main-100); }
-.qms-seg { display: inline-flex; gap: 6px; }
 .qms-chip[data-on="true"] { border-color: var(--text-300); color: var(--text-100); background: var(--bg-100); }
-
-/* ─── Template gallery ─────────────────────────────────────────── */
-.qms-tpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
-.qms-tpl-card {
-  text-align: left; background: var(--background); border: 1px solid var(--bg-200); border-radius: 10px;
-  padding: 14px; display: flex; flex-direction: column; gap: 6px;
-  transition: border-color 200ms var(--ease), box-shadow 200ms var(--ease);
-}
-.qms-tpl-card:hover { border-color: var(--accent-main-100); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); }
-.qms-tpl-top { display: flex; align-items: center; justify-content: space-between; }
-.qms-tpl-ico { color: var(--text-300); display: inline-flex; }
-.qms-tpl-prefix { font-size: 11px; color: var(--text-300); }
-.qms-tpl-label { font-size: 13.5px; font-weight: 600; color: var(--text-100); }
-.qms-tpl-desc { font-size: 11.5px; color: var(--text-300); line-height: 1.5; }
 
 /* ─── Register table ───────────────────────────────────────────── */
 /* Scrolls rather than clips. `overflow:hidden` was here for the corner radius,
@@ -141,17 +89,15 @@
    registerGrid.ts, so all of them scroll as one and the columns stay aligned. */
 .qms-table { border: 1px solid var(--bg-200); border-radius: 10px; overflow-x: auto; overflow-y: hidden; background: var(--background); }
 .qms-thead, .qms-row { display: grid; align-items: center; gap: 10px; padding: 9px 14px; }
-.qms-thead { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-300); font-weight: 600; background: var(--bg-100); border-bottom: 1px solid var(--bg-200); }
+.qms-thead { font-size: var(--fs-small); color: var(--text-300); font-weight: 500; background: var(--bg-100); border-bottom: 1px solid var(--bg-200); }
 .qms-row { border-bottom: 1px solid var(--border-subtle); font-size: 12.5px; }
 .qms-row:last-child { border-bottom: 0; }
-.qms-row[data-status="superseded"], .qms-row[data-status="retired"] { opacity: 0.6; }
 .qms-cell { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .qms-num { color: var(--text-200); font-weight: 600; text-align: left; }
-.qms-num:hover { color: var(--accent-main-100); }
+.qms-num:hover { color: var(--text-100); text-decoration: underline; }
 .qms-title { color: var(--text-100); }
 .qms-shell .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .qms-tag { display: inline-block; font-size: 10.5px; padding: 2px 7px; border-radius: 5px; background: var(--bg-100); color: var(--text-300); border: 1px solid var(--bg-200); }
-.qms-overdue { color: var(--error); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
 
 /* status pill */
 .qms-pill { display: inline-block; font-size: 10.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
@@ -161,28 +107,24 @@
 .qms-pill[data-tone="muted"]     { background: var(--bg-100); color: var(--text-300); }
 
 /* row actions — AnA-first */
-.qms-rowacts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; justify-content: flex-end; white-space: normal; }
+/* One line: the row's next step and "More" (D7-B item 6); the rest open in .qms-row-more. It was declared twice,
+   wrap here and nowrap below, and the later one won silently. */
+.qms-rowacts { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; justify-content: flex-end; white-space: normal; }
 .qms-chip {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: var(--radius-md);
-  color: var(--text-300); border: 1px solid var(--bg-200); background: var(--background);
+  color: var(--text-300); border: 1px solid var(--bg-200); background: var(--background); white-space: nowrap;
   transition: background 200ms var(--ease), color 200ms var(--ease), border-color 200ms var(--ease);
 }
 .qms-chip:hover { background: var(--bg-100); color: var(--text-100); }
 .qms-chip.ghost { border-color: transparent; padding: 3px 6px; }
 .qms-chip.ghost:hover { color: var(--accent-main-100); }
 
-/* ─── Review + training grid ───────────────────────────────────── */
-.qms-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-@media (max-width: 960px) {
-  .qms-grid2 { grid-template-columns: 1fr; }
-  .qms-kpis { grid-template-columns: repeat(2, 1fr); }
-}
-
-.qms-review { border: 1px solid var(--bg-200); border-radius: 10px; overflow: hidden; background: var(--background); }
+/* The review schedule's rows: a plain list under its section head, no box (C1). */
+.qms-review { border-top: 1px solid var(--border-subtle); }
 .qms-review-row {
   display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: center;
-  width: 100%; padding: 9px 13px; border-bottom: 1px solid var(--border-subtle); font-size: 12.5px;
+  width: 100%; padding: 9px 0; border-bottom: 1px solid var(--border-subtle);
   transition: background 200ms var(--ease);
 }
 .qms-review-open {
@@ -191,7 +133,6 @@
 }
 .qms-review-open:disabled { cursor: default; }
 .qms-review-last { grid-column: 1 / -1; color: var(--text-300); font-size: 11.5px; }
-.qms-review-row[data-overdue] .qms-review-last { color: var(--text-200); }
 .qms-review-by { display: block; color: var(--text-300); font-size: 11px; }
 @media (max-width: 480px) {
   .qms-review-row { grid-template-columns: minmax(0, 1fr); }
@@ -199,19 +140,16 @@
 }
 .qms-review-row:last-child { border-bottom: 0; }
 .qms-review-row:hover { background: var(--bg-100); }
-.qms-review-row[data-overdue] { background: var(--error-muted); }
 .qms-review-num { color: var(--text-200); font-weight: 600; }
 .qms-review-title { color: var(--text-100); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .qms-review-when { text-align: right; color: var(--text-300); font-size: 11.5px; }
-.qms-flag-txt { color: var(--error); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; justify-content: flex-end; }
 .qms-empty { padding: 18px 14px; font-size: 12px; color: var(--text-400); text-align: center; }
 
 .qms-train { display: flex; flex-direction: column; gap: 9px; padding: 2px; }
-.qms-train-row { display: grid; grid-template-columns: minmax(0, 1fr) 52px 44px; gap: var(--space-2); align-items: center; font-size: inherit; }
+.qms-train-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2); align-items: center; font-size: inherit; padding: var(--space-2) 0; border-top: 1px solid var(--border-subtle); }
 .qms-train-row .qms-train-when { grid-column: 1 / -1; justify-self: start; }
-.qms-train-row .qms-link { grid-column: 1 / -1; justify-self: start; }
+.qms-train-row > .btn { grid-column: 1 / -1; justify-self: start; }
 .qms-train-unavailable { grid-column: 2 / -1; color: var(--text-300); text-align: right; }
-.qms-training-summary { color: var(--text-300); margin: 0 0 var(--space-4); }
 
 /* Job roles and who must train on a document (P-49), inside the shared dialog. */
 .qms-train-role { border-top: 1px solid var(--border-subtle); padding: var(--space-3) 0; }
@@ -265,118 +203,58 @@
   .qms-training-receipt dl > div { grid-template-columns: 1fr; gap: var(--space-1); }
 }
 .qms-train-doc { color: var(--text-200); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.qms-train-bar { height: 6px; border-radius: 999px; background: var(--bg-200); overflow: hidden; }
-.qms-train-fill { display: block; height: 100%; border-radius: 999px; background: var(--success); transition: background 200ms var(--ease); }
-.qms-train-fill[data-tone="warn"] { background: var(--warning); }
-.qms-train-fill[data-tone="err"]  { background: var(--error); }
 .qms-train-pct { color: var(--text-300); text-align: right; }
 .qms-train-when { color: var(--text-300); font-size: 11px; text-align: right; }
-
-/* ─── Tab bar (multi-surface shell) ────────────────────────────── */
-.qms-tabbar {
-  display: flex; gap: 2px; align-items: stretch;
-  padding: 0 20px; height: 40px; flex: 0 0 40px;
-  background: var(--background); border-bottom: 1px solid var(--border-subtle);
-}
-.qms-tab {
-  display: inline-flex; align-items: center; gap: 6px; padding: 0 12px;
-  font-size: 12.5px; font-weight: 500; color: var(--text-300);
-  border-bottom: 2px solid transparent;
-  transition: color 200ms var(--ease), border-color 200ms var(--ease);
-}
-.qms-tab:hover { color: var(--text-100); }
-.qms-tab[data-on] { color: var(--text-100); font-weight: 600; border-bottom-color: var(--accent-main-100); }
-.qms-tab-ico { display: inline-flex; color: currentColor; }
 
 /* status pill — extra tone for rejected changes */
 .qms-pill[data-tone="err"] { background: var(--error-muted); color: var(--error); }
 
-/* ─── Change control: classification chip ──────────────────────── */
-.qcc-class { display: inline-block; font-size: 10.5px; font-weight: 600; padding: 2px 8px; border-radius: 5px; }
-.qcc-class[data-tone="ok"]   { background: var(--success-muted); color: var(--success); }
-.qcc-class[data-tone="warn"] { background: var(--warning-muted); color: var(--warning); }
-.qcc-class[data-tone="err"]  { background: var(--error-muted); color: var(--error); }
+/* The log's lifecycle stage filter (ChangeFlow.tsx) is D0's .seg; its count is quiet beside the label (D7-B). */
+.qcc-stages { margin: 0 0 12px; }
+.qcc-stage-n { color: var(--text-300); font-variant-numeric: tabular-nums; }
 
-/* ─── Change control: lifecycle flowchart ──────────────────────── */
-.qcc-flow { border: 1px solid var(--bg-200); border-radius: 10px; background: var(--background); padding: 16px; }
-.qcc-flow-track { display: flex; align-items: stretch; gap: 6px; overflow-x: auto; padding-bottom: 2px; }
-.qcc-node {
-  flex: 1 1 0; min-width: 122px; display: flex; flex-direction: column; gap: 4px;
-  align-items: flex-start; text-align: left; padding: 10px 12px;
-  border: 1px solid var(--bg-200); border-radius: 9px; background: var(--bg-050);
-  transition: border-color 200ms var(--ease), background 200ms var(--ease), box-shadow 200ms var(--ease);
-}
-.qcc-node:hover { border-color: var(--text-300); }
-.qcc-node[data-on] { border-color: var(--accent-main-100); background: var(--background); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); }
-.qcc-node[data-empty] { opacity: 0.6; }
-.qcc-node-top { display: flex; align-items: center; gap: 8px; width: 100%; }
-.qcc-node-dot { width: 9px; height: 9px; border-radius: 999px; flex: 0 0 auto; background: var(--text-400); }
-.qcc-node-dot[data-stage="proposed"]         { background: #b6b1a2; }
-.qcc-node-dot[data-stage="under_assessment"] { background: #d6a24a; }
-.qcc-node-dot[data-stage="approved"]         { background: #c17d3a; }
-.qcc-node-dot[data-stage="in_implementation"]{ background: #b5762e; }
-.qcc-node-dot[data-stage="verification"]     { background: #8a8f5a; }
-.qcc-node-dot[data-stage="closed"]           { background: #6f8c5a; }
-.qcc-node-count { font-size: 18px; font-weight: 600; color: var(--text-100); font-variant-numeric: tabular-nums; margin-left: auto; }
-.qcc-node-label { font-size: 12px; font-weight: 600; color: var(--text-100); }
-.qcc-node-blurb { font-size: 10.5px; color: var(--text-400); line-height: 1.4; }
-.qcc-arrow { display: flex; align-items: center; color: var(--text-500); flex: 0 0 auto; }
-
-.qcc-flow-foot { display: flex; align-items: center; gap: 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-subtle); }
-.qcc-offramps { display: flex; gap: 8px; flex: 1; flex-wrap: wrap; }
-.qcc-offramp {
-  display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 500;
-  color: var(--text-300); padding: 3px 9px; border: 1px solid var(--bg-200); border-radius: 999px;
-  background: var(--background); transition: background 200ms var(--ease), color 200ms var(--ease), border-color 200ms var(--ease);
-}
-.qcc-offramp:hover { background: var(--bg-100); color: var(--text-100); }
-.qcc-offramp[data-on] { border-color: var(--text-300); color: var(--text-100); background: var(--bg-100); }
-.qcc-offramp-dot { width: 8px; height: 8px; border-radius: 999px; }
-.qcc-offramp-dot[data-stage="rejected"]  { background: var(--error); }
-.qcc-offramp-dot[data-stage="cancelled"] { background: #b6b1a2; }
-
-/* ─── Change control: register links ───────────────────────────── */
+/* ─── Change control: the log's link count, a quiet button (C8) ─── */
 .qcc-linkcount {
-  display: inline-flex; align-items: center; gap: 4px; font-size: 12px;
+  display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 0; border: 0; background: none; cursor: pointer;
   color: var(--text-300); font-variant-numeric: tabular-nums; text-align: left;
 }
-.qcc-linkcount:hover { color: var(--accent-main-100); }
+.qcc-linkcount:hover { color: var(--text-100); }
 
 .qcc-detail { padding: 12px 14px 14px; background: var(--bg-050); border-bottom: 1px solid var(--border-subtle); }
+/* In the log's table the linked records are the change's own row (C8); the cell carries the band, not a second box. */
+.c2c-v2 .reg-tbl.qms-reg .qcc-detail-tr > td { background: var(--bg-050); }
+.c2c-v2 .reg-tbl.qms-reg .qcc-detail { padding: 0 0 4px; background: none; border-bottom: 0; }
+/* A row's More and its linked records stay in view while the table scrolls sideways on a phone (walked at 390, C8):
+   they span every column, so without this their words ran past the section's right edge. */
+.c2c-v2 .reg-tbl.qms-reg :is(.qcc-detail, .qms-row-more) { position: sticky; left: 0; max-width: calc(100vw - 64px); }
 .qcc-detail-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-.qcc-detail-title { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-400); font-weight: 600; }
-.qcc-detail-empty { font-size: 12px; color: var(--text-400); line-height: 1.5; padding: 4px 0; }
-.qcc-links { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; }
-.qcc-link {
-  display: flex; align-items: center; gap: 9px; padding: 8px 10px; border: 1px solid var(--bg-200);
-  border-radius: var(--radius-lg); background: var(--background); text-align: left;
-  transition: border-color 200ms var(--ease), box-shadow 200ms var(--ease);
-}
-.qcc-link:hover { border-color: var(--accent-main-100); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); }
-.qcc-link-ico { display: inline-flex; color: var(--text-300); flex: 0 0 auto; }
-.qcc-link-ico[data-type="deviation"]  { color: var(--warning); }
-.qcc-link-ico[data-type="capa"]       { color: var(--warning); }
-.qcc-link-ico[data-type="validation"] { color: var(--success); }
-.qcc-link-body { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-.qcc-link-ref { font-size: 12px; font-weight: 600; color: var(--text-100); }
-.qcc-link-label { font-size: 10.5px; color: var(--text-400); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.qcc-link-rel { font-size: 10px; color: var(--text-400); white-space: nowrap; }
-.qcc-link-type {
-  font-size: 10px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-400);
-  font-weight: 600; background: var(--bg-100); padding: 2px 6px; border-radius: var(--radius-sm); white-space: nowrap;
-}
+.qcc-detail-title { font-size: var(--fs-small); color: var(--text-300); font-weight: 600; }
+/* A change's record in its row (C9, ChangeRecordDetail.tsx): the fields its approval signs, as a definition list, then
+   its linked records as a plain list. Until 2026-11-10 the links were bordered cards with type-coloured icons and an
+   accent hover, and the assessment could not be read in the log at all. */
+.qcc-facts { display: grid; grid-template-columns: minmax(140px, 220px) minmax(0, 1fr); gap: 6px 16px; margin: 4px 0 14px; }
+.qcc-facts > div { display: contents; }
+.qcc-facts dt { color: var(--text-300); font-size: var(--fs-small); }
+.qcc-facts dd { margin: 0; color: var(--text-100); white-space: pre-wrap; overflow-wrap: anywhere; }
+.qcc-facts dd[data-empty] { color: var(--text-300); }
+.qcc-detail h3.qcc-detail-title { margin: 0 0 6px; }
+.qcc-links { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.qcc-links li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; }
+.qcc-link { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; padding: 0; border: 0; background: none; cursor: pointer; color: var(--text-100); text-align: left; }
+.qcc-link:hover { text-decoration: underline; }
+.qcc-link-label { color: var(--text-200); }
+.qcc-link-rel, .qcc-link-type { color: var(--text-300); font-size: var(--fs-small); }
+.qcc-link-type::before { content: "·"; margin-right: 10px; }
+/* What the approver signs, inside the signature ceremony (C9). */
+.qcc-sign-record { margin: 0 0 12px; }
+.qcc-sign-lead { margin: 0 0 6px; font-size: var(--fs-small); font-weight: 600; color: var(--text-200); }
+.qcc-sign-record .qcc-facts { grid-template-columns: 1fr; gap: 2px; margin: 0; }
+.qcc-sign-record .qcc-facts dd { margin-bottom: 6px; }
+@media (max-width: 640px) { .qcc-facts { grid-template-columns: 1fr; gap: 2px; } .qcc-facts dd { margin-bottom: 6px; } }
 
-/* ─── Change control: training + forms ─────────────────────────── */
-.qcc-train { border: 1px solid var(--bg-200); border-radius: 10px; background: var(--background); padding: 14px 16px; }
-.qcc-steps { list-style: none; margin: 0 0 14px; padding: 0; display: flex; flex-direction: column; gap: 9px; }
-.qcc-steps li { display: flex; align-items: flex-start; gap: 10px; font-size: 12.5px; color: var(--text-200); line-height: 1.45; }
-.qcc-step-n {
-  flex: 0 0 auto; width: 20px; height: 20px; border-radius: 999px; background: var(--bg-100);
-  color: var(--text-300); font-size: 11px; font-weight: 600; display: inline-flex;
-  align-items: center; justify-content: center;
-}
-.qcc-train-acts { display: flex; gap: 8px; flex-wrap: wrap; }
-.qcc-forms { display: flex; flex-direction: column; gap: 10px; }
+/* ─── Change control: how a change is raised (a closed .pj-more) and the forms ─── */
+.qcc-steps { margin: 4px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.qcc-forms { display: flex; flex-wrap: wrap; gap: 8px; }
 
 /* CAPA action items (CapaActions.tsx), inside the .qcc-detail panel. */
 .qcc-actions { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
@@ -402,3 +280,23 @@
   /* The shared drawer's close is 30 px (journey-v2.css .de-x); in the register's route sheets it is a 44 px target on a phone. */
   .c2c-v2 .qms-shell .de-x { width: 44px; height: 44px; }
 }
+
+/* ─── A register row's next step and "More" (D7-B item 6, SopRegisterRow.tsx) ───
+   The row shows one next step and "More"; the rest open in the row, on its own
+   line under the facts, never as a menu. (.qms-rowacts itself is declared once, above.) */
+.qms-row-more {
+  grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px;
+  padding: 2px 0 4px; border-top: 1px dashed var(--border-subtle);
+}
+/* The SOP register is D0's .reg-tbl (C6): one <tbody> per document, so rows are told apart between bodies too; the
+   number stays mono at 13px (people cite it); the title wraps rather than being cut off. */
+.c2c-v2 .reg-tbl.qms-reg > tbody:not(:last-child) > tr:last-child > td { border-bottom: 1px solid var(--border-subtle); }
+.c2c-v2 .reg-tbl.qms-reg td { vertical-align: top; }
+/* The table contains its own hidden "Actions" header: an absolutely positioned .sr-only escapes a scrolling table that
+   is not its containing block, and at 390 widened the whole page by 323px (walked, C6). */
+.c2c-v2 .reg-tbl.qms-reg { position: relative; }
+.c2c-v2 .reg-tbl.qms-reg .qms-num { font-size: 13px; padding: 0; border: 0; background: none; cursor: pointer; white-space: nowrap; }
+.c2c-v2 .reg-tbl.qms-reg td.qms-title { min-width: 180px; color: var(--text-100); }
+.c2c-v2 .reg-tbl.qms-reg .qms-chips { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.c2c-v2 .reg-tbl.qms-reg tbody[data-more] > tr > td { background: var(--bg-050); }
+.c2c-v2 .reg-tbl.qms-reg .qms-row-more { justify-content: flex-start; border-top: 0; padding: 0; }

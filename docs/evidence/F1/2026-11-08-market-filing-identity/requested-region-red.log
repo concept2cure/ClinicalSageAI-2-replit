@@ -1,0 +1,249 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/c2c/__tests__/add-project-market.pglite.test.ts
+{
+  "timestamp": "2026-11-08T18:24:50.620Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T18:24:50.621Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/c2c/__tests__/add-project-market.pglite.test.ts
+{
+  "timestamp": "2026-11-08T18:24:50.621Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/c2c/__tests__/add-project-market.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/c2c/__tests__/add-project-market.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/c2c/__tests__/add-project-market.pglite.test.ts
+{
+  "timestamp": "2026-11-08T18:24:50.816Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/services/c2c/__tests__/add-project-market.pglite.test.ts > canonical market identity (F22) > refuses unresolved requested market "unmapped"/"Unspecified" before reading or writing filings 31ms
+   → expected Error: Failed query: insert into "submiss… { …(2) } to match object { code: 'VALIDATION' }
+(24 matching properties omitted from actual)
+ × server/services/c2c/__tests__/add-project-market.pglite.test.ts > canonical market identity (F22) > refuses unresolved requested market ""/"" before reading or writing filings 18ms
+   → expected Error: Failed query: insert into "submiss… { …(2) } to match object { code: 'VALIDATION' }
+(24 matching properties omitted from actual)
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > canonical market identity (F22) > preserves the application region fallback for ind/"" 12ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > canonical market identity (F22) > preserves the application region fallback for cta/"Unspecified" 13ms
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > canonical market identity (F22) > refuses unresolved recorded region "Europe" before adding or reusing a filing
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > canonical market identity (F22) > refuses unresolved recorded region "" before adding or reusing a filing
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > canonical market identity (F22) > adds an offered EU market even when this program has the same application type in another region
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > canonical market identity (F22) > reuses an existing eu region alias only for that market
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > canonical market identity (F22) > reuses an existing EU region alias only for that market
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > canonical market identity (F22) > reuses an existing ema region alias only for that market
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > canonical market identity (F22) > reuses an existing EMA region alias only for that market
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > canonical market identity (F22) > keeps separately created EU and UK clinical application spines on the same program
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > market pathway eligibility (F22) > refuses a known 510k home pathway with an inconsistent medicinal product before any write
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > market pathway eligibility (F22) > refuses a known pma home pathway with an inconsistent medicinal product before any write
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > market pathway eligibility (F22) > refuses a known de_novo home pathway with an inconsistent medicinal product before any write
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > market pathway eligibility (F22) > refuses a known ide home pathway with an inconsistent medicinal product before any write
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > market pathway eligibility (F22) > refuses a known mdr home pathway with an inconsistent medicinal product before any write
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > market pathway eligibility (F22) > refuses a known ivdr home pathway with an inconsistent medicinal product before any write
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > market pathway eligibility (F22) > refuses a known cer home pathway with an inconsistent medicinal product before any write
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > market pathway eligibility (F22) > refuses a known device home pathway with an inconsistent medicinal product before any write
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > market pathway eligibility (F22) > refuses a known ivd home pathway with an inconsistent medicinal product before any write
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > market pathway eligibility (F22) > refuses 'hde' as a medicinal added market before any write
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > market pathway eligibility (F22) > refuses 'mdl' as a medicinal added market before any write
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > market pathway eligibility (F22) > refuses 'ivd_licence' as a medicinal added market before any write
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > market pathway eligibility (F22) > refuses 'shonin' as a medicinal added market before any write
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > market pathway eligibility (F22) > refuses 'ninsho' as a medicinal added market before any write
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > market pathway eligibility (F22) > refuses 'todokede' as a medicinal added market before any write
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > market pathway eligibility (F22) > refuses 'ivd_approval' as a medicinal added market before any write
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > market pathway eligibility (F22) > refuses 'jp_cdx' as a medicinal added market before any write
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > market pathway eligibility (F22) > refuses an inconsistent saved 'hde' home class before any write
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > market pathway eligibility (F22) > refuses an inconsistent saved 'mdl' home class before any write
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > market pathway eligibility (F22) > refuses an inconsistent saved 'ivd_licence' home class before any write
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > market pathway eligibility (F22) > refuses an inconsistent saved 'shonin' home class before any write
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > market pathway eligibility (F22) > refuses an inconsistent saved 'ninsho' home class before any write
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > market pathway eligibility (F22) > refuses an inconsistent saved 'todokede' home class before any write
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > market pathway eligibility (F22) > refuses an inconsistent saved 'ivd_approval' home class before any write
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > market pathway eligibility (F22) > refuses an inconsistent saved 'jp_cdx' home class before any write
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > adds EMA's MAA to an NDA project: its Module 1 and 3.2.R, an EU submission, the market, a governed action
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > the home filing is still the one an authored section binds to
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > a newer market document of the home filing's own class never takes the home binding
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > the project's own market with no submission yet gets its submission, and no second document
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > a project with no filing of its own is refused, so the market never becomes its only document
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > a repeat is refused (409), and nothing more is written
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a UK IND (the UK has no IND) with 422, says why, and writes nothing
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses Health Canada (no outline) with 422, says why, and writes nothing
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a device project with 422, says why, and writes nothing
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a supplement market on an NDA project with 422, says why, and writes nothing
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a clinical study report market on an NDA project with 422, says why, and writes nothing
+ ↓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses an application market on a project that is a document class (a PAS) with 422, says why, and writes nothing
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/c2c/__tests__/add-project-market.pglite.test.ts > canonical market identity (F22) > refuses unresolved requested market "unmapped"/"Unspecified" before reading or writing filings
+AssertionError: expected Error: Failed query: insert into "submiss… { …(2) } to match object { code: 'VALIDATION' }
+(24 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "VALIDATION",
++ DrizzleQueryError {
++   "message": "Failed query: insert into \"submissions\" (\"id\", \"title\", \"product_name\", \"application_type\", \"client_type\", \"primary_region\", \"status\", \"lifecycle_stage\", \"organization_id\", \"created_by\", \"created_at\", \"updated_at\", \"deleted_at\", \"program_id\") values (default, $1, $2, $3, $4, default, default, $5, $6, $7, default, default, default, $8) returning \"id\", \"title\", \"product_name\", \"application_type\", \"client_type\", \"primary_region\", \"status\", \"lifecycle_stage\", \"organization_id\", \"created_by\", \"created_at\", \"updated_at\", \"deleted_at\", \"program_id\"
++ params: Unresolved filing,Vorelinib,unmapped,pharma,planning,7,11,11111111-1111-4111-8111-111111111111",
++   "cause": error {
++     "message": "null value in column \"primary_region\" of relation \"submissions\" violates not-null constraint",
++     "length": 412,
++     "name": "error",
++     "severity": "ERROR",
++     "code": "23502",
++     "detail": "Failing row contains (1, Unresolved filing, Vorelinib, unmapped, pharma, null, planning, planning, 7, 11, 2026-11-08 10:24:54.311-08, 2026-11-08 10:24:54.311-08, null, 11111111-1111-4111-8111-111111111111).",
++     "hint": undefined,
++     "position": undefined,
++     "internalPosition": undefined,
++     "internalQuery": undefined,
++     "where": undefined,
++     "schema": "public",
++     "table": "submissions",
++     "column": "primary_region",
++     "dataType": undefined,
++     "constraint": undefined,
++     "file": "execMain.c",
++     "line": "2219",
++     "routine": "ReportNotNullViolationError",
++     "query": "insert into \"submissions\" (\"id\", \"title\", \"product_name\", \"application_type\", \"client_type\", \"primary_region\", \"status\", \"lifecycle_stage\", \"organization_id\", \"created_by\", \"created_at\", \"updated_at\", \"deleted_at\", \"program_id\") values (default, $1, $2, $3, $4, default, default, $5, $6, $7, default, default, default, $8) returning \"id\", \"title\", \"product_name\", \"application_type\", \"client_type\", \"primary_region\", \"status\", \"lifecycle_stage\", \"organization_id\", \"created_by\", \"created_at\", \"updated_at\", \"deleted_at\", \"program_id\"",
++     "params": [
++       "Unresolved filing",
++       "Vorelinib",
++       "unmapped",
++       "pharma",
++       "planning",
++       7,
++       11,
++       "11111111-1111-4111-8111-111111111111",
++     ],
++     "queryOptions": {
++       "rowMode": "array",
++     },
++   },
++   "query": "insert into \"submissions\" (\"id\", \"title\", \"product_name\", \"application_type\", \"client_type\", \"primary_region\", \"status\", \"lifecycle_stage\", \"organization_id\", \"created_by\", \"created_at\", \"updated_at\", \"deleted_at\", \"program_id\") values (default, $1, $2, $3, $4, default, default, $5, $6, $7, default, default, default, $8) returning \"id\", \"title\", \"product_name\", \"application_type\", \"client_type\", \"primary_region\", \"status\", \"lifecycle_stage\", \"organization_id\", \"created_by\", \"created_at\", \"updated_at\", \"deleted_at\", \"program_id\"",
++   "params": [
++     "Unresolved filing",
++     "Vorelinib",
++     "unmapped",
++     "pharma",
++     "planning",
++     7,
++     11,
++     "11111111-1111-4111-8111-111111111111",
++   ],
+  }
+
+ ❯ server/services/c2c/__tests__/add-project-market.pglite.test.ts:131:44
+    129|     await expect(ensureSubmissionSpine({ client: { query } as never, o…
+    130|       programId: NDA, name: 'Unresolved filing', productName: 'Vorelin…
+    131|       productType: 'drug', primaryAgency })).rejects.toMatchObject({ c…
+       |                                            ^
+    132|     expect(query).not.toHaveBeenCalled();
+    133|     expect(await marketState()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/c2c/__tests__/add-project-market.pglite.test.ts > canonical market identity (F22) > refuses unresolved requested market ""/"" before reading or writing filings
+AssertionError: expected Error: Failed query: insert into "submiss… { …(2) } to match object { code: 'VALIDATION' }
+(24 matching properties omitted from actual)
+
+- Expected
++ Received
+
+- {
+-   "code": "VALIDATION",
++ DrizzleQueryError {
++   "message": "Failed query: insert into \"submissions\" (\"id\", \"title\", \"product_name\", \"application_type\", \"client_type\", \"primary_region\", \"status\", \"lifecycle_stage\", \"organization_id\", \"created_by\", \"created_at\", \"updated_at\", \"deleted_at\", \"program_id\") values (default, $1, $2, $3, $4, default, default, $5, $6, $7, default, default, default, $8) returning \"id\", \"title\", \"product_name\", \"application_type\", \"client_type\", \"primary_region\", \"status\", \"lifecycle_stage\", \"organization_id\", \"created_by\", \"created_at\", \"updated_at\", \"deleted_at\", \"program_id\"
++ params: Unresolved filing,Vorelinib,,pharma,planning,7,11,11111111-1111-4111-8111-111111111111",
++   "cause": error {
++     "message": "null value in column \"primary_region\" of relation \"submissions\" violates not-null constraint",
++     "length": 404,
++     "name": "error",
++     "severity": "ERROR",
++     "code": "23502",
++     "detail": "Failing row contains (2, Unresolved filing, Vorelinib, , pharma, null, planning, planning, 7, 11, 2026-11-08 10:24:54.337-08, 2026-11-08 10:24:54.337-08, null, 11111111-1111-4111-8111-111111111111).",
++     "hint": undefined,
++     "position": undefined,
++     "internalPosition": undefined,
++     "internalQuery": undefined,
++     "where": undefined,
++     "schema": "public",
++     "table": "submissions",
++     "column": "primary_region",
++     "dataType": undefined,
++     "constraint": undefined,
++     "file": "execMain.c",
++     "line": "2219",
++     "routine": "ReportNotNullViolationError",
++     "query": "insert into \"submissions\" (\"id\", \"title\", \"product_name\", \"application_type\", \"client_type\", \"primary_region\", \"status\", \"lifecycle_stage\", \"organization_id\", \"created_by\", \"created_at\", \"updated_at\", \"deleted_at\", \"program_id\") values (default, $1, $2, $3, $4, default, default, $5, $6, $7, default, default, default, $8) returning \"id\", \"title\", \"product_name\", \"application_type\", \"client_type\", \"primary_region\", \"status\", \"lifecycle_stage\", \"organization_id\", \"created_by\", \"created_at\", \"updated_at\", \"deleted_at\", \"program_id\"",
++     "params": [
++       "Unresolved filing",
++       "Vorelinib",
++       "",
++       "pharma",
++       "planning",
++       7,
++       11,
++       "11111111-1111-4111-8111-111111111111",
++     ],
++     "queryOptions": {
++       "rowMode": "array",
++     },
++   },
++   "query": "insert into \"submissions\" (\"id\", \"title\", \"product_name\", \"application_type\", \"client_type\", \"primary_region\", \"status\", \"lifecycle_stage\", \"organization_id\", \"created_by\", \"created_at\", \"updated_at\", \"deleted_at\", \"program_id\") values (default, $1, $2, $3, $4, default, default, $5, $6, $7, default, default, default, $8) returning \"id\", \"title\", \"product_name\", \"application_type\", \"client_type\", \"primary_region\", \"status\", \"lifecycle_stage\", \"organization_id\", \"created_by\", \"created_at\", \"updated_at\", \"deleted_at\", \"program_id\"",
++   "params": [
++     "Unresolved filing",
++     "Vorelinib",
++     "",
++     "pharma",
++     "planning",
++     7,
++     11,
++     "11111111-1111-4111-8111-111111111111",
++   ],
+  }
+
+ ❯ server/services/c2c/__tests__/add-project-market.pglite.test.ts:131:44
+    129|     await expect(ensureSubmissionSpine({ client: { query } as never, o…
+    130|       programId: NDA, name: 'Unresolved filing', productName: 'Vorelin…
+    131|       productType: 'drug', primaryAgency })).rejects.toMatchObject({ c…
+       |                                            ^
+    132|     expect(query).not.toHaveBeenCalled();
+    133|     expect(await marketState()).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed | 45 skipped (49)
+   Start at  10:24:48
+   Duration  5.45s (transform 1.92s, setup 63ms, import 3.29s, tests 1.77s, environment 0ms)
+

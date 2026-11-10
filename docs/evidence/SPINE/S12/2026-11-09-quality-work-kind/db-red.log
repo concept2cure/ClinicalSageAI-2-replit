@@ -1,0 +1,72 @@
+
+> concept2cure-riai@1.0.0 test:db
+> vitest run --config vitest.db.config.ts tests/db/work-projects.dbtest.ts
+
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-11-09T08:34:51.806Z","pid":2222,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-09T08:34:51.808Z","pid":2222,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-09T08:34:51.808Z","pid":2222,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > adds the child under the anchor with no program id of its own, its kind, and its audit row in one transaction 76ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > is idempotent: the same name and kind under the same parent is the existing child, with no second audit row 64ms
+ × tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > adds a Quality work project (P-111 item 5): quality is a work kind 50ms
+   → {"error":"INVALID_WORK_PROJECT","message":"A work project needs its parent project, a name of 1 to 200 characters and one of: cmc, biostatistics, rbm, data_management, clin_pharm, nonclinical."}: expected 400 to be 201 // Object.is equality
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > nests under one of the program's work projects, and refuses a fourth level by name 86ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > refuses, by name, a parent that is not the program's project or below it, and writes nothing 41ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > under row-level security, refuses a child of another organisation's anchor and reads none of it 49ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > refuses a viewer, an unknown kind and an empty name 49ms
+stderr | tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > rolls the child back if its chained audit row cannot be written
+{
+  "timestamp": "2026-11-09T08:34:56.068Z",
+  "level": "error",
+  "message": "[c2c-projects] Work project not added",
+  "context": {
+    "err": {
+      "length": 219,
+      "name": "error",
+      "severity": "ERROR",
+      "code": "23514",
+      "schema": "public",
+      "table": "audit_logs",
+      "constraint": "synthetic_work_project_audit_failure",
+      "file": "execMain.c",
+      "line": "2109",
+      "routine": "ExecConstraints"
+    }
+  }
+}
+
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > has one door: the project hierarchy no longer creates a project 37ms
+ ✓ tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > rolls the child back if its chained audit row cannot be written 49ms
+ ✓ tests/db/work-projects.dbtest.ts > a project's work projects, read by the project page (S12) > lists the anchor's work projects with their kind, admitted as the project page is 80ms
+ ✓ tests/db/work-projects.dbtest.ts > a project's work projects, read by the project page (S12) > refuses a project outside the program, another organisation's member, and a member not on a private project 58ms
+ ✓ tests/db/work-projects.dbtest.ts > a project's work projects, read by the project page (S12) > needs the program named 33ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/work-projects.dbtest.ts > a work project under its filing project (S12) > adds a Quality work project (P-111 item 5): quality is a work kind
+AssertionError: {"error":"INVALID_WORK_PROJECT","message":"A work project needs its parent project, a name of 1 to 200 characters and one of: cmc, biostatistics, rbm, data_management, clin_pharm, nonclinical."}: expected 400 to be 201 // Object.is equality
+
+- Expected
++ Received
+
+- 201
++ 400
+
+ ❯ tests/db/work-projects.dbtest.ts:148:58
+    146|   it('adds a Quality work project (P-111 item 5): quality is a work ki…
+    147|     const quality = await add(11, { name: 'Drug product QA', workKind:…
+    148|     expect(quality.status, JSON.stringify(quality.body)).toBe(201);
+       |                                                          ^
+    149|     expect(quality.body.data).toMatchObject({ created: true, parentId:…
+    150|     expect((await owner.query('SELECT metadata FROM projects WHERE id=…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)
+   Start at  08:34:49
+   Duration  6.56s (transform 2.80s, setup 62ms, import 281ms, tests 6.02s, environment 0ms)
+

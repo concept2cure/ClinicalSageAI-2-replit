@@ -1,0 +1,6 @@
+ ✓ names the family's current version, not a superseded one 8ms
+ ✓ says the same nothing for an unknown family, another program's, and another organisation's 6ms
+ ✓ says nothing for a family whose versions are all deleted, or whose current version's data was withdrawn 11ms
+ ✓ refuses a malformed program or code without reading 0ms
+ ✓ where a task assigns the family: the program is the task's own work project's, never the body's (POST /api/tasks/tasks) 13ms
+      Tests  5 passed (5)

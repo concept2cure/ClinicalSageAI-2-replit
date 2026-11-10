@@ -80,6 +80,12 @@ function rowOf(doc: StoredDocument) {
     programId: '90000000-0000-4000-8000-000000000001',
     fileName: `${doc.id}.txt`,
     documentTitle: `Report ${doc.id}`,
+    // These suites test the delivery of a document the serving model may receive. The read refuses a tier the
+    // provider may not receive (catalog-scope.ts readDocumentBoundary; that refusal is pinned in
+    // document-source-access-tools.test.ts), and a row with no classification reads as unclassified, the highest
+    // tier. INTERNAL is a tier it admits. It is not what an upload gets: uploads are stored CONFIDENTIAL
+    // (vault-ingest.service.ts), which this fixture deliberately does not model.
+    classification: 'INTERNAL',
     extractedText: doc.text,
     contentHash: doc.contentHash,
     originalFileAvailable: true,

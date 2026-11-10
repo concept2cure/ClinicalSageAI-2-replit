@@ -1,0 +1,234 @@
+# S5d post-approval red: server/services/ana/__tests__/post-approval-unstated-inputs.test.ts in the working tree before the change (trunk's post-approval engine). 108 of 121 fail, all on assertions; the 13 controls pass.
+
+ ✓ server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the six post-approval tools compute from stated facts > 'classify_post_approval_change' reaches its engine with a stated basis 6ms
+ ✓ server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the six post-approval tools compute from stated facts > 'assess_established_conditions' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the six post-approval tools compute from stated facts > 'design_pacmp' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the six post-approval tools compute from stated facts > 'plan_annual_report' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the six post-approval tools compute from stated facts > 'assess_postapproval_comparability' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the six post-approval tools compute from stated facts > 'plan_lifecycle_management' reaches its engine with a stated basis 1ms
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'classify_post_approval_change' 'solidOralProduct' reads not_stated when omitted or null, and is refused when malformed 14ms
+   → expected { …(12) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'classify_post_approval_change' 'modifiedRelease' reads not_stated when omitted or null, and is refused when malformed 3ms
+   → expected { …(12) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'classify_post_approval_change' 'biologicLicense' reads not_stated when omitted or null, and is refused when malformed 3ms
+   → expected { …(12) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'classify_post_approval_change' 'risk.affectsCqa' reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { …(12) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'classify_post_approval_change' 'risk.affectsControlStrategy' reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { …(12) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'classify_post_approval_change' 'risk.sterileProcess' reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { …(12) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'classify_post_approval_change' 'risk.withinDesignSpace' reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { …(12) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'classify_post_approval_change' 'risk.priorKnowledge' reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { …(12) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'assess_established_conditions' 'elements[0].cqaImpact' reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'assess_established_conditions' 'elements[0].controlledDownstream' reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'assess_established_conditions' 'elements[0].withinDesignSpace' reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'design_pacmp' 'includeStability' reads not_stated when omitted or null, and is refused when malformed 6ms
+   → expected { plannedChange: { …(3) }, …(11) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'design_pacmp' 'tests[0].cqa' reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { plannedChange: { …(3) }, …(11) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'design_pacmp' 'risk.affectsCqa' reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { plannedChange: { …(3) }, …(11) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'design_pacmp' 'risk.affectsControlStrategy' reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { plannedChange: { …(3) }, …(11) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'design_pacmp' 'risk.sterileProcess' reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { plannedChange: { …(3) }, …(11) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'design_pacmp' 'risk.withinDesignSpace' reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { plannedChange: { …(3) }, …(11) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'design_pacmp' 'risk.priorKnowledge' reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { plannedChange: { …(3) }, …(11) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'plan_annual_report' 'biologicLicense' reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { productName: 'DrugX', …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'plan_annual_report' 'stabilityProtocolOngoing' reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { productName: 'DrugX', …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'plan_annual_report' 'includePlcmDocument' reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { productName: 'DrugX', …(7) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'assess_postapproval_comparability' 'affectsCqa' reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { modality: 'biologic', …(12) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'assess_postapproval_comparability' 'analyticalCoverageComplete' reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { modality: 'biologic', …(12) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'assess_postapproval_comparability' 'clinicalDataAvailable' reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { modality: 'biologic', …(12) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'assess_postapproval_comparability' 'risk.affectsCqa' reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { modality: 'biologic', …(12) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'assess_postapproval_comparability' 'risk.affectsControlStrategy' reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { modality: 'biologic', …(12) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'assess_postapproval_comparability' 'risk.sterileProcess' reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { modality: 'biologic', …(12) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'assess_postapproval_comparability' 'risk.withinDesignSpace' reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { modality: 'biologic', …(12) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'assess_postapproval_comparability' 'risk.priorKnowledge' reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { modality: 'biologic', …(12) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'plan_lifecycle_management' 'plannedChanges[0].risk.affectsCqa' reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { productName: 'DrugX', …(11) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'plan_lifecycle_management' 'plannedChanges[0].risk.affectsControl…' reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { productName: 'DrugX', …(11) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'plan_lifecycle_management' 'plannedChanges[0].risk.sterileProcess' reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { productName: 'DrugX', …(11) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'plan_lifecycle_management' 'plannedChanges[0].risk.withinDesignSp…' reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { productName: 'DrugX', …(11) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > each true/false input is kept as stated > 'plan_lifecycle_management' 'plannedChanges[0].risk.priorKnowledge' reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { productName: 'DrugX', …(11) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > classify_post_approval_change names no category an unstated fact could change > with the risk qualifiers omitted, the tier, category and variation type are null, with both answers named 1ms
+   → expected 'CBE-0' to be null
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > classify_post_approval_change names no category an unstated fact could change > an omitted solidOralProduct leaves SUPAC open, not "does not apply" 1ms
+   → expected false to be null
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > classify_post_approval_change names no category an unstated fact could change > an omitted biologicLicense leaves the regulation open, not 21 CFR 314.70 1ms
+   → expected '21 CFR 314.70(b)' to be null
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > classify_post_approval_change names no category an unstated fact could change > a risk object without a magnitude keeps the stated magnitude 1ms
+   → expected { score: 3, tier: 'moderate', …(1) } to match object { score: 1, tier: 'low' }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > classify_post_approval_change names no category an unstated fact could change > names an omitted modality and magnitude as defaults 1ms
+   → expected '' to match /modality was not stated: the change i…/
+ ✓ server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > classify_post_approval_change names no category an unstated fact could change > control: keeps the stated answer 1ms
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > assess_established_conditions > an omitted CQA fact leaves a process parameter undetermined, not supportive information 1ms
+   → expected { name: 'Granulation endpoint', …(6) } to match object { isEstablishedCondition: null, …(2) }
+ ✓ server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > assess_established_conditions > a status every answer gives is kept 0ms
+ ✓ server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > assess_established_conditions > control: keeps the stated answer 0ms
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > design_pacmp > with the risk qualifiers omitted, the category without a protocol and the reduced one are null 1ms
+   → expected { withoutProtocol: 'CBE-30', …(4) } to match object { withoutProtocol: null, …(2) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > design_pacmp > an unstated sterile process leaves a reduction to Annual Report undetermined 1ms
+   → expected true to be null
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > design_pacmp > an omitted cqa is not "not a CQA" 1ms
+   → expected false to be null
+ ✓ server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > design_pacmp > control: keeps the stated answer 0ms
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > plan_annual_report > a change with no asserted category is not classified from risk facts nobody stated 1ms
+   → expected [ { changeArea: 'equipment', …(4) } ] to deeply equal []
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > plan_annual_report > an omitted stabilityProtocolOngoing gives both answers 1ms
+   → expected 'Provide a statement on stability stat…' to match /^Whether a stability protocol or comm…/
+ ✓ server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > plan_annual_report > control: keeps the stated answer 2ms
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > assess_postapproval_comparability > an omitted analytical coverage is not read as complete 1ms
+   → expected 'analytical_only' to be null
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > assess_postapproval_comparability > affectsCqa answers risk.affectsCqa when only one is stated 1ms
+   → expected { modality: 'biologic', …(12) } to match object { …(2) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > assess_postapproval_comparability > with neither stated, affectsCqa and risk.affectsCqa are one fact, never two that disagree 1ms
+   → expected 'analytical_only' to be null
+ ✓ server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > assess_postapproval_comparability > control: keeps the stated answer 0ms
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > plan_lifecycle_management > a planned change whose category its unstated risk facts decide gets no tool 1ms
+   → expected { …(6) } to match object { recommendedTool: null, …(1) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > plan_lifecycle_management > a history change with no reported category is counted as not determined 1ms
+   → expected { 'CBE-30': 1 } to deeply equal { 'not determined': 1 }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > classify_post_approval_change changeArea "site" 2ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > classify_post_approval_change modality "mAb" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > classify_post_approval_change magnitude "Major" 2ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > classify_post_approval_change risk "high" 6ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > classify_post_approval_change risk.magnitude "big" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_established_conditions elements "granulation" 2ms
+   → expected { Object (error) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_established_conditions elements[0].elementType "parameter" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_established_conditions developmentApproach "QbD" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > design_pacmp plannedChangeArea "site" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > design_pacmp proposedReducedCategory "AR" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > design_pacmp tests "assay" 1ms
+   → expected { Object (error) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > design_pacmp tests[0].attribute 7 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > plan_annual_report changes "blender" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > plan_annual_report changes[0].assertedCategory "AR" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > plan_annual_report modality "mAb" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_postapproval_comparability changeStage "Upstream" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_postapproval_comparability changeArea "process" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > plan_lifecycle_management marketedRegions "US" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > plan_lifecycle_management marketedRegions[0] "USA" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > plan_lifecycle_management plannedChanges[0].expectedFrequency "often" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > plan_lifecycle_management changeHistory[0].yearImplemented "2024" 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(1) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_established_conditions refuses an omitted required input, elements 2ms
+   → expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > design_pacmp refuses an omitted required input, plannedChangeDescription 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > classify_post_approval_change refuses an omitted required input, changeArea 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'classify_post_approval_change' 'solidOralProduct' says what an omission leaves 1ms
+   → expected 'Whether this is a solid oral dosage f…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'classify_post_approval_change' 'modifiedRelease' says what an omission leaves 0ms
+   → expected 'Whether the product is modified-relea…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'classify_post_approval_change' 'biologicLicense' says what an omission leaves 0ms
+   → expected 'Whether the product is licensed under…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'classify_post_approval_change' 'risk.affectsCqa' says what an omission leaves 0ms
+   → expected 'Does the change affect a critical qua…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'classify_post_approval_change' 'risk.affectsControlStrategy' says what an omission leaves 0ms
+   → expected 'Does the change affect the control st…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'classify_post_approval_change' 'risk.sterileProcess' says what an omission leaves 0ms
+   → expected 'Does the change touch a sterile proce…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'classify_post_approval_change' 'risk.withinDesignSpace' says what an omission leaves 0ms
+   → expected 'Is the change within an approved desi…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'classify_post_approval_change' 'risk.priorKnowledge' says what an omission leaves 1ms
+   → expected 'Is there substantial prior knowledge …' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'assess_established_conditions' 'elements[0].cqaImpact' says what an omission leaves 0ms
+   → expected 'Does the element impact a critical qu…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'assess_established_conditions' 'elements[0].controlledDownstream' says what an omission leaves 0ms
+   → expected 'Is the element otherwise controlled b…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'assess_established_conditions' 'elements[0].withinDesignSpace' says what an omission leaves 0ms
+   → expected 'Is the element governed within an app…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'design_pacmp' 'includeStability' says what an omission leaves 0ms
+   → expected 'Whether a stability commitment should…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'design_pacmp' 'tests[0].cqa' says what an omission leaves 0ms
+   → expected 'Is this attribute a CQA?' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'design_pacmp' 'risk.affectsCqa' says what an omission leaves 0ms
+   → expected 'Does the change affect a critical qua…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'design_pacmp' 'risk.affectsControlStrategy' says what an omission leaves 0ms
+   → expected 'Does the change affect the control st…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'design_pacmp' 'risk.sterileProcess' says what an omission leaves 0ms
+   → expected 'Does the change touch a sterile proce…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'design_pacmp' 'risk.withinDesignSpace' says what an omission leaves 0ms
+   → expected 'Is the change within an approved desi…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'design_pacmp' 'risk.priorKnowledge' says what an omission leaves 0ms
+   → expected 'Is there substantial prior knowledge …' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'plan_annual_report' 'biologicLicense' says what an omission leaves 0ms
+   → expected 'True when the product is licensed und…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'plan_annual_report' 'stabilityProtocolOngoing' says what an omission leaves 0ms
+   → expected 'Whether a stability protocol/commitme…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'plan_annual_report' 'includePlcmDocument' says what an omission leaves 0ms
+   → expected 'Whether to include the ICH Q12 PLCM d…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'assess_postapproval_comparability' 'affectsCqa' says what an omission leaves 0ms
+   → expected 'Does the change affect a critical qua…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'assess_postapproval_comparability' 'analyticalCoverageComplete' says what an omission leaves 0ms
+   → expected 'Is analytical characterization covera…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'assess_postapproval_comparability' 'clinicalDataAvailable' says what an omission leaves 0ms
+   → expected 'Is clinical data available to support…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'assess_postapproval_comparability' 'risk.affectsCqa' says what an omission leaves 0ms
+   → expected 'Does the change affect a critical qua…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'assess_postapproval_comparability' 'risk.affectsControlStrategy' says what an omission leaves 0ms
+   → expected 'Does the change affect the control st…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'assess_postapproval_comparability' 'risk.sterileProcess' says what an omission leaves 0ms
+   → expected 'Does the change touch a sterile proce…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'assess_postapproval_comparability' 'risk.withinDesignSpace' says what an omission leaves 0ms
+   → expected 'Is the change within an approved desi…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'assess_postapproval_comparability' 'risk.priorKnowledge' says what an omission leaves 0ms
+   → expected 'Is there substantial prior knowledge …' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'plan_lifecycle_management' 'plannedChanges[0].risk.affectsCqa' says what an omission leaves 0ms
+   → expected 'Does the change affect a critical qua…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'plan_lifecycle_management' 'plannedChanges[0].risk.affectsControl…' says what an omission leaves 0ms
+   → expected 'Does the change affect the control st…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'plan_lifecycle_management' 'plannedChanges[0].risk.sterileProcess' says what an omission leaves 0ms
+   → expected 'Does the change touch a sterile proce…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'plan_lifecycle_management' 'plannedChanges[0].risk.withinDesignSp…' says what an omission leaves 0ms
+   → expected 'Is the change within an approved desi…' to match /Omitted or null/
+ × server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'plan_lifecycle_management' 'plannedChanges[0].risk.priorKnowledge' says what an omission leaves 0ms
+   → expected 'Is there substantial prior knowledge …' to match /Omitted or null/
+ ✓ server/services/ana/__tests__/post-approval-unstated-inputs.test.ts > the definitions say what an omitted fact means > each description fits the gateway limit 0ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 108 ⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  108 failed | 13 passed (121)

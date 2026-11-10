@@ -59,6 +59,10 @@ beforeAll(async()=>{
   state.fixture=await createCurrentSnapshotFixture();
   await pg().exec(readFileSync(resolve(__dirname,'../../../migrations/20260814d_document_alias_map.sql'),'utf8'));
   await pg().exec(readFileSync(resolve(__dirname,'../../../db/migrations/20260725_authoring_audit_trail.sql'),'utf8'));
+  // The chain's order key, as the deployed set has it: since b8cee0745c the placement's release gate reads the
+  // source's chained ledger ordered by chain_seq (workflow-import-governance.ts independentLedger), and without
+  // the column every placement answered INDEPENDENT_CHECK_REQUIRED.
+  await pg().exec(readFileSync(resolve(__dirname,'../../../migrations/20260921_audit_logs_chain_seq.sql'),'utf8'));
   await installCurrentSnapshotActor(pg(),{organizationId:ORG,userId:1,role:'member',email:'owner@example.invalid'});
   await installCurrentSnapshotActor(pg(),{organizationId:ORG,userId:2,role:'member',email:'reader@example.invalid'});
   await pg().query(`INSERT INTO regulatory_programs(id,organization_id,name,code,program_type,product_name)

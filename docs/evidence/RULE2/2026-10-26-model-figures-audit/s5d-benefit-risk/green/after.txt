@@ -1,0 +1,172 @@
+# S5d benefit-risk green: the red test, the engine's suites, S7's and the CSR builder's retirement tests and the one-home guard, after the change.
+
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > the six benefit-risk tools compute from stated facts > 'structure_benefit_risk_framework' reaches its engine with a stated basis 8ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > the six benefit-risk tools compute from stated facts > 'build_effects_table' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > the six benefit-risk tools compute from stated facts > 'assess_benefit_risk_balance' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > the six benefit-risk tools compute from stated facts > 'design_value_tree' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > the six benefit-risk tools compute from stated facts > 'assess_br_uncertainty' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > the six benefit-risk tools compute from stated facts > 'plan_br_communication' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > each true/false input is kept as stated > 'structure_benefit_risk_framework' 'unmetMedicalNeed' reads not_stated when omitted or null, and is refused when malformed 5ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > each true/false input is kept as stated > 'structure_benefit_risk_framework' 'keyRisks[0].manageable' reads not_stated when omitted or null, and is refused when malformed 3ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > each true/false input is kept as stated > 'assess_benefit_risk_balance' 'unmetMedicalNeed' reads not_stated when omitted or null, and is refused when malformed 4ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > each true/false input is kept as stated > 'assess_benefit_risk_balance' 'risks[0].mitigated' reads not_stated when omitted or null, and is refused when malformed 4ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > each true/false input is kept as stated > 'plan_br_communication' 'includeVisualSummary' reads not_stated when omitted or null, and is refused when malformed 2ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > each true/false input is kept as stated > 'plan_br_communication' 'patientExperienceDataAvailable' reads not_stated when omitted or null, and is refused when malformed 3ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > structure_benefit_risk_framework concludes nothing from an unstated fact > an omitted unmet need beside an approved option is not "Effective alternatives exist" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > structure_benefit_risk_framework concludes nothing from an unstated fact > a stated false is kept when no treatment list is given 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > structure_benefit_risk_framework concludes nothing from an unstated fact > an option of unstated status is not read as approved 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > structure_benefit_risk_framework concludes nothing from an unstated fact > an option of unstated status decides nothing beside a stated off-label one 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > structure_benefit_risk_framework concludes nothing from an unstated fact > an omitted manageable is not "Considered manageable", and a risk conclusion it decides is not assessed 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > structure_benefit_risk_framework concludes nothing from an unstated fact > an omitted condition severity is not "of lower severity" 0ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > structure_benefit_risk_framework concludes nothing from an unstated fact > control: keeps the stated answer 0ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > assess_benefit_risk_balance gives no verdict an unstated fact could change > an omitted unmet need that decides the verdict leaves it null, with both answers named 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > assess_benefit_risk_balance gives no verdict an unstated fact could change > an omitted mitigation that decides the verdict leaves it, the risk weight and that driver null 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > assess_benefit_risk_balance gives no verdict an unstated fact could change > names only the verdicts an answer gives, not every verdict between the two 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > assess_benefit_risk_balance gives no verdict an unstated fact could change > a verdict every answer gives is kept, with the net balance it cannot fix left null 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > assess_benefit_risk_balance gives no verdict an unstated fact could change > names the omitted grades a score used at its middle value 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > assess_benefit_risk_balance gives no verdict an unstated fact could change > control: keeps the stated answer 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > plan_br_communication > says when patient-experience data were not stated, instead of leaving them out 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > plan_br_communication > control: keeps the stated framing 0ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > plan_br_communication > names the visual-summary and audience defaults 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > structure_benefit_risk_framework conditionSeverity "Severe" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > structure_benefit_risk_framework conditionCourse "Chronic" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > structure_benefit_risk_framework currentTreatments "docetaxel" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > structure_benefit_risk_framework currentTreatments[0].status "Approved" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > structure_benefit_risk_framework keyBenefits[0].magnitude "large" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > structure_benefit_risk_framework keyBenefits[0].endpointType "clinical" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > structure_benefit_risk_framework keyRisks "neutropenia" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > structure_benefit_risk_framework keyRisks[0].reversibility "reversible" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > structure_benefit_risk_framework riskManagementTools "REMS" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > structure_benefit_risk_framework productName 42 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > build_effects_table effects "OS" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > build_effects_table effects[0].direction "Favourable" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > build_effects_table effects[0].treatmentValue "12" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > build_effects_table effects[0].ciLow null 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > build_effects_table effects[0].evidenceSource "RCT" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > build_effects_table effects[0].uncertainty "Low" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_benefit_risk_balance benefits "OS" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_benefit_risk_balance benefits[0].magnitude "large" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_benefit_risk_balance benefits[0].weight 1.5 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_benefit_risk_balance benefits[0].weight "heavy" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_benefit_risk_balance risks[0].severity "Severe" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_benefit_risk_balance risks[0].frequency "often" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_benefit_risk_balance conditionSeverity "Serious" 0ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_benefit_risk_balance specialPopulations "elderly" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > design_value_tree criteria "OS" 0ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > design_value_tree criteria[0].type "Benefit" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > design_value_tree criteria[0].importanceRank "1" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > design_value_tree criteria[0].importanceRank 0 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > design_value_tree weightingApproach "MCDA" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > design_value_tree alternatives "placebo" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_br_uncertainty sources "missing data" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_br_uncertainty sources[0].type "bias" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_br_uncertainty sources[0].level "High" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_br_uncertainty sources[0].affects "efficacy" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_br_uncertainty netBalanceEstimate "0.3" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > plan_br_communication audiences "patient" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > plan_br_communication audiences[0] "Patients" 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > plan_br_communication keyBenefitMessages "longer survival" 0ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > build_effects_table refuses an omitted required list, effects 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_benefit_risk_balance refuses an omitted required list, risks 5ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > design_value_tree refuses an omitted required list, criteria 1ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > a malformed value is refused by field, never read as another value or crashed on > assess_br_uncertainty refuses an omitted required list, sources 0ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'structure_benefit_risk_framework' 'unmetMedicalNeed' says what an omission leaves, and claims no default 0ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'structure_benefit_risk_framework' 'keyRisks[0].manageable' says what an omission leaves, and claims no default 0ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'assess_benefit_risk_balance' 'unmetMedicalNeed' says what an omission leaves, and claims no default 0ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'assess_benefit_risk_balance' 'risks[0].mitigated' says what an omission leaves, and claims no default 0ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'plan_br_communication' 'includeVisualSummary' says what an omission leaves, and claims no default 0ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > the definitions say what an omitted fact means > 'plan_br_communication' 'patientExperienceDataAvailable' says what an omission leaves, and claims no default 0ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > the definitions say what an omitted fact means > the balance description says the verdict can be none, naming the facts 0ms
+ ✓ server/services/ana/__tests__/benefit-risk-unstated-inputs.test.ts > the definitions say what an omitted fact means > each description fits the gateway limit 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > no other module under server/services defines one of them by name 1436ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > the home defines all twelve 1ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > unstated is true only for an omitted or null value 1ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(true, true) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(true, false) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(true, undefined) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(true, null) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(false, true) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(false, false) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(false, undefined) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(false, null) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(undefined, true) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(undefined, false) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(undefined, undefined) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(undefined, null) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(null, true) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(null, false) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(null, undefined) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(null, null) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(true, true) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(true, false) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(true, undefined) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(true, null) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(false, true) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(false, false) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(false, undefined) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(false, null) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(undefined, true) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(undefined, false) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(undefined, undefined) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(undefined, null) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(null, true) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(null, false) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(null, undefined) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(null, null) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf of nothing is false and allOf of nothing is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > uniqueStrings keeps first-seen order 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > everyAnswer keeps each stated fact and tries both answers for each unstated one 1ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > listed joins prose as "a", "a and b", "a, b and c" 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > oneOfInput and textInput are refuseUnlessStated checks for a vocabulary and for non-empty text 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > statedText keeps a stated value, leaves an omitted or null one unstated, and refuses anything else by field 1ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > statedList keeps a stated value, leaves an omitted or null one unstated, and refuses anything else by field 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > conclusions lists the distinct conclusions, and decidingFacts the unstated facts that change one 0ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > POST /api/csr-builder/safety-signals answers 404 24ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > POST /api/csr/safety-signals answers 404 4ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > POST /api/csr-builder/generate-narrative answers 404 3ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > POST /api/csr/generate-narrative answers 404 3ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > POST /api/csr-builder/analyze-benefit-risk answers 404 3ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > POST /api/csr/analyze-benefit-risk answers 404 3ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > POST /api/csr-builder/build answers 404 2ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > POST /api/csr/build answers 404 2ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > no longer mounts the builder a second time at /api/csr 9ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > keeps the builder routes that remain at /api/csr-builder 5ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > mounts the builder behind its own authentication, not only the RTM export's /api-wide one 2ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > refuses a call without a session before any builder handler 4ms
+ ✓ server/routes/__tests__/csr-builder-retired-endpoints.test.ts > retired CSR builder endpoints > reaches /api/csr/jobs through its own router 3ms
+ ✓ server/services/ana/__tests__/assess-benefit-risk-retired-onto-the-balance.test.ts > assess_benefit_risk is retired onto assess_benefit_risk_balance > is no longer defined, registered, authorised or in the launch scope 6ms
+ ✓ server/services/ana/__tests__/assess-benefit-risk-retired-onto-the-balance.test.ts > assess_benefit_risk is retired onto assess_benefit_risk_balance > its engine, which had no other caller, is gone 1ms
+ ✓ server/services/ana/__tests__/assess-benefit-risk-retired-onto-the-balance.test.ts > assess_benefit_risk is retired onto assess_benefit_risk_balance > the replacement is defined and registered 1ms
+ ✓ server/services/ana/__tests__/assess-benefit-risk-retired-onto-the-balance.test.ts > assess_benefit_risk is retired onto assess_benefit_risk_balance > the replacement computes a balance from stated benefits and risks 16ms
+ ✓ server/services/ana/__tests__/assess-benefit-risk-retired-onto-the-balance.test.ts > assess_benefit_risk is retired onto assess_benefit_risk_balance > "run a structured benefit-risk assessment weighing the benefits against the risks" still offers the replacement 9ms
+ ✓ server/services/ana/__tests__/assess-benefit-risk-retired-onto-the-balance.test.ts > assess_benefit_risk is retired onto assess_benefit_risk_balance > "BRAT weighted benefit risk score with an importance weight for each benefit and risk" still offers the replacement 5ms
+ ✓ server/services/ana/__tests__/assess-benefit-risk-retired-onto-the-balance.test.ts > assess_benefit_risk is retired onto assess_benefit_risk_balance > "compute the net benefit and favorability from weighted benefits and risks" still offers the replacement 5ms
+ ✓ server/services/ana/__tests__/assess-benefit-risk-retired-onto-the-balance.test.ts > assess_benefit_risk is retired onto assess_benefit_risk_balance > "structured benefit-risk decision aid for the clinical overview 2.5.6" still offers the replacement 11ms
+ ✓ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assessBRUncertainty — no net margin stated > does not assess robustness and prints no margin when netBalanceEstimate is omitted 3ms
+ ✓ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assessBRUncertainty — no net margin stated > reads a null margin as not stated, not as 0 0ms
+ ✓ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assessBRUncertainty — no net margin stated > control: a stated margin still gives a verdict and prints the margin 1ms
+ ✓ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assessBRUncertainty — a source with no level > reports the level as not stated instead of grading it moderate 1ms
+ ✓ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assessBRUncertainty — a source with no level > keeps a fragile verdict that the stated levels already reach 0ms
+ ✓ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assessBRUncertainty — no source stated > grades nothing and claims no insensitivity or labeling conclusion 0ms
+ ✓ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assessBRUncertainty — no source stated > control: fully stated inputs keep the existing verdict and wording 1ms
+ ✓ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > S3 review: an unstated affected side > does not invent both benefit and risk or side-specific conclusions 1ms
+ ✓ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > S3 review: an unstated affected side > keeps explicitly stated directions 1ms
+ ✓ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > S3 review: an unstated affected side > does not advertise a default affected side 0ms
+ ✓ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assess_br_uncertainty handler > returns not_assessed through the tool envelope when no margin is stated 3ms
+ ✓ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assess_br_uncertainty definition > says an omitted net margin leaves robustness not assessed 0ms
+ ✓ server/services/benefit-risk/__tests__/br-uncertainty-unstated-inputs-not-assessed.test.ts > assess_br_uncertainty definition > no longer tells the model an omitted level defaults to moderate 0ms
+ ✓ server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts > planBRCommunication: the benefit-risk conclusion is the sponsor's > refuses an unstated verdict rather than planning a favourable one 3ms
+ ✓ server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts > planBRCommunication: the benefit-risk conclusion is the sponsor's > refuses a verdict outside the vocabulary rather than carrying it through 1ms
+ ✓ server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts > planBRCommunication: the benefit-risk conclusion is the sponsor's > names absent key messages as not stated instead of inventing a benefit and a risk profile 1ms
+ ✓ server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts > planBRCommunication: the benefit-risk conclusion is the sponsor's > treats a blank message as not stated, not as the word "benefit" 1ms
+ ✓ server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts > planBRCommunication: the benefit-risk conclusion is the sponsor's > still plans from a stated verdict and stated messages, unchanged 1ms
+ ✓ server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts > plan_br_communication: AnA asks for the conclusion > returns needs_parameters naming verdict, with no plan and no core message 3ms
+ ✓ server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts > plan_br_communication: AnA asks for the conclusion > still computes once the verdict is stated 1ms
+ ✓ server/services/benefit-risk/__tests__/br-communication-states-no-conclusion.test.ts > plan_br_communication: AnA asks for the conclusion > its verdict property names no default and tells the model not to choose one 1ms
+ ✓ server/services/benefit-risk/__tests__/cer-empty-evidence-honesty.test.ts > structureBenefitRiskFramework — an uncharacterized dimension is not favourable > does NOT call unsupplied risks "readily manageable"; states no risk determination can be made 3ms
+ ✓ server/services/benefit-risk/__tests__/cer-empty-evidence-honesty.test.ts > structureBenefitRiskFramework — an uncharacterized dimension is not favourable > does NOT say "benefit modestly exceeds risk" when a dimension was not characterized 1ms
+ ✓ server/services/benefit-risk/__tests__/cer-empty-evidence-honesty.test.ts > structureBenefitRiskFramework — an uncharacterized dimension is not favourable > still produces the ordinary directional narrative when BOTH sides are characterized 1ms
+ ✓ server/services/benefit-risk/__tests__/cer-empty-evidence-honesty.test.ts > assessBenefitRiskBalance — empty EITHER side is indeterminate, not favourable > returns indeterminate when strong benefits are set against zero characterized risks 2ms
+ ✓ server/services/benefit-risk/__tests__/cer-empty-evidence-honesty.test.ts > assessBenefitRiskBalance — empty EITHER side is indeterminate, not favourable > still reaches a favourable verdict when both sides are characterized and benefit dominates 1ms
+ Test Files  7 passed (7)
+      Tests  168 passed (168)

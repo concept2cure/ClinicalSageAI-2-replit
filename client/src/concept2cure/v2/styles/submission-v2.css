@@ -2,7 +2,6 @@
    top of the shared surface framework (journey-v2.css + coverage-v2.css, both
    loaded globally by V2App). The kit expressed these as inline style
    attributes; classes keep the TSX clean and CSP-lean. */
-.c2c-v2 .sc-page { max-width: 1140px; }
 .c2c-v2 .sc-mt { margin-top: 12px; }
 .c2c-v2 .sc-mb { margin-bottom: 10px; }
 .c2c-v2 .sc-mono { font-family: var(--font-mono); }
@@ -11,12 +10,13 @@
 .c2c-v2 .sc-btn { padding: 8px 14px; }
 .c2c-v2 .sc-disp-actions .sc-btn { padding: 9px 16px; }
 .c2c-v2 .sc-btn-neutral { background: var(--bg-200); color: var(--text-100); }
-.c2c-v2 .sc-subrow { cursor: pointer; }
 /* A sequence row wraps at a phone's width; its label keeps a readable minimum (J4 human test, 2026-11-06). */
-.c2c-v2 .sc-subrow { flex-wrap: wrap; row-gap: 6px; }
+.c2c-v2 .sc-subrow { cursor: pointer; flex-wrap: wrap; row-gap: 6px; }
 .c2c-v2 .sc-subrow .sp-row-b { min-width: 140px; }
 /* A table wider than its card (the submissions list at 390 px) scrolls inside the card, not the page. */
 .c2c-v2 .sc-page .pj-card-b-flush { overflow-x: auto; }
+/* D7-A1: the Submissions list is a typographic section now, not a card; its table scrolls inside the page the same way. */
+.c2c-v2 .sc-page .sc-tbl { overflow-x: auto; }
 .c2c-v2 .sc-subpick { max-width: 100%; text-overflow: ellipsis; }
 .c2c-v2 .sc-subrow-open { background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
 .c2c-v2 .ub-r { text-align: right; }
@@ -49,16 +49,13 @@
   background: color-mix(in srgb, var(--warning) 10%, transparent);
   color: var(--warning);
 }
-/* Sequence-selector bar above the per-sequence workspaces. */
+/* D7-A2 step 10: in Dispatch a note is a plain line, not a tinted box; its words keep their tone's colour. */
+.c2c-v2 .sc-dispatch :is(.sc-verdict.tone-warn, .scaf-note) { background: none; border: 0; border-radius: 0; padding: 0; }
+.c2c-v2 .sc-dispatch .scaf-note { margin-top: 0; }
+/* A row bar of controls (Required deliverables' filters). The working-sequence select it once also held is the
+   context row's now (SeqSelect, D7-A2). */
 .c2c-v2 .sc-seqbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-/* Dispatch-gate verdict panel. */
-.c2c-v2 .sc-gate {
-  display: flex; align-items: center; gap: 8px;
-  font-weight: 600; font-size: 13px; padding: 10px 12px; border-radius: var(--radius-lg);
-  margin-bottom: 10px;
-}
-.c2c-v2 .sc-gate.ok { background: color-mix(in srgb, var(--success) 12%, transparent); color: var(--success); }
-.c2c-v2 .sc-gate.blocked { background: color-mix(in srgb, var(--error) 10%, transparent); color: var(--error); }
+/* D7-A2: the gate panel became the one verdict (DispatchVerdict, AnswerLead emphasis="verdict"); its rules went. */
 .c2c-v2 .sc-blockers { margin: 0 0 10px 18px; padding: 0; font-size: 12.5px; color: var(--text-200); }
 .c2c-v2 .sc-blockers li { margin: 4px 0; }
 /* Builder add-leaf form. */

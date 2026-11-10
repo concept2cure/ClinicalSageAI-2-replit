@@ -86,7 +86,8 @@ export interface RegisterConfig<R extends { id: number | string }> {
    *  CAPAs raised from each row, derived from the CAPA register. */
   capaSourceKind?: string;
   /** What a row opens to, under it; its first cell becomes the toggle. */
-  detail?: { label: string; render: (r: R, onChanged: () => void) => React.ReactNode };
+  /** The row's detail; `onChanged` takes the write's confirmation, which the register says as a toast (C3). */
+  detail?: { label: string; render: (r: R, onChanged: (confirmation?: string) => void) => React.ReactNode };
 }
 
 export const optionsOf = (labels: Record<string, string>) => Object.entries(labels).map(([value, label]) => ({ value, label }));
@@ -96,3 +97,8 @@ export const num = (s: string) => (s.trim() === '' ? undefined : Math.max(0, Mat
 
 /** A refusal the drawer shows; the write was not attempted. */
 export class Refused extends Error {}
+
+/** A register's name inside a sentence: lower case, keeping acronyms ("CAPA", "SOP register", "management reviews"). */
+export function inSentence(label: string): string {
+  return label.split(' ').map((w) => (w.length > 1 && w === w.toUpperCase() ? w : w.toLowerCase())).join(' ');
+}

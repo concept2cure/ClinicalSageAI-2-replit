@@ -78,7 +78,8 @@ import { requestDb } from '../../../db/requestDb';
 import { runWithTenantScope } from '../../../db/tenantStore';
 import { LEAF_SOURCE_PGLITE_DDL, SUBMISSION_CORE_PGLITE_DDL } from '../../../db/pglite-harness';
 import {
-  PREREQ, VAULT_DDL, AUTHORING_ACCESS_DDL, AUTHOR, PROGRAM, ORG, mint, makeApp, asToken, M25_SECTIONS,
+  PREREQ, VAULT_DDL, AUTHORING_ACCESS_DDL, REVIEW_ACCESS_DDL, AUTHOR, PROGRAM, ORG, mint, makeApp, asToken, M25_SECTIONS,
+  AUTHORED_M25_SECTIONS, releaseAnaDraft, appendAsAuthor,
 } from '../../../routes/__tests__/_authoring-canvas-fixture';
 import { ingestVaultDocument, type VaultIngestArgs } from '../../vault/vault-ingest.service';
 import { computeDocHash } from '../../authoring/authoring-export';
@@ -105,7 +106,7 @@ const q = async <R = any>(sql: string, params: unknown[] = []) =>
 
 beforeAll(async () => {
   jdb = await createJourneyDb({
-    prereqSql: `${PREREQ}${AUTHORING_ACCESS_DDL}${VAULT_DDL}${LEAF_SOURCE_PGLITE_DDL}${SUBMISSION_CORE_PGLITE_DDL}
+    prereqSql: `${PREREQ}${AUTHORING_ACCESS_DDL}${REVIEW_ACCESS_DDL}${VAULT_DDL}${LEAF_SOURCE_PGLITE_DDL}${SUBMISSION_CORE_PGLITE_DDL}
       ALTER TABLE organizations ADD COLUMN IF NOT EXISTS settings JSONB NOT NULL DEFAULT '{}'::jsonb;
       INSERT INTO users (id, name, email) VALUES
         (${REVIEWER.id}, '${REVIEWER.name}', '${REVIEWER.email}'), (${APPROVER.id}, '${APPROVER.name}', '${APPROVER.email}');
@@ -147,6 +148,8 @@ beforeAll(async () => {
       'migrations/20260930_vault_documents_version_lineage.sql',
       'migrations/20261006_document_data_dispositions.sql',
       'migrations/20261018_company_legal_registry.sql',
+      // The saved-document checks an AnA draft is released by (releaseAnaDraft) read the review store.
+      'db/migrations/20260730_authoring_subsystem_schema.sql',
     ],
   });
   h.db = jdb.db;
@@ -154,7 +157,7 @@ beforeAll(async () => {
   h.discard.mockImplementation(async (id: string) => h.objects.delete(id));
   author = asToken(await mint(AUTHOR));
   const { default: router } = await import('../../../routes/authoring.router');
-  app = makeApp(router);
+  app = makeApp(router, { dbClient: jdb.pool });
   stageRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'placement-parity-'));
 }, T);
 
@@ -256,13 +259,15 @@ describe('canonical ingest admission identity over actual PostgreSQL INSERT / ON
   });
 });
 
-/** One authoring document; APPROVED = reviewed and approved by two other members, sealed. */
+/** One authoring document, an AnA draft released as production releases one (releaseAnaDraft);
+ *  APPROVED = reviewed and approved by two other members, sealed. */
 async function authoringDocument(title: string, approved: boolean): Promise<string> {
   const res = await author(request(app).post('/api/authoring/docs/from-draft')).send({
     programId: PROGRAM, title, module: 'M2', sections: M25_SECTIONS, provenance: { source: 'ana' },
   });
   expect(res.status, JSON.stringify(res.body)).toBe(201);
   const docId: string = res.body.data.doc.id;
+  await releaseAnaDraft(app, author, res.body.data);
   if (!approved) return docId;
   const digest = await computeDocHash(jdb.pool as never, docId, ORG);
   for (const [who, meaning, at] of [[REVIEWER, 'REVIEWER', '2026-10-01T09:00:00Z'], [APPROVER, 'APPROVER', '2026-10-01T10:00:00Z']] as const) {
@@ -387,7 +392,7 @@ describe('step 4 safety net: one approved authoring document, placed as a coauth
     // matter), different engines in production (pdf-lib vs strict LibreOffice).
     expect(cA.bytes!.equals(cB.bytes!)).toBe(false);
     const [fa, fb] = [await pdfFacts(cA.bytes!), await pdfFacts(cB.bytes!)];
-    for (const s of M25_SECTIONS) {
+    for (const s of AUTHORED_M25_SECTIONS) { // the released text is the author's (releaseAnaDraft)
       const body = s.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().split(' ').slice(0, 6).join(' ');
       expect(fa.text).toContain(body);
       expect(fb.text).toContain(body);
@@ -529,7 +534,7 @@ describe('Authoring refiling preserves submission version pins', () => {
     });
     const [retained] = await q('SELECT * FROM vault.documents WHERE id=$1', [first.vaultId]);
     const oldBytes = Buffer.from(h.objects.get(retained.storage_version_id)!);
-    await q(`UPDATE authoring_sections SET content=content || '<p>Revised device performance evidence.</p>' WHERE doc_id=$1`, [docId]);
+    await appendAsAuthor(app, author, q, docId, '<p>Revised device performance evidence.</p>');
     const second = await placeAsVaultVersion(docId);
     expect(second.filed).toMatchObject({ version: '2.0', supersedesDocumentId: first.vaultId });
     expect(await q('SELECT supersedes_id, version FROM vault.documents WHERE id=$1', [second.vaultId]))
@@ -559,7 +564,7 @@ describe('Authoring refiling preserves submission version pins', () => {
     const word = await placeAsVaultVersion(docId, 'docx');
     expect(pdf.filed).toMatchObject({ version: '1.0', supersedesDocumentId: null });
     expect(word.filed).toMatchObject({ version: '1.0', supersedesDocumentId: null });
-    await q(`UPDATE authoring_sections SET content=content || '<p>Updated diagnostic performance.</p>' WHERE doc_id=$1`, [docId]);
+    await appendAsAuthor(app, author, q, docId, '<p>Updated diagnostic performance.</p>');
     const nextPdf = await placeAsVaultVersion(docId);
     expect(nextPdf.filed).toMatchObject({ version: '2.0', supersedesDocumentId: pdf.vaultId });
     expect(await q('SELECT supersedes_id FROM vault.documents WHERE id=$1', [word.vaultId])).toEqual([{ supersedes_id: null }]);

@@ -1,0 +1,5 @@
+MUTATION M01-disclosure-inside-readiness in client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx (on the final code and tests, 2026-11-09T11:39:57.397209Z): replaced [<RetireSequence seq={seq} onRetire={() => onGoverned(seq, 'retire')} />] with [{a && !live.error && <RetireSequence seq={seq} onRetire={() => onGoverned(seq, 'retire')} />}]
+ × client/src/concept2cure/v2/__tests__/dispatchWorkspaceRetire.test.tsx > T1 — outside the readiness read, and asked on every open and every click > renders when the readiness read fails, so a sequence whose gate cannot be read can still be retired 5039ms
+      Tests  1 failed | 22 skipped (23)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 c72ed2473e0ca751e687cbfc78db972a985f921a1c8a3346f40c8fbb9767c18d (expected c72ed2473e0ca751e687cbfc78db972a985f921a1c8a3346f40c8fbb9767c18d)

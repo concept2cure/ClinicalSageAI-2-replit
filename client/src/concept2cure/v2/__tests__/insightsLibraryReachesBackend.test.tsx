@@ -126,7 +126,7 @@ describe('Run history — GET /api/report-os/runs', () => {
     });
     await renderCanvas();
     await openTab(/Run history/);
-    fireEvent.click((await screen.findAllByRole('button', { name: 'Open' }))[0]);
+    fireEvent.click((await screen.findAllByRole('button', { name: /^Open the / }))[0]);
     await waitFor(() =>
       expect(apiRequest.mock.calls.some(([m, u]) => m === 'GET' && u === '/api/report-os/runs/41/rendered')).toBe(true),
     );
@@ -144,7 +144,7 @@ describe('Run history — GET /api/report-os/runs', () => {
     });
     await renderCanvas();
     await openTab(/Run history/);
-    fireEvent.click((await screen.findAllByRole('button', { name: 'Open' }))[0]);
+    fireEvent.click((await screen.findAllByRole('button', { name: /^Open the / }))[0]);
     expect(await screen.findByText(/seal no longer verifies/)).toBeTruthy();
   });
 });
@@ -155,6 +155,22 @@ describe('Schedules — GET/POST/PATCH /api/insights/subscriptions', () => {
     await openTab(/Schedules/);
     await waitFor(() => expect(calls('GET', '/api/insights/subscriptions').length).toBeGreaterThan(0));
     expect(await screen.findByText('Every week on Tuesday at 08:00 UTC')).toBeTruthy();
+  });
+
+  /* Reporting use walk, 2026-11-09: a schedule read "readiness.executive_digest"
+     and "project — 1", a type id and a database primary key. The report is
+     named as the catalog names it, and the open project by its name. */
+  it('names the report and the project, never a type id or a database id', async () => {
+    await renderCanvas();
+    await openTab(/Schedules/);
+    const row = (await screen.findByText('Every week on Tuesday at 08:00 UTC')).closest('tr') as HTMLElement;
+    expect(row.textContent).toMatch(/Executive Readiness Digest/);
+    expect(row.textContent).toMatch(/BX204/);
+    expect(row.textContent).not.toMatch(/readiness\.executive_digest|project — 11/);
+    fireEvent.click(screen.getByRole('button', { name: /New schedule/ }));
+    const pane = document.querySelector('.rc-canvas')!;
+    expect(pane.textContent).toMatch(/Runs over BX204\./);
+    expect(pane.textContent).not.toMatch(/project — 11/);
   });
 
   it('describes persisted platform output and does not promise external email', async () => {
@@ -438,5 +454,99 @@ describe('a failed read says WHICH failure it was', () => {
     const unreached = readFailureOf({ error: 'e', status: 0 }, 'x');
     expect(unreached.retryable).toBe(true);
     expect(unreached.message).toMatch(/did not reach the server/);
+  });
+});
+
+/* Reporting use walk, 2026-11-09. Twenty Catalog buttons were each named
+   "Run", every Run history row "Open", every schedule "Pause". A screen reader's
+   list of buttons could not say which was which. A run with no recorded scope
+   name read "project — 11", a database key. */
+describe('every repeated control says what it acts on, and no row shows a database key', () => {
+  it('names each Catalog Run by its report', async () => {
+    await renderCanvas();
+    await openTab(/^Catalog$/);
+    const runs = await waitFor(() => {
+      const found = Array.from(document.querySelectorAll('button.rl-card-run')) as HTMLElement[];
+      if (!found.length) throw new Error('no Run yet');
+      return found;
+    });
+    for (const button of runs) {
+      const title = button.closest('.rl-card')?.querySelector('.rl-card-h')?.textContent;
+      expect(button.getAttribute('aria-label')).toBe(`Run ${title}`);
+    }
+  });
+
+  it('names each Run history Open by its run, and says a scope with no name without its key', async () => {
+    await renderCanvas();
+    await openTab(/Run history/);
+    expect(await screen.findByRole('button', { name: /^Open the Executive Readiness Digest run of / })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /^Open the eTMF Completeness & Gap Pack run of / })).toBeTruthy();
+    const table = document.querySelector('[role="tabpanel"] table') as HTMLElement;
+    expect(table.textContent).not.toMatch(/project — 11/);
+    expect(table.textContent).toMatch(/A project with no recorded name/);
+  });
+
+  it('names each schedule’s Pause by its report', async () => {
+    await renderCanvas();
+    await openTab(/Schedules/);
+    expect(await screen.findByRole('button', { name: 'Pause the Executive Readiness Digest schedule' })).toBeTruthy();
+  });
+});
+
+/* Reporting use walk, 2026-11-09: at 390px Run history and Schedules pushed the page sideways (138px and 133px),
+   their tables about 510px wide with nothing to scroll them. Each register now scrolls inside its own focusable,
+   named region. jsdom applies no CSS, so this pins the region; the walk measured the page at 0. */
+describe('a wide register scrolls in its own region, never the page', () => {
+  it.each([[/Run history/, 'Run history'], [/Schedules/, 'Schedules']])('%s', async (tab, name) => {
+    await renderCanvas();
+    await openTab(tab);
+    const table = await waitFor(() => {
+      const t = document.querySelector('[role="tabpanel"] table');
+      if (!t) throw new Error('no table yet');
+      return t as HTMLElement;
+    });
+    const region = table.parentElement as HTMLElement;
+    expect(region.classList.contains('rl-table-scroll')).toBe(true);
+    expect(region.getAttribute('role')).toBe('region');
+    expect(region.getAttribute('aria-label')).toBe(name);
+    expect(region.tabIndex).toBe(0);
+  });
+});
+
+/* Use walk, 2026-11-09: right after signing, a report shows its seal line under it; reopened from Run history the
+   same sealed run showed it only inside the closed "Seal, signature and sources" section. A sealed record reads the
+   same however it is opened, and only when its seal verifies (GET /runs/:id/seal). */
+describe('a sealed run reopened from Run history shows its seal line', () => {
+  const rendered = { data: { reportTypeId: 'readiness.executive_digest', scopeType: 'project', scopeId: '11', scopeLabel: 'BX204',
+    status: 'final', generatedAt: '2026-10-02T09:00:12.000Z', sections: [{ id: 's1', title: 'Readiness', blocks: [] }] }, sealed: true };
+  const sealView = (verdict: string) => ({ data: { runId: 41, sealed: true,
+    seal: { algorithm: 'sha256', contentHash: 'f5c8f7187b555b75d5857d87a8da2f28', atomCount: 100, sealedAt: '2026-10-02T09:05:01.000Z' },
+    finalizedAt: '2026-10-02T09:05:01.000Z',
+    signature: { signerName: 'R. Mehta', signedAt: '2026-10-02T09:05:00.000Z', meaning: 'approval' },
+    finalization: { reason: 'Filed', meaning: 'approval', priorStatus: 'partial' },
+    verification: { verdict, checks: [] } } });
+  const openSealed = async (verdict: string) => {
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      if (url === '/api/report-os/runs/41/rendered') return ok(rendered);
+      if (url === '/api/report-os/runs/41/seal') return ok(sealView(verdict));
+      return route(url);
+    });
+    await renderCanvas();
+    await openTab(/Run history/);
+    fireEvent.click(await screen.findByRole('button', { name: /^Open the Executive Readiness Digest run of / }));
+    await screen.findByText(/Export PDF/);
+  };
+
+  it('shows the line when the seal verifies', async () => {
+    await openSealed('intact');
+    const line = await screen.findByTestId('ro-seal');
+    expect(line.textContent).toMatch(/Final\. Signed by R\. Mehta, meaning Approval,/);
+    expect(line.textContent).toMatch(/Sealed sha256 f5c8f7187b55… over 100 provenance atoms/);
+  });
+
+  it('shows no line over a seal that does not verify', async () => {
+    await openSealed('mismatch');
+    await waitFor(() => expect(calls('GET', '/api/report-os/runs/41/seal').length).toBeGreaterThan(0));
+    expect(screen.queryByTestId('ro-seal')).toBeNull();
   });
 });

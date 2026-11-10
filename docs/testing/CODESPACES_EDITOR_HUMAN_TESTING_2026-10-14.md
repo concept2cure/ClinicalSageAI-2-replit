@@ -113,6 +113,12 @@ What the setup did, and where to look when something is wrong:
   To force a restart: `pkill -f 'tsx --inspect=0 server/index.ts'; bash .devcontainer/post-start.sh`.
   A terminal opened before a secret was added does not hold that secret; stop and start the Codespace instead.
 - **Check it:** `set -a; . ~/.concept2cure-codespace/app.env; set +a; npm run codespaces:doctor -- --check-app --probe-anthropic`.
+- **Check that the key can draft** (one small billable request, about 60 tokens; the start script runs it too):
+  `npm run codespaces:doctor -- --probe-anthropic-usage --expect-anthropic-models=claude-opus-5-5,claude-opus-5,claude-opus-4-8`.
+  Read `anthropicDrafting` in its output. The free model list is answered even for an account with no credit, so
+  "key accepted" alone does not mean AnA can draft. `ANTHROPIC_QUOTA_OR_BILLING` means the key's Anthropic account
+  needs credit (Console, Billing); `ANTHROPIC_DRAFTING_MODELS_NOT_AVAILABLE` means its workspace cannot call an
+  approved drafting model; `ANTHROPIC_KEY_INVALID` means the secret holds a wrong or revoked key.
 - **The CSR study's data** are the public CDISC pilot ADaM files (CDISCPILOT01).
   They are fetched when the Codespace starts into `~/.concept2cure-codespace/cdisc-pilot`,
   each checked against its pinned SHA-256. CDISC's terms forbid committing or

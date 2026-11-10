@@ -250,6 +250,19 @@ export const DEFAULT_CTQ_FACTORS: CtqSeed[] = [
   },
 ];
 
+/**
+ * The mark a seeded factor carries in rbm_risk_items.metadata until a person
+ * saves its rating: its likelihood and impact are the library's, not assessed.
+ * The same vocabulary as server/services/study-design/ctq-derivation.ts
+ * (`ratingSource: 'default_seed'`, `ratingFrom`), which marks these ratings on
+ * its own path. PATCH /api/mdx/rbm-risk-items/:id removes DEFAULT_SEED_MARK_KEYS
+ * when a saved likelihood or impact differs from the stored one.
+ */
+export const DEFAULT_SEED_MARK_KEYS = ['ratingSource', 'ratingFrom'] as const;
+export function defaultCtqSeedMark(ctqFactor: string) {
+  return { ratingSource: 'default_seed' as const, ratingFrom: { table: 'DEFAULT_CTQ_FACTORS' as const, ctqFactor } };
+}
+
 export interface KriSeed {
   name: string;
   metricDefinition: string;

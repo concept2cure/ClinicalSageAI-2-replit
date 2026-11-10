@@ -31,7 +31,7 @@ import request from 'supertest';
 const {
   mockPoolQuery,
   mockGetEmbeddingService,
-  mockCreateSource,
+  mockCaptureClientSource,
   mockFindSourceByChecksum,
   mockResolveGovernedContext,
   mockFindSupersededCandidate,
@@ -39,7 +39,7 @@ const {
 } = vi.hoisted(() => ({
   mockPoolQuery: vi.fn(),
   mockGetEmbeddingService: vi.fn(),
-  mockCreateSource: vi.fn(),
+  mockCaptureClientSource: vi.fn(),
   mockFindSourceByChecksum: vi.fn(),
   mockResolveGovernedContext: vi.fn(),
   mockFindSupersededCandidate: vi.fn(),
@@ -69,7 +69,7 @@ vi.mock('../../server/services/enhancedEmbeddingService.js', () => ({
   getEmbeddingService: mockGetEmbeddingService,
 }));
 vi.mock('../../server/services/clinical-regulatory-evidence/evidence-spine.service.js', () => ({
-  createSource: mockCreateSource,
+  captureClientSource: mockCaptureClientSource,
   findSourceByChecksum: mockFindSourceByChecksum,
   // The upload handler destructures these before creating identity; a mocked
   // ESM module throws on a missing export, so both must be present.
@@ -146,7 +146,7 @@ beforeEach(() => {
   mockPoolQuery.mockResolvedValue({ rows: [] });
   mockGetEmbeddingService.mockReturnValue({ embedAtom: vi.fn().mockResolvedValue(undefined) });
   mockFindSourceByChecksum.mockResolvedValue(null);
-  mockCreateSource.mockResolvedValue({ id: 41 });
+  mockCaptureClientSource.mockResolvedValue({ source: { id: 41 }, reused: false, supersededId: null });
   mockFindSupersededCandidate.mockResolvedValue(null);
   mockCreateSupersedingSource.mockResolvedValue({ source: { id: 41 } });
   // Only reached when a projectId is supplied; the handler reads
@@ -222,7 +222,7 @@ describe('an upload with no bytes fails closed', () => {
 
     const wrote = mockPoolQuery.mock.calls.some(([sql]) => /INSERT INTO/i.test(String(sql)));
     expect(wrote).toBe(false);
-    expect(mockCreateSource).not.toHaveBeenCalled();
+    expect(mockCaptureClientSource).not.toHaveBeenCalled();
   });
 
   it('does not accept a filename and size in place of a file', async () => {
@@ -234,7 +234,7 @@ describe('an upload with no bytes fails closed', () => {
       .send({ fileName: 'protocol.pdf', mimeType: 'application/pdf', fileSize: 2048000 });
 
     expect(res.status).toBe(400);
-    expect(mockCreateSource).not.toHaveBeenCalled();
+    expect(mockCaptureClientSource).not.toHaveBeenCalled();
   });
 });
 
@@ -255,7 +255,7 @@ describe('content identity comes from content', () => {
     await send('a completely different clinical study report', 'csr.txt');
 
     // createSource(orgId, fields) — the checksum is on the second argument.
-    const checksums = mockCreateSource.mock.calls.map(
+    const checksums = mockCaptureClientSource.mock.calls.map(
       ([, fields]) => (fields as { checksum: string }).checksum,
     );
     expect(checksums).toHaveLength(2);
@@ -274,7 +274,7 @@ describe('content identity comes from content', () => {
     await send('first-name.txt');
     await send('renamed-copy.txt');
 
-    const checksums = mockCreateSource.mock.calls.map(
+    const checksums = mockCaptureClientSource.mock.calls.map(
       ([, fields]) => (fields as { checksum: string }).checksum,
     );
     expect(checksums).toHaveLength(2);
@@ -294,9 +294,10 @@ describe('content identity comes from content', () => {
       .field('projectId', 'proj_12')
       .attach('file', bytes, { filename: 'protocol.txt', contentType: 'text/plain' });
 
-    expect(mockCreateSource).toHaveBeenCalledWith(
+    expect(mockCaptureClientSource).toHaveBeenCalledWith(
       expect.any(Number),
       expect.objectContaining({ checksum: expected }),
+      { text: 'enrollment data' },
     );
   });
 });
@@ -311,6 +312,6 @@ describe('the parser enforces its limits', () => {
       });
 
     expect(res.status).toBe(415);
-    expect(mockCreateSource).not.toHaveBeenCalled();
+    expect(mockCaptureClientSource).not.toHaveBeenCalled();
   });
 });

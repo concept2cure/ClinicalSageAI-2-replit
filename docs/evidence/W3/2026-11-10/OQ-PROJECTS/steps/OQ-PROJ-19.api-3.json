@@ -1,0 +1,65 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/c2c/projects",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 30,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": [
+        {
+          "id": "5aa47005-c658-4a8d-983b-3ea7360bd22d",
+          "title": "OQ QMS program",
+          "ws": "Biotech",
+          "pathway": "ind",
+          "code": "OQQM",
+          "stage": "Planning",
+          "status": "active",
+          "lead": "oq-runner@validation.local",
+          "due": "—",
+          "due_date": null,
+          "activity": "Updated Nov 10",
+          "client_workspace_id": 2,
+          "client_name": "Concept2Cure Therapeutics",
+          "description": null,
+          "indication": null,
+          "agency": "FDA",
+          "program_type": "ind",
+          "readiness": 0,
+          "readinessState": "measured"
+        }
+      ],
+      "meta": {
+        "count": 1,
+        "limit": 50,
+        "offset": 0,
+        "hasMore": false,
+        "counts": {
+          "total": 1,
+          "byWorkstream": {
+            "Biotech": 1
+          },
+          "byPathway": {
+            "ind": 1
+          },
+          "filingWithin60Days": 0
+        },
+        "clients": [
+          {
+            "id": 2,
+            "name": "Concept2Cure Therapeutics"
+          }
+        ],
+        "clientsHasMore": false,
+        "scope": "verified-accessible-programs",
+        "reconciliationRequired": false
+      }
+    }
+  }
+}

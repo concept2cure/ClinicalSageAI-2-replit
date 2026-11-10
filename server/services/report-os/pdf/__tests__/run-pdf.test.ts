@@ -96,7 +96,8 @@ describe('buildRunPdf', () => {
 
   it('prints the signature, reason, prior status, seal and verdict of a final run, and no NOT FINAL mark', async () => {
     const t = await textOf((await buildRunPdf(base({ run: { ...base().run, status: 'final' }, seal: SEAL }))).bytes);
-    expect(t).toContain('Final. Signed by Dana Reyes as approval, 2026-10-01T09:00:01.000Z (UTC).');
+    // The meaning in words and the time as the canonical manifestation formats it (use walk, 2026-11-09).
+    expect(t).toContain('Final. Signed by Dana Reyes, meaning Approval, 2026-10-01 09:00:01 UTC.');
     expect(t).toContain('Reason: Issued for the board pack');
     expect(t).toContain('Status before finalizing: completed');
     expect(t).toContain(`Seal: sha256 ${'a'.repeat(64)}, sealed 2026-10-01T09:00:00.000Z`);
@@ -107,8 +108,8 @@ describe('buildRunPdf', () => {
   it('states missing signature name, meaning and execution time without substituting the chain finalization time', async () => {
     const missing = { ...SEAL, signature: null };
     const t = await textOf((await buildRunPdf(base({ run: { ...base().run, status: 'final' }, seal: missing }))).bytes);
-    expect(t).toContain('Final. Signed by not recorded as not recorded, not recorded (UTC).');
-    expect(t).not.toContain(`Signed by not recorded as not recorded, ${SEAL.finalizedAt}`);
+    expect(t).toContain('Final. Signed by not recorded, meaning not recorded, signing time not recorded.');
+    expect(t).not.toContain(`Signed by not recorded, meaning not recorded, ${SEAL.finalizedAt}`);
   });
 
   it('says so when the seal does not verify, with the failing check', async () => {

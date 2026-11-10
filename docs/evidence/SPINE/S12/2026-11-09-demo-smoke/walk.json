@@ -1,0 +1,151 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "dark": false,
+  "startedAt": "2026-11-09T16:57:12.187Z",
+  "stops": [
+    {
+      "name": "Home",
+      "url": "/concept2cure/home",
+      "failed": [],
+      "pageErrors": [],
+      "consoleErrors": [],
+      "errorText": [],
+      "hScroll": 0,
+      "screenshot": "home.png"
+    },
+    {
+      "name": "Projects",
+      "url": "/concept2cure/projects",
+      "failed": [],
+      "pageErrors": [],
+      "consoleErrors": [],
+      "errorText": [],
+      "hScroll": 0,
+      "screenshot": "projects.png"
+    },
+    {
+      "name": "Project home",
+      "url": "/concept2cure/project-home?program=6065271c-d4b0-4936-aad1-02855423a738",
+      "failed": [],
+      "pageErrors": [],
+      "consoleErrors": [],
+      "errorText": [],
+      "hScroll": 0,
+      "screenshot": "project-home.png"
+    },
+    {
+      "name": "Documents (authoring)",
+      "url": "/concept2cure/document-authoring?program=6065271c-d4b0-4936-aad1-02855423a738",
+      "failed": [],
+      "pageErrors": [],
+      "consoleErrors": [],
+      "errorText": [],
+      "hScroll": 0,
+      "screenshot": "documents-authoring-.png"
+    },
+    {
+      "name": "Vault",
+      "url": "/concept2cure/vault?program=6065271c-d4b0-4936-aad1-02855423a738",
+      "failed": [],
+      "pageErrors": [],
+      "consoleErrors": [],
+      "errorText": [],
+      "hScroll": 0,
+      "screenshot": "vault.png"
+    },
+    {
+      "name": "Submission Center",
+      "url": "/concept2cure/submission-center?program=6065271c-d4b0-4936-aad1-02855423a738",
+      "failed": [],
+      "pageErrors": [],
+      "consoleErrors": [],
+      "errorText": [],
+      "hScroll": 0,
+      "screenshot": "submission-center.png"
+    },
+    {
+      "name": "Tasks",
+      "url": "/concept2cure/tasks?program=6065271c-d4b0-4936-aad1-02855423a738",
+      "failed": [],
+      "pageErrors": [],
+      "consoleErrors": [],
+      "errorText": [],
+      "hScroll": 0,
+      "screenshot": "tasks.png"
+    },
+    {
+      "name": "Communication",
+      "url": "/concept2cure/communication-center?program=6065271c-d4b0-4936-aad1-02855423a738",
+      "failed": [],
+      "pageErrors": [],
+      "consoleErrors": [],
+      "errorText": [],
+      "hScroll": 0,
+      "screenshot": "communication.png"
+    },
+    {
+      "name": "CMC",
+      "url": "/concept2cure/cmc?program=6065271c-d4b0-4936-aad1-02855423a738",
+      "failed": [],
+      "pageErrors": [],
+      "consoleErrors": [],
+      "errorText": [],
+      "hScroll": 0,
+      "screenshot": "cmc.png"
+    },
+    {
+      "name": "Biostatistics",
+      "url": "/concept2cure/biostatistics?program=6065271c-d4b0-4936-aad1-02855423a738",
+      "failed": [],
+      "pageErrors": [],
+      "consoleErrors": [],
+      "errorText": [],
+      "hScroll": 0,
+      "screenshot": "biostatistics.png"
+    },
+    {
+      "name": "Risk-based monitoring",
+      "url": "/concept2cure/rbm?program=6065271c-d4b0-4936-aad1-02855423a738",
+      "failed": [],
+      "pageErrors": [],
+      "consoleErrors": [],
+      "errorText": [],
+      "hScroll": 0,
+      "screenshot": "risk-based-monitoring.png"
+    },
+    {
+      "name": "Quality",
+      "url": "/concept2cure/quality?program=6065271c-d4b0-4936-aad1-02855423a738",
+      "failed": [],
+      "pageErrors": [],
+      "consoleErrors": [],
+      "errorText": [],
+      "hScroll": 0,
+      "screenshot": "quality.png"
+    },
+    {
+      "name": "Reporting & analytics",
+      "url": "/concept2cure/insights?program=6065271c-d4b0-4936-aad1-02855423a738",
+      "failed": [],
+      "pageErrors": [],
+      "consoleErrors": [],
+      "errorText": [],
+      "hScroll": 0,
+      "screenshot": "reporting-analytics.png"
+    },
+    {
+      "name": "Study & Protocol Design",
+      "url": "/concept2cure/protocol-dev?program=6065271c-d4b0-4936-aad1-02855423a738",
+      "failed": [],
+      "pageErrors": [],
+      "consoleErrors": [],
+      "errorText": [],
+      "hScroll": 0,
+      "screenshot": "study-protocol-design.png"
+    }
+  ],
+  "program": {
+    "id": "6065271c-d4b0-4936-aad1-02855423a738"
+  },
+  "finishedAt": "2026-11-09T16:58:08.056Z"
+}

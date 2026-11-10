@@ -40,11 +40,12 @@ import { promises as fs } from 'node:fs';
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
+import { isFiledDispatchStatus } from '../services/submission-service/filed-dispatch';
 import { writeChainedAuditRow } from '../services/auditService';
 import type { AuditRowOutcome } from '../services/audit/audit-write-outcome';
 import { parseEvalidatorJsonReport } from '../services/ectd/external-validator/lorenz-adapter';
 import { tallyFindings, type ExternalValidationFinding } from '../services/ectd/external-validator/types';
-import { resolveSequenceSpine, resolveSubmissionSpine, type SubmissionSpine } from '../services/cmc/submission-spine';
+import { resolveSequenceSpine, resolveSubmissionSpine, nonApplicationEctdReason, dispatchedSequenceOfProject, type SubmissionSpine } from '../services/cmc/submission-spine';
 import { sectionMatches } from '../services/ectd/section-code-match';
 import {
   loadSpineLeaves,
@@ -69,7 +70,6 @@ import {
 } from '../services/ectd/required-sections';
 import { serverError, isConversionCapacityError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
-import { regionalDeviceApplicationClassOf } from '../../shared/regulatory/filing-catalog';
 import type { SubmissionBundle } from '../services/submission-gateways/types';
 import type { DtdValidationEvidence, DtdFileValidation } from '../../shared/regulatory/ectd-dtd-validation';
 import { hasPassedPackageDtdValidation, dtdFileValidationPassed } from '../services/ectd/dtd-bundler';
@@ -246,13 +246,13 @@ async function anchorFromRequest(
   return { orgId, anchor, ident };
 }
 
-/** Regional working documents cannot enter medicinal compilation or validation. */
-function refuseRegionalDeviceEctd(res: Response, anchor: CompileAnchor): boolean {
-  if (!regionalDeviceApplicationClassOf(anchor.programType)) return false;
-  res.status(422).json({ error: {
-    code: 'ECTD_NOT_APPLICABLE',
-    message: 'Device preparation projects are not eCTD applications. No submission package is built or transmitted for this preparation pathway.',
-  } });
+/** A project that is not an application (a regional device working document,
+ *  or a filing document class) is not compiled as an eCTD sequence: 422 with
+ *  the reason (3b slice 3 (c); submission-spine.ts nonApplicationEctdReason). */
+function refuseNonApplicationEctd(res: Response, anchor: CompileAnchor): boolean {
+  const message = nonApplicationEctdReason(anchor.programType);
+  if (!message) return false;
+  res.status(422).json({ error: { code: 'ECTD_NOT_APPLICABLE', message } });
   return true;
 }
 
@@ -286,6 +286,40 @@ async function spineForRequest(
     return null;
   }
   return { spine, named: true };
+}
+
+/**
+ * P-99 C1 (F1, founder 2026-11-03: "Nothing restores a sequence silently").
+ *
+ * A sequence's filed record is read from its transmit, or, for a send before
+ * the platform kept what each send carried, from its compiles. A compile made
+ * after the send was recorded like any other, so the fold read it as what was
+ * sent and the next sequence's refusal lifted with nobody saying so. A
+ * non-rehearsal compile of a sequence that is filed (filed-dispatch.ts) or in
+ * flight is therefore refused before anything is assembled or recorded. A
+ * sequence is put back on record only by P-99's own acts. True when refused
+ * (the response is sent).
+ */
+async function refuseCompileOfSequenceOnFile(
+  res: Response,
+  sequence: { id: number; sequenceNumber: string },
+  orgId: number,
+): Promise<boolean> {
+  const r = await pool.query(
+    `SELECT dispatch_status FROM ectd_sequences WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL`,
+    [sequence.id, orgId],
+  );
+  const status: unknown = r.rows[0]?.dispatch_status;
+  const n = sequence.sequenceNumber;
+  const message = status === 'transmitting'
+    ? `A send of sequence ${n} is unresolved, so a compile of it now is not recorded. Nothing was assembled.`
+    : isFiledDispatchStatus(status)
+      ? `Sequence ${n} is on file at the agency, so a compile of it now is not recorded: it would not be what it sent. ` +
+        'Its sent package is on Gateway transmittals when the platform kept it. Start the next sequence to compile again.'
+      : null;
+  if (!message) return false;
+  res.status(409).json({ error: { code: 'ECTD_SEQUENCE_ON_FILE', message } });
+  return true;
 }
 
 /** The type a compile of this sequence is recorded as: the sequence's own, in
@@ -625,7 +659,7 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
   const resolved = await anchorFromRequest(req, res);
   if (!resolved) return;
   const { orgId, anchor, ident } = resolved;
-  if (refuseRegionalDeviceEctd(res, anchor)) return;
+  if (refuseNonApplicationEctd(res, anchor)) return;
 
   try {
     const { modules: targetModules, submissionType = 'initial', region = 'FDA' } = req.body;
@@ -676,6 +710,7 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
           },
         });
       }
+      if (req.body?.rehearsal !== true && await refuseCompileOfSequenceOnFile(res, spine.sequence, orgId)) return;
       // The recorded type decides the record; a contradiction is refused, as a region is.
       const recordedType = await recordedCompilationType(spine.sequence.id, orgId);
       const statedType = req.body?.submissionType == null ? '' : String(req.body.submissionType).trim().toLowerCase();
@@ -1357,7 +1392,7 @@ router.get('/:projectIdent/status', async (req: Request, res: Response) => {
   const resolved = await anchorFromRequest(req, res);
   if (!resolved) return;
   const { orgId, anchor, ident } = resolved;
-  if (refuseRegionalDeviceEctd(res, anchor)) return;
+  if (refuseNonApplicationEctd(res, anchor)) return;
 
   try {
     // Get project sections (tenant-scoped — readiness is tenant data). A failed
@@ -1497,11 +1532,23 @@ router.get('/:projectIdent/filed-state', async (req: Request, res: Response) => 
   const resolved = await anchorFromRequest(req, res);
   if (!resolved) return;
   const { orgId, anchor, ident } = resolved;
-  if (refuseRegionalDeviceEctd(res, anchor)) return;
+  // P-97: refused here too unless the project already has a dispatched sequence.
+  const notApplicable = nonApplicationEctdReason(anchor.programType);
+  let filedSequenceId: number | null = null;
+  if (notApplicable) {
+    try {
+      filedSequenceId = await dispatchedSequenceOfProject(anchor, orgId);
+    } catch (err) {
+      log.warn('Whether the project has a dispatched sequence could not be read', { orgId, ident, err: err instanceof Error ? err.message : String(err) });
+      return res.status(503).json({ error: { code: 'FILED_STATE_UNAVAILABLE', message: 'What is on file at the agency could not be read. It is not shown as empty.' } });
+    }
+    if (filedSequenceId === null) return res.status(422).json({ error: { code: 'ECTD_NOT_APPLICABLE', message: notApplicable } });
+  }
   try {
     const chosen = await spineForRequest(req, res, anchor, orgId);
     if (!chosen) return;
-    const spine = chosen.spine;
+    // No spine resolves for such a type: fold the dispatched sequence's own (P-97).
+    const spine = chosen.spine ?? (filedSequenceId !== null ? await resolveSequenceSpine(anchor, orgId, filedSequenceId) : null);
     if (!spine) {
       return res.json({ projectIdent: ident, submissionId: null, throughSequence: null, sequences: [], leaves: [] });
     }
@@ -1533,7 +1580,7 @@ router.post('/:projectIdent/validate', async (req: Request, res: Response) => {
   const resolved = await anchorFromRequest(req, res);
   if (!resolved) return;
   const { orgId, anchor, ident } = resolved;
-  if (refuseRegionalDeviceEctd(res, anchor)) return;
+  if (refuseNonApplicationEctd(res, anchor)) return;
 
   // An agency-validator report run outside the product, imported against the
   // compilation whose package it covered (WO-9 Click 6). Same route: it is a

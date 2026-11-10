@@ -32,7 +32,7 @@ describe('current-context report capability disclosure', () => {
     render(<InsightsCanvas {...props} />);
     fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
     expect(await screen.findByText(/1 applicable definitions · 1 engine-backed · 1 available to run/)).toBeTruthy();
-    expect(screen.getByRole('button', { name: /^Run$/ })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /^Run / })).toBeTruthy();
   });
   it('counts applicable definitions separately from engine-backed and currently runnable types', () => {
     render(<CatalogPanel types={types} programLabel="Selected program" canRun onRun={vi.fn()} />);
@@ -45,10 +45,10 @@ describe('current-context report capability disclosure', () => {
     render(<CatalogPanel types={types} programLabel="Selected program" canRun onRun={run} />);
     expect(screen.getByRole('region', { name: 'Prediction availability' }).textContent).toMatch(/no validated prediction model/i);
     expect(screen.getByRole('region', { name: 'Prediction availability' }).textContent).toMatch(/plan does not make/i);
-    expect(screen.getAllByRole('button', { name: /Run$/ })).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: /^Run / })).toHaveLength(1);
     fireEvent.change(screen.getByLabelText('Availability'), { target: { value: 'prediction-unavailable' } });
     expect(screen.getByText('Regulatory forecast')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /Run$/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Run / })).toBeNull();
     expect(run).not.toHaveBeenCalled();
   });
 });

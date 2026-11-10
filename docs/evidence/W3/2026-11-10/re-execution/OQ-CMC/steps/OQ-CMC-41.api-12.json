@@ -1,0 +1,1684 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/module3-os/compile/ca16371b-7121-42e7-9e97-932067b83ad9",
+    "anonymous": false,
+    "identity": null,
+    "body": {}
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 377,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "compiledCount": 21,
+      "sections": [
+        {
+          "sectionKey": "3.2.S.1",
+          "sectionPath": "3.2.S.1",
+          "structuredPayload": {
+            "sectionKey": "3.2.S.1",
+            "sourceTypes": [
+              "drug_substance"
+            ],
+            "sourceObjects": [
+              {
+                "type": "drug_substance",
+                "payload": {
+                  "cas": "",
+                  "inn": "",
+                  "name": "PRV-running-20261110033923",
+                  "status": "development",
+                  "cellLine": "",
+                  "modality": "small_molecule",
+                  "structure": "",
+                  "tseStatus": "",
+                  "impurities": null,
+                  "manufacturer": "",
+                  "sourceOrganism": "",
+                  "specifications": null,
+                  "stability_data": null,
+                  "molecularWeight": "",
+                  "biologicalOrigin": "",
+                  "developmentPhase": "phase1",
+                  "molecularFormula": "",
+                  "manufacturingSite": "",
+                  "biologicalActivity": null,
+                  "manufacturingRoute": "",
+                  "processDescription": "",
+                  "qualificationBasis": null,
+                  "reference_materials": null,
+                  "characterization_data": null,
+                  "structuralElucidation": null,
+                  "viralSafetyEvaluation": "",
+                  "physicochemicalProperties": null
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "The drug substance is PRV-running-20261110033923. Nomenclature (§3.2.S.1.1), molecular structure (§3.2.S.1.2) and general properties (§3.2.S.1.3) are not recorded and are not established by this section.",
+          "tables": [
+            {
+              "title": "Drug Substance General Information",
+              "headers": [
+                "Property",
+                "Value"
+              ],
+              "rows": [
+                [
+                  "Drug Substance Name",
+                  "PRV-running-20261110033923"
+                ]
+              ]
+            }
+          ],
+          "completeness": 50,
+          "missingInputs": [
+            "manufacturer"
+          ],
+          "lineage": [
+            {
+              "sourceObjectId": "12789536-8a62-4725-9182-dcff321e8f58",
+              "sourceHashAtCompile": "2c432f0a9a904982cb603e2f11d16fc7636a39f173c136c4595d84806aaded27"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.2.S.2",
+          "sectionPath": "3.2.S.2",
+          "structuredPayload": {
+            "sectionKey": "3.2.S.2",
+            "sourceTypes": [
+              "drug_substance",
+              "manufacturing_process",
+              "process_validation",
+              "raw_material_spec"
+            ],
+            "sourceObjects": [
+              {
+                "type": "drug_substance",
+                "payload": {
+                  "cas": "",
+                  "inn": "",
+                  "name": "PRV-running-20261110033923",
+                  "status": "development",
+                  "cellLine": "",
+                  "modality": "small_molecule",
+                  "structure": "",
+                  "tseStatus": "",
+                  "impurities": null,
+                  "manufacturer": "",
+                  "sourceOrganism": "",
+                  "specifications": null,
+                  "stability_data": null,
+                  "molecularWeight": "",
+                  "biologicalOrigin": "",
+                  "developmentPhase": "phase1",
+                  "molecularFormula": "",
+                  "manufacturingSite": "",
+                  "biologicalActivity": null,
+                  "manufacturingRoute": "",
+                  "processDescription": "",
+                  "qualificationBasis": null,
+                  "reference_materials": null,
+                  "characterization_data": null,
+                  "structuralElucidation": null,
+                  "viralSafetyEvaluation": "",
+                  "physicochemicalProperties": null
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "The drug substance is manufactured via [route not specified]. ",
+          "tables": [
+            {
+              "title": "Manufacturing Process Summary",
+              "headers": [
+                "Property",
+                "Value"
+              ],
+              "rows": []
+            }
+          ],
+          "completeness": 0,
+          "missingInputs": [
+            "manufacturingRoute",
+            "processDescription",
+            "processControls",
+            "manufacturingProcessComplete"
+          ],
+          "lineage": [
+            {
+              "sourceObjectId": "12789536-8a62-4725-9182-dcff321e8f58",
+              "sourceHashAtCompile": "2c432f0a9a904982cb603e2f11d16fc7636a39f173c136c4595d84806aaded27"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.2.S.3",
+          "sectionPath": "3.2.S.3",
+          "structuredPayload": {
+            "sectionKey": "3.2.S.3",
+            "sourceTypes": [
+              "drug_substance",
+              "characterization",
+              "impurity_profile"
+            ],
+            "sourceObjects": [
+              {
+                "type": "drug_substance",
+                "payload": {
+                  "cas": "",
+                  "inn": "",
+                  "name": "PRV-running-20261110033923",
+                  "status": "development",
+                  "cellLine": "",
+                  "modality": "small_molecule",
+                  "structure": "",
+                  "tseStatus": "",
+                  "impurities": null,
+                  "manufacturer": "",
+                  "sourceOrganism": "",
+                  "specifications": null,
+                  "stability_data": null,
+                  "molecularWeight": "",
+                  "biologicalOrigin": "",
+                  "developmentPhase": "phase1",
+                  "molecularFormula": "",
+                  "manufacturingSite": "",
+                  "biologicalActivity": null,
+                  "manufacturingRoute": "",
+                  "processDescription": "",
+                  "qualificationBasis": null,
+                  "reference_materials": null,
+                  "characterization_data": null,
+                  "structuralElucidation": null,
+                  "viralSafetyEvaluation": "",
+                  "physicochemicalProperties": null
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "Structural elucidation of the drug substance was confirmed by [methods not specified]. No impurity is recorded for the drug substance; the impurity profile is not established by this section. ",
+          "tables": [
+            {
+              "title": "Characterisation Summary",
+              "headers": [
+                "Property",
+                "Value"
+              ],
+              "rows": []
+            }
+          ],
+          "completeness": 0,
+          "missingInputs": [
+            "structuralElucidation",
+            "physicochemicalProperties",
+            "biologicalActivity",
+            "drugSubstanceImpurityProfileComplete"
+          ],
+          "lineage": [
+            {
+              "sourceObjectId": "12789536-8a62-4725-9182-dcff321e8f58",
+              "sourceHashAtCompile": "2c432f0a9a904982cb603e2f11d16fc7636a39f173c136c4595d84806aaded27"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.2.S.4",
+          "sectionPath": "3.2.S.4",
+          "structuredPayload": {
+            "sectionKey": "3.2.S.4",
+            "sourceTypes": [
+              "specification",
+              "method",
+              "impurity_profile",
+              "qc_result"
+            ],
+            "sourceObjects": []
+          },
+          "narrativeDraft": "Section 3.2.S.4 has no source data available. Required inputs: acceptanceCriteria, validationStatus, drugSubstanceBatchAnalyses, drugSubstanceImpurityProfileComplete.",
+          "tables": [],
+          "completeness": 0,
+          "missingInputs": [
+            "acceptanceCriteria",
+            "validationStatus",
+            "drugSubstanceBatchAnalyses",
+            "drugSubstanceImpurityProfileComplete"
+          ],
+          "lineage": []
+        },
+        {
+          "sectionKey": "3.2.S.5",
+          "sectionPath": "3.2.S.5",
+          "structuredPayload": {
+            "sectionKey": "3.2.S.5",
+            "sourceTypes": [
+              "drug_substance",
+              "reference_standard"
+            ],
+            "sourceObjects": [
+              {
+                "type": "drug_substance",
+                "payload": {
+                  "cas": "",
+                  "inn": "",
+                  "name": "PRV-running-20261110033923",
+                  "status": "development",
+                  "cellLine": "",
+                  "modality": "small_molecule",
+                  "structure": "",
+                  "tseStatus": "",
+                  "impurities": null,
+                  "manufacturer": "",
+                  "sourceOrganism": "",
+                  "specifications": null,
+                  "stability_data": null,
+                  "molecularWeight": "",
+                  "biologicalOrigin": "",
+                  "developmentPhase": "phase1",
+                  "molecularFormula": "",
+                  "manufacturingSite": "",
+                  "biologicalActivity": null,
+                  "manufacturingRoute": "",
+                  "processDescription": "",
+                  "qualificationBasis": null,
+                  "reference_materials": null,
+                  "characterization_data": null,
+                  "structuralElucidation": null,
+                  "viralSafetyEvaluation": "",
+                  "physicochemicalProperties": null
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "No reference standard is recorded for the drug substance. The standard against which drug substance test results are reported, and the qualification of that standard, are not established by this section.",
+          "tables": [],
+          "completeness": 0,
+          "missingInputs": [
+            "drugSubstanceReferenceStandard",
+            "drugSubstanceReferenceStandardCoA",
+            "drugSubstanceReferenceStandardComplete"
+          ],
+          "lineage": [
+            {
+              "sourceObjectId": "12789536-8a62-4725-9182-dcff321e8f58",
+              "sourceHashAtCompile": "2c432f0a9a904982cb603e2f11d16fc7636a39f173c136c4595d84806aaded27"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.2.S.6",
+          "sectionPath": "3.2.S.6",
+          "structuredPayload": {
+            "sectionKey": "3.2.S.6",
+            "sourceTypes": [
+              "container_closure"
+            ],
+            "sourceObjects": []
+          },
+          "narrativeDraft": "Section 3.2.S.6 has no source data available. Required inputs: drugSubstanceContainerDescription, drugSubstanceClosureDescription, drugSubstanceSuitabilityJustification, drugSubstanceContainerClosureComplete.",
+          "tables": [],
+          "completeness": 0,
+          "missingInputs": [
+            "drugSubstanceContainerDescription",
+            "drugSubstanceClosureDescription",
+            "drugSubstanceSuitabilityJustification",
+            "drugSubstanceContainerClosureComplete"
+          ],
+          "lineage": []
+        },
+        {
+          "sectionKey": "3.2.S.7",
+          "sectionPath": "3.2.S.7",
+          "structuredPayload": {
+            "sectionKey": "3.2.S.7",
+            "sourceTypes": [
+              "stability"
+            ],
+            "sourceObjects": [
+              {
+                "type": "stability",
+                "payload": {
+                  "status": "ACTIVE",
+                  "results": [
+                    {
+                      "result": "99.8",
+                      "parameter": "assay",
+                      "timePoint": "0"
+                    },
+                    {
+                      "result": "99.4",
+                      "parameter": "assay",
+                      "timePoint": "12"
+                    },
+                    {
+                      "result": "99.1",
+                      "parameter": "assay",
+                      "timePoint": "24"
+                    }
+                  ],
+                  "duration": 24,
+                  "studyName": "",
+                  "studyType": "long_term",
+                  "timePoints": [
+                    "0",
+                    "12",
+                    "24"
+                  ],
+                  "startedDate": "2026-01-01T00:00:00.000Z",
+                  "completedDate": null,
+                  "batchesStudied": [
+                    "B-1"
+                  ],
+                  "shelfLifeClaim": "24 months at 25C/60%RH",
+                  "stabilityScope": "drug_product",
+                  "testParameters": [
+                    "assay"
+                  ],
+                  "containerClosure": "",
+                  "storageCondition": "25C/60%RH",
+                  "shelfLifeAccepted": false,
+                  "shelfLifeSignedAt": null,
+                  "storageConditions": [
+                    "25C/60%RH"
+                  ],
+                  "stabilityParameters": [
+                    "assay"
+                  ],
+                  "packagingConfiguration": null,
+                  "drugSubstanceTimePoints": null,
+                  "drugProductShelfLifeClaim": "24 months at 25C/60%RH",
+                  "drugSubstanceStorageCondition": null
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "Stability studies for the drug substance were conducted under [condition not specified] . No stability results are recorded on the drug substance studies. The stability conclusion and proposed storage period are subject to review of the stability results summarized above and are not asserted in this section. Trend not assessed: no recorded pull-point results.",
+          "tables": [
+            {
+              "title": "Stability Study Design — Drug Substance",
+              "headers": [
+                "Parameter",
+                "Value"
+              ],
+              "rows": [
+                [
+                  "Storage Condition",
+                  "[not specified]"
+                ],
+                [
+                  "Time Points (months)",
+                  "[not specified]"
+                ]
+              ]
+            }
+          ],
+          "completeness": 0,
+          "missingInputs": [
+            "drugSubstanceTimePoints",
+            "drugSubstanceStorageCondition"
+          ],
+          "lineage": [
+            {
+              "sourceObjectId": "ddd0f5cc-2a4f-4087-b8f7-3e21d75be48e",
+              "sourceHashAtCompile": "0527fbecf883a14aebb466888bb4cd47c67774d7f1307bf53c5b1fc004361601"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.2.P.1",
+          "sectionPath": "3.2.P.1",
+          "structuredPayload": {
+            "sectionKey": "3.2.P.1",
+            "sourceTypes": [
+              "drug_product",
+              "formulation_record"
+            ],
+            "sourceObjects": [
+              {
+                "type": "drug_product",
+                "payload": {
+                  "name": "PRV-running 5 mg tablet",
+                  "status": "development",
+                  "version": null,
+                  "strength": "5 mg",
+                  "batchSize": "",
+                  "components": null,
+                  "dosageForm": "Film-coated tablet",
+                  "excipients": null,
+                  "composition": null,
+                  "formulation": null,
+                  "specifications": null,
+                  "stability_data": null,
+                  "processControls": null,
+                  "containerClosure": "",
+                  "compositionDetail": null,
+                  "manufacturingSite": "",
+                  "batchFormulaDetail": null,
+                  "processDescription": "",
+                  "dosageFormDescription": "Film-coated tablet",
+                  "manufacturing_process": null,
+                  "routeOfAdministration": "oral"
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "The drug product is a Film-coated tablet with a strength of 5 mg. No formulation record is on file; the composition is not established by this section. ",
+          "tables": [
+            {
+              "title": "Drug Product Description and Composition",
+              "headers": [
+                "Property",
+                "Value"
+              ],
+              "rows": [
+                [
+                  "Dosage Form",
+                  "Film-coated tablet"
+                ],
+                [
+                  "Strength",
+                  "5 mg"
+                ]
+              ]
+            }
+          ],
+          "completeness": 50,
+          "missingInputs": [
+            "composition",
+            "formulationCompositionComplete"
+          ],
+          "lineage": [
+            {
+              "sourceObjectId": "19b36ee4-bd26-45f8-935e-71730ea18d6f",
+              "sourceHashAtCompile": "e26af088f6201598d085f70eaacae52857c81f0cb07b333737114eb4c6b51b7e"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.2.P.2",
+          "sectionPath": "3.2.P.2",
+          "structuredPayload": {
+            "sectionKey": "3.2.P.2",
+            "sourceTypes": [
+              "drug_product",
+              "drug_substance",
+              "comparability",
+              "formulation_record",
+              "dissolution_profile",
+              "container_closure",
+              "characterization",
+              "manufacturing_process"
+            ],
+            "sourceObjects": [
+              {
+                "type": "drug_product",
+                "payload": {
+                  "name": "PRV-running 5 mg tablet",
+                  "status": "development",
+                  "version": null,
+                  "strength": "5 mg",
+                  "batchSize": "",
+                  "components": null,
+                  "dosageForm": "Film-coated tablet",
+                  "excipients": null,
+                  "composition": null,
+                  "formulation": null,
+                  "specifications": null,
+                  "stability_data": null,
+                  "processControls": null,
+                  "containerClosure": "",
+                  "compositionDetail": null,
+                  "manufacturingSite": "",
+                  "batchFormulaDetail": null,
+                  "processDescription": "",
+                  "dosageFormDescription": "Film-coated tablet",
+                  "manufacturing_process": null,
+                  "routeOfAdministration": "oral"
+                }
+              },
+              {
+                "type": "drug_substance",
+                "payload": {
+                  "cas": "",
+                  "inn": "",
+                  "name": "PRV-running-20261110033923",
+                  "status": "development",
+                  "cellLine": "",
+                  "modality": "small_molecule",
+                  "structure": "",
+                  "tseStatus": "",
+                  "impurities": null,
+                  "manufacturer": "",
+                  "sourceOrganism": "",
+                  "specifications": null,
+                  "stability_data": null,
+                  "molecularWeight": "",
+                  "biologicalOrigin": "",
+                  "developmentPhase": "phase1",
+                  "molecularFormula": "",
+                  "manufacturingSite": "",
+                  "biologicalActivity": null,
+                  "manufacturingRoute": "",
+                  "processDescription": "",
+                  "qualificationBasis": null,
+                  "reference_materials": null,
+                  "characterization_data": null,
+                  "structuralElucidation": null,
+                  "viralSafetyEvaluation": "",
+                  "physicochemicalProperties": null
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "Pharmaceutical development studies were conducted to support the proposed formulation and manufacturing process. No development dissolution profile is recorded. ",
+          "tables": [
+            {
+              "title": "Pharmaceutical Development Summary",
+              "headers": [
+                "Property",
+                "Value"
+              ],
+              "rows": []
+            }
+          ],
+          "completeness": 0,
+          "missingInputs": [
+            "formulationDevelopment",
+            "manufacturingProcessDev",
+            "containerClosureStudies"
+          ],
+          "lineage": [
+            {
+              "sourceObjectId": "19b36ee4-bd26-45f8-935e-71730ea18d6f",
+              "sourceHashAtCompile": "e26af088f6201598d085f70eaacae52857c81f0cb07b333737114eb4c6b51b7e"
+            },
+            {
+              "sourceObjectId": "12789536-8a62-4725-9182-dcff321e8f58",
+              "sourceHashAtCompile": "2c432f0a9a904982cb603e2f11d16fc7636a39f173c136c4595d84806aaded27"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.2.P.3",
+          "sectionPath": "3.2.P.3",
+          "structuredPayload": {
+            "sectionKey": "3.2.P.3",
+            "sourceTypes": [
+              "drug_product",
+              "batch",
+              "change_control",
+              "process_validation",
+              "manufacturing_process"
+            ],
+            "sourceObjects": [
+              {
+                "type": "drug_product",
+                "payload": {
+                  "name": "PRV-running 5 mg tablet",
+                  "status": "development",
+                  "version": null,
+                  "strength": "5 mg",
+                  "batchSize": "",
+                  "components": null,
+                  "dosageForm": "Film-coated tablet",
+                  "excipients": null,
+                  "composition": null,
+                  "formulation": null,
+                  "specifications": null,
+                  "stability_data": null,
+                  "processControls": null,
+                  "containerClosure": "",
+                  "compositionDetail": null,
+                  "manufacturingSite": "",
+                  "batchFormulaDetail": null,
+                  "processDescription": "",
+                  "dosageFormDescription": "Film-coated tablet",
+                  "manufacturing_process": null,
+                  "routeOfAdministration": "oral"
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "The drug product is manufactured according to the batch formula described below. . ",
+          "tables": [
+            {
+              "title": "Batch Formula",
+              "headers": [
+                "Parameter",
+                "Value"
+              ],
+              "rows": [
+                [
+                  "Formulation",
+                  "[not specified]"
+                ],
+                [
+                  "Batch Number",
+                  "[not specified]"
+                ]
+              ]
+            }
+          ],
+          "completeness": 0,
+          "missingInputs": [
+            "formulation",
+            "batchNumber",
+            "drugProductProcessComplete"
+          ],
+          "lineage": [
+            {
+              "sourceObjectId": "19b36ee4-bd26-45f8-935e-71730ea18d6f",
+              "sourceHashAtCompile": "e26af088f6201598d085f70eaacae52857c81f0cb07b333737114eb4c6b51b7e"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.2.P.4",
+          "sectionPath": "3.2.P.4",
+          "structuredPayload": {
+            "sectionKey": "3.2.P.4",
+            "sourceTypes": [
+              "excipient"
+            ],
+            "sourceObjects": []
+          },
+          "narrativeDraft": "Section 3.2.P.4 has no source data available. Required inputs: excipientSpecifications, excipientAnalyticalProcedures, excipientControlComplete.",
+          "tables": [],
+          "completeness": 0,
+          "missingInputs": [
+            "excipientSpecifications",
+            "excipientAnalyticalProcedures",
+            "excipientControlComplete"
+          ],
+          "lineage": []
+        },
+        {
+          "sectionKey": "3.2.P.5",
+          "sectionPath": "3.2.P.5",
+          "structuredPayload": {
+            "sectionKey": "3.2.P.5",
+            "sourceTypes": [
+              "specification",
+              "method",
+              "dissolution_profile",
+              "impurity_profile",
+              "qc_result"
+            ],
+            "sourceObjects": []
+          },
+          "narrativeDraft": "Section 3.2.P.5 has no source data available. Required inputs: releaseCriteria, methodName, drugProductBatchAnalyses, drugProductImpurityProfileComplete.",
+          "tables": [],
+          "completeness": 0,
+          "missingInputs": [
+            "releaseCriteria",
+            "methodName",
+            "drugProductBatchAnalyses",
+            "drugProductImpurityProfileComplete"
+          ],
+          "lineage": []
+        },
+        {
+          "sectionKey": "3.2.P.6",
+          "sectionPath": "3.2.P.6",
+          "structuredPayload": {
+            "sectionKey": "3.2.P.6",
+            "sourceTypes": [
+              "drug_product",
+              "reference_standard"
+            ],
+            "sourceObjects": [
+              {
+                "type": "drug_product",
+                "payload": {
+                  "name": "PRV-running 5 mg tablet",
+                  "status": "development",
+                  "version": null,
+                  "strength": "5 mg",
+                  "batchSize": "",
+                  "components": null,
+                  "dosageForm": "Film-coated tablet",
+                  "excipients": null,
+                  "composition": null,
+                  "formulation": null,
+                  "specifications": null,
+                  "stability_data": null,
+                  "processControls": null,
+                  "containerClosure": "",
+                  "compositionDetail": null,
+                  "manufacturingSite": "",
+                  "batchFormulaDetail": null,
+                  "processDescription": "",
+                  "dosageFormDescription": "Film-coated tablet",
+                  "manufacturing_process": null,
+                  "routeOfAdministration": "oral"
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "No reference standard is recorded for the drug product. The standard against which drug product test results are reported, and the qualification of that standard, are not established by this section.",
+          "tables": [],
+          "completeness": 0,
+          "missingInputs": [
+            "drugProductReferenceStandard",
+            "drugProductReferenceStandardCoA",
+            "drugProductReferenceStandardComplete"
+          ],
+          "lineage": [
+            {
+              "sourceObjectId": "19b36ee4-bd26-45f8-935e-71730ea18d6f",
+              "sourceHashAtCompile": "e26af088f6201598d085f70eaacae52857c81f0cb07b333737114eb4c6b51b7e"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.2.P.7",
+          "sectionPath": "3.2.P.7",
+          "structuredPayload": {
+            "sectionKey": "3.2.P.7",
+            "sourceTypes": [
+              "container_closure"
+            ],
+            "sourceObjects": []
+          },
+          "narrativeDraft": "Section 3.2.P.7 has no source data available. Required inputs: drugProductContainerDescription, drugProductClosureDescription, drugProductSuitabilityJustification, drugProductContainerClosureComplete.",
+          "tables": [],
+          "completeness": 0,
+          "missingInputs": [
+            "drugProductContainerDescription",
+            "drugProductClosureDescription",
+            "drugProductSuitabilityJustification",
+            "drugProductContainerClosureComplete"
+          ],
+          "lineage": []
+        },
+        {
+          "sectionKey": "3.2.P.8",
+          "sectionPath": "3.2.P.8",
+          "structuredPayload": {
+            "sectionKey": "3.2.P.8",
+            "sourceTypes": [
+              "stability",
+              "comparability"
+            ],
+            "sourceObjects": [
+              {
+                "type": "stability",
+                "payload": {
+                  "status": "ACTIVE",
+                  "results": [
+                    {
+                      "result": "99.8",
+                      "parameter": "assay",
+                      "timePoint": "0"
+                    },
+                    {
+                      "result": "99.4",
+                      "parameter": "assay",
+                      "timePoint": "12"
+                    },
+                    {
+                      "result": "99.1",
+                      "parameter": "assay",
+                      "timePoint": "24"
+                    }
+                  ],
+                  "duration": 24,
+                  "studyName": "",
+                  "studyType": "long_term",
+                  "timePoints": [
+                    "0",
+                    "12",
+                    "24"
+                  ],
+                  "startedDate": "2026-01-01T00:00:00.000Z",
+                  "completedDate": null,
+                  "batchesStudied": [
+                    "B-1"
+                  ],
+                  "shelfLifeClaim": "24 months at 25C/60%RH",
+                  "stabilityScope": "drug_product",
+                  "testParameters": [
+                    "assay"
+                  ],
+                  "containerClosure": "",
+                  "storageCondition": "25C/60%RH",
+                  "shelfLifeAccepted": false,
+                  "shelfLifeSignedAt": null,
+                  "storageConditions": [
+                    "25C/60%RH"
+                  ],
+                  "stabilityParameters": [
+                    "assay"
+                  ],
+                  "packagingConfiguration": null,
+                  "drugSubstanceTimePoints": null,
+                  "drugProductShelfLifeClaim": "24 months at 25C/60%RH",
+                  "drugSubstanceStorageCondition": null
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "Stability studies for the drug product were conducted under 25C/60%RH at time points: 0, 12, 24 months. A shelf life of 24 months at 25C/60%RH is proposed, recorded on a study that has not been closed out under signature, subject to review of the 3 recorded result(s) tabulated in the stability results table. 3 recorded result(s) lack a usable numeric result or acceptance criterion and were not compared; whether they conform is NOT verified by this section. Any conclusion stated on the study is the applicant's and was not checked against the data here. Out-of-trend assessment (PhRMA CMC Statistics regression control chart: each pull point against the two-sided 95% prediction interval of the line fitted to all prior points): assay (25C/60%RH): trend not assessed: no acceptance criterion is recorded against these results, so there is no limit to assess the trend toward.",
+          "tables": [
+            {
+              "title": "Stability Summary — Drug Product",
+              "headers": [
+                "Parameter",
+                "Value"
+              ],
+              "rows": [
+                [
+                  "Shelf Life Claim",
+                  "24 months at 25C/60%RH"
+                ],
+                [
+                  "Comparability Status",
+                  "[not specified]"
+                ],
+                [
+                  "Storage Condition",
+                  "25C/60%RH"
+                ],
+                [
+                  "Time Points (months)",
+                  "0, 12, 24"
+                ]
+              ]
+            },
+            {
+              "title": "Stability Results — Drug Product",
+              "headers": [
+                "Batch",
+                "Condition",
+                "Attribute",
+                "Time Point (months)",
+                "Result",
+                "Acceptance Criterion",
+                "Compared"
+              ],
+              "rows": [
+                [
+                  "B-1",
+                  "25C/60%RH",
+                  "assay",
+                  "0",
+                  "99.8",
+                  "—",
+                  "not compared — no usable criterion"
+                ],
+                [
+                  "B-1",
+                  "25C/60%RH",
+                  "assay",
+                  "12",
+                  "99.4",
+                  "—",
+                  "not compared — no usable criterion"
+                ],
+                [
+                  "B-1",
+                  "25C/60%RH",
+                  "assay",
+                  "24",
+                  "99.1",
+                  "—",
+                  "not compared — no usable criterion"
+                ]
+              ]
+            }
+          ],
+          "completeness": 100,
+          "missingInputs": [],
+          "lineage": [
+            {
+              "sourceObjectId": "ddd0f5cc-2a4f-4087-b8f7-3e21d75be48e",
+              "sourceHashAtCompile": "0527fbecf883a14aebb466888bb4cd47c67774d7f1307bf53c5b1fc004361601"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.1",
+          "sectionPath": "3.1",
+          "structuredPayload": {
+            "sectionKey": "3.1",
+            "sourceTypes": [
+              "drug_substance",
+              "drug_product"
+            ],
+            "sourceObjects": [
+              {
+                "type": "drug_product",
+                "payload": {
+                  "name": "PRV-running 5 mg tablet",
+                  "status": "development",
+                  "version": null,
+                  "strength": "5 mg",
+                  "batchSize": "",
+                  "components": null,
+                  "dosageForm": "Film-coated tablet",
+                  "excipients": null,
+                  "composition": null,
+                  "formulation": null,
+                  "specifications": null,
+                  "stability_data": null,
+                  "processControls": null,
+                  "containerClosure": "",
+                  "compositionDetail": null,
+                  "manufacturingSite": "",
+                  "batchFormulaDetail": null,
+                  "processDescription": "",
+                  "dosageFormDescription": "Film-coated tablet",
+                  "manufacturing_process": null,
+                  "routeOfAdministration": "oral"
+                }
+              },
+              {
+                "type": "drug_substance",
+                "payload": {
+                  "cas": "",
+                  "inn": "",
+                  "name": "PRV-running-20261110033923",
+                  "status": "development",
+                  "cellLine": "",
+                  "modality": "small_molecule",
+                  "structure": "",
+                  "tseStatus": "",
+                  "impurities": null,
+                  "manufacturer": "",
+                  "sourceOrganism": "",
+                  "specifications": null,
+                  "stability_data": null,
+                  "molecularWeight": "",
+                  "biologicalOrigin": "",
+                  "developmentPhase": "phase1",
+                  "molecularFormula": "",
+                  "manufacturingSite": "",
+                  "biologicalActivity": null,
+                  "manufacturingRoute": "",
+                  "processDescription": "",
+                  "qualificationBasis": null,
+                  "reference_materials": null,
+                  "characterization_data": null,
+                  "structuralElucidation": null,
+                  "viralSafetyEvaluation": "",
+                  "physicochemicalProperties": null
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "This section provides a table of contents and introductory overview for Module 3 — Quality. The drug substance is PRV-running 5 mg tablet. The drug product is formulated as a Film-coated tablet. Detailed information on the drug substance and drug product is provided in subsections 3.2.S and 3.2.P respectively.",
+          "tables": [
+            {
+              "title": "Module 3 — Table of Contents",
+              "headers": [
+                "Section",
+                "Title"
+              ],
+              "rows": [
+                [
+                  "3.2.S.1",
+                  "General Information"
+                ],
+                [
+                  "3.2.S.2",
+                  "Manufacture (Drug Substance)"
+                ],
+                [
+                  "3.2.S.3",
+                  "Characterisation"
+                ],
+                [
+                  "3.2.S.4",
+                  "Control of Drug Substance"
+                ],
+                [
+                  "3.2.S.5",
+                  "Reference Standards (Drug Substance)"
+                ],
+                [
+                  "3.2.S.6",
+                  "Container Closure System (Drug Substance)"
+                ],
+                [
+                  "3.2.S.7",
+                  "Stability (Drug Substance)"
+                ],
+                [
+                  "3.2.P.1",
+                  "Description and Composition"
+                ],
+                [
+                  "3.2.P.2",
+                  "Pharmaceutical Development"
+                ],
+                [
+                  "3.2.P.3",
+                  "Manufacture (Drug Product)"
+                ],
+                [
+                  "3.2.P.4",
+                  "Control of Excipients"
+                ],
+                [
+                  "3.2.P.5",
+                  "Control of Drug Product"
+                ],
+                [
+                  "3.2.P.6",
+                  "Reference Standards (Drug Product)"
+                ],
+                [
+                  "3.2.P.7",
+                  "Container Closure System (Drug Product)"
+                ],
+                [
+                  "3.2.P.8",
+                  "Stability (Drug Product)"
+                ]
+              ]
+            }
+          ],
+          "completeness": 100,
+          "missingInputs": [],
+          "lineage": [
+            {
+              "sourceObjectId": "19b36ee4-bd26-45f8-935e-71730ea18d6f",
+              "sourceHashAtCompile": "e26af088f6201598d085f70eaacae52857c81f0cb07b333737114eb4c6b51b7e"
+            },
+            {
+              "sourceObjectId": "12789536-8a62-4725-9182-dcff321e8f58",
+              "sourceHashAtCompile": "2c432f0a9a904982cb603e2f11d16fc7636a39f173c136c4595d84806aaded27"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.3",
+          "sectionPath": "3.3",
+          "structuredPayload": {
+            "sectionKey": "3.3",
+            "sourceTypes": [
+              "drug_substance",
+              "drug_product",
+              "reference_standard"
+            ],
+            "sourceObjects": [
+              {
+                "type": "drug_product",
+                "payload": {
+                  "name": "PRV-running 5 mg tablet",
+                  "status": "development",
+                  "version": null,
+                  "strength": "5 mg",
+                  "batchSize": "",
+                  "components": null,
+                  "dosageForm": "Film-coated tablet",
+                  "excipients": null,
+                  "composition": null,
+                  "formulation": null,
+                  "specifications": null,
+                  "stability_data": null,
+                  "processControls": null,
+                  "containerClosure": "",
+                  "compositionDetail": null,
+                  "manufacturingSite": "",
+                  "batchFormulaDetail": null,
+                  "processDescription": "",
+                  "dosageFormDescription": "Film-coated tablet",
+                  "manufacturing_process": null,
+                  "routeOfAdministration": "oral"
+                }
+              },
+              {
+                "type": "drug_substance",
+                "payload": {
+                  "cas": "",
+                  "inn": "",
+                  "name": "PRV-running-20261110033923",
+                  "status": "development",
+                  "cellLine": "",
+                  "modality": "small_molecule",
+                  "structure": "",
+                  "tseStatus": "",
+                  "impurities": null,
+                  "manufacturer": "",
+                  "sourceOrganism": "",
+                  "specifications": null,
+                  "stability_data": null,
+                  "molecularWeight": "",
+                  "biologicalOrigin": "",
+                  "developmentPhase": "phase1",
+                  "molecularFormula": "",
+                  "manufacturingSite": "",
+                  "biologicalActivity": null,
+                  "manufacturingRoute": "",
+                  "processDescription": "",
+                  "qualificationBasis": null,
+                  "reference_materials": null,
+                  "characterization_data": null,
+                  "structuralElucidation": null,
+                  "viralSafetyEvaluation": "",
+                  "physicochemicalProperties": null
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "This section provides literature references cited throughout Module 3 for the drug substance (PRV-running 5 mg tablet) and drug product (Film-coated tablet). References include pharmacopoeial monographs, ICH guidelines, and published literature supporting the quality dossier.",
+          "tables": [
+            {
+              "title": "Key References",
+              "headers": [
+                "Category",
+                "Reference"
+              ],
+              "rows": [
+                [
+                  "Pharmacopoeia",
+                  "USP/NF, Ph. Eur., JP (as applicable)"
+                ],
+                [
+                  "ICH Guidelines",
+                  "Q1A-Q1E (Stability), Q2 (Validation), Q3A-Q3D (Impurities), Q6A/Q6B (Specifications)"
+                ],
+                [
+                  "Regulatory",
+                  "FDA Guidance for Industry, EMA Guidelines"
+                ]
+              ]
+            }
+          ],
+          "completeness": 100,
+          "missingInputs": [],
+          "lineage": [
+            {
+              "sourceObjectId": "19b36ee4-bd26-45f8-935e-71730ea18d6f",
+              "sourceHashAtCompile": "e26af088f6201598d085f70eaacae52857c81f0cb07b333737114eb4c6b51b7e"
+            },
+            {
+              "sourceObjectId": "12789536-8a62-4725-9182-dcff321e8f58",
+              "sourceHashAtCompile": "2c432f0a9a904982cb603e2f11d16fc7636a39f173c136c4595d84806aaded27"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.2.A.1",
+          "sectionPath": "3.2.A.1",
+          "structuredPayload": {
+            "sectionKey": "3.2.A.1",
+            "title": "Facilities and Equipment",
+            "sourceTypes": [
+              "manufacturing_process",
+              "drug_substance",
+              "drug_product",
+              "container_closure"
+            ],
+            "optional": false,
+            "sourceObjects": [
+              {
+                "type": "drug_product",
+                "payload": {
+                  "name": "PRV-running 5 mg tablet",
+                  "status": "development",
+                  "version": null,
+                  "strength": "5 mg",
+                  "batchSize": "",
+                  "components": null,
+                  "dosageForm": "Film-coated tablet",
+                  "excipients": null,
+                  "composition": null,
+                  "formulation": null,
+                  "specifications": null,
+                  "stability_data": null,
+                  "processControls": null,
+                  "containerClosure": "",
+                  "compositionDetail": null,
+                  "manufacturingSite": "",
+                  "batchFormulaDetail": null,
+                  "processDescription": "",
+                  "dosageFormDescription": "Film-coated tablet",
+                  "manufacturing_process": null,
+                  "routeOfAdministration": "oral"
+                }
+              },
+              {
+                "type": "drug_substance",
+                "payload": {
+                  "cas": "",
+                  "inn": "",
+                  "name": "PRV-running-20261110033923",
+                  "status": "development",
+                  "cellLine": "",
+                  "modality": "small_molecule",
+                  "structure": "",
+                  "tseStatus": "",
+                  "impurities": null,
+                  "manufacturer": "",
+                  "sourceOrganism": "",
+                  "specifications": null,
+                  "stability_data": null,
+                  "molecularWeight": "",
+                  "biologicalOrigin": "",
+                  "developmentPhase": "phase1",
+                  "molecularFormula": "",
+                  "manufacturingSite": "",
+                  "biologicalActivity": null,
+                  "manufacturingRoute": "",
+                  "processDescription": "",
+                  "qualificationBasis": null,
+                  "reference_materials": null,
+                  "characterization_data": null,
+                  "structuralElucidation": null,
+                  "viralSafetyEvaluation": "",
+                  "physicochemicalProperties": null
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "Per ICH M4Q, Section 3.2.A.1 (Facilities and Equipment) describes the facilities, equipment, and related controls used in the manufacture of the drug substance and drug product. Manufacturing site not yet recorded. \n\nPrimary container closure equipment and packaging components used during manufacture and storage are not yet specified. \n\nFacility cleaning, equipment qualification, changeover, cross-contamination controls, environmental monitoring and utilities (HVAC, water, compressed gases) are governed by the site's own quality system and are evidenced by its GMP documentation, which this register does not hold; this section therefore makes no statement about their content or their compliance status. \n\nNo manufacturing site, process or container closure is recorded for this product, so the facilities and equipment used in its manufacture are NOT ESTABLISHED by this section. This is not a statement that none is used: it is a statement that the question has not been answered.",
+          "tables": [
+            {
+              "title": "Facilities Summary",
+              "headers": [
+                "Property",
+                "Value"
+              ],
+              "rows": []
+            },
+            {
+              "title": "Primary Equipment / Container Closure",
+              "headers": [
+                "Property",
+                "Value"
+              ],
+              "rows": []
+            }
+          ],
+          "completeness": 0,
+          "missingInputs": [
+            "manufacturingSite",
+            "containerDescription",
+            "No manufacturing site, process or container closure is recorded for this product, so the facilities and equipment used in its manufacture are NOT ESTABLISHED by this section."
+          ],
+          "lineage": [
+            {
+              "sourceObjectId": "19b36ee4-bd26-45f8-935e-71730ea18d6f",
+              "sourceHashAtCompile": "e26af088f6201598d085f70eaacae52857c81f0cb07b333737114eb4c6b51b7e"
+            },
+            {
+              "sourceObjectId": "12789536-8a62-4725-9182-dcff321e8f58",
+              "sourceHashAtCompile": "2c432f0a9a904982cb603e2f11d16fc7636a39f173c136c4595d84806aaded27"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.2.A.2",
+          "sectionPath": "3.2.A.2",
+          "structuredPayload": {
+            "sectionKey": "3.2.A.2",
+            "title": "Adventitious Agents Safety Evaluation",
+            "sourceTypes": [
+              "drug_substance",
+              "characterization",
+              "manufacturing_process"
+            ],
+            "optional": true,
+            "sourceObjects": [
+              {
+                "type": "drug_substance",
+                "payload": {
+                  "cas": "",
+                  "inn": "",
+                  "name": "PRV-running-20261110033923",
+                  "status": "development",
+                  "cellLine": "",
+                  "modality": "small_molecule",
+                  "structure": "",
+                  "tseStatus": "",
+                  "impurities": null,
+                  "manufacturer": "",
+                  "sourceOrganism": "",
+                  "specifications": null,
+                  "stability_data": null,
+                  "molecularWeight": "",
+                  "biologicalOrigin": "",
+                  "developmentPhase": "phase1",
+                  "molecularFormula": "",
+                  "manufacturingSite": "",
+                  "biologicalActivity": null,
+                  "manufacturingRoute": "",
+                  "processDescription": "",
+                  "qualificationBasis": null,
+                  "reference_materials": null,
+                  "characterization_data": null,
+                  "structuralElucidation": null,
+                  "viralSafetyEvaluation": "",
+                  "physicochemicalProperties": null
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "Per ICH M4Q, Section 3.2.A.2 (Adventitious Agents Safety Evaluation) addresses viral, bacterial, fungal, mycoplasma, and TSE/BSE safety for biologically-derived materials. \n\nNo biological origin, source organism, cell line or fermentation step is recorded against PRV-running-20261110033923, whose modality is recorded as a chemical synthesis, with no manufacturing route recorded. On that record this section does not apply to the drug substance itself. \n\nThis is a statement about the SUBSTANCE, not about every material used to make it: the origin of the raw and starting materials is recorded in §3.2.S.2.3 and that of the excipients in §3.2.P.4 and §3.2.A.3, and this section neither reads nor certifies them. Any future change to a biologically-derived starting material would trigger re-assessment of this section.",
+          "tables": [
+            {
+              "title": "Adventitious Agents Safety Evaluation",
+              "headers": [
+                "Property",
+                "Value"
+              ],
+              "rows": [
+                [
+                  "Applicability",
+                  "Does not apply to the drug substance — no biological origin is recorded"
+                ],
+                [
+                  "Drug Substance",
+                  "PRV-running-20261110033923"
+                ],
+                [
+                  "Manufacturing Route",
+                  "not recorded"
+                ],
+                [
+                  "Biological Origin",
+                  "None recorded"
+                ],
+                [
+                  "Raw Material Origin",
+                  "Recorded in §3.2.S.2.3 — not assessed by this section"
+                ],
+                [
+                  "Excipient Origin",
+                  "Recorded in §3.2.A.3 — not assessed by this section"
+                ]
+              ]
+            }
+          ],
+          "completeness": 100,
+          "missingInputs": [],
+          "lineage": [
+            {
+              "sourceObjectId": "12789536-8a62-4725-9182-dcff321e8f58",
+              "sourceHashAtCompile": "2c432f0a9a904982cb603e2f11d16fc7636a39f173c136c4595d84806aaded27"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.2.A.3",
+          "sectionPath": "3.2.A.3",
+          "structuredPayload": {
+            "sectionKey": "3.2.A.3",
+            "title": "Excipients",
+            "sourceTypes": [
+              "excipient",
+              "drug_product",
+              "formulation_record"
+            ],
+            "optional": true,
+            "sourceObjects": [
+              {
+                "type": "drug_product",
+                "payload": {
+                  "name": "PRV-running 5 mg tablet",
+                  "status": "development",
+                  "version": null,
+                  "strength": "5 mg",
+                  "batchSize": "",
+                  "components": null,
+                  "dosageForm": "Film-coated tablet",
+                  "excipients": null,
+                  "composition": null,
+                  "formulation": null,
+                  "specifications": null,
+                  "stability_data": null,
+                  "processControls": null,
+                  "containerClosure": "",
+                  "compositionDetail": null,
+                  "manufacturingSite": "",
+                  "batchFormulaDetail": null,
+                  "processDescription": "",
+                  "dosageFormDescription": "Film-coated tablet",
+                  "manufacturing_process": null,
+                  "routeOfAdministration": "oral"
+                }
+              }
+            ]
+          },
+          "narrativeDraft": "Per ICH M4Q, Section 3.2.A.3 (Excipients of Human or Animal Origin) addresses TSE/BSE, viral, and other adventitious-agent risks associated with excipients of human or animal origin. \n\nNo excipient or formulation record is on file for this product, so whether any excipient is of human or animal origin is NOT ESTABLISHED by this section. This is not a statement that none is used: it is a statement that the question has not been answered. Record the formulation and the excipient specifications, each with its origin, before this section is relied upon.",
+          "tables": [
+            {
+              "title": "Excipients of Human or Animal Origin",
+              "headers": [
+                "Property",
+                "Value"
+              ],
+              "rows": [
+                [
+                  "Applicability",
+                  "Not established — no excipient or formulation record is on file"
+                ],
+                [
+                  "Drug Product Formulation",
+                  "—"
+                ]
+              ]
+            }
+          ],
+          "completeness": 0,
+          "missingInputs": [
+            "No excipient or formulation record is on file for this product, so whether any excipient is of human or animal origin is NOT ESTABLISHED by this section."
+          ],
+          "lineage": [
+            {
+              "sourceObjectId": "19b36ee4-bd26-45f8-935e-71730ea18d6f",
+              "sourceHashAtCompile": "e26af088f6201598d085f70eaacae52857c81f0cb07b333737114eb4c6b51b7e"
+            }
+          ]
+        },
+        {
+          "sectionKey": "3.2.R.1.US",
+          "sectionPath": "3.2.R.1.US",
+          "structuredPayload": {
+            "sectionKey": "3.2.R.1.US",
+            "title": "Regional Information — United States (FDA IND)",
+            "region": "US"
+          },
+          "narrativeDraft": "Per ICH M4Q, Section 3.2.R.1 (Regional Information) — United States carries the FDA-specific chemistry, manufacturing and controls information for this Investigational New Drug application, under 21 CFR 312.23(a)(7). The amount of information is scaled to the phase of investigation, the proposed duration, the dosage form and the information otherwise available (21 CFR 312.23(a)(7)(i)). The drug product is a Film-coated tablet (5 mg). \n\nThe table below lists each IND regional item, the regulation that requires it and where this dossier stands on it. The investigator labeling and the environmental analysis are filed in Module 1. Module 3 does not carry Module 1, so this section states those requirements and does not attest that they have been met. Marketing-application items (executed batch records, Form FDA 356h, patent and exclusivity information) do not apply to an IND and are not listed.",
+          "tables": [
+            {
+              "title": "US Regional Information — Submission Summary",
+              "headers": [
+                "Property",
+                "Value"
+              ],
+              "rows": [
+                [
+                  "Region",
+                  "United States — FDA"
+                ],
+                [
+                  "Submission Type",
+                  "IND (21 CFR Part 312)"
+                ],
+                [
+                  "Dosage Form",
+                  "Film-coated tablet"
+                ],
+                [
+                  "Strength",
+                  "5 mg"
+                ]
+              ]
+            },
+            {
+              "title": "US IND Regional Items (21 CFR 312.23(a)(7))",
+              "headers": [
+                "Item",
+                "Regulatory basis",
+                "Status in this dossier"
+              ],
+              "rows": [
+                [
+                  "Manufacturer name and address (drug substance and drug product)",
+                  "21 CFR 312.23(a)(7)(iv)(a)–(b)",
+                  "Not recorded in this dossier"
+                ],
+                [
+                  "Placebo: composition, manufacture and control",
+                  "21 CFR 312.23(a)(7)(iv)(c)",
+                  "Not recorded in this dossier — required only if a placebo is used in a controlled trial"
+                ],
+                [
+                  "Labels and labeling provided to each investigator",
+                  "21 CFR 312.23(a)(7)(iv)(d); 21 CFR 312.6",
+                  "Required in Module 1 (1.14 Labeling) — outside Module 3; not verified by this section"
+                ],
+                [
+                  "Environmental analysis: claim of categorical exclusion, or an environmental assessment",
+                  "21 CFR 312.23(a)(7)(iv)(e); 21 CFR 25.31(e)",
+                  "Required in Module 1 (1.12.14 Environmental analysis) — outside Module 3; not verified by this section"
+                ],
+                [
+                  "Chemistry or manufacturing signals of potential human risk (phase 1)",
+                  "FDA guidance: Content and Format of INDs for Phase 1 Studies (1995)",
+                  "Not recorded in this dossier"
+                ],
+                [
+                  "Relation of the clinical drug product to the material used in the toxicology studies (phase 1)",
+                  "FDA guidance: Content and Format of INDs for Phase 1 Studies (1995)",
+                  "Not recorded in this dossier"
+                ],
+                [
+                  "CMC changes as development proceeds",
+                  "21 CFR 312.31 (information amendments); 21 CFR 312.33 (annual report)",
+                  "Filed as \"Information Amendment: Chemistry, Manufacturing, and Control\" when they occur"
+                ]
+              ]
+            }
+          ],
+          "completeness": 50,
+          "missingInputs": [
+            "composition",
+            "manufacturingSite"
+          ],
+          "lineage": [
+            {
+              "sourceObjectId": "19b36ee4-bd26-45f8-935e-71730ea18d6f",
+              "sourceHashAtCompile": "e26af088f6201598d085f70eaacae52857c81f0cb07b333737114eb4c6b51b7e"
+            }
+          ]
+        }
+      ],
+      "bridgedArtifacts": [
+        {
+          "sectionKey": "3.2.S.1",
+          "artifactId": "m3-3.2.S.1-56467863",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.S.2",
+          "artifactId": "m3-3.2.S.2-88a316b1",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.S.3",
+          "artifactId": "m3-3.2.S.3-9d4d32f6",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.S.4",
+          "artifactId": "m3-3.2.S.4-d96a6cbd",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.S.5",
+          "artifactId": "m3-3.2.S.5-82900334",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.S.6",
+          "artifactId": "m3-3.2.S.6-efaa095a",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.S.7",
+          "artifactId": "m3-3.2.S.7-66064f4e",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.P.1",
+          "artifactId": "m3-3.2.P.1-095c8bb3",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.P.2",
+          "artifactId": "m3-3.2.P.2-a9989808",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.P.3",
+          "artifactId": "m3-3.2.P.3-304e450b",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.P.4",
+          "artifactId": "m3-3.2.P.4-6ba76eff",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.P.5",
+          "artifactId": "m3-3.2.P.5-7c1a614d",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.P.6",
+          "artifactId": "m3-3.2.P.6-669e7750",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.P.7",
+          "artifactId": "m3-3.2.P.7-113c9372",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.P.8",
+          "artifactId": "m3-3.2.P.8-d42da534",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.1",
+          "artifactId": "m3-3.1-9441cfdd",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.3",
+          "artifactId": "m3-3.3-72345b21",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.A.1",
+          "artifactId": "m3-3.2.A.1-284ca287",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.A.2",
+          "artifactId": "m3-3.2.A.2-53a6f692",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.A.3",
+          "artifactId": "m3-3.2.A.3-cb8ced91",
+          "isNew": true
+        },
+        {
+          "sectionKey": "3.2.R.1.US",
+          "artifactId": "m3-3.2.R.1.US-9c6dc109",
+          "isNew": true
+        }
+      ],
+      "bridgeSkips": []
+    }
+  }
+}

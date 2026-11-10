@@ -1653,3 +1653,186 @@ The conservative medium/scripted 007a assessment is retained because incorrect
 identity, offer or clock presentation can misdirect recoverable filing work.
 The incoming stronger Plan/reference checks and the local no-write observation
 are one revised OQ-PROJ-12 v0.10, still unexecuted and unsigned.
+
+## 21. Addendum 2026-11-10 — the package re-executed at head for GA (W3 session)
+
+**Why.** The last full execution (§18, 2026-09-27/28) predates the convergence packages (D0–D7), the spine packages
+and CMC / Module 3's protocol (OQ-008), which had never run under the W3 posture. Reporting & analytics, the seventh
+launch app, had no URS and no protocol. D4 needs an execution of the product as it ships.
+
+Evidence, with the setup scripts, transcripts and the triage tables: `docs/evidence/W3/2026-11-10/README.md`.
+
+### 21.1 What was executed
+
+Three executions on one fresh installation, `c2c_oq_w3_20261110`, provisioned from empty by `npm run up`. The runtime
+role is `app_service`, without superuser or BYPASSRLS. The posture is §18's: RLS enforced, development sign-in off,
+auth boundary and launch scope enforced, no AI provider, a development build.
+
+The run used seven identities. All but the run identity were added through user administration, set their own
+passwords through the product's activation link, and enrolled their own authenticators. The database owner made four
+exceptions: the first platform role (as in §18), a program in a second organisation, one cleared enrolment, and a
+report run in that second organisation (for OQ-007).
+
+| Execution | Server code | What | Result |
+|---|---|---|---|
+| First (`docs/evidence/W3/2026-11-10/OQ-*`) | `83e61866d3` | IQ-001; OQ-001…006 and OQ-008 as they stood | IQ 12 / 0 / 3. OQ 99 pass, 26 fail, 6 deviation, 31 not executed, of 162 |
+| Whole-package re-execution (`re-execution/`, `re-execution/first-pass/`) | `97a0fec5cf` | IQ-001; the seven protocols as revised after the first, with `LAUNCH_SCOPE_API_UNATTRIBUTED=enforce` (production's default) and the runtime database URL supplied | IQ 12 / 0 / 3. OQ 143 pass, 8 fail, 8 deviation, 3 not executed, of 162 |
+| Targeted re-runs, and OQ-007 (`re-execution/`) | `97a0fec5cf` | OQ-001, OQ-002, OQ-006 and OQ-008 as revised again; OQ-007, new | below |
+
+**Final, by protocol: 170 pass, 0 fail, 8 deviation, 2 not executed, of 180 steps.**
+
+| Protocol | Version | Pass | Fail | Deviation | Not executed |
+|---|---|---|---|---|---|
+| OQ-001 Projects | 0.12 | 20 | 0 | 0 | 0 |
+| OQ-002 Vault | 0.17 | 24 | 0 | 0 | 0 |
+| OQ-003 Authoring | 0.6 | 25 | 0 | 1 | 0 |
+| OQ-004 Submission Center | 0.8 | 16 | 0 | 1 | 0 |
+| OQ-005 Submission Readiness | 0.8 | 10 | 0 | 1 | 0 |
+| OQ-006 QMS | 0.10 | 22 | 0 | 0 | 0 |
+| OQ-007 Reporting & analytics | 0.1 | 17 | 0 | 1 | 0 |
+| OQ-008 CMC / Module 3 | 0.12 | 36 | 0 | 4 | 2 |
+
+**IQ-001: 12 pass, 0 fail, 3 deviation**, as in §18: IQ-04 (a development install's configuration), IQ-09 (no AI
+provider), IQ-12 (report-only CSP in development). The first attempt of the day was 7 / 3 / 5. Two causes were the
+run's own environment. The third was the protocol's check: IQ-03 matched `COPY --from=builder` and missed OPS-19's
+`COPY --chown=… --from=builder` (`ebda50531c`, 2026-10-22). The check now allows flags before `--from`.
+
+**TM-001** was regenerated from `re-execution/`: 132 requirements, 120 pass, 4 partial, 0 fail, 6 open, 2 uncovered.
+The uncovered two have no OQ step (URS-PROJ-014, §19; URS-SUBC-009, historical, superseded by 009a). The open and
+partial ones are the deviations and steps not executed in §21.4. OQ-SUBC-15 had been credited to URS-SUBC-006 and
+-007 since it was written; its protocol and URS-004 name URS-SUBC-013. The runner now credits that requirement, and
+OQ-004 was run once more for the record to carry it (16 / 0 / 1, unchanged).
+
+### 21.2 Dispositions (proposed; the system owner decides)
+
+Each failure was read from its own step record (the request, the answer, the screenshot) and traced to the commit or
+decision that changed the behaviour. Each is one of:
+- **(A)** a step overtaken by a recorded decision: the protocol is revised and the decision named;
+- **(B)** a runner or set-up defect: fixed in the runner or the set-up;
+- **(C)** a product regression.
+
+**All 34 failures across the two executions are A or B. No product regression (C) was found**, and no product file was
+changed by this work.
+
+**First execution, 26 failures.**
+
+| Step | Class | Cause |
+|---|---|---|
+| OQ-PROJ-04 | A | Intake refuses an IND with no product class (`4f53d90f3b`, 2026-10-08) |
+| OQ-PROJ-11 | A | The program journey left the launch scope (`bcc457edb8`, CPO decision of 2026-10-08) |
+| OQ-PROJ-13, -14 | A | Risk-based monitoring entered the launch scope (P-76, `b602ecad97`); the steps used it as their example of a surface outside it |
+| OQ-PROJ-18 | A | A session ends durably at suspension (P0-4b, `f8d4047454`) |
+| OQ-VAULT-09 | A | The Vault opens on the filing's binder (`2e4a9fe677`); the upload is on the Uploads tab |
+| OQ-AUTH-13 | B | The signer was added as an admin; the object gate under test refuses a reviewer who is not one |
+| OQ-AUTH-15, -16 | A | A draft of a section with no recorded jurisdiction is refused 409 `DRAFT_REGION_REQUIRED` (`8013c94575`) |
+| OQ-AUTH-18 | A | The template library left the launch scope (`bcc457edb8`) |
+| OQ-SUBC-10 | B | The runner was written against a dossier shape two commits older than the one that shipped |
+| OQ-SUBC-13 | A | Submission Center lists the open project's submissions (`b1d7d85ec8`) |
+| OQ-SUBC-16 | B | The runner inferred a development server from dev-login, which this posture refuses |
+| OQ-SRDY-04, -05b | A | The orchestration templates and execute routes belong to surfaces outside the release (`bcc457edb8`; P-33) |
+| OQ-QMS-04b | B | The signer was an admin; OQ-006 §1 requires the Approver role |
+| OQ-QMS-12 | A | Quality-management plans left the launch scope (`bcc457edb8`) |
+| OQ-CMC-02 | B | Read a path that is no route, and never acted as the viewer |
+| OQ-CMC-12 | B | Acted with the run session instead of `OQ_MEMBER` |
+| OQ-CMC-13 | B | Matched a binding basis no row carries, and required a digest the read does not return |
+| OQ-CMC-22 | B | Sent no `decision`, which the release route requires |
+| OQ-CMC-23 | A | A specification is approved only on a validated method in the register (P-110 item 1, `d9060a85e2`) |
+| OQ-CMC-33, -35, -40 | B | The run identity's signatures sent no authenticator code |
+| OQ-CMC-36 | A | The composition boundary holds at every CMC entry point (`ef71545c8e`) |
+
+**Whole-package re-execution, 8 failures.**
+
+| Step | Class | Cause |
+|---|---|---|
+| OQ-PROJ-06, OQ-VAULT-08 | A | `GET /api/c2c/actions/verify-chain` is claimed by no launch surface. Where unattributed paths are refused, which is production's default since the D2 API-scope measurement (2026-09-25), it answers 403 `LAUNCH_SCOPE`. The first execution's posture served it. The steps now read the chain verdict from the Audit trail integrity attestation, which the release serves; it read `intact` |
+| OQ-PROJ-10 | A | The Tasks board opens filtered to the open project (`958c213e03`, 2026-10-31); OQ-PROJ-09's task had no project |
+| OQ-PROJ-12 | A | As OQ-PROJ-04; the step was not executed the first time |
+| OQ-QMS-10 | A | A retirement is signed with the meaning `retirement` (decision P-51, `cd95dc9e6c`); the step was not executed the first time |
+| OQ-CMC-18 | B | Read one word of the gate's sentence, which names the first blocker only; the counts were in `data` |
+| OQ-CMC-33 | B | Took an incomplete section and met the completeness refusal first |
+| OQ-CMC-41 | B | Sent no authenticator code |
+
+Three further runner defects stood behind deviations and steps not executed, and are fixed: OQ-CMC-19 (matched
+`projectId` where the field is `programId`, and sent no `submissionId`), OQ-CMC-20 (acted as a member, who holds the
+regulatory-author role; the step is the viewer's) and OQ-CMC-29 (probed a path that is claimed, and reported a
+posture it never read).
+
+### 21.3 OQ-007, Reporting & analytics
+
+URS-008 (15 requirements) and OQ-007 (18 steps) were written from the shipped code, and RA-001 v0.25 assesses them.
+Nothing was built for the app; URS-008 §1a lists what exists, by path. Executed: **17 pass, 0 fail, 1 deviation.**
+
+Observed: anonymous access refused; the release serves the paths the two surfaces call and refuses three that no
+screen calls; a run's figures are the engine's, and a status, confidence and blockers supplied in the request are not
+stored; a type no engine computes is refused; another organisation's run is not found; a finalize is refused without
+its reason, its meaning, the signer's password and code, independence from the requester, or authority, and is then
+signed by the signer; a second finalize is refused; the seal verifies `intact` on four checks; the export's
+`X-Export-Sha256` equals the SHA-256 of the bytes sent; a compliance report is sealed, lists the finalization bound to
+the seal, and stops verifying when one character changes; both surfaces rendered.
+
+Gaps read from the code and recorded in URS-008 §3, none closed here: a sealed report snapshot is a row the runtime
+role may update (a change is detected on read, not prevented); `POST /api/audit/export/verify` has no role gate,
+compares no organisation and writes no audit row; the compliance report's run guard is in one process's memory; a
+plan refusal carries no `code`. A failed plan lookup refuses every report; it does not fail open.
+
+### 21.4 Deviations and steps not executed
+
+| Step | Requirement | Reason | What it needs |
+|---|---|---|---|
+| OQ-AUTH-16 | URS-AUTH-012 | No AI provider configured | A PQ-passed model |
+| OQ-CMC-26 | URS-CMC-016 | No AI provider configured | A PQ-passed model |
+| OQ-SUBC-16 | URS-SUBC-014 | A development build allows inline run inputs by design | A production build |
+| OQ-CMC-30 | URS-CMC-020 | The same | A production build |
+| OQ-SRDY-06b | URS-SRDY-006 | The contradiction scan is the Inconsistency board's, outside the release (§16.5) | Nothing in this release |
+| OQ-CMC-17 | URS-CMC-009 | The reference records raise no critical contradiction | A fixture (only `batch_rejected` is critical) |
+| OQ-CMC-19 | URS-CMC-011 | The placement is refused 409 by the final-export gate with no leaf, as designed: the reference records compose sections that cannot be approved | A fixture whose every section can be approved |
+| OQ-CMC-27, -28 (not executed) | URS-CMC-017, -018 | They need the sequence OQ-CMC-19 places into | The same fixture |
+| OQ-RPT-16 | URS-RPT-014 | The organisation's plan covers every report type | An organisation on a lower plan |
+
+### 21.5 Requirements withdrawn from this release
+
+Each of these requirements describes a capability a recorded decision took out of the release. The protocol step now
+expects the refusal. The URS still states the requirement; **its revision is owed through change control**, and until
+then TM-001 shows the row as passed on a step that verifies the refusal, which overstates it.
+
+| Requirement | What left | Decision |
+|---|---|---|
+| URS-PROJ-007 | The program journey | CPO decision of 2026-10-08 (`bcc457edb8`) |
+| URS-AUTH-014, the organisation's template store | The template library (the global reference remains) | The same |
+| URS-SRDY-004, URS-SRDY-005 | The readiness-review templates and their execution, which belong to the AnA command surface and the Orchestration board | The same; P-33 (2026-10-17) |
+| URS-QMS-011, and URS-QMS-012's plan half | Quality-management plans and the QMP surface | The same |
+
+Also owed to the URS documents, from earlier sections and unchanged: URS-006's revision for the review route and the
+signed retirement (OQ-006 §4), with the retirement's meaning (`retirement`, P-51).
+
+### 21.6 Observations for other rows (not dispositioned by this package)
+
+- **Part 11 owner.** `GET /api/part11/signatures/by-target` does not return `bound_payload_digest`; a reviewer sees
+  that a row binds something, not what, without the database. The e-signature register on Audit & compliance reports
+  does return it. `GET /api/c2c/actions/verify-chain`, which the ledger route's own comment calls the authoritative
+  verdict, is not served in production.
+- **Installation owner (D1).** On this installation the integrity attestation verifies the `audit_logs` chain walk and
+  reports the HMAC seals and the anchor as not configured. IQ-001 has no check for the report fonts the production
+  image installs; without them a report export answers 503.
+- **Security owner (D6).** `POST /api/audit/export/verify`, as §21.3.
+- **CMC owner.** The final-export gate's sentence names one blocker where URS-CMC-010 says each is named; the counts
+  name the rest. OQ-CMC-18's and -19's rows named cases no runner version has executed; the rows now say so.
+
+### 21.7 What stands between the package and signature
+
+**The package is not ready for signature, and D4 stays red.** Every step is now passed or dispositioned with its
+reason, on a development build. What remains:
+
+1. **Execution on a production build.** OQ-SUBC-16 and OQ-CMC-30 are production controls, IQ-12 is a report-only CSP,
+   and the compliance reports sealed with a development fallback key. The audit export signing key, the audit seal key
+   and the anchor store need to be configured where the package is executed for signature.
+2. **An AI provider.** OQ-AUTH-16 and OQ-CMC-26, with a PQ-passed model.
+3. **Fixtures.** A critical contradiction for OQ-CMC-17. A Module 3 whose every section can be approved, for the
+   positive placement (OQ-CMC-19) and the two steps behind it (OQ-CMC-27, -28). An organisation on a lower plan for
+   OQ-RPT-16.
+4. **Steps that do not exist yet.** URS-PROJ-014 (§19) has no OQ step. OQ-007 has none for the
+   bundle export, the report package or the tenant attestation. OQ-CMC-18 verifies the unapproved case only.
+5. **The URS revisions of §21.5**, through change control, and TM-001 regenerated after them.
+6. **PQ.** No performance qualification has been executed for this package.
+7. **Review and signature.** A qualified reviewer's reading of the unscripted and ad-hoc steps, expert signature on
+   the CMC reference records (P-28), and the system owner's signature on every document. All are unsigned.

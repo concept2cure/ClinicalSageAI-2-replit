@@ -1,0 +1,54 @@
+# History searches for the deletion record (P-108 3(b), item 5), run 2026-11-09 on this clone
+
+$ git log --all --format='%h %ad %s' --date=short -S'api/ctd' -- client
+exit=0
+
+$ git log --all --format='%h %ad %s' --date=short -S'uploadCTDDocument'
+b0bb8dccc 2026-11-08 Plan progress (P-100): RIM, what the agency holds is what was sent, and the queued filing work
+fb73f05f8 2026-10-26 fix(D2): retire alternate project creators behind canonical intake
+ce8cae239 2026-10-26 fix(D2): retire duplicate HTTP project creation paths
+0c69304aa 2026-10-26 D2 cleanup S01: ci:unkeyed-request-tables drops the stale ectd.module_structure entry
+a811b0d83 2026-10-17 D2: step 4 safety net; readiness refuses the vault leaves freeze would refuse
+fb80c5d10 2026-10-17 test(D2): keep the authoring-tool suites under the line ceiling
+bba77ef21 2026-10-15 D2: the IB front matter and sub-sections live in their own module (the library stays under 500 lines)
+f304c87d9 2026-10-15 chore: land current concept2cure-v2 work
+8e2d0bd98 2026-10-15 Board: release the P-32..P-35 decisions with their commits; claim the agency-questions build (D2)
+7f3b84ca5 2026-10-09 chore(repo-health): auto-refresh baseline after merge [skip ci]
+62ff3edc3 2026-10-05 Nothing is sent to PMDA over an unsourced protocol, and Japan devices no longer show as transmittable
+e5cf44624 2026-10-05 Unit tier back to its pre-existing reds: six suites broken since 2026-10-04 fixed
+1ba77dbf1 2026-10-05 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+e65b33f5a 2026-10-05 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+f28115c08 2026-10-05 Working memory keeps only what a checked answer found (FV-missed, reasoning round 8)
+782f7931e 2026-10-05 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+b07608ff3 2026-10-05 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+13f7e72e6 2026-10-05 Every write under /api/cmc needs a writing role; a viewer reads (D2)
+0c2943f1b 2026-10-05 Merge remote-tracking branch 'origin/concept2cure-v2' into concept2cure-v2
+exit=0
+
+Reading: no client commit in this clone's history ever named /api/ctd. uploadCTDDocument appears only in server code, tests and evidence (the route, its writer, the D2 retirement tests' mocks, and records).
+a811b0d83 and 8e2d0bd98 are root commits of this clone, so history before them is not here; the founder's P-108 3(b) record says the store 'has no upload caller in any history'.
+
+## Callers today
+$ grep -rn "api/ctd" client/src shared server scripts (excluding api/ctd- and api/ctd_)
+server/routes/__tests__/legacy-secondary-project-creators-retired.test.ts:37:  result.use('/api/ctd', ctd);
+server/routes/__tests__/legacy-secondary-project-creators-retired.test.ts:56:    ['/api/ctd/projects', { name: 'Legacy CTD', regulatoryRegion: 'FDA', submission
+server/routes/__tests__/legacy-secondary-project-creators-retired.test.ts:68:    const response = await request(app()).get('/api/ctd/projects');
+server/routes/__tests__/ctd-upload-route-retired.test.ts:5: * `POST /api/ctd/projects/:id/upload` wrote a file into `ctd_onboarding_documents`,
+server/routes/__tests__/ctd-upload-route-retired.test.ts:11: * The rest of /api/ctd stays as it is (ctd-project-creator-retired.test.ts keeps
+server/routes/__tests__/ctd-upload-route-retired.test.ts:37:  app.use('/api/ctd', router);
+server/routes/__tests__/ctd-upload-route-retired.test.ts:49:      .post('/api/ctd/projects/31/upload')
+server/routes/__tests__/ctd-upload-route-retired.test.ts:61:    const res = await request(app()).get('/api/ctd/projects/31');
+server/routes/__tests__/ctd-project-creator-retired.test.ts:21:  app.use('/api/ctd', router);
+server/routes/__tests__/ctd-project-creator-retired.test.ts:29:    const result = await request(app()).post('/api/ctd/projects').send({
+server/routes/__tests__/ctd-project-creator-retired.test.ts:39:    const listed = await request(app()).get('/api/ctd/projects');
+server/routes/__tests__/ctd-project-creator-retired.test.ts:43:    const stored = await request(app()).get('/api/ctd/projects/31');
+server/routes/__tests__/ctd-project-creator-retired.test.ts:50:    const result = await request(app()).post('/api/ctd/projects/31/validate').send({});
+server/routes/ctd-onboarding.ts:36:// GET /api/ctd/projects — List CTD projects
+server/routes/ctd-onboarding.ts:55:// GET /api/ctd/projects/:id — Get project with documents and gaps
+server/routes/ctd-onboarding.ts:85:// POST /api/ctd/projects/:id/validate — Run completeness validation
+server/routes/ctd-onboarding.ts:115:// POST /api/ctd/projects/:id/detect-section — Auto-detect section for filename
+server/bootstrap/register-document-routes.ts:415:    app.use('/api/ctd', ctdOnboardingModule.default);
+
+## The replacement, by path
+8:import { VaultPlaceIntoSubmission } from './VaultPlaceIntoSubmission';
+3284:        <VaultPlaceIntoSubmission

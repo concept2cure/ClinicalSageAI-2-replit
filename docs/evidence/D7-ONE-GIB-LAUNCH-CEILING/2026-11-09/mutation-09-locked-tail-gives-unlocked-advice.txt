@@ -1,0 +1,10 @@
+MUTATION 09-locked-tail-gives-unlocked-advice in server/services/submission-service/submission-service.ts (on the final code and tests, 2026-11-09T00:57:19.066720Z): replaced [  if (size && isSequenceLocked(status)) {] with [  if (size && false) {]
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: freeze and dispatch refuse it too, before their signatures (the package gate, site a) > a validated FDA sequence over 1 GiB is refused at freeze while its leaves can still change, with what to do 275ms
+ × server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: freeze and dispatch refuse it too, before their signatures (the package gate, site a) > a frozen FDA sequence over 1 GiB is refused at dispatch, saying its leaves are locked 146ms
+ × server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: freeze and dispatch refuse it too, before their signatures (the package gate, site a) > a dispatched FDA sequence over 1 GiB is refused at dispatch, saying its leaves are locked 144ms
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: freeze and dispatch refuse it too, before their signatures (the package gate, site a) > a sequence for another region over 1 GiB is not refused on size at freeze 132ms
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: freeze and dispatch refuse it too, before their signatures (the package gate, site a) > at exactly 1 GiB freeze is not refused on size 149ms
+      Tests  2 failed | 3 passed | 7 skipped (12)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: freeze and dispatch refuse it too, before their signatures (the package gate, site a) > a frozen FDA sequence over 1 GiB is refused at dispatch, saying its leaves are locked
+restored sha256 8f1f470284cfed176a7af9e49c6fad25e5f0bf8e07ad7e10075377ac0a19638b (expected 8f1f470284cfed176a7af9e49c6fad25e5f0bf8e07ad7e10075377ac0a19638b)

@@ -1,0 +1,26 @@
+ × server/routes/__tests__/report-os-bundle-recording.test.ts > saved report packs are complete and atomically recorded > roundtrips more than 20,000 characters as ONE pack row, with its runs and projects and a bound audit event 50ms
+ × server/routes/__tests__/report-os-bundle-recording.test.ts > saved report packs are complete and atomically recorded > rolls the pack row back when its run rows fail to write, before any success or audit event 21ms
+ × server/routes/__tests__/report-os-bundle-recording.test.ts > saved report packs are complete and atomically recorded > rolls the pack and its run and project rows back when the audit event fails 17ms
+ × server/routes/__tests__/report-os-bundle-recording.test.ts > saved report pack receipts distinguish SQL rollback from lost acknowledgements > confirms ordinary SQL persistence only after the pack, its links and the audit marker commit 1890ms
+ × server/routes/__tests__/report-os-bundle-recording.test.ts > saved report pack receipts distinguish SQL rollback from lost acknowledgements > keeps an actual committed pack unconfirmed after commit-after fails 1573ms
+ × server/routes/__tests__/report-os-bundle-recording.test.ts > saved report pack receipts distinguish SQL rollback from lost acknowledgements > keeps an actual committed pack unconfirmed after release-after fails 1510ms
+ ✓ server/routes/__tests__/report-os-bundle-recording.test.ts > saved report pack receipts distinguish SQL rollback from lost acknowledgements > states absence only after a pre-COMMIT audit failure is rolled back in SQL 1406ms
+ ✓ server/routes/__tests__/report-os-bundle-recording.test.ts > saved report pack receipts distinguish SQL rollback from lost acknowledgements > never claims absence when the pre-COMMIT rollback acknowledgement fails 1567ms
+ × server/routes/__tests__/report-os-bundle-recording.test.ts > report pack register admits before counting or limiting > counts only admitted distinct packs and states a lower bound after an actual extra admitted pack 8ms
+ × server/routes/__tests__/report-os-bundle-recording.test.ts > report pack register admits before counting or limiting > does not disclose private packs through register totals or truncation metadata 2ms
+ × server/routes/__tests__/report-os-bundle-recording.test.ts > report pack register admits before counting or limiting > continues past private rows before limiting the authorized register 3ms
+ ✓ server/routes/__tests__/report-os-bundle-recording.test.ts > report pack register admits before counting or limiting > refuses actor before revocation without data or count metadata 3ms
+ × server/routes/__tests__/report-os-bundle-recording.test.ts > report pack register admits before counting or limiting > refuses actor during revocation without data or count metadata 2ms
+ ✓ server/routes/__tests__/report-os-bundle-recording.test.ts > report pack register admits before counting or limiting > refuses project during revocation without data or count metadata 2ms
+ ✓ server/routes/__tests__/report-os-bundle-recording.test.ts > report pack register admits before counting or limiting > refuses scope during revocation without data or count metadata 2ms
+ × server/routes/__tests__/report-os-bundle-recording.test.ts > report pack register execution context > uses the same request executor for current actor, project admission, source checks and revalidation 3ms
+ × server/routes/__tests__/report-os-bundle-recording.test.ts > report pack register execution context > retains PostgreSQL timestamp precision in its bounded stable keyset 15ms
+ ✓ server/routes/__tests__/report-os-bundle-recording.test.ts > report pack register refuses incomplete records > refuses manifests above the explicit size limit before writes or audit 11ms
+ ✓ server/routes/__tests__/report-os-bundle-recording.test.ts > report pack register refuses incomplete records > refuses corrupt saved pack data instead of an empty register (an incomplete manifest) 2ms
+ ✓ server/routes/__tests__/report-os-bundle-recording.test.ts > report pack register refuses incomplete records > refuses corrupt saved pack data instead of an empty register (another organisation) 2ms
+ × server/routes/__tests__/report-os-bundle-recording.test.ts > carries every contributing project into a saved account-calendar bundle manifest and its project rows 10ms
+ × server/routes/__tests__/report-os-health-tenancy.test.ts > reporting diagnostics without database RLS > counts only the authenticated organization while keeping the global taxonomy count 28ms
+ ✓ server/routes/__tests__/report-os-health-tenancy.test.ts > reporting diagnostics without database RLS > does not disclose private-project organization totals to an ordinary reader 3ms
+-   "bundles": 1,
++   "bundles": 2,
+      Tests  14 failed | 9 passed (23)

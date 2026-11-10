@@ -36,10 +36,10 @@ const runs: RetainedScientificRun[] = [{
 }];
 
 /** A claim on the first `display` found from `from`, exactly its width, as the screen would build it. */
-function receiptFor(content: string, display: string, from: number, cell: { table: 'disposition' | 'primaryEfficacy'; row: number; column: number }) {
-  const start = content.indexOf(display, from);
+function receiptFor(content: string, display: string, from: number, cell: { table: 'disposition' | 'primaryEfficacy'; row: number; column: number }, rawDisplay = display) {
+  const start = content.indexOf(rawDisplay, from);
   if (start < 0) throw new Error(`fixture: "${display}" not found`);
-  const end = start + display.length;
+  const end = start + rawDisplay.length;
   const submission: ScientificReviewSubmission = {
     format: 'c2c.csr-scientific-review.v1', runIds: [RUN], expectedTablesSha256: scientificTablesSha256(runs),
     allQuantitativeResultsMapped: true, populationsMethodsUnitsReviewed: true,
@@ -79,7 +79,8 @@ describe('a mapped figure is verified where it stands in the saved text', () => 
   it('accepts a whole figure, and a percentage-column value reported with its unit (controls)', () => {
     const content = '<p>In total, 190 people were screened, 36 were randomized and 83.3% completed.</p>';
     expect(receiptFor(content, '190', 0, { table: 'disposition', row: 0, column: 1 })().checkedClaims).toBe(1);
-    expect(receiptFor(content, '83.3', 0, { table: 'disposition', row: 0, column: 3 })().checkedClaims).toBe(1);
+    // The new receipt encloses the unit too; old clipped quotes are not rewritten.
+    expect(receiptFor(content, '83.3', 0, { table: 'disposition', row: 0, column: 3 }, '83.3%')().checkedClaims).toBe(1);
   });
 });
 
@@ -99,5 +100,71 @@ describe('a design number is not a reported result (B6)', () => {
 
   it('still verifies a real result beside them (control)', () => {
     expect(receiptFor(content, '190', 0, { table: 'disposition', row: 0, column: 1 })().checkedClaims).toBe(1);
+  });
+});
+
+describe('a review quote must enclose the whole raw figure', () => {
+  function review(content: string, start: number, end: number, value: string, header = 'Result') {
+    const retained: RetainedScientificRun[] = [{ ...runs[0], studies: [{ ...runs[0].studies[0],
+      tables: { primaryEfficacy: { title: 'Synthetic result', headers: ['Endpoint', header], rows: [['Synthetic', value]] } } }] }];
+    return () => prepareScientificReviewReceipt({
+      organizationId: 3, programId: PROGRAM, documentId: DOC, snapshotHash: 'b'.repeat(64),
+      reviewId: '1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f', reviewerId: '9',
+      snapshot: { id: DOC, sections: [{ id: SECTION, content }] }, runs: retained,
+      submission: { format: 'c2c.csr-scientific-review.v1', runIds: [RUN], expectedTablesSha256: scientificTablesSha256(retained),
+        allQuantitativeResultsMapped: true, populationsMethodsUnitsReviewed: true,
+        sections: [{ sectionId: SECTION, contentSha256: scientificSha256(content), assessment: 'mapped-results',
+          rationale: 'Reviewed the full raw figure and its retained cell.', claims: [{ id: 'whole-figure', start, end,
+            quoteSha256: scientificSha256(content.slice(start, end)), runId: RUN, studyId: 'CDI02',
+            table: 'primaryEfficacy', row: 0, column: 1, expectedValue: value }] }] },
+    });
+  }
+
+  it('accepts encoded signs/operators only when the quote includes their complete raw span', () => {
+    for (const [raw, value] of [['&lt; 0.001', '<0.001'], ['&#8722;2.50', '-2.50']] as const) {
+      const content = `<p>The result was ${raw}.</p>`;
+      const start = content.indexOf(raw);
+      expect(review(content, start, start + raw.length, value)().checkedClaims).toBe(1);
+      expect(review(content, start + 1, start + raw.length, value)).toThrow(expect.objectContaining({ code: 'CSR_EVIDENCE_CLAIM_CHANGED' }));
+    }
+  });
+
+  it('does not bind a scalar to digits after a comparator or sign outside the claimed quote', () => {
+    for (const prefix of ['<', '&lt;', '&#60;', '-', '&#8722;']) {
+      const content = `<p>Result: ${prefix}0.001.</p>`;
+      const start = content.indexOf('0.001');
+      expect(review(content, start, start + 5, '0.001')).toThrow(expect.objectContaining({ code: 'CSR_EVIDENCE_CLAIM_CHANGED' }));
+    }
+  });
+
+  it('requires an implicit percentage unit to remain inside the raw quoted span', () => {
+    const content = '<p>Completion: 83.3&#37;.</p>';
+    const start = content.indexOf('83.3');
+    expect(review(content, start, start + '83.3&#37;'.length, '83.3', 'Completed (%)')().checkedClaims).toBe(1);
+    expect(review(content, start, start + 4, '83.3', 'Completed (%)'))
+      .toThrow(expect.objectContaining({ code: 'CSR_EVIDENCE_CLAIM_CHANGED' }));
+  });
+
+  it.each(['95% CI', '95% confidence interval', 'n (%)', 'Count (%)'])('does not interpret %s as a percent-only column', header => {
+    const content = '<p>Response: 83.3&#37;.</p>';
+    const start = content.indexOf('83.3');
+    expect(review(content, start, start + '83.3&#37;'.length, '83.3', header))
+      .toThrow(expect.objectContaining({ code: 'CSR_EVIDENCE_CLAIM_CHANGED' }));
+  });
+
+  it.each(['<p>p &amp;lt;0.001.</p>', 'p &lt;0.001.'])('refuses threshold mapping for a visible literal entity: %s', content => {
+    expect(review(content, 0, content.length, '<0.001', 'p-value'))
+      .toThrow(expect.objectContaining({ code: 'CSR_EVIDENCE_CLAIM_CHANGED' }));
+  });
+
+  it.each(['ng/mL', 'µg/mL', 'pg/mL', 'copies/mL'])('verifies the entire %s source display and refuses its bare count', unit => {
+    const value = `5 ${unit}`;
+    const content = `<p>Concentration: ${value}.</p>`;
+    const start = content.indexOf(value);
+    expect(review(content, start, start + value.length, '5', 'Count'))
+      .toThrow(expect.objectContaining({ code: 'CSR_EVIDENCE_CLAIM_CHANGED' }));
+    expect(review(content, start, start + value.length, '5', `Concentration (${unit})`))
+      .toThrow(expect.objectContaining({ code: 'CSR_EVIDENCE_CLAIM_CHANGED' }));
+    expect(review(content, start, start + value.length, value, 'Concentration')().checkedClaims).toBe(1);
   });
 });

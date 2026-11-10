@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { redactInternals } from '@/lib/queryClient';
-import { ErrorState } from '../v2/dataConnect';
+import { EmptyState, ErrorState, type FailedRead } from '../v2/dataConnect';
 import type { QmsDoc, TrainingRow } from './data';
 import { I } from '../v2/icons';
 import { DialogPanel } from './ControlledDocumentDialogs';
@@ -12,30 +12,40 @@ interface TrainingCoverageProps {
   unread: boolean;
   failed: boolean;
   error: string | null;
+  /** The failed read: a refusal is said as itself, with no retry (C4). */
+  read?: FailedRead;
   refresh: () => void;
   canOpen: (documentId: number) => boolean;
   onOpen: (documentId: number) => void;
+  /** The coverage figure as one sentence when there are rows to measure; null otherwise, because the section's own
+      line (the failure, the loading line, or "No training-controlled documents yet.") already says it (C1). */
+  figure: string | null;
 }
 
 /** Existing roster coverage, qualified by the exact verified release. */
 export function TrainingCoverage(props: TrainingCoverageProps) {
   const [rolesOpen, setRolesOpen] = React.useState(false);
-  return <section className="qms-sec">
-    <div className="qms-sec-head">
-      <h2>Read-and-understood training</h2>
-      <span className="meta">Version in force · people assigned</span>
-      <span className="spacer" />
-      <button type="button" className="qms-chip" title="The job functions people hold, which documents require them to train"
-        onClick={() => setRolesOpen(true)}>{I.users} Job roles</button>
+  return <section className="pj-sec" aria-labelledby="qms-training-h">
+    <div className="pj-sec-h">
+      <h2 id="qms-training-h">Read-and-understood training</h2>
+      {props.figure && <span className="sec-sub" data-testid="qms-coverage-figure">{props.figure}</span>}
+      <div className="pj-sec-acts">
+        <button type="button" className="btn ghost small" title="The job functions people hold, which documents require them to train"
+          onClick={() => setRolesOpen(true)}>Job roles</button>
+      </div>
     </div>
     {rolesOpen && <JobRolesPanel onClose={() => setRolesOpen(false)} />}
-    <p className="qms-training-summary">Coverage counts the people assigned to each document, by job role or by name, who have acknowledged the version in force. It does not assess competency. Open a document to read it and acknowledge for yourself.</p>
     <div className="qms-train">
-      {props.failed && <ErrorState title="Training records could not be read" message={props.error} retry={props.refresh} testId="sop-training-failed" />}
-      {props.unread && !props.failed && <div className="qms-empty" role="status">Loading training records…</div>}
-      {!props.unread && props.rows.length === 0 && <div className="qms-empty">No training-controlled documents yet.</div>}
+      {props.failed && <ErrorState title="Training records could not be read" message={props.error} retry={props.refresh} read={props.read} readWhat="the training record" testId="sop-training-failed" />}
+      {props.unread && !props.failed && <EmptyState title="Loading training records…" busy />}
+      {!props.unread && props.rows.length === 0 && <EmptyState title="No training-controlled documents yet." />}
       {props.rows.map((row) => <CoverageRow key={row.documentId ?? row.doc} row={row} canOpen={props.canOpen} onOpen={props.onOpen} />)}
     </div>
+    {/* The method, once, closed (C1): it was a permanent paragraph above every row. */}
+    <details className="pj-more">
+      <summary>How coverage is counted</summary>
+      <p>Coverage counts the people assigned to each document, by job role or by name, who have acknowledged the version in force. It does not assess competency. Open a document to read it and acknowledge for yourself.</p>
+    </details>
   </section>;
 }
 
@@ -64,26 +74,17 @@ function CoverageRow({ row, canOpen, onOpen }: Pick<TrainingCoverageProps, 'canO
       <span className="qms-train-when">{state.note}</span>
     </> : <CoverageFigure current={state.current} of={state.of} lastCycle={row.lastCycle} />}
     {mine && <span className="qms-train-when" data-testid="qms-train-me">{mine}</span>}
-    <button className="qms-link" disabled={disabled} aria-label={`My acknowledgement for ${row.doc}`} onClick={() => { if (row.documentId) onOpen(row.documentId); }}>My acknowledgement</button>
+    <button type="button" className="btn ghost small" disabled={disabled} aria-label={`My acknowledgement for ${row.doc}`} onClick={() => { if (row.documentId) onOpen(row.documentId); }}>My acknowledgement</button>
   </div>;
 }
 
+/* The figure in words (C1): the bar coloured red, amber and green at thresholds the client invented (80, 95) said
+   in colour what no word said, and no rule of the product defines. */
 function CoverageFigure({ current, of, lastCycle }: { current: number; of: number; lastCycle: string }) {
-  const pct = of > 0 ? Math.round((current / of) * 100) : 0;
-  const tone = pct < 80 ? 'err' : pct < 95 ? 'warn' : 'ok';
   return <>
-    <span className="qms-train-bar"><span className="qms-train-fill" data-tone={tone} style={{ width: `${pct}%` }} /></span>
-    <span className="qms-train-pct mono" title={`${current} of ${of} assigned have acknowledged the version in force`}>{current}/{of}</span>
+    <span className="qms-train-pct" title={`${current} of ${of} assigned have acknowledged the version in force`}>{current} of {of} acknowledged</span>
     <span className="qms-train-when" title="Most recent acknowledgement by the people assigned">Latest {lastCycle}</span>
   </>;
-}
-
-export function DocumentReadButton({ doc, disabled, onOpen }: {
-  doc: QmsDoc; disabled: boolean; onOpen: (documentId: number) => void;
-}) {
-  return <button className="qms-chip" disabled={disabled}
-    title="Read this controlled revision and check your personal acknowledgement"
-    onClick={() => onOpen(doc.id)}>{I.bookOpen} {doc.status === 'effective' ? 'Read and acknowledge' : 'Open document'}</button>;
 }
 
 /* ── Job roles and who must train (P-49; docs/design/QMS_TRAINING_ASSIGNMENT_2026-10-29.md §3.12) ──
@@ -132,8 +133,8 @@ export function JobRolesPanel({ onClose }: { onClose: () => void }) {
   const done = async (write: Promise<unknown>) => { await write; setAct(null); jr.refresh(); };
   return <DialogPanel title="Job roles" onClose={onClose} busy={false}>
     <p>A job role is a job function people hold, such as QA reviewer. Assigning a role to a controlled document requires everyone who holds it to read and acknowledge it.</p>
-    {jr.failed && <ErrorState title="Job roles could not be read" message={jr.error} retry={jr.refresh} testId="qms-job-roles-failed" />}
-    {!jr.failed && !jr.listing && <div className="qms-empty" role="status">Loading job roles…</div>}
+    {jr.failed && <ErrorState title="Job roles could not be read" message={jr.error} retry={jr.refresh} read={jr.failure} readWhat="the job roles list" testId="qms-job-roles-failed" />}
+    {!jr.failed && !jr.listing && <EmptyState title="Loading job roles…" busy />}
     {jr.listing && <>
       {!jr.listing.canAdminister && <p className="qms-dialog-hint">Only an administrator changes job roles and who holds them.</p>}
       {jr.listing.roles.length === 0 && <div className="qms-empty">No job roles yet.</div>}
@@ -229,8 +230,8 @@ export function TrainingAssignmentsPanel({ doc, onClose }: { doc: QmsDoc; onClos
   const done = async (write: Promise<unknown>) => { await write; setAct(null); ta.refresh(); jr.refresh(); };
   return <DialogPanel title={`Who must train on ${doc.docNumber}`} onClose={onClose} busy={false}>
     <p>{doc.docNumber} {doc.title}. Everyone who holds an assigned job role, and everyone assigned by name, must read and acknowledge the version in force.</p>
-    {ta.failed && <ErrorState title="Who must train could not be read" message={ta.error} retry={ta.refresh} testId="qms-assignments-failed" />}
-    {!ta.failed && !ta.listing && <div className="qms-empty" role="status">Loading assignments…</div>}
+    {ta.failed && <ErrorState title="Who must train could not be read" message={ta.error} retry={ta.refresh} read={ta.failure} readWhat="who must train" testId="qms-assignments-failed" />}
+    {!ta.failed && !ta.listing && <EmptyState title="Loading assignments…" busy />}
     {ta.listing && <AssignmentsBody documentId={doc.id} listing={ta.listing} roles={jr.listing} rolesFailed={jr.failed} act={act} onAct={setAct} onDone={done} />}
     <div className="qms-dialog-actions"><button type="button" className="qms-btn ghost" onClick={onClose}>Close</button></div>
   </DialogPanel>;

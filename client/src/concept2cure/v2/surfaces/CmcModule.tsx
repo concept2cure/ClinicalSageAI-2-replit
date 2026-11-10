@@ -8,12 +8,13 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
-import { EmptyState, ProjectBack, liveGetOrNull, useLiveData, useLiveRows } from '../dataConnect';
+import { EmptyState, ProjectBack, liveGetOrNull, readRefusalWords, useLiveData, useLiveRows } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import {
   specRowsFromApi,
   specCreateBody,
   specUpdateBody,
+  joinSentence,
   type CmcSpecRow,
   type QualitySpecApiRow,
 } from './cmcSpec';
@@ -312,7 +313,12 @@ const CMC_NAV: CmcNavItem[] = [
 const CMC_SUGGEST: Record<string, string[]> = {
   overview: ['Run the ICH compliance check and show every gap', 'Generate the drug-substance control strategy', 'What is blocking my shelf-life claim?'],
   materials: ['Draft the §3.2.S.2.2 manufacturing process description', 'Summarise the impurity profile for this substance', 'Draft the §3.2.P.1 composition table', 'What does §3.2.P.2 pharmaceutical development still need?'],
-  specs: ['Justify the release and shelf-life limits for aggregation', 'Flag any specification without a validated method', 'Compare release vs shelf-life limits across DS and DP'],
+  /* No attribute is named here. "…for aggregation" was hard-coded, and
+     aggregation is an antibody attribute — on the small-molecule programme
+     walked on 2026-11-09 the ask row offered to justify a limit the project
+     records nothing about. A starter names the work, not a property this
+     programme may not have. */
+  specs: ['Justify a release or shelf-life limit on this project', 'Flag any specification without a validated method', 'Compare release vs shelf-life limits across DS and DP'],
   stability: ['Project shelf life from the long-term data with an ICH Q1E fit', 'Are my primary batches combinable for one shelf-life claim?', 'Show every study trending toward a limit', 'Draft the stability summary for §3.2.S.7'],
   batch: ['Summarize deviations across the last 10 batches', 'Show batches still pending release', 'Trend yield across drug-product batches'],
   change: ['Record this change and its justification', 'Which Module 3 evidence does this change affect?', 'Review my open changes and their recorded dispositions'],
@@ -575,6 +581,7 @@ function CmPush({ label, nav, bar }: { label: string; nav?: (id: string) => void
    those two surfaces, so the import would be a cycle — and cmcShared is where
    the CMC surfaces' shared plumbing already lives. */
 import { CmHead, Kpi, cmcStateWord } from './cmcShared';
+import { WorkProjectTasks } from './ProjectWorkTasks';
 
 /**
  * The Overview's one grey line — what the retired answer banner's HEADLINE
@@ -592,8 +599,17 @@ function overviewMeta(
   submissions: number | null,
   avgRpi: number | null,
   weakest?: { sub: string; rpi: number },
+  /* D0: when the board's read was REFUSED, this line says the refusal rather
+     than "could not be read". The panel below says the same thing; a reader who
+     saw one and not the other would be told the gate failed and the feature is
+     not licensed in the same breath. */
+  refusal?: { message: string } | null,
 ): string {
-  if (state === 'unreadable') return 'The Module 3 board could not be read — nothing below is established.';
+  if (state === 'unreadable') {
+    return refusal
+      ? `${refusal.message} Nothing below is established.`
+      : 'The Module 3 board could not be read — nothing below is established.';
+  }
   if (state === 'loading') return 'Reading the Module 3 portfolio…';
   if (submissions == null) return '— submissions';
   if (submissions === 0) return 'No CMC submissions are in scope yet.';
@@ -787,6 +803,11 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
     totalSections: number; approvedSections: number; staleSections: number; openCriticalContradictions: number;
     sectionsWithoutProvenance: number; incompleteApprovedSections: string[]; governedStateEvaluated: boolean; exportReady: boolean;
   }>(ctxProjectId ? '/api/cmc/module3-os/readiness/' + encodeURIComponent(ctxProjectId) : null);
+  /* The refusal's own words, or null when the read failed to answer and the
+     chip's own sentence stands (D0, `readRefusalWords`). */
+  const readinessRefusal = readiness.error || (!readiness.loading && !readiness.data)
+    ? readRefusalWords(readiness, 'the export gate’s verdict')
+    : null;
   const readinessReasons = (() => {
     const r = readiness.data;
     if (!r || r.exportReady) return [];
@@ -933,6 +954,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
           portfolioUnreadable ? null : port.length,
           avgRpi,
           lowSub ?? undefined,
+          board.error ? readRefusalWords(board, 'the Module 3 board') : null,
         )}
       />
       {board.loading ? (
@@ -943,6 +965,12 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
           icon={I.alertTriangle}
           title="Couldn't load the Module 3 board"
           hint="The org-scoped CMC board didn't respond. It aggregates your regulatory submissions, preparedness index, and governed §3.2 sections — sign in and retry, or check the service is reachable."
+          /* D0: a refused read says what it is — a plan without the module, a
+             part outside this release, a role, a project in another
+             organization, an expired session — and offers no retry that
+             cannot change it. A failure to answer keeps the words above. */
+          read={board}
+          readWhat="the Module 3 board"
         />
       ) : (
         <>
@@ -1147,7 +1175,13 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
                   {readiness.loading ? (
                     <span className="rd-chip tone-dim" role="status">Evaluating export readiness…</span>
                   ) : readiness.error || !readiness.data ? (
-                    <span className="rd-chip tone-err" role="alert" title={readiness.error || 'no readiness verdict was returned'}>Export readiness could not be read</span>
+                    /* D0, through `readRefusalWords` rather than a panel: a chip
+                       cannot render ErrorState, and "could not be read" over a
+                       403 says the gate failed when the truth is that the
+                       feature is not licensed for this organization. */
+                    <span className="rd-chip tone-err" role="alert" title={readinessRefusal?.message || readiness.error || 'no readiness verdict was returned'}>
+                      {readinessRefusal ? readinessRefusal.title : 'Export readiness could not be read'}
+                    </span>
                   ) : readiness.data.exportReady ? (
                     <span className="rd-chip tone-ok">Export ready</span>
                   ) : (
@@ -1160,7 +1194,9 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
                     ? <> — export blocked: {readinessReasons.join('; ')}</>
                     : null}
                   {!readiness.loading && (readiness.error || !readiness.data)
-                    ? <> — the export gate's verdict could not be read, so readiness is not established; this is a failed read, not a pass.</>
+                    ? readinessRefusal
+                      ? <> — {readinessRefusal.message} Readiness is not established; this is not a pass.</>
+                      : <> — the export gate's verdict could not be read, so readiness is not established; this is a failed read, not a pass.</>
                     : null}
                 </div>
               </div>
@@ -1348,23 +1384,30 @@ function CmSpecs({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
       const json = await res.json().catch(() => null);
       if (res.ok) reportCmcLinkage(json, 'CMC record');
       if (res.status === 401) { fireToast('Approval not signed — re-authentication failed. The specification was not approved.', 'error'); return; }
-      if (!res.ok) { fireToast('Couldn’t approve the specification — ' + specErr(json, res.status) + '. Nothing was persisted.', 'error'); return; }
+      if (!res.ok) { fireToast(joinSentence('Couldn’t approve the specification — ', specErr(json, res.status), 'Nothing was persisted.'), 'error'); return; }
       const adopted = specRowsFromApi([(json as { data?: QualitySpecApiRow })?.data].filter(Boolean) as QualitySpecApiRow[])[0];
       setRows((rs) => rs.map((x) => x.id === target.id ? { ...(adopted ?? { ...x, st: 'approved' }), _new: true } : x));
       const chain = (json as { governance?: { sha256Chain?: string } })?.governance?.sha256Chain;
       fireToast('Specification "' + target.attr + '" approved and signed' + (chain ? ' · ' + String(chain).slice(0, 12) + '…' : '') + '.');
       setSign(null);
     } catch (e) {
-      fireToast('Couldn’t approve the specification — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+      fireToast(joinSentence('Couldn’t approve the specification — ', e instanceof Error ? e.message : String(e)), 'error');
     }
   };
+  /* `noMethod` is `!method` — "no method name is recorded on this limit". It
+     was labelled "without a validated method", which is a different and
+     stronger claim the screen could not make: whether the NAMED method is
+     validated is the analytical register's answer, and the approve route is
+     what asks it (ICH Q2, `specificationMethodVerdict`). The banner now says
+     only what this row knows, and the refusal a reader may still meet comes
+     from the server, in the server's words. */
   const noMethodCount = rows.filter((r) => r.noMethod).length;
   return (
     <div className="cm-body">
       <CmHead title="Specifications" meta="Release and shelf-life limits — drug substance and drug product"
         actions={<button className="nda-open" onClick={() => setEdit('new')} disabled={!projectId} title={!projectId ? 'Open a project to record specifications' : ''}>{I.plus} New specification</button>} />
       <CmCorrNotice prefixes={['3.2.S.4', '3.2.P.5']} noun="these specifications" nav={nav} />
-      {noMethodCount > 0 && <div className="pj-con" style={{ marginBottom: 14 }}><span className="ico">{I.alertTriangle}</span><div><div className="pj-con-t">{noMethodCount} specification without a validated method</div><div className="pj-con-d">A specification cannot be approved until its analytical method is validated (ICH Q2). Add the method, or ask AnA to draft the validation justification.</div></div></div>}
+      {noMethodCount > 0 && <div className="pj-con" style={{ marginBottom: 14 }}><span className="ico">{I.alertTriangle}</span><div><div className="pj-con-t">{noMethodCount} specification{noMethodCount === 1 ? '' : 's'} with no analytical method recorded</div><div className="pj-con-d">A limit is approved only with a procedure fit to measure it (ICH Q2), so these cannot be approved until a method is recorded. A method that is recorded but still in development is refused at approval, naming its status.</div></div></div>}
       <div className="pj-card">
         <div className="pj-card-h"><span className="t">Specification table</span><span className="s">{rows.length} attributes</span></div>
         <div className="pj-card-b" style={{ padding: 0 }}>
@@ -1375,7 +1418,7 @@ function CmSpecs({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
               ) : live.loading ? (
                 <EmptyState icon={I.clipboardList} title="Loading specifications…" busy />
               ) : live.error ? (
-                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load specifications" hint="The governed specifications file didn’t respond. Sign in to your tenant and retry." />
+                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load specifications" hint="The governed specifications file didn’t respond. Sign in to your tenant and retry." read={live} readWhat="this project’s specifications" />
               ) : (
                 <EmptyState icon={I.clipboardList} title="No specifications yet" hint="Release and shelf-life limits for your drug substance and drug product appear here. Use New specification to record the first one — it is persisted to the governed specifications file." />
               )}
@@ -1390,7 +1433,7 @@ function CmSpecs({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
                 <td><span className={'rd-chip tone-' + stTone(r.st)}>{cmcStateWord(r.st)}</span></td>
                 <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                   <button className="nda-open" onClick={() => setEdit(r)}>{I.penLine} Edit</button>
-                  {r.st !== 'approved' && <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => setSign(r)} disabled={r.noMethod} title={r.noMethod ? 'Validate the method before approval' : ''}>{I.lock} Approve</button>}
+                  {r.st !== 'approved' && <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => setSign(r)} disabled={r.noMethod} title={r.noMethod ? 'Record the analytical method this limit is measured by, then approve' : ''}>{I.lock} Approve</button>}
                   {/* The limits an inspector asks about first were the one
                       register whose changes could not be read in the product:
                       the route existed and nothing called it. */}
@@ -2024,7 +2067,7 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
               {live.loading ? (
                 <EmptyState icon={I.barChart} title="Loading stability studies…" busy />
               ) : live.error ? (
-                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load stability studies" hint="The org-scoped stability register didn’t respond. Sign in to your tenant and retry." />
+                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load stability studies" hint="The org-scoped stability register didn’t respond. Sign in to your tenant and retry." read={live} readWhat="the stability register" />
               ) : (
                 <EmptyState icon={I.barChart} title="No stability studies yet" hint="Register a study with the batch it is run on, the ICH condition it is placed at and its pull schedule. Each pull-point result you then record against it is the evidence §3.2.S.7 / §3.2.P.8 is written from." />
               )}
@@ -2556,7 +2599,7 @@ function CmBatch({ nav }: { ask: (text: string) => void; nav?: (id: string) => v
               ) : live.loading ? (
                 <EmptyState icon={I.grid} title="Loading batch records…" busy />
               ) : live.error ? (
-                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load batch records" hint="The governed batch file didn’t respond. Sign in to your tenant and retry." />
+                <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load batch records" hint="The governed batch file didn’t respond. Sign in to your tenant and retry." read={live} readWhat="this project’s batch records" />
               ) : (
                 <EmptyState icon={I.grid} title="No batch records yet" hint="Manufactured batches with their yield, deviations, and disposition appear here. Use Log batch to record the first one — it is persisted to the governed batch file." />
               )}
@@ -2803,6 +2846,8 @@ function CmProcessCapability({ projectId }: { projectId?: string }) {
               title="Process capability was not assessed"
               hint={`The assessment could not be read (${read.status ?? 'no status'}). Nothing is being claimed about this process’s capability.`}
               testId="cmc-capability-error"
+              read={read}
+              readWhat="the capability assessment"
             />
           </div>
         ) : !data?.assessed ? (
@@ -3104,7 +3149,7 @@ function CmPathway({ nav }: { ask: (text: string) => void; nav?: (id: string) =>
                   {contradictions.loading ? (
                     <EmptyState icon={I.shieldAlert} title="Loading contradiction history…" busy />
                   ) : contradictions.error ? (
-                    <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load contradiction history" hint={contradictions.error} />
+                    <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load contradiction history" hint={contradictions.error} read={contradictions} readWhat="the contradiction history" />
                   ) : (
                     <EmptyState icon={I.shieldCheck} title="No contradictions recorded" hint="Run the sweep from the Module 3 build tab; every finding and its resolution is kept here." />
                   )}
@@ -3313,6 +3358,8 @@ export function CmcModule({ onAsk, onNav }: SurfaceViewProps) {
             <p className="ph-sub">Module 3 for this filing, and the quality records kept while the study runs.</p>
           </div>
         </header>
+        {/* P-111: opened from a CMC work project's door, its tasks above the whole project's records (placed with the CMC session). */}
+        <WorkProjectTasks area="cmc" />
         <CmStarters tab={tab} label={tabLabel} ask={ask} />
         <CmHalves tab={tab} onTab={setTab} />
         <CmcRegisterLinks onRecovered={() => setTab('build')} />

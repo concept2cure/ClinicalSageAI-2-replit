@@ -60,4 +60,16 @@ describe("Communication's draft buttons carry the letter", () => {
       expect(onAsk.mock.calls[0][0]).toMatch(/Stability data/);
     }
   });
+
+  /* 2026-11-10 (plan §2: one primary action per view; orange for send, the spark, focus and that one action). The
+     inbox list is the same component in Communication, the HAQ manager and the project's Respond step. A filled
+     orange "Draft response with AnA" on every open letter put an orange button on each row; it is a quiet button,
+     so a view keeps its one primary. Found in the project page's acceptance walk (D3 §6 item 3). */
+  it("each letter's draft button is quiet, never a filled primary on every row", async () => {
+    render(<CommunicationCenter surface={'communication-center' as never} segment="biotech" onAsk={vi.fn()} onNav={vi.fn()} />);
+    expect(await screen.findByText('Agency letter: IR-2026-10-12.pdf')).toBeTruthy();
+    const onCard = screen.getAllByRole('button', { name: /Draft response with AnA/ }).filter((b) => b.closest('.cc-comm-foot'));
+    expect(onCard).toHaveLength(1);
+    expect(onCard[0].className).not.toMatch(/\bprimary\b/);
+  });
 });

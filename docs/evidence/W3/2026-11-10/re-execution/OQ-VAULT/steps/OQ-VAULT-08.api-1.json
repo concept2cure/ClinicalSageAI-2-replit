@@ -1,0 +1,91 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/audit/reports/audit-trail-integrity",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 35,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "export": {
+        "data": "{\n  \"report\": {\n    \"id\": \"audit-trail-integrity\",\n    \"title\": \"Audit trail integrity attestation\",\n    \"version\": 1\n  },\n  \"organizationId\": 2,\n  \"period\": {\n    \"from\": \"2026-08-12\",\n    \"to\": \"2026-11-10\",\n    \"kind\": \"range\"\n  },\n  \"generatedAt\": \"2026-11-10T03:08:40.870Z\",\n  \"chain\": {\n    \"ok\": null,\n    \"scope\": \"integrity-checks\",\n    \"rowsChecked\": 645,\n    \"reason\": \"2 of 3 checks could not verify.\",\n    \"checks\": {\n      \"total\": 3,\n      \"intact\": 1,\n      \"broken\": 0,\n      \"notVerified\": 2\n    }\n  },\n  \"sections\": [\n    {\n      \"key\": \"stores\",\n      \"title\": \"Audit stores\",\n      \"columns\": [\n        {\n          \"key\": \"store\",\n          \"label\": \"Store\"\n        },\n        {\n          \"key\": \"rows_total\",\n          \"label\": \"Rows\"\n        },\n        {\n          \"key\": \"hashed\",\n          \"label\": \"Hashed rows\"\n        },\n        {\n          \"key\": \"legacy\",\n          \"label\": \"Legacy-chain rows\"\n        },\n        {\n          \"key\": \"sealed\",\n          \"label\": \"Sealed rows\"\n        },\n        {\n          \"key\": \"first_at\",\n          \"label\": \"First entry\"\n        },\n        {\n          \"key\": \"last_at\",\n          \"label\": \"Last entry\"\n        },\n        {\n          \"key\": \"in_period\",\n          \"label\": \"Rows in period\"\n        }\n      ],\n      \"rows\": [\n        {\n          \"store\": \"audit_logs\",\n          \"rows_total\": 645,\n          \"hashed\": 645,\n          \"legacy\": 0,\n          \"sealed\": 0,\n          \"first_at\": \"2026-11-10T01:45:42Z\",\n          \"last_at\": \"2026-11-10T03:08:40Z\",\n          \"in_period\": 645\n        },\n        {\n          \"store\": \"audit_events\",\n          \"rows_total\": 0,\n          \"hashed\": 0,\n          \"legacy\": null,\n          \"sealed\": 0,\n          \"first_at\": null,\n          \"last_at\": null,\n          \"in_period\": 0\n        }\n      ],\n      \"rowCount\": 2,\n      \"truncated\": false,\n      \"notes\": [\n        \"Times are UTC. audit_events times are stored without a time zone; the server and its database run in UTC, so they are written, and shown, as UTC.\"\n      ]\n    },\n    {\n      \"key\": \"verdicts\",\n      \"title\": \"Integrity checks\",\n      \"columns\": [\n        {\n          \"key\": \"check\",\n          \"label\": \"Check\"\n        },\n        {\n          \"key\": \"store\",\n          \"label\": \"Store\"\n        },\n        {\n          \"key\": \"verdict\",\n          \"label\": \"Verdict\"\n        },\n        {\n          \"key\": \"rows_checked\",\n          \"label\": \"Rows checked\"\n        },\n        {\n          \"key\": \"detail\",\n          \"label\": \"Detail\"\n        }\n      ],\n      \"rows\": [\n        {\n          \"check\": \"audit_logs hash chain\",\n          \"store\": \"audit_logs\",\n          \"rows_checked\": 645,\n          \"verdict\": \"intact\",\n          \"detail\": \"Every chained row re-derives from its predecessor; head not verified against the anchor: no anchor store is configured on this deployment, so this verdict is the chain walk only.\"\n        },\n        {\n          \"check\": \"audit_events linkage\",\n          \"store\": \"audit_events\",\n          \"rows_checked\": 0,\n          \"verdict\": \"not verified\",\n          \"detail\": \"Nothing could be verified: no entries: there is no chain to verify.\"\n        },\n        {\n          \"check\": \"audit_logs HMAC seals\",\n          \"store\": \"audit_logs\",\n          \"verdict\": \"not verified\",\n          \"rows_checked\": null,\n          \"detail\": \"The seal key is not configured on this server, so no seal was checked.\"\n        }\n      ],\n      \"rowCount\": 3,\n      \"truncated\": false,\n      \"notes\": [\n        \"Each check covers every row of its store for this organisation, not only the rows in the period.\"\n      ]\n    },\n    {\n      \"key\": \"review\",\n      \"title\": \"Audit trail review record\",\n      \"columns\": [\n        {\n          \"key\": \"review_status\",\n          \"label\": \"Review status\"\n        },\n        {\n          \"key\": \"review_id\",\n          \"label\": \"Review record\"\n        },\n        {\n          \"key\": \"period_start\",\n          \"label\": \"Reviewed from\"\n        },\n        {\n          \"key\": \"period_end\",\n          \"label\": \"Reviewed to\"\n        },\n        {\n          \"key\": \"outcome\",\n          \"label\": \"Outcome\"\n        },\n        {\n          \"key\": \"decision_count\",\n          \"label\": \"Findings\"\n        },\n        {\n          \"key\": \"reviewer_user_id\",\n          \"label\": \"Reviewer id\"\n        },\n        {\n          \"key\": \"reviewer_name\",\n          \"label\": \"Reviewer\"\n        },\n        {\n          \"key\": \"signed_at\",\n          \"label\": \"Signed\"\n        },\n        {\n          \"key\": \"signature_id\",\n          \"label\": \"Signature\"\n        },\n        {\n          \"key\": \"content_hash\",\n          \"label\": \"Content hash (SHA-256)\"\n        },\n        {\n          \"key\": \"next_due\",\n          \"label\": \"Next review due\"\n        }\n      ],\n      \"rows\": [\n        {\n          \"review_status\": \"No audit trail review recorded\",\n          \"review_id\": null,\n          \"period_start\": null,\n          \"period_end\": null,\n          \"outcome\": null,\n          \"decision_count\": null,\n          \"reviewer_user_id\": null,\n          \"reviewer_name\": null,\n          \"signed_at\": null,\n          \"signature_id\": null,\n          \"content_hash\": null,\n          \"next_due\": null\n        }\n      ],\n      \"rowCount\": 1,\n      \"truncated\": false,\n      \"notes\": [\n        \"A review is due each quarter (POLICY-IS-001 §3a): the next one is due three months after the end of the period the last one covered. The review shown is the latest signed one, the one covering the most recent period; it is overdue once the report date is past that due date.\",\n        \"Each finding, and what was done about it, is in the review record itself, with the integrity attestation run it names.\",\n        \"Times are UTC.\"\n      ]\n    }\n  ],\n  \"notRecorded\": [\n    \"Rows written before hashing was introduced carry no hash; they are counted, but no link through them can be checked.\",\n    \"Rows written while the seal key was not configured carry no seal; the hash chain still covers them.\"\n  ]\n}",
+        "manifest": {
+          "exportId": "COMPLIANCE-REPORT-1794280120870-7036bbf8",
+          "kind": "compliance-report",
+          "report": {
+            "id": "audit-trail-integrity",
+            "title": "Audit trail integrity attestation",
+            "version": 1
+          },
+          "organizationId": 2,
+          "period": {
+            "from": "2026-08-12",
+            "to": "2026-11-10",
+            "kind": "range"
+          },
+          "generatedAt": "2026-11-10T03:08:40.870Z",
+          "generatedBy": "oq-runner@validation.local",
+          "generatedByRole": "admin",
+          "format": "json",
+          "sections": [
+            {
+              "key": "stores",
+              "rowCount": 2,
+              "truncated": false
+            },
+            {
+              "key": "verdicts",
+              "rowCount": 3,
+              "truncated": false
+            },
+            {
+              "key": "review",
+              "rowCount": 1,
+              "truncated": false
+            }
+          ],
+          "dataHash": "b834abb87986272d37ac0ca8b7a46c9344c5ec9d27a08a6f008d4f8a65a5a112",
+          "hashAlgorithm": "SHA-256",
+          "chainAtGeneration": {
+            "ok": null,
+            "scope": "integrity-checks",
+            "rowsChecked": 645,
+            "reason": "2 of 3 checks could not verify.",
+            "checks": {
+              "total": 3,
+              "intact": 1,
+              "broken": 0,
+              "notVerified": 2
+            }
+          },
+          "basis": [
+            "21 CFR 11.10(e)",
+            "EU GMP Annex 11 §9",
+            "PMDA ER/ES guideline (authenticity)"
+          ],
+          "compliance": {
+            "standard": "21 CFR Part 11",
+            "section": "§11.10(e)",
+            "description": "Compliance report generated from the organisation's records, sealed with the platform's audit export key"
+          },
+          "manifestVersion": 2,
+          "signingKeyId": "jwt-secret-fallback"
+        },
+        "signature": "c7866e49e4bc327cf896cdd53b1639ac27087e0c241cad63d2ef3ce8c4a09cd6",
+        "filename": "audit-trail-integrity_2026-08-12_2026-11-10_7036bbf8.json",
+        "contentType": "application/json; charset=utf-8",
+        "verification": {
+          "algorithm": "HMAC-SHA256",
+          "signingKeyId": "jwt-secret-fallback",
+          "instruction": "The seal is an HMAC-SHA256 under an audit export key the platform holds; manifest.signingKeyId names the key, and manifest.dataHash is the SHA-256 of data. To verify a saved file, a signed-in member of the organisation sends { data, manifest, signature } to POST /api/audit/export/verify. For a CSV, data is the CSV text exactly as saved, and manifest and signature come from the .manifest.json saved with it. An inspector verifies through the organisation."
+        }
+      }
+    }
+  }
+}

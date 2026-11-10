@@ -1,0 +1,5 @@
+ × client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > a register row shows its next step and More, and More reveals every other action in the row 242ms
+AssertionError: expected [ Array(8) ] to deeply equal [ 'QS-SOP-001', 'Approve', …(1) ]
+- Expected
++ Received
+      Tests  1 failed | 7 skipped (8)

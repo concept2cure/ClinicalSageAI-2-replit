@@ -150,3 +150,36 @@ export function AuthoringReviewRound({ docId, title, meId, admin, refreshKey, on
   if (!round) return null;
   return <Round round={round} docId={docId} title={title} meId={meId} admin={admin} onChanged={() => { setEpoch((n) => n + 1); onChanged?.(); }} />;
 }
+
+/**
+ * A review returned for changes, said where the document opens (J3 human test, R2, 2026-11-09:
+ * docs/evidence/HUMAN-TEST/J3/README.md). After "Request changes" the author opened the document and saw
+ * nothing; the reason was only under More › Review tasks. The same route read and the same words as the
+ * round above (routeHeadline: "Returned by …: …"), with the way to the Review tasks rail. Nothing for an
+ * open or completed route, or none. A route that could not be read says so, never that nothing was returned.
+ */
+export function ReturnedReviewNote({ docId, refreshKey, onOpenTasks }: {
+  docId: string;
+  refreshKey: number;
+  /** Opens the document's Review tasks rail, from the control pressed. */
+  onOpenTasks: (from: HTMLButtonElement) => void;
+}) {
+  const read = useLiveData<RoundRead>(`${documentPath(docId)}/review-route`, [docId, refreshKey], isRoundRead);
+  if (read.loading) return null;
+  if (read.error) {
+    return (
+      <div className="scaf-note" role="status" data-testid="ed-review-unread" style={{ padding: '8px 16px', fontSize: 12, borderBottom: '1px solid var(--border)' }}>
+        This document’s review could not be read, so a returned review would not show here. Open Review tasks to see where it stands.
+      </div>
+    );
+  }
+  const round = read.data?.round ?? null;
+  if (!round || round.route.status !== 'returned') return null;
+  return (
+    <div className="scaf-note" role="status" data-testid="ed-review-returned"
+      style={{ display: 'flex', gap: 10, alignItems: 'baseline', padding: '8px 16px', fontSize: 12, borderBottom: '1px solid var(--border)' }}>
+      <span style={{ flex: 1, minWidth: 0 }}>{routeHeadline(round, null)}</span>
+      <button type="button" className="nda-open" onClick={(e) => onOpenTasks(e.currentTarget)}>Review tasks</button>
+    </div>
+  );
+}

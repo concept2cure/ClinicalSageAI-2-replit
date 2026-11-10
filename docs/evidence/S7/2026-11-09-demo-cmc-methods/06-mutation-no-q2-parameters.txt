@@ -1,0 +1,13 @@
+ok 1 - biotech (C2C-101): every specification's method is a method the pack records
+ok 2 - biotech (C2C-101): every recorded method states the ICH Q2 parameters its validation signs for
+ok 3 - biotech (C2C-101): no method is declared validated in the pack's data
+ok 4 - lumen (LMN-201): every specification's method is a method the pack records
+ok 5 - lumen (LMN-201): every recorded method states the ICH Q2 parameters its validation signs for
+ok 6 - lumen (LMN-201): no method is declared validated in the pack's data
+ok 7 - the seeder records each method before the specification that cites it
+not ok 8 - the seeder carries the Q2 parameters, and does not sign without a signer
+ok 9 - with a signer, each method is validated through the governed route
+ok 10 - a second run records nothing twice
+# tests 10
+# pass 9
+# fail 1

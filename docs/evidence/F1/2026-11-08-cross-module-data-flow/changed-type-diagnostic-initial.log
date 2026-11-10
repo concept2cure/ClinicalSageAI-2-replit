@@ -1,0 +1,8 @@
+Start 00-discover: full-program context, 0 semantic targets, heap 7168 MB
+Completed 00-discover: 0 diagnostics
+Discovery: 15470 full-program files; 65 changed targets; 10 changed files outside the configured program; snapshot 9b99a26bc93fefdc046f03a31fafe6d085780f1bed6d61e1d61d862ca696da79
+Start 01-check: full-program context, 20 semantic targets, heap 7168 MB
+Completed 01-check: 1 diagnostics
+ERROR TS2322 /workspace/scratch/3002d574f952/concept2cure-v2/server/routes/c2c/project-intake.ts:172:7: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+Stopped immediately after the first completed worker with actual errors. This is not a full gate result.
