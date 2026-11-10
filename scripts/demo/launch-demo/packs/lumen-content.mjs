@@ -32,6 +32,18 @@ const program = (code) => {
 };
 
 /** The projects, one per pipeline program the kit lists as a medicine in clinical or IND-enabling development. */
+/** Who files LMN-201 in the demonstration: the IND number its fictional letters already cite, and a sponsor record
+ *  that says it is a demonstration. Every value is invented (a 999… D-U-N-S, a 555-01xx telephone, a .example address). */
+export const LMN201_IDENTITY = {
+  applicationNumber: '194021',
+  sponsorAddress: '1 Fictional Way, Demo City, WA 00000, USA',
+  sponsor: {
+    name: CLIENT.name, duns: '999999902',
+    contactName: 'Demo Regulatory Contact (fictional)', contactPhone: '+1 555 0101', contactEmail: 'regulatory@lumen-demo.example',
+    signatoryName: 'Demo Regulatory Contact (fictional)', signatoryTitle: 'Head of Regulatory Affairs (fictional)',
+  },
+};
+
 export const PROJECTS = [
   { code: 'LMN-201', name: 'LMN-201 — prevention of recurrent C. difficile infection (IND)', indication: 'Prevention of recurrent Clostridioides difficile infection', priority: 'high', targetInDays: 120 },
   { code: 'LMN-801', name: 'LMN-801 — oral hormone protein for weight loss (IND)', indication: 'Weight loss in adults with obesity or overweight, preserving lean mass', priority: 'high', targetInDays: 200 },

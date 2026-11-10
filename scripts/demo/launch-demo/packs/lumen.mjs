@@ -21,8 +21,8 @@
  */
 import fs from 'node:fs';
 import { connectSigner, makeMultiPagePdfBuffer, must, sha256 } from '../lib.mjs';
-import { asArray, makeTally } from './biotech-shared.mjs';
-import { APPROVAL_LETTER, CLIENT, INFORMATION_REQUEST, CSR_SOURCE_FILE, FOOTER, LMN201_CMC, LMN201_DESIGN, PROJECTS, T, TASKS, overviewPdf } from './lumen-content.mjs';
+import { asArray, ensureApplicantIdentity, makeTally } from './biotech-shared.mjs';
+import { APPROVAL_LETTER, CLIENT, INFORMATION_REQUEST, CSR_SOURCE_FILE, FOOTER, LMN201_CMC, LMN201_DESIGN, LMN201_IDENTITY, PROJECTS, T, TASKS, overviewPdf } from './lumen-content.mjs';
 import { ensureAgencyLetter, ensureCmc, ensurePlanDocuments, ensureStudyDesign, ensureTasks } from './work-areas.mjs';
 import { ensureLumenQms } from './lumen-qms.mjs';
 import { ensureLumenRbm } from './lumen-rbm.mjs';
@@ -188,6 +188,8 @@ export async function seed(ctx) {
      "No leaves in sequence 0000 yet" (showcase sweep, 2026-11-10). Nothing is frozen or dispatched. */
   const leaves = (vault['LMN-201'] ?? []).filter((d) => d.stage === 'approved' && d.filing?.[2])
     .map((d) => ({ id: d.id, key: d.key, sectionCode: d.filing[2], leafTitle: d.title }));
+  // Who files it, so the sequence's package identity is complete ("Download an inspection copy" was refused without).
+  await ensureApplicantIdentity(c, { id: lmn201.id, label: lmn201.code }, LMN201_IDENTITY);
   await ensureSubmission(c, { ...lmn201, productName: lmn201.code }, leaves);
   // Last, so the reports read everything above (Run history, the report canvas).
   await ensureLumenReports(c, lmn201);
