@@ -960,8 +960,9 @@ function lettersWords(live: { loading: boolean; error?: unknown }, comms: CommRo
   return `${open.length} open${next ? ` · next response due ${dayWords(next)}` : ''}`;
 }
 
-/** Tasks and approvals: the project's open work by due date, on Plan only (D3-4, D3.md §4.7 Plan item 3). It was a
- *  second panel on Review over the same read; the Tasks handoff now opens Plan with the requested row first. */
+/** Tasks and approvals: the project's open work by due date, on Plan (D3-4, D3.md §4.7 Plan item 3) and again on
+ *  Review (P-122, 2026-11-10: d50c5f07e had taken it off Review, where an approver looks for it), over the page's one
+ *  read. The Tasks handoff opens Plan with the requested row first. */
 function ProjectWorkPanel({ pid, onNav, targetId, state }: {
   pid: string | null; onNav: (id: string) => void; targetId?: string | null; state: DataState<WorkViewRow>;
 }) {
@@ -1055,58 +1056,6 @@ function ProjectWorkPanel({ pid, onNav, targetId, state }: {
         <div className="pj-work-count">
           <button type="button" className="btn small" onClick={() => onNav('tasks')}>{STEP_DOORS.allTasks} {I.right}</button>
         </div>
-      )}
-    </section>
-  );
-}
-
-/** The open review threads and approval blockers of the page's one work read, by due date. */
-const approvalsOf = (d: WorkViewRow): WorkItemRow[] => byDueDate((d.items ?? []).filter((w) => w.source === 'review' && w.status !== 'done'));
-
-/** The Review step's approvals (P-122, 2026-11-10): the open review threads and approval blockers on this project,
- *  from the page's one work read. d50c5f07e (D3-4) left them on Plan alone, inside every task; an approver looks for
- *  them on Review. The whole list stays on Plan, one click away. */
-function ReviewApprovals({ state, onPlan }: { state: DataState<WorkViewRow>; onPlan: () => void }) {
-  return (
-    <section className="pj-sec" aria-labelledby="pj-approvals-h" data-testid="pj-review-approvals">
-      <div className="pj-sec-h">
-        <h2 id="pj-approvals-h">Approvals</h2>
-        <span className="sec-sub">Review threads and approval blockers on this project, by due date</span>
-        <span className="pj-sec-acts"><button type="button" className="btn small" onClick={onPlan}>All tasks and approvals {I.right}</button></span>
-      </div>
-      {isUnanchored(state) ? (
-        <EmptyState icon={I.checkCircle} title="This project has no tracking record"
-          hint="Approvals are kept on the project's tracking record, and this project has none, so there is nothing to list for it here." />
-      ) : (
-        <Anchored
-          state={state}
-          loadingText="Loading this project's approvals…"
-          errorTitle="Couldn't load this project's approvals"
-          errorHint="The work view didn't respond. Sign in and retry, or check the service is reachable."
-          emptyTitle="No approvals are waiting on this project"
-          emptyHint="Review threads and approval blockers recorded on this project appear here."
-          isEmpty={(d) => approvalsOf(d).length === 0}
-          render={(d) => (
-            <>
-              <div className="pj-files">
-                {approvalsOf(d).map((w) => {
-                  const due = fmtDue(w.dueAt);
-                  return (
-                    <div key={w.id} className="pj-file">
-                      <div className="pj-file-top"><span className="pj-file-n">{w.title}</span><WorkStatus w={w} /></div>
-                      <div className="pj-file-m">{w.ownerName ?? 'Unassigned'} · {due ? `Due ${due}` : 'No due date'}</div>
-                    </div>
-                  );
-                })}
-              </div>
-              {d.summary?.partial && (
-                <div className="sp-tone-warn pj-work-count" role="status">
-                  One of the stores this list reads could not be read, so it may be incomplete.
-                </div>
-              )}
-            </>
-          )}
-        />
       )}
     </section>
   );
@@ -2318,7 +2267,9 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
           {stage === 'review' && (
             <div className="pj-stagebody">
               {pid && <ProjectReviews state={reviews.state} onRetry={reviews.retry} onNav={onNav} available={available} />}
-              {pid && <ReviewApprovals state={work} onPlan={() => chooseStage('plan')} />}
+              {/* The project's tasks and approvals, as Review listed them until d50c5f07e (P-122): the same panel and the
+                  same one read as Plan's. A Tasks handoff still lands on Plan. */}
+              {pid && <ProjectWorkPanel pid={pid} onNav={onNav} state={work} />}
               {pid && <ReviewReadiness read={dossier} copyFor={filingCopyIn(docsRead)} onOpen={openDocument} />}
               {pid && available('quality') && <ProjectQuality key={pid} pid={pid} onNav={onNav} />}
               {/* What the client sees of this project's work (the Client Review

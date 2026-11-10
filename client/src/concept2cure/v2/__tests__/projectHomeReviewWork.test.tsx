@@ -212,17 +212,16 @@ describe('ProjectHome — Plan’s tasks and approvals, by due date (D3-4)', () 
     expect(tasks.querySelector('.pj-overdue')?.textContent).toBe('Due Jan 2, 2020');
   });
 
-  /* P-122 (2026-11-10): Review lists its approvals again (d50c5f07e had moved them to Plan only); the whole list of
-     tasks stays on Plan, the one place a Tasks handoff lands. */
-  it('Review lists the approvals, not the other tasks: the one list of every task is on Plan', async () => {
+  /* P-122 (2026-11-10): Review lists the tasks and approvals again, the same panel over the same read as Plan
+     (d50c5f07e had moved them to Plan only). A Tasks handoff still lands on Plan (below). */
+  it('Review lists the tasks and approvals again, the same panel as Plan', async () => {
     route(() => ok(work([item(), item({ id: 'board:t-1', source: 'board', title: 'Draft the synopsis', blocking: false })])));
     render(<ProjectHome {...props()} />);
     openStage('Review');
     await screen.findByRole('region', { name: 'Reviews' });
-    const approvals = await screen.findByRole('region', { name: 'Approvals' });
-    expect(await within(approvals).findByText('Approve the 2.5 Clinical Overview')).toBeTruthy();
-    expect(within(approvals).queryByText('Draft the synopsis')).toBeNull();
-    expect(screen.queryByRole('region', { name: /Tasks/ })).toBeNull();
+    const tasks = await screen.findByRole('region', { name: 'Tasks and approvals' });
+    expect(await within(tasks).findByText('Approve the 2.5 Clinical Overview')).toBeTruthy();
+    expect(within(tasks).getByText('Draft the synopsis')).toBeTruthy();
   });
 
   it('a task handed over from Tasks with stage "review" opens Plan, the requested row first and focused', async () => {

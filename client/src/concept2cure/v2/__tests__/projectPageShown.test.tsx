@@ -138,17 +138,16 @@ describe('Records and Activity are open sections', () => {
 });
 
 describe('the Review step lists its approvals and the server\'s readiness', () => {
-  it('the open approvals of the work read, not the other tasks, with a way to all of them', async () => {
+  it('its tasks and approvals, from the page\'s one work read, as Review listed them before d50c5f07e', async () => {
     mount();
     await screen.findByTestId('pj-documents');
     fireEvent.click(tab('Review'));
-    const approvals = await screen.findByRole('region', { name: 'Approvals' });
-    await waitFor(() => expect(within(approvals).getByText('Approve the 2.5 Clinical Overview')).toBeTruthy());
-    expect(within(approvals).getByText(/Raj Patel/)).toBeTruthy();
-    expect(within(approvals).queryByText('Draft the protocol synopsis')).toBeNull();
-    expect(within(approvals).queryByText('Sign the cover letter')).toBeNull();
-    fireEvent.click(within(approvals).getByRole('button', { name: /All tasks and approvals/ }));
-    expect(activeLabel()).toBe('Plan');
+    const panel = await screen.findByRole('region', { name: 'Tasks and approvals' });
+    await waitFor(() => expect(within(panel).getByText('Approve the 2.5 Clinical Overview')).toBeTruthy());
+    expect(within(panel).getByText('Draft the protocol synopsis')).toBeTruthy();
+    expect(within(panel).getByText(/Raj Patel/)).toBeTruthy();
+    expect(within(panel).queryByText('Sign the cover letter')).toBeNull();
+    expect(within(panel).getByText(/1 done/)).toBeTruthy();
   });
 
   it('the dossier readiness the server measured, with what it counts', async () => {
@@ -170,22 +169,8 @@ describe('the Review step lists its approvals and the server\'s readiness', () =
     mount();
     await screen.findByTestId('pj-documents');
     fireEvent.click(tab('Review'));
-    const approvals = await screen.findByRole('region', { name: 'Approvals' });
-    await waitFor(() => expect(within(approvals).getByText("Couldn't load this project's approvals")).toBeTruthy());
-    expect(within(approvals).queryByText('No approvals are waiting on this project')).toBeNull();
-  });
-
-  it('no approval waiting says so', async () => {
-    apiRequest.mockImplementation(async (_m: string, url: string) => {
-      if (url.startsWith(`/api/concept2cure/projects/${PID}/unified-work`)) return ok({ items: [WORK.items[1]], summary: {} });
-      if (url === `/api/c2c/projects/${PID}`) return ok(IND);
-      if (url.startsWith('/api/authoring/docs')) return ok({ documents: [DOC] });
-      return ok({});
-    });
-    mount();
-    await screen.findByTestId('pj-documents');
-    fireEvent.click(tab('Review'));
-    const approvals = await screen.findByRole('region', { name: 'Approvals' });
-    await waitFor(() => expect(within(approvals).getByText('No approvals are waiting on this project')).toBeTruthy());
+    const panel = await screen.findByRole('region', { name: 'Tasks and approvals' });
+    await waitFor(() => expect(within(panel).getByText("Couldn't load this project's tasks and approvals")).toBeTruthy());
+    expect(within(panel).queryByText('No tasks or approvals on this project')).toBeNull();
   });
 });
