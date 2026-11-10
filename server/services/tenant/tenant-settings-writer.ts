@@ -81,7 +81,11 @@ export class CompanyDocumentsSettingRefusedError extends Error {
  * in an append-only chain can never be removed.
  */
 const VALUE_AUDITED: Readonly<Record<string, readonly string[]>> = {
-  security: ['mfaRequired', 'passwordPolicy', 'sessionTimeoutMinutes', 'maxConcurrentSessions', 'ipRestrictions'],
+  // independentReviewersRequired and soleMemberSelfApproval are the organisation's review rules (P-117).
+  security: [
+    'mfaRequired', 'passwordPolicy', 'sessionTimeoutMinutes', 'maxConcurrentSessions', 'ipRestrictions',
+    'independentReviewersRequired', 'soleMemberSelfApproval',
+  ],
   qmp: ['auditTrailRetentionDays'],
   // Whether the organisation's members may use the connector for Claude, set by
   // its owner or administrator (P1-47, ADR-0014 §10; mcp/auth/connector-enablement.ts).
