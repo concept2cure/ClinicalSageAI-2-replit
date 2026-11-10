@@ -176,16 +176,18 @@ c2c_log "The app is serving. /readyz: $(c2c_readiness_line)"
 
 # Demo packs through the product's own API. They run again when scripts/demo
 # changes on the branch (the packs are idempotent by title), so a Codespace
-# made earlier gets new demo data on its next start. Without a second signer
-# (OQ_SIGNER_*) the two-person steps are recorded as not executed; the reviewer
-# becomes that signer once the QMS packs route a draft to review before
-# approving it (the server refuses a draft's approval with QMS_INVALID_STATE).
+# made earlier gets new demo data on its next start. The approver is the second
+# signer (OQ_SIGNER_*): without one, every two-person step (QMS approvals,
+# method validation, the RACT's approval, review requests) was recorded as not
+# executed. Not the reviewer: QMS approval needs the Approver role, and the
+# packs route a draft to review before approving it (158323d776).
 C2C_DEMO_VERSION="$(git rev-parse HEAD:scripts/demo 2>/dev/null || echo unknown)"
 # The Lumen account first: it is where "Demo access" lands.
 if [[ -f "$C2C_CODESPACE_STATE/lumen-accounts.done" ]]; then c2c_seed_lumen_org "$C2C_DEMO_VERSION"; fi
 if [[ "$(cat "$C2C_CODESPACE_STATE/demo-seed.done" 2>/dev/null)" != "$C2C_DEMO_VERSION" ]]; then
   c2c_log "Seeding the demo projects (npm run demo:seed -- --pack all); log: $C2C_CODESPACE_STATE/demo-seed.log"
   if DEMO_MANIFEST_ROOT="$C2C_CODESPACE_STATE/demo-manifests" \
+      OQ_SIGNER_EMAIL="$DEMO_APPROVER_EMAIL" OQ_SIGNER_PASSWORD="$DEMO_SIGNER_PASSWORD" \
       npm run --silent demo:seed -- --pack all --base-url "http://127.0.0.1:$C2C_PORT" --email "$DEMO_SEED_EMAIL" \
       >"$C2C_CODESPACE_STATE/demo-seed.log" 2>&1; then
     echo "$C2C_DEMO_VERSION" >"$C2C_CODESPACE_STATE/demo-seed.done"

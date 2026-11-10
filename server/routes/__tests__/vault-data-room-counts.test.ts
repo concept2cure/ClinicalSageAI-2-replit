@@ -28,6 +28,11 @@ const { listClientDocuments } = vi.hoisted(() => ({ listClientDocuments: vi.fn()
 vi.mock('../../services/clinical-regulatory-evidence/evidence-spine.service.js', () => ({
   listClientDocuments,
 }));
+const { syncQualityProjectSources } = vi.hoisted(() => ({ syncQualityProjectSources: vi.fn() }));
+vi.mock('../../services/clinical-regulatory-evidence/record-source.js', async (importOriginal) => ({
+  ...(await importOriginal<object>()), syncQualityProjectSources,
+}));
+import { SourceReadAccessError } from '../../services/clinical-regulatory-evidence/source-read-access';
 
 import createProjectVaultRoutes from '../c2c/project-vault';
 
@@ -195,5 +200,29 @@ describe('data room — "filed" names the Vault version (VR-16)', () => {
     expect(by(1)).toMatchObject({ stage: 'filed', filedAs: { version: '1.0', supersededBy: '2.0' } });
     expect(by(2)).toMatchObject({ stage: 'filed', filedAs: { version: '3.0', supersededBy: null } });
     expect(by(3)).toMatchObject({ stage: 'captured', filedAs: null });
+  });
+});
+
+// 2026-11-10, the Codespace click-through: approving a project's controlled document changed its Quality record after
+// the record was captured as a source, and the Vault answered 500. The data room's own search refreshes those captures
+// first (data-room-search.ts); the Vault's data room does the same.
+describe('data room — the project\'s Quality records are current', () => {
+  it('refreshes the project\'s captured Quality records before it lists the data room', async () => {
+    const order: string[] = [];
+    syncQualityProjectSources.mockImplementation(async () => { order.push('sync'); return { created: 0, unchanged: 1, superseded: 0 }; });
+    listClientDocuments.mockImplementation(async () => { order.push('list'); return []; });
+    await dataRoom();
+    expect(syncQualityProjectSources).toHaveBeenCalledWith({ organizationId: 7, programId: PROGRAM, userId: 3 });
+    expect(order).toEqual(['sync', 'list']);
+  });
+
+  it('a refresh that cannot be verified leaves the Vault up and says why its data room is not listed', async () => {
+    syncQualityProjectSources.mockRejectedValue(new SourceReadAccessError(503, 'QUALITY_SOURCE_PROJECTION_UNAVAILABLE',
+      'Current Quality sources could not be verified. No partial catalogue was supplied.'));
+    const response = await request(app()).get(`/api/c2c/project-vault/${PROGRAM}`);
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    expect(response.body.data.dataRoom).toBeUndefined();
+    expect(response.body.data.unavailable).toContainEqual({ branch: 'Data room', reason: expect.stringMatching(/Quality records/) });
+    expect(listClientDocuments).not.toHaveBeenCalled();
   });
 });
