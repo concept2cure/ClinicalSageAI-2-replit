@@ -243,8 +243,15 @@ export const UI_SURFACES: UiSurface[] = [
     // '/api/concept2cure/submission-milestones': the catalogue of each filing type's milestones the project's task
     // list is generated from (c2c/tasks.ts; read-only, the same for every organization). Its tasks are under
     // '/api/concept2cure/projects', already claimed.
+    // 2026-11-10 (P-122, Plan: R1): '/api/project-sections/milestones': the Schedule records a milestone (POST), moves
+    // its date or marks it done (PATCH /:id). The claim is a path, so it also serves the milestone list (GET, read
+    // admitted) and DELETE /:id; every write is admitted as a write on the project (project-sections.ts
+    // admitMilestoneWrite: a role that writes, edit permission, not archived), and no section route answers to
+    // "milestones" as a section code. The section list and section writes stay unclaimed
+    // (tests/db/p122-milestone-writes.dbtest.ts).
     apiPrefixes: ['/api/projects', '/api/concept2cure/projects', '/api/mdx/client-review', '/api/charters/by-project', '/api/v1/pyramids/by-project',
-      '/api/project-hierarchy', '/api/project-sections/summary', '/api/project-sections/timeline', '/api/concept2cure/submission-milestones'],
+      '/api/project-hierarchy', '/api/project-sections/summary', '/api/project-sections/timeline', '/api/project-sections/milestones',
+      '/api/concept2cure/submission-milestones'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,

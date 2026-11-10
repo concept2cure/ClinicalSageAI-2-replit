@@ -1,0 +1,23 @@
+# Focused typecheck (2026-11-10): the repo tsconfig, extended, files = the six changed TypeScript files of the R1 commit.
+# No other tsc or vitest was running. Every error is an ambient declaration in a file this work does not touch.
+server/export/renderers.ts(3,25): error TS7016: Could not find a declaration file for module 'pdfkit'. '/home/user/ClinicalSageAI-2-replit/node_modules/pdfkit/js/pdfkit.js' implicitly has an 'any' type.
+  There are types at '/home/user/ClinicalSageAI-2-replit/server/types/pdfkit.d.ts', but this result could not be resolved when respecting package.json "exports". The 'pdfkit' library may need to update its package.json or typings.
+server/export/renderers.ts(476,20): error TS7006: Parameter 'chunk' implicitly has an 'any' type.
+server/routes/c2c/shared.ts(16,32): error TS7016: Could not find a declaration file for module '../../metrics.js'. '/home/user/ClinicalSageAI-2-replit/server/metrics.js' implicitly has an 'any' type.
+server/services/ana-ri/proposal-seal.ts(22,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`
+server/services/cmc/link-to-module3.ts(36,32): error TS7016: Could not find a declaration file for module '../../metrics.js'. '/home/user/ClinicalSageAI-2-replit/server/metrics.js' implicitly has an 'any' type.
+server/services/documentExportService.ts(22,25): error TS7016: Could not find a declaration file for module 'pdfkit'. '/home/user/ClinicalSageAI-2-replit/node_modules/pdfkit/js/pdfkit.js' implicitly has an 'any' type.
+  There are types at '/home/user/ClinicalSageAI-2-replit/server/types/pdfkit.d.ts', but this result could not be resolved when respecting package.json "exports". The 'pdfkit' library may need to update its package.json or typings.
+server/services/ectd/leaf-pdf.ts(48,25): error TS7016: Could not find a declaration file for module 'pdfkit'. '/home/user/ClinicalSageAI-2-replit/node_modules/pdfkit/js/pdfkit.js' implicitly has an 'any' type.
+  There are types at '/home/user/ClinicalSageAI-2-replit/server/types/pdfkit.d.ts', but this result could not be resolved when respecting package.json "exports". The 'pdfkit' library may need to update its package.json or typings.
+server/services/mfaService.ts(15,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`
+server/services/mfaService.ts(16,25): error TS7016: Could not find a declaration file for module 'qrcode'. '/home/user/ClinicalSageAI-2-replit/node_modules/qrcode/lib/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/qrcode` if it exists or add a new declaration (.d.ts) file containing `declare module 'qrcode';`
+server/services/token-revocation.ts(20,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`
+server/utils/jwtVerify.ts(24,41): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`
+tests/db/two-tenant-fixture.ts(21,17): error TS7016: Could not find a declaration file for module 'jsonwebtoken'. '/home/user/ClinicalSageAI-2-replit/node_modules/jsonwebtoken/index.js' implicitly has an 'any' type.
+  Try `npm i --save-dev @types/jsonwebtoken` if it exists or add a new declaration (.d.ts) file containing `declare module 'jsonwebtoken';`

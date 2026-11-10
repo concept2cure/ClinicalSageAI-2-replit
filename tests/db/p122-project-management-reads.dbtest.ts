@@ -8,7 +8,7 @@
  *   - the organization-wide reads (Sentinel's findings, submission-ops' blockers and work due soon) list only the
  *     projects the person can open, so a private project's finding, blocker or work never reaches a colleague who is
  *     not on it, and a finding on it cannot be changed by them;
- *   - what was not admitted is still refused: the section list, milestone writes, Sentinel's status and scans,
+ *   - what was not admitted is still refused: the section list, section dependencies, Sentinel's status and scans,
  *     submission-ops' workload, and a section route reached under an admitted path ("/timeline/comments").
  *
  * Evidence: docs/evidence/DESIGN/P-122/project-page/.
@@ -218,7 +218,9 @@ describe('the "at risk" reads list only the projects the person can open', () =>
 describe('what was not admitted is still refused in production', () => {
   it.each([
     ['the section list', '/api/project-sections?project_id=PROJECT'],
-    ['the milestone list (writes share its path)', '/api/project-sections/milestones?project_id=PROJECT'],
+    /* The milestone list left this list on 2026-11-10: project-home claims /api/project-sections/milestones for the
+       Schedule's milestone writes, and the list shares the path (tests/db/p122-milestone-writes.dbtest.ts). */
+    ['section dependencies', '/api/project-sections/dependencies?project_id=PROJECT'],
     ['Sentinel\'s status', '/api/sentinel/status'],
     ['submission-ops\' workload', '/api/submission-ops/workload'],
     ['the project cockpit read model', '/api/project-home/PROJECT'],
