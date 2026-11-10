@@ -143,7 +143,7 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
               {scopeOf && 'organisationWide' in scopeOf && <span data-testid="qms-record-org-wide">Organisation-wide · </span>}
               {/* At the server's cap the register is the most recent rows, and its figures are theirs (C12). */}
               {config.readCap && rows.length >= config.readCap.rows && (
-                <span data-testid="qms-record-partial">The {rows.length} {config.readCap.order} {config.noun[1]}: </span>
+                <span data-testid="qms-record-partial">The {rows.length} {config.readCap.order} {config.noun[1]} — </span>
               )}
               {config.kpis(rows, today).map((k, i) => <React.Fragment key={k.label}>{i ? ' · ' : ''}{k.label}: <span data-tone={k.tone === 'err' || k.tone === 'warn' ? k.tone : undefined}>{k.val}</span>{k.detail ? ` (${k.detail})` : ''}</React.Fragment>)}
         </p>}

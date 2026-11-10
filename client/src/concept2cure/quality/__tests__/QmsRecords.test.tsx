@@ -432,7 +432,8 @@ describe('Quality records', () => {
     H.reads['/api/capa-mdr/capa'] = { data: { rows, count: 100 }, loading: false, error: null };
     const onContext = vi.fn();
     render(<QmsRecords tab="capa" onAsk={vi.fn()} onContext={onContext} />);
-    expect(screen.getByTestId('qms-record-figures').textContent).toMatch(/^The 100 most recently updated CAPAs: Open CAPAs: 100 \(0 closed\)/);
+    // Walked, 2026-11-10: "CAPAs: Open CAPAs:" stacked two colons; the capped read is set off by a dash.
+    expect(screen.getByTestId('qms-record-figures').textContent).toMatch(/^The 100 most recently updated CAPAs — Open CAPAs: 100 \(0 closed\)/);
     await waitFor(() => expect(onContext).toHaveBeenLastCalledWith(expect.objectContaining({ state: 'ready', count: 100, partial: true })));
     cleanup();
 
