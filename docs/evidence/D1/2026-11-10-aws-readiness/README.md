@@ -72,5 +72,16 @@ AWS account or credential in this session.**
    B4, NEW-3, retention, revoking the live credentials, and the apply.
 3. **Not done here (engineering):**
    - MR-03 Stage 6 (OPS-17);
-   - Stage 7's `/readyz` half (OPS-22);
+   - Stage 7 steps 2–4 and 8;
+   - wiring `READYZ_TOKEN` into the task and the smoke test;
    - the switch of the common rule set to block, two weeks after the first apply.
+
+## Also landed: MR-03 Stage 7 steps 5 and 6
+
+| Finding | Commit | Red | Green |
+|---|---|---|---|
+| OPS-22, public `/readyz` expensive and chatty | `5e8a7317ce` | 5 hits ran 5 queries, 10 concurrent ran 10, and the detail went to everyone (`readyz-red.txt`: 7 failing) | 35/35 across the readyz suites (`readyz-green.txt`) |
+| OPS-29, metrics token compared with `===` | `8a5eb16b27` | the source check fails on `===` (`metrics-token-red.txt`) | 11/11 (`metrics-token-green.txt`) |
+
+`readyz-virus-scan`'s 30 s boundary case runs with `READYZ_CACHE_MS=0`. It pins the scanner's own cache, which the verdict
+cache would otherwise extend by up to 5 s; its assertions are unchanged.
