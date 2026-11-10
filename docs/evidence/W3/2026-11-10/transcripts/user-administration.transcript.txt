@@ -55,3 +55,5 @@ members (read as the database owner, after setup):
   7 | oq-viewer@validation.local   |   2 | viewer | active | t
 (7 rows)
 
+
+2026-11-10T02:27:01.238Z role change through user administration: PATCH /api/tenant-users/2/2 (the signer) {role:"approver", reason} as the run identity: 200 {"message":"User role updated successfully"}; role admin -> approver

@@ -441,27 +441,20 @@ await step(
   {
     id: 'OQ-QMS-12',
     urs: ['URS-QMS-011'],
-    title: 'Quality Management Plan create and list (governed: reason required)',
-    action: 'POST /api/quality/plans {name, description} with no reason; again with a reason of at least 8 characters; GET /api/quality/plans',
-    expected: 'Without a reason: HTTP 400 REASON_REQUIRED and no plan created. With it: HTTP 201; plan listed with status draft',
+    title: 'Quality management plans are outside this release',
+    action: 'POST /api/quality/plans {name, description, reason}; GET /api/quality/plans',
+    expected: 'Both 403 LAUNCH_SCOPE: no plan is created or listed in this release',
+    note: 'v0.9: quality-management plans left the launch scope by the CPO decision of 2026-10-08 (bcc457edb8, docs/SURFACE_DECISIONS_2026-10-08.md, shared/constants/launch-scope.ts): a plan\'s gates and CTQ factors cannot be authored anywhere, and nothing reads them. ' +
+      'Until v0.8 the step created and listed a plan (v0.5: with a governed reason). URS-QMS-011 is withdrawn from this release; its revision is owed through change control.',
   },
   async ({ api, expect }) => {
     const name = `OQ-006 QMP ${stamp}`;
-    // v0.5: creating a plan is a governed change (D5, 2026-09-23); a plan
-    // posted without a reason is refused and nothing is created.
-    const refused = await api('POST', '/api/quality/plans', { name, description: 'Validation exercise' });
-    expect(refused.status === 400, `expected 400 without a reason, got ${refused.status}`, refused.json);
-    expect(refused.json?.error === 'REASON_REQUIRED', 'expected REASON_REQUIRED', refused.json);
-    const before = await api('GET', '/api/quality/plans');
-    const beforeArr = Array.isArray(before.json) ? before.json : before.json?.data ?? [];
-    expect(!beforeArr.some((p) => p.name === name), 'a refused plan was created', beforeArr.map((p) => p.name));
-    const r = await api('POST', '/api/quality/plans', { name, description: 'Validation exercise', reason: 'OQ-006 validation exercise: QMP create' });
-    expect(r.status === 201, `expected 201, got ${r.status}`, r.json);
-    const l = await api('GET', '/api/quality/plans');
-    const arr = Array.isArray(l.json) ? l.json : l.json?.data ?? [];
-    expect(arr.some((p) => p.name === name), 'plan not listed', arr.map((p) => p.name));
-    state.qmpName = name;
-    return `plan ${r.json?.id} status ${r.json?.status}; ${arr.length} plans listed`;
+    const code = (r) => r.json?.error?.code ?? r.json?.code;
+    const made = await api('POST', '/api/quality/plans', { name, description: 'Validation exercise', reason: 'OQ-006 validation exercise: QMP create' });
+    const listed = await api('GET', '/api/quality/plans');
+    expect(made.status === 403 && code(made) === 'LAUNCH_SCOPE', `create: expected 403 LAUNCH_SCOPE, got ${made.status} ${code(made)}`, made.json);
+    expect(listed.status === 403 && code(listed) === 'LAUNCH_SCOPE', `list: expected 403 LAUNCH_SCOPE, got ${listed.status} ${code(listed)}`, listed.json);
+    return `create ${made.status} ${code(made)}; list ${listed.status} ${code(listed)}`;
   },
 );
 
@@ -513,17 +506,17 @@ await step(
     id: 'OQ-QMS-15',
     kind: 'unscripted',
     urs: ['URS-QMS-011', 'URS-QMS-012'],
-    title: 'QMP surface renders the plan',
+    title: 'The QMP surface shows it is outside this release',
     action: 'Open /concept2cure/qmp',
-    expected: 'The plan name is visible',
-    dependsOn: ['OQ-QMS-12'],
+    expected: 'The page explains the surface is not in this release (no plan content, no upsell)',
+    note: 'v0.9: quality-management plans left the release (bcc457edb8, 2026-10-08); see OQ-QMS-12. Until v0.8 the step expected the plan created in OQ-QMS-12 on the page.',
   },
   async (ctx) => {
     await ctx.newPage(null);
     await ctx.goto('/concept2cure/qmp');
-    await ctx.expectText(state.qmpName);
+    await ctx.expectText(/not in this release/i);
     await ctx.screenshot();
-    return 'plan visible';
+    return 'launch-scope gate rendered';
   },
 );
 
