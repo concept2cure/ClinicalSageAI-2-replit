@@ -2788,7 +2788,9 @@ chose: **self-approve, on record.**
     A door admits a sole member only once it also writes the record above, so no door admits one silently.
     - Built: the conversation artifact's approval and lock (`artifact-approval-act.ts`, `artifact-signed-act.ts`), on
       both its doors (the status route and AnA's signed act).
-    - Next: the editor's APPROVER e-signature and Freeze (`server/routes/authoring.router.ts`).
+    - Built 2026-11-10 (P-120): the editor's APPROVER signature, by E-sign and by the workflow sign
+      (`approverIndependenceRefused`, `server/routes/authoring.router.ts`). Freeze needed nothing: an author already
+      freezes their own document with the meaning AUTHOR.
     - Not yet, each its own slice with its own record: QMS documents, Module 3 sections, labeling approvals, the
       document lifecycle, and a sequence's freeze and dispatch. Until then those doors refuse a sole member as before.
   - **Membership is counted strictly.** Every membership row counts, whatever the account's status, so disabling a
@@ -2956,3 +2958,43 @@ the entire platform."**
 - **What it does not add.** No screen, route, service, table or AnA tool (RULE 6). It completes the job-role store
   and reaches it from Administration.
 - **Design.** `docs/design/CLIENT_TYPE_JOB_ROLES_2026-11-10.md`.
+
+### P-120 — Decided under the founder's delegation: the open questions on a one-person organisation
+
+The founder, 2026-11-10: **"Study this online thoroughly and decide as an SME would across all open questions and
+then proceed."** Decided by session `…01QoxbLaF` from the sources below. Each is reversible by the founder.
+
+1. **A sole consultant may dispatch a sequence to FDA alone.** Nothing in the regulations asks for a second person at
+   filing.
+   - 21 CFR 312.3 defines a sponsor-investigator as an individual who both initiates and conducts an investigation.
+   - 21 CFR 312.23(a)(1)(ix) asks for one signature on Form FDA 1571: the sponsor's, or the sponsor's authorized
+     representative's.
+   - FDA's ESG NextGen registration lets an individual hold an account under an individual letter of non-repudiation,
+     and lets a consultant, CRO or US agent file for clients under one account with each client's Letter of
+     Authorization.
+   - **Conditions.** The same setting governs it (`soleMemberSelfApproval`, P-117). The dispatch is recorded as having
+     no independent review. A consultant who files for a client still files under that client's authorization: the
+     gateway account setting is unchanged. The dispatch door admits a sole member only when it is built to write that
+     record (P-116's rule for every door).
+2. **Self-approval stays on by default.** 21 CFR Part 11 does not require the approver to differ from the author:
+   11.50(a)(3) lists authorship, review and approval as meanings one person's signature may carry. The second-person
+   rule is this platform's policy. A one-person organisation cannot work with it off, the setting has no effect once a
+   second member exists, and every such act is recorded. An administrator who wants it off switches it off.
+3. **QMS controlled documents follow the same setting**, when that door is built. FDA's guidance "Quality Systems
+   Approach to Pharmaceutical CGMP Regulations" (2006) accepts one person in both production and quality functions only
+   in very limited circumstances, and recommends a periodic review by another qualified person who is not involved.
+   The platform records the act; arranging that periodic review is the organisation's duty, and its quality manual
+   says how.
+4. **GMP batch disposition is never admitted by this setting** (21 CFR 211.22, 211.192). It is outside the launch
+   catalog. If it ever enters, it needs its own founder decision.
+5. **A reviewer is still never the approver** (P-95 question 1) and never an author (P-18), in every organisation with
+   more than one member.
+6. **The reviewer count stays 1 to 5.** No source sets a number; ICH E6(R3) asks for review proportionate to risk.
+7. **Order of the remaining doors:** sequence freeze and dispatch, then QMS controlled documents, Module 3 sections,
+   labeling approvals and the document lifecycle. Each is its own slice.
+
+Sources read 2026-11-10: 21 CFR 11.50, 312.3 and 312.23 (eCFR); FDA, "Letters of Non-Repudiation Agreement" and
+"Steps for CROs, US Agents and Consultants to Create an ESG NextGen Account" (fda.gov); FDA, "Quality Systems Approach
+to Pharmaceutical CGMP Regulations" (2006); 21 CFR 211.22; ICH E6(R3). The regulation and guidance texts were read
+through search summaries and secondary quotations, not line by line: counsel or QA should confirm item 1 and item 3
+against the primary texts before the first real filing by a one-person client.
