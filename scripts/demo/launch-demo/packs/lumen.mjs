@@ -26,6 +26,7 @@ import { APPROVAL_LETTER, CLIENT, INFORMATION_REQUEST, CSR_SOURCE_FILE, FOOTER, 
 import { ensureAgencyLetter, ensureCmc, ensurePlanDocuments, ensureStudyDesign, ensureTasks } from './work-areas.mjs';
 import { ensureLumenQms } from './lumen-qms.mjs';
 import { ensureLumenRbm } from './lumen-rbm.mjs';
+import { connectApprover, ensureLumenVault } from './lumen-vault.mjs';
 
 const rowsOf = (j) => (Array.isArray(j) ? j : Array.isArray(j?.data) ? j.data : []);
 const inDays = (n) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
@@ -137,9 +138,12 @@ export async function seed(ctx) {
   const tally = makeTally(run);
   // The second person (lib.mjs connectSigner: OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD). Two-person steps run only with one.
   const signer = await connectSigner({ baseUrl: ctx.baseUrl, authorEmail: ctx.identity?.email });
-  const c = { api, run, tally, signer, identity: ctx.identity };
+  // A third person (OQ_APPROVER_EMAIL / OQ_APPROVER_PASSWORD): the Vault's review route refuses one person in two roles.
+  const approver = await connectApprover({ baseUrl: ctx.baseUrl, excludeEmails: [ctx.identity?.email, signer?.email].filter(Boolean) });
+  const c = { api, run, tally, signer, approver, identity: ctx.identity, baseUrl: ctx.baseUrl };
   run.note('Lumen Bioscience demonstration built from public information (data/seeds/lumen-demo). Not affiliated with Lumen Bioscience, Inc.; every specification, stability result, batch, planning assumption and task is illustrative.');
 
+  const cast = await castOf(c);
   const clientWorkspaceId = await ensureClient(c);
   const existing = await listAllProjects(api);
   const projects = {};
@@ -147,7 +151,7 @@ export async function seed(ctx) {
     const project = await ensureProject(c, spec, clientWorkspaceId, existing);
     projects[spec.code] = project;
     await ensureOverview(c, project, spec);
-    await ensureTasks(c, project, TASKS[spec.code] ?? [], spec.code);
+    await ensureTasks(c, project, castTasks(TASKS[spec.code] ?? [], cast), spec.code);
   }
   run.record('projects', projects);
 
@@ -168,6 +172,8 @@ export async function seed(ctx) {
   await ensureLumenQms(c, { lmn201 }, 'LMN-201');
   // Risk-based monitoring: RACT, KRIs and QTLs over six monthly extracts, signals, the plan and site actions (lumen-rbm.mjs).
   await ensureLumenRbm({ ...ctx, ...c }, lmn201, 'LMN-201');
+  // The Vault: each project's synthetic client data room, reviewed, approved and sealed by its people (lumen-vault.mjs).
+  await ensureLumenVault({ ...ctx, ...c }, projects);
   await ensureLumenSequence(c, lmn201);
   // Last, so the reports read everything above (Run history, the report canvas).
   await ensureLumenReports(c, lmn201);
@@ -281,3 +287,26 @@ async function ensureLumenReports({ api, run, tally, identity }, program) {
     return out.join('; ');
   });
 }
+
+/**
+ * The story's people (lumen-content.mjs TASKS) by role. In an organisation that holds a persona by name (the
+ * Codespace's development organisation), the task is theirs. Elsewhere, such as the Lumen organisation of the
+ * founder, Brian Finrow and Carl (2026-11-06), each persona's work goes to the member in that role: the author is the
+ * person seeding, the reviewer is the second signer, the approver is a third member. Read from the board's roster.
+ */
+const PERSONA_ROLE = {
+  'Ana Author': 'author', 'Rhea Reviewer': 'reviewer', 'Mo Monitor': 'reviewer', 'Quinn Quality': 'reviewer',
+  'Ava Approver': 'approver', 'Sam Statistician': 'approver', 'Cal CMC': 'approver',
+};
+
+async function castOf({ api, signer, identity }) {
+  const roster = asArray(must(await api('GET', '/api/task-management/assignees'), 200, 'read the task roster'), 'data');
+  const nameOf = (id) => roster.find((r) => String(r.id) === String(id))?.name ?? null;
+  const author = nameOf(identity?.userId);
+  const reviewer = signer ? nameOf(signer.userId ?? signer.session?.user?.id) : null;
+  const approver = roster.find((r) => r.name !== author && r.name !== reviewer)?.name ?? null;
+  return { names: new Set(roster.map((r) => r.name)), byRole: { author, reviewer: reviewer ?? author, approver: approver ?? reviewer ?? author } };
+}
+
+const castTasks = (tasks, cast) => tasks.map((t) => (!t.assignee || cast.names.has(t.assignee)
+  ? t : { ...t, assignee: cast.byRole[PERSONA_ROLE[t.assignee] ?? 'author'] ?? t.assignee }));
