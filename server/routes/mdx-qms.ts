@@ -101,7 +101,7 @@ import {
   InvalidChangeTransitionError, ChangeApprovalRequiresSignatureError,
   type ChangeState,
 } from '../services/qms/changeControl.service';
-import { approveQmsChangeSigned } from '../services/qms/change-approval-signature';
+import { approveQmsChangeSigned, computeQmsChangeContentDigest, type QmsChangeRow } from '../services/qms/change-approval-signature';
 import { AggregateLearningRefusedError } from '../services/intelligence/ana-failure-learning';
 import { clientIpOf } from '../utils/client-ip';
 import { requireEditorAccess } from '../middleware/orgMembership';
@@ -644,7 +644,7 @@ const approveBody = z.object({
   reason: z.string().trim().min(3, 'A reason for change of at least 3 characters is required').max(2000),
   effectiveDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'effectiveDate must be YYYY-MM-DD').optional(),
 });
-const changeApproveBody = approveBody.extend({ learningReview: z.object({
+const changeApproveBody = approveBody.extend({ expectedContentDigest: z.string().regex(/^[a-f0-9]{64}$/), learningReview: z.object({
   expectedArtifactSha256: z.string().regex(/^[a-f0-9]{64}$/), invariantAccepted: z.literal(true),
 }).strict().optional() });
 const learningReviewOption = (body: z.infer<typeof changeApproveBody>) => body.learningReview ? { learningReview: body.learningReview } : {};
@@ -735,7 +735,7 @@ function approvalRefusal(res: Response, err: QmsApprovalRefusedError, what: 'Doc
   // Its own code: the remedy is to re-file the section, not to change the document's state.
   if (err.code === 'FILING_DIVERGED') return clientError(res, 409, err.message, { code: 'FILING_DIVERGED' });
   if (err.code === 'EFFECTIVE_DATE_BACKDATED') return clientError(res, 422, err.message, { code: 'QMS_EFFECTIVE_DATE_BACKDATED' });
-  return clientError(res, 409, err.message, { code: 'QMS_INVALID_STATE' });
+  return clientError(res, 409, err.message, { code: err.code === 'CHANGED_SINCE_READ' ? 'QMS_CHANGED_SINCE_READ' : 'QMS_INVALID_STATE' });
 }
 
 function signedQmsFailure(res: Response, error: unknown, operation: string, what: 'Document' | 'Change' = 'Document'): Response {
@@ -1191,7 +1191,7 @@ router.get('/qms/changes', async (req: Request, res: Response) => {
     const register = rows.map((r) => ({
       ...r,
       links: links.get(Number(r.id)) ?? [],
-      next_states: nextStatesOf(r.status),
+      next_states: nextStatesOf(r.status), content_digest: computeQmsChangeContentDigest(r as unknown as QmsChangeRow),
     }));
     return ok(res, register, { count: register.length });
   } catch (err) {
@@ -1376,7 +1376,7 @@ router.post('/qms/changes/:id/approve', async (req: Request, res: Response) => {
       authenticationMethod: verified.secondFactorVerified ? 'password+totp' : 'password',
       secondFactorVerified: verified.secondFactorVerified,
       ipAddress: resolveIpAddress(req),
-      ...learningReviewOption(body),
+      ...learningReviewOption(body), expectedContentDigest: body.expectedContentDigest,
     });
     commitAttempted = true;
     await client.query('COMMIT');

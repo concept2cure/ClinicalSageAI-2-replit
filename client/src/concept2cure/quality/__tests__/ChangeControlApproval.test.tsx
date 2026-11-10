@@ -134,9 +134,19 @@ describe('ChangeControl — approving a change is a signature taken here', () =>
       password: 'pw',
       meaning: 'APPROVED',
       reason: 'Impact assessment reviewed and accepted.',
+      // The approval signs the content the dialog showed, by the register's digest of it.
+      expectedContentDigest: 'd'.repeat(64),
     });
     expect(H.signed).toMatchObject({ signedAt: '2026-09-25T09:00:00.000Z' });
     expect(H.refresh).toHaveBeenCalled();
+  });
+
+  it('signs nothing when the row carries no digest of its content', () => {
+    renderLog(FIXTURE_CHANGES.map((c) => (c.status === 'under_assessment' ? { ...c, contentDigest: null } : c)));
+    fireEvent.click(screen.getAllByRole('button', { name: /^Approve$/ })[0]);
+    expect(screen.getByRole('alert').textContent).toMatch(/could not be read for signing/);
+    expect((screen.getByText('stub-sign') as HTMLButtonElement).disabled).toBe(true);
+    expect(H.apiRequest.mock.calls.filter((call) => call[0] === 'POST')).toEqual([]);
   });
 
   it('no longer tells AnA to capture an e-signature it cannot capture', () => {

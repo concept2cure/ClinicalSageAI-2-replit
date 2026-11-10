@@ -149,9 +149,12 @@ function ChangeControlSession({
       .then(valid => { if (active && valid) setCheckedLearning(learningReview); }).catch(() => undefined);
     return () => { active = false; };
   }, [learningReview]);
-  const learningRefusal = !learningReview ? null : 'unavailable' in learningReview || checkedLearning !== learningReview
+  /* The approval signs the content the dialog shows, by its digest; a row that carries none is not signed. */
+  const unreadContent = approving && !approving.contentDigest
+    ? 'This change\'s content could not be read for signing. Reload the change log, then approve.' : null;
+  const learningRefusal = unreadContent ?? (!learningReview ? null : 'unavailable' in learningReview || checkedLearning !== learningReview
     ? 'The exact aggregate artifact could not be verified. Reload this change before signing.'
-    : !learningAccepted ? 'Review the exact artifact and explicitly confirm the no-client-content invariant before signing.' : null;
+    : !learningAccepted ? 'Review the exact artifact and explicitly confirm the no-client-content invariant before signing.' : null);
   /** The open write drawer, if any: raise, advance a row, or link to a row. */
   const [drawer, setDrawer] = React.useState<
     | { kind: 'raise' }
@@ -558,7 +561,7 @@ function ChangeControlSession({
             if (learningRefusal) throw new Error(learningRefusal);
             const review = learningReview && !('unavailable' in learningReview)
               ? { expectedArtifactSha256: learningReview.artifactSha256, invariantAccepted: true as const } : undefined;
-            const manifest = await postQmsApproval({ kind: 'change', id: approving.id }, input, undefined, review);
+            const manifest = await postQmsApproval({ kind: 'change', id: approving.id }, input, undefined, review, approving.contentDigest ?? undefined);
             onRetry?.(); sum.refresh?.();
             return manifest;
           }}
