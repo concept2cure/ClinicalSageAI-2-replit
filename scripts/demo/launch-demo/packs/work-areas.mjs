@@ -14,6 +14,7 @@
  */
 import { must } from '../lib.mjs';
 import { NOT_EXECUTED_NO_SIGNER } from './biotech-shared.mjs';
+import { ensureCmcRegisters } from './cmc-registers.mjs';
 
 const DAY = 86_400_000;
 const isoIn = (days) => new Date(Date.now() + days * DAY).toISOString();
@@ -459,7 +460,7 @@ async function ensureBatches({ api, tally }, program, batches) {
   return created;
 }
 
-/** cmc: { methods: [...], specs: [...], stability: [...], batches: [...] } */
+/** cmc: { methods: [...], specs: [...], stability: [...], batches: [...], registers?: {...} (cmc-registers.mjs) } */
 export async function ensureCmc(ctx, program, cmc, label) {
   const { run } = ctx;
   /* The materials first: §3.2.S and §3.2.P are written about them, and the
@@ -486,6 +487,9 @@ export async function ensureCmc(ctx, program, cmc, label) {
       `${await ensureQcResults(ctx, program, cmc.qcResults)} created of ${cmc.qcResults.length}` +
       ' — second-person review is left to the register, so these compose as not reviewed');
   }
+  /* The eleven registers above the seven this function writes itself, when the
+     pack carries them (P-122): before the compile, so §3.2 composes from them. */
+  await ensureCmcRegisters(ctx, program, cmc.registers, label);
 }
 
 /* ───────────────────────── Biostatistics ───────────────────────── */

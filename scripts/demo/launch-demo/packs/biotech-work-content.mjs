@@ -7,6 +7,7 @@
  * and test values of a demonstration product, not data from any real study.
  */
 import { T } from './biotech-content.mjs';
+import { BIOTECH_SM_REGISTERS } from './biotech-sm-registers.mjs';
 
 export const BIOTECH_TASKS = [
   { title: 'Finalise drug substance specification for the IND (§3.2.S.4.1)', moduleType: 'CMC', priority: 'high', status: 'in-progress', dueInDays: 10,
@@ -275,6 +276,10 @@ export const BIOTECH_SM_CMC = {
     { number: 'C2C201-DP-2503', product: 'C2C-201 tablets', yieldPercent: 94, openDeviations: 0 },
     { number: 'C2C201-DP-2601', product: 'C2C-201 tablets', yieldPercent: 92, openDeviations: 1 },
   ],
+  /* The other eleven registers (P-122, 2026-11-10): reference standards,
+     impurities, dissolution, characterisation, processes, process validation,
+     formulation, materials, container closure, change control, comparability. */
+  registers: BIOTECH_SM_REGISTERS,
 };
 
 /**
