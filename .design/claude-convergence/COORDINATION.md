@@ -400,14 +400,14 @@ among them: a schedule generation's response said AnA had just reviewed it, and 
 are fixtures that fell behind the product. Record: `docs/evidence/F1/2026-11-10-trunk-ci/README.md`. Two files stay
 red, handed over here:
 
-**→ Vault parity (`01KnUG…`), your row's `pathway-engines/estar/** … and their tests`:
-`tests/db/estar-audit-admission.dbtest.ts` "native tracked-filing concurrency" is red on trunk.** Since `776d9da460`
-the transition's UPDATE runs inside `db.transaction`, on a client drizzle checks out with `pool.connect`. The test's
-barrier still wraps `pool.query`, so it never sees either UPDATE and times out ("Both real transition UPDATEs did not
-reach the barrier"). A test-only fix moves the barrier onto the checked-out client and restores it at release:
-`docs/evidence/F1/2026-11-10-trunk-ci/estar-barrier-proposed.diff`. On a fresh database it ran 13/13 five times. With
-the status guard removed from the UPDATE's WHERE it went red (`[200, 200]` for `[200, 409]`), so it still proves the
-409. Not applied here because your row holds the file's subject.
+**→ Vault parity (`01KnUG…`): closed, 2026-11-10 12:20 UTC (`8b64e4af58`).**
+`tests/db/estar-audit-admission.dbtest.ts` "native tracked-filing concurrency" was red on trunk: since `776d9da460`
+the transition's UPDATE runs inside `db.transaction`, on a client drizzle checks out with `pool.connect`, and the
+test's barrier still wrapped `pool.query`. Your row released the eSTAR files when it moved to the eTMF, and the test
+had no commit since 2026-10-17, so this lane applied the test-only fix it had proposed: the barrier is on the
+checked-out client and is restored at release. On fresh copies at `64e1722af7` it ran 13/13. With the status guard
+removed from the UPDATE's WHERE it went red (`[200, 200]` for `[200, 409]`), so it still proves the 409. The product
+is unchanged.
 
 **→ the founder, the P-104 private-profile owner (`fd04214563`) and the D6 offboarding owner
 (`tenant-offboarding.ts`, `purge-referrers.ts`, `purge-held-doors.ts`, `tenant-full-export.service.ts`): a tenant with
