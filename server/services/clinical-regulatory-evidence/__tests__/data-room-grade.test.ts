@@ -9,7 +9,7 @@ const SHA = 'a'.repeat(64);
 const facts = (over: Partial<DataRoomGradeFacts> = {}): DataRoomGradeFacts => ({
   checksum: SHA, capturedBy: 7, origin: 'chat_upload', originalFileAvailable: true, isCurrent: true, dataEligible: true,
   disposition: null, extractionStatus: 'extracted', textAvailable: true, extractionPartial: false,
-  filed: true, fixity: 'verified', catalogState: 'confirmed', datasetTables: null, ...over,
+  filed: true, fixity: 'verified', catalogState: 'confirmed', datasetTables: null, nativeLifecycle: null, ...over,
 });
 
 describe('gradeCapture', () => {
@@ -47,6 +47,19 @@ describe('gradeCapture', () => {
   it('gives no conformance to a dataset with no CDISC standard recognized', () => {
     const t = { name: 'listing.csv', columns: [{ name: 'X', type: 'text' }], cdisc: { standard: null, domain: null } };
     expect(gradeCapture(facts({ datasetTables: [t] })).basis.find(b => b.criterion === 'conformance')).toMatchObject({ points: 0 });
+  });
+
+  it('grades a record the system keeps by its snapshot and its register, never as a missing file', () => {
+    const native = { originalFileAvailable: false, filed: false, fixity: null, catalogState: null, origin: 'native_record_snapshot' };
+    const pending = gradeCapture(facts({ ...native, nativeLifecycle: 'pending' }));
+    expect(pending.basis.find(b => b.criterion === 'integrity')).toMatchObject({ points: 20, detail: expect.stringMatching(/no uploaded file/) });
+    expect(pending.basis.find(b => b.criterion === 'verification')).toMatchObject({ points: 0, detail: expect.stringMatching(/as pending: not yet approved/) });
+    const approved = gradeCapture(facts({ ...native, nativeLifecycle: 'effective' }));
+    expect(approved.basis.find(b => b.criterion === 'verification')).toMatchObject({ points: 15 });
+    expect(approved.grade).toBe('A');
+    // An approval still pending inside a longer status is not an approval.
+    expect(gradeCapture(facts({ ...native, nativeLifecycle: 'effective; approval pending' })).basis
+      .find(b => b.criterion === 'verification')).toMatchObject({ points: 0 });
   });
 
   it('is deterministic: the same facts give the same grade and fingerprint; a changed fact changes the fingerprint', () => {

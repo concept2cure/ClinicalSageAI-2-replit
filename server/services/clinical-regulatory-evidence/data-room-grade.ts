@@ -84,7 +84,16 @@ export interface DataRoomGradeFacts {
   catalogState: string | null;
   /** The dataset profile's tables, when the capture is a dataset; null otherwise. */
   datasetTables: GradeProfiledTable[] | null;
+  /**
+   * A snapshot of a record the system itself keeps (a Quality supplier, SOP, CAPA: record-source.ts), with
+   * the status its own register records; null for a captured file. Such a record has no uploaded file and is
+   * not filed in Vault: its integrity is its snapshot's SHA-256, its verification its register's approval.
+   */
+  nativeLifecycle: string | null;
 }
+
+/** Statuses a register records only after a person approved the record. Anything else is not yet approved. */
+const APPROVED_LIFECYCLES = new Set(['approved', 'effective', 'qualified', 'released', 'closed', 'completed']);
 
 const MAX: Record<GradeCriterion, number> = {
   provenance: 20, integrity: 20, currency: 15, processing: 15, verification: 15, conformance: 15,
@@ -104,6 +113,12 @@ function provenance(f: DataRoomGradeFacts): GradeBasisLine {
 }
 
 function integrity(f: DataRoomGradeFacts): GradeBasisLine {
+  if (f.nativeLifecycle !== null) {
+    const hash = Boolean(f.checksum && SHA256_RE.test(f.checksum.trim()));
+    return { criterion: 'integrity', points: hash ? MAX.integrity : 0, max: MAX.integrity,
+      detail: hash ? 'A snapshot of a record the system keeps, its SHA-256 recorded; it has no uploaded file to hold or file.'
+        : 'A snapshot of a record the system keeps, with no SHA-256 recorded.' };
+  }
   let points = f.originalFileAvailable ? 10 : 0;
   const said = [f.originalFileAvailable ? 'original bytes held' : 'original bytes not available'];
   if (f.filed) { points += 5; said.push('the same bytes are filed in Vault'); }
@@ -134,6 +149,12 @@ function processing(f: DataRoomGradeFacts): GradeBasisLine {
 }
 
 function verification(f: DataRoomGradeFacts): GradeBasisLine {
+  if (f.nativeLifecycle !== null) {
+    const state = f.nativeLifecycle.replace(/_/g, ' ');
+    return APPROVED_LIFECYCLES.has(f.nativeLifecycle.trim().toLowerCase())
+      ? { criterion: 'verification', points: MAX.verification, max: MAX.verification, detail: `Its own register records it as ${state}.` }
+      : { criterion: 'verification', points: 0, max: MAX.verification, detail: `Its own register records it as ${state}: not yet approved by a person.` };
+  }
   if (f.catalogState === 'confirmed' || f.catalogState === 'corrected') {
     return { criterion: 'verification', points: MAX.verification, max: MAX.verification, detail: `Its Vault catalog record was ${f.catalogState} by a person.` };
   }
@@ -282,10 +303,15 @@ async function readVaultFacts(q: Queryable, ids: number[]): Promise<Map<number, 
 const NO_VAULT_FACTS: VaultFacts = { filed: false, fixity: null, catalogState: null, capturedBy: null };
 
 /** How the capture arrived and whether its reading stopped short, from its provenance. */
-function provenanceFacts(provenance: GradeableSource['provenance']): { origin: string | null; extractionPartial: boolean } {
+function provenanceFacts(provenance: GradeableSource['provenance']): { origin: string | null; extractionPartial: boolean; nativeLifecycle: string | null } {
   const prov = obj(provenance);
   const coverage = obj(prov?.extractionCoverage);
-  return { origin: typeof prov?.origin === 'string' ? prov.origin : null, extractionPartial: Boolean(coverage?.limitedBy) };
+  const snapshot = obj(prov?.recordSnapshot);
+  return {
+    origin: typeof prov?.origin === 'string' ? prov.origin : null,
+    extractionPartial: Boolean(coverage?.limitedBy),
+    nativeLifecycle: snapshot && typeof snapshot.lifecycle === 'string' ? snapshot.lifecycle : null,
+  };
 }
 
 /** The facts of one capture, from its row and what the Vault records. */

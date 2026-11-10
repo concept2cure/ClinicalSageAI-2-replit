@@ -9,6 +9,8 @@
  *   phase before  the Data room lane as it was: shots before-*.png.
  *   phase catalog step 1 and 2: "All my projects", organized by study / kind / CTD / folder, each item graded
  *                 with its basis. Shots catalog-*.png.
+ *   phase reach   where a person finds it: the project page's "Open the data catalog" and the Vault's "Data catalog"
+ *                 tab. Shots reach-*.png.
  *   phase use     step 3: "Use in this project" on a capture of the other project, listed under "Used in this
  *                 project" first, then "Remove". Shots use-*.png.
  *
@@ -161,6 +163,36 @@ async function phaseCatalog(page, width, a, b) {
   void b;
 }
 
+/**
+ * Where a person finds it (2026-11-10, the founder: "I can not see the data catalog / data room from anywhere in the UI").
+ * (1) The rail's Vault, with a project open: its "Data catalog" tab. (2) The project page's Data room section:
+ * "Open the data catalog", which lands on that tab.
+ */
+async function phaseReach(page, width, a) {
+  await page.goto(`${BASE}/concept2cure/project-home?program=${a}`, { waitUntil: 'networkidle' });
+  await page.getByRole('navigation', { name: 'Project lifecycle' }).getByRole('button', { name: /^Evidence/ }).click();
+  const open = page.getByTestId('open-data-catalog');
+  await open.waitFor({ timeout: 30000 });
+  await open.scrollIntoViewIfNeeded();
+  await shoot(page, `reach-${width}-project-page-link`);
+  await open.click();
+  const tab = page.getByRole('tab', { name: 'Data catalog' });
+  await tab.waitFor({ timeout: 30000 });
+  expect(await tab.getAttribute('aria-selected') === 'true', 'the project page lands on the Vault\'s Data catalog view');
+  const room = page.getByTestId('editor-data-room');
+  await room.getByTestId('data-room-catalog-controls').waitFor({ timeout: 30000 });
+  await room.getByTestId('source-grade').first().waitFor({ timeout: 30000 });
+  await shoot(page, `reach-${width}-vault-data-catalog`);
+  step(`${width}: the project page's "Open the data catalog" opens Vault on the Data catalog, graded`, {
+    text: (await room.innerText()).replace(/\s+/g, ' ').slice(0, 500),
+  });
+  // From the Vault's own tabs: away to the library and back.
+  await page.getByRole('tab', { name: 'Library' }).click();
+  await tab.click();
+  await room.getByTestId('source-grade').first().waitFor({ timeout: 30000 });
+  step(`${width}: the Vault's Data catalog tab, from its own tabs`);
+}
+
 async function phaseUse(page, width, a, b) {
   const room = await openDataRoom(page, a);
   await room.getByRole('button', { name: 'All my projects' }).click();
@@ -207,6 +239,7 @@ async function phaseUse(page, width, a, b) {
         else if (PHASE === 'before') await phaseBefore(page, width, a);
         else if (PHASE === 'catalog') await phaseCatalog(page, width, a, b);
         else if (PHASE === 'use') await phaseUse(page, width, a, b);
+        else if (PHASE === 'reach') await phaseReach(page, width, a);
       } catch (e) {
         await shoot(page, `${PHASE}-${width}-FAILED`).catch(() => undefined);
         throw e;

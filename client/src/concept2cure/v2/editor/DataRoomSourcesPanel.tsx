@@ -7,6 +7,7 @@ import { parseProjectSourcePage, projectSourceCatalogUrl, type ProjectSourcePage
 import { sourceHasGroundingText, sourceReadView } from '@shared/data-room-processing-status';
 import { SourceAssemblyAction, sourceAssemblyUnavailableReason } from './SourceAssemblyDialog';
 import { vaultDocKindLabel } from '@shared/constants/domain/vault-taxonomy';
+import { apiCall, apiErrorText } from '../apiCall';
 
 /** One criterion of a capture's grade, as the server's engine computed it (data-room-grade.ts). */
 interface GradeBasisLine { criterion: string; points: number | null; max: number; detail: string }
@@ -27,9 +28,143 @@ const FACETS: Array<[FacetKey, string, string]> = [['project', 'Project', 'proje
 type Filters = Partial<Record<FacetKey, string>>;
 const PAGE_SIZE = 50;
 
+/** A data-room capture this project uses, as GET /api/c2c/projects/:id/evidence records it (c2c_project_pinned_evidence). */
+interface ProjectUse {
+  id: number; title: string; pinnedAt: string;
+  source: { sourceId: number; projectId: string | null; projectName: string | null; isCurrent: boolean; grade: SourceGrade['grade'] | null; gradeScore: number | null } | null;
+}
+/** What this project uses, and the acts on it. Each use is audited on the project (c2c.project.evidence.pin / unpin). */
+export interface ProjectUses {
+  loading: boolean; error: string | null; list: ProjectUse[];
+  /** The use recording a capture, by source id. */
+  useOf: (sourceId: number) => ProjectUse | undefined;
+  busy: number | null; actError: string | null;
+  use: (source: { id: number; title: string | null }) => Promise<void>;
+  remove: (use: ProjectUse) => Promise<void>;
+}
+
+function readUses(body: unknown): ProjectUse[] | null {
+  const rows = (body as { evidence?: unknown } | null)?.evidence;
+  if (!Array.isArray(rows)) return null;
+  return rows.filter((r): r is Record<string, any> => Boolean(r) && (r as Record<string, unknown>).evidence_kind === 'data_room').map(r => ({
+    id: Number(r.id), title: String(r.title ?? ''), pinnedAt: String(r.pinned_at ?? ''),
+    source: r.data_room ? {
+      sourceId: Number(r.data_room.sourceId), projectId: r.data_room.projectId ?? null, projectName: r.data_room.projectName ?? null,
+      isCurrent: r.data_room.isCurrent !== false, grade: r.data_room.grade ?? null, gradeScore: r.data_room.gradeScore ?? null,
+    } : null,
+  }));
+}
+
+/** The project's subscribed data (S2): read, used and removed through the project's own evidence routes. */
+function useProjectUses(programId: string, current: () => boolean): ProjectUses {
+  const [list, setList] = useState<ProjectUse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<number | null>(null);
+  const [actError, setActError] = useState<string | null>(null);
+  const [epoch, setEpoch] = useState(0);
+  const url = `/api/c2c/projects/${encodeURIComponent(programId)}/evidence`;
+  useEffect(() => {
+    let live = true;
+    setLoading(true);
+    void apiCall('GET', url).then(result => {
+      if (!live || !current()) return;
+      const rows = result.ok ? readUses(result.body) : null;
+      setList(rows ?? []);
+      setError(rows ? null : apiErrorText(result, 'What this project uses could not be read.'));
+      setLoading(false);
+    });
+    return () => { live = false; };
+  }, [url, epoch, current]);
+  const act = async (key: number, run: () => Promise<{ ok: boolean; status: number; body: unknown; networkError: boolean }>, failed: string) => {
+    setBusy(key); setActError(null);
+    try {
+      const result = await run();
+      if (!current()) return;
+      if (!result.ok) setActError(apiErrorText(result as never, failed));
+      setEpoch(v => v + 1);
+    } finally { if (current()) setBusy(null); }
+  };
+  return {
+    loading, error, list, busy, actError,
+    useOf: sourceId => list.find(u => u.source?.sourceId === sourceId),
+    use: source => act(source.id, () => apiCall('POST', url, {
+      evidenceKind: 'data_room', evidenceRef: String(source.id), title: source.title || `Source ${source.id}`,
+      reason: 'Used in this project from the data catalog',
+    }), 'It could not be added to this project. Nothing was recorded.'),
+    remove: u => act(u.source?.sourceId ?? -u.id, () => apiCall('DELETE', `${url}/${encodeURIComponent(String(u.id))}`),
+      'It could not be removed from this project.'),
+  };
+}
+
+/** Use in this project, or Remove: one button, the person's act, recorded on the project. */
+function UseAction({ source, uses }: { source: SourceRow; uses?: ProjectUses }) {
+  if (!uses) return null;
+  return <>
+    <UseButton source={source} uses={uses} />
+    {uses.actError && uses.busy === null && <p className="pf-sel-m" role="alert">{uses.actError}</p>}
+  </>;
+}
+
+function UseButton({ source, uses }: { source: SourceRow; uses: ProjectUses }) {
+  const used = uses.useOf(source.id);
+  const busy = uses.busy === source.id;
+  if (used) {
+    return <span className="pf-actions">
+      <span className="rd-chip tone-ok">Used in this project</span>
+      <button type="button" className="btn ghost" disabled={busy} onClick={() => void uses.remove(used)}>{busy ? 'Removing…' : 'Remove'}</button>
+    </span>;
+  }
+  const blocked = source.isCurrent === false ? 'A later capture replaced this file. Use the current one.' : null;
+  return <button type="button" className="btn ghost" disabled={busy || Boolean(blocked) || uses.loading} title={blocked ?? undefined}
+    onClick={() => void uses.use(source)}>{I.plus ?? null} {busy ? 'Adding…' : 'Use in this project'}</button>;
+}
+
+/** What this project uses, first: each subscribed capture with its project, grade and currency, and Remove beside it. */
+function UsedInProject({ uses, programId, onNav }: { uses: ProjectUses; programId: string; onNav?: (id: string) => void }) {
+  if (uses.loading) return null;
+  if (uses.error) return <p className="pf-sel-m" role="alert">{uses.error}</p>;
+  if (uses.list.length === 0) return null;
+  const own = uses.list.filter(u => u.source && u.source.projectId === programId && u.source.isCurrent);
+  return <div className="pf-list" data-testid="data-room-used" role="group" aria-label="Used in this project">
+    <p className="pf-count"><b>Used in this project</b> · {uses.list.length}</p>
+    {uses.list.map(u => <div key={u.id} className="pf-sel">
+      <span className="pf-sel-t">{u.title}</span>
+      <span className="pf-sel-m" style={{ display: 'block' }}>
+        {u.source?.grade ? <span className={`rd-chip tone-${GRADE_TONE[u.source.grade]}`}>Grade {u.source.grade} · {u.source.gradeScore}</span> : null}
+        {' '}{!u.source ? 'This capture can no longer be read.' : u.source.projectId === programId ? 'Captured in this project' : `From ${u.source.projectName ?? 'another project'}`}
+        {u.source && !u.source.isCurrent ? ' · superseded: a later capture replaced it' : ''}
+        {u.pinnedAt ? ` · added ${new Date(u.pinnedAt).toLocaleDateString()}` : ''}
+      </span>
+      <button type="button" className="btn ghost" disabled={uses.busy !== null} onClick={() => void uses.remove(u)}>Remove</button>
+    </div>)}
+    {own.length > 0 && <SourceAssemblyAction programId={programId} onNav={onNav} titles={own.map(u => u.title)}
+      sources={own.slice(0, 10).map(u => ({ kind: 'data-room' as const, sourceId: (u.source as NonNullable<ProjectUse['source']>).sourceId }))} />}
+    {uses.actError && <p className="pf-sel-m" role="alert">{uses.actError}</p>}
+  </div>;
+}
+
+/* The project page's "Open the data catalog" asks the Vault, once, to open on its Data catalog view.
+   Browser storage can be unavailable; then the Vault opens on its library, as it always did. */
+const VAULT_CATALOG_KEY = 'c2c.vault.openView';
+export function openVaultCatalog(onNav: (id: string) => void): void {
+  try { sessionStorage.setItem(VAULT_CATALOG_KEY, 'catalog'); } catch { /* the Vault opens on its library */ }
+  onNav('vault');
+}
+/** Whether the Vault was asked to open on the catalog; the ask is used once. */
+export function takeVaultCatalogAsk(): boolean {
+  try {
+    const asked = sessionStorage.getItem(VAULT_CATALOG_KEY) === 'catalog';
+    sessionStorage.removeItem(VAULT_CATALOG_KEY);
+    return asked;
+  } catch { return false; }
+}
+
 interface DataRoomSourcesPanelProps {
   programId: string; readOwner?: DataReadOwner; onOpenDocument?: (docId: string) => void;
   onAsk?: (text: string) => void; onNav?: (id: string) => void;
+  /** Open on the catalog across the person's projects (Vault's Data catalog view) instead of this project's room. */
+  initialScope?: RoomScope;
 }
 
 function sourceReadLabel(source: SourceRow): string {
@@ -104,9 +239,9 @@ function SourcePlacement({ source }: { source: SourceRow }) {
   </>;
 }
 
-function SourceEntry({ source, term, onPull, onAsk, programId, onNav, catalog = false }: {
+function SourceEntry({ source, term, onPull, onAsk, programId, onNav, catalog = false, uses }: {
   programId: string; source: SourceRow; term: string; onPull: (source: SourceRow) => void; onAsk?: (text: string) => void; onNav?: (id: string) => void;
-  catalog?: boolean;
+  catalog?: boolean; uses?: ProjectUses;
 }) {
   const statusId = useId();
   /* A capture of another project is read here; working on it belongs to its own project. */
@@ -125,8 +260,9 @@ function SourceEntry({ source, term, onPull, onAsk, programId, onNav, catalog = 
       <SourcePlacement source={source} />
       <SourceSnippet show={Boolean(term)} text={source.snippet} className="pf-sel-m" />
       <GradeBasis grade={source.grade} />
+      <UseAction source={source} uses={uses} />
       {elsewhere
-        ? <p className="pf-sel-m">Captured in {source.projectName ?? 'another project'}. Open that project to work on it.</p>
+        ? <p className="pf-sel-m">Captured in {source.projectName ?? 'another project'}. Use it in this project to list it with this project’s data.</p>
         : <SourceRowActions source={source} statusId={statusId} onPull={onPull} onAsk={onAsk} programId={programId} onNav={onNav} />}
     </div>
   </details>;
@@ -181,8 +317,8 @@ function groupedSources(sources: SourceRow[], by: FacetKey, facets?: Record<Face
   return [...groups.entries()].sort((a, b) => rank(a[0]) - rank(b[0])).map(([k, [label, rows]]) => [k, label, rows]);
 }
 
-function SourceListPage({ state, offset, term, onRetry, onClear, onPage, onPull, onAsk, programId, onNav, catalog = false, groupBy = null }: {
-  programId: string; onNav?: (id: string) => void; catalog?: boolean; groupBy?: FacetKey | null;
+function SourceListPage({ state, offset, term, onRetry, onClear, onPage, onPull, onAsk, programId, onNav, catalog = false, groupBy = null, uses }: {
+  programId: string; onNav?: (id: string) => void; catalog?: boolean; groupBy?: FacetKey | null; uses?: ProjectUses;
   state: DataState<SourcesPage>; offset: number; term: string; onRetry: () => void; onPage: (offset: number) => void;
   onClear: () => void; onPull: (source: SourceRow) => void; onAsk?: (text: string) => void;
 }) {
@@ -191,7 +327,7 @@ function SourceListPage({ state, offset, term, onRetry, onClear, onPage, onPull,
      itself with no retry, by the shared panel's one rule (`read`, 2026-11-05/06); a failure keeps these words. */
   if (state.error) return <EmptyState tone="error" icon={I.alertTriangle} title="The data room could not be read" hint={state.error} retry={onRetry} read={state} readWhat="the data room" />;
   const sources = state.data?.sources ?? [];
-  const entry = (source: SourceRow) => <SourceEntry key={source.id} source={source} term={term} onPull={onPull} onAsk={onAsk} programId={programId} onNav={onNav} catalog={catalog} />;
+  const entry = (source: SourceRow) => <SourceEntry key={source.id} source={source} term={term} onPull={onPull} onAsk={onAsk} programId={programId} onNav={onNav} catalog={catalog} uses={uses} />;
   return <>
     {typeof state.data?.total === 'number' && <p className="pf-count" role="status">{state.data.total} matching sources · showing {sources.length}.</p>}
     {sources.length === 0 && <EmptySources term={term} onClear={onClear} />}
@@ -248,7 +384,8 @@ export function DataRoomSourcesPanel(props: DataRoomSourcesPanelProps) {
   return <DataRoomForProgram key={`${props.programId}:${scope.current.epoch}`} {...props} ownerCurrent={owned.current} />;
 }
 
-function DataRoomPage({ programId, offset, term, readOwner, scope, filters, groupBy, onFilter, onGroup, ...actions }: {
+function DataRoomPage({ programId, offset, term, readOwner, scope, filters, groupBy, onFilter, onGroup, uses, ...actions }: {
+  uses?: ProjectUses;
   programId: string; offset: number; term: string; readOwner?: DataReadOwner; onRetry: () => void; onClear: () => void;
   onPage: (offset: number) => void; onPull: (source: SourceRow) => void; onAsk?: (text: string) => void; onNav?: (id: string) => void;
   scope: RoomScope; filters: Filters; groupBy: FacetKey | null; onFilter: (key: FacetKey, value: string) => void; onGroup: (key: FacetKey | null) => void;
@@ -266,11 +403,12 @@ function DataRoomPage({ programId, offset, term, readOwner, scope, filters, grou
       {typeof state.data?.catalogProjects === 'number' && <p className="pf-sel-m">Every captured file across your {state.data.catalogProjects} project{state.data.catalogProjects === 1 ? '' : 's'} of this sponsor, each graded from what the system records about it.</p>}
       <CatalogControls facets={state.data?.facets} filters={filters} groupBy={groupBy} onFilter={onFilter} onGroup={onGroup} />
     </>}
-    <SourceListPage state={state} offset={offset} term={term} programId={programId} catalog={catalog} groupBy={groupBy} {...actions} />
+    {!catalog && uses && <UsedInProject uses={uses} programId={programId} onNav={actions.onNav} />}
+    <SourceListPage state={state} offset={offset} term={term} programId={programId} catalog={catalog} groupBy={groupBy} uses={uses} {...actions} />
   </div>;
 }
 
-function DataRoomForProgram({ programId, onOpenDocument, onAsk, onNav, readOwner, ownerCurrent }: DataRoomSourcesPanelProps & { ownerCurrent: () => boolean }) {
+function DataRoomForProgram({ programId, onOpenDocument, onAsk, onNav, readOwner, ownerCurrent, initialScope = 'project' }: DataRoomSourcesPanelProps & { ownerCurrent: () => boolean }) {
   // Retained controls and receipts must keep the visit that created them.
   const capturedCurrent = useRef(ownerCurrent).current;
   const mounted = useRef(true);
@@ -282,9 +420,10 @@ function DataRoomForProgram({ programId, onOpenDocument, onAsk, onNav, readOwner
   const [offset, setOffset] = useState(0);
   const [epoch, setEpoch] = useState(0);
   const [pullSource, setPullSource] = useState<SourceRow | null>(null);
-  const [scope, setScope] = useState<RoomScope>('project');
+  const [scope, setScope] = useState<RoomScope>(initialScope);
   const [filters, setFilters] = useState<Filters>({});
-  const [groupBy, setGroupBy] = useState<FacetKey | null>(null);
+  const [groupBy, setGroupBy] = useState<FacetKey | null>(initialScope === 'catalog' ? 'study' : null);
+  const uses = useProjectUses(programId, current);
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!current()) return;
@@ -317,7 +456,7 @@ function DataRoomForProgram({ programId, onOpenDocument, onAsk, onNav, readOwner
     </div>
     {searchPending ? <div className="pf-list" aria-busy="true"><EmptyState busy icon={I.fileText} title="Loading project sources…" /></div>
       : <DataRoomPage key={`${scope}\u0000${JSON.stringify(filters)}\u0000${term}\u0000${offset}\u0000${epoch}`} programId={programId} offset={offset} term={term} readOwner={readOwner ? { key: readOwner.key, current } : undefined}
-        scope={scope} filters={filters} groupBy={groupBy}
+        scope={scope} filters={filters} groupBy={groupBy} uses={uses}
         onFilter={(key, value) => { if (current()) { setFilters(previous => ({ ...previous, [key]: value || undefined })); setOffset(0); } }}
         onGroup={key => { if (current()) setGroupBy(key); }}
         onRetry={() => { if (current()) { setOffset(previous => current() ? 0 : previous); setEpoch(v => current() ? v + 1 : v); } }}
