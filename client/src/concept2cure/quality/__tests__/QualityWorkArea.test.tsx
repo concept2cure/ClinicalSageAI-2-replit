@@ -119,7 +119,8 @@ describe('Quality is one work area with one header (D7-B)', () => {
     expect(H.asked[1]).toMatch(/how to raise a change request/i);
     expect(H.asked[1]).not.toMatch(/quiz me|record read-and-understood training/i);
     // An empty log claims nothing: no "none overdue" of nothing.
-    expect(screen.getByTestId('change-figures').textContent).toBe('No changes in the log yet.');
+    expect(screen.queryByTestId('change-figures')).toBeNull();
+    expect(screen.getAllByText('No changes in the log yet.')).toHaveLength(1);
     // ...and an empty log has no stage filter of zeroes to offer.
     expect(screen.queryByRole('group', { name: 'Lifecycle stage' })).toBeNull();
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
