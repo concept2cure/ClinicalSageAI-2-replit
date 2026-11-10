@@ -41,11 +41,17 @@ export async function readSuccessors(
 ): Promise<Map<string, VersionSuccessor>> {
   const out = new Map<string, VersionSuccessor>();
   if (!ids.length) return out;
-  // tenant-isolation-safe: p is bound to the organization and program; VALID_LINK holds succ to the same ones.
+  // The join is VALID_LINK('succ', 'p') written out, so this SQL text carries no interpolation (ci:sql-interpolation).
+  // tenant-isolation-safe: p is bound to the organization and program; the link holds succ to the same ones.
   const { rows } = await q.query(
     `SELECT p.id::text AS id, succ.version, succ.created_at
        FROM vault.documents p
-       JOIN vault.documents succ ON ${VALID_LINK('succ', 'p')}
+       JOIN vault.documents succ
+         ON succ.supersedes_id = p.id
+        AND succ.program_id = p.program_id
+        AND succ.document_code IS NOT DISTINCT FROM p.document_code
+        AND succ.organization_id = p.organization_id
+        AND succ.deleted_at IS NULL AND p.deleted_at IS NULL
       WHERE p.id::text = ANY($1::text[]) AND p.organization_id = $2 AND p.program_id = $3::uuid`,
     [ids, organizationId, programId],
   );
