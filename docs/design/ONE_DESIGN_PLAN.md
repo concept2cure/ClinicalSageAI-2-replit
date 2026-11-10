@@ -1386,6 +1386,37 @@ in the running app where a screen changed. Where either was not possible, its RE
 
 1. Answers to the founder questions above, which decide this lane's next slices.
 
+**2026-11-10: P-107 item 3, and what this lane withdrew.** The coordinating session decided this lane's six
+questions as P-107 item 3 (2026-11-08). While this lane built them, the session holding the Vault's folders
+(`…01QoxbLZMS`) landed three of the same decisions on trunk: the page asks which sponsor first (`47a306700`), a seal
+says when a version was superseded (`0a65d9191`), and a Word version's PDF rendition (`ed9f5d36d`, `b5bb39ce8`). One
+implementation stands: this lane withdrew its own copies before they reached trunk (`e2c4162ec`) and kept only what
+trunk did not have.
+
+- **The server refuses a read that would span clients** (F1, `6dac0b836`; S6, `cc1af9221`;
+  `docs/evidence/SPINE/S6/2026-11-10-p107-sponsor-first/`). A governed-artifacts listing or a library search with no
+  project is one client's, or `409 CLIENT_REQUIRED` with the clients named. The document picker asks which client;
+  a refused listing says why. Red on real PostgreSQL first.
+- **One rule for which sections a 510(k) or De Novo requires** (F1, `9cff33fe4`;
+  `…/2026-11-10-p107-device-coverage-estar/`). The Library asks the eSTAR mapper, as filing readiness does, with the
+  project's device answers. The D4 and D6 disagreement is gone on the read side; the pack's data is not changed.
+- **The converter does not request what a Word file links to** (F1, `4cc352ccf`;
+  `…/2026-11-10-p107-renditions/`). Measured with the real converter: an uploaded Word file made the server call an
+  address. Trunk's rendition hands uploads to it, so this is its only protection (P-121 item 4, open).
+- **A Risk management plan in a drug project is the dossier's** (S6, `8e5f7cd0b`; `…/2026-11-10-rmp-classifier/`).
+  P-121 item 1.
+- **Assessed, not built.** Retention (P-107, FD3 (c)) holds today: the database refuses to delete or re-point a
+  version, and the sweep only tombstones. Nothing names who may delete stored bytes; the smallest pin is the writers
+  gate (`scripts/ci/check-vault-document-writers.mjs`) listing the six `delete` call sites. Binders: folders and the
+  cabinet meet three of the decision's four properties; a version-pinned view is the seal, which could group what it
+  holds by folder.
+
+**Next: the TMF inside the Vault.** The founder, 2026-11-10: "I don't see the TMF on the vault UI anywhere." It was
+decided on 2026-10-30 (P-74, P-75: the eTMF lives inside the Vault and files against the project's study) and
+designed (`docs/design/ETMF_CONVERGENCE_2026-10-30.md`, slices E1 to E6). Only E1 landed (`3fa2b6febc`). No session
+holds it. This lane takes E2 on, with the screen brought into the Vault's own views (RULE 4) and not admitted as a
+screen of its own.
+
 #### S6 — The Vault's folders and filing binders, like Veeva's (session `session_01QoxbLZMScz1c2iFESBLn9J`, 2026-11-06)
 
 Started by the lead (`011Dpx…`) for the founder's ask of 2026-11-06: *"a Vault user interface, files, folders … just

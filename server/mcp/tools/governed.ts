@@ -9,11 +9,18 @@
  * signing and dispatching stay in the app behind 21 CFR Part 11 electronic
  * signature, and the tool returns the link to that surface rather than
  * signing anything.
+ *
+ * The reason is the placement's reason for change (21 CFR 11.10(e)). It is
+ * held to the floor the human door applies (requireGovernedReason, as PUT
+ * /api/submissions/sequences/:seqId/leaves) and given to upsertLeaf, which
+ * records it on the placement's audit row. 2026-11-10: until then this tool
+ * described it as "recorded in the audit trail" and only echoed it back.
  */
 
 import { z } from 'zod';
 import { defineTool, ok, refused, errorMessage } from './runtime';
 import { MCP_SCOPES } from '../config';
+import { GOVERNED_REASON_MIN, requireGovernedReason } from '../../routes/governed-reason';
 
 /** The two ways to point at a document are exclusive and each must be whole. */
 function pointerRefusal(input: { vault_document_id?: string; document_table?: string; document_id?: number }): string | null {
@@ -25,6 +32,14 @@ function pointerRefusal(input: { vault_document_id?: string; document_table?: st
   return null;
 }
 
+/**
+ * The reason is on the placement's audit row or it is nowhere: an unchanged
+ * placement wrote no row, and an unpersisted one did not keep it.
+ */
+function reasonRecordedOn(leaf: { unchanged?: true; auditTrail: { persisted: boolean } | null }): boolean {
+  return leaf.unchanged !== true && leaf.auditTrail?.persisted === true;
+}
+
 export const fileDraftForReview = defineTool({
   name: 'c2c_file_draft_for_review',
   title: 'File draft into sequence for review',
@@ -34,7 +49,8 @@ export const fileDraftForReview = defineTool({
     'coauthor document (document_table + document_id). Refused verbatim when the sequence is frozen/' +
     'dispatched, the document is not in your organisation, or the section code is not a CTD section. ' +
     'Creates the record and returns the Submission Center link where a human reviews and signs; it never ' +
-    'signs, freezes or transmits. Audited as a governed action.',
+    'signs, freezes or transmits. Audited as a governed action; the reason you give is recorded on the ' +
+    'placement’s audit row, and the call is refused without one.',
   inputSchema: {
     sequence_id: z.number().int().positive(),
     section_code: z.string().min(2).max(64).describe('CTD section code; decides where the document is filed in the package.'),
@@ -44,7 +60,14 @@ export const fileDraftForReview = defineTool({
     document_id: z.number().int().positive().optional(),
     document_type: z.string().max(60).optional().describe('Classifier hint, e.g. protocol, csr, cer'),
     lifecycle_op: z.enum(['new', 'replace', 'append']).default('new'),
-    reason: z.string().min(5).max(500).describe('Reason for the filing, recorded in the audit trail.'),
+    reason: z
+      .string()
+      .min(GOVERNED_REASON_MIN)
+      .max(500)
+      .describe(
+        `Why this document is being filed here, in the words of the person asking (at least ${GOVERNED_REASON_MIN} characters). ` +
+          'Recorded as given on the placement’s audit row; when nothing changed no audit row is written, and the result says so.',
+      ),
   },
   annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
   scope: MCP_SCOPES.file,
@@ -53,6 +76,8 @@ export const fileDraftForReview = defineTool({
   async run(input, ctx) {
     const pointerProblem = pointerRefusal(input);
     if (pointerProblem) return refused(pointerProblem);
+    const reason = requireGovernedReason(input.reason);
+    if (!reason.ok) return refused(`${reason.error} Nothing was filed.`);
     const svc = await import('../../services/submission-service/submission-service');
     const orgId = ctx.principal.organizationId;
     try {
@@ -66,6 +91,7 @@ export const fileDraftForReview = defineTool({
           documentUuid: input.vault_document_id ?? null,
           documentId: input.document_id ?? null,
           documentType: input.document_type ?? null,
+          reason: reason.reason,
         },
         { organizationId: orgId, userId: ctx.principal.userId },
       );
@@ -84,7 +110,8 @@ export const fileDraftForReview = defineTool({
           sequence: { id: sequence.id, submissionId: sequence.submissionId, sequenceNumber: sequence.sequenceNumber, status: sequence.status },
           auditTrail: leaf.auditTrail ?? null,
           unchanged: leaf.unchanged === true,
-          reason: input.reason,
+          reason: reason.reason,
+          reasonRecorded: reasonRecordedOn(leaf),
           signOff: {
             url: signOffUrl,
             instruction: `Open Submission Center → submission #${sequence.submissionId} → sequence ${sequence.sequenceNumber} → review the leaf, then freeze/dispatch with an electronic signature (21 CFR Part 11 §11.50/§11.70). The connector cannot sign.`,

@@ -14,8 +14,8 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   apiRequest: vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ data: [] }) })),
 }));
 
-import { RbmRact, RbmOverview } from '../surfaces/RbmSurfacesA';
-import { RbmSites, RbmPatients } from '../surfaces/RbmSurfacesB';
+import { RbmRact, RbmOverview, RbmKris } from '../surfaces/RbmSurfacesA';
+import { RbmSites, RbmPatients, RbmSignals } from '../surfaces/RbmSurfacesB';
 import { RbmFreshness } from '../surfaces/RbmSurfaces';
 import type { RbmBoard } from '../surfaces/rbmBoard';
 
@@ -89,5 +89,31 @@ describe('RBM screens name their methods in words', () => {
     expect(container.textContent).not.toMatch(/T17:07:13\.543Z/);
     expect(container.querySelector('time')?.getAttribute('datetime')).toBe('2026-11-09T17:07:13.543Z');
     expect(container.textContent).toContain('scored —');
+  });
+
+  /* Showcase walk, 2026-11-10, LMN-201: two more lines still printed the stored string. Key risk indicators read
+     "amber 14days — red 28days — evaluated 2026-11-08T00:00:00.000Z", and Central monitoring's inbox read
+     "site 104 — 2026-11-10T06:45:39.873Z". */
+  it('shows when an indicator was evaluated as a time, and says so when it never was', () => {
+    const evaluated = board();
+    evaluated.kris = [{ ...evaluated.kris[0], at: '2026-11-08T00:00:00.000Z' }];
+    const { container, unmount } = render(<RbmKris board={evaluated} onReload={vi.fn()} />);
+    const line = container.querySelector('.rbm-kri-thr')!;
+    expect(line.textContent).not.toMatch(/T00:00:00\.000Z/);
+    expect(line.textContent).toMatch(/— evaluated /);
+    expect(line.querySelector('time')?.getAttribute('datetime')).toBe('2026-11-08T00:00:00.000Z');
+    unmount();
+    render(<RbmKris board={board()} onReload={vi.fn()} />);
+    expect(document.querySelector('.rbm-kri-thr')!.textContent).toMatch(/— never evaluated$/);
+  });
+
+  it('shows when a central-monitoring signal was detected as a time, beside its site', () => {
+    const detected = board();
+    detected.signals = [{ ...detected.signals[0], detected: '2026-11-10T06:45:39.873Z' }];
+    const { container } = render(<RbmSignals board={detected} onTab={vi.fn()} onReload={vi.fn()} />);
+    const meta = container.querySelector('.rbm-sig-meta')!;
+    expect(meta.textContent).not.toMatch(/T06:45:39\.873Z/);
+    expect(meta.textContent).toMatch(/^site 5 — /);
+    expect(meta.querySelector('time')?.getAttribute('datetime')).toBe('2026-11-10T06:45:39.873Z');
   });
 });

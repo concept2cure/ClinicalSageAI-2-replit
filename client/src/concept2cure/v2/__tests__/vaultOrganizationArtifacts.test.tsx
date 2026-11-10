@@ -484,3 +484,38 @@ describe('with no project open and several sponsors, the Vault asks which sponso
     expect(screen.queryByTestId('vault-org-artifacts')).toBeNull();
   });
 });
+
+/* The server's half of P-107 item 3: a listing with no project that would span clients is refused with
+   CLIENT_REQUIRED (server/services/artifact-registry-read.ts). The page asks which sponsor before it reads, so it
+   meets the refusal only when its project list did not show the second client (an archived project, a list that is
+   not complete). It is then said as what it is, never as a failed read or an empty registry. */
+describe('a listing the server refuses until a client is chosen', () => {
+  const refused = () => new ApiRequestError('Your projects belong to more than one client.', 409,
+    { success: false, error: 'CLIENT_REQUIRED', message: 'Your projects belong to more than one client.', meta: { clients: [{ id: 9, name: 'Acme' }, { id: 3, name: 'Lumen' }] } },
+    'CLIENT_REQUIRED');
+  const oneListed: Route = (method, url) => {
+    if (method !== 'GET') return undefined;
+    if (url === '/api/c2c/projects?limit=200') return ok({ success: true, data: [] });
+    return url.startsWith(ORG) && !url.startsWith(`${ORG}/`) ? refused() : undefined;
+  };
+
+  it('says the artifacts are listed one client at a time, with no retry and no claim that the read failed', async () => {
+    mockApi(oneListed);
+    render(<Vault {...props()} />);
+    const panel = await orgPanel();
+    const said = await within(panel).findByText(/Your projects belong to more than one client/);
+    expect(said.textContent).toMatch(/listed one client at a time/);
+    expect(within(panel).queryByRole('alert')).toBeNull();
+    expect(within(panel).queryByRole('button', { name: /Try again/ })).toBeNull();
+    expect(panel.textContent).not.toMatch(/could not be read|No governed artifacts|not an empty registry/);
+  });
+
+  it('tells AnA the same, not that a read failed', async () => {
+    mockApi(oneListed);
+    let latest: SurfaceContext | null = null;
+    render(<><Vault {...props()} /><ContextProbe onContext={(c) => { latest = c; }} /></>);
+    await waitFor(() => expect(String((latest as SurfaceContext | null)?.facts?.organizationArtifacts)).toMatch(/a client must be chosen first/));
+    expect(String((latest as unknown as SurfaceContext).summary)).toMatch(/listed one client at a time/);
+    expect(String((latest as unknown as SurfaceContext).summary)).not.toMatch(/could not be read/);
+  });
+});

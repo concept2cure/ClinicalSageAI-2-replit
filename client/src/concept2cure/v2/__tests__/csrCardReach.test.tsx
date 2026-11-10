@@ -245,13 +245,29 @@ it('shows no live writing for a build that is not drafting, and refuses a list w
   expect(await screen.findByText(/could not be listed/)).toBeTruthy();
 });
 
+it.each([
+  ['a build a provider refusal stopped', 'The AI provider refused this deployment’s API key, so nothing more was drafted. An administrator must set a valid key. The build stopped at §9.1. The sections already saved are kept.', 'stopped'],
+  ['a build that ran to its end with a heading left unwritten', 'Not complete: §12.5 has no saved text. The sections already saved are kept. The draft of §12.5 was not written, because its study tables hold no results, so it was not saved.', 'not complete'],
+  ['a build that stopped for a reason it does not name', 'The build could not read its study data.', 'failed'],
+])('names the state of %s in words that fit it', async (_name, failure, word) => {
+  builds = [{ ...build(51, 'failed'), progress: 98, failure }];
+  await card();
+  const region = await screen.findByLabelText('CSR builds from this study data');
+  expect(await within(region).findByText(new RegExp(`CSR build 51 · ${word} · 98%`))).toBeTruthy();
+  expect((await within(region).findByText(failure)).getAttribute('role')).toBe('alert');
+  // Whatever the word, the build can still be resumed: the server's recorded state is unchanged.
+  expect(within(region).getByRole('button', { name: /Resume build 51/ })).toBeTruthy();
+});
+
 it('says why a failed build stopped, as the list states it, and refuses a list whose reason is not text', async () => {
   // F10 of the 2026-11-02 demo walk: the build showed only "CSR build N · failed · NN%".
   const why = 'Not complete: §9.8 still holds a data placeholder (“[…]”) where the study’s data is missing.';
   builds = [{ ...build(44, 'failed'), progress: 15, failure: why }];
   await card();
   const region = await screen.findByLabelText('CSR builds from this study data');
-  expect(await within(region).findByText(/CSR build 44 · failed · 15%/)).toBeTruthy();
+  // Showcase walk, 2026-11-10: "failed · 98%" stood beside a build that had drafted 68 of its 69 headings and left one
+  // with no study table. A build that ran to its end and is not complete says so.
+  expect(await within(region).findByText(/CSR build 44 · not complete · 15%/)).toBeTruthy();
   const reason = await within(region).findByText(why);
   expect(reason.getAttribute('role')).toBe('alert');
   cleanup();

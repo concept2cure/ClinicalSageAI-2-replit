@@ -163,7 +163,7 @@ beforeAll(() => {
 
 beforeEach(() => {
   repoState.reset();
-  currentUser = { id: 9, organizationId: 1 };
+  currentUser = { id: 9, organizationId: 1, role: 'member' };
   gatewayMocks.route.mockResolvedValue(gatewayReply('Übersetzter Text'));
 });
 
@@ -208,7 +208,9 @@ describe('tenancy guard', () => {
     ] as const) {
       const res = await (request(app) as any)[method](url).send({});
       expect(res.status).toBe(403);
-      expect(res.body.error).toBe('Organization context required');
+      // A write is asked for a writing role first (requireEditorAccessForWrites), and a session with no user
+      // has none; a read reaches the tenancy guard. authMiddleware refuses such a request before either.
+      expect(res.body.error).toBe(method === 'post' ? 'Insufficient permissions' : 'Organization context required');
     }
   });
 });
@@ -291,7 +293,7 @@ describe('projects', () => {
 
   it('GET /projects/:id → 404 for a project outside the tenant', async () => {
     const project = await createProject();
-    currentUser = { id: 5, organizationId: 2 };
+    currentUser = { id: 5, organizationId: 2, role: 'member' };
     const res = await request(app).get(`/api/translation/projects/${project.id}`);
     expect(res.status).toBe(404);
   });
@@ -406,7 +408,7 @@ describe('post-edit', () => {
   it('404 for a segment outside the tenant', async () => {
     const project = await createProject();
     const drafted = await draftAll(project.id);
-    currentUser = { id: 5, organizationId: 2 };
+    currentUser = { id: 5, organizationId: 2, role: 'member' };
     const res = await request(app)
       .post(`/api/translation/segments/${drafted.segments[0].id}/post-edit`)
       .send({ targetText: 'X', method: 'human' });
@@ -519,7 +521,7 @@ describe('approve (real hybrid-workflow guards)', () => {
     gatewayMocks.route.mockResolvedValue(gatewayReply('Adverse events were reported.'));
     await request(app).post(`/api/translation/segments/${segmentId}/back-translation`).send({});
 
-    currentUser = { id: 10, organizationId: 1 }; // distinct reviewer of record
+    currentUser = { id: 10, organizationId: 1, role: 'member' }; // distinct reviewer of record
     const res = await request(app)
       .post(`/api/translation/segments/${segmentId}/approve`)
       .send({ reviewNote: 'Terminology verified against the DNT registry.' });
@@ -553,13 +555,13 @@ describe('approve (real hybrid-workflow guards)', () => {
     // The project detail now rolls up as approved once every segment is terminal.
     // (Post-edit as user 9 again — the reviewer of record must stay distinct.)
     const secondId = drafted.segments[1].id;
-    currentUser = { id: 9, organizationId: 1 };
+    currentUser = { id: 9, organizationId: 1, role: 'member' };
     await request(app)
       .post(`/api/translation/segments/${secondId}/post-edit`)
       .send({ targetText: 'Unter 25 Grad lagern.', method: 'mt_postedited' });
     gatewayMocks.route.mockResolvedValue(gatewayReply('Store below 25 degrees.'));
     await request(app).post(`/api/translation/segments/${secondId}/back-translation`).send({});
-    currentUser = { id: 10, organizationId: 1 };
+    currentUser = { id: 10, organizationId: 1, role: 'member' };
     const secondApprove = await request(app)
       .post(`/api/translation/segments/${secondId}/approve`)
       .send({});
@@ -572,7 +574,7 @@ describe('approve (real hybrid-workflow guards)', () => {
   it('404 for a segment outside the tenant', async () => {
     const project = await createProject();
     const drafted = await draftAll(project.id);
-    currentUser = { id: 10, organizationId: 2 };
+    currentUser = { id: 10, organizationId: 2, role: 'member' };
     const res = await request(app)
       .post(`/api/translation/segments/${drafted.segments[0].id}/approve`)
       .send({});

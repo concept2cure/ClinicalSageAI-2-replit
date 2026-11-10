@@ -2137,7 +2137,7 @@ const governedPrecheckSchema = z
     // Held-send settlement: which way, on what (FDA's document in the project's Vault, or the platform's own proof).
     outcome: z.enum(HELD_SEND_OUTCOMES).optional(),
     evidenceKind: z.enum(HELD_SEND_EVIDENCE_KINDS).optional(),
-    evidenceDocumentId: z.string().uuid().optional(),
+    evidenceDocumentId: z.string().guid().optional(),
   })
   .refine((b) => b.step !== 'shadow-finding-disposition' || (b.findingId !== undefined && b.disposition !== undefined), {
     message: "A 'shadow-finding-disposition' precheck names the finding (findingId) and the disposition (accepted or fixed).",

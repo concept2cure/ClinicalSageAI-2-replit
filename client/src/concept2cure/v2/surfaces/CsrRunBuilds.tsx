@@ -151,7 +151,7 @@ function BuildPicker({ builds, selected, onChoose, onReload }: {
   return <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
     <strong>CSR builds from this study data</strong>
     {builds && builds.length > 1 && <select aria-label="CSR build" value={selected?.jobId ?? ''} onChange={e => onChoose(Number(e.target.value))}>
-      {builds.map(b => <option key={b.jobId} value={b.jobId}>CSR build {b.jobId} · {b.status}</option>)}
+      {builds.map(b => <option key={b.jobId} value={b.jobId}>CSR build {b.jobId} · {buildStateWord(b)}</option>)}
     </select>}
     <button type="button" className="btn" onClick={onReload}>{I.rotateCw} Reload builds</button>
   </div>;
@@ -365,13 +365,27 @@ function ResumeBuild({ jobId, onResumed }: { jobId: number; onResumed: () => voi
   </>;
 }
 
+/**
+ * How a build's state reads. The server records `failed` for three different ends, and says which in `failure`
+ * (csr-job-runner.ts csrBuildFailureText): a build that ran to its end and left a heading without text ("Not
+ * complete: …"), a build a provider refusal stopped ("… The build stopped at §N."), and a failure it cannot name.
+ * "failed · 98%" stood beside a build that had drafted 68 of 69 headings (showcase walk, 2026-11-10). Only the word
+ * changes: the recorded state, the reason and "Resume build" are as before.
+ */
+export function buildStateWord(build: Pick<RunBuild, 'status' | 'failure'>): string {
+  if (build.status !== 'failed') return build.status;
+  const why = build.failure?.trim() ?? '';
+  if (why.startsWith('Not complete:')) return 'not complete';
+  return /The build stopped at §/.test(why) ? 'stopped' : 'failed';
+}
+
 function BuildOnCard({ build, programId, documentId, onBuildChanged, onDocumentChanged }: {
   build: RunBuild; programId: string; documentId: string; onBuildChanged: () => void; onDocumentChanged?: () => void;
 }) {
   const { headings, error, reload } = useBuildHeadings(build.jobId, build.updatedAt);
   const [importing, setImporting] = useState<string[] | null>(null);
   return <div style={{ display: 'grid', gap: 4 }}>
-    <p role="status">CSR build {build.jobId} · {build.status} · {build.progress}% · last updated {new Date(build.updatedAt).toLocaleString()}</p>
+    <p role="status">CSR build {build.jobId} · {buildStateWord(build)} · {build.progress}% · last updated {new Date(build.updatedAt).toLocaleString()}</p>
     {build.writing && <LiveDraft writing={build.writing} />}
     {build.status === 'failed' && <p role="alert">{build.failure?.trim() || 'This build stopped before it finished. No reason was recorded.'}</p>}
     {build.status === 'failed' && <ResumeBuild jobId={build.jobId} onResumed={onBuildChanged} />}

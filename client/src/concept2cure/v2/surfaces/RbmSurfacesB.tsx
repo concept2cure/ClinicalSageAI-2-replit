@@ -30,7 +30,7 @@ import { I } from '../icons';
 import { RBM_VOCAB, type RbmSignal } from '../fixtures/rbm-data';
 import type { RbmBoard, RbmBoardSignal, RbmBoardSite, RbmBoardAction } from './rbmBoard';
 import {
-  RbmChip, RbmScore, RbmFreshness, DimBars,
+  RbmChip, RbmScore, RbmFreshness, RbmWhen, DimBars,
   RbmFormModal, GovernedApprovalDialog, type FormField,
 } from './RbmSurfaces';
 import {
@@ -211,7 +211,7 @@ export function RbmSignals({ board, onTab, onReload }: SubProps) {
             <RbmChip vocab="severity" value={s.severity} />
             <span className="rbm-sig-src" data-src={s.source}>{SRC_LABEL[s.source] || s.source}</span>
             <span className="rbm-sig-t">{s.title}</span>
-            <span className="rbm-sig-meta">{s.site !== '—' ? `site ${s.site} — ` : ''}{s.detected}</span>
+            <span className="rbm-sig-meta">{s.site !== '—' ? `site ${s.site} — ` : ''}{s.detected ? <RbmWhen at={s.detected} /> : null}</span>
             <RbmChip vocab="signal" value={s.status} />
           </button>
           {openId === s.id && (

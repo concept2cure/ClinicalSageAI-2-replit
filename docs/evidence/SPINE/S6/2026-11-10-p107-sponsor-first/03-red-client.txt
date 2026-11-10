@@ -1,0 +1,7 @@
+# Red: the picker's and the refused listing's cases on trunk's client (the merged tree with this lane's three client files put back to trunk's)
+ × client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > a listing the server refuses until a client is chosen > says the artifacts are listed one client at a time, with no retry and no claim that the read failed 5025ms
+ × client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx > a listing the server refuses until a client is chosen > tells AnA the same, not that a read failed 5019ms
+ × client/src/concept2cure/v2/__tests__/vaultVersionPicker.test.tsx > the picker searches one client at a time > asks which client when the library search is refused, then searches that client's Vaults only 5017ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  3 failed | 31 passed (34)
