@@ -174,7 +174,14 @@ export const UI_SURFACES: UiSurface[] = [
     // (free tier) but neither of those was refused its own projects. They
     // keep their claims; the gate serves a holder of any claimant, so nobody
     // loses access (docs/evidence/D2-ONE-ANA/2026-10-29/core-project-record-gating/).
-    apiPrefixes: ['/api/projects', '/api/c2c/projects'],
+    // 2026-11-10 (P-122 §3.2 and §3.5, Plan: R1): "Which projects are at risk this week?" is answered on Projects by
+    // the server's risk engines, so production serves their three reads, each listing only the projects the person
+    // can open: Sentinel's findings (deadline risk, cross-project conflicts; sentinel-routes.ts), and submission-ops'
+    // open blockers and work due within seven days (submission-ops.ts). Claimed narrowly: the rest of /api/sentinel
+    // and /api/submission-ops stays unclaimed. Under these paths the only other routes are the finding and blocker
+    // updates, which refuse a project the person cannot open (the blocker's also keeps its editor gate).
+    apiPrefixes: ['/api/projects', '/api/c2c/projects', '/api/sentinel/findings', '/api/submission-ops/blockers',
+      '/api/submission-ops/due-soon'],
     anaToolFamilies: ['plan_submission'],
     sharedContract: null,
     discoveryCatalog: null,
@@ -228,8 +235,16 @@ export const UI_SURFACES: UiSurface[] = [
     // 2026-11-09 (S12, P-83/P-109): '/api/project-hierarchy': the project's work projects (ProjectCoreWork.tsx
     // ProjectWorkProjects, GET /:anchor/children?programId=), program-checked and project-admitted before anything is
     // read; project home is the only client caller of the namespace.
+    // 2026-11-10 (P-122 §3.5, Plan: R1): '/api/project-sections/summary' and '/api/project-sections/timeline': the Plan
+    // step's section owners, deadlines and milestones, read by the project's id and admitted by the project sharing
+    // policy before any read (project-sections.ts admitNamedProject). Only the regulatory workspace, outside the
+    // catalog, claimed the namespace, so production refused it. Claimed narrowly: the section writes, milestone writes
+    // and the rest stay unclaimed, and no section route answers to "summary" or "timeline" as a section code.
+    // '/api/concept2cure/submission-milestones': the catalogue of each filing type's milestones the project's task
+    // list is generated from (c2c/tasks.ts; read-only, the same for every organization). Its tasks are under
+    // '/api/concept2cure/projects', already claimed.
     apiPrefixes: ['/api/projects', '/api/concept2cure/projects', '/api/mdx/client-review', '/api/charters/by-project', '/api/v1/pyramids/by-project',
-      '/api/project-hierarchy'],
+      '/api/project-hierarchy', '/api/project-sections/summary', '/api/project-sections/timeline', '/api/concept2cure/submission-milestones'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,

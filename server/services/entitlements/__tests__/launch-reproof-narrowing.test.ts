@@ -74,8 +74,7 @@ const NOT_SERVED_AT_LAUNCH = [ // Remaining findings after admitted/reached call
   '/api/project-sections/initialize',
   '/api/project-sections/milestones',
   '/api/project-sections/notifications',
-  '/api/project-sections/summary',
-  '/api/project-sections/timeline',
+  /* /api/project-sections/summary and /timeline: served since P-122 (2026-11-10), below. */
   '/api/realtime-collab/health',
   '/api/regulatory/tasks/dashboard',
   '/api/regulatory/tasks/sync',
@@ -83,7 +82,7 @@ const NOT_SERVED_AT_LAUNCH = [ // Remaining findings after admitted/reached call
   '/api/submission-ops/automation',
   '/api/submission-ops/command-center',
   '/api/submission-ops/digests',
-  '/api/submission-ops/due-soon',
+  /* /api/submission-ops/due-soon: served since P-122 (2026-11-10), below. */
   '/api/submission-ops/hotspots',
   '/api/submission-ops/policies',
   '/api/submission-ops/sections',
@@ -106,6 +105,13 @@ const NOT_SERVED_AT_LAUNCH = [ // Remaining findings after admitted/reached call
 
 /** What a launch screen calls or a launch app uses under the same prefixes (the route inventory's 'called' list). */
 const STILL_SERVED = [
+  /* Upheld on 2026-10-15: no screen read them. P-122 (2026-11-10) reaches them: the project page's Plan step reads
+     the section owners, deadlines and milestones, and the Projects page's "at risk" answer reads the work due soon,
+     each listing only the projects the person can open (tests/db/p122-project-management-reads.dbtest.ts). Claimed
+     exactly, so the section list, its writes and the rest of /api/submission-ops stay refused. */
+  '/api/project-sections/summary',
+  '/api/project-sections/timeline',
+  '/api/submission-ops/due-soon',
   '/api/authoring-actions/decision-context',
   '/api/authoring-actions/decisions',
   '/api/authoring-actions/module-preflight',
