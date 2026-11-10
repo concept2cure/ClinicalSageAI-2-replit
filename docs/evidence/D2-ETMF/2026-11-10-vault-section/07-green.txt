@@ -1,0 +1,56 @@
+# 07-green: this change's tests on the changed code
+# $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx > the page that hosts the trial master file > with a project open: the way back, one title, and the section for that project’s study 259ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx > the page that hosts the trial master file > with no project open: says a trial master file belongs to a project’s study, offers Projects, and reads nothing 12ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx > what AnA can see of the page is what the section read > the study, the verdict as the server gave it, and the counts 25ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx > what AnA can see of the page is what the section read > not determined is published as not determined, with the server’s null, never as missing or not ready 56ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx > what AnA can see of the page is what the section read > a refused read is published as that refusal, not as an empty or unready trial master file 14ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx > what AnA can see of the page is what the section read > a project with no study, or with several and none chosen, is published as that 182ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx > the Vault’s header button > is named "Trial master file" and opens the page that hosts it 280ms
+ ✓ client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx > the Vault’s header button > is not offered where that page is locked, and the Vault itself reads nothing of the trial master file 188ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > which study the trial master file is of > reads nothing until the view that holds it is first on screen 164ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > which study the trial master file is of > uses the project’s one study and says which 18ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > which study the trial master file is of > asks which study when the project has several, and reads none until one is chosen 31ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > which study the trial master file is of > a study chosen next carries neither the last study’s verdict nor its failed read 51ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > which study the trial master file is of > says plainly that a project with no study has no trial master file, and where a study is created 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > which study the trial master file is of > a study list that is not a list is a failed read, never "no study" 32ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > whether the essential records are all filed > says what is filed and what is missing in a sentence, then each zone by the record’s name 42ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > whether the essential records are all filed > names the document a record is filed against as the server names it 26ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > whether the essential records are all filed > says complete only when every essential record is filed against a document 18ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > whether the essential records are all filed > says not determined when the server could not determine it, never complete and never incomplete 18ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > whether the essential records are all filed > states no verdict over a read that checked nothing, even one the server called ready 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > whether the essential records are all filed > an answer about another study is not shown as this study’s 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > whether the essential records are all filed > a completeness answer with no stated verdict is a failed read 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > a refusal is said as itself, and a failed read is never an empty trial master file > not in this release (403 LAUNCH_SCOPE) 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > a refusal is said as itself, and a failed read is never an empty trial master file > not enabled for the organization (403 MODULE_NOT_LICENSED) 5ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > a refusal is said as itself, and a failed read is never an empty trial master file > the person’s role (403, no code) 6ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > a refusal is said as itself, and a failed read is never an empty trial master file > not found (404 STUDY_NOT_FOUND) 4ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > a refusal is said as itself, and a failed read is never an empty trial master file > a failed read says so, offers another try, and shows no record as missing 24ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > a refusal is said as itself, and a failed read is never an empty trial master file > when only the list of filings cannot be read, the verdict stands and no document or removal is shown 72ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > filing a document against a missing record > files the version picked from this project’s Vault, with the reason, against the reference the Vault gave 139ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > filing a document against a missing record > a refused filing says the server’s reason, files nothing and keeps the form 102ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > filing a document against a missing record > a filing refused as not in this release is said as that refusal 102ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > filing a document against a missing record > a filing refused as not enabled for the organization is said as that refusal 91ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > filing a document against a missing record > a filing refused as the person’s role is said as that refusal 91ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > filing a document against a missing record > a filing refused as the study not found is said as that refusal 84ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > filing a document against a missing record > keeps what was filed on screen when the read after it fails 88ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > filing a document against a missing record > when the server does not confirm the filing, it is not called filed or refused, and the list is read again 92ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > removing a filing > removes it with a reason of at least 8 characters, and reads the trial master file again 63ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > removing a filing > a refused removal says why and removes nothing 70ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > a role that may not write the Vault > reads the trial master file and is offered no filing or removal 13ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > the inspection package > downloads it for the study and says what it is, and its SHA-256 checked on receipt 24ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > the inspection package > says a package the server marked not determined as not determined, never as missing records 23ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > the inspection package > does not save a file that does not match the SHA-256 the server stated 22ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > the inspection package > a failure (the person’s role) is said with its reason, and nothing is saved 28ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > the inspection package > a failure (not in this release) is said with its reason, and nothing is saved 31ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > the inspection package > a failure (a server error) is said with its reason, and nothing is saved 24ms
+
+ Test Files  2 passed (2)
+      Tests  44 passed (44)
+   Start at  12:57:15
+   Duration  6.26s (transform 2.00s, setup 168ms, import 2.51s, tests 2.64s, environment 717ms)
+
+# exit: 0

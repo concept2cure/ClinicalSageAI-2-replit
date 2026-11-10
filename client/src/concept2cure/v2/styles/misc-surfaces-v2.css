@@ -537,7 +537,16 @@
   .vd-confirm{ display:flex; flex-direction:column; gap:6px; margin:0; }
   .vd-confirm-acts{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
   .vd-confirm-form{ display:flex; flex-direction:column; gap:6px; max-width:560px; }
-  .vd-confirm-form textarea{ height:auto; padding:6px 9px; resize:vertical; }
+  /* The form is a column, so the reason field's row basis (flex:1 1 200px, for a field beside its button) would
+     read as a 200px height: the field takes its rows. */
+  .vd-confirm-form textarea{ flex:0 0 auto; height:auto; padding:6px 9px; resize:vertical; }
+  /* The trial master file's records (VaultTrialMasterFile.tsx): a record's name is read whole. It wraps and is
+     never cut to an ellipsis; on a narrow screen what is filed and its action wrap under the name. */
+  .vd-tmf-rows .vd-dr-name{ max-width:45%; overflow:visible; white-space:normal; }
+  @media (max-width:640px){
+    .vd-tmf-rows .vd-dr-row{ flex-wrap:wrap; row-gap:4px; }
+    .vd-tmf-rows .vd-dr-name{ max-width:100%; }
+  }
   /* Library search: hits from every project the reader can open, each with its project. */
   .vd-lib{ display:flex; flex-direction:column; border-top:1px solid var(--border); }
   .vd-lib > .vd-dr-meta{ padding:8px 0; }

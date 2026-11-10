@@ -1,0 +1,63 @@
+diff --git a/client/src/concept2cure/v2/surfaces/Vault.tsx b/client/src/concept2cure/v2/surfaces/Vault.tsx
+--- a/client/src/concept2cure/v2/surfaces/Vault.tsx
++++ b/client/src/concept2cure/v2/surfaces/Vault.tsx
+@@ -13,6 +13,7 @@
+ import { VaultVersions } from './VaultVersions';
+ import { APPROVED_STAGES, VAULT_STAGE_CHOICES, stageLabel } from './VaultLifecycle';
+ import { VaultCoverage, type VaultCoverageShape, type CoverageDocument } from './VaultCoverage';
++import { VaultTrialMasterFile, revealVaultTrialMasterFile } from './VaultTrialMasterFile';
+ import {
+   ARTIFACTS_BRANCH,
+   ArtifactAuditReport,
+@@ -3097,17 +3098,21 @@
+   );
+ 
+   const requiredView = (
+-    <VaultCoverage
+-      coverage={vault?.coverage}
+-      documents={coverageDocuments}
+-      onUpload={() => uploadControls.current?.chooseFiles()}
+-      onFileHere={(docId, target) =>
+-        void fileDocument(docId, { ...target, note: `Filed at ${target.ctdSection} from Vault coverage.` })
+-      }
+-      busy={filing}
+-      defaultOpen
+-      onShowOutline={() => setView('library')}
+-    />
++    <>
++      <VaultCoverage
++        coverage={vault?.coverage}
++        documents={coverageDocuments}
++        onUpload={() => uploadControls.current?.chooseFiles()}
++        onFileHere={(docId, target) =>
++          void fileDocument(docId, { ...target, note: `Filed at ${target.ctdSection} from Vault coverage.` })
++        }
++        busy={filing}
++        defaultOpen
++        onShowOutline={() => setView('library')}
++      />
++      {/* The study's trial master file (P-75: the eTMF lives inside the Vault): a section of this view, read once it is opened. */}
++      <VaultTrialMasterFile projectId={projectId} active={view === 'required'} documents={coverageDocuments} />
++    </>
+   );
+ 
+   const artifactsView = (
+@@ -3170,14 +3175,14 @@
+           ) : null}
+         </div>
+         <div className="ph-acts">
+-          {/* Offered only where the eTMF can be opened: outside this release it
+-              led to the locked panel (FILING_SPINE.md F16). */}
++          {/* Offered only where the eTMF can be opened (FILING_SPINE.md F16). It shows the
++              trial master file where it lives, in Required documents. */}
+           {available('etmf') && (
+             <button
+               type="button"
+               className="btn ghost"
+-              onClick={() => onNav && onNav('etmf')}
+-              title="Open the trial master file of this project’s study: its essential records, filed and missing"
++              onClick={() => { setView('required'); revealVaultTrialMasterFile(); }}
++              title="The trial master file of this project’s study, in Required documents"
+             >
+               {I.shieldCheck} Trial master file
+             </button>
