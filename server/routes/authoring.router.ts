@@ -39,7 +39,7 @@ import { writeChainedAuditRow } from '../services/auditService';
 import { resolveSignerOrgRole } from '../services/part11/resolve-signer-role.js';
 import { checkSigningAuthority } from '../services/part11/signing-authority-gate.js';
 import {
-  assertSignerIsNotAuthor,
+  assertSignerIsNotAuthor, organizationReviewPolicy, soleMemberMayApprove, SOLE_MEMBER_RECORD,
   SeparationOfDutiesAuthorUnresolvedError,
   SeparationOfDutiesError,
 } from '../services/governance/separation-of-duties.js';
@@ -5056,8 +5056,7 @@ async function approvalRefused(
   current: Awaited<ReturnType<typeof lockedSigningContent>>,
   ids: { docId: string | string[] | undefined; tenantId: number; meaning: string },
 ): Promise<boolean> {
-  if (await signingRefused(client, req, res, ids)) return true;
-  if (await reviewRefused(client, req, res, current, ids)) return true; // P-95
+  if (await approverIndependenceRefused(client, req, res, current, ids)) return true; // P-18, P-95, P-116, P-117
   const { openCommentCount, pendingEdits } = await freezeCensus(ids.docId, ids.tenantId, current.sections, client);
   if (openCommentCount > 0 || pendingEdits > 0) {
     if (req.body?.acknowledgeUnresolved !== true) {
@@ -5091,10 +5090,35 @@ async function reviewRefused(
 ): Promise<boolean> {
   const refusal = await authoringApprovalReviewRefusal(client, {
     tenantId: ids.tenantId, docId: String(current.doc?.id ?? ids.docId), digest: sectionsDigest(current.sections),
+    reviewersRequired: (await organizationReviewPolicy(client, ids.tenantId)).independentReviewersRequired, // P-117
   });
   if (!refusal) return false;
   res.status(refusal.status).json({ success: false, error: { code: refusal.code, message: refusal.message } });
   return true;
+}
+
+/**
+ * What makes an APPROVER signature independent, on both its doors (E-sign and
+ * the workflow /sign): the seal refusal, then the signer is not an author
+ * (P-18) and the document's review is complete (P-95). One exception, founder
+ * decisions P-116 and P-117: the organisation's only member, where its review
+ * rules allow it, approves with no reviewer, and this transaction's audit trail
+ * says no independent review took place. The record is written before the
+ * credential, on the signing transaction, so it exists only if the signature does.
+ */
+async function approverIndependenceRefused(
+  client: Queryable, req: Request, res: Response,
+  current: Awaited<ReturnType<typeof lockedSigningContent>>,
+  ids: { docId: string | string[] | undefined; tenantId: number; meaning: string },
+): Promise<boolean> {
+  if (await sealRefusedForFiling(client, res, ids.docId, ids.tenantId)) return true;
+  if (await soleMemberMayApprove(client, ids.tenantId, Number(getActorId(req)))) {
+    await createAuditTrail(req, ids.docId, null, 'APPROVAL_WITHOUT_INDEPENDENT_REVIEW', null, null, SOLE_MEMBER_RECORD,
+      { independentReview: 'none' }, client);
+    return false;
+  }
+  if (await separationOfDutiesRefused(client, req, res, ids)) return true;
+  return reviewRefused(client, req, res, current, ids);
 }
 
 /* ── P-89: AN UNVERIFIED FIGURE IS NOT SEALED UNNOTICED ──
@@ -7780,8 +7804,8 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
          around it. If evidence later shows reviewers blocked by a divergence
          they cannot clear, narrow this to the sealing step — do not weaken the
          refusal. */
-      if (await signingRefused(client, req, res, { docId, tenantId, meaning })) return;
-      if (meaning === 'APPROVER' && await reviewRefused(client, req, res, current, { docId, tenantId })) return; // P-95
+      if (meaning === 'APPROVER' ? await approverIndependenceRefused(client, req, res, current, { docId, tenantId, meaning }) // P-18, P-95, P-116, P-117
+        : await signingRefused(client, req, res, { docId, tenantId, meaning })) return;
       if (meaning === 'APPROVER' && await figuresRefused(client, req, res, current, { docId, act: 'approve' })) return; // P-89
 
       const signer = await reverifyAuthoringSigner(req, res);

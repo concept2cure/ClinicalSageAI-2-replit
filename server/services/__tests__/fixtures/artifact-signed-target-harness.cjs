@@ -90,7 +90,7 @@ async function runCase(tree,c){
  }
  const snap=()=>JSON.stringify(Object.fromEntries(Object.keys(columns).map(t=>[t,db.prepare(`SELECT * FROM ${t} ORDER BY id`).all()])));
  const before=snap();
- const query=async(sql,params=[])=>{assert(started,'query is on transaction');trace.push({kind:'query',sql,params});if(sql.includes('review_assignments'))fail('assignmentsRead');if(sql.includes('review_decisions'))fail('decisionsRead');return{rows:db.prepare(sql).all(Object.fromEntries(params.map((p,i)=>['$'+(i+1),p])))};};
+ const query=async(sql,params=[])=>{assert(started,'query is on transaction');trace.push({kind:'query',sql,params});if(sql.includes('review_assignments'))fail('assignmentsRead');if(sql.includes('review_decisions'))fail('decisionsRead');sql=sql.replace("to_jsonb(o) -> 'settings' AS settings",'o.settings AS settings');/* SQLite has no to_jsonb (organizationReviewPolicy, P-117) */return{rows:db.prepare(sql).all(Object.fromEntries(params.map((p,i)=>['$'+(i+1),p])))};};
  function builder(kind,table){let cond,payload,limit,lock,ignore=false;
   const b={from:t=>(table=t,b),where:x=>(cond=x,b),for:x=>(lock=x,b),limit:n=>(limit=n,exec()),set:v=>(payload=v,b),values:v=>(payload=v,b),onConflictDoNothing:()=>(ignore=true,b),returning:()=>exec()};
   async function exec(){assert(started,'operation is on transaction');let sql,params=[];const t=table.table;
