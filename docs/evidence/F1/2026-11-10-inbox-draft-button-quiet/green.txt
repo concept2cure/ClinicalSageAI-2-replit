@@ -1,0 +1,3 @@
+$ npx vitest run <the inbox list's three hosts and their draft tests> (after the change)
+      Tests  42 passed (42)
+ Test Files  7 passed (7)

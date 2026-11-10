@@ -1,0 +1,7 @@
+$ npx vitest run client/src/concept2cure/v2/__tests__/communicationDraftCarriesLetter.test.tsx  (before the change)
+ ✓ client/src/concept2cure/v2/__tests__/communicationDraftCarriesLetter.test.tsx > Communication's draft buttons carry the letter > every draft button is labelled "Draft response with AnA" and pins the letter of its communication 239ms
+ × client/src/concept2cure/v2/__tests__/communicationDraftCarriesLetter.test.tsx > Communication's draft buttons carry the letter > each letter's draft button is quiet, never a filled primary on every row 63ms
+AssertionError: expected 'cc-btn sm primary' not to match /\bprimary\b/
+- Expected:
++ Received:
+      Tests  1 failed | 1 passed (2)
