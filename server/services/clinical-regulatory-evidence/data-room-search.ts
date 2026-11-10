@@ -250,7 +250,9 @@ export async function searchDataRoom(orgId: number, p: DataRoomQuery, actor?: { 
               : 'NULL::text'} AS snippet
        FROM cre_evidence_sources s
       WHERE ${where}
-      ORDER BY ${qParam ? `ts_rank_cd(${SEARCH_VECTOR}, websearch_to_tsquery('english', ${qParam})) DESC, ` : ''}s.created_at DESC, s.id DESC
+      /* Current captured files first, then current native Quality record snapshots, then what a later capture replaced
+         (a search ranks by relevance first). */
+      ORDER BY ${qParam ? `ts_rank_cd(${SEARCH_VECTOR}, websearch_to_tsquery('english', ${qParam})) DESC, ` : ''}(s.is_current IS FALSE), (s.metadata->>'nativeRecord' IS NOT DISTINCT FROM 'true'), s.created_at DESC, s.id DESC
       LIMIT $${page.length - 1} OFFSET $${page.length}`,
     page,
   );
