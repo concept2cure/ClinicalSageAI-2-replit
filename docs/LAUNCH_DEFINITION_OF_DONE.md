@@ -2828,3 +2828,85 @@ admin in client security user settings."**
 - **A consequence to know.** An administrator who is also the organisation's only member sets their own rule. That is
   what a one-person organisation is. The settings change is itself an audited act with a reason.
 - **Evidence.** `docs/evidence/W5/2026-11-10-review-rules-settings/`.
+
+### P-118 — The founder approves the qualification protocol; the retrieval test bank is completed without a regulatory reviewer, and says so
+
+The founder, 2026-11-10, answering the three things P-115's clarification left with them (a working key, the
+protocol's approval with the CSR scoping written into it, and a regulatory reviewer for the retrieval test bank):
+**"I can try to again load a new Anthropic api key tomorrow and yes I approve"**, and on the reviewer:
+**"impossible right not to get a human reviewer so figure out alternatives."**
+
+- **What the founder approved.** `server/eval/pq/pq-protocol.json` (PQ-DRAFT-001), with P-115's scoping written into
+  it, as **version 1.0.0, approved 2026-11-10** by the founder as system owner. The file records it.
+- **What approval does.** It fixes the acceptance criteria before any model has been run against them. P-31: "a PQ
+  against acceptance criteria nobody has approved is not a PQ."
+- **What approval does not do.** It qualifies no model and changes nothing a model may do. Every `pq.status` in
+  `approved-models.ts` is still `pending`, and production still refuses to store model-authored text in a governed
+  record. On the approved protocol a run that is perfect on drafting, extraction and retrieval is still INCOMPLETE
+  (`pq-verdict-rag.test.ts`, "approval alone qualifies nothing").
+- **P-31's sixth condition, a product provider key, is not yet met.** The founder approved ahead of it. A key is a
+  condition for running the protocol, not for fixing what it measures, and criteria fixed before the first run are
+  the stronger record.
+- **How it changes from here.** A change to the approved protocol is a new version and a new approval by the
+  founder. A change after a model has passed invalidates that pass (P-31).
+
+**Written into the protocol by the walking session (`01QoxbLZ…`) under P-115's delegation. The founder may overrule
+any of it before the first run.**
+
+- **The scope** (the file's `scope` block). A qualification is for a named use, on the components that use needs:
+  - evidence-bound CSR drafting: drafting, extraction and the CSR drafting run. It releases CSR text only;
+  - every use that retrieves: drafting, extraction and retrieval.
+- **A CSR drafting component** (`csrDrafting`): the pinned model drafts every ICH E3 narrative heading of one public
+  study through the CSR builder's own request and its own checks. Its criteria:
+
+  | Criterion | Value | Where the value comes from |
+  |---|---|---|
+  | Figures in accepted text that are not a claimed cell of the retained tables | 0 | RULE 2 and P-115 item 1 |
+  | Forbidden or overclaiming phrases | 0 | the drafting component's own criterion |
+  | Share of narrative headings the pinned model verifiably drafted | all | as every other component requires of its tasks |
+  | Share of headings whose first draft passed every check | at least 85% | **no earlier document.** Set here, at the drafting component's coverage floor |
+
+- **That component is required and cannot be executed yet**: the run is not written (ledger package S4). So no run
+  can pass today, for any use. This is stricter than the scope above, on purpose. The test bank holds 510(k), CER,
+  IND, Module 2 and Module 3 tasks and no CSR. Without this, a model that passed on that bank would be admitted to
+  draft a CSR it was never measured on, the failure P-31's fourth condition names.
+
+**The retrieval test bank without a regulatory reviewer.** Decided under the same delegation.
+
+What the record check asks of the bank is facts, not a credential (`verify-pq-record.ts`, `reviewedSource` and
+`reviewedGold`): each source's official URL, version, date and SHA-256, the publisher's reuse terms quoted with
+their URL, and for each test item the section and a verbatim quotation that states its answer. The corpus
+manifest's own procedure asks "what was done and by whom" (`guidance-corpus-manifest.json`, `verifyProcedure` step
+6). So the work is split by kind.
+
+1. **The CSR does not wait for any of this.** The CSR build retrieves nothing (P-115's clarification stands).
+2. **Mechanical steps: the founder, from the Codespace.** The official URL, the download, its SHA-256 and size, and
+   the title, revision and date on the cover, for the 18 required sources. The publishers' sites are refused from
+   the sessions' containers, so a session prepares the commands and the founder runs them. Each entry's
+   `verification` names who ran it and when.
+3. **Reuse terms: the founder reads each of the four publishers' posted terms.** The operative sentence is quoted
+   with its URL and the date read. Recording what a publisher posts needs no counsel. Whether those terms permit
+   this product's use is the founder's call as the owner of the business; a session does not make it. A publisher
+   whose terms are unclear has its texts left out, and the items that rely on them are replaced.
+4. **Judgement steps: replaced by a check anyone can re-run.** The five open checks and the twelve further items
+   are worked by a session from the downloaded official text. Every item carries its section and a verbatim
+   quotation that states the answer. The quotation is checked, character for character, against the file whose hash
+   is pinned, and the check's output is retained. The founder reads each item's quotation beside its answer and
+   confirms it. An item whose quotation does not state its answer plainly is dropped, not argued for.
+5. **The bank says what it is.** Its record, and every qualification record that uses it, states: *sources verified
+   by download and hash, answers verified by verbatim quotation, confirmed by the system owner; no regulatory
+   professional reviewed this bank.* Nothing calls it independently reviewed.
+6. **Two ways to a reviewer's name later; neither changes a criterion.**
+   - The buyer's own regulatory staff review the bank as part of accepting the system. A regulated company
+     qualifies a system for its own intended use, on the supplier's protocol and evidence, as a matter of course.
+   - A contract regulatory writer, for about a day.
+7. **Until the bank is complete,** every use that retrieves stays as it is today: the model assists, and its text
+   is not stored in a governed record as the model's.
+
+- **The order in P-115 changes in one place.** Step 2 is now: the CSR drafting run and a verdict that reads the use
+  (S4); then the run with the founder's key.
+- **Not decided here.**
+  - Whether the buyer is offered the review in item 6.
+  - Whether any publisher's terms are acceptable (item 3).
+  - Any value in the table above, if the founder wants another.
+- **Evidence.** `docs/evidence/D4/2026-11-10-pq-protocol-approved/`.

@@ -172,7 +172,11 @@ describe('qualification tenant admission', () => {
     const result = await runPq({ modelId: MODEL_ID, gateway: s.gateway });
     expect(result).toMatchObject({ verdict: 'INCOMPLETE', generation: [], extraction: [], recordPath: null,
       preflight: { readyToEvaluate: false, qualifiesModel: false } });
-    expect(result.preflight?.blockers.map(blocker => blocker.code)).toContain('PROTOCOL_NOT_APPROVED');
+    // The protocol is approved (P-118). What blocks the run now is what it measures: a required component that cannot
+    // be executed yet, and the retrieval bank.
+    const codes = result.preflight?.blockers.map(blocker => blocker.code);
+    expect(codes).toEqual(expect.arrayContaining(['REQUIRED_COMPONENT_UNAVAILABLE', 'RAG_SAMPLE_SHORTFALL', 'SOURCE_REVIEW_INCOMPLETE']));
+    expect(codes).not.toContain('PROTOCOL_NOT_APPROVED');
     expect(s.calls).toEqual([]);
     expect(admission.resolve).not.toHaveBeenCalled();
   });
@@ -279,14 +283,14 @@ describe('run-pq live path', () => {
     expect(r.generation.every((g) => !g.servedModelVerified)).toBe(true);
   });
 
-  it('on the current draft protocol, a perfect model is INCOMPLETE — and the reasons say why', async () => {
+  it('on the current protocol, approved (P-118), a perfect model is INCOMPLETE — and the reasons say why', async () => {
     const r = await runPq({ modelId: MODEL_ID, gateway: stub(PINNED).gateway });
     expect(r.verdict).toBe('INCOMPLETE');
     const why = r.reasons.join(' ');
-    // What still blocks a PASS: rag cannot execute (pq-protocol.json records
-    // why, and run-pq has no rag phase), and the protocol is a draft nobody has
-    // approved.
+    // What still blocks a PASS: rag was not run here, and the CSR drafting
+    // component the approved protocol requires cannot be executed yet.
     expect(why).toMatch(/rag/);
+    expect(why).toMatch(/required component "csrDrafting" cannot be executed yet/);
     // Extraction used to be named here too, as a component that could not be
     // executed. It executes now and a perfect model passes it, so its absence
     // from the reasons is the evidence — the same shape as the sample-floor
@@ -394,7 +398,7 @@ describe('run-pq live path', () => {
     expect(rec).toMatchObject({
       kind: 'pq-record',
       protocolId: 'PQ-DRAFT-001',
-      protocolStatus: 'draft',
+      protocolStatus: 'approved',
       modelId: MODEL_ID,
       pinnedVersion: PINNED,
       verdict: 'INCOMPLETE',
@@ -430,6 +434,8 @@ describe('run-pq rag component', () => {
     p.status = 'approved';
     (p as { approvedBy: string | null }).approvedBy = 'System owner (test copy)';
     (p as { approvedOn: string | null }).approvedOn = '2026-09-28';
+    // The CSR drafting component (P-118) cannot be executed yet; these cases are about rag.
+    delete (p.components as Partial<typeof p.components>).csrDrafting;
     mutate(p);
     return `${JSON.stringify(p, null, 2)}\n`;
   }
@@ -447,8 +453,8 @@ describe('run-pq rag component', () => {
   });
 
   it('control — the redirect works: an approved copy with rag not required lets a perfect model PASS', async () => {
-    // The real protocol is a draft and cannot PASS, so a PASS here proves the
-    // copy was what run-pq read — and that the stub is otherwise passing, so the
+    // The real protocol requires a component that cannot be executed yet and so
+    // cannot PASS, so a PASS here proves the copy was what run-pq read — and that the stub is otherwise passing, so the
     // E6 case below is INCOMPLETE because of rag and nothing else.
     fsRedirect.protocolText = approvedCopy((p) => {
       p.components.rag.required = false;
@@ -490,7 +496,8 @@ describe('run-pq rag component', () => {
     } as RunPqOptions);
     expect(r.verdict).not.toBe('PASS');
     const rec = JSON.parse(readFileSync(r.recordPath as string, 'utf8'));
-    expect(rec.protocolStatus).toBe('draft');
+    // The copy handed in would PASS (see the control above). The real file cannot, and the record is of the real file.
+    expect(r.reasons.join(' ')).toMatch(/required component "csrDrafting" cannot be executed yet/);
     expect(rec.protocolSha256).toBe(sha256(readFileSync(REAL_PROTOCOL_PATH, 'utf8')));
   });
 });
