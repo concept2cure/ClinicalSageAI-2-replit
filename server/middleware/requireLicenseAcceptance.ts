@@ -11,10 +11,17 @@
  * serve the route. 2026-10-15: it failed open (next() from the catch), so an
  * unreadable licensing store served users who had not accepted a required
  * agreement. Mounted on no route as of that change.
+ *
+ * 2026-11-10 (F1 W1-05): when the agreement records do not exist on the
+ * installation it says so (503 AGREEMENTS_NOT_SET_UP, with a sentence) instead
+ * of "could not be verified". Either way the route is not served.
  */
 
 import type { Request, Response, NextFunction } from 'express';
-import { getOutstandingAgreements } from '../services/licensing/eula-service.js';
+import {
+  AgreementStoreUnavailableError,
+  getOutstandingAgreements,
+} from '../services/licensing/eula-service.js';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('require-license-acceptance');
@@ -36,6 +43,9 @@ export function requireLicenseAcceptance() {
         orgId != null ? Number(orgId) : null
       );
     } catch (err) {
+      if (err instanceof AgreementStoreUnavailableError) {
+        return res.status(err.statusCode).json({ error: err.message, code: err.code });
+      }
       logger.warn('License acceptance could not be read — request refused', {
         userId,
         organizationId: orgId ?? null,
