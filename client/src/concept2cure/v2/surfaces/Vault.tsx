@@ -91,7 +91,8 @@ import { readShellProject, publishShellProject } from '../shellProject';
 import { usePaletteProjects, type PaletteProject } from '../paletteProjects';
 import { useDialog } from '../useDialog';
 import { VaultFolderEdit, type FolderEditMode } from './VaultFolderEdit';
-import { cabinetFolderOptions, indentedLabel, newFolderParentOf, personFolderOf, type CabinetFolder } from './vaultFolders';
+import { cabinetFolderOptions, openFolderMatches, indentedLabel, newFolderParentOf, personFolderOf, type CabinetFolder } from './vaultFolders';
+import { VaultPlanWork } from './VaultPlanWork';
 import { locateVaultDocument, takeVaultTarget, vaultTargetIsFor, VAULT_TARGET_EVENT, type TakenVaultTarget } from '../vaultTarget';
 import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason, type ImportSource } from '../editor/SourceImportDialog';
 import { DataRoomSourcesPanel, takeVaultCatalogAsk } from '../editor/DataRoomSourcesPanel';
@@ -1863,7 +1864,8 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
     },
     'vault.open-folder': (params) => {
       const wanted = (params.folder ?? '').trim().toLowerCase();
-      if (!wanted) return { ok: false, reason: 'No folder named.' };
+      const exactId = (params.folderId ?? '').trim();
+      if (!wanted && !exactId) return { ok: false, reason: 'No folder named.' };
       if (!projectId) return { ok: false, reason: NO_PROGRAM_OPEN };
       // Not-ready, not failed: the bus holds the directive and re-attempts on
       // this surface's ready signal below — the navigate→act gap.
@@ -1882,12 +1884,12 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
         }
       };
       walk(tree, []);
-      const exact = found.filter((f) => f.folder.label.toLowerCase() === wanted);
-      const contains = exact.length
-        ? exact
-        : found.filter((f) => f.folder.label.toLowerCase().includes(wanted));
+      // An exact binder heading (the plan's "Open in Vault", S6 step 3) or tree id, else the folder's name.
+      const contains = openFolderMatches(found, exactId, wanted);
       if (contains.length === 0) {
-        return { ok: false, reason: `No folder named "${params.folder}" in this vault.` };
+        return { ok: false, reason: exactId
+          ? `This project's Vault has no folder for ${exactId.replace(/^bn:/, '')} (its binder holds no such heading).`
+          : `No folder named "${params.folder}" in this vault.` };
       }
       if (contains.length > 1) {
         return {
@@ -2863,9 +2865,18 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
               Searching…
             </div>
           )}
+          {!searching && folder && folder.id.startsWith('cab') && (cabinet as CabinetFolder | null)?.binder ? (
+            /* Where the binder's folders come from: the filing's outline, by name and version. */
+            <div className="vd-d-idx" data-testid="vault-binder-source">
+              Binder from the filing’s outline: {(cabinet as CabinetFolder).binder!.label} · version {(cabinet as CabinetFolder).binder!.version}
+            </div>
+          ) : null}
           {!searching && folder && folder.id.startsWith('cab') && (cabinet as CabinetFolder | null)?.note ? (
             /* Said plainly: this filing or region has no binder template yet. */
             <div className="scaf-note" role="status" data-testid="vault-binder-note">{(cabinet as CabinetFolder).note}</div>
+          ) : null}
+          {!searching && projectId && folder && folder.id.startsWith('cab-bn:') ? (
+            <VaultPlanWork projectId={projectId} treeFolderId={folder.id} onOpenPlan={onNav ? () => onNav('project-home') : undefined} />
           ) : null}
           {folderEdit && projectId ? (
             <VaultFolderEdit

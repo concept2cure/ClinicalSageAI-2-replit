@@ -1,0 +1,152 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "startedAt": "2026-11-10T02:00:45.077Z",
+  "steps": [
+    {
+      "name": "2. ind: the Vault opens on its binder",
+      "project": "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)",
+      "first": "Filing binder · IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 0/6",
+      "source": "Binder from the filing’s outline: IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 · version ich-m4-v2.2",
+      "folders": [
+        "Unfiled · needs review 0/0",
+        "Module 1 · Administrative (US regional — FDA eCTD Module 1 Specification v2.3) 0/2",
+        "Module 2 · Summaries 0/2",
+        "Module 3 · Quality (CMC) 0/0",
+        "Module 4 · Nonclinical study reports 0/0",
+        "Module 5 · Clinical study reports 0/2",
+        "eCTD sequences 0/0",
+        "Agency correspondence 0/0",
+        "Shared · Templates 0/0",
+        "M1 Module 1 · Administrative (US regional — FDA eCTD Module 1 Specification v2.3) 0/13",
+        "M2 Module 2 · Summaries 0/12",
+        "M3 Module 3 · Quality (CMC) 0/20",
+        "M4 Module 4 · Nonclinical study reports 0/19",
+        "M5 Module 5 · Clinical study reports 0/8"
+      ]
+    },
+    {
+      "name": "2. nda: the Vault opens on its binder",
+      "project": "S6 binder walk · NDA",
+      "first": "Filing binder · NDA × FDA · 505(b)(1) · eCTD M1–M5 0/0",
+      "source": "Binder from the filing’s outline: NDA × FDA · 505(b)(1) · eCTD M1–M5 · version ich-m4-v2.2",
+      "folders": [
+        "Unfiled · needs review 0/0",
+        "Module 1 · Administrative (US) 0/0",
+        "Module 2 · Summaries 0/0",
+        "Module 3 · Quality (CMC) 0/0",
+        "Module 4 · Nonclinical study reports 0/0",
+        "Module 5 · Clinical study reports 0/0",
+        "eCTD sequences 0/0",
+        "Agency correspondence 0/0",
+        "Shared · Templates 0/0",
+        "M1 Module 1 · Administrative (US) 0/16",
+        "M2 Module 2 · Summaries 0/7",
+        "M3 Module 3 · Quality (CMC) 0/20",
+        "M4 Module 4 · Nonclinical study reports 0/4",
+        "M5 Module 5 · Clinical study reports 0/12"
+      ]
+    },
+    {
+      "name": "2. maa: the Vault opens on its binder",
+      "project": "S6 binder walk · MAA",
+      "first": "Filing binder · MAA × EMA · centralised procedure · eCTD M1–M5 0/0",
+      "source": "Binder from the filing’s outline: MAA × EMA · centralised procedure · eCTD M1–M5 · version ich-m4-v2.1",
+      "folders": [
+        "Unfiled · needs review 0/0",
+        "Module 1 · Administrative (EU) 0/0",
+        "Module 2 · Summaries 0/0",
+        "Module 3 · Quality (CMC) 0/0",
+        "Module 4 · Nonclinical study reports 0/0",
+        "Module 5 · Clinical study reports 0/0",
+        "eCTD sequences 0/0",
+        "Agency correspondence 0/0",
+        "Shared · Templates 0/0",
+        "M1 Module 1 · Administrative (EU) 0/18",
+        "M2 Module 2 · Summaries 0/7",
+        "M3 Module 3 · Quality (CMC) 0/20",
+        "M4 Module 4 · Nonclinical study reports 0/4",
+        "M5 Module 5 · Clinical study reports 0/12"
+      ]
+    },
+    {
+      "name": "2. 510k: the Vault opens on its binder",
+      "project": "[Demo · MDX] NeuroPanel-Dx 510(k)",
+      "first": "Filing binder · 510(k) × FDA · eSTAR (nIVD/IVD v7.0) · 21 CFR Part 807 0/6",
+      "source": "Binder from the filing’s outline: 510(k) × FDA · eSTAR (nIVD/IVD v7.0) · 21 CFR Part 807 · version fda-estar-510k-v1.1",
+      "folders": [
+        "Unfiled · needs review 0/0",
+        "A Administrative 0/0",
+        "B Device description 0/0",
+        "C Substantial equivalence 0/0",
+        "D Design, manufacturing and labeling 0/0",
+        "E Performance and safety testing 0/0",
+        "F Quality management 0/0",
+        "G References and additional information 0/0",
+        "510(k) submissions 0/2",
+        "Clinical evaluation 0/1",
+        "Engineering (DHF + RMF) 0/2",
+        "Labeling and UDI 0/1",
+        "Post-market vigilance 0/0",
+        "Quality system 0/0"
+      ]
+    },
+    {
+      "name": "2. mdr: the Vault opens on its binder",
+      "project": "S6 binder walk · EU MDR technical file",
+      "first": "Filing binder · EU MDR × Notified Body · Regulation 2017/745 Annex II + III 0/0",
+      "source": "Binder from the filing’s outline: EU MDR × Notified Body · Regulation 2017/745 Annex II + III · version eu-mdr-2017-745-annex-ii-v1.0",
+      "folders": [
+        "Unfiled · needs review 0/0",
+        "II Annex II · Technical documentation 0/0",
+        "III Annex III · Post-market surveillance 0/0",
+        "IV Conformity assessment and registration 0/0",
+        "Clinical evaluation 0/0",
+        "Engineering (DHF + RMF) 0/0",
+        "Labeling and UDI 0/0",
+        "Post-market vigilance 0/0",
+        "Quality system 0/0",
+        "Agency correspondence 0/0",
+        "Shared · Templates 0/0",
+        "II Annex II · Technical documentation 0/28",
+        "III Annex III · Post-market surveillance 0/4",
+        "IV Conformity assessment and registration 0/6"
+      ]
+    },
+    {
+      "name": "2. ivdr: the Vault opens on its binder",
+      "project": "S6 binder walk · EU IVDR technical file",
+      "first": "Filing binder · EU IVDR × Notified Body · Regulation 2017/746 Annex II + III 0/0",
+      "source": "Binder from the filing’s outline: EU IVDR × Notified Body · Regulation 2017/746 Annex II + III · version eu-ivdr-2017-746-annex-ii-v1.0",
+      "folders": [
+        "Unfiled · needs review 0/0",
+        "II Annex II · Technical documentation 0/0",
+        "III Annex III · Post-market surveillance 0/0",
+        "IV Conformity assessment and registration 0/0",
+        "Clinical evaluation 0/0",
+        "Engineering (DHF + RMF) 0/0",
+        "Labeling and UDI 0/0",
+        "Post-market vigilance 0/0",
+        "Quality system 0/0",
+        "Agency correspondence 0/0",
+        "Shared · Templates 0/0",
+        "II Annex II · Technical documentation 0/32",
+        "III Annex III · Post-market surveillance 0/4",
+        "IV Conformity assessment and registration 0/6"
+      ]
+    },
+    {
+      "name": "3a. a binder folder lists the plan work that feeds it",
+      "folder": "Module 3",
+      "tasks": [
+        "To do Draft drug substance section (3.2.S) · 3.2.S",
+        "To do Draft drug product section (3.2.P) · 3.2.P",
+        "To do Describe manufacturing process · 3.2.S.2, 3.2.P.3",
+        "To do Compile stability data · 3.2.S.7, 3.2.P.8"
+      ]
+    },
+    {
+      "name": "3b. a plan task opens its binder folder in the Vault",
+      "breadcrumb": "3.2.S Drug substance"
+    }
+  ]
+}

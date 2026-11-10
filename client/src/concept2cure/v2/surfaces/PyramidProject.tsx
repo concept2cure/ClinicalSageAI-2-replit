@@ -19,6 +19,7 @@
  *
  * @module client/src/concept2cure/v2/surfaces/PyramidProject
  */
+import { applySurfaceAction } from '../surfaceActions';
 import React, { useEffect, useMemo, useState } from 'react';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { useLiveData, type DataState } from '../dataConnect';
@@ -278,7 +279,13 @@ function ProjectTaskSheet({ pyr, task, tasks, slot, standing, ind, setStatus, on
         onOpenTask(null);
         onNav('document-authoring');
       } : undefined}
-      onWorkDocument={ind ? (title) => { onOpenTask(null); onAsk(workDocumentAsk(title, task.name)); } : undefined} />
+      onWorkDocument={ind ? (title) => { onOpenTask(null); onAsk(workDocumentAsk(title, task.name)); } : undefined}
+      onOpenVaultFolder={(code) => {
+        onOpenTask(null);
+        /* The Vault's own open-folder action: the binder heading for the code, or the nearest above it (S6 step 3). */
+        applySurfaceAction({ actionType: 'surface_action', actionId: 'vault.open-folder', surfaceId: 'vault',
+          label: `Open ${code} in the Vault`, params: { folder: code, folderId: `bn:${code}` } }, onNav);
+      }} />
   );
 }
 

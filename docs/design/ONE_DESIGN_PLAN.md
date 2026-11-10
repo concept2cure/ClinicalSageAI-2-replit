@@ -1321,7 +1321,7 @@ like Veeva … templates and folders for the full IND pyramid of potential filin
 and regions … Anna needs to have autonomous control over all of this, agentically."* Evidence:
 `docs/evidence/SPINE/S6/2026-11-06/` (README with "What already exists", before/after screenshots, walks, audit rows).
 
-**Delivered: step 1 of 4, plus most of step 2** (S6 `b3abbe5b`, `daaaae1d`; R1 `061fc4a8`, `3c7cd5eb`).
+**Delivered 2026-11-06: step 1 of 4, plus most of step 2** (S6 `b3abbe5b`, `daaaae1d`; R1 `061fc4a8`, `3c7cd5eb`).
 
 - **Folders a person makes.** `public.document_folders` (it existed, reached only by the uncalled legacy `/api/folders`)
   gains `program_id` and `parent_key` (`migrations/20261106_document_folders_project_scope.sql`, additive, in the set
@@ -1338,28 +1338,37 @@ and regions … Anna needs to have autonomous control over all of this, agentica
   (`uf:12`). A row filed to a module preset shows at its CTD heading. With no pack, the folders stop at module level
   and the cabinet says why (`note`).
 
-**Not done, for the next session** (holds released in `.design/claude-convergence/COORDINATION.md`):
+**Continued 2026-11-10: steps 2–4 landed, and a multi-tenant repair** (the founder: "the UI doesn't reflect all the
+Vault features yet … this is a multi tenant environment").
 
-1. **Step 2's walk.** Projects exist for it on a fresh Codespace only if made again: NDA, MAA, EU MDR and EU IVDR were
-   created through `POST /api/c2c/projects` (`clientWorkspaceId` required when several workspaces exist). The app
-   refuses a J-NDA (PMDA requires eCTD 4.0) and a Health Canada NDS (no outline), so neither binder can be shown in a
-   project yet; the J-NDA pack exists. Shoot each binder; restart the app first (the leaf's folder label fix in
-   `filingCabinet`, `nameLeafFolders`, is not yet seen in the running app; the record pane read `uf:5`).
-2. **Step 3, the pyramid in Vault.** Design settled, not built: extend `vault.open-folder`
-   (`shared/navigation/surface-actions.ts`, handler in `Vault.tsx`) with an exact `folderId` resolved to the nearest
-   binder heading; in `Pyramid.tsx` `PyTaskSheet` add "Open in Vault" beside each Document-binding code (wired in
-   `PyramidProject.tsx` through `applySurfaceAction`, Plan: S11); in the Vault, read
-   `GET /api/v1/pyramids/by-project/:id` once and list under a binder folder the tasks whose `ctd` codes fall in it.
-3. **Step 4, AnA.** Extend `place_project_document` (`server/services/ana/document-catalog-tool-defs.ts`,
-   `document-placement-tools.ts`, Plan: S4) so `folder_id` names a binder heading or a person's folder, and add an
-   input that makes a folder through `createProgramFolder` with AnA's provenance (`anaToolProvenance`); let
-   `list_project_documents` return the folder index. A document AnA places stays a suggestion a person confirms.
-4. **Duplicates to converge:** the legacy `/api/folders` route (`server/routes/folder-management.js`) writes the same
-   table with no project; retire it onto `project-vault.ts` with its contract test
-   (`server/__tests__/security/tenant-isolation-folders.contract.test.ts`).
-5. **Running the gates here:** `ci:typecheck-no-regression` does not complete on a 15 GB machine with the app running;
-   stop the app before `git push`. `ci:check-css-selector-shadowing` is red on trunk (`journey-v2.css`,
-   `protocol-dev-editing.css`), not from this work.
+- **Step 2, walked** (`walk-binders.cjs`): an IND, NDA, MAA, 510(k), EU MDR and EU IVDR project each open on their own
+  binder, now **first in the tree** (it was below every authored document's draft outline), with the outline and its
+  version named. An EU MDR file no longer lists the empty US "510(k) submissions" and "PMA submissions" folders.
+  The record pane names a binder or person's folder, not its id. (R1 `3cf74c4b9d`, S6 `05e907d064`.)
+- **Step 3, the pyramid in Vault** (S6 `05e907d064`, R1 `3cf74c4b9d`, S11 `d6e27d9ddd`): a binder folder lists the plan
+  tasks bound to it with their status (`VaultPlanWork.tsx`, from `GET /api/v1/pyramids/by-project/:id`); a plan task's
+  CTD binding opens its binder folder in the Vault (`vault.open-folder` takes an exact `folderId`). Walked both ways.
+- **Step 4, AnA** (S6 `1ead231890`, S4 `a8af07d238`): `list_project_documents` returns the project's folders;
+  `place_project_document` files into any of them and can make a folder first (`new_folder`), through the Vault's
+  governed writer with AnA's provenance. Her filing stays a suggestion a person confirms. Run live on the database
+  under RLS (`ana-step4-live.txt`); not walked through a conversation here, which has no model key.
+- **Multi-tenant repair** (F1 `28650cf42d`): the organization-wide `/api/folders` route listed, renamed and deleted
+  folders by organization alone, so once projects had folders a CRO member (a viewer included) could see another
+  sponsor's project folder names, or rename or delete one with no audit row. It now never reaches a project's folders.
+  Shown red first. Project folders are reached only through the project's Vault route, under that project's access.
+
+**What the survey found** (every Vault route checked for a UI caller): every `/api/c2c/project-vault`,
+`/api/vault/ingest` and legal-hold route has one. Open, for the next session:
+
+1. Search sends one value per filter (`Vault.tsx`, `v ? [v] : null`); the server takes several. The library search's
+   project filter (`programId=`) is never sent.
+2. A project folder cannot be moved or removed (no route); org-level folders (`/api/folders`) have no UI and no
+   caller. Decide with the founder whether org-level folders stay.
+3. AnA over folders walked in a conversation, once a model key is present.
+4. A J-NDA or Health Canada NDS project is refused at intake, so those binders cannot be shown in a project.
+5. Gates: stop the app before `git push` (the full typecheck runs out of memory beside it on 15 GB).
+   `ci:check-css-selector-shadowing` and `server/routes/c2c/__tests__/project-settings.pglite.test.ts` (6 cases) are red
+   on trunk, not from this work.
 
 #### L1 (row D2) — CSR drafting with the person in control, and the running-app walk of its screens (session `session_01T2wooCZu46W7msw4TJuuzr`)
 
@@ -2097,6 +2106,71 @@ M1–M22. Each repair below extends an existing file; none adds a screen, mount 
   - the `mdx` pack writes into the filing;
   - P-114's items 2–5: the design file's records (M16), the EU technical file per project (M3), the De Novo doors
     (M7), and the IVD 510(k) outline (M6(a)).
+
+#### L1 / F1 — The lead: the CSR demo path, the Codespace click-through, and the founder's rail and Vault decisions (session `session_011DpxUyQmE1enma4gTjcfBy`, 2026-11-06 to 2026-11-10)
+
+Facts only; no package's scope, status or ownership changes here. Committed under P-100, as P-107 item 6 allows.
+
+**Where testers run it (L1).**
+- `docker-compose.beta.yml` and the self-host `docker-compose.yml` now run:
+  - TLS on their database;
+  - a provision step;
+  - the self-hosted embeddings lane;
+  - `SETUP_TOKEN` for the first administrator;
+  - loopback-only ports (`27720c8221`, `1847807cb0`).
+- `scripts/db/provision.mjs` skips install-fresh over a complete database.
+- Walked from empty volumes in production mode, through sign-in with an emailed code
+  (`docs/evidence/HUMAN-TEST/2026-11-06-beta-stack/`).
+
+**AnA's CSR path, up to the model** (`docs/evidence/HUMAN-TEST/ANA-CSR/2026-11-06/`). No model key reached the
+session, so no model output was produced or claimed.
+
+| Commit | What it does |
+|---|---|
+| `1d129897b4` | The conversation pins `draft_authoring_document`, so a drafted document reaches the canvas. |
+| `9d7624d9fd` | The CSR builder's title page and synopsis print one field per line (the PDF's title page ran on). |
+| `0e18147b2b` | A refused key, an account with no credit or quota, and a model the account cannot use each say so: `PROVIDER_KEY_REFUSED`, `PROVIDER_ACCOUNT_REFUSED`. |
+| `5aa8aae4d3` | With only an OpenAI key, the refusal names the providers approved for drafting. |
+| `ad3d977314` | A refused turn offers no next steps. |
+| `dbc080553c` | The conversation docked beside the CSR fits its column. |
+| `c0181112ad`, `839efe9471` | Two layout fixes: the editor's filings line, and the protocol head at 390 px. |
+
+**The founder's decisions of 2026-11-06, as said in the session.**
+- Vault is reachable from the rail at all times. With no project open, it lists the projects' Vaults. The editor's
+  "Project files" is "Vault".
+- Biostatistics is a rail work area. The founder's words are recorded in `scripts/ci/one-product-baseline.json`
+  `founderDecisions` as `rail:biostatistics` (`5144702d21`, `adb1c00cba`). P-107 item 1 confirms it.
+- The Vault change broke two contract tests, `projectCreationDoors.contract` and `projectDestination`. The project
+  page's session repaired them (`d50c5f07e9`, `aeedd1b86e`). All 46 pass on trunk at 2026-11-10.
+
+**The Codespace click-through** (`docs/evidence/HUMAN-TEST/CLICK-THROUGH/2026-11-06/`, with its rerun scripts,
+`0a617f4cd4`, `0ca1f5f4`).
+- **Ran on:** the founder's Codespace data, built here by `.devcontainer`'s own scripts. The CSR study preparation
+  passed.
+- **Fixed:** Manage billing (`1f97ae5495`, `3a473d045e`).
+- **Landed elsewhere:** the demo organisation now signs out after 120 idle minutes, not 15 (`fe3bdced33`, the
+  Codespace session). The Lumen organisation follows when R1's founder-organisation change lands.
+- **Open:**
+  - the CSR study's filing identity, for the inspection copy (sent to R1's DATA; no change for it found on trunk at
+    2026-11-10);
+  - RBM's "Generate from RACT" 409, not yet checked.
+- **Coverage is incomplete.** The last run's results were lost when the container was replaced. Rerun it to the end.
+
+**Started for the founder's Vault and data request** (2026-11-06; the surveys' "What already exists" is in each
+session's brief). Each records its own progress here; as reported to this session:
+- `session_01QoxbLZMScz1c2iFESBLn9J`, **S6**: step 1 landed (`b3abbe5b`, `daaaae1d`; R1 `061fc4a8`, `3c7cd5eb`).
+  A project's Vault has "New folder", Rename and "Move to…", each audited. Its cabinet is the filing's binder from the
+  active rule pack. Steps 2 to 4 are open: other filing types, the pyramid in Vault, AnA over folders.
+- `session_01QoxbLdTrwYyiaSgLDxgHQJ`, **S2**: landed (`c15afd47`..`07a1c645`). Vault has a "Data catalog" tab with
+  a grade A to D per item and its basis, and "Use in this project". Open: the CSR study-data chooser putting used items
+  first (S3), and AnA over the catalog.
+- **S12** (work projects) was declined by `01QoxbLcnW…`. Under P-107 item 7 it is with a project-page session, after
+  D3-4 (`d50c5f07e9`).
+
+**Open for the founder:**
+- `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` as Codespaces secrets. No model output has been seen in a Codespace;
+- the PQ decision for production drafting (every model is `pending`);
+- whether the client types read "medical device and diagnostics, biotech, pharma, CROs/consultants".
 
 ## 4. How everyone works
 
