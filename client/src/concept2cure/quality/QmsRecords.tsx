@@ -25,7 +25,7 @@ import { C2CForm } from '../v2/C2CForm';
 import { EmptyState, ErrorState } from '../v2/dataConnect';
 import { C2CToast, useToast } from '../v2/toast';
 import { useCapasBySource } from './capaSources';
-import { scopedPath, useQualityScope, useRegisterContext } from './registerContext';
+import { scopedPath, useAnswerOf, useQualityScope, useRegisterContext } from './registerContext';
 import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
 import { useAuthUser } from '@/services/portal/authService';
 import type { QmsRecordTab } from './qmsRecordData';
@@ -42,7 +42,11 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
   config: RegisterConfig<R>; onAsk: (q: string) => void; onContext?: ReportContext;
 }) {
   const scope = useQualityScope();
-  const read = useFetchJson<unknown>(config.projectKept ? scopedPath(config.listPath, scope.programId) : config.listPath);
+  const readPath = config.projectKept ? scopedPath(config.listPath, scope.programId) : config.listPath;
+  const fetched = useFetchJson<unknown>(readPath);
+  // The answer for this scope only, never the previous one's while it loads (Quality review, 2026-11-10).
+  const answer = useAnswerOf(readPath, fetched.data);
+  const read = { ...fetched, data: answer, loading: fetched.loading || (fetched.data != null && answer == null) };
   /* Whose rows these are, said beside the figures and to AnA while a project is open (C14). */
   const scopeOf = React.useMemo<RecordRegisterContext['scope']>(() => (config.projectKept
     ? (scope.programId && scope.projectName ? { project: scope.projectName } : null)
