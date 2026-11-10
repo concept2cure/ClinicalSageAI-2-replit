@@ -1484,15 +1484,20 @@ Vault features yet … this is a multi tenant environment").
 - **Retention (FD3 c) already holds** (`retentionCron.ts` refuses destruction); **binders** are the folders above.
 - **A Word version is viewed as a PDF rendition** through the one converter, bound to the source's SHA-256, audited
   with both hashes, made on request and never stored, so it is never filed in place of its source. Red first; walked.
-- **Open, not held:** device coverage converged onto the eSTAR mapper; renditions of formats other than Word.
+- **Device coverage follows the eSTAR registry**: landed on trunk by session `01KnUGoX3g…`
+  (`estar-outline-requirements.ts`); this session's copy was withdrawn unpushed. This session decided what that slice
+  left open (P-123, 2026-11-10): a 510(k)'s risk management follows FDA's template and reads "When applicable" (a
+  Special 510(k)), no longer required of every 510(k). Red first; walked on the 510(k) demo project.
+- **The organisation-wide `/api/folders` route is retired (P-123).** Folders are a project's, through its Vault.
+- **Decided, not built (P-123):** renditions stay Word to PDF; search filters stay one value each.
 
 **Open, for the next session:**
 
 1. AnA over folders walked in a conversation, once a model key is present.
 2. A J-NDA or Health Canada NDS project is refused at intake, so those binders cannot be shown in a project.
-3. Org-level folders (`/api/folders`) have no UI and no caller: keep or retire is a founder decision.
-4. Search selects send one value per filter (several arrive through a saved view); the library search's project
-   filter (`programId=`) is never sent.
+3. A 510(k)'s kind (Traditional, Special, Abbreviated) is not recorded at intake; until it is, risk management reads
+   "When applicable" (P-123 item 2; the device lane's).
+4. The library search's project filter (`programId=`) is never sent.
 5. Stop the app before `git push` (the full typecheck runs out of memory beside it on 15 GB).
 
 #### L1 (row D2) — CSR drafting with the person in control, and the running-app walk of its screens (session `session_01T2wooCZu46W7msw4TJuuzr`)

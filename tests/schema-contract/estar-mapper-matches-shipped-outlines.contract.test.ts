@@ -28,7 +28,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { mapToEstar } from '../../server/services/pathway-engines/estar/estar-mapper';
+import { estarSlots, mapToEstar } from '../../server/services/pathway-engines/estar/estar-mapper';
 import {
   governedSectionsToDeviceSections,
   sectionsToLeaves,
@@ -118,7 +118,10 @@ describe('eSTAR slot registry vs the shipped rule packs', () => {
 
     const k510v10 = scoreFullyAuthored(shippedPacks(OUTLINES_V1_0)[0], '510k').result;
     const denovoV10 = scoreFullyAuthored(shippedPacks(OUTLINES_V1_0)[1], 'de_novo').result;
-    expect(k510v10.summary.missingRequired.sort()).toEqual(['risk-management', 'user-fee-cover-sheet']);
+    /* 2026-11-10 (P-123): risk management left this line. FDA's template asks it of a Special 510(k) only, so the
+       registry no longer scores it missing on every 510(k); v1.0 still has no section for it (checkApplicability). */
+    expect(k510v10.summary.missingRequired.sort()).toEqual(['user-fee-cover-sheet']);
+    expect(k510v10.summary.checkApplicability).toContain('risk-management');
     expect(denovoV10.summary.missingRequired.sort()).toEqual(['user-fee-cover-sheet']);
   });
 
@@ -204,5 +207,35 @@ describe('eSTAR slot registry vs the shipped rule packs', () => {
       measured[node.key ?? '?'] = scoreNode(node, type);
     }
     expect(measured).toEqual(expected);
+  });
+
+  /**
+   * P-123 (2026-11-10). The registry required risk management of every 510(k) while the outline, following FDA's
+   * template, made it optional. Readers now take the registry's word for a section a slot takes
+   * (estar-outline-requirements, P-107 item 3), so what is pinned here is that the registry never demands of every
+   * device what the outline leaves optional: a slot every device owes is supplied by at least one section the
+   * outline marks mandatory.
+   */
+  it.each([
+    ['510k', 0],
+    ['de_novo', 1],
+  ] as const)('the %s registry never requires of every device what the outline leaves optional', (type, idx) => {
+    const nodes = packNodes(shippedPacks()[idx]) as Array<{ key?: string; label?: string; mandatory?: boolean; children?: unknown[] }>;
+    const leaves = nodes.filter((n) => !n.children?.length);
+    const lit = new Map(leaves.map((n) => [n, scoreNode(n, type)]));
+
+    const unsupplied = estarSlots(type)
+      .filter((s) => s.necessity === 'always')
+      .filter((s) => leaves.some((n) => lit.get(n)!.includes(s.id)))
+      .filter((s) => !leaves.some((n) => n.mandatory && lit.get(n)!.includes(s.id)))
+      .map((s) => s.id);
+    expect(unsupplied, 'a slot every device owes, answered only by sections the outline calls optional').toEqual([]);
+  });
+
+  it('the 510(k) risk management section follows FDA\'s template: needed in a Special 510(k), not scored missing otherwise', () => {
+    const slot = estarSlots('510k').find((s) => s.id === 'risk-management')!;
+    expect(slot.necessity).toBe('when-applicable');
+    expect(slot.appliesWhen).toMatch(/Special 510\(k\)/);
+    expect(estarSlots('de_novo').find((s) => s.id === 'risk-management')!.necessity).toBe('always');
   });
 });
