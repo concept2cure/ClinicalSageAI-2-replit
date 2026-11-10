@@ -30,7 +30,7 @@ import { C2CToast, useToast } from '../toast';
 import { DEVICE_FLAGS } from '@shared/constants/domain/device-classification';
 import { isDeviceFamily, isDeviceOrDiagnosticProgram, workstreamForFilingType } from '@shared/constants/domain/product-types';
 import { isUsInd, useProgramMarkets } from './programSequence';
-import { StageTracker, lifecycleFor } from './ProjectStages';
+import { StageTracker, StepGuidance, lifecycleFor } from './ProjectStages';
 import { STEP_DOORS } from '../projectDoors';
 import { openProgramAction } from '../programAction';
 import { FileDropZone } from '../FileDropZone';
@@ -1055,6 +1055,75 @@ function ProjectWorkPanel({ pid, onNav, targetId, state }: {
           <button type="button" className="btn small" onClick={() => onNav('tasks')}>{STEP_DOORS.allTasks} {I.right}</button>
         </div>
       )}
+    </section>
+  );
+}
+
+/** The open review threads and approval blockers of the page's one work read, by due date. */
+const approvalsOf = (d: WorkViewRow): WorkItemRow[] => byDueDate((d.items ?? []).filter((w) => w.source === 'review' && w.status !== 'done'));
+
+/** The Review step's approvals (P-122, 2026-11-10): the open review threads and approval blockers on this project,
+ *  from the page's one work read. d50c5f07e (D3-4) left them on Plan alone, inside every task; an approver looks for
+ *  them on Review. The whole list stays on Plan, one click away. */
+function ReviewApprovals({ state, onPlan }: { state: DataState<WorkViewRow>; onPlan: () => void }) {
+  return (
+    <section className="pj-sec" aria-labelledby="pj-approvals-h" data-testid="pj-review-approvals">
+      <div className="pj-sec-h">
+        <h2 id="pj-approvals-h">Approvals</h2>
+        <span className="sec-sub">Review threads and approval blockers on this project, by due date</span>
+        <span className="pj-sec-acts"><button type="button" className="btn small" onClick={onPlan}>All tasks and approvals {I.right}</button></span>
+      </div>
+      {isUnanchored(state) ? (
+        <EmptyState icon={I.checkCircle} title="This project has no tracking record"
+          hint="Approvals are kept on the project's tracking record, and this project has none, so there is nothing to list for it here." />
+      ) : (
+        <Anchored
+          state={state}
+          loadingText="Loading this project's approvals…"
+          errorTitle="Couldn't load this project's approvals"
+          errorHint="The work view didn't respond. Sign in and retry, or check the service is reachable."
+          emptyTitle="No approvals are waiting on this project"
+          emptyHint="Review threads and approval blockers recorded on this project appear here."
+          isEmpty={(d) => approvalsOf(d).length === 0}
+          render={(d) => (
+            <>
+              <div className="pj-files">
+                {approvalsOf(d).map((w) => {
+                  const due = fmtDue(w.dueAt);
+                  return (
+                    <div key={w.id} className="pj-file">
+                      <div className="pj-file-top"><span className="pj-file-n">{w.title}</span><WorkStatus w={w} /></div>
+                      <div className="pj-file-m">{w.ownerName ?? 'Unassigned'} · {due ? `Due ${due}` : 'No due date'}</div>
+                    </div>
+                  );
+                })}
+              </div>
+              {d.summary?.partial && (
+                <div className="sp-tone-warn pj-work-count" role="status">
+                  One of the stores this list reads could not be read, so it may be incomplete.
+                </div>
+              )}
+            </>
+          )}
+        />
+      )}
+    </section>
+  );
+}
+
+/** The Review step's readiness (P-122, 2026-11-10): the dossier readiness the server computes
+ *  (GET /api/c2c/projects/:id/dossier), its figure line and each market's, from the page's one dossier read. Each
+ *  market's dispatch verdict is on Submit. */
+function ReviewReadiness({ read, copyFor, onOpen }: {
+  read: DossierState; copyFor: (filingId: string) => RowCopy; onOpen: (doc: BuiltDocument, within?: string | null) => void;
+}) {
+  return (
+    <section className="pj-sec" aria-labelledby="pj-review-readiness-h" data-testid="pj-review-readiness">
+      <div className="pj-sec-h">
+        <h2 id="pj-review-readiness-h">Readiness</h2>
+        <span className="sec-sub">Sections approved or locked, as the server counts them</span>
+      </div>
+      <DossierReadinessCard read={read} copyFor={copyFor} onOpen={onOpen} />
     </section>
   );
 }
@@ -2193,7 +2262,8 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
           {/* A lifecycle belongs to a project; with none selected nothing here
               renders (the empty state above stands instead). */}
           <StageTracker stage={stage} setStage={chooseStage} lifecycle={lifecycle} />
-          {openStep && <p className="pj-step-blurb">{openStep.blurb}</p>}
+          {/* The open step's line: what it is, what to do on it, and the next step (P-122). */}
+          <StepGuidance stage={stage} lifecycle={lifecycle} onStage={chooseStage} sequenced={sequenced} planListed={planListed} />
           {/* Plan — what the filing needs, who does it and by when, then the
               team and the project's tasks, moved from Author (pass 3). */}
           {stage === 'plan' && pid && (
@@ -2233,11 +2303,14 @@ function ProjectWorkspace({ onNav, onAsk, selection: sel, actor: teamActor, sess
             </div>
           )}
 
-          {/* Review — this filing's reviews, each opening its document (F7), and its quality records. The project's
-              tasks and approvals are on Plan (D3-4, D3.md §4.7). */}
+          {/* Review — this filing's reviews, each opening its document (F7), its approvals and the readiness the server
+              computes (P-122: d50c5f07e had moved both off Review), and its quality records. The full task list is on
+              Plan (D3-4, D3.md §4.7). */}
           {stage === 'review' && (
             <div className="pj-stagebody">
               {pid && <ProjectReviews state={reviews.state} onRetry={reviews.retry} onNav={onNav} available={available} />}
+              {pid && <ReviewApprovals state={work} onPlan={() => chooseStage('plan')} />}
+              {pid && <ReviewReadiness read={dossier} copyFor={filingCopyIn(docsRead)} onOpen={openDocument} />}
               {pid && available('quality') && <ProjectQuality key={pid} pid={pid} onNav={onNav} />}
               {/* What the client sees of this project's work (the Client Review
                   Room), for this project only: the device portfolio drew it for

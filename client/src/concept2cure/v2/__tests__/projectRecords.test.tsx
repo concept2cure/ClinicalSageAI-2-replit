@@ -73,18 +73,19 @@ describe('ProjectRecords', () => {
     expect(sectionOf('vaultDocuments').textContent).toMatch(/None in this project yet/);
   });
 
-  /* D3-2a: one card in Project knowledge; each store a closed disclosure whose summary says its count. */
-  it('is one "Records" card whose stores are closed disclosures, each summary saying its count', async () => {
+  /* D3-2a made one card in Project knowledge whose stores were closed disclosures. P-122 (2026-11-10): each store is an
+     open section, headed by its name and count, its records shown. */
+  it('is one "Records" card whose stores are open sections, each heading saying its count', async () => {
     apiRequest.mockResolvedValue(ok({ projectId: PID, records: {
       sources: section([{ id: 1, title: 'CSR-001.pdf', source_type: 'client_document' }]),
       vaultDocuments: { available: false, rows: [], reason: 'could not be read' },
     } }));
     render(<Records pid={PID} />);
     const card = await screen.findByRole('region', { name: 'Records' });
-    await waitFor(() => expect(sectionOf('sources').querySelector('summary')?.textContent).toBe('Data Room sources · 1'));
-    expect(sectionOf('vaultDocuments').querySelector('summary')?.textContent).toBe('Vault documents · not available');
-    expect(sectionOf('sources').tagName).toBe('DETAILS');
-    expect(card.querySelectorAll('details[open]')).toHaveLength(0);
+    await waitFor(() => expect(sectionOf('sources').querySelector('h4')?.textContent).toBe('Data Room sources · 1'));
+    expect(sectionOf('vaultDocuments').querySelector('h4')?.textContent).toBe('Vault documents · not available');
+    expect(within(sectionOf('sources')).getByText('CSR-001.pdf')).toBeTruthy();
+    expect(card.querySelectorAll('details')).toHaveLength(0);
   });
 
   it('a store it could not read says so, and is never shown as none', async () => {
