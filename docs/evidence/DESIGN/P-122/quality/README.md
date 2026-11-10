@@ -101,3 +101,41 @@ served (`device-postmarket` claims `/api/capa-mdr`). Its tenant isolation with R
   and the launch-scope test finds readiness excluded as dead.
 - Green (`item3-green.txt`): 55 files, 997 tests (Quality, entitlements, the readiness route); `ci:launch-scope-api`
   reports nothing of Quality's (its one finding, `/api/cmc-changes`, is the CMC lane's); `ci:sql-interpolation` OK.
+
+## Item 4 — the Post-market surveillance panels, read for the project
+
+**What changed, server (`server/routes/mdx-postmarket.ts`).** `GET /api/mdx/postmarket` takes `?program_id=`. A named
+project is admitted as Engineering admits one (P-60, `mdx-engineering.ts`): `getCurrentAccessibleProgramScope` on the
+request's RLS executor, then `requireProgramScopeStillCurrent` after the reads. So:
+
+| Request | Answer |
+|---|---|
+| a member, their organisation's project | 200, that project's signals and CAPAs only, `meta.scope: 'program'` |
+| another organisation's project (either way round) | 404, no body data |
+| a private project the member is not shared on | 403, no body data; its owner reads it (200) |
+| a malformed id | 422, nothing read |
+| no `program_id` | 200, `meta.scope: 'organization'`: the projects the caller can open, never another organisation's |
+
+The last row also closes a gap the DB test found: without a project the read returned every project of the
+organisation, a private project's signals and CAPAs included, to any member. It now returns the projects the caller
+can open, as Engineering's and the CAPA register's reads do.
+
+**What changed, client.** `usePostmarket(programId)` asks for the open project and reports the server's `scope`.
+`PostmarketSurface.tsx` drops `SURVEILLANCE_KEYED_TO_PROJECT = false` (since `10bbeeeea`): the signal triage queue,
+the CAPA board, vigilance trending and PMS plan execution are drawn when, and only when, the server says the rows are
+this project's. Each panel's DataGate says loading, a failure with Try again, or empty; an answer that does not say
+`program` keeps the old "Shown once this screen reads this project's records" notes. Trends and PMS plan execution
+still have no store, and their panels say so ("not yet computed", "not yet tracked"), not that the project has none.
+The host's banner (`MdxSurfaceHost.tsx`) says the clocks, signals and CAPA board are this project's.
+
+- Red (`item4-red.txt`): the DB test, 5 of 11 fail at HEAD (no `meta.scope`; another organisation's project, a private
+  project and a malformed id all answered 200 with the whole organisation's rows); the client suite, 3 of 4 fail (no
+  `program_id` asked; panels hidden; a failed read not said).
+- Green (`item4-green.txt`): the DB test 11/11 as `app_service` with `RLS_ENFORCE=on` on a provisioned database
+  (`c2c_p122q`); the MDX client suites and the route unit test, 106 files, 1,046 tests; `ci:sql-interpolation`,
+  `ci:tenant-resolvers`, `ci:unkeyed-request-tables` OK.
+
+The same DB test proves the reads items 3 and 5 rely on: `GET /api/mdx/qms/readiness` answers each organisation's
+member with that organisation's counts only, and refuses no session (401); `GET /api/capa-mdr/complaints`,
+`/mdr-events` and `/vigilance` answer a member with their organisation's records only, and refuse another
+organisation's project (404).

@@ -90,13 +90,15 @@ describe('PostmarketSurface — statutory-clock cards come from the reads that h
        projects share. The scope names the project by its title. */
     const project = { id: 'project-a', code: 'Class II · 510(k)', title: 'Device project' } as Program;
     const { getByTestId, getByText } = mount(project);
-    /* Slice 0: PMS plan entries have no store (`pmsPlan: []`), so no scope is stated for them. */
-    expect(getByTestId('postmarket-scope').textContent).toContain("Surveillance signals and the CAPA board are read for every project in this organization and are not shown until this screen reads this project's records.");
+    /* Slice 0: PMS plan entries have no store (`pmsPlan: []`), so no scope is stated for them. P-122: once the
+       surveillance read answers without saying the rows are this project's, the screen says it is not showing them. */
+    await waitFor(() => expect(getByTestId('postmarket-scope').textContent).toContain("Surveillance signals and the CAPA board are read for every project in this organization and are not shown until this screen reads this project's records."));
     expect(getByTestId('postmarket-scope').textContent).toContain('Reporting clocks and the MDR/CAPA deadline metrics are limited to Device project.');
     expect(getByTestId('postmarket-scope').textContent).not.toContain('Class II · 510(k)');
     expect(getByText(/Device project only/)).toBeTruthy();
     await waitFor(() => expect(seen.some(url => url.includes('/api/capa-mdr/triage?program_id=project-a'))).toBe(true));
-    expect(seen).toContain('/api/mdx/postmarket');
+    // P-122: the surveillance read asks for the project too; this fixture's answer says no scope, so it stays unshown.
+    expect(seen).toContain('/api/mdx/postmarket?program_id=project-a');
     expect(seen).not.toContain('/api/capa-mdr/triage');
   });
 

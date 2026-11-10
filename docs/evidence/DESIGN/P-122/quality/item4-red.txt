@@ -1,0 +1,33 @@
+# Item 4 red, server: tests/db/p122-quality-surveillance-reads.dbtest.ts against HEAD's mdx-postmarket.ts, as app_service with RLS_ENFORCE=on (database c2c_p122q, provisioned by scripts/db/provision-test-db.sh)
+# d6c61cd12 2026-11-10T12:24:27Z
+ ✓ tests/db/p122-quality-surveillance-reads.dbtest.ts > runtime role with RLS on > is not a superuser and does not bypass RLS 14ms
+ ✓ tests/db/p122-quality-surveillance-reads.dbtest.ts > Quality's figure line: GET /api/mdx/qms/readiness > answers a member with their organisation's counts, and never another's 73ms
+ ✓ tests/db/p122-quality-surveillance-reads.dbtest.ts > Quality's figure line: GET /api/mdx/qms/readiness > refuses a request with no session 4ms
+ × tests/db/p122-quality-surveillance-reads.dbtest.ts > Post-market surveillance: GET /api/mdx/postmarket?program_id= > reads one project's signals and CAPAs, and says so 29ms
+   → expected undefined to be 'program' // Object.is equality
+ × tests/db/p122-quality-surveillance-reads.dbtest.ts > Post-market surveillance: GET /api/mdx/postmarket?program_id= > without a project, reads the organisation's, and never another organisation's 22ms
+   → expected undefined to be 'organization' // Object.is equality
+ × tests/db/p122-quality-surveillance-reads.dbtest.ts > Post-market surveillance: GET /api/mdx/postmarket?program_id= > answers another organisation's project as not found, never an empty feed 24ms
+   → {"data":{"metrics":[{"label":"Open signals","metric":"5","meta":"0 critical","tone":"ok"},{"label":"Open CAPAs","metric":"3","meta":"0 critical"}],"signals":[{"id":"f75abd6c-801b-40b3-91c9-ce7f8a4e44b7","device":"P122-33046112","source":"mdr_opened","op
+ × tests/db/p122-quality-surveillance-reads.dbtest.ts > Post-market surveillance: GET /api/mdx/postmarket?program_id= > refuses a private project the member is not shared on, and answers its owner 25ms
+   → {"data":{"metrics":[{"label":"Open signals","metric":"5","meta":"0 critical","tone":"ok"},{"label":"Open CAPAs","metric":"3","meta":"0 critical"}],"signals":[{"id":"f75abd6c-801b-40b3-91c9-ce7f8a4e44b7","device":"P122-33046112","source":"mdr_opened","op
+ × tests/db/p122-quality-surveillance-reads.dbtest.ts > Post-market surveillance: GET /api/mdx/postmarket?program_id= > refuses a malformed project id 17ms
+   → expected 200 to be 422 // Object.is equality
+ ✓ tests/db/p122-quality-surveillance-reads.dbtest.ts > Quality's Complaints and MDR tab: GET /api/capa-mdr/complaints, /mdr-events, /vigilance > answers a member with their organisation's complaints and MDR events, and never another's 140ms
+ ✓ tests/db/p122-quality-surveillance-reads.dbtest.ts > Quality's Complaints and MDR tab: GET /api/capa-mdr/complaints, /mdr-events, /vigilance > reads a complaint's vigilance timeline for its member, and refuses another organisation's 41ms
+ ✓ tests/db/p122-quality-surveillance-reads.dbtest.ts > Quality's Complaints and MDR tab: GET /api/capa-mdr/complaints, /mdr-events, /vigilance > refuses another organisation's project on the complaint list 17ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  5 failed | 6 passed (11)
+
+# Item 4 red, client: PostmarketSurface.programScope.test.tsx against HEAD's PostmarketSurface.tsx / usePostmarket.ts (SURVEILLANCE_KEYED_TO_PROJECT = false, no program_id)
+ × client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.programScope.test.tsx > PostmarketSurface — the surveillance panels, read for this project (P-122) > asks for this project's records 5059ms
+   → expected [ '/api/mdx/postmarket', …(1) ] to include '/api/mdx/postmarket?program_id=333333…'
+ × client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.programScope.test.tsx > PostmarketSurface — the surveillance panels, read for this project (P-122) > shows this project's signals, CAPA board, trends and PMS plan execution when the server 
+   → expected 'WorkstreamPost-market vigilance21 CFR…' to match /Own pump occlusion/
+ × client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.programScope.test.tsx > PostmarketSurface — the surveillance panels, read for this project (P-122) > says a failed read is a failure, with a retry, and never an empty or unkeyed panel 5019m
+   → expected 'WorkstreamPost-market vigilance21 CFR…' to match /could not|couldn['’]t|failed/i
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/PostmarketSurface.programScope.test.tsx > PostmarketSurface — the surveillance panels, read for this project (P-122) > keeps the panels hidden when the server does not say the rows are this project's 27ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
