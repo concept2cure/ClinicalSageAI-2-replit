@@ -2176,6 +2176,51 @@ session's brief). Each records its own progress here; as reported to this sessio
 - the PQ decision for production drafting (every model is `pending`);
 - whether the client types read "medical device and diagnostics, biotech, pharma, CROs/consultants".
 
+#### L1 (row D1) — ready to run on AWS: re-measured at head, the WAF, cheaper readiness (session `session_01QoxbLaF89iYd7wC96owa7t`, 2026-11-10)
+
+**What already exists.**
+- Work order: `docs/work-orders/MR-03-first-deploy-staging-to-production.md`. Stages 1–4 had landed.
+- Infrastructure: `terraform/` (one stack, two roots, tested modules), `deploy-aws.yml` (staging, promote, rollback) and
+  `provision-database.yml`.
+- CI's image jobs.
+- P-11, the WAF, decided but never built.
+
+**Delivered**
+- **Re-measured at head.** Evidence: `docs/evidence/D1/2026-11-10-aws-readiness/`.
+  - Terraform: 121/121 offline tests pass, every root validates, and the deploy preflight proof holds.
+  - The deploy contracts pass.
+  - On GitHub: the production image boot, blank-DB provisioning, boot smoke, Security Scan and Codespace jobs pass.
+- **P-11, the WAF**, `4e697a5381`: an `aws_wafv2_web_acl` on the distribution.
+  - The IP-reputation and known-bad-inputs groups block, and a per-IP rate rule blocks.
+  - The common rule set counts for two weeks; its 8 KB body rule counts on every path.
+  - The region precondition is in, and the Trivy exception is deleted.
+  - Red 11/1 failed, then green 15/15.
+- **OPS-22**, `5e8a7317ce` and `37d030e109`'s chain: `/readyz` runs its database query and Vault-store probe at most once
+  per 5 s, and in production the public body is `{ ready }` alone. Green 81/81.
+- **OPS-29**, `8a5eb16b27`: the metrics token is compared in constant time.
+- **MR-03**, `999efec84a`: re-confirmed at head, with the founder's first-apply checklist in order.
+
+**What blocks a deploy, in order**
+1. **Trunk CI is red**, and `deploy-aws.yml` runs only a SHA whose whole `ci.yml` run passed. The MR-02 lanes own it:
+   - Secret scan: 8 findings, 3 credentials live;
+   - Lint;
+   - Integration;
+   - Test: 447 of 79,560 failing.
+2. **The founder's inputs**, listed in MR-03's 2026-11-10 checklist:
+   - accounts, region, domain and certificates;
+   - SMTP;
+   - the Anthropic key, and its placement entry (B4);
+   - error reporting (NEW-3);
+   - Vault retention;
+   - revoking the live credentials;
+   - the apply.
+
+**Next, engineering, no founder input**
+- Wire `READYZ_TOKEN` into the task definition and the smoke test.
+- MR-03 Stage 6 (OPS-17).
+- Stage 7 steps 2–4 and 8.
+- Switch the common rule set to block two weeks after the first apply.
+
 ## 4. How everyone works
 
 1. **Every commit names its package.** The last paragraph of the message carries the trailer `Plan: <ID>`, for
