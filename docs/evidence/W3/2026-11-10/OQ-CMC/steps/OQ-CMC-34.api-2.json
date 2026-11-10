@@ -1,0 +1,49 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/analytical-methods",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "projectId": "808060af-b01c-4b94-b24f-58138b33098d",
+      "methodCode": "OQ-526871",
+      "title": "OQ probe assay",
+      "purpose": "Assay",
+      "analyte": "API",
+      "matrix": "Drug substance",
+      "technique": "HPLC",
+      "status": "development"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 18,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 2,
+        "organizationId": 2,
+        "projectId": "808060af-b01c-4b94-b24f-58138b33098d",
+        "methodCode": "OQ-526871",
+        "title": "OQ probe assay",
+        "purpose": "Assay",
+        "analyte": "API",
+        "matrix": "Drug substance",
+        "technique": "HPLC",
+        "status": "development",
+        "ichQ2Parameters": null,
+        "systemSuitability": null,
+        "acceptance_criteria": null,
+        "robustness_data": null,
+        "validationDate": null,
+        "developedBy": null,
+        "validatedBy": null,
+        "createdAt": "2026-11-10T02:08:47.399Z",
+        "updatedAt": "2026-11-10T02:08:47.399Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

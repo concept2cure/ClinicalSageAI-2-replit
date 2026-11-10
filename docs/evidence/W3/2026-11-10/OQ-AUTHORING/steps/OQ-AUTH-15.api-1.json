@@ -1,0 +1,24 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/authoring/sections/a5ae3f81-c4c7-4d55-ac26-d2913bb89552/ai/draft",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "prompt": "Draft a one-paragraph summary."
+    }
+  },
+  "response": {
+    "status": 409,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 21,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": {
+        "code": "DRAFT_REGION_REQUIRED",
+        "message": "Choose a supported writing region for this draft. The saved section has no confirmed receiving jurisdiction; nothing was drafted."
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/module3-os/sections/808060af-b01c-4b94-b24f-58138b33098d/3.1/approve",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "meaning": "approval",
+      "reauth": {
+        "password": "[REDACTED]"
+      }
+    }
+  },
+  "response": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 14,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": false,
+      "error": "REASON_REQUIRED",
+      "detail": "A reason for change of at least 8 characters is required.",
+      "field": "reason"
+    }
+  }
+}

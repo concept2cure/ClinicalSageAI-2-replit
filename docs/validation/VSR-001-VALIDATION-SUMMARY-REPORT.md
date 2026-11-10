@@ -1653,3 +1653,59 @@ The conservative medium/scripted 007a assessment is retained because incorrect
 identity, offer or clock presentation can misdirect recoverable filing work.
 The incoming stronger Plan/reference checks and the local no-write observation
 are one revised OQ-PROJ-12 v0.10, still unexecuted and unsigned.
+
+## 21. Addendum 2026-11-10 — the package re-executed at head for GA (W3 session)
+
+**Why.** The last full execution (§18, 2026-09-27/28) predates the convergence packages (D0–D7), the spine packages
+and CMC / Module 3's protocol (OQ-008), which had never run under the W3 posture. D4 needs an execution of the
+product as it ships.
+
+**What was executed.** IQ-001 and OQ-001…006 and OQ-008, at `83e61866d3`. The installation was fresh,
+`c2c_oq_w3_20261110`, provisioned from empty by `npm run up`: migration set 467 of 467, runtime role `app_service`
+without superuser or BYPASSRLS. The posture was §18's: RLS enforced, development sign-in off, auth boundary and
+launch scope enforced, no AI provider.
+
+The run used seven identities. All but the run identity were added through user administration, set their own
+passwords through the product's activation link, and enrolled their own authenticators. The run needed three
+database-owner exceptions:
+- the first platform role (as in §18);
+- a program in a second organisation, as another tenant's record;
+- one cleared enrolment.
+
+Evidence, with the setup scripts and transcripts: `docs/evidence/W3/2026-11-10/`.
+
+**IQ-001: 12 pass, 0 fail, 3 deviation**, as in §18. The first attempt was 7 / 3 / 5:
+- Two of its causes were the run's own environment: the runner read the development `.env`, and the toolchain was
+  not installed.
+- One was the protocol's own check. IQ-03 matched `COPY --from=builder` and so missed OPS-19's
+  `COPY --chown=… --from=builder` (`ebda50531c`, 2026-10-22). The image copies the migrations, `scripts/db` and the
+  assets; the check said it did not. The check now allows flags before `--from`.
+
+**OQ: 99 pass, 26 fail, 6 deviation, 31 not executed** (§18: 91 / 3 / 2 / 7 of 103). By protocol:
+
+| Protocol | Pass | Fail | Deviation | Not executed |
+|---|---|---|---|---|
+| OQ-001 Projects | 9 | 5 | 0 | 6 |
+| OQ-002 Vault | 23 | 1 | 0 | 0 |
+| OQ-003 Authoring | 19 | 4 | 0 | 3 |
+| OQ-004 Submission Center | 14 | 3 | 0 | 0 |
+| OQ-005 Submission Readiness | 8 | 2 | 1 | 0 |
+| OQ-006 QMS | 7 | 2 | 0 | 13 |
+| OQ-008 CMC / Module 3 | 19 | 9 | 5 | 9 |
+
+**Dispositions (proposed; the system owner decides).** Each failure is classed as one of:
+- (A) a step overtaken by a recorded decision, with the protocol revised and the decision named;
+- (B) a runner defect;
+- (C) a product regression, fixed under F1.
+
+The classification is in progress and is listed with its evidence in `docs/evidence/W3/2026-11-10/README.md`.
+Classified so far:
+- **A:** OQ-PROJ-04 (a product class is required, `4f53d90f3b`), OQ-PROJ-11 (the program journey left the launch
+  scope, `bcc457edb8`), OQ-PROJ-13/14 (RBM entered it, P-76), OQ-PROJ-18 (a suspended session ends durably, P0-4b
+  `f8d4047454`), and OQ-VAULT-09 (the Vault opens on the filing's binder, S6; to confirm in the browser).
+- **B:** OQ-CMC-12 (acts as the run identity instead of `OQ_MEMBER`) and OQ-CMC-33/35/40 (the signing calls send
+  no authenticator code).
+- **C:** none yet.
+
+The package is not ready for signature. D4 stays red until every step is passed or dispositioned and the protocols
+it revises are re-executed.

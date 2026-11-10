@@ -1,0 +1,27 @@
+{
+  "status": 200,
+  "rows": [
+    {
+      "id": 7,
+      "document_id": null,
+      "version_id": null,
+      "signed_target": "cmc_module3_section:808060af-b01c-4b94-b24f-58138b33098d/3.1",
+      "signature_type": "governed-action",
+      "signature_purpose": "Reviewed against the executed batch record and the certificate of analysis.",
+      "signer_id": 2,
+      "signer_name": "OQ Signer",
+      "signer_title": null,
+      "signer_email": "oq-signer@validation.local",
+      "signature_meaning": "approval",
+      "signature_hash": "d18a16ab8cd461bc69eda1e3a8c4b836d5fdbba7a79dd4c0ca54298598240843",
+      "binding_basis": "cmc-module3-section-version-sha256",
+      "second_factor_verified": true,
+      "is_valid": true,
+      "signed_at": "2026-11-10T02:07:30.651Z",
+      "ip_address": "127.0.0.1",
+      "approvals_recorded": null,
+      "approvals_required": null,
+      "interim_approval": false
+    }
+  ]
+}
