@@ -181,7 +181,10 @@ beforeAll(async () => {
        (${AUTHOR}, 'author@example.com', 'Ari Author', 'x'),
        (${REVIEWER}, 'reviewer@example.com', 'Rae Reviewer', 'x')`,
   );
-  await holder.pg.exec(`INSERT INTO organization_users (organization_id, user_id, role) VALUES (${ORG}, ${USER}, 'admin')`);
+  // The author and the reviewer are members too: the organisation has someone to be independent
+  // of, so P-116's sole-member path (isSoleMember) is not what these cases exercise.
+  await holder.pg.exec(`INSERT INTO organization_users (organization_id, user_id, role) VALUES (${ORG}, ${USER}, 'admin'),
+    (${ORG}, ${AUTHOR}, 'member'), (${ORG}, ${REVIEWER}, 'reviewer')`);
 }, 60_000);
 afterAll(async () => {
   await holder.pg?.close();

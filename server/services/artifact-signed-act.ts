@@ -44,6 +44,7 @@ import {
   ARTIFACT_ACT_MEANING,
   artifactStatusUpdate,
   assertArtifactSignerIndependent,
+  SOLE_MEMBER_RECORD,
   reviewQuorumVerdict,
 } from './artifact-approval-act';
 
@@ -161,16 +162,18 @@ export async function commitSignedArtifactAct(
   // 2026-11-01 (F1, P-18): the signer is not an author, re-read on this
   // transaction under the row lock, as the quorum is below. The preflight both
   // doors share asked first; this refuses an authorship it could not see.
-  await assertArtifactSignerIndependent(q, {
+  const independence = await assertArtifactSignerIndependent(q, {
     organizationId: input.organizationId,
     signerId: input.userId,
     artifactId: artifact.artifactId,
     status: input.status,
   });
+  let unreviewedBySoleMember = independence.soleMember === true;
   if (input.status === 'approved') {
     // The signer did not review this version either (P-95 Q1), re-read here.
     const quorum = await reviewQuorumVerdict(q, artifact.id, input.organizationId, artifact.version, input.userId);
     if (!quorum.met) throw new ArtifactActConflictError(`${quorum.message} Nothing was signed.`);
+    unreviewedBySoleMember ||= quorum.soleMember === true;
   }
   // This recheck catches decisions that changed since preflight. It does NOT
   // serialize all review/source writers or qualify the science in a document.
@@ -203,6 +206,9 @@ export async function commitSignedArtifactAct(
       contentHash: version.contentHash,
       meaning,
       signatureId,
+      // P-116: said on the act itself, in the same transaction, so the record
+      // never reads as an independently reviewed approval.
+      ...(unreviewedBySoleMember ? { independentReview: 'none', independentReviewNote: SOLE_MEMBER_RECORD } : {}),
     },
     domain: 'authoring',
     surface: input.surface ?? 'artifact-status',
