@@ -81,7 +81,16 @@ describe('The control plane gives platform data to platform operators and org da
     process.env.ANA_OPS_TOKEN = OPS_TOKEN;
     callers.member = userA;
     callers.admin = await provisionMember(ORG_A, 'admin', 'cp-admin');
-    callers.research_admin = await provisionMember(ORG_A, 'research_admin', 'cp-research-admin');
+    // The role that "merely contains admin". `research_admin` was the first such
+    // case; since 2026-10-30 organization_users refuses it on a database that did
+    // not already hold it (organization_users_role_known,
+    // migrations/20260926_organization_users_own_writes.sql, which keeps admitting
+    // values rows already held), so a fresh one cannot be written here. The
+    // column still admits the staff spellings on a membership row, and
+    // `platform_admin` is the hardest of them for this guard: a substring match
+    // admits it, and so would a guard that read platform role NAMES off the
+    // request instead of platform_role_grants (contrast `operator` below).
+    callers.platform_admin = await provisionMember(ORG_A, 'platform_admin', 'cp-row-platform-admin');
     operator = await provisionMember(ORG_A, 'member', 'cp-operator');
     await grantPlatformRole(operator, 'platform_admin');
   });
@@ -120,9 +129,12 @@ describe('The control plane gives platform data to platform operators and org da
     expect(res.status).toBe(403);
   });
 
-  it('a role that merely contains "admin" is not a platform role', async () => {
-    const res = await request(cp).get('/api/control-plane/kernel/recent?limit=500').set(as('research_admin'));
-    expect(JSON.stringify(res.body), "tenant B's traffic must not reach a research_admin").not.toContain(planted);
+  it('a membership row naming a platform role is not platform standing', async () => {
+    const res = await request(cp).get('/api/control-plane/kernel/recent?limit=500').set(as('platform_admin'));
+    expect(
+      JSON.stringify(res.body),
+      "tenant B's traffic must not reach a membership row named platform_admin"
+    ).not.toContain(planted);
     expect(res.status).toBe(403);
   });
 

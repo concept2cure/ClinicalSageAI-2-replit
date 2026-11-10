@@ -211,21 +211,33 @@ describe('a project PMR, signed', () => {
 });
 
 describe('a project with no program', () => {
-  /* Project admission (communication-center.ts router.param) admits only a
-     project anchored to a program, so a project with none is refused at the
-     door, before the fulfilment's own PROJECT_NOT_LINKED (which stays as the
-     service's answer if a link is gone between admission and the read). */
-  it('is refused at the project door, and nothing about the commitment changes', async () => {
+  /* Project admission (communication-center.ts router.param, project-access.ts
+     requireProjectAdmission) is about the project: who may open it, in its own
+     client workspace. It never asked for a program. This case once read 404 at
+     the door, but only because admission looked a project up in the
+     organisation's FIRST workspace, and this fixture gives each project its own;
+     0edd864728 (2026-10-31) admits a project in its own workspace. So the
+     project is opened, and the fulfilment's own answer is the one that holds:
+     the options name nothing (projectLinked false, no sequence, no Vault
+     program), and naming evidence is refused 409 PROJECT_NOT_LINKED, read-only,
+     before the password (commitment-fulfil-route.ts precheckFulfilment). */
+  it('is admitted, offers nothing to name, and refuses a fulfilment as not linked before the password; nothing changes', async () => {
     const cid = Number((await owner.query(
       `INSERT INTO regulatory_commitments (organization_id, commitment_type, description, status, created_by, project_id)
        VALUES ($1, 'pmc', 'PMC in an unlinked project', 'open', $2, $3) RETURNING id`,
       [orgId, users.signer.id, project.Z],
     )).rows[0].id);
     const opts = await request(app).get(optionsUrl(project.Z, cid)).set(as('signer'));
-    expect(opts.status, JSON.stringify(opts.body)).toBe(404);
-    const res = await request(app).post(fulfilUrl(project.Z, cid)).set(as('signer')).send(signedBody({ sequenceId: seq.ok }));
-    expect(res.status, JSON.stringify(res.body)).toBe(404);
+    expect(opts.status, JSON.stringify(opts.body)).toBe(200);
+    expect(opts.body.data).toMatchObject({ projectLinked: false, sequences: [], sequencesTruncated: false, vault: { programId: null } });
+    const before = await failedAttempts('prober');
+    const res = await request(app).post(fulfilUrl(project.Z, cid)).set(as('prober'))
+      .send(signedBody({ sequenceId: seq.ok }, { password: 'wrong-password' }));
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(res.body.error.code).toBe('PROJECT_NOT_LINKED');
+    expect(await failedAttempts('prober'), 'a refused fulfilment spent a password attempt').toBe(before);
     expect((await stateOf(cid)).status).toBe('open');
+    expect(await signaturesOn(cid)).toEqual([]);
   });
 });
 

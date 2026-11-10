@@ -81,7 +81,7 @@ async function ensureComponents(ctx, rec) {
   const objectives = await ensureEach(ctx, 'protocol-objective', rec.spec.PROTOCOL.objectives, asArray(d, 'objectives'), { same: (x, o) => x.objective === o.objective, post: async (o) => {
     must(await api('POST', `${base}/objectives`, { ...o, reason: reason(rec, 'add an objective') }), 201, 'add objective');
   } });
-  const criteria = [...PROTOCOL.inclusion.map((criterion) => ({ kind: 'inclusion', criterion })), ...PROTOCOL.exclusion.map((criterion) => ({ kind: 'exclusion', criterion }))];
+  const criteria = [...(rec.spec.PROTOCOL.inclusion ?? []).map((criterion) => ({ kind: 'inclusion', criterion })), ...(rec.spec.PROTOCOL.exclusion ?? []).map((criterion) => ({ kind: 'exclusion', criterion }))];
   const eligibility = await ensureEach(ctx, 'protocol-criterion', criteria, asArray(d, 'eligibility', 'eligibilityCriteria'), { same: (x, c) => x.criterion === c.criterion && x.kind === c.kind, post: async (c) => {
     must(await api('POST', `${base}/eligibility`, { ...c, reason: reason(rec, `add an ${c.kind} criterion`) }), 201, `add ${c.kind} criterion`);
   } });

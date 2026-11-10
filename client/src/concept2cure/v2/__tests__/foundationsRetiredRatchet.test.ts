@@ -113,7 +113,7 @@ const RETIRED: Retired[] = [
   /* chips → `.rd-chip` + tone */
   cls('status-pill', 49), cls('sp-tag', 17), cls('reg-pill', 10), cls('ml-chip', 10), cls('pg-badge', 8), cls('rc-chip', 3),
   /* drawers → `.de` */
-  cls('tt-panel', 3), cls('pdev-sheet', 4), cls('py-sheet', 1), cls('de-sheet', 5), cls('ana-sheet', 1), cls('adm-drawer', 4), cls('risk-drawer', 1),
+  cls('tt-panel', 3), cls('pdev-sheet', 4), cls('py-sheet', 1), cls('de-sheet', 4), cls('ana-sheet', 1), cls('adm-drawer', 4), cls('risk-drawer', 1),
   /* composers → the composer chrome */
   cls('ec-composer', 1), cls('rc-composer', 0), cls('rbm-ana-composer', 1),
   /* header meta → `.ph-sub` */

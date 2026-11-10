@@ -95,6 +95,16 @@ describe('QMS controls reach the canonical authoring workbench', () => {
     expect(H.request.mock.calls.every(([,path])=>path==='/api/mdx/qms/documents/9')).toBe(true);
     expect(screen.getByRole('button',{name:'Try again'})).toBeTruthy();
   });
+  // C15: a document that is not there is said as such, with no Try again that cannot change it.
+  it('says a notification target that is not there was not found, and offers no Try again',async()=>{
+    H.request.mockResolvedValue(response(null,404));
+    render(<QualityApp qmsDocumentId="9" />);
+    const failed=await screen.findByTestId('qms-target-failed');
+    expect(failed.textContent).toMatch(/This controlled document was not found in your organization/);
+    expect(within(failed).queryByRole('button',{name:'Try again'})).toBeNull();
+    fireEvent.click(within(failed).getByRole('button',{name:'Dismiss this message'}));
+    expect(screen.queryByTestId('qms-target-failed')).toBeNull();
+  });
   it('queues a new notification target while the current canonical editing copy remains open',async()=>{
     H.request.mockImplementation(async(method:string,path:string)=>path.endsWith('/editor')?response({...editor,qmsDocument:{id:Number(path.split('/').at(-2)),status:'draft'}}):
       response({id:Number(path.split('/').at(-1)),doc_number:'SOP-009',title:'Notification target',doc_type:'sop',version:'1.0',status:'draft',authoring_document_id:DOCUMENT}));

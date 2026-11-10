@@ -334,8 +334,8 @@ async function connectPackIdentities(): Promise<void> {
 }
 
 /** A settled document: one section, no open comment, no tracked change. */
-async function settledDoc(suffix: string): Promise<string> {
-  const id = await createDoc(actors.admin, programA, suffix);
+async function settledDoc(suffix: string, programId: string = programA): Promise<string> {
+  const id = await createDoc(actors.admin, programId, suffix);
   const sec = await request(actors.admin.app)
     .post('/api/authoring/sections')
     .set('Authorization', actors.admin.auth)
@@ -364,8 +364,35 @@ async function signaturesOf(id: string) {
   )).rows;
 }
 
+/**
+ * A program with the one project anchored to it that every program a document is authored in has in
+ * production (PF-07: Authoring creates only in a project; the demo packs author in their project's
+ * program). The review route reads that anchor (authoring-program-access.ts, PROJECT_ANCHOR_UNRESOLVED
+ * without it). Its own program, so the cases above keep programA as they had it; found or made, so a
+ * re-run keeps the anchor unique (readProgramAnchorRow requireUnique).
+ */
+async function anchoredProgram(orgId: number, code: string, ownerId: number): Promise<string> {
+  const programId = await upsertProgram(orgId, code);
+  const anchored = await owner.query('SELECT 1 FROM projects WHERE regulatory_program_id = $1 AND organization_id = $2', [programId, orgId]);
+  if (anchored.rows.length === 0) {
+    const ws = await owner.query(
+      `INSERT INTO client_workspaces (organization_id, name, slug) VALUES ($1, $2, $2)
+       ON CONFLICT (organization_id, slug) DO UPDATE SET name = EXCLUDED.name RETURNING id`,
+      [orgId, `${code.toLowerCase()}-ws`],
+    );
+    await owner.query(
+      `INSERT INTO projects (organization_id, client_workspace_id, name, type, status, owner_id, created_by_id, regulatory_program_id, settings)
+       VALUES ($1, $2, $3, 'regulatory', 'active', $4, $4, $5, '{}'::jsonb)`,
+      [orgId, Number(ws.rows[0].id), `${code} project`, ownerId, programId],
+    );
+  }
+  return programId;
+}
+
 describe('DP-35 — the demo seed packs freeze through the ceremony, on the real database', () => {
   beforeAll(connectPackIdentities, 60_000);
+  let programMdx: string;
+  beforeAll(async () => { programMdx = await anchoredProgram(orgA, 'DBTEST-P130-MDX', users.admin); });
 
   afterAll(async () => {
     await Promise.all(packServers.map((s) => new Promise((r) => s.close(r))));
@@ -409,25 +436,61 @@ describe('DP-35 — the demo seed packs freeze through the ceremony, on the real
     expect(await signaturesOf(id)).toHaveLength(0);
   });
 
-  it('mdx pack: the second signer seals the summary as REVIEWER, then approves; the approval is its own signature', async () => {
-    const id = await settledDoc('demo-mdx-signed');
+  it('mdx pack: the summary is reviewed, the second signer seals it as REVIEWER, then approves; the approval is its own signature', async () => {
+    const id = await settledDoc('demo-mdx-signed', programMdx);
     const p = packRun();
     const ctx = { api: author, run: p.run };
+
+    /* P-95 on the editor's document (33c3e4de9e, 2026-11-09): an APPROVER
+       signature is refused 409 REVIEW_REQUIRED, before the password, unless the
+       latest review route names a reviewer and every reviewer has signed it. The
+       pack meets that before it freezes (mdx.mjs submitAndFreezeSummary): it
+       sends the summary for review (ensureReviewRequested, exported) and the
+       reviewer signs the review as REVIEWER (signReview, not exported, so its one
+       request is made here with the pack's body). A freeze signed REVIEWER seals
+       the text but does not complete the route.
+
+       The reviewer here is a third person of org A, neither the author nor the
+       approver. The pack itself names the second signer (reviewerOf(signer)),
+       who then approves; in an organization of more than one member that is
+       what P-95 Q1 (2026-11-09) and P-116 (2026-11-10) forbid, and the product
+       does not refuse it yet (authoring-review-route.ts: "a later slice"). So
+       this case does not pin that as correct: it stays green when the product
+       refuses an approver who reviewed. Handed to the pack's owner
+       (COORDINATION.md, trunk-CI lane, 2026-11-10). */
+    const revEmail = 'dbtest-p130-reviewer@c2c.test';
+    const revId = await upsertUser(revEmail);
+    await owner.query(
+      `INSERT INTO organization_users (organization_id, user_id, role) VALUES ($1, $2, 'admin') ON CONFLICT DO NOTHING`,
+      [orgA, revId],
+    );
+    const revApp = await appFor(revId, orgA, 'admin', revEmail);
+    const revAuth = await bearer(revId, orgA, 'admin', revEmail);
+    const reviewer = { id: revId, name: `${revEmail} actor`, email: revEmail };
+    expect(await mdx.ensureReviewRequested(ctx, { id, status: String((await docRow(id))?.status) }, reviewer)).toBe(true);
+    const reviewIntent = 'Reviewed: the 510(k) Summary v1.0 matches the dossier documents in the Vault and 21 CFR 807.92.';
+    const reviewed = await request(revApp).post(`/api/authoring/docs/${id}/e-sign`).set('Authorization', revAuth)
+      .send({ password: PASSWORD, meaning: 'REVIEWER', intent: reviewIntent });
+    expect(reviewed.status, reviewed.text).toBe(200);
 
     await mdx.freezeSummary(ctx, { id }, signer);
     expect(String((await docRow(id))?.status).toUpperCase()).toBe('FROZEN');
     await mdx.signSummary(ctx, id, signer);
     expect(String((await docRow(id))?.status).toUpperCase()).toBe('APPROVED');
     const sigs = await signaturesOf(id);
+    // The review, the freeze and the approval: three signatures, the approval its own row.
     expect(sigs.map((s) => [s.signer_email, s.meaning])).toEqual([
+      ['dbtest-p130-reviewer@c2c.test', 'REVIEWER'],
       ['dbtest-p130-signer@c2c.test', 'REVIEWER'],
       ['dbtest-p130-signer@c2c.test', 'APPROVER'],
     ]);
+    expect(sigs[0].reason).toBe(reviewIntent);
+    expect(sigs[1].covered_freeze_version).toBe('1.0');
     expect(p.records['authoring.summarySignature']).toMatchObject({ executed: true, existing: false, meaning: 'APPROVER' });
 
     // A re-run finds the approval and signs nothing more.
     await mdx.signSummary(ctx, id, signer);
-    expect(await signaturesOf(id)).toHaveLength(2);
+    expect(await signaturesOf(id)).toHaveLength(3);
     expect(p.records['authoring.summarySignature']).toMatchObject({ executed: true, existing: true, meaning: 'APPROVER' });
   });
 

@@ -1,0 +1,16 @@
+ × client/src/concept2cure/quality/__tests__/PersonalTrainingReader.test.tsx > personal reading and acknowledgement in the controlled-document dialog > reads in the one drawer, with the acknowledgement as its footer action 30ms
+ × client/src/concept2cure/quality/__tests__/qmsReviewRoute.test.tsx > the round in the register and its sheet (RR4, §2.12) > reassigns through the shared sheet, which reads who may take it over again after a failed read 50ms
+ × client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts > retired-name ratchet (ONE_DESIGN_PLAN §2, D0 guard 3) > `de-sheet`: no more than 4 uses, and gone from the CSS at 0 10ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  3 failed (3)
+      Tests  3 failed | 124 passed (127)
+
+F1 (the rate limit bucket; the people picker):
+ × server/middleware/__tests__/redisRateLimiter-vault-reads-and-batch-upload.test.ts > the bucket each path is counted in > a QMS controlled document's review route and who it admits are record reads too; its route acts stay writes 7ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: review-route: expected 'documents' to be 'document_metadata' // Object.is equality
+      Tests  1 failed | 14 passed (15)
+ × client/src/concept2cure/v2/__tests__/vaultReviewRoute.test.tsx > the people picker with no one to offer > says no one can be chosen, and keeps "No one matches" for a search that finds nobody 179ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'No one matches “”.' to be 'No one can be chosen.' // Object.is equality
+      Tests  1 failed | 12 skipped (13)

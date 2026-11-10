@@ -131,7 +131,7 @@ describe('every CMC destination says what it is and what to do on it', () => {
     expect(CMC_CODE).not.toMatch(/className="cm-sub"/);
     /* And what the page opens with instead: one h1, then the ask row, then the
        halves — the tabs are BELOW the header, never above it. */
-    const page = /<div className="page-inner cm" data-work-area="cmc">([\s\S]*?)<Surf /.exec(CMC_CODE);
+    const page = /<div className="page-inner" data-work-area="cmc">([\s\S]*?)<Surf /.exec(CMC_CODE);
     expect(page, 'the work-area root is not where this case can read it').not.toBeNull();
     const order = ['<ProjectBack', '<h1 className="ph-title">', '<CmStarters', '<CmHalves'];
     let at = -1;

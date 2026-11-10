@@ -330,3 +330,17 @@ describe('the route form over the record drawer below 1280px (D6-3)', () => {
     expect(screen.getByRole('dialog', { name: /^Record:/ })).toBeTruthy();
   });
 });
+
+/* Walked 2026-11-10 (Quality, D7 C17): reassigning the only designated QMS approver, the picker had no one to offer,
+   and said `No one matches “”.`, as if a search had been typed and found nobody. */
+describe('the people picker with no one to offer', () => {
+  it('says no one can be chosen, and keeps "No one matches" for a search that finds nobody', async () => {
+    const { PeoplePicker } = await import('../editor/reviewFields');
+    const { unmount } = render(<PeoplePicker name="p" options={[]} selected={[]} onChange={() => {}} multiple={false} searchLabel="Find a person" testIdPrefix="p" />);
+    expect(screen.getByRole('status').textContent).toBe('No one can be chosen.');
+    unmount();
+    render(<PeoplePicker name="p" options={[{ id: '8', label: 'Ann Approver' }]} selected={[]} onChange={() => {}} multiple={false} searchLabel="Find a person" testIdPrefix="p" />);
+    fireEvent.change(screen.getByTestId('p-search'), { target: { value: 'zed' } });
+    expect(screen.getByRole('status').textContent).toBe('No one matches “zed”.');
+  });
+});

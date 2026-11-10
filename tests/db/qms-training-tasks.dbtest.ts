@@ -65,6 +65,22 @@ async function notices(taskIds: string[], expected: number) {
   }
   return rows;
 }
+/**
+ * The due-date sweep stamps a task and then sends its notice fire and forget
+ * (server/jobs/taskDueSweep.ts notifyOneTask; task-side-effects notifyTaskEvent):
+ * the sweep's promise settles before the notice's INSERT has committed. Counted
+ * the moment the sweep returned, a notice still being written read as never
+ * sent (red alone, 5 runs of 6, 2026-11-10). So count once the runtime pool
+ * has no statement in flight: a notice the sweep sent, or a second one it
+ * should not have, has landed by then.
+ */
+async function sweptNotices(taskId: string): Promise<number> {
+  const { pool } = await import('../../server/db');
+  const busy = () => pool.waitingCount > 0 || pool.idleCount < pool.totalCount;
+  for (let i = 0; i < 100 && busy(); i += 1) await new Promise(r => setTimeout(r, 20));
+  expect(busy(), 'the runtime pool still has statements in flight after 2 s').toBe(false);
+  return (await owner.query(`SELECT count(*)::int AS n FROM mdx_notifications WHERE resource_id = $1`, [taskId])).rows[0].n;
+}
 const approve = (id: number, extra: Record<string, unknown> = {}) =>
   call(A.approver, 'post', `/documents/${id}/approve`, { password: PASSWORD, meaning: 'APPROVED', reason: 'Independent release of the invented procedure.', ...extra });
 const trainingOf = async (id: number, by: Actor) => {
@@ -184,7 +200,7 @@ describe('a version in force', () => {
     expect(notice.body).toMatch(/is in force; read and acknowledge it now\.$/);
     const { runTaskDueSweep } = await import('../../server/jobs/taskDueSweep');
     await runTaskDueSweep();
-    expect((await owner.query(`SELECT count(*)::int AS n FROM mdx_notifications WHERE resource_id = $1`, [task.task_id])).rows[0].n).toBe(1);
+    expect(await sweptNotices(task.task_id)).toBe(1);
   });
 
   it('is due 14 days after they were covered for someone assigned after it was in force (P-50 Q1)', async () => {
@@ -200,7 +216,7 @@ describe('a version in force', () => {
   it('gives a task due in the future one due-soon notice and one overdue notice from the sweep', async () => {
     const [task] = await taskOf(doc, A.qa2);
     const { runTaskDueSweep } = await import('../../server/jobs/taskDueSweep');
-    const count = async () => (await owner.query(`SELECT count(*)::int AS n FROM mdx_notifications WHERE resource_id = $1`, [task.task_id])).rows[0].n;
+    const count = () => sweptNotices(task.task_id);
     await runTaskDueSweep();
     expect(await count(), 'fourteen days out: outside the seven days').toBe(1);
     await owner.query(`UPDATE unified_tasks SET due_date = now() + interval '3 days' WHERE task_id = $1`, [task.task_id]);

@@ -1,7 +1,7 @@
 /** Quality hosts the one Authoring editor, pinned to its controlled version. */
 import * as React from 'react';
 import { redactInternals } from '@/lib/queryClient';
-import { ErrorState } from '../v2/dataConnect';
+import { EmptyState, ErrorState } from '../v2/dataConnect';
 import { QmsRequestError, readQmsEditingCopy, type QmsEditingCopy } from './qmsDocuments';
 import '../v2/styles/authoring-v2.css';
 
@@ -44,7 +44,7 @@ export function ControlledDocumentWorkbench({ documentId, onBack, onNavigate, on
   }, [load]);
   return <div className="qms-workbench">
     {error ? <>
-      <button className="qms-btn ghost" onClick={onBack}>Back to Quality register</button>
+      <button type="button" className="btn ghost small" onClick={onBack}>Back to Quality register</button>
       {/* A refusal (a role, no editing copy) is said without a Try again that cannot change it; its text can still be read. */}
       <ErrorState title="The controlled document could not be opened" message={error}
         retry={failure && (failure.status === 403 || failure.status === 409) ? undefined : () => void load()}
@@ -56,6 +56,6 @@ export function ControlledDocumentWorkbench({ documentId, onBack, onNavigate, on
       <DocumentWorkbench docs={[copy.document]} docsState="ready" status="all" programId={copy.programId}
         pinnedDocId={copy.document.id} reloadDocs={load} surfaceActionId={null} consumeDeepLinks={false}
         embedded={{ onBack, backLabel: 'Back to Quality register' }} onNav={onNavigate} onAsk={null} />
-    </React.Suspense> : <div className="qms-empty" role="status">Opening the controlled document…</div>}
+    </React.Suspense> : <EmptyState title="Opening the controlled document…" busy />}
   </div>;
 }

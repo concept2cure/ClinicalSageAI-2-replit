@@ -1,0 +1,19 @@
+ × server/services/qms/__tests__/training-compliance.pglite.test.ts > compliance counts the people assigned (P-49, MR-12 Stage 4 slice 3) > expiry lists the people assigned only 45ms
+ × server/services/qms/__tests__/training-compliance.pglite.test.ts > per-person training expiry (G10) > lists each active member whose current training lapses within the window, and by when 52ms
+ × server/services/qms/__tests__/training-compliance.pglite.test.ts > per-person training expiry (G10) > names a member whose training on the release in force lapsed, and never one who renewed it 52ms
+ × server/services/qms/__tests__/training-compliance.pglite.test.ts > outstanding training in the per-person view (G10, MR-12 Stage 4 slice 5) > lists a member assigned before it took effect who never acknowledged it as overdue, first; never one who did, nor twice one who lapsed 50ms
+ × server/services/qms/__tests__/training-compliance.pglite.test.ts > outstanding training in the per-person view (G10, MR-12 Stage 4 slice 5) > a member assigned after it took effect is due 14 days after they were assigned, listed within the window only 40ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: member 11 is current but not assigned: expected [] to deeply equal [ 10 ]
+AssertionError: expected [] to deeply equal [ ObjectContaining{…} ]
+AssertionError: expected [] to deeply equal [ ObjectContaining{…} ]
+AssertionError: expected [ { userId: 11, documentId: 1, …(7) } ] to deeply equal [ ObjectContaining{…}, …(1) ]
+AssertionError: expected [] to deeply equal [ ObjectContaining{…}, …(1) ]
+ Test Files  1 failed (1)
+ × client/src/concept2cure/quality/__tests__/QualityWorkArea.test.tsx > Quality is one work area with one header (D7-B) > lays the SOP tab out as one column of sections, each with its own head and no box 32ms
+ × client/src/concept2cure/quality/__tests__/TrainingExpiry.test.tsx > Training lapsing soon > says each assignment state as it is, and an all-clear only where training is assigned 9ms
+ × client/src/concept2cure/quality/__tests__/TrainingExpiry.test.tsx > Training lapsing soon > lists overdue, then due training, before the lapses, each with its day 211ms
+ × client/src/concept2cure/quality/__tests__/TrainingExpiry.test.tsx > Training lapsing soon > says when the list stopped at its cap, and treats a row of an unknown kind as a failed read 11ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  4 failed | 16 passed (20)

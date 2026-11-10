@@ -38,7 +38,11 @@ const hoisted = vi.hoisted(() => ({
   cronCallbacks: [] as Array<() => unknown>,
   digestImpl: null as null | ((orgId: number) => Promise<unknown>),
   reviewImpl: null as null | ((p: { orgId: number; projectId: number }) => Promise<unknown>),
+  /** The tenant scope each org's rule-alignment digest ran in (the heartbeat calls it first since b8cee0745c). */
+  alignmentScopes: [] as Array<{ orgId: number; tenantId: string | undefined }>,
   embedDelayMs: 0,
+  /** Runs after the sweep's real estate listing and before its claims: a parent changing between the two. */
+  afterList: null as null | (() => Promise<void>),
 }));
 
 // node-cron is replaced by a recorder so the test can fire "02:00" itself — on
@@ -69,17 +73,41 @@ vi.mock('../../server/services/enhancedEmbeddingService', () => ({
 // The digest's content is run-proactive-digest.test.ts's subject. Here it is a
 // stand-in that WRITES through the runtime pool, so it succeeds only if the
 // heartbeat gave it the org's tenant scope — which is the defect.
+// Since b8cee0745c (S4, 2026-11-06) each org's tick first runs the
+// rule-alignment digest, in that org's job scope. Its content is the alignment
+// suites' subject; here it records the scope it was given and writes what
+// production writes, one 'proactive_digest' notice of kind rule_alignment per
+// org, through the runtime pool. That notice is the same category as the
+// digest's own, so it is what the heartbeat's "already delivered" check must
+// tell apart from a delivered digest; a stand-in that wrote nothing could not
+// see that check removed.
 vi.mock('../../server/services/digest/proactive-digest', () => ({
   PROACTIVE_DIGEST_CATEGORY: 'proactive_digest',
   runProactiveDigest: (orgId: number) => hoisted.digestImpl!(orgId),
+  runRuleAlignmentDigest: async (orgId: number) => {
+    hoisted.alignmentScopes.push({ orgId, tenantId: store.getTenantScope()?.tenantId });
+    const { pool } = await import('../../server/db/runtime');
+    await pool!.query(`INSERT INTO mdx_notifications (organization_id, category, severity, title, metadata, created_at)
+      SELECT $1, 'proactive_digest', 'info', 'Standing-rule alignment', '{"kind":"rule_alignment"}'::jsonb, $2
+      WHERE NOT EXISTS (SELECT 1 FROM mdx_notifications WHERE organization_id=$1 AND metadata->>'kind'='rule_alignment')`, [orgId, new Date()]);
+    return { notificationsCreated: 1, tasksCreated: 0 };
+  },
 }));
 
 // listActiveSchedulePlans stays REAL (it must pass the fail-closed pool under
 // the sweep's system scope). reviewScheduleHealthForSweep becomes a slow recorder: its
 // writes — tasks, alerts, the health_review revision — happen once per call,
 // so the number of calls IS the number of duplicate side effects.
-vi.mock('../../server/services/projects/schedule-of-events', async importOriginal => ({
-  ...(await importOriginal<Record<string, unknown>>()),
+vi.mock('../../server/services/projects/schedule-of-events', async importOriginal => {
+  const original = await importOriginal<Record<string, unknown>>();
+  return {
+  ...original,
+  // Still the real listing; afterList lets a case change a parent between it and the claim.
+  listActiveSchedulePlans: async () => {
+    const plans = await (original.listActiveSchedulePlans as () => Promise<unknown>)();
+    if (hoisted.afterList) await hoisted.afterList();
+    return plans;
+  },
   reviewScheduleHealthForSweep: async (p: { orgId: number; projectId: number }, executor: RequestSqlClient) => {
     expect(store.getTenantScope()).toMatchObject({
       tenantId: String(p.orgId), role: null, source: 'job', caller: 'schedule-of-events-sweep:review',
@@ -88,7 +116,7 @@ vi.mock('../../server/services/projects/schedule-of-events', async importOrigina
     expect(scope.rows[0]).toEqual({ tenant: String(p.orgId), role: '' });
     return hoisted.reviewImpl!(p);
   },
-}));
+};});
 
 type Runtime = typeof import('../../server/db/runtime');
 type Store = typeof import('../../server/db/tenantStore');
@@ -133,6 +161,7 @@ CREATE TABLE mdx_notifications (
   category text NOT NULL,
   severity text NOT NULL,
   title text NOT NULL,
+  metadata jsonb DEFAULT '{}'::jsonb,
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE TABLE project_schedule_of_events (
@@ -325,6 +354,7 @@ describe('proactive-digest heartbeat (the only digest trigger without Redis)', (
     heartbeat.__resetDigestHeartbeatStateForTests();
     metrics.resetBackgroundJobsMetrics();
     scopesSeen.length = 0;
+    hoisted.alignmentScopes.length = 0;
     calls = [];
     await env.owner.query(`TRUNCATE ${env.t('organizations')}, ${env.t('mdx_notifications')} RESTART IDENTITY`);
     await env.owner.query(`INSERT INTO ${env.t('organizations')} (name) VALUES ('a'), ('b')`);
@@ -369,7 +399,10 @@ describe('proactive-digest heartbeat (the only digest trigger without Redis)', (
 
     expect(scopesSeen.every(s => s !== undefined), 'digest ran with no tenant scope').toBe(true);
     expect([...new Set(scopesSeen)].sort()).toEqual(['1', '2']);
-    expect(await digestsPerOrg()).toEqual({ 1: 1, 2: 1 });
+    expect(hoisted.alignmentScopes.filter(a => a.tenantId !== String(a.orgId)), 'an alignment digest ran outside its org').toEqual([]);
+    expect([...new Set(hoisted.alignmentScopes.map(a => a.orgId))].sort()).toEqual([1, 2]);
+    // Per org: its one alignment notice and its one digest.
+    expect(await digestsPerOrg()).toEqual({ 1: 2, 2: 2 });
     expect(calls.sort()).toEqual([1, 2]);
   });
 
@@ -455,14 +488,41 @@ describe('schedule-of-events sweep', () => {
       WHERE organization_id=51 AND project_id=510`)).rows[0].last_reviewed_by_ana_at;
     expect(await stamp()).toBeNull();
     const summary = await sweep.runScheduleOfEventsSweep();
-    // An archived project is refused by the claim (recentlyReviewed). An
-    // archived organization is refused earlier, by the tenant-lifecycle filter
-    // (sweepAll -> filterTenantsForBackgroundWork), so it never reaches the claim.
-    expect(summary).toMatchObject(parent === 'project'
-      ? { schedules: 2, reviewed: 1, recentlyReviewed: 1, skippedNotEntitled: 0, errors: 0 }
-      : { schedules: 2, reviewed: 1, recentlyReviewed: 0, skippedNotEntitled: 1, errors: 0 });
+    // Since a2f9264a5d (S4, 2026-11-06) the estate listing itself reads only
+    // active projects of active organizations (listActiveSchedulePlans), so an
+    // archived project or organization is never listed, claimed or filtered.
+    // The claim's own guard (a parent archived between listing and claim) and
+    // the tenant-lifecycle filter stay, and the two cases below pin each on
+    // real PostgreSQL (scheduleOfEventsSweep.test.ts checks only their SQL text).
+    expect(summary).toMatchObject({ schedules: 1, reviewed: 1, recentlyReviewed: 0, skippedNotEntitled: 0, errors: 0 });
     expect(reviewed).toEqual([{ orgId: 52, projectId: 520 }]);
     expect(await stamp()).toBeNull();
+  });
+
+  it('a project archived between listing and claim is refused by the claim itself', async () => {
+    reviewed = [];
+    hoisted.afterList = async () => { await env.owner.query(`UPDATE ${env.t('projects')} SET status='archived' WHERE id=510`); };
+    try {
+      const summary = await sweep.runScheduleOfEventsSweep();
+      // Listed (2), but the claim's parent-active guard matched nothing for 510.
+      expect(summary).toMatchObject({ schedules: 2, reviewed: 1, recentlyReviewed: 1, skippedNotEntitled: 0, errors: 0 });
+      expect(reviewed).toEqual([{ orgId: 52, projectId: 520 }]);
+    } finally { hoisted.afterList = null; }
+  });
+
+  it('an active but past-due organization is refused by the tenant-lifecycle filter', async () => {
+    reviewed = [];
+    await env.owner.query(`UPDATE ${env.t('organizations')} SET payment_status='past_due' WHERE id=51`);
+    const { invalidateTenantPosture } = await import('../../server/services/tenant/tenant-lifecycle');
+    invalidateTenantPosture(51);
+    try {
+      const summary = await sweep.runScheduleOfEventsSweep();
+      expect(summary).toMatchObject({ schedules: 2, reviewed: 1, recentlyReviewed: 0, skippedNotEntitled: 1, errors: 0 });
+      expect(reviewed).toEqual([{ orgId: 52, projectId: 520 }]);
+    } finally {
+      await env.owner.query(`UPDATE ${env.t('organizations')} SET payment_status='active' WHERE id=51`);
+      invalidateTenantPosture(51);
+    }
   });
 });
 

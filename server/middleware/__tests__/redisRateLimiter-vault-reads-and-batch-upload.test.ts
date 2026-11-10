@@ -228,6 +228,20 @@ describe('the bucket each path is counted in', () => {
     expect(getCategory(`/api/authoring/documents/${docId(0)}/review-route/hand-back`, 'POST')).toBe('documents');
   });
 
+  // Walked 2026-11-10 (Quality, D7 C17): the same two reads on a QMS controlled document were still metered as document
+  // content. An author wrote the procedure in the editor, sent it for review and opened Reassign within the minute:
+  // GET …/route-candidates?for=reassign answered 429, so the sheet said who may take it over could not be read.
+  it("a QMS controlled document's review route and who it admits are record reads too; its route acts stay writes", () => {
+    for (const read of ['review-route', 'route-candidates']) {
+      expect(getCategory(`/api/mdx/qms/documents/31/${read}`, 'GET'), read).toBe('document_metadata');
+      expect(getCategory(`/mdx/qms/documents/31/${read}`, 'GET'), read).toBe('document_metadata');
+    }
+    expect(getCategory('/api/mdx/qms/documents/31/review-route/reassign', 'POST')).toBe('documents');
+    expect(getCategory('/api/mdx/qms/documents/31/review-route', 'POST')).toBe('documents');
+    expect(getCategory('/api/mdx/qms/documents/31', 'PATCH')).toBe('documents');
+    expect(getCategory('/api/mdx/qms/documents/31/versions', 'GET')).toBe('documents');
+  });
+
   it('chat uploads are upload reads', () => {
     expect(getCategory('/chat/upload', 'POST')).toBe('upload');
   });

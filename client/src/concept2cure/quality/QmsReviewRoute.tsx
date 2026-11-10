@@ -26,10 +26,12 @@
 import React, { useState } from 'react';
 import { I } from '../v2/icons';
 import { useDialog } from '../v2/useDialog';
+import { registerCeremonyOpen } from '../v2/ceremony';
 import { useLiveData } from '../v2/dataConnect';
 import { DueDateField, PeoplePicker, ReasonField, reviewReasonProblem, type PickerOption } from '../v2/editor/reviewFields';
 import { RouteOrderFields } from '../v2/reviewRoute/RouteOrderFields';
 import { AddReviewerSheet } from '../v2/reviewRoute/AddReviewer';
+import { RouteReassignSheet } from '../v2/reviewRoute/RouteReassignSheet';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { EsignModal, type EsignSigner } from '../_shared/components/EsignModal';
 import { mayAddReviewer, memberLine, routeHeadline, waitingApprovers } from '../v2/reviewRoute/routeRound';
@@ -45,12 +47,11 @@ export interface QmsRouteDoc { id: number; docNumber: string; title: string; ver
 const label = (d: QmsRouteDoc) => `${d.docNumber} ${d.title} v${d.version}`;
 const today = () => new Date().toISOString().slice(0, 10);
 
-/** Who may be named on this document, read when the form opens; an unread list offers no one, and says so. */
-function useQmsCandidates(id: number, purpose: 'send' | 'reassign') {
+/** Who may be named on this document, read when the form opens; an unread list offers no one, and says so. A
+ *  reassignment reads its own candidates through the shared sheet (C17). */
+function useQmsCandidates(id: number) {
   const [epoch, setEpoch] = useState(0);
-  const read = useLiveData<RouteCandidatesShape>(
-    purpose === 'reassign' ? `/api/mdx/qms/documents/${id}/route-candidates?for=reassign` : `/api/mdx/qms/documents/${id}/route-candidates`,
-    [id, purpose, epoch], isRouteCandidates);
+  const read = useLiveData<RouteCandidatesShape>(`/api/mdx/qms/documents/${id}/route-candidates`, [id, epoch], isRouteCandidates);
   return { loading: read.loading, data: read.loading ? null : read.data, again: () => setEpoch((n) => n + 1) };
 }
 
@@ -85,17 +86,18 @@ function NotOffered({ candidates }: { candidates: RouteCandidateView[] }) {
   );
 }
 
-/** A governed sheet: the shell every dialog here shares (useDialog, a bottom sheet at a phone's width). */
+/** A governed sheet: the product's drawer (C17: no bottom-sheet variant and no eyebrow, as C2CForm's), registered as a
+ *  ceremony so AnA does not change the screen under it. */
 function Sheet({ title, sub, testId, busy, onClose, children, footer }: {
   title: string; sub: string; testId: string; busy: boolean; onClose: () => void; children: React.ReactNode; footer: React.ReactNode;
 }) {
   const ref = useDialog(() => { if (!busy) onClose(); });
+  React.useEffect(() => registerCeremonyOpen(), []);
   return (
-    <div className="de-bd de-sheet" onMouseDown={(e) => { if (e.target === e.currentTarget && !busy) onClose(); }}>
+    <div className="de-bd" onMouseDown={(e) => { if (e.target === e.currentTarget && !busy) onClose(); }}>
       <div className="de" ref={ref} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={`${testId}-title`} data-testid={testId}>
         <div className="de-h">
           <div>
-            <div className="de-h-eye">Review route</div>
             <div className="de-h-t" id={`${testId}-title`}>{title}</div>
             <div className="de-h-s">{sub}</div>
           </div>
@@ -110,7 +112,7 @@ function Sheet({ title, sub, testId, busy, onClose, children, footer }: {
 
 /** Send for review (or name reviewers on a document already in review): one QMS approver, optional reviewers, dates and a reason. */
 export function QmsRouteForm({ doc, mode, onClose, onSent }: { doc: QmsRouteDoc; mode: 'send' | 'resend'; onClose: () => void; onSent: () => void }) {
-  const read = useQmsCandidates(doc.id, 'send');
+  const read = useQmsCandidates(doc.id);
   const [f, setF] = useState<QmsRouteFormInput>({ reviewers: [], approvers: [], order: 'parallel', reviewDue: '', stepDue: [], approvalDue: '', reason: '' });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -213,43 +215,6 @@ function ActDialog({ act, doc, onClose, onDone }: { act: QmsRouteAct; doc: QmsRo
   );
 }
 
-function ReassignDialog({ doc, member, onClose, onDone }: { doc: QmsRouteDoc; member: RouteMemberView; onClose: () => void; onDone: () => void }) {
-  const read = useQmsCandidates(doc.id, 'reassign');
-  const [to, setTo] = useState<string | null>(null);
-  const [reason, setReason] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const problem = reviewReasonProblem(reason);
-  const ready = !busy && to !== null && problem === null;
-  const run = async () => {
-    if (!ready) return;
-    setBusy(true); setError(null);
-    try { await reassignQmsMember(doc.id, member.taskId, Number(to), reason); onDone(); }
-    catch (e) { setError(e instanceof Error ? e.message : 'Nothing was changed.'); }
-    finally { setBusy(false); }
-  };
-  const options = optionsFor(read.data?.candidates ?? [], member.role, [], '');
-  return (
-    <Sheet title={`Reassign ${nameOf(member)}'s ${member.role === 'reviewer' ? 'review' : 'approval'}`} sub={label(doc)} testId="qms-route-reassign"
-      busy={busy} onClose={onClose}
-      footer={<>
-        <button className="de-btn ghost" onClick={onClose} disabled={busy}>Cancel</button>
-        <button className="de-btn primary" onClick={() => void run()} disabled={!ready} data-testid="qms-reassign-confirm">{busy ? 'Reassigning…' : 'Reassign'}</button>
-      </>}>
-      {read.loading ? <div className="de-desc" role="status">Reading who may take this assignment…</div> : null}
-      {!read.loading && read.data === null ? <div className="de-err" role="alert">Who may take this assignment could not be read, so no one can be chosen.</div> : null}
-      {read.data ? <fieldset className="de-field">
-        <legend className="de-label">Give it to<span className="req">*</span></legend>
-        <PeoplePicker name="qms-reassign-to" multiple={false} searchLabel="Find a person" testIdPrefix="qms-reassign" options={options}
-          selected={to ? [to] : []} onChange={(ids) => setTo(ids[0] ?? null)} />
-      </fieldset> : null}
-      <ReasonField id="qms-reassign-reason" label="Reason for reassigning" value={reason} onChange={setReason} testId="qms-reassign-reason"
-        note={`Recorded on this document's audit trail; both people are told. At least ${GOVERNED_REASON_MIN} characters.`} />
-      {error ? <div className="de-err" role="alert" data-testid="qms-reassign-error">{error}</div> : null}
-    </Sheet>
-  );
-}
-
 type Open = { kind: 'act'; act: QmsRouteAct } | { kind: 'reassign'; member: RouteMemberView } | { kind: 'sign' } | { kind: 'resend' } | { kind: 'add' } | null;
 
 /** What the reader may do on this route, in the order offered. */
@@ -296,10 +261,10 @@ export function QmsRoutePanel({ doc, view, meId, admin, signer, onClose, onChang
               <li key={m.taskId} className="vr-member" data-testid={`qms-route-member-${m.userId}`}>
                 <span>{memberLine(m, round)}</span>
                 {can.remind && round.route.status === 'open' && m.stepOpen && m.outcome === 'pending' ? (
-                  <button type="button" className="sp-ask" aria-label={`Remind ${nameOf(m)}`} onClick={() => void remindQmsMember(m, label(doc)).then(setNote)}>Remind</button>
+                  <button type="button" className="btn ghost small" aria-label={`Remind ${nameOf(m)}`} onClick={() => void remindQmsMember(m, label(doc)).then(setNote)}>Remind</button>
                 ) : null}
                 {can.reassign && (m.outcome === 'pending' || m.outcome === 'handed back') ? (
-                  <button type="button" className="sp-ask" aria-label={`Reassign ${nameOf(m)}`} onClick={() => setOpen({ kind: 'reassign', member: m })}>Reassign</button>
+                  <button type="button" className="btn ghost small" aria-label={`Reassign ${nameOf(m)}`} onClick={() => setOpen({ kind: 'reassign', member: m })}>Reassign</button>
                 ) : null}
               </li>
             ))}
@@ -318,7 +283,11 @@ export function QmsRoutePanel({ doc, view, meId, admin, signer, onClose, onChang
         </div>
       </Sheet>
       {open?.kind === 'act' ? <ActDialog act={open.act} doc={doc} onClose={() => setOpen(null)} onDone={done} /> : null}
-      {open?.kind === 'reassign' ? <ReassignDialog doc={doc} member={open.member} onClose={() => setOpen(null)} onDone={done} /> : null}
+      {open?.kind === 'reassign' ? (
+        <RouteReassignSheet member={open.member} title={label(doc)} candidatesUrl={`/api/mdx/qms/documents/${doc.id}/route-candidates?for=reassign`}
+          audit="this document's audit trail" post={(b) => reassignQmsMember(doc.id, b.taskId, b.assigneeId, b.reason)}
+          onClose={() => setOpen(null)} onDone={done} />
+      ) : null}
       {open?.kind === 'resend' ? <QmsRouteForm doc={doc} mode="resend" onClose={() => setOpen(null)} onSent={done} /> : null}
       {open?.kind === 'add' && round ? (
         <AddReviewerSheet idPrefix="qms-add" testId="qms-route-add" title={label(doc)} candidatesUrl={`/api/mdx/qms/documents/${doc.id}/route-candidates?for=add`}

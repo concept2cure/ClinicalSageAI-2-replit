@@ -195,3 +195,100 @@ describe('prior integrity and unsupported-markup refusals are atomic', () => {
     expect(await raw(id)).toEqual(before);
   });
 });
+
+/* 2026-11-10 (F1, the founder-path lineage lane). A citation prints text beyond its own words, so content holding
+   one is never "safe" for formatting carry-forward, and the gate then requires every prior machine clause to be
+   carried exactly. That rightly refuses a save that keeps the machine's words and wraps or splits them with a
+   citation. It also refused a save in which a person REPLACED a machine clause with their own words, whenever the
+   section held a citation anywhere: so once a section was cited, no machine sentence in it could be rewritten. */
+const CITE = '<a data-cite="101">Study report</a>';
+const REWRITTEN = 'Visits follow the original timetable for every enrolled participant';
+const HUMAN = `Two oral formulations were compared in the programme ${CITE}.`;
+const kinds = async (id: string, content: string, value: string) =>
+  (await raw(id)).filter(span => contains(span, content, value)).map(span => span.provenance_kind);
+async function refusedAtomically(id: string, prior: string, next: string) {
+  const before = await raw(id);
+  await db.exec('BEGIN');
+  try { await expect(saved(id, prior, next)).rejects.toMatchObject({ status: 422, code: 'MACHINE_LINEAGE_FORMATTING_UNVERIFIED' }); }
+  finally { await db.exec('ROLLBACK'); }
+  expect(await raw(id)).toEqual(before);
+}
+
+describe('a person replaces a machine clause in a section that holds a citation', () => {
+  it('rewrites and cites the sentence in one save: the new words are the editor’s, the untouched clause stays the machine’s', async () => {
+    const id = 'cite-rewrite-one-save';
+    const prior = `<p>${SENTENCE}</p><p>${OTHER}</p>`;
+    const next = `<p>${REWRITTEN} ${CITE}.</p><p>${OTHER}</p>`;
+    await imported(id, prior);
+    await saved(id, prior, next);
+    expect(await kinds(id, next, REWRITTEN)).toEqual(['author_assertion']);
+    expect(await kinds(id, next, OTHER)).toEqual(['machine_draft']);
+  });
+
+  it('rewrites a machine sentence after the section already holds a person’s cited sentence', async () => {
+    const id = 'cite-rewrite-after-citation';
+    const prior = `<p>${SENTENCE}</p><p>${OTHER}</p>`;
+    const cited = `${prior}<p>${HUMAN}</p>`;
+    const next = `<p>${REWRITTEN}.</p><p>${OTHER}</p><p>${HUMAN}</p>`;
+    await imported(id, prior);
+    await saved(id, prior, cited);
+    await saved(id, cited, next);
+    expect(await kinds(id, next, REWRITTEN)).toEqual(['author_assertion']);
+    expect(await kinds(id, next, OTHER)).toEqual(['machine_draft']);
+  });
+
+  it('deletes one machine sentence of a paragraph in a cited section, and the sentence beside it stays the machine’s', async () => {
+    const id = 'cite-delete';
+    const prior = `<p>${SENTENCE} ${OTHER}</p>`;
+    const cited = `${prior}<p>${HUMAN}</p>`;
+    const next = `<p>${OTHER}</p><p>${HUMAN}</p>`;
+    await imported(id, prior);
+    await saved(id, prior, cited);
+    await saved(id, cited, next);
+    expect(await kinds(id, next, OTHER)).toEqual(['machine_draft']);
+    expect((await raw(id)).filter(span => span.provenance_kind === 'machine_draft')).toHaveLength(1);
+  });
+
+  /* The limit, pinned. One machine span can cover two paragraphs (the clause splitter cuts at white space, and
+     `</p><p>` holds none). Deleting the first leaves the second unchanged but no longer matched to the span, so it
+     would become the saver's. The gate refuses that, as it must. */
+  it('still refuses a deletion that would leave an unchanged machine sentence credited to the saver', async () => {
+    const id = 'cite-delete-uncredited';
+    const prior = `<p>${SENTENCE}</p><p>${OTHER}</p>`;
+    const cited = `${prior}<p>${HUMAN}</p>`;
+    await imported(id, prior);
+    await saved(id, prior, cited);
+    await refusedAtomically(id, cited, `<p>${OTHER}</p><p>${HUMAN}</p>`);
+  });
+});
+
+describe('the machine’s words do not become the person’s by a citation', () => {
+  const bare = SENTENCE.slice(0, -1);
+  it.each([
+    ['a citation added at the end of the kept sentence', `<p>${bare} ${CITE}.</p>`],
+    ['a citation put in the middle of the kept sentence', `<p>${bare.replace('remains', `${CITE} remains`)}.</p>`],
+    ['the kept words moved into a printed attribute', `<p title="${bare}">${REWRITTEN} ${CITE}.</p>`],
+    ['the kept words written with a character reference', `<p>${bare.replace('population', 'popul&#97;tion')} ${CITE}.</p>`],
+    ['the kept words split by an inline tag', `<p>${bare.replace('visit', '<span data-x="1">visit</span>')} ${CITE}.</p>`],
+  ])('refuses %s', async (what, next) => {
+    const id = `cite-kept-${what.length}-${next.length}`;
+    await imported(id, SENTENCE);
+    await refusedAtomically(id, SENTENCE, next);
+  });
+
+  it('refuses a kept and cited sentence beside an unchanged one of the same machine span', async () => {
+    const id = 'cite-kept-two-sentence-span';
+    const prior = `<p>${SENTENCE}</p><p>${OTHER}</p>`;
+    await imported(id, prior);
+    await refusedAtomically(id, prior, `<p>${bare} ${CITE}.</p><p>${OTHER}</p>`);
+  });
+
+  it.each([
+    ['source mode', `<figure><p>${REWRITTEN} ${CITE}.</p></figure>`],
+    ['a place two readers may disagree', `<p>${REWRITTEN} ${CITE}.</p><xmp>raw</xmp>`],
+  ])('keeps refusing a replaced sentence when the obstacle is %s, not a citation alone', async (what, next) => {
+    const id = `cite-other-obstacle-${what.length}`;
+    await imported(id, SENTENCE);
+    await refusedAtomically(id, SENTENCE, next);
+  });
+});

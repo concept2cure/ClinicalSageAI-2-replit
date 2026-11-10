@@ -953,7 +953,8 @@ export async function generateProjectSchedule(
          (organization_id, project_id, status, project_type, regulatory_framework, goals,
           basis_summary, ana_summary, confidence, version, baseline_date, target_date,
           generated_by_ana, last_reviewed_by_ana_at, updated_at)
-       VALUES ($1, $2, 'active', $3, $4, $5, $6, $7, $8, 1, $9, $10, $11, now(), now())
+       VALUES ($1, $2, 'active', $3, $4, $5, $6, $7, $8, 1, $9, $10, $11, NULL, now())
+       -- Review time NULL, not now(): a human write; withHumanScheduleWrite marks the monitor dirty before COMMIT.
        -- Arbiter MUST name the tenant column. Uniqueness is what ON CONFLICT
        -- resolves against, so an arbiter of (project_id) alone — against the old
        -- org-blind unique index — decided whose row this upsert landed on, and
@@ -972,7 +973,7 @@ export async function generateProjectSchedule(
           baseline_date = EXCLUDED.baseline_date,
           target_date = EXCLUDED.target_date,
           generated_by_ana = EXCLUDED.generated_by_ana,
-          last_reviewed_by_ana_at = now(),
+          last_reviewed_by_ana_at = NULL,
           updated_at = now()
        RETURNING id, version`,
       [
