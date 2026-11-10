@@ -1,0 +1,9 @@
+ × client/src/concept2cure/v2/__tests__/submissionCenterDoorsP122.test.tsx > Submission Center: the doors to its own features > Submission readiness opens each market's dispatch verdict 5057ms
+   → Unable to find role="button" and name "Submission readiness"
+ × client/src/concept2cure/v2/__tests__/submissionCenterDoorsP122.test.tsx > Submission Center: the doors to its own features > Gateway transmittals opens the log of what was sent and acknowledged 5021ms
+   → Unable to find role="button" and name "Gateway transmittals"
+ × client/src/concept2cure/v2/__tests__/submissionCenterDoorsP122.test.tsx > Submission Center: the doors to its own features > they are quiet secondary actions in the header, and New submission stays the one primary 5013ms
+   → Unable to find role="button" and name "Submission readiness"
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
