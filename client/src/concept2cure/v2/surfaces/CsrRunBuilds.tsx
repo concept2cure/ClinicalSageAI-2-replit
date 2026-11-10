@@ -141,7 +141,7 @@ export function CsrRunBuilds({ programId, runId, documentId, focus, onDocumentCh
     {error && <p role="alert">{error}</p>}
     {!error && builds === null && <p role="status">Loading the CSR builds of this run…</p>}
     {!error && builds?.length === 0 && <p>No CSR build has been started from this study data.</p>}
-    {!error && selected && <BuildOnCard key={selected.jobId} build={selected} programId={programId} documentId={documentId} onDocumentChanged={onDocumentChanged} />}
+    {!error && selected && <BuildOnCard key={selected.jobId} build={selected} programId={programId} documentId={documentId} onBuildChanged={retry} onDocumentChanged={onDocumentChanged} />}
   </section>;
 }
 
@@ -341,8 +341,32 @@ function LiveDraft({ writing }: { writing: LiveWriting }) {
   </div>;
 }
 
-function BuildOnCard({ build, programId, documentId, onDocumentChanged }: {
-  build: RunBuild; programId: string; documentId: string; onDocumentChanged?: () => void;
+/**
+ * A failed build is resumed, not replaced (POST /api/csr/jobs/:jobId/resume): the same build drafts the headings
+ * that have no saved text and keeps the rest. A CSR document takes its imported sections from one build, so a new
+ * build's sections would be refused by a document that already holds this one's (2026-11-10).
+ */
+function ResumeBuild({ jobId, onResumed }: { jobId: number; onResumed: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const resume = async () => {
+    setBusy(true); setError(null);
+    const result = await apiCall('POST', `${JOBS}/${jobId}/resume`, {});
+    setBusy(false);
+    if (result.ok) onResumed();
+    else setError(apiErrorText(result, 'This build could not be resumed.'));
+  };
+  return <>
+    <p style={{ margin: 0 }}>
+      <button type="button" className="btn" disabled={busy} onClick={() => void resume()}>{busy ? 'Resuming…' : `Resume build ${jobId}`}</button>
+      {' '}It drafts the headings that have no saved text and keeps the rest.
+    </p>
+    {error && <p role="alert">{error}</p>}
+  </>;
+}
+
+function BuildOnCard({ build, programId, documentId, onBuildChanged, onDocumentChanged }: {
+  build: RunBuild; programId: string; documentId: string; onBuildChanged: () => void; onDocumentChanged?: () => void;
 }) {
   const { headings, error, reload } = useBuildHeadings(build.jobId, build.updatedAt);
   const [importing, setImporting] = useState<string[] | null>(null);
@@ -350,6 +374,7 @@ function BuildOnCard({ build, programId, documentId, onDocumentChanged }: {
     <p role="status">CSR build {build.jobId} · {build.status} · {build.progress}% · last updated {new Date(build.updatedAt).toLocaleString()}</p>
     {build.writing && <LiveDraft writing={build.writing} />}
     {build.status === 'failed' && <p role="alert">{build.failure?.trim() || 'This build stopped before it finished. No reason was recorded.'}</p>}
+    {build.status === 'failed' && <ResumeBuild jobId={build.jobId} onResumed={onBuildChanged} />}
     {error && <p role="alert">{error}{' '}
       <button type="button" className="btn ghost" onClick={reload}>Retry reading sections</button>
     </p>}

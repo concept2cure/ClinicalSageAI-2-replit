@@ -94,7 +94,7 @@ import {
 } from '../services/qms/document-approval-signature';
 import { SOP_TEMPLATES } from '../services/qms/sopTemplates';
 import {
-  createChange, listChanges, getChange, updateChange, transitionChange, deleteChange,
+  createChange, listChanges, getChange, updateChange, changeEditRefusal, transitionChange, deleteChange,
   listLinks, listLinksForChanges, nextStatesOf, addLink, removeLink, changeControlSummary, ChangeLinkRefusedError,
   CHANGE_TYPES, CHANGE_CLASSIFICATIONS, CHANGE_RISK_LEVELS, CHANGE_STATES,
   LINK_TYPES, LINK_RELATIONSHIPS,
@@ -1262,7 +1262,7 @@ router.get('/qms/changes/:id', async (req: Request, res: Response) => {
   } catch (err) { return serverError(res, log, 'change-get', err); }
 });
 
-// Partial update (draft edits; not a lifecycle move — use /transition for that).
+// Partial update while proposed or under assessment; 409 after (changeEditRefusal). Not a move: that is /transition.
 router.patch('/qms/changes/:id', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
@@ -1272,7 +1272,8 @@ router.patch('/qms/changes/:id', requireEditorAccess, async (req: Request, res: 
   if (!parsed.success) return clientError(res, 422, 'Invalid body', parsed.error.flatten().fieldErrors);
   try {
     const row = await updateChange(orgId, id, { ...parsed.data, assessedBy: getUserId(req) }, requestPgClient(req));
-    if (!row) return notFoundInTenant(res, 'Change');
+    const refused = row ? null : await changeEditRefusal(orgId, id, requestPgClient(req));
+    if (!row) return refused ? clientError(res, 409, refused.message, refused.details) : notFoundInTenant(res, 'Change');
     /* WO-16C #133. Was `void auditService.logAction({…})`. `updateChange` has
        committed the edit and returned the row, so the edit is not undone here;
        `meta.auditTrail` reports whether the §11.10(e) record of it exists. */

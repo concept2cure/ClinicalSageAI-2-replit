@@ -54,6 +54,8 @@ export interface ChangeControl {
   riskLevel: RiskLevel | null;
   status: ChangeState;
   reason: string | null;
+  /** Who raised it (`proposed_by`); null when the row carries none. The server refuses their approval. */
+  proposedBy?: number | null;
   targetImplementationDate: string | null;
   createdAt: string | null;
   updatedAt: string | null;
@@ -95,16 +97,18 @@ export const STATE_LABEL: Record<ChangeState, string> = {
   cancelled: 'Cancelled',
 };
 
-export type StateTone = 'draft' | 'review' | 'effective' | 'muted' | 'err';
+/** D0's chip tone for a change's state (.rd-chip, C8): closed is ok, rejected err, cancelled dim, the rest neutral,
+    as the SOP register's effective, retired and in-flight states are. */
+export type StateTone = 'ok' | 'err' | 'dim' | null;
 export const STATE_TONE: Record<ChangeState, StateTone> = {
-  proposed: 'draft',
-  under_assessment: 'review',
-  approved: 'review',
-  in_implementation: 'review',
-  verification: 'review',
-  closed: 'effective',
+  proposed: null,
+  under_assessment: null,
+  approved: null,
+  in_implementation: null,
+  verification: null,
+  closed: 'ok',
   rejected: 'err',
-  cancelled: 'muted',
+  cancelled: 'dim',
 };
 
 export const CHANGE_TYPE_LABEL: Record<ChangeType, string> = {
@@ -125,8 +129,9 @@ export const CLASSIFICATION_LABEL: Record<Classification, string> = {
   major: 'Major',
   critical: 'Critical',
 };
-export const CLASSIFICATION_TONE: Record<Classification, 'ok' | 'warn' | 'err'> = {
-  minor: 'ok',
+/** D0's chip tone for a classification (C8): critical err, major warn. Minor is neutral: green would read as "fine". */
+export const CLASSIFICATION_TONE: Record<Classification, 'warn' | 'err' | null> = {
+  minor: null,
   major: 'warn',
   critical: 'err',
 };
