@@ -22,6 +22,12 @@ const log = { base: BASE, startedAt: new Date().toISOString(), steps: [] };
 const step = (name, detail = {}) => { log.steps.push({ name, ...detail }); console.info(`ok  ${name}`); };
 const expect = (cond, what) => { if (!cond) throw new Error(`expected: ${what}`); };
 
+/** The upload's answer, read once: the new version's id and recorded hash, or what the Vault said. */
+function uploaded({ status, body }) {
+  const d = (body && (body.document || (body.data && body.data.document))) || {};
+  return { status, id: d.id || null, hash: d.contentHash || d.content_hash || null, error: (body && body.error) || null };
+}
+
 (async () => {
   const browser = await chromium.launch();
   const page = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 })).newPage();
@@ -59,10 +65,8 @@ const expect = (cond, what) => { if (!cond) throw new Error(`expected: ${what}`)
       form.append('documentType', 'OTHER');
       form.append('file', new File([bytes], name, { type }));
       const r = await fetch('/api/vault/ingest', { method: 'POST', headers: { Authorization: `Bearer ${localStorage.getItem('trialsage_access_token')}` }, body: form });
-      const j = await r.json().catch(() => null);
-      const d = j?.document ?? j?.data?.document ?? null;
-      return { status: r.status, id: d?.id ?? null, hash: d?.contentHash ?? d?.content_hash ?? null, error: j?.error ?? null, message: j?.message ?? null };
-    }, { programId: program.id, name, type, b64, docTitle, code: `S6-REND-${RUN}-${name.split('.').pop()}` });
+      return { status: r.status, body: await r.json().catch(() => null) };
+    }, { programId: program.id, name, type, b64, docTitle, code: `S6-REND-${RUN}-${name.split('.').pop()}` }).then(uploaded);
     const word = await upload('stability-note.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       docx.toString('base64'), title);
     expect(word.status < 300 && word.id, `the Word file was uploaded (${JSON.stringify(word)})`);
