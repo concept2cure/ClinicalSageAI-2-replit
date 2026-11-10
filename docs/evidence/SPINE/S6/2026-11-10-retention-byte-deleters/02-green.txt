@@ -1,0 +1,23 @@
+$ npm run -s ci:vault-document-writers:selftest
+  ✓ every named writer, nothing else — expected exit 0, got 0
+  ✓ a named ingestion writer uses an upsert without a direct UPDATE statement — expected exit 0, got 0
+  ✓ an unnamed upsert mutates a recorded version — expected exit 1, got 1
+  ✓ an insert that does nothing on conflict is not an update writer — expected exit 0, got 0
+  ✓ an unnamed service file writes vault.documents — expected exit 1, got 1
+  ✓ a named writer no longer writes (stale allowlist) — expected exit 1, got 1
+  ✓ a test file writing it is not a finding — expected exit 0, got 0
+  ✓ an unnamed file deletes a version's bytes from the byte store — expected exit 1, got 1
+  ✓ an unnamed store delete written over several lines, its organization a call — expected exit 1, got 1
+  ✓ an unnamed file sends an S3 delete — expected exit 1, got 1
+  ✓ a named deleter sends an S3 delete in place of a store delete — expected exit 0, got 0
+  ✓ a named deleter no longer deletes (stale allowlist) — expected exit 1, got 1
+  ✓ a route registration, a Map delete, a one-table delete and an HTTP delete of a templated address are not store deletes — expected exit 0, got 0
+  ✓ a test file deleting stored bytes is not a finding — expected exit 0, got 0
+[selftest] ✅ the gate fails on an unnamed writer, an unnamed deleter of stored bytes and a stale entry, and only there.
+exit=0
+
+$ npm run -s ci:vault-document-writers
+[ci:vault-document-writers] 7 file(s) write vault.documents; 7 named.
+[ci:vault-document-writers] 10 file(s) can delete stored bytes; 10 named.
+[ci:vault-document-writers] OK: every writer and every deleter of stored bytes is a named one.
+exit=0

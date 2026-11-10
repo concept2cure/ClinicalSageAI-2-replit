@@ -1,0 +1,157 @@
+# 01-red: the new tests on the unchanged code
+#
+# (a) Both source files as at HEAD bb17f97b77: Vault.tsx restored with 'git show HEAD:', and
+#     VaultTrialMasterFile.tsx absent (it is new). The suite cannot be collected: none of its 37 cases runs.
+# $ npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx [ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx ]
+Error: Failed to resolve import "../surfaces/VaultTrialMasterFile" from "client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx:52:0
+  26 |  const __vi_import_5__ = await import("@shared/constants/domain/tmf-reference-model");
+  27 |  const __vi_import_6__ = await import("../surfaces/Vault");
+  28 |  const __vi_import_7__ = await import("../surfaces/VaultTrialMasterFile");
+     |                                       ^
+  29 |  const __vi_import_8__ = await import("./_vault-surface-fixtures");
+  30 |  
+ ❯ TransformPluginContext._formatLog node_modules/vite/dist/node/chunks/dep-3O3b9SCF.js:42846:41
+ ❯ TransformPluginContext.error node_modules/vite/dist/node/chunks/dep-3O3b9SCF.js:42843:16
+ ❯ normalizeUrl node_modules/vite/dist/node/chunks/dep-3O3b9SCF.js:40820:23
+ ❯ node_modules/vite/dist/node/chunks/dep-3O3b9SCF.js:40939:37
+ ❯ TransformPluginContext.transform node_modules/vite/dist/node/chunks/dep-3O3b9SCF.js:40866:7
+ ❯ EnvironmentPluginContainer.transform node_modules/vite/dist/node/chunks/dep-3O3b9SCF.js:42641:18
+ ❯ loadAndTransform node_modules/vite/dist/node/chunks/dep-3O3b9SCF.js:36053:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  12:16:26
+   Duration  639ms (transform 53ms, setup 101ms, import 0ms, tests 0ms, environment 339ms)
+
+# exit: 1
+
+# (b) Vault.tsx as at HEAD, with the new VaultTrialMasterFile.tsx present so the suite can be collected. The
+#     three cases that render the Vault fail on HEAD's Vault.tsx: it has no section in Required documents, and
+#     its header button calls onNav('etmf'). The other 34 cases exercise the new file only, which did not
+#     exist at HEAD; 04-mutations.txt shows each of them failing on the defect it exists to catch.
+# $ DEBUG_PRINT_LIMIT=0 npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > which study the trial master file is of > reads nothing until the Required documents view is first on screen 168ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > which study the trial master file is of > uses the project’s one study and says which 20ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > which study the trial master file is of > asks which study when the project has several, and reads none until one is chosen 31ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > which study the trial master file is of > says plainly that a project with no study has no trial master file, and where a study is created 6ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > which study the trial master file is of > a study list that is not a list is a failed read, never "no study" 33ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > whether the essential records are all filed > says what is filed and what is missing in a sentence, then each zone by the record’s name 31ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > whether the essential records are all filed > says a document that no longer exists, and names a document it cannot find by its reference 17ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > whether the essential records are all filed > says complete only when every essential record is filed against a document 20ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > whether the essential records are all filed > says not determined when the server could not determine it, never complete and never incomplete 17ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > whether the essential records are all filed > states no verdict over a read that checked nothing, even one the server called ready 7ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > whether the essential records are all filed > an answer about another study is not shown as this study’s 6ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > whether the essential records are all filed > a completeness answer with no stated verdict is a failed read 9ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > a refusal is said as itself, and a failed read is never an empty trial master file > not in this release (403 LAUNCH_SCOPE) 7ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > a refusal is said as itself, and a failed read is never an empty trial master file > not enabled for the organization (403 MODULE_NOT_LICENSED) 10ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > a refusal is said as itself, and a failed read is never an empty trial master file > the person’s role (403, no code) 6ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > a refusal is said as itself, and a failed read is never an empty trial master file > not found (404 STUDY_NOT_FOUND) 7ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > a refusal is said as itself, and a failed read is never an empty trial master file > a failed read says so, offers another try, and shows no record as missing 30ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > a refusal is said as itself, and a failed read is never an empty trial master file > when only the list of filings cannot be read, the verdict stands and no document or removal is shown 81ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > filing a document against a missing record > files the version picked from this project’s Vault, with the reason, against the reference the Vault gave 166ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > filing a document against a missing record > a refused filing says the server’s reason, files nothing and keeps the form 116ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > filing a document against a missing record > a filing refused as not in this release is said as that refusal 100ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > filing a document against a missing record > a filing refused as not enabled for the organization is said as that refusal 96ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > filing a document against a missing record > a filing refused as the person’s role is said as that refusal 100ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > filing a document against a missing record > a filing refused as the study not found is said as that refusal 94ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > filing a document against a missing record > keeps what was filed on screen when the read after it fails 101ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > filing a document against a missing record > when the server does not confirm the filing, it is not called filed or refused, and the list is read again 156ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > removing a filing > removes it with a reason of at least 8 characters, and reads the trial master file again 62ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > removing a filing > a refused removal says why and removes nothing 53ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > a role that may not write the Vault > reads the trial master file and is offered no filing or removal 14ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > the inspection package > downloads it for the study and says what it is, and its SHA-256 checked on receipt 24ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > the inspection package > does not save a file that does not match the SHA-256 the server stated 26ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > the inspection package > a failure (the person’s role) is said with its reason, and nothing is saved 20ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > the inspection package > a failure (not in this release) is said with its reason, and nothing is saved 24ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > the inspection package > a failure (a server error) is said with its reason, and nothing is saved 25ms
+ × client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > in the Vault: a section of Required documents, and the header button that shows it > is a section of the Required documents view, not a view of its own, and reads nothing until that view opens 103ms
+   → Unable to find an element by: [data-testid="vault-tmf"]
+
+Ignored nodes: comments, script, style
+...
+ × client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > in the Vault: a section of Required documents, and the header button that shows it > "Inspection readiness" shows Required documents and brings the section into view; it opens no other screen 166ms
+   → expected 'false' to be 'true' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > in the Vault: a section of Required documents, and the header button that shows it > where the eTMF screen is locked the button is not offered, and the section is still in Required documents 168ms
+   → Unable to find an element by: [data-testid="vault-tmf"]
+
+Ignored nodes: comments, script, style
+...
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > in the Vault: a section of Required documents, and the header button that shows it > is a section of the Required documents view, not a view of its own, and reads nothing until that view opens
+TestingLibraryElementError: Unable to find an element by: [data-testid="vault-tmf"]
+
+Ignored nodes: comments, script, style
+...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx:547:24
+    545|     const views = within(screen.getByRole('tablist', { name: 'Vault vi…
+    546|     expect(views).toEqual(['Library', 'Data catalog', 'Uploads · 1', '…
+    547|     const tmf = screen.getByTestId('vault-tmf');
+       |                        ^
+    548|     const panel = tmf.closest('[role="tabpanel"]') as HTMLElement;
+    549|     expect(panel.getAttribute('data-view')).toBe('required');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > in the Vault: a section of Required documents, and the header button that shows it > "Inspection readiness" shows Required documents and brings the section into view; it opens no other screen
+AssertionError: expected 'false' to be 'true' // Object.is equality
+
+Expected: "true"
+Received: "false"
+
+ ❯ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx:564:69
+    562|     expect(tab('Library').getAttribute('aria-selected')).toBe('true');
+    563|     fireEvent.click(screen.getByRole('button', { name: /Inspection rea…
+    564|     expect(tab('Required documents').getAttribute('aria-selected')).to…
+       |                                                                     ^
+    565|     const tmf = screen.getByTestId('vault-tmf');
+    566|     expect(tmf.id).toBe(VAULT_TMF_SECTION_ID);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx > in the Vault: a section of Required documents, and the header button that shows it > where the eTMF screen is locked the button is not offered, and the section is still in Required documents
+TestingLibraryElementError: Unable to find an element by: [data-testid="vault-tmf"]
+
+Ignored nodes: comments, script, style
+...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx:578:25
+    576|     expect(screen.queryByRole('button', { name: /Inspection readiness/…
+    577|     fireEvent.click(tab('Required documents'));
+    578|     await within(screen.getByTestId('vault-tmf')).findByTestId('vault-…
+       |                         ^
+    579|   });
+    580| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 34 passed (37)
+   Start at  12:16:27
+   Duration  5.24s (transform 2.10s, setup 106ms, import 2.53s, tests 2.12s, environment 349ms)
+
+# exit: 1

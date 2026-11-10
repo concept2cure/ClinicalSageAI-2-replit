@@ -1417,6 +1417,50 @@ designed (`docs/design/ETMF_CONVERGENCE_2026-10-30.md`, slices E1 to E6). Only E
 holds it. This lane takes E2 on, with the screen brought into the Vault's own views (RULE 4) and not admitted as a
 screen of its own.
 
+**2026-11-10, later: the trial master file is in the app; the retention pin** (session `…01KnUGoX3g`, under the
+founder's permission, P-100; decisions in P-124).
+
+- **E2 and E3, the server** (F1, `64e4bcca0a`; `docs/evidence/D2-ETMF/2026-11-10/`). A trial master file belongs to
+  a study of a project (`/api/etmf/trials/:studyId`, the study's `study_id`); a filing's document is a live document
+  of that project's Vault. Filing and removing need a reason and a Vault-write role and write the chained audit row
+  in the same transaction; a removal stays on the row. The inspection package is a recorded download. One additive
+  migration (`20261110_tmf_filings_study_ref.sql`). 38 cases on PostgreSQL with RLS on, 182 unit and route cases.
+- **The page** (F1, `8c84dd5fb4` and `0113bd0d2b`; `docs/evidence/D2-ETMF/2026-11-10-vault-section/`). The
+  Vault's button reads "Trial master file" and opens the study's essential records by zone: filed against which
+  document and version, or missing; file with a reason, remove with a reason, download the package. One client of
+  `/api/etmf`: the section `surfaces/VaultTrialMasterFile.tsx`, hosted by the thin page `surfaces/Etmf.tsx`. The old
+  screen (a typed trial id bound to nothing, filing with no reason) is retired onto it. **Under P-122 everything
+  that screen showed is carried**: the essential/all choice, the figures, each record's code and zone, upload and
+  file in one step (now with a reason), the package shown as a document, and asking AnA. Not carried, by P-124: the
+  report built in the browser when the package failed (an export with no record). Opened and used in the running
+  app on PostgreSQL; two defects only the running app showed were fixed (the reason field's height; a record name
+  cut on a phone).
+- **Where the founder's sentence stands.** It is answered where the eTMF can be opened: the demo, a development
+  installation, a professional-tier one. In a release the page is locked, as the old screen was, until admission
+  (P-74: one store, a URS, an OQ). At admission the section moves into the Vault's Required documents view; the
+  change is kept ready in `docs/evidence/D2-ETMF/2026-11-10-vault-section/held/`.
+- **Retention, the bytes** (F1, `23e1296daa`; `docs/evidence/SPINE/S6/2026-11-10-retention-byte-deleters/`). The
+  writers gate (`ci:vault-document-writers`) now also names every file that can delete stored bytes: ten, none of
+  which deletes a recorded version's bytes during a tenant's life. A new one fails until a person names it. This
+  closes the pin the entry above left open.
+- **A trunk red repaired** (F1, `303d019f09`): the project-doors contract named the hook the Vault used before
+  P-107's sponsor change.
+
+**Next, in this order** (the E4 plan, with every caller by path: `docs/design/ETMF_CONVERGENCE_E4_PLAN_2026-11-10.md`).
+
+1. **E4, one store.** The report pack `etmf.completeness_pack` reads the deployed store; AnA's `get_tmf_view` and
+   the trial master file part of `search_all_documents` read it (**a defect in production today**: on a deployed
+   database the second store's tables do not exist, so that search answers "unavailable" for the TMF on every call);
+   `classify_tmf_artifact` files through it; `create_tmf`, `seed_tmf`, `update_tmf_artifact_status` and
+   `review_tmf_completeness` retire onto it; then the second store's routes, service, schema and migration go
+   (amended in place, RULE 1). `server/services/ana/AnaToolDefinitions.ts` is held by RIM: see the coordination row.
+2. **"Not applicable", with a reason**, and a record's state read from its document's lifecycle stage (P-124
+   item 5).
+3. **The URS and OQ** for the eTMF (`docs/validation/**` is held by Validation for GA; the design's URS-008 number is
+   now Reporting's).
+4. **Admission**: the Vault app gains the `etmf` surface as a professional-tier module, and the held change is
+   applied.
+
 #### S6 — The Vault's folders and filing binders, like Veeva's (session `session_01QoxbLZMScz1c2iFESBLn9J`, 2026-11-06)
 
 Started by the lead (`011Dpx…`) for the founder's ask of 2026-11-06: *"a Vault user interface, files, folders … just
