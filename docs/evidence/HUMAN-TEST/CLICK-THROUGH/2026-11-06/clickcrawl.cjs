@@ -10,6 +10,8 @@
 //                      are load-checked only
 //   env DISCOVER=1     also click each rail button and each account-menu item from Home, record where it lands
 //   env MAXSTOPS       stop after this many stops (default 400)
+//   env MAXPERSTOP     click at most this many controls on one stop, an even sample of its list, and record a "sampled"
+//                      line saying how many of how many (a Vault lists a hundred document rows that run the same code)
 //   env MAXCLICKS      end this process after this many new clicks, with no "end" line, so a shell loop can start it
 //                      again from its log: a headless browser holds temporary files until it exits (several GB over a
 //                      long run, which filled a disk on 2026-11-10). Loop until the log holds an "end" line:
@@ -238,6 +240,16 @@ function logStop(stop, ev, t0) {
   if (!DONE.stops.has(JSON.stringify(stop))) fs.appendFileSync(LOG, JSON.stringify(rec) + '\n');
 }
 
+// An even sample of a long list, the same one on every run so a resumed run continues it.
+function sampled(list, stop) {
+  const cap = Number(process.env.MAXPERSTOP || 0);
+  if (!cap || list.length <= cap) return list;
+  const pick = list.filter((_, i) => Math.floor(i * cap / list.length) !== Math.floor((i - 1) * cap / list.length));
+  const line = JSON.stringify({ kind: 'sampled', stop, clicked: pick.length, of: list.length });
+  if (!fs.readFileSync(LOG, 'utf8').includes(line)) fs.appendFileSync(LOG, line + '\n');
+  return pick;
+}
+
 async function crawlStop(page, ev, add, stop) {
   await requireApp(page);
   ev.errors.length = 0; ev.api.length = 0;
@@ -252,7 +264,7 @@ async function crawlStop(page, ev, add, stop) {
   if (prog && full.length && !full.includes(prog)) return 0;
   const stepNames = await page.$$eval('button.pj-lc-stage', (bs) => bs.map((b) => (b.getAttribute('aria-label') || b.innerText || '').replace(/\s+/g, ' ').trim())).catch(() => []);
   const list = (await controls(page)).filter((c) => c.role !== 'tab' && !stepNames.includes(c.name) && !SKIP.test(c.name) && !(c.href && /^https?:/.test(c.href) && !c.href.startsWith(BASE)));
-  for (const c of list) await clickOne(page, ev, add, stop, c);
+  for (const c of sampled(list, stop)) await clickOne(page, ev, add, stop, c);
   return list.length;
 }
 
