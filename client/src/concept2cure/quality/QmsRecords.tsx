@@ -25,7 +25,7 @@ import { C2CForm } from '../v2/C2CForm';
 import { EmptyState, ErrorState } from '../v2/dataConnect';
 import { C2CToast, useToast } from '../v2/toast';
 import { useCapasBySource } from './capaSources';
-import { useRegisterContext } from './registerContext';
+import { scopedPath, useQualityScope, useRegisterContext } from './registerContext';
 import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
 import { useAuthUser } from '@/services/portal/authService';
 import type { QmsRecordTab } from './qmsRecordData';
@@ -41,7 +41,12 @@ import { AUDITS, NONCONFORMANCES, REVIEWS, SUPPLIERS } from './qmsRecordRegister
 function RecordRegister<R extends { id: number | string }>({ config, onAsk, onContext }: {
   config: RegisterConfig<R>; onAsk: (q: string) => void; onContext?: ReportContext;
 }) {
-  const read = useFetchJson<unknown>(config.listPath);
+  const scope = useQualityScope();
+  const read = useFetchJson<unknown>(config.projectKept ? scopedPath(config.listPath, scope.programId) : config.listPath);
+  /* Whose rows these are, said beside the figures and to AnA while a project is open (C14). */
+  const scopeOf = React.useMemo<RecordRegisterContext['scope']>(() => (config.projectKept
+    ? (scope.programId && scope.projectName ? { project: scope.projectName } : null)
+    : (scope.programId ? { organisationWide: true } : null)), [config.projectKept, scope.programId, scope.projectName]);
   const rows = React.useMemo(() => listOf<R>(read.data), [read.data]);
   const [drawer, setDrawer] = React.useState<{ kind: 'create' } | { kind: 'row'; row: R; action: RowAction<R> } | null>(null);
   const [refusal, setRefusal] = React.useState<string | null>(null);
@@ -107,7 +112,7 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
      failed read is never passed on as an empty register. */
   React.useEffect(() => {
     if (!onContext) return;
-    const base = { title: config.title, noun: config.noun, about: config.sub };
+    const base = { title: config.title, noun: config.noun, about: config.sub, scope: scopeOf };
     if (failed) onContext({ ...base, state: 'failed', count: null, counts: [], records: [], truncated: false, partial: false });
     else if (!loaded || !rows) onContext({ ...base, state: 'loading', count: null, counts: [], records: [], truncated: false, partial: false });
     else onContext({
@@ -115,7 +120,7 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
       counts: config.kpis(rows, today).map((k) => ({ label: k.label, val: k.val, ...(k.detail ? { detail: k.detail } : {}) })),
       records: rows.slice(0, MAX_FACT_ROWS).map((r) => config.facts(r, ctx)), truncated: rows.length > MAX_FACT_ROWS,
     });
-  }, [onContext, config, failed, loaded, rows, today, ctx]);
+  }, [onContext, config, failed, loaded, rows, today, ctx, scopeOf]);
 
   return (
     <>
@@ -127,6 +132,7 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
           <h2 id={headId}>{config.title}</h2>
           {/* Said once (C1, C4): an unread or failed register is said by its own line below, never here too. */}
           {loaded && !failed && rows.length > 0 && <span className="sec-sub" data-testid="qms-record-figures">
+                {scopeOf && 'organisationWide' in scopeOf && <span data-testid="qms-record-org-wide">Organisation-wide · </span>}
                 {/* At the server's cap the register is the most recent rows, and its figures are theirs (C12). */}
                 {config.readCap && rows.length >= config.readCap.rows && (
                   <span data-testid="qms-record-partial">The {rows.length} {config.readCap.order} {config.noun[1]}: </span>
@@ -148,7 +154,9 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
           />
         )}
         {!failed && !loaded && <EmptyState title="Loading the register…" busy />}
-        {loaded && rows.length === 0 && <EmptyState title={`No ${config.noun[1]} recorded yet.`} />}
+        {loaded && rows.length === 0 && (scopeOf && 'project' in scopeOf
+          ? <EmptyState title={`No ${config.noun[1]} filed under ${scopeOf.project}.`} hint={`The organisation's other ${config.noun[1]} are under Show the whole organisation.`} />
+          : <EmptyState title={`No ${config.noun[1]} recorded yet.`} />)}
         {/* D0's table (C11), as the SOP register and the change log: a row shows its first action as its next step,
             and More holds the rest and Ask AnA. Until 2026-11-10 each row carried every action as an arrow chip and a
             sparkle, on a grid wider than the pane, so at 1440 the action column was scrolled out of the box. */}

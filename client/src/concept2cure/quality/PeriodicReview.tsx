@@ -67,7 +67,7 @@ export const REVIEW_WINDOW_DAYS = 120;
  * derivation from the register and still headed "due within 120 days", so a failure read as a list. An empty
  * register is said as empty here too, never "0 overdue · 0 due" (finding 112).
  */
-export function PeriodicReviewPanel({ rows, unread, failed, error, read, retry, registerEmpty, canOpen, onOpen, onRecord }: {
+export function PeriodicReviewPanel({ rows, unread, failed, error, read, retry, registerEmpty, scopeName = null, canOpen, onOpen, onRecord }: {
   rows: ReviewDueRow[];
   unread: boolean;
   failed: boolean;
@@ -77,6 +77,8 @@ export function PeriodicReviewPanel({ rows, unread, failed, error, read, retry, 
   retry: () => void;
   /** The register was read and holds no documents. */
   registerEmpty: boolean;
+  /** The open project, when the register is its documents (C14): the schedule is filtered to them and says so. */
+  scopeName?: string | null;
   canOpen: (documentId: number) => boolean;
   onOpen: (documentId: number) => void;
   onRecord: (row: ReviewDueRow, trigger: HTMLElement) => void;
@@ -93,8 +95,12 @@ export function PeriodicReviewPanel({ rows, unread, failed, error, read, retry, 
       </div>
       {failed && <ErrorState title="Periodic review dates could not be read" message={error} retry={retry} read={read} readWhat="the review schedule" testId="sop-review-failed" />}
       {unread && !failed && <EmptyState title="Loading review dates…" busy />}
-      {!unread && registerEmpty && <EmptyState title="No controlled documents yet, so none is due for review." />}
-      {!unread && !registerEmpty && rows.length === 0 && <EmptyState title={`None is due for review within ${REVIEW_WINDOW_DAYS} days.`} />}
+      {!unread && registerEmpty && <EmptyState title={scopeName
+        ? `No controlled document was authored in ${scopeName}, so none of its documents is due for review.`
+        : 'No controlled documents yet, so none is due for review.'} />}
+      {!unread && !registerEmpty && rows.length === 0 && <EmptyState title={scopeName
+        ? `None of ${scopeName}'s documents is due for review within ${REVIEW_WINDOW_DAYS} days.`
+        : `None is due for review within ${REVIEW_WINDOW_DAYS} days.`} />}
       {rows.length > 0 && (
         <div className="qms-review" role="list" aria-labelledby={PERIODIC_REVIEW_HEADING_ID}>
           {rows.map((r) => <ReviewRow key={r.id} row={r} canOpen={canOpen(r.id)} onOpen={onOpen} onRecord={onRecord} />)}

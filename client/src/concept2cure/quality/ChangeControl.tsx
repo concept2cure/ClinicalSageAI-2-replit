@@ -35,6 +35,7 @@ import * as React from 'react';
 import { I } from '../v2/icons';
 import { ChangeRecordDetail, ChangeRecordFacts, changeRecordRows } from './ChangeRecordDetail';
 import { RegisterBody, RegisterTable } from './SopRegisterRow';
+import { useQualityScope } from './registerContext';
 import { ChangeFlow } from './ChangeFlow';
 import {
   CHANGE_FORM_TEMPLATE_KEYS,
@@ -46,6 +47,7 @@ import {
   RISK_LABEL,
   ASSESSABLE_STATES,
   deriveStageCounts,
+  summaryOfChanges,
   isImplementationOverdue,
   formatDate,
   type ChangeState,
@@ -135,7 +137,7 @@ function ChangeControlSession({
   const user = useAuthUser(); // display, and who proposed a change; the server resolves the signer and refuses the proposer
   const meId = user?.id && /^\d+$/.test(String(user.id)) ? Number(user.id) : null;
   /* P-60: a change may be filed under the open project, which that project's
-     Engineering screen reads; the server admits it before writing. */
+     Quality section counts (ProjectHome.tsx ProjectQuality); the server admits it before writing. */
   const shell = useShellProject();
   const openProgram = shellProgramId(shell);
   /** The change being approved, while the signature dialog is open. */
@@ -202,7 +204,10 @@ function ChangeControlSession({
   /* The register read lives in QualityApp, lifted because AnA's open-change
      action resolves free-text names against the same rows this log renders,
      and a handler can only read state its own component holds. */
-  const summary = sum.summary;
+  /* A log scoped to the open project counts its own rows: the summary route has no project (C14). */
+  const scope = useQualityScope();
+  const scopedFigures = scope.programId !== null;
+  const summary = scopedFigures ? (loading && changes.length === 0 ? null : summaryOfChanges(changes)) : sum.summary;
   const counts = React.useMemo(() => deriveStageCounts(changes), [changes]);
 
   const visible = changes.filter((c) => stage === 'all' || c.status === stage);
@@ -234,7 +239,7 @@ function ChangeControlSession({
               (finding 112), and the figure line repeating "No changes in the log yet." said it twice (C3). */}
           {/* Nothing here while the log's own panel reports its failure: said once (review C4-1). */}
           {!(summary && summary.total === 0) && !failed && <span className="sec-sub" data-testid={summary === null ? 'change-summary-absent' : 'change-figures'}>
-            {summary === null ? (sum.error ? (readRefusalWords(sum.failure, 'the change-log summary')?.message ?? 'The change-log totals could not be read.')
+            {summary === null ? (!scopedFigures && sum.error ? (readRefusalWords(sum.failure, 'the change-log summary')?.message ?? 'The change-log totals could not be read.')
               : 'Change-log totals appear once the change register loads.') : <>
               {summary.open} open of {summary.total} in the log; {summary.awaitingApproval || 'none'} awaiting approval;{' '}
               {summary.inImplementation || 'none'} in implementation{summary.awaitingVerification ? ` (${summary.awaitingVerification} awaiting verification)` : ''};{' '}
@@ -266,7 +271,9 @@ function ChangeControlSession({
         )}
         {unread && !failed && <EmptyState title="Loading the change log…" busy />}
         {!unread && visible.length === 0 && (
-          <EmptyState title={changes.length === 0 ? 'No changes in the log yet.' : 'No changes at this stage.'} />
+          <EmptyState title={changes.length > 0 ? 'No changes at this stage.'
+            : scope.programId ? `No change is filed under ${scope.projectName}.` : 'No changes in the log yet.'}
+            hint={changes.length === 0 && scope.programId ? "The organisation's other changes are under Show the whole organisation." : undefined} />
         )}
         {visible.length > 0 && (
           <RegisterTable columns={CHANGE_COLUMNS}>
@@ -412,7 +419,7 @@ function ChangeControlSession({
               { key: 'impactAssessment', label: 'Impact assessment', type: 'textarea', rows: 3, desc: 'Product, process, validation and filings. It can be completed until the change is approved.' },
               { key: 'implementationPlan', label: 'Implementation plan', type: 'textarea', rows: 3 },
               ...(openProgram ? [{ key: 'programId', label: 'Project', type: 'seg' as const, options: [{ value: '', label: 'Organisation-wide' }, { value: openProgram, label: projectName(shell) }],
-                desc: "A change filed under the open project is shown on that project's Engineering screen." }] : []),
+                desc: "A change filed under the open project is counted in that project's Quality section, and listed when Quality is opened from it." }] : []),
             ],
           }}
           onCancel={() => setDrawer(null)}

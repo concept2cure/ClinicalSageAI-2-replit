@@ -257,6 +257,8 @@ export const updateDeviation = (id: number, v: Record<string, string>) =>
 
 export const createNonconformance = (v: {
   ncNumber: string; description: string; deviceName?: string; lotOrSerial?: string; source?: string;
+  /** The project it is filed under (C14); absent, the organisation's. */
+  programId?: string;
 }) => qmsWrite<NonconformanceRow>('POST', 'nonconforming', compact(v));
 
 

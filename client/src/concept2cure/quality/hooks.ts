@@ -12,6 +12,7 @@
 
 import { useMemo } from 'react';
 import { useFetchJson } from '../mdx/hooks/useFetchJson';
+import { scopedPath, useQualityScope } from './registerContext';
 import type { QmsDoc, DocStatus, SopTemplate, ReviewDueRow, TrainingRow, TrainingSummary } from './data';
 import {adaptDoc,adaptPeriodicReview,nextReviewDueOf,type ServerDoc} from './qmsDocumentRecord';
 import { listOf } from './qmsList';
@@ -26,10 +27,12 @@ function shapeError(path: string, payload: unknown, rows: unknown[] | null): str
 /** Controlled-document register — GET /api/mdx/qms/documents. */
 const DOCS_PATH = '/api/mdx/qms/documents';
 export function useSopRegister() {
-  const { data, loading, error, failure, refresh } = useFetchJson<unknown>(DOCS_PATH);
+  /* The open project's controlled documents: those authored in it (C14; mdx-qms.ts GET /qms/documents). */
+  const path = scopedPath(DOCS_PATH, useQualityScope().programId);
+  const { data, loading, error, failure, refresh } = useFetchJson<unknown>(path);
   const rows = useMemo(() => listOf<ServerDoc>(data), [data]);
   const docs = useMemo<QmsDoc[] | null>(() => rows?.map(adaptDoc) ?? null, [rows]);
-  return { docs, loading, error: error ?? shapeError(DOCS_PATH, data, rows), failure, refresh };
+  return { docs, loading, error: error ?? shapeError(path, data, rows), failure, refresh };
 }
 
 /** Quality system template family — GET /api/mdx/qms/templates. */

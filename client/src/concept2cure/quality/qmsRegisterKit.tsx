@@ -29,6 +29,9 @@ export interface RecordRegisterContext {
   partial: boolean;
   /** What the register is, in a sentence (the configuration's `sub`). */
   about: string;
+  /** Whose rows these are (C14): the open project's, or the organisation's while a project is open, or null when no
+   *  project is open or the person chose the whole organisation. */
+  scope: { project: string } | { organisationWide: true } | null;
   records: RecordFacts[];
   /** True when more rows were read than are passed on. */
   truncated: boolean;
@@ -79,6 +82,9 @@ export interface RegisterConfig<R extends { id: number | string }> {
   /** The server's cap on the list read, and the order it keeps (C12): at the cap the register says it shows "the 100
    *  most recently updated CAPAs", not all of them. Absent, the read is the whole register. */
   readCap?: { rows: number; order: string };
+  /** The register's rows name a project, and its read takes `program_id`: Quality opened with a project open lists
+   *  only that project's (C14). Absent, the register is the organisation's whichever project is open. */
+  projectKept?: true;
   /** The record's number or name: its row's "More actions for …" and the group it opens say it. */
   name: (r: R) => string;
   columns: Column<R>[];

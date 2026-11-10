@@ -24,7 +24,10 @@ vi.mock('../../mdx/hooks/useFetchJson', async (original) => ({
 /* A real refresh keeps the data it has and marks the read as loading again (useFetchJson), so a write's re-read
    is in flight when the screen next renders (C3: a write keeps the register, and its confirmation, on screen). */
 H.refresh.mockImplementation(() => { for (const k of Object.keys(H.reads)) H.reads[k] = { ...H.reads[k], loading: true }; });
-vi.mock('../../v2/shellProject', () => ({ shellProgramId: () => H.program, shellProgramName: () => H.programName }));
+vi.mock('../../v2/shellProject', () => ({
+  shellProgramId: () => H.program, shellProgramName: () => H.programName,
+  useShellProject: () => (H.program ? { id: H.program, title: H.programName ?? undefined } : null),
+}));
 vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ name: 'Q. Approver' }) }));
 /* The signing dialog hands over what a signer typed (ChangeControlApproval.test.tsx). */
 vi.mock('../../_shared/components/EsignModal', () => ({
@@ -301,7 +304,8 @@ describe('Quality records', () => {
   it('raises a CAPA from a nonconformance, in the open project, with the record as its source', async () => {
     H.program = '40000000-0000-4000-8000-000000000001';
     H.programName = 'C2C-101';
-    H.reads['/api/mdx/qms/nonconforming'] = { data: { data: [NC] }, loading: false, error: null };
+    // C14: with a project open, the nonconformances read is the project's.
+    H.reads[`/api/mdx/qms/nonconforming?program_id=${H.program}`] = { data: { data: [NC] }, loading: false, error: null };
     H.apiRequest.mockResolvedValue({ status: 201, json: async () => ({ ...CAPA, capaCode: 'CAPA-008', meta: {} }) });
     render(<QmsRecords tab="nonconforming" onAsk={vi.fn()} />);
 
@@ -448,6 +452,48 @@ describe('Quality records', () => {
     expect(screen.queryByTestId('qms-record-partial')).toBeNull();
     await waitFor(() => expect(onContext).toHaveBeenLastCalledWith(expect.objectContaining({ partial: false, about: expect.stringMatching(/^Corrective and preventive actions/) })));
     expect(onContext.mock.calls.at(-1)![0].counts).toContainEqual({ label: 'Open CAPAs', val: '1', detail: '1 closed' });
+  });
+
+  // C14 (QP3): with a project open, CAPA and nonconformances read the project's; the others say they are the organisation's.
+  it("reads the open project's CAPAs and nonconformances, and says the other registers are the organisation's", async () => {
+    H.program = '40000000-0000-4000-8000-000000000001';
+    H.programName = 'C2C-101';
+    H.reads[`/api/capa-mdr/capa?program_id=${H.program}`] = { data: { rows: [CAPA] }, loading: false, error: null };
+    const onContext = vi.fn();
+    render(<QmsRecords tab="capa" onAsk={vi.fn()} onContext={onContext} />);
+    expect(screen.getByRole('button', { name: 'CAPA-007' })).toBeTruthy();
+    expect(screen.queryByTestId('qms-record-org-wide')).toBeNull();
+    await waitFor(() => expect(onContext).toHaveBeenLastCalledWith(expect.objectContaining({ state: 'ready', scope: { project: 'C2C-101' } })));
+    cleanup();
+
+    H.reads['/api/mdx/qms/suppliers'] = { data: { data: [{ id: 9, supplier_name: 'Acme', supplier_code: 'ACM', scope: null, criticality: 'major',
+      approval_status: 'approved', approval_date: null, reapproval_date: null, last_audit_date: null, next_audit_date: null,
+      iso_certifications: null, quality_agreement_id: null }] }, loading: false, error: null };
+    const supplierContext = vi.fn();
+    render(<QmsRecords tab="suppliers" onAsk={vi.fn()} onContext={supplierContext} />);
+    expect(screen.getByTestId('qms-record-org-wide').textContent).toBe('Organisation-wide · ');
+    await waitFor(() => expect(supplierContext).toHaveBeenLastCalledWith(expect.objectContaining({ scope: { organisationWide: true } })));
+  });
+
+  it('files a new nonconformance under the open project by default', async () => {
+    H.program = '40000000-0000-4000-8000-000000000001';
+    H.programName = 'C2C-101';
+    H.reads[`/api/mdx/qms/nonconforming?program_id=${H.program}`] = { data: { data: [] }, loading: false, error: null };
+    H.apiRequest.mockResolvedValue({ status: 201, json: async () => ({ data: { ...NC, nc_number: 'NC-2026-009' } }) });
+    render(<QmsRecords tab="nonconforming" onAsk={vi.fn()} />);
+    // An empty register scoped to the project says the project has none, not that none exist.
+    expect(screen.getByText('No nonconformances filed under C2C-101.')).toBeTruthy();
+    expect(screen.queryByText('No nonconformances recorded yet.')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Record nonconformance' }));
+    const d = screen.getByRole('dialog');
+    expect(within(d).getByRole('radio', { name: 'C2C-101' }).getAttribute('aria-checked')).toBe('true');
+    expect(within(d).getByRole('radio', { name: 'Organisation-wide' }).getAttribute('aria-checked')).toBe('false');
+    fireEvent.change(within(d).getByLabelText(/^Number/), { target: { value: 'NC-2026-009' } });
+    fireEvent.change(within(d).getByLabelText(/What was found/), { target: { value: 'Torn pouch seal at receipt.' } });
+    fireEvent.click(within(d).getByRole('button', { name: 'Record' }));
+    await waitFor(() => expect(H.apiRequest).toHaveBeenCalledWith('POST', '/api/mdx/qms/nonconforming', expect.objectContaining({
+      ncNumber: 'NC-2026-009', programId: H.program,
+    })));
   });
 
   it('tells the shell for AnA what the register read, and that a failed read is a failure', async () => {

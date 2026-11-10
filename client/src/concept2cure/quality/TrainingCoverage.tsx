@@ -20,6 +20,8 @@ interface TrainingCoverageProps {
   /** The coverage figure as one sentence when there are rows to measure; null otherwise, because the section's own
       line (the failure, the loading line, or "No training-controlled documents yet.") already says it (C1). */
   figure: string | null;
+  /** A project is open: training is still the organisation's, and the section says so (C14). */
+  organisationWide?: boolean;
 }
 
 /** Existing roster coverage, qualified by the exact verified release. */
@@ -28,7 +30,9 @@ export function TrainingCoverage(props: TrainingCoverageProps) {
   return <section className="pj-sec" aria-labelledby="qms-training-h">
     <div className="pj-sec-h">
       <h2 id="qms-training-h">Read-and-understood training</h2>
-      {props.figure && <span className="sec-sub" data-testid="qms-coverage-figure">{props.figure}</span>}
+      {(props.figure || props.organisationWide) && <span className="sec-sub" data-testid="qms-coverage-figure">
+        {props.organisationWide ? `Organisation-wide${props.figure ? ' · ' : ''}` : ''}{props.figure}
+      </span>}
       <div className="pj-sec-acts">
         <button type="button" className="btn ghost small" title="The job functions people hold, which documents require them to train"
           onClick={() => setRolesOpen(true)}>Job roles</button>

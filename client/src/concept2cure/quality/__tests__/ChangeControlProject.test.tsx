@@ -110,3 +110,28 @@ describe('Raise change request — the project a change belongs to', () => {
     expect(posted()).not.toHaveProperty('programId');
   });
 });
+
+/* C14 (QP3): the summary route reads the whole organisation and takes no project, so a log scoped to the open
+   project counts its own rows, by the server's definitions. */
+describe('a change log scoped to the open project', () => {
+  it('counts its own rows, not the organisation summary', () => {
+    H.shell = { id: PROGRAM, title: 'Current program' };
+    render(
+      <ChangeControl onAsk={() => {}} stage="all" onStageChange={() => {}} openId={null} onOpenIdChange={() => {}}
+        changes={CHANGE_ROWS.slice(0, 2)} loading={false} onRetry={() => {}} />,
+    );
+    expect(screen.getByTestId('change-figures').textContent).toMatch(/^2 open of 2 in the log; 1 awaiting approval; 1 in implementation/);
+    H.shell = null;
+  });
+
+  it('says the project has no change, not that the log is empty', () => {
+    H.shell = { id: PROGRAM, title: 'Current program' };
+    render(
+      <ChangeControl onAsk={() => {}} stage="all" onStageChange={() => {}} openId={null} onOpenIdChange={() => {}}
+        changes={[]} loading={false} onRetry={() => {}} />,
+    );
+    expect(screen.getByText('No change is filed under Current program.')).toBeTruthy();
+    expect(screen.queryByText('No changes in the log yet.')).toBeNull();
+    H.shell = null;
+  });
+});

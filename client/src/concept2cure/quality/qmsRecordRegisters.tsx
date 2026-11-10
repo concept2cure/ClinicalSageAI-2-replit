@@ -17,6 +17,7 @@ import { raiseCapaFrom } from './qmsCapaRegister';
 import { signNcDisposition, signSupplierApproval } from './qmsApproval';
 import { documentLabel, type RegisterContext } from './registerContext';
 import { STATUS_LABEL } from './data';
+import { shellProgramId, shellProgramName } from '../v2/shellProject';
 import type { C2CFormField } from '../v2/C2CForm';
 
 const DISPOSITION_TONE: Record<string, PillTone> = {
@@ -36,6 +37,7 @@ export const NONCONFORMANCES: RegisterConfig<NonconformanceRow> = {
   name: (r) => r.nc_number,
   /* GET /api/mdx/qms/nonconforming: the 500 most recently detected (mdx-qms-records.ts). */
   readCap: { rows: 500, order: 'most recently detected' },
+  projectKept: true,
   columns: [
     { label: 'Number', cell: (r) => <span className="mono">{r.nc_number}</span> },
     { label: 'What was found', text: true, cell: (r) => <span title={r.description}>{r.description}</span> },
@@ -58,7 +60,8 @@ export const NONCONFORMANCES: RegisterConfig<NonconformanceRow> = {
     ];
   },
   createLabel: 'Record nonconformance',
-  createForm: {
+  /* With a project open, the record is filed under it by default (C14; the route admits the project before writing). */
+  createForm: () => ({
     eyebrow: 'Quality',
     title: 'Record a nonconformance',
     sub: 'Recorded as awaiting disposition. The disposition and its rationale are a separate entry.',
@@ -70,12 +73,13 @@ export const NONCONFORMANCES: RegisterConfig<NonconformanceRow> = {
       { key: 'deviceName', label: 'Product or material', type: 'text', half: true },
       { key: 'lotOrSerial', label: 'Lot or batch', type: 'text', half: true },
       { key: 'description', label: 'What was found', type: 'textarea', rows: 4, required: true },
+      ...projectField('A nonconformance filed under the open project is counted in its Quality section.'),
     ],
-  },
+  }),
   create: async (v) => {
     const row = await createNonconformance({
       ncNumber: v.ncNumber.trim(), description: v.description.trim(), source: v.source,
-      deviceName: v.deviceName.trim(), lotOrSerial: v.lotOrSerial.trim(),
+      deviceName: v.deviceName.trim(), lotOrSerial: v.lotOrSerial.trim(), programId: v.programId || undefined,
     });
     return `${row.nc_number} was recorded as awaiting disposition.`;
   },
@@ -132,6 +136,15 @@ function documentCell(ctx: RegisterContext, id: number | null | undefined): Reac
   if (doc) return <span className="mono">{doc.docNumber}</span>;
   if (ctx.documents) return <span title={`Controlled document ${id}`}>Not in the register</span>;
   return ctx.documentsFailed ? <span title={`Controlled document ${id}`}>Not read</span> : '…';
+}
+
+/** The open project as a form's filing choice: filed under it by default, or the organisation's (C14). */
+function projectField(desc: string): C2CFormField[] {
+  const id = shellProgramId();
+  if (!id) return [];
+  const name = shellProgramName() ?? 'The open project';
+  return [{ key: 'programId', label: 'Project', type: 'seg', default: id,
+    options: [{ value: id, label: name }, { value: '', label: 'Organisation-wide' }], desc }];
 }
 
 /* A supplier's quality agreement is one of this organisation's controlled

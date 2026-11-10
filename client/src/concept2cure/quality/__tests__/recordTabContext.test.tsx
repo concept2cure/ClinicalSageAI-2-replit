@@ -9,13 +9,21 @@ import { recordTabContext } from '../App';
 
 const ready = { tab: 'capa', title: 'CAPA', noun: ['CAPA', 'CAPAs'] as [string, string], state: 'ready' as const, count: 2,
   counts: [{ label: 'Open CAPAs', val: '2', detail: '3 closed' }], records: [{ capa: 'CAPA-007' }, { capa: 'CAPA-008' }], truncated: false,
-  partial: false, about: 'Corrective and preventive actions.' };
+  partial: false, about: 'Corrective and preventive actions.', scope: null };
 
 describe('Quality record tab context for AnA', () => {
   it('names the rows and counts read', () => {
     const c = recordTabContext('capa', ready);
     expect(c.summary).toBe('The user is on the CAPA tab of Quality. The register holds 2 CAPAs (Open CAPAs: 2 (3 closed)).');
     expect(c.facts).toMatchObject({ recordCount: 2, records: ready.records, partial: false, about: 'Corrective and preventive actions.' });
+  });
+
+  // C14: whose rows these are, while a project is open.
+  it("says whose rows these are while a project is open", () => {
+    expect(recordTabContext('capa', { ...ready, scope: { project: 'C11 · Gasket programme' } }).summary)
+      .toBe('The user is on the CAPA tab of Quality. The register holds 2 CAPAs filed under the project C11 · Gasket programme (Open CAPAs: 2 (3 closed)).');
+    expect(recordTabContext('capa', { ...ready, scope: { organisationWide: true } }).summary)
+      .toMatch(/holds 2 CAPAs of the whole organisation \(this register is not kept per project\)/);
   });
 
   // C12: at the server's cap the read is the most recent rows; "holds 100" would claim records nobody read.

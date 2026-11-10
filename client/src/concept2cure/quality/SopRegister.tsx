@@ -62,6 +62,7 @@ import { personalTrainingScope } from './qmsPersonalTraining';
 import { TrainingCoverage, TrainingAssignmentsPanel, ApprovalTrainingReach } from './TrainingCoverage';
 import { TrainingExpiry } from './TrainingExpiry';
 import { SopRegisterRow, RegisterTable, REGISTER_COLUMNS, type RegisterRowActions } from './SopRegisterRow';
+import { useQualityScope } from './registerContext';
 export interface SopRegisterProps {
   /** Forward a prompt to the host's AnA conversation surface. */
   onAsk: (q: string) => void;
@@ -108,6 +109,8 @@ export function SopRegister(props: SopRegisterProps) {
 }
 function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEditorOpenChange, qmsDocumentId, qmsIntent, qmsTargetRequest }: SopRegisterProps) {
   const reg = useSopRegister();
+  /* An empty register scoped to the open project says the project has none (C14), not that none exist. */
+  const scope = useQualityScope();
   const tpl = useSopTemplates();
   const rev = useReviewDue(REVIEW_WINDOW_DAYS);
   /* Four raw `?? FIXTURE` fallbacks on a GxP document register, none of them
@@ -128,7 +131,11 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
   const templates = tpl.templates ?? NO_TEMPLATES;
   /* The review schedule as read, or none: a failed schedule read is not replaced by a derivation (C2). The
      register's own overdue count may still derive from the register when the schedule is unread. */
-  const reviewDue = rev.rows ?? NO_REVIEW;
+  /* In a project's scope the register is its documents, so the schedule (read for the whole organisation, the
+     route has no project) is filtered to them: the SOP tab is the project's documents and their review (C14). */
+  const scopedIds = React.useMemo(() => (scope.programId && reg.docs ? new Set(reg.docs.map((d) => d.id)) : null), [scope.programId, reg.docs]);
+  const reviewRows = React.useMemo(() => (rev.rows && scopedIds ? rev.rows.filter((r) => scopedIds.has(r.id)) : rev.rows), [rev.rows, scopedIds]);
+  const reviewDue = reviewRows ?? NO_REVIEW;
   /* The overdue count is the review schedule's; while that read is unread or failed the register says nothing about
      overdue (a derivation from the register left out a version in force under revision, review C2-1). */
   /* Live read-and-understood compliance (numerator = distinct current
@@ -237,7 +244,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
   const effectiveCount = docs.filter((d) => d.status === 'effective' || d.inForce).length;
   const underReviewCount = docs.filter((d) => d.status === 'in_review').length;
   const draftCount = docs.filter((d) => d.status === 'draft').length;
-  const overdueCount = rev.rows ? rev.rows.filter((r) => r.overdue).length : null;
+  const overdueCount = reviewRows ? reviewRows.filter((r) => r.overdue).length : null;
   // The server's summary (P-49): the client computes no percentage.
   const coverage = coverageKpiOf(training, trainComp.summary ?? null);
   /* A read that has not answered is not an empty register. An unread register
@@ -329,7 +336,9 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
         )}
         {regUnread && !regFailed && <EmptyState title="Loading the register…" busy />}
         {!regUnread && visible.length === 0 && (
-          <EmptyState title={filter === 'all' ? 'No controlled documents in the register yet.' : 'No documents with this status.'} />
+          <EmptyState title={filter !== 'all' ? 'No documents with this status.'
+            : scope.programId ? `No controlled document was authored in ${scope.projectName}.` : 'No controlled documents in the register yet.'}
+            hint={filter === 'all' && scope.programId ? "The organisation's other controlled documents are under Show the whole organisation." : undefined} />
         )}
         {visible.length > 0 && (
           <RegisterTable columns={REGISTER_COLUMNS}>
@@ -340,12 +349,12 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
 
       {/* ── Periodic review, training, expiry: one column of quiet sections (C1). ── */}
       <PeriodicReviewPanel rows={reviewDue} unread={reviewUnread} failed={reviewFailed} error={rev.error} read={rev.failure}
-        retry={() => { rev.refresh?.(); }} registerEmpty={registerEmpty}
+        retry={() => { rev.refresh?.(); }} registerEmpty={registerEmpty} scopeName={scope.programId ? scope.projectName : null}
         canOpen={(id) => docs.some((x) => x.id === id) || (regUnread && canOpen(id))}
         onOpen={(id) => { const d = docs.find((x) => x.id === id); if (d) openDocument(d); else openReader(id); }} onRecord={recordReview.start} />
 
       <TrainingCoverage rows={training} unread={trainUnread} failed={trainFailed} error={trainComp.error} read={trainComp.failure}
-        refresh={trainComp.refresh} figure={coverageFigure}
+        refresh={trainComp.refresh} figure={coverageFigure} organisationWide={scope.programId !== null}
         canOpen={canOpen} onOpen={openReader} />
       <TrainingExpiry assignment={trainComp.summary ? { assigned: trainComp.summary.assigned, noActiveAssignees: trainComp.summary.noActiveAssignees }
         : trainUnread && !trainFailed ? 'reading' : null} />

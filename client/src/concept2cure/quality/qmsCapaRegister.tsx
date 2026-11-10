@@ -86,6 +86,7 @@ export const CAPAS: RegisterConfig<CapaRow> = {
   name: (r) => r.capaCode,
   /* GET /api/capa-mdr/capa: the 100 most recently updated (capaMdr.service.ts listCapas). */
   readCap: { rows: CAPA_READ_CAP, order: 'most recently updated' },
+  projectKept: true,
   columns: [
     { label: 'Number', cell: (r) => <span className="mono">{r.capaCode}</span> },
     { label: 'Title', text: true, cell: (r) => <span title={r.problemStatement ?? r.title}>{r.title}</span> },

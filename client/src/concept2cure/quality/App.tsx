@@ -31,6 +31,7 @@ import { ChangeControl } from './ChangeControl';
 import { QmsRecords, QMS_RECORD_ASK, QMS_RECORD_TABS } from './QmsRecords';
 import type { QmsRecordTab } from './qmsRecordData';
 import { inSentence, type RecordRegisterContext } from './qmsRegisterKit';
+import { setQualityWide, useQualityScope } from './registerContext';
 import { useChangeRegister } from './changeHooks';
 import {
   STATE_LABEL,
@@ -133,13 +134,15 @@ export function recordTabContext(tab: QmsRecordTab, ctx: RecordRegisterContext |
   const noun = n === 1 ? ctx.noun[0] : ctx.noun[1];
   /* At the server's cap the read is the most recent rows, not the register (C12): "holds 100" would be a claim about
      records nobody read. */
+  const whose = !ctx.scope ? '' : 'project' in ctx.scope ? ` filed under the project ${ctx.scope.project}`
+    : ' of the whole organisation (this register is not kept per project)';
   const held = ctx.partial
-    ? `The register read stopped at the server's cap: it shows the ${n} most recent ${noun}, and there may be more, so its figures are of those ${n}`
-    : `The register holds ${n} ${noun}`;
+    ? `The register read stopped at the server's cap: it shows the ${n} most recent ${noun}${whose}, and there may be more, so its figures are of those ${n}`
+    : `The register holds ${n} ${noun}${whose}`;
   return {
     summary: `The user is on the ${here} tab of Quality. ${held}` +
       (counts ? ` (${counts})` : '') + '.' + (ctx.truncated ? ` Only the first ${ctx.records.length} are listed in the facts.` : ''),
-    facts: { tab, about: ctx.about, recordCount: n, partial: ctx.partial, counts: ctx.counts, records: ctx.records, truncated: ctx.truncated },
+    facts: { tab, about: ctx.about, scope: ctx.scope, recordCount: n, partial: ctx.partial, counts: ctx.counts, records: ctx.records, truncated: ctx.truncated },
     availableActions: actions,
   };
 }
@@ -176,6 +179,7 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
      none — the example change log (FIXTURE_CHANGES) and the sample mode that
      could show it were removed on 2026-10-14. */
   const changeReg = useChangeRegister();
+  const scope = useQualityScope();
   /* The record register on screen reports what it read (QmsRecords.tsx), so
      what AnA is told about a record tab is the register's own rows. */
   const [recordCtx, setRecordCtx] = React.useState<RecordRegisterContext | null>(null);
@@ -325,7 +329,7 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
     const base =
       `The user is on the ${HERE[tab]} tab of Quality` +
       (state.length ? ` — ${state.join('; ')}` : '') +
-      '.';
+      '.' + (scope.programId ? ` Quality shows the project ${scope.projectName}: its controlled documents and changes only.` : '');
     if (changeReg.loading) {
       return {
         summary: `${base} The change log is still loading — its records are not readable yet.`,
@@ -358,7 +362,7 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
         'People read controlled text and record their own personal acknowledgement in the SOP register; AnA cannot acknowledge for them',
       ],
     };
-  }, [editingDocument, tab, sopFilter, stage, openId, changes, changeReg.loading, changeReg.error, recordCtx]);
+  }, [editingDocument, tab, sopFilter, stage, openId, changes, changeReg.loading, changeReg.error, recordCtx, scope.programId, scope.projectName]);
   usePublishSurfaceContext('quality', anaContext);
 
   /* The bus's ready signal: a not-ready open-change (retry: true) held across
@@ -378,8 +382,21 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
             <header className="ph">
               <div>
                 <h1 className="ph-title">{surface.label}</h1>
-                <p className="ph-sub">Controlled documents and their training, change control, CAPA and the other quality records.</p>
+                <p className="ph-sub" data-testid="quality-scope">
+                  {scope.programId
+                    ? `${scope.projectName}: its controlled documents and their periodic review, changes, CAPAs and nonconformances. Training, deviations, suppliers, audits and management reviews are the organisation's.`
+                    : scope.wide
+                      ? "The whole organisation's quality records."
+                      : 'Controlled documents and their training, change control, CAPA and the other quality records.'}
+                </p>
               </div>
+              {scope.projectName && (
+                <div className="ph-acts">
+                  <button type="button" className="btn ghost small" onClick={() => setQualityWide(!scope.wide)}>
+                    {scope.wide ? `Show ${scope.projectName} only` : 'Show the whole organisation'}
+                  </button>
+                </div>
+              )}
             </header>
             {/* P-111: opened from a Quality work project's door, its tasks under the title, above the registers. */}
             <WorkProjectTasks area="quality" />
