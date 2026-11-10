@@ -456,3 +456,23 @@ export async function renameProgramFolder(
     return { ok: true, folder: { folderId: args.folderId, name: named.name, parentFolderId, label: named.name } };
   });
 }
+
+/** The project's folders as AnA is given them: every folder a document may be filed to, by id, in tree order. */
+export function folderChoices(index: ProgramFolderIndex): {
+  binder: { label: string; version: string } | null;
+  binderMissing: string | null;
+  folders: Array<{ id: string; label: string; kind: 'binder' | 'preset' | 'person' }>;
+} {
+  const folders: Array<{ id: string; label: string; kind: 'binder' | 'preset' | 'person' }> = [];
+  for (const n of index.binder?.nodes ?? []) folders.push({ id: binderFolderId(n.key), label: index.label(binderFolderId(n.key)), kind: 'binder' });
+  for (const p of index.presets) folders.push({ id: p.id, label: p.label, kind: 'preset' });
+  for (const f of index.person) {
+    const parent = f.parentId != null ? personFolderId(f.parentId) : f.parentKey;
+    folders.push({ id: f.folderId, label: parent ? `${f.name} (in ${index.label(parent) || parent})` : f.name, kind: 'person' });
+  }
+  return {
+    binder: index.binder ? { label: index.binder.label, version: index.binder.version } : null,
+    binderMissing: index.binderMissing,
+    folders,
+  };
+}
