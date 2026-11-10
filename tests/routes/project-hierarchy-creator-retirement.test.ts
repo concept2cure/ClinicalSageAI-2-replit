@@ -58,6 +58,18 @@ describe('hierarchy creator retirement', () => {
     expect(router.stack.some((layer: any) => layer.route?.path === '/:projectId/move' && layer.route?.methods?.patch)).toBe(true);
   });
 
+  it('reads the children of a program whose id is not RFC-shaped, as every other program route does', async () => {
+    // The GA demo seed's programs (scripts/seed/ga-demo.d/10-risk.mjs BX204_PROGRAM_ID) carry fixed ids whose
+    // variant nibble is 4. Postgres holds them as uuid, and the other program routes accept them (guid).
+    const seeded = '11111111-2222-3333-4444-000000000204';
+    const res = await request(app).get('/api/project-hierarchy/9/children').query({ programId: seeded });
+    expect(res.status).toBe(200);
+    expect(H.programAccess).toHaveBeenCalledWith(expect.anything(), { organizationId: 1, userId: 7, programId: seeded });
+    const notAnId = await request(app).get('/api/project-hierarchy/9/children').query({ programId: 'not-a-program-id' });
+    expect(notAnId.status).toBe(400);
+    expect(notAnId.body.error.code).toBe('INVALID_CHILDREN_READ');
+  });
+
   it('refuses an unnamed program or a project outside its anchor without reading children', async () => {
     const unnamed = await request(app).get('/api/project-hierarchy/9/children');
     expect(unnamed.status).toBe(400);
