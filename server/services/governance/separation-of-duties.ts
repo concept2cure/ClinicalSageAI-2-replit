@@ -42,6 +42,7 @@
  * @module server/services/governance/separation-of-duties
  */
 import { pool } from '../../db.js';
+import { reviewPolicyOf, type ReviewPolicy } from '../../../shared/artifact-governance';
 import { QmsControlledTextAuthorshipInvalid, qmsControlledTextAuthorIds } from '../qms/controlled-text-authorship.js';
 /* Who entered the register records a Module 3 section was composed from. The
    reader lives with the CMC registers because the lineage it walks is theirs;
@@ -666,9 +667,9 @@ export interface SeparationOfDutiesResult {
   soleMember?: true;
 }
 
-/** What the record says of an act a sole member signed on their own record (P-116). */
+/** What the record says of an act a sole member signed on their own record (P-116, P-117). */
 export const SOLE_MEMBER_RECORD =
-  "No independent review: the signer is this organisation's only member, so there is nobody to be independent of (P-116).";
+  "No independent review: the signer is this organisation's only member, and its review rules admit a sole member's own approval (P-116, P-117).";
 
 /**
  * Is this user the organisation's only member (founder decision P-116,
@@ -677,7 +678,6 @@ export const SOLE_MEMBER_RECORD =
  * admitted and not removed still counts, so the answer cannot be reached by
  * disabling a colleague. organization_users' SELECT is open under RLS
  * (20260926_organization_users_own_writes.sql), so the count is the real one.
- * Not a setting: nobody switches it on, and it ends when a second row exists.
  */
 export async function isSoleMember(db: AuthorshipReader, orgId: number, userId: number): Promise<boolean> {
   if (![orgId, userId].every((v) => Number.isSafeInteger(v) && v > 0)) return false;
@@ -685,11 +685,35 @@ export async function isSoleMember(db: AuthorshipReader, orgId: number, userId: 
   return rows.length === 1 && Number(rows[0].user_id) === userId;
 }
 
+/**
+ * The organisation's review rules, as its administrator set them in the
+ * security settings (founder decision P-117, 2026-11-10; the governed settings
+ * writer, services/tenant/tenant-settings-writer.ts). A read error propagates:
+ * an approval is not recorded under rules that could not be read. An
+ * organisation whose row cannot be found gets the default reviewer count and
+ * no self-approval.
+ */
+export async function organizationReviewPolicy(db: AuthorshipReader, orgId: number): Promise<ReviewPolicy> {
+  const { rows } = await db.query(`SELECT settings FROM organizations WHERE id = $1`, [orgId]);
+  if (rows.length !== 1) return { ...reviewPolicyOf(null), soleMemberSelfApproval: false };
+  const stored: unknown = rows[0].settings;
+  return reviewPolicyOf(typeof stored === 'string' ? JSON.parse(stored) : stored);
+}
+
+/**
+ * May this signer approve, lock or sign their own record with no independent
+ * review? Only the organisation's sole member, and only where its review rules
+ * allow it (P-116, P-117). The rules are read only for a sole member.
+ */
+export async function soleMemberMayApprove(db: AuthorshipReader, orgId: number, userId: number): Promise<boolean> {
+  return (await isSoleMember(db, orgId, userId)) && (await organizationReviewPolicy(db, orgId)).soleMemberSelfApproval;
+}
+
 /** P-116: only a door that records SOLE_MEMBER_RECORD on the act asks, and only a sole member is admitted. */
 async function admitsSoleMember(
   opts: { soleMember?: 'admit-and-record'; client?: AuthorshipReader }, orgId: number, signerId: number,
 ): Promise<boolean> {
-  return opts.soleMember === 'admit-and-record' && isSoleMember(opts.client ?? pool, orgId, signerId);
+  return opts.soleMember === 'admit-and-record' && soleMemberMayApprove(opts.client ?? pool, orgId, signerId);
 }
 
 /**

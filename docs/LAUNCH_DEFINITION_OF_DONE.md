@@ -2780,8 +2780,10 @@ chose: **self-approve, on record.**
   independent of. That person may then approve, lock or sign their own record without a reviewer.
   - **On the record.** The audit trail records, on that act, that the signer was the organisation's sole member and
     that no independent review took place. The act is never recorded as an independent review or approval.
-  - **Not a setting.** It follows from the membership alone; nobody switches it on. From the moment a second active
-    member exists, independent review is required again, for every act from then on. Nothing earlier is reopened.
+  - **A setting, by P-117 (below).** As first decided this was not a setting. The founder changed that the same day:
+    the organisation's administrator switches it on or off. Whatever the setting says, it applies only while the
+    organisation has one member. From the moment a second member exists, independent review is required again, for
+    every act from then on. Nothing earlier is reopened.
   - **Scope, door by door.** The rule is one function (`isSoleMember`, `server/services/governance/separation-of-duties.ts`).
     A door admits a sole member only once it also writes the record above, so no door admits one silently.
     - Built: the conversation artifact's approval and lock (`artifact-approval-act.ts`, `artifact-signed-act.ts`), on
@@ -2799,3 +2801,30 @@ chose: **self-approve, on record.**
 - **Not decided here.** Whether a GMP batch-record or quality-unit act (21 CFR 211.22, 211.192) may ever be signed by
   a sole member: those acts are outside the launch catalog today. A QMS document's approver designation (D-Q) is
   unchanged.
+
+### P-117 — The review rules are each organisation's own, set by its administrator in the security settings
+
+The founder, 2026-11-10, on P-116's two rules being fixed in code: **"Those rules should be set by the client super
+admin in client security user settings."**
+
+- **What the administrator sets.** Two values in the organisation's settings, under `security`:
+  - `independentReviewersRequired`: how many independent reviewers must approve a version before it can be approved.
+    A whole number from 1 to 5. Unset, it is 1 (P-116).
+  - `soleMemberSelfApproval`: whether the organisation's only member may approve, lock or sign their own record with
+    no reviewer. On or off. Unset, it is on (P-116: "self-approve, on record").
+- **What is not a setting.** Review stays mandatory (P-95): the count cannot be set below 1. A reviewer is still
+  neither an author nor the approving signer (P-18). A sole member's act is still recorded as having no independent
+  review; no setting removes that record. Self-approval still applies only while the organisation has one member.
+- **Who sets them.** The organisation's administrator or owner, in Administration's settings ("Review and approval",
+  beside "Session policy"). No other role can.
+- **How a change is made.** Through the one governed settings writer (`PATCH /api/organizations/:id/settings`,
+  `server/services/tenant/tenant-settings-writer.ts`), with a reason. The audit row carries both values before and
+  after. A value outside the bounds is refused, not stored and clamped.
+- **When a change applies.** To every approval from then on. The approval act reads the rules on the signing
+  transaction (`organizationReviewPolicy`, `server/services/governance/separation-of-duties.ts`). Approvals already
+  recorded stand. If the rules cannot be read, the approval is refused.
+- **Scope.** The same doors as P-116: the conversation artifact's approval and lock today. Each later door (the
+  editor's APPROVER e-signature and Freeze, then the others P-116 lists) reads the same two values when it is built.
+- **A consequence to know.** An administrator who is also the organisation's only member sets their own rule. That is
+  what a one-person organisation is. The settings change is itself an audited act with a reason.
+- **Evidence.** `docs/evidence/W5/2026-11-10-review-rules-settings/`.

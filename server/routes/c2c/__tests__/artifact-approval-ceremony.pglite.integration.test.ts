@@ -145,7 +145,7 @@ import { moveArtifactToSection } from '../../../services/artifact-approval-act';
 
 const BASELINE = 'migrations/0000_sweet_joseph.sql';
 const DDL = [
-  `CREATE TABLE organizations (id serial PRIMARY KEY, name text);`,
+  `CREATE TABLE organizations (id serial PRIMARY KEY, name text, settings jsonb);`,
   extractTableDdl(BASELINE, [
     'users', 'organization_users', 'concept2cure_artifacts', 'concept2cure_artifact_versions',
     'concept2cure_signatures', 'concept2cure_submission_snapshots', 'concept2cure_provenance_events',
@@ -1341,6 +1341,72 @@ describe('P-116: a one-person organisation approves its own artifact, on the rec
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     const [act] = await ledgerPayloads();
     expect(act.payload.independentReview).toBeUndefined();
+  });
+});
+
+/**
+ * P-117 (founder, 2026-11-10: "Those rules should be set by the client super
+ * admin in client security user settings"): the reviewer count and the
+ * sole-member self-approval are the organisation's settings, read from
+ * organizations.settings.security on every approval. Unset, they are P-116's
+ * rule: one reviewer, and a sole member may approve their own record.
+ */
+describe("P-117: the review rules are the organisation's own settings", () => {
+  const setSecurity = (security: Record<string, unknown> | null) =>
+    run(`UPDATE organizations SET settings = $2::jsonb WHERE id = $1`, [ORG, security ? JSON.stringify({ security }) : null]);
+  const soleMember = () => run(`DELETE FROM organization_users WHERE organization_id = $1 AND user_id <> $2`, [ORG, USER]);
+  beforeAll(addReviewers);
+  afterEach(async () => { await setSecurity(null); await addReviewers(); });
+
+  it('two reviewers required, one has approved: refused 409 REVIEW_REQUIRED, naming the organisation\'s rule', async () => {
+    await setSecurity({ independentReviewersRequired: 2 });
+    await seed('review');
+    await reviewed();
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(JSON.stringify(res.body)).toMatch(/needs 2 independent reviewers.*your organisation's review rules ask for that many; 1 has approved/);
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+  });
+
+  it('two reviewers required, two have approved: approved', async () => {
+    await setSecurity({ independentReviewersRequired: 2 });
+    await seed('review');
+    await reviewedBy([ADA, BEN]);
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(await artifactRow()).toMatchObject({ status: 'approved', approved_version_id: 2 });
+  });
+
+  it('self-approval switched off: the only member cannot approve what they wrote, and nothing is written', async () => {
+    await setSecurity({ soleMemberSelfApproval: false });
+    await soleMember();
+    await seed('review', { author: USER });
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).not.toBe(200);
+    expect(await artifactRow()).toMatchObject({ status: 'review', approved_version_id: null });
+    expect((await run(`SELECT 1 FROM c2c_ana_actions`)).rows).toEqual([]);
+  });
+
+  it('self-approval switched off, and the only member did not write it: still refused, because no one reviewed it', async () => {
+    await setSecurity({ soleMemberSelfApproval: false });
+    await soleMember();
+    await seed('review');
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(JSON.stringify(res.body)).toContain('REVIEW_REQUIRED');
+  });
+
+  it('a stored value outside the bounds never lowers the floor below one reviewer', async () => {
+    await setSecurity({ independentReviewersRequired: 0 });
+    await seed('review');
+    const res = await putStatus(APPROVE);
+
+    expect(res.status, JSON.stringify(res.body)).toBe(409);
+    expect(JSON.stringify(res.body)).toContain('REVIEW_REQUIRED');
   });
 });
 
