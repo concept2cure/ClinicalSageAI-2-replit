@@ -1691,9 +1691,20 @@ Record: `docs/evidence/W3/2026-11-10/README.md`; dispositions: `docs/validation/
   `tests/validation/oq/reporting/`. 17 pass, 0 fail, 1 deviation.
 - **TM-001** regenerated: 132 requirements, 120 pass, 4 partial, 0 fail, 6 open, 2 uncovered. RA-001 v0.25 assesses
   Reporting (`4c7ded950c`).
+- **Later on 2026-11-10: the CMC protocol executes an approvable Module 3 end to end** (`345b5fef0a`, OQ-008 v0.13,
+  VSR-001 §21.8). **41 pass, 0 fail, 2 deviation, 0 not executed, of 43**; the package is 175 / 0 / 6 / 0 of 181;
+  TM-001 124 pass, 2 partial, 4 open, 2 uncovered.
+  - A second programme's 23 records, each entered through its register route, compose 21 complete sections. Every
+    section is approved by the second signer, the final-export gate passes, and Module 3 is placed into the IND
+    sequence. The critical finding, the release signature and the dispatch verdict are observed as URS-007 states
+    them. OQ-CMC-17, -19, -27 and -28 ran for the first time.
+  - Two of those steps had been calling routes the product does not serve. No product regression; no product file
+    changed.
+  - For the CMC owner: a repeat of an identical placement writes 21 new filing documents and stops a release
+    signature clearing the sequence, although no content changed.
 - **D4 stays red.** The package is unsigned and is not ready for signature. It still needs: execution on a production
-  build with the audit signing, seal and anchor keys; an AI provider (PQ-passed) for two steps; three fixtures (a
-  critical CMC contradiction, a Module 3 whose every section can be approved, an organisation on a lower plan); the
+  build with the audit signing, seal and anchor keys; an AI provider (PQ-passed) for two steps; one fixture (an
+  organisation on a lower plan; the two CMC fixtures exist since v0.13); the
   URS revisions for the requirements withdrawn from this release (URS-PROJ-007, URS-AUTH-014's organisation store,
   URS-SRDY-004 and -005, URS-QMS-011 and URS-QMS-012's plan half), through change control; PQ; review and the system
   owner's signature.
