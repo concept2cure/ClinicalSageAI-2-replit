@@ -20,6 +20,7 @@ window, the CDISC pilot CSR study). The defects below were fixed in the existing
 | C | Every two-person demo step (QMS approvals, method validation, the RACT's approval, review requests; 20 steps) was recorded "not executed": the Codespace passed no second signer. With the RACT a draft, RBM's "Generate from RACT" was refused on every project (finding 10 of the first run). | **Fixed** (`11aa491184`, then the designation below): the approver is the second signer. |
 | D | With the approver as signer, a fresh Codespace's QMS packs failed, not skipped: every demo person is an administrator, and with no QMS approver designated only the Approver role approves. The seed never finished, so it re-ran on every start. | **Fixed** (`ff49ebed77`): the start designates the approver as the organisation's QMS approver, once, through the governed route an administrator uses (`PUT /api/tenant-users/:org/:user/qms-approver`, with a reason, audited). From an empty database the seed finishes with every approval signed; 26 steps stay "not executed" (24 lumen-vault steps want a third person, sent to the Codespace session; orchestration is outside the launch; Shadow Review needs a key). |
 | H | An existing Codespace's next start (reported by the Codespace session): with a signer now present, the seed asked for review on documents a previous run had frozen or approved (409 `AUTHORING_DOCUMENT_IMMUTABLE`) and never finished. | **Fixed** (`7aeecfc654`): a document past review is found, not re-requested, in the biotech and device packs. Shown red then green: `scripts/demo/launch-demo/authoring-rerun.test.mjs`. |
+| J | A re-run of the seed over its own data (each start after `scripts/demo` changes) stopped at "The project Task Board contains malformed or duplicate task titles": once the SOPs are effective, each member holds a "Read and acknowledge …" task of the same title, and the task step read every title on the board as its key. | **Fixed** (`c9a3680a24`): only the seed's own titles are its keys. Shown red then green in `faux-demo.test.mjs`. Walked: the start re-ran the seed over its own data and it finished. |
 | I | The prepared CSR study had no IND number, sponsor, D-U-N-S or FDA contact, so Dispatch → "Download an inspection copy" answered 409 `PACKAGE_IDENTITY_MISSING` (first run, item 4). | **Fixed** (`cc06768a51`, P-115 item 4: a CSR goes to an open IND): the preparation records a clearly fictional IND (999901) and sponsor through the applicant identity's own routes. Walked: recorded and bound. Not walked: the inspection copy itself, which needs the amendment sequence P-115's CSR filing walk makes. |
 
 ### B, in detail
@@ -39,7 +40,14 @@ Four runs on the fresh Codespace, all against the same app: A (projects, project
 conversation) and B (communication, Vault, Submission Center, tasks) and C (work areas and administration, with every
 rail button and account-menu item from Home) as Ana Author; D (every area of two Lumen projects, with the rail) as the
 Lumen lead, where "Demo access" lands. They were stopped twice to push fixes, and restarted from the start each time.
-**In progress at this entry:** the third start had reached 217 clicks over 9 stops. Results are added here when it ends.
+The crawler now resumes from its own log, so a stop no longer starts a run again.
+
+| Run | State at this entry | Result |
+|---|---|---|
+| A, projects and authoring (Ana) | **Finished**: 29 stops, 120 clicks | Nothing new. One browser-side "insufficient resources" while four browsers ran. |
+| C, work areas and administration, with the rail (Ana) | **Finished**: 68 stops, 265 clicks | Nothing new beyond E, the correct refusals and the minor wording above. |
+| B, Communication, Vault, Submission Center, Tasks (Ana) | Resumed, in progress | Added when it ends. |
+| D, the Lumen account, every area, with the rail (Lumen lead) | Resumed, in progress | Added when it ends. |
 
 ### What the clicks found
 
@@ -53,6 +61,8 @@ Lumen lead, where "Demo access" lands. They were stopped twice to push fixes, an
 | — | Biostatistics → **Assess defensibility** with no effect size: 422 `NEEDS_PARAMETERS`, shown as a red toast: "…the inputs listed in errors are missing or invalid. No verdict was formed. Missing or invalid: effectSize." | **Open, minor** (Biostatistics lane): honest, but a missing field reads as an error, in developer words ("listed in errors", "effectSize"). |
 | — | Authoring showed "Loading…" as it opened; the rail's Home, account and "Organizations and invitations" clicks timed out. | **The run's own.** "Loading…" is gone within a second; the rail buttons click when addressed directly (the crawler's text match misses an icon-only button and a multi-line label). |
 | — | Shadow Review and AnA's starters: 503. | **Correct without a key.** |
+| — | 429 on Quality's and the Vault's document reads. | **The run's own.** One page open makes 40 to 70 API requests (measured: Vault 47, Quality 44, Project home 70, Submission Center 41), so a person needs about ten full page loads a minute to reach the 600-a-minute ceiling; the crawler reopens the page for every click. Noted for the shell's owner: each open reads the session six times and the project five. |
+| — | The app stopped once mid-run (`uncaughtException: ENOSPC` on a log write). | **The run's own.** The crawler's browser kept every file it downloaded until it closed (3.6 GB), which filled the sandbox's disk. The crawler now discards each download. The app's log holds no token: request logging records allowlisted metadata only. |
 
 ### Not this lane's, seen red on trunk
 

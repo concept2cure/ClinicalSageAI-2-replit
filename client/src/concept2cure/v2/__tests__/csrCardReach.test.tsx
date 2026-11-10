@@ -159,6 +159,37 @@ it('follows a drafting build until it ends, then stops re-reading the list', asy
   } finally { vi.useRealTimers(); }
 });
 
+// 2026-11-10: a CSR document takes its imported sections from one build, so a build that stopped part-way must be
+// resumed, not replaced. The failed build offers it, and the list is read again once the server has taken it.
+it('offers to resume a failed build, as that build, and follows it once resumed', async () => {
+  builds = [{ ...build(48, 'failed'), progress: 40, failure: 'Drafting was refused by a rate limit for several minutes running.' }];
+  apiRequest.mockImplementation(async (method: string, path: string) => {
+    if (method === 'POST' && path === '/api/csr/jobs/48/resume') { builds = [{ ...build(48, 'queued'), progress: 40 }]; return ok({ jobId: 48, status: 'queued', resumed: true }, 202); }
+    return routes(method, path);
+  });
+  await card();
+  const region = await screen.findByLabelText('CSR builds from this study data');
+  const resume = await within(region).findByRole('button', { name: 'Resume build 48' });
+  expect(within(region).getByText(/drafts the headings that have no saved text and keeps the rest/i)).toBeTruthy();
+  fireEvent.click(resume);
+  expect(await within(region).findByText(/CSR build 48 · queued · 40%/)).toBeTruthy();
+  expect(within(region).queryByRole('button', { name: 'Resume build 48' })).toBeNull();
+  expect(apiRequest.mock.calls.filter(([m, p]) => m === 'POST' && p === '/api/csr/jobs').length).toBe(0);
+});
+
+it('says why a failed build could not be resumed, and keeps the offer', async () => {
+  builds = [{ ...build(49, 'failed'), progress: 10, failure: 'The build stopped.' }];
+  apiRequest.mockImplementation(async (method: string, path: string) => {
+    if (method === 'POST' && path === '/api/csr/jobs/49/resume') throw refusal(409, { code: 'CSR_BUILD_NOT_RESUMABLE', error: 'This build is complete and cannot be resumed.' });
+    return routes(method, path);
+  });
+  await card();
+  const region = await screen.findByLabelText('CSR builds from this study data');
+  fireEvent.click(await within(region).findByRole('button', { name: 'Resume build 49' }));
+  expect(await within(region).findByText(/cannot be resumed/)).toBeTruthy();
+  expect(within(region).getByRole('button', { name: 'Resume build 49' })).toBeTruthy();
+});
+
 // The founder, 2026-11-10: "I want to see it happening, or in the background, I want to see that it's progressing,
 // and then I want to see the result." A drafting build showed one line, "CSR build N · drafting · 13%", for as long as
 // it ran: no heading, no text, and the heading list blinked out each time a heading was saved.

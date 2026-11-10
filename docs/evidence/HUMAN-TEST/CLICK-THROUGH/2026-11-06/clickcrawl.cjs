@@ -128,7 +128,9 @@ function watch(page) {
     if (u.includes('/api/') && r.status() >= 400) ev.api.push(`${r.status()} ${r.request().method()} ${u.replace(BASE, '').slice(0, 160)}`);
     if (r.status() === 401 && /\/api\/(users\/me|tenants|v1\/auth\/session)/.test(u)) sessionEnded = true;
   });
-  page.on('download', () => { ev.downloads++; });
+  // A download is counted, then discarded. Kept, the browser held every clicked file until it closed: 3.6 GB of
+  // them filled the disk and took the app down mid-run (2026-11-10).
+  page.on('download', (d) => { ev.downloads++; d.cancel().catch(() => {}).then(() => d.delete().catch(() => {})); });
   page.on('dialog', (d) => d.dismiss().catch(() => {}));
   return ev;
 }

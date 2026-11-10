@@ -40,6 +40,31 @@ Searches run: `progress`, `streaming`, `onStream`, `AnaActivity`, `currentSectio
 and `server/`. The conversation already streams AnA's text (`ana-ri/stream.ts`); the editor's single-section "Draft
 from sources" does not, and is not changed here.
 
+## Found while recording the review: a stopped build could not be resumed
+
+A CSR document takes its imported sections from one build (`workflow-source-import.ts`: "This document holds sections
+imported from CSR build 1 … Nothing was imported"). So a build that stops part-way must be resumed, not replaced: a
+second build's sections are refused by a document that holds the first's. The runner has always resumed a failed job
+(`runCSRBuildJob`), but nothing called it for one, and "Build CSR draft" always starts a new build. With a real key
+the first stop for a rate limit would have left the document unable to take the rest.
+
+- **`POST /api/csr/jobs/:jobId/resume`** (`server/routes/csr-jobs.ts`, in the existing router): only a failed build,
+  only for someone who may write to its project; the same build goes back to the runner.
+- **"Resume build N"** under a failed build's reason in the build panel (`CsrRunBuilds.tsx`): "It drafts the headings
+  that have no saved text and keeps the rest."
+- **A build on which the narratives were built could not be resumed at all.** The narrative run writes §12.3.2 from
+  the ADaM rows and records its own composer; the resume read that row as a builder result with no evidence lineage
+  and refused with `CSR_EVIDENCE_SAVED_LINEAGE_MISMATCH`. `verifySavedTargetEvidence` now leaves the narrative run's
+  row, composed over this build's own study data, to that run. A row over other study data, or one that only names
+  the composer, is still refused.
+
+In the running app: build 1, stopped at 47% before the 2026-11-10 fixes and with narratives built on it, was resumed
+from the panel and ended complete at 100%, as build 1. Three of its headings were then sent, approved by a second
+person and imported into the document that already held build 1's earlier sections (`record-review.cjs`).
+
+Red first: 3 route tests (404 for the route), 2 panel tests, 1 runner test. Green: the route suite 24 of 24, the
+panel suite 20 of 20, the runner, route and narrative suites together 113 tests.
+
 ## Limits, stated
 
 - **The live text is work in progress.** It is not yet checked against the study's tables and is never saved from
@@ -71,3 +96,7 @@ node docs/evidence/D2-CSR/2026-11-10-live-drafting-view/record-drafting.cjs \
 It signs in as the author, opens the CSR, presses "Build CSR draft", films the live view for `RECORD_SECONDS`
 (default 60), opens one saved heading, and writes `csr-drafting.webm`. It starts a new build each run. Keep the video
 out of the repository: it shows the study's text and tables.
+
+`record-review.cjs` films what follows on a finished build: the author sends three headings for review, a second
+person (unfilmed) reads and approves them, the author imports them, and the document shows the text. Same arguments;
+`DEMO_HEADINGS` and `DEMO_BUILD` choose the headings and the build.
