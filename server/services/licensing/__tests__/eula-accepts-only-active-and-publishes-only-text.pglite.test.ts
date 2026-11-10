@@ -64,8 +64,12 @@ describe('recordAcceptance', () => {
 
 describe('publishAgreement', () => {
   it('refuses an agreement with neither body nor url, and leaves the active one active', async () => {
-    await expect(publishAgreement({ agreementKey: 'terms', version: '4', title: 'Terms v4' })).rejects.toMatchObject({ statusCode: 400 });
-    await expect(publishAgreement({ agreementKey: 'terms', version: '4', title: 'Terms v4', body: '   ' })).rejects.toMatchObject({ statusCode: 400 });
+    // A reason is given (required since 2026-11-10), so the refusal here is the missing text and nothing else.
+    const reason = 'Annual review of the terms';
+    await expect(publishAgreement({ agreementKey: 'terms', version: '4', title: 'Terms v4', reason }))
+      .rejects.toMatchObject({ statusCode: 400, code: 'AGREEMENT_TEXT_MISSING' });
+    await expect(publishAgreement({ agreementKey: 'terms', version: '4', title: 'Terms v4', body: '   ', reason }))
+      .rejects.toMatchObject({ statusCode: 400, code: 'AGREEMENT_TEXT_MISSING' });
     const active = await h.pg!.query<{ id: string }>(`SELECT id FROM license_agreements WHERE agreement_key = 'terms' AND status = 'active'`);
     expect(active.rows.map(r => r.id)).toEqual([ACTIVE]);
   });
