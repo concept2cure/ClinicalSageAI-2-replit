@@ -293,7 +293,7 @@ export async function updateChange(orgId: number, id: number, p: {
   riskLevel?: string | null; reason?: string | null; impactAssessment?: string | null;
   implementationPlan?: string | null; targetImplementationDate?: string | null;
   qmsDocumentId?: number | null; assessedBy?: number | null;
-}, client: RequestSqlClient = pool): Promise<ChangeControlRow | null> {
+}, client: RequestSqlClient = pool): Promise<(ChangeControlRow & { edits: ChangeFieldEdit[] }) | null> {
   // Build a COALESCE-guarded partial update (only provided fields change).
   const sets: string[] = [];
   /* The id, the organization and the editable states are bound first, so the statement names them as $1-$3. */
@@ -310,26 +310,54 @@ export async function updateChange(orgId: number, id: number, p: {
   if (p.targetImplementationDate !== undefined) add('target_implementation_date', p.targetImplementationDate);
   if (p.qmsDocumentId !== undefined) add('qms_document_id', p.qmsDocumentId);
   if (p.assessedBy !== undefined) add('assessed_by', p.assessedBy);
-  if (sets.length === 0) return getChange(orgId, id, client);
-  const { rows } = await queryRowsClient(client).query<ChangeControlRow>(
-    `UPDATE qms_change_controls SET ${sets.join(', ')}, updated_at = clock_timestamp()
-      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL AND status = ANY($3::text[])
-      RETURNING *`,
+  if (sets.length === 0) {
+    const row = await getChange(orgId, id, client);
+    return row ? { ...row, edits: [] } : null;
+  }
+  /* The row as it was is read and locked in the same statement, so the edit's audit row can say what it replaced
+     (21 CFR 11.10(e)). Both sides are read as JSON, so a date compares as the same text on each. */
+  const { rows } = await queryRowsClient(client).query<ChangeControlRow & { previous: Record<string, unknown>; current: Record<string, unknown> }>(
+    `UPDATE qms_change_controls c SET ${sets.join(', ')}, updated_at = clock_timestamp()
+       FROM (SELECT * FROM qms_change_controls WHERE id = $1 AND organization_id = $2 FOR UPDATE) o
+      WHERE c.id = o.id AND c.organization_id = $2 AND c.deleted_at IS NULL AND c.status = ANY($3::text[])
+      RETURNING c.*, to_jsonb(o) AS previous, to_jsonb(c) AS current`,
     args,
   );
-  return rows[0] ?? null;
+  if (!rows[0]) return null;
+  const { previous, current, ...row } = rows[0];
+  return { ...(row as ChangeControlRow), edits: changeFieldEdits(previous, current) };
+}
+
+/** One field an edit changed (F1, Part 11 review L-2): what it was, and what it is now. */
+export interface ChangeFieldEdit { field: string; before: unknown; after: unknown }
+/** The columns an edit may change, in the order the record shows them. */
+const EDITABLE_COLUMNS = ['title', 'description', 'change_type', 'classification', 'risk_level', 'reason', 'impact_assessment',
+  'implementation_plan', 'target_implementation_date', 'qms_document_id', 'assessed_by'] as const;
+/** The fields whose value changed between the row as it was and as it is, each before and after. */
+export function changeFieldEdits(previous: Record<string, unknown>, current: Record<string, unknown>): ChangeFieldEdit[] {
+  return EDITABLE_COLUMNS.filter(col => JSON.stringify(previous[col] ?? null) !== JSON.stringify(current[col] ?? null))
+    .map(col => ({ field: col, before: previous[col] ?? null, after: current[col] ?? null }));
 }
 
 /**
- * Why an edit matched no change: null when the organization has no such change (the route's 404), or the refusal of a
- * change past assessment (409 QMS_CHANGE_CONTENT_FIXED), which names its state and says nothing was saved. Until
- * 2026-11-10 a refused edit answered "not found".
+ * Why an edit or a removal matched no change: null when the organization has no such change (the route's 404), or the
+ * refusal of a change past assessment, which names its state. An edit is 409 QMS_CHANGE_CONTENT_FIXED and says nothing
+ * was saved (until 2026-11-10 a refused edit answered "not found"); a removal is 409 QMS_CHANGE_KEPT and says the
+ * change is kept on the record and is cancelled through its lifecycle (F1, Part 11 review L-2).
  */
-export async function changeEditRefusal(orgId: number, id: number, client: RequestSqlClient = pool): Promise<{
-  message: string; details: { code: 'QMS_CHANGE_CONTENT_FIXED'; status: string };
+export async function changeEditRefusal(orgId: number, id: number, client: RequestSqlClient = pool, act: 'edit' | 'delete' = 'edit'): Promise<{
+  message: string; details: { code: 'QMS_CHANGE_CONTENT_FIXED' | 'QMS_CHANGE_KEPT'; status: string };
 } | null> {
   const existing = await getChange(orgId, id, client);
   if (!existing) return null;
+  const state = String(existing.status).replace(/_/g, ' ');
+  if (act === 'delete') {
+    return {
+      message: `This change is ${state}, so it is kept on the record. Nothing was removed. A change is removed only before `
+        + 'its approval; after that, cancel it through its lifecycle, with a reason.',
+      details: { code: 'QMS_CHANGE_KEPT', status: existing.status },
+    };
+  }
   const signed = ['approved', 'in_implementation', 'verification', 'closed'].includes(existing.status);
   return {
     message: `This change is ${String(existing.status).replace(/_/g, ' ')}, so its content is fixed`
@@ -458,11 +486,13 @@ export async function transitionChange(orgId: number, id: number, to: ChangeStat
 
 /** Soft-delete a change (and, via ON DELETE CASCADE on hard-delete only, its
  *  links — soft-delete keeps links for the audit trail). */
+/** Removes a change only before its approval (proposed or under assessment); after that it is kept on the record and
+ *  is cancelled through its lifecycle (F1, Part 11 review L-2: until 2026-11-10 an approved change could be removed). */
 export async function deleteChange(orgId: number, id: number, client: RequestSqlClient = pool): Promise<boolean> {
   const { rows } = await queryRowsClient(client).query(
     `UPDATE qms_change_controls SET deleted_at = now(), updated_at = now()
-      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL RETURNING id`,
-    [id, orgId],
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL AND status = ANY($3::text[]) RETURNING id`,
+    [id, orgId, [...CHANGE_EDITABLE_STATES]],
   );
   return rows.length > 0;
 }
