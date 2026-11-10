@@ -2,7 +2,17 @@
  * app_service. No test schema, policy, trigger or grants are installed. All
  * fixture content is synthetic. The targeted audit refusal changes only the
  * destination tenant at the audit boundary; actual PostgreSQL/tenant guards
- * reject it. The thrown control tests the documented unexpected rejection. */
+ * reject it. The thrown control tests the documented unexpected rejection.
+ *
+ * 2026-11-10 (eTMF convergence E2 and E3). A TMF filing is made against a
+ * study of a project the caller can open, with a reason, and its audit row is
+ * written by the filing's own transaction. So the TMF cases here file against
+ * a real study (cdisc_prm_studies), and the two that pinned "the filing stands
+ * when its audit row is lost" now hold the opposite: a filing or a removal
+ * whose audit row cannot be written is rolled back by PostgreSQL. The TMF
+ * controls act on the transaction's own connection, since the writer no longer
+ * issues its statements through pool.query. The assessment cases are as they
+ * were: a recorded snapshot keeps the ancillary audit. */
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import express from 'express';
@@ -32,7 +42,10 @@ let foreignToken: string;
 let viewerToken: string;
 let userId: number;
 let foreignUserId: number;
-let control: 'none' | 'audit-refusal' | 'audit-thrown' | 'business-refusal' | 'bulk-completion-loss' = 'none';
+let control: 'none' | 'audit-refusal' | 'audit-thrown' | 'business-refusal' | 'bulk-completion-loss' | 'tmf-audit-loss' = 'none';
+let originalConnect: Pool['connect'];
+let accessibleProgram: string;
+const REASON = 'Synthetic filing for the native audit proof.';
 let refusedBusinessCode: string | undefined;
 let auditRefusal: Awaited<ReturnType<typeof auditService.logAction>> | undefined;
 let serial = 0;
@@ -59,13 +72,73 @@ function businessTenantParameter(text: string): number {
 
 const file = (trial: string, bearer = token, artifactCode = 'protocol') => request(app)
   .post(`/api/etmf/trials/${trial}/artifacts`).set('Authorization', `Bearer ${bearer}`)
-  .send({ artifactCode, documentRef: 'external-archive-synthetic-reference', organizationId: FOREIGN_ORG, userId: foreignUserId });
+  .send({ artifactCode, documentRef: 'external-archive-synthetic-reference', reason: REASON, organizationId: FOREIGN_ORG, userId: foreignUserId });
+/** A study of the author's own project, named as a route names it: a TMF belongs to a study (E2). */
+async function study(suffix: string): Promise<string> {
+  const studyId = `${PREFIX}-${suffix}`;
+  await owner.query(`INSERT INTO cdisc_prm_studies (tenant_id, study_id, program_id, protocol_id, protocol_title, protocol_version)
+    VALUES ($1, $2, $3, $4, 'Synthetic TMF study', '1.0')`, [ORG, studyId, accessibleProgram, `PROT-${suffix}`]);
+  return studyId;
+}
 const assessment = (submissionId: number, bearer = token) => request(app).post('/api/regulatory-assessments')
   .set('Authorization', `Bearer ${bearer}`).send({ submissionId, assessmentType: `${PREFIX}-${++serial}`, ready: false,
     result: { fixture: PREFIX, verification: 'not-established' }, organizationId: FOREIGN_ORG, userId: foreignUserId });
 const rows = (trial: string) => owner.query('SELECT * FROM tmf_artifact_filings WHERE trial_id=$1 ORDER BY organization_id', [trial]);
 const auditRows = (resourceId: string) => owner.query(`SELECT tenant_id,user_id,action,table_name,record_id,sha256_chain,hmac_seal
   FROM audit_logs WHERE tenant_id=$1 AND record_id=$2 ORDER BY occurred_at`, [ORG, resourceId]);
+
+type TxClient = { query: (...q: unknown[]) => Promise<unknown> };
+
+/** A statement of this run on one of the two business tables, with its tenant parameter rewritten to the other organization. */
+function withForeignTenant(qargs: unknown[]): unknown[] | null {
+  const { text, values, config } = queryParts(qargs);
+  const tenant = businessTenantParameter(text);
+  const ownedStatement = values?.some(value => typeof value === 'string' && value.includes(PREFIX));
+  if (!values || !ownedStatement || tenant < 0 || values[tenant] !== ORG) return null;
+  const replacement = [...values];
+  replacement[tenant] = FOREIGN_ORG;
+  return config && !Array.isArray(qargs[1]) ? [{ ...config, values: replacement }, ...qargs.slice(1)] : [qargs[0], replacement, ...qargs.slice(2)];
+}
+
+/** Whether this statement files this run's investigators_brochure: the item whose COMMIT acknowledgement the bulk case loses. */
+function filesTheUncertainItem(qargs: unknown[]): boolean {
+  const { text, values } = queryParts(qargs);
+  return businessTenantParameter(text) >= 0 && Boolean(values?.includes('investigators_brochure')) &&
+    Boolean(values?.some(value => typeof value === 'string' && value.includes(PREFIX)));
+}
+
+/** One connection's statements under the active control. `state` remembers that this transaction's COMMIT is to be lost. */
+function controlledStatement(run: TxClient['query'], qargs: unknown[], state: { commitWillBeLost: boolean }): Promise<unknown> {
+  const { text, values } = queryParts(qargs);
+  // The audit row of a TMF act cannot be written: the driver rejects it inside the transaction.
+  if (control === 'tmf-audit-loss' && /^\s*INSERT INTO audit_logs/i.test(text) && values?.includes('tmf_artifact')) return Promise.reject(new Error(SECRET));
+  if (control === 'bulk-completion-loss' && filesTheUncertainItem(qargs)) state.commitWillBeLost = true;
+  // COMMIT reaches PostgreSQL and its acknowledgement is lost: the filing is durable and the caller cannot know.
+  if (state.commitWillBeLost && /^\s*COMMIT\b/i.test(text)) {
+    state.commitWillBeLost = false;
+    return run(...qargs).then(() => { throw Object.assign(new Error(SECRET), { code: 'ECONNRESET' }); });
+  }
+  const foreign = control === 'business-refusal' ? withForeignTenant(qargs) : null;
+  if (!foreign) return run(...qargs);
+  return run(...foreign).catch(error => { refusedBusinessCode = (error as { code?: string }).code; throw error; });
+}
+
+/**
+ * The TMF writer runs in a transaction on one connection (E3), so its controls
+ * act on that connection. A released client drops them: the pool's own wrapper
+ * restores the connection's query on release.
+ */
+function interceptTmfTransactions(): void {
+  originalConnect = sharedPool.connect;
+  sharedPool.connect = (async (...args: unknown[]) => {
+    const client = await (Reflect.apply(originalConnect, sharedPool, args) as Promise<TxClient | undefined>);
+    if (control === 'none' || !client) return client;
+    const run = client.query.bind(client);
+    const state = { commitWillBeLost: false };
+    client.query = (...qargs: unknown[]) => controlledStatement(run, qargs, state);
+    return client;
+  }) as unknown as Pool['connect'];
+}
 
 const priorAuditHmacKey = process.env.AUDIT_HMAC_KEY;
 const priorAuditHmacSecret = process.env.AUDIT_HMAC_SECRET;
@@ -117,6 +190,7 @@ beforeAll(async () => {
       file_name,file_size,mime_type,content_hash,s3_bucket,s3_key,created_by)
       VALUES($1,$2,$3,$4::text,$4::text,'PROTOCOL','1.0','synthetic-protocol.pdf',1,'application/pdf',$5,'synthetic-local','synthetic-key',$6)`,
     [id, program, org, `TMF-${id}`, 'a'.repeat(64), actor]);
+    if (name === 'accessible-source') accessibleProgram = program;
     return id;
   };
   accessibleDocument = await sourceDocument(ORG, workspace, userId, 'accessible-source');
@@ -169,6 +243,7 @@ beforeAll(async () => {
     const actual = config && !Array.isArray(args[1]) ? [{ ...config, values: replacement }, ...args.slice(1)] : [args[0], replacement, ...args.slice(2)];
     return (Reflect.apply(delegate, sharedPool, actual) as Promise<unknown>).catch(error => { refusedBusinessCode = (error as { code?: string }).code; throw error; });
   }) as Pool['query'];
+  interceptTmfTransactions();
 });
 
 afterAll(async () => {
@@ -176,6 +251,7 @@ afterAll(async () => {
   restoreAuditKeys();
   auditSpy?.mockRestore();
   if (sharedPool && originalQuery) sharedPool.query = originalQuery;
+  if (sharedPool && originalConnect) sharedPool.connect = originalConnect;
   if (owner) await owner.end();
   if (runtime) await runtime.end();
   if (sharedPool) await sharedPool.end();
@@ -204,17 +280,21 @@ function registerTmfAssessmentReceiptsCases1() {
     expect(scope.status).toBe(200);
     expect(scope.body.functionalRoles).toEqual(['member', 'regulatory-author']);
     expect((await request(app).get('/native-tmf-assessment-admin').set('Authorization', `Bearer ${forgedClaims}`)).status).toBe(403);
-    expect((await file(`${PREFIX}-current-member-claims`, forgedClaims)).status).toBe(201);
+    expect((await file(await study('current-member-claims'), forgedClaims)).status).toBe(201);
   });
 
   it('records native identities with verified actor/org and retrievable sealed audit rows', async () => {
-    const trial = `${PREFIX}-positive`;
+    const trial = await study('positive');
     const filed = await file(trial);
     expect(filed.status, JSON.stringify(filed.body)).toBe(201);
     expect(filed.body).toMatchObject({ organizationId: ORG, createdBy: userId, trialId: trial, meta: { auditTrail: { persisted: true, chained: true } } });
-    expect((await rows(trial)).rows).toMatchObject([{ id: filed.body.id, organization_id: ORG, created_by: userId }]);
+    expect(filed.body.studyRef).toEqual(expect.any(Number));
+    expect((await rows(trial)).rows).toMatchObject([{ id: filed.body.id, organization_id: ORG, created_by: userId, study_ref: filed.body.studyRef }]);
     const receipt = (await auditRows(filed.body.id)).rows;
     expect(receipt).toMatchObject([{ tenant_id: ORG, user_id: userId, action: 'TMF_ARTIFACT_FILED', table_name: 'tmf_artifact', record_id: filed.body.id }]);
+    // The filing and its audit row are one transaction's (E3).
+    expect((await owner.query('SELECT xmin::text AS tx FROM audit_logs WHERE tenant_id=$1 AND record_id=$2', [ORG, filed.body.id])).rows)
+      .toEqual((await owner.query('SELECT xmin::text AS tx FROM tmf_artifact_filings WHERE id=$1', [filed.body.id])).rows);
     expect(receipt[0].sha256_chain).toMatch(/^[a-f0-9]{64}$/);
     expect(receipt[0].hmac_seal).toBeTruthy();
     const recorded = await assessment(12345);
@@ -225,39 +305,48 @@ function registerTmfAssessmentReceiptsCases1() {
   });
 
   it('refuses viewer mutations and foreign reads/deletes without new audits', async () => {
-    const trial = `${PREFIX}-access`;
+    const trial = await study('access');
     const filed = await file(trial);
     const recorded = await assessment(12346);
     const calls = auditSpy.mock.calls.length;
-    expect((await file(`${trial}-viewer`, viewerToken)).status).toBe(403);
+    const tmfAudits = async () => (await owner.query("SELECT count(*)::int AS n FROM audit_logs WHERE tenant_id=$1 AND table_name='tmf_artifact'", [ORG])).rows[0].n;
+    const recordedTmfAudits = await tmfAudits();
+    expect((await file(trial, viewerToken, 'sample_crf')).status).toBe(403);
     expect((await assessment(12347, viewerToken)).status).toBe(403);
-    expect((await request(app).delete(`/api/etmf/artifacts/${filed.body.id}`).set('Authorization', `Bearer ${viewerToken}`)).status).toBe(403);
-    expect((await request(app).get(`/api/etmf/trials/${trial}/artifacts`).set('Authorization', `Bearer ${foreignToken}`)).body).toEqual([]);
-    expect((await request(app).delete(`/api/etmf/artifacts/${filed.body.id}`).set('Authorization', `Bearer ${foreignToken}`)).status).toBe(404);
+    expect((await request(app).delete(`/api/etmf/artifacts/${filed.body.id}`).set('Authorization', `Bearer ${viewerToken}`).send({ reason: REASON })).status).toBe(403);
+    // Another organization does not see the study at all: 404, where an unbound trial label used to answer an empty list.
+    const foreignRead = await request(app).get(`/api/etmf/trials/${trial}/artifacts`).set('Authorization', `Bearer ${foreignToken}`);
+    expect(foreignRead.status).toBe(404);
+    expect(foreignRead.body).toMatchObject({ success: false, error: 'STUDY_NOT_FOUND' });
+    expect((await file(trial, foreignToken, 'sample_crf')).status).toBe(404);
+    expect((await request(app).delete(`/api/etmf/artifacts/${filed.body.id}`).set('Authorization', `Bearer ${foreignToken}`).send({ reason: REASON })).status).toBe(404);
     expect((await request(app).get(`/api/regulatory-assessments/${recorded.body.id}`).set('Authorization', `Bearer ${foreignToken}`)).status).toBe(404);
     expect(auditSpy.mock.calls).toHaveLength(calls);
+    expect(await tmfAudits()).toBe(recordedTmfAudits);
     expect((await rows(trial)).rows).toHaveLength(1);
   });
 }
 
 function registerTmfAssessmentReceiptsCases2() {
 
-  it.each(['audit-refusal', 'audit-thrown'] as const)('%s preserves the real filing and idempotent retry recovers a real audit', async mode => {
-    const trial = `${PREFIX}-${mode}`;
-    control = mode;
+  it('a filing whose audit row cannot be written is rolled back, and a retry files and records both', async () => {
+    /* Until 2026-11-10 this case held the opposite: the filing stood (201) with
+       AUDIT_ROW_NOT_PERSISTED beside it. The audit row is now the filing
+       transaction's own, so PostgreSQL keeps neither. */
+    const trial = await study('audit-loss');
+    control = 'tmf-audit-loss';
     const response = await file(trial);
     control = 'none';
-    expect(response.status, JSON.stringify(response.body)).toBe(201);
-    expect(response.body.meta.auditTrail).toMatchObject({ persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED' });
+    expect(response.status, JSON.stringify(response.body)).toBe(500);
+    expect(response.body).toMatchObject({ success: false, error: 'INTERNAL' });
     expect(JSON.stringify(response.body)).not.toContain(SECRET);
-    expect((await rows(trial)).rows).toHaveLength(1);
-    expect((await auditRows(response.body.id)).rows).toEqual([]);
-    if (mode === 'audit-refusal') expect(auditRefusal).toMatchObject({ persisted: false, chained: false, tamperProof: false });
+    expect((await rows(trial)).rows).toEqual([]);
+    expect((await owner.query("SELECT 1 FROM audit_logs WHERE tenant_id=$1 AND table_name='tmf_artifact' AND new_values::text LIKE $2", [ORG, `%${trial}%`])).rows).toEqual([]);
     const retry = await file(trial);
-    expect(retry.body.id).toBe(response.body.id);
+    expect(retry.status, JSON.stringify(retry.body)).toBe(201);
     expect(retry.body.meta.auditTrail).toEqual({ persisted: true, chained: true });
     expect((await rows(trial)).rows).toHaveLength(1);
-    expect((await auditRows(response.body.id)).rows).toHaveLength(1);
+    expect((await auditRows(retry.body.id)).rows).toHaveLength(1);
   });
 
   it('reports an assessment audit refusal without losing or replaying its append-only snapshot', async () => {
@@ -272,23 +361,35 @@ function registerTmfAssessmentReceiptsCases2() {
     expect((await auditRows(recorded.body.id)).rows).toEqual([]);
   });
 
-  it('preserves the 204 removal and reports its failed audit through headers', async () => {
-    const trial = `${PREFIX}-remove`;
+  it('a removal whose audit row cannot be written is rolled back; a retry marks the row removed and records it', async () => {
+    /* Until 2026-11-10: the row was deleted (204) and the lost audit row was
+       reported in a header. A removal now keeps the row, and is not made
+       without its audit row. */
+    const trial = await study('remove');
     const created = await file(trial);
-    control = 'audit-refusal';
-    const removed = await request(app).delete(`/api/etmf/artifacts/${created.body.id}`).set('Authorization', `Bearer ${token}`);
+    const remove = () => request(app).delete(`/api/etmf/artifacts/${created.body.id}`).set('Authorization', `Bearer ${token}`)
+      .send({ reason: 'Synthetic removal for the native audit proof.' });
+    control = 'tmf-audit-loss';
+    const refused = await remove();
     control = 'none';
-    expect(removed.status).toBe(204);
-    expect(removed.headers['x-audit-row-persisted']).toBe('false');
-    expect(removed.headers['x-audit-row-code']).toBe('AUDIT_ROW_NOT_PERSISTED');
-    expect((await rows(trial)).rows).toEqual([]);
+    expect(refused.status).toBe(500);
+    expect(refused.headers['x-audit-row-persisted']).toBeUndefined();
+    expect(JSON.stringify(refused.body)).not.toContain(SECRET);
+    expect((await rows(trial)).rows).toMatchObject([{ id: created.body.id, removed_at: null, removal_reason: null }]);
     expect((await auditRows(created.body.id)).rows).toHaveLength(1); // creation only
+    const removed = await remove();
+    expect(removed.status).toBe(204);
+    expect(removed.headers['x-audit-row-persisted']).toBe('true');
+    expect(removed.headers['x-audit-row-code']).toBeUndefined();
+    expect((await rows(trial)).rows).toMatchObject([{ id: created.body.id, removed_by: userId, removal_reason: 'Synthetic removal for the native audit proof.' }]);
+    expect((await auditRows(created.body.id)).rows.map(row => row.action)).toEqual(['TMF_ARTIFACT_FILED', 'TMF_ARTIFACT_REMOVED']);
+    expect((await request(app).get(`/api/etmf/trials/${trial}/artifacts`).set('Authorization', `Bearer ${token}`)).body).toEqual([]);
   });
 
   it('real RLS business refusals produce neither a business row nor an ancillary audit', async () => {
     control = 'business-refusal';
     const calls = auditSpy.mock.calls.length;
-    const trial = `${PREFIX}-business-refusal`;
+    const trial = await study('business-refusal');
     const filed = await file(trial);
     const recorded = await assessment(12349);
     control = 'none';
@@ -306,10 +407,10 @@ function registerTmfAssessmentReceiptsCases2() {
 function registerTmfAssessmentReceiptsCases3() {
 
   it('bulk completion loss preserves earlier receipts, marks uncertainty and stops before remaining writes', async () => {
-    const trial = `${PREFIX}-bulk-completion-loss`;
+    const trial = await study('bulk-completion-loss');
     control = 'bulk-completion-loss';
     const response = await request(app).post(`/api/etmf/trials/${trial}/artifacts/bulk`).set('Authorization', `Bearer ${token}`)
-      .send({ artifacts: [{ artifactCode: 'protocol' }, { artifactCode: 'investigators_brochure' }, { artifactCode: 'sample_crf' }] });
+      .send({ reason: REASON, artifacts: [{ artifactCode: 'protocol' }, { artifactCode: 'investigators_brochure' }, { artifactCode: 'sample_crf' }] });
     control = 'none';
     expect(response.status, JSON.stringify(response.body)).toBe(207);
     expect(response.body).toMatchObject({ partial: true, filed: 1, total: 3,
@@ -325,27 +426,31 @@ function registerTmfAssessmentReceiptsCases3() {
     const recovered = await file(trial, token, 'investigators_brochure');
     expect(recovered.status).toBe(201);
     expect((await rows(trial)).rows).toHaveLength(2);
-    expect((await request(app).get(response.body.recovery.url).set('Authorization', `Bearer ${foreignToken}`)).body).toEqual([]);
+    expect((await request(app).get(response.body.recovery.url).set('Authorization', `Bearer ${foreignToken}`)).status).toBe(404);
   });
 
-  it('checks each Vault reference against its actual project while retaining an unbound trial label', async () => {
-    const trial = `${PREFIX}-private-source-check`;
+  it('holds each Vault reference to the study\'s own project, with one refusal for any other document', async () => {
+    /* Until 2026-11-10 the trial was an unbound label and each reference was
+       checked against its own project: a private project's document answered
+       DOCUMENT_ACCESS_DENIED and another organization's UNRESOLVABLE_DOCUMENT_REF.
+       The study has a project now, and a document outside it is one refusal. */
+    const trial = await study('private-source-check');
     const response = await request(app).post(`/api/etmf/trials/${trial}/artifacts/bulk`).set('Authorization', `Bearer ${token}`)
-      .send({ artifacts: [{ artifactCode: 'protocol', documentRef: `vault://${accessibleDocument}` },
+      .send({ reason: REASON, artifacts: [{ artifactCode: 'protocol', documentRef: `vault://${accessibleDocument}` },
         { artifactCode: 'investigators_brochure', documentRef: `vault://${privateDocument}` },
         { artifactCode: 'sample_crf', documentRef: `vault://${foreignDocument}` }] });
     expect(response.status, JSON.stringify(response.body)).toBe(200);
     expect(response.body).toMatchObject({ filed: 1, results: [
       { artifactCode: 'protocol', ok: true },
-      { artifactCode: 'investigators_brochure', ok: false, error: 'DOCUMENT_ACCESS_DENIED' },
-      { artifactCode: 'sample_crf', ok: false, error: 'UNRESOLVABLE_DOCUMENT_REF' }] });
+      { artifactCode: 'investigators_brochure', ok: false, error: 'DOCUMENT_NOT_IN_PROJECT' },
+      { artifactCode: 'sample_crf', ok: false, error: 'DOCUMENT_NOT_IN_PROJECT' }] });
     expect((await rows(trial)).rows).toMatchObject([{ document_ref: `vault://${accessibleDocument}` }]);
     expect(JSON.stringify(response.body)).not.toContain(privateDocument);
     expect(JSON.stringify(response.body)).not.toContain(foreignDocument);
   });
 }
 
-describe('native TMF and assessment ancillary audit outcomes', () => {
+describe('native TMF and assessment audit outcomes', () => {
   registerTmfAssessmentReceiptsCases1();
   registerTmfAssessmentReceiptsCases2();
   registerTmfAssessmentReceiptsCases3();

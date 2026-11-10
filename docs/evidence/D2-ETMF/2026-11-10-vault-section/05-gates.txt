@@ -1,0 +1,53 @@
+# 05-gates: the client-facing gates on the changed tree (the last lines of each)
+
+$ npm run -s ci:one-product    -> exit 0
+ci:one-product: 101 surfaces, 11 rail entries, none new.
+
+$ npm run -s ci:undefined-css-classes    -> exit 0
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+
+$ npm run -s ci:class-vocabulary    -> exit 0
+[ci:class-vocabulary] OK — 6066 file(s) scanned, no restated class vocabulary.
+
+$ npm run -s ci:design-system    -> exit 0
+[design-system] OK — no icon-library, spring/bounce or inline <style> violations on live concept2cure surfaces.
+
+$ npm run -s ci:unauthenticated-fetch    -> exit 0
+✅ ci:unauthenticated-fetch — 73 raw fetch() call(s) scanned; every one sends the bearer token or targets a public endpoint (0 baselined).
+
+$ npm run -s ci:fixture-fallback    -> exit 0
+  baselined (known, unfixed) : 0
+✅ no new ungated fixture fallback. 0 baselined.
+
+$ npm run -s ci:fabricated-identity    -> exit 0
+[ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new.
+
+$ npm run -s ci:launch-scope    -> exit 0
+[ci:launch-scope] 9 apps · 43 surfaces · 12 modules · 32 surface files checked for fixture imports
+✅ launch scope is routable, registered, licensable and fixture-free
+
+$ npm run -s ci:ana-surface-context    -> exit 0
+  several, and a child can publish for a parent that has no call of its own
+  (69 surface file(s) hold a call).
+
+$ npm run -s ci:surface-discoverability    -> exit 0
+[ci:surface-discoverability] OK — 103 renderable surface(s): 78 in the Apps catalog, 25 declared contextual.
+
+$ npm run -s ci:launch-scope-api    -> exit 1
+ci:launch-scope-api: 2 API path(s) that launch or shell screens call are not attributed to the launch scope:
+"out-of-scope" is refused in production today; "unmapped" is claimed by no surface. Declare each prefix on the
+launch surface that calls it (shared/constants/ui-surface-registry*.ts apiPrefixes), or, if the shell uses it
+whatever app is open, on LAUNCH_PLATFORM_API with its reason — or stop calling it.
+  [out-of-scope] /api/etmf/trials/:p
+    called by vault
+    in client/src/concept2cure/v2/surfaces/VaultTrialMasterFile.tsx
+  [out-of-scope] /api/etmf/artifacts/:p
+    called by vault
+    in client/src/concept2cure/v2/surfaces/VaultTrialMasterFile.tsx
+
+$ node scripts/ci/check-eslint-warning-ratchet.mjs --since HEAD
+[ci:eslint-warning-ratchet] --since HEAD (bb17f97b7) -- 13 lintable file(s) changed; linting both versions of each...
+[ci:eslint-warning-ratchet] no file changed its warning count since HEAD.
+
+ci:launch-scope-api on both source files as at HEAD (Vault.tsx from 'git show HEAD:', the new file absent): exit 0,
+"639 API paths named by launch and shell screens; none refused."

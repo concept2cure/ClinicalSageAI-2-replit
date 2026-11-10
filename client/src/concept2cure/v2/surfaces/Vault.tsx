@@ -3177,9 +3177,9 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
               type="button"
               className="btn ghost"
               onClick={() => onNav && onNav('etmf')}
-              title="TMF inspection-readiness — completeness, timeliness & QC"
+              title="Open the trial master file of this project’s study: its essential records, filed and missing"
             >
-              {I.shieldCheck} Inspection readiness
+              {I.shieldCheck} Trial master file
             </button>
           )}
           {canWrite ? (

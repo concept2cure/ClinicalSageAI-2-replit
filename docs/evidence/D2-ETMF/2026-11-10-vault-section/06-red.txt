@@ -1,0 +1,242 @@
+# 06-red: this change's tests on the unchanged code (HEAD 23e1296daa)
+#
+# (a) The three source files as at HEAD: Vault.tsx and Etmf.tsx (the retired screen) restored with
+#     'git show HEAD:', VaultTrialMasterFile.tsx absent (it is not on trunk). The section's suite cannot be
+#     collected; the page's suite runs against the old screen and the old button.
+# $ DEBUG_PRINT_LIMIT=0 npx vitest run --config vitest.config.ts client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx > the page that hosts the trial master file > with a project open: the way back, one title, and the section for that project’s study 157ms
+   → expected [ 'Inspection readiness' ] to deeply equal [ 'Trial master file' ]
+ × client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx > the page that hosts the trial master file > with no project open: says a trial master file belongs to a project’s study, offers Projects, and reads nothing 13ms
+   → Unable to find an element by: [data-testid="etmf-no-project"]
+
+Ignored nodes: comments, script, style
+...
+ × client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx > what AnA can see of the page is what the section read > the study, the verdict as the server gave it, and the counts 5010ms
+   → Unable to find an element by: [data-testid="vault-tmf-verdict"]
+
+Ignored nodes: comments, script, style
+...
+
+Ignored nodes: comments, script, style
+...
+ × client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx > what AnA can see of the page is what the section read > not determined is published as not determined, with the server’s null, never as missing or not ready 5011ms
+   → expected undefined to be 'undetermined' // Object.is equality
+
+Ignored nodes: comments, script, style
+...
+ × client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx > what AnA can see of the page is what the section read > a refused read is published as that refusal, not as an empty or unready trial master file 5014ms
+   → Unable to find an element by: [data-testid="vault-tmf-error"]
+
+Ignored nodes: comments, script, style
+...
+
+Ignored nodes: comments, script, style
+...
+ × client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx > what AnA can see of the page is what the section read > a project with no study, or with several and none chosen, is published as that 5011ms
+   → expected 'eTMF inspection readiness is computed…' to match /^The open project has no study, so it…/
+
+Ignored nodes: comments, script, style
+...
+ × client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx > the Vault’s header button > is named "Trial master file" and opens the page that hosts it 238ms
+   → expected <button type="button" …(2)>…(1)</button> to be null
+ ✓ client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx > the Vault’s header button > is not offered where that page is locked, and the Vault itself reads nothing of the trial master file 246ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx [ client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx ]
+Error: Failed to resolve import "../surfaces/VaultTrialMasterFile" from "client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /home/user/ClinicalSageAI-2-replit/client/src/concept2cure/v2/__tests__/vaultTrialMasterFile.test.tsx:40:0
+  12 |  const __vi_import_1__ = await import("@testing-library/react");
+  13 |  const __vi_import_2__ = await import("@shared/constants/domain/tmf-reference-model");
+  14 |  const __vi_import_3__ = await import("../surfaces/VaultTrialMasterFile");
+     |                                       ^
+  15 |  const __vi_import_4__ = await import("./_vault-surface-fixtures");
+  16 |  const __vi_import_5__ = await import("./_vault-tmf-fixtures");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx > the page that hosts the trial master file > with a project open: the way back, one title, and the section for that project’s study
+AssertionError: expected [ 'Inspection readiness' ] to deeply equal [ 'Trial master file' ]
+
+- Expected
++ Received
+
+  [
+-   "Trial master file",
++   "Inspection readiness",
+  ]
+
+ ❯ client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx:68:84
+     66|     openProject();
+     67|     const onNav = page();
+     68|     expect(screen.getAllByRole('heading', { level: 1 }).map((h) => h.t…
+       |                                                                                    ^
+     69|     // The page is titled once: the section's own heading names what i…
+     70|     const section = screen.getByTestId('vault-tmf');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx > the page that hosts the trial master file > with no project open: says a trial master file belongs to a project’s study, offers Projects, and reads nothing
+TestingLibraryElementError: Unable to find an element by: [data-testid="etmf-no-project"]
+
+Ignored nodes: comments, script, style
+...
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx:85:26
+     83|   it('with no project open: says a trial master file belongs to a proj…
+     84|     const onNav = page();
+     85|     const empty = screen.getByTestId('etmf-no-project');
+       |                          ^
+     86|     expect(empty.textContent).toMatch(/Open a project to see its trial…
+     87|     expect(empty.textContent).toMatch(/A trial master file belongs to …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx > what AnA can see of the page is what the section read > the study, the verdict as the server gave it, and the counts
+TestingLibraryElementError: Unable to find an element by: [data-testid="vault-tmf-verdict"]
+
+Ignored nodes: comments, script, style
+...
+
+Ignored nodes: comments, script, style
+...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx:102:18
+    100|     openProject();
+    101|     page();
+    102|     await screen.findByTestId('vault-tmf-verdict');
+       |                  ^
+    103|     await waitFor(() => expect(facts().verdict).toBe('incomplete'));
+    104|     expect(published?.summary).toBe(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx > what AnA can see of the page is what the section read > not determined is published as not determined, with the server’s null, never as missing or not ready
+AssertionError: expected undefined to be 'undetermined' // Object.is equality
+
+Ignored nodes: comments, script, style
+...
+
+- Expected:
+"undetermined"
+
++ Received:
+undefined
+
+ ❯ client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx:129:49
+    127|     }));
+    128|     page();
+    129|     await waitFor(() => expect(facts().verdict).toBe('undetermined'));
+       |                                                 ^
+    130|     expect(facts().ready).toBeNull();
+    131|     expect(published?.summary).toMatch(/essential records\. Not determ…
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx > what AnA can see of the page is what the section read > a refused read is published as that refusal, not as an empty or unready trial master file
+TestingLibraryElementError: Unable to find an element by: [data-testid="vault-tmf-error"]
+
+Ignored nodes: comments, script, style
+...
+
+Ignored nodes: comments, script, style
+...
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx:139:18
+    137|     tmf.refuseWith.completeness = () => { throw refusal(403, NOT_RELEA…
+    138|     page();
+    139|     await screen.findByTestId('vault-tmf-error');
+       |                  ^
+    140|     await waitFor(() => expect(published?.summary).toMatch(/^This part…
+    141|     expect(published?.summary).toMatch(/not because the trial master f…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx > what AnA can see of the page is what the section read > a project with no study, or with several and none chosen, is published as that
+AssertionError: expected 'eTMF inspection readiness is computed…' to match /^The open project has no study, so it…/
+
+Ignored nodes: comments, script, style
+...
+
+- Expected:
+/^The open project has no study, so it has no trial master file\./
+
++ Received:
+"eTMF inspection readiness is computed per trial and no trial is named yet, so there is no completeness verdict on screen — this is not an empty or unready TMF."
+
+ ❯ client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx:150:52
+    148|     tmf.studies = [];
+    149|     page();
+    150|     await waitFor(() => expect(published?.summary).toMatch(/^The open …
+       |                                                    ^
+    151|     cleanup();
+    152|     tmf.studies = [STUDY, EXTENSION];
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx > the Vault’s header button > is named "Trial master file" and opens the page that hosts it
+AssertionError: expected <button type="button" …(2)>…(1)</button> to be null
+
+- Expected:
+null
+
++ Received:
+<button
+  class="btn ghost"
+  title="TMF inspection-readiness — completeness, timeliness & QC"
+  type="button"
+>
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-shield-check"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"
+    />
+    <path
+      d="m9 12 2 2 4-4"
+    />
+  </svg>
+   Inspection readiness
+</button>
+
+ ❯ client/src/concept2cure/v2/__tests__/etmfHostsTrialMasterFile.test.tsx:177:76
+    175|     const p = await openVault();
+    176|     // The founder did not recognise "Inspection readiness" as the tri…
+    177|     expect(screen.queryByRole('button', { name: /Inspection readiness/…
+       |                                                                            ^
+    178|     fireEvent.click(screen.getByRole('button', { name: /Trial master f…
+    179|     expect(p.onNav).toHaveBeenCalledWith('etmf');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  7 failed | 1 passed (8)
+   Start at  12:48:04
+   Duration  24.15s (transform 1.90s, setup 152ms, import 2.29s, tests 20.70s, environment 676ms)
+
+# exit: 1
