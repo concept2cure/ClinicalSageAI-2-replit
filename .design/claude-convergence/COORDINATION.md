@@ -502,3 +502,22 @@ After publication, these existing-file scopes are assigned within the P-104 cont
 
 No agent adds a source file, screen, mount, table, tool, model or dependency, and no baseline or ceiling grows.
 Existing code is extended or cohesively rehomed inside existing related files. Root retains Git, plan and compiler.
+
+## The CSR path with a provider present — 2026-11-10 (`01QoxbLZ…`, F1/L1, holds no files)
+
+Walked with the Codespace's start script and a strict stand-in for the Anthropic API; record and scripts in
+`docs/evidence/D2-CSR/2026-11-10-build-provider-refusals/`. Landed: the CSR build waits out a limit and stops with a
+typed reason on a refused key, an empty account or no drafting model (`csr/csr-draft-refusal.ts`, split out of
+`csr-builder.ts`); a part number is not a figure (`unsupplied-statistics.ts`); the review-route reads are record
+reads (`redisRateLimiter.ts`); the Codespace start makes one real drafting request
+(`codespaces-doctor.mjs --probe-anthropic-usage`). A whole-report build completes at 100% against the stand-in.
+
+- **→ the founder (decisions, none taken here):** imported model-drafted text is never releasable
+  (`WORKFLOW_MODEL_QUALIFICATION_REQUIRED` has no branch for a PQ-passed model, and every `pq.status` is pending);
+  the assembled CSR files are refused at release unconditionally (`renderedLeafNotTransmittable`; the binding to the
+  signed Authoring CSR is not built); all 119 headings must hold text and none can be marked not applicable.
+- **→ S4/CSR owners:** when source-tier propagation reaches the CSR builder's gateway calls, a build over
+  CONFIDENTIAL study tables will be refused on first-party Anthropic. Decide the tables' classification or the lane
+  before it lands.
+- **→ the CSR lane:** a failed build cannot be resumed from the screen ("Build CSR draft" starts a new one), though
+  `runCSRBuildJob` resumes a failed job. No real Claude request has been made on this path yet.
