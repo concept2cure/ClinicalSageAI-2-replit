@@ -1,0 +1,46 @@
+▶ 1/8 Prerequisites — schemas + extensions
+  ✓ schemas (vault, precedent, audit, extensions) + extensions (pgcrypto, uuid-ossp, pg_trgm)
+  ✓ pgvector (extension "vector") present
+▶ 2/8 Tables — drizzle-kit push
+  ✓ schema pushed from ./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts (489 of 495 declared tables verified present here: 489 in public, 6 in vault)
+▶ 3/8 Complete schema — raw migration overlay
+  ✓ pre-overlay creator: db/migrations/20260401_cmc_convergence_os.sql
+  ✓ pre-overlay creator: db/migrations/20260224_ai_trace_chain.sql
+  ✓ pre-overlay creator: db/migrations/20260730_cmc_projects_reconstruction.sql
+  ✓ pre-overlay creator: db/migrations/20260730_manufacturing_processes_reconstruction.sql
+  ✓ pre-overlay creator: db/migrations/20260730_fk_delete_policies_port.sql
+  ✓ pre-overlay creator: db/migrations/20260917_ana_runs.sql
+  ✓ pre-overlay creator: db/migrations/20260331_communication_center_scaffold.sql
+  ✓ overlay: 391 applied, 1 already-present from push
+▶ 4/8 Authoring subsystem (Part-11 unit)
+  ✓ authoring subsystem provisioned as a unit (9 files, 23 tables, tenant-isolated)
+▶ 5/8 Row-Level Security policies (raw migrations)
+  ✓ coerced residual text tenant columns to integer (fresh-DB safe)
+  ✓ applied 0005_csr_knowledge_database.sql
+  ✓ applied 0019_tenant_column_audit.sql
+  ✓ applied 0020_coerce_text_tenant_columns.sql
+  ✓ applied 0021_enable_rls_everywhere.sql
+  ✓ applied 20260608_ai_placement_policies.sql
+  ✓ applied 20260612_rls_research_admin.sql
+▶ 6/8 Governed content — Part 11 audit tree (*_gcc_*.sql)
+  ✓ governed content: 40/40 applied
+  ✓ re-applied 30/30 root file(s) guarded on a named schema (their dependency exists only after this tree)
+  ✓ tenant-isolation sweep re-run over the tables this tree created
+  ✓ non-public uuid-tenant tables policied
+  ✓ child tables scoped to their tenant-keyed parents
+▶ 7/8 Runtime role — non-superuser grants
+▶ 8/8 Verify
+  tables (public): 839
+  RLS policies:    1048
+    ✓ stability_studies — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · RLS on organization_id
+    ✓ project_intelligence_profiles — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · RLS on organization_id
+    ✓ immutable_report_records — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · RLS on organization_id
+    ✓ evidence_claims — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · RLS on organization_id
+    ✓ conversation_working_memory — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · RLS on organization_id
+    ✓ ana_capability_registry — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · global (no tenant scope, no policy expected)
+    ✓ report_type_registry — from drizzle-kit push (./shared/schema.ts, ./shared/schema/ana-intelligence.ts, ./shared/schema/report-os.ts) · global (no tenant scope, no policy expected)
+    ✓ doc_permissions — from authoring subsystem (db/migrations/20260725_authoring_*) · RLS on tenant_id
+  tenant isolation: every integer tenant-keyed table is policied ✓
+✅ Application schema install complete.
+   • set RLS_ENFORCE=on and restart to enforce tenant isolation;
+EXIT 0

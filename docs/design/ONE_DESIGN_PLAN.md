@@ -1484,6 +1484,23 @@ first.
    and Respond use the calm section pattern, and Respond lists Commitments from the page's one read. This includes Tasks and approvals on Plan, the Tasks handoff opening Plan, and
    Module completion without the ring.
 
+#### F1 — the project page's walk findings, closed (session `session_01QoxbLcnW5jPvJSjjKQtvTA`, 2026-11-10)
+
+The D3-4 session's acceptance walk handed four findings to other owners. None of their files is held, so this
+session took them under F1.
+- **The inbox's "Draft response with AnA" is a quiet button**, `d4a3934b7`,
+  `docs/evidence/F1/2026-11-10-inbox-draft-button-quiet/`. The list is one component in Communication, the HAQ
+  manager and Respond, and it put a filled orange button on every open letter. It is now `cc-btn sm` like its
+  neighbours. It was red on trunk and is green (42 tests); in the running app each view keeps one orange.
+- **"install-fresh refuses `ctd_cross_references`" does not reproduce on trunk.**
+  `docs/evidence/F1/2026-11-10-install-fresh-ctd-cross-references/`: on an empty database the install and then
+  deploy-migrate both exit 0, and the table is policied through `csr_studies`. The report fits a partial install
+  with pgvector absent. No code change.
+- **Already fixed on trunk, by others:** Tasks hands a project task to Plan (`stage: 'plan'` in
+  `TaskBoard.tsx` `publishNativeTaskHome`), and the `documents` alias follows Vault (`projectDestination`,
+  `projectCreationDoors.contract`: 32 of 32 pass).
+- **Left with its owner:** the demo seed's Lumen pack recorded on other projects' data rooms (DATA).
+
 #### D3 — The project page, D3-4 (session `session_01FTWcmXm7At3ZXBE5VWn6oS`, from 2026-11-08, P-107 item 7)
 
 - **D3-4, the step bodies**, `d50c5f07e`, `docs/evidence/DESIGN/D3/D3-4/`. It completes the six items of the
