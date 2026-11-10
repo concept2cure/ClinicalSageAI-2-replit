@@ -187,7 +187,7 @@ async function checkCsrCatalog() {
 async function openVersions(page, file) {
   await page.goto(`${BASE}/concept2cure/vault?program=${state.data.programId}`, { waitUntil: 'networkidle' });
   await page.getByText(/^Uploads · \d+/).first().click();
-  await page.locator('main').getByText(file, { exact: true }).first().click();
+  await page.locator('main').getByText(file, { exact: true }).filter({ visible: true }).first().click();
   const versions = page.locator('aside.vd-detail details', { has: page.locator('summary', { hasText: /^Versions/ }) });
   await versions.waitFor();
   if (!(await versions.evaluate((d) => d.open))) await versions.locator('summary').click();
