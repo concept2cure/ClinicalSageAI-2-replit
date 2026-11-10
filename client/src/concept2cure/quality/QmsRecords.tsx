@@ -30,7 +30,7 @@ import { useRegisterContext } from './registerContext';
 import { EsignModal, esignSignerOf } from '../_shared/components/EsignModal';
 import { useAuthUser } from '@/services/portal/authService';
 import type { QmsRecordTab } from './qmsRecordData';
-import { type Column, type RecordRegisterContext, type RowAction, type RegisterConfig, type SignedStep } from './qmsRegisterKit';
+import { type Column, type RecordRegisterContext, type RowAction, type RegisterConfig, type SignedStep, inSentence } from './qmsRegisterKit';
 
 /** How many rows AnA is passed; the count says when there are more. */
 const MAX_FACT_ROWS = 100;
@@ -128,9 +128,8 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
       <section className="pj-sec qms-sec" aria-labelledby={headId}>
         <div className="pj-sec-h">
           <h2 id={headId}>{config.title}</h2>
-          {failed ? <span className="sec-sub" data-testid="qms-record-figures">The register could not be read.</span>
-            : !loaded ? <span className="sec-sub" data-testid="qms-record-figures">Reading the register…</span>
-              : rows.length > 0 && <span className="sec-sub" data-testid="qms-record-figures">
+          {/* Said once (C1, C4): an unread or failed register is said by its own line below, never here too. */}
+          {loaded && !failed && rows.length > 0 && <span className="sec-sub" data-testid="qms-record-figures">
                 {config.kpis(rows, today).map((k, i) => <React.Fragment key={k.label}>{i ? ' · ' : ''}{k.label}: <span data-tone={k.tone === 'err' || k.tone === 'warn' ? k.tone : undefined}>{k.val}</span></React.Fragment>)}
               </span>}
           <div className="pj-sec-acts">
@@ -139,9 +138,11 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
         </div>
         {failed && (
           <ErrorState
-            title={`The ${config.title.toLowerCase()} register could not be read`}
+            title={`The ${inSentence(config.title)} register could not be read`}
             message={read.error ?? 'The server did not return a list.'}
             retry={read.refresh}
+            read={read.failure}
+            readWhat={`the ${inSentence(config.title)} register`}
             testId="qms-record-failed"
           />
         )}

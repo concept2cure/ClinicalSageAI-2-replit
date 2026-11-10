@@ -43,7 +43,7 @@ export function TrainingExpiry({ assigned }: { assigned?: number | null }) {
       <span className="sec-sub">Lapsed, or lapsing in the next {TRAINING_EXPIRY_DAYS} days, across the active organization roster</span>
     </div>
     <div className="qms-train">
-      {st.failed && <ErrorState title="Training expiry could not be read" message={st.error} retry={st.refresh} testId="training-expiry-failed" />}
+      {st.failed && <ErrorState title="Training expiry could not be read" message={st.error} retry={st.refresh} read={st.failure} readWhat="the training expiry list" testId="training-expiry-failed" />}
       {!st.failed && st.rows === null && <EmptyState title="Reading training expiry…" busy />}
       {st.rows?.length === 0 && <EmptyState title={nothingLapsing(assigned)} />}
       {st.rows?.map((r) => (
