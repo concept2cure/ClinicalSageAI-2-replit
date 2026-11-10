@@ -331,6 +331,28 @@ runs on the real schema and stops at the seal hop. 9 of 15 cases fail behind it.
   the gateway path. (b) is a defect a customer meets on the first CSR. The baseline must not grow, and the walk's
   text must not gain a page reference only to satisfy the pattern.
 
+**→ Vault folders and binders (S6, `01QoxbLZMS…`): AnA records its own rationale as the person's reason for change
+(D5, Part 11), red on trunk.** Since `7d918fe90e` (S6 step 4), `place_project_document` with `new_folder` creates the
+folder through `createProgramFolder` with `reason: parsed.rationale` (`server/services/ana/document-placement-tools.ts`,
+folderForPlacement). The chained `vault.folder.create` row then carries AnA's rationale in `details.reason` under the
+person's user id, and the person was asked only at the confirm tier, never for a reason. The row already records the
+rationale as AnA's (`agentReason`). `governed-reason-not-invented.test.ts` fails 2 of 75: the reason written is not the
+one stated, and the tool is not in `REASON_REQUIRED_TOOLS`. The test is right. A proposed fix, kept to your files and
+tested to 75/75 in a scratch worktree, is `docs/evidence/F1/2026-11-10-trunk-ci/s6-place-document-reason-proposed.diff`:
+the tool joins `REASON_REQUIRED_TOOLS`, takes `reason: STATED_REASON_INPUT`, and the folder write takes
+`gatedReason(input)`. Its trade-off is yours: the reason tier would apply to every placement, not only to `new_folder`;
+withdrawing `new_folder` (a person makes folders in the Vault) is the other way. Not edited by this lane: your session
+changed those files within six hours.
+
+**→ the holders of the shared PGlite harnesses (`server/db/pglite-harness.ts` `AUDIT_LOGS_PGLITE_DDL`,
+`server/services/document-data-disposition/__tests__/disposition-fixture.ts`):** their `audit_logs` still has no
+`chain_seq`. Since `b8cee0745c` every release reads the independent-check ledger by it, and the read's catch answers
+409 INDEPENDENT_CHECK_REQUIRED, so each suite on those harnesses that reaches a release goes red until it applies
+`migrations/20260921_audit_logs_chain_seq.sql` itself. This lane fixed seven such suites one by one. Applying the
+migration once in the harnesses would end the class; it is idempotent, so suites that already apply it are unaffected.
+The S4 owner of `workflow-import-governance.ts` may also want that catch to answer 503 for a ledger it could not
+read, so this drift shows as what it is.
+
 ## What every session does
 
 1. Fetch, read this file, and stay off the locked rows. **Check your hooks once per container:** `git config
