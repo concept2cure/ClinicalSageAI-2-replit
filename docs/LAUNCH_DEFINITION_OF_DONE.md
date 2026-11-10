@@ -2655,3 +2655,83 @@ those choices."** The MDX journey session (`01P6GW…`) decided as follows, as P
 - **Not decided here.**
   - Which design package takes the device screens (study question 1) is a plan matter.
   - The retirement of unreached device capability (question 4) is R1's.
+
+### P-115 — Decided under the founder's delegation: how a model-drafted CSR reaches a filed sequence
+
+The founder, 2026-11-10, after the CSR path was walked with a model provider present for the first time
+(`docs/evidence/D2-CSR/2026-11-10-build-provider-refusals/README.md`) and three stops were put to them: **"I want you
+to make the most educated, best decision for me getting this product to market and providing the best product I can
+to this institutional buyer in a highly regulated market."** The walking session (`01QoxbLZ…`) decided as follows, as
+P-107 and P-114 were decided under delegation. The founder may overrule any item by a later decision.
+
+The principle behind every item: the sponsor answers for each word of a submission whoever drafted it, and an
+institutional buyer's quality unit audits two things, that the system is validated for its intended use (21 CFR
+11.10(a)) and that a named person reviewed and signed the record. So the product files model-drafted text only with
+both, and says plainly when it has neither.
+
+- **What is decided.**
+  1. **Model-drafted text is released only as qualified text that a named person has adopted. It is never released
+     otherwise, and there is no bypass.** Today `assertWorkflowImportRelease`
+     (`server/services/authoring/workflow-import-governance.ts`) refuses a CSR whose imported text a model wrote, for
+     any model, for ever, until a person rewrites it. That makes drafting worthless for a filing. The ordinary AnA
+     draft already has the right rule (`ordinaryMachineGenesisMayRelease`, `governed-machine-claims.ts`): machine text
+     is released when retained evidence shows a qualified generation wrote those exact words. The CSR import path
+     takes the same rule. Imported text is releasable when all four hold:
+     - the build retained which model and pinned version wrote the section, and that model's approved-models entry
+       has `pq.status: 'passed'` for document drafting, with its executed record;
+     - every figure in it is a claimed cell of the retained engine tables (the build's claim receipts; RULE 2);
+     - the assigned reviewer's CSR scientific review and REVIEWER e-signature adopt that exact text;
+     - the approver signs under separation of duties.
+
+     Text from a model with no passed PQ stays unreleasable until a person replaces it, as today.
+  2. **Performance qualification of the drafting model is the first launch task, ahead of any further CSR feature.**
+     Every `pq.status` in `approved-models.ts` is `pending`, so item 1 releases nothing until one passes. PQ-DRAFT-001
+     (`server/eval/pq/pq-protocol.json`) is executed on the primary drafting model (`claude-opus-5-5`) with the
+     founder's key, and its result is recorded whether it passes or fails. If it fails, the fallback rung is run. If
+     none passes by launch, the product is sold as drafting assistance whose text a person rewrites before filing,
+     and it says so. A model's status changes only through its executed record; the registry test already refuses a
+     pass with nothing to point at.
+  3. **One CSR is filed: the signed document in the one editor. The assembly is bound to it** (RULE 4). The filing
+     artifact is the assembly (the body with its bookmarks and checked links, §14, the narratives, the §16 files and
+     their study-tagging roles). It is rendered from the approved, signed Authoring CSR's exact sections, not from
+     the build job's outputs, and it records that document's sections digest. `renderedLeafNotTransmittable`
+     (`server/services/ectd/leaf-release-verdicts.ts`) then releases an assembled file only while that digest matches
+     an approval signature that stands. Its unconditional refusal stays until the binding lands (P-22;
+     `docs/evidence/D5/2026-10-30-assembled-csr-not-released/`).
+     **Until then the launch path is the one that exists:** "Place into filing" of the approved, signed CSR at
+     5.3.5.1 with its study id and study-tagging role, and each appendix as an approved Vault PDF.
+  4. **A CSR goes to an open IND in an amendment sequence**, with Form 1571 and the cover letter, not in sequence
+     0000. The gates already admit this (`ind-sequence-validation.ts`); the preparation and demo walks follow it. No
+     gate changes.
+  5. **Every heading holds text. "Not applicable" is a person's statement with a reason, never a default.** The
+     signed record must be complete, so no heading is skipped by a flag. ICH E3 is guidance on structure, and a
+     heading that does not apply is said not to apply. The editor offers, on a CSR heading, the "Not applicable
+     because …" act the assembly already has for §16 (`CsrAssemblyControl.tsx`, `csr-assembly-body.ts`). It writes
+     that sentence with the person's reason as their own text, audited. For §14 and §16 the import writes what the
+     engines and the assembly already hold (the table or listing, the supplied appendix, the recorded declaration),
+     labelled as engine content. Any route path the reach needs is checked against `approvedAdditions` first.
+  6. **Subject-level data never goes to a model, and the study's source keeps its classification.** This is so
+     today: the narratives are composed by the engine, and the builder sends aggregate tables screened for
+     identifiers. When source-tier propagation reaches the builder's calls, it carries the aggregate evidence as a
+     governed derivative under the organization's placement policy. It does not reclassify the CONFIDENTIAL source,
+     and it does not stop the build. The provider lane is the buyer's election in its Order Form: first-party
+     Anthropic under a zero-retention agreement, or the buyer's private cloud lane. The S4 owner chooses the
+     mechanism among the gateway's existing ones.
+  7. **"Submitted" means transmitted through the agency's gateway and acknowledged.** The product records
+     `ECTD_TRANSMIT_SKIPPED` when it has no gateway credentials and never records a filing it did not send. Before
+     the buyer's first filing, a sequence is sent through FDA ESG's test environment with the buyer's credentials.
+- **Order.**
+  1. The founder's Anthropic key works in the Codespace (the check landed 2026-11-10), and one whole-report build
+     is run with it. Its record states how many drafts the figure checks accepted and how long it took. No real
+     model request has been made on this path yet.
+  2. Item 2, the PQ run.
+  3. Item 1 on the import path, red first (S4, L1).
+  4. Item 5 (D4, L1).
+  5. The walk, as people: review, adoption, approval, Place into filing, the amendment sequence, compile, Shadow
+     Review, freeze and dispatch (items 3 and 4's launch path).
+  6. Item 3's binding (S5, L1).
+  7. Item 7's test transmission, once the founder holds ESG test credentials.
+- **Not decided here.**
+  - Which provider lane this buyer elects, and its commercial terms.
+  - Any widening beyond a US IND (P-28, P-110 stand).
+  - Whether a failed build is resumed from the screen; that is a repair (F1), not a decision.
