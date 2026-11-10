@@ -245,7 +245,9 @@ describe('Change control — governed actions reach their routes', () => {
 
   it("Advance offers the server's next states, never approval, and posts the move with its reason", async () => {
     renderLog();
-    const row = screen.getByText('CC-2026-014').closest('.qms-row') as HTMLElement;
+    // C8: under assessment, the row's next step is Approve; Advance is behind its More.
+    const row = screen.getByText('CC-2026-014').closest('tbody') as HTMLElement;
+    fireEvent.click(within(row).getByRole('button', { name: 'More actions for CC-2026-014' }));
     fireEvent.click(within(row).getByRole('button', { name: /Advance/ }));
     const d = drawer(/Advance CC-2026-014/);
     const to = within(d).getByLabelText(/Move to/) as HTMLSelectElement;
@@ -264,6 +266,7 @@ describe('Change control — governed actions reach their routes', () => {
 
   it('links a record through POST /changes/:id/links', async () => {
     renderLog();
+    fireEvent.click(screen.getByRole('button', { name: 'More actions for CC-2026-014' }));
     fireEvent.click(screen.getByRole('button', { name: /Link a record/ }));
     const d = drawer(/Link a record to CC-2026-014/);
     fill(d, /Record type/, 'capa');

@@ -1,0 +1,69 @@
+{
+  "apiErrors": [
+    {
+      "who": "author",
+      "width": 1440,
+      "status": 409,
+      "url": "/api/mdx/qms/changes/11",
+      "at": "/concept2cure"
+    },
+    {
+      "who": "author",
+      "width": 1440,
+      "status": 404,
+      "url": "/api/mdx/qms/changes/99999999",
+      "at": "/concept2cure"
+    }
+  ],
+  "pageErrors": [],
+  "steps": [
+    {
+      "name": "raise",
+      "status": 201,
+      "id": 11
+    },
+    {
+      "name": "edit-proposed",
+      "status": 200,
+      "impact": "Assessed while proposed."
+    },
+    {
+      "name": "to-under-assessment",
+      "status": 200
+    },
+    {
+      "name": "edit-under-assessment",
+      "status": 200,
+      "plan": "Planned under assessment."
+    },
+    {
+      "name": "approve",
+      "status": 200,
+      "state": "approved"
+    },
+    {
+      "name": "edit-approved",
+      "status": 409,
+      "error": "This change is approved, so its content is fixed: it is what its approval signed. Nothing was saved. To amend it, raise a new change request.",
+      "details": {
+        "code": "QMS_CHANGE_CONTENT_FIXED",
+        "status": "approved"
+      }
+    },
+    {
+      "name": "read-after",
+      "status": 200,
+      "state": "approved",
+      "plan": "Planned under assessment.",
+      "impact": "Assessed while proposed."
+    },
+    {
+      "name": "edit-absent",
+      "status": 404
+    },
+    {
+      "name": "w12-change-edit",
+      "ok": true
+    }
+  ]
+}

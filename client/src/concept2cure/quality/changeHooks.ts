@@ -43,6 +43,8 @@ interface ServerChange {
   risk_level: string | null;
   status: string;
   reason: string | null;
+  /** Who raised the change: the server refuses their approval (change-approval-signature.ts, the two-person rule). */
+  proposed_by?: number | null;
   target_implementation_date: string | null;
   created_at: string | null;
   updated_at: string | null;
@@ -86,6 +88,7 @@ function adaptChange(r: ServerChange): ChangeControl {
     riskLevel: (r.risk_level as RiskLevel | null) ?? null,
     status: r.status as ChangeState,
     reason: r.reason,
+    proposedBy: typeof r.proposed_by === 'number' ? r.proposed_by : null,
     learningReview: learningReviewViewOf(r.learning_review),
     targetImplementationDate: r.target_implementation_date,
     createdAt: r.created_at,

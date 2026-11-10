@@ -82,10 +82,28 @@ function isUnmodelledRecipientFiling(c: { agency?: string; tier: string; channel
   return expected !== undefined && c.channel === expected;
 }
 
+/* 2026-11-06 (79a2f3605, Plan F1): a UK medicinal-product trial application is
+   prepared for combined IRAS review by MHRA and REC (MHRA guidance effective
+   28 April 2026). It no longer borrows the UK region default (the MHRA eCTD
+   gateway, the marketing channel UK_MA still uses); the platform has no IRAS
+   connector (Rule 2). The product pins this in
+   server/services/regulatory/registry/__tests__/submittability-portal-channels.test.ts,
+   which expects UK_CTA in the report's gaps. Allowed by id, and only with exactly
+   that channel, so another UK entry without a channel, or UK_CTA claiming any
+   other channel, still fails this file. */
+const UK_CTA_IRAS_CHANNEL = 'Combined IRAS review (MHRA and REC)';
+function isUkCtaIrasFiling(c: { id: string; tier: string; channel?: string }): boolean {
+  return c.tier === 'no_gateway' && c.id === 'UK_CTA' && c.channel === UK_CTA_IRAS_CHANNEL;
+}
+
 describe('every startable filing type is finishable', () => {
-  it('NO filing type is selectable but unsubmittable — except the known unconnected EMA, Notified Body, NCA and certification-body channels', () => {
+  it('NO filing type is selectable but unsubmittable — except the known unconnected EMA, Notified Body, NCA, certification-body and UK IRAS channels', () => {
     const gaps = getUnsubmittableFilings().filter(
-      g => !isKnownUnconnectedEmaFiling(g) && !isNotifiedBodyFiling(g) && !isUnmodelledRecipientFiling(g)
+      g =>
+        !isKnownUnconnectedEmaFiling(g) &&
+        !isNotifiedBodyFiling(g) &&
+        !isUnmodelledRecipientFiling(g) &&
+        !isUkCtaIrasFiling(g)
     );
     expect(
       gaps,
@@ -105,6 +123,19 @@ describe('every startable filing type is finishable', () => {
     expect(isUnmodelledRecipientFiling({ agency: 'Registered_Certification_Body', tier: 'no_gateway', channel: nca })).toBe(false);
     expect(isUnmodelledRecipientFiling({ agency: 'EMA', tier: 'no_gateway', channel: nca })).toBe(false);
     expect(isUnmodelledRecipientFiling({ agency: 'National_Competent_Authority', tier: 'no_identity', channel: nca })).toBe(false);
+  });
+
+  it('admits UK_CTA only with exactly its combined IRAS channel', () => {
+    expect(isUkCtaIrasFiling({ id: 'UK_CTA', tier: 'no_gateway', channel: UK_CTA_IRAS_CHANNEL })).toBe(true);
+    // Another UK filing naming IRAS, UK_CTA with another or no channel, or another tier is still a gap.
+    expect(isUkCtaIrasFiling({ id: 'UK_MA', tier: 'no_gateway', channel: UK_CTA_IRAS_CHANNEL })).toBe(false);
+    expect(isUkCtaIrasFiling({ id: 'UK_CTA', tier: 'no_gateway', channel: 'EMA — channel not modelled' })).toBe(false);
+    expect(isUkCtaIrasFiling({ id: 'UK_CTA', tier: 'no_gateway' })).toBe(false);
+    expect(isUkCtaIrasFiling({ id: 'UK_CTA', tier: 'no_identity', channel: UK_CTA_IRAS_CHANNEL })).toBe(false);
+    // And the live entry is exactly that case: no borrowed MHRA gateway, no portal claim.
+    const uk = getSubmittability(GLOBAL_REGISTRY.find(e => e.id === 'UK_CTA')!);
+    expect(isUkCtaIrasFiling(uk)).toBe(true);
+    expect(getSubmittability(GLOBAL_REGISTRY.find(e => e.id === 'UK_MA')!).tier).toBe('submittable');
   });
 
   it('every region carrying filings resolves to a registered gateway pair', () => {

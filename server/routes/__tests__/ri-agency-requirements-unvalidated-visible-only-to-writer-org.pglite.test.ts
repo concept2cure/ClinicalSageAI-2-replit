@@ -5,6 +5,14 @@
  * Real creating DDL and real route/service SQL run on PGlite; platform-role
  * lookup and authenticated identity are fixtures. A dedicated non-superuser
  * case also proves the database policy under a NOSUPERUSER/NOBYPASSRLS role.
+ *
+ * Since b8cee0745c a correction (non-empty correctionText) is recorded by
+ * recordAuditedHumanCorrection inside one transaction on the request's own
+ * client: it re-reads the actor's active membership (readCsrProjectActor, for
+ * share) and writes a chained source audit carrying only the correction's
+ * SHA-256. So the request carries a client over the same PGlite connection
+ * (production's authenticateToken attaches it), and the tables that path reads
+ * and writes come from their real creating DDL.
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import express from 'express';
@@ -12,6 +20,9 @@ import request from 'supertest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
+import { pglitePool } from '../../services/ana-ri/__tests__/pglite-pool.fixture';
+import { AUDIT_LOGS_PGLITE_DDL } from '../../db/pglite-harness';
+import { extractTableDdl } from '../../../tests/golden-journeys/harness';
 
 const h = vi.hoisted(() => ({
   pg: null as unknown as import('@electric-sql/pglite').PGlite,
@@ -34,11 +45,15 @@ const ORG_A = 7;
 const ORG_B = 8;
 const CURATOR_ORG = 9;
 
+// The request's pinned client, as establishRequestTenantScope attaches it.
+const requestClient = pglitePool(() => h.pg).client;
+
 const app = express();
 app.use(express.json());
 app.use((req, _res, next) => {
   (req as any).user = { id: h.userId, userId: h.userId, role: 'admin', organizationId: h.orgId };
   (req as any).userId = h.userId;
+  (req as any).dbClient = requestClient;
   next();
 });
 app.use('/api/regulatory-intelligence', router);
@@ -73,6 +88,16 @@ const columns = async () =>
 
 beforeAll(async () => {
   h.pg = new PGlite();
+  // The membership a correction's actor is re-read from, and the chained
+  // audit its source is written to, from their creating DDL.
+  await h.pg.exec(extractTableDdl('migrations/0000_sweet_joseph.sql', ['organizations', 'users', 'organization_users']));
+  await h.pg.exec(AUDIT_LOGS_PGLITE_DDL);
+  await h.pg.exec(fs.readFileSync(path.join(process.cwd(), 'migrations/20260921_audit_logs_chain_seq.sql'), 'utf8'));
+  await h.pg.exec(`INSERT INTO organizations (id, name, slug) VALUES
+      (${ORG_A}, 'Org A', 'org-a'), (${ORG_B}, 'Org B', 'org-b'), (${CURATOR_ORG}, 'Curator', 'curator');
+    INSERT INTO users (id, email, name, password_hash) VALUES (5, 'member@example.test', 'Member', 'fixture');
+    INSERT INTO organization_users (organization_id, user_id, role) VALUES
+      (${ORG_A}, 5, 'admin'), (${ORG_B}, 5, 'admin'), (${CURATOR_ORG}, 5, 'admin');`);
   await h.pg.exec(MIGRATION);
   await h.pg.exec(MIGRATION); // every file in the set re-runs on every deploy
   await h.pg.exec(`CREATE ROLE learning_runtime NOLOGIN NOSUPERUSER NOBYPASSRLS;
@@ -87,7 +112,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
   h.platform = vi.fn().mockResolvedValue(false);
-  await h.pg.exec(`DELETE FROM intelligence.agency_requirements; DELETE FROM intelligence.failure_patterns; DELETE FROM intelligence.ana_interactions;`);
+  await h.pg.exec(`DELETE FROM intelligence.agency_requirements; DELETE FROM intelligence.failure_patterns; DELETE FROM intelligence.ana_interactions; DELETE FROM audit_logs;`);
   const p = await h.pg.query<{ id: string }>(
     `INSERT INTO intelligence.failure_patterns
        (pattern_fingerprint, agency, document_type, intent_class, suggested_correction,
@@ -245,12 +270,14 @@ describe('v0.5 shared-learning promotion boundary', () => {
   const SECRET_B = 'TENANT_B_CMC_PROCESS_86_TRADE_SECRET';
 
   it('keeps unique corrections from two tenants out of extraction, suggestions and legacy replay', async () => {
+    const sources: Array<{ tenant: number; id: string }> = [];
     for (const [orgId, secret] of [[ORG_A, SECRET_A], [ORG_B, SECRET_B]] as const) {
       const recorded = await as(orgId).post('/api/regulatory-intelligence/interactions').send({
         agency: 'ema', documentType: 'cmc', intent: 'draft', outcome: 'edited',
         promptSummary: 'Draft Module 3', correctionText: secret,
       });
       expect(recorded.status, JSON.stringify(recorded.body)).toBe(201);
+      sources.push({ tenant: orgId, id: recorded.body.data.sourceAuditEventId });
     }
     const retained = await h.pg.query<{ organization_id: number; correction_text: string }>(
       'SELECT organization_id::integer, correction_text FROM intelligence.ana_interactions ORDER BY organization_id',
@@ -259,6 +286,15 @@ describe('v0.5 shared-learning promotion boundary', () => {
       { organization_id: ORG_A, correction_text: SECRET_A },
       { organization_id: ORG_B, correction_text: SECRET_B },
     ]);
+    // Each correction's source audit stays in its writer tenant and carries
+    // only the correction's hash, never its text.
+    const audits = await h.pg.query<{ id: string; tenant: number; new_values: unknown }>(
+      `SELECT id, tenant_id AS tenant, new_values FROM audit_logs
+        WHERE action = 'ana_correction.recorded' ORDER BY tenant_id`,
+    );
+    expect(audits.rows.map(({ id, tenant }) => ({ tenant, id }))).toEqual(sources);
+    expect(JSON.stringify(audits.rows)).not.toContain(SECRET_A);
+    expect(JSON.stringify(audits.rows)).not.toContain(SECRET_B);
 
     // Even an existing legacy row, marked active with a large cohort, cannot
     // establish either de-identification or named human artifact approval.

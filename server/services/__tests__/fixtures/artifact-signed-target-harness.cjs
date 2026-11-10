@@ -37,6 +37,8 @@ const columns={
  audit_fixture:`id integer primary key autoincrement, payload text`,action_fixture:`id integer primary key autoincrement, payload text`,
  // The quorum asks whether the signer is the organisation's only member (P-116, isSoleMember).
  organization_users:`id integer primary key autoincrement, organization_id integer, user_id integer`,
+ // The organisation's review rules are read from its settings (P-117, organizationReviewPolicy).
+ organizations:`id integer primary key, settings text`,
 };
 const schema={};for(const [name,table] of Object.entries({concept2cureArtifacts:'concept2cure_artifacts',concept2cureArtifactVersions:'concept2cure_artifact_versions',concept2cureSignatures:'concept2cure_signatures',concept2cureSubmissionSnapshots:'concept2cure_submission_snapshots'}))schema[name]=new Proxy({table},{get:(o,k)=>k==='table'?o.table:{table:o.table,column:snake(k)}});
 const qcol=c=>`"${c.column}"`;
@@ -53,6 +55,7 @@ async function runCase(tree,c){
  // default pool, are never the artifact's path: each double throws if reached.
  const unreached=what=>()=>{throw new Error('separation-of-duties reached '+what+' on the artifact path');};
  const sod=load(tree,'server/services/governance/separation-of-duties.ts',{'../../db.js':{pool:{query:unreached('the default pool')}},
+  '../../../shared/artifact-governance':load(tree,'shared/artifact-governance.ts',{}),
   '../qms/controlled-text-authorship.js':{QmsControlledTextAuthorshipInvalid:class extends Error{},qmsControlledTextAuthorIds:unreached('the QMS authorship reader')},
   '../cmc/register-operators.js':{readSectionRecordOperators:unreached('the CMC register reader'),unattributedRecordsRefusal:unreached('the CMC register refusal')}});
  // The act module also renders P-95 Q2's move increment through Drizzle
@@ -67,6 +70,7 @@ async function runCase(tree,c){
  insert('concept2cure_artifacts',head);if(!c.missingVersion)insert('concept2cure_artifact_versions',ver);
  // Organisation 7 has the signer and reviewers: someone to be independent of, so P-116's sole-member path is not taken.
  for(const user_id of [777,700,701,702])insert('organization_users',{organization_id:7,user_id});
+ insert('organizations',{id:7,settings:c.organizationSettings??null});
  const input={artifact:revive(db.prepare('SELECT * FROM concept2cure_artifacts').get()),version:c.missingVersion?null:revive(db.prepare('SELECT * FROM concept2cure_artifact_versions').get()),status:c.status||'approved',previousStatus:c.status==='locked'?'approved':'review',organizationId:7,userId:777,userRole:'admin',attestationText:'I approve the reviewed document.',reason:'Reviewed',secondFactorVerified:true,ipAddress:null};
  input.updateData=review.artifactStatusUpdate(input.artifact,input.previousStatus,input.status,input.userId);
  patch(input.artifact,c.cachedHead);if(input.version)patch(input.version,c.cachedVersion);patch(input,c.input);

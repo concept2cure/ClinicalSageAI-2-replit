@@ -1041,6 +1041,12 @@ RBM, QMS and more; Vault … and tasking too")
   - It seeds the Lumen pack there first, and "Demo access" lands on it.
   - The Vault seed now records an artifact's review before its approval (P-95).
   - Run end to end against a fresh local database; `codespaces:doctor:test` 50/50.
+- **"Demo access" chooses who** (2026-11-10, the founder: "a selection of users … tied to demo accounts and various
+  scenarios and according to role … this must work in Codespace"), `2a3cb63a6`.
+  - The login's existing button gains "Sign in as": every demo person, grouped by account and labelled by role.
+  - The Codespace supplies the list from its two rosters (`VITE_DEMO_ACCOUNTS`).
+  - Signed in through it in the running app as two people, one in each account.
+- **The Vault seed no longer re-files on each run** (2026-11-10): it reads each document's own filing record.
 
 **Finding shared with the design lead**
 

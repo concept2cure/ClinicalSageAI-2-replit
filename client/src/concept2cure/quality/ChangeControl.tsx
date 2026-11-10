@@ -33,7 +33,7 @@
 
 import * as React from 'react';
 import { I } from '../v2/icons';
-import { registerRowMinWidth } from './registerGrid';
+import { RegisterBody, RegisterTable } from './SopRegisterRow';
 import { ChangeFlow } from './ChangeFlow';
 import {
   CHANGE_FORM_TEMPLATE_KEYS,
@@ -96,10 +96,10 @@ export interface ChangeControlProps {
   onEditorOpenChange?: (open: boolean) => void;
 }
 
-const GRID = '112px minmax(0, 1fr) 118px 80px 128px 104px 62px 120px';
-/* Derived, never hand-kept — see registerGrid.ts. Below this the title track
-   resolves to 0px and the row's last columns are clipped away. */
-const ROW_MIN = registerRowMinWidth(GRID);
+/** The change log's columns, in order (C8: D0's .reg-tbl, as the SOP register; the row's actions follow them). */
+const CHANGE_COLUMNS = ['Number', 'Title', 'Type', 'Class', 'Status', 'Target', 'Links'] as const;
+/** A D0 chip of the given tone; no tone is the neutral chip. */
+const chip = (tone: string | null) => `rd-chip${tone ? ` tone-${tone}` : ''}`;
 
 
 const errText = (err: unknown) => (err instanceof Error ? err.message : String(err));
@@ -137,7 +137,8 @@ function ChangeControlSession({
   onEditorOpenChange,
 }: ChangeControlProps) {
   const sum = useChangeSummary();
-  const user = useAuthUser(); // display only; the server resolves the signer
+  const user = useAuthUser(); // display, and who proposed a change; the server resolves the signer and refuses the proposer
+  const meId = user?.id && /^\d+$/.test(String(user.id)) ? Number(user.id) : null;
   /* P-60: a change may be filed under the open project, which that project's
      Engineering screen reads; the server admits it before writing. */
   const shell = useShellProject();
@@ -268,130 +269,110 @@ function ChangeControlSession({
         {!unread && visible.length === 0 && (
           <EmptyState title={changes.length === 0 ? 'No changes in the log yet.' : 'No changes at this stage.'} />
         )}
-        {visible.length > 0 && <div className="qms-table">
-          <div className="qms-thead" style={{ gridTemplateColumns: GRID, minWidth: ROW_MIN }}>
-            <div>Number</div>
-            <div>Title</div>
-            <div>Type</div>
-            <div>Class</div>
-            <div>Status</div>
-            <div>Target</div>
-            <div>Links</div>
-            <div />
-          </div>
-          {visible.map((c) => {
-            const overdue = isImplementationOverdue(c);
-            const open = openId === c.id;
-            const linkCount = c.links?.length ?? 0;
-            return (
-              <React.Fragment key={c.id}>
-                <div className="qms-row" style={{ gridTemplateColumns: GRID, minWidth: ROW_MIN }} data-status={c.status}>
-                  <button
-                    className="qms-cell qms-num mono"
-                    onClick={() => onOpenIdChange(open ? null : c.id)}
-                    aria-expanded={open}
-                    title="Show linked records"
-                  >
-                    {c.changeNumber}
-                  </button>
-                  <div className="qms-cell qms-title" title={c.title}>{c.title}</div>
-                  <div className="qms-cell">
-                    <span className="qms-tag">{CHANGE_TYPE_LABEL[c.changeType] ?? c.changeType}</span>
-                  </div>
-                  <div className="qms-cell">
-                    <span className="qcc-class" data-tone={CLASSIFICATION_TONE[c.classification]}>
-                      {CLASSIFICATION_LABEL[c.classification]}
-                    </span>
-                  </div>
-                  <div className="qms-cell">
-                    <span className="qms-pill" data-tone={STATE_TONE[c.status]}>{STATE_LABEL[c.status]}</span>
-                  </div>
-                  <div className="qms-cell">
-                    {c.targetImplementationDate ? (
-                      <span>
+        {visible.length > 0 && (
+          <RegisterTable columns={CHANGE_COLUMNS}>
+            {visible.map((c) => {
+              const overdue = isImplementationOverdue(c);
+              const open = openId === c.id;
+              const linkCount = c.links?.length ?? 0;
+              const toggle = () => onOpenIdChange(open ? null : c.id);
+              /* The row's one next step (C8): Approve while the change is under assessment, the signed route; otherwise
+                 Advance, when the server lists a move. Everything else is behind More, with the same handlers. */
+              const advance = unsignedMovesOf(c).length > 0 ? (
+                <button key="advance" type="button" className="btn ghost small"
+                  title="Move this change to its next lifecycle state, with a reason for the move"
+                  onClick={() => openDrawer({ kind: 'advance', change: c })}>
+                  Advance
+                </button>
+              ) : null;
+              /* Approve is offered to anyone but the change's proposer, whose approval the server refuses (the two-person
+                 rule, change-approval-signature.ts), as the SOP register offers it to anyone but a document's author. */
+              const approvable = c.proposedBy == null || meId == null || c.proposedBy !== meId;
+              const approve = c.status === 'under_assessment' && approvable ? (
+                <button key="approve" type="button" className="btn ghost small"
+                  title="Approve with your electronic signature (password and second factor). The person who proposed the change cannot approve it."
+                  onClick={() => setApproving(c)}>
+                  Approve
+                </button>
+              ) : null;
+              const rest = [
+                ...(approve && advance ? [advance] : []),
+                <button key="link" type="button" className="btn ghost small"
+                  title="Link the deviation, CAPA or validation record this change touches"
+                  onClick={() => openDrawer({ kind: 'link', change: c })}>
+                  Link a record
+                </button>,
+                <button key="ask" type="button" className="btn ghost small" aria-label="Ask AnA about this change"
+                  title="Ask AnA about this change"
+                  onClick={() => onAsk(`Summarize change ${c.changeNumber} ${c.title}: its impact assessment, linked records, and what it needs next.`)}>
+                  Ask AnA
+                </button>,
+              ];
+              return (
+                <RegisterBody key={c.id} name={c.changeNumber} className="qcc-change" status={c.status}
+                  columns={CHANGE_COLUMNS.length} primary={approve ?? advance} rest={rest} cells={<>
+                    <td>
+                      <button type="button" className="qms-num mono" onClick={toggle} aria-expanded={open} title="Show linked records">
+                        {c.changeNumber}
+                      </button>
+                    </td>
+                    <td className="qms-title">{c.title}</td>
+                    <td>{CHANGE_TYPE_LABEL[c.changeType] ?? c.changeType}</td>
+                    <td><span className={chip(CLASSIFICATION_TONE[c.classification])}>{CLASSIFICATION_LABEL[c.classification]}</span></td>
+                    <td><span className={chip(STATE_TONE[c.status])}>{STATE_LABEL[c.status]}</span></td>
+                    <td>
+                      {c.targetImplementationDate ? <>
                         {formatDate(c.targetImplementationDate)}
                         {overdue && <> <span className="rd-chip tone-err">Overdue</span></>}
-                      </span>
-                    ) : '—'}
-                  </div>
-                  <button
-                    className="qms-cell qcc-linkcount"
-                    onClick={() => onOpenIdChange(open ? null : c.id)}
-                    title={`${linkCount} linked record${linkCount === 1 ? '' : 's'}`}
-                  >
-                    {I.link} {linkCount}
-                  </button>
-                  <div className="qms-cell qms-rowacts">
-                    {unsignedMovesOf(c).length > 0 && (
-                      <button
-                        className="qms-chip"
-                        title="Move this change to its next lifecycle state, with a reason for the move"
-                        onClick={() => openDrawer({ kind: 'advance', change: c })}
-                      >
-                        {I.arrowRight} Advance
+                      </> : '—'}
+                    </td>
+                    <td>
+                      <button type="button" className="qcc-linkcount" onClick={toggle} aria-expanded={open}
+                        aria-label={`${linkCount} linked record${linkCount === 1 ? '' : 's'}`}>
+                        {I.link} {linkCount}
                       </button>
-                    )}
-                    {c.status === 'under_assessment' && (
-                      <button
-                        className="qms-chip"
-                        title="Approve with your electronic signature (password and second factor). The person who proposed the change cannot approve it."
-                        onClick={() => setApproving(c)}
-                      >
-                        {I.check} Approve
-                      </button>
-                    )}
-                    <button
-                      className="qms-chip ghost"
-                      title="Ask AnA about this change" aria-label="Ask AnA about this change"
-                      onClick={() =>
-                        onAsk(`Summarize change ${c.changeNumber} ${c.title}: its impact assessment, linked records, and what it needs next.`)
-                      }
-                    >
-                      {I.sparkles}
-                    </button>
-                  </div>
-                </div>
-
-                {open && (
-                  <div className="qcc-detail">
-                    <div className="qcc-detail-head">
-                      <span className="qcc-detail-title">Linked records</span>
-                      <button
-                        className="qms-link"
-                        onClick={() => openDrawer({ kind: 'link', change: c })}
-                      >
-                        {I.plus} Link a record
-                      </button>
-                    </div>
-                    {linkCount === 0 ? (
-                      <EmptyState title="No linked records yet." hint="Link the deviation, CAPA or validation protocol this change touches so the change control log stays traceable end to end." />
-                    ) : (
-                      <div className="qcc-links">
-                        {c.links!.map((l) => (
-                          <button
-                            key={l.id}
-                            className="qcc-link"
-                            onClick={() =>
-                              onAsk(`Open ${LINK_TYPE_LABEL[l.linkType]} ${l.linkedRef}${l.linkedLabel ? ` (${l.linkedLabel})` : ''} and show how it relates to change ${c.changeNumber}.`)
-                            }
-                          >
-                            <span className="qcc-link-ico" data-type={l.linkType}>{linkIcon(LINK_TYPE_ICON[l.linkType])}</span>
-                            <span className="qcc-link-body">
-                              <span className="qcc-link-ref mono">{l.linkedRef}</span>
-                              {l.linkedLabel && <span className="qcc-link-label">{l.linkedLabel}</span>}
-                            </span>
-                            <span className="qcc-link-rel">{RELATIONSHIP_LABEL[l.relationship]}</span>
-                            <span className="qcc-link-type">{LINK_TYPE_LABEL[l.linkType]}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </React.Fragment>
-            );
-          })}
-        </div>}
+                    </td>
+                  </>}
+                  after={open && (
+                    <tr className="qcc-detail-tr">
+                      <td colSpan={CHANGE_COLUMNS.length + 1}>
+                        <div className="qcc-detail">
+                          <div className="qcc-detail-head">
+                            <span className="qcc-detail-title">Linked records</span>
+                          </div>
+                          {linkCount === 0 ? (
+                            <EmptyState title="No linked records yet." hint="To keep the log traceable, link the deviation, CAPA or validation protocol this change touches (More, then Link a record)." />
+                          ) : (
+                            <div className="qcc-links">
+                              {c.links!.map((l) => (
+                                <button
+                                  key={l.id}
+                                  type="button"
+                                  className="qcc-link"
+                                  onClick={() =>
+                                    onAsk(`Open ${LINK_TYPE_LABEL[l.linkType]} ${l.linkedRef}${l.linkedLabel ? ` (${l.linkedLabel})` : ''} and show how it relates to change ${c.changeNumber}.`)
+                                  }
+                                >
+                                  <span className="qcc-link-ico" data-type={l.linkType}>{linkIcon(LINK_TYPE_ICON[l.linkType])}</span>
+                                  <span className="qcc-link-body">
+                                    <span className="qcc-link-ref mono">{l.linkedRef}</span>
+                                    {l.linkedLabel && <span className="qcc-link-label">{l.linkedLabel}</span>}
+                                  </span>
+                                  <span className="qcc-link-rel">{RELATIONSHIP_LABEL[l.relationship]}</span>
+                                  <span className="qcc-link-type">{LINK_TYPE_LABEL[l.linkType]}</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                />
+              );
+            })}
+          </RegisterTable>
+        )}
         {/* How a change is raised: the procedure's five steps, closed by default (D5 §WA.4.2 rule 8). Until
             2026-11-10 a boxed guidance panel beside the forms, with an orange "Explain the procedure" and a
             "Find the controlled procedure"; the explanation is the tab's third starter, and the SOP register,
