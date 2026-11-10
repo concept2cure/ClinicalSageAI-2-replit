@@ -60,6 +60,9 @@ vi.mock('../../vault/document-catalog.service.js', () => ({
 
 import { registerDocumentPlacementHandlers } from '../document-placement-tools.js';
 import { PLACE_PROJECT_DOCUMENT } from '../document-catalog-tool-defs.js';
+import { ReasonNotStatedError } from '../stated-reason-input.js';
+
+const PERSONS_REASON = 'Keeping the pivotal study apart from the supportive ones.';
 
 type Handler = (input: Record<string, unknown>, ctx?: ToolContext) => Promise<string>;
 const handlers = new Map<string, Handler>();
@@ -348,13 +351,14 @@ describe('folders AnA names or makes', () => {
     expect(createProgramFolder).not.toHaveBeenCalled();
   });
 
-  it('makes the folder under her provenance, then suggests the document into it', async () => {
+  it('makes the folder under her provenance with the person\'s reason, then suggests the document into it', async () => {
     loadDocumentForOrg.mockResolvedValue(doc('cataloged'));
-    const out = await call({ document_id: VAULT_ID, new_folder: { name: 'Pivotal study', parent_folder_id: 'bn:5.3' }, rationale: 'The pivotal study needs its own folder.' });
+    const out = await call({ document_id: VAULT_ID, new_folder: { name: 'Pivotal study', parent_folder_id: 'bn:5.3' }, rationale: 'The pivotal study needs its own folder.', reason: PERSONS_REASON });
     expect(createProgramFolder).toHaveBeenCalledTimes(1);
+    // The reason for change on the folder's audit row is the person's; her rationale stays in her provenance.
     expect(createProgramFolder.mock.calls[0][0]).toMatchObject({
       name: 'Pivotal study', parentFolderId: 'bn:5.3', organizationId: 42, userId: 7,
-      reason: 'The pivotal study needs its own folder.', agent: expect.objectContaining({ actorKind: 'agent:ana' }),
+      reason: PERSONS_REASON, agent: expect.objectContaining({ actorKind: 'agent:ana' }),
     });
     expect(placeVaultDocument.mock.calls[0][0]).toMatchObject({ folderId: 'uf:9', agent: expect.objectContaining({ actorKind: 'agent:ana' }) });
     expect(out.madeFolder).toEqual({ folderId: 'uf:9', name: 'Pivotal study' });
@@ -362,7 +366,7 @@ describe('folders AnA names or makes', () => {
 
   it('makes no folder for a document she has not read', async () => {
     loadDocumentForOrg.mockResolvedValue(doc('extracted'));
-    const out = await call({ document_id: VAULT_ID, new_folder: { name: 'X' }, rationale: 'r' });
+    const out = await call({ document_id: VAULT_ID, new_folder: { name: 'X' }, rationale: 'r', reason: PERSONS_REASON });
     expect(out.refused).toBe(true);
     expect(createProgramFolder).not.toHaveBeenCalled();
     expect(placeVaultDocument).not.toHaveBeenCalled();
@@ -371,9 +375,27 @@ describe('folders AnA names or makes', () => {
   it('says the Vault\'s refusal, and places nothing, when the folder cannot be made', async () => {
     loadDocumentForOrg.mockResolvedValue(doc('cataloged'));
     createProgramFolder.mockResolvedValue({ ok: false, status: 409, code: 'FOLDER_EXISTS', message: 'A folder of that name is already there.' });
-    const out = await call({ document_id: VAULT_ID, new_folder: { name: 'Pivotal study' }, rationale: 'r' });
+    const out = await call({ document_id: VAULT_ID, new_folder: { name: 'Pivotal study' }, rationale: 'r', reason: PERSONS_REASON });
     expect(out).toMatchObject({ ok: false, error: 'FOLDER_EXISTS' });
     expect(placeVaultDocument).not.toHaveBeenCalled();
+  });
+
+  it('makes no folder, and places nothing, without the person\'s own reason: her rationale is not one', async () => {
+    loadDocumentForOrg.mockResolvedValue(doc('cataloged'));
+    for (const reason of [undefined, '', 'short', 42]) {
+      await expect(call({ document_id: VAULT_ID, new_folder: { name: 'Pivotal study' }, rationale: 'The pivotal study needs its own folder.', reason }))
+        .rejects.toBeInstanceOf(ReasonNotStatedError);
+    }
+    expect(loadDocumentForOrg).not.toHaveBeenCalled();
+    expect(createProgramFolder).not.toHaveBeenCalled();
+    expect(placeVaultDocument).not.toHaveBeenCalled();
+  });
+
+  it('asks no reason for a suggestion into an existing folder or an unfile: neither writes one', async () => {
+    loadDocumentForOrg.mockResolvedValue(doc('cataloged'));
+    expect((await call({ document_id: VAULT_ID, folder_id: 'module-4', rationale: 'A 28-day repeat-dose study.' })).ok).toBe(true);
+    expect((await call({ document_id: VAULT_ID, unfile: true, rationale: 'I cannot tell where it belongs.' })).ok).toBe(true);
+    expect(createProgramFolder).not.toHaveBeenCalled();
   });
 
   it('refuses folder_id and new_folder together', async () => {

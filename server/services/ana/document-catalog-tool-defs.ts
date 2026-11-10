@@ -10,6 +10,7 @@
 
 import type { AnaTool } from '../ai-gateway/types';
 import { RESULT_BUDGET } from './agentic-loop.js';
+import { STATED_REASON_INPUT } from './stated-reason-input.js';
 import { CATALOG_FACT_CANDIDATE_JSON_SCHEMA } from '../../../shared/ana/catalog-facts.js';
 import {
   VAULT_DOC_KINDS,
@@ -295,8 +296,10 @@ export const PLACE_PROJECT_DOCUMENT: AnaTool = {
         type: 'object',
         description:
           'Make a folder first and suggest the document into it, when no existing folder fits (e.g. a study\u0027s own ' +
-          'folder under "bn:5.3"). The folder is made under your name in the audit trail, with your rationale as its ' +
-          'reason; the document placed in it is still a suggestion a person confirms. Omit folder_id when you pass this.',
+          'folder under "bn:5.3"). Making a folder is a governed change: the audit trail records you as the agent who ' +
+          'made it and the person\u0027s own reason for it, so pass their reason in "reason" (ask them if they have ' +
+          'not given one; your rationale is not it). The document placed in the folder is still a suggestion a ' +
+          'person confirms. Omit folder_id when you pass this.',
         properties: {
           name: { type: 'string', description: 'The folder\u0027s name, at most 120 characters, no / or \\.' },
           parent_folder_id: { type: 'string', description: 'The folder to make it in (a vaultFolders id); omit for the top of the cabinet.' },
@@ -329,6 +332,8 @@ export const PLACE_PROJECT_DOCUMENT: AnaTool = {
         description:
           'Why this is the right folder, in one sentence, grounded in what the document says. Recorded on the row and in the audit trail.',
       },
+      // Read only when new_folder is passed (stated-reason-input.ts reasonRequiredFor).
+      reason: STATED_REASON_INPUT,
     },
     required: ['document_id', 'rationale'],
   },

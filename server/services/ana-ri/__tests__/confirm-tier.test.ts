@@ -103,7 +103,7 @@ describe('a tool that records a reason for change is proposed at the reason tier
     // card opens on data.tier, so a reason tool proposed at "confirm" would be
     // a click the confirmation route then refuses.
     expect(governedTierOf('seed_tmf')).toBe('confirm');
-    const out = buildHumanConfirmationRequiredResult('seed_tmf', { reason: 'x' }, registeredToolTier('seed_tmf'));
+    const out = buildHumanConfirmationRequiredResult('seed_tmf', { reason: 'x' }, registeredToolTier('seed_tmf', { reason: 'x' }));
     expect(out.data).toMatchObject({ tier: 'reason', reasonRequired: true, signatureRequired: false });
     expect(out.message).toMatch(/your reason for the change is recorded/);
   });

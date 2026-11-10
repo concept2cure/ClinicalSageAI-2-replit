@@ -602,7 +602,7 @@ export function mountUtilityRoutes(router: Router): void {
     if (!command || !(isProposeOnlyCommand(command) || isTool)) {
       return sendError(res, 400, 'A governed command name is required', null, 'NOT_A_GOVERNED_COMMAND');
     }
-    const tier = isTool ? registeredToolTier(command) : governedTierOf(command, params);
+    const tier = isTool ? registeredToolTier(command, params) : governedTierOf(command, params);
     if (tier === 'confirm') {
       if (body.confirm !== true) {
         return sendError(res, 400, 'Confirm the proposed action to run it', null, 'CONFIRMATION_REQUIRED');
