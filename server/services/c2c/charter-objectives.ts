@@ -61,6 +61,9 @@ const httpUrl = z.string().trim().max(2000).url().refine((u) => /^https?:\/\//i.
 export const objectivesBodySchema = z.object({
   objective: z.string().trim().min(1).max(4000),
   successCriteria: z.string().trim().max(8000).optional(),
+  /** How the project means to reach the objective: the regulatory strategy, in the team's words (S11, THE_PROGRAM
+   *  §8 item 1). Part of the objective of record, so it is versioned, reasoned and audited with it. */
+  strategy: z.string().trim().max(8000).optional(),
   sources: z.array(z.object({
     kind: z.enum(OBJECTIVE_SOURCE_KINDS),
     title: z.string().trim().min(1).max(500),
@@ -75,6 +78,8 @@ export type ObjectivesBody = z.infer<typeof objectivesBodySchema>;
 export interface ObjectivesContent {
   objective: string;
   successCriteria: string | null;
+  /** The regulatory strategy, or null when none is stated. */
+  strategy: string | null;
   sources: ObjectivesBody['sources'];
 }
 export interface CurrentObjectives {
@@ -183,6 +188,8 @@ function canonical(content: ObjectivesContent): string {
     objective: content.objective,
     sources: content.sources.map((s) => ({ kind: s.kind, locator: s.locator ?? null, title: s.title, url: s.url ?? null })),
     successCriteria: content.successCriteria,
+    // Only when stated, after the earlier keys: a version recorded before the strategy existed keeps its hash.
+    ...(content.strategy ? { strategy: content.strategy } : {}),
   });
 }
 const sha256 = (text: string) => createHash('sha256').update(text).digest('hex');
@@ -214,6 +221,7 @@ function parseContent(raw: string | null): ObjectivesContent | null {
     const v = JSON.parse(raw) as Partial<ObjectivesContent>;
     if (typeof v.objective !== 'string') return null;
     return { objective: v.objective, successCriteria: typeof v.successCriteria === 'string' ? v.successCriteria : null,
+      strategy: typeof v.strategy === 'string' && v.strategy.trim() ? v.strategy : null,
       sources: Array.isArray(v.sources) ? v.sources as ObjectivesContent['sources'] : [] };
   } catch {
     return null;
@@ -393,7 +401,8 @@ export async function recordObjectiveAtCreation(client: PoolClient, input: Recor
 
 /** A version's canonical text and its hash: the same content always hashes the same. */
 function versionContent(body: ObjectivesBody): { text: string; contentHash: string } {
-  const text = canonical({ objective: body.objective, successCriteria: body.successCriteria?.trim() || null, sources: body.sources });
+  const text = canonical({ objective: body.objective, successCriteria: body.successCriteria?.trim() || null,
+    strategy: body.strategy?.trim() || null, sources: body.sources });
   return { text, contentHash: sha256(text) };
 }
 
@@ -464,6 +473,7 @@ export function objectivesContextBlock(record: ObjectivesRecord): string | null 
   if (!c) return null;
   const lines = [`\n## The project's objective (of record, version ${record.current!.version})`, c.objective];
   if (c.successCriteria) lines.push(`\nSuccess criteria:\n${c.successCriteria}`);
+  if (c.strategy) lines.push(`\nRegulatory strategy:\n${c.strategy}`);
   if (c.sources.length) {
     lines.push('\nSources:');
     for (const s of c.sources) lines.push(`- ${s.title}${s.locator ? `, ${s.locator}` : ''}${s.url ? ` (${s.url})` : ''} [${s.kind.replace('_', ' ')}]`);

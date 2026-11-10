@@ -25,6 +25,7 @@ import {
 import { computeDocHash } from '../../services/authoring/authoring-export';
 import { vaultVersionNotTransmittable, readVaultLifecycles } from '../../services/vault/vault-lifecycle';
 import { hashLifecyclePayload } from '../../services/regulatory/canonicalDocumentStore';
+import { readAuthoringVaultFilingReceipt } from '../../services/authoring/authoring-vault-filing-receipt';
 import { verifyAuditChain } from '../../../shared/regulatory/document-lifecycle';
 
 const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown, put: vi.fn() }));
@@ -255,5 +256,93 @@ describe('FD5 (c): a sealed Authoring approval carries to its Vault copy', () =>
     expect(approval.reason).toMatch(/wrote part of this document \(.*Authoring revision ledger.*\) signed its review or approval/);
     expect(await recordsFor(vaultDocumentId)).toEqual([]);
     expect(await vaultVersionNotTransmittable(jdb.pool as never, ORG, vaultDocumentId, sha256)).toBe('not reviewed');
+  }, T);
+});
+
+/**
+ * LX-10 (2026-11-10). The filing row named each section's revision and a
+ * digest of the sections, never the seal: from a Vault version nothing reached
+ * the frozen record its bytes were rendered from. The seal is written here in
+ * the shape the signing routes write it (authoring.router.ts: the freeze and
+ * the APPROVER snapshot), which their own suites cover.
+ */
+async function sealAs(docId: string, version: string, change: { text?: string; hash?: string } = {}): Promise<string> {
+  const [document] = await q(`SELECT * FROM authoring_documents WHERE id = $1 AND tenant_id = $2`, [docId, ORG]);
+  const sections = await q<{ content: string | null }>(
+    `SELECT id, doc_id, code, title, content, order_index, created_at, updated_at, tenant_id FROM authoring_sections
+      WHERE doc_id = $1 AND tenant_id = $2 ORDER BY order_index, created_at, id`, [docId, ORG]);
+  if (change.text !== undefined) sections[0] = { ...sections[0], content: change.text };
+  const frozenContent = JSON.stringify({ document, sections, approvedBy: APPROVER.email, frozenAt: '2026-10-01T10:00:00.000Z' });
+  const contentHash = change.hash ?? createHash('sha256').update(frozenContent).digest('hex');
+  await q(
+    `INSERT INTO frozen_documents (document_id, version, frozen_content, content_hash, frozen_by, frozen_reason, tenant_id)
+     VALUES ($1, $2, $3, $4, $5, 'Approved and frozen', $6)`,
+    [docId, version, frozenContent, contentHash, APPROVER.email, ORG],
+  );
+  return contentHash;
+}
+async function filingRecord(docId: string): Promise<{ details: Record<string, unknown>; exported: Record<string, unknown> }> {
+  const parsed = (v: unknown) => (typeof v === 'string' ? JSON.parse(v) : v) as Record<string, unknown>;
+  const [row] = await q(`SELECT new_values FROM audit_logs WHERE tenant_id = $1 AND action = 'authoring.document.file_to_vault' AND record_id = $2`, [ORG, docId]);
+  const [history] = await q(`SELECT metadata FROM authoring_export_history WHERE document_id = $1 AND tenant_id = $2`, [docId, ORG]);
+  return { details: parsed(row.new_values), exported: parsed(history.metadata) };
+}
+
+describe('LX-10: a sealed document’s Vault filing names the seal it rendered', () => {
+  it('approved and sealed: the chained row, the export history and the receipt name the frozen version and its content hash', async () => {
+    const { docId } = await signedDocument('Clinical overview, seal named', 'APPROVED', [REVIEW, APPROVE]);
+    const sealHash = await sealAs(docId, 'approved');
+    const res = await fileIt(docId);
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    const { details, exported } = await filingRecord(docId);
+    expect(details).toMatchObject({ sealVersion: 'approved', sealContentHash: sealHash });
+    expect(details).not.toHaveProperty('sealUnverified');
+    expect(exported).toMatchObject({ sealVersion: 'approved', sealContentHash: sealHash });
+    // The package's governance record reads the same receipt (leaf-source-resolver.ts).
+    const receipt = await readAuthoringVaultFilingReceipt(jdb.pool as never, {
+      organizationId: ORG, programId: PROGRAM, vaultDocumentId: res.body.data.vaultDocumentId, artifactSha256: res.body.data.sha256,
+    });
+    expect(receipt).toMatchObject({ status: 'recorded', source: { sealedVersion: { version: 'approved', contentHash: sealHash } } });
+  }, T);
+
+  it('sealed twice: the filing names the seal now in force, the later one', async () => {
+    const { docId } = await signedDocument('Clinical overview, frozen then approved', 'APPROVED', [REVIEW, APPROVE]);
+    await sealAs(docId, 'v1.0.frozen');
+    await q(`UPDATE frozen_documents SET frozen_at = '2026-10-01T09:30:00Z' WHERE document_id = $1 AND version = 'v1.0.frozen'`, [docId]);
+    const approvedHash = await sealAs(docId, 'approved');
+    expect((await fileIt(docId)).status).toBe(201);
+    expect((await filingRecord(docId)).details).toMatchObject({ sealVersion: 'approved', sealContentHash: approvedHash });
+  }, T);
+
+  it('a working draft names no seal, and is not called unverified', async () => {
+    const { docId } = await signedDocument('Clinical overview, working draft', 'draft', []);
+    expect((await fileIt(docId)).status).toBe(201);
+    const { details } = await filingRecord(docId);
+    expect(details).not.toHaveProperty('sealVersion');
+    expect(details).not.toHaveProperty('sealContentHash');
+    expect(details).not.toHaveProperty('sealUnverified');
+  }, T);
+
+  // A filing never names a seal it did not hold the filed text to. It records
+  // why none is named, on the artefact's own record (P-29.2: recorded, not refused).
+  it.each([
+    ['no sealed record stands behind the status', 'SOURCE_NOT_SEALED', async (_docId: string) => {}],
+    ['the sealed record is of other text', 'SOURCE_ALTERED_SINCE_SEAL', async (docId: string) => { await sealAs(docId, 'approved', { text: 'Text nobody filed.' }); }],
+    ['the sealed record does not match its own hash', 'SOURCE_SEAL_INTEGRITY_FAILED', async (docId: string) => { await sealAs(docId, 'approved', { hash: 'e'.repeat(64) }); }],
+  ] as const)('%s: the filing says so and names no seal', async (label, code, arrange) => {
+    const { docId } = await signedDocument(`Seal not named: ${label}`, 'APPROVED', [REVIEW, APPROVE]);
+    await arrange(docId);
+    const res = await fileIt(docId);
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    const { details, exported } = await filingRecord(docId);
+    expect(details).toMatchObject({ sealUnverified: code });
+    expect(exported).toMatchObject({ sealUnverified: code });
+    expect(details).not.toHaveProperty('sealVersion');
+    expect(details).not.toHaveProperty('sealContentHash');
+    const receipt = await readAuthoringVaultFilingReceipt(jdb.pool as never, {
+      organizationId: ORG, programId: PROGRAM, vaultDocumentId: res.body.data.vaultDocumentId, artifactSha256: res.body.data.sha256,
+    });
+    expect(receipt).toMatchObject({ status: 'recorded', source: { sealUnverified: code } });
+    expect((receipt as { source: Record<string, unknown> }).source).not.toHaveProperty('sealedVersion');
   }, T);
 });

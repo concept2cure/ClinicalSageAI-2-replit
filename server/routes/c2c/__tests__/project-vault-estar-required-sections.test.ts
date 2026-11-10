@@ -107,7 +107,8 @@ beforeEach(() => {
 describe('GET /api/c2c/project-vault/:id — a 510(k) is marked by its device', () => {
   const K510 = { doc_type: 'k510', agency: 'fda', rule_pack_version: 'fda-estar-510k-v1.1', required_sections: K510_SECTIONS };
 
-  it('a sterile device: D4 is required, D6 is required, and the reasons are said', async () => {
+  // D6 read Required until 2026-11-10 (P-123): FDA's eSTAR asks for it in a Special 510(k) only, and the mapper now says so.
+  it('a sterile device: D4 is required, D6 turns on the kind of 510(k), and the reasons are said', async () => {
     seed(K510);
     loadFlags.mockResolvedValueOnce({ ...NOT_STERILE, sterile: true });
     const res = await request(app()).get(`/api/c2c/project-vault/${PROJECT}`);
@@ -120,8 +121,9 @@ describe('GET /api/c2c/project-vault/:id — a 510(k) is marked by its device', 
       type: 'Required: one of D4, D5', blocker: true, flag: 'Mandatory section — no content yet in D4 or D5',
       preview: 'NeuroPanel 510(k) · D4 · Sterilization · required: the project answered yes to “Sterile”',
     });
-    expect(leaves.D6).toMatchObject({ type: 'Required', blocker: true, flag: 'Mandatory section — no content yet' });
-    expect(leaves.D6.preview).toMatch(/ · required of every 510\(k\)$/);
+    expect(leaves.D6.type).toBe('When applicable');
+    expect(leaves.D6.blocker).toBeFalsy();
+    expect(leaves.D6.preview).toMatch(/ · required when the submission is a Special 510\(k\)/);
     expect(leaves.A1).toMatchObject({ type: 'Required', blocker: true });
     // No slot takes A2: the pack's flag, in the pack's words.
     expect(leaves.A2).toMatchObject({ type: 'Required', blocker: true, flag: 'Mandatory section — no content yet' });

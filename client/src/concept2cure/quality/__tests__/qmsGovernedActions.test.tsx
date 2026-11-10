@@ -273,6 +273,10 @@ describe('Change control — governed actions reach their routes', () => {
     expect((within(d).getByLabelText(/Impact assessment/) as HTMLTextAreaElement).value)
       .toBe('Filter qualification and an extractables study; no filing change.');
     fill(d, /Implementation plan/, 'Qualify the second source; validate the fill line; update the batch record.');
+    // F1 (Part 11 review L-2): the edit states its reason, recorded with each field before and after.
+    fireEvent.click(within(d).getByRole('button', { name: 'Save assessment' }));
+    expect(H.apiRequest).not.toHaveBeenCalledWith('PATCH', expect.anything(), expect.anything());
+    fill(d, /Reason for this edit/, 'Second source added after the supplier audit.');
     fireEvent.click(within(d).getByRole('button', { name: 'Save assessment' }));
     await waitFor(() =>
       expect(H.apiRequest).toHaveBeenCalledWith('PATCH', '/api/mdx/qms/changes/1', {
@@ -280,6 +284,7 @@ describe('Change control — governed actions reach their routes', () => {
         impactAssessment: 'Filter qualification and an extractables study; no filing change.',
         implementationPlan: 'Qualify the second source; validate the fill line; update the batch record.',
         targetImplementationDate: '2026-09-15',
+        editReason: 'Second source added after the supplier audit.',
       }),
     );
     expect(H.refresh).toHaveBeenCalled();

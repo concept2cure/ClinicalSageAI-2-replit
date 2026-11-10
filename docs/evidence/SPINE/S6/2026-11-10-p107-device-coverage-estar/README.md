@@ -179,6 +179,9 @@ slot takes keep theirs.
    they are not owed; then delete the fallback (`packAnswer`).
 2. **D6 on a Traditional or Abbreviated 510(k).** The Library now marks it Required, as readiness already did. The
    form hides it. The fix is in the mapper: record the 510(k) type at intake, or make the slot "when applicable".
+   *Decided 2026-11-10 (P-123, session `01QoxbLZMS…`, under the founder's delegation of this lane's open calls):* the
+   slot is "when applicable" (a Special 510(k)), so D6 now reads "When applicable" and does not block. Recording the
+   510(k) type at intake remains open, the device lane's.
 3. **Slots several sections supply** (C1 or C2; D4 or D5; E5, E6 or E7; De Novo E1 or E2). The Library now says "one
    of", which is what readiness does. A predicate section alone satisfies substantial equivalence, and shelf life
    alone satisfies sterilization for a sterile device. Splitting them needs separate slots.

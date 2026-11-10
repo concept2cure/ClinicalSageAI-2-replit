@@ -485,7 +485,7 @@ function ChangeControlSession({
               eyebrow: 'Change control',
               title: `Assess ${c.changeNumber}`,
               sub: `${c.title}. The assessment can be edited while the change is proposed or under assessment. From approval on, it is what the approval signed.`,
-              governed: 'Saving writes an audit entry under your name.',
+              governed: 'Saving writes an audit entry under your name, with your reason and each field before and after.',
               submitLabel: 'Save assessment',
               ...(refusal ? { notice: refusal } : {}),
               fields: [
@@ -493,6 +493,8 @@ function ChangeControlSession({
                 { key: 'impactAssessment', label: 'Impact assessment', type: 'textarea', rows: 5, default: c.impactAssessment ?? '', desc: 'Product, process, validation and filings.' },
                 { key: 'implementationPlan', label: 'Implementation plan', type: 'textarea', rows: 5, default: c.implementationPlan ?? '' },
                 { key: 'targetImplementationDate', label: 'Target implementation date', type: 'date', default: c.targetImplementationDate?.slice(0, 10) ?? '' },
+                { key: 'editReason', label: 'Reason for this edit', type: 'textarea', rows: 2, required: true,
+                  desc: 'Recorded on the change\'s audit trail with each field before and after. At least 8 characters.' },
               ],
             }}
             onCancel={() => setDrawer(null)}
@@ -502,7 +504,7 @@ function ChangeControlSession({
                 impactAssessment: v.impactAssessment.trim() || null,
                 implementationPlan: v.implementationPlan.trim() || null,
                 targetImplementationDate: v.targetImplementationDate || null,
-              });
+              }, v.editReason.trim());
               return `The assessment of ${c.changeNumber} was saved.`;
             })}
           />

@@ -59,6 +59,13 @@ describe('native records on the existing immutable source spine', () => {
     expect(rows[0].is_current).toBe(false);
     expect(rows[1].previous_version_id).toBe(rows[0].id);
   });
+  it('captures a renamed record again, so the room shows the name the register now gives it', async () => {
+    await capture([snapshot()]);
+    expect(await capture([{ ...snapshot(), title: 'CAPA action: 2. Retrain the packaging line' }])).toMatchObject({ created: 1, superseded: 1 });
+    const rows = (await q.query('SELECT title,is_current,previous_version_id,id FROM cre_evidence_sources ORDER BY id')).rows;
+    expect(rows.map(row => row.is_current)).toEqual([false, true]);
+    expect(rows[1]).toMatchObject({ title: 'CAPA action: 2. Retrain the packaging line', previous_version_id: rows[0].id });
+  });
   it('does not retire records omitted from another actor’s admitted view', async () => {
     await capture([snapshot()]);
     expect(await capture([])).toMatchObject({ created: 0, superseded: 0 });

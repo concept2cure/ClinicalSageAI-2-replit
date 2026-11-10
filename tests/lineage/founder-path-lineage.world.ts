@@ -142,7 +142,7 @@ export const PASSWORD = randomBytes(12).toString('hex');
 /** users.id is a serial in production; the JWT carries it as a string. */
 export const AUTHOR = { id: '3', organizationId: ORG_A, email: 'author@founder.example', name: 'Avery Author' };
 export const APPROVER = { id: '4', organizationId: ORG_A, email: 'approver@founder.example', name: 'Quinn Approver' };
-/** Reviews the Vault copy (VR-13): neither its filer nor its approver may (FD4). */
+/** The QA reviewer: reviews the document in Authoring (P-95). Not its author and not its approver (FD4). */
 export const REVIEWER = { id: '5', organizationId: ORG_A, email: 'reviewer@founder.example', name: 'Remy Reviewer' };
 /** What the gateway reports as the serving model — the stream passes it as ctx.servingModel (stream.ts:1733). */
 export const SERVED_MODEL = APPROVED_SERVING_MODEL;
@@ -332,10 +332,11 @@ async function mountApp(jdb: JourneyDb): Promise<express.Express> {
     runWithTenantScope({ tenantId: String(ORG_A), role: 'admin', source: 'request', caller: 'founder-path-lineage' }, next),
   );
   app.use('/api/authoring', authoringRouter);
-  // VR-13: a Vault version is reviewed and approved on the one lifecycle (FD5 (a):
-  // an Authoring export is approved again in the Vault). The signer ceremony's
-  // verdict is injected, as tests/db/vault-lifecycle.dbtest.ts does; its own
-  // suites prove the real one.
+  // VR-13: a Vault version's review record lives on the one lifecycle. Since
+  // 2026-11-10 the walk only opens the record the carried Authoring approval
+  // made (hop 6b, FD5 (c)) and signs nothing through this router; the signer
+  // ceremony's verdict stays injected, as tests/db/vault-lifecycle.dbtest.ts
+  // does, because the router requires one.
   const { createDocumentLifecycleRouter } = await import('../../server/routes/document-lifecycle');
   app.use('/api/regulatory/documents', createDocumentLifecycleRouter({
     db: jdb.db as never,

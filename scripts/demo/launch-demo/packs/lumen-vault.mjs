@@ -246,7 +246,7 @@ async function ensureDocument(ctx, program, doc, cabinet, people, out) {
     else hit = await upload(ctx, program, doc, title, pdf);
     const filed = await ensureFiled(ctx, program, doc, hit);
     const stage = await ensureStage(ctx, program, doc, hit.id, people);
-    out.push({ key: doc.key, code: doc.code, id: hit.id, title, type: doc.type, filing: doc.filing, stage: doc.stage, pages, sha256: sha256(pdf) });
+    out.push({ key: doc.key, code: doc.code, id: hit.id, title, type: doc.type, filing: doc.filing, stf: doc.stf ?? null, stage: doc.stage, pages, sha256: sha256(pdf) });
     return `${created ? 'uploaded' : 'found'} ${hit.id} (${pages} pages); ${filed}; ${stage}`;
   });
 }

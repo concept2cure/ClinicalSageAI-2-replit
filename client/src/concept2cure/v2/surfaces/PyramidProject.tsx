@@ -30,7 +30,7 @@ import {
 } from '../fixtures/pyramid-data';
 import { PyTaskSheet, PyWorkBreakdown, statusRefusal, workDocumentAsk } from './Pyramid';
 import { resolveFilingCatalogEntry } from '@shared/regulatory/filing-catalog';
-import { AssignAction, AssignmentLine, buildPyramidTaskBody, type PlanAssignment } from './PlanAssign';
+import { AssignAction, AssignmentLine, buildPyramidTaskBody, UseScheduleDate, type PlanAssignment } from './PlanAssign';
 
 /** A recorded filing in words: the catalogue's name, or nothing when the catalogue does not know it. */
 const filingName = (filing: string | null | undefined) => (filing ? resolveFilingCatalogEntry(filing)?.displayName ?? null : null);
@@ -115,9 +115,19 @@ function RowPlan({ slot, owner, standing }: { slot?: PyScheduledTask; owner?: Pl
   );
 }
 
+/** "Use the schedule's date", offered only where an unfinished owner's task is due on another day than the plan's. */
+export function MoveToSchedule({ owner, slot, ownerDay, onMoved }: {
+  owner?: PlanAssignment; slot?: PyScheduledTask; ownerDay: string | null; onMoved?: () => void;
+}) {
+  if (!owner || !slot || !onMoved || ownerDay === slot.due || ['completed', 'cancelled'].includes(owner.status)) return null;
+  return <UseScheduleDate assignment={owner} scheduleDay={slot.due} scheduleWords={dayWords(slot.due)} onMoved={onMoved} />;
+}
+
 /** The task sheet's schedule and owner. */
-function TaskPlan({ slot, standing, owner, ownersUnread, assign }: {
+function TaskPlan({ slot, standing, owner, ownersUnread, assign, onMoved }: {
   slot?: PyScheduledTask; standing: PyStanding; owner?: PlanAssignment; ownersUnread: boolean; assign: React.ReactNode;
+  /** Reads the owners again after the owner's task was moved to the schedule's date. */
+  onMoved?: () => void;
 }) {
   const ownerDue = owner?.dueDate ? new Date(owner.dueDate) : null;
   const ownerDay = ownerDue && Number.isFinite(ownerDue.getTime())
@@ -135,6 +145,7 @@ function TaskPlan({ slot, standing, owner, ownersUnread, assign }: {
       ) : <p className="py-sheet-sched">No due date: this project has no target submission date recorded.</p>}
       {owner ? <p><AssignmentLine assignment={owner} />{slot && ownerDay && ownerDay !== slot.due ? `. The schedule now says ${dayWords(slot.due)}.` : ''}</p>
         : <p>{ownersUnread ? 'Who owns this task could not be read.' : 'No owner yet.'}</p>}
+      <MoveToSchedule owner={owner} slot={slot} ownerDay={ownerDay} onMoved={onMoved} />
       {assign}
     </div>
   );
@@ -273,7 +284,7 @@ function ProjectTaskSheet({ pyr, task, tasks, slot, standing, ind, setStatus, on
   return (
     <PyTaskSheet pyr={pyr} task={task} tasks={tasks} onClose={() => onOpenTask(null)} onTask={onOpenTask}
       onStatus={(id, s) => void setStatus(id, s)} projectOpen
-      plan={<TaskPlan slot={slot} standing={standing} owner={owners?.get(task.id)} ownersUnread={ownersUnread} assign={assign} />}
+      plan={<TaskPlan slot={slot} standing={standing} owner={owners?.get(task.id)} ownersUnread={ownersUnread} assign={assign} onMoved={onAssigned} />}
       onOpenSection={ind ? (code, title) => {
         setEditorTarget({ docType: null, code, label: title, programId });
         onOpenTask(null);

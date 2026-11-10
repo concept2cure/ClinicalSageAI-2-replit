@@ -13,7 +13,9 @@
  *   4. record   — ONE transaction: the export-history row the Exports rail
  *                 lists, the EXPORT audit-trail row, and one governed chained
  *                 audit row (`authoring.document.file_to_vault`) that names the
- *                 document, the vault row, the bytes' SHA-256 and the folder.
+ *                 document, the vault row, the bytes' SHA-256 and the folder;
+ *                 each section's revision; and, for a sealed document, the
+ *                 seal it rendered (sealNamedBy, LX-10).
  *
  * ── Refusals ────────────────────────────────────────────────────────────────
  *   • no program           409 DOCUMENT_HAS_NO_PROGRAM — a vault is a project's
@@ -49,6 +51,7 @@ import { SavedDraftSourceError, reserveSavedDraftSourceReferences, withSavedDraf
 import { assertWorkflowImportRelease, WorkflowImportGovernanceError } from './workflow-import-governance';
 import { savedImportSource } from './import-source-references';
 import { readFiledSectionRevisions } from './revision-ledger';
+import { sealNamedBy } from '../coauthor/coauthor-snapshot';
 import type { AuthoringPool, AuthoringActor } from './authoring-documents';
 import { ingestVaultDocument, type VaultIngestResult } from '../vault/vault-ingest.service';
 import { placeVaultDocument, type VaultFilingRecord } from '../vault/vault-placement.service';
@@ -324,6 +327,16 @@ async function recordFiling(
     // Which revision of each section this rendition is (LX-10): read in the
     // same lock as the sections, so it is the revision these bytes came from.
     const sectionRevisions = await readFiledSectionRevisions(client, tenantId, currentSections.rows);
+    /* Which seal it is (LX-10): a sealed document's filing names the frozen
+       version it rendered and that record's content hash, under the names the
+       filing copy keeps, so the Vault version is walked back to its seal by a
+       recorded key. Named only when the seal holds for these rows; otherwise
+       the filing names none and says why. That is recorded, not refused, by
+       the rule P-29.2 set above for this exit: the Vault version's own gates
+       (the approval carry, the transmit gate) decide what it may be used for.
+       Whether such a filing should be refused instead is the founder's call;
+       it is not decided here. A working draft names nothing. */
+    const seal = await sealNamedBy(client, { sourceId: docId, organizationId: tenantId, status: doc.status });
     const filingDiverged = agreement.diverged.map((d) => ({ key: d.key, filed: d.filed, section: d.section.code }));
     const details = {
       format: args.format,
@@ -340,6 +353,7 @@ async function recordFiling(
       sourceVersion: doc.version,
       sourceSectionsSha256: sectionsDigest(sections),
       sectionRevisions,
+      ...seal,
       ...(filingDiverged.length > 0 ? { filingDiverged } : {}),
       // The exact original dependency survives the new bytes' identity. This
       // receipt is how withdrawal finds a source-derived Vault rendition.

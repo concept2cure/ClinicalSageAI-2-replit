@@ -560,13 +560,15 @@ licensed equivalent.
 
 The active item takes a soft fill.
 
-**Home.** A centred serif greeting and one large rounded composer (radius about 20 px, a hairline border, a soft
-shadow, attach, and an orange send button). A few quiet starter suggestions sit below. Nothing else is above the
-fold.
+**Home.** A compact serif greeting and one large rounded composer (radius about 20 px, a hairline border, a soft
+shadow, attach, and an orange send button), with a few quiet starter suggestions. Beneath them, and visible at
+1440×900 without scrolling, are the person's projects and their due tasks (P-122).
 
-**Projects.** The page holds the title, a search field, one "New project" button and a grid of calm cards. Each card
-shows the name, a one-line description and when it was updated. Filters stay quiet. There are no readiness bars and
-no stat strip.
+**Projects.** The page holds the title, a search field, one "New project" button, the portfolio figures (active
+projects, average readiness, filings due within 60 days) and a grid of calm cards. Each card shows the name, a
+one-line description, its readiness, stage, lead and status, and when it was updated. These are shown by default, in
+grid and list, and the figures come from the server. Filters stay quiet. "Which projects are at risk this week?" is
+one click, answered by the server's risk engines (P-122).
 
 **A project.** This is Claude's project page:
 - **Main column:** the name, a one-line description, the composer ("How can I help with this project?") and the
@@ -576,6 +578,11 @@ no stat strip.
 - **The regulatory work:** Plan, Evidence, Author, Review, Submit and Respond, documents, filing state and the work
   areas. All of it stays one click away, in a quiet segmented control and sections below the composer, never as
   banners above it.
+- **Shown, not hidden (P-122):**
+  - the open step says what to do next;
+  - Records and Activity are open sections;
+  - the Review step lists its approvals and the server's readiness;
+  - section owners, deadlines and milestones are on the Plan step.
 
 **Conversation.** A centred reading column. AnA's prose is set in the serif, the person's turns are quiet, and
 artifacts and citations appear inline.
@@ -616,6 +623,10 @@ Quality, RBM and Reporting share one page pattern:
 **Zero capability loss.** This is not negotiable (`.claude/skills/claude-ui-design-principles.md`). Every metric,
 workflow, verdict and action a removed element gave stays reachable: through the conversation, an inspector, a quiet
 section or ⌘K. Each package files a ledger of every removed element and where it now lives.
+
+**Enforced since P-122 (2026-11-10).** A ledger entry is not enough. Nothing a screen showed is removed, hidden, moved
+below the fold or put behind a closed disclosure without a founder decision. A fold is admitted only with a test
+that opens the target and shows the same outcome.
 
 ## 3. The work packages
 
@@ -1473,15 +1484,20 @@ Vault features yet … this is a multi tenant environment").
 - **Retention (FD3 c) already holds** (`retentionCron.ts` refuses destruction); **binders** are the folders above.
 - **A Word version is viewed as a PDF rendition** through the one converter, bound to the source's SHA-256, audited
   with both hashes, made on request and never stored, so it is never filed in place of its source. Red first; walked.
-- **Open, not held:** device coverage converged onto the eSTAR mapper; renditions of formats other than Word.
+- **Device coverage follows the eSTAR registry**: landed on trunk by session `01KnUGoX3g…`
+  (`estar-outline-requirements.ts`); this session's copy was withdrawn unpushed. This session decided what that slice
+  left open (P-123, 2026-11-10): a 510(k)'s risk management follows FDA's template and reads "When applicable" (a
+  Special 510(k)), no longer required of every 510(k). Red first; walked on the 510(k) demo project.
+- **The organisation-wide `/api/folders` route is retired (P-123).** Folders are a project's, through its Vault.
+- **Decided, not built (P-123):** renditions stay Word to PDF; search filters stay one value each.
 
 **Open, for the next session:**
 
 1. AnA over folders walked in a conversation, once a model key is present.
 2. A J-NDA or Health Canada NDS project is refused at intake, so those binders cannot be shown in a project.
-3. Org-level folders (`/api/folders`) have no UI and no caller: keep or retire is a founder decision.
-4. Search selects send one value per filter (several arrive through a saved view); the library search's project
-   filter (`programId=`) is never sent.
+3. A 510(k)'s kind (Traditional, Special, Abbreviated) is not recorded at intake; until it is, risk management reads
+   "When applicable" (P-123 item 2; the device lane's).
+4. The library search's project filter (`programId=`) is never sent.
 5. Stop the app before `git push` (the full typecheck runs out of memory beside it on 15 GB).
 
 #### L1 (row D2) — CSR drafting with the person in control, and the running-app walk of its screens (session `session_01T2wooCZu46W7msw4TJuuzr`)
@@ -1684,9 +1700,18 @@ Record: `docs/evidence/W3/2026-11-10/README.md`; dispositions: `docs/validation/
 
 #### F1 — the founder path's seal hop: what blocks it, and the citation the check now counts (session `session_01QoxbLcnW5jPvJSjjKQtvTA`, 2026-11-10)
 
-The founder-path walk (`tests/lineage/founder-path-lineage.pglite.test.ts`) is 6 of 15 at head. Its seal hop is
-refused 409 `INDEPENDENT_CHECK_REQUIRED`, and the seven cases behind it do not run. Read from the code and run, not
-inferred:
+**Update, later on 2026-11-10: the walk is 15 of 15** (`60b1d53767`,
+`docs/evidence/SPINE/S2/2026-11-10-walk-persons-path/`). It follows the path a person can take before a model is
+qualified: AnA drafts; the person rewrites both sections in their own words and cites the Data Room source; the
+independent check is run; the reviewer decides the earlier finding, approves and signs; then freeze, approval,
+filing and transmit. A new check states that AnA's draft is not signed as drafted (409). The approval now carries
+to the Vault copy (FD5 (c)), because the document is reviewed (P-95). Baseline 11 → 10. The walk no longer proves
+that text AnA wrote survives to the seal, nor AC-03: both wait for a PQ-passed model. Found, not fixed: the review
+route answers `INDEPENDENT_CHECK_REQUIRED` as 503 `REVIEW_UNAVAILABLE` (`authoring.router.ts:3075`).
+
+When this entry was first written the walk (`tests/lineage/founder-path-lineage.pglite.test.ts`) was 6 of 15: its
+seal hop was refused 409 `INDEPENDENT_CHECK_REQUIRED`, and the seven cases behind it did not run. Read from the code
+and run, not inferred:
 
 - **No model has passed PQ, so nothing AnA writes can be released.** Every entry of
   `server/services/ai-governance/approved-models.ts` reads `pq: { status: 'pending' }`. A document holding
@@ -1720,6 +1745,15 @@ inferred:
   "unsupported markup". It now accepts a prior machine span whose words are gone or still the machine's. Red first
   (4 cases), then 24 of 24; 557 pass across the 30 suites around the gate.
 
+- **A sealed document's Vault filing names the seal it rendered** (`46d849a026`,
+  `docs/evidence/SPINE/S2/2026-11-10-vault-filing-names-seal/`; LX-10's seal half, rows D5 and D7). From a Vault
+  leaf, nothing reached the frozen record its bytes were rendered from; the filing-copy leaf of the same document did.
+  The chained filing row and the export history now record the frozen version and its content hash, held to the
+  filed text by the seal check the filing copy uses, and the receipt reader carries it into the package's governance
+  record. Red first (13 cases), then 52 of 52; 440 pass across the 32 suites around the filing. The walk's baseline
+  10 → 8, still 15 of 15. **For the founder:** when a sealed document's seal does not hold, the filing records why
+  and names none; the filing copy refuses in that state. Whether the Vault filing should refuse too is not decided.
+
 **Found, not fixed here**
 
 - A person still cannot put a citation into a sentence AnA wrote and keep the sentence (422
@@ -1736,8 +1770,7 @@ inferred:
 
 1. The founder: approve PQ-DRAFT-001 or say what it still lacks; supply the provider key; allow the issuer hosts.
 2. D4: finish the RAG bank and the source review once the hosts are reachable, then run the PQ.
-3. The walk follows the path a person can take before a model is qualified: rewrite AnA's text, cite the source,
-   run the check, review, sign, seal, file. That restores the seven cases behind the seal hop.
+3. ~~The walk follows the path a person can take before a model is qualified.~~ Done (`60b1d53767`), above.
 
 #### D3 — The project page, D3-4 (session `session_01FTWcmXm7At3ZXBE5VWn6oS`, from 2026-11-08, P-107 item 7)
 

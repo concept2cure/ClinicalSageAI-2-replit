@@ -91,6 +91,23 @@ describe('native Quality evidence admission', () => {
     await expect(readQualityProjectEvidence(q,input)).rejects.toMatchObject({status:503});
   });
 
+  it('names a child record in its own words, never by its bare row id', async () => {
+    state.rows.qms_documents = [{ id: 5, organization_id: 2, doc_number: 'SOP-QA-001', title: 'Deviation handling', version: '2.0', status: 'effective' }];
+    state.rows.qms_training_assignments = [{ id: 4, organization_id: 2, document_id: 5, user_id: 9 }];
+    state.rows.capa_actions = [{ id: '90012220-2fba-43b9-8865-77021f305d3c', capa_id: 'capa-1', n: 2, description: 'Retrain   the packaging line', state: 'open' }];
+    state.rows.qms_job_role_members = [];
+    const titles = (await readQualityProjectEvidence(q, input)).map(row => row.title);
+    expect(titles).toContain('Training assignment: SOP-QA-001 Deviation handling (assignment 4)');
+    expect(titles).toContain('CAPA action: 2. Retrain the packaging line');
+    expect(titles.some(title => /90012220/.test(title))).toBe(false);
+    state.rows.qms_change_controls = [{ id: 7, organization_id: 2, change_number: 'CC-7', title: 'Visit-window control', status: 'open' }];
+    state.rows.qms_change_links = [{ id: 3, organization_id: 2, change_id: 7, relationship: 'triggered_by', linked_label: 'Site 104 deviation' }];
+    expect((await readQualityProjectEvidence(q, input)).map(row => row.title)).toContain('Quality record relationship: triggered by Site 104 deviation');
+    // With nothing of its own to say, the record says what it is.
+    state.rows.capa_actions = [{ id: 'action-9', capa_id: 'capa-1', state: 'open' }];
+    expect((await readQualityProjectEvidence(q, input)).map(row => row.title)).toContain('CAPA action: record action-9');
+  });
+
   it('rechecks current admission and returns null only for a genuinely absent selected identity', async () => {
     expect(await readQualityRecordEvidence(q, input, 'quality:qms_suppliers:999')).toBeNull();
     state.changed = true;
