@@ -154,9 +154,21 @@ describe('QMS controls reach the canonical authoring workbench', () => {
     await screen.findByTestId('canonical-workbench');
     expect(H.request).toHaveBeenCalledWith('GET', '/api/mdx/qms/documents/4/editor');
     fireEvent.click(screen.getByRole('button', { name: 'Open Vault' })); expect(H.nav).toHaveBeenCalledWith('vault');
+    // C5: the one editor owns its asks inside Quality, so it keeps its unsaved-work decision and its document,
+    // section and saved-version origin; a host onAsk would bypass both (product-editor-ask-leaves-quality).
+    expect((H.workbench as { onAsk?: unknown }).onAsk).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Back to Quality register' }));
     expect(screen.queryByTestId('canonical-workbench')).toBeNull(); expect(H.refresh).toHaveBeenCalled();
     expect(H.ask).not.toHaveBeenCalled();
+  });
+  // C5, found walking it: a legacy entry past draft has its text inline and no editing copy. "Open" reads that text
+  // where it lives; the editor has nothing to open and would answer "no editing copy" with a Try again that cannot help.
+  // (The reader's own read of the text is pinned in SopRegisterPersonalTraining.test.tsx, for a signed-in reader.)
+  it('opens a legacy entry under review to its inline controlled text, not to an editor with no copy', () => {
+    H.docs = [{ ...DRAFT, status: 'in_review', authoringDocumentId: null }];
+    renderRegister(); fireEvent.click(screen.getByRole('button', { name: 'SOP-004' }));
+    expect(screen.queryByTestId('canonical-workbench')).toBeNull();
+    expect(screen.getByRole('dialog', { name: 'Read and acknowledge' })).toBeTruthy();
   });
   it('binds an unbound legacy draft explicitly before opening its new editing copy', async () => {
     H.docs = [{ ...DRAFT, authoringDocumentId: null }];

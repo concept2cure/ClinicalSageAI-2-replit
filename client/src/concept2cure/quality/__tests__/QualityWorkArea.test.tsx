@@ -140,7 +140,7 @@ describe('Quality is one work area with one header (D7-B)', () => {
     expect(more.getAttribute('aria-expanded')).toBe('true');
     const group = within(row).getByRole('group', { name: 'Actions for QS-SOP-001' });
     expect(within(group).getAllByRole('button').map((b) => b.getAttribute('aria-label') ?? b.textContent)).toEqual([
-      'Open document', 'Training', 'Review route', 'Revise', 'View version history of QS-SOP-001', 'Ask AnA about this document',
+      'Open', 'Training', 'Review route', 'Revise', 'View version history of QS-SOP-001', 'Ask AnA about this document',
     ]);
     fireEvent.click(within(group).getByRole('button', { name: 'Ask AnA about this document' }));
     expect(H.asked).toEqual(['Summarize QS-SOP-001 Handling of customer complaints and tell me what it needs next.']);

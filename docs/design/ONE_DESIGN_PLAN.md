@@ -1380,31 +1380,41 @@ Vault features yet … this is a multi tenant environment").
 - **Step 2, walked** (`walk-binders.cjs`): an IND, NDA, MAA, 510(k), EU MDR and EU IVDR project each open on their own
   binder, now **first in the tree** (it was below every authored document's draft outline), with the outline and its
   version named. An EU MDR file no longer lists the empty US "510(k) submissions" and "PMA submissions" folders.
-  The record pane names a binder or person's folder, not its id. (R1 `3cf74c4b9d`, S6 `05e907d064`.)
-- **Step 3, the pyramid in Vault** (S6 `05e907d064`, R1 `3cf74c4b9d`, S11 `d6e27d9ddd`): a binder folder lists the plan
+  The record pane names a binder or person's folder, not its id. (R1 `844b7de191`, S6 `d208ba8f68`.)
+- **Step 3, the pyramid in Vault** (S6 `d208ba8f68`, R1 `844b7de191`, S11 `a36449dd90`): a binder folder lists the plan
   tasks bound to it with their status (`VaultPlanWork.tsx`, from `GET /api/v1/pyramids/by-project/:id`); a plan task's
   CTD binding opens its binder folder in the Vault (`vault.open-folder` takes an exact `folderId`). Walked both ways.
-- **Step 4, AnA** (S6 `1ead231890`, S4 `a8af07d238`): `list_project_documents` returns the project's folders;
+- **Step 4, AnA** (S6 `c80d21ae3b`, S4 `7d918fe90e`): `list_project_documents` returns the project's folders;
   `place_project_document` files into any of them and can make a folder first (`new_folder`), through the Vault's
   governed writer with AnA's provenance. Her filing stays a suggestion a person confirms. Run live on the database
   under RLS (`ana-step4-live.txt`); not walked through a conversation here, which has no model key.
-- **Multi-tenant repair** (F1 `28650cf42d`): the organization-wide `/api/folders` route listed, renamed and deleted
+- **Multi-tenant repair** (F1 `9d01cdb37b`): the organization-wide `/api/folders` route listed, renamed and deleted
   folders by organization alone, so once projects had folders a CRO member (a viewer included) could see another
   sponsor's project folder names, or rename or delete one with no audit row. It now never reaches a project's folders.
   Shown red first. Project folders are reached only through the project's Vault route, under that project's access.
 
-**What the survey found** (every Vault route checked for a UI caller): every `/api/c2c/project-vault`,
-`/api/vault/ingest` and legal-hold route has one. Open, for the next session:
+**Continued 2026-11-10, second pass** (the founder: "Fix all and then prepare for GA"):
 
-1. Search sends one value per filter (`Vault.tsx`, `v ? [v] : null`); the server takes several. The library search's
-   project filter (`programId=`) is never sent.
-2. A project folder cannot be moved or removed (no route); org-level folders (`/api/folders`) have no UI and no
-   caller. Decide with the founder whether org-level folders stay.
-3. AnA over folders walked in a conversation, once a model key is present.
-4. A J-NDA or Health Canada NDS project is refused at intake, so those binders cannot be shown in a project.
-5. Gates: stop the app before `git push` (the full typecheck runs out of memory beside it on 15 GB).
-   `ci:check-css-selector-shadowing` and `server/routes/c2c/__tests__/project-settings.pglite.test.ts` (6 cases) are red
-   on trunk, not from this work.
+- **A person's folder is moved and removed**: Move and Remove beside Rename; POST
+  `/:id/folders/:folderId/move` and `/remove`. Remove takes only an empty folder. Found live: with no person in the
+  database scope, row security hid a folder's file and it counted as empty; removal now refuses unless the database
+  confirms the session can read the project's documents. Walked (`walk-folder-moves.cjs`).
+- **Search's folder filter** takes binder headings and people's folders; it refused all but presets.
+- **Two trunk reds repaired** (F1): `.qms-rowacts` declared twice (`ci:check-css-selector-shadowing`);
+  `project-settings.pglite.test.ts` injected its failures on a connection the route no longer takes (38 of 38 now).
+- **Readiness for GA** is written down in `docs/evidence/SPINE/S6/2026-11-06/GA-READINESS.md`: what is proven in this
+  lane (154 server files / 2,683 tests, 76 client files / 850 tests, the two-tenant row-security check on
+  `document_folders`), and the 18 blockers `ga-readiness-report.mjs` reports (8 of 42 ready), none of which this lane
+  can close: deploy secrets and switches, licences, model qualification, and the founder's rows D1, D9, D10.
+
+**Open, for the next session:**
+
+1. AnA over folders walked in a conversation, once a model key is present.
+2. A J-NDA or Health Canada NDS project is refused at intake, so those binders cannot be shown in a project.
+3. Org-level folders (`/api/folders`) have no UI and no caller: keep or retire is a founder decision.
+4. Search selects send one value per filter (several arrive through a saved view); the library search's project
+   filter (`programId=`) is never sent.
+5. Stop the app before `git push` (the full typecheck runs out of memory beside it on 15 GB).
 
 #### L1 (row D2) — CSR drafting with the person in control, and the running-app walk of its screens (session `session_01T2wooCZu46W7msw4TJuuzr`)
 
