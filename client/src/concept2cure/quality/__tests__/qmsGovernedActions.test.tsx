@@ -294,7 +294,7 @@ describe('Change control — governed actions reach their routes', () => {
   // Quality review, 2026-11-10 (Part 11 #3): Escape while a drawer's write is in flight kept the write and closed the
   // drawer, so a refusal had nowhere to show.
   it('keeps a drawer open while its write is in flight', async () => {
-    H.apiRequest.mockImplementation((method: string) => (method === 'PATCH' ? new Promise(() => {}) : Promise.resolve(ok({ data: [] }))));
+    H.apiRequest.mockImplementation((method: string) => (method === 'PATCH' ? new Promise(() => {}) : Promise.resolve(json(200, { data: [] }))));
     renderLog();
     fireEvent.click(screen.getByRole('button', { name: 'More actions for CC-2026-014' }));
     fireEvent.click(screen.getByRole('button', { name: 'Edit assessment' }));
