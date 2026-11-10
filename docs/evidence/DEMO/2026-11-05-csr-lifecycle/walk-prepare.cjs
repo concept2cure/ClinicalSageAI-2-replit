@@ -369,10 +369,13 @@ async function approveHeadings(page, nums) {
 async function prepareHeadingReview() {
   let heads = await headingsOf(PEOPLE.author.page);
   const toSend = heads.filter((h) => h.state === 'draft' && reviewable(h)).map((h) => h.num);
-  if (toSend.length) await retrying(PEOPLE.author.page, () => sendHeadings(PEOPLE.author.page, toSend));
+  // Each attempt reads what is still to do: a retry that began again from the first heading waited 30 s on a
+  // button the first attempt had already pressed (2026-11-10, after a dev reload interrupted the first attempt).
+  const still = async (page, state) => (await headingsOf(page)).filter((h) => h.state === state && reviewable(h)).map((h) => h.num);
+  if (toSend.length) await retrying(PEOPLE.author.page, async () => sendHeadings(PEOPLE.author.page, await still(PEOPLE.author.page, 'draft')));
   heads = await headingsOf(PEOPLE.author.page);
   const toApprove = heads.filter((h) => h.state === 'in_review' && reviewable(h)).map((h) => h.num);
-  const readShot = toApprove.length ? await retrying(PEOPLE.approver.page, () => approveHeadings(PEOPLE.approver.page, toApprove)) : null;
+  const readShot = toApprove.length ? await retrying(PEOPLE.approver.page, async () => approveHeadings(PEOPLE.approver.page, await still(PEOPLE.approver.page, 'in_review'))) : null;
   heads = await headingsOf(PEOPLE.author.page);
   const count = (f) => heads.filter(f).length;
   const panel = await openCsr(PEOPLE.approver.page);

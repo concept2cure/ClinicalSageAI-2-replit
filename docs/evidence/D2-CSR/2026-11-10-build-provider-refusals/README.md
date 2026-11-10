@@ -56,7 +56,7 @@ Searches run: `csr`, `draft`, `provider`, `rate limit`, `429`, `credit`, `probe`
 | 2 | A refused key, an account with no credit and a model the account cannot use all read the same as 1. | The same catch. | A refusal waiting cannot change stops the build on that heading with a typed code, and the build card says which. Three provider calls are made (one per approved drafting model), not 207. | `screens/key-refused.png`, `screens/no-credit.png`; `build-key-refused.json`, `build-no-credit.json`. |
 | 3 | Build 2 drafted 68 of 69 headings and ended "failed at 98%: §12.4.1 has no saved text". | The builder tells the model to head a section with its canonical title. ICH E3's title of §12.4.1 is "… by Patient (16.2.8) and Each Abnormal Laboratory Value (14.3.4)". The figure check read those as the figures 16.2, 0.8, 14.3 and 0.4 and refused the draft. Any model that obeys the instruction is refused. | `unsupplied-statistics.ts`: a number with two or more points is a report part, not a figure. A one-point number and a percentage are still refused. | The same draft is accepted (`build-rate-limited-complete.json`). |
 | 4 | When a figure check refused a draft of a heading with no template, the build said only "has no saved text". | The reason is on the unsaved row's lineage, and the row is not saved. | `csr-job-runner.ts`: the receipt keeps the typed reason per heading (never the draft or its figures), and the build card states it. | Unit tests; not seen on screen, because after fix 3 the stand-in's drafts are all accepted. |
-| 5 | "Send for review" on the CSR was refused: "Too many document requests." | `GET …/review-route` (read on every open of a document since 2026-11-09) and `GET …/route-candidates` were counted as document content, 20 a minute. | `redisRateLimiter.ts`: both are record reads. Reassigning and handing back a route stay writes. | Unit test. Not yet re-walked in the app. |
+| 5 | "Send for review" on the CSR was refused: "Too many document requests." | `GET …/review-route` (read on every open of a document since 2026-11-09) and `GET …/route-candidates` were counted as document content, 20 a minute. | `redisRateLimiter.ts`: both are record reads. Reassigning and handing back a route stay writes. | Re-walked: the CSR was sent to the reviewer, with no 429 in the run (`walk-codespace.json`, step "Send the CSR for review": pass). |
 
 Also changed, for the Codespace:
 
@@ -94,11 +94,11 @@ With the fixes, on this database, through the product's own screens and routes:
 |---|---|
 | Project, Vault uploads, three-person approvals (7 files, 14 signatures), CSR document, frozen study data | pass (the start script) |
 | Build CSR draft | **complete, 100%** (build 6): every narrative heading drafted and accepted, in 229 s, against a provider limiting at 20 requests a minute. It answered 36 of the 105 requests it received with 429; each was waited out. `build-rate-limited-complete.json`, `screens/rate-limited-complete.png` |
-| Section review: the requester sends, the approver reads and approves | pass for 32 headings on build 1. On build 2 the script read 68 headings in under a minute and was rate limited; a person does not read that fast, and the script is not paced. Not a product fault |
+| Section review: the requester sends, the approver reads and approves | pass for 32 headings on build 1. On build 2 the script read 68 headings in under a minute and was rate limited; a person does not read that fast, and the script is now paced. On build 6 the first 14 headings were sent, then a dev reload (this session merged trunk while the walk ran) closed the panel. Not re-run; not a product fault |
 | Import approved sections into the CSR document | pass (32 sections written, build 1) |
 | Narratives | pass: 95 of 95 |
-| Assemble CSR files | assembled. With every heading drafted: bookmarks reach 4 levels, 0 placeholder sections, 235 links checked, 3 body gaps. 18 §16 appendices are named as missing, 12 of which block placement |
-| Send the CSR for review | refused by the rate limit (fix 5) |
+| Assemble CSR files | assembled. With every heading drafted (build 6): contents to 4 levels, 0 placeholder sections, 236 links checked and all resolved, 1 body gap (§15 is prepared from source records). 18 §16 appendices are named as missing, 12 of which block placement |
+| Send the CSR for review | pass after fix 5; refused by the rate limit before it |
 | Sequence 0000; compile | sequence started; compile refused for the application number, the sponsor and its D-U-N-S, as designed |
 
 ## What still stands between this CSR and a filed sequence
@@ -125,7 +125,13 @@ These were read in the code and are not changed here. The first three are decisi
    the data that produces them.
 5. **A CSR is filed to an IND as an amendment.** Sequence 0000 as an original needs the whole IND. An `amendment`
    sequence holding Form 1571, the cover letter and the CSR at 5.3.5.1 satisfies the compile and the structural gate.
-6. **Dispatch** needs a Shadow Review (a model call), a freeze and a dispatch each signed by someone other than the
+6. **The study data's classification is not yet carried into the build's model calls.** A Vault upload defaults to
+   CONFIDENTIAL, and the gateway sends CONFIDENTIAL sources to no frontier provider. The CSR builder's calls do not
+   carry their source's classification today (`.design/claude-convergence/COORDINATION.md`, "source-tier propagation
+   remains incomplete in … CSR-builder gateway calls"), which is why they reach Claude. When that propagation lands,
+   a build over CONFIDENTIAL study tables will be refused on first-party Anthropic unless the tables are classified
+   lower or a qualified private lane exists. That is a decision to take before it lands, not after.
+7. **Dispatch** needs a Shadow Review (a model call), a freeze and a dispatch each signed by someone other than the
    sequence's creator, and the applicant identity. **Transmission** needs FDA ESG credentials. Without them the
    product records `ECTD_TRANSMIT_SKIPPED` and the sequence stays "dispatched, pending". It does not pretend to file.
 
