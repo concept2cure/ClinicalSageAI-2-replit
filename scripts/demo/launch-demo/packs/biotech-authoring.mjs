@@ -93,12 +93,33 @@ function reviewerFor({ me, signer }) {
     : { id: Number(me.id), name: me.displayName ?? me.email, email: me.email };
 }
 
+/**
+ * The review round, completed (P-122): the named reviewer signs the review over the document's current text, so
+ * the route is complete and an approval is no longer refused 409 REVIEW_REQUIRED (P-95). The second signer is the
+ * reviewer when supplied; otherwise the synthetic reviewer the seed adds (lib.mjs ensureSyntheticReviewer). Its
+ * password exists only in this run, so a round it cannot sign is said, not faked.
+ */
+const REVIEW_INTENT = (name) => `Reviewed ${name} for the demo IND: content checked; ready for approval (demo seed, synthetic reviewer).`;
+
+async function signReviewRound({ run }, spec, docRec, who) {
+  if (pastReview(docRec.status)) return 'past review on a previous run';
+  const sigs = must(await who.api('GET', `/api/authoring/docs/${docRec.id}/signatures`), 200, `signatures ${spec.key}`).signatures ?? [];
+  if (sigs.some((x) => x.signer_email === who.email && x.meaning === 'REVIEWER' && x.reason === REVIEW_INTENT(spec.name))) return `review already signed by ${who.email}`;
+  if (!who.password) {
+    run.note(`Review of ${spec.name}: not signed — ${who.note ?? 'the reviewer password is not known'}`);
+    return `review not signed — ${who.note ?? 'the reviewer password is not known'}`;
+  }
+  must(await who.api('POST', `/api/authoring/docs/${docRec.id}/e-sign`, { password: who.password, meaning: 'REVIEWER', intent: REVIEW_INTENT(spec.name) }), 200, `sign the review of ${spec.key}`);
+  return `review signed by ${who.email}: the round is complete`;
+}
+
 export async function ensureReview(ctx, spec, docRec) {
   const { api, tally } = ctx;
   // Independent review: the server refuses the author as their own reviewer
   // (REVIEWER_IS_AUTHOR). Without a second person nothing is requested.
-  if (!ctx.signer) { docRec.review = null; return `review ${NOT_EXECUTED_NO_SIGNER}`; }
-  const reviewer = reviewerFor(ctx);
+  const second = ctx.signer ?? ctx.reviewer ?? null;
+  if (!second) { docRec.review = null; return `review ${NOT_EXECUTED_NO_SIGNER}`; }
+  const reviewer = reviewerFor({ me: ctx.me, signer: second });
   const rows = asArray(must(await api('GET', `/api/authoring/documents/${docRec.id}/reviews`), 200, `reviews ${spec.key}`), 'reviews', 'data');
   let pending = rows.find((x) => x.reviewer_email === reviewer.email) || null;
   if (pending) tally.found('authoring-review-request');
@@ -114,7 +135,10 @@ export async function ensureReview(ctx, spec, docRec) {
     tally.created('authoring-review-request');
   }
   docRec.review = { reviewer: reviewer.email, status: pending.review_status ?? pending.status ?? null };
-  if (spec.role !== 'in-review') return `reviewer ${reviewer.email} (${docRec.review.status})`;
+  // The synthetic reviewer completes its round; a supplied second signer reviews through the freeze, as before.
+  const round = ctx.signer ? null : await signReviewRound(ctx, spec, docRec, second);
+  if (round) docRec.review.round = round;
+  if (spec.role !== 'in-review' || !ctx.signer) return `reviewer ${reviewer.email} (${docRec.review.status})${round ? `; ${round}` : ''}`;
   const wf = must(await api('GET', `/api/authoring/docs/${docRec.id}/workflow`), 200, `workflow ${spec.key}`);
   if (/PENDING|APPROVED/.test(JSON.stringify(wf))) tally.found('authoring-workflow');
   else {
@@ -151,7 +175,8 @@ export async function ensureFreeze({ api, run, tally, signer }, spec, docRec) {
 export async function ensureSignature({ api, run, tally, signer }, spec, docRec) {
   const rows = must(await api('GET', `/api/authoring/docs/${docRec.id}/signatures`), 200, `signatures ${spec.key}`).signatures ?? [];
   if (!signer) {
-    const existing = rows[0] ?? null;
+    // The synthetic reviewer's review signature completes the round; it is not the second signer's e-signature.
+    const existing = rows.find((x) => x.reason !== REVIEW_INTENT(spec.name)) ?? null;
     docRec.signature = existing ? { id: existing.id, signer: existing.signer_email, meaning: existing.meaning } : NOT_EXECUTED_NO_SIGNER;
     run.note(`Authoring e-signature on ${spec.name}: ${NOT_EXECUTED_NO_SIGNER}`);
     return existing ? `found signature ${existing.id} by ${existing.signer_email}` : NOT_EXECUTED_NO_SIGNER;
