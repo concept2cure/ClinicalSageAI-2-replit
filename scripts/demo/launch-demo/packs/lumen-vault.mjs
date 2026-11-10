@@ -67,7 +67,7 @@ export async function connectApprover({ baseUrl, excludeEmails = [], onRecord } 
 }
 
 /** The people for the signed steps, or null with why. */
-function signingPeople({ identity, signer, approver }) {
+export function signingPeople({ identity, signer, approver }) {
   if (!signer || !approver) return null;
   const emails = [identity?.email, signer.email, approver.email].map((e) => String(e ?? '').toLowerCase());
   if (new Set(emails).size !== 3) throw new Error('The uploader, reviewer and approver must be three different people; nothing was sent for review.');
@@ -185,7 +185,7 @@ async function stageOf(api, program, docId) {
  * reviewer signs the review, the approver signs the approval. Each step is
  * taken only when the version has not reached it.
  */
-async function ensureStage({ api, run, tally }, program, doc, docId, people) {
+export async function ensureStage({ api, run, tally }, program, doc, docId, people) {
   const want = RANK[doc.stage];
   if (!want) return 'draft (not sent for review)';
   if (!people) return NO_PEOPLE;
