@@ -157,6 +157,43 @@ Mutant runs, on separate fresh copies:
 Each file was restored afterwards. In the arbiter contract (10/10) and the schedule service's unit suites (136/136),
 everything passes. The ESLint warning count per file is unchanged against HEAD.
 
+## Rolling rerun, 2026-11-10 from 10:53 UTC
+
+GitHub CI was 32 hours behind trunk and falling further back (COORDINATION.md, "GitHub CI cannot keep up with
+trunk"), so the lane ran the suite again locally. Trunk took about 100 commits an hour, so each part ran at the
+head of its moment.
+
+| Part | At | Result |
+|---|---|---|
+| Shards 1–4 of 8, one file at a time | `64e1722af7` | 2 and 4 pass. 1: the founder-path walk, 9 cases (its owner fixed it since, `60b1d53767`). 3: `projectCreationDoors.contract`'s Vault case (handed over, below) |
+| Shards 5–6 of 8 | `700e9df2a2` | 5 passes. 6: two client tests that pass 3 of 3 alone on an idle machine (below) |
+| Shards 7–8 of 8 | not run | CI changed shape first: `8a7e41392d` (MR-02 Stage 3) made Test four shards, three files at a time |
+| Shard 1 of 4, three files at a time | `8a7e41392d` | 19,305 of 19,306. One: `editorBridgePropose` "a base read before the save is stale after it", `not-editable` where `ok` was expected; passes 3 of 3 alone |
+| Lint, 125 guardrail steps (without the typecheck, ESLint, its report and the proof tier) | `8a7e41392d` | 123 pass. Three gates red, none of them in `.husky/pre-push` (below) |
+
+**Fixed in this rerun:**
+- **`tests/db/estar-audit-admission.dbtest.ts`** (`8b64e4af58`), in "Still red" below.
+- **`ci:lineage-save-gate`** (`2c3627c039`), red since `64da37618f`. `charter-objectives.ts` no longer matched the
+  fingerprint its NOT_PROSE classification was reviewed at. That commit's 12 lines add an optional regulatory
+  strategy to the objective's canonical JSON. The write, its actor, reason, version chain and same-transaction audit
+  are unchanged, and only a person enters the text (the objective's one form, through the PUT). Renewed with the
+  review in its reason. The renewed fingerprint was seen failing on a one-byte change.
+- **`ci:canonicalizers`** (`ff87cab87e`): `data-room-grade.ts` sorted and serialized its facts itself, and only the
+  top-level keys. Its fingerprint is now `sha256(stableStringify([engine, facts]))`.
+  - **Red first:** the same profiled table with its keys in two orders hashed differently.
+  - **Data consequence:** a fingerprint stored earlier differs, so each grade is stored once more on its next read,
+    the same grade with a new `graded_at`.
+  - **Also found:** that gate is the first command of "Gates that existed but ran nowhere", so the thirteen after
+    it had not run in CI. All thirteen pass.
+
+**Handed over:** `ci:error-envelope` on `PlanAssign.tsx:318`, to S11, which committed to that file at 11:32.
+
+**Tests that depend on how files are run:**
+- `workbenchRemedies` "insert-empty" and one `biostatBridge` case failed in shard 6 of 8. MR-02's own measurement
+  (`docs/evidence/MR-02/2026-10-30-ci-verdict/parallel-shards-2026-11-10.txt`) has "insert-empty" failing only one
+  file at a time, in the long-lived single process. CI's Test no longer runs that way. The nightly coverage run
+  still does.
+
 ## Still red, handed over (COORDINATION.md)
 
 - ~~`tests/db/estar-audit-admission.dbtest.ts`~~ **Fixed by this lane, 2026-11-10 12:20 UTC.** Vault parity's row
