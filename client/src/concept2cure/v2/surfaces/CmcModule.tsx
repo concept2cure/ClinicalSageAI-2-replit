@@ -84,6 +84,8 @@ import { CmcRegisterLinks, reportCmcLinkage } from './CmcRegisterLinks';
    for "what is open, what to do on it, what comes next" across the product. */
 import { CmcVariationAssessment } from './CmcVariationAssessment';
 import { RecordHistoryPanel } from './cmcRecordHistory';
+/* The Q1E fit, drawn from the engine's own line and bound (P-122). */
+import { StabilityFitCharts, useAutoQ1e, type Q1eChartEstimate } from './cmcStabilityChart';
 /* Agency questions on Module 3 are the letter's record (2026-10-19, P-38 /
    P-39 item 1): read once at this module's root, shown by the Overview, the
    per-tab signposts and Program records, and worked on the letter in
@@ -1586,7 +1588,7 @@ function stabConditionText(codes: string[] | null | undefined): string | undefin
    too few numeric points, or with no recorded acceptance criterion for the
    confidence bound to intersect, is reported as such rather than dropped or
    given a default limit. */
-interface Q1eEstimate {
+interface Q1eEstimate extends Q1eChartEstimate {
   parameter: string;
   estimable: boolean;
   reason?: string;
@@ -1790,6 +1792,15 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
      because the estimate belongs to the batch and condition it was fitted from —
      a shelf life is not a property of the programme. */
   const [q1e, setQ1e] = useState<Record<number, Q1eReport>>({});
+  /* Estimated when the register opens, for every study with results (P-122):
+     the estimate is a read, and its chart is the register's. A refusal is kept
+     per study and said in the table. */
+  const q1eRefused = useAutoQ1e<Q1eReport>(
+    rows.map((r) => ({ id: r.id, hasResults: readStabilityResults(r.stabilityData).length > 0 })),
+    q1e,
+    (id, report) => setQ1e((m) => ({ ...m, [id]: report })),
+    (v): v is Q1eReport => Array.isArray((v as Q1eReport | null)?.estimates),
+  );
   /* One trend report per study, keyed by study id — the same shape the Q1E fit
      beside it uses, so a study can carry both and neither replaces the other. */
   const [trend, setTrend] = useState<Record<number, TrendReport>>({});
@@ -2235,7 +2246,7 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
                         <td><span className={'rd-chip tone-' + (bad ? 'err' : 'ok')}>{res.length - bad}/{res.length}</span></td>
                         <td>
                           {!fit ? (
-                            <span className="cm-meta">not run</span>
+                            <span className="cm-meta">{q1eRefused[r.id] ?? 'estimating…'}</span>
                           ) : fit.supportedShelfLife == null ? (
                             <span className="sp-tone-warn">not estimable</span>
                           ) : (
@@ -2294,6 +2305,7 @@ function CmStability({ nav }: { ask: (text: string) => void; nav?: (id: string) 
                       </tbody>
                     </table>
                     <div className="cm-meta">{fit.basis}. {fit.scopeLimit}</div>
+                    <StabilityFitCharts estimates={fit.estimates} />
                   </div>
                 );
               })}
