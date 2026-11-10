@@ -102,7 +102,7 @@ function mockApi() {
   });
 }
 const renderRegister = () => render(<div className="c2c-v2"><SopRegister onAsk={vi.fn()} filter="all" onFilterChange={vi.fn()} /></div>);
-const rowOf = (n: string) => (Array.from(document.querySelectorAll('.qms-row')) as HTMLElement[]).find((r) => r.textContent?.includes(n))!;
+const rowOf = (n: string) => (Array.from(document.querySelectorAll('tbody.qms-doc')) as HTMLElement[]).find((r) => r.textContent?.includes(n))!;
 const posted = (method: string, url: string) => calls.find((c) => c.method === method && c.url === url);
 
 beforeEach(() => { answers = {}; H.signed = []; H.refresh.mockReset(); H.me = { id: '7', name: 'Sam Sender', roles: ['member'] }; mockApi(); });

@@ -179,7 +179,7 @@ describe('SopRegister — a draft is sent for review before it can be approved',
   it('offers Approve only on a document under review; a draft offers Send for review instead', () => {
     H.docs = [DRAFT_ROW, DRAFT];
     renderRegister();
-    const rows = Array.from(document.querySelectorAll('.qms-row')) as HTMLElement[];
+    const rows = Array.from(document.querySelectorAll('tbody.qms-doc')) as HTMLElement[];
     const draftRow = rows.find((r) => r.textContent?.includes('WI-014'))!;
     const reviewRow = rows.find((r) => r.textContent?.includes('SOP-014'))!;
     expect(draftRow.textContent).not.toMatch(/Approve/);
