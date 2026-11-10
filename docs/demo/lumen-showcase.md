@@ -4,6 +4,10 @@
 minutes. Every screen named here was opened in the running app on 2026-11-10 as the Codespace builds it
 (`docs/evidence/DEMO/2026-11-10-showcase-walk/`). Every record is synthetic and says so; say so too.
 
+The same account by person and scene, with what the reviewer and the approver each see, is in
+`docs/evidence/DEMO/2026-11-10-sales-showcase/README.md`. For the clinical study report, this page is the one to
+follow.
+
 **The story in one breath.** Lumen Bioscience (demo) is taking LMN-201, for prevention of recurrent *C. difficile*
 infection, to its IND. One project holds the goal. The Vault is its data room. The protocol, the statistics and the
 monitoring are worked where the study is. AnA drafts the Phase 2 clinical study report from the study's own tables,
