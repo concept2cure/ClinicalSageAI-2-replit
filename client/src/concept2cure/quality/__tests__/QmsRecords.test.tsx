@@ -16,8 +16,10 @@ const H = vi.hoisted(() => ({
   programName: null as string | null,
 }));
 
-vi.mock('../../mdx/hooks/useFetchJson', () => ({
-  useFetchJson: (url: string) => ({ ...(H.reads[url] ?? { data: null, loading: true, error: null }), refresh: H.refresh }),
+// C4: the shared failure panel classifies a failed read through this module (readFailureFor), so keep the real one.
+vi.mock('../../mdx/hooks/useFetchJson', async (original) => ({
+  ...(await original<typeof import('../../mdx/hooks/useFetchJson')>()),
+  useFetchJson: (url: string) => ({ failure: null, ...(H.reads[url] ?? { data: null, loading: true, error: null }), refresh: H.refresh }),
 }));
 /* A real refresh keeps the data it has and marks the read as loading again (useFetchJson), so a write's re-read
    is in flight when the screen next renders (C3: a write keeps the register, and its confirmation, on screen). */
@@ -271,6 +273,22 @@ describe('Quality records', () => {
 
   // C3 (records-5): a write re-reads the register; while that read is in flight the rows it already has stay on
   // screen, with any open detail, instead of blanking to "Loading the register…".
+  // C4: a refused read is said as itself, with no Try again; a failure to answer keeps its words and its retry.
+  it('says a register read refused by this release as that, with no retry, and keeps a failure retryable', () => {
+    H.reads['/api/capa-mdr/capa'] = { data: null, loading: false, error: 'HTTP 403', failure: { kind: 'out-of-release', status: 403, code: 'LAUNCH_SCOPE' } } as never;
+    const { unmount } = render(<QmsRecords tab="capa" onAsk={vi.fn()} />);
+    const refused = screen.getByTestId('qms-record-failed');
+    expect(refused.textContent).toMatch(/Not in this release/);
+    expect(refused.textContent).toMatch(/so the CAPA register was not read/);
+    expect(within(refused).queryByRole('button', { name: 'Try again' })).toBeNull();
+    expect(screen.queryByTestId('qms-record-figures')).toBeNull();
+    unmount();
+    H.reads['/api/capa-mdr/capa'] = { data: null, loading: false, error: 'HTTP 500', failure: { kind: 'failed', status: 500 } } as never;
+    render(<QmsRecords tab="capa" onAsk={vi.fn()} />);
+    expect(screen.getByTestId('qms-record-failed').textContent).toMatch(/The CAPA register could not be read/);
+    expect(within(screen.getByTestId('qms-record-failed')).getByRole('button', { name: 'Try again' })).toBeTruthy();
+  });
+
   it('keeps the register on screen while a re-read is in flight', () => {
     H.reads['/api/capa-mdr/capa'] = { data: { rows: [CAPA], count: 1 }, loading: true, error: null };
     render(<QmsRecords tab="capa" onAsk={vi.fn()} />);

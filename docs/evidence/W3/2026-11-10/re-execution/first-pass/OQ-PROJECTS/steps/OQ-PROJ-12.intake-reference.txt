@@ -1,0 +1,35 @@
+Build and sequence. Authored, built and frozen here as an eCTD sequence for FDA. Transmit not proven: FDA onboarding, submission requirements and an accepted test submission have not been verified.
+
+Catalog reference. Application to begin clinical trials; includes CMC (Module 3), nonclinical data (Module 4), clinical protocol and IB (Module 5). Submit 30 days before trial start.
+
+Authority / region
+FDA · US
+Submission format
+eCTD
+CTD module
+M1–M5
+Reference workflow family
+IND
+Reference guide
+
+Authored filing-family guidance. Clinical-trial authorization.
+
+This is general catalog reference, not this project’s status, deadline or agency commitment. Applicable requirements and timelines need to be checked for the filing and jurisdiction.
+
+Use recorded agency requirements and correspondence for the steps and dates of your filing. Platform support is stated separately in the filing offer.
+
+Timing examples: IND: 30-day default review -- IDE: 30-day FDA decision
+
+Pre-IND meeting
+Assemble IND/IDE
+Submit
+30-day safety review
+Trial may proceed
+Amendments & safety reports
+Ongoing
+
+If it comes back: Clinical Hold. FDA may place a full or partial clinical hold within 30 days. Resolve every hold issue in a complete response; the trial resumes only on FDA's written removal of the hold.
+
+How you’ll build it. Uses the IND × FDA · eCTD M1 (FDA Module 1 Spec v2.3) + ICH M4 M2–M5 outline (ich-m4-v2.2). Module 1 is built to the agency's own headings. AS2 CMS signing/encryption and pinned MDN verification are engineered, but environment-specific FDA UAT, credential onboarding, required submission artifacts and an accepted test sequence have not been verified.
+
+Ask AnA

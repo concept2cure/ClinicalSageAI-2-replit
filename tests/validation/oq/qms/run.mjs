@@ -8,7 +8,7 @@ import { requireSigner, signerCode } from '../../lib/credentials.mjs';
 import { computeQmsDocumentContentDigest, qmsDocumentDigestInput } from '../../lib/qms-digest.mjs';
 import {
   inDays, errCode, dataOf, isApprovalRow, isQmsSignatureRow, isRetirementStamp, signatureRowsFor,
-  postSigned, approveSigned, retireSigned, retirementDigestReport,
+  postSigned, approveSigned, retireSigned, retirementDigestReport, RETIREMENT_MEANING,
 } from './signed-acts.mjs';
 import { asSigned, createAuthoredSop, expectRouteCompleteOn, qmsProgramId, qualifyRoutedSend, sendOnRoute, signerRoute } from './controlled-sop.mjs';
 
@@ -394,8 +394,8 @@ await step(
     id: 'OQ-QMS-10',
     urs: ['URS-QMS-007'],
     title: 'CREDENTIALED: the signer retires SOP B as an electronic signature; the retirement is stamped, audited and signed; a second retirement is refused',
-    action: 'as the signer, POST /documents/:docB/retire {password, mfaToken?, meaning:"APPROVED", reason}; read the signatures by target; recompute the §11.70 digest from the stored row; retire again',
-    expected: 'HTTP 200: status retired, metadata.retired {reason, meaning APPROVED, contentDigest, bindingBasis, by = signer, at, fromStatus effective}, meta.auditTrail {persisted, chained}, meta.signature {id, meaning APPROVED, boundPayloadDigest (sha256), bindingBasis qms-document-version-content-sha256}; metadata.retired.contentDigest equals the signature digest; the signatures for docB are now two, the new one signature_type qms-document-retirement by the signer; the digest recomputed from the stored row (version content minus metadata.approval and metadata.retired) equals the signature digest; second retire → 409 QMS_INVALID_STATE',
+    action: 'as the signer, POST /documents/:docB/retire {password, mfaToken?, meaning:"retirement", reason} (v0.10; "APPROVED" until P-51); read the signatures by target; recompute the §11.70 digest from the stored row; retire again',
+    expected: 'HTTP 200: status retired, metadata.retired {reason, meaning retirement, contentDigest, bindingBasis, by = signer, at, fromStatus effective}, meta.auditTrail {persisted, chained}, meta.signature {id, meaning retirement, boundPayloadDigest (sha256), bindingBasis qms-document-version-content-sha256}; metadata.retired.contentDigest equals the signature digest; the signatures for docB are now two, the new one signature_type qms-document-retirement by the signer; the digest recomputed from the stored row (version content minus metadata.approval and metadata.retired) equals the signature digest; second retire → 409 QMS_INVALID_STATE',
     dependsOn: ['OQ-QMS-06d'],
     note: 'Security review 2026-09-24, DP-32 / P1-29. Retiring is the terminal transition of an effective procedure and a signed record (§11.50, §11.200), taken with the same ceremony as the approval: signing authority, password and enrolled second factor re-verified, the meaning, one electronic_signatures row bound to the version content, the UPDATE and the chained audit row in one transaction (server/services/qms/document-approval-signature.ts retireQmsDocumentSigned).',
   },
@@ -414,7 +414,7 @@ await step(
     const report = retirementDigestReport(await asSigned(asSigner, expect, dataOf(await asSigner('GET', `/api/mdx/qms/documents/${d.id}`))), sig, retired, row);
     attach('retirement-digest-recomputation.json', report);
     expect(report.match, 'recomputed §11.70 retirement digest does not match the signature / the stored document', report);
-    const again = await postSigned(ctx, `/api/mdx/qms/documents/${d.id}/retire`, { reason: 'OQ-006 step 10: second retirement must be refused' });
+    const again = await postSigned(ctx, `/api/mdx/qms/documents/${d.id}/retire`, { reason: 'OQ-006 step 10: second retirement must be refused', meaning: RETIREMENT_MEANING });
     expect(again.status === 409 && errCode(again) === 'QMS_INVALID_STATE', `second retire expected 409 QMS_INVALID_STATE, got ${again.status}`, again.json);
     state.docB = d;
     return `retired by ${retired.by} (${signer.session.user.email}) from ${retired.fromStatus} at ${retired.at}; signature ${sig.id} meaning ${sig.meaning}, ${sig.authenticationMethod}, digest ${String(sig.boundPayloadDigest).slice(0, 12)}… (recomputed match ${report.match}); 2 rows for docB; auditTrail=${JSON.stringify(response.json.meta.auditTrail)}; re-retire → 409 QMS_INVALID_STATE`;

@@ -185,3 +185,38 @@ describe.each(CASES)('%s unprepared demo', (_name, mount, button) => {
     ]);
   });
 });
+
+/* "Demo access" with a choice of demo people (2026-11-10, DemoAccounts.tsx): the live login screen only. */
+describe('Concept2CureLogin demo people', () => {
+  const ACCOUNTS = 'lead@demo.example|Lena Lead|Acme Bio (demo)|Lead and author;'
+    + 'rev@demo.example|Rex Reviewer|Acme Bio (demo)|Reviewer;'
+    + 'mon@other.example|Mo Monitor|Other Org|Clinical monitor';
+
+  it('offers no choice for a single configured identity', () => {
+    vi.stubEnv('VITE_DEV_LOGIN_EMAIL', 'dev-admin@local.test');
+    vi.stubEnv('VITE_DEMO_ACCOUNTS', '');
+    render(<Concept2CureLogin />);
+    expect(screen.queryByRole('combobox', { name: 'Demo person' })).toBeNull();
+  });
+
+  it('lists the people by organisation and role, and signs in as the one chosen', async () => {
+    vi.stubEnv('VITE_DEV_LOGIN_EMAIL', 'lead@demo.example');
+    vi.stubEnv('VITE_DEMO_ACCOUNTS', ACCOUNTS);
+    render(<Concept2CureLogin />);
+    const pick = screen.getByRole('combobox', { name: 'Demo person' }) as HTMLSelectElement;
+    expect(pick.value).toBe('lead@demo.example');
+    expect(screen.getByRole('option', { name: 'Mo Monitor — Clinical monitor' })).toBeTruthy();
+    expect(pick.querySelectorAll('optgroup')).toHaveLength(2);
+    fireEvent.change(pick, { target: { value: 'mon@other.example' } });
+    fireEvent.click(screen.getByRole('button', { name: /action\.demoAccess/ }));
+    await waitFor(() => expect(fetchSpy).toHaveBeenCalled());
+    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('/api/auth/dev-login');
+    expect(JSON.parse(String(init.body))).toEqual({ email: 'mon@other.example' });
+  });
+
+  it('skips a malformed entry rather than guessing', async () => {
+    const { parseDemoAccounts } = await import('../../components/concept2cure-auth/DemoAccounts');
+    expect(parseDemoAccounts('not-an-email|X|Y|Z;ok@a.example|Ok||;ok@a.example|Dup||').map((a) => a.email)).toEqual(['ok@a.example']);
+  });
+});

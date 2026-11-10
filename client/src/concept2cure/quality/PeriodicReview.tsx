@@ -21,7 +21,7 @@
  */
 import * as React from 'react';
 import { I } from '../v2/icons';
-import { EmptyState, ErrorState } from '../v2/dataConnect';
+import { EmptyState, ErrorState, type FailedRead } from '../v2/dataConnect';
 import { EsignModal, type EsignSigner } from '../_shared/components/EsignModal';
 import { DialogPanel } from './ControlledDocumentDialogs';
 import { formatDate, type PeriodicReviewSummary, type ReviewDueRow } from './data';
@@ -67,11 +67,13 @@ export const REVIEW_WINDOW_DAYS = 120;
  * derivation from the register and still headed "due within 120 days", so a failure read as a list. An empty
  * register is said as empty here too, never "0 overdue · 0 due" (finding 112).
  */
-export function PeriodicReviewPanel({ rows, unread, failed, error, retry, registerEmpty, canOpen, onOpen, onRecord }: {
+export function PeriodicReviewPanel({ rows, unread, failed, error, read, retry, registerEmpty, canOpen, onOpen, onRecord }: {
   rows: ReviewDueRow[];
   unread: boolean;
   failed: boolean;
   error: string | null | undefined;
+  /** The failed read: a refusal is said as itself, with no retry (C4). */
+  read?: FailedRead;
   retry: () => void;
   /** The register was read and holds no documents. */
   registerEmpty: boolean;
@@ -89,7 +91,7 @@ export function PeriodicReviewPanel({ rows, unread, failed, error, retry, regist
         <h2 id={PERIODIC_REVIEW_HEADING_ID} tabIndex={-1}>Periodic review</h2>
         {figure && <span className="sec-sub" data-testid="qms-review-figure">{figure}</span>}
       </div>
-      {failed && <ErrorState title="Periodic review dates could not be read" message={error} retry={retry} testId="sop-review-failed" />}
+      {failed && <ErrorState title="Periodic review dates could not be read" message={error} retry={retry} read={read} readWhat="the review schedule" testId="sop-review-failed" />}
       {unread && !failed && <EmptyState title="Loading review dates…" busy />}
       {!unread && registerEmpty && <EmptyState title="No controlled documents yet, so none is due for review." />}
       {!unread && !registerEmpty && rows.length === 0 && <EmptyState title={`None is due for review within ${REVIEW_WINDOW_DAYS} days.`} />}

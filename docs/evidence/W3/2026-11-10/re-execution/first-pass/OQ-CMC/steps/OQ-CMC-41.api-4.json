@@ -1,0 +1,111 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/cmc/stability-studies",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "projectId": "1253f2c5-f168-40ab-876c-c3ef99f7fa9c",
+      "productName": "PRV-running",
+      "batchNumber": "B-1",
+      "dosageForm": "tablet",
+      "scope": "DP",
+      "climaticZone": "II",
+      "studyType": "long_term",
+      "storageConditions": [
+        "25C/60%RH"
+      ],
+      "duration": 24,
+      "testParameters": [
+        "assay"
+      ],
+      "timePoints": [
+        "0",
+        "12",
+        "24"
+      ],
+      "status": "ACTIVE",
+      "startDate": "2026-01-01T00:00:00.000Z",
+      "stabilityData": [
+        {
+          "timePoint": "0",
+          "parameter": "assay",
+          "result": "99.8"
+        },
+        {
+          "timePoint": "12",
+          "parameter": "assay",
+          "result": "99.4"
+        },
+        {
+          "timePoint": "24",
+          "parameter": "assay",
+          "result": "99.1"
+        }
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 27,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "id": 18,
+        "organizationId": 2,
+        "projectId": "1253f2c5-f168-40ab-876c-c3ef99f7fa9c",
+        "studyTitle": null,
+        "productName": "PRV-running",
+        "batchNumber": "B-1",
+        "dosageForm": "tablet",
+        "strength": null,
+        "scope": "DP",
+        "climaticZone": "II",
+        "studyType": "long_term",
+        "storageConditions": [
+          "25C/60%RH"
+        ],
+        "duration": 24,
+        "testParameters": [
+          "assay"
+        ],
+        "testingSchedule": null,
+        "timePoints": [
+          "0",
+          "12",
+          "24"
+        ],
+        "stabilityData": [
+          {
+            "timePoint": "0",
+            "parameter": "assay",
+            "result": "99.8"
+          },
+          {
+            "timePoint": "12",
+            "parameter": "assay",
+            "result": "99.4"
+          },
+          {
+            "timePoint": "24",
+            "parameter": "assay",
+            "result": "99.1"
+          }
+        ],
+        "notes": null,
+        "shelfLife": null,
+        "shelfLifeSignedBy": null,
+        "shelfLifeSignedAt": null,
+        "status": "ACTIVE",
+        "startDate": "2026-01-01T00:00:00.000Z",
+        "plannedEndDate": null,
+        "studyDirector": null,
+        "createdAt": "2026-11-10T03:01:01.837Z",
+        "updatedAt": "2026-11-10T03:01:01.837Z"
+      },
+      "module3Linked": true
+    }
+  }
+}

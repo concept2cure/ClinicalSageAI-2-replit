@@ -1,0 +1,40 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/c2c/project-vault/a2d23776-d656-465a-a1a8-b7e4b7ac87e0/file-batch",
+    "anonymous": false,
+    "identity": null,
+    "body": {
+      "folderId": "module-5",
+      "documentIds": [
+        "08c8191d-efd0-48ea-a3d9-7b024b7fd2eb",
+        "e7e9ff76-f6b9-4402-a091-d90b3602ab1d"
+      ],
+      "note": "OQ-002 step 16: confirmed for validation"
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 35,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "complete": false,
+      "items": [
+        {
+          "documentId": "08c8191d-efd0-48ea-a3d9-7b024b7fd2eb",
+          "outcome": "refused",
+          "code": "CONFLICT",
+          "message": "Its filing changed since this list was loaded, so it was not confirmed. Reload and check it."
+        },
+        {
+          "documentId": "e7e9ff76-f6b9-4402-a091-d90b3602ab1d",
+          "outcome": "refused",
+          "code": "CONFLICT",
+          "message": "Its filing changed since this list was loaded, so it was not confirmed. Reload and check it."
+        }
+      ]
+    }
+  }
+}

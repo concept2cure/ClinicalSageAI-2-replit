@@ -288,6 +288,40 @@ c2c_seed_lumen_org() {
   fi
 }
 
+# Every person "Demo access" offers (client DemoAccounts.tsx), as email|name|organisation|role entries separated by
+# ";": the Lumen account's three people, then the development organisation's roster. Only accounts that exist.
+c2c_demo_role() {
+  case "$1" in
+    "Ana Author") echo "Author: the CDISC CSR study, the C2C-101 IND, the NeuroPanel 510(k)" ;;
+    "Rhea Reviewer") echo "Reviewer and second signer" ;;
+    "Ava Approver") echo "Approver: approves and signs" ;;
+    "Mo Monitor") echo "Clinical monitor: risk-based monitoring and site visits" ;;
+    "Quinn Quality") echo "QA lead: SOPs, deviations, CAPA, audits" ;;
+    "Sam Statistician") echo "Biostatistician: sample size, SAP, tables" ;;
+    "Cal CMC") echo "CMC lead: Module 3, specifications, stability" ;;
+    *) echo "Team member" ;;
+  esac
+}
+c2c_demo_accounts() {
+  local entries=() email name role slug
+  if [[ -f "$C2C_CODESPACE_STATE/lumen-accounts.done" ]]; then
+    while IFS='|' read -r email name role; do
+      case "$role" in
+        lead) role="Lead and author: the LMN-201 Phase 2 CSR, Lumen's projects" ;;
+        reviewer) role="Reviewer and second signer" ;;
+        approver) role="Approver: approves, signs and seals" ;;
+      esac
+      entries+=("$email|$name|$C2C_LUMEN_ORG_NAME|$role")
+    done < <(c2c_lumen_roster)
+  fi
+  if [[ -f "$C2C_CODESPACE_STATE/accounts.done" ]]; then
+    while IFS='|' read -r email name slug; do
+      entries+=("$email|$name|Concept2Cure Therapeutics (demo)|$(c2c_demo_role "$name")")
+    done < <(c2c_account_roster)
+  fi
+  (IFS=';'; printf '%s' "${entries[*]}")
+}
+
 c2c_post_create_main() {
   echo "C2C Codespace setup (Node.js 22, PostgreSQL $C2C_PG_VERSION + pgvector, local database)"
   node -e "if (Number(process.versions.node.split('.')[0]) !== 22) { console.error('Node.js 22 is required'); process.exit(1) }"

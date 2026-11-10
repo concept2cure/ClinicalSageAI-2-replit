@@ -1,0 +1,3 @@
+ × client/src/concept2cure/quality/__tests__/SopRegisterApproval.test.tsx > SopRegister — a failed read is not an empty register > says a register read refused for this role as that, with no Try again
+ × client/src/concept2cure/quality/__tests__/QmsRecords.test.tsx > Quality records > says a register read refused by this release as that, with no retry, and keeps a failure retryable
+      Tests  2 failed | 37 passed (39)

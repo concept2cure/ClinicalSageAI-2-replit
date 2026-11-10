@@ -1,0 +1,42 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/part11/signatures/by-target?target=process_validation%3A2",
+    "anonymous": false,
+    "identity": null,
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 20,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": [
+        {
+          "id": 20,
+          "document_id": null,
+          "version_id": null,
+          "signed_target": "process_validation:2",
+          "signature_type": "governed-action",
+          "signature_purpose": "OQ-008: the process validation record is approved on the evidence recorded against it.",
+          "signer_id": 1,
+          "signer_name": "oq-runner@validation.local",
+          "signer_title": null,
+          "signer_email": "oq-runner@validation.local",
+          "signature_meaning": "approval",
+          "signature_hash": "840fb1287eca4ddedc8d4edb531ab02825236bee4a4ed0688047aff2d4b6b7f9",
+          "binding_basis": "governed-action-sha256-chain",
+          "second_factor_verified": true,
+          "is_valid": true,
+          "signed_at": "2026-11-10T02:58:00.614Z",
+          "ip_address": "127.0.0.1",
+          "approvals_recorded": null,
+          "approvals_required": null,
+          "interim_approval": false
+        }
+      ]
+    }
+  }
+}

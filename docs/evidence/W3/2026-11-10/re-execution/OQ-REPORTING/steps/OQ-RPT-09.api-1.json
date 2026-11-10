@@ -1,0 +1,543 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:5200/api/report-os/runs/23/finalize",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": {
+      "reason": "OQ-007: the report was read against the register it is drawn from.",
+      "meaning": "approval",
+      "reauth": {
+        "password": "[REDACTED]",
+        "totp": "[REDACTED]"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 316,
+    "rateLimitRetries": 0,
+    "body": {
+      "data": {
+        "runId": 23,
+        "status": "final",
+        "seal": {
+          "algorithm": "sha256",
+          "canonVersion": 2,
+          "contentHash": "f24511c39ff99d4a3fcc2f5e174a00ecb229b328e0ddba92d752090866a25935",
+          "atoms": [
+            {
+              "blockPath": "register#1",
+              "sourceTable": "regulatory_commitments",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#1",
+              "sourceTable": "iacuc_protocols",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#1",
+              "sourceTable": "lifecycle_obligations",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#1",
+              "sourceTable": "research_personnel",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#1",
+              "sourceTable": "personnel_training",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#1",
+              "sourceTable": "coi_disclosures",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#1",
+              "sourceTable": "effort_certifications",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#1",
+              "sourceTable": "effort_lines",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#1",
+              "sourceTable": "grant_awards",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#1",
+              "sourceTable": "grant_proposals",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#1",
+              "sourceTable": "grant_invoices",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#1",
+              "sourceTable": "grant_closeout_records",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#1",
+              "sourceTable": "grant_subawards",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#1",
+              "sourceTable": "grant_budget_lines",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#1",
+              "sourceTable": "grant_expenditures",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#1",
+              "sourceTable": "grant_cost_share_contributions",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#1",
+              "sourceTable": "grant_nce_records",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#1",
+              "sourceTable": "inspections",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#1",
+              "sourceTable": "inspection_findings",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#1",
+              "sourceTable": "financial_disclosures",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#2",
+              "sourceTable": "regulatory_commitments",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#2",
+              "sourceTable": "iacuc_protocols",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#2",
+              "sourceTable": "lifecycle_obligations",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#2",
+              "sourceTable": "research_personnel",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#2",
+              "sourceTable": "personnel_training",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#2",
+              "sourceTable": "coi_disclosures",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#2",
+              "sourceTable": "effort_certifications",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#2",
+              "sourceTable": "effort_lines",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#2",
+              "sourceTable": "grant_awards",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#2",
+              "sourceTable": "grant_proposals",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#2",
+              "sourceTable": "grant_invoices",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#2",
+              "sourceTable": "grant_closeout_records",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#2",
+              "sourceTable": "grant_subawards",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#2",
+              "sourceTable": "grant_budget_lines",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#2",
+              "sourceTable": "grant_expenditures",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#2",
+              "sourceTable": "grant_cost_share_contributions",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#2",
+              "sourceTable": "grant_nce_records",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#2",
+              "sourceTable": "inspections",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#2",
+              "sourceTable": "inspection_findings",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#2",
+              "sourceTable": "financial_disclosures",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#3",
+              "sourceTable": "regulatory_commitments",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#3",
+              "sourceTable": "iacuc_protocols",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#3",
+              "sourceTable": "lifecycle_obligations",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#3",
+              "sourceTable": "research_personnel",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#3",
+              "sourceTable": "personnel_training",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#3",
+              "sourceTable": "coi_disclosures",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#3",
+              "sourceTable": "effort_certifications",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#3",
+              "sourceTable": "effort_lines",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#3",
+              "sourceTable": "grant_awards",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#3",
+              "sourceTable": "grant_proposals",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#3",
+              "sourceTable": "grant_invoices",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#3",
+              "sourceTable": "grant_closeout_records",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#3",
+              "sourceTable": "grant_subawards",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#3",
+              "sourceTable": "grant_budget_lines",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#3",
+              "sourceTable": "grant_expenditures",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#3",
+              "sourceTable": "grant_cost_share_contributions",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#3",
+              "sourceTable": "grant_nce_records",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#3",
+              "sourceTable": "inspections",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#3",
+              "sourceTable": "inspection_findings",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#3",
+              "sourceTable": "financial_disclosures",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#4",
+              "sourceTable": "regulatory_commitments",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#4",
+              "sourceTable": "iacuc_protocols",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#4",
+              "sourceTable": "lifecycle_obligations",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#4",
+              "sourceTable": "research_personnel",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#4",
+              "sourceTable": "personnel_training",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#4",
+              "sourceTable": "coi_disclosures",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#4",
+              "sourceTable": "effort_certifications",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#4",
+              "sourceTable": "effort_lines",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#4",
+              "sourceTable": "grant_awards",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#4",
+              "sourceTable": "grant_proposals",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#4",
+              "sourceTable": "grant_invoices",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#4",
+              "sourceTable": "grant_closeout_records",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#4",
+              "sourceTable": "grant_subawards",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#4",
+              "sourceTable": "grant_budget_lines",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#4",
+              "sourceTable": "grant_expenditures",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#4",
+              "sourceTable": "grant_cost_share_contributions",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#4",
+              "sourceTable": "grant_nce_records",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#4",
+              "sourceTable": "inspections",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#4",
+              "sourceTable": "inspection_findings",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "register#4",
+              "sourceTable": "financial_disclosures",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "provider-readiness#0",
+              "sourceTable": "regulatory_commitments",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "provider-readiness#0",
+              "sourceTable": "iacuc_protocols",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "provider-readiness#0",
+              "sourceTable": "lifecycle_obligations",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "provider-readiness#0",
+              "sourceTable": "research_personnel",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "provider-readiness#0",
+              "sourceTable": "personnel_training",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "provider-readiness#0",
+              "sourceTable": "coi_disclosures",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "provider-readiness#0",
+              "sourceTable": "effort_certifications",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "provider-readiness#0",
+              "sourceTable": "effort_lines",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "provider-readiness#0",
+              "sourceTable": "grant_awards",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "provider-readiness#0",
+              "sourceTable": "grant_proposals",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "provider-readiness#0",
+              "sourceTable": "grant_invoices",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "provider-readiness#0",
+              "sourceTable": "grant_closeout_records",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "provider-readiness#0",
+              "sourceTable": "grant_subawards",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "provider-readiness#0",
+              "sourceTable": "grant_budget_lines",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "provider-readiness#0",
+              "sourceTable": "grant_expenditures",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "provider-readiness#0",
+              "sourceTable": "grant_cost_share_contributions",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "provider-readiness#0",
+              "sourceTable": "grant_nce_records",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "provider-readiness#0",
+              "sourceTable": "inspections",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "provider-readiness#0",
+              "sourceTable": "inspection_findings",
+              "transformation": "aggregation"
+            },
+            {
+              "blockPath": "provider-readiness#0",
+              "sourceTable": "financial_disclosures",
+              "transformation": "aggregation"
+            }
+          ],
+          "atomCount": 100,
+          "aiDisclosed": false,
+          "sealedAt": "2026-11-10T03:38:30.327Z"
+        },
+        "signature": {
+          "signatureId": 49,
+          "signedAt": "2026-11-10T03:38:30.617Z",
+          "meaning": "approval"
+        }
+      }
+    }
+  }
+}

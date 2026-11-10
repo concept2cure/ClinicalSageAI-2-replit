@@ -1,0 +1,353 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "http://localhost:5200/api/review/board",
+    "anonymous": false,
+    "identity": "oq-signer@validation.local",
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 44,
+    "rateLimitRetries": 0,
+    "body": {
+      "success": true,
+      "data": {
+        "queue": [
+          {
+            "id": "fdc9cecb-3058-4434-9d8c-1ee8ab1d635e",
+            "doc": "OQ-003 Clinical Overview 20261110024818",
+            "prog": "OQ-003 Authoring program 20261110024818",
+            "programId": "0f6df2e4-d780-4097-a157-694bbe51a663",
+            "pid": "fdc9cecb-3058-4434-9d8c-1ee8ab1d635e",
+            "module": "M2",
+            "docStatus": "IN_REVIEW",
+            "state": "in-review",
+            "reviews": [
+              {
+                "id": "9d6fae8d-47f2-4c5b-8ecf-14d21bf1c42d",
+                "reviewerId": "2",
+                "reviewer": "OQ Signer",
+                "reviewerEmail": "oq-signer@validation.local",
+                "status": "pending",
+                "standing": "pending",
+                "comments": null,
+                "requestedBy": "1",
+                "requestedByName": "oq-runner@validation.local",
+                "requestedAt": "2026-11-10T02:48:33.109Z",
+                "reviewedAt": null,
+                "routeSignedAt": null
+              }
+            ],
+            "myReviewId": "9d6fae8d-47f2-4c5b-8ecf-14d21bf1c42d",
+            "myReviewStatus": "pending",
+            "myReviewStanding": "pending",
+            "myReviewSignedAt": null,
+            "awaitingMyReview": true,
+            "requestedByMe": false,
+            "atMySignOff": false,
+            "mine": true,
+            "reviewer": "OQ Signer",
+            "role": "Reviewer",
+            "due": "",
+            "tone": "",
+            "comments": 1,
+            "esig": "pending",
+            "conf": null,
+            "prov": "in review · review requested by oq-runner@validation.local",
+            "passage": "Initial 2.5 text.",
+            "firstSectionId": "13bd16a4-6bff-4ffd-b0b9-16163adf30ae",
+            "requestedAt": "2026-11-10T02:48:33.109Z"
+          },
+          {
+            "id": "aef11e08-e0af-4793-b714-2928902a6322",
+            "doc": "OQ-003 Clinical Overview 20261110020318",
+            "prog": "OQ-003 Authoring program 20261110020318",
+            "programId": "bc2946f0-8a62-47e6-bdf7-9aced623e69a",
+            "pid": "aef11e08-e0af-4793-b714-2928902a6322",
+            "module": "M2",
+            "docStatus": "FROZEN",
+            "state": "in-review",
+            "reviews": [
+              {
+                "id": "f8d14f1e-fcc6-4374-9997-9ce1e2e2870d",
+                "reviewerId": "2",
+                "reviewer": "OQ Signer",
+                "reviewerEmail": "oq-signer@validation.local",
+                "status": "pending",
+                "standing": "pending",
+                "comments": null,
+                "requestedBy": "1",
+                "requestedByName": "oq-runner@validation.local",
+                "requestedAt": "2026-11-10T02:03:33.130Z",
+                "reviewedAt": null,
+                "routeSignedAt": null
+              }
+            ],
+            "myReviewId": "f8d14f1e-fcc6-4374-9997-9ce1e2e2870d",
+            "myReviewStatus": "pending",
+            "myReviewStanding": "pending",
+            "myReviewSignedAt": null,
+            "awaitingMyReview": true,
+            "requestedByMe": false,
+            "atMySignOff": false,
+            "mine": true,
+            "reviewer": "OQ Signer",
+            "role": "Reviewer",
+            "due": "",
+            "tone": "",
+            "comments": 0,
+            "esig": "pending",
+            "conf": null,
+            "prov": "frozen · review requested by oq-runner@validation.local",
+            "passage": "Initial 2.5 text.",
+            "firstSectionId": "ec821497-7f2e-40bd-aa64-d42cb7237fe0",
+            "requestedAt": "2026-11-10T02:03:33.130Z"
+          }
+        ],
+        "workflows": {
+          "fdc9cecb-3058-4434-9d8c-1ee8ab1d635e": {
+            "templateId": "077286fc-319e-413b-8437-93653954a0b9",
+            "template": "Authoring approval workflow",
+            "steps": [
+              {
+                "id": "f14283d2-3c0d-4238-a75c-2a85fdd119fa",
+                "order": 1,
+                "name": "QA",
+                "approverType": "user",
+                "approver": "oq-runner@validation.local",
+                "requiredActions": [
+                  "sign"
+                ],
+                "status": "current",
+                "at": null
+              }
+            ]
+          },
+          "aef11e08-e0af-4793-b714-2928902a6322": {
+            "templateId": "1c38c8dd-a916-48f5-b2a8-fe79fec11f58",
+            "template": "Authoring approval workflow",
+            "steps": [
+              {
+                "id": "6edc8a48-4de5-4c9f-8977-25e7c70e225c",
+                "order": 1,
+                "name": "QA",
+                "approverType": "user",
+                "approver": "oq-runner@validation.local",
+                "requiredActions": [
+                  "sign"
+                ],
+                "status": "current",
+                "at": null
+              }
+            ]
+          }
+        },
+        "thread": [
+          {
+            "id": "388aa4b7-dbb9-4cd1-a9fc-c985d4b8a6cf",
+            "author": "oq-runner@validation.local",
+            "role": "§2.5",
+            "when": "1m ago",
+            "state": "open",
+            "body": "OQ-003 step 09 review comment",
+            "ai": false,
+            "sectionId": "13bd16a4-6bff-4ffd-b0b9-16163adf30ae",
+            "parentId": null
+          }
+        ],
+        "meta": {
+          "scope": "all",
+          "programId": null,
+          "total": 2,
+          "threadItemId": "fdc9cecb-3058-4434-9d8c-1ee8ab1d635e",
+          "threadDocumentId": "fdc9cecb-3058-4434-9d8c-1ee8ab1d635e",
+          "generatedAt": "2026-11-10T02:48:35.048Z"
+        },
+        "vaultReviews": [
+          {
+            "canonicalId": "5d0908f6-ca17-48a0-bdc2-9fdde20541ef",
+            "vaultId": "082cde6c-fdaa-4083-9692-72ba333f94d1",
+            "programId": "a2d23776-d656-465a-a1a8-b7e4b7ac87e0",
+            "program": "OQ-002 Vault program 20261110024537",
+            "title": "OQ-002 Protocol 20261110024537",
+            "version": "2.0",
+            "step": "approve",
+            "sentBy": "oq-runner@validation.local",
+            "sentAt": "2026-11-10T02:45:56.561Z",
+            "eligibleSigners": [
+              "OQ Approver"
+            ],
+            "mine": false,
+            "sentByMe": false,
+            "routeState": "live",
+            "round": {
+              "route": {
+                "id": "fdc3fec3-d3e3-4f56-b5ef-28bbfeb208c1",
+                "round": 1,
+                "senderId": 1,
+                "senderName": "oq-runner@validation.local",
+                "order": "parallel",
+                "status": "open",
+                "statusReason": null,
+                "statusBy": null,
+                "statusAt": null,
+                "contentDigest": "0f119702af25cdb8d3461d6678c2ce8648fc5f5e09c1b1f51b3669fdb0de289d",
+                "reviewDueAt": "2026-11-17T23:59:59.999Z",
+                "approvalDueAt": "2026-11-24T23:59:59.999Z",
+                "createdAt": "2026-11-10T02:45:56.561Z"
+              },
+              "members": [
+                {
+                  "taskId": "ROUTE-fdc3fec3-2",
+                  "userId": 2,
+                  "role": "reviewer",
+                  "step": 1,
+                  "printedName": "OQ Signer",
+                  "outcome": "signed",
+                  "stepOpen": true,
+                  "dueDate": "2026-11-17T23:59:59.999Z",
+                  "signature": {
+                    "id": 8,
+                    "printedName": "OQ Signer",
+                    "meaning": "REVIEWED",
+                    "signedAt": "2026-11-10T02:46:00.640Z"
+                  },
+                  "actId": null
+                },
+                {
+                  "taskId": "ROUTE-fdc3fec3-3",
+                  "userId": 3,
+                  "role": "approver",
+                  "step": 2,
+                  "printedName": "OQ Approver",
+                  "outcome": "pending",
+                  "stepOpen": true,
+                  "dueDate": "2026-11-24T23:59:59.999Z",
+                  "signature": null,
+                  "actId": null
+                }
+              ],
+              "reviewComplete": true,
+              "approvalComplete": false,
+              "history": [
+                {
+                  "action": "send",
+                  "at": "2026-11-10T02:45:56.606Z",
+                  "actorId": 1,
+                  "actorName": "oq-runner@validation.local",
+                  "reason": "OQ-002 step 13: sent for review for validation",
+                  "members": [
+                    {
+                      "userId": 2,
+                      "role": "reviewer",
+                      "printedName": "OQ Signer"
+                    },
+                    {
+                      "userId": 3,
+                      "role": "approver",
+                      "printedName": "OQ Approver"
+                    }
+                  ]
+                }
+              ]
+            },
+            "routeUnread": false,
+            "myDueAt": null
+          },
+          {
+            "canonicalId": "d4e4b3bb-6476-4804-a071-316b16858145",
+            "vaultId": "3064d186-b75f-4332-a8c8-34c3e99a3aa3",
+            "programId": "8c05d32c-f5b2-4a79-87d5-ddd208dfb428",
+            "program": "OQ-002 Vault program 20261110020007",
+            "title": "OQ-002 Protocol 20261110020007",
+            "version": "2.0",
+            "step": "approve",
+            "sentBy": "oq-runner@validation.local",
+            "sentAt": "2026-11-10T02:01:01.706Z",
+            "eligibleSigners": [
+              "OQ Approver"
+            ],
+            "mine": false,
+            "sentByMe": false,
+            "routeState": "live",
+            "round": {
+              "route": {
+                "id": "bb8e7421-10f2-4579-ad5a-01f1c093b144",
+                "round": 1,
+                "senderId": 1,
+                "senderName": "oq-runner@validation.local",
+                "order": "parallel",
+                "status": "open",
+                "statusReason": null,
+                "statusBy": null,
+                "statusAt": null,
+                "contentDigest": "c6044ebd792c00eb0dd613a87a392b802b46ce950c9178df875d6aa9999bcd3f",
+                "reviewDueAt": "2026-11-17T23:59:59.999Z",
+                "approvalDueAt": "2026-11-24T23:59:59.999Z",
+                "createdAt": "2026-11-10T02:01:01.706Z"
+              },
+              "members": [
+                {
+                  "taskId": "ROUTE-bb8e7421-2",
+                  "userId": 2,
+                  "role": "reviewer",
+                  "step": 1,
+                  "printedName": "OQ Signer",
+                  "outcome": "signed",
+                  "stepOpen": true,
+                  "dueDate": "2026-11-17T23:59:59.999Z",
+                  "signature": {
+                    "id": 1,
+                    "printedName": "OQ Signer",
+                    "meaning": "REVIEWED",
+                    "signedAt": "2026-11-10T02:01:02.648Z"
+                  },
+                  "actId": null
+                },
+                {
+                  "taskId": "ROUTE-bb8e7421-3",
+                  "userId": 3,
+                  "role": "approver",
+                  "step": 2,
+                  "printedName": "OQ Approver",
+                  "outcome": "pending",
+                  "stepOpen": true,
+                  "dueDate": "2026-11-24T23:59:59.999Z",
+                  "signature": null,
+                  "actId": null
+                }
+              ],
+              "reviewComplete": true,
+              "approvalComplete": false,
+              "history": [
+                {
+                  "action": "send",
+                  "at": "2026-11-10T02:01:01.796Z",
+                  "actorId": 1,
+                  "actorName": "oq-runner@validation.local",
+                  "reason": "OQ-002 step 13: sent for review for validation",
+                  "members": [
+                    {
+                      "userId": 2,
+                      "role": "reviewer",
+                      "printedName": "OQ Signer"
+                    },
+                    {
+                      "userId": 3,
+                      "role": "approver",
+                      "printedName": "OQ Approver"
+                    }
+                  ]
+                }
+              ]
+            },
+            "routeUnread": false,
+            "myDueAt": null
+          }
+        ]
+      }
+    }
+  }
+}
