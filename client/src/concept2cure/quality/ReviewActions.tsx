@@ -11,14 +11,14 @@
 import * as React from 'react';
 import { C2CForm } from '../v2/C2CForm';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
+import { EmptyState } from '../v2/dataConnect';
 import { formatDate } from './data';
 import { closeReviewAction, reviewActions, type ManagementReviewRow, type ReviewAction } from './qmsRecordData';
 
-export function ReviewActions({ review, onChanged }: { review: ManagementReviewRow; onChanged: () => void }) {
+export function ReviewActions({ review, onChanged }: { review: ManagementReviewRow; onChanged: (confirmation?: string) => void }) {
   const actions = reviewActions(review);
   const [closing, setClosing] = React.useState<ReviewAction | null>(null);
   const [refusal, setRefusal] = React.useState<string | null>(null);
-  const [notice, setNotice] = React.useState<string | null>(null);
   const writing = React.useRef(false);
 
   const close = async (note: string) => {
@@ -31,9 +31,10 @@ export function ReviewActions({ review, onChanged }: { review: ManagementReviewR
     setRefusal(null);
     try {
       await closeReviewAction(review.id, closing.n, note);
-      setNotice(`Action ${closing.n} was closed.`);
+      // The confirmation is the register's toast (C3), not a line that unmounts with this detail.
+      const done = `Action ${closing.n} was closed.`;
       setClosing(null);
-      onChanged();
+      onChanged(done);
     } catch (err) {
       setRefusal(`Not recorded — ${err instanceof Error ? err.message : String(err)}`);
     } finally {
@@ -46,9 +47,8 @@ export function ReviewActions({ review, onChanged }: { review: ManagementReviewR
       <div className="qcc-detail-head">
         <span className="qcc-detail-title">Actions</span>
       </div>
-      {notice && <div className="qcc-detail-empty" role="status">{notice}</div>}
       {actions.length === 0 ? (
-        <div className="qcc-detail-empty">No actions recorded for this review. Add one with Add action.</div>
+        <EmptyState title="No actions recorded for this review. Add one with Add action." />
       ) : (
         <ol className="qcc-actions">
           {actions.map((a) => (

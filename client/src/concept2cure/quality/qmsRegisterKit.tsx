@@ -86,7 +86,8 @@ export interface RegisterConfig<R extends { id: number | string }> {
    *  CAPAs raised from each row, derived from the CAPA register. */
   capaSourceKind?: string;
   /** What a row opens to, under it; its first cell becomes the toggle. */
-  detail?: { label: string; render: (r: R, onChanged: () => void) => React.ReactNode };
+  /** The row's detail; `onChanged` takes the write's confirmation, which the register says as a toast (C3). */
+  detail?: { label: string; render: (r: R, onChanged: (confirmation?: string) => void) => React.ReactNode };
 }
 
 export const optionsOf = (labels: Record<string, string>) => Object.entries(labels).map(([value, label]) => ({ value, label }));

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { redactInternals } from '@/lib/queryClient';
-import { ErrorState } from '../v2/dataConnect';
+import { EmptyState, ErrorState } from '../v2/dataConnect';
 import type { QmsDoc, TrainingRow } from './data';
 import { I } from '../v2/icons';
 import { DialogPanel } from './ControlledDocumentDialogs';
@@ -35,8 +35,8 @@ export function TrainingCoverage(props: TrainingCoverageProps) {
     {rolesOpen && <JobRolesPanel onClose={() => setRolesOpen(false)} />}
     <div className="qms-train">
       {props.failed && <ErrorState title="Training records could not be read" message={props.error} retry={props.refresh} testId="sop-training-failed" />}
-      {props.unread && !props.failed && <div className="qms-empty" role="status">Loading training records…</div>}
-      {!props.unread && props.rows.length === 0 && <div className="qms-empty">No training-controlled documents yet.</div>}
+      {props.unread && !props.failed && <EmptyState title="Loading training records…" busy />}
+      {!props.unread && props.rows.length === 0 && <EmptyState title="No training-controlled documents yet." />}
       {props.rows.map((row) => <CoverageRow key={row.documentId ?? row.doc} row={row} canOpen={props.canOpen} onOpen={props.onOpen} />)}
     </div>
     {/* The method, once, closed (C1): it was a permanent paragraph above every row. */}

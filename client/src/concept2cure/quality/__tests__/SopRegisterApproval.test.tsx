@@ -199,6 +199,21 @@ describe('SopRegister — a draft is sent for review before it can be approved',
   });
 });
 
+// C3: an outcome is a toast in its own tone. A refused controlled copy was a grey line under the register's column
+// headers, in the same place and tone as "nothing here".
+describe('SopRegister — a refused controlled copy is said as a refusal', () => {
+  it('shows the server refusal as an alert, not as a line in the register', async () => {
+    H.docs = [EFFECTIVE];
+    H.apiRequest.mockResolvedValue({ status: 403, ok: false, json: async () => ({ error: 'Your role cannot issue controlled copies.' }) });
+    renderRegister();
+    openMore();
+    fireEvent.click(screen.getByRole('button', { name: /Download a controlled copy/ }));
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toMatch(/Your role cannot issue controlled copies/);
+    expect(document.querySelector('.qms-table .qms-empty')).toBeNull();
+  });
+});
+
 describe('SopRegister — retirement is a signature taken here (P1-29 / DP-32)', () => {
   beforeEach(() => { H.docs = [EFFECTIVE]; });
 

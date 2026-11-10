@@ -19,6 +19,9 @@ const H = vi.hoisted(() => ({
 vi.mock('../../mdx/hooks/useFetchJson', () => ({
   useFetchJson: (url: string) => ({ ...(H.reads[url] ?? { data: null, loading: true, error: null }), refresh: H.refresh }),
 }));
+/* A real refresh keeps the data it has and marks the read as loading again (useFetchJson), so a write's re-read
+   is in flight when the screen next renders (C3: a write keeps the register, and its confirmation, on screen). */
+H.refresh.mockImplementation(() => { for (const k of Object.keys(H.reads)) H.reads[k] = { ...H.reads[k], loading: true }; });
 vi.mock('../../v2/shellProject', () => ({ shellProgramId: () => H.program, shellProgramName: () => H.programName }));
 vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ name: 'Q. Approver' }) }));
 /* The signing dialog hands over what a signer typed (ChangeControlApproval.test.tsx). */
@@ -264,6 +267,15 @@ describe('Quality records', () => {
       sourceRefs: [{ kind: 'qms_nonconforming_product', id: '4', label: 'NC-2026-004' }],
     });
     await waitFor(() => expect(screen.getByText('CAPA-008 was raised from NC-2026-004.')).toBeTruthy());
+  });
+
+  // C3 (records-5): a write re-reads the register; while that read is in flight the rows it already has stay on
+  // screen, with any open detail, instead of blanking to "Loading the register…".
+  it('keeps the register on screen while a re-read is in flight', () => {
+    H.reads['/api/capa-mdr/capa'] = { data: { rows: [CAPA], count: 1 }, loading: true, error: null };
+    render(<QmsRecords tab="capa" onAsk={vi.fn()} />);
+    expect(screen.getByRole('button', { name: 'CAPA-007' })).toBeTruthy();
+    expect(screen.queryByText('Loading the register…')).toBeNull();
   });
 
   it('completes a CAPA action only with its evidence, along the server action lifecycle', async () => {

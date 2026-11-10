@@ -47,7 +47,8 @@ import { approvalShare } from '../v2/reviewRoute/routeRound';
 import { useAuthUser } from '@/services/portal/authService';
 import { todayUtc, type QmsDoc } from './data';
 import { PeriodicReviewPanel, RecordPeriodicReview, REVIEW_WINDOW_DAYS, useRecordPeriodicReview } from './PeriodicReview';
-import { ErrorState } from '../v2/dataConnect';
+import { EmptyState, ErrorState } from '../v2/dataConnect';
+import { C2CToast, useToast } from '../v2/toast';
 import { ControlledDocumentSetup, ControlledDocumentReason } from './ControlledDocumentDialogs';
 import { ControlledDocumentWorkbench } from './ControlledDocumentWorkbench';
 import { fetchQmsControlledCopy, reviseQmsDocument } from './qmsDocuments';
@@ -149,19 +150,18 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
   const [routePanel, setRoutePanel] = React.useState<QmsDoc | null>(null);
   const meId = user?.id && /^\d+$/.test(String(user.id)) ? Number(user.id) : null;
   const admin = ((user as { roles?: string[] } | null)?.roles ?? []).some((r) => String(r).toLowerCase() === 'admin');
-  /** The last register action's outcome, in the server's words when it refused. */
-  const [notice, setNotice] = React.useState<{ tone: 'ok' | 'err'; text: string } | null>(null);
+  /** The last register action's outcome, in the server's words when it refused: a toast (C3), not a line in the table. */
+  const [toast, fire] = useToast();
   /** The day an approval makes its version effective from (CAT2-19): today unless the approver chooses later. */
   const [effectiveFrom, setEffectiveFrom] = React.useState<string>(todayUtc());
   /** The controlled copy of the version in force (MR-12 Stage 8): issued, recorded and downloaded, or the server's reason. */
   const downloadControlledCopy = async (d: QmsDoc) => {
     try {
       const { blob, filename } = await fetchQmsControlledCopy(d.id);
-      setNotice(downloadBlob(filename, blob)
-        ? { tone: 'ok', text: `A controlled copy of ${d.docNumber} v${d.inForce?.version ?? d.version} was issued to you and recorded.` }
-        : { tone: 'err', text: 'The controlled copy was issued but this browser could not save it. Try again from another browser.' });
+      if (downloadBlob(filename, blob)) fire(`A controlled copy of ${d.docNumber} v${d.inForce?.version ?? d.version} was issued to you and recorded.`);
+      else fire('The controlled copy was issued but this browser could not save it. Try again from another browser.', 'error');
     } catch (e) {
-      setNotice({ tone: 'err', text: e instanceof Error ? e.message : 'The controlled copy could not be issued. Nothing was downloaded.' });
+      fire(e instanceof Error ? e.message : 'The controlled copy could not be issued. Nothing was downloaded.', 'error');
     }
   };
   const [setup, setSetup] = React.useState<{ document?: QmsDoc; template?: SopTemplate; revision?: boolean } | null>(null);
@@ -220,7 +220,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
     ask: onAsk,
   };
   const sent = (d: QmsDoc) => {
-    setNotice({ tone: 'ok', text: `${d.docNumber} was sent for review on its route. The people named are told when it is their turn.` });
+    fire(`${d.docNumber} was sent for review on its route. The people named are told when it is their turn.`);
     setReviewing(null);
     reg.refresh?.();
   };
@@ -302,44 +302,33 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
           </div>
         </div>
 
-        <div className="qms-table">
-          <div className="qms-thead" style={{ gridTemplateColumns: GRID, minWidth: ROW_MIN }}>
-            <div>Number</div>
-            <div>Title</div>
-            <div>Type</div>
-            <div>Version</div>
-            <div>Status</div>
-            <div>Effective</div>
-            <div>Next review</div>
-            <div />
+        {regFailed && (
+          <ErrorState
+            title="The controlled-document register could not be read"
+            message={reg.error}
+            retry={reg.refresh}
+            testId="sop-register-failed"
+          />
+        )}
+        {regUnread && !regFailed && <EmptyState title="Loading the register…" busy />}
+        {!regUnread && visible.length === 0 && (
+          <EmptyState title={filter === 'all' ? 'No controlled documents in the register yet.' : 'No documents with this status.'} />
+        )}
+        {visible.length > 0 && (
+          <div className="qms-table">
+            <div className="qms-thead" style={{ gridTemplateColumns: GRID, minWidth: ROW_MIN }}>
+              <div>Number</div>
+              <div>Title</div>
+              <div>Type</div>
+              <div>Version</div>
+              <div>Status</div>
+              <div>Effective</div>
+              <div>Next review</div>
+              <div />
+            </div>
+            {visible.map((d) => <SopRegisterRow key={d.id} doc={d} actions={rowActions} />)}
           </div>
-          {notice && (
-            <div
-              className="qms-empty"
-              role={notice.tone === 'err' ? 'alert' : 'status'}
-              data-tone={notice.tone}
-            >
-              {notice.text}
-            </div>
-          )}
-          {regFailed && (
-            <ErrorState
-              title="The controlled-document register could not be read"
-              message={reg.error}
-              retry={reg.refresh}
-              testId="sop-register-failed"
-            />
-          )}
-          {regUnread && !regFailed && (
-            <div className="qms-empty" role="status">Loading the register…</div>
-          )}
-          {!regUnread && visible.length === 0 && (
-            <div className="qms-empty">
-              {filter === 'all' ? 'No controlled documents in the register yet.' : 'No documents with this status.'}
-            </div>
-          )}
-          {visible.map((d) => <SopRegisterRow key={d.id} doc={d} actions={rowActions} />)}
-        </div>
+        )}
       </section>
 
       {/* ── Periodic review, training, expiry: one column of quiet sections (C1). ── */}
@@ -352,6 +341,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
         refresh={trainComp.refresh} figure={coverageFigure}
         canOpen={canOpen} onOpen={openReader} />
       <TrainingExpiry assigned={trainComp.summary ? trainComp.summary.assigned : null} />
+      <C2CToast msg={toast} />
       {history && <ControlledDocumentHistory document={history} onClose={() => setHistory(null)} />}
       {assigning && <TrainingAssignmentsPanel doc={assigning} onClose={() => { setAssigning(null); trainComp.refresh(); }} />}
       {setup && <ControlledDocumentSetup document={setup.document} template={setup.template} templates={templates} revision={setup.revision}

@@ -179,7 +179,9 @@ describe('ChangeControl — a failed read is not an empty log', () => {
 
   it('shows a log that answered empty as empty', () => {
     renderLog({});
-    expect(screen.getByText('No changes at this stage.')).toBeTruthy();
+    // C3: an empty log says so once, as the shared empty state, with no column headers over nothing.
+    expect(screen.getByText('No changes in the log yet.')).toBeTruthy();
+    expect(document.querySelector('.qms-thead')).toBeNull();
     expect(screen.queryByTestId('change-log-failed')).toBeNull();
   });
 });
