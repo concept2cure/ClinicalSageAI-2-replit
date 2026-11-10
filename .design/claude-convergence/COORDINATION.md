@@ -70,7 +70,7 @@ Publication request for the demo followthrough, 2026-11-06 22:01 UTC: its source
 | Files | Held by | For |
 |---|---|---|
 | `tests/validation/**`, `scripts/validation/**`, `docs/validation/**` (VSR-001, TM-001, the OQ protocols), `docs/evidence/W3/2026-11-10/**` | Validation for GA (`01QoxbLcnW…`), from 2026-11-10 | **Launch row D4, workstream W3.** Re-execute IQ-001 and OQ-001…006, 008 at head on a fresh installation (the last full run was 2026-09-27/28, VSR-001 §18, before the D0–D7 convergence and the spine packages). Each red step is a product regression (fixed under F1 by its file's holder, or here if unheld) or a protocol overtaken by a recorded decision (revised with a change-impact note). Then OQ-007, Reporting & analytics, which has no URS or protocol yet. A VSR-001 addendum and TM-001 regenerated. |
-| `surfaces/Biostatistics.tsx`, `surfaces/BiostatWorkbench.tsx`, `__tests__/biostatIsOneSurface.test.tsx` (the select-calculator handler only), until its push | Trunk CI at HEAD (`01E8btkB…`), from 2026-11-10 | **F1 under launch row D2 (L1): trunk CI to green.** No CI run on `concept2cure-v2` has completed green: the last completed run (`04fd70b23`, 2026-11-09 00:12) failed all eight test shards, the integration tests, six lint guardrails, the proof tier and the full-history secret scan. Runs since then wait about a day in the queue, so nobody has seen trunk green or red since. This lane runs every CI job's own steps locally at HEAD (`.github/workflows/ci.yml`, same commands, the CI Postgres image's pgvector), lists what is still red, fixes what is in files nobody holds (red first, each fix its own commit), and hands what is in a held file to its holder here, with the failing case and the cause. The Anna-runtime area's triage (A, B, E, lint, proof tier, secret scan, row 346) is that lane's and is not redone. |
+| (none held; the Biostatistics hold was released with `d529eeab14`) | Trunk CI at HEAD (`01E8btkB…`), from 2026-11-10 | **F1 under launch row D2 (L1): trunk CI to green.** No CI run on `concept2cure-v2` has completed green: the last completed run (`04fd70b23`, 2026-11-09 00:12) failed all eight test shards, the integration tests, six lint guardrails, the proof tier and the full-history secret scan. Runs since then wait about a day in the queue, so nobody has seen trunk green or red since. This lane runs every CI job's own steps locally at HEAD (`.github/workflows/ci.yml`, same commands, the CI Postgres image's pgvector), lists what is still red, fixes what is in files nobody holds (red first, each fix its own commit), and hands what is in a held file to its holder here, with the failing case and the cause. The Anna-runtime area's triage (A, B, E, lint, proof tier, secret scan, row 346) is that lane's and is not redone. |
 | (none held) | Codebase market readiness (`01Gx2fiw…`), 2026-11-09 | **P-112 item 1 landed: the Vault admits a `.zip`, stored as one file.** `.zip` is `vault: true` in `shared/constants/document-intake-formats.ts`, and its name binds a zip container in `shared/constants/upload-name-bindings.ts` (a `.zip` declared `text/html` with HTML bytes passed both checks before). The archive bound, the signature check and the no-text extraction were already there. The Data Room's in-browser expansion is unchanged. Evidence `docs/evidence/MR-08/2026-11-09-vault-admits-zip/`. **→ RIM:** P-108 4(a) (a sponsor's copy of a sent package, matched by SHA-256) can now take the package from the Vault; it is under the 50 MB upload limit until the founder sets the admission size (P-112, open). **→ Vault parity (S6):** P-112 items 2 to 4 (the picked-document export, reaching compression, combining). Holds released. |
 | `server/routes/ind-lifecycle/sequence.routes.ts` (deleted whole); the P-106 handlers in `server/routes/ind-lifecycle/submission.routes.ts` (`GET /portfolio` stays); their mounts in the IND lifecycle router; `tests/schema-contract/one-dispatch-verdict.contract.test.ts` (:72–76 read `sequence.routes.ts`); `server/services/export/__tests__/recorded-downloads.contract.test.ts` (:88, :195 list the portfolio/drift handlers); the openapi route-count test | RIM system build-out (`011e42…`), recorded by the coordinating session 2026-11-09 | `Plan: R1`, one deletion commit: P-87 with P-106, both the founder's (no `LAUNCH_DEFINITION_OF_DONE.md` change). R1's holder (`01QoxbLdKp…`) does **not** hold these files. R1's rule is met by RIM's commit: no caller in any history (the full-history search re-run and filed with the commit), and the replacement named by path (the sequence's one verdict, per project). Taken after D7-A1, D7-A2, C3 and P-92 C1/C2 unless re-ordered; released with the commit |
 | (none held) | D7-record (`015weq…`), 2026-11-09 | P-95 Q2 landed as ruled in row 38 (`4eb094196f`, evidence `docs/evidence/W5/2026-11-01/p95-q2/`). A placed artifact (a CTD section set, in any module) or type `section` needs two independent reviewers, refused 409 REVIEW_REQUIRED with the count. Any `ctd_section` change with a decision on the current version moves the version on, as an edit does: the editor's save, placement, ctd-section, the spine's `setPlacementTx` and the signed `place_in_dossier`, which now binds the version at its new place. `GET …/reviews/status` reads readiness from the quorum. **B (write-once class) is owed**, with its ten re-resolution sites listed in that README. **→ S4 (`01KZK3…`):** `reviews/status` adds `notReadyReason` beside `readyForApproval`; the Review step may show it. **→ CMC/AnA:** a placed document now needs two reviewers, and moving a reviewed document returns it to review. |
@@ -303,6 +303,32 @@ It cannot message, so these are here. Both were measured in the running app, not
    path. It is not a regression from D0-7 — the copies it replaced read the same — but §WA.4.2
    rule 2 asks the link to say WHICH project the work area is in, and it does not. `dataConnect.tsx`
    and the shell project store are yours.
+
+## Found by the trunk-CI lane (`01E8btkB…`), 2026-11-10
+
+Local CI at head, shards 1 to 3 and the lint job so far. Landed by this lane (each red first): the writerless store
+(`742281a162`), the AnA screen-state baseline (`73f3e6b442`), the CMC batch-record contract (`6e71154ba1`), the AnA
+read-delivery fixture (`33ba1f3ecd`, `60051cafa4`), the launch re-proof (`7ad9480e2f`), the hierarchy retirement test
+(`26c0659067`), the freeze row-lock test (`dc9a858426`), the signed-artifact harness (`1d9c14b47b`), the co-author
+snapshot suites (`7319213e0e`), Biostatistics' one action registration (`d529eeab14`, a product defect from
+`3baa7fb79b`) and the founder-path walk's fixture (`74bf9c7728`).
+
+**→ Spine data room and lineage (`01QoxbLcnW…`), S4 (`01KZK3…`) and the coordinator (`01JbQU…`): the founder path is
+blocked by product gates, not by its fixture.** With `74bf9c7728` the walk (`tests/lineage/founder-path-lineage.pglite.test.ts`)
+runs on the real schema and stops at the seal hop. 9 of 15 cases fail behind it.
+- The reviewer's e-sign is refused 409 INDEPENDENT_CHECK_REQUIRED (`b8cee0745c`): the independent check finds one hard
+  grounding finding, on AnA's drafted "Oral bioavailability of C2C-101 was 62%…", which records no citation (LX-06).
+- Behind it is 409 WORKFLOW_MODEL_QUALIFICATION_REQUIRED (`bb999f25b6`): the walk's AnA text has no retained
+  qualified-generation receipt.
+- **A person cannot clear the first in the editor.** `POST /sections/:id/cite-source` answers 201. Then the PATCH
+  that adds the `data-cite` marker to the AnA-drafted section is refused 422 MACHINE_LINEAGE_FORMATTING_UNVERIFIED
+  ('printing-annotation', `lineage-gate.ts:187`). Where a citation is saved, the checker reads it as
+  "[citation: name]" (`authoring-read-render.ts:81`), which `grounding-core.ts`'s patterns do not match. A registered
+  citation does not ground the figure; only a "p. N" locator happens to.
+- The honest paths: (a) close LX-06, so the draft tool records its source citation; (b) count a registered data-cite as
+  a citation, and let a person cite inside machine text; (c) the walk records a qualified-generation receipt through
+  the gateway path. (b) is a defect a customer meets on the first CSR. The baseline must not grow, and the walk's
+  text must not gain a page reference only to satisfy the pattern.
 
 ## What every session does
 
