@@ -80,6 +80,10 @@ With no second or third person, every two-person step says "not executed" and no
        changes, as the Codespace session already does for `--pack all`;
      - start the app with `VITE_DEV_LOGIN_EMAIL` set to the founder once the account exists, so "Demo access" lands
        in Lumen.
+   - After the Lumen seed, call `c2c_set_idle_window "$C2C_FOUNDER_EMAIL" 120`, as the Codespace session asked
+     (`fe3bdced`), so the founder's landing organisation keeps a session for 120 idle minutes.
+   - The Codespace session has since released `.devcontainer/**`. Its next steps are in plan §3a, "L1 (rows D1/D2) —
+     the founder's Codespace sets itself up".
    - Before pushing, run `npm run codespaces:doctor:test`.
 2. **The Vault re-files on every run.** The second run counts `vault-filing: 21`. `ensureFiled` in `lumen-vault.mjs`
    trusts the ingest reply's `filing` on a re-upload. It should read the document's current filing before calling
