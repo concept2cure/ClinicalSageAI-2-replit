@@ -327,6 +327,8 @@ const ACTION_EVENT: Record<string, string> = {
   'vault.document.annotation.retract': 'Annotation retracted',
   'vault.document.catalog_suggest': 'Catalog description suggested',
   'vault.document.retention_soft_delete': 'Removed under the retention process',
+  'vault.folder.create': 'Folder made', 'vault.folder.rename': 'Folder renamed',
+  'vault.folder.move': 'Folder moved', 'vault.folder.remove': 'Folder removed',
   'regulated_document.registered': 'Registered as a controlled document',
   'regulated_document.created': 'Version entered review and approval',
   'regulated_document.authoring': 'Version returned to Not sent for review',

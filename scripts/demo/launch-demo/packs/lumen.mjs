@@ -20,9 +20,10 @@
  * server's answer. Content and its provenance are in lumen-content.mjs.
  */
 import fs from 'node:fs';
+import path from 'node:path';
 import { connectSigner, makeMultiPagePdfBuffer, must, sha256 } from '../lib.mjs';
 import { asArray, ensureApplicantIdentity, makeTally } from './biotech-shared.mjs';
-import { APPROVAL_LETTER, CLIENT, INFORMATION_REQUEST, CSR_SOURCE_FILE, FOOTER, LMN201_CMC, LMN201_DESIGN, LMN201_IDENTITY, PROJECTS, T, TASKS, overviewPdf } from './lumen-content.mjs';
+import { APPROVAL_LETTER, CLIENT, INFORMATION_REQUEST, CSR_SOURCE_CODE, CSR_SOURCE_FILE, CSR_SOURCE_TITLE, FOOTER, LMN201_CMC, LMN201_DESIGN, LMN201_IDENTITY, PROJECTS, T, TASKS, overviewPdf } from './lumen-content.mjs';
 import { ensureAgencyLetter, ensureCmc, ensurePlanDocuments, ensureStudyDesign, ensureTasks } from './work-areas.mjs';
 import { ensureLumenQms } from './lumen-qms.mjs';
 import { ensureLumenRbm } from './lumen-rbm.mjs';
@@ -114,16 +115,16 @@ async function ensureOverview({ api, run, tally }, project, spec) {
 
 /** The runbook's step 2: retain the synthetic CSR source in the LMN-201 Vault as an original. */
 async function ensureCsrSource({ api, run, tally }, project) {
-  const title = T('LMN-201-like Part B CSR source — SYNTHETIC, NOT CLINICAL EVIDENCE');
+  const title = CSR_SOURCE_TITLE;
   await run.step('Vault: synthetic LMN-201 CSR source (JSON)', async () => {
     const search = must(await api('GET', `/api/c2c/project-vault/${project.id}/search?q=${encodeURIComponent('CSR source')}&limit=50`), 200, 'vault search');
     const hit = (search.data?.results ?? []).find((x) => x.title === title);
     if (hit) { tally.found('vault-document'); return `found ${hit.id}`; }
     const bytes = fs.readFileSync(CSR_SOURCE_FILE);
     const form = new FormData();
-    form.append('file', new Blob([bytes], { type: 'application/json' }), 'lmn201_synthetic_csr_source_v1.json');
+    form.append('file', new Blob([bytes], { type: 'application/json' }), path.basename(CSR_SOURCE_FILE));
     form.append('programId', project.id);
-    form.append('documentCode', 'LMN-201-CSR-SOURCE-SYNTHETIC.json');
+    form.append('documentCode', CSR_SOURCE_CODE);
     form.append('documentTitle', title);
     form.append('documentType', 'OTHER');
     const res = await api('POST', '/api/vault/ingest', form);
@@ -186,10 +187,11 @@ export async function seed(ctx) {
      eCTD leaves and the deterministic readiness reads, through the biotech pack's own path (biotech-submission.mjs).
      Without a sequence the CSR's "Place into filing" asked for one first, and with an empty one the Builder showed
      "No leaves in sequence 0000 yet" (showcase sweep, 2026-11-10). Nothing is frozen or dispatched. */
+  await ensureApplicantIdentity(c, { id: lmn201.id, label: lmn201.code }, LMN201_IDENTITY);
   const leaves = (vault['LMN-201'] ?? []).filter((d) => d.stage === 'approved' && d.filing?.[2])
     .map((d) => ({ id: d.id, key: d.key, sectionCode: d.filing[2], leafTitle: d.title, studyId: d.stf?.studyId, stfFileTag: d.stf?.fileTag }));
-  // Who files it, so the sequence's package identity is complete ("Download an inspection copy" was refused without).
-  await ensureApplicantIdentity(c, { id: lmn201.id, label: lmn201.code }, LMN201_IDENTITY);
+  // The study files are placed with their study id and STF file-tag, and ones an earlier run placed are tagged
+  // (biotech-submission.mjs ensureLeaves, from each document's `stf` in lumen-vault-content.mjs).
   await ensureSubmission(c, { ...lmn201, productName: lmn201.code }, leaves);
   // Last, so the reports read everything above (Run history, the report canvas).
   await ensureLumenReports(c, lmn201);

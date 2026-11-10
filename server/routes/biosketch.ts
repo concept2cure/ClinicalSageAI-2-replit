@@ -31,9 +31,15 @@ import {
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
+import { requireEditorAccessForWrites } from '../middleware/orgMembership';
 
 const router = Router();
 const log = createScopedLogger('biosketch');
+
+/* A write here needs a writing role; a read does not. The mount is behind
+   authMiddleware alone, so until 2026-11-10 an organization `viewer` could
+   create a biosketch and edit its sections (same repair as biostat-bridge.ts). */
+router.use(requireEditorAccessForWrites);
 
 function resolveUserId(req: Request): number | null {
   const r = req as any;
