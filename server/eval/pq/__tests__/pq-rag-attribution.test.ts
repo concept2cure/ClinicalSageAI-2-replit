@@ -6,6 +6,8 @@ const protocol = (): PqProtocol => {
   const p = JSON.parse(JSON.stringify(protocolJson)) as unknown as PqProtocol;
   p.status = 'approved'; p.approvedBy = 'test owner'; p.approvedOn = '2026-10-06';
   p.components.rag.executable = true; p.components.rag.criteria.minScoredItems = 1;
+  // The CSR drafting component (P-118) cannot be executed yet and is not what these cases measure.
+  delete p.components.csrDrafting;
   return p;
 };
 const generation = Array.from({ length: 10 }, (_, i) => ({ taskId: `g${i}`, docType: 'ind', servedModel: 'generator-pin',
