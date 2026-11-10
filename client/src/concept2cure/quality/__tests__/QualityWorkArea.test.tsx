@@ -154,6 +154,17 @@ describe('Quality is one work area with one header (D7-B)', () => {
     expect(within(row).getByTestId('qms-route-open').textContent).toBe('Review route');
   });
 
+  // C1: the SOP tab is one column of quiet sections; every section head is the work area's, no box or two-up grid.
+  it('lays the SOP tab out as one column of sections, each with its own head and no box', () => {
+    const { container } = mount();
+    expect(container.querySelector('.qms-grid2, .qms-sec-head, .qms-train-fill')).toBeNull();
+    const heads = [...container.querySelectorAll('[data-work-area] h2')];
+    expect(heads.map((h) => h.textContent)).toEqual(['Controlled documents', 'Periodic review', 'Read-and-understood training', 'Training lapsed or lapsing soon']);
+    for (const h of heads) expect(h.parentElement?.classList.contains('pj-sec-h'), h.textContent ?? '').toBe(true);
+    expect(screen.getByRole('button', { name: 'Job roles' }).querySelector('svg')).toBeNull();
+    expect((screen.getByText('How coverage is counted').closest('details') as HTMLDetailsElement).open).toBe(false);
+  });
+
   it('states the register in one sentence above its rows', () => {
     mount();
     expect(screen.getByTestId('qms-register-figures').textContent).toBe('1 controlled document: 1 in review; none overdue for review.');

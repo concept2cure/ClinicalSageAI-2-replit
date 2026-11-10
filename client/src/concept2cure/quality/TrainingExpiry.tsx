@@ -24,20 +24,31 @@ export function lapseText(r: Pick<TrainingExpiryRow, 'expiresAt' | 'daysLeft' | 
   return r.daysLeft <= 0 ? `lapses ${on} (today)` : `lapses ${on} (in ${r.daysLeft} day${r.daysLeft === 1 ? '' : 's'})`;
 }
 
-export function TrainingExpiry() {
+/**
+ * The all-clear is said only of training that exists (C2, finding 112): "no one's training lapses" of an organization
+ * where no document is assigned is only vacuously true. `assigned` is the coverage summary's count of documents with
+ * people assigned; null when that summary was not read, and then no all-clear is given.
+ */
+function nothingLapsing(assigned: number | null | undefined): string {
+  if (assigned == null) return 'Whether anyone is assigned to train could not be read, so no all-clear is given.';
+  if (assigned === 0) return 'No document is assigned for training yet.';
+  return `No one's training has lapsed, and none lapses in the next ${TRAINING_EXPIRY_DAYS} days.`;
+}
+
+export function TrainingExpiry({ assigned }: { assigned?: number | null }) {
   const st = useTrainingExpiring(TRAINING_EXPIRY_DAYS);
-  return <section className="qms-sec" data-testid="training-expiry">
-    <div className="qms-sec-head">
-      <h2>Training lapsed or lapsing soon</h2>
-      <span className="meta">Lapsed, or lapsing in the next {TRAINING_EXPIRY_DAYS} days · active organization roster</span>
+  return <section className="pj-sec" aria-labelledby="qms-expiry-h" data-testid="training-expiry">
+    <div className="pj-sec-h">
+      <h2 id="qms-expiry-h">Training lapsed or lapsing soon</h2>
+      <span className="sec-sub">Lapsed, or lapsing in the next {TRAINING_EXPIRY_DAYS} days, across the active organization roster</span>
     </div>
     <div className="qms-train">
       {st.failed && <ErrorState title="Training expiry could not be read" message={st.error} retry={st.refresh} testId="training-expiry-failed" />}
       {!st.failed && st.rows === null && <div className="qms-empty" role="status">Reading training expiry…</div>}
-      {st.rows?.length === 0 && <div className="qms-empty">No one's training has lapsed, and none lapses in the next {TRAINING_EXPIRY_DAYS} days.</div>}
+      {st.rows?.length === 0 && <div className="qms-empty">{nothingLapsing(assigned)}</div>}
       {st.rows?.map((r) => (
         <div className="qms-train-row" key={`${r.userId}:${r.documentId}`}>
-          <span className="qms-train-doc">{r.userName ?? `User #${r.userId}`}</span>
+          <span className="qms-train-doc" title={r.userName ? undefined : `User ${r.userId}`}>{r.userName ?? 'A member whose name is not on record'}</span>
           <span className="qms-train-when">
             {r.docNumber} {r.title} · v{r.documentVersion} · {lapseText(r)}
           </span>

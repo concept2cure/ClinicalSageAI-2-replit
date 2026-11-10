@@ -46,7 +46,7 @@ import { qmsApprovalMeta, qmsRouteView } from './qmsReviewRoute';
 import { approvalShare } from '../v2/reviewRoute/routeRound';
 import { useAuthUser } from '@/services/portal/authService';
 import { todayUtc, type QmsDoc } from './data';
-import { PeriodicReviewPanel, RecordPeriodicReview, useRecordPeriodicReview } from './PeriodicReview';
+import { PeriodicReviewPanel, RecordPeriodicReview, REVIEW_WINDOW_DAYS, useRecordPeriodicReview } from './PeriodicReview';
 import { ErrorState } from '../v2/dataConnect';
 import { ControlledDocumentSetup, ControlledDocumentReason } from './ControlledDocumentDialogs';
 import { ControlledDocumentWorkbench } from './ControlledDocumentWorkbench';
@@ -96,6 +96,7 @@ function registerSentence(total: number, inForce: number, inReview: number, draf
 }
 /* Stable identities for an unread read, so memo deps do not churn. */
 const NO_DOCS: QmsDoc[] = [];
+const NO_REVIEW: ReturnType<typeof deriveReviewDue> = [];
 const NO_TEMPLATES: NonNullable<ReturnType<typeof useSopTemplates>['templates']> = [];
 const NO_TRAINING: NonNullable<ReturnType<typeof useTrainingCompliance>['rows']> = [];
 
@@ -106,7 +107,7 @@ export function SopRegister(props: SopRegisterProps) {
 function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEditorOpenChange, qmsDocumentId, qmsIntent, qmsTargetRequest }: SopRegisterProps) {
   const reg = useSopRegister();
   const tpl = useSopTemplates();
-  const rev = useReviewDue();
+  const rev = useReviewDue(REVIEW_WINDOW_DAYS);
   /* Four raw `?? FIXTURE` fallbacks on a GxP document register, none of them
      gated by sample mode and none of them marked. They fired on an empty
      tenant, an expired token, a 500, or a fetch that had not started — and
@@ -123,7 +124,10 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
      FIXTURE_DOCS, FIXTURE_TRAINING and SOP_TEMPLATES. */
   const docs = reg.docs ?? NO_DOCS;
   const templates = tpl.templates ?? NO_TEMPLATES;
-  const reviewDue = rev.rows ?? deriveReviewDue(docs);
+  /* The review schedule as read, or none: a failed schedule read is not replaced by a derivation (C2). The
+     register's own overdue count may still derive from the register when the schedule is unread. */
+  const reviewDue = rev.rows ?? NO_REVIEW;
+  const overdueFrom = rev.rows ?? deriveReviewDue(docs);
   /* Live read-and-understood compliance (numerator = distinct current
      acknowledgments, denominator = org roster). */
   const trainComp = useTrainingCompliance();
@@ -217,7 +221,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
   const effectiveCount = docs.filter((d) => d.status === 'effective' || d.inForce).length;
   const underReviewCount = docs.filter((d) => d.status === 'in_review').length;
   const draftCount = docs.filter((d) => d.status === 'draft').length;
-  const overdueCount = reviewDue.filter((r) => r.overdue).length;
+  const overdueCount = overdueFrom.filter((r) => r.overdue).length;
   // The server's summary (P-49): the client computes no percentage.
   const coverage = coverageKpiOf(training, trainComp.summary ?? null);
   /* A read that has not answered is not an empty register. An unread register
@@ -232,8 +236,8 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
   const regFailed = regUnread && reg.error != null;
   /* Review dates come from their own read, or are derived from the register;
      they are unknown only when both are. */
-  const reviewUnread = rev.rows == null && regUnread;
-  const reviewFailed = reviewUnread && regFailed;
+  const reviewUnread = rev.rows == null;
+  const reviewFailed = reviewUnread && rev.error != null;
   const trainUnread = trainComp.rows == null && training.length === 0;
   const trainFailed = trainUnread && trainComp.error != null;
   /* A register that was read and holds nothing. "None in review" and "Review
@@ -246,12 +250,10 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
      reads the four tiles used, each with its unread arm: an unread register
      states no count, an empty one states nothing (one quiet line in the rows),
      and an overdue count is said only of documents that exist. */
-  const figures = regFailed ? 'The register could not be read.'
-    : regUnread ? 'Reading the register…'
-      : registerEmpty ? null
-        : registerSentence(docs.length, effectiveCount, underReviewCount, draftCount, overdueCount);
+  const figures = regUnread || registerEmpty ? null
+    : registerSentence(docs.length, effectiveCount, underReviewCount, draftCount, overdueCount);
   /* Acknowledgement coverage: the server's average, or why there is none — never 0%. */
-  const coverageFigure = trainUnread ? (trainFailed ? 'Coverage could not be read.' : 'Reading coverage…')
+  const coverageFigure = trainUnread || training.length === 0 ? null
     : coverage.pct === null ? `${coverage.sub}.`
       : `Coverage ${coverage.pct}%: ${coverage.sub.charAt(0).toLowerCase()}${coverage.sub.slice(1)}.`;
 
@@ -269,7 +271,7 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
           on 2026-11-06: the figures are the sentence below, each with its unread arm,
           and the document types are the template field of "New controlled document"
           (RULE 4: a document type is data). ── */}
-      <section className="pj-sec qms-sec" aria-labelledby="qms-register-h">
+      <section className="pj-sec" aria-labelledby="qms-register-h">
         <div className="pj-sec-h">
           <h2 id="qms-register-h">Controlled documents</h2>
           {figures && <span className="sec-sub" data-testid="qms-register-figures">{figures}</span>}
@@ -333,17 +335,15 @@ function SopRegisterSession({ onAsk, filter, onFilterChange, onNavigate, onEdito
         </div>
       </section>
 
-      {/* ── Periodic review + training ── */}
-      <div className="qms-grid2">
-        <PeriodicReviewPanel rows={reviewDue} unread={reviewUnread} failed={reviewFailed} error={rev.error ?? reg.error}
-          retry={() => { reg.refresh?.(); rev.refresh?.(); }} overdueCount={overdueCount}
-          canOpen={canOpen} onOpen={openReader} onRecord={recordReview.start} />
+      {/* ── Periodic review, training, expiry: one column of quiet sections (C1). ── */}
+      <PeriodicReviewPanel rows={reviewDue} unread={reviewUnread} failed={reviewFailed} error={rev.error}
+        retry={() => { rev.refresh?.(); }} registerEmpty={registerEmpty}
+        canOpen={canOpen} onOpen={openReader} onRecord={recordReview.start} />
 
-        <TrainingCoverage rows={training} unread={trainUnread} failed={trainFailed} error={trainComp.error}
-          refresh={trainComp.refresh} figure={coverageFigure}
-          canOpen={canOpen} onOpen={openReader} />
-        <TrainingExpiry />
-      </div>
+      <TrainingCoverage rows={training} unread={trainUnread} failed={trainFailed} error={trainComp.error}
+        refresh={trainComp.refresh} figure={coverageFigure}
+        canOpen={canOpen} onOpen={openReader} />
+      <TrainingExpiry assigned={trainComp.summary ? trainComp.summary.assigned : null} />
       {history && <ControlledDocumentHistory document={history} onClose={() => setHistory(null)} />}
       {assigning && <TrainingAssignmentsPanel doc={assigning} onClose={() => { setAssigning(null); trainComp.refresh(); }} />}
       {setup && <ControlledDocumentSetup document={setup.document} template={setup.template} templates={templates} revision={setup.revision}
