@@ -13,6 +13,24 @@
  * template, with the reason.
  */
 
+/**
+ * Room for one heading. The drafting models reason before they write, and that reasoning is billed against the same
+ * ceiling as the text (Opus 5.5 cannot run without it). At 4,096 a results heading that lists a claim for every
+ * figure could be cut off before its claims block, and then every figure in it was unreconciled.
+ */
+export const CSR_SECTION_MAX_TOKENS = 16_000;
+
+/**
+ * Where a build shows the heading it is writing (csr-job-runner.ts csrLiveBuild): `start` when a drafting call
+ * begins, `text` for each piece of prose the model streams. The founder, 2026-11-10: "I want to see it happening".
+ */
+export interface CsrLiveDraft { start(): void; text(chunk: string): void }
+
+/** The gateway's stream callback for a drafting call: prose goes to the live view; the model's reasoning does not. */
+export const streamInto = (live?: CsrLiveDraft) => (chunk: string, meta?: { type?: string }): void => {
+  if (live && chunk && (!meta || meta.type === 'text')) live.text(chunk);
+};
+
 /** How long the build waits before drafting a heading again after a rate limit or an overloaded provider. */
 const DRAFT_RETRY_WAITS_MS = [20_000, 40_000, 60_000, 60_000] as const;
 
@@ -72,9 +90,10 @@ async function draftingRefusal(error: unknown): Promise<DraftingRefusal | null> 
  * not drafted (null for an error the gateway did not raise: the heading keeps its template, as before). Throws
  * CsrDraftingUnavailableError when the build should stop.
  */
-export async function callDraftingModel<T>(sectionNumber: string, call: () => Promise<T>): Promise<{ reply: T } | { refused: string | null }> {
+export async function callDraftingModel<T>(sectionNumber: string, call: () => Promise<T>, live?: CsrLiveDraft): Promise<{ reply: T } | { refused: string | null }> {
   for (let attempt = 0; ; attempt += 1) {
     try {
+      live?.start();
       return { reply: await call() };
     } catch (error) {
       // Never log an SDK error object: its message/response may contain the clinical prompt, source-table cells or

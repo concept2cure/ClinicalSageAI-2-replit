@@ -20,7 +20,7 @@ import { buildCsrClaimReceipts } from './csr/csr-claim-receipts.js';
 import { resolveCsrBuildContext } from './csr/project-scope';
 import { hasUnresolvedPlaceholders } from './csr/csr-placeholders.js';
 import { isTruncated } from '../../shared/ai/finish-reason.js';
-import { callDraftingModel } from './csr/csr-draft-refusal.js';
+import { callDraftingModel, streamInto, CSR_SECTION_MAX_TOKENS, type CsrLiveDraft } from './csr/csr-draft-refusal.js';
 import { csrWritingBrief, csrWritingGuidance } from './ana/medical-writing-csr.js';
 
 // Load the canonical gateway client only when an async drafting operation
@@ -295,6 +295,8 @@ export interface CSRAIContext {
   organizationId?: number;
   projectId?: number;
   userId?: number;
+  /** Where the running build shows the heading being written (csr-job-runner.ts). */
+  live?: CsrLiveDraft;
 }
 
 /**
@@ -466,13 +468,6 @@ function acceptSectionReply(
 }
 
 /**
- * Room for one heading. The drafting models reason before they write, and that reasoning is billed against the same
- * ceiling as the text (Opus 5.5 cannot run without it). At 4,096 a results heading that lists a claim for every
- * figure could be cut off before its claims block, and then every figure in it was unreconciled.
- */
-const CSR_SECTION_MAX_TOKENS = 16_000;
-
-/**
  * Draft one section with its provenance, for the async job runner: the model
  * id the gateway served, its token cost, and a lineage envelope. `evidence` is
  * the section's retained evidence pack (cortex-authoring-context) when the job
@@ -520,10 +515,11 @@ export async function draftCSRSectionWithProvenance(
       organizationId: aiContext?.organizationId ?? request.organizationId,
       projectId: aiContext?.projectId ?? request.projectId,
       userId: aiContext?.userId ?? request.userId,
-      // Streamed, and the chunks ignored: the gateway ends a non-streamed call at 120 s, while a stream is watched
-      // for silence (30 s while writing, 5 min while the model reasons). The saved text is the complete reply.
-      onStream: () => undefined,
-    }));
+      // Streamed: the gateway ends a non-streamed call at 120 s, while a stream is watched for silence (30 s while
+      // writing, 5 min while the model reasons). The prose goes to the build's live view as it arrives; the saved
+      // text is the complete reply, after its figures are checked.
+      onStream: streamInto(aiContext?.live),
+    }), aiContext?.live);
     if ('reply' in outcome) {
       const accepted = acceptSectionReply(section.number, outcome.reply, info, lineage, evidence);
       if (accepted) return done(accepted.content, 'ai', accepted.model, accepted.tokenCost);
