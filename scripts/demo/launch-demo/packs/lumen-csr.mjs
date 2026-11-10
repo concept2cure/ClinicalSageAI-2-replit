@@ -16,10 +16,10 @@
  */
 import { must } from '../lib.mjs';
 import { asArray } from './biotech-shared.mjs';
-import { T } from './lumen-content.mjs';
+import { CSR_SOURCE_TITLE, T } from './lumen-content.mjs';
 import { ensureStage, signingPeople } from './lumen-vault.mjs';
 
-const SOURCE_TITLE = T('LMN-201-like Part B CSR source — SYNTHETIC, NOT CLINICAL EVIDENCE');
+const SOURCE_TITLE = CSR_SOURCE_TITLE;
 const CSR_TITLE = T('LMN-201 RePreve Part B Clinical Study Report — SYNTHETIC');
 const CSR_TEMPLATE = 'GLOBAL · Clinical Study Report (CSR)';
 const CSR = '/api/submission-orchestrator/csr';
@@ -67,12 +67,19 @@ async function ensureCsrDocument({ api, run, tally }, program) {
   return documentId;
 }
 
+/** Whether one of the document's frozen study data was frozen from the source with these bytes. */
+export function studyDataFrom(studyData, sha256) {
+  return studyData.some((frozen) => Array.isArray(frozen?.sources) && frozen.sources.some((s) => s?.sha256 === sha256));
+}
+
 async function ensureStudyData({ api, run, tally }, program, documentId, source) {
   await run.step('CSR: the study data frozen in the document', async () => {
     if (!documentId) return 'not executed: there is no CSR document';
     const read = must(await api('GET', `${CSR}/study-data?programId=${encodeURIComponent(program.id)}&documentId=${encodeURIComponent(documentId)}`), 200, 'read the document\'s study data');
     if (!Array.isArray(read.studyData)) throw new Error('the document\'s study data could not be read; this is not an empty list');
-    if (read.studyData.length) { tally.found('csr-study-data'); return `frozen already (${read.studyData.length})`; }
+    // Frozen from THIS source, by its bytes: a document that froze an earlier source (the kit's v1, before 2026-11-10)
+    // freezes this one as its newer study data, as "Freeze newer study data" does on the screen.
+    if (source && studyDataFrom(read.studyData, source.sha256)) { tally.found('csr-study-data'); return `frozen already (${read.studyData.length})`; }
     if (!source?.approved) return 'not executed: the clinical source is not approved, and only an approved version is frozen';
     const frozen = must(await api('POST', `${CSR}/study-data`, {
       programId: program.id, documentId, source: { documentId: source.documentId, expectedSha256: source.sha256 },

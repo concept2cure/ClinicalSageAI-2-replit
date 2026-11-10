@@ -15,7 +15,8 @@ const HERE = __dirname;
 const TAG = (process.env.DEMO_TAG || '').replace(/[^a-z0-9-]/gi, '');
 const SHOTS = path.join(HERE, 'screenshots');
 const PROJECT_TITLE = 'Xanomeline TTS Phase 2 (CDISCPILOT01)';
-const CSR_TITLE = 'CDISCPILOT01 Clinical Study Report';
+/** DEMO_CSR_TITLE names another prepared CSR (the Lumen account's LMN-201 report), for the recorders that open it. */
+const CSR_TITLE = process.env.DEMO_CSR_TITLE || 'CDISCPILOT01 Clinical Study Report';
 const PEOPLE = {
   author: { email: process.env.DEMO_AUTHOR_EMAIL || 'jm.smith@concept2cure.pro', name: 'JM Smith' },
   reviewer: { email: process.env.DEMO_REVIEWER_EMAIL || 'rhea.reviewer@concept2cure.pro', name: 'Rhea Reviewer',
