@@ -172,6 +172,29 @@ function confirmationRefusal(documentId: unknown): string {
   });
 }
 
+/**
+ * The folder a placement goes to: the one named, or one made first (new_folder) through the Vault's own governed
+ * writer, with the project's write authority and a chained audit row carrying AnA's provenance and her rationale as
+ * the reason (vault-folders.ts).
+ */
+async function folderForPlacement(
+  parsed: PlacementPlan, programId: string, orgId: number, userId: number | undefined, agent: Record<string, unknown>,
+): Promise<{ folderId: string | null; made?: { folderId: string; name: string } } | { refusal: string }> {
+  if (!parsed.newFolder) return { folderId: parsed.folderId };
+  const { createProgramFolder } = await import('../vault/vault-folders.js');
+  const created = await createProgramFolder({
+    programId, organizationId: orgId, userId: userId ?? null,
+    reason: parsed.rationale, agent, name: parsed.newFolder.name, parentFolderId: parsed.newFolder.parentFolderId,
+  });
+  if (!created.ok) return { refusal: JSON.stringify({ ok: false, error: created.code, message: created.message }) };
+  return { folderId: created.folder.folderId, made: { folderId: created.folder.folderId, name: created.folder.name } };
+}
+
+/** A folder made for a placement that was then refused: said, so AnA does not claim the document is in it. */
+function madeButNotPlaced(made: { folderId: string; name: string } | undefined) {
+  return made ? { madeFolder: made, note: `The folder "${made.name}" was made; the document was not placed in it.` } : {};
+}
+
 async function handlePlaceProjectDocument(
   input: Record<string, unknown>,
   ctx?: ToolContext,
@@ -203,20 +226,9 @@ async function handlePlaceProjectDocument(
   }
 
   const agent = anaToolProvenance(ctx, orgId, parsed.rationale, 'place_project_document');
-  let folderId = parsed.folderId;
-  let made: { folderId: string; name: string } | null = null;
-  if (parsed.newFolder) {
-    // The folder is made through the Vault's own governed writer: the project's write authority, a chained
-    // audit row carrying AnA's provenance and her rationale as the reason (vault-folders.ts).
-    const { createProgramFolder } = await import('../vault/vault-folders.js');
-    const created = await createProgramFolder({
-      programId: doc.programId, organizationId: orgId, userId: scope.accessibleScope.actor.userId,
-      reason: parsed.rationale, agent, name: parsed.newFolder.name, parentFolderId: parsed.newFolder.parentFolderId,
-    });
-    if (!created.ok) return JSON.stringify({ ok: false, error: created.code, message: created.message });
-    folderId = created.folder.folderId;
-    made = { folderId, name: created.folder.name };
-  }
+  const folder = await folderForPlacement(parsed, doc.programId, orgId, scope.accessibleScope.actor.userId, agent);
+  if ('refusal' in folder) return folder.refusal;
+  const { folderId, made } = folder;
 
   const { placeVaultDocument } = await import('../vault/vault-placement.service.js');
   const outcome = await placeVaultDocument({
@@ -233,8 +245,7 @@ async function handlePlaceProjectDocument(
   });
 
   if (!outcome.ok) {
-    return JSON.stringify({ ok: false, error: outcome.code, message: outcome.message,
-      ...(made ? { madeFolder: made, note: `The folder "${made.name}" was made; the document was not placed in it.` } : {}) });
+    return JSON.stringify({ ok: false, error: outcome.code, message: outcome.message, ...madeButNotPlaced(made) });
   }
   const { filing } = outcome;
   return JSON.stringify({
@@ -243,7 +254,7 @@ async function handlePlaceProjectDocument(
     fileName: doc.fileName,
     from: outcome.before,
     filing,
-    ...(made ? { madeFolder: made } : {}),
+    madeFolder: made,
     message:
       filing.placementStatus === 'unfiled'
         ? `${doc.fileName} is now in the Unfiled queue with your reason recorded, for a person to decide. ` +
