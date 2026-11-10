@@ -51,10 +51,11 @@ import { extractWithTika } from '../services/ingestion/tikaClient';
 import { extractWithGrobid, looksScholarlyDocument } from '../services/literature/grobidClient';
 import { indexGovernedDocument } from '../services/search/opensearchClient';
 import { searchConnectedRepositories } from '../services/integrations/connector-search.js';
-import { decryptConnectorCredentials } from '../services/connectors/connector-registry.js';
+import { assertCredentialUseCurrent, captureCredentialForUse, type CapturedCredentialUse } from '../services/connectors/connector-registry.js';
 
 import { toBinaryBody } from '../utils/binary-body.js';
 import { serverError } from '../lib/api-response';
+import { authedUserId } from '../utils/authedActor';
 import { createScopedLogger } from '../utils/logger';
 const router = Router();
 
@@ -1808,6 +1809,8 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
     if (!orgId || orgId <= 0) {
       return res.status(400).json({ error: 'Organization context required' });
     }
+    const userId = authedUserId(req);
+    if (userId === null) return res.status(403).json({ error: 'Current authenticated user required' });
 
     // Generate DOCX blob from content using the local DOCX builder
     let fileBuffer: Buffer;
@@ -1856,13 +1859,14 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
         const { VeevaVaultConnector } = await import('../services/connectors/veeva-vault.js');
         const connector = new VeevaVaultConnector();
         // Authenticate with org credentials from DB or env
-        const credentials = await getConnectorCredentials(orgId, 'veeva_vault');
+        const credentials = await getConnectorCredentials(orgId, 'veeva_vault', userId);
         if (!credentials) {
           return res.status(400).json({
             error: 'Veeva Vault not configured. Set up credentials in Connector Library.',
           });
         }
         await connector.authenticate(credentials);
+        await assertConnectorCredentialCurrent(credentials);
         const uploadResult = await connector.upload(
           fileBuffer,
           fileName,
@@ -1881,13 +1885,14 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
       case 'sharepoint': {
         const { SharePointConnector } = await import('../services/connectors/sharepoint.js');
         const connector = new SharePointConnector();
-        const credentials = await getConnectorCredentials(orgId, 'sharepoint');
+        const credentials = await getConnectorCredentials(orgId, 'sharepoint', userId);
         if (!credentials) {
           return res
             .status(400)
             .json({ error: 'SharePoint not configured. Set up credentials in Connector Library.' });
         }
         await connector.authenticate(credentials);
+        await assertConnectorCredentialCurrent(credentials);
         const uploadResult = await connector.upload(
           fileBuffer,
           fileName,
@@ -1906,13 +1911,14 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
       case 'onedrive': {
         const { OneDriveConnector } = await import('../services/connectors/onedrive.js');
         const connector = new OneDriveConnector();
-        const credentials = await getConnectorCredentials(orgId, 'onedrive');
+        const credentials = await getConnectorCredentials(orgId, 'onedrive', userId);
         if (!credentials) {
           return res
             .status(400)
             .json({ error: 'OneDrive not configured. Set up credentials in Connector Library.' });
         }
         await connector.authenticate(credentials);
+        await assertConnectorCredentialCurrent(credentials);
         const uploadResult = await connector.upload(
           fileBuffer,
           fileName,
@@ -1931,13 +1937,14 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
       case 'google_drive': {
         const { GoogleDriveConnector } = await import('../services/connectors/google-drive.js');
         const connector = new GoogleDriveConnector();
-        const credentials = await getConnectorCredentials(orgId, 'google_drive');
+        const credentials = await getConnectorCredentials(orgId, 'google_drive', userId);
         if (!credentials) {
           return res.status(400).json({
             error: 'Google Drive not configured. Set up credentials in Connector Library.',
           });
         }
         await connector.authenticate(credentials);
+        await assertConnectorCredentialCurrent(credentials);
         const uploadResult = await connector.upload(
           fileBuffer,
           fileName,
@@ -1956,13 +1963,14 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
       case 'box': {
         const { BoxConnector } = await import('../services/connectors/box.js');
         const connector = new BoxConnector();
-        const credentials = await getConnectorCredentials(orgId, 'box');
+        const credentials = await getConnectorCredentials(orgId, 'box', userId);
         if (!credentials) {
           return res
             .status(400)
             .json({ error: 'Box not configured. Set up credentials in Connector Library.' });
         }
         await connector.authenticate(credentials);
+        await assertConnectorCredentialCurrent(credentials);
         const uploadResult = await connector.upload(
           fileBuffer,
           fileName,
@@ -2098,55 +2106,26 @@ router.post('/save-to-connector', async (req: Request, res: Response) => {
     }
 
     res.json(result);
-  } catch (err: any) {
-    console.error('[knowledge-base] Save to connector failed:', err.message);
-    return serverError(res, logger, 'saving save to connector', err);
+  } catch {
+    return serverError(res, logger, 'saving to the connector', new Error('The connector upload could not be completed.'));
   }
 });
 
 /**
  * Helper: retrieve stored connector credentials for an organization.
  */
-async function getConnectorCredentials(
-  orgId: number,
-  connectorId: string
-): Promise<{
-  baseUrl?: string;
-  username?: string;
-  password?: string;
-  clientId?: string;
-  clientSecret?: string;
-  apiKey?: string;
-} | null> {
-  if (!db) return null;
-  try {
-    // Connector credentials are canonical AES-GCM ciphertext in the
-    // connector registry's `credentials` column.
-    const rows = await db.execute({
-      sql: `SELECT credentials FROM connector_credentials WHERE organization_id = $1 AND connector_id = $2 LIMIT 1`,
-      args: [orgId, connectorId],
-    } as any);
-    const row = (rows as any)?.rows?.[0] || (rows as any)?.[0];
-    if (typeof row?.credentials === 'string') {
-      return JSON.parse(decryptConnectorCredentials(row.credentials));
-    }
-  } catch {
-    // Table may not exist — check env vars as fallback
-  }
-
-  // Fallback: environment variables per connector
-  const prefix = connectorId.toUpperCase().replace(/-/g, '_');
-  const baseUrl = process.env[`${prefix}_BASE_URL`] || process.env[`${prefix}_URL`];
-  const username = process.env[`${prefix}_USERNAME`];
-  const password = process.env[`${prefix}_PASSWORD`];
-  const clientId = process.env[`${prefix}_CLIENT_ID`];
-  const clientSecret = process.env[`${prefix}_CLIENT_SECRET`];
-  const apiKey = process.env[`${prefix}_API_KEY`];
-
-  if (baseUrl || clientId || apiKey) {
-    return { baseUrl, username, password, clientId, clientSecret, apiKey };
-  }
-  return null;
+const connectorCredentialUses = new WeakMap<object, { captured: CapturedCredentialUse; userId: number }>();
+async function getConnectorCredentials(orgId: number, connectorId: string, userId: number) {
+  const captured = await captureCredentialForUse(orgId, connectorId, 'connector_upload');
+  if (!captured) return null;
+  await assertCredentialUseCurrent(captured, userId);
+  connectorCredentialUses.set(captured.credentials, { captured, userId });
+  return captured.credentials;
+}
+async function assertConnectorCredentialCurrent(credentials: object): Promise<void> {
+  const authority = connectorCredentialUses.get(credentials);
+  if (!authority) throw new Error('The connector credential authority could not be confirmed. Nothing was sent.');
+  await assertCredentialUseCurrent(authority.captured, authority.userId, false);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

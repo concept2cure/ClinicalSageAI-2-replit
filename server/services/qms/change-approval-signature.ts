@@ -35,12 +35,53 @@ import { assertCurrentQmsSigningAuthority } from './current-signing-admission';
 import {
   persistGovernedActionSignature,
   sha256CanonicalJson,
+  manifestSignatureHash,
+  isSignatureWithdrawn,
   type SignatureDbClient,
 } from '../part11/signature-persistence';
 import {
   QmsApprovalRefusedError,
   type QmsApprovalSignatureRecord,
 } from './document-approval-signature';
+import { AGENCIES, DOCUMENT_TYPES, AggregateLearningRefusedError, LEARNING_COHORT_MINIMUM, learningClassOf,
+  type Agency, type DocumentType, type LearningClassKey } from '../intelligence/ana-failure-learning';
+
+export interface ReviewedLearningArtifact {
+  kind: 'aggregate_learning_v1'; libraryVersionId: string; classKey: LearningClassKey;
+  agency: Agency; documentType: DocumentType; cohortMinimum: number; tenantCount: number; eventCount: number;
+}
+export interface LearningPromotion { artifact: ReviewedLearningArtifact; artifactSha256: string }
+const learningObject = (value: unknown): Record<string, unknown> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
+function assertLearningArtifactIdentity(artifact: Record<string, unknown>): void {
+  if (artifact.kind !== 'aggregate_learning_v1' || typeof artifact.libraryVersionId !== 'string' ||
+      !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(artifact.libraryVersionId) ||
+      !AGENCIES.includes(artifact.agency as Agency) || !DOCUMENT_TYPES.includes(artifact.documentType as DocumentType)) throw new AggregateLearningRefusedError();
+  learningClassOf(artifact.classKey);
+}
+export function learningPromotionOf(metadata: unknown): LearningPromotion | null {
+  const raw = learningObject(metadata).learningPromotion;
+  if (raw === undefined) return null;
+  const value = learningObject(raw), artifact = learningObject(value.artifact);
+  const keys = ['kind', 'libraryVersionId', 'classKey', 'agency', 'documentType', 'cohortMinimum', 'tenantCount', 'eventCount'];
+  if (Object.keys(value).length !== 2 || Object.keys(value).some(key => !['artifact', 'artifactSha256'].includes(key)) ||
+      Object.keys(artifact).length !== keys.length || Object.keys(artifact).some(key => !keys.includes(key)) ||
+      artifact.cohortMinimum !== LEARNING_COHORT_MINIMUM || !Number.isSafeInteger(artifact.tenantCount) ||
+      Number(artifact.tenantCount) < LEARNING_COHORT_MINIMUM || !Number.isSafeInteger(artifact.eventCount) ||
+      Number(artifact.eventCount) < Number(artifact.tenantCount) || value.artifactSha256 !== sha256CanonicalJson(artifact)) {
+    throw new AggregateLearningRefusedError();
+  }
+  assertLearningArtifactIdentity(artifact);
+  return { artifact: artifact as unknown as ReviewedLearningArtifact, artifactSha256: String(value.artifactSha256) };
+}
+
+/** A current persisted curator grant is additional to the ordinary QMS signing gate. */
+export async function assertCurrentLearningCurator(client: SignatureDbClient, userId: number): Promise<void> {
+  // tenant-isolation-safe: a platform role grant is not a tenant's; curating shared learning is a platform act. The read is the authenticated signer's own grant and account status (users is the global identity table), keyed by userId.
+  const grant = await client.query(`SELECT g.id FROM platform_role_grants g JOIN users u ON u.id=g.user_id
+    WHERE g.user_id=$1 AND g.revoked_at IS NULL AND LOWER(g.role)=ANY($2::text[]) AND u.status='active'
+    FOR SHARE OF u`, [userId, ['super_admin', 'platform_admin']]);
+  if (!grant.rows.some(row => Number.isSafeInteger(Number(row.id)) && Number(row.id) > 0)) throw new AggregateLearningRefusedError();
+}
 
 /** What `bound_payload_digest` is a digest OF, stated on the signature row. */
 export const QMS_CHANGE_BINDING_BASIS = 'qms-change-control-content-sha256';
@@ -111,6 +152,22 @@ export interface ApproveQmsChangeSignedParams {
   authenticationMethod: 'password' | 'password+totp';
   secondFactorVerified: boolean;
   ipAddress: string | null;
+  learningReview?: { expectedArtifactSha256: string; invariantAccepted: true };
+}
+
+async function reviewedLearningApproval(client: SignatureDbClient, row: QmsChangeRow, params: ApproveQmsChangeSignedParams) {
+  const promotion = learningPromotionOf(row.metadata);
+  if (!promotion) {
+    if (params.learningReview !== undefined) throw new AggregateLearningRefusedError(400);
+    return null;
+  }
+  await assertCurrentLearningCurator(client, params.userId);
+  if (!Number.isSafeInteger(row.proposed_by) || params.learningReview?.invariantAccepted !== true ||
+      params.learningReview.expectedArtifactSha256 !== promotion.artifactSha256) throw new AggregateLearningRefusedError(409);
+  const { readLearningCohort } = await import('./changeControl.service');
+  const cohort = await readLearningCohort(promotion.artifact);
+  if (cohort.tenantCount !== promotion.artifact.tenantCount || cohort.eventCount !== promotion.artifact.eventCount) throw new AggregateLearningRefusedError(409);
+  return { libraryVersionId: promotion.artifact.libraryVersionId, artifactSha256: promotion.artifactSha256, invariantAccepted: true as const };
 }
 
 export interface ApproveQmsChangeSignedResult {
@@ -162,6 +219,7 @@ export async function approveQmsChangeSigned(
   const { orgId, userId, changeId } = params;
   const row = await lockApprovableChange(client, orgId, userId, changeId);
   await assertCurrentQmsSigningAuthority(client, { organizationId: orgId, userId, target: `qms-change:${changeId}` });
+  const learningReview = await reviewedLearningApproval(client, row, params);
   const twoPersonRule = row.proposed_by != null ? 'enforced' : 'not_applicable_no_proposer_recorded';
   const contentDigest = computeQmsChangeContentDigest(row);
   const target = `qms-change:${changeId}`;
@@ -237,7 +295,8 @@ export async function approveQmsChangeSigned(
       note:
         'sha256 over the canonical qms_change_controls content (id, organization, change number, title, description, type, classification, risk, reason, impact assessment, implementation plan, target date, controlled-document pointer, metadata minus metadata.approval) read under FOR UPDATE at approval time — the same digest stored on metadata.approval.contentDigest.',
     },
-    extraManifest: { changeNumber: row.change_number, classification: row.classification, twoPersonRule },
+    extraManifest: { changeNumber: row.change_number, classification: row.classification, twoPersonRule,
+      ...(learningReview ? { learningReview } : {}) },
     complianceStatement:
       'QMS change-control approval (ICH Q10 §3.2.3; EU GMP Annex 15; 21 CFR 820.70) applied as an electronic signature under 21 CFR Part 11 §11.50/§11.70/§11.200; ledger-chained to the audit_logs sha256 chain.',
   });
@@ -257,4 +316,33 @@ export async function approveQmsChangeSigned(
       secondFactorVerified: params.secondFactorVerified,
     },
   };
+}
+
+/** Recompute exact content and inspect the actual retained signature; approval stamps alone never admit a library artifact. */
+function learningSignatureInstant(value: unknown): string | null {
+  const date = new Date(value instanceof Date ? value.getTime() : String(value));
+  return Number.isFinite(date.getTime()) ? date.toISOString() : null;
+}
+export async function readReviewedLearningChangeApproval(client: SignatureDbClient, change: QmsChangeRow, promotion: LearningPromotion) {
+  if (!['approved', 'in_implementation', 'verification', 'closed'].includes(change.status) ||
+      !Number.isSafeInteger(change.approved_by) || !change.approved_at ||
+      learningPromotionOf(change.metadata)?.artifactSha256 !== promotion.artifactSha256) throw new AggregateLearningRefusedError();
+  const found = await client.query(`SELECT * FROM electronic_signatures WHERE organization_id=$1 AND signed_target=$2
+    AND signature_type='qms-change-approval' AND signer_id=$3 AND signed_at=$4::timestamptz FOR SHARE`,
+  [change.organization_id, `qms-change:${change.id}`, change.approved_by, change.approved_at]);
+  if (found.rows.length !== 1) throw new AggregateLearningRefusedError();
+  const row = found.rows[0], manifest = learningObject(row.signature_manifest), review = learningObject(manifest.learningReview);
+  const pairs = [[row.bound_payload_digest, computeQmsChangeContentDigest(change)], [row.binding_basis, QMS_CHANGE_BINDING_BASIS],
+    [manifest.kind, 'governed-sign'], [row.signature_meaning, 'APPROVED'], [manifest.reason, row.signature_purpose],
+    [manifest.signerName, row.signer_name], [manifest.signerEmail, row.signer_email],
+    [manifest.changeNumber, change.change_number], [manifest.classification, change.classification],
+    [learningSignatureInstant(manifest.signedAt), learningSignatureInstant(change.approved_at)],
+    [manifest.boundPayloadDigest, row.bound_payload_digest], [manifest.bindingBasis, row.binding_basis],
+    [manifest.organizationId, change.organization_id], [manifest.signerId, change.approved_by],
+    [manifest.target, `qms-change:${change.id}`], [manifest.command, 'approve'], [manifest.meaning, 'APPROVED'],
+    [review.libraryVersionId, promotion.artifact.libraryVersionId], [review.artifactSha256, promotion.artifactSha256], [review.invariantAccepted, true]];
+  if (isSignatureWithdrawn(row) || !pairs.every(([actual, expected]) => actual === expected) ||
+      typeof row.signature_hash !== 'string' || manifestSignatureHash(manifest) !== row.signature_hash) throw new AggregateLearningRefusedError();
+  await assertCurrentLearningCurator(client, Number(change.approved_by));
+  return { signatureId: Number(row.id), signatureHash: row.signature_hash };
 }

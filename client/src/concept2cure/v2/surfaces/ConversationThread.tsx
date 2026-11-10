@@ -14,15 +14,16 @@ import { ANA_SUGGESTION_AUTHOR_ID, anaInsertRefusal, answerUnfinished } from '..
 import { useChatUpload, readyAttachmentLabel, composeTurn, type SentAttachment } from '../../hooks/useChatUpload';
 import { CHAT_UPLOAD_ACCEPT } from '@shared/constants/document-intake-formats';
 import { DocTypeChip, DocumentContextCard } from './AnaDocContext';
+import { ConversationArtifactReview } from './ConversationArtifactReview';
 import { SignoffList } from '../SignoffList';
 import { apiCall, apiErrorText } from '../apiCall';
 import { downloadBlob, safeFileName } from '../download';
 import { readShellProject, shellProgramName } from '../shellProject';
-import { conversationIdFromLocation, locationForConversation, surfaceIdFromLocation } from '../routing';
-import { AnaProgressChip, AnaWorkPanel } from '../AnaWorkPanel';
+import { conversationIdFromLocation, conversationSwitchRefusal, locationForConversation, surfaceIdFromLocation } from '../routing';
+import { AnaProgressChip, AnaWorkPanel, ProjectTeamPanel } from '../AnaWorkPanel';
 import { TurnSummarySheet, useSummaryTurn } from '../TurnSummary';
 import { RunControlStrip, steerHelpFor } from '../AnaWorkSections';
-import { useAgentActivity } from '../useAgentActivity';
+import { useAgentActivity, useProjectTeam } from '../useAgentActivity';
 import { AnaActivity, activityPropsFor, hasReportableWork, type AnaActivityProps } from '../AnaActivity';
 import { CONTINUE_PROMPT, continueTurnIndex, FOLLOW_LINES, RUN_LIMIT_WORKING_LEAD, workingMarkerLine } from '../anaWorkModel';
 import { useWorkingThreads } from './projectThreads';
@@ -140,6 +141,31 @@ function toTurn(m: AnaChatMessage): CtTurn {
     authoringDoc: authoringDoc ?? undefined,
     suggestedActions: suggestionsFor(m),
   };
+}
+
+/** A screen's name inside a sentence: "From the editor", "Back to the review board". A name that begins with "The"
+ *  read "Back to The editor" in the docked conversation (2026-11-06, R1's demo-day sweep); a proper name stays as it is. */
+export const inSentence = (label: string): string => label.replace(/^The /, 'the ');
+
+/**
+ * The composer grows with what is in it, up to its stylesheet's max-height (160 px), then scrolls, as Claude's does.
+ * It was one row whatever it held, so a request handed over from the editor showed one line and half of the next
+ * (2026-11-06, R1's demo-day sweep).
+ */
+function useComposerFit(ref: React.RefObject<HTMLTextAreaElement | null>, value: string): void {
+  React.useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return undefined;
+    const fit = () => { el.style.height = 'auto'; el.style.height = `${el.scrollHeight}px`; };
+    fit();
+    /* Again when its width changes: docked beside the editor, the column narrows after the text arrives, and a fit
+       measured at the wider width left the second line cut. Only width refits, so setting the height cannot loop. */
+    if (typeof ResizeObserver === 'undefined') return undefined;
+    let width = el.clientWidth;
+    const observer = new ResizeObserver(() => { if (el.clientWidth !== width) { width = el.clientWidth; fit(); } });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [ref, value]);
 }
 
 /**
@@ -1046,6 +1072,11 @@ function ArtifactCard({ art, expanded, onToggle, onOpenAsDocument, projectId, sa
           {routable && routeBlockedBecause && !art.note && (
             <div className="ct-art-note">{routeBlockedBecause}</div>
           )}
+          {/* In review, the artifact's own review (P-95): name its reviewers and,
+              as a named reviewer, decide (ConversationArtifactReview.tsx). */}
+          {status === 'review' && art.artifactId && projectId != null && (
+            <ConversationArtifactReview projectId={projectId} artifactId={art.artifactId} title={art.title} fireToast={fireToast} />
+          )}
         </div>
       )}
     </div>
@@ -1297,6 +1328,7 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
   /* `/` offers the conversation's skills after the commands; choosing one picks it. */
   const skillMentions = useSkillMentionSource(shellProjectId, draft, chosenSkills, setChosenSkills);
   const mentions = useAppMentions(draft, setDraft, draftRef, skillMentions);
+  useComposerFit(draftRef, draft);
   /* An ask from inside a document canvas lands HERE — in this composer, with
      focus — so the person keeps talking to AnA about the document she is
      looking at. Not auto-sent: it is her message to send. */
@@ -1383,6 +1415,9 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
      the header, and reaches it from an open document ("← Documents"). It is
      re-read when an AnA turn ends. */
   const conversationId = anaChat.threadId ?? (isNew || isCurrent ? null : sel.id);
+  const lastTurn = anaChat.messages[anaChat.messages.length - 1];
+  const teamReceipt = lastTurn?.timeline?.filter(event => event.kind === 'worker').at(-1)?.seq;
+  const team = useProjectTeam(shellProjectId, `${sel.id}:${conversationId ?? ''}`, `${anaChat.isStreaming}:${teamReceipt ?? ''}`);
   const narrowCanvas = useNarrowCanvas();
   /* Read when an act happens, not from the last render. */
   const narrowNow = () => narrowCanvas || (typeof window !== 'undefined' && !!window.matchMedia?.('(max-width: 1100px)').matches);
@@ -1671,12 +1706,10 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
       // Another conversation, asked for while AnA is still answering in this
       // one. Loading it would abort her; the person is told instead, and opens
       // it again once she has finished.
-      if (shellChat?.isStreaming) {
+      const refusal = conversationSwitchRefusal(shellChat?.threadId, sel.id, Boolean(shellChat?.isStreaming));
+      if (refusal) {
         convo.C2C_CONVO = { id: 'current', seed: null };
-        fireToast(
-          'AnA is still answering in the current conversation, so it stays open. Open the other conversation again once she has finished.',
-          'error',
-        );
+        fireToast(refusal, 'error');
         return;
       }
       loadConversation(sel.id);
@@ -1979,11 +2012,18 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
             onToggle={toggleProgress}
             controls={dock.panelId}
           />
+          <button type="button" className="ct-head-open" aria-pressed={team.open} aria-expanded={team.open}
+            aria-controls={team.panelId} onClick={team.toggle}>
+            {I.users} {team.open ? 'Hide team' : 'Show team'}
+          </button>
         </div>
       </div>
 
       <div className="ct-main" data-canvas-open={expandedDocId || listShown ? 'true' : undefined}>
         <div className="ct-conv">
+          <div id={team.panelId} hidden={!team.open} style={team.open ? { maxHeight: '45vh', overflowY: 'auto', padding: '8px 16px' } : { display: 'none' }}>
+            {team.open && <ProjectTeamPanel view={team} onOpenProject={() => onNav?.('project-home')} />}
+          </div>
           <div className="ct-scroll" ref={scrollRef} onScroll={onScroll}>
             <div className="ct-col">
               {loadingHistory && (
@@ -2119,18 +2159,18 @@ export function ConversationThread({ onNav, liveDrive, shellChat, engine }: Owne
           {askOrigin && (
             <div className="ct-ask-origin" data-testid="ct-ask-origin">
               <span className="ct-ask-origin-chip">
-                From <b>{askOrigin.label}</b>
+                From <b>{inSentence(askOrigin.label)}</b>
                 <button
                   type="button"
                   className="ct-ready-doc-x"
-                  aria-label={`Do not send what ${askOrigin.label} shows with this question`}
+                  aria-label={`Do not send what ${inSentence(askOrigin.label)} shows with this question`}
                   onClick={() => { originRemovedRef.current = true; setAskOrigin(null); }}
                 >
                   {'×'}
                 </button>
               </span>
               <button type="button" className="btn ghost" onClick={() => onNav(askOrigin.surfaceId)}>
-                Back to {askOrigin.label}
+                Back to {inSentence(askOrigin.label)}
               </button>
             </div>
           )}

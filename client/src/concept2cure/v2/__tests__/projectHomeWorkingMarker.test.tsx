@@ -108,7 +108,8 @@ describe("the project's conversations", () => {
     const working = await screen.findByText(`Working · stops by ${STOPS_BY} if nobody opens it`, { exact: false });
     expect(working.closest('button')?.textContent).toContain('Stability reports');
     const other = screen.getByText('Clinical overview').closest('button')!;
-    expect(other.textContent).toContain('Resume');
+    /* D3-1: a row says when it was last active, as Claude's project conversation list does; it resumes on click. */
+    expect(other.getAttribute('title')).toBe('Resume this conversation');
     expect(other.textContent).not.toContain('Working');
     expect(apiRequest.mock.calls.some(c => c[1] === '/api/ana-ri/runs?mine=live')).toBe(true);
   });
@@ -130,7 +131,7 @@ describe("the project's conversations", () => {
     await act(async () => { document.dispatchEvent(new Event('visibilitychange')); });
     await act(async () => { await new Promise(r => setTimeout(r, 10)); });
     const row = screen.getByText('Stability reports').closest('button')!;
-    expect(row.textContent).toContain('Resume');
+    expect(row.getAttribute('title')).toBe('Resume this conversation');
     expect(row.textContent).not.toContain('Working');
   });
 

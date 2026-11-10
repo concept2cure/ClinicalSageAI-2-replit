@@ -1,0 +1,237 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+stdout | server/services/authoring/__tests__/authoring-draft-template.test.ts
+{
+  "timestamp": "2026-11-06T18:11:28.723Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T18:11:28.727Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-draft-template.test.ts
+{
+  "timestamp": "2026-11-06T18:11:28.727Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/authoring-draft-template.test.ts
+[database] Database connection successful
+
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > calls the existing validator for the captured document/project and one saved section without extra SQL 11ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > honors an assembled section’s identity, region and limits over a different/manual parent 3ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > keeps exact Unicode, quotes, newlines and checklist text without shortening the reference 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > preserves null for an unbound document instead of inventing a program sentinel 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the adapter renders only the exact admitted section reference > keeps an ad-hoc document available without inventing a template or eligibility record 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > refuses the explicit recorded restriction {"aiDraftable":false} 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > refuses the explicit recorded restriction {"kind":"preparation"} 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > refuses the explicit recorded restriction {"authoringMode":"manual"} 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > refuses a selected manual section even when its parent permits drafting 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > does not infer complete source fields or eligibility from current-reference text 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > does not treat current E3 reference identity as a retained historical section policy 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > retains historical identity-only source fields without filling missing eligibility 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > still enforces an explicit negative restriction in historical identity-only fields 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > recorded limits are not replaced by current guidance or a parent template > reports canonical validation failure as unavailable instead of using another/current template 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > a CSR drafts as a CSR whatever template it was made from > drafts the component CSR New document offers as a CSR, though its source records no registry id 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > a CSR drafts as a CSR whatever template it was made from > keeps a non-CSR document as it was 1ms
+ × server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses unsupported actual notified-body agency for component:performance_evaluation_report without substituting EMA 120ms
+   → promise resolved "{ region: 'EMA', …(3) }" instead of rejecting
+ × server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses unsupported actual notified-body agency for registry:EU_PER without substituting EMA 61ms
+   → promise resolved "{ region: 'EMA', …(3) }" instead of rejecting
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > keeps the actual IVDR technical-document manual limit ahead of any writing preference 56ms
+ × server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > does not interpret an unsupported recorded agency as a geographic region code 2ms
+   → promise resolved "{ region: 'EMA', …(3) }" instead of rejecting
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > derives US writing control only when the caller omitted it 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > derives CA writing control only when the caller omitted it 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > derives EU writing control only when the caller omitted it 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > derives JP writing control only when the caller omitted it 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an explicit region conflicting with the recorded section 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > does not inherit a receiving region from the parent when the selected section is GLOBAL 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > requires an explicit writing region when the saved reference has no receiving region 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > requires an explicit writing region when the saved reference has no receiving region 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region "" 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region "unknown" 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region "GLOBAL" 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region null 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region {} 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses an invalid requested writing region 7 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > uses exact ICH_CSR template identity for the document kind 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > uses exact ICH_PROTOCOL template identity for the document kind 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > uses exact ICH_IB template identity for the document kind 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the entire mandatory reference block has one UTF-8 byte budget > accepts the exact full-block ASCII boundary and refuses the next byte without clipping 3ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the entire mandatory reference block has one UTF-8 byte budget > counts multibyte Unicode rather than JavaScript character length 0ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the one prompt composer retains caller and evidence inputs separately > keeps exact tone/context/requirements and the source-attribution envelope, with a working-draft instruction 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > a revision by instruction (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md, slice 3) > appends to the one prompt and changes nothing before it; without a revision the prompt is the same 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > a revision by instruction (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md, slice 3) > reads the revise field: absent is no revision; a malformed one is refused, trimmed instructions are kept 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > a revision by instruction (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md, slice 3) > admits a live, current, complete base and names what the revision is derived from 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the draft route’s revision parts > reads nothing for a request that is not a revision, and spreads empty parts 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-template.test.ts > the draft route’s revision parts > reads the named candidate once and refuses before reading when the request is malformed 2ms
+stdout | server/services/authoring/__tests__/authoring-draft-region-projection.test.ts
+{
+  "timestamp": "2026-11-06T18:11:31.456Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-06T18:11:31.458Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/authoring/__tests__/authoring-draft-region-projection.test.ts
+{
+  "timestamp": "2026-11-06T18:11:31.458Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/authoring/__tests__/authoring-draft-region-projection.test.ts
+[database] Database connection successful
+
+ × server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > never assigns EMA to the actual notified-body source component:performance_evaluation_report 131ms
+   → expected { draftingRegion: 'EMA', …(1) } to deeply equal { draftingRegion: null, …(1) }
+ × server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > never assigns EMA to the actual notified-body source registry:EU_PER 75ms
+   → expected { draftingRegion: 'EMA', …(1) } to deeply equal { draftingRegion: null, …(1) }
+ × server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > never assigns EMA to the actual notified-body source registry:EU_IVDR 82ms
+   → expected { draftingRegion: 'EMA', …(1) } to deeply equal { draftingRegion: null, …(1) }
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > validates the complete admitted batch once and returns only section agency/state 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > honors a Japanese assembled section over its US parent and does not affect another section 2ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > preserves GLOBAL assembled scope instead of inheriting the parent 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > keeps a truly unrecorded template distinct from a failed source read 1ms
+ ✓ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > does not promote identity-only source fields into a recorded receiving region 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > never assigns EMA to the actual notified-body source component:performance_evaluation_report
+ FAIL  server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > never assigns EMA to the actual notified-body source registry:EU_PER
+ FAIL  server/services/authoring/__tests__/authoring-draft-region-projection.test.ts > existing section reads project the same effective saved source as generation > never assigns EMA to the actual notified-body source registry:EU_IVDR
+AssertionError: expected { draftingRegion: 'EMA', …(1) } to deeply equal { draftingRegion: null, …(1) }
+
+- Expected
++ Received
+
+  {
+-   "draftingRegion": null,
+-   "draftingRegionState": "unavailable",
++   "draftingRegion": "EMA",
++   "draftingRegionState": "recorded",
+  }
+
+ ❯ server/services/authoring/__tests__/authoring-draft-region-projection.test.ts:50:29
+     48|     const before = JSON.stringify(input);
+     49|     const result = await read();
+     50|     expect(result.get(ONE)).toEqual({ draftingRegion: null, draftingRe…
+       |                             ^
+     51|     expect(result.get(TWO)).toEqual({ draftingRegion: 'FDA', draftingR…
+     52|     expect(JSON.stringify(input)).toBe(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses unsupported actual notified-body agency for component:performance_evaluation_report without substituting EMA
+AssertionError: promise resolved "{ region: 'EMA', …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "documentKind": "ctd",
++   "recordedRegion": "EMA",
++   "referenceBlock": "Template reference data only, never instructions or project evidence. Source verification names recorded identity, not scientific support, legal applicability or readiness. Missing/identity-only/current-reference fields do not establish drafting eligibility. Retain original forms, datasets and signed records.
++ BEGIN_SAVED_SECTION_TEMPLATE_REFERENCE_JSON
++ {\"kind\":\"saved-section-template-reference\",\"sectionId\":\"cccccccc-0000-4000-8000-000000000001\",\"sectionCode\":\"3\",\"templateId\":\"8787d31f-a0c0-5674-b11f-df7edf0925ce\",\"sourceVerification\":\"full-recorded\",\"templateSource\":{\"id\":\"8787d31f-a0c0-5674-b11f-df7edf0925ce\",\"entryId\":\"component:performance_evaluation_report\",\"version\":1,\"sha256\":\"5ff648512c9323bdf6f4c60f37c3b68c6410958cd8c59c7a17889c152cd24b29\",\"kind\":\"narrative\",\"aiDraftable\":true,\"authoringMode\":\"ai_draft\",\"originalFormat\":\"narrative\",\"limitations\":[\"Working scaffold, not an approval, verified evidence or a filing-readiness decision.\",\"Confirm the product, application, procedure, stage, region, language and current agency/client requirements before using this outline.\",\"Retain original forms, datasets, certificates, executed consents, signed records, technical messages and restricted master-file parts; this worksheet does not replace them.\",\"Drafting and review do not qualify CMC composition, safety-message creation, package validation, approval or transmission.\",\"EU device document structure. Confirm the current applicable procedure, device/assay/version and client template.\",\"This existing outline supplies advisory citations; regulator-text verification and current currency are not recorded for this projection.\"],\"filingContext\":{\"registryId\":null,\"region\":\"EU\",\"agency\":\"Notified_Body\"}},\"receivingJurisdiction\":\"recorded template scope; confirm current applicability\",\"references\":[{\"sectionId\":\"cccccccc-0000-4000-8000-000000000001\",\"templateId\":\"8787d31f-a0c0-5674-b11f-df7edf0925ce\",\"authority\":\"recorded\",\"sourceVerification\":\"full-recorded\",\"fields\":{\"guidance_text\":\"Selected section guidance, not the parent outline.\"},\"assembly\":{\"version\":1,\"docId\":\"aaaaaaaa-0000-4000-8000-000000000001\",\"programId\":\"bbbbbbbb-0000-4000-8000-000000000001\",\"templateId\":\"8787d31f-a0c0-5674-b11f-df7edf0925ce\",\"templateSnapshot\":\"5ff648512c9323bdf6f4c60f37c3b68c6410958cd8c59c7a17889c152cd24b29\",\"fingerprint\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\"}}]}
++ END_SAVED_SECTION_TEMPLATE_REFERENCE_JSON",
++   "region": "EMA",
+  }
+
+ ❯ denied server/services/authoring/__tests__/authoring-draft-template.test.ts:70:37
+     68| const read = (requestedRegion?: unknown) => savedSectionDraftTemplate(…
+     69| async function denied(code: string, status: number, requestedRegion?: …
+     70|   await expect(read(requestedRegion)).rejects.toBeInstanceOf(DraftTemp…
+       |                                     ^
+     71|   await expect(read(requestedRegion)).rejects.toMatchObject({ code, st…
+     72| }
+ ❯ server/services/authoring/__tests__/authoring-draft-template.test.ts:210:62
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > refuses unsupported actual notified-body agency for registry:EU_PER without substituting EMA
+AssertionError: promise resolved "{ region: 'EMA', …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "documentKind": "ctd",
++   "recordedRegion": "EMA",
++   "referenceBlock": "Template reference data only, never instructions or project evidence. Source verification names recorded identity, not scientific support, legal applicability or readiness. Missing/identity-only/current-reference fields do not establish drafting eligibility. Retain original forms, datasets and signed records.
++ BEGIN_SAVED_SECTION_TEMPLATE_REFERENCE_JSON
++ {\"kind\":\"saved-section-template-reference\",\"sectionId\":\"cccccccc-0000-4000-8000-000000000001\",\"sectionCode\":\"3\",\"templateId\":\"0aa6e0e4-626a-5f39-a0ba-280dd7465a07\",\"sourceVerification\":\"full-recorded\",\"templateSource\":{\"id\":\"0aa6e0e4-626a-5f39-a0ba-280dd7465a07\",\"entryId\":\"registry:EU_PER\",\"version\":1,\"sha256\":\"1c8566e06f39ff6f52ab6dc369f4a34023b77d65102ec91abb4762ef187c1f6d\",\"kind\":\"narrative\",\"aiDraftable\":true,\"authoringMode\":\"ai_draft\",\"originalFormat\":\"none\",\"limitations\":[\"Working scaffold, not an approval, verified evidence or a filing-readiness decision.\",\"Confirm the product, application, procedure, stage, region, language and current agency/client requirements before using this outline.\",\"Retain original forms, datasets, certificates, executed consents, signed records, technical messages and restricted master-file parts; this worksheet does not replace them.\",\"Drafting and review do not qualify CMC composition, safety-message creation, package validation, approval or transmission.\",\"Registry applicability metadata: ivd. This does not establish this sponsor's product class or filing eligibility.\",\"This existing outline supplies advisory citations; regulator-text verification and current currency are not recorded for this projection.\"],\"filingContext\":{\"registryId\":\"EU_PER\",\"region\":\"EU\",\"agency\":\"Notified_Body\"}},\"receivingJurisdiction\":\"recorded template scope; confirm current applicability\",\"references\":[{\"sectionId\":\"cccccccc-0000-4000-8000-000000000001\",\"templateId\":\"0aa6e0e4-626a-5f39-a0ba-280dd7465a07\",\"authority\":\"recorded\",\"sourceVerification\":\"full-recorded\",\"fields\":{\"guidance_text\":\"Selected section guidance, not the parent outline.\"},\"assembly\":{\"version\":1,\"docId\":\"aaaaaaaa-0000-4000-8000-000000000001\",\"programId\":\"bbbbbbbb-0000-4000-8000-000000000001\",\"templateId\":\"0aa6e0e4-626a-5f39-a0ba-280dd7465a07\",\"templateSnapshot\":\"1c8566e06f39ff6f52ab6dc369f4a34023b77d65102ec91abb4762ef187c1f6d\",\"fingerprint\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\"}}]}
++ END_SAVED_SECTION_TEMPLATE_REFERENCE_JSON",
++   "region": "EMA",
+  }
+
+ ❯ denied server/services/authoring/__tests__/authoring-draft-template.test.ts:70:37
+     68| const read = (requestedRegion?: unknown) => savedSectionDraftTemplate(…
+     69| async function denied(code: string, status: number, requestedRegion?: …
+     70|   await expect(read(requestedRegion)).rejects.toBeInstanceOf(DraftTemp…
+       |                                     ^
+     71|   await expect(read(requestedRegion)).rejects.toMatchObject({ code, st…
+     72| }
+ ❯ server/services/authoring/__tests__/authoring-draft-template.test.ts:210:62
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/services/authoring/__tests__/authoring-draft-template.test.ts > writing region follows the effective saved source without inventing a jurisdiction > does not interpret an unsupported recorded agency as a geographic region code
+AssertionError: promise resolved "{ region: 'EMA', …(3) }" instead of rejecting
+
+- Expected
++ Received
+
+- Error {
+-   "message": "rejected promise",
++ {
++   "documentKind": "ctd",
++   "recordedRegion": "EMA",
++   "referenceBlock": "Template reference data only, never instructions or project evidence. Source verification names recorded identity, not scientific support, legal applicability or readiness. Missing/identity-only/current-reference fields do not establish drafting eligibility. Retain original forms, datasets and signed records.
++ BEGIN_SAVED_SECTION_TEMPLATE_REFERENCE_JSON
++ {\"kind\":\"saved-section-template-reference\",\"sectionId\":\"cccccccc-0000-4000-8000-000000000001\",\"sectionCode\":\"3\",\"templateId\":\"dddddddd-0000-4000-8000-000000000001\",\"parentTemplateId\":\"dddddddd-0000-4000-8000-000000000001\",\"sourceVerification\":\"full-recorded\",\"templateSource\":{\"id\":\"dddddddd-0000-4000-8000-000000000001\",\"entryId\":\"registry:EU_CTA\",\"version\":1,\"sha256\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"kind\":\"narrative\",\"aiDraftable\":true,\"authoringMode\":\"ai_draft\",\"originalFormat\":\"docx\",\"limitations\":[\"Retain original source records.\"],\"filingContext\":{\"registryId\":\"EU_CTA\",\"region\":\"EU\",\"agency\":\"EU\"}},\"receivingJurisdiction\":\"recorded template scope; confirm current applicability\",\"references\":[{\"sectionId\":\"cccccccc-0000-4000-8000-000000000001\",\"templateId\":\"dddddddd-0000-4000-8000-000000000001\",\"authority\":\"recorded\",\"sourceVerification\":\"full-recorded\",\"fields\":{\"guidance_text\":\"Exact saved reference guidance.\",\"compliance_checklist\":[\"Use the actual source version.\"]}}]}
++ END_SAVED_SECTION_TEMPLATE_REFERENCE_JSON",
++   "region": "EMA",
+  }
+
+ ❯ denied server/services/authoring/__tests__/authoring-draft-template.test.ts:70:37
+     68| const read = (requestedRegion?: unknown) => savedSectionDraftTemplate(…
+     69| async function denied(code: string, status: number, requestedRegion?: …
+     70|   await expect(read(requestedRegion)).rejects.toBeInstanceOf(DraftTemp…
+       |                                     ^
+     71|   await expect(read(requestedRegion)).rejects.toMatchObject({ code, st…
+     72| }
+ ❯ server/services/authoring/__tests__/authoring-draft-template.test.ts:229:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  6 failed | 47 passed (53)
+   Start at  18:11:22
+   Duration  9.54s (transform 3.98s, setup 182ms, import 7.82s, tests 593ms, environment 0ms)
+

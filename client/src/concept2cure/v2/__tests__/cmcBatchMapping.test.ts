@@ -38,7 +38,12 @@ describe('cmcBatch mapping', () => {
       deviations: [{ ref: 'D1' }, { ref: 'D2' }],
     };
     const m = batchRowFromApi(row);
-    expect(m.dbId).toBe(9);
+    /* The id AS GIVEN, so '9' stays '9' (2026-11-09). This asserted `9`, which
+       encoded the `Number()` coercion that made every uuid id NaN and broke the
+       Release button (`cmcBatchRowIdentity.test.ts`). For what dbId is for — a
+       URL segment and a React key — '9' and 9 address and distinguish the same
+       row, and nothing does arithmetic on it. */
+    expect(m.dbId).toBe('9');
     expect(m.yield).toBe(88.5);
     expect(m.dev).toBe(2);
     expect(m.st).toBe('released');

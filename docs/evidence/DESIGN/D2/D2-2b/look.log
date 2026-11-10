@@ -1,0 +1,31 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the header and the step rail > has no eyebrow, and one sub-line that says what the three steps do 145ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the header and the step rail > states each step for screen readers only, and the current one with aria-current 11ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the header and the step rail > keeps the step-1 note as text, without AnA’s spark 12ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: Team members leaves the form, and the review says where people are added > step 2 has no Team members field and no empty-state box 221ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: Team members leaves the form, and the review says where people are added > step 3 says, under the list, what happens on create and where to add people; the body is unchanged 273ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: Team members leaves the form, and the review says where people are added > the place the review names exists: the project page has a Team section that grants sharing 312ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > is found 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > draws no orange: the one primary button is D0’s, not this block’s 0ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > sizes every text from the D0 type scale, never below 12px 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > uses no muted ink below --text-300 (the quiet floor off --bg-000) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > marks the current step in ink, a done step in --text-200, never in a status colour 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > turns the step-1 box into one quiet line, and retires the kicker and the green box 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > keeps `.npw-seg-t` a heading where step 2 uses it, outside the step-1 note 0ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > frames the review once, at radius 12, with hairline rows and no fill 0ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > aligns the header, rail, body and footer on one gutter, the Projects page’s 1120px column 0ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > gives form fields 36px, and gives touch its 44px back 0ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the .npw-* block of project-home-v2.css > keeps the shared field classes’ layout where other screens use them: the two-column grid is the wizard’s own 0ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the registry picker reads as Claude's (D2-2b) > draws no orange and no status colour anywhere in the picker 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the registry picker reads as Claude's (D2-2b) > marks the chosen tab with an ink underline, and the chosen card with an ink ring 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the registry picker reads as Claude's (D2-2b) > gives a document type's agency, region, dossier and CTD chips one neutral style: they are facts, not statuses 0ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the registry picker reads as Claude's (D2-2b) > sizes no picker text below 12px and uses no muted ink below --text-300 1ms
+ ✓ client/src/concept2cure/v2/__tests__/newProjectWizardLook.test.tsx > New project: the registry picker reads as Claude's (D2-2b) > lays the cards in one column at phone width, and the cards at radius 12 0ms
+
+ Test Files  1 passed (1)
+      Tests  22 passed (22)
+   Start at  13:59:29
+   Duration  4.31s (transform 2.24s, setup 118ms, import 2.75s, tests 986ms, environment 339ms)
+

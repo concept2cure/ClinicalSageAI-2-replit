@@ -65,11 +65,6 @@ export const RUNTIME_EXCEPTIONS = {
   // (No dev-only entry is needed for `vite`: imported inside setupVite(), it
   // leaves the bundle entirely — the build bakes NODE_ENV=production, so the
   // dev branch of server/startup/frontend.ts is removed as dead code.)
-  'ssh2-sftp-client':
-    'server/services/submission-gateways/fda-esg.ts SFTP transport. Not in package.json at all, so ' +
-    'the image cannot send over SFTP: absence is refused before any connection, with a ' +
-    'TransportError carrying NOTHING_TRANSMITTED. Whether production ships it is the ESG ' +
-    "lane's decision (D7); this entry records that it does not today.",
   'citation-js':
     'server/integrations/citationjs/client.ts — optional citation normalization. Absence logs ' +
     '"Citation.js normalization unavailable" and returns no normalization, never a made-up one.',

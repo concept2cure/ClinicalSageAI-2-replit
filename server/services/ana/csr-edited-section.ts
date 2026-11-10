@@ -5,7 +5,7 @@
  * forever (SECTION_VERSION_CHANGED). Instead, the edited section's CURRENT
  * text is re-reconciled against the claim receipts the import carried:
  *
- *   - a claimed cell still stated (verbatim, or every one of its numbers)
+ *   - a claimed cell still stated (verbatim, or a faithful aggregate rewording)
  *     passes, and the existing gate still compares the claim to the cell the
  *     retained run holds now (NUMERIC_MISMATCH when the source changed);
  *   - a figure written in the cell's shape (or an n/N with the cell's
@@ -19,6 +19,7 @@
  * Pure. Nothing here decides approval; the verdict stays pending human review.
  */
 import type { CsrCellClaim } from '../csr/csr-claim-receipts';
+import { numericalClaimDisplays, numericalFigures, numericalText, reportedDisplaySpans, type NumericalFigure, type NumericalText } from '../../../shared/authoring/csr-scientific-review';
 
 export type EditedClaimOutcome =
   | { state: 'stated' }
@@ -27,7 +28,6 @@ export type EditedClaimOutcome =
 
 const NUMBER = /\d+(?:\.\d+)?/g;
 const RATIO = /(\d+)\s*(?:\/|of)\s*(\d+)/g;
-const numbersOf = (s: string) => [...s.matchAll(NUMBER)].map(m => String(Number(m[0])));
 const squash = (s: string) => s.replace(/\s+/g, ' ').trim();
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -46,8 +46,7 @@ function changedShape(text: string, value: string, claimedValues: Set<string>): 
   if (!shape) return null;
   const target = squash(value);
   const hits = [...text.matchAll(shape)].map(m => squash(m[0]));
-  if (hits.includes(target)) return null;
-  return hits.find(h => !claimedValues.has(h)) ?? null;
+  return hits.find(h => h !== target && !claimedValues.has(h)) ?? null;
 }
 
 /** An n/N (or n of N) with the cell's denominator and another numerator, that no claimed cell states as n/N.
@@ -61,18 +60,60 @@ function changedRatio(text: string, value: string, claimed: Set<string>): string
   return null;
 }
 
+/** Preserve aggregate rewordings such as "16 of 305 subjects (5.2%)". Each
+ * component keeps its identity, order and multiplicity in one passage, and
+ * an n/N retains its numerator/denominator relationship. */
+function faithfulAggregatePresent(text: string, value: string, expected: readonly NumericalFigure[], stated: readonly NumericalFigure[]): boolean {
+  for (const source of value.matchAll(RATIO)) {
+    if (![...text.matchAll(RATIO)].some(hit => hit[1] === source[1] && hit[2] === source[2])) return false;
+  }
+  for (let start = 0; start < stated.length; start++) {
+    let next = start;
+    let last = start;
+    let matched = 0;
+    for (const source of expected) {
+      while (next < stated.length && stated[next].identity !== source.identity) next++;
+      if (next === stated.length) break;
+      last = next++;
+      matched++;
+    }
+    if (matched === expected.length) {
+      const passage = text.slice(stated[start].start, stated[last].end);
+      if (passage.length <= 300 && !/[;\n]|\.(?:\s+[A-Z])/.test(passage)) return true;
+    }
+  }
+  return false;
+}
+
 /**
- * What an edited section's current text does with one claimed cell. `text` is
- * the accepted text with layout numbering removed; `claimedValues` the exact
- * cell texts every claim of the section carries.
+ * What an edited section's content does with one claimed cell. Already-rendered
+ * accepted text supplies a `text` view; original encoded prose uses the default.
+ * `claimedValues` holds the exact cell texts and equivalent retained-unit displays.
  */
-export function editedClaimOutcome(text: string, claim: Pick<CsrCellClaim, 'value'>, claimedValues: readonly string[]): EditedClaimOutcome {
+export function editedClaimOutcome(content: string, claim: Pick<CsrCellClaim, 'value'> & Partial<Pick<CsrCellClaim, 'population'>>, claimedValues: readonly string[],
+  view: NumericalText = numericalText(content)): EditedClaimOutcome {
+  const text = view.text;
   const values = new Set(claimedValues.map(squash));
   const shaped = changedShape(text, claim.value, values);
   if (shaped) return { state: 'changed', stated: shaped };
-  const stated = new Set(numbersOf(text));
-  if (numbersOf(claim.value).every(n => stated.has(n))) return { state: 'stated' };
   const claimedRatios = new Set(claimedValues.flatMap(v => [...v.matchAll(RATIO)].map(m => `${Number(m[1])}/${Number(m[2])}`)));
   const ratio = changedRatio(text, claim.value, claimedRatios);
-  return ratio ? { state: 'changed', stated: ratio } : { state: 'removed' };
+  if (ratio) return { state: 'changed', stated: ratio };
+
+  const expected = numericalFigures(claim.value);
+  const stated = numericalFigures(text, 'text').filter(figure => !(/^[+-]?[\d.]/.test(figure.text)
+    && /[A-Za-z_]/.test(text[figure.start - 1] ?? '')));
+  const ownDisplays = numericalClaimDisplays(content, [{ value: claim.value, header: claim.population }], view);
+  const claimed = new Set([...claimedValues, ...ownDisplays].flatMap(value => numericalFigures(value).map(figure => figure.identity)));
+  // A correct occurrence does not excuse a later sign, threshold, precision
+  // or unit mutation. Other independently claimed cells remain independent.
+  const changed = stated.find(figure => !claimed.has(figure.identity)
+    && expected.some(source => source.number !== '' && Number(source.number) === Number(figure.number)
+      && source.identity !== figure.identity));
+  if (changed) return { state: 'changed', stated: changed.text };
+  if (reportedDisplaySpans(content, claim.value, claim.population ?? '', view).length) return { state: 'stated' };
+  // A scalar needs a whole display; finding 12 inside 10/12 does not state 12.
+  if (expected.length < 2) return { state: 'removed' };
+
+  return faithfulAggregatePresent(text, claim.value, expected, stated) ? { state: 'stated' } : { state: 'removed' };
 }

@@ -4,7 +4,7 @@
  * data cut on a regulatory record is worse than none.
  */
 import { describe, expect, it } from 'vitest';
-import { findTextFacts, isoDate } from '../catalog-facts';
+import { findTextFacts, isoDate, matchStudy } from '../catalog-facts';
 
 const TITLE_PAGE = [
   'CLINICAL STUDY REPORT',
@@ -50,5 +50,27 @@ describe('findTextFacts', () => {
 
   it('nothing to read is no facts, not an error', () => {
     expect(findTextFacts(null)).toEqual({ registryIds: [], protocolNumber: null, documentDate: null, dataCutDate: null });
+  });
+});
+
+describe('matchStudy keeps every explicit protocol in the scope decision', () => {
+  const programId = '55555555-5555-4555-8555-555555555555';
+  const known = { id: 31, study_id: 'sd_STUDY-A', protocol_id: 'STUDY-A' };
+
+  it('does not discard a later unmatched protocol because the first matched', async () => {
+    const facts = findTextFacts('Protocol Number: STUDY-A\nProtocol Number: UNKNOWN-B');
+    const found = await matchStudy({ query: async () => ({ rows: [known] }) }, 7, programId, facts);
+    expect(facts.protocolNumber?.value).toBe('STUDY-A');
+    expect(found).toEqual({ studyRef: null, candidates: [{ id: 31, studyId: 'sd_STUDY-A', protocolId: 'STUDY-A' }] });
+  });
+
+  it('passes all distinct protocols to the scoped matcher, retaining a repeated single protocol', async () => {
+    let keys: unknown;
+    const q = { query: async (_sql: string, params?: unknown[]) => { keys = params?.[2]; return { rows: [known] }; } };
+    await matchStudy(q, 7, programId, findTextFacts('Protocol Number: STUDY-A\nProtocol ID: STUDY-B'));
+    expect(keys).toEqual(['STUDY-A', 'STUDY-B']);
+    const repeated = await matchStudy(q, 7, programId, findTextFacts('Protocol Number: STUDY-A\nProtocol ID: study-a'));
+    expect(keys).toEqual(['STUDY-A']);
+    expect(repeated.studyRef).toBe(31);
   });
 });

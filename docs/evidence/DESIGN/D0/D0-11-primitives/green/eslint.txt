@@ -1,0 +1,6 @@
+# HEAD b391bfad2 + this change; npx eslint on the two changed .ts files
+$ npx eslint client/src/concept2cure/v2/__tests__/d0Primitives.test.ts client/src/concept2cure/v2/__tests__/foundationsRetiredRatchet.test.ts
+exit 0
+
+# the ratchet as at HEAD (git show HEAD:<file>, linted in place under a temporary name, then removed)
+exit 0

@@ -1,11 +1,28 @@
 /**
- * Project home's six steps: the tracker that opens one, and the band that says
- * what the open step is, what to do on it, and which step comes next.
- * Moved out of ProjectHome.tsx on 2026-10-25 with the band's second line.
+ * Project home's six steps: the segmented control that opens one.
+ * Moved out of ProjectHome.tsx on 2026-10-25; its band retired on 2026-11-06 (D3-1).
  */
 import React from 'react';
 import { I } from '../icons';
-import { PJ_LIFECYCLE } from '../fixtures/project-home-data';
+import { PJ_LIFECYCLE, type LifecycleStage } from '../fixtures/project-home-data';
+
+/** The same steps as a device or diagnostic filing words them: its own blurbs for Author and Submit, its "now" lines
+ *  and its suggestions. A lifecycle definition the page uses, so it lives with the steps, not under fixtures/ (moved
+ *  2026-11-08: ci:launch-scope found ProjectHome importing it from fixtures/ with no allowlist reason). */
+export const PJ_LIFECYCLE_DEVICE: LifecycleStage[] = PJ_LIFECYCLE.map((item) => {
+  const device = { ...item, now: item.nowDevice ?? item.now, starter: item.starterDevice ?? item.starter };
+  if (item.id === 'author') return { ...device, blurb: 'Author filing documents from the project’s device or diagnostic evidence' };
+  if (item.id === 'submit') return { ...device, blurb: 'Assemble eSTAR or the applicable technical documentation' };
+  return device;
+});
+
+/** The two wordings of the steps, by the filing's track. A choice between two definitions, not a fallback. */
+const LIFECYCLES: Record<'device' | 'medicinal', LifecycleStage[]> = { device: PJ_LIFECYCLE_DEVICE, medicinal: PJ_LIFECYCLE };
+
+/** The steps a project's filing has: a device or diagnostic filing's wording, or the medicinal one. */
+export function lifecycleFor(deviceFiling: boolean): LifecycleStage[] {
+  return LIFECYCLES[deviceFiling ? 'device' : 'medicinal'];
+}
 
 /* ════ Lifecycle (canonical stage catalog — not data) ════
    The tracker is navigation over the stage catalog, not a progress meter.
@@ -21,55 +38,33 @@ import { PJ_LIFECYCLE } from '../fixtures/project-home-data';
    on a button, so a screen reader was told of no open stage at all (design
    review 2026-10-08, a11y lens, WCAG 4.1.2). The stage bodies are not tab
    panels: each stage renders below the conversations, so a nav is what it is.
-   It is drawn as a row of tabs (app-v2.css .pj-lc), not a stepper: the open
-   step is the one being viewed, never where the project is (2026-10-31). */
+   D3-1 (2026-11-06, .design/claude-convergence/D3.md §4.6): drawn as D0's
+   segmented control (`.seg` / `.seg-b` / `data-on`), not a stepper: the open
+   step is the one being viewed, never where the project is. `.pj-lc`,
+   `.pj-lc-stage`, `data-status="active"` and `aria-current="step"` stay, for
+   the code and the tests that find a step by them. */
 export function StageTracker({ stage, setStage, lifecycle = PJ_LIFECYCLE }: { stage: string; setStage: (s: string) => void; lifecycle?: typeof PJ_LIFECYCLE }) {
   return (
     <nav className="pj-lc" aria-label="Project lifecycle">
-      {lifecycle.map((s) => {
-        const status = s.id === stage ? 'active' : undefined;
-        return (
-          <button key={s.id} type="button" className="pj-lc-stage" data-status={status} aria-current={stage === s.id ? 'step' : undefined}
-            onClick={() => setStage(s.id)} title={s.blurb}>
-            <span className="pj-lc-node"><span className="pj-lc-ic">{I[s.icon] || I.grid}</span></span>
-            <span className="pj-lc-l">{s.label}</span>
-          </button>
-        );
-      })}
+      <div className="seg">
+        {lifecycle.map((s) => {
+          const on = s.id === stage;
+          return (
+            <button key={s.id} type="button" className="seg-b pj-lc-stage" data-status={on ? 'active' : undefined} data-on={on || undefined}
+              aria-current={on ? 'step' : undefined} onClick={() => setStage(s.id)} title={s.blurb}>
+              <span className="pj-lc-ic" aria-hidden="true">{I[s.icon] || I.grid}</span>
+              <span className="pj-lc-l">{s.label}</span>
+            </button>
+          );
+        })}
+      </div>
     </nav>
   );
 }
 
-/* ════ The open step: what it is, what to do now, and the next step ═════════
-   docs/design/CLIENT_JOURNEY_2026-10-25.md, pass 2. The band named the step and
-   described it; a new client still could not tell what to do on it or what came
-   after. It now says what to do, in one sentence that is guidance about the
-   step and never a claim about the program, and offers the next step, so the
-   steps read as a sequence. Respond is the last, and has no next. */
-export function StageBand({ stage, lifecycle = PJ_LIFECYCLE, onStage, sequenced, planListed = true }: {
-  stage: string; lifecycle?: typeof PJ_LIFECYCLE; onStage: (s: string) => void; sequenced: boolean;
-  /** Plan lists what this filing needs (a US IND, a device filing). Its sentence promises that list, so a
-   *  filing without one is not told to "see every document" (design review, pass 3). */
-  planListed?: boolean;
-}) {
-  const at = lifecycle.findIndex((s) => s.id === stage);
-  const step = lifecycle[at];
-  const next = at >= 0 ? lifecycle[at + 1] : undefined;
-  if (!step) return null;
-  const now = (step.id === 'submit' && !sequenced) || (step.id === 'plan' && !planListed) ? null : step.now;
-  return (
-    <div className="pj-stageband" data-testid="pj-stageband">
-      <div className="pj-stageband-l">
-        <span className="pj-stageband-stage">{step.label}</span>
-        <span className="pj-stageband-blurb">{step.blurb}</span>
-        {now && <span className="pj-stageband-now"><strong>What to do now:</strong> {now}</span>}
-      </div>
-      {next && (
-        <button type="button" className="pj-stageband-next" onClick={() => onStage(next.id)}>
-          <span className="pj-stageband-next-k">Next step {I.right}</span>
-          <span className="pj-stageband-next-v">{next.label}: {next.blurb}</span>
-        </button>
-      )}
-    </div>
-  );
-}
+/* The band under the steps ("What to do now", "Next step") was retired on
+   2026-11-06 (D3-1; ONE_DESIGN_PLAN §2: guidance boxes move into AnA and the
+   composer). Its guidance lives on as each step's starter in the composer
+   (PJ_LIFECYCLE[].starter, ProjectHome.tsx stepStarters) and its blurb as one
+   quiet line under the steps; its "next step" is the next item of this
+   control. */

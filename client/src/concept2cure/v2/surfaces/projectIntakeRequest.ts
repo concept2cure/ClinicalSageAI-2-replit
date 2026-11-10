@@ -49,30 +49,3 @@ export async function createProjectIntake(actor: ProjectIntakeActor, workspace: 
   }
 }
 
-export type IntakeObjectiveAnswer = { kind: 'recorded' } | { kind: 'retired' } | { kind: 'not-recorded'; message: string };
-
-/**
- * Record the objective stated in New project as the project's objective of
- * record: the charter's objectives section (S1, P-80;
- * PUT /api/charters/by-project/:programId/objectives), after the project is
- * confirmed created. It is a second write, so a refusal is said, never hidden:
- * the project exists, and its objective can be set on the project page.
- */
-export async function recordIntakeObjective(actor: ProjectIntakeActor, workspace: ProjectIntakeWorkspace, programId: string,
-  objective: string, isCurrent: () => boolean): Promise<IntakeObjectiveAnswer> {
-  if (!isCurrent()) return { kind: 'retired' };
-  let headers: Record<string, string>;
-  try { headers = capturedActorHeaders({ userId: actor.actorUserId, organizationId: actor.organizationId }); } catch { return { kind: 'retired' }; }
-  headers['x-client-id'] = workspace.id;
-  try {
-    const res = await apiRequest('PUT', `/api/charters/by-project/${encodeURIComponent(programId)}/objectives`,
-      { objective, sources: [], reason: 'Stated when the project was created' }, headers);
-    if (!currentActor(actor, isCurrent)) return { kind: 'retired' };
-    if (res.ok) return { kind: 'recorded' };
-    const body = await res.json().catch(() => null) as { message?: string } | null;
-    return { kind: 'not-recorded', message: body?.message || 'the server did not record it' };
-  } catch (error) {
-    if (!currentActor(actor, isCurrent)) return { kind: 'retired' };
-    return { kind: 'not-recorded', message: error instanceof ApiRequestError && error.message ? error.message : 'the save could not be confirmed' };
-  }
-}

@@ -47,12 +47,14 @@ import {
   calculateCriticalPath,
   getOptimalAssignee,
 } from '../services/tasking/task-planning';
-import { requestDb, type RequestDb } from '../db/requestDb';
+import { requestDb, requestPgClient, type RequestDb } from '../db/requestDb';
 import { createTaskInTx, type TaskInsertRunner } from '../services/tasking/create-task';
 import { readMyWork } from '../services/tasking/my-work';
 import { routeRemindRefusal } from '../services/review/review-route';
 import { queryableFromDrizzle } from '../db/drizzle-queryable';
-import { projectForTaskSource, PROJECT_TELLING_SOURCES } from '../services/tasking/task-project';
+import { projectForTaskSource, PROJECT_TELLING_SOURCES, requireTaskProjectId,
+  admitParentTask, admitTaskCreationActor, admitTaskCreationProject, TaskProjectAdmissionError } from '../services/tasking/task-project';
+import { requireAssignedVaultFamily, VaultFamilyRefusal } from '../services/clinical-regulatory-evidence/vault-citation-changes';
 import { assignTask, assignmentExpectedSchema, assignmentFailure, namedAssignmentSchema, TaskAssignmentUnknown } from '../services/tasking/task-assignment';
 
 const router = Router();
@@ -103,6 +105,8 @@ const createTaskSchema = z.object({
   moduleSource: z.string().optional(),
   moduleData: jsonValueSchema.optional(),
   projectId: z.number().optional(),
+  /** P-111 item 4: one level of subtasks; tasking/task-project.ts admitParentTask decides. */
+  parentTaskId: z.number().int().positive().max(2_147_483_647).optional(),
   category: z.string().optional(),
   taskType: z.string().optional(),
   priority: z.enum(['low', 'medium', 'high', 'critical']).default('medium'),
@@ -187,7 +191,7 @@ const createAutomationSchema = z.object({
 });
 
 /**
- * The project a new task is on, or null once a refusal has been sent.
+ * The project a new task is on, resolved before writes on their transaction.
  *
  * A task raised on an authoring document is on that document's program's
  * project (services/tasking/task-project.ts), read on the request's RLS client.
@@ -199,16 +203,15 @@ const createAutomationSchema = z.object({
  * told is not written.
  */
 async function taskProjectOrRefuse(
-  req: Request,
-  res: Response,
+  tx: RequestDb,
   organizationId: number,
   data: { projectId?: number; sourceEntityType?: string; sourceEntityId?: string },
-): Promise<{ projectId: number | undefined } | null> {
+): Promise<{ projectId: number | undefined }> {
   if (data.projectId !== undefined || !PROJECT_TELLING_SOURCES.includes(String(data.sourceEntityType))) {
     return { projectId: data.projectId };
   }
   try {
-    const projectId = await projectForTaskSource(requestDb(req), {
+    const projectId = await projectForTaskSource(tx, {
       orgId: organizationId,
       sourceEntityType: data.sourceEntityType,
       sourceEntityId: data.sourceEntityId,
@@ -216,12 +219,8 @@ async function taskProjectOrRefuse(
     return { projectId: projectId ?? undefined };
   } catch (err) {
     console.error('Task create: the source document\'s project could not be read:', err instanceof Error ? err.message : err);
-    res.status(503).json({
-      success: false,
-      code: 'TASK_PROJECT_UNREADABLE',
-      error: 'The project of the document this task is for could not be read. Nothing was created; try again.',
-    });
-    return null;
+    throw new TaskProjectAdmissionError(503, 'TASK_PROJECT_UNREADABLE',
+      'The project of the document this task is for could not be read. Nothing was created; try again.');
   }
 }
 
@@ -256,6 +255,7 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
     // A route member is written only by the review route (RR1a, B1/M9).
     refuseRouteColumnsInInput(req.body, 'task.create');
     const validatedData = createTaskSchema.parse(req.body);
+    if (validatedData.projectId !== undefined) requireTaskProjectId(validatedData.projectId);
     const taskId = `TASK-${Date.now()}-${uuidv4().substr(0, 8)}`;
 
     // Auto-assign if not specified
@@ -286,21 +286,28 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
       assignment = { assignedBy: actorUserId, assignedAt: new Date() };
     }
 
-    const project = await taskProjectOrRefuse(req, res, organizationId, validatedData);
-    if (!project) return;
-
-    if (!assigneeId) {
-      const optimalAssignee = await getOptimalAssignee(organizationId, validatedData);
-      if (optimalAssignee) {
-        assigneeId = optimalAssignee.id;
-        assigneeName = optimalAssignee.name;
-      }
-    }
-
     const { startDate, dueDate, ...taskFields } = validatedData;
     // Part 11 lineage — the create is written to the governed ledger on THIS
     // path too (assessment D11), in the create's own transaction.
-    const newTask = await storage.db.transaction(async (tx) => {
+    const newTask = await requestDb(req).transaction(async (tx) => {
+      const project = await taskProjectOrRefuse(tx as unknown as RequestDb, organizationId, validatedData);
+      const q = queryableFromDrizzle(tx);
+      let clientWorkspaceId: number | null = null;
+      if (project.projectId !== undefined) {
+        const admitted = await admitTaskCreationProject(q, { ...ctx, projectId: project.projectId,
+          clientWorkspaceId: req.tenantContext?.clientWorkspaceId });
+        clientWorkspaceId = admitted.clientWorkspaceId;
+      } else {
+        await admitTaskCreationActor(q, ctx);
+      }
+      const attached = await admitTaskAttachments(q, organizationId, project.projectId, validatedData);
+      if (!assigneeId) {
+        const optimalAssignee = await getOptimalAssignee(organizationId, validatedData);
+        if (optimalAssignee) {
+          assigneeId = optimalAssignee.id;
+          assigneeName = optimalAssignee.name;
+        }
+      }
       const row = await createTaskInTx(tx as unknown as TaskInsertRunner, {
         organizationId,
         actorUserId,
@@ -308,6 +315,7 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
         values: {
           ...taskFields,
           projectId: project.projectId,
+          clientWorkspaceId,
           startDate: startDate ? new Date(startDate) : undefined,
           dueDate: dueDate ? new Date(dueDate) : undefined,
           assigneeId,
@@ -324,7 +332,7 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
           status: validatedData.status ?? 'pending',
           assigneeId: assigneeId ?? null,
           sourceEntityType: validatedData.sourceEntityType ?? null,
-          sourceEntityId: validatedData.sourceEntityId ?? null,
+          sourceEntityId: validatedData.sourceEntityId ?? null, ...attached,
         },
         reason: typeof req.body?.reason === 'string' ? req.body.reason : undefined,
       });
@@ -340,9 +348,11 @@ router.post('/tasks', requireEditorAccess, async (req: Request, res: Response) =
       data: newTask,
     });
   } catch (error) {
+    if (commitInFlight) return unconfirmedTaskCreation(req, res);
     if (error instanceof RouteTaskWriteRefused) return res.status(error.status).json(routeTaskRefusalBody(error));
+    if (error instanceof TaskProjectAdmissionError) return taskAdmissionRefusal(res, error);
+    if (error instanceof VaultFamilyRefusal) return res.status(error.status).json({ success: false, code: error.code, error: error.message });
     if (error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, 'The task');
-    if (commitInFlight) return outcomeUnknown(res);
     console.error('Error creating task:', error);
     res.status(400).json({
       success: false,
@@ -810,16 +820,45 @@ router.post('/tasks/bulk-create', requireEditorAccess, async (req: Request, res:
   }
 });
 
+/** What a new task names beyond its project, each checked against the admitted project (never the body's), on the
+ *  create's own transaction, and returned for the audit row. Absent fields: unchanged.
+ *  - S12 gap 5 (2026-11-09): a Vault family a work project is assigned to produce is one in its project's program.
+ *  - P-111 item 4: a subtask's parent is the same project's, live, and not itself a subtask. */
+async function admitTaskAttachments(q: Parameters<typeof admitParentTask>[0], organizationId: number, projectId: number | undefined,
+  data: { moduleData?: unknown; parentTaskId?: number }): Promise<{ parentTaskId?: number }> {
+  await requireAssignedVaultFamily(q, organizationId, projectId, data.moduleData);
+  if (data.parentTaskId === undefined) return {};
+  /* The audit row names the admitted parent. */
+  return { parentTaskId: await admitParentTask(q, { organizationId, projectId, parentTaskId: data.parentTaskId }) };
+}
+
 // Create tasks from template
 type TemplateShape = { templateId: string; name: string; tasks: unknown; dependencies?: unknown };
+async function unconfirmedTaskCreation(req: Request, res: Response) {
+  try { await requestPgClient(req).discard?.(new Error('Task creation COMMIT acknowledgement was not confirmed')); }
+  catch { /* The request owner may already have discarded its ended lease. */ }
+  return outcomeUnknown(res);
+}
+function taskAdmissionRefusal(res: Response, error: TaskProjectAdmissionError) {
+  return res.status(error.status).json({ success: false, code: error.code, error: error.message });
+}
+async function workflowCreateFailure(req: Request, res: Response, error: unknown, committing: boolean) {
+  if (committing) return unconfirmedTaskCreation(req, res);
+  if (error instanceof RouteTaskWriteRefused) return res.status(error.status).json(routeTaskRefusalBody(error));
+  if (error instanceof TaskProjectAdmissionError) return taskAdmissionRefusal(res, error);
+  if (error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, 'The workflow');
+  console.error('Error creating tasks from template:', error);
+  return res.status(500).json({ success: false, error: 'Failed to create tasks from template' });
+}
 router.post('/tasks/from-template/:templateId', requireEditorAccess, async (req: Request, res: Response) => {
+  let committing = false;
   try {
     const ctx = governedWriter(req, res);
     if (!ctx) return;
     const { organizationId, actorUserId } = ctx;
     const templateId = String(req.params.templateId);
     refuseRouteColumnsInInput(req.body, 'task.create');
-    const { projectId, startDate, adjustDates } = req.body;
+    const { projectId: requestedProjectId, startDate, adjustDates } = req.body ?? {};
 
     // Get template — the org's own row wins; a built-in catalog entry serves
     // when the org has none, so "Start workflow" works with zero seeding
@@ -855,12 +894,15 @@ router.post('/tasks/from-template/:templateId', requireEditorAccess, async (req:
     // A stored template's task definitions are org-authored data: one naming
     // a route column instantiates nothing (RR1a, M9).
     for (const taskDef of taskDefinitions) refuseRouteColumnsInInput(taskDef, 'task.create');
+    const projectId = requireTaskProjectId(requestedProjectId);
     const taskIdMapping: Record<string, string> = {};
 
     // The workflow is instantiated as ONE transaction — every task, its ledger
     // row, the dependency edges with theirs and the usage bump — so a failure
     // part-way leaves no half-built workflow and nothing without its lineage.
-    const createdTasks = await storage.db.transaction(async (tx) => {
+    const createdTasks = await requestDb(req).transaction(async (tx) => {
+      const parent = await admitTaskCreationProject(queryableFromDrizzle(tx),
+        { ...ctx, projectId, clientWorkspaceId: req.tenantContext?.clientWorkspaceId });
       // Stored templates only — built-ins have no row to bump. First, so its
       // row lock is taken before the first ledger write (the audit-chain lock
       // last, the order every task transaction takes them in).
@@ -900,7 +942,8 @@ router.post('/tasks/from-template/:templateId', requireEditorAccess, async (req:
           .values({
             taskId,
             organizationId,
-            projectId: projectId != null ? Number(projectId) : undefined,
+            projectId: parent.projectId,
+            clientWorkspaceId: parent.clientWorkspaceId,
             title: taskDef.title,
             description: taskDef.description,
             moduleType: taskDef.moduleType || 'general',
@@ -971,15 +1014,14 @@ router.post('/tasks/from-template/:templateId', requireEditorAccess, async (req:
           }
         }
       }
+      committing = true;
       return created;
     });
+    committing = false;
 
     res.json({ success: true, data: createdTasks, count: createdTasks.length, template: template.name });
   } catch (error) {
-    if (error instanceof RouteTaskWriteRefused) return res.status(error.status).json(routeTaskRefusalBody(error));
-    if (error instanceof TaskAuditNotRecordedError) return auditWriteFailed(res, 'The workflow');
-    console.error('Error creating tasks from template:', error);
-    res.status(500).json({ success: false, error: 'Failed to create tasks from template' });
+    return workflowCreateFailure(req, res, error, committing);
   }
 });
 

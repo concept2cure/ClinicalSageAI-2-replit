@@ -1,0 +1,156 @@
+{
+  "data": {
+    "reportTypeId": "compliance.audit_assurance_pack",
+    "scopeType": "project",
+    "scopeId": "1",
+    "scopeLabel": "F1 Recent conversation verification",
+    "generatedAt": "2026-11-06T21:42:07.163Z",
+    "status": "partial",
+    "computedScope": "project",
+    "sections": [
+      {
+        "id": "executive-summary",
+        "title": "Executive summary",
+        "blocks": [
+          {
+            "kind": "summary",
+            "text": "Compliance & Audit Assurance Pack for F1 Recent conversation verification. Status: partial."
+          }
+        ]
+      },
+      {
+        "id": "quality-project-evidence",
+        "title": "Project Quality evidence",
+        "blocks": [
+          {
+            "kind": "summary",
+            "text": "These evidence snapshots describe this project. Working copies, releases in force and retained versions are separate snapshots."
+          },
+          {
+            "kind": "table",
+            "columns": [
+              "Record",
+              "Version",
+              "Recorded lifecycle",
+              "Recorded facts"
+            ],
+            "rows": [
+              [
+                "CAPA-2026-0002 \u2014 CAPA: Fictional current-record task verification",
+                null,
+                "Open",
+                "Summary: Not recorded; Problem statement: Fictional local verification; no effectiveness or approval is asserted.; Root cause analysis: Not recorded; Target close date: 2026-12-20T00:00:00.000Z; Corrective action plan: Not recorded; Effectiveness check result: Not recorded; CAPA number: CAPA-2026-0002; Risk level: medium; Source: Internal audit; Type: corrective"
+              ],
+              [
+                "CAPA-2026-0001 \u2014 CAPA: Fictional Quality task linkage verification",
+                null,
+                "Open",
+                "Summary: Not recorded; Problem statement: Fictional audit observation for local integration verification.; Root cause analysis: Not recorded; Target close date: 2026-12-15T00:00:00.000Z; Corrective action plan: Not recorded; Effectiveness check result: Not recorded; CAPA number: CAPA-2026-0001; Risk level: medium; Source: Internal audit; Type: corrective"
+              ],
+              [
+                "Nonconformance: NC-PROJECT-QUALITY-20261106",
+                null,
+                "Pending",
+                "Description: Fictional project-owned nonconformance: review evidence remains pending; no disposition approval is asserted.; CAPA linked: No; Detected at: 2026-11-06T19:50:05.034Z; Device name: Fictional material; Lot or serial: PROJECT-QA-01; Nonconformance number: NC-PROJECT-QUALITY-20261106; Source: audit"
+              ],
+              [
+                "Nonconformance: NC-QUALITY-FIDELITY-20261106",
+                null,
+                "Pending",
+                "Description: Fictional acceptance check: pH < 6 and temperature > 30 C; impurity <LOQ; review remains pending.; CAPA linked: No; Detected at: 2026-11-06T21:28:40.764Z; Device name: Fictional acceptance material; Lot or serial: QA-FIDELITY-LOCAL; Nonconformance number: NC-QUALITY-FIDELITY-20261106; Source: audit"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "quality-organization-context",
+        "title": "Organization Quality-system context",
+        "blocks": [
+          {
+            "kind": "summary",
+            "text": "Organization context is not assigned to this project."
+          },
+          {
+            "kind": "table",
+            "columns": [
+              "Record",
+              "Version",
+              "Recorded lifecycle",
+              "Recorded facts"
+            ],
+            "rows": [
+              [
+                "Nonconformance: NC-QUALITY-WORKFLOW-20261106",
+                null,
+                "Pending",
+                "Description: Fictional verification record: source review and corrective action evidence are pending. This local test record is not an approved disposition.; CAPA linked: No; Detected at: 2026-11-06T19:48:43.303Z; Device name: Fictional workflow verification material; Lot or serial: QA-QS-LOCAL-01; Nonconformance number: NC-QUALITY-WORKFLOW-20261106; Source: audit"
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "quality-assessment-limits",
+        "title": "Assessment limits",
+        "blocks": [
+          {
+            "kind": "summary",
+            "text": "Quality evidence completeness is not assessed. Audit-chain integrity and compliance controls are not assessed."
+          },
+          {
+            "kind": "summary",
+            "text": "Records state their current native lifecycle. A working copy, signed release and retained version are distinct evidence; no historical status is reconstructed."
+          }
+        ]
+      },
+      {
+        "id": "provider-readiness",
+        "title": "Provider readiness",
+        "blocks": [
+          {
+            "kind": "table",
+            "columns": [
+              "Provider",
+              "Status",
+              "Note"
+            ],
+            "rows": [
+              [
+                "Quality evidence",
+                "partial",
+                "Quality evidence completeness is not assessed. Audit-chain integrity and compliance controls are not assessed."
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "blockers",
+        "title": "Blockers",
+        "blocks": [
+          {
+            "kind": "blocker-list",
+            "items": [
+              "Quality evidence completeness is not assessed. Audit-chain integrity and compliance controls are not assessed."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "gaps",
+        "title": "Gaps",
+        "blocks": [
+          {
+            "kind": "summary",
+            "text": "Gaps were not evaluated for this scope."
+          }
+        ]
+      }
+    ],
+    "truthfulness": {
+      "allowedStatus": "partial",
+      "reasons": []
+    }
+  }
+}

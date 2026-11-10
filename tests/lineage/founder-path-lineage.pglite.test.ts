@@ -208,6 +208,8 @@ const MIGRATIONS = [
   // gained users.sessions_ended_at (P0-4b); without it every signature is
   // refused REAUTH_ACCOUNT_STATE_UNKNOWN, fail-closed.
   'migrations/20261001_users_sessions_ended_at.sql',
+  // organizations.payment_status: sending a document for review reads the organisation's standing (P-95's review hop).
+  'migrations/0003_billing_stripe.sql',
   'migrations/20260527_mutation_primitives.sql',
   // The governed-action ledger's open command vocabulary, as the deploy set
   // applies it after 20260527: the approval signature records command

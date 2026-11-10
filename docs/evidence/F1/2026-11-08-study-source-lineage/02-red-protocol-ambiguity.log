@@ -1,0 +1,74 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:23) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/clinical-regulatory-evidence/__tests__/catalog-facts.test.ts > findTextFacts > finds every labelled fact on a title page, with the offset it matched at 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/catalog-facts.test.ts > findTextFacts > reads the date shapes regulatory documents use 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/catalog-facts.test.ts > findTextFacts > takes nothing without its label: a bare date, number or code is not a fact 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/catalog-facts.test.ts > findTextFacts > declines an impossible date rather than recording a plausible one 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/catalog-facts.test.ts > findTextFacts > nothing to read is no facts, not an error 0ms
+ × server/services/clinical-regulatory-evidence/__tests__/catalog-facts.test.ts > matchStudy keeps every explicit protocol in the scope decision > does not discard a later unmatched protocol because the first matched 6ms
+   → expected { studyRef: 31, …(1) } to deeply equal { studyRef: null, …(1) }
+ × server/services/clinical-regulatory-evidence/__tests__/catalog-facts.test.ts > matchStudy keeps every explicit protocol in the scope decision > passes all distinct protocols to the scoped matcher, retaining a repeated single protocol 1ms
+   → expected [ 'STUDY-A' ] to deeply equal [ 'STUDY-A', 'STUDY-B' ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/catalog-facts.test.ts > matchStudy keeps every explicit protocol in the scope decision > does not discard a later unmatched protocol because the first matched
+AssertionError: expected { studyRef: 31, …(1) } to deeply equal { studyRef: null, …(1) }
+
+- Expected
++ Received
+
+@@ -4,7 +4,7 @@
+        "id": 31,
+        "protocolId": "STUDY-A",
+        "studyId": "sd_STUDY-A",
+      },
+    ],
+-   "studyRef": null,
++   "studyRef": 31,
+  }
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/catalog-facts.test.ts:64:19
+     62|     const found = await matchStudy({ query: async () => ({ rows: [know…
+     63|     expect(facts.protocolNumber?.value).toBe('STUDY-A');
+     64|     expect(found).toEqual({ studyRef: null, candidates: [{ id: 31, stu…
+       |                   ^
+     65|   });
+     66|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  server/services/clinical-regulatory-evidence/__tests__/catalog-facts.test.ts > matchStudy keeps every explicit protocol in the scope decision > passes all distinct protocols to the scoped matcher, retaining a repeated single protocol
+AssertionError: expected [ 'STUDY-A' ] to deeply equal [ 'STUDY-A', 'STUDY-B' ]
+
+- Expected
++ Received
+
+  [
+    "STUDY-A",
+-   "STUDY-B",
+  ]
+
+ ❯ server/services/clinical-regulatory-evidence/__tests__/catalog-facts.test.ts:71:18
+     69|     const q = { query: async (_sql: string, params?: unknown[]) => { k…
+     70|     await matchStudy(q, 7, programId, findTextFacts('Protocol Number: …
+     71|     expect(keys).toEqual(['STUDY-A', 'STUDY-B']);
+       |                  ^
+     72|     const repeated = await matchStudy(q, 7, programId, findTextFacts('…
+     73|     expect(keys).toEqual(['STUDY-A']);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+   Start at  08:53:21
+   Duration  291ms (transform 61ms, setup 61ms, import 19ms, tests 13ms, environment 0ms)
+

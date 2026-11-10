@@ -1,0 +1,80 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM metric ingest — a duplicate load is refused, and reprocess needs a reason > names its methods in words on the overview, the RACT, the patient profiles and site risk
+An update to RbmRact inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > appends a KRI reading through the real values endpoint
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > creates a KRI against the program, with blank thresholds left null
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > writes a QTL breach response onto the QTL
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > posts a CtQ factor with the components, letting the engine derive the score
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > triages a signal through the signals endpoint
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > runs central monitoring server-side and reports the engine counts
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > recomputes site risk server-side
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > advances a monitoring action through the actions endpoint
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > generates the plan from the RACT when the study has none
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > seeds the KRI library through the engine when the study has none (J5-03)
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > seeds the default QTLs through the engine when the study has none (J5-03)
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > offers no library seed once the study has indicators or limits
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > will not offer to raise an action when there is no plan to attach it to
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > refuses to edit the CtQ register of an approved assessment
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > omits fields it cannot show when editing, instead of blanking them
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > shows and mutates only the governing plan's actions
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > records an investigation and its follow-up action in one transactional call
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > states outright when no source feed is tracked
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > marks a stale feed on the overview rather than showing its age neutrally
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM v2 surfaces persist their writes > surfaces the server error and changes nothing when a write is rejected
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM metric ingest — reports what the load actually did > posts the pasted extract with its source and cutoff
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM metric ingest — reports what the load actually did > shows the rejected rows and their reasons on a partial load
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM metric ingest — reports what the load actually did > calls out metrics that matched no indicator, even when nothing was rejected
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM RACT — versioned amendment of a signed assessment > offers Amend on an approved assessment instead of dead-ending the register
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM RACT — versioned amendment of a signed assessment > opens the amendment with a reason, and says the signed version is preserved
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM RACT — versioned amendment of a signed assessment > renders the version chain with each version's own signature
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM RACT — versioned amendment of a signed assessment > does not offer Add CtQ factor when the study has no risk assessment
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM RACT — versioned amendment of a signed assessment > does not offer Amend on a draft — a draft is already editable
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM plan — an approved plan is amended, not edited > offers Amend on an approved plan and posts the reason to /amend
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM plan — an approved plan is amended, not edited > does not offer Amend on a draft plan
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM actions are logged against the plan in force, not an open amendment > Add action posts to the plan in force while the amendment draft is on screen
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM actions are logged against the plan in force, not an open amendment > a signal follow-up is raised on the plan in force
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM actions are logged against the plan in force, not an open amendment > an investigation follow-up is raised on the plan in force
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM actions are logged against the plan in force, not an open amendment > says so when the server saved the notes but did not raise the action
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM actions are logged against the plan in force, not an open amendment > a scheduled oversight visit is raised on the plan in force
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM actions are logged against the plan in force, not an open amendment > opening an amendment does not claim to carry actions forward
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM metric ingest — a duplicate load is refused, and reprocess needs a reason > holds the 409 as its own state and resubmits only with reprocess + reason
+ ↓ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM metric ingest — a duplicate load is refused, and reprocess needs a reason > says how the attention list is ordered and when, without a function name or a raw ISO time
+ × client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM metric ingest — a duplicate load is refused, and reprocess needs a reason > names its methods in words on the overview, the RACT, the patient profiles and site risk 95ms
+   → expected 'Data sourcesNo source feeds are track…' not to contain 'rbm-engine'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx > RBM metric ingest — a duplicate load is refused, and reprocess needs a reason > names its methods in words on the overview, the RACT, the patient profiles and site risk
+AssertionError: expected 'Data sourcesNo source feeds are track…' not to contain 'rbm-engine'
+
+Expected: "rbm-engine"
+Received: "Data sourcesNo source feeds are tracked for this study — the values below were entered by hand and their currency is unrecorded.Load extract…Overall riskMediumrbm-engine — L x I bandingCritical CtQ factors11 of 1 openKRIs red / amber0 / 11 indicators — 0 not evaluatedQTLs breached10 approaching — 0 not evaluatedOpen signals11 high severityEnhanced-tier sites1of 1 sitesNeeds attention nowOrdered by severity · as of 2026-07-01 00:00:00 UTC · Jul 01, 2026, 00:00 (UTC)Nothing needs attention right now for this study.ich_e6r3Version 1 — Open draft — approval pending — 1 CtQ factors, 1 criticalApprove assessmentLikelihood x impactclick a cell to filterImpact510115202548121620369121524681012345LikelihoodLow <8Medium 8-14High 15+Critical-to-quality register — 1 of 1Add CtQ factorCategoryCtQ factorL x IInherentDetect.MitigationResidualStatusSafetycriticalSAE reporting3x5152Central reviewNot assessedOpenThe governing risk score is likelihood x impact (rbm-engine scoreRisk), banded low <8 / medium 8-14 / high 15+. Detectability is recorded against each factor for review but is not multiplied into the score — one scoring method, applied consistently. Residual score is derived the same way from the post-mitigation likelihood and impact.scorePatientCohort — robust modified z-score — MIN_COHORT 5 — 0 subjects — never scoredScan cohortCohort — ranked by anomaly score0 flagged — 0 in reviewSubjectSiteAnomalyTop dimensionStatusNo subjects scored for this study yet.The bars are the accessible equivalent of a cohort scatter — every dimension shows its signed z. Cohorts below MIN_COHORT (5) are not scored (no false anomalies on thin data). Scoring runs over the metrics already loaded into the profile store; it is not a full patient timeline of visits, dosing, adverse events and concomitant medication.site-risk-engine — composite from Site Intelligence — never scoredRecompute site riskSiteCompositeDimensions (of 25)TierDrivers — why this tier5 Mercy Clinical71 71Enr18Qual20Ops15EnhancedqualityAll 1 scored site shown, ranked by composite risk. Tier assignment is monitoringTierFromRisk() on the composite; the enhanced tier drives the monitoring-plan visit cadence. Recomputing replaces the current snapshot — per-run history is not retained, so trend over time is not available."
+
+ ❯ client/src/concept2cure/v2/__tests__/rbmSurfaceWrites.test.tsx:606:124
+    604|     </>);
+    605|     const text = container.textContent ?? '';
+    606|     for (const id of ['rbm-engine', 'scoreRisk', 'scorePatientCohort',…
+       |                                                                                                                            ^
+    607|     expect(text).toContain('Likelihood × impact banding');
+    608|     expect(text).toContain('Robust modified z-score · minimum cohort o…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 38 skipped (39)
+   Start at  17:20:41
+   Duration  1.97s (transform 990ms, setup 120ms, import 1.18s, tests 99ms, environment 403ms)
+

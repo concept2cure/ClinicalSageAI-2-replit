@@ -1,0 +1,17 @@
+ × client/src/concept2cure/v2/editor/__tests__/assemblyPlanRowWords.test.tsx > the build preview says what the build will do to each section > a kept section with text, and one without 4ms
+   → assemblyRowWords is not a function
+ × client/src/concept2cure/v2/editor/__tests__/assemblyPlanRowWords.test.tsx > the build preview says what the build will do to each section > an added section with the template text, and one without 1ms
+   → assemblyRowWords is not a function
+ × client/src/concept2cure/v2/editor/__tests__/assemblyPlanRowWords.test.tsx > the build preview says what the build will do to each section > a section AnA does not draft gives its reason, and without AnA there is no AnA line 0ms
+   → assemblyRowWords is not a function
+ × client/src/concept2cure/v2/editor/__tests__/assemblyPlanRowWords.test.tsx > the build preview says what the build will do to each section > never says a section holds text it does not hold 1ms
+   → assemblyRowWords is not a function
+TypeError: assemblyRowWords is not a function
+TypeError: assemblyRowWords is not a function
+TypeError: assemblyRowWords is not a function
+TypeError: assemblyRowWords is not a function
+ × client/src/concept2cure/v2/editor/__tests__/workbenchAssemblyBuild.test.tsx > assembly is reachable in the one existing editor > the preview says what the build does to each section, and which ones AnA drafts 1072ms
+   → expected '3.2.P.8.1 Existing stability summary …' to contain 'Kept as saved, with its text'
+Expected: "Kept as saved, with its text"
+Received: "3.2.P.8.1 Existing stability summary · Preserve existing section and textAnA can prepare a candidate only if this saved section is empty."
+      Tests  1 failed | 31 skipped (32)

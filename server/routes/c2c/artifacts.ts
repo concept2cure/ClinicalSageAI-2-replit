@@ -27,8 +27,10 @@ import {
   ARTIFACT_ACT_MEANING,
   allowedArtifactTransitions,
   artifactStatusUpdate,
+  moveVoidsReview,
   refuseArtifactTransition,
   refuseSignedArtifactAct,
+  reviewQuorumVerdict,
 } from '../../services/artifact-approval-act';
 import { ArtifactActConflictError, ArtifactActContractError, commitSignedArtifactAct, type ArtifactTx } from '../../services/artifact-signed-act';
 import { SignerNotAttributableError } from '../../services/part11/resolve-signer-identity';
@@ -37,7 +39,7 @@ import { actorLabel, resolveActorNames } from '../../services/tenant/actor-names
 import { evaluateAndInterceptGovernedDocument } from '../../src/control-plane/governed-document-evaluator';
 import { governedDecisionPersisted } from '../../services/governed-decision-ledger';
 import * as crypto from 'crypto';
-import { and, desc, eq, inArray, ne } from 'drizzle-orm';
+import { and, desc, eq, inArray, ne, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { createScopedLogger } from '../../utils/logger';
 import { authMiddleware } from '../../auth';
@@ -61,7 +63,7 @@ import { authorizedProjectId, loadProjectArtifact, urlProjectId } from './artifa
 import { projectAdmissionMiddleware, ProjectAdmissionRefusal, requireCurrentProjectActor } from './project-access';
 import { getAccessibleReportProjectIds } from '../../services/report-os/project-access';
 import { verifyReauth } from './actions';
-import { separationOfDutiesRefusal } from '../../services/governance/separation-of-duties';
+import { resolveTargetAuthors, separationOfDutiesRefusal } from '../../services/governance/separation-of-duties';
 import { checkSigningAuthority } from '../../services/part11/signing-authority-gate';
 import { isSigningAuthorized } from '../../services/part11/signing-authority';
 import { clientIpKey } from '../../utils/client-ip';
@@ -955,7 +957,11 @@ router.put('/projects/:projectId/artifacts/:artifactId', async (req: Request, re
         title: newTitle,
         content: newContent,
         contentHash: newContentHash,
-        version: newVersion,
+        // P-95 Q2: a move voids review decisions, as an edit does. An edit has
+        // already moved the version on; a move alone moves it here.
+        version: contentChanged
+          ? newVersion
+          : sql`${concept2cureArtifacts.version} + ${moveVoidsReview(newCtdSection)}`,
         ctdSection: newCtdSection,
         metadata: {
           ...existingMetadata,
@@ -1243,6 +1249,8 @@ router.put(
         .update(concept2cureArtifacts)
         .set({
           ctdSection: toSection,
+          // P-95 Q2: a move voids review decisions, as an edit does.
+          version: sql`${concept2cureArtifacts.version} + ${moveVoidsReview(toSection)}`,
           updatedAt: new Date(),
           metadata: {
             ...existingMetadata,
@@ -3002,6 +3010,8 @@ router.put(
         .update(concept2cureArtifacts)
         .set({
           ctdSection,
+          // P-95 Q2: a move voids review decisions, as an edit does.
+          version: sql`${concept2cureArtifacts.version} + ${moveVoidsReview(ctdSection ?? null)}`,
           updatedAt: new Date(),
           metadata: {
             ...existingMetadata,
@@ -3745,6 +3755,17 @@ async function insertReviewAssignments(input: {
 }
 
 /**
+ * Those of `userIds` who wrote the artifact, read as P-18 reads its authors
+ * (resolveTargetAuthors, `artifact:` target): its creator and every version's
+ * writer. 2026-11-09 (F1, P-95 Q1): the reviewer is not an author.
+ */
+async function reviewersWhoWroteIt(artifactId: string, organizationId: number, userIds: number[]): Promise<number[]> {
+  const { authors } = await resolveTargetAuthors(`artifact:${artifactId}`, organizationId);
+  const written = new Set(authors.map(Number));
+  return userIds.filter(id => written.has(Number(id)));
+}
+
+/**
  * POST /api/concept2cure/projects/:projectId/artifacts/:artifactId/reviewers
  * Assign one or more reviewers to an artifact: into the open review round, or
  * into a new round when the latest is closed (reviewRoundForNewAssignment,
@@ -3818,6 +3839,10 @@ router.post(
           );
         }
       }
+      // 2026-11-09 (F1, P-95 Q1): no author either, as P-18 reads them (creator and version writers). The quorum
+      // refuses an author's decision too; this says so before assigning.
+      const writers = await reviewersWhoWroteIt(artifact.artifactId, organizationId, numericIds);
+      if (writers.length > 0) return sendError(res, 400, `Cannot assign ${writers.length} reviewer(s): they wrote this document, and an author's review does not count. Assign a reviewer who did not write it.`);
 
       const parsedDueDate = dueDate ? new Date(dueDate) : null;
 
@@ -4220,11 +4245,11 @@ router.post(
 
       // Self-review prevention: author cannot review their own artifact
       if (artifact.createdById && artifact.createdById === userId) {
-        return sendError(
-          res,
-          403,
-          'You cannot review an artifact you authored (GxP separation of duties)'
-        );
+        return sendError(res, 403, 'You cannot review an artifact you authored (GxP separation of duties)');
+      }
+      // 2026-11-09 (F1, P-95 Q1): nor one they wrote a version of.
+      if ((await reviewersWhoWroteIt(artifact.artifactId, organizationId, [userId])).length > 0) {
+        return sendError(res, 403, 'You cannot review an artifact you wrote a version of (GxP separation of duties)');
       }
 
       // Find this user's pending assignment for the current round
@@ -4381,6 +4406,15 @@ router.get(
 
       if (!artifact) return sendError(res, 404, 'Artifact not found');
 
+      /* P-95 Q2 (2026-11-09): ready for approval is the one quorum's answer
+         (reviewQuorumVerdict), not a second count beside it. The count here
+         ignored the version reviewed, independence and the two-reviewer floor,
+         so a review step could say "ready" while approval was refused. Read
+         with no signer: ready means ready for an approver who did not review
+         it. When it is not ready, its sentence says why. */
+      const readiness = await reviewQuorumVerdict(pool, artifact.id, organizationId, artifact.version);
+      const notReady = readiness.met ? {} : { notReadyReason: readiness.message };
+
       // Get all assignments for the latest round
       const allAssignments = await db
         .select()
@@ -4401,6 +4435,7 @@ router.get(
           currentRound: 0,
           reviewers: [],
           readyForApproval: false,
+          ...notReady,
         });
       }
 
@@ -4446,7 +4481,8 @@ router.get(
         completedCount,
         pendingCount: totalAssigned - completedCount,
         allApproved,
-        readyForApproval: allApproved,
+        readyForApproval: readiness.met,
+        ...notReady,
         reviewers: roundAssignments.map(a => {
           const reviewer = reviewerMap.get(a.reviewerId);
           const dec = decisionMap.get(a.reviewerId);

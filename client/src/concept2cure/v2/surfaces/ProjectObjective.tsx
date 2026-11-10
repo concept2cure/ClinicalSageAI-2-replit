@@ -55,24 +55,25 @@ function sourceFrom(v: Record<string, string>): ObjectiveSource | null {
   return { kind: (v.sourceKind || 'other') as SourceKind, title, ...(link && isUrl ? { url: link } : {}), ...(link && !isUrl ? { locator: link } : {}) };
 }
 
-/** The recorded objective: its words, criteria and sources, and its versions on demand. */
+/** The recorded objective: its words, criteria and sources, and its versions on demand. Under the project's
+ *  description, as Claude states what a project is for (D3-1, D3.md §4.3): no box, no tint. */
 function ObjectiveView({ record }: { record: ObjectiveRecord }) {
   const current = record.current;
-  if (!current) return <p className="pj-desc pj-fact-none">No objective is recorded for this project yet.</p>;
+  if (!current) return <p className="pj-objective-s">No objective is recorded for this project yet.</p>;
   return (
     <>
-      <p className="pj-desc">{current.content.objective}</p>
-      {current.content.successCriteria && <p className="pj-desc">{current.content.successCriteria}</p>}
+      <p className="pj-objective-t">{current.content.objective}</p>
+      {current.content.successCriteria && <p className="pj-objective-t">{current.content.successCriteria}</p>}
       {current.content.sources.length > 0 && (
-        <ul className="pj-desc">
+        <ul className="pj-objective-s">
           {current.content.sources.map((s, i) => (
             <li key={i}>From {s.url ? <a href={s.url} target="_blank" rel="noreferrer">{s.title}</a> : s.title}{s.locator ? `, ${s.locator}` : ''}</li>
           ))}
         </ul>
       )}
-      <details className="pj-desc">
+      <details className="pj-more">
         <summary>Version {current.version}, {dayOf(current.updatedAt)}</summary>
-        <ol>
+        <ol className="pj-objective-s">
           {record.history.map((h, i) => (
             <li key={i}>{h.version != null ? `Version ${h.version}` : 'Charter started'}, {dayOf(h.occurredAt)}{h.reason ? `: ${h.reason}` : ''}</li>
           ))}
@@ -127,7 +128,7 @@ export function ProjectObjective({ programId, canEdit, onAsk }: {
   const [busy, setBusy] = React.useState(false);
 
   // Nothing is shown while it loads; a failed or unreadable read says so and never takes the page down.
-  if (!read.data) return read.loading ? null : <p className="pj-fact-none" role="note">The project's objective could not be read.</p>;
+  if (!read.data) return read.loading ? null : <p className="pj-objective pj-objective-s" role="note">The project's objective could not be read.</p>;
   const record = read.data;
   const current = record.current;
 
@@ -149,13 +150,15 @@ export function ProjectObjective({ programId, canEdit, onAsk }: {
   };
 
   return (
-    <section aria-labelledby={`pj-objective-${programId}`}>
-      <h3 id={`pj-objective-${programId}`} className="pj-seclbl">Objective</h3>
-      <ObjectiveView record={record} />
-      <div className="pj-about-row">
-        {onAsk && <button type="button" className="btn ghost small" onClick={() => onAsk(PROPOSE_OBJECTIVE_ASK)}>Ask AnA to propose it</button>}
-        {canEdit && <button type="button" className="btn ghost small" disabled={busy} onClick={() => setEditing(true)}>{current ? 'Edit' : 'Set the objective'}</button>}
+    <section className="pj-objective" aria-labelledby={`pj-objective-${programId}`}>
+      <div className="pj-objective-k">
+        <h2 id={`pj-objective-${programId}`}>Objective</h2>
+        <span className="pj-objective-acts">
+          {onAsk && <button type="button" className="btn ghost small" onClick={() => onAsk(PROPOSE_OBJECTIVE_ASK)}>Ask AnA to propose it</button>}
+          {canEdit && <button type="button" className="btn ghost small" disabled={busy} onClick={() => setEditing(true)}>{current ? 'Edit' : 'Set the objective'}</button>}
+        </span>
       </div>
+      <ObjectiveView record={record} />
       {editing && <ObjectiveForm current={current} onCancel={() => setEditing(false)} onSubmit={(v) => void save(v)} />}
       <C2CToast msg={toast} />
     </section>
@@ -168,7 +171,8 @@ export function NewProjectObjectiveField({ value, onChange }: { value: string; o
   return (
     <div className="npw-field npw-field-wide">
       <label className="npw-field-l" htmlFor="npw-objective">Objective (optional)</label>
-      <textarea id="npw-objective" className="c2c-input" rows={3} value={value} aria-describedby="npw-objective-help"
+      {/* The server's limit (charter-objectives.ts objectivesBodySchema, checked by POST /api/c2c/projects). */}
+      <textarea id="npw-objective" className="c2c-input" rows={3} value={value} maxLength={4000} aria-describedby="npw-objective-help"
         onChange={e => onChange(e.target.value)}
         /* For every filing type: a device 510(k) has no study endpoint to state (human test J1, 2026-11-06). */
         placeholder="What this project must achieve, e.g. study-may-proceed on the IND, or 510(k) clearance, and by when." />

@@ -1,0 +1,104 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | client/src/concept2cure/v2/__tests__/authoringEnginePage.test.tsx > The authoring engine page on D0 (D4-7) > has the page header with no eyebrow, and asks AnA quietly
+An update to AuthoringEngine inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | client/src/concept2cure/v2/__tests__/authoringEnginePage.test.tsx > The authoring engine page on D0 (D4-7) > keeps "Open the document editor" as the page's one primary
+An update to AuthoringEngine inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+ × client/src/concept2cure/v2/__tests__/authoringEnginePage.test.tsx > The authoring engine page on D0 (D4-7) > has the page header with no eyebrow, and asks AnA quietly 74ms
+   → expected <div class="reg-eyebrow">…(1)</div> to be null
+ ✓ client/src/concept2cure/v2/__tests__/authoringEnginePage.test.tsx > The authoring engine page on D0 (D4-7) > keeps "Open the document editor" as the page's one primary 26ms
+ × client/src/concept2cure/v2/__tests__/authoringEnginePage.test.tsx > The authoring engine page on D0 (D4-7) > states its claims as quiet words, not bordered pills 1ms
+   → expected 'display:inline-flex;align-items:cente…' not to match /border:\s*1px/
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringEnginePage.test.tsx > The authoring engine page on D0 (D4-7) > has the page header with no eyebrow, and asks AnA quietly
+AssertionError: expected <div class="reg-eyebrow">…(1)</div> to be null
+
+- Expected:
+null
+
++ Received:
+<div
+  class="reg-eyebrow"
+>
+  Biotech & Pharma 
+  <svg
+    aria-hidden="true"
+    class="lucide lucide-dot"
+    fill="none"
+    focusable="false"
+    height="1em"
+    stroke="currentColor"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="1.5"
+    viewBox="0 0 24 24"
+    width="1em"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <circle
+      cx="12.1"
+      cy="12.1"
+      r="1"
+    />
+  </svg>
+   authoring
+</div>
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringEnginePage.test.tsx:45:66
+     43|   it('has the page header with no eyebrow, and asks AnA quietly', () =…
+     44|     const { container } = renderPage();
+     45|     expect(container.querySelector('.reg-eyebrow, .ph-eyebrow')).toBeN…
+       |                                                                  ^
+     46|     expect(container.textContent).not.toMatch(/Biotech & Pharma/);
+     47|     const head = container.querySelector('.ph')!;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/authoringEnginePage.test.tsx > The authoring engine page on D0 (D4-7) > states its claims as quiet words, not bordered pills
+AssertionError: expected 'display:inline-flex;align-items:cente…' not to match /border:\s*1px/
+
+- Expected:
+/border:\s*1px/
+
++ Received:
+"display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:500;color:var(--text-300);border:1px solid var(--border);background:var(--bg-000);border-radius:99px;padding:5px 11px;"
+
+ ❯ client/src/concept2cure/v2/__tests__/authoringEnginePage.test.tsx:64:22
+     62|   it('states its claims as quiet words, not bordered pills', () => {
+     63|     const rule = /\.c2c-v2 \.ae-badge\{([^}]*)\}/.exec(readFileSync(JO…
+     64|     expect(rule).not.toMatch(/border:\s*1px/);
+       |                      ^
+     65|     expect(rule).not.toMatch(/border-radius:\s*99px/);
+     66|     expect(rule).toMatch(/font-size:\s*var\(--fs-small\)/);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  14:55:22
+   Duration  1.42s (transform 480ms, setup 146ms, import 613ms, tests 105ms, environment 427ms)
+

@@ -1,0 +1,10 @@
+{
+  "shared/regulatory/document-taxonomy.ts": "e92f728ba2aa3a30c8b13dedbd1a7ffb76c7c088b717dfbf3a9de8cd6e129fed",
+  "shared/regulatory/uk-cta-authoring.ts": "d4164c61f97394afcb7182514bc3bacea06bff7a01e5cb24eb4d66c7d35f3d96",
+  "server/services/regulatory/registry/blueprints/euCtaBlueprint.ts": "2c73e445f886f312b8e0cfc0d3d6a3ff350f88ceaa3f44c0189d99366f396f3b",
+  "server/services/regulatory/registry/blueprints/canadaCtaBlueprint.ts": "3145265c996e34a5fa33ebe6b1c326c9409c03c05086e65702f267771f1cecf2",
+  "server/services/ana/AnaDocumentDraftingService.ts": "93f6a4a853b5a1753df8f5dd4b0f0f636e0beabc642223157dee64db27c48f7b",
+  "server/services/ana/draft-product-advisory.ts": "86a1efea8e11b71f4e5116d63fbe601697b6548212d918b0098b5c4473e7cb91",
+  "server/services/ana/therapeutic-area-profiles/index.ts": "2094799d2781b28d9ec8cef78d438ee725d2f70c764304fe2d90ffa92ff233de",
+  "server/services/authoring/authoring-draft-template.ts": "abed0af419d98f0dfaa9677fe8b9f25901e3c268ba326833909e16b1c6999ffe"
+}

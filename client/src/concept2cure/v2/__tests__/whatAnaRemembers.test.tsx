@@ -18,8 +18,15 @@
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { createHash, webcrypto } from 'node:crypto';
+import { TextEncoder as NodeTextEncoder } from 'node:util';
+import { stableStringify } from '@shared/canonical-json';
+import { ApiRequestError } from '@/lib/queryClient';
+import type { PrivateUserRuleAction, PrivateUserRuleDto, PrivateUserRuleLedgerDto } from '@shared/ana/skills';
 
 const apiRequest = vi.hoisted(() => vi.fn());
+const ruleOwner = vi.hoisted(() => ({ value: { actor: '', key: 1, sameRevision: (): boolean => true } }));
+vi.mock('../editor/authoringCurrentRead', async original => ({ ...await original<typeof import('../editor/authoringCurrentRead')>(), useAuthoringReadSession: () => ruleOwner.value }));
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
@@ -83,6 +90,7 @@ afterEach(cleanup);
 beforeEach(() => {
   apiRequest.mockReset();
   onClose.mockReset();
+  ruleOwner.value = { actor: '', key: 1, sameRevision: () => true };
 });
 
 describe('What AnA remembers — the two real reads, for the caller alone', () => {
@@ -265,5 +273,128 @@ describe('What AnA remembers — a dialog beside the conversation', () => {
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(onClose).toHaveBeenCalledTimes(2);
     expect(apiRequest.mock.calls.every(([method]) => method === 'GET')).toBe(true);
+  });
+});
+
+const PRIVATE_PATH = '/api/client-intelligence/ana/user-profile';
+const RULE_ID = '776388f1-3c29-4ab2-9a7f-82b8e42bb624';
+const PERSONAL: PrivateUserRuleDto = { ruleId: RULE_ID, version: 1, scope: 'user', state: 'active', level: 'standing',
+  name: 'Show sources first', instructions: 'Put the exact source before a proposed conclusion.', conflictKey: 'writing.sources', policyBindings: [], supersedes: [],
+  source: { correctionId: '0a88165f-6e56-4f6b-a365-297fd011caba', sourceAuditEventId: 'actual-correction-receipt', correctionSha256: 'a'.repeat(64) },
+  createdAt: '2026-11-06T00:00:00.000Z', updatedAt: '2026-11-06T00:00:00.000Z' };
+const personalLedger = (rules: PrivateUserRuleDto[] = []): PrivateUserRuleLedgerDto => ({ schemaVersion: 1, organizationId: 7, userId: 1,
+  revision: 1, promptUse: 'held_privacy_boundary', rules, conflicts: [], receipts: [] });
+type PersonalPost = (body: PrivateUserRuleAction) => Promise<Response>;
+function servePersonal(read: () => Promise<unknown>, post?: PersonalPost) {
+  ruleOwner.value = { actor: '7:1', key: 2, sameRevision: () => true };
+  vi.stubGlobal('crypto', webcrypto); vi.stubGlobal('TextEncoder', NodeTextEncoder);
+  apiRequest.mockImplementation(async (method: string, url: string, body: PrivateUserRuleAction) => {
+    if (method === 'GET' && url === PRIVATE_PATH) return ok({ success: true, privateRules: await read() });
+    if (method === 'POST' && url === PRIVATE_PATH && post) return post(body);
+    if (url === USER_PATH) return mine();
+    if (url === PROJECT_PATH) return ok({ data: MINE_FOR_PROJECT, meta: PROJECT_META });
+    throw new Error('Unexpected personal-rule request');
+  });
+}
+function acknowledged(action: PrivateUserRuleAction, ledger = personalLedger([PERSONAL])) {
+  ledger.receipts.push({ intentId: action.intentId, payloadSha256: createHash('sha256').update(stableStringify(action)).digest('hex'),
+    ruleId: RULE_ID, version: 1, revision: ledger.revision });
+  return { success: true, audited: true, replayed: false, intentId: action.intentId, privateRules: ledger };
+}
+const privatePosts = () => apiRequest.mock.calls.filter(([method, path]) => method === 'POST' && path === PRIVATE_PATH);
+async function newPersonalRule(level = 'standing') {
+  fireEvent.click(await screen.findByRole('button', { name: 'Add a personal rule' }));
+  const form = within(screen.getByRole('dialog', { name: 'Add personal rule' }));
+  for (const [label, value] of [['Rule name', 'Show sources first'], ['How AnA should work', PERSONAL.instructions], ['Rule topic', PERSONAL.conflictKey],
+    ['The correction behind this rule', 'You previously omitted the exact source.'], ['Reason for change', 'Keep future conclusions attributable.']]) {
+    fireEvent.change(form.getByRole('textbox', { name: label }), { target: { value } });
+  }
+  fireEvent.change(form.getByRole('combobox', { name: 'How this applies' }), { target: { value: level } });
+  return form;
+}
+afterEach(() => { vi.unstubAllGlobals(); });
+
+describe('owner-private personal rule controls', () => {
+  it('shows the real source/date/version and leaves revoked rules read-only', async () => {
+    servePersonal(async () => personalLedger([PERSONAL, { ...PERSONAL, ruleId: '30985f5e-d0bb-4c18-9f9b-34ee95de65ff', name: 'Retired preference', state: 'revoked', version: 2 }]));
+    open();
+    expect(await screen.findAllByText(PERSONAL.instructions)).toHaveLength(2);
+    expect(screen.getAllByText(/From your recorded correction/)).toHaveLength(2);
+    expect(screen.getByRole('button', { name: 'Edit Show sources first' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Edit Retired preference' })).toBeNull();
+    expect(screen.getByText(/not yet loaded into model prompts/)).toBeTruthy();
+  });
+  it('describes protected-turn use as a restriction without claiming qualification or completed model use', async () => {
+    servePersonal(async () => ({ ...personalLedger([PERSONAL]), promptUse: 'protected_turns_only' })); open();
+    expect(await screen.findByText(/Personal instructions are limited to protected conversations/)).toBeTruthy();
+    expect(screen.getByText(/AnA pauses if privacy or model approval cannot be verified/)).toBeTruthy();
+    expect(screen.queryByText(/not yet loaded into model prompts/)).toBeNull();
+  });
+  it.each([personalLedger([{ ...PERSONAL, instructions: 'FOREIGN_PRIVATE_CANARY' }]), { ...personalLedger(), receipts: undefined }])('refuses foreign or malformed personal ledgers', async candidate => {
+    const answer = candidate.rules.length ? { ...candidate, userId: 2 } : candidate;
+    servePersonal(async () => answer); open();
+    expect(await screen.findByText(/personal rules could not be read/)).toBeTruthy();
+    expect(screen.queryByText('FOREIGN_PRIVATE_CANARY')).toBeNull(); expect(screen.queryByText('No personal rules recorded.')).toBeNull();
+  });
+  it('records one typed hard rule with actual exact-payload receipt; double submit does not duplicate', async () => {
+    servePersonal(async () => personalLedger(), async action => ok(acknowledged(action)));
+    open(); const form = await newPersonalRule('hard_gate');
+    const submit = form.getByRole('button', { name: 'Record rule' }); fireEvent.click(submit); fireEvent.click(submit);
+    expect(await screen.findByText('Personal rule change recorded.')).toBeTruthy(); expect(privatePosts()).toHaveLength(1);
+    const action = privatePosts()[0][2] as PrivateUserRuleAction;
+    expect(action).toMatchObject({ action: 'create_rule', rule: { level: 'hard_gate', policyBindings: [{ toolName: 'check_dossier_consistency', enforcement: 'mandatory' }] } });
+    expect(action).not.toHaveProperty('userId'); expect(action).not.toHaveProperty('organizationId');
+    expect(Object.values(localStorage).join('')).not.toContain('You previously omitted the exact source.');
+  });
+  it('reconciles an uncertain committed save from a fresh matching intent and payload hash without resubmitting', async () => {
+    let ledger = personalLedger();
+    servePersonal(async () => ledger, async action => { ledger = acknowledged(action).privateRules; throw new Error('Lost acknowledgement'); });
+    open(); fireEvent.click((await newPersonalRule()).getByRole('button', { name: 'Record rule' }));
+    await screen.findByText(/save could not be confirmed/);
+    expect(screen.queryByRole('button', { name: 'Retry the same personal rule change' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Re-read personal rules' }));
+    expect(await screen.findByText(/change confirmed from the current ledger/)).toBeTruthy(); expect(privatePosts()).toHaveLength(1);
+  });
+  it('allows an explicit identical-intent retry only after a fresh authoritative read has no receipt', async () => {
+    let count = 0;
+    servePersonal(async () => personalLedger(), async action => { if (++count === 1) throw new Error('Unknown commit'); return ok(acknowledged(action)); });
+    open(); fireEvent.click((await newPersonalRule()).getByRole('button', { name: 'Record rule' }));
+    await screen.findByText(/save could not be confirmed/); fireEvent.click(screen.getByRole('button', { name: 'Re-read personal rules' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Retry the same personal rule change' }));
+    await screen.findByText('Personal rule change recorded.'); expect(privatePosts()).toHaveLength(2);
+    expect(privatePosts()[1][2]).toEqual(privatePosts()[0][2]);
+  });
+  it('does not soften an existing hard rule and revokes only its current saved version', async () => {
+    const hard = { ...PERSONAL, level: 'hard_gate' as const, version: 4,
+      policyBindings: [{ policyType: 'requires_approval' as const, enforcement: 'mandatory' as const, toolName: 'check_dossier_consistency', description: 'My approval is required for this check.' }] };
+    servePersonal(async () => personalLedger([hard]), async action => ok(acknowledged(action)));
+    open(); fireEvent.click(await screen.findByRole('button', { name: 'Edit Show sources first' }));
+    const form = within(screen.getByRole('dialog', { name: 'Edit personal rule' }));
+    expect((form.getByRole('option', { name: 'Preference' }) as HTMLOptionElement).disabled).toBe(true);
+    fireEvent.click(form.getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Revoke Show sources first' }));
+    const revoke = within(screen.getByRole('dialog', { name: 'Revoke personal rule' }));
+    fireEvent.change(revoke.getByRole('textbox', { name: 'Reason for change' }), { target: { value: 'I am retiring this personal rule.' } });
+    fireEvent.click(revoke.getByRole('button', { name: 'Revoke rule' })); await screen.findByText('Personal rule change recorded.');
+    expect(privatePosts()[0][2]).toMatchObject({ action: 'revoke_rule', ruleId: RULE_ID, expectedVersion: 4 });
+  });
+  it('clears cached rule content and blocks new edits after authoritative access refusal', async () => {
+    servePersonal(async () => personalLedger([PERSONAL]), async () => { throw new ApiRequestError('Unavailable', 403); });
+    open(); fireEvent.click(await screen.findByRole('button', { name: 'Revoke Show sources first' }));
+    const form = within(screen.getByRole('dialog', { name: 'Revoke personal rule' }));
+    fireEvent.change(form.getByRole('textbox', { name: 'Reason for change' }), { target: { value: 'Retire this rule after reviewing it.' } });
+    fireEvent.click(form.getByRole('button', { name: 'Revoke rule' }));
+    await screen.findByText(/change was refused/);
+    expect(screen.queryByText(PERSONAL.instructions)).toBeNull(); expect(screen.queryByRole('button', { name: 'Add a personal rule' })).toBeNull();
+  });
+  it('discards a late foreign-session response before it can display private instructions', async () => {
+    const deliveries: Array<(value: unknown) => void> = [];
+    servePersonal(() => new Promise(resolve => { deliveries.push(resolve); })); const view = open();
+    const original = deliveries[0];
+    if (!original) throw new Error('Original owner read did not start');
+    ruleOwner.value = { actor: '7:2', key: 3, sameRevision: () => true };
+    view.rerender(<WhatAnaRemembers projectRef={PROGRAM} projectName="ZX-9" onClose={onClose} />);
+    original(personalLedger([{ ...PERSONAL, instructions: 'OLD_OWNER_PRIVATE_CANARY' }]));
+    await waitFor(() => expect(screen.queryByText('OLD_OWNER_PRIVATE_CANARY')).toBeNull()); expect(privatePosts()).toHaveLength(0);
   });
 });

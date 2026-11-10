@@ -96,7 +96,7 @@ function mountPage() {
     act(() => { selectProject(pid); view.rerender(tree()); });
   } };
 }
-const composer = () => screen.getByRole('textbox', { name: /Start a conversation in/ }) as HTMLTextAreaElement;
+const composer = () => screen.getByRole('textbox', { name: 'Ask AnA about this project' }) as HTMLTextAreaElement;
 const stage = (name: string) => within(screen.getByRole('navigation', { name: 'Project lifecycle' })).getByRole('button', { name });
 const threadReads = () => request.mock.calls.filter(([, path]) => String(path).startsWith('/api/chat/threads?')).map(([, path]) => path);
 const scopedReads = () => request.mock.calls.filter(([, path]) =>

@@ -1,11 +1,16 @@
-/** Launch the repository's canonical TS verifier through its existing loader. */
+/** Launch the canonical verifier through the checkout loader or shipped Node bundle. */
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 
 export function canonicalPqClaims(repoRoot, execute = execFileSync) {
   try {
-    const stdout = execute(process.execPath, ['--import', path.join(repoRoot, 'node_modules/tsx/dist/loader.mjs'),
-      path.join(repoRoot, 'scripts/ops/verify-pq-claims.ts')], {
+    const loader = path.join(repoRoot, 'node_modules/tsx/dist/loader.mjs');
+    const source = path.join(repoRoot, 'scripts/ops/verify-pq-claims.ts');
+    const args = existsSync(loader) && existsSync(source)
+      ? ['--import', loader, source]
+      : [path.join(repoRoot, 'dist/ops/verify-pq-claims.mjs')];
+    const stdout = execute(process.execPath, args, {
       cwd: repoRoot, encoding: 'utf8', timeout: 15000, maxBuffer: 1024 * 1024,
       stdio: ['ignore', 'pipe', 'pipe'],
     });

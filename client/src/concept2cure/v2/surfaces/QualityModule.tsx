@@ -13,16 +13,41 @@
 
 import React from 'react';
 import type { SurfaceViewProps } from '../surfaceViews';
-import QualityRoute from '../../quality/QualityRoute';
+import QualityRoute, { type QualityRouteProps } from '../../quality/QualityRoute';
+import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
+import { applySurfaceAction, type SurfaceActionOutcome } from '../surfaceActions';
+import { C2CToast, useToast } from '../toast';
 import {consumeNavParams,NAV_PARAMS_EVENT} from '../navParams';
+import { keepWorkProjectBinding } from './ProjectWorkTasks';
 
 export function QualityModule({ onAsk, onNav }: SurfaceViewProps) {
-  // A training task's notice says `qmsIntent: 'read'` (MR-12 Stage 4 slice 4b): the register opens the reader, not the editor.
-  const intentOf=(params:Record<string,string>|null)=>params?.qmsIntent==='read'?'read' as const:undefined;
-  const [target,setTarget]=React.useState(()=>{const params=consumeNavParams('quality');return {id:params?.qmsDocumentId,intent:intentOf(params),request:0};});
-  React.useEffect(()=>{
-    const receive=()=>{const params=consumeNavParams('quality');if(params?.qmsDocumentId)setTarget(current=>({id:params.qmsDocumentId,intent:intentOf(params),request:current.request+1}));};
-    window.addEventListener(NAV_PARAMS_EVENT,receive);return()=>window.removeEventListener(NAV_PARAMS_EVENT,receive);
-  },[]);
-  return <QualityRoute onAskAna={onAsk} onNavigate={onNav} qmsDocumentId={target.id} qmsIntent={target.intent} qmsTargetRequest={target.request} />;
+  const [notice, notify] = useToast();
+  const intentOf = (params: Record<string,string> | null) => params?.qmsIntent === 'read' ? 'read' as const : undefined;
+  const tabOf = (params: Record<string,string> | null): QualityRouteProps['initialTab'] =>
+    params?.qmsTab && resolveSurfaceAction('quality.open-tab', { tab: params.qmsTab }).ok
+      ? params.qmsTab as QualityRouteProps['initialTab'] : undefined;
+  const [target, setTarget] = React.useState(() => {
+    const params = consumeNavParams('quality');
+    keepWorkProjectBinding(params); // P-111: a Quality work project's door binds the area (ProjectWorkTasks.tsx)
+    return { id: params?.qmsDocumentId, intent: intentOf(params), tab: tabOf(params), request: 0 };
+  });
+  React.useEffect(() => {
+    const outcome = (result: SurfaceActionOutcome) => {
+      if (result.status === 'failed' || result.status === 'unavailable') notify(result.reason, 'error');
+    };
+    const receive = () => {
+      const params = consumeNavParams('quality');
+      keepWorkProjectBinding(params);
+      if (params?.qmsDocumentId) {
+        setTarget(current => ({ ...current, id: params.qmsDocumentId, intent: intentOf(params), request: current.request + 1 }));
+      } else if (tabOf(params)) {
+        const action = resolveSurfaceAction('quality.open-tab', { tab: params!.qmsTab });
+        if (action.ok) outcome(applySurfaceAction(action.directive, onNav, outcome));
+      }
+    };
+    window.addEventListener(NAV_PARAMS_EVENT, receive);
+    return () => window.removeEventListener(NAV_PARAMS_EVENT, receive);
+  }, [onNav, notify]);
+  return <><QualityRoute onAskAna={onAsk} onNavigate={onNav} initialTab={target.tab}
+    qmsDocumentId={target.id} qmsIntent={target.intent} qmsTargetRequest={target.request} /><C2CToast msg={notice} /></>;
 }

@@ -32,6 +32,11 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
   if (typeof proto.getBoundingClientRect !== 'function') proto.getBoundingClientRect = () => ({ top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, x: 0, y: 0 } as DOMRect);
 }
 const ok = (body: unknown) => ({ ok: true, status: 200, json: async () => body }) as Response;
+/** The list as GET /api/authoring/docs answers a project read (authoring-document-read.ts): success, and each row's program_id. */
+const scopedList = (url: string, body: { success?: boolean; documents: object[] }) => {
+  const programId = new URLSearchParams(url.split('?')[1]).get('programId');
+  return programId === null ? body : { success: true, ...body, documents: body.documents.map(row => ({ program_id: programId, ...row })) };
+};
 afterEach(() => { cleanup(); authService.endSession(null); localStorage.clear(); sessionStorage.clear(); vi.unstubAllGlobals(); delete window.C2C_PROJECT; });
 const AUTHOR: AuthUser = { id: '1', organizationId: '7', organizationName: 'Synthetic sponsor',
   firstName: 'Test', lastName: 'Author', displayName: 'Author', email: 'author@example.test',
@@ -82,7 +87,7 @@ describe('current authoring lists retain their canonical session owner', () => {
     apiRequest.mockReset().mockImplementation(async (_method: string,url: string) => {
       if (url.startsWith('/api/authoring/docs?')) {
         if (++reads === 1) return { ok: true,status:200,json: () => { decoding = true; return body; } } as Response;
-        return ok({ documents: [{ ...row,title:'Replacement-session list title' }] });
+        return ok(scopedList(url, { documents: [{ ...row,title:'Replacement-session list title' }] }));
       }
       return baseRead(url);
     });
@@ -90,7 +95,7 @@ describe('current authoring lists retain their canonical session owner', () => {
     await waitFor(() => expect(decoding).toBe(true));
     act(() => { authService.endSession(null); authService.setToken('synthetic-owner-after',AUTHOR,'synthetic-refresh-after'); });
     await screen.findAllByText('Replacement-session list title');
-    await act(async () => { release({ documents: [{ ...row,title:'Old-session private list title' }] }); await body; });
+    await act(async () => { release({ success: true, documents: [{ ...row,title:'Old-session private list title',program_id: PID }] }); await body; });
     expect(document.body.textContent).not.toContain('Old-session private list title');
     expect(reads).toBe(2);
   });

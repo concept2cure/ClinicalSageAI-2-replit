@@ -151,8 +151,10 @@ export const NAV_GROUP_OF: Record<string, string> = {
  *    filter, and Home's "Your tasks", give the person's own.
  *  - Conversation: Home lists the person's recent conversations, and each
  *    project lists its own.
- * Risk-based monitoring and Biostatistics are work areas by the founder's model
- * but stay off the rail until each is in the launch catalog (Rule 2).
+ * Risk-based monitoring and Biostatistics are work areas by the founder's model. Biostatistics joined the rail on
+ * 2026-11-06, by the founder: "Our core modules are project management, Vault, CMC, biostatistics, RBM, submission
+ * center, tasking, and collaboration, and reporting … the left rail should be a navigation point for all of those
+ * entry points" (recorded in scripts/ci/one-product-baseline.json founderDecisions).
  *
  * `target` is the screen an entry opens when it is not its own id. `applies`
  * is a screen action the entry asks of that screen as it opens it, through the
@@ -171,6 +173,7 @@ export const RAIL_CORE = [
   { id: 'vault', label: 'Vault', icon: 'vault' },
   { id: 'submission-center', label: 'Submission Center', icon: 'rocket' },
   { id: 'cmc', label: 'CMC / Module 3', icon: 'beaker', group: 'work-areas' as const },
+  { id: 'biostatistics', label: 'Biostatistics', icon: 'sigma', group: 'work-areas' as const },
   { id: 'rbm', label: 'Risk-based monitoring', icon: 'activity', group: 'work-areas' as const },
   { id: 'quality', label: 'Quality', icon: 'shieldCheck', group: 'work-areas' as const },
   { id: 'insights', label: 'Reporting & analytics', icon: 'barChart', group: 'work-areas' as const },
@@ -676,7 +679,7 @@ export const SEGMENT_MODULES = {
       // characteristics — were reachable only from the two pharma segments.
       // 2026-10-29: Risk management folded into Engineering evidence (fold F1c), which this segment lists under Evidence & data.
       // 2026-10-30 (D2, fold F4): device analytics joined Reporting & analytics, a work area on every segment's rail (RAIL_CORE).
-      items: ['precedent-intelligence', 'device-postmarket', 'biostat-workbench', 'crl-library', 'global-ri', 'intelligence-catalog', 'deep-research'],
+      items: ['precedent-intelligence', 'device-postmarket', 'crl-library', 'global-ri', 'intelligence-catalog', 'deep-research'],
     },
     { label: 'Lifecycle & access', items: ['registrations', 'device-udi', 'market-access', 'change-assessment'] },
   ],
@@ -711,7 +714,7 @@ export const SEGMENT_MODULES = {
       // workbench is the surface that delivers the outcome
       // (docs/SURFACE_DECISIONS_2026-10-08.md).
       // 2026-10-29: Risk management folded into Engineering evidence (fold F1c), a device-engineering project feature.
-      items: ['precedent-intelligence', 'biostat-workbench', 'crl-library', 'global-ri', 'intelligence-catalog', 'deep-research'],
+      items: ['precedent-intelligence', 'crl-library', 'global-ri', 'intelligence-catalog', 'deep-research'],
     },
     { label: 'Lifecycle & access', items: ['registrations', 'market-access', 'change-assessment'] },
   ],
@@ -771,7 +774,6 @@ export const SEGMENT_MODULES = {
       label: 'Science & intelligence',
       items: [
         'biostatistics',
-        'biostat-workbench',
         'rbm',
         'clinical-ops',
         'safety-narrative',
@@ -816,7 +818,6 @@ export const SEGMENT_MODULES = {
       label: 'Science & intelligence',
       items: [
         'biostatistics',
-        'biostat-workbench',
         'rbm',
         'precedent-intelligence',
         'crl-library',
@@ -841,7 +842,7 @@ export const SEGMENT_MODULES = {
       // docs/SURFACE_DECISIONS_2026-10-08.md scraps as a place. That surface
       // stays listed until the change that removes it names the replacement
       // path for each of its entry points, as the working agreement requires.
-      items: ['biostatistics', 'biostat-workbench', 'global-ri', 'intelligence-catalog', 'deep-research'],
+      items: ['biostatistics', 'global-ri', 'intelligence-catalog', 'deep-research'],
     },
     { label: 'Review & govern', items: ['review', 'tasks', 'audit-trail'] },
   ],

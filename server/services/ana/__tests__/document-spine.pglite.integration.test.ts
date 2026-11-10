@@ -148,6 +148,10 @@ beforeEach(async () => {
   for (const rel of ['db/migrations/20260724_clinical_regulatory_evidence_spine.sql', 'db/migrations/20260803_document_span_lineage.sql', 'migrations/20260907_span_lineage_accepted_machine_draft.sql', 'migrations/20260908_span_lineage_machine_draft.sql']) {
     await pg.exec(fs.readFileSync(path.resolve(__dirname, '../../../../', rel), 'utf8'));
   }
+  // The review tables, from their creator on the set (and the users their keys name): P-95 Q2 (2026-11-09)
+  // has the placement step read whether a review decision is recorded on the artifact's current version.
+  await pg.exec(`CREATE TABLE IF NOT EXISTS users (id integer PRIMARY KEY, name text, email text);`);
+  await pg.exec(fs.readFileSync(path.resolve(__dirname, '../../../../', 'db/migrations/20260314_phase12_multi_user_review.sql'), 'utf8'));
   const client = { query: (sql: string, params?: unknown[]) => pg.query(sql, params) as Promise<{ rows: any[] }> };
   emitted = [];
   deps = {
@@ -241,3 +245,48 @@ describe('commitCanonicalRevision against real Postgres', () => {
     expect(act.n).toBe(1); // audit/action still recorded
   });
 });
+
+/**
+ * P-95 Q2 (2026-11-09, COORDINATION.md row 38): a move voids review decisions,
+ * as an edit does. The spine's placement step (setPlacementTx) moves the
+ * version on when the section changes and a decision is recorded on the
+ * artifact's current version; not otherwise.
+ */
+describe('setPlacementTx: a move voids review, as an edit does (P-95 Q2)', () => {
+  const ORG = 3;
+  async function artifactWithDecision(section: string, versionReviewed: number) {
+    await pg.exec(`INSERT INTO users (id, name, email) VALUES (51, 'Rae Reviewer', 'r@x.test'), (52, 'Ada Author', 'a@x.test') ON CONFLICT DO NOTHING;`);
+    const { rows } = await pg.query<{ id: number }>(
+      `INSERT INTO concept2cure_artifacts (artifact_id, project_id, organization_id, type, category, title, content, version, status, ctd_section, created_by_id)
+       VALUES ('art_moved', 21, $1, 'regulatory_document', 'document', 'Clinical overview', 'body', 2, 'review', $2, 52) RETURNING id`,
+      [ORG, section],
+    );
+    const pk = rows[0].id;
+    await pg.query(
+      `WITH a AS (INSERT INTO concept2cure_review_assignments (assignment_id, artifact_id, organization_id, reviewer_id, assigned_by_id, status)
+                  VALUES ('asg_moved', $1, $2, 51, 52, 'completed') RETURNING id)
+       INSERT INTO concept2cure_review_decisions (decision_id, assignment_id, artifact_id, organization_id, reviewer_id, review_round, decision, version_reviewed)
+       SELECT 'dec_moved', a.id, $1, $2, 51, 1, 'approve', $3 FROM a`,
+      [pk, ORG, versionReviewed],
+    );
+    return pk;
+  }
+  const client = () => ({ query: (sql: string, params?: unknown[]) => pg.query(sql, params) as Promise<{ rows: any[] }> });
+  const versionOf = async (pk: number) => Number(((await pg.query(`SELECT version FROM concept2cure_artifacts WHERE id = $1`, [pk])).rows[0] as { version: number }).version);
+
+  it('a move with a decision on the current version moves the version on', async () => {
+    const pk = await artifactWithDecision('2.5', 2);
+    expect(await defaultSpineDeps().setPlacementTx(client() as never, pk, ORG, '2.7.3')).toBe('2.7.3');
+    expect(await versionOf(pk)).toBe(3);
+  });
+
+  it('the same section, or decisions only on an earlier version, leave the version as it is', async () => {
+    const pk = await artifactWithDecision('2.5', 1);
+    await defaultSpineDeps().setPlacementTx(client() as never, pk, ORG, '2.7.3');
+    expect(await versionOf(pk)).toBe(2);
+    await pg.query(`UPDATE concept2cure_review_decisions SET version_reviewed = 2`);
+    await defaultSpineDeps().setPlacementTx(client() as never, pk, ORG, '2.7.3');
+    expect(await versionOf(pk)).toBe(2);
+  });
+});
+

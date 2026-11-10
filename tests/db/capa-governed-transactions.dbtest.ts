@@ -277,6 +277,45 @@ describe('native CAPA authority and governed writes', () => {
     expect(await snapshot()).toEqual(before);
   });
 
+});
+
+describe('native CAPA closure prerequisites and programme boundaries', () => {
+  it('enforces action evidence and effective closure prerequisites through the authenticated canonical route', async () => {
+    const id = expectCommitted(await call('/capa', capaBody()), 201);
+    expectCommitted(await call(`/capa/${id}/transition`, { to: 'investigation' }));
+    const action = expectCommitted(await call(`/capa/${id}/actions`, { type: 'corrective', description: `${TAG}-closure` }), 201);
+    expectCommitted(await call(`/capa/actions/${action}/transition`, { to: 'in_progress' }));
+    expectCommitted(await call(`/capa/${id}/transition`, { to: 'action_planned' }));
+    let before = await snapshot();
+    for (const [path, body] of [
+      [`/capa/${id}/transition`, { to: 'action_implemented' }],
+      [`/capa/actions/${action}/transition`, { to: 'done' }],
+    ] as const) {
+      const response = await call(path, body);
+      expect(response.status, JSON.stringify(response.body)).toBe(422);
+      expect(response.body.meta).toBeUndefined();
+      expect(await snapshot()).toEqual(before);
+    }
+    expectCommitted(await call(`/capa/actions/${action}/transition`, { to: 'done', evidenceRefs: [{ kind: 'reference', label: `${TAG}-training` }] }));
+    expectCommitted(await call(`/capa/${id}/transition`, { to: 'action_implemented' }));
+    expectCommitted(await call(`/capa/${id}/transition`, { to: 'effectiveness_check' }));
+    before = await snapshot();
+    for (const result of [null, {}, { outcome: 'not_effective', narrative: 'Criterion failed.' }]) {
+      const response = await call(`/capa/${id}/transition`, { to: 'closed_effective', effectivenessCheckResult: result });
+      expect(response.status, JSON.stringify(response.body)).toBe(422);
+      expect(response.body.meta).toBeUndefined();
+      expect(await snapshot()).toEqual(before);
+    }
+    const result = { outcome: 'effective', narrative: 'No recurrence in the assessed batches.' };
+    const closed = await call(`/capa/${id}/transition`, { to: 'closed_effective', effectivenessCheckResult: result, actor: String(otherUser) });
+    expectCommitted(closed);
+    expect(closed.body).toMatchObject({ state: 'closed_effective', closedBy: String(userId), effectivenessCheckResult: result });
+    before = await snapshot();
+    const late = await call(`/capa/${id}/actions`, { type: 'corrective', description: 'An action after closure' });
+    expect(late.status, JSON.stringify(late.body)).toBe(422);
+    expect(await snapshot()).toEqual(before);
+  });
+
   it('refuses an MDR backlink to another accessible programme without changing either complaint or the proposed MDR', async () => {
     const otherComplaint = expectCommitted(await call('/complaints', complaintBody(uniqueAnchorProgram)), 201);
     const before = await snapshot();

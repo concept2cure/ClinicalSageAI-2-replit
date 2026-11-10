@@ -65,8 +65,46 @@ export interface AdaptivePlan {
   decisions?: AdaptiveDecisionRow[];
 }
 
+/**
+ * The server's answer for one plan, which nests the plan's own fields.
+ *
+ * `GET /api/biostat/adaptive/:planId` returns
+ * `{ plan: {...}, snapshots, decisions, reports }`. This module typed those
+ * fields at the top level until 2026-11-09, so `title`, `designType`,
+ * `spendingFunction`, `maxSampleSize` and even `id` were all undefined against
+ * a real server: the panel's header read "Plan undefined" and "design type not
+ * recorded" while the interim looks beside it were right, because `snapshots`
+ * is top-level. Found by seeding a plan and reading it back — the panel's own
+ * suite had answered with the shape this file declared, so it agreed with
+ * itself.
+ */
+interface AdaptivePlanEnvelope {
+  plan?: Partial<AdaptivePlan> & { id?: number };
+  snapshots?: InterimSnapshot[];
+  decisions?: AdaptiveDecisionRow[];
+}
+
+/** Flatten the envelope into the shape the panel renders. */
+function planOf(envelope: AdaptivePlanEnvelope, planId: number): AdaptivePlan {
+  const p = envelope.plan ?? {};
+  return {
+    ...p,
+    /* The id the caller asked for, when the row does not carry one: the panel
+       titles an unnamed plan "Plan <id>", and "Plan undefined" is worse than a
+       number the person just typed. */
+    id: typeof p.id === 'number' ? p.id : planId,
+    title: p.title ?? null,
+    designType: p.designType ?? null,
+    spendingFunction: p.spendingFunction ?? null,
+    maxSampleSize: p.maxSampleSize ?? null,
+    snapshots: envelope.snapshots ?? [],
+    decisions: envelope.decisions ?? [],
+  };
+}
+
 export const adaptiveApi = {
-  plan: (planId: number) => readOne<AdaptivePlan>('GET', `/api/biostat/adaptive/${planId}`),
+  plan: async (planId: number) =>
+    planOf(await readOne<AdaptivePlanEnvelope>('GET', `/api/biostat/adaptive/${planId}`), planId),
   operatingCharacteristics: (planId: number) =>
     readOne<Record<string, unknown>>('GET', `/api/biostat/adaptive/${planId}/operating-characteristics`),
   idmcReport: (planId: number, lookNumber: number) =>

@@ -1,0 +1,232 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/c2c/__tests__/add-project-market.pglite.test.ts
+{
+  "timestamp": "2026-11-08T17:10:04.660Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T17:10:04.661Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/c2c/__tests__/add-project-market.pglite.test.ts
+{
+  "timestamp": "2026-11-08T17:10:04.661Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/services/c2c/__tests__/add-project-market.pglite.test.ts
+[database] Database connection successful
+
+stderr | server/services/c2c/__tests__/add-project-market.pglite.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/services/c2c/__tests__/add-project-market.pglite.test.ts
+{
+  "timestamp": "2026-11-08T17:10:04.914Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+ × server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > adds an offered EU market even when this program has the same application type in another region 29ms
+   → This project already files MAA with EMA. Nothing was added.
+ × server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > reuses an existing eu region alias only for that market 21ms
+   → expected { id: 3, created: false } to deeply equal { id: 2, created: false }
+ × server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > reuses an existing EU region alias only for that market 13ms
+   → expected { id: 5, created: false } to deeply equal { id: 4, created: false }
+ × server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > reuses an existing ema region alias only for that market 10ms
+   → expected { id: 7, created: false } to deeply equal { id: 6, created: false }
+ × server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > reuses an existing EMA region alias only for that market 8ms
+   → expected { id: 9, created: false } to deeply equal { id: 8, created: false }
+ × server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > keeps separately created EU and UK clinical application spines on the same program 12ms
+   → expected false to be true // Object.is equality
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a known 510k home pathway with an inconsistent medicinal product before any write 16ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a known pma home pathway with an inconsistent medicinal product before any write 17ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a known de_novo home pathway with an inconsistent medicinal product before any write 13ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a known ide home pathway with an inconsistent medicinal product before any write 12ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a known mdr home pathway with an inconsistent medicinal product before any write 14ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a known ivdr home pathway with an inconsistent medicinal product before any write 13ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a known cer home pathway with an inconsistent medicinal product before any write 14ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a known device home pathway with an inconsistent medicinal product before any write 13ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a known ivd home pathway with an inconsistent medicinal product before any write 15ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses 'hde' as a medicinal added market before any write 14ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses 'mdl' as a medicinal added market before any write 13ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses 'ivd_licence' as a medicinal added market before any write 14ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses 'shonin' as a medicinal added market before any write 15ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses 'ninsho' as a medicinal added market before any write 15ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses 'todokede' as a medicinal added market before any write 13ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses 'ivd_approval' as a medicinal added market before any write 13ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses 'jp_cdx' as a medicinal added market before any write 14ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses an inconsistent saved 'hde' home class before any write 14ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses an inconsistent saved 'mdl' home class before any write 13ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses an inconsistent saved 'ivd_licence' home class before any write 15ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses an inconsistent saved 'shonin' home class before any write 14ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses an inconsistent saved 'ninsho' home class before any write 14ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses an inconsistent saved 'todokede' home class before any write 14ms
+stderr | server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > adds EMA's MAA to an NDA project: its Module 1 and 3.2.R, an EU submission, the market, a governed action
+[audit/chain] audit_logs.chain_seq is absent in this test fixture; using the pre-fix (occurred_at, id) order. Apply migrations/20260921_audit_logs_chain_seq.sql to the fixture.
+
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses an inconsistent saved 'ivd_approval' home class before any write 14ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses an inconsistent saved 'jp_cdx' home class before any write 14ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > adds EMA's MAA to an NDA project: its Module 1 and 3.2.R, an EU submission, the market, a governed action 38ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > the home filing is still the one an authored section binds to 28ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > a newer market document of the home filing's own class never takes the home binding 10ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > the project's own market with no submission yet gets its submission, and no second document 22ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > a project with no filing of its own is refused, so the market never becomes its only document 11ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > a repeat is refused (409), and nothing more is written 28ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a UK IND (the UK has no IND) with 422, says why, and writes nothing 10ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses Health Canada (no outline) with 422, says why, and writes nothing 11ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a device project with 422, says why, and writes nothing 7ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a supplement market on an NDA project with 422, says why, and writes nothing 7ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses a clinical study report market on an NDA project with 422, says why, and writes nothing 7ms
+ ✓ server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > refuses an application market on a project that is a document class (a PAS) with 422, says why, and writes nothing 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > adds an offered EU market even when this program has the same application type in another region
+AddMarketRefusal: This project already files MAA with EMA. Nothing was added.
+ ❯ existingDocument server/services/c2c/add-project-market.ts:179:11
+    177|   }
+    178|   if (sub.rows.length > 0 || found?.filing_scope === 'market') {
+    179|     throw new AddMarketRefusal(409, 'MARKET_EXISTS',
+       |           ^
+    180|       `This project already files ${input.applicationType.toUpperCase(…
+    181|   }
+ ❯ addProjectMarket server/services/c2c/add-project-market.ts:189:26
+ ❯ add server/services/c2c/__tests__/add-project-market.pglite.test.ts:99:17
+ ❯ server/services/c2c/__tests__/add-project-market.pglite.test.ts:130:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { status: 409, code: 'MARKET_EXISTS' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > reuses an existing eu region alias only for that market
+AssertionError: expected { id: 3, created: false } to deeply equal { id: 2, created: false }
+
+- Expected
++ Received
+
+  {
+    "created": false,
+-   "id": 2,
++   "id": 3,
+  }
+
+ ❯ server/services/c2c/__tests__/add-project-market.pglite.test.ts:150:19
+    148|         programId: NDA, name: 'Replay', productName: 'Vorelinib', appl…
+    149|         productType: 'drug', primaryAgency: 'EMA' });
+    150|       expect(out).toEqual({ id: Number(existing.id), created: false });
+       |                   ^
+    151|       expect(await count('SELECT count(*) AS n FROM submissions WHERE …
+    152|     } finally { client.release(); }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > reuses an existing EU region alias only for that market
+AssertionError: expected { id: 5, created: false } to deeply equal { id: 4, created: false }
+
+- Expected
++ Received
+
+  {
+    "created": false,
+-   "id": 4,
++   "id": 5,
+  }
+
+ ❯ server/services/c2c/__tests__/add-project-market.pglite.test.ts:150:19
+    148|         programId: NDA, name: 'Replay', productName: 'Vorelinib', appl…
+    149|         productType: 'drug', primaryAgency: 'EMA' });
+    150|       expect(out).toEqual({ id: Number(existing.id), created: false });
+       |                   ^
+    151|       expect(await count('SELECT count(*) AS n FROM submissions WHERE …
+    152|     } finally { client.release(); }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > reuses an existing ema region alias only for that market
+AssertionError: expected { id: 7, created: false } to deeply equal { id: 6, created: false }
+
+- Expected
++ Received
+
+  {
+    "created": false,
+-   "id": 6,
++   "id": 7,
+  }
+
+ ❯ server/services/c2c/__tests__/add-project-market.pglite.test.ts:150:19
+    148|         programId: NDA, name: 'Replay', productName: 'Vorelinib', appl…
+    149|         productType: 'drug', primaryAgency: 'EMA' });
+    150|       expect(out).toEqual({ id: Number(existing.id), created: false });
+       |                   ^
+    151|       expect(await count('SELECT count(*) AS n FROM submissions WHERE …
+    152|     } finally { client.release(); }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > reuses an existing EMA region alias only for that market
+AssertionError: expected { id: 9, created: false } to deeply equal { id: 8, created: false }
+
+- Expected
++ Received
+
+  {
+    "created": false,
+-   "id": 8,
++   "id": 9,
+  }
+
+ ❯ server/services/c2c/__tests__/add-project-market.pglite.test.ts:150:19
+    148|         programId: NDA, name: 'Replay', productName: 'Vorelinib', appl…
+    149|         productType: 'drug', primaryAgency: 'EMA' });
+    150|       expect(out).toEqual({ id: Number(existing.id), created: false });
+       |                   ^
+    151|       expect(await count('SELECT count(*) AS n FROM submissions WHERE …
+    152|     } finally { client.release(); }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  server/services/c2c/__tests__/add-project-market.pglite.test.ts > add a market (F22) > keeps separately created EU and UK clinical application spines on the same program
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/c2c/__tests__/add-project-market.pglite.test.ts:162:26
+    160|       const eu = await ensureSubmissionSpine({ ...base, primaryAgency:…
+    161|       const uk = await ensureSubmissionSpine({ ...base, primaryAgency:…
+    162|       expect(uk.created).toBe(true);
+       |                          ^
+    163|       expect(uk.id).not.toBe(eu.id);
+    164|       expect(await rows('SELECT primary_region FROM submissions WHERE …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 37 passed (43)
+   Start at  09:10:02
+   Duration  6.56s (transform 2.37s, setup 71ms, import 3.71s, tests 2.50s, environment 0ms)
+

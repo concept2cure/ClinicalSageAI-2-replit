@@ -15,6 +15,7 @@ import { mockPool } from '../../../../tests/setup';
 // instrumented pool too (writing-precision-gate, 8d919b1f8).
 const { ALL_ANA_TOOLS } = await import('../AnaToolDefinitions.js');
 const { getToolHandler } = await import('../AnaToolExecutor.js');
+const { syntheticCurrentPolicyQuery } = await import('./support/source-read-tool-fixture.js');
 
 const names = ALL_ANA_TOOLS.map(t => t.name);
 
@@ -25,7 +26,6 @@ describe('deepening tools — registration', () => {
     'list_cmc_registers',
     'estimate_recorded_shelf_life',
     'get_submission_readiness_twin',
-    'assess_benefit_risk',
     'assess_recorded_stability_trend',
     'assess_recorded_process_capability',
   ])('%s is defined and registered', (name) => {
@@ -83,22 +83,6 @@ describe('assess_batch_poolability', () => {
   });
   it('requires ≥2 batches', async () => {
     const out = JSON.parse(await getToolHandler('assess_batch_poolability')!({ batches: [{ batchId: 'A', data: [{ time: 0, value: 1 }, { time: 1, value: 1 }, { time: 2, value: 1 }] }], specLimit: 0, direction: 'decreasing' }));
-    expect(out.status).toBe('needs_parameters');
-  });
-});
-
-describe('assess_benefit_risk', () => {
-  it('computes a structured benefit-risk result', async () => {
-    const out = JSON.parse(await getToolHandler('assess_benefit_risk')!({
-      benefits: [{ name: 'Efficacy', weight: 3, score: 80 }],
-      risks: [{ name: 'AEs', weight: 1, score: 30 }],
-    }));
-    expect(out.status).toBe('computed');
-    expect(out.result.favorability).toBe('favorable');
-    expect(out.result.disclaimer).toMatch(/decision aid/i);
-  });
-  it('validates inputs', async () => {
-    const out = JSON.parse(await getToolHandler('assess_benefit_risk')!({ benefits: [], risks: [{ name: 'R', weight: 1, score: 1 }] }));
     expect(out.status).toBe('needs_parameters');
   });
 });
@@ -391,9 +375,12 @@ describe('assess_recorded_process_capability', () => {
   const call = (input: Record<string, unknown>, ctx?: Record<string, unknown>) => {
     const run = () => getToolHandler('assess_recorded_process_capability')!(input, ctx as never);
     const org = ctx?.organizationId;
+    // With the verified account where the context names a member, as a request's scope carries it: since
+    // a2f9264a the standing-rule gate reads that member's private rules only for the verified owner.
+    const accountId = ctx?.userId == null ? {} : { accountId: Number(ctx.userId) };
     return org == null
       ? run()
-      : runWithTenantScope({ tenantId: String(org), source: 'test', caller: 'tool:assess_recorded_process_capability' }, run);
+      : runWithTenantScope({ tenantId: String(org), ...accountId, source: 'test', caller: 'tool:assess_recorded_process_capability' }, run);
   };
 
   it('refuses without an organization', async () => {
@@ -413,12 +400,16 @@ describe('assess_recorded_process_capability', () => {
        recorded" about a register it never opened while the open program's
        batches sat unexamined. The refusal below names the project it actually
        tried to read, which is how this is observable at all. */
+    const programId = '10000000-0000-4000-8000-000000000001';
+    // Current project access and an empty standing-rule set are premises of
+    // this handler-priority test; an invalid placeholder is refused earlier.
+    const sqlClient = { query: syntheticCurrentPolicyQuery };
     const out = JSON.parse(String(await call(
       { project_id: 'BX-701' },
-      { organizationId: 999999, projectRef: 'the-open-program' },
+      { organizationId: 999999, userId: 3, projectRef: programId, sqlClient },
     )));
     expect(out.status).toBe('not_found');
-    expect(out.message).toContain('the-open-program');
+    expect(out.message).toContain(programId);
     expect(out.message).not.toContain('BX-701');
   });
 

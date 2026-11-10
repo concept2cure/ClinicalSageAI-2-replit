@@ -1,0 +1,97 @@
+# S5d biosimilar green: the red test and the one-home guard, after the change.
+
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six biosimilar tools keep their stated results > 'assess_analytical_similarity_biosimil…' reaches its engine with a stated basis 7ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six biosimilar tools keep their stated results > 'design_biosimilar_clinical' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six biosimilar tools keep their stated results > 'assess_indication_extrapolation' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six biosimilar tools keep their stated results > 'assess_interchangeability' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six biosimilar tools keep their stated results > 'plan_biosimilar_ip_strategy' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six biosimilar tools keep their stated results > 'assess_biosimilar_cmc' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > assess_interchangeability keeps each boolean answer as stated > biosimilarityEstablished reads not_stated when omitted or null, and is refused when malformed 4ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > assess_interchangeability keeps each boolean answer as stated > switchingStudyDataAvailable reads not_stated when omitted or null, and is refused when malformed 3ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'assess_analytical_similarity_biosimil…' refuses 'productType' (case 1) 1ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'assess_analytical_similarity_biosimil…' refuses 'criticalQualityAttributes' (case 2) 1ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'assess_analytical_similarity_biosimil…' refuses 'analyticalMethodsUsed' (case 3) 1ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'design_biosimilar_clinical' refuses 'productType' (case 4) 1ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'design_biosimilar_clinical' refuses 'referenceProduct' (case 5) 1ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'design_biosimilar_clinical' refuses 'pkComplexity' (case 6) 1ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'design_biosimilar_clinical' refuses 'immunogenicityRisk' (case 7) 1ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'assess_indication_extrapolation' refuses 'referenceProductIndications' (case 8) 1ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'assess_indication_extrapolation' refuses 'mechanismOfActionPerIndication' (case 9) 1ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'assess_indication_extrapolation' refuses 'mechanismOfActionPerIndication' (case 10) 1ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'assess_indication_extrapolation' refuses 'targetReceptorPerIndication' (case 11) 1ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'assess_indication_extrapolation' refuses 'clinicalStudyIndication' (case 12) 0ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'assess_interchangeability' refuses 'dosingFrequency' (case 13) 1ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'plan_biosimilar_ip_strategy' refuses 'market' (case 14) 0ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'plan_biosimilar_ip_strategy' refuses 'referenceProductName' (case 15) 1ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'assess_biosimilar_cmc' refuses 'expressionSystem' (case 16) 1ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'assess_biosimilar_cmc' refuses 'productionScale' (case 17) 1ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a malformed enum, list, map or text is refused by field, never read > 'assess_biosimilar_cmc' refuses 'analyticalCapability' (case 18) 1ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'assess_analytical_similarity_biosimil…' asks for 'productType' (case 1) 1ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'design_biosimilar_clinical' asks for 'referenceProduct' (case 2) 1ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'assess_indication_extrapolation' asks for 'clinicalStudyIndication' (case 3) 1ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'assess_interchangeability' asks for 'dosingFrequency' (case 4) 0ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'plan_biosimilar_ip_strategy' asks for 'referenceProductName' (case 5) 0ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'assess_biosimilar_cmc' asks for 'expressionSystem' (case 6) 1ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > assess_indication_extrapolation compares only what was stated for both indications > leaves an indication with nothing stated not assessed, and names the facts 1ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > assess_indication_extrapolation compares only what was stated for both indications > does not read an omitted target as the same target 1ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > assess_interchangeability calls nothing met or unmet that was not stated > leaves eligibility null while a requirement is unstated and none is false 0ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > assess_interchangeability calls nothing met or unmet that was not stated > is false once a requirement is stated false, and says where the clinical-result answer comes from 1ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > assess_analytical_similarity_biosimilar says when it falls back to a full list > names an unmatched attribute or method list 1ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'assess_analytical_similarity_biosimil…' 0ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'design_biosimilar_clinical' 0ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'assess_indication_extrapolation' 0ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'assess_interchangeability' 0ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'plan_biosimilar_ip_strategy' 0ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'assess_biosimilar_cmc' 0ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > keeps the interchangeability requirements optional and three-valued, and names the inputs no function reads 1ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > keeps assess_analytical_similarity_biosimilar among the tools selected for "Assign CQA tiers for our adalimumab biosimilar analytical similarity" 7ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > keeps design_biosimilar_clinical among the tools selected for "Design the clinical program for our trastuzumab biosimilar" 8ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > keeps assess_indication_extrapolation among the tools selected for "Justify extrapolation of indications for our infliximab biosimilar" 3ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > keeps assess_interchangeability among the tools selected for "Do we need a switching study for interchangeability?" 4ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > keeps plan_biosimilar_ip_strategy among the tools selected for "Walk me through the BPCIA patent dance for our Humira biosimilar" 4ms
+ ✓ server/services/ana/__tests__/biosimilar-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > keeps assess_biosimilar_cmc among the tools selected for "Plan the CMC development strategy for a biosimilar of Herceptin" 4ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > no other module under server/services defines one of them by name 1354ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > the home defines all twelve 1ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > unstated is true only for an omitted or null value 1ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(true, true) is true 1ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(true, false) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(true, undefined) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(true, null) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(false, true) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(false, false) is false 1ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(false, undefined) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(false, null) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(undefined, true) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(undefined, false) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(undefined, undefined) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(undefined, null) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(null, true) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(null, false) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(null, undefined) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf(null, null) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(true, true) is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(true, false) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(true, undefined) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(true, null) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(false, true) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(false, false) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(false, undefined) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(false, null) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(undefined, true) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(undefined, false) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(undefined, undefined) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(undefined, null) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(null, true) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(null, false) is false 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(null, undefined) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > allOf(null, null) is undefined 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > anyOf of nothing is false and allOf of nothing is true 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > uniqueStrings keeps first-seen order 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > everyAnswer keeps each stated fact and tries both answers for each unstated one 1ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > listed joins prose as "a", "a and b", "a, b and c" 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > oneOfInput and textInput are refuseUnlessStated checks for a vocabulary and for non-empty text 1ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > statedText keeps a stated value, leaves an omitted or null one unstated, and refuses anything else by field 1ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > statedList keeps a stated value, leaves an omitted or null one unstated, and refuses anything else by field 0ms
+ ✓ server/services/immunogenicity/__tests__/s5-three-valued-helpers-have-one-home.test.ts > the S5 three-valued helpers have one home > conclusions lists the distinct conclusions, and decidingFacts the unstated facts that change one 1ms
+ Test Files  2 passed (2)
+      Tests  93 passed (93)

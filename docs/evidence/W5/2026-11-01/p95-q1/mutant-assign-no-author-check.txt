@@ -1,0 +1,8 @@
+# Mutant: POST …/reviewers assigns a version writer
+# in server/routes/c2c/artifacts.ts
+# - if (writers.length > 0) return sendError
+# + if (false && writers.length > 0) return sendError
+
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q1: the reviewer is neither the approving signer nor an author > a reviewer who wrote a version is not assigned (400), and cannot decide once they have written one (403) 22ms
+ Test Files  1 failed | 2 passed (3)
+      Tests  1 failed | 166 passed (167)

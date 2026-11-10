@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "package": "F1",
+  "launchRow": "D2",
+  "kind": "e5 P104 and CSR frontend compatibility",
+  "incomingCommit": "e5a1536fa0f94a609f93a9871bd579446854330c",
+  "reviewBase": "f6127e72231bd9e9f302f596a672f58b1b40db15",
+  "headAtTestStart": "6cd96537dd5ca7828461844aca6bfd61d64d392c",
+  "mergeHeadAtTestStart": "e5a1536fa0f94a609f93a9871bd579446854330c",
+  "unresolvedPathsAtTestStart": [
+    "scripts/ci/lib/approved-sql-predicates.mjs",
+    "server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts",
+    "server/services/ai-gateway/gateway.ts",
+    "server/services/ai-gateway/providers/clients.ts"
+  ],
+  "testSourceBasis": "Cleanly merged/staged frontend inputs, independent of the four unresolved server SDK/SQL paths. Exact selected files, rather than the pre-merge HEAD alone, define the tested source.",
+  "headAtPackaging": "6cd96537dd5ca7828461844aca6bfd61d64d392c",
+  "mergeHeadAtPackaging": "e5a1536fa0f94a609f93a9871bd579446854330c",
+  "unresolvedPathsAtPackaging": [
+    "scripts/ci/lib/approved-sql-predicates.mjs",
+    "server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts",
+    "server/services/ai-gateway/gateway.ts",
+    "server/services/ai-gateway/providers/clients.ts"
+  ],
+  "finalMergeBridge": {
+    "commit": "d6cb7f9a9e10e20fea8daa97408c41c78b3b0942",
+    "tree": "1f6e50c839cb9bee0df14e04fa15c81fa2f5bc25",
+    "allSelectedInputsMatch": true,
+    "selectedInputsVerified": 29,
+    "workingInputsAlsoMatch": true,
+    "mergeConflictsResolved": true,
+    "verifiedAtUtc": "2026-11-06T22:17:49.323649+00:00",
+    "method": "Compare retained SHA-256, Git blob and byte count for each of the 29 selected tested inputs against committed HEAD and current working bytes. No tests rerun."
+  },
+  "packagedAtUtc": "2026-11-06T22:14:28.732752+00:00",
+  "workdir": "/workspace/ClinicalSageAI-2-replit",
+  "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --maxWorkers=1 --fileParallelism=false client/src/concept2cure/v2/__tests__/authoringPeerReviewTransport.test.ts client/src/concept2cure/v2/__tests__/reviewDecisionBinding.test.tsx client/src/concept2cure/v2/__tests__/reviewDecisionCsrEvidence.test.tsx client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx client/src/concept2cure/v2/__tests__/adminSettingsGoverned.test.tsx client/src/concept2cure/v2/__tests__/adminSkills.test.tsx client/src/concept2cure/v2/__tests__/csrNarrativeBuild.test.tsx client/src/concept2cure/v2/__tests__/csrBuildProgress.test.tsx",
+  "exitCode": 0,
+  "suitesPassed": 8,
+  "testsPassed": 197,
+  "durationSeconds": 46.04,
+  "log": {
+    "path": "tests.log",
+    "sha256": "22fb9f4211179c57838ca95adcc82bdbc06757ad848ab6b85e2c617c47b84bbd",
+    "bytes": 45194,
+    "originalSha256": "22fb9f4211179c57838ca95adcc82bdbc06757ad848ab6b85e2c617c47b84bbd",
+    "originalBytes": 45194,
+    "originalLines": 388,
+    "gzipMtime": null
+  },
+  "selectedInputs": 29,
+  "selectedInputsUnchanged": true,
+  "inputManifests": [
+    {
+      "path": "before.json",
+      "sha256": "07a5ba7989171c5de1db0db6e0f2f02c269d57d3a5d5d442ef536d0af389fc9a"
+    },
+    {
+      "path": "after.json",
+      "sha256": "e968e0116ba54fd1ba20ca366d08bab10d6b3e41a9c0baa5793faea1dcbdfcf0"
+    }
+  ],
+  "reviewFindings": [
+    "Independent saved-document checks are explicitly not semantic/scientific approval; semanticVerified is fixed false in the contract.",
+    "Finding decisions bind current server receipt and saved snapshot; current hard findings cannot be waived by disagreement, and CSR scientific review remains separately required.",
+    "Review mutations share synchronous locks, generation fences, current actor checks and explicit reload after uncertain outcomes.",
+    "Shared skill administration exposes tenant/project scope, not private user scope. Sourced rules use exact versions, explicit conflict/revocation actions and cannot silently lower mandatory approval.",
+    "Correction source text is omitted from ordinary method test/design payloads; stale skill target/session forms retire.",
+    "Administration verifies exact derivative payload bytes, hash/version and fresh current session before human attestation; the AnA handoff contains fixed intent and candidate/project references only.",
+    "CSR narrative polling applies received progress while later requests wait, preserves newer completion/errors over late older replies, and retires prior job readers."
+  ],
+  "productionEdits": false,
+  "testEdits": false,
+  "gitMutations": false,
+  "realCredentialsUsed": false,
+  "providerRequestsPerformed": false,
+  "limits": "Mocked component/transport qualification with selected pins, not an exhaustive transitive dependency inventory. The selected frontend inputs are bridged to the completed merge; server SDK/SQL resolution and its runtime qualification remain separate. No live IQ/OQ, real model qualification, private-profile backend/RLS acceptance, agency delivery, browser acceptance or full P104 acceptance is claimed. No broad editor/Vault 313-test rerun, compiler or lint run was performed.",
+  "finalMergeBridgeRecord": "final-merge-bridge.json"
+}

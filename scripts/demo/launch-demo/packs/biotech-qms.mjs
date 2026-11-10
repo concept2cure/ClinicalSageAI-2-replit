@@ -5,7 +5,7 @@
  * SOP-002, and personal acknowledgement readiness on SOP-001. A deviation register is
  * not a QMS API capability; that is recorded as a finding, not simulated.
  */
-import { must, fillQmsSections } from '../lib.mjs';
+import { must, fillQmsSections, sendQmsForReview } from '../lib.mjs';
 import { CHANGE, PROVENANCE, SOPS, T, findDemoByTitle, inDays, today } from './biotech-content.mjs';
 import { NOT_EXECUTED_NO_SIGNER, asArray } from './biotech-shared.mjs';
 
@@ -34,15 +34,18 @@ async function settleStatus(ctx, sop, doc, d) {
     } else if (!signer) {
       d.approval = NOT_EXECUTED_NO_SIGNER;
       run.note(`QMS approval of ${sop.docNumber}: ${NOT_EXECUTED_NO_SIGNER}`);
-    } else await approveAsSigner(ctx, sop, doc, d);
+    } else {
+      // A draft is approved only once it is under review, routed to its approver (lib.mjs sendQmsForReview).
+      await sendQmsForReview(api, doc, signer, { reason: 'Demo: send for approval by the second signer', approvalDueDate: inDays(14) });
+      await approveAsSigner(ctx, sop, doc, d);
+    }
   } else if (sop.target === 'in_review') {
     if (doc.status !== 'draft') tally.found('qms-status-change');
     else if (!signer) {
       // Review names an approver who is not the author (REVIEW_ROUTE_REQUIRED, two-person rule).
       d.status = `draft — review ${NOT_EXECUTED_NO_SIGNER}`;
     } else {
-      const p = must(await api('PATCH', `/api/mdx/qms/documents/${doc.id}`, { status: 'in_review', reason: 'Demo: send for independent review' }), 200, `route ${sop.docNumber} for review`);
-      d.status = p.data?.status ?? 'in_review';
+      d.status = await sendQmsForReview(api, doc, signer, { reason: 'Demo: send for independent review', approvalDueDate: inDays(14) });
       tally.created('qms-status-change');
     }
   }

@@ -11,6 +11,7 @@
  *   - a malformed id is refused (422); without `program_id` each list is as before.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import type request from 'supertest';
 import {
   A, TAG, call, orgA, orgB, owner, programId,
   provisionTrainingAssignmentFixture, teardownTrainingAssignmentFixture,
@@ -77,4 +78,94 @@ describe('a project’s quality records, by project', () => {
       expect((await call(A.admin, 'get', `${path}?program_id=not-a-project`)).status, path).toBe(422);
     }
   });
+});
+
+/** Two actual connections, with the real HTTP writer waiting in PostgreSQL.
+ * The fixture starts at verification to isolate closure concurrency; it does
+ * not claim to have executed a signed change approval in these cases. */
+describe('native change closure and concurrent work', () => {
+  let sequence = 0;
+  async function verification() {
+    const response = await call(A.admin, 'post', '/changes', {
+      changeNumber: `${TAG}-CLOSE-${++sequence}`, title: 'Invented native closure concurrency record', programId,
+    });
+    expect(response.status, JSON.stringify(response.body)).toBe(201);
+    const id = Number(response.body.data.id);
+    await owner.query("UPDATE qms_change_controls SET status='verification', implemented_at=now() WHERE id=$1 AND organization_id=$2", [id, orgA.id]);
+    return id;
+  }
+  const closure = (id: number) => call(A.admin, 'post', `/changes/${id}/transition`, {
+    to: 'closed', effectivenessReview: 'The retained synthetic acceptance criteria were met.', reason: 'Record the synthetic verification outcome.',
+  }).then(response => response);
+
+  async function waitForBlockedMutation(blockerPid: number, minimum = 1) {
+    const deadline = Date.now() + 15_000;
+    while (Date.now() < deadline) {
+      const result = await owner.query(`WITH RECURSIVE blocked(pid) AS (
+          SELECT pid FROM pg_stat_activity WHERE $1::int=ANY(pg_blocking_pids(pid))
+          UNION SELECT a.pid FROM pg_stat_activity a JOIN blocked b ON b.pid=ANY(pg_blocking_pids(a.pid))
+        ) SELECT a.pid FROM pg_stat_activity a JOIN blocked b ON b.pid=a.pid
+          WHERE a.state='active' AND a.wait_event_type='Lock' AND a.query LIKE '%UPDATE qms_change_controls%'`, [blockerPid]);
+      if (result.rows.length >= minimum) return;
+      await new Promise(resolve => setTimeout(resolve, 25));
+    }
+    throw new Error('The actual QMS writer did not wait on the locked parent record.');
+  }
+
+  it.each(['content', 'requirement'])('a waiting closure cannot overwrite a concurrent %s change', async kind => {
+    const id = await verification();
+    const blocker = await owner.connect();
+    let pending: Promise<request.Response> | undefined;
+    try {
+      await blocker.query('BEGIN');
+      const pid = Number((await blocker.query('SELECT pg_backend_pid() AS pid')).rows[0].pid);
+      await blocker.query('SELECT id FROM qms_change_controls WHERE id=$1 AND organization_id=$2 FOR UPDATE', [id, orgA.id]);
+      pending = closure(id);
+      await waitForBlockedMutation(pid);
+      const service = await import('../../server/services/qms/changeControl.service');
+      if (kind === 'content') {
+        await service.updateChange(orgA.id, id, { implementationPlan: 'Revised while the verifier was closing.' }, blocker);
+      } else {
+        await service.addLink(orgA.id, id, { linkType: 'validation', linkedRef: `${TAG}-VP-LATE`, relationship: 'requires' }, blocker);
+      }
+      await blocker.query('COMMIT');
+      const response = await pending;
+      expect(response.status, JSON.stringify(response.body)).toBe(409);
+      const row = (await owner.query('SELECT status,closed_at,verified_at FROM qms_change_controls WHERE id=$1 AND organization_id=$2', [id, orgA.id])).rows[0];
+      expect(row).toEqual({ status: 'verification', closed_at: null, verified_at: null });
+    } finally {
+      await blocker.query('ROLLBACK');
+      blocker.release();
+      await pending?.catch(() => undefined);
+    }
+  }, 60_000);
+
+  it('a queued link cannot append a requirement after the authenticated closure wins the parent lock', async () => {
+    const id = await verification();
+    const blocker = await owner.connect();
+    let closing: Promise<request.Response> | undefined;
+    let linking: Promise<request.Response> | undefined;
+    try {
+      await blocker.query('BEGIN');
+      const pid = Number((await blocker.query('SELECT pg_backend_pid() AS pid')).rows[0].pid);
+      await blocker.query('SELECT id FROM qms_change_controls WHERE id=$1 AND organization_id=$2 FOR UPDATE', [id, orgA.id]);
+      closing = closure(id);
+      await waitForBlockedMutation(pid);
+      linking = call(A.admin, 'post', `/changes/${id}/links`, {
+        linkType: 'validation', linkedRef: `${TAG}-VP-TOO-LATE`, relationship: 'requires',
+      }).then(response => response);
+      await waitForBlockedMutation(pid, 2);
+      await blocker.query('COMMIT');
+      const closed = await closing;
+      expect(closed.status, JSON.stringify(closed.body)).toBe(200);
+      const refused = await linking;
+      expect(refused.status, JSON.stringify(refused.body)).toBe(422);
+      expect((await owner.query('SELECT status FROM qms_change_controls WHERE id=$1 AND organization_id=$2', [id, orgA.id])).rows[0].status).toBe('closed');
+      expect((await owner.query('SELECT id FROM qms_change_links WHERE change_id=$1 AND organization_id=$2', [id, orgA.id])).rows).toEqual([]);
+    } finally {
+      await blocker.query('ROLLBACK');
+      blocker.release();
+      await Promise.all([closing?.catch(() => undefined), linking?.catch(() => undefined)]);
+    }
+  }, 60_000);
 });

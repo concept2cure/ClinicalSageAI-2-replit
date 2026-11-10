@@ -1,6 +1,7 @@
 /** Current actor admission composes the exact-source pin with the existing
  * request-scoped program authority. Neither grant widens the other. */
 import type { ToolContext } from './AnaToolExecutor.js';
+import { decideInputTierPlacement, sensitivityTierForClassification } from '../ai-gateway/sensitive-placement-policy.js';
 import { switchPinTerms } from '../../db/sessionScope.js';
 import { isPlatformScopeRole, PlatformScopeRoleRefusedError } from '../../db/tenantStore.js';
 import { AnaProjectScopeError } from './project-scope-admission.js';
@@ -100,4 +101,24 @@ export function catalogDocumentBoundary(scope: { programId: string | null }, tar
     return JSON.stringify({ ok: false, code: 'CROSS_PROJECT', error: 'That document belongs to another project. This conversation is held in its own project; open the document’s project to work with it.' });
   }
   return null;
+}
+
+/**
+ * The read's boundary: the project (catalogDocumentBoundary), then the document's tier against the model serving the
+ * turn. A document that model may not receive is refused at the read, before any of its text enters the turn (demo
+ * sweep, 2026-11-09): read and recorded as a run source, it refused the turn's next round with DENY_INPUT_TIER, the
+ * step showed as done, and AnA never answered. No classification changes; the person is told where it is set. With no
+ * known serving model (another caller), only the project boundary applies, and the run-source check stays.
+ */
+export function readDocumentBoundary(scope: { programId: string | null }, doc: { id: string; programId: string; classification?: unknown },
+  ctx?: ToolContext): string | null {
+  const crossProject = catalogDocumentBoundary(scope, doc.programId);
+  const provider = ctx?.servingModel?.provider;
+  if (crossProject || !provider) return crossProject;
+  if (decideInputTierPlacement({ tiers: [sensitivityTierForClassification(doc.classification)], provider }).allowed) return null;
+  const label = typeof doc.classification === 'string' && doc.classification.trim() ? doc.classification.trim().toUpperCase() : 'not classified';
+  return JSON.stringify({ ok: false, code: 'SOURCE_TIER_NOT_SENDABLE', documentId: doc.id, classification: label,
+    error: `This document is classified ${label}, and its text is not sent to ${provider}, so it was not read. ` +
+      'If it may be shared with the AI provider, a person can set its classification to Internal or Public in the Vault (Edit details). ' +
+      'Tell the person this; do not guess its contents.' });
 }

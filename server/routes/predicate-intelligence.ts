@@ -107,8 +107,11 @@ router.use(authenticateToken);
 
 function requireConfigured(_req: Request, res: Response, next: NextFunction) {
   if (!getAdminToken()) {
+    /* The code lets a screen say "not configured" once, instead of a read
+       failure with a retry that cannot change the answer (2026-11-09). */
     return res.status(503).json({
       error: 'Predicate Intelligence not configured',
+      code: 'PREDICATE_INTELLIGENCE_NOT_CONFIGURED',
       detail: 'REVIEW_ADMIN_TOKEN is not set',
     });
   }

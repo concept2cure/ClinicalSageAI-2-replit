@@ -1,0 +1,8 @@
+MUTATION 15-unsourced-limit-enforced in server/services/submission-gateways/pre-transmit-check.ts (on the final code and tests, 2026-11-09T01:55:05.984641Z): replaced [  return getGatewaySizeLimitOnFile(REGION_TO_REGULATORY[region]) !== null && !SIZE_LIMIT_UNSOURCED[region];] with [  return getGatewaySizeLimitOnFile(REGION_TO_REGULATORY[region]) !== null;]
+ × server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: an FDA package over 1 GiB is refused before anyone signs to send it (readiness, site b) > a sequence for another region is not measured (FDA only) 239ms
+ ✓ server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: freeze and dispatch refuse it too, before their signatures (the package gate, site a) > a sequence for another region over 1 GiB is not refused on size at freeze 109ms
+      Tests  1 failed | 1 passed | 13 skipped (15)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/submission-service/__tests__/launch-sequence-size.pglite.test.ts > P-93: an FDA package over 1 GiB is refused before anyone signs to send it (readiness, site b) > a sequence for another region is not measured (FDA only)
+AssertionError: expected 1 to be +0 // Object.is equality
+restored sha256 bbbcceada27bd4714026a8a1ceeee55fdc43c6c721ca78575b44f73401136da5 (expected bbbcceada27bd4714026a8a1ceeee55fdc43c6c721ca78575b44f73401136da5)

@@ -79,7 +79,8 @@ function canvasEditor(): Editor {
 
 const DOCS = {
   success: true,
-  documents: [{ id: 'D1', title: 'Nonclinical Overview', module: 'M3', product_code: 'ABC', status: 'draft', updated_at: '2026-07-20T10:00:00Z', section_count: 1 }],
+  // No project and no filing: the list and header (authoring-document-read.ts) state the copy unbound.
+  documents: [{ id: 'D1', title: 'Nonclinical Overview', module: 'M3', product_code: 'ABC', status: 'draft', updated_at: '2026-07-20T10:00:00Z', section_count: 1, c2c_document_id: null }],
 };
 const SECTIONS = {
   success: true,
@@ -100,6 +101,7 @@ beforeEach(() => {
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
     if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1/sections') return ok(SECTIONS);
+    if (method === 'GET' && url.split('?')[0] === '/api/authoring/docs/D1') return ok({ success: true, document: { ...DOCS.documents[0], client_program_id: null } });
     if (method === 'GET' && url.startsWith('/api/authoring/sections/S1/history')) return ok({ success: true, revisions: [] });
     if (method === 'GET' && url.startsWith('/api/authoring/documents/D1/comments')) return ok({ success: true, comments: [] });
     if (method === 'PATCH' && url === '/api/authoring/sections/S1') {

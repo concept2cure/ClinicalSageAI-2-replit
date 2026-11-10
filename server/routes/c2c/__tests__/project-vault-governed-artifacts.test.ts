@@ -164,6 +164,7 @@ describe('GET /api/c2c/project-vault/:id — every artifact of the project, acro
     });
     expect(leaf.artifact).toEqual({
       artifactId: 'artifact_1',
+      version: 5,
       kind: 'Clinical Overview',
       format: 'docx',
       model: 'claude-opus-4',
@@ -179,6 +180,13 @@ describe('GET /api/c2c/project-vault/:id — every artifact of the project, acro
     // The recorded hash is not offered as an upload's SHA-256 of stored bytes:
     // the composer and the importer record theirs over other inputs.
     expect(leaf.hash).toBeUndefined();
+  });
+
+  it.each([null, 0, 1.5])('does not invent an importable version for an unrecorded or invalid head (%s)', async version => {
+    seed([artifact({ version })]);
+    const res = await request(app()).get(`/api/c2c/project-vault/${PROJECT}`);
+    expect(res.status).toBe(200);
+    expect(branch(res.body).children[0].children[0].artifact.version).toBeNull();
   });
 
   it('each leaf carries its stored content size, as the Artifacts center states it (slice B: the shared manifest)', async () => {

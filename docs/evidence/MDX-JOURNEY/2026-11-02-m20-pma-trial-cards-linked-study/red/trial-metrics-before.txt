@@ -1,0 +1,112 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ × server/services/__tests__/pma-trial-metrics-linked-study.pglite.test.ts > the PMA screen's trial cards > bind no study by its name: a project with no link says so 23ms
+   → expected { …(4) } to be null
+ × server/services/__tests__/pma-trial-metrics-linked-study.pglite.test.ts > the PMA screen's trial cards > read the linked study's figures, and name the study 7ms
+   → expected { label: 'Enrolled', …(4) } to match object { metric: '340/680', …(1) }
+(5 matching properties omitted from actual)
+ × server/services/__tests__/pma-trial-metrics-linked-study.pglite.test.ts > the PMA screen's trial cards > count protocol deviations as protocol deviations, never as adverse events, with no invented threshold 3ms
+   → expected { label: 'AE rate', …(4) } to be undefined
+ × server/services/__tests__/pma-trial-metrics-linked-study.pglite.test.ts > the PMA screen's trial cards > say a link to a study that is not there was not found 3ms
+   → 33333333-3333-4333-8333-333333333333: expected false to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/__tests__/pma-trial-metrics-linked-study.pglite.test.ts > the PMA screen's trial cards > bind no study by its name: a project with no link says so
+AssertionError: expected { …(4) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "id": "aaaaaaaa-0000-4000-8000-000000000001",
+  "name": "Corvant valve II pivotal",
+  "phase": "pivotal",
+  "status": "enrolling",
+}
+
+ ❯ server/services/__tests__/pma-trial-metrics-linked-study.pglite.test.ts:102:22
+    100|   it('bind no study by its name: a project with no link says so', asyn…
+    101|     const r = await getPmaTrialMetrics(ORG, UNLINKED);
+    102|     expect(r?.study).toBeNull();
+       |                      ^
+    103|     expect(r?.metrics.map((m) => m.metric)).toEqual(['—', '—', '—', '—…
+    104|     expect(r?.metrics.every((m) => m.meta === 'No study linked to this…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  server/services/__tests__/pma-trial-metrics-linked-study.pglite.test.ts > the PMA screen's trial cards > read the linked study's figures, and name the study
+AssertionError: expected { label: 'Enrolled', …(4) } to match object { metric: '340/680', …(1) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "meta": "50% of target · CV-01 pivotal IDE",
++   "meta": "50% of target",
+    "metric": "340/680",
+  }
+
+ ❯ server/services/__tests__/pma-trial-metrics-linked-study.pglite.test.ts:110:33
+    108|     const r = await getPmaTrialMetrics(ORG, LINKED);
+    109|     expect(r?.study).toMatchObject({ id: OWN, name: 'CV-01 pivotal IDE…
+    110|     expect(card(r, 'Enrolled')).toMatchObject({ metric: '340/680', met…
+       |                                 ^
+    111|     expect(card(r, 'Endpoints achieved')).toMatchObject({ metric: '1/2…
+    112|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  server/services/__tests__/pma-trial-metrics-linked-study.pglite.test.ts > the PMA screen's trial cards > count protocol deviations as protocol deviations, never as adverse events, with no invented threshold
+AssertionError: expected { label: 'AE rate', …(4) } to be undefined
+
+- Expected:
+undefined
+
++ Received:
+{
+  "label": "AE rate",
+  "meta": "Serious + critical / enrolled",
+  "metric": "0.9",
+  "tone": "ok",
+  "unit": "%",
+}
+
+ ❯ server/services/__tests__/pma-trial-metrics-linked-study.pglite.test.ts:116:32
+    114|   it('count protocol deviations as protocol deviations, never as adver…
+    115|     const r = await getPmaTrialMetrics(ORG, LINKED);
+    116|     expect(card(r, 'AE rate')).toBeUndefined();
+       |                                ^
+    117|     expect(card(r, 'Serious deviations')).toEqual({
+    118|       label: 'Serious deviations', metric: '3', meta: 'Serious and cri…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  server/services/__tests__/pma-trial-metrics-linked-study.pglite.test.ts > the PMA screen's trial cards > say a link to a study that is not there was not found
+AssertionError: 33333333-3333-4333-8333-333333333333: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ server/services/__tests__/pma-trial-metrics-linked-study.pglite.test.ts:126:88
+    124|       const r = await getPmaTrialMetrics(ORG, id);
+    125|       expect(r?.study, id).toBeNull();
+    126|       expect(r?.metrics.every((m) => m.meta === 'The linked study was …
+       |                                                                                        ^
+    127|     }
+    128|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
+   Start at  05:21:04
+   Duration  2.99s (transform 552ms, setup 68ms, import 970ms, tests 1.75s, environment 0ms)
+

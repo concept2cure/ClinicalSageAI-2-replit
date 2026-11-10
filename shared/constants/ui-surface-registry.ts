@@ -225,7 +225,11 @@ export const UI_SURFACES: UiSurface[] = [
     // (useProjectObjective, S1); nothing claimed it, so production refused it as unmapped. '/api/v1/pyramids/by-project':
     // the program plan in the Plan step (PyramidProject.tsx, S11); longest prefix wins over the out-of-catalog
     // 'pyramid' surface's '/api/v1/pyramids'.
-    apiPrefixes: ['/api/projects', '/api/concept2cure/projects', '/api/mdx/client-review', '/api/charters/by-project', '/api/v1/pyramids/by-project'],
+    // 2026-11-09 (S12, P-83/P-109): '/api/project-hierarchy': the project's work projects (ProjectCoreWork.tsx
+    // ProjectWorkProjects, GET /:anchor/children?programId=), program-checked and project-admitted before anything is
+    // read; project home is the only client caller of the namespace.
+    apiPrefixes: ['/api/projects', '/api/concept2cure/projects', '/api/mdx/client-review', '/api/charters/by-project', '/api/v1/pyramids/by-project',
+      '/api/project-hierarchy'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -345,7 +349,9 @@ export const UI_SURFACES: UiSurface[] = [
     uiKit: 'mdx',
     // Launch-scope API (2026-09-25, ci:launch-scope-api): Review reads its board, queue, threads and tasks.
     // Narrowed 2026-10-22 to what a launch screen or app uses (D2-API-SCOPE/2026-10-15-reproof/api-scope/).
-    apiPrefixes: ['/api/part11', '/api/review', '/api/concept2cure/review-tasks', '/api/concept2cure/review-threads', '/api/concept2cure/reviews/my-queue'],
+    // reviews/pending: the AnA artifact reviews you were named for (P-95), read by ReviewRequests.tsx here and
+    // by Your open work (OpenWork.tsx), which opens this screen.
+    apiPrefixes: ['/api/part11', '/api/review', '/api/concept2cure/review-tasks', '/api/concept2cure/review-threads', '/api/concept2cure/reviews/my-queue', '/api/concept2cure/reviews/pending'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -856,33 +862,19 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'sigma',
     group: 'clinical',
     uiKit: null,
-    // '/api/biostat-bridge/designs', not the bridge's root: the screens call only its designs. The broad claim
-    // served /computation-runs and /filing-placements, which no screen calls and the launch re-proof excluded
-    // (launch-reproof-narrowing.test.ts), once Biostatistics joined the catalog (0edd864728, 2026-10-31).
-    apiPrefixes: ['/api/biostat', '/api/ana-biostats', '/api/biostat-bridge/designs'],
+    // The existing design assessment now also reaches stored-run reproduction, shared with protocol statistics.
+    // Claim those two namespaces, not the bridge root: filing-placements and unrelated children remain excluded
+    // by the launch re-proof (launch-reproof-narrowing.test.ts).
+    /* Gained '/api/statistical-defensibility' and '/api/diagnostics-performance'
+       on 2026-11-09, when the `biostat-workbench` surface was retired into this
+       one and its two capabilities became sections here. */
+    apiPrefixes: ['/api/biostat', '/api/ana-biostats', '/api/biostat-bridge/designs', '/api/biostat-bridge/computation-runs', '/api/statistical-defensibility', '/api/diagnostics-performance'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
     notes: 'SAP authoring, power analysis, TLF shells, adaptive trial plans, IDMC. Loads the program\'s persisted study designs through the biostatistics bridge: gaps, filing placement per application type, governed sample-size write-back and task raising.',
-  },
-  {
-    id: 'biostat-workbench',
-    label: 'Design calculators',
-    navTier: 'specialist',
-    layoutMode: 'biostatistics',
-    icon: 'sigma',
-    group: 'clinical',
-    uiKit: null,
-    // The diagnostic-accuracy calculators (biostatCalculatorsIvd.ts) are served by the CLSI engines.
-    apiPrefixes: ['/api/statistical-defensibility', '/api/biostat', '/api/diagnostics-performance'],
-    anaToolFamilies: [],
-    sharedContract: null,
-    discoveryCatalog: null,
-    readiness: 'routes-ready',
-    compliance: [A11Y, TONE],
-    notes: 'Real statistical engine: reviewer-risk defensibility assessment + design calculators (assurance), replacing the client-side normal approximation.',
   },
   // 'rbm-operations' is retired. It was a second, thinner RBM destination
   // holding the write/compute layer (KRI value capture, site-risk recompute,

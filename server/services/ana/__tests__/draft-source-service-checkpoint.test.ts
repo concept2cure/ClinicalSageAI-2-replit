@@ -3,11 +3,19 @@
  * real-PGlite tests; the actual private source issuer/checkpoints remain in use. */
 import { createHash } from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { GatewayRequest } from '../../ai-gateway/types';
+import type { GatewayRequest, GatewayResponse } from '../../ai-gateway/types';
 import type { DocumentDraftRequest } from '../AnaDocumentDraftingService';
 
 const seam = vi.hoisted(() => ({
   scope: vi.fn(), load: vi.fn(), actor: vi.fn(), program: vi.fn(),
+  admit: vi.fn(),
+  routeDerivative: vi.fn(async (_request: unknown): Promise<GatewayResponse> => ({
+    content: 'Locally restored draft.', provider: 'local', model: 'fixture-local', resolvedModel: 'fixture-snapshot',
+    requestId: '30000000-0000-4000-8000-000000000001', usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2, estimatedCostUsd: 0 },
+    latencyMs: 1, cached: false, deterministic: false, finishReason: 'stop',
+    derivativeVerification: { kind: 'deterministic_token_roundtrip', derivativeId: '40000000-0000-4000-8000-000000000001',
+      payloadSha256: 'a'.repeat(64), semanticVerified: false, originTier: 2, effectiveTier: 1, resultingContentTier: 2 },
+  })),
   route: vi.fn(async (_request: unknown) => ({ content: 'Generated draft.', model: 'test-model',
     usage: { inputTokens: 1, outputTokens: 1, estimatedCostUsd: 0 }, latencyMs: 1, finishReason: 'end_turn' })),
 }));
@@ -17,7 +25,10 @@ vi.mock('../../vault/document-catalog.service', () => ({ loadDocumentForActor: s
 vi.mock('../../c2c/current-program-access', () => ({ requireProgramScopeStillCurrent: seam.program }));
 vi.mock('../draft-product-context', async () => ({ loadRecordedDraftProductContext:
   (await import('./support/unassessed-product-context-fixture.js')).unassessedProductContextFixture }));
-vi.mock('../../ai-gateway/gateway', () => ({ getGateway: () => ({ route: seam.route }),
+vi.mock('../project-scope-admission', async importOriginal => ({
+  ...(await importOriginal<typeof import('../project-scope-admission')>()), admitAnaProjectScope: (...args: unknown[]) => seam.admit(...args),
+}));
+vi.mock('../../ai-gateway/gateway', () => ({ getGateway: () => ({ route: seam.route, routeDerivative: seam.routeDerivative }),
   GatewayPolicyError: class extends Error {}, GatewayNoProviderError: class extends Error {},
   GatewayAllProvidersFailedError: class extends Error {}, ModelNotApprovedError: class extends Error {},
 }));
@@ -39,6 +50,7 @@ function document(id = SOURCE, text = TEXT) {
   return { id, organizationId: 7, programId: PROGRAM, contentHash: 'a'.repeat(64),
     documentTitle: 'Synthetic CSR', fileName: 'csr.pdf', extractedText: text, extractedTextSha256: sha(text),
     isCurrent: true, originalFileAvailable: true, disposition: null as string | null,
+    classification: 'CONTROLLED',
     sourceAccess: { currentUseEligible: true },
     catalog: { contentHash: 'a'.repeat(64), status: 'extracted', extractionMethod: 'pdf-text', extractionConfidence: null } };
 }
@@ -53,6 +65,12 @@ const response = () => ({ content: 'Generated draft.', model: 'test-model',
 
 beforeEach(() => {
   vi.resetAllMocks();
+  seam.admit.mockResolvedValue({ projectId: 42, programId: PROGRAM, projectRef: PROGRAM });
+  seam.routeDerivative.mockResolvedValue({ content: 'Locally restored draft.', provider: 'local', model: 'fixture-local', resolvedModel: 'fixture-snapshot',
+    requestId: '30000000-0000-4000-8000-000000000001', usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2, estimatedCostUsd: 0 },
+    latencyMs: 1, cached: false, deterministic: false, finishReason: 'stop',
+    derivativeVerification: { kind: 'deterministic_token_roundtrip', derivativeId: '40000000-0000-4000-8000-000000000001',
+      payloadSha256: 'a'.repeat(64), semanticVerified: false, originTier: 2, effectiveTier: 1, resultingContentTier: 2 } });
   documents = new Map([[SOURCE, document()], [OTHER_SOURCE, document(OTHER_SOURCE)]]);
   seam.scope.mockResolvedValue({ programId: PROGRAM, executor,
     admittedScope: { organizationId: 7, userId: 3, programId: PROGRAM, role: 'viewer', accessibleProgramIds: [PROGRAM] },
@@ -61,6 +79,40 @@ beforeEach(() => {
   seam.route.mockImplementation(async raw => {
     await (raw as GatewayRequest).beforeDispatch?.();
     return response();
+  });
+});
+
+describe('approved derivative drafting is a separate server-issued context', () => {
+  const derivativeId = '40000000-0000-4000-8000-000000000001';
+  it('admits the canonical project and forwards only the custody reference and routing identity', async () => {
+    const result = await service.draftDocument({ ...request(), derivativeId, instructions: 'RAW_INSTRUCTION_SECRET',
+      existingContent: 'RAW_SOURCE_SECRET', projectContext: { deviceName: 'PRIVATE_DEVICE' } });
+    expect(seam.admit).toHaveBeenCalledWith(expect.any(Object), { organizationId: 7, userId: 3, projectRef: PROGRAM });
+    expect(seam.routeDerivative).toHaveBeenCalledWith(expect.objectContaining({ organizationId: 7, userId: 3, projectId: 42, derivativeId, taskType: 'document_drafting' }));
+    expect(JSON.stringify(seam.routeDerivative.mock.calls)).not.toMatch(/RAW_INSTRUCTION_SECRET|RAW_SOURCE_SECRET|PRIVATE_DEVICE/);
+    expect(seam.route).not.toHaveBeenCalled();
+    expect(seam.load).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ content: 'Locally restored draft.', derivativeVerification: { semanticVerified: false, resultingContentTier: 2 },
+      derivativeGeneration: { requestId: '30000000-0000-4000-8000-000000000001', provider: 'local', resolvedModel: 'fixture-snapshot',
+        contentSha256: sha('Locally restored draft.') } });
+  });
+
+  it('refuses an unadmitted project without requesting generation', async () => {
+    seam.admit.mockResolvedValueOnce({ projectId: null, programId: null, projectRef: null });
+    await expect(service.draftDocument({ ...request(), derivativeId })).rejects.toMatchObject({ code: 'DERIVATIVE_DRAFT_SCOPE_REQUIRED' });
+    expect(seam.routeDerivative).not.toHaveBeenCalled();
+  });
+
+  it('refuses streaming before project or custody admission', async () => {
+    await expect(service.draftDocument({ ...request(), derivativeId, onStream: vi.fn() })).rejects.toMatchObject({ code: 'DERIVATIVE_DRAFT_SCOPE_REQUIRED' });
+    expect(seam.admit).not.toHaveBeenCalled();
+    expect(seam.routeDerivative).not.toHaveBeenCalled();
+  });
+
+  it('withholds a response lacking the matching local round-trip proof', async () => {
+    seam.routeDerivative.mockResolvedValueOnce({ content: 'UNVERIFIED_CONTENT', provider: 'local', model: 'fixture-local', requestId: 'fixture',
+      usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2, estimatedCostUsd: 0 }, latencyMs: 1, cached: false, deterministic: false });
+    await expect(service.draftDocument({ ...request(), derivativeId })).rejects.toMatchObject({ code: 'DERIVATIVE_VERIFICATION_REQUIRED' });
   });
 });
 
@@ -96,10 +148,20 @@ describe('selected-source service authority', () => {
 });
 
 describe('selected-source generation checkpoints', () => {
+  it('carries the exact qualified choice to the gateway without the legacy Anthropic preference', async () => {
+    const qualifiedModelPin = { id: 'local-default', provider: 'local' as const, pinnedVersion: `sha256:${'a'.repeat(64)}`,
+      intendedUse: 'document_drafting' as const, pqReference: 'controlled/qualification.json', pqSha256: 'b'.repeat(64) };
+    await service.draftDocument({ ...request(await selected()), qualifiedModelPin });
+    const sent = seam.route.mock.calls[0][0] as GatewayRequest;
+    expect(sent.qualifiedModelPin).toEqual(qualifiedModelPin);
+    expect(sent.provider).toBeUndefined();
+    expect(sent.model).toBeUndefined();
+  });
   it('passes a genuine identity-bearing context through a private dispatch guard and text-free metadata', async () => {
     const context = await selected();
     await expect(service.draftDocument(request(context))).resolves.toMatchObject({ content: 'Generated draft.' });
     const sent = seam.route.mock.calls[0][0] as GatewayRequest;
+    expect(sent.inputSensitivityTiers).toEqual([3]);
     expect(sent.beforeDispatch).toEqual(expect.any(Function));
     expect(JSON.stringify(sent.messages)).toContain(TEXT);
     expect(sent.metadata).toMatchObject({ projectSourceStatus: 'loaded', projectSources: [expect.objectContaining({

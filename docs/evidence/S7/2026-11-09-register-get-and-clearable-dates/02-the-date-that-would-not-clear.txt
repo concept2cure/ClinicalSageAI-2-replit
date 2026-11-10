@@ -1,0 +1,40 @@
+Live, against the running app, on a reference standard created through the API.
+
+=== set up: a standard with both dates ===
+$ POST /api/cmc/reference-standards  {"standardCode":"RS-01", ..., "retestDate":"2027-06-30...","expiryDate":"2028-06-30..."}
+created id=1
+$ psql -tAc "select id, retest_date, expiry_date from cmc_reference_standards where id='1';"
+1|2027-06-30 00:00:00|2028-06-30 00:00:00
+
+=== PRE-FIX (schema reverted to optionalDate, server restarted) ===
+$ PUT /api/cmc/reference-standards/1
+  {"standardCode":"RS-01", ..., "retestDate":null,"expiryDate":null,
+   "reason":"Retest and expiry dates were entered against the wrong lot; clearing them."}
+
+HTTP body success = True
+
+$ psql -tAc "select id, coalesce(retest_date::text,'NULL'), coalesce(expiry_date::text,'NULL') from cmc_reference_standards where id='1';"
+1|2027-06-30 00:00:00|2028-06-30 00:00:00
+
+   ^ The user was told the edit succeeded. Nothing was cleared. On reload the
+     old dates come back. No error anywhere.
+
+=== POST-FIX (clearableDate restored, server restarted, the SAME PUT) ===
+success = True
+1|NULL|NULL
+
+=== and a date still SETS, so the field is not write-once-null ===
+$ PUT /api/cmc/reference-standards/1  {"retestDate":"2027-09-01T00:00:00.000Z","reason":"Recorded the retest date from the certificate."}
+1|2027-09-01 00:00:00
+
+$ # scratch row removed
+$ psql -tAc "delete from cmc_reference_standards where id='1'; select count(*) from cmc_reference_standards;"
+0
+
+=== why not simply widen optionalDate ===
+$ psql -tAc "select table_name||'.'||column_name||' nullable='||is_nullable from information_schema.columns where column_name='test_date' and table_schema='public';"
+qc_testing.test_date nullable=NO
+
+   qc_testing.test_date is NOT NULL and takes optionalDate. A null there would
+   be a 500 from the database instead of a clean 400. So clearableDate is a
+   second primitive used on exactly the three nullable fields a drawer clears.

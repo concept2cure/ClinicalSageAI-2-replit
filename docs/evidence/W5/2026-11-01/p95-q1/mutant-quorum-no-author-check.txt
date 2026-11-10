@@ -1,0 +1,9 @@
+# Mutant: the quorum counts an author's decision
+# in server/services/artifact-approval-act.ts
+# - if (authorReviewers.length > 0) {
+# + if (false && authorReviewers.length > 0) {
+
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95 Q1: the reviewer is neither the approving signer nor an author > a decision by someone who is now an author does not meet the quorum 37ms
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > canonical review-quorum integrity > 'an author\'s review does not count (P…' 13ms
+ Test Files  2 failed | 1 passed (3)
+      Tests  2 failed | 165 passed (167)

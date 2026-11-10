@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "package": "F1",
+  "launchRow": "D2",
+  "kind": "incoming7d admin frontend compatibility",
+  "reviewBase": "b86b489405",
+  "incomingCommit": "7d771e124a4dba820fbbd26d8919c7c69cd1a9d4",
+  "sourceCommit": "b8b73e2fc924a5f0b80510a8920d57ca22bf8459",
+  "sourceTree": "91001bd62c943144a69b73d5d309bb406197dba1",
+  "headAtPackaging": "b8b73e2fc924a5f0b80510a8920d57ca22bf8459",
+  "packagedAtUtc": "2026-11-06T20:33:52.492447+00:00",
+  "workdir": "/workspace/ClinicalSageAI-2-replit",
+  "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --maxWorkers=1 --fileParallelism=false client/src/concept2cure/v2/__tests__/adminConsoleSettings.test.tsx client/src/concept2cure/v2/__tests__/adminSkills.test.tsx client/src/concept2cure/v2/__tests__/gatewayAccountsSetting.test.tsx",
+  "exitCode": 0,
+  "suitesPassed": 3,
+  "testsPassed": 44,
+  "durationSeconds": 17.57,
+  "log": {
+    "path": "tests.log",
+    "sha256": "be7aa0b9693d1108a7a0a1d7231bb6281bc3afb5ca17c050f41db540997824b4",
+    "bytes": 8255,
+    "originalSha256": "be7aa0b9693d1108a7a0a1d7231bb6281bc3afb5ca17c050f41db540997824b4",
+    "originalBytes": 8255,
+    "originalLines": 53,
+    "gzipMtime": null
+  },
+  "selectedInputs": 15,
+  "selectedWorkingInputsMatchCanonicalSource": true,
+  "pinBasis": "Canonical Git objects at the frozen source commit, compared byte-for-byte with working inputs during evidence packaging. The initial pre-launch helper used the wrong authService extension and emitted no manifest; no pre-launch timestamped filesystem snapshot is claimed.",
+  "inputManifests": [
+    {
+      "path": "canonical-inputs.json",
+      "sha256": "032e7efce4e31dc7ca3244a0894dd0eaba80c94c9b724ec3a7689dfb6da5e639"
+    },
+    {
+      "path": "after.json",
+      "sha256": "fdc54678d09365c1ace19c482b528f83c4e415fb402013c70796de15b71d886f"
+    }
+  ],
+  "reviewFindings": [
+    "Credential capture remains in administration, with current canonical session and organization/canManage metadata guards.",
+    "Multiline credential inputs render a fixed password mask, preserve exact pasted newlines and support clearing. Writes close the credential form before awaiting outcomes.",
+    "Credential failures use bounded UI messages rather than reflecting arbitrary response or exception text.",
+    "Gateway read refusal removes previously displayed management authority.",
+    "Mandatory approval bindings and their source audit references are displayed read-only; ordinary skill method edits omit those governance fields.",
+    "AdminSkills.tsx runtime is unchanged by this delta; its companion suite covers the updated shared studio display."
+  ],
+  "realCredentialsUsed": false,
+  "providerRequestsPerformed": false,
+  "productionOrTestSourceEdits": false,
+  "gitMutations": false,
+  "limits": "Mocked HTTP and synthetic credentials only. This selected frontend compatibility check does not establish real credential storage, provider connectivity, model qualification, agency delivery, live admin authorization or browser acceptance. It does not enumerate every transitive dependency. No editor/Vault broad rerun, compiler or lint run was performed."
+}

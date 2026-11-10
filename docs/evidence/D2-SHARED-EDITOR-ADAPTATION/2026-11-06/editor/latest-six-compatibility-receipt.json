@@ -1,0 +1,95 @@
+{
+  "observedAt": "2026-11-06T19:38:28.301107+00:00",
+  "testedHead": "f86f61a0dc48ed921de903b8323fe0313676c25b",
+  "testedCommittedTree": "b2dbc4842f7b9b0af93b8a6443fa8dd59ee224d2",
+  "incomingCanonical": "965084590ccf7a569248cc1c6df0455785f7a722",
+  "state": "Read-only runs. No production or test edits, casts, timeout increases or assertion changes. All runtime sessions completed.",
+  "sourceAndTestPins": {
+    "client/src/concept2cure/v2/V2App.tsx": "35d7770e9adfb2689c951cc550f5443c3c245ebdebf08e35072be2e9b623764f",
+    "client/src/concept2cure/v2/routing.ts": "8828d3afe5ab625b7440cfcfbf1a49762bbe2d9bdd45f1175429db6faf3ac439",
+    "client/src/concept2cure/v2/surfaces/ConversationThread.tsx": "8e14bf4f385f87e266f003dcc2c920ce7cfb97cc0084b39865b56af33f174c3a",
+    "client/src/concept2cure/v2/surfaces/ProjectHome.tsx": "c4a3914a434382107777d77d72c4d055e92b3e80d46253710b7a90ddb7c5ed4e",
+    "client/src/concept2cure/v2/surfaces/ProjectSide.tsx": "12b7d651bfb4ffc44eab31e69bac98f0e8627b1a5de3772263aa7dabdad67bfb",
+    "client/src/concept2cure/v2/ProjectSkills.tsx": "c09a4428fcf6d77bbddebf1a5e5d1d5dd1ea57b622d383acd00f040f7b986b88",
+    "client/src/concept2cure/v2/surfaces/ProjectTeamResponsibilities.tsx": "c7d3509eb4c5ba4d0737212d38a292cb42a82f1ea0f473c65676792df34fca74",
+    "client/src/concept2cure/v2/styles/project-home-v2.css": "1542a22c34ae335c789e95b4cc578e10b63b6aff727e1db6e80051c86684845c",
+    "client/src/concept2cure/v2/__tests__/recentConversationHandoffShell.test.tsx": "689d4ac4154d08fd5d6d23fdfb1b89a31df7453c20978bcc5c06eeeefffe572a",
+    "client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx": "3ea15fb72bdf597e8d645e005f909a92a466fe7275bf818460a485a33faaa0bf",
+    "client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx": "42cfb2d272de8884d5663e71319c791c35787f79aa1fa403187a96331e0ec205",
+    "client/src/concept2cure/v2/editor/__tests__/authoringConversationHandoff.test.tsx": "d60531e4bcabe7d35a0c6908281200d2b6e29fa25f803fc42ccd6078c018b315",
+    "client/src/concept2cure/v2/__tests__/projectActivityReason.test.tsx": "3cd8537acabb72fdac6e318238426b63c66fe5f3152d6b307911286be3223b4d",
+    "client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx": "3fc4098ccf9ff6679a8d77c927a29dd48606f40336e0a4cc749b6dadb6323466"
+  },
+  "pinsCapturedDuringInitialRunMatchFinal": true,
+  "restoredRuntimeOwnerChangesSincePriorCombinedD971": [],
+  "initialSixSuiteRun": {
+    "runnerExitCode": 1,
+    "suites": 6,
+    "passedSuites": 5,
+    "failedSuites": 1,
+    "passedTests": 67,
+    "failedTests": 1,
+    "durationSeconds": 94.17,
+    "receipt": "latest-six-compatibility-red.txt.gz",
+    "failure": "shellAskGuard first Vault starter case did not find Search my connected repositories within the unchanged five-second wait."
+  },
+  "isolatedReproduction": {
+    "runnerExitCode": 0,
+    "passedTests": 1,
+    "skippedTests": 13,
+    "durationSeconds": 13.73,
+    "receipt": "latest-shell-isolated-green.txt.gz",
+    "sourceChanged": false
+  },
+  "completeAffectedFileRerun": {
+    "runnerExitCode": 0,
+    "suites": 1,
+    "passedTests": 14,
+    "durationSeconds": 16.11,
+    "receipt": "latest-shell-full-green.txt.gz",
+    "sourceChanged": false
+  },
+  "composedVerification": {
+    "unchangedPassingSuites": 5,
+    "unchangedPassingTests": 54,
+    "affectedFilePassingSuites": 1,
+    "affectedFilePassingTests": 14,
+    "totalSuites": 6,
+    "totalPassingTests": 68,
+    "qualification": "Five unchanged suites from the initial run plus the entire affected-file rerun. This is not a fresh all-six-suite green run."
+  },
+  "failureInterpretation": "Initial first-only failure did not reproduce in the unchanged isolated case or full affected file after concurrent native/browser/build work ended. Cold lazy-load timing under load is consistent with this observation; the cause is not proven. Initial failure is retained, not erased or classified as a fixed production defect.",
+  "logs": {
+    "latest-six-compatibility-red.txt.gz": {
+      "uncompressedSha256": "4df59e795e6e3304909b820f5ac046f473745a1e880f5933aecd607a9939c769",
+      "bytes": 200533,
+      "passedByFile": {
+        "client/src/concept2cure/v2/__tests__/conversationThreadCanvas.test.tsx": 21,
+        "client/src/concept2cure/v2/__tests__/projectHomeTeamSetup.test.tsx": 14,
+        "client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx": 13,
+        "client/src/concept2cure/v2/editor/__tests__/authoringConversationHandoff.test.tsx": 9,
+        "client/src/concept2cure/v2/__tests__/recentConversationHandoffShell.test.tsx": 8,
+        "client/src/concept2cure/v2/__tests__/projectActivityReason.test.tsx": 2
+      }
+    },
+    "latest-shell-isolated-green.txt.gz": {
+      "uncompressedSha256": "654412e3a17c80de2407891648a5302837efcedd3d830e240af0aeba42177c65",
+      "bytes": 3005,
+      "passedByFile": {
+        "client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx": 1
+      }
+    },
+    "latest-shell-full-green.txt.gz": {
+      "uncompressedSha256": "cbd27ee301894711a29b34c1e4d0f3ceb3c8a0e73aa62d6ebc3d5585cbf2189f",
+      "bytes": 4040,
+      "passedByFile": {
+        "client/src/concept2cure/v2/__tests__/shellAskGuard.test.tsx": 14
+      }
+    }
+  },
+  "limits": [
+    "The broader119editor cohort and45-input component browser fixture were not repeated by this agent.",
+    "Actual component/SSE tests use synthetic HTTP; they do not qualify a provider, production deployment or native PostgreSQL concurrency.",
+    "Root separately owns refreshed native V2App handoff qualification, final build/compiler and publication."
+  ]
+}

@@ -12,6 +12,7 @@ import { createJourneyDb, type JourneyDb } from '../../../../tests/golden-journe
 import { PREREQ, VAULT_DDL, AUTHORING_ACCESS_DDL, PROGRAM, OTHER_PROGRAM, ORG, AUTHOR } from '../../../routes/__tests__/_authoring-canvas-fixture';
 import { approvedToolHandler } from './support/approved-tool-handler';
 import { AUTHORING_TOOL_MIGRATIONS, DISPOSITION_IMPACT_PREREQ, authoringCountsOn } from './support/authoring-tool-db';
+import { PRIVATE_RULE_STORE_DDL, asRequestOwner, ownerScopedClient } from './support/request-owner';
 
 const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown }));
 vi.mock('../../enhancedEmbeddingService.js', () => ({ getEmbeddingService: () => ({ embed: async () => {
@@ -27,14 +28,15 @@ vi.mock('../../../db.js', () => ({
 
 const T = 240_000;
 let jdb: JourneyDb;
-const requestExecutor = { query: (text: string, values?: unknown[]) => jdb.pglite.query<Record<string, unknown>>(text, values) };
+// The request's connection, carrying its verified owner (support/request-owner.ts).
+const requestExecutor = ownerScopedClient((text, values) => jdb.pglite.query<Record<string, unknown>>(text, values));
 const authoringCounts = () => authoringCountsOn(jdb.pool as never);
 
 beforeAll(async () => {
   jdb = await createJourneyDb({
     prereqSql: PREREQ + VAULT_DDL + DISPOSITION_IMPACT_PREREQ,
     migrations: [...AUTHORING_TOOL_MIGRATIONS],
-    testOnlySql: AUTHORING_ACCESS_DDL,
+    testOnlySql: AUTHORING_ACCESS_DDL + PRIVATE_RULE_STORE_DDL,
   });
   h.db = jdb.db;
   h.pool = jdb.pool;
@@ -59,7 +61,8 @@ describe('save_document_to_vault — the single-body form of draft_authoring_doc
   beforeAll(() => {
     const found = approvedToolHandler('save_document_to_vault');
     expect(found, 'save_document_to_vault is not registered').toBeDefined();
-    save = found as typeof save;
+    // Every tool call reads its member's private rules first (P-104): it runs as that verified member.
+    save = (input, ctx) => asRequestOwner(ctx, () => found!(input, ctx as never));
   });
 
   it('creates one authoring draft with one section, AnA-attributed, carrying the stated reason — and no artifact or Vault row', async () => {
@@ -110,10 +113,11 @@ describe('save_document_to_vault — the single-body form of draft_authoring_doc
     expect(await otherStores()).toEqual(storesBefore);
   });
 
-  it('refuses another organization’s project as no project — never a cross-tenant write', async () => {
+  it('refuses a foreign project at current policy admission without reading or writing foreign content', async () => {
     const before = await authoringCounts();
     const out = JSON.parse(await save(SAVE_INPUT, { ...saveCtx, projectRef: OTHER_PROGRAM }));
-    expect(out.error).toMatch(/needs an open project/);
+    expect(out).toMatchObject({ code: 'ANA_PROJECT_NOT_FOUND', error: 'Project not found.' }); // the gate's admission, in its own words
+    expect(JSON.stringify(out)).not.toContain(SAVE_INPUT.content);
     expect(await authoringCounts()).toEqual(before);
   });
 

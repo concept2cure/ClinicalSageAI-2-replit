@@ -1,0 +1,13 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ server/services/__tests__/pma-trial-metrics-linked-study.pglite.test.ts > the PMA screen's trial cards > bind no study by its name: a project with no link says so 7ms
+ ✓ server/services/__tests__/pma-trial-metrics-linked-study.pglite.test.ts > the PMA screen's trial cards > read the linked study's figures, and name the study 14ms
+ ✓ server/services/__tests__/pma-trial-metrics-linked-study.pglite.test.ts > the PMA screen's trial cards > count protocol deviations as protocol deviations, never as adverse events, with no invented threshold 3ms
+ ✓ server/services/__tests__/pma-trial-metrics-linked-study.pglite.test.ts > the PMA screen's trial cards > say a link to a study that is not there was not found 6ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  05:21:00
+   Duration  2.91s (transform 622ms, setup 63ms, import 1.02s, tests 1.64s, environment 0ms)
+

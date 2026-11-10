@@ -97,6 +97,11 @@ vi.mock('../../c2c/program-access', async original => ({ ...(await original<Reco
 vi.mock('../../c2c/current-program-access', async original => ({ ...(await original<Record<string, unknown>>()), requireCurrentProgramAccess: async () => ({ programId: PROGRAM, projectId: 9, actor: { userId: 3, role: 'admin' } }) }));
 vi.mock('../../part11/editor-role', async original => ({ ...(await original<Record<string, unknown>>()), editorRoleDecision: async () => ({ allowed: true, role: 'admin' }) }));
 vi.mock('../../entitlements/enforcement-mode', () => ({ currentEnforcementMode: async () => ({ mode: 'off' }) }));
+// The registry's mandatory-skill check (governed-tool-gate.ts, P-104) reads the
+// organisation's rules from the database; these cases are about RBM, so the
+// organisation has none (_standing-rule-fixture.ts).
+vi.mock('../governed-tool-gate.js', async orig =>
+  (await import('./_standing-rule-fixture')).withNoStandingRules(await orig()));
 vi.mock('../../c2c/governed-program-write', () => ({
   // Recorded into the SQL log so a test can see where the write recheck ran.
   requireGovernedProgramWriteTx: (...args: unknown[]) => { h.calls.push({ sql: '-- write recheck', params: [] }); return h.write(...args); },

@@ -385,6 +385,41 @@ const FDA_GATEWAY_LIMIT_LABEL = `${FDA_GATEWAY_LIMIT_BYTES / 1000 ** 3} GB`;
 export const FDA_OVERSIZE_REMEDY =
   `FDA takes a sequence over ${FDA_GATEWAY_LIMIT_LABEL} on physical media (USB) sent to the CDER or CBER document room, ` +
   'not through the gateway (FDA Form 5640 v2.0).';
+/**
+ * The largest package Concept2Cure sends to FDA at launch: 1 GiB (2^30 bytes).
+ * Founder decision P-93, 2026-11-02 (docs/LAUNCH_DEFINITION_OF_DONE.md, "P-93 —
+ * FDA sequences over 1 GiB are out of scope for launch"): "A sequence over the
+ * size the documented channel takes is refused before signing, with a plain
+ * message, from sequenceTransmitReadiness."
+ *
+ * The figure is the decision's heading. It is NOT an agency limit: the only FDA
+ * limit on file is 10 GB (FDA_GATEWAY_LIMIT_BYTES above, Form 5640 v2.0), and no
+ * FDA source on file states a smaller one for AS2. So no message states it as
+ * FDA's: it is Concept2Cure's launch scope. It is the threshold at which the
+ * retired SFTP branch took over (`> 1_073_741_824`), so every package that went
+ * over AS2 before still does. Binary GiB, never mixed with FDA's decimal GB.
+ */
+export const LAUNCH_SEQUENCE_MAX_BYTES = 1024 ** 3;
+
+/**
+ * The clause for an FDA package over the launch ceiling, or null. Lower-case,
+ * with no closing period; each caller frames it and says what follows. A size
+ * that would read "1.00 GiB" is given in bytes, so it never reads as equal to
+ * the ceiling it is over.
+ */
+export function launchSequenceSizeRefusal(sizeBytes: number): string | null {
+  // A size that is not a count of bytes was not measured: refused, never sent (fail closed).
+  if (!Number.isSafeInteger(sizeBytes) || sizeBytes < 0) {
+    return 'the package’s size could not be read, and at launch Concept2Cure sends packages of up to 1 GiB to FDA';
+  }
+  if (sizeBytes <= LAUNCH_SEQUENCE_MAX_BYTES) return null;
+  const gib = (sizeBytes / LAUNCH_SEQUENCE_MAX_BYTES).toFixed(2);
+  const size = gib === '1.00'
+    ? `just over 1 GiB (${sizeBytes.toLocaleString('en-US')} bytes)`
+    : `${gib} GiB`;
+  return `the package is ${size}, and at launch Concept2Cure sends packages of up to 1 GiB to FDA`;
+}
+
 const EMA_CESP_LIMIT_BYTES = 600 * 1024 * 1024;
 const PMDA_LIMIT_BYTES = 1024 * 1024 * 1024;
 // NMPA and MFDS publish no single eCTD gateway package-size limit in the

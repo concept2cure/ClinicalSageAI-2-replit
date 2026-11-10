@@ -8,7 +8,6 @@
     "audit-trail",
     "authoring-engine",
     "batch-draft",
-    "biostat-workbench",
     "biostatistics",
     "change-assessment",
     "client-portal",
@@ -105,6 +104,7 @@
     "vault"
   ],
   "rail": [
+    "biostatistics",
     "cmc",
     "communication-center",
     "home",
@@ -116,5 +116,7 @@
     "tasking",
     "vault"
   ],
-  "founderDecisions": {}
+  "founderDecisions": {
+    "rail:biostatistics": "Founder, 2026-11-06: \"Our core modules are, project management, Vault, CMC, biostatistics, RBM, submission center, tasking, and collaboration, and reporting. \u2026 And the left rail should be a navigation point for all of those entry points. But again, everything starts with a project.\" Confirmed by P-107 (2026-11-08, under the founder's delegation)."
+  }
 }

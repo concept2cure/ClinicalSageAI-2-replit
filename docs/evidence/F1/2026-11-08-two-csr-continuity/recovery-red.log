@@ -1,0 +1,72 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:26) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ↓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > Submission Center carries no CSR build and no study data: both are the CSR document’s, in the editor
+ ↓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > carries the narrative build and the assembly for a build of the saved run, in the CSR document’s editor
+ ↓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > a newly queued build is selected in the editor; nothing navigates to the board
+ ↓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > states that no build exists for the run, and a refused build list as an alert, never an empty list
+ ↓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > follows a drafting build until it ends, then stops re-reading the list
+ ↓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > says why a failed build stopped, as the list states it, and refuses a list whose reason is not text
+ ↓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > reviews the selected build section by section, with the ICH E3 labels, and approves against the content hash
+ ↓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > imports exactly the approved sections into this document, with this document as the target, and opens no other document
+ ↓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > states a refused import by name, and refuses a reply that is not for this document
+ × client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > explains the existing new-CSR path after IMPORT_TARGET_BOUND_TO_OTHER_BUILD at preview, while collaborators keep this CSR 335ms
+   → expected 'This document holds sections imported…' to be 'This document holds sections imported…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > explains the existing new-CSR path after IMPORT_TARGET_STUDY_DATA_MISMATCH at preview, while collaborators keep this CSR 102ms
+   → expected 'This build was not drafted from the s…' to be 'This build was not drafted from the s…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > explains the existing new-CSR path after IMPORT_TARGET_BOUND_TO_OTHER_BUILD at write, while collaborators keep this CSR 135ms
+   → expected 'This document holds sections imported…' to be 'This document holds sections imported…' // Object.is equality
+ × client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > explains the existing new-CSR path after IMPORT_TARGET_STUDY_DATA_MISMATCH at write, while collaborators keep this CSR 149ms
+   → expected 'This build was not drafted from the s…' to be 'This build was not drafted from the s…' // Object.is equality
+ ↓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > does not offer another CSR as recovery for an access refusal
+ ↓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > refuses a headings read whose template flag is not a yes or no, never guessing which rows are drafted
+ ↓ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > states a refused headings read as an alert, never an empty review
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > explains the existing new-CSR path after IMPORT_TARGET_BOUND_TO_OTHER_BUILD at preview, while collaborators keep this CSR
+ FAIL  client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > explains the existing new-CSR path after IMPORT_TARGET_BOUND_TO_OTHER_BUILD at write, while collaborators keep this CSR
+AssertionError: expected 'This document holds sections imported…' to be 'This document holds sections imported…' // Object.is equality
+
+Expected: "This document holds sections imported from CSR build 40. Nothing was imported. For a different data cut, go to Project → New document → Clinical Study Report. Freeze that cut for the new document, then build and import there. Collaborators should open this existing CSR."
+Received: "This document holds sections imported from CSR build 40. Nothing was imported."
+
+ ❯ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx:289:31
+    287|     }
+    288|     const alert = await within(panel).findByRole('alert');
+    289|     expect(alert.textContent).toBe(`${original} For a different data c…
+       |                               ^
+    290|       'Freeze that cut for the new document, then build and import the…
+    291|     if (stage === 'preview') expect(within(panel).queryByRole('button'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > explains the existing new-CSR path after IMPORT_TARGET_STUDY_DATA_MISMATCH at preview, while collaborators keep this CSR
+ FAIL  client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx > explains the existing new-CSR path after IMPORT_TARGET_STUDY_DATA_MISMATCH at write, while collaborators keep this CSR
+AssertionError: expected 'This build was not drafted from the s…' to be 'This build was not drafted from the s…' // Object.is equality
+
+Expected: "This build was not drafted from the study data this document froze. Nothing was imported. For a different data cut, go to Project → New document → Clinical Study Report. Freeze that cut for the new document, then build and import there. Collaborators should open this existing CSR."
+Received: "This build was not drafted from the study data this document froze. Nothing was imported."
+
+ ❯ client/src/concept2cure/v2/__tests__/csrCardReach.test.tsx:289:31
+    287|     }
+    288|     const alert = await within(panel).findByRole('alert');
+    289|     expect(alert.textContent).toBe(`${original} For a different data c…
+       |                               ^
+    290|       'Freeze that cut for the new document, then build and import the…
+    291|     if (stage === 'preview') expect(within(panel).queryByRole('button'…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 12 skipped (16)
+   Start at  09:23:11
+   Duration  2.03s (transform 533ms, setup 143ms, import 651ms, tests 724ms, environment 394ms)
+

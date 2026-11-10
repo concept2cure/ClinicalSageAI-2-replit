@@ -262,6 +262,57 @@ it('states a refused import by name, and refuses a reply that is not for this do
   expect(within(other).queryByText(/Will be written/)).toBeNull();
 });
 
+it.each([
+  ['IMPORT_TARGET_BOUND_TO_OTHER_BUILD', 'preview'], ['IMPORT_TARGET_STUDY_DATA_MISMATCH', 'preview'],
+  ['IMPORT_TARGET_BOUND_TO_OTHER_BUILD', 'write'], ['IMPORT_TARGET_STUDY_DATA_MISMATCH', 'write'],
+])(
+  'explains the existing new-CSR path after %s at %s, while collaborators keep this CSR', async (code, stage) => {
+    const original = code === 'IMPORT_TARGET_BOUND_TO_OTHER_BUILD'
+      ? 'This document holds sections imported from CSR build 40. Nothing was imported.'
+      : 'This build was not drafted from the study data this document froze. Nothing was imported.';
+    apiRequest.mockImplementation(async (method: string, path: string, body?: { previewOnly?: boolean }) => {
+      if (method === 'POST' && path === '/api/authoring/import/source') {
+        if (stage === 'write' && body?.previewOnly === true) return into(true);
+        throw refusal(409, { error: code, message: original });
+      }
+      return routes(method, path);
+    });
+    await card();
+    const region = await screen.findByLabelText('CSR builds from this study data');
+    fireEvent.click(await within(region).findByRole('button', { name: /Import approved sections into this document/ }));
+    const panel = await within(region).findByLabelText('Import into this document');
+    if (stage === 'write') {
+      fireEvent.change(await within(panel).findByLabelText(/Reason for importing/), { target: { value: 'Import the approved headings from this saved cut' } });
+      fireEvent.click(within(panel).getByRole('button', { name: 'Import into this document' }));
+    }
+    const alert = await within(panel).findByRole('alert');
+    expect(alert.textContent).toBe(`${original} For a different data cut, go to Project → New document → Clinical Study Report. ` +
+      'Freeze that cut for the new document, then build and import there. Collaborators should open this existing CSR.');
+    if (stage === 'preview') expect(within(panel).queryByRole('button', { name: 'Import into this document' })).toBeNull();
+    expect(screen.queryByTestId('csr-import')).toBeNull();
+    expect(imports()).toHaveLength(stage === 'preview' ? 1 : 2);
+    expect(imports()[0][2]).toMatchObject({ targetDocumentId: CSR_DOC, previewOnly: true });
+    expect(imports().every(([, , body]) => body.targetDocumentId === CSR_DOC)).toBe(true);
+    expect(nav).not.toHaveBeenCalled();
+    expect(peekEditorTarget()).toBeFalsy();
+  },
+);
+
+it('does not offer another CSR as recovery for an access refusal', async () => {
+  const original = 'You cannot edit this document with your current permissions. Nothing was imported.';
+  apiRequest.mockImplementation(async (method: string, path: string) => {
+    if (method === 'POST' && path === '/api/authoring/import/source') throw refusal(403, { error: 'IMPORT_TARGET_PERMISSION_DENIED', message: original });
+    return routes(method, path);
+  });
+  await card();
+  const region = await screen.findByLabelText('CSR builds from this study data');
+  fireEvent.click(await within(region).findByRole('button', { name: /Import approved sections into this document/ }));
+  const panel = await within(region).findByLabelText('Import into this document');
+  expect((await within(panel).findByRole('alert')).textContent).toBe(original);
+  expect(within(panel).queryByText(/Project → New document/)).toBeNull();
+  expect(imports()).toHaveLength(1);
+});
+
 it('refuses a headings read whose template flag is not a yes or no, never guessing which rows are drafted', async () => {
   headingRows = [...headings, { num: '9.8', label: 'Changes in the conduct of the study', depth: 2, manual: false, state: 'draft',
     placeholder: 'yes', contentHash: 'f'.repeat(64) }];

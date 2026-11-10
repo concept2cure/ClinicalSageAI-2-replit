@@ -10,6 +10,8 @@
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
 import { createJourneyDb, type JourneyDb } from '../../../../tests/golden-journeys/harness';
 import { PREREQ, VAULT_DDL, AUTHORING_ACCESS_DDL, PROGRAM, PROGRAM_B, OTHER_PROGRAM, ORG, OTHER_ORG, AUTHOR, M25_SECTIONS } from '../../../routes/__tests__/_authoring-canvas-fixture';
 import { DRAFT_AUTHORING_DOCUMENT_NO_PROJECT } from '../../authoring/authoring-draft-tool';
@@ -17,8 +19,9 @@ import { approvedToolHandler } from './support/approved-tool-handler';
 import { createDocumentDispositionService } from '../../document-data-disposition/service';
 import { runWithTenantScope } from '../../../db/tenantStore';
 import { draftSourceIdentityForText } from '../draft-source-identity';
-import { registerDraftSourceToolIdentityControls } from './support/draft-source-tool-v2-controls';
+import { registerDraftSourceToolIdentityControls, registerReviewedDerivativeToolControls } from './support/draft-source-tool-v2-controls';
 import { AUTHORING_TOOL_MIGRATIONS, DISPOSITION_IMPACT_PREREQ, authoringCountsOn } from './support/authoring-tool-db';
+import { PRIVATE_RULE_STORE_DDL, asRequestOwner, ownerScopedClient } from './support/request-owner';
 
 /** The request's tenant scope, as the global /api gate opens it for every AnA
  *  turn. Since 9c266724f the actor source read (withAnaSourceReadScope) and the
@@ -27,7 +30,18 @@ const inRequestScope = <T>(fn: () => Promise<T>): Promise<T> =>
   runWithTenantScope({ tenantId: String(ORG), role: 'member', source: 'request', caller: 'draft-authoring-document-tool.test' }, fn);
 
 
-const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown, beforeEmbedding: null as (() => Promise<void>) | null }));
+const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown, beforeEmbedding: null as (() => Promise<void>) | null, derivativeDraft: vi.fn(), custodyDenied: false, custodyChecks: [] as any[] }));
+vi.mock('../AnaDocumentDraftingService', async importOriginal => ({
+  ...await importOriginal<typeof import('../AnaDocumentDraftingService')>(),
+  getAnaDraftingService: () => ({ draftDocument: (...args: unknown[]) => h.derivativeDraft(...args) }),
+}));
+vi.mock('../../ai-gateway/providers/org-placement-writer', async importOriginal => ({
+  ...await importOriginal<typeof import('../../ai-gateway/providers/org-placement-writer')>(),
+  authorizeDerivativeUse: async (_pool: unknown, input: any) => {
+    h.custodyChecks.push(input); if (h.custodyDenied) throw new Error('Source revoked');
+    return { derivativeId: input.derivativeId, payloadSha256: 'e'.repeat(64) };
+  },
+}));
 vi.mock('../../enhancedEmbeddingService.js', () => ({ getEmbeddingService: () => ({ embed: async () => {
   await h.beforeEmbedding?.();
   throw new Error('Test embedding unavailable');
@@ -42,17 +56,19 @@ vi.mock('../../../db.js', () => ({
 
 const T = 240_000;
 let jdb: JourneyDb;
-const requestExecutor = { query: (text: string, values?: unknown[]) => jdb.pglite.query<Record<string, unknown>>(text, values) };
+// The request's connection, carrying its verified owner (support/request-owner.ts).
+const requestExecutor = ownerScopedClient((text, values) => jdb.pglite.query<Record<string, unknown>>(text, values));
 let handler: (input: Record<string, unknown>, ctx?: Record<string, unknown>) => Promise<string>;
 
 beforeAll(async () => {
   jdb = await createJourneyDb({
     prereqSql: PREREQ + VAULT_DDL + DISPOSITION_IMPACT_PREREQ,
     migrations: [...AUTHORING_TOOL_MIGRATIONS],
-    testOnlySql: AUTHORING_ACCESS_DDL,
+    testOnlySql: AUTHORING_ACCESS_DDL + PRIVATE_RULE_STORE_DDL,
   });
   h.db = jdb.db;
   h.pool = jdb.pool;
+  await jdb.pglite.exec(fs.readFileSync(path.resolve('db/migrations/20260813_ai_gateway_audit_log.sql'), 'utf8'));
   // Withdrawal scenarios act as the programme's actual current lead; a
   // test context claiming manager does not substitute for live membership.
   await jdb.pool.query('UPDATE regulatory_programs SET lead_user_id=$1 WHERE organization_id=$2', [Number(AUTHOR.id), ORG]);
@@ -61,8 +77,8 @@ beforeAll(async () => {
   for (const [id, program, organizationId, hash] of [[SOURCE_ID, PROGRAM, ORG, 'a'],
     [OTHER_SOURCE_ID, PROGRAM_B, ORG, 'b'], [FOREIGN_SOURCE_ID, OTHER_PROGRAM, OTHER_ORG, 'c']] as const) {
     await jdb.pool.query(`INSERT INTO vault.documents
-      (id, program_id, organization_id, document_code, document_title, document_type, file_name, content_hash, extracted_text)
-      VALUES ($1::uuid,$2,$3,$1::text,'Processed CSR','csr','csr.pdf',$4,$5)`, [id, program, organizationId, hash.repeat(64), SOURCE_TEXT]);
+      (id, program_id, organization_id, document_code, document_title, document_type, file_name, content_hash, extracted_text, classification)
+      VALUES ($1::uuid,$2,$3,$1::text,'Processed CSR','csr','csr.pdf',$4,$5,'CONFIDENTIAL')`, [id, program, organizationId, hash.repeat(64), SOURCE_TEXT]);
     await jdb.pool.query(`INSERT INTO vault.document_catalog
       (document_id,content_hash,catalog_status,extraction_method,char_count)
       VALUES ($1,$2,'extracted','pdf-text',$3)`, [id, hash.repeat(64), SOURCE_TEXT.length]);
@@ -71,7 +87,8 @@ beforeAll(async () => {
   await import('../AnaToolExecutor');
   const found = approvedToolHandler('draft_authoring_document');
   expect(found, 'draft_authoring_document is not registered').toBeDefined();
-  handler = found as typeof handler;
+  // Every tool call reads its member's private rules first (P-104): it runs as that verified member.
+  handler = (input, ctx) => asRequestOwner(ctx, () => found!(input, { sqlClient: requestExecutor, ...ctx } as never));
 }, T);
 
 afterAll(async () => {
@@ -234,14 +251,15 @@ describe('project catalog — source-version truth', () => {
       // Its identity only: the stale record's content never leaves the database.
       expect(loaded?.catalog).toMatchObject({ version: 'other', status: 'cataloged', summary: null, keyData: null, charCount: 0 });
       const { getToolHandler } = await import('../AnaToolExecutor');
+      const readCtx = { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM };
       const read = JSON.parse(await runWithTenantScope({ tenantId: String(ORG), role: 'member', source: 'test' }, () =>
-        getToolHandler('read_project_document')!({ document_id: SOURCE_ID }, { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM })));
+        asRequestOwner(readCtx, () => getToolHandler('read_project_document')!({ document_id: SOURCE_ID }, readCtx))));
       expect(read).toMatchObject({ ok: false, code: 'SOURCE_VERSION_CHANGED' });
       expect(JSON.stringify(read)).not.toContain('9 of 10');
       // A 'cataloged' record for other bytes is not a studied document: placement refuses before any write.
       vi.stubEnv('ANA_DOCUMENT_CATALOG_FORCE_ON', 'true');
       try {
-        const placed = JSON.parse(await getToolHandler('place_project_document')!({ document_id: SOURCE_ID, folder_id: 'module-5', rationale: 'The stale record says CSR.' }, { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, projectRef: PROGRAM, humanConfirmed: true }));
+        const placed = JSON.parse(await asRequestOwner(readCtx, () => getToolHandler('place_project_document')!({ document_id: SOURCE_ID, folder_id: 'module-5', rationale: 'The stale record says CSR.' }, { ...readCtx, humanConfirmed: true })));
         expect(placed).toMatchObject({ ok: false, refused: true, code: 'SOURCE_VERSION_CHANGED' });
       } finally { vi.unstubAllEnvs(); }
       const receipts = await jdb.pool.query('SELECT COUNT(*)::int AS n FROM vault.document_read_receipts WHERE document_id=$1', [SOURCE_ID]);
@@ -289,7 +307,8 @@ describe('draft_authoring_document', () => {
     const { ALL_ANA_TOOLS } = await import('../AnaToolDefinitions');
     const def = ALL_ANA_TOOLS.find((t) => t.name === 'draft_authoring_document');
     expect(def).toBeDefined();
-    expect(def!.input_schema.required).toEqual(['title', 'sections']);
+    expect(def!.input_schema.required).toEqual(['title']);
+    expect(def!.input_schema.properties).toHaveProperty('derivativeId');
   });
 
   it('refuses verbatim without an open project, and writes nothing', async () => {
@@ -300,9 +319,9 @@ describe('draft_authoring_document', () => {
     expect(after.rows[0]).toEqual(before.rows[0]);
   });
 
-  it('refuses a project another organization owns as "no project" — never a cross-tenant write', async () => {
+  it('refuses a foreign open project at current policy admission before any authoring write', async () => {
     const out = JSON.parse(await handler(input, { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, humanConfirmed: true, projectRef: OTHER_PROGRAM }));
-    expect(out).toEqual({ error: DRAFT_AUTHORING_DOCUMENT_NO_PROJECT });
+    expect(out).toMatchObject({ code: 'ANA_PROJECT_NOT_FOUND', error: 'Project not found.' }); // the gate's admission, in its own words
   });
 
   it('with the open program (uuid projectRef): the document, its sections and its provenance exist', async () => {
@@ -351,7 +370,7 @@ describe('draft_authoring_document', () => {
     );
     const before = await jdb.pool.query(`SELECT count(*)::int AS n FROM authoring_documents`);
     const out = JSON.parse(await handler({ ...input, title: 'Foreign anchor draft' }, { organizationId: ORG, userId: Number(AUTHOR.id), sqlClient: requestExecutor, humanConfirmed: true, projectId: 44 }));
-    expect(out).toEqual({ error: DRAFT_AUTHORING_DOCUMENT_NO_PROJECT });
+    expect(out).toMatchObject({ code: 'ANA_PROJECT_NOT_FOUND', error: 'Project not found.' }); // the gate's admission, in its own words
     const after = await jdb.pool.query(`SELECT count(*)::int AS n FROM authoring_documents`);
     expect((after.rows[0] as { n: number }).n).toBe((before.rows[0] as { n: number }).n);
   });
@@ -535,3 +554,10 @@ describe('draft_authoring_document — governed source withdrawal before save', 
     expect(await authoringCounts()).toEqual(before);
   });
 });
+
+
+registerReviewedDerivativeToolControls({ database: () => jdb, call: (body, ctx) => inRequestScope(() => handler(body, ctx)),
+  counts: authoringCounts, state: h, organizationId: ORG, userId: Number(AUTHOR.id), programId: PROGRAM,
+  sections: M25_SECTIONS, sourceBinding: { documentId: SOURCE_ID, programId: PROGRAM, contentHash: 'a'.repeat(64),
+    extractedTextSha256: createSourceHash(), projectId: 42 } });
+function createSourceHash() { return draftSourceIdentityForText(SOURCE_TEXT, { start: 0, end: SOURCE_TEXT.length, totalChars: SOURCE_TEXT.length }).extractedTextSha256; }

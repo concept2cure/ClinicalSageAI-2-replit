@@ -1,0 +1,38 @@
+{
+ "verifiedAt": "2026-11-06T22:41:33.253Z",
+ "mergedHead": "e802750f45765e2900f7da8db672f2b8b67ee346",
+ "passed": true,
+ "verification": "Exact SHA-256 comparison of every recorded component/native selected pin against current local files; original receipts retained without relabeling.",
+ "retained": [
+  {
+   "receipt": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/ui/browser-result/result.json",
+   "receiptSha256": "0e3374f1ef22b46d8bc3ed3108df5dc05d3f14ba1e9c237e41d21e18f49ba221",
+   "retainedCheckpoint": "5283da69cb953d7c4c8970d80fd14f8fe81879ce",
+   "passedChecks": 12,
+   "selectedPinEntries": 45,
+   "recordedPinsSha256": "d7f8531c8fcf720f339e7427d5e8c2207cf83876e353408f69b46c3a019f0eaf",
+   "currentPinsSha256": "d7f8531c8fcf720f339e7427d5e8c2207cf83876e353408f69b46c3a019f0eaf",
+   "allSelectedHashesMatch": true,
+   "mismatches": []
+  },
+  {
+   "receipt": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/ui/live-result/result.json",
+   "receiptSha256": "aad4a639f10f388b4fd75d834922515f89b93ec3168055b8bbab71c5697a5ad4",
+   "retainedCheckpoint": "d6cb7f9a9e10e20fea8daa97408c41c78b3b0942",
+   "passedChecks": 2,
+   "selectedPinEntries": 30,
+   "recordedPinsSha256": "2bf1a47e04ea0e682de540459181bcdf9d249c43b0f56fb6bc261553ef730e3e",
+   "currentPinsSha256": "2bf1a47e04ea0e682de540459181bcdf9d249c43b0f56fb6bc261553ef730e3e",
+   "allSelectedHashesMatch": true,
+   "mismatches": []
+  }
+ ],
+ "browserRerunPerformed": false,
+ "nativeRerunPerformed": false,
+ "newLocalWritesExecuted": 0,
+ "retainedFinalNativeRunSaves": 2,
+ "completedNativeRuns": 6,
+ "cumulativeQualificationContentSaves": 12,
+ "productionFilesEdited": false,
+ "scope": "This bridges only recorded selected owners. It does not qualify other incoming changes, untested transitive behavior, deployment, providers, signatures or transmission."
+}

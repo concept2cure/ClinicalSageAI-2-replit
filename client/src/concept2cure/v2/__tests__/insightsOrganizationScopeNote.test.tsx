@@ -168,7 +168,7 @@ describe('report scope line — what the counts cover', () => {
     await ready();
     fireEvent.click(await screen.findByRole('tab', { name: 'Catalog' }));
     const card = (await screen.findByText('Lifecycle Obligation Calendar')).closest('.rl-card') as HTMLElement;
-    fireEvent.click(within(card).getByRole('button', { name: /^Run$/ }));
+    fireEvent.click(within(card).getByRole('button', { name: /^Run / }));
     expect((await screen.findByTestId('ro-scope')).textContent).toBe(PROJECT);
     expect(within(head()).getByText(NOT_NARROWED)).toBeTruthy();
     const obligations = screen.getByRole('heading', { name: 'Recorded obligation calendar' }).closest('section')!;

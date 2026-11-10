@@ -153,24 +153,50 @@ function rememberLastProject(project: ShellProject): void {
   try { localStorage.setItem(LAST_KEY, JSON.stringify({ account, project: kept })); } catch { /* storage unavailable */ }
 }
 
+const hasProjectId = (project: ShellProject | null | undefined): project is ShellProject => {
+  const id = project?.id;
+  return typeof id === 'string' ? id.trim() !== '' : typeof id === 'number' && Number.isFinite(id);
+};
+
+/* The most recent project the signed-in account can open, as the rail's Recents
+   read it from the server (GET /api/c2c/projects, newest-updated first). It is
+   what a project screen reopens when this account has never opened a project in
+   this browser: on 2026-11-09, in the founder's client demo, CMC on the rail
+   opened Projects in a fresh browser because nothing was remembered. Memory
+   only, keyed to the account signed in when it was noted, and forgotten on a
+   tenant switch; each screen still admits the project on the server. */
+let recentProject: { account: string; project: ShellProject } | null = null;
+
+/** Note the most recent project the rail lists (null forgets it). Opens nothing. */
+export function noteRecentProject(project: ShellProject | null): void {
+  const account = signedInAccount();
+  recentProject = account && hasProjectId(project) ? { account, project: { ...project } } : null;
+}
+
+/** The project this account last opened in this browser, or null. */
+function rememberedProject(account: string): ShellProject | null {
+  try {
+    const saved = JSON.parse(localStorage.getItem(LAST_KEY) ?? 'null') as { account?: unknown; project?: ShellProject } | null;
+    return saved?.account === account && hasProjectId(saved.project) ? saved.project : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
- * Reopen the last project the signed-in account opened, when none is open.
- * True when a project is open afterwards. Nothing is reopened for another
- * account, or when nothing was remembered.
+ * Reopen a project when none is open: the last one the signed-in account
+ * opened, or, when it never opened one here, the most recent one the rail
+ * lists for it. True when a project is open afterwards. Nothing is reopened for
+ * another account, or when there is nothing to reopen.
  */
 export function reopenLastProject(): boolean {
   if (readShellProject()) return true;
   const account = signedInAccount();
   if (!account) return false;
-  try {
-    const saved = JSON.parse(localStorage.getItem(LAST_KEY) ?? 'null') as { account?: unknown; project?: ShellProject } | null;
-    const id = saved?.project?.id;
-    if (saved?.account !== account || !(typeof id === 'string' ? id.trim() : typeof id === 'number' && Number.isFinite(id))) return false;
-    publishShellProject(saved!.project!);
-    return true;
-  } catch {
-    return false;
-  }
+  const project = rememberedProject(account) ?? (recentProject?.account === account ? recentProject.project : null);
+  if (!project) return false;
+  publishShellProject(project);
+  return true;
 }
 
 /**
@@ -188,6 +214,7 @@ export function openProjectHome(project: ShellProject & { title: string }, onNav
 /** A tenant-boundary switch retires all pending handoffs and the previous selection. */
 export function clearShellProject(): void {
   projectRevision += 1;
+  recentProject = null;
   delete window.C2C_PROJECT;
   try { sessionStorage.removeItem(KEY); } catch { /* storage unavailable */ }
   notify();

@@ -1,0 +1,11 @@
+The contract case, run while server/services/vault/document-catalog-governance.service.ts
+still imported stableHash from shared/canonical-json:
+
+ × no server module hashes through shared/canonical-json > imports neither
+   sha256Hex nor stableHash from it
+   → these cannot run in the ESM runtime: hash stableStringify(value) with
+     node:crypto in the server module: expected [ Array(1) ] to deeply equal []
+
+That caller was found by this case, not by anyone reaching it. It is the Vault
+catalog's governed verification record, and it would have answered 500 the
+moment it was used.

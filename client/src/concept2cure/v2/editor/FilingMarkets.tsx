@@ -26,6 +26,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import { apiRequest, ApiRequestError, redactInternals } from '@/lib/queryClient';
 import type { FilingMarket } from '../useFilingOutline';
 import { editingCopyOf } from './editingCopy';
+import { filingAuthorityLabel } from './writingAgencyPresentation';
 
 export interface FilingMarketsProps {
   home: FilingMarket | null;
@@ -46,9 +47,10 @@ export interface FilingMarketsProps {
    carries neither, and the list now renders for the home filing: name what is
    recorded, else the filing's title, and never throw. */
 const upper = (v: unknown) => (typeof v === 'string' ? v.toUpperCase() : '');
-const nameOf = (f: FilingMarket) => [upper(f.agency), upper(f.doc_type)].filter(Boolean).join(' · ') || f.title || 'This filing';
+const authorityOf = (f: FilingMarket) => typeof f.agency === 'string' && typeof f.doc_type === 'string' ? filingAuthorityLabel(f) : upper(f.agency);
+const nameOf = (f: FilingMarket) => [authorityOf(f), upper(f.doc_type)].filter(Boolean).join(' · ') || f.title || 'This filing';
 /** The filing a toast names: its agency's, when one is recorded. */
-const filingOf = (f: FilingMarket) => (upper(f.agency) ? `${upper(f.agency)} filing` : 'filing');
+const filingOf = (f: FilingMarket) => (authorityOf(f) ? `${authorityOf(f)} filing` : 'filing');
 
 /* Each action's accessible name is its visible text; the filing it acts on is
    its description (the row's name), so a voice-control user says what they
@@ -117,12 +119,12 @@ export function FilingMarkets(props: FilingMarketsProps) {
 }
 
 /** The market's gaps: required sections the home filing does not hold. Shown, never added. */
-export function FilingGaps({ gaps, agency }: { gaps: readonly { key: string; label: string }[]; agency: string }) {
+export function FilingGaps({ gaps, agency, docType = '' }: { gaps: readonly { key: string; label: string }[]; agency: string; docType?: string }) {
   if (gaps.length === 0) return null;
   return (
     <div className="scaf-note" data-testid="ed-filing-gaps">
       <span id="ed-filing-gaps-h">
-        {agency.toUpperCase()} requires {gaps.length === 1 ? 'a section' : `${gaps.length} sections`} the home filing does not hold.
+        {filingAuthorityLabel({ agency, doc_type: docType })} requires {gaps.length === 1 ? 'a section' : `${gaps.length} sections`} the home filing does not hold.
         They belong to the home filing; nothing was added for them.
       </span>
       <ul role="list" aria-labelledby="ed-filing-gaps-h" style={{ margin: '4px 0 0', paddingLeft: 16 }}>

@@ -22,6 +22,16 @@ cd "$C2C_REPO_ROOT" || exit 0
 echo "C2C Codespace post-start. Branch: $(git branch --show-current 2>/dev/null || echo unknown)"
 echo "No database or AI secret is printed."
 
+# Dependencies first: a pull that changed package-lock.json since the last
+# install would otherwise start the app on the old tree.
+if ! c2c_deps_current; then
+  c2c_log "package-lock.json changed since the last install: stopping the app and running npm ci."
+  pkill -f 'tsx --inspect=0 server/index.ts' 2>/dev/null
+  c2c_install_deps >"$C2C_CODESPACE_STATE/npm-ci.log" 2>&1 ||
+    { tail -n 20 "$C2C_CODESPACE_STATE/npm-ci.log"; c2c_log "BLOCKED: npm ci failed; see $C2C_CODESPACE_STATE/npm-ci.log."; exit 0; }
+  c2c_log "Dependencies match package-lock.json."
+fi
+
 c2c_blocked() { c2c_log "BLOCKED: $*"; c2c_log "The editor stays open for repair; see .devcontainer and docs/testing/CODESPACES_EDITOR_HUMAN_TESTING_2026-10-14.md."; exit 0; }
 
 if [[ ! -s "$C2C_CODESPACE_STATE/owner.env" || ! -s "$C2C_CODESPACE_STATE/app.env" ]]; then
@@ -34,7 +44,7 @@ c2c_ensure_database || c2c_blocked "the owner role or database could not be ensu
 # Idempotent: over a complete database this is deploy-migrate + the readiness
 # contract, so migrations committed since the last start are applied.
 c2c_provision || c2c_blocked "database provisioning failed."
-if [[ "${NEED_ACCOUNTS:-0}" == "1" || ! -f "$C2C_CODESPACE_STATE/accounts.done" ]]; then
+if [[ "${NEED_ACCOUNTS:-0}" == "1" ]] || ! c2c_accounts_current; then
   c2c_seed_accounts || c2c_blocked "sign-in accounts could not be created."
 fi
 
@@ -81,6 +91,17 @@ c2c_ana_state() {
 }
 c2c_ana_detail() {
   c2c_readyz | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(String(JSON.parse(s).anaDetail||"").slice(0,300))}catch{console.log("")}})'
+}
+# The existing public build stamp is fixed when the backend starts. A healthy
+# process can otherwise survive a pull while the database/client move ahead.
+c2c_app_current() {
+  local expected
+  expected="$(git rev-parse HEAD 2>/dev/null)" || return 1
+  [[ "$expected" =~ ^[0-9a-f]{40}$ ]] || return 1
+  curl -fsS --max-time 5 "http://127.0.0.1:$C2C_PORT/api/version" 2>/dev/null |
+    C2C_EXPECTED_COMMIT="$expected" node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{
+      try{const c=JSON.parse(s).commit;process.exit(typeof c==="string"&&/^[0-9a-f]{40}$/.test(c)&&c===process.env.C2C_EXPECTED_COMMIT?0:1)}
+      catch{process.exit(1)}})'
 }
 c2c_stop_app() {
   pkill -f 'tsx --inspect=0 server/index.ts' 2>/dev/null
@@ -130,6 +151,10 @@ if c2c_app_up; then
     c2c_log "The running app was started without $C2C_APP_LACKS (AnA: $(c2c_ana_state)); restarting it with this start's keys."
     c2c_stop_app
     c2c_start_app
+  elif ! c2c_app_current; then
+    c2c_log "The running app serves an older or unverified code revision; restarting it with the current checkout."
+    c2c_stop_app
+    c2c_start_app
   else
     c2c_log "The app is already running on port $C2C_PORT."
   fi
@@ -141,17 +166,53 @@ c2c_log "The app is serving. /readyz: $(c2c_readiness_line)"
 # Read (not export) the demo identities; the seeders get only what they need.
 . "$C2C_CODESPACE_STATE/app.env"
 
-# Demo packs through the product's own API, once.
-if [[ ! -f "$C2C_CODESPACE_STATE/demo-seed.done" ]]; then
+# Demo packs through the product's own API. They run again when scripts/demo
+# changes on the branch (the packs are idempotent by title), so a Codespace
+# made earlier gets new demo data on its next start. Without a second signer
+# (OQ_SIGNER_*) the two-person steps are recorded as not executed; the reviewer
+# becomes that signer once the QMS packs route a draft to review before
+# approving it (the server refuses a draft's approval with QMS_INVALID_STATE).
+C2C_DEMO_VERSION="$(git rev-parse HEAD:scripts/demo 2>/dev/null || echo unknown)"
+if [[ "$(cat "$C2C_CODESPACE_STATE/demo-seed.done" 2>/dev/null)" != "$C2C_DEMO_VERSION" ]]; then
   c2c_log "Seeding the demo projects (npm run demo:seed -- --pack all); log: $C2C_CODESPACE_STATE/demo-seed.log"
-  if DEMO_MANIFEST_ROOT="$C2C_CODESPACE_STATE/demo-manifests" npm run --silent demo:seed -- --pack all --base-url "http://127.0.0.1:$C2C_PORT" --email "$DEMO_SEED_EMAIL" \
+  if DEMO_MANIFEST_ROOT="$C2C_CODESPACE_STATE/demo-manifests" \
+      npm run --silent demo:seed -- --pack all --base-url "http://127.0.0.1:$C2C_PORT" --email "$DEMO_SEED_EMAIL" \
       >"$C2C_CODESPACE_STATE/demo-seed.log" 2>&1; then
-    touch "$C2C_CODESPACE_STATE/demo-seed.done"
-    c2c_log "Demo projects seeded."
+    echo "$C2C_DEMO_VERSION" >"$C2C_CODESPACE_STATE/demo-seed.done"
+    c2c_log "Demo projects seeded ($(grep -c 'not executed' "$C2C_CODESPACE_STATE/demo-seed.log" || true) steps recorded as not executed; see the log)."
   else
     c2c_log "The demo seed did not finish; see $C2C_CODESPACE_STATE/demo-seed.log. It re-runs on the next start."
   fi
 fi
+
+# A demonstration is a conversation: the default 15-minute idle sign-out
+# would end it mid-sentence. The development organisation's idle window is set
+# to 120 minutes once, through the governed settings route an administrator
+# uses (PATCH /api/tenant-config/:id/settings, audited as
+# tenant_settings_changed). Real tenants keep their own setting.
+c2c_set_idle_window() {
+  local email="$1" minutes="$2" marker="$C2C_CODESPACE_STATE/idle-window.done"
+  grep -qx "$email=$minutes" "$marker" 2>/dev/null && return 0
+  if C2C_BASE="http://127.0.0.1:$C2C_PORT" C2C_EMAIL="$email" C2C_MINUTES="$minutes" node -e '
+    (async () => {
+      const base = process.env.C2C_BASE;
+      const l = await (await fetch(base + "/api/auth/dev-login", { method: "POST",
+        headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: process.env.C2C_EMAIL }) })).json();
+      const org = l?.user?.organizationId;
+      if (!l?.accessToken || !org) process.exit(1);
+      const r = await fetch(base + "/api/tenant-config/" + org + "/settings", { method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + l.accessToken },
+        body: JSON.stringify({ security: { sessionTimeoutMinutes: Number(process.env.C2C_MINUTES) } }) });
+      const j = await r.json().catch(() => null);
+      process.exit(r.status === 200 && j?.security?.sessionTimeoutMinutes === Number(process.env.C2C_MINUTES) ? 0 : 1);
+    })().catch(() => process.exit(1));' 2>/dev/null; then
+    echo "$email=$minutes" >>"$marker"
+    c2c_log "Idle sign-out for $email's organisation: $minutes minutes."
+  else
+    c2c_log "Could not set the idle sign-out for $email's organisation; it stays at the default (15 minutes)."
+  fi
+}
+c2c_set_idle_window "$DEMO_SEED_EMAIL" 120
 
 # The CSR study (CDISCPILOT01), prepared once: the public CDISC pilot ADaM
 # files are fetched OUTSIDE the repository (CDISC's terms forbid committing or
@@ -163,6 +224,16 @@ if [[ ! -f "$C2C_CODESPACE_STATE/csr-study.done" ]]; then
     c2c_log "Fetching the CDISC pilot ADaM files into $C2C_CDISC_DIR (verified by SHA-256)."
     node scripts/cre/fetch-cdisc-pilot-adam.mjs "$C2C_CDISC_DIR" >"$C2C_CODESPACE_STATE/cdisc-fetch.log" 2>&1 ||
       c2c_log "The CDISC pilot files could not be fetched; see $C2C_CODESPACE_STATE/cdisc-fetch.log."
+  fi
+  if [[ -f "$C2C_CDISC_DIR/adsl.xpt" ]] && ! node -e "require.resolve('playwright')" >/dev/null 2>&1; then
+    # The preparation walk drives a browser with playwright, which is not a project dependency: without it every
+    # fresh Codespace stopped here with "Cannot find module 'playwright'" (2026-11-09). Installed for this checkout
+    # only (--no-save), with its browser; a failure leaves the app running and the preparation re-tried next start.
+    c2c_log "Installing playwright for the CSR study preparation; log: $C2C_CODESPACE_STATE/playwright-install.log"
+    { timeout 900 npm install --no-save --no-audit --no-fund playwright@1.56.1 &&
+      timeout 900 npx playwright install chromium &&
+      c2c_sudo timeout 900 "$(command -v npx)" playwright install-deps chromium; } >"$C2C_CODESPACE_STATE/playwright-install.log" 2>&1 ||
+      c2c_log "playwright could not be installed; see $C2C_CODESPACE_STATE/playwright-install.log."
   fi
   if [[ -f "$C2C_CDISC_DIR/adsl.xpt" ]]; then
     c2c_log "Preparing the CSR study in the app (Vault uploads, approvals, CSR document, frozen study data)."

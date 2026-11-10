@@ -31,6 +31,7 @@ export const h = {
   beforeWrite: null as null | (() => Promise<unknown>),
   /** What the sign-off step answers; `{ required: false }` when unset. */
   signoff: null as null | Record<string, unknown>,
+  workspaceClaim: undefined as number | undefined,
 };
 
 export let pg: PGlite;
@@ -182,6 +183,18 @@ export function setUpPgliteApp(ddl: string, fixture: string) {
       }
     };
     await pg.exec(ddl);
+    // Current actor/project admission now runs through this real transaction.
+    // These fixture tables model the existing policy inputs; no ACL is mocked.
+    await pg.exec(`CREATE TABLE organizations(id integer PRIMARY KEY,status text);
+      CREATE TABLE users(id integer PRIMARY KEY,name text,email text,status text);
+      CREATE TABLE organization_users(id serial PRIMARY KEY,organization_id integer,user_id integer,role text);
+      CREATE TABLE client_workspaces(id integer PRIMARY KEY,organization_id integer);
+      CREATE TABLE projects(id integer PRIMARY KEY,organization_id integer,client_workspace_id integer,owner_id integer,created_by_id integer,status text,settings jsonb,
+        parent_project_id integer); -- P-111 (b): the task admission reads a work project's filing project (task-project.ts canWorkOnProjectTasks)
+      CREATE TABLE project_members(id serial PRIMARY KEY,organization_id integer,project_id integer,user_id integer,role text,status text);
+      CREATE TABLE project_visibility_settings(project_id integer PRIMARY KEY,organization_id integer,visibility text);
+      CREATE TABLE concept2cure_artifacts(id integer,organization_id integer,project_id integer);
+      CREATE TABLE concept2cure_review_assignments(artifact_id integer,reviewer_id integer,organization_id integer,status text);`);
 
     // Imported only now, once `db` resolves to this PGlite.
     const { default: routes } = await import('../unifiedTasks.routes');
@@ -190,6 +203,8 @@ export function setUpPgliteApp(ddl: string, fixture: string) {
     app.use((req, _res, next) => {
       (req as any).user = { organizationId: ORG, id: 7, role: h.role };
       (req as any).userRole = h.role;
+      if (h.workspaceClaim !== undefined) (req as any).tenantContext = { organizationId: ORG, clientWorkspaceId: h.workspaceClaim };
+      (req as any).dbClient = { query: (text: string, params?: unknown[]) => pg.query(text, params) };
       next();
     });
     app.use(BASE, routes);
@@ -199,11 +214,19 @@ export function setUpPgliteApp(ddl: string, fixture: string) {
   });
   beforeEach(async () => {
     await pg.exec(fixture);
+    await pg.exec(`TRUNCATE organization_users,users,organizations,client_workspaces,projects,project_members,project_visibility_settings,concept2cure_artifacts,concept2cure_review_assignments RESTART IDENTITY;
+      INSERT INTO organizations VALUES(${ORG},'active'),(${OTHER_ORG},'active');
+      INSERT INTO users VALUES(7,'Owner','owner@example.test','active'),(8,'Other owner','other@example.test','active');
+      INSERT INTO organization_users(organization_id,user_id,role) VALUES(${ORG},7,'member'),(${ORG},8,'member');
+      INSERT INTO client_workspaces VALUES(71,${ORG}),(72,${ORG}),(81,${OTHER_ORG});
+      INSERT INTO projects VALUES(301,${ORG},71,7,7,'active','{}'),(302,${ORG},72,8,8,'active','{}');
+      INSERT INTO project_visibility_settings VALUES(301,${ORG},'private'),(302,${ORG},'private');`);
     h.log = [];
     h.failLedgerFor = null;
     h.failLedgerCommand = null;
     h.role = 'member';
     h.beforeWrite = null;
     h.signoff = null;
+    h.workspaceClaim = undefined;
   });
 }

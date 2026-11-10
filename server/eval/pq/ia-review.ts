@@ -9,6 +9,7 @@ import type { GatewayMessage } from '../../services/ai-gateway/types.js';
 import { ANA_INTELLIGENT_AWARENESS } from '../../services/ana-ri/personality-core.js';
 import { servedModelMatches } from './pq-verdict.js';
 import { isCompletedProviderText, providerResponseMetadata } from './output-integrity.js';
+import { requireEvaluationScope, withEvaluationTenantScope, type EvaluationScope } from '../rag/qualification-corpus.js';
 
 export interface IaReviewSource {
   id: string;
@@ -231,11 +232,15 @@ export async function captureIaReview(
   bank: IaReviewBank,
   entry: ReviewEntry,
   gateway: ReviewGateway,
+  scope: EvaluationScope,
 ): Promise<IaCaptureResult> {
   const issues = validateIaReviewBank(bank);
   if (issues.length) throw new Error(`IA case bank refused: ${issues.join('; ')}`);
+  const capturedScope = Object.freeze(requireEvaluationScope(scope));
+  const scopedGateway: ReviewGateway = { evaluateModel: (id, request) => withEvaluationTenantScope(capturedScope, () =>
+    gateway.evaluateModel(id, { ...request, organizationId: capturedScope.organizationId, projectId: capturedScope.programId })) };
   const captures: IaCaseCapture[] = [];
-  for (const item of bank.cases) captures.push(await captureCase(item, bank, entry, gateway));
+  for (const item of bank.cases) captures.push(await captureCase(item, bank, entry, scopedGateway));
   const turns = captures.flatMap(c => c.turns);
   const plannedTurns = captures.reduce((sum, c) => sum + c.plannedTurns, 0);
   const capturedTurns = turns.filter(t => t.response !== null).length;

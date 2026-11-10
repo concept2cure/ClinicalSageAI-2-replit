@@ -870,6 +870,7 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
         }
         action={{
           label: 'Draft this argument with AnA',
+          icon: I.sparkles,
           onClick: () =>
             ask(
               'Draft the substantial-equivalence argument citing ' +

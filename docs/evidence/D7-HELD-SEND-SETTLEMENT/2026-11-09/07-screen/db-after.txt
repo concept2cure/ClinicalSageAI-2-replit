@@ -1,0 +1,22 @@
+# What the two signed acts left in the walk database, read after the walk (read-only queries)
+
+ id | sequence_number |   status   | dispatch_status | claim_cleared | attempt_cleared 
+----+-----------------+------------+-----------------+---------------+-----------------
+ 31 | 0001            | dispatched | pending         | t             | t
+ 32 | 0002            | dispatched | sent            | f             | f
+(2 rows)
+
+ id |    status     |   outcome    |      kind      |     proof      | cites_vault_doc | settled_by 
+----+---------------+--------------+----------------+----------------+-----------------+------------
+  1 | rejected      | not-received | platform-proof | no-as2-message | f               | 17
+  2 | ack2_received | received     | ack2           |                | t               | 17
+(2 rows)
+
+ sequence |         action         |   outcome    |    meaning     | has_reason |        source        |    status     
+----------+------------------------+--------------+----------------+------------+----------------------+---------------
+ 31       | ECTD_TRANSMITTED       |              |                | f          | held-send-settlement | not-received
+ 31       | ECTD_HELD_SEND_SETTLED | not-received | responsibility | t          |                      | 
+ 32       | ECTD_TRANSMITTED       |              |                | f          | held-send-settlement | ack2_received
+ 32       | ECTD_HELD_SEND_SETTLED | received     | responsibility | t          |                      | 
+(4 rows)
+

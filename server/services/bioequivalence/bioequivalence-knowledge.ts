@@ -11,12 +11,23 @@
  * Regulatory citations: 21 CFR 320, FDA Guidance for Industry (various),
  * ICH M9, EMA/CHMP/QWP/428693/2017, WHO TRS 1003 Annex 6.
  *
+ * Rule 2 S5d (2026-11-09): a true/false input reads true, false or not_stated
+ * (inputStates) and decides nothing an answer could change; NTI status taken
+ * from the drug-name list, and a numeric default, are said in the result. A
+ * required or malformed input is refused by field.
+ *
  * @module server/services/bioequivalence/bioequivalence-knowledge
  */
 
 /* f2 and every eligibility condition around it live in services/cmc/
    dissolution-comparison, which the CMC dissolution register calls too. */
 import { compareDissolutionProfiles } from '../cmc/dissolution-comparison';
+import { refuseUnlessStated, type RequiredInputCheck } from '../ana-biostats/computation-engine';
+import {
+  booleanInputStates, conclusions, decidingFacts, everyAnswer, listed, statedBoolean, statedNumber, statedOneOf, textInput,
+} from '../immunogenicity/immunogenicity-reference';
+import { normalQuantile } from '../stats/normal';
+import { BE_STUDY_DESIGNS } from './bioequivalence-reference';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. BCS Classification System — Reference Data
@@ -77,18 +88,14 @@ const BCS_CLASS_REGISTRY: Record<BCSClass, Omit<BCSClassification, 'bcsClass'>> 
     permeability: 'high',
     biowaiverEligible: false,
     biowaiverConditions: [
-      'BCS Class II is NOT eligible for biowaiver under FDA guidance',
-      'ICH M9 allows biowaiver for BCS Class IIa (weak acids) under specific conditions',
-      'EMA may grant biowaiver for BCS Class IIa when dose/solubility ratio is <= 250 mL at pH 6.8',
-      'ICH M9 Class IIa condition: pH-dependent solubility with high solubility at pH 6.8',
+      'BCS Class II is NOT eligible for a BCS-based biowaiver: ICH M9, which the FDA and the EMA apply, covers Class I and III only',
+      'A weak acid highly soluble at pH 6.8 is not an exception under ICH M9',
     ],
     regulatoryImplications: [
       'In vivo BE study generally required',
       'Dissolution is the rate-limiting step for absorption',
       'Formulation differences can significantly affect bioavailability',
       'Product-specific guidances often require additional dissolution testing or in vivo studies',
-      'BCS Class IIa (weak acids): ICH M9 permits biowaiver if very rapidly dissolving at pH 6.8',
-      'BCS Class IIb (weak bases, neutral compounds): in vivo BE required',
     ],
     fdaGuidance: [
       'FDA does not grant biowaivers for BCS Class II (as of 2024 guidance)',
@@ -96,13 +103,10 @@ const BCS_CLASS_REGISTRY: Record<BCSClass, Omit<BCSClassification, 'bcsClass'>> 
       '21 CFR 320.22 — BCS Class II not listed for biowaiver eligibility',
     ],
     emaGuidance: [
-      'EMA/CHMP/QWP/428693/2017 — Limited biowaiver for Class IIa weak acids',
-      'Requires demonstration of pH-dependent solubility profile',
+      'The EMA applies ICH M9: no BCS-based biowaiver for Class II',
     ],
     ichM9Notes: [
-      'ICH M9 Step 4 (2019): BCS Class IIa eligible if dose/solubility ratio <= 250 mL at pH 6.8',
-      'IIa: weak acids with high solubility at intestinal pH; must be very rapidly dissolving',
-      'IIb: not eligible; solubility-limited across physiological pH range',
+      'ICH M9 Step 4 (2019): BCS-based biowaivers cover Class I and III only; Class II is not eligible',
     ],
   },
   III: {
@@ -114,7 +118,6 @@ const BCS_CLASS_REGISTRY: Record<BCSClass, Omit<BCSClassification, 'bcsClass'>> 
       'Very rapidly dissolving (>= 85% in 15 min) for BOTH test and reference',
       'Excipients must be qualitatively the same and quantitatively similar to the RLD',
       'Drug substance is not a narrow therapeutic index (NTI) drug',
-      'ICH M9: rapidly dissolving (>= 85% in 30 min) with f2 >= 50 acceptable',
     ],
     regulatoryImplications: [
       'Biowaiver possible under ICH M9, EMA, and recent FDA guidance',
@@ -132,7 +135,7 @@ const BCS_CLASS_REGISTRY: Record<BCSClass, Omit<BCSClassification, 'bcsClass'>> 
       'CPMP/EWP/QWP/1401/98 Rev. 1 — Qualitative and quantitative excipient similarity',
     ],
     ichM9Notes: [
-      'ICH M9: BCS Class III eligible; very rapidly dissolving preferred, rapidly dissolving with f2 >= 50 acceptable',
+      'ICH M9: BCS Class III eligible only when both test and reference are very rapidly dissolving (>= 85% in 15 min)',
       'Excipient similarity: qualitatively the same, quantitatively within +/- 10% for excipient amounts',
       'Surfactants and sweeteners limited to <= 0.5% (w/w) change from RLD',
     ],
@@ -212,392 +215,7 @@ export interface BEStudyDesign {
   washoutGuidance: string;
 }
 
-const BE_STUDY_DESIGNS: Record<BEStudyDesignName, BEStudyDesign> = {
-  crossover_2x2: {
-    designName: 'crossover_2x2',
-    displayName: '2x2 Crossover (Standard)',
-    description:
-      'Two-sequence, two-period crossover design. Each subject receives both test (T) and reference (R) in randomized order. The gold standard for average BE.',
-    sequences: 2,
-    periods: 2,
-    designNotation: 'TR|RT',
-    whenToUse: [
-      'Standard design for most immediate-release oral formulations',
-      'Drug has moderate intra-subject variability (CVw <= 30%)',
-      'Adequate washout period can be established (>= 5 half-lives)',
-      'Drug is not an endogenous substance or has a stable baseline',
-    ],
-    advantages: [
-      'Each subject serves as own control — reduces inter-subject variability',
-      'Most efficient design for drugs with low-to-moderate variability',
-      'Widely accepted by all regulatory agencies globally',
-      'Simpler logistics than replicate designs',
-    ],
-    disadvantages: [
-      'Cannot estimate within-subject variability for reference product',
-      'May require large sample sizes for highly variable drugs (CVw > 30%)',
-      'Period effects and carryover effects are confounded',
-      'Not suitable for drugs with very long half-lives (washout impractical)',
-    ],
-    acceptanceCriteria: [
-      {
-        parameter: 'AUC0-t',
-        lowerBound: 80.00,
-        upperBound: 125.00,
-        confidenceLevel: 90,
-        scalingApplied: false,
-      },
-      {
-        parameter: 'AUC0-inf',
-        lowerBound: 80.00,
-        upperBound: 125.00,
-        confidenceLevel: 90,
-        scalingApplied: false,
-      },
-      {
-        parameter: 'Cmax',
-        lowerBound: 80.00,
-        upperBound: 125.00,
-        confidenceLevel: 90,
-        scalingApplied: false,
-      },
-    ],
-    regulatoryBasis: [
-      '21 CFR 320.26 — General design requirements for BA/BE studies',
-      'FDA Guidance: Statistical Approaches to Establishing Bioequivalence (2001)',
-      'EMA/CHMP/QWP/428693/2017 — Guideline on the Investigation of Bioequivalence',
-      'ICH M13A (draft) — Bioequivalence for IR Solid Oral Dosage Forms',
-    ],
-    minSubjectsGuidance:
-      'Minimum 12 evaluable subjects per EMA; FDA recommends sample size based on power calculation (typically 24-36 for CVw ~25%)',
-    statisticalModel:
-      'ANOVA on ln-transformed data: Sequence + Subject(Sequence) + Period + Formulation. 90% CI for geometric mean ratio T/R.',
-    washoutGuidance:
-      'Minimum 5 elimination half-lives between periods. For drugs with active metabolites, consider metabolite half-life.',
-  },
-  crossover_3x3: {
-    designName: 'crossover_3x3',
-    displayName: '3x3 Crossover (Williams)',
-    description:
-      'Three-sequence, three-period Williams design. Typically used when comparing three formulations (e.g., T1, T2, R) or for higher-order crossover efficiency.',
-    sequences: 3,
-    periods: 3,
-    designNotation: 'T1-R-T2 | R-T2-T1 | T2-T1-R (Williams balanced)',
-    whenToUse: [
-      'Comparing two test formulations against a single reference',
-      'Dose-proportionality assessment across three dose strengths',
-      'Fasted/fed/reference three-way comparison',
-    ],
-    advantages: [
-      'Allows simultaneous comparison of multiple formulations',
-      'Each pair of treatments appears equally often in each period (Williams balanced)',
-      'Efficient use of subjects for multi-formulation comparisons',
-    ],
-    disadvantages: [
-      'Longer study duration (three periods with washouts)',
-      'Higher dropout risk due to extended duration',
-      'More complex logistics and statistical analysis',
-    ],
-    acceptanceCriteria: [
-      {
-        parameter: 'AUC0-t',
-        lowerBound: 80.00,
-        upperBound: 125.00,
-        confidenceLevel: 90,
-        scalingApplied: false,
-      },
-      {
-        parameter: 'Cmax',
-        lowerBound: 80.00,
-        upperBound: 125.00,
-        confidenceLevel: 90,
-        scalingApplied: false,
-      },
-    ],
-    regulatoryBasis: [
-      'FDA Guidance: Statistical Approaches to Establishing Bioequivalence (2001)',
-      'EMA/CHMP/QWP/428693/2017 Section 4.1.8 — Higher-order crossover designs',
-    ],
-    minSubjectsGuidance:
-      'Sample size calculated per comparison; minimum 12 evaluable per EMA guidance.',
-    statisticalModel:
-      'Mixed-effects ANOVA on ln-transformed PK parameters: Sequence + Subject(Sequence) + Period + Treatment. Pairwise 90% CIs.',
-    washoutGuidance:
-      'Minimum 5 elimination half-lives between each period.',
-  },
-  crossover_4x4: {
-    designName: 'crossover_4x4',
-    displayName: '4x4 Crossover (Williams)',
-    description:
-      'Four-sequence, four-period Williams design for comparing four formulations or four treatments simultaneously.',
-    sequences: 4,
-    periods: 4,
-    designNotation: 'ABDC | BCAD | CDBA | DACB (Williams balanced)',
-    whenToUse: [
-      'Comparing three test formulations against one reference',
-      'Complex multi-strength dose-proportionality studies',
-      'Rarely used for standard BE — typically for formulation development',
-    ],
-    advantages: [
-      'Maximum information per subject for multi-formulation comparisons',
-      'Balanced for first-order carryover effects',
-    ],
-    disadvantages: [
-      'Very long study duration — high dropout risk',
-      'Complex logistics and significant subject burden',
-      'Rarely required by regulatory agencies for standard ANDA filings',
-    ],
-    acceptanceCriteria: [
-      {
-        parameter: 'AUC0-t',
-        lowerBound: 80.00,
-        upperBound: 125.00,
-        confidenceLevel: 90,
-        scalingApplied: false,
-      },
-      {
-        parameter: 'Cmax',
-        lowerBound: 80.00,
-        upperBound: 125.00,
-        confidenceLevel: 90,
-        scalingApplied: false,
-      },
-    ],
-    regulatoryBasis: [
-      'FDA Guidance: Statistical Approaches to Establishing Bioequivalence (2001)',
-      'EMA/CHMP/QWP/428693/2017 Section 4.1.8',
-    ],
-    minSubjectsGuidance:
-      'Minimum 12 evaluable subjects; power calculation drives sample size.',
-    statisticalModel:
-      'Mixed-effects ANOVA on ln-transformed data with Williams-design fixed effects.',
-    washoutGuidance:
-      'Minimum 5 elimination half-lives between each of the four periods.',
-  },
-  replicate_3_period: {
-    designName: 'replicate_3_period',
-    displayName: 'Three-Period Replicate Crossover',
-    description:
-      'Three-period, three-sequence replicate design (TRR|RTR|RRT or TRT|RTR). The reference is administered twice to estimate within-subject variability for reference-scaled average bioequivalence (RSABE).',
-    sequences: 3,
-    periods: 3,
-    designNotation: 'TRR | RTR | RRT',
-    whenToUse: [
-      'Highly variable drugs (CVw > 30%) where scaled average BE is planned',
-      'When reference-scaled average bioequivalence (RSABE) is the regulatory approach',
-      'FDA recommends for HVDs when using the RSABE approach',
-    ],
-    advantages: [
-      'Enables estimation of within-subject variance for reference product (sWR)',
-      'Permits reference-scaled average BE approach for HVDs',
-      'Fewer periods than 4-period replicate — lower dropout risk',
-    ],
-    disadvantages: [
-      'Unbalanced for test product (T given once, R given twice)',
-      'Cannot estimate within-subject variance for test product',
-      'More complex analysis than standard 2x2 crossover',
-    ],
-    acceptanceCriteria: [
-      {
-        parameter: 'AUC0-t (unscaled)',
-        lowerBound: 80.00,
-        upperBound: 125.00,
-        confidenceLevel: 90,
-        scalingApplied: false,
-      },
-      {
-        parameter: 'Cmax (unscaled)',
-        lowerBound: 80.00,
-        upperBound: 125.00,
-        confidenceLevel: 90,
-        scalingApplied: false,
-      },
-      {
-        parameter: 'Cmax (RSABE, if sWR >= 0.294)',
-        lowerBound: -Infinity,
-        upperBound: Infinity,
-        confidenceLevel: 95,
-        scalingApplied: true,
-        scalingDetails:
-          'Upper bound of 95% CI for (muT - muR)^2 - theta * sWR^2 <= 0, where theta = (ln 1.25)^2 / sW0^2 and sW0 = 0.25. Point estimate constraint: 80.00-125.00%.',
-      },
-    ],
-    regulatoryBasis: [
-      'FDA Guidance: Statistical Approaches to Establishing Bioequivalence (2001)',
-      'FDA Draft Guidance: Bioequivalence Studies with Pharmacokinetic Endpoints for Drugs Submitted Under an ANDA (2021)',
-      'FDA Progesterone capsules PSG — pioneered RSABE approach',
-      '21 CFR 320.23(b) — In vivo BE requirement for ANDAs',
-    ],
-    minSubjectsGuidance:
-      'Typically 24-48 subjects; power depends on expected CVw and true T/R ratio.',
-    statisticalModel:
-      'Mixed-effects model with unstructured covariance: Sequence + Subject(Sequence) + Period + Treatment. Estimates sWR from replicated reference arms.',
-    washoutGuidance:
-      'Minimum 5 elimination half-lives between each period; identical to 2x2 design.',
-  },
-  replicate_4_period: {
-    designName: 'replicate_4_period',
-    displayName: 'Four-Period Full Replicate Crossover',
-    description:
-      'Four-period, two-sequence replicate design (TRTR|RTRT). Both test and reference are administered twice, enabling estimation of within-subject variability for both products. The most information-rich replicate design.',
-    sequences: 2,
-    periods: 4,
-    designNotation: 'TRTR | RTRT',
-    whenToUse: [
-      'Highly variable drugs (CVw > 30%) requiring RSABE or scaled average BE',
-      'When within-subject variability estimates for BOTH T and R are needed',
-      'Individual bioequivalence (IBE) assessments (historical — largely superseded)',
-      'EMA and FDA both accept for reference-scaled approaches',
-    ],
-    advantages: [
-      'Estimates within-subject variability for both test and reference products',
-      'Most powerful replicate design — highest statistical efficiency',
-      'Supports RSABE, SABE, and IBE analyses',
-      'Balanced design — equal exposure to T and R',
-    ],
-    disadvantages: [
-      'Four periods with washouts — longest study duration',
-      'Highest dropout risk among replicate designs',
-      'Greater subject burden and study cost',
-    ],
-    acceptanceCriteria: [
-      {
-        parameter: 'AUC0-t (unscaled)',
-        lowerBound: 80.00,
-        upperBound: 125.00,
-        confidenceLevel: 90,
-        scalingApplied: false,
-      },
-      {
-        parameter: 'Cmax (RSABE, if sWR >= 0.294)',
-        lowerBound: -Infinity,
-        upperBound: Infinity,
-        confidenceLevel: 95,
-        scalingApplied: true,
-        scalingDetails:
-          'Scaled criterion: upper 95% CI for (muT - muR)^2 - theta * sWR^2 <= 0, theta = (ln 1.25)^2 / 0.25^2. Point estimate constraint: 80.00-125.00%. If sWR < 0.294, use unscaled 80.00-125.00% criterion.',
-      },
-    ],
-    regulatoryBasis: [
-      'FDA Guidance: Statistical Approaches to Establishing Bioequivalence (2001)',
-      'EMA/CHMP/QWP/428693/2017 Section 4.1.10 — Highly variable drug products',
-      'EMA uses expanded limits approach: 69.84-143.19% if CVw > 30%, capped at CVw = 50%',
-      'FDA uses RSABE (reference-scaled average BE) with sWR switching criterion',
-    ],
-    minSubjectsGuidance:
-      'Typically 24-36 subjects; lower than 2x2 for same power because each subject contributes twice.',
-    statisticalModel:
-      'Mixed-effects model: Sequence + Subject(Sequence) + Period(Sequence) + Treatment. Separate within-subject variances for T and R estimable.',
-    washoutGuidance:
-      'Minimum 5 elimination half-lives between each of the four periods.',
-  },
-  partial_replicate: {
-    designName: 'partial_replicate',
-    displayName: 'Partial Replicate (3-Period, 3-Sequence)',
-    description:
-      'TRR|RTR|RRT partial replicate design where reference is replicated but test is not. A compromise between 2x2 simplicity and full-replicate power for scaled average BE.',
-    sequences: 3,
-    periods: 3,
-    designNotation: 'TRR | RTR | RRT',
-    whenToUse: [
-      'Highly variable drugs where RSABE is needed but 4-period design is impractical',
-      'When only reference within-subject variability is needed for scaling',
-      'Preferred by EMA as an alternative to full replicate for HVDs',
-    ],
-    advantages: [
-      'Fewer periods than full replicate (3 vs. 4)',
-      'Estimates reference within-subject variability (sWR)',
-      'Lower dropout risk than 4-period design',
-    ],
-    disadvantages: [
-      'Cannot estimate test within-subject variability',
-      'Unbalanced exposure to T and R',
-      'Slightly less efficient than full replicate for RSABE',
-    ],
-    acceptanceCriteria: [
-      {
-        parameter: 'AUC0-t (unscaled)',
-        lowerBound: 80.00,
-        upperBound: 125.00,
-        confidenceLevel: 90,
-        scalingApplied: false,
-      },
-      {
-        parameter: 'Cmax (scaled, EMA approach if CVw > 30%)',
-        lowerBound: -Infinity,
-        upperBound: Infinity,
-        confidenceLevel: 90,
-        scalingApplied: true,
-        scalingDetails:
-          'EMA expanded acceptance: [L, U] where L = 100 * exp(-k * sWR), U = 100 * exp(k * sWR), k = 0.760. Limits expand from 80-125% up to max 69.84-143.19% at CVw >= 50%.',
-      },
-    ],
-    regulatoryBasis: [
-      'EMA/CHMP/QWP/428693/2017 Section 4.1.10',
-      'EMA CPMP/EWP/QWP/1401/98 Rev. 1',
-      'FDA Draft Guidance: BE Studies with PK Endpoints for Drugs Under ANDA (2021)',
-    ],
-    minSubjectsGuidance:
-      'Typically 24-48 subjects depending on expected CVw.',
-    statisticalModel:
-      'Mixed-effects model with replicate R data: Sequence + Subject(Sequence) + Period + Treatment. sWR estimated from within-subject R variance.',
-    washoutGuidance:
-      'Minimum 5 elimination half-lives between each period.',
-  },
-  parallel: {
-    designName: 'parallel',
-    displayName: 'Parallel Group Design',
-    description:
-      'Two independent groups receive either test or reference. Each subject receives only one formulation. Used when crossover designs are impractical.',
-    sequences: 2,
-    periods: 1,
-    designNotation: 'T || R',
-    whenToUse: [
-      'Drugs with very long half-lives (e.g., > 2 weeks) where washout is impractical',
-      'Drugs with irreversible pharmacodynamic effects',
-      'Studies in patients (not healthy volunteers) where repeated dosing is unethical',
-      'Steady-state studies for modified-release formulations with long half-lives',
-    ],
-    advantages: [
-      'No carryover or period effects',
-      'Shorter study duration per subject (single period)',
-      'Suitable for drugs with very long half-lives',
-    ],
-    disadvantages: [
-      'No within-subject comparison — much higher variability',
-      'Requires substantially larger sample sizes (2-4x crossover)',
-      'Less powerful than crossover designs for same sample size',
-      'Inter-subject variability is not controlled',
-    ],
-    acceptanceCriteria: [
-      {
-        parameter: 'AUC0-t',
-        lowerBound: 80.00,
-        upperBound: 125.00,
-        confidenceLevel: 90,
-        scalingApplied: false,
-      },
-      {
-        parameter: 'Cmax',
-        lowerBound: 80.00,
-        upperBound: 125.00,
-        confidenceLevel: 90,
-        scalingApplied: false,
-      },
-    ],
-    regulatoryBasis: [
-      '21 CFR 320.26(b) — Parallel design acceptable when crossover impractical',
-      'FDA Guidance: Statistical Approaches to Establishing Bioequivalence (2001) — Section V',
-      'EMA/CHMP/QWP/428693/2017 Section 4.1.3 — Parallel design',
-    ],
-    minSubjectsGuidance:
-      'Sample size typically 2-4 times that of crossover design. Minimum 12 per group per EMA.',
-    statisticalModel:
-      'Two-sample t-test on ln-transformed PK parameters. ANOVA: Treatment. 90% CI for geometric mean ratio T/R.',
-    washoutGuidance:
-      'Not applicable — single-period design.',
-  },
-};
+// BE_STUDY_DESIGNS is in bioequivalence-reference.ts (moved unchanged on 2026-11-09, Rule 2 S5d).
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 3. Dissolution Testing Knowledge
@@ -722,7 +340,7 @@ const PATHWAY_REGISTRY: Record<RegulatoryPathway, PathwayGuidance> = {
     ],
     beRequirements: [
       'In vivo BE study with PK endpoints (AUC, Cmax) in standard 2x2 crossover, unless:',
-      '- BCS-based biowaiver is applicable (Class I, III, or IIa per ICH M9)',
+      '- BCS-based biowaiver is applicable (Class I or III per ICH M9)',
       '- Product-specific guidance (PSG) specifies alternative approach',
       '- Topical products: clinical endpoint or pharmacodynamic BE study',
       '- Locally acting drugs: clinical endpoint study or in vitro alternatives',
@@ -905,6 +523,74 @@ const HVD_SWITCHING_CRITERION = {
 // 6. Exported Functions — Deterministic Decision Engines
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ────── Stated inputs (Rule 2 S5d) ──────
+
+/** A true/false input as stated, or not_stated when it was left out. */
+export type InputStates = Record<string, boolean | 'not_stated'>;
+
+const BCS_CLASSES: readonly BCSClass[] = ['I', 'II', 'III', 'IV'];
+const FRAMEWORKS = ['fda', 'ema', 'ich_m9', 'who'] as const;
+
+/** A required number that satisfies `ok`, for refuseUnlessStated. */
+function numberInput(field: string, value: unknown, ok: (n: number) => boolean, expected: string): RequiredInputCheck {
+  return { field, value, ok: typeof value === 'number' && Number.isFinite(value) && ok(value), expected };
+}
+/** Optional text: text, or left out. */
+function optionalText(field: string, value: unknown): RequiredInputCheck {
+  return { field, value, ok: value === undefined || value === null || typeof value === 'string', expected: 'text, or left out' };
+}
+
+/**
+ * A dosage form named as modified release (the words, enteric coating, or ER/XR/XL/SR/CR/DR/MR); it is not
+ * immediate release whatever else it names.
+ */
+function isModifiedRelease(dosageForm: string): boolean {
+  return /modified|extended|delayed|sustained|controlled|prolonged|enteric|\b(?:er|xr|xl|sr|cr|dr|mr)\b/.test(dosageForm.toLowerCase());
+}
+
+interface NTIStatus {
+  /** undefined while NTI status is not settled: not stated with no drug name, or in conflict with the list. */
+  isNTI: boolean | undefined;
+  basis: string;
+  /** Why it is not settled ('' when it is), to name in a result. */
+  open: string;
+}
+
+/**
+ * NTI status: a stated isNTI is kept; otherwise the drug name is looked up in NTI_DRUGS, a list that is not
+ * exhaustive, and the basis says so. With neither, it is not assessed. A stated false for a listed drug is a
+ * conflict of inputs: it is neither read as stated nor overridden by the list, so NTI status is not assessed and
+ * the conflict is named (as the device engine treats a class III device stated 510(k)-exempt). Until 2026-11-09
+ * an omitted isNTI with no name was read as false, and a stated false for a listed drug was silently read as true.
+ */
+function ntiStatus(stated: boolean | undefined, drugName: string | null | undefined): NTIStatus {
+  const listedNTI = !!drugName && NTI_DRUGS.some((n) => n.toLowerCase() === drugName.toLowerCase());
+  if (stated === false && listedNTI) {
+    const open = `isNTI is stated false, but ${drugName} is on the platform's NTI list`;
+    return { isNTI: undefined, open, basis: `${open}: the two conflict, so NTI status is not assessed. Confirm it and state isNTI.` };
+  }
+  if (stated !== undefined) return { isNTI: stated, basis: 'isNTI was stated.', open: '' };
+  if (listedNTI) return { isNTI: true, basis: `isNTI was not stated; ${drugName} is on the platform's NTI list.`, open: '' };
+  if (drugName) {
+    return {
+      isNTI: false,
+      open: '',
+      basis: `isNTI was not stated; ${drugName} is not on the platform's NTI list, which is not exhaustive, so it is treated as not NTI. State isNTI if it is.`,
+    };
+  }
+  return { isNTI: undefined, open: 'isNTI is not stated', basis: 'isNTI was not stated and no drug name was given, so NTI status is not assessed.' };
+}
+
+/** "x is not stated", "x and y are not stated", with an NTI conflict named in its own words. */
+function notSettled(keys: readonly string[], nti: NTIStatus): string {
+  const conflict = keys.includes('isNTI') && nti.open !== 'isNTI is not stated';
+  const unstated = conflict ? keys.filter((k) => k !== 'isNTI') : keys;
+  return [
+    ...(unstated.length > 0 ? [`${listed(unstated)} ${unstated.length > 1 ? 'are' : 'is'} not stated`] : []),
+    ...(conflict ? [nti.open] : []),
+  ].join('; ');
+}
+
 // ────── 6a. classifyBCS ──────
 
 export interface ClassifyBCSParams {
@@ -925,8 +611,12 @@ export interface ClassifyBCSResult {
   solubility: 'high' | 'low';
   permeability: 'high' | 'low';
   doseNumberVolume_mL: number;
-  biowaiverEligible: boolean;
-  isNTI: boolean;
+  /** null while an unstated drug name or dosage form could change it. */
+  biowaiverEligible: boolean | null;
+  /** null when no drug name was given. */
+  isNTI: boolean | null;
+  /** Where NTI status came from: the platform's NTI list (not exhaustive), or not assessed. */
+  ntiBasis: string;
   biowaiverRationale: string[];
   regulatoryImplications: string[];
   requiredDissolutionConditions: string[];
@@ -944,6 +634,15 @@ export interface ClassifyBCSResult {
  */
 export function classifyBCS(params: ClassifyBCSParams): ClassifyBCSResult {
   const { highestDoseStrength_mg, solubility_mg_per_mL, fractionAbsorbed, drugName, dosageForm } = params;
+  // S5d: a missing or non-numeric input used to classify as Class IV, and an omitted drug name or
+  // dosage form was read as not NTI and immediate release.
+  refuseUnlessStated('classify_bcs', [
+    numberInput('highestDoseStrength_mg', highestDoseStrength_mg, (n) => n > 0, 'a positive dose in mg'),
+    numberInput('solubility_mg_per_mL', solubility_mg_per_mL, (n) => n >= 0, 'a solubility of 0 mg/mL or more'),
+    numberInput('fractionAbsorbed', fractionAbsorbed, (n) => n >= 0 && n <= 1, 'a fraction from 0 to 1'),
+    optionalText('drugName', drugName),
+    optionalText('dosageForm', dosageForm),
+  ], 'classified');
 
   // Dose number calculation: D:S ratio = dose / (solubility * 250 mL)
   const doseNumberVolume_mL =
@@ -958,12 +657,11 @@ export function classifyBCS(params: ClassifyBCSParams): ClassifyBCSResult {
   else bcsClass = 'IV';
 
   const classData = BCS_CLASS_REGISTRY[bcsClass];
-  const isNTI = drugName
-    ? NTI_DRUGS.some(n => n.toLowerCase() === drugName.toLowerCase())
-    : false;
+  const nti = ntiStatus(undefined, drugName);
+  const isNTI = nti.isNTI === true;
 
   const biowaiverRationale: string[] = [];
-  let biowaiverEligible = classData.biowaiverEligible;
+  let biowaiverEligible: boolean | null = classData.biowaiverEligible;
 
   if (isNTI) {
     biowaiverEligible = false;
@@ -974,7 +672,7 @@ export function classifyBCS(params: ClassifyBCSParams): ClassifyBCSResult {
   }
 
   const irForms = ['tablet', 'capsule', 'ir tablet', 'ir capsule', 'immediate-release tablet', 'immediate-release capsule'];
-  if (dosageForm && !irForms.some(f => dosageForm.toLowerCase().includes(f))) {
+  if (dosageForm && (!irForms.some(f => dosageForm.toLowerCase().includes(f)) || isModifiedRelease(dosageForm))) {
     biowaiverEligible = false;
     biowaiverRationale.push(
       'Dosage form "' + dosageForm + '" is not an immediate-release solid oral dosage form. ' +
@@ -982,7 +680,18 @@ export function classifyBCS(params: ClassifyBCSParams): ClassifyBCSResult {
     );
   }
 
-  if (biowaiverEligible) {
+  const unstated = [
+    ...(nti.isNTI === undefined ? ['drugName'] : []),
+    ...(dosageForm === undefined || dosageForm === null || dosageForm === '' ? ['dosageForm'] : []),
+  ];
+  if (biowaiverEligible && unstated.length > 0) {
+    biowaiverEligible = null;
+    biowaiverRationale.push(
+      'BCS Class ' + bcsClass + ' is eligible for a biowaiver only for an immediate-release solid oral dosage form of a drug that is not NTI; ' +
+        listed(unstated) + (unstated.length > 1 ? ' are' : ' is') + ' not stated, so eligibility is not assessed.',
+    );
+    biowaiverRationale.push(...classData.biowaiverConditions);
+  } else if (biowaiverEligible) {
     biowaiverRationale.push(
       'BCS Class ' + bcsClass + ': biowaiver eligible under FDA/EMA/ICH M9 guidance.',
     );
@@ -995,7 +704,7 @@ export function classifyBCS(params: ClassifyBCSParams): ClassifyBCSResult {
     biowaiverRationale.push(...classData.biowaiverConditions);
   }
 
-  const requiredDissolutionConditions = biowaiverEligible
+  const requiredDissolutionConditions = biowaiverEligible !== false
     ? [
         'Test dissolution in three media: 0.1N HCl (pH 1.2), acetate buffer (pH 4.5), phosphate buffer (pH 6.8)',
         'USP Apparatus II (paddle) at 50 rpm or USP Apparatus I (basket) at 100 rpm',
@@ -1013,7 +722,8 @@ export function classifyBCS(params: ClassifyBCSParams): ClassifyBCSResult {
     permeability,
     doseNumberVolume_mL: Math.round(doseNumberVolume_mL * 100) / 100,
     biowaiverEligible,
-    isNTI,
+    isNTI: nti.isNTI ?? null,
+    ntiBasis: nti.basis,
     biowaiverRationale,
     regulatoryImplications: classData.regulatoryImplications,
     requiredDissolutionConditions,
@@ -1049,13 +759,19 @@ export interface DesignBEStudyParams {
 }
 
 export interface DesignBEStudyResult {
-  recommendedDesign: BEStudyDesign;
-  alternativeDesigns: BEStudyDesignName[];
-  acceptanceCriteria: BEAcceptanceCriteria[];
+  inputStates: InputStates;
+  /** null where an unstated NTI status could change it. */
+  recommendedDesign: BEStudyDesign | null;
+  alternativeDesigns: BEStudyDesignName[] | null;
+  acceptanceCriteria: BEAcceptanceCriteria[] | null;
   isHighlyVariable: boolean;
-  isNTI: boolean;
-  scaledApproachApplicable: boolean;
-  estimatedSampleSize: { perGroup: number; total: number; basis: string };
+  isNTI: boolean | null;
+  ntiBasis: string;
+  scaledApproachApplicable: boolean | null;
+  /** null when it is not computable: an unstated NTI status, or a GMR outside the acceptance limits. */
+  estimatedSampleSize: { perGroup: number | null; total: number | null; basis: string };
+  /** The numeric inputs that were not stated and the value used for each. */
+  defaultsApplied: string[];
   washoutPeriod: { minimum_hours: number; recommended_hours: number; basis: string };
   studyConditions: string[];
   additionalRequirements: string[];
@@ -1072,21 +788,67 @@ export interface DesignBEStudyResult {
  * Deterministic — identical input always yields identical output.
  */
 export function designBEStudy(params: DesignBEStudyParams): DesignBEStudyResult {
+  // S5d: required numbers were not checked (a missing CV gave NaN subjects), an omitted isNTI with no
+  // name and an omitted fedStudyRequired were read as false, a stated false NTI was overridden by the
+  // list, and a power other than 0.70, 0.80 or 0.90 was sized at one of them.
+  refuseUnlessStated('design_be_study', [
+    numberInput('withinSubjectCV', params.withinSubjectCV, (n) => n > 0, 'a positive CV in %'),
+    numberInput('halfLife_hours', params.halfLife_hours, (n) => n > 0, 'a positive half-life in hours'),
+    optionalText('drugName', params.drugName),
+    optionalText('dosageForm', params.dosageForm),
+  ], 'designed');
+  const gmr = statedNumber('expectedGMR', params.expectedGMR, (n) => n > 0, 'a positive GMR in %');
+  const power = statedNumber('targetPower', params.targetPower, (n) => n > 0 && n < 1, 'a power between 0 and 1');
+  const formulations = statedNumber('formulationsToCompare', params.formulationsToCompare, (n) => Number.isInteger(n) && n >= 2, 'a whole number of 2 or more');
+  const inputStates = booleanInputStates(params, ['isNTI', 'fedStudyRequired']);
+  const nti = ntiStatus(statedBoolean('isNTI', params.isNTI), params.drugName);
+  const defaultsApplied = [
+    ...(gmr === undefined ? ['expectedGMR not stated: 100% used.'] : []),
+    ...(power === undefined ? ['targetPower not stated: 0.80 used.'] : []),
+    ...(formulations === undefined ? ['formulationsToCompare not stated: 2 (test vs. reference) used.'] : []),
+  ];
+  const resolved = { ...params, expectedGMR: gmr ?? 100, targetPower: power ?? 0.8, formulationsToCompare: formulations ?? 2 };
+  const base = { inputStates, ntiBasis: nti.basis, defaultsApplied };
+  if (nti.isNTI !== undefined) return { ...beStudyFor(resolved, nti.isNTI), ...base };
+  // NTI not stated: a field both answers give is kept; one they differ on is null and named.
+  const notNTI = beStudyFor(resolved, false);
+  const ifNTI = beStudyFor(resolved, true);
+  const same = <T>(a: T, b: T): T | null => (JSON.stringify(a) === JSON.stringify(b) ? a : null);
+  return {
+    ...notNTI,
+    ...base,
+    recommendedDesign: same(notNTI.recommendedDesign, ifNTI.recommendedDesign),
+    alternativeDesigns: same(notNTI.alternativeDesigns, ifNTI.alternativeDesigns),
+    acceptanceCriteria: null,
+    isNTI: null,
+    scaledApproachApplicable: same(notNTI.scaledApproachApplicable, ifNTI.scaledApproachApplicable),
+    estimatedSampleSize: {
+      perGroup: null,
+      total: null,
+      basis: `Not computed: it depends on NTI status (${nti.open}): 90.00-111.11% limits if NTI, 80.00-125.00% if not.`,
+    },
+    additionalRequirements: [
+      `${nti.open}: for an NTI drug, tighter acceptance criteria (90.00-111.11%) apply and a replicate design is considered.`,
+      ...notNTI.additionalRequirements,
+    ],
+    citations: [...new Set([...notNTI.citations, ...ifNTI.citations])],
+  };
+}
+
+/** The design for a stated (or name-listed) NTI status, with the numeric defaults already applied. */
+function beStudyFor(
+  params: DesignBEStudyParams & { expectedGMR: number; targetPower: number; formulationsToCompare: number },
+  isNTI: boolean,
+): Omit<DesignBEStudyResult, 'inputStates' | 'ntiBasis' | 'defaultsApplied'> {
   const {
     withinSubjectCV,
     halfLife_hours,
-    drugName,
-    expectedGMR = 100,
-    targetPower = 0.80,
+    expectedGMR,
+    targetPower,
     dosageForm,
-    fedStudyRequired = false,
-    formulationsToCompare = 2,
+    formulationsToCompare,
   } = params;
-
-  let isNTI = params.isNTI ?? false;
-  if (!isNTI && drugName) {
-    isNTI = NTI_DRUGS.some(n => n.toLowerCase() === drugName.toLowerCase());
-  }
+  const fedStudyRequired = statedBoolean('fedStudyRequired', params.fedStudyRequired);
 
   const isHighlyVariable = withinSubjectCV > 30;
   const isVeryLongHalfLife = halfLife_hours > 72;
@@ -1140,11 +902,13 @@ export function designBEStudy(params: DesignBEStudyParams): DesignBEStudyResult 
   const delta = Math.abs(Math.log(gmrDecimal));
   const theta = isNTI ? Math.log(111.11 / 100) : Math.log(125 / 100);
   const zAlpha = 1.645; // one-sided 5% (for 90% CI)
-  const zBeta = targetPower >= 0.90 ? 1.282 : targetPower >= 0.80 ? 0.842 : 0.524;
+  // z for the stated power, to the table's 3 decimals (0.524, 0.842, 1.282 at 0.70, 0.80, 0.90). Before
+  // 2026-11-09 any other power was sized at one of those three.
+  const zBeta = Math.round(normalQuantile(targetPower) * 1000) / 1000;
 
-  let nPerGroup: number;
+  let nPerGroup: number | null;
   if (theta - delta <= 0) {
-    nPerGroup = 9999; // GMR outside acceptance range; cannot achieve BE
+    nPerGroup = null; // GMR outside the acceptance range: no sample size achieves BE (it was 9999)
   } else {
     // Crossover: n per sequence = 2 * sigma^2 * (z_alpha + z_beta)^2 / (theta - delta)^2
     // Parallel: n per group = 2 * sigma_total^2 * (z_alpha + z_beta)^2 / (theta - delta)^2
@@ -1156,12 +920,12 @@ export function designBEStudy(params: DesignBEStudyParams): DesignBEStudyResult 
   }
 
   // For replicate designs, reduce sample size by ~25% due to lower residual variance
-  if (designName.includes('replicate')) {
+  if (designName.includes('replicate') && nPerGroup !== null) {
     nPerGroup = Math.max(Math.ceil(nPerGroup * 0.75), 6);
   }
 
   const seqCount = design.sequences;
-  const total = nPerGroup * seqCount;
+  const total = nPerGroup === null ? null : nPerGroup * seqCount;
 
   // ── Washout ──
   const minWashout = halfLife_hours * 5;
@@ -1179,6 +943,8 @@ export function designBEStudy(params: DesignBEStudyParams): DesignBEStudyResult 
       'Fed condition: FDA high-fat, high-calorie breakfast (800-1000 kcal, ~50% from fat)',
       'Dosing within 30 minutes of starting the meal',
     );
+  } else if (fedStudyRequired === undefined) {
+    studyConditions.push('fedStudyRequired is not stated: whether a fed-state study is also needed is not assessed.');
   }
 
   const additionalRequirements: string[] = [];
@@ -1196,7 +962,7 @@ export function designBEStudy(params: DesignBEStudyParams): DesignBEStudyResult 
       'If sWR >= 0.294, reference-scaled acceptance limits apply to Cmax',
     );
   }
-  if (dosageForm && (dosageForm.toLowerCase().includes('modified') || dosageForm.toLowerCase().includes('extended'))) {
+  if (dosageForm && isModifiedRelease(dosageForm)) {
     additionalRequirements.push(
       'Modified-release product: both fasting and fed BE studies typically required',
       'Multi-dose (steady-state) study may be needed per product-specific guidance',
@@ -1214,7 +980,9 @@ export function designBEStudy(params: DesignBEStudyParams): DesignBEStudyResult 
     estimatedSampleSize: {
       perGroup: nPerGroup,
       total,
-      basis: 'Closed-form estimate: CVw=' + withinSubjectCV + '%, GMR=' + expectedGMR + '%, power=' + (targetPower * 100).toFixed(0) + '%, alpha=0.05 (two one-sided tests). Actual sample size should be confirmed via simulation.',
+      basis: nPerGroup === null
+        ? 'Not computed: the expected GMR (' + expectedGMR + '%) lies outside the acceptance limits, so no sample size achieves BE.'
+        : 'Closed-form estimate: CVw=' + withinSubjectCV + '%, GMR=' + expectedGMR + '%, power=' + (targetPower * 100).toFixed(0) + '%, alpha=0.05 (two one-sided tests). Actual sample size should be confirmed via simulation.',
     },
     washoutPeriod: {
       minimum_hours: Math.round(minWashout),
@@ -1264,10 +1032,12 @@ export interface AssessDissolutionSimilarityParams {
 }
 
 export interface DissolutionSimilarityResult {
-  f2: number;
-  f2Pass: boolean;
-  f1: number;
-  f1Pass: boolean;
+  /** null when f2 was not computed. */
+  f2: number | null;
+  /** null when f2 was not computed: no similarity conclusion either way. */
+  f2Pass: boolean | null;
+  f1: number | null;
+  f1Pass: boolean | null;
   interpretation: string;
   f2Formula: string;
   f1Formula: string;
@@ -1276,6 +1046,29 @@ export interface DissolutionSimilarityResult {
   warnings: string[];
   regulatoryInterpretation: string[];
   citations: string[];
+}
+
+/** A list of finite numbers (as long as timePoints_min where given), for refuseUnlessStated. */
+function finiteList(field: string, value: unknown, required: boolean, length?: number): RequiredInputCheck {
+  return {
+    field, value,
+    ok: (!required && (value === undefined || value === null)) ||
+      (Array.isArray(value) && value.length > 0 && value.every((n) => typeof n === 'number' && Number.isFinite(n)) &&
+        (length === undefined || value.length === length)),
+    expected: `a list of numbers${length === undefined ? '' : ` as long as timePoints_min (${length})`}${required ? '' : ', or left out'}`,
+  };
+}
+/** The checks on one typed profile. */
+function profileChecks(role: 'reference' | 'test', p: unknown): RequiredInputCheck[] {
+  if (!p || typeof p !== 'object') return [{ field: role, value: p, ok: false, expected: 'a profile with timePoints_min and meanDissolved' }];
+  const q = p as Record<string, unknown>;
+  const n = Array.isArray(q.timePoints_min) ? q.timePoints_min.length : undefined;
+  return [
+    finiteList(`${role}.timePoints_min`, q.timePoints_min, true),
+    finiteList(`${role}.meanDissolved`, q.meanDissolved, true, n),
+    finiteList(`${role}.rsdPercent`, q.rsdPercent, false, n),
+    finiteList(`${role}.sdPercent`, q.sdPercent, false, n),
+  ];
 }
 
 /**
@@ -1309,6 +1102,13 @@ export function assessDissolutionSimilarity(
      evaluate them against; and it compared a rounded f2 against 50, so a true
      49.99973 was reported as similar. */
   const { reference, test, unitsPerProduct } = params;
+  // S5d: a missing profile or a non-list crashed, and '45' was read as 45. Each is refused by field.
+  refuseUnlessStated('assess_dissolution_similarity', [
+    ...profileChecks('reference', reference),
+    ...profileChecks('test', test),
+    { field: 'unitsPerProduct', value: unitsPerProduct, expected: 'a whole number of units, or left out',
+      ok: unitsPerProduct === undefined || unitsPerProduct === null || (Number.isInteger(unitsPerProduct) && unitsPerProduct > 0) },
+  ], 'compared');
   const toPoints = (p: DissolutionProfile) =>
     p.timePoints_min.map((t, i) => ({
       timepointMin: t,
@@ -1342,10 +1142,10 @@ export function assessDissolutionSimilarity(
        invented: the numbers stay NaN-free by being absent from the verdict, and
        `interpretation` carries the reason a reader has to act on. */
     return {
-      f2: Number.NaN,
-      f2Pass: false,
-      f1: Number.NaN,
-      f1Pass: false,
+      f2: null,
+      f2Pass: null,
+      f1: null,
+      f1Pass: null,
       interpretation: 'f2 was NOT computed. ' + outcome.message,
       ...FORMULAE,
       conditions: outcome.offending.map(
@@ -1404,9 +1204,9 @@ export interface AssessBiowaiverParams {
   isNTI?: boolean;
   /** Dosage form. */
   dosageForm: string;
-  /** Is the drug substance a weak acid? (relevant for BCS Class IIa). */
+  /** Is the drug substance a weak acid? Reported, not read: ICH M9 has no Class II weak-acid exception. */
   isWeakAcid?: boolean;
-  /** Dose/solubility ratio at pH 6.8 in mL (relevant for BCS Class IIa). */
+  /** Dose/solubility ratio at pH 6.8 in mL. Checked, not read: ICH M9 has no Class II weak-acid exception. */
   doseSolubilityRatioAtPH6_8_mL?: number;
   /** Does test product dissolve >= 85% in 15 min in all three media? */
   veryRapidlyDissolving?: boolean;
@@ -1424,15 +1224,33 @@ export interface AssessBiowaiverParams {
   framework?: 'fda' | 'ema' | 'ich_m9' | 'who';
 }
 
+export type BiowaiverDecision = 'BIOWAIVER_GRANTED' | 'BIOWAIVER_CONDITIONAL' | 'BIOWAIVER_DENIED';
+
 export interface BiowaiverResult {
-  eligible: boolean;
-  decision: 'BIOWAIVER_GRANTED' | 'BIOWAIVER_CONDITIONAL' | 'BIOWAIVER_DENIED';
+  /** null while an unstated true/false input could change the decision. */
+  eligible: boolean | null;
+  decision: BiowaiverDecision | 'BIOWAIVER_NOT_ASSESSED';
   rationale: string[];
   requiredDissolutionConditions: string[];
   outstandingRequirements: string[];
   regulatoryFramework: string;
   citations: string[];
+  inputStates: InputStates;
+  ntiBasis: string;
+  defaultsApplied: string[];
 }
+
+type BiowaiverOutcome = Omit<BiowaiverResult, 'inputStates' | 'ntiBasis' | 'defaultsApplied' | 'decision' | 'eligible'> & {
+  eligible: boolean;
+  decision: BiowaiverDecision;
+};
+
+/** The true/false facts a decision is searched over. isWeakAcid is reported in inputStates but decides nothing. */
+const BIOWAIVER_FACTS = [
+  'isNTI', 'veryRapidlyDissolving', 'rapidlyDissolving', 'referenceVeryRapidlyDissolving',
+  'excipientsQualitativelySame', 'excipientsQuantitativelySimilar',
+] as const;
+type BiowaiverFact = (typeof BIOWAIVER_FACTS)[number];
 
 /**
  * Evaluate biowaiver eligibility based on the BCS classification, dissolution
@@ -1444,31 +1262,86 @@ export interface BiowaiverResult {
  * Deterministic — identical input always yields identical output.
  */
 export function assessBiowaiver(params: AssessBiowaiverParams): BiowaiverResult {
+  // S5d: an omitted dissolution or NTI fact was read as false, so a decision one answer would change was
+  // given; a missing class or form crashed, 'false' read as true, and a stated false NTI was silently
+  // overridden by the list. The decision is now given only when every answer to the unstated facts gives it.
+  const bcsClass = statedOneOf('bcsClass', params.bcsClass, BCS_CLASSES);
+  refuseUnlessStated('assess_biowaiver', [
+    { field: 'bcsClass', value: params.bcsClass, ok: bcsClass !== undefined, expected: `one of ${BCS_CLASSES.join(', ')}` },
+    textInput('dosageForm', params.dosageForm),
+    optionalText('drugName', params.drugName),
+  ], 'assessed');
+  const framework = statedOneOf('framework', params.framework, FRAMEWORKS);
+  const f2 = statedNumber('f2', params.f2, (n) => n >= 0 && n <= 100, 'an f2 from 0 to 100');
+  const ratio = statedNumber('doseSolubilityRatioAtPH6_8_mL', params.doseSolubilityRatioAtPH6_8_mL, (n) => n > 0, 'a positive volume in mL');
+  const inputStates = booleanInputStates(params, [...BIOWAIVER_FACTS, 'isWeakAcid']);
+  const nti = ntiStatus(statedBoolean('isNTI', params.isNTI), params.drugName);
+  const facts = Object.fromEntries(
+    BIOWAIVER_FACTS.map((k) => [k, k === 'isNTI' ? nti.isNTI : statedBoolean(k, params[k])]),
+  ) as Record<BiowaiverFact, boolean | undefined>;
+  const base = {
+    ...params, bcsClass: bcsClass as BCSClass, framework: framework ?? 'ich_m9', f2, doseSolubilityRatioAtPH6_8_mL: ratio,
+  };
+  const extra = {
+    inputStates,
+    ntiBasis: nti.basis,
+    defaultsApplied: framework === undefined ? ['framework not stated: ich_m9 used.'] : [],
+  };
+  const reading = biowaiverOutcome({ ...base, ...facts });
+  const deciding = decidingFacts(facts, (a) => biowaiverOutcome({ ...base, ...a }).decision);
+  if (deciding.length === 0) return { ...reading, ...extra };
+  const answers = everyAnswer(facts).map((a) => biowaiverOutcome({ ...base, ...a }));
+  const decisions = conclusions(facts, (a) => biowaiverOutcome({ ...base, ...a }).decision);
+  // A rationale line or citation (which can name a decision) is kept only when every answer gives it, so none
+  // speaks for one answer. The dissolution conditions are those any waiver would need, and the requirements
+  // those of the reading in which an unstated fact is not established.
+  const everyOne = (pick: (o: BiowaiverOutcome) => string[]) => pick(reading).filter((s) => answers.every((o) => pick(o).includes(s)));
+  const citations = everyOne((o) => o.citations);
+  return {
+    ...extra,
+    eligible: null,
+    decision: 'BIOWAIVER_NOT_ASSESSED',
+    rationale: [
+      `Not assessed: ${notSettled(deciding, nti)}, and the decision turns on ` +
+        `${deciding.length > 1 ? 'them' : 'it'}: on the possible answers it is ${listed(decisions)}.`,
+      ...everyOne((o) => o.rationale),
+    ],
+    requiredDissolutionConditions: [...new Set(answers.flatMap((o) => o.requiredDissolutionConditions))],
+    outstandingRequirements: [
+      nti.open !== '' && nti.open !== 'isNTI is not stated' && deciding.includes('isNTI')
+        ? `Confirm NTI status and state isNTI (${nti.open})${deciding.length > 1 ? `; state ${listed(deciding.filter((k) => k !== 'isNTI'))}` : ''}.`
+        : `State ${listed(deciding)}.`,
+      ...(reading.decision === 'BIOWAIVER_CONDITIONAL' ? reading.outstandingRequirements : []),
+    ],
+    regulatoryFramework: reading.regulatoryFramework,
+    citations: citations.length > 0 ? citations : ['ICH M9 Step 4 (2019)', 'FDA Guidance: M9 Biopharmaceutics Classification System-Based Biowaivers (2021)'],
+  };
+}
+
+/** The decision for one reading of the facts; an unstated (undefined) fact is not established. */
+function biowaiverOutcome(
+  params: Omit<AssessBiowaiverParams, 'framework'> & { framework: NonNullable<AssessBiowaiverParams['framework']> },
+): BiowaiverOutcome {
   const {
     bcsClass,
     drugName,
     dosageForm,
-    isWeakAcid = false,
-    doseSolubilityRatioAtPH6_8_mL,
     veryRapidlyDissolving = false,
     rapidlyDissolving = false,
     referenceVeryRapidlyDissolving = false,
     f2,
     excipientsQualitativelySame,
     excipientsQuantitativelySimilar,
-    framework = 'ich_m9',
+    framework,
   } = params;
-
-  let isNTI = params.isNTI ?? false;
-  if (!isNTI && drugName) {
-    isNTI = NTI_DRUGS.some(n => n.toLowerCase() === drugName.toLowerCase());
-  }
+  const isNTI = params.isNTI === true;
 
   const rationale: string[] = [];
   const outstandingRequirements: string[] = [];
   const requiredDissolutionConditions: string[] = [];
 
-  // Gate 1: NTI check
+  // Gate 1: NTI check. Denied on a stated or listed narrow-therapeutic-index drug: ICH M9 (2019), whose scope the
+  // FDA (2021) and the EMA apply, excludes NTI drug products from BCS-based biowaivers.
   if (isNTI) {
     return {
       eligible: false,
@@ -1491,7 +1364,8 @@ export function assessBiowaiver(params: AssessBiowaiverParams): BiowaiverResult 
   // Gate 2: Dosage form check
   const isIR = ['tablet', 'capsule', 'ir', 'immediate-release', 'immediate release'].some(
     kw => dosageForm.toLowerCase().includes(kw),
-  );
+  ) && !isModifiedRelease(dosageForm);
+  // Denied for a form that is not immediate release: ICH M9's scope is immediate-release, solid oral dosage forms.
   if (!isIR) {
     return {
       eligible: false,
@@ -1639,61 +1513,25 @@ export function assessBiowaiver(params: AssessBiowaiverParams): BiowaiverResult 
     }
 
     case 'II': {
-      rationale.push('BCS Class II (low solubility, high permeability): generally NOT eligible for biowaiver.');
+      rationale.push('BCS Class II (low solubility, high permeability): NOT eligible for a BCS-based biowaiver.');
 
-      // ICH M9 Class IIa exception
-      if (framework === 'ich_m9' || framework === 'ema') {
-        if (isWeakAcid && doseSolubilityRatioAtPH6_8_mL !== undefined && doseSolubilityRatioAtPH6_8_mL <= 250) {
-          rationale.push(
-            'BCS Class IIa (weak acid): dose/solubility ratio at pH 6.8 = ' + doseSolubilityRatioAtPH6_8_mL + ' mL (<= 250 mL).',
-            'ICH M9 permits biowaiver for BCS Class IIa weak acids with high solubility at pH 6.8.',
-          );
-          requiredDissolutionConditions.push(
-            'Very rapidly dissolving (>= 85% in 15 min) at pH 6.8 phosphate buffer',
-            'Test in 0.1N HCl (pH 1.2), acetate buffer (pH 4.5), phosphate buffer (pH 6.8)',
-          );
-          if (veryRapidlyDissolving) {
-            return {
-              eligible: true,
-              decision: 'BIOWAIVER_GRANTED',
-              rationale,
-              requiredDissolutionConditions,
-              outstandingRequirements: [],
-              regulatoryFramework: framework.toUpperCase(),
-              citations: [
-                'ICH M9 Step 4 (2019) — BCS Class IIa weak acid biowaiver',
-                'EMA/CHMP/QWP/428693/2017',
-              ],
-            };
-          }
-          outstandingRequirements.push('Demonstrate very rapidly dissolving (>= 85% in 15 min) at pH 6.8');
-          return {
-            eligible: false,
-            decision: 'BIOWAIVER_CONDITIONAL',
-            rationale: [...rationale, 'Very rapid dissolution at pH 6.8 required for IIa biowaiver.'],
-            requiredDissolutionConditions,
-            outstandingRequirements,
-            regulatoryFramework: framework.toUpperCase(),
-            citations: ['ICH M9 Step 4 (2019) — BCS Class IIa'],
-          };
-        }
-      }
-
+      // ICH M9 admits Class I and III only; the FDA (2021) and the EMA apply it. Until 2026-11-09 a weak acid
+      // with a pH 6.8 dose/solubility ratio <= 250 mL was granted a "Class IIa" waiver under ich_m9 and ema,
+      // which ICH M9 does not contain; isWeakAcid and that ratio now decide nothing.
       return {
         eligible: false,
         decision: 'BIOWAIVER_DENIED',
         rationale: [
           ...rationale,
-          'FDA does not grant BCS-based biowaivers for Class II drugs.',
-          'ICH M9 allows biowaiver only for Class IIa (weak acids with high solubility at pH 6.8).',
+          'ICH M9, which the FDA and the EMA apply, permits a BCS-based biowaiver for Class I and III only; a weak acid is not an exception.',
           'An in vivo BE study is required.',
         ],
         requiredDissolutionConditions: [],
         outstandingRequirements: ['Conduct in vivo bioequivalence study'],
         regulatoryFramework: framework.toUpperCase(),
         citations: [
-          'FDA Guidance: Waiver of In Vivo BA/BE Studies for IR SODF Based on BCS (2017)',
-          'ICH M9 Step 4 (2019) — BCS Class II/IIb: biowaiver not applicable',
+          'FDA Guidance: M9 Biopharmaceutics Classification System-Based Biowaivers (2021)',
+          'ICH M9 Step 4 (2019) — BCS Class II: biowaiver not applicable',
           '21 CFR 320.22 — BCS Class II not listed for biowaiver',
         ],
       };
@@ -1756,23 +1594,8 @@ export function assessBiowaiver(params: AssessBiowaiverParams): BiowaiverResult 
         };
       }
 
-      // ICH M9 also accepts rapidly dissolving with f2 >= 50 for Class III
-      if (framework === 'ich_m9' && rapidlyDissolving && f2 !== undefined && f2 >= 50 && excipientOK) {
-        rationale.push(
-          'ICH M9: BCS Class III rapidly dissolving (>= 85% in 30 min) with f2 >= 50 is acceptable.',
-        );
-        return {
-          eligible: true,
-          decision: 'BIOWAIVER_GRANTED',
-          rationale,
-          requiredDissolutionConditions,
-          outstandingRequirements: [],
-          regulatoryFramework: framework.toUpperCase(),
-          citations: [
-            'ICH M9 Step 4 (2019) — BCS Class III rapidly dissolving with f2 >= 50',
-          ],
-        };
-      }
+      // ICH M9 requires BOTH products to be very rapidly dissolving for Class III. Until 2026-11-09 a test
+      // product that was only rapidly dissolving, with f2 >= 50, was granted under ich_m9, which ICH M9 does not allow.
 
       if (!veryRapidlyDissolving || !referenceVeryRapidlyDissolving) {
         outstandingRequirements.push(
@@ -1795,6 +1618,7 @@ export function assessBiowaiver(params: AssessBiowaiverParams): BiowaiverResult 
     }
 
     case 'IV': {
+      // Denied: ICH M9 admits BCS Class I and III drugs only; Class IV (low solubility, low permeability) is outside it.
       return {
         eligible: false,
         decision: 'BIOWAIVER_DENIED',
@@ -1828,16 +1652,16 @@ export interface GuidanceForANDAParams {
   activeIngredient: string;
   /** Proposed dosage form. */
   dosageForm: string;
-  /** Proposed route of administration. */
-  routeOfAdministration: string;
+  /** Proposed route of administration. Not read: the pathway reads sameRouteAsRLD. */
+  routeOfAdministration?: string;
   /** Proposed strength(s). */
   strengths: string[];
-  /** Is the product the same dosage form as the RLD? */
-  sameDosageFormAsRLD: boolean;
-  /** Is the product the same route as the RLD? */
-  sameRouteAsRLD: boolean;
-  /** Is the product the same strength as the RLD? */
-  sameStrengthAsRLD: boolean;
+  /** Is the product the same dosage form as the RLD? Omitted: not stated. */
+  sameDosageFormAsRLD?: boolean;
+  /** Is the product the same route as the RLD? Omitted: not stated. */
+  sameRouteAsRLD?: boolean;
+  /** Is the product the same strength as the RLD? Omitted: not stated. */
+  sameStrengthAsRLD?: boolean;
   /** Is this a combination product? */
   isCombinationProduct?: boolean;
   /** BCS class, if known. */
@@ -1847,9 +1671,13 @@ export interface GuidanceForANDAParams {
 }
 
 export interface ANDAGuidanceResult {
-  recommendedPathway: RegulatoryPathway;
-  pathwayGuidance: PathwayGuidance;
-  suitabilityPetitionRequired: boolean;
+  inputStates: InputStates;
+  /** Where NTI status came from: stated, the active ingredient on the platform's NTI list, or not assessed. */
+  ntiBasis: string;
+  /** not_assessed while an unstated sameness fact could change it. */
+  recommendedPathway: RegulatoryPathway | 'not_assessed';
+  pathwayGuidance: PathwayGuidance | null;
+  suitabilityPetitionRequired: boolean | null;
   suitabilityPetitionReason?: string;
   beStrategyRecommendation: string[];
   orangeBookConsiderations: string[];
@@ -1868,58 +1696,79 @@ export interface ANDAGuidanceResult {
  * Deterministic — identical input always yields identical output.
  */
 export function guidanceForANDA(params: GuidanceForANDAParams): ANDAGuidanceResult {
-  const {
-    activeIngredient,
-    dosageForm,
-    routeOfAdministration,
-    strengths,
-    sameDosageFormAsRLD,
-    sameRouteAsRLD,
-    sameStrengthAsRLD,
-    isCombinationProduct = false,
-    bcsClass,
-    isNTI = false,
-  } = params;
-
-  // Suppress unused-variable lint for values used only in output strings
-  void routeOfAdministration;
-
-  let recommendedPathway: RegulatoryPathway;
-  let suitabilityPetitionRequired = false;
-  let suitabilityPetitionReason: string | undefined;
+  // S5d: an omitted sameness fact was read as false ({} gave a 505(b)(2)), an omitted BCS class, NTI or
+  // combination fact as the answer that adds nothing, and a missing form or strength list crashed.
+  const bcsClass = statedOneOf('bcsClass', params.bcsClass, BCS_CLASSES);
+  refuseUnlessStated('guidance_for_anda', [
+    textInput('activeIngredient', params.activeIngredient),
+    textInput('dosageForm', params.dosageForm),
+    {
+      field: 'strengths', value: params.strengths, expected: 'a list of one or more strengths as text',
+      ok: Array.isArray(params.strengths) && params.strengths.length > 0 && params.strengths.every((s) => typeof s === 'string'),
+    },
+  ], 'assessed');
+  const inputStates = booleanInputStates(params, [
+    'sameDosageFormAsRLD', 'sameRouteAsRLD', 'sameStrengthAsRLD', 'isCombinationProduct', 'isNTI',
+  ]);
+  const { activeIngredient, dosageForm, strengths } = params;
+  const sameDosageFormAsRLD = statedBoolean('sameDosageFormAsRLD', params.sameDosageFormAsRLD);
+  const sameRouteAsRLD = statedBoolean('sameRouteAsRLD', params.sameRouteAsRLD);
+  const sameStrengthAsRLD = statedBoolean('sameStrengthAsRLD', params.sameStrengthAsRLD);
+  const isCombinationProduct = statedBoolean('isCombinationProduct', params.isCombinationProduct);
+  // NTI status as in the other worksheets: stated, or the active ingredient on the platform's NTI list.
+  const nti = ntiStatus(statedBoolean('isNTI', params.isNTI), activeIngredient);
+  const isNTI = nti.isNTI;
 
   // ── Pathway determination ──
-  const isPharmEquivalent = sameDosageFormAsRLD && sameRouteAsRLD && sameStrengthAsRLD;
-  const hasMinorDifference =
-    (!sameDosageFormAsRLD || !sameStrengthAsRLD) && sameRouteAsRLD;
-
-  if (isPharmEquivalent) {
-    recommendedPathway = 'anda_505j';
-  } else if (hasMinorDifference) {
-    // Suitability petition may allow ANDA despite dosage form or strength difference
-    recommendedPathway = 'suitability_petition';
-    suitabilityPetitionRequired = true;
+  // A different route is a 505(b)(2); the same route with a different form or strength a suitability
+  // petition; pharmaceutical equivalence an ANDA. Decided only when every answer to the unstated facts agrees.
+  const sameness = { sameDosageFormAsRLD, sameRouteAsRLD, sameStrengthAsRLD };
+  const pathwayOf = (a: Record<keyof typeof sameness, boolean>): RegulatoryPathway =>
+    !a.sameRouteAsRLD ? '505b2' : a.sameDosageFormAsRLD && a.sameStrengthAsRLD ? 'anda_505j' : 'suitability_petition';
+  const deciding = decidingFacts(sameness, pathwayOf);
+  const candidates = conclusions(sameness, pathwayOf);
+  const recommendedPathway: RegulatoryPathway | 'not_assessed' = deciding.length === 0 ? candidates[0] : 'not_assessed';
+  const suitabilityPetitionRequired: boolean | null = candidates.every((p) => p === 'suitability_petition')
+    ? true
+    : candidates.includes('suitability_petition') ? null : false;
+  let suitabilityPetitionReason: string | undefined;
+  if (suitabilityPetitionRequired) {
     const reasons: string[] = [];
-    if (!sameDosageFormAsRLD) reasons.push('different dosage form (proposed: ' + dosageForm + ')');
-    if (!sameStrengthAsRLD) reasons.push('different strength(s) (proposed: ' + strengths.join(', ') + ')');
+    if (sameDosageFormAsRLD === false) reasons.push('different dosage form (proposed: ' + dosageForm + ')');
+    if (sameStrengthAsRLD === false) reasons.push('different strength(s) (proposed: ' + strengths.join(', ') + ')');
+    const open = (['sameDosageFormAsRLD', 'sameStrengthAsRLD'] as const).filter((k) => sameness[k] === undefined);
     suitabilityPetitionReason =
       'Suitability petition required because the proposed product has ' + reasons.join(' and ') + ' compared to the RLD. ' +
-      'FDA must determine that the change does not require new safety/efficacy data.';
-  } else {
-    // Different route — cannot be ANDA, must be 505(b)(2)
-    recommendedPathway = '505b2';
+      'FDA must determine that the change does not require new safety/efficacy data.' +
+      (open.length > 0 ? ' ' + listed(open) + (open.length > 1 ? ' are' : ' is') + ' not stated.' : '');
+  } else if (recommendedPathway === 'not_assessed') {
+    suitabilityPetitionReason =
+      'Not assessed: ' + listed(deciding) + (deciding.length > 1 ? ' are' : ' is') + ' not stated, and the pathway turns on ' +
+      (deciding.length > 1 ? 'them' : 'it') + ' (' + listed(candidates) + ').';
   }
 
-  const pathwayGuidance = PATHWAY_REGISTRY[recommendedPathway];
+  const pathwayGuidance = recommendedPathway === 'not_assessed' ? null : PATHWAY_REGISTRY[recommendedPathway];
 
   // ── BE strategy ──
   const beStrategyRecommendation: string[] = [];
+  const genericRoute = candidates.every((p) => p === 'anda_505j' || p === 'suitability_petition');
 
-  if (recommendedPathway === 'anda_505j' || recommendedPathway === 'suitability_petition') {
+  if (recommendedPathway === 'not_assessed' && !genericRoute) {
+    beStrategyRecommendation.push(
+      'The BE strategy turns on the pathway, which is not assessed (' + listed(deciding) + ' not stated).',
+      'For an ANDA or a suitability petition: an in vivo BE study with PK endpoints, or a BCS-based biowaiver where eligible.',
+      'For a 505(b)(2): a bridging BE study to the reference product.',
+    );
+  } else if (genericRoute) {
     if (bcsClass === 'I' || bcsClass === 'III') {
       beStrategyRecommendation.push(
         'BCS Class ' + bcsClass + ': evaluate biowaiver eligibility (in vitro dissolution comparison may suffice).',
         'Conduct dissolution testing in three media (pH 1.2, 4.5, 6.8) per FDA BCS Guidance.',
+      );
+    } else if (bcsClass === undefined) {
+      beStrategyRecommendation.push(
+        'bcsClass is not stated: for BCS Class I or III, evaluate biowaiver eligibility; otherwise an in vivo BE study with PK endpoints (AUC, Cmax) is required.',
+        'Consult product-specific guidance (PSG) on FDA website for specific study design requirements.',
       );
     } else {
       beStrategyRecommendation.push(
@@ -1945,7 +1794,7 @@ export function guidanceForANDA(params: GuidanceForANDAParams): ANDAGuidanceResu
         'Inhalation/nasal product: in vitro comparative testing (cascade impaction, spray pattern) plus PK and/or clinical endpoint study.',
         'FDA product-specific guidance provides detailed requirements.',
       );
-    } else if (lowerForm.includes('extended') || lowerForm.includes('modified') || lowerForm.includes('controlled')) {
+    } else if (isModifiedRelease(dosageForm)) {
       beStrategyRecommendation.push(
         'Modified-release product: both fasting and fed BE studies required.',
         'Multi-dose steady-state study may be needed for certain products.',
@@ -1958,6 +1807,8 @@ export function guidanceForANDA(params: GuidanceForANDAParams): ANDAGuidanceResu
         'NTI drug: tighter BE acceptance criteria (90.00-111.11%) may apply.',
         'Replicate design recommended to assess within-subject variability equivalence.',
       );
+    } else if (isNTI === undefined) {
+      beStrategyRecommendation.push(`${nti.open}: for an NTI drug, tighter BE acceptance criteria (90.00-111.11%) may apply.`);
     }
   } else {
     // 505(b)(2)
@@ -1981,6 +1832,8 @@ export function guidanceForANDA(params: GuidanceForANDAParams): ANDAGuidanceResu
       'Combination product: verify that each active ingredient has an approved RLD',
       'Check whether a single RLD covers all active ingredients or multiple RLDs are needed',
     );
+  } else if (isCombinationProduct === undefined) {
+    orangeBookConsiderations.push('isCombinationProduct is not stated: for a combination product, verify that each active ingredient has an approved RLD');
   }
 
   // ── Patent certification guidance ──
@@ -1996,19 +1849,25 @@ export function guidanceForANDA(params: GuidanceForANDAParams): ANDAGuidanceResu
   // ── Additional studies ──
   const additionalStudies: string[] = [];
   if (recommendedPathway !== 'anda_505j') {
-    if (!sameRouteAsRLD) {
+    if (sameRouteAsRLD === false) {
       additionalStudies.push(
         'New route of administration requires safety evaluation (local tolerance, PK bridging)',
       );
     }
-    if (!sameDosageFormAsRLD) {
+    if (sameDosageFormAsRLD === false) {
       additionalStudies.push(
         'Different dosage form may require relative bioavailability study and dissolution method development',
       );
     }
+    const open = (['sameRouteAsRLD', 'sameDosageFormAsRLD'] as const).filter((k) => sameness[k] === undefined);
+    if (open.length > 0) {
+      additionalStudies.push(listed(open) + (open.length > 1 ? ' are' : ' is') + ' not stated: a new route or dosage form may require bridging or relative bioavailability studies');
+    }
   }
 
   return {
+    inputStates,
+    ntiBasis: nti.basis,
     recommendedPathway,
     pathwayGuidance,
     suitabilityPetitionRequired,
@@ -2018,7 +1877,7 @@ export function guidanceForANDA(params: GuidanceForANDAParams): ANDAGuidanceResu
     patentCertificationGuidance,
     additionalStudies,
     citations: [
-      ...pathwayGuidance.regulatoryCitations,
+      ...(pathwayGuidance ? pathwayGuidance.regulatoryCitations : []),
       '21 CFR 314.92-314.99 — ANDA filing requirements',
       '21 CFR 320.21-320.25 — BA/BE requirements for ANDAs',
       'FDA Orange Book — Approved Drug Products with Therapeutic Equivalence Evaluations',

@@ -1,0 +1,50 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > does not offer another study’s same-filename source as predecessor 22ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > finds the correct study even when a second study has the same filename 17ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > does not infer a successor when the incoming study is unmatched 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > does not equate two unresolved study references 3ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > same filename is a successor only within a positively matched study > binds the complete project scope as well as study identity 12ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > captures two studies’ same filename independently, then revises only its own study 139ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > reuses current bytes without changing the original upload, capturer or title 76ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > captures unmatched scope without retiring the same-named study source 72ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > captures multiple known scope without retiring the same-named study source 70ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > captures later unmatched scope without retiring the same-named study source 68ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > captures no study scope without retiring the same-named study source 70ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > declines two same-study filename candidates without guessing the newest 41ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > never reactivates superseded bytes or creates a current clone of them 91ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > cannot revive unresolved retired bytes after a study is registered 20ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > matches identical bytes only within the explicitly selected study 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > an audit failure rolls back retirement and the new source together 70ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > a failed study lookup refuses capture rather than recording an unrelated source 15ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > rechecks membership after waiting for the capture reservation 7ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > requires the recorded original upload and never accepts a guessed byte binding 15ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > a retained deleted capture cannot be replaced by a fresh current identity for its bytes 55ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > a project use share permits reading but cannot capture a file 13ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-capture-study.pglite.integration.test.ts > the admitted capture decision is one transaction > a lost commit acknowledgement preserves uncertainty and a retry resolves the committed identity 73ms
+(node:42) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/clinical-regulatory-evidence/__tests__/catalog-facts.test.ts > findTextFacts > finds every labelled fact on a title page, with the offset it matched at 2ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/catalog-facts.test.ts > findTextFacts > reads the date shapes regulatory documents use 1ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/catalog-facts.test.ts > findTextFacts > takes nothing without its label: a bare date, number or code is not a fact 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/catalog-facts.test.ts > findTextFacts > declines an impossible date rather than recording a plausible one 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/catalog-facts.test.ts > findTextFacts > nothing to read is no facts, not an error 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/catalog-facts.test.ts > matchStudy keeps every explicit protocol in the scope decision > does not discard a later unmatched protocol because the first matched 0ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/catalog-facts.test.ts > matchStudy keeps every explicit protocol in the scope decision > passes all distinct protocols to the scoped matcher, retaining a repeated single protocol 0ms
+(node:50) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-checksum-executor.test.ts > findSourceByChecksum supplied executor > uses the caller transaction without changing historical identity or filters 4ms
+ ✓ server/services/clinical-regulatory-evidence/__tests__/source-checksum-executor.test.ts > findSourceByChecksum supplied executor > retains the existing pool fallback and empty-checksum no-query behavior 1ms
+
+ Test Files  3 passed (3)
+      Tests  31 passed (31)
+   Start at  09:05:58
+   Duration  4.98s (transform 716ms, setup 86ms, import 1.81s, tests 2.64s, environment 0ms)
+

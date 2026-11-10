@@ -1,0 +1,122 @@
+[
+ {
+  "case": "editor-1440-light",
+  "page": {
+   "left": 554,
+   "right": 1370,
+   "width": 816,
+   "padX": "48px"
+  },
+  "row": {
+   "left": 554,
+   "right": 1370,
+   "offsetWidth": 816,
+   "scrollWidth": 816,
+   "clientWidth": 816,
+   "offsetHeight": 41,
+   "marginLeft": "-48px"
+  },
+  "trackChanges": {
+   "left": 1253,
+   "right": 1366,
+   "inView": true
+  },
+  "comment": {
+   "right": 1249,
+   "inView": true
+  },
+  "pageScrollsSideways": false,
+  "hit": {
+   "firstControlVisible": true,
+   "trackChangesVisible": true,
+   "commentVisible": true
+  },
+  "clippingAncestor": null,
+  "dark": false,
+  "moreRow": {
+   "hidden": false,
+   "offsetWidth": 816,
+   "scrollWidth": 816
+  }
+ },
+ {
+  "case": "editor-1440-dark",
+  "page": {
+   "left": 554,
+   "right": 1370,
+   "width": 816,
+   "padX": "48px"
+  },
+  "row": {
+   "left": 554,
+   "right": 1370,
+   "offsetWidth": 816,
+   "scrollWidth": 816,
+   "clientWidth": 816,
+   "offsetHeight": 41,
+   "marginLeft": "-48px"
+  },
+  "trackChanges": {
+   "left": 1253,
+   "right": 1366,
+   "inView": true
+  },
+  "comment": {
+   "right": 1249,
+   "inView": true
+  },
+  "pageScrollsSideways": false,
+  "hit": {
+   "firstControlVisible": true,
+   "trackChangesVisible": true,
+   "commentVisible": true
+  },
+  "clippingAncestor": null,
+  "dark": true,
+  "moreRow": {
+   "hidden": false,
+   "offsetWidth": 816,
+   "scrollWidth": 816
+  }
+ },
+ {
+  "case": "editor-390-light",
+  "page": {
+   "left": 0,
+   "right": 390,
+   "width": 390,
+   "padX": "16px"
+  },
+  "row": {
+   "left": 0,
+   "right": 390,
+   "offsetWidth": 390,
+   "scrollWidth": 1005,
+   "clientWidth": 390,
+   "offsetHeight": 57,
+   "marginLeft": "-16px"
+  },
+  "trackChanges": {
+   "left": 888,
+   "right": 1001,
+   "inView": false
+  },
+  "comment": {
+   "right": 884,
+   "inView": false
+  },
+  "pageScrollsSideways": false,
+  "hit": {
+   "firstControlVisible": true,
+   "trackChangesVisible": false,
+   "commentVisible": false
+  },
+  "clippingAncestor": null,
+  "dark": false,
+  "moreRow": {
+   "hidden": false,
+   "offsetWidth": 390,
+   "scrollWidth": 456
+  }
+ }
+]

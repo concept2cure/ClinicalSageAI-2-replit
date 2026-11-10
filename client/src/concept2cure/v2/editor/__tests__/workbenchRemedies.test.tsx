@@ -34,6 +34,11 @@ const answer = (base = AT) => `A duration needs correction.\n\n\`\`\`authoring-r
 const doc = { id: DOC, title: 'Stability summary', module: 'M3', status: 'draft', updated_at: AT, section_count: 1 };
 const section = { id: SEC, doc_id: DOC, code: '3.2.P.8.1', title: 'Stability Summary', content: '<p>The product is stable for 18 months.</p>', order_index: 0, updated_at: AT };
 const ok = (payload: unknown, status = 200) => ({ ok: status < 400, status, json: async () => payload }) as Response;
+/** The list as GET /api/authoring/docs answers a project read (authoring-document-read.ts): success, and each row's program_id. */
+const scopedList = (url: string, body: { success?: boolean; documents: object[] }) => {
+  const programId = new URLSearchParams(url.split('?')[1]).get('programId');
+  return programId === null ? body : { success: true, ...body, documents: body.documents.map(row => ({ program_id: programId, ...row })) };
+};
 
 for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unknown as Array<Record<string, unknown>>) {
   if (typeof proto.getClientRects !== 'function') proto.getClientRects = () => [];
@@ -45,11 +50,13 @@ beforeEach(() => {
   window.C2C_PROJECT = { id: PID } as typeof window.C2C_PROJECT;
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (_method: string, url: string) => {
-    if (url.startsWith('/api/authoring/docs?')) return ok({ documents: [doc] });
+    if (url.startsWith('/api/authoring/docs?')) return ok(scopedList(url, { documents: [doc] }));
     if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ document: doc });
     if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) return ok({ sections: [section] });
     if (url === `/api/authoring/sections/${SEC}/sources`) return ok({ sources: [{ citationId: 'cite-1', source: { id: 17, title: 'Stability report' } }] });
     if (url.startsWith('/api/c2c/documents/')) return ok({ success: false }, 404);
+    // The workbench reads the document's review route on open (J3 R2); this document was never sent for review.
+    if (url === `/api/authoring/documents/${DOC}/review-route`) return ok({ success: true, round: null });
     return ok({ success: true });
   });
 });
@@ -182,7 +189,7 @@ describe('AnA remedies reach the existing editor', () => {
     await waitFor(() => expect(document.querySelector('.tiptap')?.textContent).toContain('18 months'));
     const editor = (document.querySelector('.tiptap') as unknown as { editor: Editor }).editor;
     act(() => { editor.commands.insertContent('Unsaved note. '); });
-    fireEvent.click(openEditorControl('Project files'));
+    fireEvent.click(openEditorControl('Vault'));
     fireEvent.click(screen.getByRole('button', { name: 'Open pulled working copy' }));
     await screen.findByRole('alertdialog', { name: 'Unsaved changes in 3.2.P.8.1' });
     expect(onNav).not.toHaveBeenCalled();

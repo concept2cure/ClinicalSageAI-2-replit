@@ -7,6 +7,7 @@ import { apiRequest, serverMessage, ApiRequestError } from '@/lib/queryClient';
 import { downloadBlob, safeFileName } from '../download';
 import type { FireToast } from '../toast';
 import { ANA_REVIEW_COMMENT_ROLE } from '@shared/constants/review-comment';
+import { ReviewRequests } from './ReviewRequests';
 
 /**
  * Who a comment's words are from. A comment AnA wrote for a person carries
@@ -184,8 +185,10 @@ type ResolvedItem = { kind: 'thread' | 'task'; id: string; title: string };
 function useReopenLastResolved(onNotice: FireToast, refresh: () => void, canResolve: boolean) {
   const [lastResolved, setLastResolved] = useState<ResolvedItem | null>(null);
   const reopen = async (item: ResolvedItem) => {
-    const kind = item.kind === 'thread' ? 'review-threads' : 'review-tasks';
-    const res = await apiCall('POST', `/api/concept2cure/${kind}/${encodeURIComponent(item.id)}/reopen`, {});
+    const path = item.kind === 'thread'
+      ? `/api/concept2cure/review-threads/${encodeURIComponent(item.id)}/reopen`
+      : `/api/concept2cure/review-tasks/${encodeURIComponent(item.id)}/reopen`;
+    const res = await apiCall('POST', path, {});
     if (!res.ok) { onNotice(apiErrorText(res, "Couldn't reopen it."), 'error'); return; }
     setLastResolved(null);
     refresh();
@@ -366,11 +369,15 @@ export function ReviewThreadsPane({
   };
 
   return (
+    <>
+    {/* The artifact reviews this person was named for (P-95), above their threads (ReviewRequests.tsx). */}
+    <ReviewRequests onNotice={onNotice} />
     <section aria-label="Review threads assigned to you" style={{ marginTop: 20 }}>
-      <div className="dr-seclbl" style={{ padding: '0 0 8px', display: 'flex', justifyContent: 'space-between' }}>
-        <span>Threads &amp; change requests — assigned to you{program ? ` · ${program.title}` : ''}</span>
+      {/* D0's section heading (§D4.J). The project is the board's scope already, so it is not repeated here. */}
+      <div className="pj-sec-h">
+        <h2>Threads and change requests assigned to you</h2>
         {queue.data && (
-          <span style={{ color: 'var(--text-400)', fontWeight: 400 }}>
+          <span className="sec-sub">
             {queue.data.totalThreads} thread{queue.data.totalThreads === 1 ? '' : 's'} · {queue.data.totalTasks} task{queue.data.totalTasks === 1 ? '' : 's'}
           </span>
         )}
@@ -492,5 +499,6 @@ export function ReviewThreadsPane({
         </div>
       )}
     </section>
+    </>
   );
 }

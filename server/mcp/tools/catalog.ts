@@ -112,7 +112,7 @@ export const listSequences = defineTool({
   description:
     'List the eCTD sequences (0000, 0001, …) of one submission: id, region, sequence number, type, status ' +
     '(draft|assembling|validated|frozen|dispatched), validation and dispatch status. Refuses when the ' +
-    'submission is not in your organisation.',
+    'submission is not in your organisation. Sequences in use only; c2c_get_sequence_status reports a retired one.',
   inputSchema: { submission_id: z.number().int().positive().describe('A submission id from c2c_list_submissions.') },
   annotations: READ,
   scope: MCP_SCOPES.read,
@@ -136,7 +136,7 @@ export const listSequences = defineTool({
       }));
       return ok(
         sequences.length === 0
-          ? `Submission #${input.submission_id} has no sequences yet.`
+          ? `Submission #${input.submission_id} has no sequence in use.`
           : `${sequences.length} sequence(s): ${sequences.map((s) => `${s.sequenceNumber} [${s.status}] id=${s.id}`).join(', ')}.`,
         { submissionId: input.submission_id, sequences },
       );
@@ -145,6 +145,36 @@ export const listSequences = defineTool({
     }
   },
 });
+
+type SubmissionService = typeof import('../../services/submission-service/submission-service');
+
+/**
+ * A sequence of this organisation that is no longer in use, said plainly
+ * (P-86): retired, with when, by whom and why; or not in use with no
+ * retirement recorded. Undefined when the id is not found at all, or was
+ * refused for another reason, so the caller keeps its own refusal.
+ */
+async function notInUseAnswer(svc: SubmissionService, id: number, orgId: number, err: unknown) {
+  if (!(err instanceof svc.SubmissionError) || err.code !== 'NOT_FOUND') return undefined;
+  let answer: Awaited<ReturnType<SubmissionService['readRetiredSequence']>>;
+  try {
+    answer = await svc.readRetiredSequence(id, { organizationId: orgId });
+  } catch (readErr) {
+    return refused(`Sequence #${id} is not in use in this organisation, and whether it was retired could not be read: ${errorMessage(readErr)}`);
+  }
+  if (!answer) return undefined;
+  const { sequenceNumber, region } = answer;
+  if (answer.state === 'removed') {
+    return ok(`Sequence ${sequenceNumber} (${region}) is not in use; no retirement is recorded for it.`,
+      { sequence: { id, sequenceNumber, region, inUse: false, retired: false } });
+  }
+  const by = answer.retiredBy ?? 'a person the record no longer names';
+  return ok(
+    `Sequence ${sequenceNumber} (${region}) was retired on ${answer.retiredOn} UTC by ${by}${answer.meaning ? ` (${answer.meaning})` : ''}. ` +
+      `${answer.reason ? `Reason: ${answer.reason}${/[.!?]$/.test(answer.reason) ? '' : '.'} ` : ''}It is kept as history; it is not sent, filed or built on.`,
+    { sequence: { id, sequenceNumber, region, inUse: false, retired: true, retiredOn: answer.retiredOn, retiredBy: answer.retiredBy, meaning: answer.meaning, reason: answer.reason } },
+  );
+}
 
 export const getSequenceStatus = defineTool({
   name: 'c2c_get_sequence_status',
@@ -166,7 +196,7 @@ export const getSequenceStatus = defineTool({
     try {
       sequence = await svc.getSequence(input.sequence_id, { organizationId: orgId });
     } catch (err) {
-      return refused(errorMessage(err));
+      return (await notInUseAnswer(svc, input.sequence_id, orgId, err)) ?? refused(errorMessage(err));
     }
     const leaves = await svc.listLeaves(sequence.id, { organizationId: orgId });
     let releaseSignature: Record<string, unknown>;

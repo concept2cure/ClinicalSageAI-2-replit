@@ -31,7 +31,10 @@ vi.mock('../hooks', () => ({
 }));
 vi.mock('../changeHooks', () => ({ useChangeRegister: () => ({ changes: [], loading: false, error: null, refresh: vi.fn() }),
   useChangeSummary: () => ({ summary: { total: 0, open: 0, awaitingApproval: 0, inImplementation: 0, awaitingVerification: 0, overdueImplementation: 0 }, loading: false, error: null }) }));
-vi.mock('@/services/portal/authService', () => ({ useAuthUser: () => ({ name: 'Ada Author' }) }));
+// Change control's reviewed-learning step reads the session through authService (a2f9264a5): keep the real module.
+vi.mock('@/services/portal/authService', async (original) => ({
+  ...(await original<typeof import('@/services/portal/authService')>()), useAuthUser: () => ({ name: 'Ada Author' }),
+}));
 vi.mock('@/lib/queryClient', async (original) => ({ ...(await original<typeof import('@/lib/queryClient')>()), apiRequest: (...a: unknown[]) => H.request(...a) }));
 vi.mock('../../v2/shellProject', () => ({ useShellProject: () => null, shellProgramId: () => null }));
 vi.mock('../../v2/surfaceActions', () => ({ useSurfaceActionHandlers: () => undefined, notifySurfaceActionReady: () => undefined }));

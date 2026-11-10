@@ -1,0 +1,201 @@
+{
+  "recordedAt": "2026-11-06T21:10:16.441711+00:00",
+  "package": "F1",
+  "scope": "Read-only integration of incoming regional therapeutic advisory context with strict saved-agency/template owners",
+  "incomingRange": "7d771e124a4dba820fbbd26d8919c7c69cd1a9d4..8dbc9d589ff1370c97d2166646a03d68489a8311",
+  "before": {
+    "capturedAt": "2026-11-06T21:08:46.459845+00:00",
+    "head": "16fe9e08e2ce0ef482c633415090f4a9fa116ec0",
+    "incomingRange": "7d771e124a4dba820fbbd26d8919c7c69cd1a9d4..8dbc9d589ff1370c97d2166646a03d68489a8311",
+    "testFiles": [
+      "server/services/authoring/__tests__/authoring-draft-template.test.ts",
+      "server/services/authoring/__tests__/authoring-draft-region-projection.test.ts",
+      "server/routes/__tests__/authoring-draft-recorded-filing.test.ts",
+      "server/services/ana/__tests__/draft-product-advisory-selection.test.ts",
+      "server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts",
+      "server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts",
+      "server/services/ana/__tests__/drafting-regional-context.test.ts",
+      "server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts"
+    ],
+    "sourceInputs": {
+      "client/src/concept2cure/v2/useFilingOutline.ts": "0e98df97ae5ca3795025a2a644482ff7c7f9102f89cbfde626686220377c9cd4",
+      "scripts/ci/lib/approved-sql-predicates.mjs": "c6688b005480c879f2725fcbc6ea45128dc667019f60559ac41c36f1ef2989ff",
+      "server/routes/__tests__/authoring-draft-recorded-filing.test.ts": "f87c4360d5e5a26d6c78108dbf5414d0c7df78f220be9ecd3f7ec129f1e3f890",
+      "server/routes/artifacts-center-routes.ts": "fb401a68211827f58e0181858b831c29620949d9d4e1fd4a79533e77cd0b053b",
+      "server/services/ai-gateway/__tests__/gateway-model-governance.test.ts": "066e80a0bed82775d5dfc88d3029d1691759f54de53f7a3cea743dd23f8e1f56",
+      "server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts": "d16e3d1ca9c8d7b4b503d5133948c49a403f32283cfa6d0f79e83b8cc751d688",
+      "server/services/ai-gateway/gateway.ts": "09d187427e7dece2beec0b5a6d2e39391f94152909f291ca5c7a59a881427ff7",
+      "server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts": "487fffb0df4b2444bb12acc94fa8c4e524c0da7c9c77ad8602ba775c2bc38e50",
+      "server/services/ai-gateway/providers/clients.ts": "0e3a3b26808709947a182c0fb4a96abb6fc2b02437ed54e0cf3fce4987227eb2",
+      "server/services/ana/AnaDocumentDraftingService.ts": "f1f8b9cbad317f89b4cafc7594cabc57856af99e726e00e658e090f5c8577c98",
+      "server/services/ana/__tests__/draft-product-advisory-selection.test.ts": "e2bbaffcef0b0cdba2e63977ca3e4ceb1da374dea7ea11286600174442411abb",
+      "server/services/ana/__tests__/drafting-regional-context.test.ts": "c6a674870af4c9d099d035aaa905813789a1eda195f720b105ecf6e2750f1650",
+      "server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts": "a43ab9a2cb7a823233bb222fe8a58448611bf08f7db37c49bde68d06e581f4c6",
+      "server/services/ana/draft-product-advisory.ts": "075023efba6b48cbd9f4f9d38172f9513a44f5557594a950cde62be46a261fc5",
+      "server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts": "c772d11befa709518ddb57bacc9a3950a8e03b11f2b7a30099c27cb251e1315c",
+      "server/services/ana/therapeutic-area-profiles/index.ts": "52a7356bae78e91689b432741c2befa8b410d55fbe3e23ec14377409b0c8c67a",
+      "server/services/authoring/__tests__/authoring-draft-region-projection.test.ts": "a18213f0acd3130513b71b6595f7ba98ebb64aa303d4b39688922a72bfc17249",
+      "server/services/authoring/__tests__/authoring-draft-template.test.ts": "b60821293d1522b0ba887f13f51256d740bfafdee805c0a0cd15912baa6633a5",
+      "server/services/authoring/artifact-workflow-source.ts": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+      "server/services/authoring/authoring-draft-region-projection.ts": "ee941d35fa923714754b39e463ec9e1eda8765015d85a545797eff1f640571c6",
+      "server/services/authoring/authoring-draft-template.ts": "b16879734790f80c2bef8fec03e08b450ef3c2987210bda579ba81bbaca9a170",
+      "server/services/authoring/authoring-source-import.ts": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+      "server/services/authoring/import-source-references.ts": "b4a9a3f3395681d54f616bf98976c8db4285ed208c4a3946b2a77791be18478b",
+      "server/services/authoring/workflow-import-governance.ts": "7253f5c51e335529bc5bef414048ef563982b4916f586877d672c96b8377a0c4",
+      "server/services/authoring/workflow-source-import.ts": "9f3c25ff1c6be493edd440706a2ac046f15791cc5fda23fc9ac96ac142273a31",
+      "server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts": "cf9a0ac2b22ac98c9b2af6327c456d0bf52faa47abd892dae5c914ad279dc32a",
+      "server/services/regulatory/registry/blueprints/canadaCtaBlueprint.ts": "aa4119d16e12c17bbf1bcd653d816113af2f9c41216aa776ccdce73a75c5b9f9",
+      "server/services/regulatory/registry/blueprints/euCtaBlueprint.ts": "1b732e9137c87a58eb3e67d44ef408259bc2bb65ea151c3e7fa7e250e516b076",
+      "shared/authoring/source-import.ts": "bfc71c40d79bd909e8b3ab7134dbe110ae6b2fd2be6aaca934ffe550712fd35e",
+      "shared/regulatory/document-taxonomy.ts": "4383ec406c9e448cadd76021798c067b87296b08062a5b0bf78cb832f573429b",
+      "shared/regulatory/uk-cta-authoring.ts": "bc6cc087d0219bf0c85636984116ffe9a3584287d014b2eb1d27f045ed999667"
+    },
+    "originalRuntimePreservation": [
+      {
+        "path": "client/src/concept2cure/v2/useFilingOutline.ts",
+        "originalSha256": "0e98df97ae5ca3795025a2a644482ff7c7f9102f89cbfde626686220377c9cd4",
+        "currentSha256": "0e98df97ae5ca3795025a2a644482ff7c7f9102f89cbfde626686220377c9cd4",
+        "changed": false
+      },
+      {
+        "path": "server/services/authoring/authoring-draft-template.ts",
+        "originalSha256": "0beb24ff53d7bcf8de01882c7012f256f543465820c92517097187b929d4e97d",
+        "currentSha256": "b16879734790f80c2bef8fec03e08b450ef3c2987210bda579ba81bbaca9a170",
+        "changed": true
+      },
+      {
+        "path": "server/services/authoring/authoring-draft-region-projection.ts",
+        "originalSha256": "ee941d35fa923714754b39e463ec9e1eda8765015d85a545797eff1f640571c6",
+        "currentSha256": "ee941d35fa923714754b39e463ec9e1eda8765015d85a545797eff1f640571c6",
+        "changed": false
+      },
+      {
+        "path": "shared/authoring/source-import.ts",
+        "originalSha256": "bfc71c40d79bd909e8b3ab7134dbe110ae6b2fd2be6aaca934ffe550712fd35e",
+        "currentSha256": "bfc71c40d79bd909e8b3ab7134dbe110ae6b2fd2be6aaca934ffe550712fd35e",
+        "changed": false
+      },
+      {
+        "path": "server/services/authoring/artifact-workflow-source.ts",
+        "originalSha256": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+        "currentSha256": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+        "changed": false
+      },
+      {
+        "path": "server/services/authoring/authoring-source-import.ts",
+        "originalSha256": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+        "currentSha256": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+        "changed": false
+      },
+      {
+        "path": "server/services/authoring/workflow-source-import.ts",
+        "originalSha256": "9f3c25ff1c6be493edd440706a2ac046f15791cc5fda23fc9ac96ac142273a31",
+        "currentSha256": "9f3c25ff1c6be493edd440706a2ac046f15791cc5fda23fc9ac96ac142273a31",
+        "changed": false
+      },
+      {
+        "path": "server/services/authoring/import-source-references.ts",
+        "originalSha256": "b4a9a3f3395681d54f616bf98976c8db4285ed208c4a3946b2a77791be18478b",
+        "currentSha256": "b4a9a3f3395681d54f616bf98976c8db4285ed208c4a3946b2a77791be18478b",
+        "changed": false
+      },
+      {
+        "path": "server/services/authoring/workflow-import-governance.ts",
+        "originalSha256": "7253f5c51e335529bc5bef414048ef563982b4916f586877d672c96b8377a0c4",
+        "currentSha256": "7253f5c51e335529bc5bef414048ef563982b4916f586877d672c96b8377a0c4",
+        "changed": false
+      },
+      {
+        "path": "server/routes/artifacts-center-routes.ts",
+        "originalSha256": "fb401a68211827f58e0181858b831c29620949d9d4e1fd4a79533e77cd0b053b",
+        "currentSha256": "fb401a68211827f58e0181858b831c29620949d9d4e1fd4a79533e77cd0b053b",
+        "changed": false
+      },
+      {
+        "path": "scripts/ci/lib/approved-sql-predicates.mjs",
+        "originalSha256": "c6688b005480c879f2725fcbc6ea45128dc667019f60559ac41c36f1ef2989ff",
+        "currentSha256": "c6688b005480c879f2725fcbc6ea45128dc667019f60559ac41c36f1ef2989ff",
+        "changed": false
+      }
+    ],
+    "finalWireFiveInputsUnchanged": true
+  },
+  "after": {
+    "capturedAt": "2026-11-06T21:10:16.441711+00:00",
+    "head": "16fe9e08e2ce0ef482c633415090f4a9fa116ec0",
+    "sourceInputs": {
+      "client/src/concept2cure/v2/useFilingOutline.ts": "0e98df97ae5ca3795025a2a644482ff7c7f9102f89cbfde626686220377c9cd4",
+      "scripts/ci/lib/approved-sql-predicates.mjs": "c6688b005480c879f2725fcbc6ea45128dc667019f60559ac41c36f1ef2989ff",
+      "server/routes/__tests__/authoring-draft-recorded-filing.test.ts": "f87c4360d5e5a26d6c78108dbf5414d0c7df78f220be9ecd3f7ec129f1e3f890",
+      "server/routes/artifacts-center-routes.ts": "fb401a68211827f58e0181858b831c29620949d9d4e1fd4a79533e77cd0b053b",
+      "server/services/ai-gateway/__tests__/gateway-model-governance.test.ts": "066e80a0bed82775d5dfc88d3029d1691759f54de53f7a3cea743dd23f8e1f56",
+      "server/services/ai-gateway/__tests__/gateway-source-checkpoint.test.ts": "d16e3d1ca9c8d7b4b503d5133948c49a403f32283cfa6d0f79e83b8cc751d688",
+      "server/services/ai-gateway/gateway.ts": "09d187427e7dece2beec0b5a6d2e39391f94152909f291ca5c7a59a881427ff7",
+      "server/services/ai-gateway/providers/__tests__/local-provider-gate0.test.ts": "487fffb0df4b2444bb12acc94fa8c4e524c0da7c9c77ad8602ba775c2bc38e50",
+      "server/services/ai-gateway/providers/clients.ts": "0e3a3b26808709947a182c0fb4a96abb6fc2b02437ed54e0cf3fce4987227eb2",
+      "server/services/ana/AnaDocumentDraftingService.ts": "f1f8b9cbad317f89b4cafc7594cabc57856af99e726e00e658e090f5c8577c98",
+      "server/services/ana/__tests__/draft-product-advisory-selection.test.ts": "e2bbaffcef0b0cdba2e63977ca3e4ceb1da374dea7ea11286600174442411abb",
+      "server/services/ana/__tests__/drafting-regional-context.test.ts": "c6a674870af4c9d099d035aaa905813789a1eda195f720b105ecf6e2750f1650",
+      "server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts": "a43ab9a2cb7a823233bb222fe8a58448611bf08f7db37c49bde68d06e581f4c6",
+      "server/services/ana/draft-product-advisory.ts": "075023efba6b48cbd9f4f9d38172f9513a44f5557594a950cde62be46a261fc5",
+      "server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts": "c772d11befa709518ddb57bacc9a3950a8e03b11f2b7a30099c27cb251e1315c",
+      "server/services/ana/therapeutic-area-profiles/index.ts": "52a7356bae78e91689b432741c2befa8b410d55fbe3e23ec14377409b0c8c67a",
+      "server/services/authoring/__tests__/authoring-draft-region-projection.test.ts": "a18213f0acd3130513b71b6595f7ba98ebb64aa303d4b39688922a72bfc17249",
+      "server/services/authoring/__tests__/authoring-draft-template.test.ts": "b60821293d1522b0ba887f13f51256d740bfafdee805c0a0cd15912baa6633a5",
+      "server/services/authoring/artifact-workflow-source.ts": "b9dbcb735879671cb32c207641c8f1a48a196143ff11c2f5d4c41405662c6de2",
+      "server/services/authoring/authoring-draft-region-projection.ts": "ee941d35fa923714754b39e463ec9e1eda8765015d85a545797eff1f640571c6",
+      "server/services/authoring/authoring-draft-template.ts": "b16879734790f80c2bef8fec03e08b450ef3c2987210bda579ba81bbaca9a170",
+      "server/services/authoring/authoring-source-import.ts": "3617fa774eb923922f6292da4cad4d22013ee349853a3cd668ed5ae3c88fb0cb",
+      "server/services/authoring/import-source-references.ts": "b4a9a3f3395681d54f616bf98976c8db4285ed208c4a3946b2a77791be18478b",
+      "server/services/authoring/workflow-import-governance.ts": "7253f5c51e335529bc5bef414048ef563982b4916f586877d672c96b8377a0c4",
+      "server/services/authoring/workflow-source-import.ts": "9f3c25ff1c6be493edd440706a2ac046f15791cc5fda23fc9ac96ac142273a31",
+      "server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts": "cf9a0ac2b22ac98c9b2af6327c456d0bf52faa47abd892dae5c914ad279dc32a",
+      "server/services/regulatory/registry/blueprints/canadaCtaBlueprint.ts": "aa4119d16e12c17bbf1bcd653d816113af2f9c41216aa776ccdce73a75c5b9f9",
+      "server/services/regulatory/registry/blueprints/euCtaBlueprint.ts": "1b732e9137c87a58eb3e67d44ef408259bc2bb65ea151c3e7fa7e250e516b076",
+      "shared/authoring/source-import.ts": "bfc71c40d79bd909e8b3ab7134dbe110ae6b2fd2be6aaca934ffe550712fd35e",
+      "shared/regulatory/document-taxonomy.ts": "4383ec406c9e448cadd76021798c067b87296b08062a5b0bf78cb832f573429b",
+      "shared/regulatory/uk-cta-authoring.ts": "bc6cc087d0219bf0c85636984116ffe9a3584287d014b2eb1d27f045ed999667"
+    }
+  },
+  "changedInputs": [],
+  "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --maxWorkers=1 --no-file-parallelism server/services/authoring/__tests__/authoring-draft-template.test.ts server/services/authoring/__tests__/authoring-draft-region-projection.test.ts server/routes/__tests__/authoring-draft-recorded-filing.test.ts server/services/ana/__tests__/draft-product-advisory-selection.test.ts server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts server/services/ana/__tests__/drafting-regional-context.test.ts server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts",
+  "exitCode": 0,
+  "result": {
+    "suitesPassed": 8,
+    "testsPassed": 404,
+    "durationSeconds": 42.0,
+    "perFileObservedPasses": {
+      "server/services/ana/__tests__/recorded-product-drafting-service.pglite.test.ts": 35,
+      "server/services/ana/__tests__/draft-product-advisory-selection.test.ts": 223,
+      "server/routes/__tests__/authoring-draft-recorded-filing.test.ts": 15,
+      "server/services/ana/therapeutic-area-profiles/__tests__/therapeutic-selection.test.ts": 35,
+      "server/services/ana/__tests__/drafting-regional-context.test.ts": 28,
+      "server/services/regulatory/registry/__tests__/regional-cta-blueprints.test.ts": 9,
+      "server/services/authoring/__tests__/authoring-draft-region-projection.test.ts": 8,
+      "server/services/authoring/__tests__/authoring-draft-template.test.ts": 51
+    }
+  },
+  "log": {
+    "originalScratchPath": "/workspace/scratch/shared-editor-regional-2026-11-06-green.txt",
+    "bytes": 104067,
+    "sha256": "f1b839c37f244f20712cefad5864275ee142259d1d0d1450368c0952cb4e7bfb",
+    "orderedParts": [
+      "logs/shared-editor-regional-2026-11-06-green.txt.part01",
+      "logs/shared-editor-regional-2026-11-06-green.txt.part02"
+    ],
+    "reassemblyCommand": "cat logs/shared-editor-regional-2026-11-06-green.txt.part01 logs/shared-editor-regional-2026-11-06-green.txt.part02 > shared-editor-regional-2026-11-06-green.txt"
+  },
+  "findings": [
+    "Incoming auto-merged authoring-draft-template retains actual recorded receiving-agency matching, unsupported Notified_Body refusal, saved manual eligibility and exact current section reference admission.",
+    "Only exact UK_CTA/EU_CTA/CA_CTA/CA_CTA_A registry-and-current-section identities select added therapeutic protocol/synopsis context. Unknown, malformed, foreign or mismatched regional identities suppress clinical fallback; CMC/toxicology exclusions remain.",
+    "Context remains advisory; no therapeutic label becomes qualified source evidence or legal applicability, and no new agency inference or MDX product admission is introduced.",
+    "Authoring template now forwards exact validated effective saved-template context, including selected assembly source, rather than consulting an unrelated project filing.",
+    "Of the original eleven repaired runtime pins, only authoring-draft-template intentionally changes for the incoming context forwarding; the other ten remain exact.",
+    "Final-wire two runtime and three test inputs remain exact; The earlier 250-test combined final-wire cohort was intentionally not repeated."
+  ],
+  "limitations": [
+    "No production or test source edits made by this integration task.",
+    "These are bounded component/fixture tests with synthetic drafting transport; not scientific applicability, external provider or deployment qualification.",
+    "Cohorts overlap earlier evidence and are not additive. Root owns final compiler/build/publication."
+  ]
+}

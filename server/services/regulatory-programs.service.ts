@@ -805,8 +805,31 @@ export async function getPmaModules(
 
 /* ─── PMA trial metrics ──────────────────────────────────────── */
 
-/** Bind program to a clinical_ops.studies row (via metadata override or
- *  fuzzy productName match) and compute the kit's 4 trial KPIs. */
+const STUDY_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** The four cards with nothing to read, each saying why. */
+function unreadTrialMetrics(why: string): TrialMetric[] {
+  return [
+    { label: 'Enrolled',           metric: '—', meta: why, tone: 'warn' },
+    { label: 'Sites active',       metric: '—', meta: why },
+    { label: 'Serious deviations', metric: '—', meta: why },
+    { label: 'Endpoints achieved', metric: '—', meta: why },
+  ];
+}
+
+/** The project's pivotal-trial figures, from the clinical_ops study the
+ *  project is linked to (program.metadata.clinicalStudyId, written by AnA's
+ *  link_program_clinical_study), and from no other.
+ *
+ *  Until 2026-11-02 (MDX journey M20) a project with no link was bound to the
+ *  organization's most recently updated study whose name, indication or
+ *  therapeutic area contained the product name, and the cards did not say
+ *  which: another product's enrolment could read as this one's. clinical_ops
+ *  studies carry no project key, so the link is the only binding there is.
+ *  And the card "AE rate" counted serious and critical protocol DEVIATIONS
+ *  (clinical_ops.deviations) per enrolled subject, with alarm thresholds of
+ *  2% and 5%: clinical_ops records no adverse events. It is now labelled for
+ *  what it counts, with no threshold. */
 export async function getPmaTrialMetrics(
   orgId: number,
   programId: string,
@@ -815,37 +838,23 @@ export async function getPmaTrialMetrics(
   if (!program) return null;
 
   const meta = (program.metadata as Record<string, unknown> | null) ?? {};
-  const overrideStudyId = typeof meta.clinicalStudyId === 'string' ? meta.clinicalStudyId : null;
-  const productLike = `%${(program.productName ?? program.name ?? '').slice(0, 60)}%`;
+  const linkedStudyId = typeof meta.clinicalStudyId === 'string' ? meta.clinicalStudyId.trim() : '';
+  if (!linkedStudyId) return { metrics: unreadTrialMetrics('No study linked to this project'), study: null };
 
   let study: ClinicalOpsStudyRow | null = null;
-  try {
-    const r = await pool.query<ClinicalOpsStudyRow>(
-      overrideStudyId
-        ? `SELECT * FROM clinical_ops.studies WHERE id = $1 AND org_id::text = $2 LIMIT 1`
-        : `SELECT * FROM clinical_ops.studies
-            WHERE org_id::text = $1
-              AND (name ILIKE $2 OR indication ILIKE $2 OR therapeutic_area ILIKE $2)
-            ORDER BY updated_at DESC LIMIT 1`,
-      overrideStudyId ? [overrideStudyId, String(orgId)] : [String(orgId), productLike],
-    );
-    study = r.rows[0] ?? null;
-  } catch (err: unknown) {
-    const code = (err as PgError).code;
-    if (code !== '42P01' && code !== '3F000') throw err;
+  if (STUDY_UUID.test(linkedStudyId)) {
+    try {
+      const r = await pool.query<ClinicalOpsStudyRow>(
+        `SELECT * FROM clinical_ops.studies WHERE id = $1 AND org_id::text = $2 LIMIT 1`,
+        [linkedStudyId, String(orgId)],
+      );
+      study = r.rows[0] ?? null;
+    } catch (err: unknown) {
+      const code = (err as PgError).code;
+      if (code !== '42P01' && code !== '3F000') throw err;
+    }
   }
-
-  if (!study) {
-    return {
-      metrics: [
-        { label: 'Enrolled',          metric: '—', meta: 'No study linked', tone: 'warn' },
-        { label: 'Sites active',      metric: '—', meta: 'No study linked' },
-        { label: 'AE rate',           metric: '—', unit: '%', meta: 'Pending enrollment' },
-        { label: 'Endpoints achieved',metric: '—', meta: 'Pending interim analysis' },
-      ],
-      study: null,
-    };
-  }
+  if (!study) return { metrics: unreadTrialMetrics('The linked study was not found'), study: null };
 
   const enrolled     = Number(study.enrolled ?? 0);
   const targetEnroll = Number(study.target_enrollment ?? 0);
@@ -854,15 +863,14 @@ export async function getPmaTrialMetrics(
   const activeSites  = Number(study.active_sites ?? 0);
   const enrollTone: 'ok' | 'warn' | 'err' = enrollPct >= 80 ? 'ok' : enrollPct >= 50 ? 'warn' : 'err';
 
-  let aeRate: number | null = null;
+  let seriousDeviations: number | null = null;
   try {
-    const aeQ = await pool.query<{ n: number }>(
+    const devQ = await pool.query<{ n: number }>(
       `SELECT COUNT(*)::int AS n FROM clinical_ops.deviations
         WHERE study_id = $1 AND severity IN ('serious','critical')`,
       [study.id],
     );
-    const ae = aeQ.rows[0]?.n ?? 0;
-    aeRate = enrolled > 0 ? Math.round((ae / enrolled) * 1000) / 10 : 0;
+    seriousDeviations = devQ.rows[0]?.n ?? 0;
   } catch (err: unknown) {
     if (!isPgUndefinedTable(err)) throw err;
   }
@@ -888,17 +896,15 @@ export async function getPmaTrialMetrics(
     { label: 'Enrolled',
       metric: `${enrolled.toLocaleString()}/${targetEnroll.toLocaleString()}`,
       bar:    { pct: enrollPct, tone: enrollTone },
-      meta:   `${enrollPct}% of target`,
+      meta:   `${enrollPct}% of target · ${study.name}`,
       tone:   enrollTone },
     { label: 'Sites active',
       metric: `${activeSites}/${totalSites}`,
       meta:   totalSites > 0 ? `${Math.round((activeSites / totalSites) * 100)}% activated` : 'No sites yet',
       tone:   activeSites === 0 ? 'warn' : undefined },
-    { label: 'AE rate',
-      metric: aeRate !== null ? aeRate.toFixed(1) : '—',
-      unit:   aeRate !== null ? '%' : undefined,
-      meta:   aeRate !== null ? `Serious + critical / enrolled` : 'No AE data',
-      tone:   aeRate !== null && aeRate > 5 ? 'err' : aeRate !== null && aeRate > 2 ? 'warn' : 'ok' },
+    { label: 'Serious deviations',
+      metric: seriousDeviations !== null ? seriousDeviations.toLocaleString() : '—',
+      meta:   seriousDeviations !== null ? 'Serious and critical protocol deviations' : 'No deviation records' },
     { label: 'Endpoints achieved',
       metric: endpointsTotal !== null && endpointsTotal > 0
         ? `${endpointsAchieved}/${endpointsTotal}`

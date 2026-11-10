@@ -1,14 +1,16 @@
 // @vitest-environment jsdom
 /**
- * New project asks for the project's objective (optional), shows it on the
- * review, and records it as the project's objective of record once the project
- * is confirmed created (S1, P-80: PUT /api/charters/by-project/:id/objectives).
- * It is a second write, so a refusal is said and the project still exists.
+ * New project asks for the project's objective (optional, at most 4,000 characters, as the server says), shows it on
+ * the review, and sends it WITH the create: POST /api/c2c/projects records it as version 1 of the project's charter
+ * in the creation's own transaction (S1, 505449d7a; D2 §2.4 item 6). There is no second write, so a project can no
+ * longer exist without the objective it was given: a refused objective refuses the creation, in the server's own
+ * words, and nothing is created.
  */
 import React from 'react';
 import { intakeFixtureRequest, waitForIntakeWorkspace } from './projectIntakeFixture';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { ApiRequestError } from '@/lib/queryClient';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -35,14 +37,15 @@ const reviewValue = (term: string) =>
 
 afterEach(() => { cleanup(); apiRequest.mockReset(); });
 
-async function createWith(objective: string, objectiveAnswer: { ok: boolean; status: number; body: unknown }) {
+const REFUSAL = 'The objective must be at most 4,000 characters, with at most 20 sources. Each source needs a kind and a title; an address, if given, must be http or https.';
+
+async function createWith(objective: string, refuse = false) {
   apiRequest.mockImplementation(async (method: string, path: string) => {
-    if (method === 'PUT' && path.startsWith('/api/charters/')) {
-      return { ok: objectiveAnswer.ok, status: objectiveAnswer.status, json: async () => objectiveAnswer.body };
-    }
+    if (method === 'POST' && path === '/api/c2c/projects' && refuse) throw new ApiRequestError(REFUSAL, 400, { error: REFUSAL });
     return { ok: true, status: 201, json: async () => ({ data: { id: ID, title: 'HLV-334 — IND', code: 'HLV-334' }, meta: {} }) };
   });
-  render(<NewProjectWizard onClose={() => {}} onNav={() => {}} />);
+  const onNav = vi.fn();
+  render(<NewProjectWizard onClose={() => {}} onNav={onNav} />);
   fireEvent.click(screen.getByRole('button', { name: /pick ind/i }));
   fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
   await waitForIntakeWorkspace();
@@ -52,33 +55,42 @@ async function createWith(objective: string, objectiveAnswer: { ok: boolean; sta
   fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
   const shown = reviewValue('Objective');
   await act(async () => { fireEvent.click(await screen.findByRole('button', { name: /create project/i })); });
-  return shown;
+  return { shown, onNav };
 }
-const objectiveCall = () => apiRequest.mock.calls.find((c) => c[0] === 'PUT' && String(c[1]).startsWith('/api/charters/'));
+const createCall = () => apiRequest.mock.calls.find((c) => c[0] === 'POST' && c[1] === '/api/c2c/projects');
+const charterWrite = () => apiRequest.mock.calls.find((c) => String(c[1]).startsWith('/api/charters/'));
 
 describe('New project — the objective', () => {
-  it('shows it on the review and records it on the new project, after the create', async () => {
-    const shown = await createWith(OBJECTIVE, { ok: true, status: 200, body: { success: true } });
+  it('is labelled optional and held to the server\'s 4,000 characters', () => {
+    apiRequest.mockImplementation(async () => ({ ok: true, status: 200, json: async () => ({}) }));
+    render(<NewProjectWizard onClose={() => {}} onNav={() => {}} />);
+    fireEvent.click(screen.getByRole('button', { name: /pick ind/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^continue$/i }));
+    const field = screen.getByRole('textbox', { name: 'Objective (optional)' }) as HTMLTextAreaElement;
+    expect(field.maxLength).toBe(4000);
+  });
+
+  it('shows it on the review and sends it with the create, in one write', async () => {
+    const { shown, onNav } = await createWith(OBJECTIVE);
     expect(shown).toBe(OBJECTIVE);
-    await vi.waitFor(() => expect(objectiveCall()).toBeTruthy());
-    const [, path, body] = objectiveCall()!;
-    expect(path).toBe(`/api/charters/by-project/${ID}/objectives`);
-    expect(body).toEqual({ objective: OBJECTIVE, sources: [], reason: 'Stated when the project was created' });
-    const createIndex = apiRequest.mock.calls.findIndex((c) => c[0] === 'POST' && c[1] === '/api/c2c/projects');
-    expect(createIndex).toBeGreaterThan(-1);
-    expect(apiRequest.mock.calls.indexOf(objectiveCall()!)).toBeGreaterThan(createIndex);
+    await vi.waitFor(() => expect(createCall()).toBeTruthy());
+    expect(createCall()![2]).toMatchObject({ objective: OBJECTIVE });
+    await vi.waitFor(() => expect(onNav).toHaveBeenCalledWith('project-home'));
+    expect(charterWrite()).toBeUndefined();
   });
 
-  it('records nothing when none is stated', async () => {
-    const shown = await createWith('', { ok: true, status: 200, body: {} });
+  it('sends none when none is stated', async () => {
+    const { shown } = await createWith('   ');
     expect(shown).toBe('Not stated');
-    await vi.waitFor(() => expect(apiRequest.mock.calls.some((c) => c[0] === 'POST' && c[1] === '/api/c2c/projects')).toBe(true));
-    expect(objectiveCall()).toBeUndefined();
+    await vi.waitFor(() => expect(createCall()).toBeTruthy());
+    expect(createCall()![2]).not.toHaveProperty('objective');
+    expect(charterWrite()).toBeUndefined();
   });
 
-  it('says so when the objective is refused, and the project still exists', async () => {
-    await createWith(OBJECTIVE, { ok: false, status: 409, body: { success: false, message: 'This project’s charter cannot be started.' } });
-    // Said in the visible notice and in its live region.
-    expect((await screen.findAllByText(/The project is created and open\. Its objective was not recorded: This project’s charter cannot be started\./)).length).toBeGreaterThan(0);
+  it('says a refused objective in the server\'s own words, and opens no project', async () => {
+    const { onNav } = await createWith(OBJECTIVE, true);
+    expect((await screen.findAllByText(REFUSAL)).length).toBeGreaterThan(0);
+    expect(onNav).not.toHaveBeenCalledWith('project-home');
+    expect(charterWrite()).toBeUndefined();
   });
 });

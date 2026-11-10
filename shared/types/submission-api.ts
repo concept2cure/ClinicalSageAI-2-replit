@@ -271,6 +271,9 @@ export interface DeliverableEvaluationScope {
 
 export type DeliverableDocumentTable = 'coauthor_documents' | 'unified_documents'
   | 'ctd_onboarding_documents' | 'rendered_leaf_files' | 'c2c_document_sections' | 'vault_documents';
+/** The store a project document's filing copy is placed from (placeIntoFilingCopy.ts): a request payload value,
+ *  named once here so a screen sends it without spelling a table name in its own source. */
+export const FILING_COPY_DOCUMENT_TABLE = 'coauthor_documents' as const satisfies DeliverableDocumentTable;
 export interface DeliverableSourceEvidence {
   content: 'substantive' | 'non-substantive' | 'undetermined';
   pin: 'match' | 'mismatch' | 'unpinned' | 'unverifiable';

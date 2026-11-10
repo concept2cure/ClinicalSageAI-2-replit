@@ -154,7 +154,10 @@
   display: flex; align-items: flex-start; justify-content: space-between;
   gap: 12px 24px; flex-wrap: wrap; margin: 0 0 24px;
 }
-.c2c-v2 :is(.ph, .sp-head, .reg-head, .surface-head, .pj-head, .adm-access .page-header) > :first-child { flex: 1 1 420px; min-width: 0; }
+/* The text block wraps the actions under it on a 420px floor. The basis is 0%, not 420px: in a
+   column a 420px basis is a 420px height, which opened a ~250px gap under the Tasks header at 390
+   (D0 review fix 2). A 0% basis against a column's indefinite height counts as its content. */
+.c2c-v2 :is(.ph, .sp-head, .reg-head, .surface-head, .pj-head, .adm-access .page-header) > :first-child { flex: 1 1 0%; min-width: min(420px, 100%); }
 /* The context line: what was the uppercase orange eyebrow. Same text, quiet. */
 .c2c-v2 :is(.ph-eyebrow, .sp-eyebrow, .reg-eyebrow, .surface-kicker, .pj-eyebrow, .adm-access .page-eyebrow) {
   display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 0 0 6px;
@@ -183,8 +186,10 @@
 .c2c-v2 .pj-seclbl .s { font-weight: 400; }
 
 /* Buttons. Ghost by default; `.ghost` is the hairline secondary; `.primary` is
-   the view's one orange action. No transform on hover. */
-.c2c-v2 :is(.btn, .reg-cta, .landing-newproj) {
+   the view's one orange action. No transform on hover. `.sp-primary` is a retired
+   name for the primary (D0 review fix 5; foundationsRetiredRatchet holds its uses).
+   Its grey disabled state stays in journey-v2.css, so it is not in the opacity list. */
+.c2c-v2 :is(.btn, .reg-cta, .landing-newproj, .sp-primary) {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   height: 32px; padding: 0 12px; border: 1px solid transparent; border-radius: var(--radius-lg);
   background: transparent; color: var(--text-200);
@@ -192,19 +197,29 @@
   text-transform: none; letter-spacing: 0; cursor: pointer;
   transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-.c2c-v2 :is(.btn, .reg-cta, .landing-newproj) :is(.ico, svg) { width: 16px; height: 16px; font-size: 16px; flex-shrink: 0; }
+.c2c-v2 :is(.btn, .reg-cta, .landing-newproj, .sp-primary) :is(.ico, svg) { width: 16px; height: 16px; font-size: 16px; flex-shrink: 0; }
 .c2c-v2 .btn:hover { background: var(--bg-200); color: var(--text-100); }
 /* ghost: the hairline secondary, the workhorse (364 uses) */
 .c2c-v2 .btn.ghost { border-color: var(--border); }
 .c2c-v2 .btn.ghost:hover { background: var(--bg-100); border-color: var(--border-strong); color: var(--text-100); }
 /* primary: the view's ONE orange action */
-.c2c-v2 :is(.btn.primary, .reg-cta, .landing-newproj) { background: var(--accent-strong); border-color: var(--accent-strong); color: var(--accent-on-strong); }
-.c2c-v2 :is(.btn.primary, .reg-cta, .landing-newproj):hover { background: color-mix(in srgb, var(--accent-strong) 88%, var(--text-100)); border-color: transparent; color: var(--accent-on-strong); }
+.c2c-v2 :is(.btn.primary, .reg-cta, .landing-newproj, .sp-primary) { background: var(--accent-strong); border-color: var(--accent-strong); color: var(--accent-on-strong); }
+.c2c-v2 :is(.btn.primary, .reg-cta, .landing-newproj, .sp-primary):hover { background: color-mix(in srgb, var(--accent-strong) 88%, var(--text-100)); border-color: transparent; color: var(--accent-on-strong); }
 /* small: canonical name `small` (≈150 uses); `sm` (14) aliased until 0 */
 .c2c-v2 :is(.btn.small, .btn.sm, .reg-cta.sm) { height: 28px; padding: 0 10px; gap: 5px; font-size: var(--fs-small); }
 .c2c-v2 :is(.btn.small, .btn.sm) :is(.ico, svg) { width: 14px; height: 14px; font-size: 14px; }
 .c2c-v2 :is(.btn, .reg-cta, .landing-newproj):disabled { opacity: .5; cursor: not-allowed; }
-@media (pointer: coarse) { .c2c-v2 :is(.btn, .reg-cta, .landing-newproj) { min-height: 44px; } }
+/* A disabled primary is grey, not faded orange (D0.md §8.2): it is not the view's orange action, and it
+   should not read as one. The same treatment `.sp-primary:disabled` has (journey-v2.css). */
+.c2c-v2 :is(.btn.primary, .reg-cta, .landing-newproj):disabled,
+.c2c-v2 :is(.btn.primary, .reg-cta, .landing-newproj):disabled:hover { opacity: 1; background: var(--bg-200); border-color: transparent; color: var(--text-400); }
+@media (pointer: coarse) { .c2c-v2 :is(.btn, .reg-cta, .landing-newproj, .sp-primary) { min-height: 44px; } }
+/* D0.md §8.5: on a touch screen the tabs, segmented items, the composer's send and a drawer's close reach
+   44px too. A fine pointer keeps 36, 28, 32 and 32, which pass WCAG 2.5.8 AA (24px). */
+@media (pointer: coarse) {
+  .c2c-v2 :is(.tab, .reg-tab, .cc-tab, .seg-b, .ml-seg-btn) { min-height: 44px; }
+  .c2c-v2 :is(.landing-send, .pj-comp-send, .ct-comp-send, .de-x) { min-width: 44px; min-height: 44px; }
+}
 
 /* Inputs: 32px inline (`.c2c-input`, matches `.btn`), 36px in forms (`.de-input`,
    matches `.de-btn`), 14px text, radius 8, one focus ring. */
@@ -265,9 +280,11 @@
 .c2c-v2 .de-textarea { min-height: 80px; padding: 8px 12px; resize: vertical; line-height: 1.5; }
 /* Italic stays: "an example, not your number" must not ride on colour alone (WCAG 1.4.1, app-v2.css note). */
 .c2c-v2 :is(.c2c-input, .de-input, .de-textarea)::placeholder { color: var(--text-300); font-style: italic; }
-/* ONE ring: the field's own border + halo, so the global outline (app-v2.css:95–103) steps aside. */
+/* ONE ring: the field's own border + halo, so the global outline (above) steps aside. The outline is
+   transparent, not none: it paints nothing here, and forced colours, which repaint the border in one
+   system colour and drop the halo, show it as the field's ring (D0 review fix 13). */
 .c2c-v2 :is(.c2c-input, .de-input, .de-select, .de-textarea):is(:focus, :focus-visible) {
-  outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-000);
+  outline: 2px solid transparent; border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-000);
 }
 .c2c-v2 :is(select.c2c-input, .de-select) {
   appearance: none; padding-right: 32px; background-repeat: no-repeat; background-position: right 10px center;
@@ -299,8 +316,9 @@
   cursor: pointer; transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
 .c2c-v2 :is(button.pj-card, a.pj-card, .pj-card[role="button"]):hover { background: var(--bg-050); border-color: var(--border-strong); }
-/* No header band: a title row inside the card's own padding. */
-.c2c-v2 .pj-card-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 10px; padding: 0; border: 0; background: none; }
+/* No header band: a title row inside the card's own padding. It wraps, so a long subtitle drops
+   below the title rather than squeezing it (D0 review fix 11). */
+.c2c-v2 .pj-card-h { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 10px; padding: 0; border: 0; background: none; }
 .c2c-v2 .pj-card-h :is(.t, h3) { margin: 0; font-size: var(--fs-body); font-weight: 600; line-height: 1.4; color: var(--text-100); }
 .c2c-v2 .pj-card-h :is(.s, .sec-sub) { font-size: var(--fs-small); color: var(--text-300); }
 .c2c-v2 .pj-card-h-go { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-small); font-weight: 500; color: var(--text-300); white-space: nowrap; }
@@ -326,35 +344,44 @@
 .c2c-v2 :is(.reg-kpi[data-tone="ai"] .reg-kpi-v) { color: var(--text-100); }
 .c2c-v2 button.reg-kpi:hover .reg-kpi-l { color: var(--text-100); text-decoration: underline; text-underline-offset: 2px; }
 
-/* Segmented control: a --bg-100 track; the active item lifts onto --bg-000. */
+/* Segmented control: a --bg-100 track; the active item lifts onto --bg-000. Admin's `.seg-btn`
+   (AdminAccess.tsx) is an item too, aliased scoped to `.adm-access` (D0 review fix 10): an unscoped
+   `.seg-btn` would reach mdx's own segmented buttons, which render inside `.c2c-v2`. */
 .c2c-v2 :is(.seg, .ml-seg) { display: inline-flex; align-items: center; gap: 2px; padding: 2px; max-width: 100%; overflow-x: auto; scrollbar-width: none; border-radius: 10px; background: var(--bg-100); }
-.c2c-v2 :is(.seg-b, .ml-seg-btn) {
+.c2c-v2 :is(.seg-b, .ml-seg-btn), .c2c-v2 .adm-access .seg-btn {
   display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; border: 0; border-radius: var(--radius-lg);
   background: none; font-size: var(--fs-small); font-weight: 500; color: var(--text-300); white-space: nowrap;
   transition: background-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-.c2c-v2 :is(.seg-b, .ml-seg-btn):hover { color: var(--text-100); }
-.c2c-v2 :is(.seg-b, .ml-seg-btn):is(.on, [data-on], [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"]) {
+.c2c-v2 :is(.seg-b, .ml-seg-btn):hover, .c2c-v2 .adm-access .seg-btn:hover { color: var(--text-100); }
+.c2c-v2 :is(.seg-b, .ml-seg-btn):is(.on, [data-on], [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"]),
+.c2c-v2 .adm-access .seg-btn:is(.on, [data-on], [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"]) {
   background: var(--bg-000); color: var(--text-100); box-shadow: 0 1px 2px rgb(20 20 19 / .06), 0 0 0 1px var(--border);
 }
-.c2c-v2.dark :is(.seg-b, .ml-seg-btn):is(.on, [data-on], [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"]) { background: var(--bg-200); box-shadow: none; }
+/* Dark keeps light's hairline ring (D0 §3; review fix 12): the --bg-200 fill alone is 1.21:1 on the
+   track. --border-strong is 1.49:1 on the track, a ring but short of SC 1.4.11's 3:1 (D0-10 README). */
+.c2c-v2.dark :is(.seg-b, .ml-seg-btn):is(.on, [data-on], [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"]),
+.c2c-v2.dark .adm-access .seg-btn:is(.on, [data-on], [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"]) { background: var(--bg-200); box-shadow: 0 0 0 1px var(--border-strong); }
 
 /* Tabs: one scrollable row; the active tab is an ink underline, not orange. */
-.c2c-v2 :is(.tabs, .reg-tabs, .sc-wsbar, .cc-tabs) {
+.c2c-v2 :is(.tabs, .reg-tabs, .cc-tabs) {
   display: flex; flex-wrap: nowrap; gap: 4px; margin: 0 0 20px; padding: 0; overflow-x: auto; scrollbar-width: none;
   border-bottom: 1px solid var(--border);
 }
-.c2c-v2 :is(.tab, .reg-tab, .sc-ws, .cc-tab) {
+.c2c-v2 :is(.tab, .reg-tab, .cc-tab) {
   display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 10px; margin-bottom: -1px;
   border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: none;
   font-size: var(--fs-body); font-weight: 500; color: var(--text-300); white-space: nowrap;
   transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease);
 }
-.c2c-v2 :is(.tab, .reg-tab, .sc-ws, .cc-tab) svg { width: 16px; height: 16px; }
-.c2c-v2 :is(.tab, .reg-tab, .sc-ws, .cc-tab):hover { color: var(--text-100); }
-.c2c-v2 :is(.tab, .reg-tab, .sc-ws, .cc-tab):is(.on, [data-on], [aria-selected="true"], [aria-current="page"]) {
+.c2c-v2 :is(.tab, .reg-tab, .cc-tab) svg { width: 16px; height: 16px; }
+.c2c-v2 :is(.tab, .reg-tab, .cc-tab):hover { color: var(--text-100); }
+.c2c-v2 :is(.tab, .reg-tab, .cc-tab):is(.on, [data-on], [aria-selected="true"], [aria-current="page"]) {
   color: var(--text-100); border-bottom-color: var(--text-100);
 }
+/* Focus inside the edge: the tab row and the segmented track scroll, and a scroller clips the global
+   ring drawn 2px outside a button (D0 review fix 7; the inset form .crumb-proj uses). */
+.c2c-v2 :is(.tab, .reg-tab, .cc-tab, .seg-b, .ml-seg-btn):focus-visible, .c2c-v2 .adm-access .seg-btn:focus-visible { outline-offset: -2px; }
 .c2c-v2 .tab-body { padding: 20px 0 0; }
 
 /* Chips: 12px, sentence case; tone only where it means something. */
@@ -371,6 +398,9 @@
 .c2c-v2 .rd-chip.tone-ok   { background: var(--success-muted); color: var(--success); }
 .c2c-v2 .rd-chip.tone-warn { background: var(--warning-muted); color: var(--warning); }
 .c2c-v2 .rd-chip.tone-err  { background: var(--error-muted);   color: var(--error); }
+/* dim: a quiet "nothing yet" (no sources, no operation). It took these values from a bare
+   `.c2c-v2 .tone-dim`, deleted with the other bare tones (D0 review fix 1). */
+.c2c-v2 .rd-chip.tone-dim  { background: var(--bg-100);        color: var(--text-400); }
 /* tone-ai was orange for a neutral state ("active"): neutral now; orange is not a status. */
 .c2c-v2 .rd-chip:is(.tone-ai, .tone-idle) { background: var(--bg-100); color: var(--text-200); }
 .c2c-v2.dark .rd-chip:is(:not([class*="tone-"]), .tone-ai, .tone-idle) { background: var(--bg-200); }
@@ -381,6 +411,13 @@
 .c2c-v2 .reg-tbl td { padding: 10px 12px; font-size: var(--fs-small); line-height: 1.45; color: var(--text-200); border-bottom: 1px solid var(--border-subtle); vertical-align: middle; }
 .c2c-v2 .reg-tbl tr:last-child td { border-bottom: 0; }
 .c2c-v2 .reg-tbl tbody tr:hover td { background: var(--bg-050); }
+/* At phone width a wide table scrolls inside its card, card body or work-area section, never the
+   page (D0 review fix 3; a card has no overflow rule since D0-2). The one definition: D5-0's
+   [data-work-area] copy is folded in here, and its .pj-sec > .pj-card-b case is .pj-card-b's. */
+@media (max-width: 640px) {
+  .c2c-v2 :is(.pj-card, .pj-card-b, .reg-card) > .reg-tbl,
+  .c2c-v2 [data-work-area] .pj-sec > .reg-tbl { display: block; overflow-x: auto; }
+}
 
 /* The empty state (dataConnect EmptyState, 579 renders): no box. One sentence,
    an optional hint, one ghost action and the regulation line. */
@@ -398,22 +435,34 @@
 }
 .c2c-v2 .c2c-empty-state :is(.c2c-empty-action, .c2c-empty-retry):hover { background: var(--bg-100); border-color: var(--border-strong); color: var(--text-100); }
 @media (pointer: coarse) { .c2c-v2 .c2c-empty-state :is(.c2c-empty-action, .c2c-empty-retry) { min-height: 44px; } }
-.c2c-v2 .c2c-empty-state .c2c-empty-reg { margin-top: 6px; font-size: var(--fs-caption); color: var(--text-400); }
+/* --text-300: an empty state sits on any surface, and --text-400 holds 4.5:1 only on --bg-000
+   (D0.md §3; review fix 1). */
+.c2c-v2 .c2c-empty-state .c2c-empty-reg { margin-top: 6px; font-size: var(--fs-caption); color: var(--text-300); }
 
 /* Centered dialog (rare, for confirmations). Governed ceremonies keep their own. */
 .c2c-v2 :is(.cl-modal, .rbm-modal) { width: min(560px, calc(100vw - 32px)); max-height: 86vh; display: flex; flex-direction: column; background: var(--canvas-elevated); border: 1px solid var(--border); border-radius: var(--radius-2xl); box-shadow: var(--v2-shadow-lg); overflow: hidden; }
 
 /* Composer chrome (each composer keeps its own layout). */
 .c2c-v2 :is(.landing-composer, .pj-composer, .ct-composer) {
-  background: var(--canvas-elevated); border: 1px solid var(--border); border-radius: 20px;
+  /* The resting edge is --border-control, 3.91:1 on the page and 4.12:1 on the fill in light, 4.36 and 3.80 in
+     dark (D0.md §8.4, WCAG 1.4.11). --border was 1.41:1, and --border-strong 1.70:1 in dark. */
+  background: var(--canvas-elevated); border: 1px solid var(--border-control); border-radius: 20px;
   box-shadow: 0 1px 2px rgb(20 20 19 / .04), 0 6px 20px -8px rgb(20 20 19 / .10);
   transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
 .c2c-v2.dark :is(.landing-composer, .pj-composer, .ct-composer) { box-shadow: 0 1px 2px rgb(0 0 0 / .30), 0 6px 20px -8px rgb(0 0 0 / .45); }
-/* Focus: one quiet orange edge (plan §2: orange for focus), no 3px halo. --border-focus clears 3:1. */
-.c2c-v2 :is(.landing-composer, .pj-composer, .ct-composer):focus-within { border-color: var(--border-focus); }
+/* Focus: one quiet orange edge (plan §2: orange for focus), no 3px halo. --border-focus clears 3:1.
+   The transparent outline is the composer's ring in forced colours, which repaint the border (D0
+   review fix 13). Its text area keeps no outline of its own (the inputs block), so there is one ring. */
+.c2c-v2 :is(.landing-composer, .pj-composer, .ct-composer):focus-within { border-color: var(--border-focus); outline: 2px solid transparent; }
 .c2c-v2 :is(.landing-input, .pj-composer textarea, .ct-composer textarea) { font-size: 15px; line-height: 1.5; color: var(--text-100); }
 .c2c-v2 :is(.landing-input, .pj-composer textarea, .ct-composer textarea)::placeholder { color: var(--text-300); }
+/* On a touch screen every text area is 16px, so iOS does not zoom when it takes focus (D0 review
+   fix 4; the inputs are in the coarse block above). It sits here, not there: it has the 15px rule's
+   specificity, (0,2,1), so it must come after it. The size only: .de-textarea keeps its 80px. */
+@media (pointer: coarse) {
+  .c2c-v2 :is(.de-textarea, .landing-input, .pj-composer textarea, .ct-composer textarea) { font-size: 16px; }
+}
 .c2c-v2 :is(.landing-send, .pj-comp-send, .ct-comp-send) {
   flex-shrink: 0; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;
   border: 0; border-radius: var(--radius-lg); background: var(--accent-strong); color: var(--accent-on-strong);
@@ -423,11 +472,6 @@
 .c2c-v2 :is(.landing-send, .pj-comp-send, .ct-comp-send):not(:disabled):hover { background: color-mix(in srgb, var(--accent-strong) 88%, var(--text-100)); }
 .c2c-v2 :is(.landing-send, .pj-comp-send, .ct-comp-send):disabled { opacity: .4; cursor: default; }
 
-/* The retired banners, until their owners remove the markup: neutral now, so no
-   screen shows them in their loud form. */
-/* .pj-stageband (below, with its parts): the project page's plain version becomes the only one. */
-.c2c-v2 .pj-stageband { display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start; flex-wrap: wrap; gap: 6px; padding: 0 0 14px; margin: 0 0 18px; background: none; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; }
-.c2c-v2 .pj-stageband-next-k { display: inline-flex; align-items: center; gap: 5px; justify-content: flex-start; font-size: var(--fs-small); font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--text-300); }
 /* ════ end D0 foundations ════ */
 
 .c2c-v2 svg { display: block; }
@@ -452,12 +496,9 @@
    fixture-free replacement for a "Sample data" card. A real backend returned
    nothing, or the fetch failed; either way the surface says so plainly rather
    than rendering a fabricated stand-in. */
-/* Its quiet form is in the D0 block above. The error tone stays here. */
-.c2c-v2 .c2c-empty-state.tone-error {
-  border-color: color-mix(in srgb, var(--warning) 34%, transparent);
-  background: color-mix(in srgb, var(--warning) 6%, transparent);
-}
-.c2c-v2 .c2c-empty-state.tone-error .c2c-empty-ic { color: var(--warning); opacity: 1; }
+/* Its quiet form is in the D0 block above. A failed load is not drawn here:
+   `tone="error"` renders ErrorState (below), and the panel carries no tone class
+   (D0 review fix 1 deleted the error tone's two dead rules). */
 /* The loading treatment, moved off the MDX lane's private `.data-gate-icon-pulse`
    when `<DataGate>` converged onto this component. `busy` previously set
    `aria-busy` and nothing else here, so a panel waiting on a fetch was
@@ -566,11 +607,12 @@
    measures 3.01:1 (light) / 3.77:1 (dark) on the tinted fill — worse again on
    the chip's own 10% wash, at 2.74:1 / 3.32:1. The id is the one string a
    support call depends on being read correctly, so it takes --text-200:
-   9.23:1 / 10.71:1 for the label, 8.40:1 / 9.42:1 for the chip. */
-.c2c-v2 .c2c-error-ref { font-size: 11px; color: var(--text-200); }
+   9.23:1 / 10.71:1 for the label, 8.40:1 / 9.42:1 for the chip. 12px, the
+   floor (D0.md §3; review fix 16): it was 11px, the handle and its label. */
+.c2c-v2 .c2c-error-ref { font-size: var(--fs-caption); color: var(--text-200); }
 .c2c-v2 .c2c-error-ref code {
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
-  font-size: 11px; user-select: all; color: var(--text-200);
+  font-size: var(--fs-caption); user-select: all; color: var(--text-200);
   padding: 1px 4px; border-radius: 3px;
   background: color-mix(in srgb, var(--text-400) 10%, transparent);
 }
@@ -819,7 +861,8 @@
 .c2c-v2 .reg-strat-w{font-size:12px;line-height:1.55;color:var(--text-300);}
 .c2c-v2 .reg-note{display:flex;gap:8px;align-items:flex-start;font-size:12px;line-height:1.55;color:var(--text-300);background:var(--bg-050);border:1px solid var(--border);border-radius:var(--radius-md);padding:11px 13px;margin-top:6px;}
 .c2c-v2 .reg-note svg{width:14px;height:14px;color:var(--accent-100);flex-shrink:0;margin-top:1px;}
-.c2c-v2 .mono{font-family:var(--font-mono);}
+/* D0 §3's 12px floor holds for mono too: 0.8125em of the 14px root was 11.4px (D0-5 review). */
+.c2c-v2 .mono{font-family:var(--font-mono);font-size:max(12px, 0.8125em);}
 .c2c-v2 .surface-degraded{margin:auto;max-width:460px;padding:56px 32px;text-align:center;color:var(--text-300);}
 .c2c-v2 .surface-degraded .sd-mark{width:44px;height:44px;margin:0 auto 16px;border-radius:12px;background:var(--accent-000);color:var(--accent-100);display:flex;align-items:center;justify-content:center;font-size:20px;}
 .c2c-v2 .surface-degraded h2{font-size:17px;color:var(--text-100);margin:0 0 8px;}
@@ -859,28 +902,14 @@
    track (2026-10-31 client demo). Nothing records per-step completion, so the
    tabs claim none; the 2026-09-23 removal of the "done" fill was the same
    finding, one rule earlier. Scrolls sideways inside itself at phone width. */
-.c2c-v2 .pj-lc{display:flex;align-items:stretch;gap:2px;margin:2px 0 16px;width:100%;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none;}
-.c2c-v2 .pj-lc-stage{position:relative;flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;background:none;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;padding:9px 14px;cursor:pointer;color:var(--text-400);transition:color var(--dur), border-color var(--dur);}
-.c2c-v2 .pj-lc-node{display:inline-flex;align-items:center;justify-content:center;color:inherit;}
-.c2c-v2 .pj-lc-ic{display:flex;}.c2c-v2 .pj-lc-ic svg{width:14px;height:14px;}
-.c2c-v2 .pj-lc-l{font-size:13px;font-weight:500;color:inherit;white-space:nowrap;}
-.c2c-v2 .pj-lc-stage:hover{color:var(--text-200);}
-.c2c-v2 .pj-lc-stage[data-status="active"]{color:var(--text-100);border-bottom-color:var(--accent-100);}
-.c2c-v2 .pj-lc-stage[data-status="active"] .pj-lc-node{color:var(--accent-200);}
-.c2c-v2 .pj-lc-stage[data-status="active"] .pj-lc-l{font-weight:600;}
-.c2c-v2 .pj-lc-stage:focus-visible{outline:2px solid var(--accent-200);outline-offset:-2px;border-radius:var(--radius-sm);}
-
-.c2c-v2 .pj-stageband-l{display:flex;flex-direction:column;gap:2px;}
-.c2c-v2 .pj-stageband-stage{font-size:15px;font-weight:600;color:var(--text-100);}
-.c2c-v2 .pj-stageband-blurb{font-size:12.5px;color:var(--text-300);}
-.c2c-v2 .pj-stageband-next{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;}
-.c2c-v2 .pj-stageband-next-k svg{width:12px;height:12px;}
-.c2c-v2 .pj-stageband-next-v{font-size:12.5px;color:var(--text-200);}
-/* What to do on the open step, and the next step as a button (ProjectHome StageBand). */
-.c2c-v2 .pj-stageband-now{margin-top:6px;font-size:13px;line-height:1.5;color:var(--text-200);max-width:68ch;}
-.c2c-v2 .pj-stageband-now strong{font-weight:600;color:var(--text-100);}
-.c2c-v2 button.pj-stageband-next{padding:0;border:1px solid transparent;border-radius:var(--radius-md);background:none;cursor:pointer;transition:background var(--dur),border-color var(--dur);}
-.c2c-v2 button.pj-stageband-next:hover{background:var(--bg-000);border-color:var(--border);}
+.c2c-v2 .pj-lc{margin:32px 0 0;border:0;overflow:visible;}
+/* D3-1 (2026-11-06): D0's segmented control; it scrolls sideways inside itself at phone width. */
+.c2c-v2 .pj-lc .seg{display:flex;width:max-content;max-width:100%;overflow-x:auto;scrollbar-width:none;}
+.c2c-v2 .pj-lc-stage{flex:0 0 auto;}
+.c2c-v2 .pj-lc-ic{display:inline-flex;}.c2c-v2 .pj-lc-ic svg{width:16px;height:16px;}
+.c2c-v2 .pj-lc-l{white-space:nowrap;}
+/* The open step's one line (the retired band's blurb). */
+.c2c-v2 .pj-step-blurb{margin:8px 0 24px;font-size:var(--fs-small);color:var(--text-300);}
 .c2c-v2 .orch-embed{padding:0;}
 .c2c-v2 .orch-embed .metrics{margin-top:0;}
 .c2c-v2 .orch-views .seg-badge{margin-left:6px;background:var(--warning);color:var(--on-warning);font-size:10px;font-weight:600;border-radius:9px;padding:0 5px;}
@@ -1195,12 +1224,11 @@
 .c2c-v2 .tb-assignment-form textarea{border:1px solid var(--border);border-radius:var(--radius-md);padding:8px;background:var(--bg-000);color:var(--text-100);font:inherit;}
 .c2c-v2 .tb-assignment .tb-detail-note{overflow-wrap:anywhere;}
 @media (max-width:1100px){.c2c-v2 .tb-kanban{grid-template-columns:repeat(2,1fr);}}
-/* Keep the existing task header and recovery messages readable on a phone. */
+/* Keep the task board's recovery messages readable on a phone. (Its header is the canonical
+   one, which wraps; the column rule it had here is gone, D0 review fix 2.) */
 @media (max-width:760px){
-  .c2c-v2 .tb .ph{flex-direction:column;align-items:stretch;gap:12px;}
-  /* Stacked, the shared `> :first-child{flex:1 1 420px}` became a 420px height:
-     a ~250px gap above the actions at 390 (J5-09 / J2 D9, 2026-11-06). */
-  .c2c-v2 .tb .ph > :first-child{flex:0 0 auto;}
+  /* The task filter fits the phone: it ran off the right edge at 456px (J5-09 / J2 D9, 2026-11-06).
+     The ~250px gap above the actions that J5 also found is closed by D0 review fix 2's shared basis. */
   .c2c-v2 .tb-filters{min-width:0;max-width:100%;}
   .c2c-v2 .tb-filters .tb-sel{max-width:100%;min-width:0;text-overflow:ellipsis;}
   .c2c-v2 .tb .c2c-error-state{display:grid;grid-template-columns:15px minmax(0,1fr);}
@@ -1250,11 +1278,10 @@
 .c2c-v2 .pj-tool:hover .pj-tool-go,.c2c-v2 .pj-tool:focus-visible .pj-tool-go{opacity:1;}
 
 /* ===== Project Home — Claude-Projects model, grounded in ctdOnboardingProjects/Documents/Gaps ===== */
-.c2c-v2 .pj{max-width:1180px;}
-.c2c-v2 .pj-back{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-400);margin-bottom:14px;}
+.c2c-v2 .pj-back{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-small);color:var(--text-300);margin:0 0 12px;}
 .c2c-v2 .pj-back:hover{color:var(--text-100);}
 .c2c-v2 .pj-back .ico{font-size:15px;}
-.c2c-v2 .pj-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px;}
+.c2c-v2 .pj-top{margin:0 0 24px;}
 .c2c-v2 .pj-title{font-family:var(--font-serif,Georgia,serif);font-size:30px;font-weight:600;letter-spacing:-.02em;color:var(--text-100);margin:0 0 6px;}
 .c2c-v2 .pj-desc{font-size:13px;line-height:1.55;color:var(--text-300);max-width:680px;}
 .c2c-v2 .pj-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px;}
@@ -1263,42 +1290,75 @@
 .c2c-v2 .pj-fact dt{font-size:var(--fs-caption);color:var(--text-400);}
 .c2c-v2 .pj-fact dd{margin:0;font-size:13px;color:var(--text-100);}
 .c2c-v2 .pj-fact-none{color:var(--text-400);font-style:italic;}
-.c2c-v2 .pj-top-actions{display:flex;gap:6px;flex-shrink:0;}
 .c2c-v2 .pj-icon{width:32px;height:32px;border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;color:var(--text-400);border:1px solid var(--border);background:var(--bg-000);font-size:15px;}
 .c2c-v2 .pj-icon:hover{color:var(--text-100);border-color:var(--text-400);}
-.c2c-v2 .pj-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:22px;align-items:start;}
-@media(max-width:980px){.c2c-v2 .pj-grid{grid-template-columns:1fr;}}
-.c2c-v2 .pj-main{display:flex;flex-direction:column;gap:20px;min-width:0;}
-.c2c-v2 .pj-side{display:flex;flex-direction:column;gap:14px;position:sticky;top:14px;}
+/* D3-1 (2026-11-06, D3.md §3, §4.12): the main column and Project knowledge (320). The grid answers to the page's
+   own width, not the viewport's: with the rail open a 1180px window gives the page 836px. */
+.c2c-v2 .page-inner.pj{container-type:inline-size;}
+.c2c-v2 .pj-grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:32px;align-items:start;}
+@container (max-width: 900px){.c2c-v2 .pj-grid{grid-template-columns:minmax(0,1fr);gap:40px;}}
+.c2c-v2 .pj-main{display:flex;flex-direction:column;gap:0;min-width:0;}
+.c2c-v2 .pj-side{display:flex;flex-direction:column;gap:12px;position:static;min-width:0;}
+.c2c-v2 .pj-side-h{margin:0 0 4px;font-size:var(--fs-section,15px);font-weight:600;color:var(--text-100);}
 /* ── Claude's project page (founder, 2026-11-01; RULE 4) ─────────────────────
    The title and one quiet line of what the project is; the conversation with
    AnA first in the main column, then the work; what the project is and where
    its filing stands beside it, as Claude keeps a project's knowledge. The
    status and priority keep their tone (a blocked project never reads green),
    as coloured words rather than uppercase pills. */
-.c2c-v2 .pj .pj-top{margin-bottom:18px;}
 /* Each item wraps as a unit with the separator after it, so a wrapped line
    never starts with a dot. */
-.c2c-v2 .pj .pj-tags{display:block;margin-top:4px;font-size:13px;line-height:1.6;color:var(--text-300);}
-.c2c-v2 .pj .pj-tags .rd-chip{display:inline-block;margin-right:8px;background:none;border:0;padding:0;border-radius:0;font-size:13px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-300);}
+/* The header: the name in the serif with its settings beside it, the byline, the description. */
+.c2c-v2 .pj-title-row{display:flex;align-items:flex-start;gap:8px;}
+.c2c-v2 .pj .pj-title-row .pj-title{flex:1 1 auto;min-width:0;margin:0;font-size:var(--fs-title,26px);line-height:1.25;font-weight:500;letter-spacing:-.01em;overflow-wrap:anywhere;}
+.c2c-v2 .pj-settings-btn{flex:0 0 32px;width:32px;height:32px;padding:0;margin-top:1px;color:var(--text-300);}
+.c2c-v2 .pj-settings-btn svg{width:18px;height:18px;}
+.c2c-v2 .pj .pj-top .pj-desc{margin:8px 0 0;max-width:68ch;font-size:var(--fs-body,14px);line-height:1.55;color:var(--text-200);}
+.c2c-v2 .pj .pj-tags{display:block;margin-top:6px;font-size:var(--fs-small);line-height:1.5;color:var(--text-300);}
+.c2c-v2 .pj .pj-byline{margin:6px 0 0;}
+.c2c-v2 .pj .pj-tags .rd-chip{display:inline;white-space:normal;overflow-wrap:anywhere;margin-right:8px;background:none;border:0;padding:0;border-radius:0;font-size:13px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-300);}
 .c2c-v2 .pj .pj-tags .rd-chip:not(:last-child)::after{content:"·";margin-left:8px;color:var(--text-500);}
 .c2c-v2 .pj .pj-tags .rd-chip.tone-ok{color:var(--success);}
 .c2c-v2 .pj .pj-tags .rd-chip.tone-warn{color:var(--warning);}
 .c2c-v2 .pj .pj-tags .rd-chip.tone-err{color:var(--error);}
 
-.c2c-v2 .pj .pj-main > .pj-convo{margin-bottom:24px;}
-.c2c-v2 .pj .pj-main > .pj-convo .pj-composer{min-height:96px;}
+/* The objective of record (S1), under the description: no box, no tint. */
+.c2c-v2 .pj-objective{margin:16px 0 0;}
+/* The reading measure is the text's, so the actions sit at the column's edge. */
+.c2c-v2 .pj-objective :is(.pj-objective-t, .pj-objective-s, .pj-more){max-width:68ch;}
+.c2c-v2 .pj-objective-k{display:flex;align-items:center;flex-wrap:wrap;gap:8px;min-height:28px;}
+.c2c-v2 .pj-objective-k h2{margin:0;font-size:var(--fs-small);font-weight:500;color:var(--text-300);}
+.c2c-v2 .pj-objective-v{font-size:var(--fs-caption);color:var(--text-300);}
+.c2c-v2 .pj-objective-acts{display:inline-flex;flex-wrap:wrap;gap:4px 8px;margin-left:auto;}
+.c2c-v2 .pj-objective-t{margin:2px 0 0;font-size:15px;line-height:1.55;color:var(--text-100);white-space:pre-wrap;}
+.c2c-v2 .pj-objective-s{margin:4px 0 0;padding:0;list-style:none;font-size:var(--fs-small);color:var(--text-300);}
+/* The composer, its suggestions, and the project's conversations under them (D3.md §4.4–4.5). */
+.c2c-v2 .pj .pj-main > .pj-convo{margin:0;}
+.c2c-v2 .pj .pj-main > .pj-convo .pj-composer{min-height:112px;padding:14px 14px 10px 16px;display:flex;flex-direction:column;}
+.c2c-v2 .pj .pj-main > .pj-convo .pj-composer textarea{flex:1;}
+.c2c-v2 .pj-starters{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 0;}
+.c2c-v2 .pj-starters .sp-starter{width:auto;}
+.c2c-v2 .pj-main > [aria-labelledby="pj-threads-h"]{margin-top:32px;}
+.c2c-v2 .pj-main .pj-thread{display:flex;align-items:baseline;justify-content:space-between;gap:16px;width:100%;text-align:left;padding:10px 0;border:0;border-bottom:1px solid var(--border-subtle);border-radius:0;background:none;cursor:pointer;}
+.c2c-v2 .pj-main .pj-thread:hover .pj-file-n{text-decoration:underline;text-underline-offset:2px;}
+.c2c-v2 .pj-main .pj-thread .pj-file-n{font-size:var(--fs-body,14px);font-weight:500;color:var(--text-100);}
+.c2c-v2 .pj-main .pj-thread .pj-file-m{margin:0;flex-shrink:0;font-size:var(--fs-small);color:var(--text-300);}
+.c2c-v2 .pj-main .pj-older{margin-top:8px;}
+@media (max-width:640px){
+  .c2c-v2 .pj .pj-title-row .pj-title{font-size:22px;}
+  .c2c-v2 .pj-main .pj-thread{flex-direction:column;gap:2px;}
+}
 
-.c2c-v2 .pj .pj-side .pj-facts{grid-template-columns:1fr;gap:10px;margin:0;padding:0;border-top:0;}
+/* Project knowledge's facts: a two-column list, label and value (D3.md §3). */
+.c2c-v2 .pj .pj-side .pj-facts{display:grid;grid-template-columns:104px minmax(0,1fr);gap:6px 12px;margin:0;padding:0;border:0;}
+.c2c-v2 .pj .pj-side .pj-fact{display:contents;}
+.c2c-v2 .pj .pj-side .pj-fact dt{font-size:var(--fs-small);color:var(--text-300);}
+.c2c-v2 .pj .pj-side .pj-fact dd{margin:0;font-size:var(--fs-small);color:var(--text-100);overflow-wrap:anywhere;}
+.c2c-v2 .pj .pj-side .pj-fact-none{color:var(--text-300);font-style:normal;}
 .c2c-v2 .pj-convo{display:flex;flex-direction:column;gap:8px;}
 .c2c-v2 .pj-composer{padding:13px 14px;}
 .c2c-v2 .pj-composer textarea{display:block;width:100%;min-width:0;box-sizing:border-box;border:none;background:none;outline:none;resize:none;font-family:var(--font-sans);}
-/* Project home's start box (ONE_ANA_ONE_CANVAS.md §2.3): a heading and the
-   composer. The chat chrome it replaced (header, bubbles, typing dots) went
-   with the pretend conversation it drew. */
-.c2c-v2 .pj-start-h{display:flex;flex-direction:column;gap:2px;}
-.c2c-v2 .pj-start-h h2{margin:0;font-size:15px;font-weight:600;color:var(--text-100);}
-.c2c-v2 .pj-composer-row{display:flex;align-items:center;gap:8px;margin-top:8px;}
+.c2c-v2 .pj-composer-row{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:8px;}
 .c2c-v2 .pj-comp-attach{width:30px;height:30px;border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-300);font-size:16px;}
 .c2c-v2 .pj-comp-attach:hover{border-color:var(--accent-100);color:var(--accent-100);}
 .c2c-v2 .pj-comp-model{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text-400);}
@@ -1308,9 +1368,6 @@
    panel, bounded so a large vault scrolls inside the section, not the page. */
 .c2c-v2 .pj-evidence .pf-search{padding:0 0 10px;border-bottom:none;}
 .c2c-v2 .pj-evidence .pf-list{max-height:480px;border:1px solid var(--border);border-radius:var(--radius-md);}
-.c2c-v2 .pj-map{display:flex;gap:18px;align-items:center;}
-.c2c-v2 .pj-map-ring{position:relative;flex-shrink:0;text-align:center;}
-.c2c-v2 .pj-map-ring-l{font-size:10px;color:var(--text-400);margin-top:2px;line-height:1.2;}
 .c2c-v2 .pj-mods{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0;}
 .c2c-v2 .pj-mod{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:6px 4px;}
 .c2c-v2 .pj-mod:hover .pj-mod-t{color:var(--accent-200);}
@@ -1331,9 +1388,18 @@
 .c2c-v2 .pj-gap-ask{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--accent-200);flex-shrink:0;padding:4px 8px;border:1px solid var(--accent-muted);border-radius:var(--radius-md);background:var(--accent-000);white-space:nowrap;}
 .c2c-v2 .pj-gap-ask:hover{background:var(--accent-muted);}
 .c2c-v2 .pj-gap-ask .ico{font-size:12px;}
-.c2c-v2 .pj-team{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
-.c2c-v2 .pj-team-m{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-200);}
-.c2c-v2 .pj-team-av{width:22px;height:22px;border-radius:50%;background:var(--bg-200);color:var(--text-200);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+/* The Team card in Project knowledge (D3-3, D3.md §4.8 item 3). These three names styled an older team strip that
+   no markup used any more; they are the card's now. */
+.c2c-v2 .pj-team{list-style:none;margin:0;padding:0;display:grid;gap:10px;}
+.c2c-v2 .pj-team-row{display:flex;align-items:flex-start;gap:10px;min-width:0;}
+.c2c-v2 .pj-team-av{flex:0 0 24px;width:24px;height:24px;border-radius:50%;background:var(--bg-200);color:var(--text-200);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+.c2c-v2 .pj-team-who{display:grid;gap:1px;min-width:0;}
+.c2c-v2 .pj-team-n{font-size:13px;font-weight:500;color:var(--text-100);overflow-wrap:anywhere;}
+.c2c-v2 .pj-team-m{font-size:12px;line-height:1.45;color:var(--text-300);overflow-wrap:anywhere;}
+/* A member's open work (D3-2b): a next due date that has passed is said with the clock, in the warning tone. */
+.c2c-v2 .pj-team-due{display:inline-flex;align-items:center;gap:4px;}
+.c2c-v2 .pj-team-due[data-late]{color:var(--warning);}
+.c2c-v2 .pj-team-due svg{width:12px;height:12px;flex:0 0 12px;}
 .c2c-v2 .pj-team-list{list-style:none;padding:0;margin:12px 0;display:grid;gap:12px;}
 .c2c-v2 .pj-team-person{padding:12px;border:1px solid var(--border);border-radius:8px;min-width:0;}
 .c2c-v2 .pj-team-identity{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline;overflow-wrap:anywhere;}
@@ -2318,14 +2384,13 @@
 .c2c-v2 .rd-card .n{font-size:30px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1;}
 .c2c-v2 .rd-card .l{font-size:12px;font-weight:500;margin-top:6px;display:flex;align-items:center;gap:7px;}
 .c2c-v2 .rd-card .b{font-size:11px;color:var(--text-400);margin-top:3px;line-height:1.4;}
-.c2c-v2 .tone-ok{background:var(--success-muted);color:var(--success);}
-.c2c-v2 .tone-ai{background:var(--ai-muted);color:var(--ai);}
-.c2c-v2 .tone-warn{background:var(--warning-muted);color:var(--warning);}
-.c2c-v2 .tone-idle{background:var(--idle-muted);color:var(--text-300);}
-/* `dim` and `err` are emitted by fifteen call sites (`rd-chip tone-` + tone) and had no rule: a
-   "no sources" or "failed" chip rendered as unstyled text. */
-.c2c-v2 .tone-dim{background:var(--bg-100);color:var(--text-400);}
-.c2c-v2 .tone-err{background:var(--error-muted);color:var(--error);}
+/* No bare `.c2c-v2 .tone-*` rule (D0 review fix 1). Six stood here and lent a chip's fill to any
+   element with a tone class, the empty state included. The chip's six tones are its own (D0 block),
+   and each element that showed a fill or colour only these gave keeps it in its own sheet
+   (docs/evidence/DESIGN/D0/D0-11-primitives/). This one's sheet, mdx/app.css, is outside D0's
+   paths: the blocker dot's fill is `currentColor`, so its tone is its colour. */
+.c2c-v2 .eng-blocker-dot.tone-err{color:var(--error);}
+.c2c-v2 .eng-blocker-dot.tone-warn{color:var(--warning);}
 
 /* ── Labeling / IFU workbench ── */
 .c2c-v2 .lbl-symgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
@@ -2410,7 +2475,7 @@
 .c2c-v2 .scaf-card .l{font-size:var(--fs-caption);color:var(--text-400);font-weight:600;margin-bottom:10px;}
 .c2c-v2 .scaf-row{display:flex;align-items:center;gap:8px;font-size:12px;padding:5px 0;border-bottom:1px solid var(--border);}
 .c2c-v2 .scaf-row:last-child{border-bottom:0;}
-.c2c-v2 .scaf-row .mono{font-size:11px;color:var(--text-200);}
+.c2c-v2 .scaf-row .mono{font-size:12px;color:var(--text-200);}
 .c2c-v2 .scaf-readiness{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
 .c2c-v2 .scaf-readiness-blurb{font-size:12.5px;color:var(--text-300);line-height:1.5;}
 .c2c-v2 .scaf-ok{display:inline-flex;color:var(--success);flex-shrink:0;}.c2c-v2 .scaf-ok svg{width:12px;height:12px;}
@@ -2941,7 +3006,10 @@
 .c2c-v2 .ct-att-chip[data-status="uploading"] em{color:var(--text-500);}
 .c2c-v2 .ct-att-x{border:none;background:none;color:var(--text-400);cursor:pointer;font-size:14px;line-height:1;padding:0 2px;}
 .c2c-v2 .ct-att-x:hover{color:var(--text-100);}
-.c2c-v2 .ct-comp-foot{max-width:768px;margin:8px auto 0;font-size:10.5px;color:var(--text-300);display:flex;align-items:center;gap:5px;justify-content:center;text-align:center;}
+/* Wraps (2026-11-06, R1's demo-day sweep): docked beside the editor the column is about 400 px, and the four
+   controls overflowed both edges, "AnA drives" under the rail and "Engine" past the column, with "Between steps"
+   squeezed into a 179 px stack. They now break into centred rows inside the column. */
+.c2c-v2 .ct-comp-foot{max-width:768px;margin:8px auto 0;font-size:10.5px;color:var(--text-300);display:flex;flex-wrap:wrap;align-items:center;gap:5px;row-gap:6px;justify-content:center;text-align:center;}
 /* A reading measure, widened in steps rather than removed: long-form
    regulatory prose is unreadable at a 1400px line, and 768px beside a 384px
    dock read as a strip with dead margin on a wide display. The composer, its
@@ -3084,6 +3152,9 @@
   font-family:Georgia,'Times New Roman',serif;font-size:14px;line-height:1.9;
   color:#222220;margin:0 0 12px;text-align:justify;hyphens:auto;
 }
+/* The journey's preview is a past version of a document the editor writes, so its prose takes the editor's type
+   (D4-7, §D4.J; `rich-section-editor.css` `.rse-body .tiptap`). The paper's ink and margins stay. */
+.c2c-v2 .dj-stagepane .dj-page .dj-page-p{font-family:var(--font-serif);font-size:var(--fs-prose, 16px);line-height:1.7;}
 /* `.lp-page.hl` and `.lp-bw` were declared here AND again in the lineage-page
    component block ~130 lines below. Same specificity, so the later block won —
    except this copy of .lp-page.hl carried !important and beat it, which is why
@@ -3162,7 +3233,6 @@
 .c2c-v2 .dj-stage-ic{color:var(--accent-100);display:inline-flex;}.c2c-v2 .dj-stage-ic svg{width:18px;height:18px;}
 .c2c-v2 .dj-stage-t{font-size:15px;font-weight:600;color:var(--text-100);}
 .c2c-v2 .dj-stage-v{font-size:11px;font-family:var(--font-mono);color:var(--text-400);}
-.c2c-v2 .dj-stage-acts{display:flex;gap:6px;}
 .c2c-v2 .reg-mini{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-300);border:1px solid var(--border);border-radius:7px;padding:5px 9px;background:var(--bg-000);}
 .c2c-v2 .reg-mini:hover{border-color:var(--accent-100);color:var(--accent-200);}
 .c2c-v2 .reg-mini svg{width:13px;height:13px;}
@@ -3296,28 +3366,31 @@
 /* ════ Registry Picker ════ */
 .c2c-v2 .rpk{display:flex;flex-direction:column;gap:0;}
 .c2c-v2 .rpk-tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);padding-bottom:0;}
-.c2c-v2 .rpk-tab{display:flex;align-items:center;gap:5px;padding:7px 12px;border:none;background:none;cursor:pointer;font-size:11.5px;color:var(--text-400);border-bottom:2px solid transparent;transition:border-bottom-color var(--dur), color var(--dur), font-weight var(--dur);white-space:nowrap;}
-.c2c-v2 .rpk-tab[data-on]{color:var(--accent-200);border-bottom-color:var(--accent-200);font-weight:600;}
+.c2c-v2 .rpk-tab{display:flex;align-items:center;gap:5px;height:36px;padding:0 10px;margin-bottom:-1px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:500;color:var(--text-300);border-bottom:2px solid transparent;transition:border-bottom-color var(--dur), color var(--dur);white-space:nowrap;}
+/* D2-2b (D2.md §2.4 item 9): the selected tab is an ink underline, not orange. */
+.c2c-v2 .rpk-tab[data-on]{color:var(--text-100);border-bottom-color:var(--text-100);font-weight:500;}
 .c2c-v2 .rpk-tab:hover{color:var(--text-100);}
 .c2c-v2 .rpk-tab .ico{font-size:13px;}
-.c2c-v2 .rpk-tab-n{font-size:10px;opacity:0.6;}
+.c2c-v2 .rpk-tab-n{font-size:12px;color:var(--text-300);opacity:1;}
 .c2c-v2 .rpk-body{padding:8px 0;}
 .c2c-v2 .rpk-cat{margin-bottom:12px;}
-.c2c-v2 .rpk-cat-h{font-size:var(--fs-caption);font-weight:600;color:var(--text-400);margin-bottom:6px;display:flex;align-items:center;gap:6px;}
-.c2c-v2 .rpk-cat-n{font-size:10px;color:var(--text-500);font-weight:400;}
-.c2c-v2 .rpk-cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.c2c-v2 .rpk-cat-h{font-size:13px;font-weight:500;color:var(--text-200);margin:16px 0 8px;display:flex;align-items:center;gap:6px;}
+.c2c-v2 .rpk-cat-n{font-size:12px;color:var(--text-300);font-weight:400;}
+.c2c-v2 .rpk-cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+@media (max-width:720px){.c2c-v2 .rpk-cat-grid{grid-template-columns:1fr;}}
 /* White, like any other choice on the page: on --bg-100 the cards read as
    disabled to a client testing the wizard (docs/design/CLIENT_JOURNEY_2026-10-25.md). */
-.c2c-v2 .rpk-type{padding:8px 10px;border-radius:var(--radius-md);border:1.5px solid var(--border);background:var(--bg-000);cursor:pointer;text-align:left;transition:border var(--dur),background var(--dur);}
-.c2c-v2 .rpk-type:hover{border-color:var(--text-500);}
-.c2c-v2 .rpk-type[data-on]{border-color:var(--accent-200);background:var(--accent-000);}
-.c2c-v2 .rpk-type-n{font-size:11.5px;font-weight:500;color:var(--text-100);line-height:1.35;margin-bottom:4px;}
+.c2c-v2 .rpk-type{padding:12px 14px;border-radius:var(--radius-xl);border:1px solid var(--border);background:var(--bg-000);cursor:pointer;text-align:left;transition:border-color var(--dur),background var(--dur),box-shadow var(--dur);}
+.c2c-v2 .rpk-type:hover{background:var(--bg-050);border-color:var(--border-strong);}
+/* D2-2b (D2.md §2.6 item 2): the chosen card is an ink ring, not orange. */
+.c2c-v2 .rpk-type[data-on]{border-color:var(--text-100);background:var(--bg-050);box-shadow:inset 0 0 0 1px var(--text-100);}
+.c2c-v2 .rpk-type-n{font-size:14px;font-weight:500;color:var(--text-100);line-height:1.35;margin-bottom:6px;}
 .c2c-v2 .rpk-type-meta{display:flex;gap:4px;flex-wrap:wrap;}
 /* The picker's two tiers: built here, then documents only (AnaVerbs RegistryPicker). */
-.c2c-v2 .rpk-tier-h{display:flex;flex-direction:column;gap:2px;margin:6px 0 10px;font-size:13px;font-weight:600;color:var(--text-100);}
-.c2c-v2 .rpk-tier-s{font-size:12px;font-weight:400;color:var(--text-300);}
+.c2c-v2 .rpk-tier-h{display:flex;flex-direction:column;gap:2px;margin:6px 0 10px;font-size:var(--fs-section);font-weight:600;color:var(--text-100);}
+.c2c-v2 .rpk-tier-s{font-size:var(--fs-small);font-weight:400;color:var(--text-300);}
 .c2c-v2 .rpk-rest{margin-top:18px;padding-top:14px;border-top:1px solid var(--border);}
-.c2c-v2 .rpk-chip{font-size:10px;padding:1px 5px;border-radius:3px;background:var(--bg-300);color:var(--text-400);}
+.c2c-v2 .rpk-chip{font-size:12px;padding:1px 6px;border-radius:var(--radius-md);background:var(--bg-100);color:var(--text-200);}
 
 /* ════ Registry Context Header ════ */
 .c2c-v2 .rch{display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--bg-200);border-bottom:1px solid var(--border);font-size:11px;flex-shrink:0;}
@@ -3370,25 +3443,24 @@
 .c2c-v2 .gov-audit-note{display:flex;align-items:flex-start;gap:8px;font-size:11px;color:var(--text-500);line-height:1.5;padding:8px 10px;border-radius:var(--radius-md);background:var(--bg-200);}
 
 /* ════ Registry Picker — search + filters ════ */
-.c2c-v2 .rpk-search{display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:1px solid var(--border);}
-.c2c-v2 .rpk-search-ic{font-size:13px;color:var(--text-500);}
-.c2c-v2 .rpk-search input{flex:1;border:none;background:none;font-size:12px;color:var(--text-100);outline:none;}
-.c2c-v2 .rpk-search input::placeholder{color:var(--text-500);}
-.c2c-v2 .rpk-search-x{font-size:12px;color:var(--text-500);}
-.c2c-v2 .rpk-filters{padding:6px 10px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:4px;}
+.c2c-v2 .rpk-search{display:flex;align-items:center;gap:6px;height:36px;padding:0 10px;border-bottom:1px solid var(--border);}
+.c2c-v2 .rpk-search-ic{font-size:13px;color:var(--text-300);}
+.c2c-v2 .rpk-search input{flex:1;border:none;background:none;font-size:14px;color:var(--text-100);outline:none;}
+.c2c-v2 .rpk-search input::placeholder{color:var(--text-300);}
+.c2c-v2 .rpk-search-x{font-size:12px;color:var(--text-300);}
+.c2c-v2 .rpk-filters{padding:10px 0;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:6px;}
 .c2c-v2 .rpk-filter-row{display:flex;align-items:center;gap:4px;flex-wrap:wrap;}
-.c2c-v2 .rpk-filter-label{font-size:var(--fs-caption);font-weight:600;color:var(--text-500);min-width:48px;}
-.c2c-v2 .rpk-fchip{padding:2px 7px;border-radius:3px;border:1px solid var(--border);background:var(--bg-100);font-size:10px;color:var(--text-400);cursor:pointer;transition:background var(--dur), border-color var(--dur), color var(--dur), font-weight var(--dur);}
-.c2c-v2 .rpk-fchip:hover{border-color:var(--text-500);color:var(--text-200);}
-.c2c-v2 .rpk-fchip.on{border-color:var(--accent-200);background:var(--accent-000);color:var(--accent-200);font-weight:600;}
-.c2c-v2 .rpk-result-note{padding:6px 10px;font-size:11px;color:var(--text-400);border-bottom:1px solid var(--border);}
+.c2c-v2 .rpk-filter-label{font-size:13px;font-weight:400;color:var(--text-300);min-width:56px;}
+.c2c-v2 .rpk-fchip{height:24px;padding:0 8px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--bg-000);font-size:12px;color:var(--text-200);cursor:pointer;transition:background var(--dur), border-color var(--dur), color var(--dur);}
+.c2c-v2 .rpk-fchip:hover{border-color:var(--border-strong);color:var(--text-100);}
+/* D2-2b: a chosen filter is ink, not orange. */
+.c2c-v2 .rpk-fchip.on{border-color:var(--text-100);background:var(--bg-000);color:var(--text-100);font-weight:600;}
+.c2c-v2 .rpk-result-note{padding:8px 0;font-size:13px;color:var(--text-300);border-bottom:1px solid var(--border);}
 .c2c-v2 .rpk-compact .rpk-tabs{padding:0;}
-.c2c-v2 .rpk-compact .rpk-tab{padding:5px 10px;font-size:11px;}
-.c2c-v2 .rpk-chip-agency{background:color-mix(in srgb,var(--ai) 10%,transparent);color:var(--ai);}
-.c2c-v2 .rpk-chip-region{background:color-mix(in srgb,var(--success) 8%,transparent);color:var(--success);}
-.c2c-v2 .rpk-chip-dossier{background:color-mix(in srgb,var(--accent-100) 8%,transparent);color:var(--accent-200);}
-.c2c-v2 .rpk-chip-ctd{background:color-mix(in srgb,var(--warning) 8%,transparent);color:var(--warning);}
-.c2c-v2 .rpk-empty{padding:32px 20px;text-align:center;color:var(--text-500);font-size:12px;}
+.c2c-v2 .rpk-compact .rpk-tab{padding:5px 10px;font-size:12px;}
+/* D2-2b: a document type's agency, region, dossier and CTD chips are facts, not statuses: one neutral style. */
+.c2c-v2 .rpk-chip:is(.rpk-chip-agency,.rpk-chip-region,.rpk-chip-dossier,.rpk-chip-ctd){background:var(--bg-100);color:var(--text-200);}
+.c2c-v2 .rpk-empty{padding:32px 20px;text-align:center;color:var(--text-300);font-size:13px;}
 .c2c-v2 .rpk-empty .ico{font-size:24px;display:block;margin-bottom:8px;opacity:0.4;}
 
 /* ════ Registry Picker Dropdown (toolbar) ════ */
@@ -3450,7 +3522,7 @@
 .c2c-v2 .gov-manifest-row{display:flex;padding:3px 10px;font-size:11.5px;}
 .c2c-v2 .gov-mk{color:var(--text-500);min-width:100px;flex-shrink:0;}
 .c2c-v2 .gov-mv{color:var(--text-200);font-weight:500;}
-.c2c-v2 .gov-mv.mono{font-family:var(--font-mono);font-size:10.5px;}
+.c2c-v2 .gov-mv.mono{font-family:var(--font-mono);font-size:12px;}
 .c2c-v2 .gov-hashchain{border-radius:var(--radius-md);background:var(--bg-200);padding:10px 12px;}
 .c2c-v2 .gov-hashchain-h{font-size:11px;font-weight:600;color:var(--text-400);margin-bottom:8px;display:flex;align-items:center;gap:5px;}
 .c2c-v2 .gov-hashchain-h .ico{font-size:12px;}
@@ -3537,7 +3609,7 @@
 .c2c-v2 .pv-det-grid{display:grid;grid-template-columns:80px 1fr;gap:7px 10px;font-size:11.5px;margin-bottom:16px;}
 .c2c-v2 .pv-det-grid .k{color:var(--text-400);font-weight:500;}
 .c2c-v2 .pv-det-grid .v{color:var(--text-200);}
-.c2c-v2 .pv-det-grid .v.mono{font-family:var(--font-mono);font-size:10.5px;}
+.c2c-v2 .pv-det-grid .v.mono{font-family:var(--font-mono);font-size:12px;}
 .c2c-v2 .pv-det-grid .v.tone-ok{color:var(--success);}
 .c2c-v2 .pv-det-grid .v.tone-warn{color:var(--warning);}
 .c2c-v2 .pv-det-grid .v.tone-idle{color:var(--text-400);}
@@ -3546,7 +3618,7 @@
 .c2c-v2 .pv-det-section{border-top:1px solid var(--border);padding-top:12px;}
 .c2c-v2 .pv-det-sec-h{font-size:var(--fs-caption);color:var(--text-400);font-weight:600;margin-bottom:8px;}
 .c2c-v2 .pv-ver-row{display:flex;gap:10px;padding:4px 0;font-size:11px;color:var(--text-300);align-items:baseline;}
-.c2c-v2 .pv-ver-row .mono{font-family:var(--font-mono);font-size:10px;color:var(--accent-200);min-width:28px;}
+.c2c-v2 .pv-ver-row .mono{font-family:var(--font-mono);font-size:12px;color:var(--accent-200);min-width:28px;}
 .c2c-v2 .pv-det-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:40px 10px;text-align:center;}
 .c2c-v2 .pv-det-empty p{font-size:12px;color:var(--text-400);margin:0;}
 
@@ -3698,7 +3770,7 @@
 .c2c-v2 .adc-sec-w{flex:none;font-size:10px;color:var(--text-400);font-family:ui-monospace,"JetBrains Mono",SFMono-Regular,Menlo,Consolas,monospace;}
 .c2c-v2 .adc-sec-opt{flex:none;font-size:var(--fs-caption);font-weight:600;color:var(--text-400);background:var(--bg-200);padding:1px 5px;border-radius:var(--radius-sm);}
 .c2c-v2 .adc-note{font-size:10.5px;color:var(--text-400);line-height:1.5;padding:0 12px 10px;}
-.c2c-v2 .adc-note .mono{font-family:ui-monospace,"JetBrains Mono",SFMono-Regular,Menlo,Consolas,monospace;font-size:10px;}
+.c2c-v2 .adc-note .mono{font-family:ui-monospace,"JetBrains Mono",SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;}
 
 /* ── shell-required blocks from kit coverage.css (AnswerLead + account menu) ──
    Ported here because the Phase-1 shell needs them before the coverage surface
@@ -3707,7 +3779,7 @@
    the action is `btn ghost al-btn` and the alt `btn al-btn2` (AnswerLead.tsx), so
    the header's one primary stays the view's only orange. Serif only at
    data-emphasis="verdict", the one screen where the answer is the screen. */
-.c2c-v2 .al-lead { max-width: 72ch; margin: 0 0 24px; padding: 0; border: 0; border-radius: 0; background: none; }
+.c2c-v2 .al-lead { max-width: 72ch; margin: 24px 0; padding: 0; border: 0; border-radius: 0; background: none; }
 .c2c-v2 .al-k { display: flex; align-items: center; gap: 6px; margin: 0 0 4px; font-size: var(--fs-small); font-weight: 500; line-height: 1.4; letter-spacing: 0; text-transform: none; color: var(--text-300); }
 .c2c-v2 .al-urgent .al-k { color: var(--warning); }
 .c2c-v2 .al-good .al-k { color: var(--success); }
@@ -3719,7 +3791,8 @@
 .c2c-v2 .al-urgent .al-cue { color: var(--warning); }
 .c2c-v2 .al-good .al-cue { color: var(--success); }
 .c2c-v2 .al-cue svg { width: 14px; height: 14px; }
-.c2c-v2 .al-h { margin: 0 0 4px; font-family: var(--font-sans); font-size: var(--fs-section); font-weight: 600; line-height: 1.45; color: var(--text-100); }
+/* D0.md §8.3: quieter than a section heading (500, not 600), with room above (.al-lead's 24px margin). */
+.c2c-v2 .al-h { margin: 0 0 4px; font-family: var(--font-sans); font-size: var(--fs-section); font-weight: 500; line-height: 1.45; color: var(--text-100); }
 .c2c-v2 .al-h b { font-weight: 600; }
 .c2c-v2 .al-lead[data-emphasis="verdict"] .al-h { font-family: var(--font-serif); font-size: 20px; font-weight: 500; line-height: 1.35; }
 .c2c-v2 .al-b { font-size: var(--fs-body); line-height: 1.6; color: var(--text-300); }
@@ -3916,6 +3989,42 @@
    one rule for both — whichever of D3 and this lands second drops its copy). */
 .c2c-v2 :is(.pj-main, [data-work-area]) .pj-sec{background:none;border:0;border-radius:0;padding:0;}
 .c2c-v2 :is(.pj-main, [data-work-area]) .pj-sec + .pj-sec{margin-top:32px;}
+/* The step bodies' rows (D3-4, D3.md §4.7, §4.12): separated by a hairline, not boxed; the title at the body size. */
+.c2c-v2 .pj-main .pj-files{display:flex;flex-direction:column;gap:0;}
+.c2c-v2 .pj-main .pj-file{padding:10px 0;border:0;border-bottom:1px solid var(--border-subtle);border-radius:0;background:none;}
+.c2c-v2 .pj-main .pj-file:last-child{border-bottom:0;}
+.c2c-v2 .pj-main .pj-file .pj-file-top{align-items:baseline;gap:12px;margin:0;}
+.c2c-v2 .pj-main .pj-file .pj-file-n{font-size:var(--fs-body);font-weight:500;line-height:1.4;color:var(--text-100);}
+.c2c-v2 .pj-main .pj-file .pj-file-m{margin-top:2px;font-size:var(--fs-small);color:var(--text-300);}
+/* Module completion's lead: the dossier's figure line and markets; the drawn ring is gone. */
+.c2c-v2 .pj-dossier-lead{display:flex;flex-direction:column;gap:4px;margin:0 0 16px;}
+.c2c-v2 .pj-dossier-k{display:flex;align-items:baseline;gap:8px;}
+.c2c-v2 .pj-dossier-k h3{margin:0;font-size:var(--fs-small);font-weight:500;color:var(--text-300);}
+.c2c-v2 .pj-dossier-lead [data-testid="pj-dossier-home"] > .pj-card-note:first-child{font-size:var(--fs-section);font-weight:500;color:var(--text-100);}
+.c2c-v2 .pj-main .pj-sec > .pj-more{margin-top:8px;}
+/* At a phone's width nothing on the project page is wider than the page (D3.md §6 item 14, walked 2026-11-08): a
+   long indication in the byline, a record's title in Project knowledge, and a door that names its job all wrap. */
+.c2c-v2 .pj-side .pj-act{flex-wrap:wrap;min-width:0;}
+.c2c-v2 .pj-side .pj-act-w{flex-shrink:1;min-width:0;overflow-wrap:anywhere;}
+/* At 390 a section's actions ran past the page's edge ("See every sequence in Submission Center" on the Submit step,
+   human test J1, 2026-11-06): on a phone the head wraps and its actions wrap under the heading, starting left.
+   Moved here from project-home-v2.css (2026-11-08), whose rules may not name this sheet's classes. */
+@media (max-width: 640px) {
+  .c2c-v2 .pj .pj-sec-h { flex-wrap: wrap; }
+  .c2c-v2 .pj .pj-sec-acts { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; max-width: 100%; }
+  .c2c-v2 .pj-main .pj-sec-acts { justify-content: flex-start; flex-basis: 100%; }
+  .c2c-v2 .pj-main .btn, .c2c-v2 .pj .pj-sec-acts > .btn { white-space: normal; max-width: 100%; text-align: left; }
+}
+/* New project's filing tabs (Pharma & Biotech, Medical Devices, Diagnostics & IVD, Cross-Cutting Documents) are 661px
+   wide; at 390 the last two were cut off, so a diagnostics company could not open its own tab on a phone (human test
+   J1, 2026-11-06). The row scrolls sideways in place. Moved here from project-home-v2.css (2026-11-08). */
+.c2c-v2 .npw .rpk-tabs { overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
+.c2c-v2 .npw .rpk-tabs > * { flex-shrink: 0; }
+/* A module row says its name and its count in full, on its own line above the bar (walked 2026-11-08: a 104px
+   ellipsis cut "Module 1 · Administrative · 0 of 13 approved or locked" to "Module 1 · Admin…", so the count was
+   only in the row's accessible name). */
+.c2c-v2 .pj-main .pj-lmod{flex-wrap:wrap;row-gap:6px;}
+.c2c-v2 .pj-main .pj-lmod-t{flex:1 1 100%;width:auto;white-space:normal;overflow:visible;font-size:var(--fs-small);}
 .c2c-v2 [data-work-area] .pj-sec > .reg-tbl{margin:0;}
 /* The section's lead: heading and count together, actions right. `.pj-sec-h`
    is space-between, which with three children strands the count in the middle. */
@@ -3946,10 +4055,9 @@
    component. */
 .c2c-v2 [data-work-area] .wa-split{display:grid;grid-template-columns:minmax(0, 1fr) 360px;gap:24px;align-items:start;}
 @media (max-width: 1023px){.c2c-v2 [data-work-area] .wa-split{grid-template-columns:minmax(0, 1fr);}}
-/* Phone: the page never scrolls sideways; a wide table scrolls inside its section. */
+/* Phone: the page never scrolls sideways. A wide table scrolls inside its section by D0's one
+   table rule, after .reg-tbl (D0 review fix 3 folded this block's copy into it). */
 @media (max-width: 640px){
-  .c2c-v2 [data-work-area] .pj-sec > .reg-tbl,
-  .c2c-v2 [data-work-area] .pj-sec > .pj-card-b > .reg-tbl{display:block;overflow-x:auto;}
   .c2c-v2 [data-work-area] .pj-sec-h{flex-wrap:wrap;}
   .c2c-v2 [data-work-area] .pj-sec-acts{justify-content:flex-start;width:100%;}
   .c2c-v2 [data-work-area] > .sp-starters[data-layout="row"]{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;}

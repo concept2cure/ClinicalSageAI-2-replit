@@ -1,0 +1,2 @@
+NODE_OPTIONS=--max-old-space-size=12288 npx tsc --noEmit -p tsconfig.json, on the committed C3 code (2026-11-09T11:51:08Z)
+tsc exit 0 errors 0

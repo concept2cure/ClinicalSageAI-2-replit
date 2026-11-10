@@ -16,6 +16,7 @@
  */
 
 import { reconcileCsrTableClaims, type CsrAuthoringEvidence } from './cortex-authoring-context.js';
+import { numericalClaimDisplays, numericalFigures, renderedCsrText, type NumericalTextFormat } from '../../../shared/authoring/csr-scientific-review.js';
 
 /** ICH E3 sections whose content is statistical methods or results. */
 const STATISTICAL_SECTION = /^(2|9\.7|10|11|12|13|14)(\.|$)/;
@@ -40,7 +41,7 @@ export function isCsrObservedResultsSection(sectionNumber: string): boolean {
  * Inspect clinical-result clauses independently; a flat list of metadata
  * digits is not enough to distinguish an actual count from a planned one.
  */
-export function unclaimedCsrSynopsisResults(prose: string, claimed: string[]): string[] {
+export function unclaimedCsrSynopsisResults(prose: string, claimed: string[], format: NumericalTextFormat = 'encoded'): string[] {
   const observed = /\b(?:completed|reported|experienced|occurred|died|deaths?|fatal\w*|responders?|remission|cured|(?:were|was)\s+(?:randomi[sz]ed|enrolled|treated|observed))\b/i;
   const planned = /\b(?:planned|targeted|intended|expected|proposed|anticipated)\b/i;
   const findings = new Set<string>();
@@ -49,7 +50,7 @@ export function unclaimedCsrSynopsisResults(prose: string, claimed: string[]): s
     // A clause describing planned recruitment is not an observed finding.
     // Actual-conduct verbs in that same clause still require receipts.
     if (planned.test(clause) && !/\b(?:completed|reported|experienced|occurred|died|deaths?|fatal\w*|cured|remission)\b/i.test(clause)) continue;
-    for (const figure of findUnclaimedNumbers(clause, { claimed })) findings.add(figure.text);
+    for (const figure of findUnclaimedNumbers(clause, { claimed }, format)) findings.add(figure.text);
   }
   return [...findings];
 }
@@ -78,17 +79,18 @@ const PATTERNS: readonly StatPattern[] = [
   { kind: 'interval', re: /\b(?:CI|CrI|credible interval|confidence interval)\b[^.\d\n]{0,12}?-?\d+(?:\.\d+)?\s*(?:,|;|–|—|\bto\b)\s*-?\d+(?:\.\d+)?/gi },
 ];
 
-/** Every number written in the supplied study information, normalised. */
+/** Every supplied numerical identity, including its comparator, sign,
+ * displayed precision and unit. Equal digit magnitudes are not equal claims. */
 function suppliedNumbers(supplied: unknown): Set<string> {
   const out = new Set<string>();
   const walk = (v: unknown): void => {
     if (v == null) return;
     if (typeof v === 'number' && Number.isFinite(v)) {
-      out.add(String(v));
+      for (const figure of numericalFigures(String(v))) out.add(figure.identity);
       return;
     }
     if (typeof v === 'string') {
-      for (const m of v.matchAll(/\d+(?:\.\d+)?/g)) out.add(String(Number(m[0])));
+      for (const figure of numericalFigures(v)) out.add(figure.identity);
       return;
     }
     if (Array.isArray(v)) v.forEach(walk);
@@ -110,13 +112,14 @@ export interface UnsuppliedStatistic {
  */
 export function findUnsuppliedStatistics(draft: string, supplied: unknown): UnsuppliedStatistic[] {
   const known = suppliedNumbers(supplied);
+  const visible = renderedCsrText(draft);
   const found: UnsuppliedStatistic[] = [];
   const seen = new Set<string>();
   for (const { kind, re } of PATTERNS) {
-    for (const m of draft.matchAll(re)) {
+    for (const m of visible.matchAll(re)) {
       const text = m[0].trim();
-      const numbers = text.replace(/(\d),(?=\d{3}\b)/g, '$1').match(/\d+(?:\.\d+)?/g) ?? [];
-      const allSupplied = numbers.length > 0 && numbers.every((n) => known.has(String(Number(n))));
+      const numbers = numericalFigures(text, 'text');
+      const allSupplied = numbers.length > 0 && numbers.every(n => known.has(n.identity));
       if (allSupplied || seen.has(text)) continue;
       seen.add(text);
       found.push({ kind, text });
@@ -158,7 +161,7 @@ const REFERENCE = /(?:\b(?:sections?|tables?|figures?|listings?|appendi(?:x|ces)
  * more: any number at all ("13 of 114", "11.5 percent") must be a claimed
  * cell's. Cross-references to report parts are not figures.
  */
-export function findUnclaimedNumbers(prose: string, supplied: unknown): UnsuppliedStatistic[] {
+export function findUnclaimedNumbers(prose: string, supplied: unknown, format: NumericalTextFormat = 'encoded'): UnsuppliedStatistic[] {
   const known = suppliedNumbers(supplied);
   const found: UnsuppliedStatistic[] = [];
   // A protocol/product identifier is not a clinical figure. It may contain
@@ -167,10 +170,12 @@ export function findUnclaimedNumbers(prose: string, supplied: unknown): Unsuppli
   // Exempt only visibly structured UPPERCASE identifiers, not bare metadata
   // digits or quantitative phrases such as "300 patients" or "300mg".
   const identifiers = /\b(?:NCT\d{8}|[A-Z]{2,}[A-Z0-9_-]*[-_][A-Z0-9_-]*\d[A-Z0-9_-]*)\b/g;
-  const text = prose.replace(REFERENCE, ' ').replace(identifiers, ' ').replace(/(\d),(?=\d{3}\b)/g, '$1');
-  for (const m of text.matchAll(/\d+(?:\.\d+)?/g)) {
-    if (known.has(String(Number(m[0]))) || found.some((f) => f.text === m[0])) continue;
-    found.push({ kind: 'number', text: m[0] });
+  const text = renderedCsrText(prose, format).replace(REFERENCE, ' ').replace(identifiers, ' ');
+  for (const figure of numericalFigures(text, 'text')) {
+    if (known.has(figure.identity)) continue;
+    // Keep the established caller-facing number field; the admission above
+    // compares its full identity and visits every occurrence independently.
+    found.push({ kind: 'number', text: figure.number });
   }
   return found;
 }
@@ -323,7 +328,9 @@ export function acceptEvidenceBoundDraft(
     lineage.rejectedModelDraft = { reason: 'unreconciled_claims', evidenceDigest: evidence.evidenceDigest, findings: unreconciled.slice(0, 20) };
     return false;
   }
-  const claimed = (claims as Array<{ value: string }>).map((c) => c.value);
+  const claimed = numericalClaimDisplays(prose, (claims as Array<{ table: string; column: number; value: string }>).map(c => ({
+    value: c.value, header: evidence.tables.find(table => table.key === c.table)?.headers[c.column],
+  })));
   const deaths = unsupportedDeathFigures(sectionNumber, prose, claims, evidence, claimed);
   if (deaths.misattributed.length) {
     lineage.rejectedModelDraft = { reason: 'outcome_cell_mismatch',

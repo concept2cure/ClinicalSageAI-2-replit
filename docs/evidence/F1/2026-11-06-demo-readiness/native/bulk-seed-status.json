@@ -1,0 +1,47 @@
+{
+  "observedAt": "2026-11-06T20:26:15.429571+00:00",
+  "command": "npm run --silent demo:seed -- --pack all --base-url http://127.0.0.1:5000 --email ana.author@concept2cure.pro",
+  "requestPaceMs": 750,
+  "processState": "Z",
+  "observedExitCode": 0,
+  "packs": [
+    {
+      "pack": "biotech",
+      "outcome": "seeded_unqualified",
+      "browserQualification": "not_executed",
+      "startedAt": "2026-11-06T20:17:47.258Z",
+      "finishedAt": "2026-11-06T20:20:08.666Z"
+    },
+    {
+      "pack": "mdx",
+      "outcome": "seeded_unqualified",
+      "browserQualification": "not_executed",
+      "startedAt": "2026-11-06T20:20:08.666Z",
+      "finishedAt": "2026-11-06T20:21:53.911Z"
+    },
+    {
+      "pack": "lumen",
+      "outcome": "seeded_unqualified",
+      "browserQualification": "not_executed",
+      "startedAt": "2026-11-06T20:21:53.911Z",
+      "finishedAt": "2026-11-06T20:25:42.367Z"
+    }
+  ],
+  "fauxExcludedByExistingSeeder": true,
+  "preservedDatabaseAndPreviouslyCreatedRecords": true,
+  "rawLogsAndManifestsOutsideGit": true,
+  "knownLimits": {
+    "modelProvider": "unavailable; no AI drafting qualified",
+    "optionalSecondSignerPackSteps": "not executed because no OQ signer credential was passed to the bulk seeder",
+    "demoSubmissions": "not cleared for dispatch",
+    "rbmSyntheticSubjectImport": {
+      "route": "POST /api/mdx/rbm-metric-ingest",
+      "status": 500,
+      "sqlState": "42P10",
+      "reason": "missing unique/exclusion constraint matching ON CONFLICT",
+      "subjectProfilesImported": false,
+      "cohortScoringExecuted": false
+    }
+  },
+  "csrPreparationSeparate": "six browser steps passed with three fictional signers; frozen study data persisted after real npm restart"
+}

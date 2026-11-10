@@ -299,7 +299,7 @@ router.patch('/labeling/:id', requireEditorAccess, signingLimit(DOC_SIGNED_STATU
       args,
     );
     if (rows.length > 0) return ok(res, rows[0]);
-    return refuseControlledDocumentEdit(res, id, orgId, locked);
+    return refuseControlledDocumentEdit(req, res, id, orgId, locked);
   } catch (err) { return serverError(res, log, 'patch', err); }
 });
 
@@ -421,7 +421,7 @@ router.patch('/labeling/translations/:transId', requireEditorAccess, signingLimi
       args,
     );
     if (rows.length > 0) return ok(res, rows[0]);
-    return refuseApprovedTranslationEdit(res, transId, orgId, lockedFieldsIn('labeling-translation', parsed.data));
+    return refuseApprovedTranslationEdit(req, res, transId, orgId, lockedFieldsIn('labeling-translation', parsed.data));
   } catch (err) { return serverError(res, log, 'trans-patch', err); }
 });
 

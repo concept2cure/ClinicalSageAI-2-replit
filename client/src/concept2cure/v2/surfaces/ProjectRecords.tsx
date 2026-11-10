@@ -15,8 +15,9 @@
  * total it did not count.
  */
 import React from 'react';
+import { APP_REGISTRY } from '@shared/regulatory/app-registry';
 import { I } from '../icons';
-import { EmptyState, useLiveData } from '../dataConnect';
+import { EmptyState, useLiveData, type DataState } from '../dataConnect';
 import { enumWords, filingTypeWords, regionWords, studyPhaseWords, submissionStatusWords } from './projectWords';
 
 type RecordRow = Record<string, unknown>;
@@ -25,7 +26,7 @@ interface RecordSection {
   rows: RecordRow[];
   reason?: string;
 }
-interface ProjectRecordsRead {
+export interface ProjectRecordsRead {
   projectId: string;
   records: Partial<Record<SectionKey, RecordSection>>;
 }
@@ -78,33 +79,94 @@ function countLabel(section: RecordSection | undefined): string {
   return n >= SECTION_CAP ? `the first ${SECTION_CAP}` : String(n);
 }
 
-export function ProjectRecords({ pid }: { pid: string }) {
-  const state = useLiveData<ProjectRecordsRead>(`/api/c2c/projects/${pid}/records`);
-  if (state.loading) {
-    return <div role="status" aria-busy="true" className="scaf-note" style={{ padding: '16px 10px' }}>Loading the project’s records…</div>;
-  }
-  if (state.error || !state.data) {
-    return (
-      <EmptyState
-        tone="error"
-        icon={I.alertTriangle}
-        title="Couldn't load the project's records"
-        hint="The project records read didn't respond. Sign in and retry, or check the service is reachable."
-      />
-    );
-  }
-  const records = state.data.records ?? {};
+/** The project's records, read once by the page (D3-4, D3.md §4.10): the Records card and Evidence's Protocol render
+ *  this one read. `epoch` re-reads it when the project's details are saved. */
+export function useProjectRecords(pid: string | null, epoch = 0): DataState<ProjectRecordsRead> {
+  const path = pid ? `/api/c2c/projects/${pid}/records` : null;
+  return useLiveData<ProjectRecordsRead>(path, [path, epoch]);
+}
+
+/** The project's records as one card in Project knowledge, on every step (D3-2a, D3.md §4.8 item 7). Each store is
+ *  a closed disclosure whose summary says its count ("Vault documents · 6") or that it is not available, so the card
+ *  is a short list until a person opens a store. It moved here from the Author step's "Records in this project". */
+export function ProjectRecords({ state, activity }: { state: DataState<ProjectRecordsRead>; activity?: React.ReactNode }) {
+  const records = state.data?.records ?? {};
   return (
-    <div>
-      {SECTIONS.map(({ key, label, title, detail }) => {
-        const section = records[key];
-        return (
-          <div key={key} style={{ marginTop: 12 }} data-records-section={key}>
-            <div className="pj-sec-h"><h3>{label} <span className="rd-chip tone-idle">{countLabel(section)}</span></h3></div>
-            <SectionBody section={section} title={title} detail={detail} />
-          </div>
-        );
-      })}
+    <section className="pj-card" aria-labelledby="pj-records-h">
+      <div className="pj-card-h"><h3 id="pj-records-h">Records</h3></div>
+      {state.loading ? <p role="status" aria-busy="true" className="pj-team-note">Reading the project’s records…</p>
+        : state.error || !state.data ? (
+          <EmptyState tone="error" icon={I.alertTriangle} title="Couldn't load the project's records" read={state} readWhat="the project's records"
+            hint="The project records read didn't respond. Sign in and retry, or check the service is reachable." />
+        ) : SECTIONS.map(({ key, label, title, detail }) => {
+          const section = records[key];
+          return (
+            <details key={key} className="pj-more" data-records-section={key}>
+              <summary>{label} · {countLabel(section)}</summary>
+              <SectionBody section={section} title={title} detail={detail} />
+            </details>
+          );
+        })}
+      {/* The project's audit read, last (D3-2b): every act, its actor and its recorded reason. It was a section of
+          the Author step. It is read by the page, so a failed records read does not hide it. */}
+      {activity && (
+        <details className="pj-more" data-records-section="activity">
+          <summary>Activity</summary>
+          {activity}
+        </details>
+      )}
+    </section>
+  );
+}
+
+/** The study design store's rows in words: "Phase 2 · Draft". */
+const studyDesign = SECTIONS.find((section) => section.key === 'studyDesigns')!;
+
+/** What Protocol shows under its heading: reading, a failed read, the store's reason, none yet, or the rows. */
+function ProtocolBody({ state, firstDoor }: {
+  state: DataState<ProjectRecordsRead>; firstDoor?: { label: string; onAct: () => void };
+}) {
+  const section = state.data?.records?.studyDesigns;
+  if (state.loading) return <p role="status" aria-busy="true" className="scaf-note">Reading the project’s study designs…</p>;
+  if (state.error || !state.data) {
+    return <EmptyState tone="error" icon={I.alertTriangle} title="Couldn't load the project's study designs" read={state} readWhat="the project's records"
+      hint="The project records read didn't respond. Sign in and retry, or check the service is reachable." />;
+  }
+  if (!section || !section.available) return <p className="scaf-note">Not available here: {section?.reason ?? 'the read returned nothing for this store'}.</p>;
+  if (section.rows.length === 0) return <EmptyState icon={I.fileText} title="No study design in this project yet." action={firstDoor} />;
+  return (
+    <div className="pj-files" data-testid="pj-protocol">
+      {section.rows.map((row, i) => (
+        <div key={text(row.id) ?? i} className="pj-file">
+          <div className="pj-file-n">{studyDesign.title(row)}</div>
+          <div className="pj-file-m">{studyDesign.detail(row) || 'Phase and status not recorded'}</div>
+        </div>
+      ))}
     </div>
+  );
+}
+
+/** Evidence's Protocol (D3-4, D3.md §4.7 Evidence item 2): the project's study designs, from the page's one records
+ *  read (its `studyDesigns` section), with the doors to the work areas that hold them. No read of its own. A store
+ *  this environment does not carry says its reason, as the Records card does; a failed read says so, never "none". */
+export function ProjectProtocol({ state, available, onNav }: {
+  state: DataState<ProjectRecordsRead>; available: (id: string) => boolean; onNav: (id: string) => void;
+}) {
+  const designer = APP_REGISTRY.study_protocol_design;
+  const designId = designer.moduleId && available(designer.moduleId) ? designer.moduleId : null;
+  const designDoor = designId && (
+    <button type="button" className="btn small" onClick={() => onNav(designId)}>Open in {designer.label} {I.right}</button>
+  );
+  const biostatDoor = available('biostatistics') && (
+    <button type="button" className="btn small" onClick={() => onNav('biostatistics')}>Open Biostatistics {I.right}</button>
+  );
+  return (
+    <section className="pj-sec" aria-labelledby="pj-protocol-h">
+      <div className="pj-sec-h">
+        <h2 id="pj-protocol-h">Protocol</h2>
+        {(designDoor || biostatDoor) && <span className="pj-sec-acts">{designDoor}{biostatDoor}</span>}
+      </div>
+      <ProtocolBody state={state} firstDoor={designId ? { label: `Open in ${designer.label}`, onAct: () => onNav(designId) } : undefined} />
+    </section>
   );
 }

@@ -44,6 +44,11 @@ const PID = '5ac45b38-a1d8-4a41-9488-fac39a57b852';
 const DOC = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
 const SEC = 'ssssssss-ssss-4sss-8sss-ssssssssssss';
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => payload }) as Response;
+/** The list as GET /api/authoring/docs answers a project read (authoring-document-read.ts): success, and each row's program_id. */
+const scopedList = (url: string, body: { success?: boolean; documents: object[] }) => {
+  const programId = new URLSearchParams(url.split('?')[1]).get('programId');
+  return programId === null ? body : { success: true, ...body, documents: body.documents.map(row => ({ program_id: programId, ...row })) };
+};
 let exports: Array<Record<string, unknown>>;
 beforeEach(() => {
   (window as unknown as { C2C_PROJECT: unknown }).C2C_PROJECT = { id: PID, title: 'C2C-101' };
@@ -51,7 +56,7 @@ beforeEach(() => {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
     const document = { id: DOC, title: 'Nonclinical Overview', module: 'M2', status: 'APPROVED', section_count: 1 };
-    if (url.startsWith('/api/authoring/docs?')) return ok({ documents: [document] });
+    if (url.startsWith('/api/authoring/docs?')) return ok(scopedList(url, { documents: [document] }));
     if (url.split('?')[0] === `/api/authoring/docs/${DOC}`) return ok({ success: true, document });
     if (url.split('?')[0] === `/api/authoring/docs/${DOC}/sections`) return ok({ sections: [{ id: SEC, doc_id: DOC, code: '2.4', title: 'Overview', content: '<p>Saved summary.</p>', order_index: 0 }] });
     if (method === 'POST' && url.split('?')[0] === `/api/authoring/docs/${DOC}/export`) {

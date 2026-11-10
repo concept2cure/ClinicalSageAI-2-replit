@@ -1,0 +1,11 @@
+const c = require('./common.cjs');
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.newPage(browser);
+  await page.goto(c.BASE + '/concept2cure/login', { waitUntil: 'networkidle' });
+  await page.screenshot({ path: c.SCRATCH + '/probe-login.png' });
+  const els = await page.$$eval('input,button,a', (es) => es.map((e) => `${e.tagName} type=${e.type||''} id=${e.id} name=${e.name||''} aria=${e.getAttribute('aria-label')||''} text=${(e.innerText||'').trim().slice(0,40)}`));
+  console.log(els.join('\n'));
+  console.log(await c.textOf(page, 'body'));
+  await browser.close();
+})();

@@ -2,7 +2,7 @@
  * name, and a review verdict are three different facts; none is qualification. */
 import { isWorkflowImportOrigin, type WorkflowImportOrigin } from '../../../shared/authoring/source-import';
 import { clauseSpans } from '../clinical-regulatory-evidence/lineage-gate';
-import { comparableText, MIN_MACHINE_CLAUSE_CHARS } from '../clinical-regulatory-evidence/machine-attribution';
+import { MIN_MACHINE_CLAUSE_CHARS } from '../clinical-regulatory-evidence/machine-attribution';
 import { assertLineageCoversContent, assertLineageHashesMatchContent, SpanLineageError, hashSpanText, listLiveMachineSpans } from '../clinical-regulatory-evidence/span-lineage.service';
 import { sectionsDigest, computeAuthoringSignatureDigest, fullVisibleAuthoringSnapshot, authoringSnapshotHash } from './authoring-content-digests';
 import { authoringReviewStanding } from './peer-review';
@@ -15,6 +15,12 @@ import { hashPayload } from '../audit/chain';
 import { isDeepStrictEqual } from 'node:util';
 import type { MaterializedWorkflowSource } from './workflow-source-import';
 import { assertSignerIsNotAuthor, SeparationOfDutiesError, SeparationOfDutiesAuthorUnresolvedError } from '../governance/separation-of-duties';
+import { randomUUID } from 'node:crypto';
+import { writeAuthoringAuditTrail, verifyAuthoringTrailRow, type AuthoringAuditContext } from './authoring-evidence';
+import { verifySequencedRow } from '../audit/chain-row';
+import type { IndependentCheckContext, AuthoringReviewInput } from '../../../shared/authoring/peer-review';
+import { INDEPENDENT_CHECKER_VERSION, independentSourcePins, verifyIndependentVaultSource, type IndependentCheckResult } from '../ana/saved-document-critique';
+import { machineQualificationText as qualificationComparison, ordinaryMachineGenesisMayRelease } from './governed-machine-claims';
 
 export interface WorkflowGovernanceDocument {
   id: string;
@@ -89,7 +95,7 @@ async function retainedOrigin(q: Queryable, input: WorkflowGovernanceInput): Pro
   const rows = await q.query(`SELECT section_id::text, metadata->'provenance'->'importSource' AS origin,
       metadata->>'section_code' AS source_code
     FROM authoring_audit_trail WHERE doc_id=$1 AND tenant_id=$2 AND operation_type='CREATE'
-      AND metadata->'provenance'->'importSource'->>'kind' IN ('protocol','csr','ivd-assessment','ivd-document','study-design-crf','agency-response')
+      AND metadata->'provenance'->'importSource'->>'kind' IN ('protocol','csr','ivd-assessment','ivd-document','study-design-crf','agency-response','artifact')
     ORDER BY created_at, id`, [input.doc.id, input.organizationId]);
   const first = rows.rows[0]?.origin as WorkflowImportOrigin | undefined;
   if (!first) {
@@ -152,10 +158,6 @@ async function verifyCurrentLineageHashes(q: Queryable, input: { organizationId:
  * Prose punctuation/reflow alone must not discharge known generated content.
  * Decimal/group separators immediately before digits and scientific operators
  * remain literal; a different numeric result is never treated as the same fact. */
-function qualificationComparison(content: string): string {
-  return comparableText(content).replace(/[.,;:!?](?!\d)/g, ' ').replace(/\s+/g, ' ').trim();
-}
-
 function retainedKnownMachineClauses(source: MaterializedWorkflowSource, sections: ReadonlyArray<WorkflowGovernanceSection>): boolean {
   const knownCodes = new Set(source.origin.sectionOrigins.filter(origin => origin.originalAuthorship === 'machine').map(origin => origin.code));
   const current = sections.map(section => qualificationComparison(section.content ?? ''));
@@ -325,7 +327,9 @@ async function requireCsrScientificRelease(q: Queryable, input: WorkflowGovernan
 }
 
 export async function assertWorkflowImportRelease(q: Queryable, input: WorkflowGovernanceInput): Promise<void> {
+  await assertIndependentCheckRelease(q, input);
   await requireCsrScientificRelease(q, input);
+  await assertOrdinaryMachineRelease(q, input);
   const state = await inspectedWorkflow(q, input);
   if (!state) return;
   if (state.knownMachineRemains) refusal('WORKFLOW_MODEL_QUALIFICATION_REQUIRED',
@@ -333,6 +337,166 @@ export async function assertWorkflowImportRelease(q: Queryable, input: WorkflowG
   if (!await hasCurrentAdoption(q, input, state.origin.fingerprint, state.contentHash)) {
     refusal('WORKFLOW_HUMAN_ADOPTION_REQUIRED', 'Release needs an assigned reviewer’s approved review and explicit REVIEWER electronic signature adopting this exact full document. Earlier reviews and imported signatures do not cover this copy.');
   }
+}
+
+async function assertOrdinaryMachineRelease(q: Queryable, input: WorkflowGovernanceInput): Promise<void> {
+  const rows = await independentLedger(q, input.doc.id, input.organizationId);
+  const ordinary = rows.some(row => row.operation_type === 'CREATE' && row.metadata?.provenance?.source === 'ana');
+  if (!ordinary) {
+    if ((input.doc.provenance as { source?: unknown } | null)?.source === 'ana') refusal('WORKFLOW_ORIGIN_UNVERIFIED',
+      'The machine draft has no retained creation receipt. Nothing was released.');
+    return;
+  }
+  let allowed = false;
+  try { allowed = await ordinaryMachineGenesisMayRelease(q, input,
+    await independentLedger(q, input.doc.id, input.organizationId, ['UPDATE'])); }
+  catch (error) {
+    if (!(error instanceof SpanLineageError)) throw new WorkflowImportGovernanceError(503, 'WORKFLOW_GENERATION_UNVERIFIED',
+      'Current retained machine generation could not be verified. Nothing was released.');
+  }
+  if (!allowed) refusal('WORKFLOW_MODEL_QUALIFICATION_REQUIRED',
+    'Stored machine-generated text has no retained qualified generation covering its exact words. Human review does not establish model qualification. Replace it through the governed human editing path before release.');
+}
+
+const CHECK_OPERATIONS = ['INDEPENDENT_CHECK_INIT', 'INDEPENDENT_CHECK_RECORDED', 'INDEPENDENT_FINDING_REVIEW'];
+function independentRefused(): never {
+  return refusal('INDEPENDENT_CHECK_REQUIRED',
+    'Independent checks or their human finding decisions are missing, stale or unavailable. Run the saved-document checks and review the current findings before signing.');
+}
+interface IndependentReceipt extends IndependentCheckResult { receiptId: string; checkerVersion: string }
+
+/** Reconcile both ledger sides: changing a trail's type/metadata cannot hide
+ * its original chained operation and expose an older favorable receipt. */
+async function independentLedger(q: Queryable, docId: string, organizationId: number, extraOperations: string[] = []) {
+  try {
+  const result = await q.query(`WITH trails AS (SELECT * FROM authoring_audit_trail WHERE doc_id=$1::uuid AND tenant_id=$2),
+    chains AS (SELECT * FROM audit_logs WHERE tenant_id=$2 AND new_values->>'docId'=$1::uuid::text)
+    SELECT t.*,t.id::text AS trail_id,a.id::text AS audit_id,a.new_values AS chain_details,a.payload_hash,a.action,
+      a.actor_id AS chain_actor_id,a.target,a.tenant_id AS chain_tenant_id,a.sha256_chain,a.hmac_seal,a.occurred_at,
+      to_jsonb(a)->>'chain_seq' AS sequence
+    FROM trails t FULL OUTER JOIN chains a ON a.new_values->>'trailId'=t.id::text
+    WHERE t.operation_type='CREATE' OR t.operation_type=ANY($3::text[]) OR t.metadata::jsonb ? 'independentCheck'
+      OR a.new_values->>'operationType'=ANY($3::text[])
+      OR a.new_values->>'operationType'='CREATE'
+    ORDER BY a.chain_seq NULLS FIRST,t.created_at,t.id`, [docId, organizationId, [...CHECK_OPERATIONS, ...extraOperations]]);
+  for (const row of result.rows) await verifyIndependentLedgerRow(q, row, { docId, organizationId });
+  return result.rows as Array<Record<string, any>>;
+  } catch { return independentRefused(); }
+}
+function legacyManualCreation(row: Record<string, any>): boolean {
+  return !row.audit_id && row.operation_type === 'CREATE' && row.metadata?.provenance?.source !== 'ana' && row.metadata?.independentCheck?.required !== true;
+}
+async function verifyIndependentLedgerRow(q: Queryable, row: Record<string, any>, scope: { docId: string; organizationId: number }) {
+  if (legacyManualCreation(row)) return;
+  if (!row.trail_id || !row.audit_id || !row.chain_details) independentRefused();
+  const bound = [row.chain_tenant_id === scope.organizationId, row.chain_details.docId === scope.docId,
+    row.action === `authoring.section.${row.operation_type}`,
+    verifyAuthoringTrailRow(independentStoredTrail(row), row.chain_details).intact === true,
+    hashPayload(row.chain_details) === row.payload_hash].every(Boolean);
+  if (!bound) independentRefused();
+  const integrity = await verifySequencedRow(q, { action: row.action, actor_id: row.chain_actor_id, target: row.target,
+    payload_hash: row.payload_hash, occurred_at: row.occurred_at, tenant_id: scope.organizationId,
+    sha256_chain: row.sha256_chain, hmac_seal: row.hmac_seal, chain_seq: row.sequence });
+  if (integrity.link !== 'linked' || !['valid', 'no-key'].includes(integrity.seal)) independentRefused();
+}
+function independentStoredTrail(row: Record<string, unknown>) {
+  const text = (value: unknown): string => { if (typeof value !== 'string') return independentRefused(); return value; };
+  const nullable = (value: unknown): string | null => value === null ? null : text(value);
+  return { id: text(row.trail_id), operation_type: text(row.operation_type),
+    before_content: nullable(row.before_content), after_content: nullable(row.after_content),
+    content_hash_before: nullable(row.content_hash_before), content_hash_after: nullable(row.content_hash_after),
+    change_reason: nullable(row.change_reason), metadata: row.metadata };
+}
+
+function requiresIndependentCheck(rows: Array<Record<string, any>>): boolean {
+  return rows.some(row => CHECK_OPERATIONS.includes(row.operation_type) || row.metadata?.provenance?.source === 'ana' || row.metadata?.independentCheck?.required === true);
+}
+function independentInventory(rows: Array<Record<string, any>>, snapshotHash: string): IndependentCheckContext | undefined {
+  if (!requiresIndependentCheck(rows)) return;
+  const receipts = rows.filter(row => row.operation_type === 'INDEPENDENT_CHECK_RECORDED').map(row => row.metadata.independentCheck as IndependentReceipt);
+  const latest = receipts.at(-1);
+  const current = latest?.snapshotHash === snapshotHash && latest?.checkerVersion === INDEPENDENT_CHECKER_VERSION;
+  const findings = independentFindingHistory(rows).map(f => ({ ...f, description: independentFindingDescription(f.category),
+    current: Boolean(current && latest?.findings.some(currentFinding => currentFinding.findingId === f.findingId)) }));
+  return { required: true, receiptId: latest?.receiptId ?? null, snapshotHash, checkerVersion: INDEPENDENT_CHECKER_VERSION,
+    standing: latest ? current ? 'current' : 'stale' : 'missing', findings,
+    hardBlockCount: findings.filter(f => f.hard && f.open).length, semanticVerified: false };
+}
+function independentFindingHistory(rows: Array<Record<string, any>>) {
+  const history = new Map<string, IndependentCheckResult['findings'][number] & { open: boolean }>();
+  for (const row of rows) {
+    if (row.operation_type === 'INDEPENDENT_CHECK_RECORDED') {
+      for (const finding of row.metadata.independentCheck.findings) history.set(finding.findingId, { ...finding, open: true });
+    }
+    if (row.operation_type === 'INDEPENDENT_FINDING_REVIEW') {
+      for (const decision of row.metadata.independentCheck.dispositions) {
+        const finding = history.get(decision.findingId);
+        if (!finding) independentRefused();
+        if (decision.decision === 'resolved') finding.open = false;
+      }
+    }
+  }
+  return [...history.values()];
+}
+function independentFindingDescription(category: string): string {
+  const descriptions: Record<string, string> = { grounding: 'Quantitative claims need a nearby resolvable citation.',
+    empty_section: 'This saved section has no accepted text.', citation_unavailable: 'A cited source is unavailable or is not registered to this saved section.',
+    pending_changes: 'Tracked insertions or deletions remain undecided.', consistency: 'The deterministic cross-section comparison found a discrepancy requiring review.' };
+  return descriptions[category] ?? `The deterministic ${category} check requires review.`;
+}
+
+export async function readIndependentCheckContext(q: Queryable, input: WorkflowGovernanceInput): Promise<IndependentCheckContext | undefined> {
+  const rows = await independentLedger(q, input.doc.id, input.organizationId);
+  if (!requiresIndependentCheck(rows)) return;
+  const snapshotHash = authoringSnapshotHash(fullVisibleAuthoringSnapshot({ doc: input.doc, sections: input.sections }));
+  const state = independentInventory(rows, snapshotHash);
+  if (!state) return independentRefused();
+  const receipt = rows.filter(row => row.operation_type === 'INDEPENDENT_CHECK_RECORDED').at(-1)?.metadata.independentCheck as IndependentReceipt;
+  if (state.standing === 'current') {
+    try { if (JSON.stringify(await independentSourcePins(q, receipt.sourcePins.map(pin => pin.sourceId))) !== JSON.stringify(receipt.sourcePins)) state.standing = 'stale'; }
+    catch { state.standing = 'stale'; }
+    for (const binding of receipt.vaultSourcePins ?? []) {
+      try { await verifyIndependentVaultSource(q, { organizationId: input.organizationId, userId: Number(input.actor?.id), binding }); }
+      catch { state.standing = 'stale'; }
+    }
+  }
+  return state;
+}
+
+export async function recordIndependentCheck(q: Queryable, input: WorkflowGovernanceInput,
+  result: IndependentCheckResult, audit: AuthoringAuditContext): Promise<IndependentCheckContext> {
+  const snapshotHash = authoringSnapshotHash(fullVisibleAuthoringSnapshot({ doc: input.doc, sections: input.sections }));
+  if (result.snapshotHash !== snapshotHash) independentRefused();
+  const rows = await independentLedger(q, input.doc.id, input.organizationId);
+  const receipt = { ...result, receiptId: randomUUID(), checkerVersion: INDEPENDENT_CHECKER_VERSION };
+  const write = (operationType: string, metadata: Record<string, unknown>) => writeAuthoringAuditTrail(audit, {
+    docId: input.doc.id, sectionId: null, operationType, beforeContent: null, afterContent: null,
+    changeReason: 'Server ran the independent deterministic saved-record checks.', metadata: { independentCheck: metadata }, executor: q });
+  if (!rows.some(row => row.operation_type === 'INDEPENDENT_CHECK_INIT')) await write('INDEPENDENT_CHECK_INIT', { required: true, version: 1 });
+  await write('INDEPENDENT_CHECK_RECORDED', receipt);
+  const state = await readIndependentCheckContext(q, input);
+  if (!state) return independentRefused();
+  return state;
+}
+
+export async function recordIndependentFindingDispositions(q: Queryable, input: WorkflowGovernanceInput,
+  body: NonNullable<AuthoringReviewInput['independent_findings']>, audit: AuthoringAuditContext): Promise<void> {
+  const current = await readIndependentCheckContext(q, input);
+  if (!current || current.standing !== 'current' || body.receiptId !== current.receiptId || body.snapshotHash !== current.snapshotHash ||
+      new Set(body.dispositions.map(d => d.findingId)).size !== body.dispositions.length) independentRefused();
+  for (const decision of body.dispositions) {
+    const finding = current.findings.find(f => f.findingId === decision.findingId && f.open);
+    if (!finding || (decision.decision === 'resolved' && finding.current)) independentRefused();
+  }
+  await writeAuthoringAuditTrail(audit, { docId: input.doc.id, sectionId: null, operationType: 'INDEPENDENT_FINDING_REVIEW',
+    beforeContent: null, afterContent: null, changeReason: 'Assigned human reviewer recorded explicit finding decisions.',
+    metadata: { independentCheck: body }, executor: q });
+}
+
+export async function assertIndependentCheckRelease(q: Queryable, input: WorkflowGovernanceInput): Promise<void> {
+  const state = await readIndependentCheckContext(q, input);
+  if (!state) return;
+  if (state.standing !== 'current' || state.hardBlockCount) independentRefused();
 }
 
 /** An uncontrolled review copy may retain uncertain/unqualified source prose,

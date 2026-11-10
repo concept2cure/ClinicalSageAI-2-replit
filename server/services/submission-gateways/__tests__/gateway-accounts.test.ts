@@ -13,6 +13,7 @@ import { promises as fs } from 'fs';
 import { createHash } from 'crypto';
 import os from 'os';
 import path from 'path';
+import { PGlite } from '@electric-sql/pglite';
 
 const h = vi.hoisted(() => ({
   account: null as null | Record<string, unknown>,
@@ -43,10 +44,12 @@ import {
   clientAccountRefusal,
   listGatewayAccounts,
   resolveGatewayAccount,
+  resolveGatewayAccountForUse,
   specFor,
   writeGatewayAccount,
 } from '../gateway-accounts';
 import { encryptCredential } from '../../security/credential-cipher';
+import * as sentPackages from '../sent-package-archive';
 
 const PEM_CERT = '-----BEGIN CERTIFICATE-----\nMIIBclientcert\n-----END CERTIFICATE-----';
 const PEM_KEY = '-----BEGIN PRIVATE KEY-----\nMIIEclientkey\n-----END PRIVATE KEY-----';
@@ -141,6 +144,49 @@ describe('writing the choice', () => {
     expect(await code(writeGatewayAccount(db, { ...base, mode: 'shared' }))).toBe('INVALID_MODE');
     expect(db.row).toBeNull();
   });
+
+  it('still clears an unreadable prior client credential, withholding a reason whose secrets cannot be checked', async () => {
+    const db = memoryDb();
+    await writeGatewayAccount(db, { ...base, mode: 'client', credentials: { clientKeyPem: PEM_KEY } });
+    db.row!.credentials_ciphertext = 'unreadable-ciphertext';
+    const written = await writeGatewayAccount(db, { ...base, mode: 'platform', reason: 'Clear account CANARY_UNREADABLE_SECRET_8833' });
+    expect(db.row).toMatchObject({ account_mode: 'platform', credentials_ciphertext: null, credential_fields: [] });
+    expect(written.reason).toBe(db.row!.reason);
+    expect(JSON.stringify(written)).not.toContain('CANARY_UNREADABLE_SECRET_8833');
+  });
+});
+
+describe('gateway credential change reasons on PostgreSQL semantics', () => {
+  it('keeps new and previous PEM variants out of capture, rotation and platform-revert reasons', async () => {
+    const pg = new PGlite();
+    const db = { query: (sql: string, params: unknown[] = []) => pg.query<Record<string, unknown>>(sql, params) };
+    const oldKey = '  -----BEGIN PRIVATE KEY-----\r\nCANARY_FDA_OLD_442211\r\n-----END PRIVATE KEY-----\r\n';
+    const newKey = '-----BEGIN PRIVATE KEY-----\nCANARY_FDA_NEW_775533\n-----END PRIVATE KEY-----\n';
+    const variants = (value: string) => [value, value.trim(), value.replace(/\r\n?/g, '\n'),
+      value.replace(/\r\n?/g, '\n').trim().replace(/\n/g, '\\n'), JSON.stringify(value).slice(1, -1)];
+    const base = { organizationId: 7, userId: 11, region: 'fda', gateway: 'esg', environment: 'production' };
+    try {
+      await pg.exec(await fs.readFile(path.resolve('migrations/20261001g_organization_gateway_accounts.sql'), 'utf8'));
+      for (const action of ['capture', 'rotate', 'revert'] as const) {
+        const key = action === 'capture' ? oldKey : newKey;
+        const values = action === 'rotate' ? [oldKey, newKey] : [key];
+        const reason = `Approved ESG account ${action}: ${values.flatMap(variants).join(' | ')}`;
+        const written = await writeGatewayAccount(db, { ...base, reason, mode: action === 'revert' ? 'platform' : 'client',
+          ...(action === 'revert' ? {} : { credentials: { clientKeyPem: key, clientCertPem: PEM_CERT } }) });
+        const row = (await pg.query<{ reason: string; credentials_ciphertext: string | null }>('SELECT reason, credentials_ciphertext FROM organization_gateway_accounts')).rows[0];
+        const known = action === 'rotate' ? ['CANARY_FDA_OLD_442211', 'CANARY_FDA_NEW_775533']
+          : [action === 'capture' ? 'CANARY_FDA_OLD_442211' : 'CANARY_FDA_NEW_775533'];
+        for (const canary of known) {
+          expect(row.reason, `${action} leaked a held credential into plaintext`).not.toContain(canary);
+          expect(JSON.stringify(written)).not.toContain(canary);
+        }
+        expect(row.reason).toContain('[redacted]');
+        expect(written.reason).toBe(row.reason);
+        if (action === 'revert') expect(row.credentials_ciphertext).toBeNull();
+        else expect((await resolveGatewayAccount(db, 7, 'fda', 'esg', 'production')).credentials?.clientKeyPem).toBe(key);
+      }
+    } finally { await pg.close(); }
+  });
 });
 
 describe('what the organisation sees', () => {
@@ -153,6 +199,40 @@ describe('what the organisation sees', () => {
     expect(views.find((v) => v.gateway === 'mhra_gateway' && v.environment === 'production')!.status).toBe('client_not_supported');
     expect(views.find((v) => v.gateway === 'esg' && v.environment === 'staging')).toMatchObject({ mode: 'platform', status: 'platform_not_configured' });
     expect(JSON.stringify(views)).not.toMatch(/ciphertext/);
+  });
+});
+
+describe('captured account authority', () => {
+  it('does not accept a copied account or reuse authority in another organization or environment', async () => {
+    const db = memoryDb();
+    const captured = await resolveGatewayAccount(db, 7, 'fda', 'esg', 'production');
+    const scope = { organizationId: 7, region: 'fda', gateway: 'esg', environment: 'production' } as const;
+    await expect(resolveGatewayAccountForUse(db, { ...captured }, scope)).rejects.toBeInstanceOf(CredentialError);
+    await expect(resolveGatewayAccountForUse(db, captured, { ...scope, organizationId: 8 })).rejects.toBeInstanceOf(CredentialError);
+    await expect(resolveGatewayAccountForUse(db, captured, { ...scope, environment: 'staging' })).rejects.toBeInstanceOf(CredentialError);
+    await expect(resolveGatewayAccountForUse(db, captured, { ...scope, region: 'ema', gateway: 'cesp' })).rejects.toBeInstanceOf(CredentialError);
+  });
+
+  it('re-establishes credentials from the store, ignoring changes to the captured object', async () => {
+    const db = memoryDb();
+    await writeGatewayAccount(db, { organizationId: 7, userId: 11, region: 'fda', gateway: 'esg', environment: 'production',
+      reason: 'Sponsor uses its own FDA account', mode: 'client', senderIdentifier: 'ZZACME001',
+      credentials: { clientCertPem: PEM_CERT, clientKeyPem: PEM_KEY } });
+    const captured = await resolveGatewayAccount(db, 7, 'fda', 'esg', 'production');
+    captured.senderIdentifier = 'FORGED';
+    captured.credentials!.clientKeyPem = 'FORGED';
+    const current = await resolveGatewayAccountForUse(db, captured, { organizationId: 7, region: 'fda', gateway: 'esg', environment: 'production' });
+    expect(current.senderIdentifier).toBe('ZZACME001');
+    expect(current.credentials!.clientKeyPem).toBe(PEM_KEY);
+  });
+
+  it('fails closed with a content-free credential refusal if the authority store cannot be re-read', async () => {
+    const captured = await resolveGatewayAccount(memoryDb(), 7, 'fda', 'esg', 'production');
+    const unavailable = { query: async () => { throw new Error('CANARY-private-store-error'); } };
+    const error = await failureOf(resolveGatewayAccountForUse(unavailable, captured,
+      { organizationId: 7, region: 'fda', gateway: 'esg', environment: 'production' }));
+    expect(error).toBeInstanceOf(CredentialError);
+    expect((error as Error).message).not.toContain('CANARY-private-store-error');
   });
 });
 
@@ -209,6 +289,30 @@ describe('the guarded transmit honours the choice, before the wire', () => {
     const result = await getGateway('fda', 'esg').transmit(request());
     expect((wire.mock.calls[0][0] as GatewayTransmitRequest).account).toEqual({ mode: 'platform', senderIdentifier: null, credentials: null });
     expect(result.gatewayAccount).toEqual({ mode: 'platform', senderIdentifier: null });
+  });
+
+  it.each(['rotation', 'sender change', 'switch to platform', 'deletion'])('an account %s during archival revokes this transmit before the wire', async change => {
+    h.account = { account_mode: 'client', sender_identifier: 'ZZACME001', credentials_ciphertext: encryptCredential(JSON.stringify({ clientCertPem: PEM_CERT, clientKeyPem: PEM_KEY })) };
+    const archive = sentPackages.archiveSentPackage;
+    vi.spyOn(sentPackages, 'archiveSentPackage').mockImplementation(async (req, region, gateway) => {
+      const stored = await archive(req, region, gateway);
+      if (change === 'rotation') h.account = { ...h.account, credentials_ciphertext: encryptCredential(JSON.stringify({ clientCertPem: PEM_CERT, clientKeyPem: PEM_KEY.replace('client', 'rotated') })) };
+      if (change === 'sender change') h.account = { ...h.account, sender_identifier: 'ANOTHER-SENDER' };
+      if (change === 'switch to platform') h.account = { account_mode: 'platform', sender_identifier: null, credentials_ciphertext: null };
+      if (change === 'deletion') h.account = null;
+      return stored;
+    });
+    const wire = vi.spyOn(FdaEsgGateway.prototype, 'transmit').mockResolvedValue({ transmittalId: 41 } as never);
+
+    const error = await failureOf(getGateway('fda', 'esg').transmit(request()));
+
+    expect(error).toBeInstanceOf(CredentialError);
+    expect((error as Error).message).toMatch(/account changed/i);
+    expect(refusedBeforeWire(error)).toBe(true);
+    expect(wire).not.toHaveBeenCalled();
+    expect(h.calls.some(c => /INSERT INTO submission_transmittals/.test(c.text))).toBe(false);
+    expect((error as Error).message).not.toContain(PEM_KEY);
+    expect((error as Error).message).not.toContain('credentials_ciphertext');
   });
 
   it('clientAccountRefusal is null for the platform account and for a complete FDA client account', () => {

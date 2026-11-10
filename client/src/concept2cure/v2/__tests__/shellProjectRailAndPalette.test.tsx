@@ -55,7 +55,7 @@ afterEach(() => {
 describe('the rail inside a project', () => {
   it.each([
     ['project-home', 'projects'], ['dossier', 'projects'], ['dossier-map', 'projects'],
-    ['device-510k', 'projects'], ['biostatistics', 'projects'], ['biostat-workbench', 'projects'], ['protocol-dev', 'projects'],
+    ['device-510k', 'projects'], ['biostatistics', 'biostatistics'], ['protocol-dev', 'projects'],
     ['vault', 'vault'], ['tasks', 'tasks'], ['cmc', 'cmc'], ['rbm', 'rbm'], ['home', 'home'],
   ])('%s is shown under %s', (screenId, entry) => {
     expect(railTargetOf(screenId)).toBe(entry);

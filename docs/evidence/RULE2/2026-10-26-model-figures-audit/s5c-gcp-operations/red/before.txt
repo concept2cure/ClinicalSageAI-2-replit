@@ -1,0 +1,220 @@
+# S5c GCP operations red: server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts on trunk 7e3cb137c. 104 of 112 fail; the 8 controls pass.
+
+ ✓ server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > the six GCP operations tools keep their stated results > 'design_monitoring_plan' reaches its engine with a stated basis 5ms
+ ✓ server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > the six GCP operations tools keep their stated results > 'assess_inspection_readiness' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > the six GCP operations tools keep their stated results > 'assess_gcp_compliance' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > the six GCP operations tools keep their stated results > 'design_informed_consent' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > the six GCP operations tools keep their stated results > 'classify_protocol_deviation' reaches its engine with a stated basis 1ms
+ ✓ server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > the six GCP operations tools keep their stated results > 'plan_essential_documents' reaches its engine with a stated basis 1ms
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'design_monitoring_plan' keeps each boolean answer as stated > isFirstInHuman reads not_stated when omitted or null, and is refused when malformed 9ms
+   → expected { …(12) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'design_monitoring_plan' keeps each boolean answer as stated > isMultiRegional reads not_stated when omitted or null, and is refused when malformed 3ms
+   → expected { overallRiskLevel: 'low', …(11) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'design_monitoring_plan' keeps each boolean answer as stated > usesInvestigationalDevice reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { overallRiskLevel: 'low', …(11) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'design_monitoring_plan' keeps each boolean answer as stated > blinded reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { overallRiskLevel: 'low', …(11) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'design_monitoring_plan' keeps each boolean answer as stated > vulnerablePopulation reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { overallRiskLevel: 'low', …(11) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'design_monitoring_plan' keeps each boolean answer as stated > complexProtocol reads not_stated when omitted or null, and is refused when malformed 4ms
+   → expected { overallRiskLevel: 'low', …(11) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'design_monitoring_plan' keeps each boolean answer as stated > electronicDataCapture reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { overallRiskLevel: 'low', …(11) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'design_monitoring_plan' keeps each boolean answer as stated > experiencedSites reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { overallRiskLevel: 'low', …(11) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'design_monitoring_plan' keeps each boolean answer as stated > priorInspectionFindings reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { overallRiskLevel: 'low', …(11) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'assess_inspection_readiness' keeps each boolean answer as stated > tmfContemporaneous reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { inspectionTarget: 'sponsor', …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'assess_inspection_readiness' keeps each boolean answer as stated > consentDocumentationComplete reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { inspectionTarget: 'sponsor', …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'assess_inspection_readiness' keeps each boolean answer as stated > delegationLogCurrent reads not_stated when omitted or null, and is refused when malformed 6ms
+   → expected { inspectionTarget: 'sponsor', …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'assess_inspection_readiness' keeps each boolean answer as stated > trainingRecordsComplete reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { inspectionTarget: 'sponsor', …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'assess_inspection_readiness' keeps each boolean answer as stated > ipAccountabilityReconciled reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { inspectionTarget: 'sponsor', …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'assess_inspection_readiness' keeps each boolean answer as stated > safetyReportingCurrent reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { inspectionTarget: 'sponsor', …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'assess_inspection_readiness' keeps each boolean answer as stated > protocolDeviationsLogged reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { inspectionTarget: 'sponsor', …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'assess_inspection_readiness' keeps each boolean answer as stated > capaProcessInPlace reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { inspectionTarget: 'sponsor', …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'assess_inspection_readiness' keeps each boolean answer as stated > dataTraceabilityVerified reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { inspectionTarget: 'sponsor', …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'assess_inspection_readiness' keeps each boolean answer as stated > computerizedSystemsValidated reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { inspectionTarget: 'sponsor', …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'assess_inspection_readiness' keeps each boolean answer as stated > monitoringReportsCurrent reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { inspectionTarget: 'sponsor', …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'assess_inspection_readiness' keeps each boolean answer as stated > priorInspectionFindings reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { inspectionTarget: 'sponsor', …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'assess_gcp_compliance' keeps each boolean answer as stated > ethicsApprovalCurrent reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { overallStatus: 'minor_gaps', …(6) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'assess_gcp_compliance' keeps each boolean answer as stated > informedConsentProcessCompliant reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { overallStatus: 'minor_gaps', …(6) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'assess_gcp_compliance' keeps each boolean answer as stated > independentEthicsReviewDocumented reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { overallStatus: 'minor_gaps', …(6) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'assess_gcp_compliance' keeps each boolean answer as stated > riskBasedQualityManagement reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { overallStatus: 'minor_gaps', …(6) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'assess_gcp_compliance' keeps each boolean answer as stated > proportionateProcessesDocumented reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { overallStatus: 'minor_gaps', …(6) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'assess_gcp_compliance' keeps each boolean answer as stated > sponsorOversightDocumented reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { overallStatus: 'minor_gaps', …(6) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'assess_gcp_compliance' keeps each boolean answer as stated > personnelQualified reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { overallStatus: 'minor_gaps', …(6) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'assess_gcp_compliance' keeps each boolean answer as stated > ipManagementCompliant reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { overallStatus: 'minor_gaps', …(6) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'assess_gcp_compliance' keeps each boolean answer as stated > dataGovernanceAlcoaPlus reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { overallStatus: 'minor_gaps', …(6) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'assess_gcp_compliance' keeps each boolean answer as stated > vendorOversightDocumented reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { overallStatus: 'compliant', …(6) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'assess_gcp_compliance' keeps each boolean answer as stated > delegationDocumented reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { overallStatus: 'minor_gaps', …(6) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'assess_gcp_compliance' keeps each boolean answer as stated > protocolFollowedWithChangeControl reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { overallStatus: 'compliant', …(6) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'assess_gcp_compliance' keeps each boolean answer as stated > safetyReportingCompliant reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { overallStatus: 'compliant', …(6) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'assess_gcp_compliance' keeps each boolean answer as stated > computerizedSystemsValidated reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { overallStatus: 'minor_gaps', …(6) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'assess_gcp_compliance' keeps each boolean answer as stated > auditTrailReviewPerformed reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { overallStatus: 'compliant', …(6) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'assess_gcp_compliance' keeps each boolean answer as stated > recordRetentionCompliant reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { overallStatus: 'compliant', …(6) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'design_informed_consent' keeps each boolean answer as stated > involvesPlacebo reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { requiredElements: [ …(11) ], …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'design_informed_consent' keeps each boolean answer as stated > moreThanMinimalRisk reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { requiredElements: [ …(11) ], …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'design_informed_consent' keeps each boolean answer as stated > collectsBiospecimens reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { requiredElements: [ …(11) ], …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'design_informed_consent' keeps each boolean answer as stated > genomicData reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { requiredElements: [ …(11) ], …(9) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'design_informed_consent' keeps each boolean answer as stated > electronicConsent reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { requiredElements: [ …(11) ], …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'design_informed_consent' keeps each boolean answer as stated > remoteConsent reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { requiredElements: [ …(11) ], …(9) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'design_informed_consent' keeps each boolean answer as stated > commercialProfitPotential reads not_stated when omitted or null, and is refused when malformed 5ms
+   → expected { requiredElements: [ …(11) ], …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'design_informed_consent' keeps each boolean answer as stated > applicableClinicalTrial reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { requiredElements: [ …(10) ], …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'classify_protocol_deviation' keeps each boolean answer as stated > affectsParticipantSafety reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { importance: 'not_assessed', …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'classify_protocol_deviation' keeps each boolean answer as stated > affectsPrimaryEndpoint reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { importance: 'not_assessed', …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'classify_protocol_deviation' keeps each boolean answer as stated > affectsEligibilityCriticalCriterion reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { importance: 'not_assessed', …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'classify_protocol_deviation' keeps each boolean answer as stated > affectsConsentValidity reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { importance: 'not_assessed', …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'classify_protocol_deviation' keeps each boolean answer as stated > isRecurring reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { importance: 'not_assessed', …(9) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'classify_protocol_deviation' keeps each boolean answer as stated > involvedUnreportedSAE reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { importance: 'not_assessed', …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'classify_protocol_deviation' keeps each boolean answer as stated > deviationFromIRBApprovedProtocol reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { importance: 'not_assessed', …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'classify_protocol_deviation' keeps each boolean answer as stated > increasedRiskToSubjects reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { importance: 'not_assessed', …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'plan_essential_documents' keeps each boolean answer as stated > includeInvestigatorSiteFile reads not_stated when omitted or null, and is refused when malformed 3ms
+   → expected { Object (documents, byStage, ...) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'plan_essential_documents' keeps each boolean answer as stated > includeSponsorTmf reads not_stated when omitted or null, and is refused when malformed 3ms
+   → expected { Object (documents, byStage, ...) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'plan_essential_documents' keeps each boolean answer as stated > electronicTmf reads not_stated when omitted or null, and is refused when malformed 4ms
+   → expected { Object (documents, byStage, ...) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'plan_essential_documents' keeps each boolean answer as stated > usesInvestigationalDevice reads not_stated when omitted or null, and is refused when malformed 3ms
+   → expected { Object (documents, byStage, ...) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > 'plan_essential_documents' keeps each boolean answer as stated > multiSite reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { Object (documents, byStage, ...) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > a malformed enum, list, count or percentage is refused by field, never read > 'design_monitoring_plan' refuses 'phase' = 'Phase 1' 2ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > a malformed enum, list, count or percentage is refused by field, never read > 'design_monitoring_plan' refuses 'noveltyOfIntervention' = 'Novel' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > a malformed enum, list, count or percentage is refused by field, never read > 'design_monitoring_plan' refuses 'endpointObjectivity' = 'Subjective' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > a malformed enum, list, count or percentage is refused by field, never read > 'design_monitoring_plan' refuses 'numberOfSites' = '50' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > a malformed enum, list, count or percentage is refused by field, never read > 'design_monitoring_plan' refuses 'numberOfSites' = -5 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > a malformed enum, list, count or percentage is refused by field, never read > 'design_monitoring_plan' refuses 'plannedEnrollment' = '60' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > a malformed enum, list, count or percentage is refused by field, never read > 'assess_inspection_readiness' refuses 'inspectionTarget' = 'FDA' 1ms
+   → expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > a malformed enum, list, count or percentage is refused by field, never read > 'assess_inspection_readiness' refuses 'essentialDocsCompletePercent' = 150 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > a malformed enum, list, count or percentage is refused by field, never read > 'assess_inspection_readiness' refuses 'essentialDocsCompletePercent' = '90' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > a malformed enum, list, count or percentage is refused by field, never read > 'assess_inspection_readiness' refuses 'openCapas' = -2 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > a malformed enum, list, count or percentage is refused by field, never read > 'design_informed_consent' refuses 'studyType' = 'Observational' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > a malformed enum, list, count or percentage is refused by field, never read > 'design_informed_consent' refuses 'vulnerablePopulations' = 'children' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > a malformed enum, list, count or percentage is refused by field, never read > 'design_informed_consent' refuses 'vulnerablePopulations' = [ 'Children' ] 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > a malformed enum, list, count or percentage is refused by field, never read > 'design_informed_consent' refuses 'targetReadingGradeLevel' = 20 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > a malformed enum, list, count or percentage is refused by field, never read > 'classify_protocol_deviation' refuses 'category' = 'Safety reporting' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > a malformed enum, list, count or percentage is refused by field, never read > 'classify_protocol_deviation' refuses 'numberOfParticipantsAffected' = '5' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > a malformed enum, list, count or percentage is refused by field, never read > 'plan_essential_documents' refuses 'stage' = 'Before' 1ms
+   → expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'design_monitoring_plan' 1ms
+   → isFirstInHuman: expected 'Whether this is a first-in-human stud…' to match /Omitted or null stays not_stated/
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'assess_inspection_readiness' 1ms
+   → tmfContemporaneous: expected 'Whether the TMF is contemporaneous (f…' to match /Omitted or null stays not_stated/
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'assess_gcp_compliance' 0ms
+   → ethicsApprovalCurrent: expected 'Whether IRB/IEC approval is current.' to match /Omitted or null stays not_stated/
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'design_informed_consent' 3ms
+   → involvesPlacebo: expected 'Whether a placebo is used.' to match /Omitted or null stays not_stated/
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'classify_protocol_deviation' 0ms
+   → affectsParticipantSafety: expected 'Whether the deviation affects partici…' to match /Omitted or null stays not_stated/
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > 'plan_essential_documents' 0ms
+   → includeInvestigatorSiteFile: expected 'Whether to include the investigator s…' to match /Omitted or null stays not_stated/
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > claims no scored factor, priority or class the engine does not give 1ms
+   → expected 'Design a risk-based monitoring (RBM) …' not to match /blinding/
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > the six definitions say what an omitted fact means, within the trimmed length > names the inputs no function reads 0ms
+   → expected 'Therapeutic area (context for risk we…' to match /Not read/
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > assess_gcp_compliance gives no gap, strength, score or status from an unstated fact > does not grade a trial nobody described 1ms
+   → expected { overallStatus: 'major_gaps', …(6) } to match object { overallStatus: 'not_assessed', …(3) }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > assess_gcp_compliance gives no gap, strength, score or status from an unstated fact > raises no "not documented" gap for the facts left out 1ms
+   → expected { overallStatus: 'minor_gaps', …(6) } to match object { overallStatus: 'not_assessed', …(2) }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > assess_gcp_compliance gives no gap, strength, score or status from an unstated fact > does not read null as documented 2ms
+   → expected 'compliant' to be 'not_assessed' // Object.is equality
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > assess_gcp_compliance gives no gap, strength, score or status from an unstated fact > vendorOversightDocumented left out leaves the status open 1ms
+   → expected 'compliant' to be 'not_assessed' // Object.is equality
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > assess_gcp_compliance gives no gap, strength, score or status from an unstated fact > delegationDocumented left out leaves the status open 0ms
+   → expected 'minor_gaps' to be 'not_assessed' // Object.is equality
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > assess_gcp_compliance gives no gap, strength, score or status from an unstated fact > protocolFollowedWithChangeControl left out leaves the status open 0ms
+   → expected 'compliant' to be 'not_assessed' // Object.is equality
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > assess_gcp_compliance gives no gap, strength, score or status from an unstated fact > safetyReportingCompliant left out leaves the status open 0ms
+   → expected 'compliant' to be 'not_assessed' // Object.is equality
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > assess_gcp_compliance gives no gap, strength, score or status from an unstated fact > computerizedSystemsValidated left out leaves the status open 0ms
+   → expected 'minor_gaps' to be 'not_assessed' // Object.is equality
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > assess_gcp_compliance gives no gap, strength, score or status from an unstated fact > auditTrailReviewPerformed left out leaves the status open 0ms
+   → expected 'compliant' to be 'not_assessed' // Object.is equality
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > assess_gcp_compliance gives no gap, strength, score or status from an unstated fact > recordRetentionCompliant left out leaves the status open 0ms
+   → expected 'compliant' to be 'not_assessed' // Object.is equality
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > assess_gcp_compliance gives no gap, strength, score or status from an unstated fact > leaves the score null and the principle unverified, without asserting the failure 1ms
+   → expected { overallStatus: 'minor_gaps', …(6) } to match object { overallStatus: 'not_assessed', …(1) }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > assess_gcp_compliance gives no gap, strength, score or status from an unstated fact > gives a status no answer to the unstated facts could change 1ms
+   → expected { Object (overallStatus, complianceScore, ...) } to match object { Object (overallStatus, complianceScore) }
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > assess_gcp_compliance gives no gap, strength, score or status from an unstated fact > reads a stated protocolFollowedWithChangeControl 1ms
+   → expected [] to deeply equal [ ObjectContaining{…} ]
+ ✓ server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > assess_gcp_compliance gives no gap, strength, score or status from an unstated fact > keeps the stated answers 0ms
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > design_informed_consent decides no element or method from an unstated feature > does not call an unstated consent method paper 0ms
+   → expected 'Paper consent process selected — ensu…' not to match /Paper consent process selected/
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > design_informed_consent decides no element or method from an unstated feature > names the elements an unstated feature leaves undecided 1ms
+   → expected 'Whether this is an applicable clinica…' to contain 'unforeseeable_risks'
+ ✓ server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > design_informed_consent decides no element or method from an unstated feature > decides an element from a stated fact that settles it alone 0ms
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > design_informed_consent decides no element or method from an unstated feature > says when placebo use was not stated 0ms
+   → expected 'More-than-minimal-risk research: the …' to match /Placebo use not stated/
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > design_informed_consent decides no element or method from an unstated feature > says when no populations or reading target were stated 0ms
+   → expected 'More-than-minimal-risk research: the …' to match /vulnerablePopulations not stated/
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > design_monitoring_plan and plan_essential_documents name what an unstated fact leaves out > names a critical-to-quality factor an unstated fact decides 0ms
+   → expected '' to match /Not assessed: blinding maintenance \(…/
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > design_monitoring_plan and plan_essential_documents name what an unstated fact leaves out > names the device records an unstated device status leaves out 1ms
+   → expected 'Multi-site trial: maintain a per-site…' to match /usesInvestigationalDevice not stated:…/
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > assess_inspection_readiness reports an unstated target and prior findings as unstated > reads null like an omitted target, and says the sponsor findings are listed 0ms
+   → expected 'sponsor' to be 'not_stated' // Object.is equality
+ × server/services/ana/__tests__/gcp-operations-unstated-inputs.test.ts > assess_inspection_readiness reports an unstated target and prior findings as unstated > says prior inspection findings were not provided 0ms
+   → expected 'CAPA process in place — ensure each f…' to match /Prior inspection findings not provided/
+ Test Files  1 failed (1)
+      Tests  104 failed | 8 passed (112)

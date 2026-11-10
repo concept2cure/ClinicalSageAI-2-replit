@@ -1,0 +1,33 @@
+waiting for server to start.... done
+server started
+(node:16) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:16) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:38) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"level":30,"time":"2026-11-08T17:33:26.531Z","pid":38,"hostname":"8e30f1e3f944","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-08T17:33:26.532Z","pid":38,"hostname":"8e30f1e3f944","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-08T17:33:26.532Z","pid":38,"hostname":"8e30f1e3f944","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/biostat-authoring-basis.dbtest.ts > native statistical basis retained by the canonical editor > writes actual project/study/input basis with one section, revision and chained CREATE audit
+[database] Database connection successful
+
+{"level":30,"time":"2026-11-08T17:33:30.625Z","pid":38,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 94e7ec84-849a-4df8-8078-75ee9e550729 by unknown"}
+ ✓ tests/db/biostat-authoring-basis.dbtest.ts > native statistical basis retained by the canonical editor > writes actual project/study/input basis with one section, revision and chained CREATE audit 3813ms
+{"level":30,"time":"2026-11-08T17:33:30.735Z","pid":38,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc ae5defb5-630f-48e4-893a-c6cc201af71a by unknown"}
+ ✓ tests/db/biostat-authoring-basis.dbtest.ts > native statistical basis retained by the canonical editor > retains a verified saved run as distinct context when workbench inputs changed 104ms
+{"level":30,"time":"2026-11-08T17:33:30.900Z","pid":38,"hostname":"8e30f1e3f944","context":{},"msg":"[authoring-evidence] Audit trail created: CREATE on doc 03a1d48f-4be7-46a2-a9cf-0c7288856e8e by unknown"}
+ ✓ tests/db/biostat-authoring-basis.dbtest.ts > native statistical basis retained by the canonical editor > refuses a named study from another project without creating a document 47ms
+ ✓ tests/db/biostat-authoring-basis.dbtest.ts > native statistical basis retained by the canonical editor > does not expose a private study to an active unshared organization member 18ms
+ ✓ tests/db/biostat-authoring-basis.dbtest.ts > native statistical basis retained by the canonical editor > records illustrative examples without a study or saved-run claim 95ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  09:33:25
+   Duration  5.86s (transform 3.38s, setup 52ms, import 1.41s, tests 4.14s, environment 0ms)
+
+waiting for server to shut down.... done
+server stopped

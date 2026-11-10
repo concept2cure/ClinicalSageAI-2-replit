@@ -1,0 +1,152 @@
+# S5d bioequivalence red: server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts in the working tree before the change (trunk's bioequivalence engine). 68 of 79 fail, all on assertions; the 11 controls pass.
+
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five bioequivalence tools keep their stated results > 'classify_bcs' reaches its engine with a stated basis 7ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five bioequivalence tools keep their stated results > 'design_be_study' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five bioequivalence tools keep their stated results > 'assess_dissolution_similarity' reaches its engine with a stated basis 3ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five bioequivalence tools keep their stated results > 'assess_biowaiver' reaches its engine with a stated basis 2ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five bioequivalence tools keep their stated results > 'guidance_for_anda' reaches its engine with a stated basis 2ms
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > 'design_be_study' keeps each boolean answer as stated > isNTI reads not_stated when omitted or null, and is refused when malformed 11ms
+   → expected { recommendedDesign: { …(14) }, …(10) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > 'design_be_study' keeps each boolean answer as stated > fedStudyRequired reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { recommendedDesign: { …(14) }, …(10) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > 'assess_biowaiver' keeps each boolean answer as stated > isNTI reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { eligible: true, …(6) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > 'assess_biowaiver' keeps each boolean answer as stated > isWeakAcid reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { eligible: true, …(6) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > 'assess_biowaiver' keeps each boolean answer as stated > veryRapidlyDissolving reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { eligible: false, …(6) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > 'assess_biowaiver' keeps each boolean answer as stated > rapidlyDissolving reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { eligible: true, …(6) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > 'assess_biowaiver' keeps each boolean answer as stated > referenceVeryRapidlyDissolving reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { eligible: false, …(6) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > 'assess_biowaiver' keeps each boolean answer as stated > excipientsQualitativelySame reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { eligible: true, …(6) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > 'assess_biowaiver' keeps each boolean answer as stated > excipientsQuantitativelySimilar reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { eligible: true, …(6) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > 'guidance_for_anda' keeps each boolean answer as stated > sameDosageFormAsRLD reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > 'guidance_for_anda' keeps each boolean answer as stated > sameRouteAsRLD reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { recommendedPathway: '505b2', …(8) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > 'guidance_for_anda' keeps each boolean answer as stated > sameStrengthAsRLD reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > 'guidance_for_anda' keeps each boolean answer as stated > isCombinationProduct reads not_stated when omitted or null, and is refused when malformed 2ms
+   → expected { …(9) } to match object { inputStates: { …(1) } }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > 'guidance_for_anda' keeps each boolean answer as stated > isNTI reads not_stated when omitted or null, and is refused when malformed 1ms
+   → expected { …(9) } to match object { Object (inputStates) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'classify_bcs' refuses 'fractionAbsorbed' (case 1) 2ms
+   → classify_bcs fractionAbsorbed: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'classify_bcs' refuses 'fractionAbsorbed' (case 2) 2ms
+   → classify_bcs fractionAbsorbed: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'classify_bcs' refuses 'highestDoseStrength_mg' (case 3) 1ms
+   → classify_bcs highestDoseStrength_mg: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'classify_bcs' refuses 'solubility_mg_per_mL' (case 4) 2ms
+   → classify_bcs solubility_mg_per_mL: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'classify_bcs' refuses 'drugName' (case 5) 2ms
+   → classify_bcs drugName: expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'classify_bcs' refuses 'dosageForm' (case 6) 1ms
+   → classify_bcs dosageForm: expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'design_be_study' refuses 'withinSubjectCV' (case 7) 1ms
+   → design_be_study withinSubjectCV: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'design_be_study' refuses 'halfLife_hours' (case 8) 2ms
+   → design_be_study halfLife_hours: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'design_be_study' refuses 'expectedGMR' (case 9) 2ms
+   → design_be_study expectedGMR: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'design_be_study' refuses 'targetPower' (case 10) 1ms
+   → design_be_study targetPower: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'design_be_study' refuses 'formulationsToCompare' (case 11) 2ms
+   → design_be_study formulationsToCompare: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'design_be_study' refuses 'formulationsToCompare' (case 12) 1ms
+   → design_be_study formulationsToCompare: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'design_be_study' refuses 'drugName' (case 13) 1ms
+   → design_be_study drugName: expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'assess_dissolution_similarity' refuses 'reference' (case 14) 5ms
+   → assess_dissolution_similarity reference: expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'assess_dissolution_similarity' refuses 'reference.meanDissolved' (case 15) 1ms
+   → assess_dissolution_similarity reference.meanDissolved: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'assess_dissolution_similarity' refuses 'test.timePoints_min' (case 16) 1ms
+   → assess_dissolution_similarity test.timePoints_min: expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'assess_dissolution_similarity' refuses 'reference.rsdPercent' (case 17) 1ms
+   → assess_dissolution_similarity reference.rsdPercent: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'assess_dissolution_similarity' refuses 'unitsPerProduct' (case 18) 1ms
+   → assess_dissolution_similarity unitsPerProduct: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'assess_biowaiver' refuses 'bcsClass' (case 19) 1ms
+   → assess_biowaiver bcsClass: expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'assess_biowaiver' refuses 'framework' (case 20) 1ms
+   → assess_biowaiver framework: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'assess_biowaiver' refuses 'f2' (case 21) 1ms
+   → assess_biowaiver f2: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'assess_biowaiver' refuses 'f2' (case 22) 1ms
+   → assess_biowaiver f2: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'assess_biowaiver' refuses 'doseSolubilityRatioAtPH6_8_mL' (case 23) 1ms
+   → assess_biowaiver doseSolubilityRatioAtPH6_8_mL: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'assess_biowaiver' refuses 'dosageForm' (case 24) 1ms
+   → assess_biowaiver dosageForm: expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'guidance_for_anda' refuses 'bcsClass' (case 25) 1ms
+   → guidance_for_anda bcsClass: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'guidance_for_anda' refuses 'strengths' (case 26) 1ms
+   → guidance_for_anda strengths: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a malformed number, enum, list or text is refused by field, never read > 'guidance_for_anda' refuses 'strengths' (case 27) 1ms
+   → guidance_for_anda strengths: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'classify_bcs' asks for 'highestDoseStrength_mg' (case 1) 1ms
+   → classify_bcs highestDoseStrength_mg: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'design_be_study' asks for 'withinSubjectCV' (case 2) 1ms
+   → design_be_study withinSubjectCV: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'assess_dissolution_similarity' asks for 'reference' (case 3) 1ms
+   → assess_dissolution_similarity reference: expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'assess_biowaiver' asks for 'bcsClass' (case 4) 1ms
+   → assess_biowaiver bcsClass: expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'assess_biowaiver' asks for 'dosageForm' (case 5) 1ms
+   → assess_biowaiver dosageForm: expected { Object (error) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > a required input that is not stated is asked for by name > 'guidance_for_anda' asks for 'activeIngredient' (case 6) 1ms
+   → guidance_for_anda activeIngredient: expected { status: 'computed', …(5) } to match object { status: 'needs_parameters', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > classify_bcs decides no eligibility an unstated drug name or dosage form could change > leaves eligibility and NTI status null without a drug name or form, and says so 1ms
+   → expected { bcsClass: 'I', …(9) } to match object { bcsClass: 'I', …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > classify_bcs decides no eligibility an unstated drug name or dosage form could change > keeps an ineligible class ineligible, and says where an NTI answer came from 2ms
+   → expected { bcsClass: 'I', …(9) } to match object { ntiBasis: StringMatching{…} }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > classify_bcs decides no eligibility an unstated drug name or dosage form could change > does not read a modified-release form as immediate release 1ms
+   → expected true to be false // Object.is equality
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > design_be_study sizes nothing from an unstated NTI status, and says what it defaulted > leaves the criteria and the sample size null with no isNTI and no drug name 3ms
+   → expected { recommendedDesign: { …(14) }, …(10) } to match object { isNTI: null, …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > design_be_study sizes nothing from an unstated NTI status, and says what it defaulted > takes NTI status from the list only when isNTI is not stated, and names a stated false for a listed drug as a conflict 2ms
+   → expected { recommendedDesign: { …(14) }, …(10) } to match object { isNTI: null, …(4) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > design_be_study sizes nothing from an unstated NTI status, and says what it defaulted > sizes the stated power, and computes no sample size for a GMR outside the limits 1ms
+   → expected [ 44, 44, 60, 60 ] to deeply equal [ 44, 50, 60, 76 ]
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > design_be_study sizes nothing from an unstated NTI status, and says what it defaulted > treats a delayed-release, enteric-coated or ER form as modified release 1ms
+   → delayed-release capsule: expected '' to match /Modified-release product/
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > assess_dissolution_similarity reports no pass or fail when f2 is not computed > is null, not false, without a unit count 1ms
+   → expected { f2: NaN, f2Pass: false, …(10) } to match object { f2: null, f2Pass: null, …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > assess_biowaiver decides only what every answer to the unstated facts gives > denies Class II under every framework: ICH M9 has no weak-acid exception 1ms
+   → undefined: expected { eligible: true, …(6) } to match object { decision: 'BIOWAIVER_DENIED', …(1) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > assess_biowaiver decides only what every answer to the unstated facts gives > does not grant Class III to a product that is only rapidly dissolving, whatever its f2 1ms
+   → expected { eligible: true, …(6) } to match object { …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > assess_biowaiver decides only what every answer to the unstated facts gives > does not grant with no NTI answer and no drug name, and names it 1ms
+   → expected { eligible: true, …(6) } to match object { …(2) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > assess_biowaiver decides only what every answer to the unstated facts gives > denies a modified-release form, and names a stated NTI false for a listed drug as a conflict 2ms
+   → extended-release tablet: expected 'BIOWAIVER_GRANTED' to be 'BIOWAIVER_DENIED' // Object.is equality
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > assess_biowaiver decides only what every answer to the unstated facts gives > keeps a decision the stated facts settle, with an omitted f2 outstanding 0ms
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > guidance_for_anda chooses no pathway an unstated sameness fact could change > leaves the pathway not assessed and names the facts 1ms
+   → expected { recommendedPathway: '505b2', …(8) } to match object { …(3) }
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > guidance_for_anda chooses no pathway an unstated sameness fact could change > keeps a pathway the stated facts settle 1ms
+   → expected 'Suitability petition required because…' not to match /different strength/
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > guidance_for_anda chooses no pathway an unstated sameness fact could change > names an unstated BCS class and combination fact, and takes NTI status from the active ingredient as the other worksheets do 0ms
+   → expected 'In vivo BE study required with PK end…' to match /bcsClass is not stated/
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five definitions say what an omitted fact means, within the trimmed length > 'classify_bcs' 1ms
+   → expected 'Classify a drug substance according t…' to match /relay the validation error/
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five definitions say what an omitted fact means, within the trimmed length > 'design_be_study' 0ms
+   → expected 1081 to be less than or equal to 1024
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five definitions say what an omitted fact means, within the trimmed length > 'assess_dissolution_similarity' 0ms
+   → expected 1749 to be less than or equal to 1024
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five definitions say what an omitted fact means, within the trimmed length > 'assess_biowaiver' 0ms
+   → expected 1190 to be less than or equal to 1024
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five definitions say what an omitted fact means, within the trimmed length > 'guidance_for_anda' 0ms
+   → expected 1124 to be less than or equal to 1024
+ × server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five definitions say what an omitted fact means, within the trimmed length > points recorded profiles to compare_recorded_dissolution, and names the input no function reads 1ms
+   → expected 'Compute the f2 similarity factor and …' to match /for recorded profiles use compare_re…/i
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five definitions say what an omitted fact means, within the trimmed length > keeps classify_bcs among the tools selected for "Classify this drug substance under the Biopharmaceutics Classification System" 7ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five definitions say what an omitted fact means, within the trimmed length > keeps design_be_study among the tools selected for "Design a bioequivalence study for a highly variable drug with CV 45%" 4ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five definitions say what an omitted fact means, within the trimmed length > keeps assess_dissolution_similarity among the tools selected for "Compute f2 for these test and reference dissolution profiles" 9ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five definitions say what an omitted fact means, within the trimmed length > keeps assess_biowaiver among the tools selected for "Can we get a biowaiver for our BCS Class III tablet?" 4ms
+ ✓ server/services/ana/__tests__/bioequivalence-unstated-inputs.test.ts > the five definitions say what an omitted fact means, within the trimmed length > keeps guidance_for_anda among the tools selected for "Should we file an ANDA or a 505(b)(2) for our generic?" 3ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 68 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  68 failed | 11 passed (79)

@@ -1,0 +1,12 @@
+# Mutant: the preflight drops REVIEW_REQUIRED and answers every quorum refusal 400
+# in server/services/artifact-approval-act.ts
+# -   return quorum.code ? { httpStatus: 409, code: quorum.code, message: quorum.message } : { httpStatus: 400, message: quorum.message };
+# +   return { httpStatus: 400, message: quorum.message };
+
+ × server/routes/c2c/__tests__/artifact-approval-ceremony.pglite.integration.test.ts > P-95: an artifact is approved only after its review > no reviewer named: refused 409 REVIEW_REQUIRED before the password is verified, nothing written 15ms
+ × server/services/ana-ri/__tests__/ana-signed-artifact-act.pglite.integration.test.ts > P-95: AnA approves an artifact only after its review > no reviewer named: refused REVIEW_REQUIRED, saying where to name one, nothing signed 15ms
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > shared signed-approval preflight: no reviewer named is 409 REVIEW_REQUIRED 10ms
+ × server/services/__tests__/artifact-approval-review-integrity.pglite.test.ts > shared signed-approval preflight: every reviewer withdrawn is 409 REVIEW_REQUIRED 4ms
+ × tests/artifact-status-lock-covers-approval.test.ts > PUT …/status review → approved applies the canonical P12 review quorum > no reviewer named refuses the approval 409 REVIEW_REQUIRED (P-95) and records no approved version 12ms
+ Test Files  4 failed (4)
+      Tests  5 failed | 186 passed (191)

@@ -1,0 +1,60 @@
+# Mutation 1 (post-wire-environment-branch): remove the environment branch at the post-wire write (toDispatchStatus no longer reads the environment)
+# File: server/services/submission-service/submission-service.ts   Run: 2026-11-02T04:17:44Z
+# Expected: refused-step-voids-signature.pglite.test.ts: the staging send of 61 and of 67 is 'sent', not 'pending'
+#
+# REPLACED:
+#     if (environment !== 'production') return 'pending';
+#     if (status === 'rejected' || status === 'validation_failed') return 'rejected';
+# WITH:
+#     if (status === 'rejected' || status === 'validation_failed') return 'rejected';
+
+## The mutation, as applied (diff of the file against its unmutated copy)
+diff --git aa/server/services/submission-service/submission-service.ts bb/server/services/submission-service/submission-service.ts
+index 8cbb6ed3c..9f34e8aab 100644
+--- aa/server/services/submission-service/submission-service.ts
++++ bb/server/services/submission-service/submission-service.ts
+@@ -2346,7 +2346,6 @@ export function resendRefusal(dispatchStatus: string | null | undefined): string
+  * so a value that is neither environment files nothing.
+  */
+ function toDispatchStatus(status: string, environment: string): 'pending' | 'sent' | 'acknowledged' | 'rejected' {
+-  if (environment !== 'production') return 'pending';
+   if (status === 'rejected' || status === 'validation_failed') return 'rejected';
+   if (status === 'ack3_received' || status === 'validation_passed' || status === 'completed') return 'acknowledged';
+   return 'sent';
+
+## Command: npx vitest run server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts
+## Exit: 1
+ ✓ server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a refused freeze voids the signature given for it > refused at its gate, the signature is void; once the gate clears it is refused, and a fresh one freezes 313ms
+ ✓ server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a refused freeze voids the signature given for it > a signature someone else names is not theirs to void 9ms
+ × server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a transmit that sent nothing voids the signature given for it > with no gateway credentials nothing is sent and the signature is void; once credentials exist it is refused, and a fresh one transmits 192ms
+   → expected { transmitted: true, …(8) } to match object { transmitted: true, …(1) }
+ ✓ server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > transmit checks the typed application number against the program record > the precheck refuses a number that contradicts the record, before anyone signs 68ms
+ ✓ server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > transmit checks the typed application number against the program record > a contradicting number is refused 409, nothing is sent, and its signature is void; the recorded number transmits 173ms
+ ✓ server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > transmit names the applicant and the application from the record > the package sent names the organisation as the applicant, never a placeholder 124ms
+ ✓ server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > transmit names the applicant and the application from the record > sequence 64, with no recorded number: the precheck says so before anyone signs, and transmit is refused by name, nothing sent, its signature void 49ms
+ ✓ server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > transmit names the applicant and the application from the record > sequence 65, with no recorded number: the precheck says so before anyone signs, and transmit is refused by name, nothing sent, its signature void 45ms
+ × server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a send to the agency's test environment is not a filing (F1, D7) > a staging send leaves 0000 unfiled to every reader; a fresh signature files it in production, and the fold reads that send 138ms
+   → expected { transmitted: true, …(8) } to match object { transmitted: true, …(1) }
+ ✓ server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a send to the agency's test environment is not a filing (F1, D7) > a staging send that fails after the wire releases the claim and voids its signature; a fresh one files in production 324ms
+ ✓ server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a send to the agency's test environment is not a filing (F1, D7) > a production send that fails after the wire still holds the claim, and its signature is not voided 145ms
+ Test Files  1 failed (1)
+      Tests  2 failed | 9 passed (11)
+ FAIL  server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a transmit that sent nothing voids the signature given for it > with no gateway credentials nothing is sent and the signature is void; once credentials exist it is refused, and a fresh one transmits
+AssertionError: expected { transmitted: true, …(8) } to match object { transmitted: true, …(1) }
+- Expected
++ Received
+-   "dispatchStatus": "pending",
++   "dispatchStatus": "sent",
+ ❯ server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts:255:18
+ FAIL  server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts > a send to the agency's test environment is not a filing (F1, D7) > a staging send leaves 0000 unfiled to every reader; a fresh signature files it in production, and the fold reads that send
+AssertionError: expected { transmitted: true, …(8) } to match object { transmitted: true, …(1) }
+- Expected
++ Received
+-   "dispatchStatus": "pending",
++   "dispatchStatus": "sent",
+ ❯ server/services/submission-service/__tests__/refused-step-voids-signature.pglite.test.ts:379:18
+
+## Restore
+sha256 before mutation: 0f721f9a309e06b19e0fef542faac334f2f5959a2b0cb1e84574a0e22723c1eb
+sha256 after restore:   0f721f9a309e06b19e0fef542faac334f2f5959a2b0cb1e84574a0e22723c1eb
+restored byte for byte: True

@@ -50,7 +50,70 @@ import {
   type ApprovedModel,
 } from '../ai-governance/approved-models.js';
 import { isProductionEnv } from './pii-screen.js';
-import type { GatewayRequest, ModelConfig } from './types';
+import type { GatewayRequest, ModelConfig, QualifiedModelPin } from './types';
+import { createHash } from 'node:crypto';
+import { verifyPqClaim } from '../../eval/pq/pq-verdict.js';
+import { readQualificationAsset, type CanonicalPqEvidence } from '../../eval/pq/verify-pq-record.js';
+
+export type QualifiedPinRefusal = 'invalid-pin' | 'registry-mismatch' | 'use-mismatch' | 'mutable-version' |
+  'pq-not-passed' | 'evidence-mismatch' | 'evidence-invalid' | 'unavailable' | 'streaming' | 'deterministic' | 'served-mismatch';
+export type QualifiedPinEvidenceReader = (controlledReference: string) => { recordText: string; canonicalEvidence?: CanonicalPqEvidence };
+
+/** Only invoked with the exact reference from an immutable registry entry. Never read a request-owned path. */
+export const readQualifiedPinEvidence: QualifiedPinEvidenceReader = reference => {
+  return { recordText: readQualificationAsset(reference) };
+};
+
+/** Strict qualification requires an immutable snapshot, rather than a floating family alias. */
+export function hasConcreteQualifiedPin(entry: ApprovedModel): boolean {
+  if (entry.provider === 'local') return entry.pq.pinKind === 'weights_sha256' && !isNominalPin(entry);
+  return entry.pq.pinKind === 'provider_snapshot' && /(?:-\d{8}|-\d{4}-\d{2}-\d{2}|@\d{8})(?::\d+)?$/.test(entry.pinnedVersion);
+}
+
+export function qualifiedPinFor(entry: ApprovedModel, intendedUse: GatewayRequest['taskType']): QualifiedModelPin {
+  return { id: entry.id, provider: entry.provider, pinnedVersion: entry.pinnedVersion, intendedUse,
+    pqReference: entry.pq.reference ?? '', pqSha256: entry.pq.recordSha256 ?? '' };
+}
+
+type QualifiedPinRequest = Pick<GatewayRequest, 'qualifiedModelPin' | 'taskType' | 'provider' | 'model' | 'riskTier'>;
+function validQualifiedPin(pin: unknown): pin is QualifiedModelPin {
+  if (!pin || typeof pin !== 'object' || Array.isArray(pin) || Object.keys(pin).length !== 6) return false;
+  return ['id', 'provider', 'pinnedVersion', 'intendedUse', 'pqReference', 'pqSha256'].every(key => {
+    const value = (pin as Record<string, unknown>)[key];
+    return typeof value === 'string' && Boolean(value.trim());
+  });
+}
+function pinOverrideConflict(request: QualifiedPinRequest, pin: QualifiedModelPin): boolean {
+  return Boolean((request.provider && request.provider !== pin.provider) ||
+    (request.model && request.model !== pin.id && request.model !== pin.pinnedVersion));
+}
+function qualificationMetadataRefusal(entry: ApprovedModel, pin: QualifiedModelPin, request: QualifiedPinRequest): QualifiedPinRefusal | null {
+  if (pin.intendedUse !== request.taskType || !entry.pq.intendedUses?.includes(pin.intendedUse)) return 'use-mismatch';
+  if (!hasConcreteQualifiedPin(entry)) return 'mutable-version';
+  if (entry.pq.status !== 'passed' || (isHighRiskRequest(request.taskType, request.riskTier) && !entry.approvedForHighRisk)) return 'pq-not-passed';
+  if (!entry.pq.reference || pin.pqReference !== entry.pq.reference || !/^[a-f0-9]{64}$/.test(pin.pqSha256) ||
+      pin.pqSha256 !== entry.pq.recordSha256) return 'evidence-mismatch';
+  return null;
+}
+
+/** Recompute qualification against repository-owned evidence; caller metadata cannot grant approval. */
+export function qualifiedPinRefusal(request: QualifiedPinRequest,
+  entries: readonly ApprovedModel[] = APPROVED_MODELS, readEvidence: QualifiedPinEvidenceReader = readQualifiedPinEvidence): QualifiedPinRefusal | null {
+  const pin = request.qualifiedModelPin;
+  if (!validQualifiedPin(pin)) return 'invalid-pin';
+  const matches = entries.filter(entry => entry.id === pin.id && entry.provider === pin.provider && entry.pinnedVersion === pin.pinnedVersion);
+  const entry = matches.length === 1 ? matches[0] : undefined;
+  if (!entry || pinOverrideConflict(request, pin)) return 'registry-mismatch';
+  const metadataRefusal = qualificationMetadataRefusal(entry, pin, request);
+  if (metadataRefusal) return metadataRefusal;
+  const controlledReference = entry.pq.reference;
+  if (!controlledReference) return 'evidence-mismatch';
+  try {
+    const { recordText, canonicalEvidence } = readEvidence(controlledReference);
+    if (createHash('sha256').update(recordText).digest('hex') !== entry.pq.recordSha256) return 'evidence-mismatch';
+    return verifyPqClaim(entry, () => JSON.parse(recordText), canonicalEvidence).length ? 'evidence-invalid' : null;
+  } catch { return 'evidence-invalid'; }
+}
 
 /** What a production refusal of high-risk drafting says, in these words (ADR-0015 §3). */
 export const NO_PQ_QUALIFIED_MODEL =

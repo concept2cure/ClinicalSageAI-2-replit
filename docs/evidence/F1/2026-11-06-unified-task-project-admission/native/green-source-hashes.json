@@ -1,0 +1,32 @@
+{
+  "exitCode": 0,
+  "sourcesBefore": {
+    "server/routes/unifiedTasks.routes.ts": "22ffcbac88004c33c53dd9cd192d4b641215c1e12de8dc06f8e168a5b6a2e40a",
+    "server/services/unifiedTaskService.ts": "47453b50b459c0cb42b2dc3aa140cd78c2b570671ec12ebb1fc1f8365b993f3b",
+    "server/services/tasking/task-project.ts": "0dc2b50d3fcf9085c9511629dc36402229af98e9097feccb7fa50fd76ebd29ea",
+    "server/routes/taskManagement.routes.ts": "2a88aa5b39137a81e22d3fb4f7d79b194975517819a6ea2079788fbbf5abac0d",
+    "server/services/tasking/create-task.ts": "3eb7998674894f300c47d1b52667b28c5e7fdc10867e9fefbed8025a9aedda3b",
+    "tests/db/workflow-project-admission.dbtest.ts": "57edb92b5c9243804642c6237ea53d984eac5faca202662169de25374b0df187",
+    "tests/db/workflow-project-native-fixture.ts": "bd803bada51bfee27f2f741ed2c7158b4fd1fd1682d6bebb2f4e7bd02c9cfe8a"
+  },
+  "sourcesAfter": {
+    "server/routes/unifiedTasks.routes.ts": "22ffcbac88004c33c53dd9cd192d4b641215c1e12de8dc06f8e168a5b6a2e40a",
+    "server/services/unifiedTaskService.ts": "47453b50b459c0cb42b2dc3aa140cd78c2b570671ec12ebb1fc1f8365b993f3b",
+    "server/services/tasking/task-project.ts": "0dc2b50d3fcf9085c9511629dc36402229af98e9097feccb7fa50fd76ebd29ea",
+    "server/routes/taskManagement.routes.ts": "2a88aa5b39137a81e22d3fb4f7d79b194975517819a6ea2079788fbbf5abac0d",
+    "server/services/tasking/create-task.ts": "3eb7998674894f300c47d1b52667b28c5e7fdc10867e9fefbed8025a9aedda3b",
+    "tests/db/workflow-project-admission.dbtest.ts": "57edb92b5c9243804642c6237ea53d984eac5faca202662169de25374b0df187",
+    "tests/db/workflow-project-native-fixture.ts": "bd803bada51bfee27f2f741ed2c7158b4fd1fd1682d6bebb2f4e7bd02c9cfe8a"
+  },
+  "sourcesUnchanged": true,
+  "command": [
+    "/home/agent/.npm/_npx/52027bd8fc0022aa/node_modules/node/bin/node",
+    "node_modules/vitest/vitest.mjs",
+    "run",
+    "--config",
+    "vitest.db.config.ts",
+    "tests/db/workflow-project-admission.dbtest.ts",
+    "--reporter=verbose"
+  ],
+  "elapsedSeconds": 12.46
+}

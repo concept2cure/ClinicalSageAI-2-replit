@@ -36,14 +36,13 @@
 
 import { writeChainedAuditRow } from '../../auditService';
 import type { DataResidency, ProviderName, SubstrateClass } from '../types';
-import {
-  PLACEMENT_PROVIDERS,
-  PLACEMENT_SUBSTRATES,
-  effectiveAllowedProviders,
-  getOrgPlacementResolver,
-  isProviderExcludedInEnvironment,
-} from './org-placement';
+import { PLACEMENT_PROVIDERS, PLACEMENT_SUBSTRATES, effectiveAllowedProviders,
+  getOrgPlacementResolver, isProviderExcludedInEnvironment } from './org-placement';
 import { isPlacementCompliant, resolvePlacement } from './placement';
+import { createHash, randomUUID } from 'node:crypto';
+import { isImmutableTenantKeyArn, sealTenantPayload, openTenantPayload, type TenantEnvelopeContext } from '../../security/field-encryption';
+import { buildExplicitDerivative, derivativePayloadSha256, reinjectExplicitDerivative, type DerivativeSpan, type DerivativeTransform } from '../../observability/redaction';
+import type { IStorageProvider } from '../../storage/storage-provider';
 
 /** A complete tenant placement policy, as stored. null = no constraint. */
 export interface StoredPlacementPolicy {
@@ -61,12 +60,8 @@ export type PlacementPolicyInput =
 
 const WRITABLE_RESIDENCIES = new Set(['us', 'eu', 'apac', 'on_prem']);
 const POLICY_KEYS = [
-  'residency',
-  'zeroDataRetention',
-  'allowedSubstrates',
-  'allowedProviders',
-  'publicSourceFrontier',
-  'publicSourceEgress',
+  'residency', 'zeroDataRetention', 'allowedSubstrates',
+  'allowedProviders', 'publicSourceFrontier', 'publicSourceEgress',
 ] as const;
 const REASON_MIN = 8;
 const REASON_MAX = 2000;
@@ -84,10 +79,9 @@ function allowListInput<T extends string>(
     };
   }
   const unknown = value.filter(v => typeof v !== 'string' || !valid.has(v as T));
-  if (unknown.length > 0) {
-    return { ok: false, message: `${key} names unknown values: ${unknown.map(String).join(', ')}.` };
-  }
-  return { ok: true, list: [...new Set(value as T[])] };
+  return unknown.length > 0
+    ? { ok: false, message: `${key} names unknown values: ${unknown.map(String).join(', ')}.` }
+    : { ok: true, list: [...new Set(value as T[])] };
 }
 
 /**
@@ -238,9 +232,7 @@ const SELECT_POLICY = `SELECT required_data_residency, zero_data_retention, allo
    FROM ai_placement_policies
   WHERE organization_id = $1`;
 
-interface Queryable {
-  query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
-}
+interface Queryable { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> }
 interface PoolLike extends Queryable {
   connect: () => Promise<Queryable & { release: () => void }>;
 }
@@ -296,15 +288,7 @@ export async function writeOrgPlacementPolicy(
          public_source_frontier  = EXCLUDED.public_source_frontier,
          public_source_egress    = EXCLUDED.public_source_egress,
          updated_at              = NOW()`,
-      [
-        organizationId,
-        policy.residency,
-        policy.zeroDataRetention,
-        policy.allowedSubstrates,
-        policy.allowedProviders,
-        policy.publicSourceFrontier,
-        policy.publicSourceEgress,
-      ],
+      [organizationId, ...POLICY_KEYS.map(key => policy[key])],
     );
     await writeChainedAuditRow(client, {
       tenantId: organizationId,
@@ -325,4 +309,289 @@ export async function writeOrgPlacementPolicy(
   }
   getOrgPlacementResolver().invalidate?.(organizationId);
   return { previousPolicy, policy };
+}
+
+
+/** Managed metadata only. Ciphertext and the candidate residual live in the
+ * existing tenant byte store, never in settings, audit details or tool output. */
+export interface DerivativePolicy { enabled: boolean; kmsKeyArn: string; maxLifetimeSeconds: number; version: number }
+export interface DerivativeUseInput { organizationId: number; userId: number; projectId: number; derivativeId: string }
+export interface DerivativePool extends Queryable { connect(): Promise<Queryable & { release(error?: Error): void }> }
+interface DerivativeRecord extends TenantEnvelopeContext {
+  documentId: string; extractedTextSha256: string; programId: string; version: number;
+  status: 'prepared' | 'attested' | 'revoked'; payloadSha256: string;
+  storage: { provider: string; versionId: string; sha256: string };
+  createdBy: number; attestedBy?: number; attestedAt?: string;
+}
+export interface DerivativeCustodyView { policy: DerivativePolicy | null; records: DerivativeRecord[] }
+interface CustodyState { policy: DerivativePolicy | null; records: Record<string, DerivativeRecord> }
+export type DerivativeAction = { reasonForChange: string } & (
+  | { action: 'derivative_policy'; policy: Omit<DerivativePolicy, 'version'> }
+  | { action: 'derivative_prepare'; projectId: number; documentId: string; template: string; spans: DerivativeSpan[]; expiresInSeconds: number }
+  | { action: 'derivative_review'; projectId: number; derivativeId: string }
+  | { action: 'derivative_attest'; projectId: number; derivativeId: string; payloadSha256: string; expectedVersion: number }
+  | { action: 'derivative_revoke'; projectId: number; derivativeId: string; payloadSha256: string; expectedVersion: number }
+);
+export interface DerivativeReviewView { derivativeId: string; version: number; exactPayload: string; payloadSha256: string; expiresAt: string }
+export interface DerivativeSourceBinding { readonly documentId: string; readonly programId: string; readonly contentHash: string; readonly extractedTextSha256: string; readonly projectId: number }
+export interface AuthorizedDerivativeUse {
+  readonly exactPayload: string; readonly payloadSha256: string; readonly authorityFingerprint: string;
+  readonly originTier: 2; readonly effectiveTier: 1; readonly policyVersion: number;
+  readonly expiresAt: string; readonly derivativeId: string;
+  readonly placementPolicy: StoredPlacementPolicy;
+  readonly sourceBinding: DerivativeSourceBinding;
+}
+export class DerivativeCustodyError extends Error {
+  readonly code = 'DERIVATIVE_USE_REFUSED';
+  readonly status: 400 | 403 | 404 | 409 | 503 = 403;
+  constructor() { super('Current derivative custody, source access or human attestation could not be verified. No derivative content was released.'); this.name = 'DerivativeCustodyError'; }
+}
+function derivativeDenied(): never { throw new DerivativeCustodyError(); }
+const positive = (v: unknown): v is number => typeof v === 'number' && Number.isSafeInteger(v) && v > 0;
+const uuid = (v: unknown): v is string => typeof v === 'string' && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(v);
+const sha = (v: unknown): v is string => typeof v === 'string' && /^[a-f0-9]{64}$/.test(v);
+const object = (v: unknown): Record<string, any> => v && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, any> : derivativeDenied();
+function policyOf(value: unknown): DerivativePolicy {
+  const v = object(value);
+  if (typeof v.enabled !== 'boolean' || !isImmutableTenantKeyArn(v.kmsKeyArn) || !positive(v.version) ||
+      !positive(v.maxLifetimeSeconds) || v.maxLifetimeSeconds > 86400) derivativeDenied();
+  return { enabled: v.enabled, kmsKeyArn: v.kmsKeyArn, version: v.version, maxLifetimeSeconds: v.maxLifetimeSeconds };
+}
+function recordLifecycle(v: Record<string, any>): void {
+  if (!['prepared', 'attested', 'revoked'].includes(v.status) || typeof v.expiresAt !== 'string' || !Number.isFinite(Date.parse(v.expiresAt))) derivativeDenied();
+  if (v.status === 'attested' && (!positive(v.attestedBy) || typeof v.attestedAt !== 'string' || !Number.isFinite(Date.parse(v.attestedAt)))) derivativeDenied();
+}
+function recordOf(value: unknown, id: string): DerivativeRecord {
+  const v = object(value);
+  const keys = ['organizationId', 'projectId', 'derivativeId', 'sourceHash', 'policyVersion', 'expiresAt', 'documentId',
+    'extractedTextSha256', 'programId', 'version', 'status', 'payloadSha256', 'storage', 'createdBy', 'attestedBy', 'attestedAt'];
+  if (Object.keys(v).some(key => !keys.includes(key))) derivativeDenied();
+  if (!uuid(id) || v.derivativeId !== id || !uuid(v.documentId) || !uuid(v.programId) ||
+      ![v.organizationId, v.projectId, v.policyVersion, v.version, v.createdBy].every(positive) ||
+      !sha(v.sourceHash) || !sha(v.extractedTextSha256) || !sha(v.payloadSha256)) derivativeDenied();
+  const storage = object(v.storage);
+  if (!sha(storage.sha256) || !uuid(storage.versionId) || !['local', 's3'].includes(storage.provider)) derivativeDenied();
+  recordLifecycle(v);
+  return v as DerivativeRecord;
+}
+function custodyOf(settings: unknown): CustodyState {
+  const raw = object(settings ?? {}).derivativeCustody;
+  if (raw === undefined) return { policy: null, records: {} };
+  const v = object(raw), entries = Object.entries(object(v.records));
+  if (entries.length > 1000) derivativeDenied();
+  return { policy: v.policy === null ? null : policyOf(v.policy), records: Object.fromEntries(entries.map(([id, record]) => [id, recordOf(record, id)])) };
+}
+const custodyCopy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
+const derivativeActionId = (action: DerivativeAction, prepared?: DerivativeRecord): string | undefined =>
+  'derivativeId' in action ? action.derivativeId : prepared?.derivativeId;
+function custodyAuditDetails(state: CustodyState, prior: { policy: DerivativePolicy | null; record: DerivativeRecord | null }, id?: string) {
+  return { previousPolicy: prior.policy, policy: state.policy, previousRecord: prior.record, record: id ? state.records[id] : null };
+}
+function derivativeActionFields(b: Record<string, any>): void {
+  if (b.action === 'derivative_policy') {
+    if (Object.keys(object(b.policy)).some(k => !['enabled', 'kmsKeyArn', 'maxLifetimeSeconds'].includes(k))) derivativeDenied();
+    policyOf({ ...b.policy, version: 1 }); return;
+  }
+  if (!positive(b.projectId)) derivativeDenied();
+  if (b.action === 'derivative_prepare') {
+    if (!uuid(b.documentId) || typeof b.template !== 'string' || !Array.isArray(b.spans) || !positive(b.expiresInSeconds)) derivativeDenied();
+    return;
+  }
+  if (!uuid(b.derivativeId)) derivativeDenied();
+  if (b.action === 'derivative_review') return;
+  if (!positive(b.expectedVersion) || !sha(b.payloadSha256)) derivativeDenied();
+}
+export function parseDerivativeAction(body: unknown): DerivativeAction {
+  const b = object(body);
+  if (typeof b.reasonForChange !== 'string' || b.reasonForChange.trim().length < 8 || b.reasonForChange.length > 2000) derivativeDenied();
+  const keys: Record<string, string[]> = {
+    derivative_policy: ['policy'], derivative_prepare: ['projectId', 'documentId', 'template', 'spans', 'expiresInSeconds'],
+    derivative_review: ['projectId', 'derivativeId'], derivative_attest: ['projectId', 'derivativeId', 'payloadSha256', 'expectedVersion'],
+    derivative_revoke: ['projectId', 'derivativeId', 'payloadSha256', 'expectedVersion'],
+  };
+  const allowed = typeof b.action === 'string' && Object.prototype.hasOwnProperty.call(keys, b.action) ? keys[b.action] : undefined;
+  if (!allowed || Object.keys(b).some(k => !['action', 'reasonForChange', ...allowed].includes(k)) || allowed.some(k => !(k in b))) derivativeDenied();
+  derivativeActionFields(b);
+  return JSON.parse(JSON.stringify(b)) as DerivativeAction;
+}
+async function loadCustody(q: Queryable, orgId: number, lock = false): Promise<{ settings: Record<string, any>; state: CustodyState }> {
+  if (!positive(orgId)) derivativeDenied();
+  const { rows } = lock
+    ? await q.query("SELECT settings FROM organizations WHERE id=$1 AND status='active' FOR UPDATE", [orgId])
+    : await q.query("SELECT settings FROM organizations WHERE id=$1 AND status='active'", [orgId]);
+  if (rows.length !== 1) derivativeDenied();
+  const state = custodyOf(rows[0].settings);
+  if (Object.values(state.records).some(record => record.organizationId !== orgId)) derivativeDenied();
+  return { settings: object(rows[0].settings ?? {}), state };
+}
+export async function readDerivativeCustody(q: Queryable, orgId: number): Promise<DerivativeCustodyView> {
+  const { state } = await loadCustody(q, orgId);
+  return { policy: state.policy, records: Object.values(state.records) };
+}
+async function currentSource(input: DerivativeUseInput, documentId: string) {
+  const { loadDocumentForActor } = await import('../../vault/document-catalog.service');
+  const doc = await loadDocumentForActor({ organizationId: input.organizationId, userId: input.userId, projectId: input.projectId, documentId }, { includeText: true, currentOnly: true });
+  if (!doc || doc.organizationId !== input.organizationId || doc.admittedScope.projectId !== input.projectId ||
+      doc.classification !== 'CONFIDENTIAL' || !doc.isCurrent || !doc.sourceAccess.currentUseEligible ||
+      typeof doc.extractedText !== 'string' || !doc.extractedText || !sha(doc.contentHash) || !sha(doc.extractedTextSha256)) derivativeDenied();
+  return doc;
+}
+function currentRecord(state: CustodyState, input: DerivativeUseInput, status?: 'attested'): DerivativeRecord {
+  const record = state.records[input.derivativeId];
+  if (!positive(input.userId) || !positive(input.projectId) || !record || record.organizationId !== input.organizationId ||
+      record.projectId !== input.projectId || !state.policy?.enabled || record.policyVersion !== state.policy.version ||
+      Date.parse(record.expiresAt) <= Date.now() || record.status === 'revoked' || (status && record.status !== status)) derivativeDenied();
+  return record;
+}
+async function checkSource(record: DerivativeRecord, input: DerivativeUseInput): Promise<void> {
+  const source = await currentSource(input, record.documentId);
+  if (source.contentHash !== record.sourceHash || source.extractedTextSha256 !== record.extractedTextSha256 || source.programId !== record.programId) derivativeDenied();
+}
+async function byteStore(provider?: string): Promise<IStorageProvider> {
+  const { getStorageProviderFor } = await import('../../storage/index');
+  return getStorageProviderFor(provider);
+}
+async function openCandidate(state: CustodyState, record: DerivativeRecord): Promise<DerivativeTransform> {
+  const stored = await (await byteStore(record.storage.provider)).get(record.storage.versionId, record.organizationId);
+  if (!stored || stored.sha256 !== record.storage.sha256 || derivativePayloadSha256(stored.bytes.toString('utf8')) !== record.storage.sha256) derivativeDenied();
+  const transform = JSON.parse(await openTenantPayload(stored.bytes.toString('utf8'), record, state.policy!.kmsKeyArn));
+  if (!transform || typeof transform.payload !== 'string' || transform.payloadSha256 !== record.payloadSha256 ||
+      derivativePayloadSha256(transform.payload) !== record.payloadSha256 || !Array.isArray(transform.tokens)) derivativeDenied();
+  reinjectExplicitDerivative(transform.payload, transform);
+  return transform;
+}
+async function assertCustodyAdmin(q: Queryable, orgId: number, userId: number): Promise<void> {
+  const { resolveSignerOrgRole } = await import('../../part11/resolve-signer-role');
+  const role = await resolveSignerOrgRole(userId, orgId, q);
+  if (!role || !['admin', 'owner'].includes(role)) derivativeDenied();
+}
+async function prepareRecord(q: Queryable, state: CustodyState, orgId: number,
+  action: Extract<DerivativeAction, { action: 'derivative_prepare' }>, actor: PlacementPolicyActor): Promise<DerivativeRecord> {
+  if (!state.policy?.enabled || action.expiresInSeconds > state.policy.maxLifetimeSeconds || Object.keys(state.records).length >= 1000) derivativeDenied();
+  const derivativeId = randomUUID(), input = { organizationId: orgId, userId: actor.userId, projectId: action.projectId, derivativeId };
+  const doc = await currentSource(input, action.documentId);
+  const transform = buildExplicitDerivative(doc.extractedText!, action.template, action.spans);
+  const identity = { organizationId: orgId, projectId: action.projectId, derivativeId, sourceHash: doc.contentHash,
+    policyVersion: state.policy.version, expiresAt: new Date(Date.now() + action.expiresInSeconds * 1000).toISOString() };
+  const envelope = await sealTenantPayload(JSON.stringify(transform), identity, state.policy.kmsKeyArn);
+  await assertCustodyAdmin(q, orgId, actor.userId);
+  const stored = await (await byteStore()).put({ orgId, projectId: String(action.projectId), filename: `${derivativeId}.custody`,
+    bytes: Buffer.from(envelope), mime: 'application/octet-stream', metadata: { purpose: 'encrypted-derivative-custody' } });
+  return { ...identity, documentId: doc.id, programId: doc.programId, extractedTextSha256: doc.extractedTextSha256!,
+    payloadSha256: transform.payloadSha256, status: 'prepared', version: 1, createdBy: actor.userId,
+    storage: { provider: stored.provider, versionId: stored.vaultVersionId, sha256: stored.sha256 } };
+}
+async function changeExistingDerivative(state: CustodyState, orgId: number,
+  action: Exclude<DerivativeAction, { action: 'derivative_policy' | 'derivative_prepare' }>, actor: PlacementPolicyActor): Promise<DerivativeReviewView | undefined> {
+  const input = { organizationId: orgId, userId: actor.userId, projectId: action.projectId, derivativeId: action.derivativeId };
+  const record = action.action === 'derivative_revoke' ? state.records[action.derivativeId] : currentRecord(state, input);
+  if (!record || record.organizationId !== orgId || record.projectId !== action.projectId) derivativeDenied();
+  if (action.action === 'derivative_revoke') {
+    if (record.version !== action.expectedVersion || record.payloadSha256 !== action.payloadSha256) derivativeDenied();
+    record.status = 'revoked'; record.version += 1; return;
+  }
+  await checkSource(record, input);
+  const candidate = await openCandidate(state, record);
+  await checkSource(record, input);
+  if (action.action === 'derivative_review') return { derivativeId: record.derivativeId, version: record.version,
+    exactPayload: candidate.payload, payloadSha256: record.payloadSha256, expiresAt: record.expiresAt };
+  if (record.version !== action.expectedVersion || record.payloadSha256 !== action.payloadSha256) derivativeDenied();
+  record.status = 'attested'; record.attestedBy = actor.userId; record.attestedAt = new Date().toISOString(); record.version += 1;
+}
+/** Root route supplies current canonical admin + fresh human reauthentication.
+ * A request body's reviewer/model labels never become authority here. */
+export async function manageDerivativeCustody(pool: DerivativePool, orgId: number, raw: DerivativeAction,
+  actor: PlacementPolicyActor): Promise<DerivativeCustodyView | DerivativeReviewView> {
+  const action = parseDerivativeAction(raw), q = await pool.connect();
+  let orphan: DerivativeRecord | undefined;
+  let commitAttempted = false;
+  let discardConnection: Error | undefined;
+  try {
+    await q.query('BEGIN');
+    const { settings, state } = await loadCustody(q, orgId, true);
+    await assertCustodyAdmin(q, orgId, actor.userId);
+    const prior = { policy: custodyCopy(state.policy), record: custodyCopy(state.records[derivativeActionId(action) ?? ''] ?? null) };
+    let review: DerivativeReviewView | undefined;
+    if (action.action === 'derivative_policy') state.policy = { ...action.policy, version: (state.policy?.version ?? 0) + 1 };
+    else if (action.action === 'derivative_prepare') {
+      orphan = await prepareRecord(q, state, orgId, action, actor); state.records[orphan.derivativeId] = orphan;
+      await checkSource(orphan, { organizationId: orgId, userId: actor.userId, projectId: action.projectId, derivativeId: orphan.derivativeId });
+    } else review = await changeExistingDerivative(state, orgId, action, actor);
+    await assertCustodyAdmin(q, orgId, actor.userId);
+    if (!review) await q.query('UPDATE organizations SET settings=$2::jsonb WHERE id=$1', [orgId, JSON.stringify({ ...settings, derivativeCustody: state })]);
+    const recordId = derivativeActionId(action, orphan);
+    await writeChainedAuditRow(q, { tenantId: orgId, userId: actor.userId, action: action.action, resourceType: 'derivative_custody',
+      resourceId: recordId ?? String(orgId), reason: action.reasonForChange, details: custodyAuditDetails(state, prior, recordId) });
+    commitAttempted = true;
+    await q.query('COMMIT'); orphan = undefined;
+    return review ?? { policy: state.policy, records: Object.values(state.records) };
+  } catch {
+    if (commitAttempted) {
+      // The database may have committed before the acknowledgement was lost.
+      // Keep its encrypted object and let an authoritative reread resolve the outcome.
+      discardConnection = new Error('Derivative custody commit acknowledgement unavailable');
+      throw discardConnection;
+    }
+    await q.query('ROLLBACK').catch(() => undefined);
+    if (orphan) {
+      try { await (await byteStore(orphan.storage.provider)).delete(orphan.storage.versionId, orgId); } catch { /* Encrypted orphan has no issued authority. */ }
+    }
+    derivativeDenied();
+  } finally { q.release(discardConnection); }
+}
+const issuedDerivatives = new WeakMap<AuthorizedDerivativeUse, { input: DerivativeUseInput; transform: DerivativeTransform }>();
+async function freshDerivativePlacement(pool: Queryable, orgId: number): Promise<StoredPlacementPolicy> {
+  const policy = await readOrgPlacementPolicy(pool, orgId);
+  if (!policy || !parsePlacementPolicyInput({ ...policy, reasonForChange: 'Verify current derivative placement' }).ok) derivativeDenied();
+  return policy;
+}
+function immutablePlacement(policy: StoredPlacementPolicy): StoredPlacementPolicy {
+  if (policy.allowedProviders) Object.freeze(policy.allowedProviders);
+  if (policy.allowedSubstrates) Object.freeze(policy.allowedSubstrates);
+  return Object.freeze(policy);
+}
+const authorityHash = (policy: DerivativePolicy | null, record: DerivativeRecord, placementPolicy: StoredPlacementPolicy): string =>
+  createHash('sha256').update(JSON.stringify({ policy, record, placementPolicy })).digest('hex');
+async function checkedCandidate(pool: Queryable, input: DerivativeUseInput) {
+  const { state } = await loadCustody(pool, input.organizationId), record = currentRecord(state, input, 'attested');
+  await checkSource(record, input);
+  const transform = await openCandidate(state, record);
+  await checkSource(record, input);
+  const placementPolicy = await freshDerivativePlacement(pool, input.organizationId);
+  return { transform, record, placementPolicy, fingerprint: authorityHash(state.policy, record, placementPolicy) };
+}
+export async function authorizeDerivativeUse(pool: DerivativePool, input: DerivativeUseInput): Promise<AuthorizedDerivativeUse> {
+  try {
+    const pinned = { ...input }, candidate = await checkedCandidate(pool, pinned);
+    const issued: AuthorizedDerivativeUse = Object.freeze({ exactPayload: candidate.transform.payload, payloadSha256: candidate.record.payloadSha256,
+      authorityFingerprint: candidate.fingerprint, originTier: 2, effectiveTier: 1, policyVersion: candidate.record.policyVersion,
+      expiresAt: candidate.record.expiresAt, derivativeId: candidate.record.derivativeId, placementPolicy: immutablePlacement(candidate.placementPolicy),
+      sourceBinding: Object.freeze({ documentId: candidate.record.documentId, programId: candidate.record.programId, contentHash: candidate.record.sourceHash,
+        extractedTextSha256: candidate.record.extractedTextSha256, projectId: candidate.record.projectId }) });
+    issuedDerivatives.set(issued, { input: pinned, transform: candidate.transform });
+    await recheckDerivativeUse(pool, pinned, issued);
+    return issued;
+  } catch { return derivativeDenied(); }
+}
+export async function recheckDerivativeUse(pool: DerivativePool, input: DerivativeUseInput, issued: AuthorizedDerivativeUse): Promise<void> {
+  try {
+    const held = issuedDerivatives.get(issued);
+    if (!held || JSON.stringify(held.input) !== JSON.stringify(input)) derivativeDenied();
+    const now = await checkedCandidate(pool, held.input);
+    if (now.fingerprint !== issued.authorityFingerprint || now.transform.payloadSha256 !== issued.payloadSha256) derivativeDenied();
+    const final = await loadCustody(pool, input.organizationId);
+    const record = currentRecord(final.state, input, 'attested');
+    const placementPolicy = await freshDerivativePlacement(pool, input.organizationId);
+    if (authorityHash(final.state.policy, record, placementPolicy) !== issued.authorityFingerprint) derivativeDenied();
+    await checkSource(record, held.input);
+  } catch { derivativeDenied(); }
+}
+export async function reinjectAndVerifyDerivative(pool: DerivativePool, input: DerivativeUseInput,
+  issued: AuthorizedDerivativeUse, modelText: string): Promise<{ content: string; verification: { kind: 'deterministic_token_roundtrip'; derivativeId: string; payloadSha256: string } }> {
+  await recheckDerivativeUse(pool, input, issued);
+  const held = issuedDerivatives.get(issued) ?? derivativeDenied();
+  let content: string;
+  try { content = reinjectExplicitDerivative(modelText, held.transform); } catch { return derivativeDenied(); }
+  await recheckDerivativeUse(pool, input, issued);
+  return { content, verification: { kind: 'deterministic_token_roundtrip', derivativeId: issued.derivativeId, payloadSha256: issued.payloadSha256 } };
 }

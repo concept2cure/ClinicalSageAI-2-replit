@@ -65,8 +65,7 @@ export class BoxConnector implements DataConnector {
     });
 
     if (!res.ok) {
-      const err = await res.text();
-      throw new Error(`Box token refresh failed: ${res.status} ${err.slice(0, 200)}`);
+      throw new Error(`Box token refresh failed: ${res.status}`);
     }
 
     const data = await res.json() as { access_token: string; expires_in: number };
@@ -82,8 +81,7 @@ export class BoxConnector implements DataConnector {
       headers: { Authorization: `Bearer ${this.accessToken}` },
     });
     if (!res.ok) {
-      const err = await res.text();
-      throw new Error(`Box API error: ${res.status} ${err.slice(0, 200)}`);
+      throw new Error(`Box API error: ${res.status}`);
     }
     return res.json() as Promise<Record<string, unknown>>;
   }
@@ -247,8 +245,7 @@ export class BoxConnector implements DataConnector {
     });
 
     if (!res.ok) {
-      const err = await res.text();
-      throw new Error(`Box upload failed: ${res.status} ${err.slice(0, 200)}`);
+      throw new Error(`Box upload failed: ${res.status}`);
     }
 
     const data = await res.json() as { entries?: Array<{ id: string }> };

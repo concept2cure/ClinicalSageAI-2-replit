@@ -172,7 +172,8 @@ describe('private project access remains required for reporting', () => {
     h.queued.select.push([DIGEST], [HLV]);
     const res = await request(app).post('/api/report-os/runs').set('x-test-role', 'member').send({ scopeType: 'project', scopeId: '11', reportTypeId: DIGEST.typeId });
     expect(res.status).toBe(404);
-    expect(x.scopeAccess).toHaveBeenCalledWith(7, { userId: 5, role: 'member' }, expect.objectContaining({ scopeType: 'project', scopeId: '11' }), undefined, [11,12]);
+    expect(x.scopeAccess).toHaveBeenCalledWith(7, { userId: 5, role: 'member' }, expect.objectContaining({ scopeType: 'project', scopeId: '11' }), undefined,
+      expect.objectContaining({ accessibleIds: [11,12] }));
     expect(h.compute).not.toHaveBeenCalled();
     expect(h.audit).not.toHaveBeenCalled();
   });
@@ -267,7 +268,8 @@ describe('saved report detail and history', () => {
     expect(res.status).toBe(200);
     expect(res.body.data).toMatchObject({ id: 52, reportTypeLabel: DIGEST.label, computedScope: 'project', scopeLabel: HLV.name });
     const index = h.statements.findIndex(sql => /WITH matching_runs/.test(sql));
-    expect(h.params[index]).toEqual([7, [11,12], true, 52, 1, 0]);
+    expect(h.params[index]).toEqual([7, [], [11,12], true, 52, 1, 0]);
+    expect(h.statements.slice(0, index).some(sql => sql.includes('qualityEvidence') && sql.includes('FOR SHARE'))).toBe(true);
     expect(h.statements[0]).toBe('BEGIN');
     expect(h.statements[1]).toMatch(/current_tenant_id/);
     expect(h.params[1]).toEqual(['7']);
@@ -283,7 +285,7 @@ describe('saved report detail and history', () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ data: [], meta: { limit: 5, offset: 10, total: 0, hasMore: false } });
     const index = h.statements.findIndex(sql => /WITH matching_runs/.test(sql));
-    expect(h.params[index]).toEqual([7, [11,12], true, '%EU%', 5, 10]);
+    expect(h.params[index]).toEqual([7, [], [11,12], true, '%EU%', 5, 10]);
     expect(h.statements[index]).toContain('ORDER BY "reportTypeLabel" ASC');
   });
 });
@@ -304,6 +306,37 @@ describe('a run computed with no blocker', () => {
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(res.body.data.status).toBe('partial');
     expect(JSON.stringify(res.body.data.sections)).not.toMatch(/Status: final/);
+  });
+});
+
+/*
+ * Finalize was offered on every run below final. On a run the gate holds below
+ * final, the person chose a meaning, wrote a reason and typed a password, and
+ * only then read "Cannot mark final: 23 critical blocker(s) present" (Reporting
+ * use walk, 2026-11-09). The rendered read now says whether the run can be
+ * finalized, from the same evaluation the finalize route makes
+ * (buildRenderedFromRun with a final request), so the screen can say why before
+ * asking for a signature.
+ */
+describe('the rendered read says whether the run can be finalized', () => {
+  it('a run with critical blockers cannot, and says why in the finalize route\'s own words', async () => {
+    const held = { ...RUN, status: 'partial', blockers: ['Form FDA 1572 missing', 'Cover letter missing'],
+      dependencySummary: { providers: [], summary: {}, criticalBlockers: ['Form FDA 1572 missing', 'Cover letter missing'] } };
+    h.queued.select.push([held], [{ label: 'Executive Readiness Digest', truthfulnessRules: { allowPartial: true, forbidFinalIfMissingCritical: true } }]);
+    h.respond.fn = (sql) => (/FROM report_runs/.test(sql) ? [{ status: 'partial' }] : []);
+    const res = await request(app).get(`/api/report-os/runs/${RUN.id}/rendered`);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.finalEligibility).toEqual({ eligible: false, reasons: ['Cannot mark final: 2 critical blocker(s) present.'] });
+    // The report itself still reads as the partial it is.
+    expect(res.body.data.status).toBe('partial');
+  });
+
+  it('a run with nothing holding it can', async () => {
+    const completed = { ...RUN, reportTypeId: SEND.typeId, status: 'completed', blockers: [] as string[] };
+    h.queued.select.push([completed], [{ label: SEND.label, truthfulnessRules: { allowPartial: true, requireBlockers: true } }]);
+    h.respond.fn = (sql) => (/FROM report_runs/.test(sql) ? [{ status: 'completed' }] : []);
+    const res = await request(app).get(`/api/report-os/runs/${RUN.id}/rendered`);
+    expect(res.body.finalEligibility).toEqual({ eligible: true, reasons: [] });
   });
 });
 

@@ -40,6 +40,7 @@ import {
 } from './changeData';
 import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../v2/surfaceActions';
 import { usePublishSurfaceContext } from '../v2/surfaceContext';
+import { WorkProjectTasks } from '../v2/surfaces/ProjectWorkTasks';
 
 /** Stable identity for an unread register, so memo deps do not churn. */
 const NO_CHANGES: ChangeControlRow[] = [];
@@ -372,6 +373,8 @@ export function QualityApp({ onAskAna, onNavigate, initialTab = 'sop',qmsDocumen
                 <p className="ph-sub">Controlled documents and their training, change control, CAPA and the other quality records.</p>
               </div>
             </header>
+            {/* P-111: opened from a Quality work project's door, its tasks under the title, above the registers. */}
+            <WorkProjectTasks area="quality" />
             <div className="sp-starters" data-layout="row" role="group" aria-label="Ask AnA">
               {qualityStarters(tab).map((s) => (
                 <button key={s.label} type="button" className="sp-starter" onClick={() => onAsk(s.prompt)}>

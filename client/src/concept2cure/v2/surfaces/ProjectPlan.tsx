@@ -13,7 +13,8 @@
  *   · a device or diagnostic filing: its workstreams (ProjectMdxWorkflow, which
  *     sat above the steps until this pass), each opening its existing feature.
  * Each item can be assigned to a person with a due date (PlanAssign.tsx), and
- * the team and the project's tasks follow, moved here from Author.
+ * the project's tasks follow, moved here from Author. The team left Plan on 2026-11-06 (D3-3): it is the
+ * Team card in Project knowledge, on every step, and the Team drawer it opens.
  *
  * S11 step 4 (THE_PROGRAM §3.5, §8): the step opens with what is due for the
  * signed-in person in this project's plan, and each IND document says the
@@ -97,7 +98,7 @@ function usePlanReads(pid: string, prog: { target_submission_date?: string | nul
 }
 
 export function ProjectPlan({ pid, prog, usInd, cmcComposes, deviceFiling, otherFilings, marketsState, projectId,
-  available, onNav, onStage, onAsk, onOpenDocument, team, tasks }: {
+  available, onNav, onStage, onAsk, onOpenDocument, onWorkChanged, tasks }: {
   pid: string;
   /** The verified project read (ProjectHome `prog`), for the device plan and the target date. */
   prog: (MdxWorkflowProject & { target_submission_date?: string | null; registry_id?: string | null; submission_type_id?: string | null }) | null;
@@ -113,14 +114,16 @@ export function ProjectPlan({ pid, prog, usInd, cmcComposes, deviceFiling, other
   onStage: (id: string) => void;
   onAsk: (text: string) => void;
   onOpenDocument: (docId: string) => void;
-  team: React.ReactNode;
+  /** The page's unified-work read is read again after an assignment (D3-2b: it is lifted, so a remount no longer re-reads it). */
+  onWorkChanged?: () => void;
   tasks: React.ReactNode;
 }) {
   const [epoch, setEpoch] = useState(0);
+  const assigned = () => { setEpoch(value => value + 1); onWorkChanged?.(); };
   const { assignments, pyramid, assignmentOf, dueForYou } = usePlanReads(pid, prog, epoch);
   const assignAction = (deliverable: PlanDeliverable) => (
     <AssignAction deliverable={deliverable} programId={pid} projectId={projectId} assigned={assignments.byDeliverable.has(deliverable.id)}
-      onAssigned={() => setEpoch(value => value + 1)} />
+      onAssigned={assigned} />
   );
   const devicePlan = deviceFiling && prog ? mdxProjectPlan(prog, otherFilings) : null;
   const biotech = biotechPlanEntry(prog, pid);
@@ -174,12 +177,12 @@ export function ProjectPlan({ pid, prog, usInd, cmcComposes, deviceFiling, other
       {/* The filing's work breakdown with this project's progress (S11): beside what the filing needs, the work
           that produces it, phase by phase, with its critical path. */}
       {prog && <ProjectProgramPlan programId={pid} read={pyramid} projectId={projectId} workstreamNote={deviceWorkstreamNote(devicePlan)} owners={assignments.byPyramidTask}
-        ownersUnread={Boolean(assignments.error)} onAssigned={() => setEpoch(value => value + 1)}
+        ownersUnread={Boolean(assignments.error)} onAssigned={assigned}
         onNav={onNav} onAsk={onAsk} />}
-      {prog && <FilingLifecycleReference filingId={prog.submission_type_id} recorded={{ programType: prog.program_type, primaryAgency: prog.primary_agency }} />}
-      {team}
-      {/* Read again after each Assign, so the new task is listed without a reload. */}
+      {/* Tasks and approvals, by due date, before the reference (D3-4, D3.md §4.7 Plan item 1). Read again after each
+          Assign, so the new task is listed without a reload. */}
       <React.Fragment key={epoch}>{tasks}</React.Fragment>
+      {prog && <FilingLifecycleReference filingId={prog.submission_type_id} recorded={{ programType: prog.program_type, primaryAgency: prog.primary_agency }} />}
     </div>
   );
 }

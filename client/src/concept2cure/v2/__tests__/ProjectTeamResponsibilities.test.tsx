@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import type { ProjectTeamMember, ProjectTeamResponse } from '@shared/project-team';
 import type { DataState } from '../dataConnect';
-import { ProjectTeamResponsibilities } from '../surfaces/ProjectTeamResponsibilities';
+import { PROJECT_TEAM_AUTHORITY_NOTE, ProjectTeamResponsibilities } from '../surfaces/ProjectTeamResponsibilities';
 
 const PID = '11111111-1111-4111-8111-111111111111';
 const members: ProjectTeamMember[] = [
@@ -54,6 +54,15 @@ describe('project responsibility panel', () => {
     expect(screen.getByText('None recorded')).toBeTruthy();
     expect(screen.getByText('Project creator')).toBeTruthy();
     expect(screen.queryByText('Project owner', { exact: true })).toBeNull();
+  });
+
+  /* D3-3: the Team drawer says the authority note once, as its governance box, so the list inside it does not. */
+  it('states the authority note by default, and not when the drawer says it (showNote false)', () => {
+    const view = render(<ProjectTeamResponsibilities programId={PID} state={state()} />);
+    expect(screen.getByText(PROJECT_TEAM_AUTHORITY_NOTE)).toBeTruthy();
+    view.rerender(<ProjectTeamResponsibilities programId={PID} state={state()} showNote={false} />);
+    expect(screen.queryByText(PROJECT_TEAM_AUTHORITY_NOTE)).toBeNull();
+    expect(screen.getByRole('list', { name: 'Recorded project team' })).toBeTruthy();
   });
 
   it('announces loading and a verified empty roster distinctly', () => {

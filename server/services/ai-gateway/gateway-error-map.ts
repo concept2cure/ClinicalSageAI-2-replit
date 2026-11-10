@@ -18,8 +18,11 @@ import {
 import { GatewayContextWindowError } from './context-budget';
 import { isTenantPlacementRefusal } from './gateway-outcome';
 import { NO_PQ_QUALIFIED_MODEL } from './model-governance';
+import { APPROVED_MODELS } from '../ai-governance/approved-models';
 
 export type GatewayErrorCode =
+  | 'OWNER_PRIVATE_CONTEXT_UNAVAILABLE'
+  | 'DERIVATIVE_USE_REFUSED'
   | 'SOURCE_CONTEXT_UNAVAILABLE'
   | 'PLACEMENT_REFUSED'
   | 'MODEL_NOT_QUALIFIED'
@@ -42,6 +45,8 @@ export interface ClassifiedGatewayError {
  * submissions.ts and ectd-documents.ts predate this export and agree with it.
  */
 export const GATEWAY_ERROR_HTTP_STATUS: Readonly<Record<GatewayErrorCode, number>> = {
+  OWNER_PRIVATE_CONTEXT_UNAVAILABLE: 409,
+  DERIVATIVE_USE_REFUSED: 403,
   SOURCE_CONTEXT_UNAVAILABLE: 409,
   // Not an outage: the organization's own policy excludes every lane that
   // could serve the request, and retrying cannot change that.
@@ -100,8 +105,14 @@ export function classifyGatewayError(
   if (err instanceof GatewayNoProviderError) {
     return { code: 'PROVIDER_UNAVAILABLE', message: 'No AI provider is available to handle this request.' };
   }
+  if (err instanceof GatewayPolicyError && (err as { code?: unknown }).code === 'OWNER_PRIVATE_CONTEXT_UNAVAILABLE') {
+    return { code: 'OWNER_PRIVATE_CONTEXT_UNAVAILABLE', message: 'Private context or encrypted capture could not be verified. Check the current session and private custody configuration before retrying.' };
+  }
   if (err instanceof GatewayPolicyError && (err as { code?: unknown }).code === 'SOURCE_CONTEXT_UNAVAILABLE') {
     return { code: 'SOURCE_CONTEXT_UNAVAILABLE', message: 'Selected project sources changed or are no longer available. Check project access and current source versions before retrying this section.' };
+  }
+  if (err instanceof GatewayPolicyError && (err as { code?: unknown }).code === 'DERIVATIVE_USE_REFUSED') {
+    return { code: 'DERIVATIVE_USE_REFUSED', message: 'The approved derivative, its source access or its local verification is no longer valid. Review current custody and approval before drafting again.' };
   }
   const refusal = classifyPolicyRefusal(err);
   if (refusal) return refusal;
@@ -212,8 +223,9 @@ function classifyPolicyRefusal(err: unknown): ClassifiedGatewayError | null {
       code: 'MODEL_NOT_QUALIFIED',
       message:
         'No model approved for regulatory drafting and review is configured on this deployment ' +
-        'for this request, so it was not sent to one that is not approved for it. Retrying will ' +
-        'not change this; an administrator needs to enable an approved model.',
+        'for this request, so it was not sent to one that is not approved for it. ' +
+        `Regulatory drafting is approved only for models served by ${HIGH_RISK_PROVIDERS}. Retrying will ` +
+        'not change this; an administrator needs to enable one of those providers.',
     };
   }
   if (err instanceof GatewayPolicyError && (err as { code?: unknown }).code === 'RATE_LIMIT_EXCEEDED') {
@@ -273,10 +285,25 @@ function classifyPolicyRefusal(err: unknown): ClassifiedGatewayError | null {
 function classifyModelGovernanceRefusal(err: unknown): ClassifiedGatewayError | null {
   if (!(err instanceof GatewayPolicyError)) return null;
   const { code, reason } = err as { code?: unknown; reason?: unknown };
+  if (code === 'QUALIFIED_MODEL_PIN_REFUSED') return { code: 'MODEL_NOT_QUALIFIED', message: err.message };
+  if (code === 'TENANT_CREDENTIAL_UNAVAILABLE') return { code: 'PROVIDER_UNAVAILABLE', message: err.message };
   if (code === 'MODEL_NOT_PQ_QUALIFIED') return { code: 'MODEL_NOT_QUALIFIED', message: NO_PQ_QUALIFIED_MODEL };
   if (code !== 'MODEL_NOT_GOVERNED') return null;
   return { code: 'MODEL_NOT_QUALIFIED', message: MODEL_NOT_GOVERNED_COPY[String(reason)] ?? MODEL_NOT_GOVERNED_COPY['no-entry'] };
 }
+
+/**
+ * Who serves the models approved for regulatory drafting, read from the registry, in words a person reads. Walked
+ * 2026-11-06 with only an OpenAI key: the conversation said "enable an approved model" without saying which, and
+ * /readyz named the providers. Now both read the same registry, so the sentence cannot drift from what is approved.
+ */
+const PROVIDER_WORDS: Readonly<Record<string, string>> = {
+  anthropic: 'Anthropic', bedrock: 'Amazon Bedrock', vertex: 'Google Vertex AI', openai: 'OpenAI', azure: 'Azure OpenAI',
+};
+const HIGH_RISK_PROVIDERS = ((): string => {
+  const names = [...new Set(APPROVED_MODELS.filter(m => m.approvedForHighRisk).map(m => PROVIDER_WORDS[m.provider] ?? m.provider))];
+  return names.length > 1 ? `${names.slice(0, -1).join(', ')} or ${names[names.length - 1]}` : names[0] ?? 'no provider';
+})();
 
 const MODEL_NOT_GOVERNED_COPY: Readonly<Record<string, string>> = {
   'unknown-model': 'This request was not sent: it named a model this platform does not have.',

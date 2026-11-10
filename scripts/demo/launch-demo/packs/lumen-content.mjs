@@ -66,6 +66,56 @@ const LMN201_DS = 'LMN-201 drug substance (illustrative)';
 const LMN201_DP = 'LMN-201 enteric capsules (illustrative)';
 
 export const LMN201_CMC = {
+  /* The drug substance and drug product §3.2.S / §3.2.P are written about;
+     without the substance the boundary cannot say WHY this project's Module 3
+     is not composed here. Illustrative demo values, not Lumen data; the
+     modality is stated rather than read from the route. */
+  substance: {
+    name: 'LMN-201 protein mixture',
+    manufacturer: 'Lumen Bioscience (demo — not affiliated)',
+    site: 'Illustrative demo site',
+    route: 'Spirulina (Arthrospira platensis) photobioreactor cultivation; harvest, lysis and spray-drying of the biomass carrying the expressed proteins (illustrative).',
+    modality: 'biologic',
+    biologicalOrigin: 'Spirulina photobioreactor cultivation',
+    sourceOrganism: 'Arthrospira platensis',
+    viralSafetyEvaluation: 'Illustrative: no mammalian cell substrate; ICH Q5A(R2) applies to the extent its scope covers a cyanobacterial platform.',
+    tseStatus: 'No animal-derived raw materials in the process or the media (illustrative).',
+    developmentPhase: 'phase_2',
+    status: 'development',
+  },
+  product: {
+    name: 'LMN-201 enteric capsules',
+    dosageForm: 'Capsule',
+    strength: 'Illustrative',
+    route: 'Oral',
+    composition: 'LMN-201 spray-dried biomass, microcrystalline cellulose, in an enteric-coated capsule shell (illustrative).',
+    batchFormula: 'Illustrative per-batch quantity statement; not Lumen data.',
+    process: 'Blend, encapsulate, enteric coat, inspect, pack (illustrative).',
+    site: 'Illustrative demo site',
+    containerClosure: 'HDPE bottle with induction seal and child-resistant closure (illustrative).',
+    status: 'development',
+  },
+
+  /* The procedures the specifications below name, recorded in the method
+     register so the approval route can resolve them (see biotech-work-content's
+     note). Illustrative demo values, not Lumen data. */
+  methods: [
+    { code: 'LMN-AM-01', title: 'LC-MS peptide map', purpose: 'Identity', analyte: 'LMN-201 protein identity', matrix: 'Drug substance', technique: 'LC-MS peptide mapping', status: 'validation',
+      characteristics: ['specificity', 'precision (repeatability)', 'precision (intermediate)'],
+      summary: 'Illustrative: peptide coverage against the reference map, conformance assessed by retention and mass match.' },
+    { code: 'LMN-AM-02', title: 'Cell-based toxin B cytotoxicity neutralisation assay', purpose: 'Potency', analyte: 'Anti-toxin B neutralising activity', matrix: 'Drug substance', technique: 'Cell-based bioassay', status: 'validation',
+      characteristics: ['specificity', 'accuracy', 'precision (repeatability)', 'precision (intermediate)', 'linearity', 'range'],
+      summary: 'Illustrative: relative potency against the reference standard over 50–200% of nominal, within the 60–140% release range.' },
+    { code: 'LMN-AM-03', title: 'Ph. Eur. 2.6.12 / 2.6.13', purpose: 'Microbial enumeration and specified organisms', analyte: 'TAMC, TYMC, E. coli', matrix: 'Drug substance', technique: 'Compendial microbiological examination', status: 'validation',
+      characteristics: ['specificity', 'accuracy', 'precision (repeatability)'],
+      summary: 'Illustrative: compendial procedures verified for this matrix, growth promotion and suitability demonstrated.' },
+    { code: 'LMN-AM-04', title: 'USP <711> delayed-release, apparatus 2', purpose: 'Enteric protection and release', analyte: 'Released protein', matrix: 'Drug product', technique: 'Dissolution, apparatus 2', status: 'validation',
+      characteristics: ['specificity', 'accuracy', 'precision (repeatability)', 'linearity', 'range'],
+      summary: 'Illustrative: acid stage and buffer stage profiles against the 2 h / 45 min acceptance table.' },
+    { code: 'LMN-AM-05', title: 'Karl Fischer titration', purpose: 'Water content', analyte: 'Water', matrix: 'Drug product', technique: 'Coulometric Karl Fischer', status: 'validation',
+      characteristics: ['specificity', 'accuracy', 'precision (repeatability)', 'linearity', 'range'],
+      summary: 'Illustrative: recovery 97–103% over 2–10% w/w against the 8.0% limit.' },
+  ],
   specs: [
     { material: 'Drug substance', name: `${LMN201_DS} — identity`, release: 'Conforms to reference by peptide mapping', method: 'LC-MS peptide map', ich: 'ICH Q6B', justification: 'Illustrative demo specification.' },
     { material: 'Drug substance', name: `${LMN201_DS} — potency (toxin B neutralisation)`, release: '60–140% of reference standard', method: 'Cell-based toxin B cytotoxicity neutralisation assay', ich: 'ICH Q6B', justification: 'Illustrative demo range.' },
@@ -159,17 +209,38 @@ export const TASKS = {
     { title: 'Confirm RePreve sample size assumptions with biostatistics', moduleType: 'Biostatistics', priority: 'high', status: 'review', dueInDays: 6, description: 'Check the illustrative placebo cure rate and treatment effect behind the 375-participant plan.' },
     { title: 'Prepare the annual IND report', moduleType: 'IND', priority: 'medium', status: 'pending', dueInDays: 45, description: 'Summarise RePreve enrolment, safety and manufacturing changes for the IND annual report (21 CFR 312.33).' },
     { title: 'Review the synthetic CSR source before table generation', moduleType: 'Clinical', priority: 'medium', status: 'pending', dueInDays: 15, description: 'Select the SYNTHETIC LMN-201-like CSR source in the Vault and run the source checks. Demonstration only — not clinical evidence.' },
+    /* The rest of the study's week, so the board reads like a team's (2026-11-06, the founder: "users, full story in
+       data … tasking too"). Fictional people and sites; a name not on the roster stays with the person seeding. */
+    { title: 'Close out the Site 104 missed week-12 visit deviation', moduleType: 'Clinical', priority: 'high', status: 'in-progress', dueInDays: -2, assignee: 'Mo Monitor', criticalPath: true, description: 'Synthetic demo: participant 104-007 missed the week-12 window by 4 days. Confirm the root cause, the CAPA and the impact on the primary endpoint.' },
+    { title: 'Triggered monitoring visit at Site 107 after the AE reporting-lag KRI breach', moduleType: 'Clinical', priority: 'high', status: 'pending', dueInDays: 5, assignee: 'Mo Monitor', criticalPath: true, description: 'Synthetic demo: the AE reporting lag at Site 107 crossed its threshold two periods running. Source-verify AEs and retrain the coordinator.' },
+    { title: 'Reconcile SAE listings with the safety database before the data cut', moduleType: 'Clinical', priority: 'high', status: 'review', dueInDays: 3, assignee: 'Rhea Reviewer', criticalPath: true, description: 'Synthetic demo: three SAEs to reconcile between the EDC listing and the safety database.' },
+    { title: 'Database lock readiness checklist', moduleType: 'Biostatistics', priority: 'high', status: 'pending', dueInDays: 21, assignee: 'Sam Statistician', criticalPath: true, description: 'Open queries, SAE reconciliation, protocol deviations classified, medical coding signed off.' },
+    { title: 'Approve the CSR shells and the tables, listings and figures plan', moduleType: 'Biostatistics', priority: 'medium', status: 'completed', dueInDays: -5, assignee: 'Sam Statistician', description: 'TLF shells for ICH E3 sections 11 and 12, agreed with clinical and medical writing.' },
+    { title: 'Requalify the courier after the shipment temperature excursion', moduleType: 'Quality', priority: 'high', status: 'blocked', dueInDays: 4, assignee: 'Quinn Quality', description: 'Synthetic demo: blocked until the courier returns its data-logger records for the excursion.' },
+    { title: "Sign the Investigator's Brochure version 4 update", moduleType: 'Clinical', priority: 'medium', status: 'review', dueInDays: 9, assignee: 'Ava Approver', description: 'Section 5 updated with Part B safety; awaiting the approver\'s e-signature.' },
+    { title: 'Release drug product lot LMN201-DP-2406 for Part B resupply', moduleType: 'CMC', priority: 'high', status: 'completed', dueInDays: -10, assignee: 'Cal CMC', description: 'Synthetic demo lot: release testing complete and the certificate of analysis filed in the Vault.' },
+    { title: 'Respond to the FDA information request on capsule dissolution', moduleType: 'IND', priority: 'high', status: 'in-progress', dueInDays: 7, assignee: 'Ana Author', criticalPath: true, description: 'Fictional information request: justify the dissolution method for the enteric capsule at pH 6.8.' },
+    { title: 'Train site staff on protocol amendment 2', moduleType: 'Clinical', priority: 'medium', status: 'completed', dueInDays: -14, assignee: 'Mo Monitor', description: 'Training records for all eight synthetic sites filed before first use of amendment 2.' },
+    { title: 'File the IRB continuing review approval in the Vault', moduleType: 'Clinical', priority: 'low', status: 'completed', dueInDays: -3, assignee: 'Ana Author', description: 'Fictional central IRB approval for another year of the RePreve study.' },
   ],
   'LMN-801': [
     { title: 'Draft the Phase 2 protocol synopsis', moduleType: 'Clinical', priority: 'high', status: 'in-progress', dueInDays: 14, description: 'Body weight change and lean mass preservation as co-primary candidates.' },
     { title: 'Plan the pre-IND meeting request', moduleType: 'IND', priority: 'medium', status: 'pending', dueInDays: 30, description: 'Questions on oral delivery of a hormone protein and the nonclinical package.' },
+    { title: 'Nonclinical gap assessment for oral protein absorption', moduleType: 'Nonclinical', priority: 'medium', status: 'in-progress', dueInDays: 10, assignee: 'Ana Author', description: 'Which bioavailability and local-tolerance studies the IND still needs.' },
+    { title: 'Draft the pre-IND briefing package', moduleType: 'IND', priority: 'high', status: 'pending', dueInDays: 21, assignee: 'Ava Approver', criticalPath: true, description: 'Briefing document and questions for the fictional pre-IND meeting.' },
+    { title: 'Select the manufacturer for the enteric formulation', moduleType: 'CMC', priority: 'medium', status: 'blocked', dueInDays: 12, assignee: 'Cal CMC', description: 'Blocked on the quality agreement with the shortlisted fictional manufacturer.' },
   ],
   'LMN-301': [
     { title: "Summarise Phase 1 safety for the Investigator's Brochure", moduleType: 'Clinical', priority: 'medium', status: 'pending', dueInDays: 25, description: 'Single and multiple intranasal doses in healthy volunteers (NCT06030414).' },
     { title: 'Nasal tolerability assessment plan', moduleType: 'Nonclinical', priority: 'low', status: 'pending', dueInDays: 40, description: 'Local tolerance findings to carry into the next protocol.' },
+    { title: 'Compile Phase 1 safety tables for the IB update', moduleType: 'Biostatistics', priority: 'medium', status: 'review', dueInDays: 8, assignee: 'Sam Statistician', description: 'Synthetic summary tables of adverse events by dose cohort.' },
+    { title: 'Draft the Phase 2 protocol concept', moduleType: 'Clinical', priority: 'high', status: 'in-progress', dueInDays: 18, assignee: 'Ana Author', criticalPath: true, description: 'Population, endpoints and the dose to carry forward from Phase 1.' },
+    { title: 'Close the Phase 1 database and archive the study files', moduleType: 'Clinical', priority: 'low', status: 'completed', dueInDays: -20, assignee: 'Rhea Reviewer', description: 'Synthetic demo: final archive filed in the Vault.' },
   ],
   'LMN-401': [
     { title: 'Field proof-of-concept study outline', moduleType: 'Clinical', priority: 'medium', status: 'pending', dueInDays: 60, description: 'Planned 2026 field study, informed by the travelers\' diarrhea etiology study (NCT06363890).' },
+    { title: 'Pre-IND meeting request letter', moduleType: 'IND', priority: 'high', status: 'pending', dueInDays: 12, assignee: 'Ava Approver', criticalPath: true, description: 'Fictional meeting request: the antibody cocktail, its nonclinical package and the field-study design.' },
+    { title: 'Review the etiology study data listings', moduleType: 'Clinical', priority: 'medium', status: 'completed', dueInDays: -7, assignee: 'Rhea Reviewer', description: 'Synthetic listings reviewed; pathogen distribution summarised for the briefing package.' },
   ],
 };
 
@@ -282,5 +353,60 @@ Sincerely,
 {See appended electronic signature page}
 
 DEMONSTRATION ONLY: FICTIONAL LETTER. NOT ISSUED BY FDA.
+`,
+};
+
+/**
+ * A FICTIONAL FDA information request on the LMN-201 IND, so Communication has a letter that needs an answer and
+ * Respond has questions to answer (2026-11-06, the founder: "full story in data"). Its three numbered questions are
+ * the ones the inbox's splitter reads (shared/agency/__tests__/letter-questions.test.ts). It ties to the board's task
+ * "Respond to the FDA information request on capsule dissolution". Not issued by FDA; the IND number is invented.
+ * Fixed text and dates, so the data room's checksum is the same on every run. ASCII only.
+ */
+export const INFORMATION_REQUEST = {
+  fileName: '[Demo] FDA information request (fictional) - LMN-201 IND 194021.txt',
+  communication: {
+    sourceType: 'uploaded_official_correspondence',
+    communicationType: 'FDA information request (fictional demo), IND 194021',
+    sourceChannel: 'Demo seed: fictional letter',
+    letterClass: 'information_request',
+    urgency: 'high',
+    responseRequired: true,
+  },
+  expect: { commitments: [], questions: 3 },
+  text: `DEMONSTRATION ONLY: FICTIONAL LETTER. NOT ISSUED BY FDA.
+NO LUMEN BIOSCIENCE AUTHORIZATION IS REPRESENTED. ALL DATA REFERRED TO ARE SYNTHETIC.
+
+DEPARTMENT OF HEALTH AND HUMAN SERVICES
+Food and Drug Administration
+Silver Spring, MD 20993
+
+IND 194021
+October 28, 2026
+
+Concept2Cure Therapeutics (fictional demonstration sponsor)
+Attention: Regulatory Affairs
+
+Dear Regulatory Affairs:
+
+Please refer to your Investigational New Drug Application (IND) for LMN-201 (illustrative) enteric capsules.
+
+We are reviewing your submission and have the following requests for information:
+
+1. Provide the dissolution method and its discriminating power for the enteric capsule at pH 6.8, including
+   the data supporting the acceptance criterion for lot LMN201-DP-2406.
+
+2. Submit the 12-month long-term stability data for the drug product lots used in Part B, and justify the
+   proposed shelf life if any result is trending toward its limit.
+
+3. Clarify how serious adverse events reported at the clinical sites are reconciled with the safety
+   database before each data cut, and identify any SAE that remains unreconciled.
+
+Please submit your response as an amendment to this IND within 30 days.
+
+If you have any questions, please contact the Regulatory Project Manager (fictional) at 301-796-0000.
+
+Sincerely,
+{See appended electronic signature page}
 `,
 };

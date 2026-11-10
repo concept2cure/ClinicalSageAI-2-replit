@@ -13,7 +13,7 @@ import type { AiDraftReviewState, PendingAiDraft } from './authoringDraftTranspo
 import type { EditorProposalReceipt } from './editorProposalReceipt';
 import {
   alternativeDescription, alternativeLabel, alternativeName, approachOf, comparedText, defaultPairing, draftParagraphAuthor, draftParagraphs,
-  MAX_INSTRUCTION_CHARS, paragraphProposals, paragraphRefusal, QUICK_INSTRUCTIONS, revisedIndex, revisionRefusal, savedParagraphs,
+  MAX_INSTRUCTION_CHARS, csrFigureHold, paragraphProposals, paragraphRefusal, QUICK_INSTRUCTIONS, revisedIndex, revisionRefusal, savedParagraphs,
   type DraftProposalTarget, type ParagraphPlan,
 } from './draftAlternatives';
 import '../styles/redline.css';
@@ -209,18 +209,27 @@ function paragraphNote(draft: PendingAiDraft, target: DraftProposalTarget | unde
 }
 
 /** One paragraph of the alternative: its choice, its pair and its redline against that pair. */
-function ParagraphRow({ index, text, current, pair, chosen, disabled, onChoose, onPair }: {
+function ParagraphRow({ index, text, current, pair, chosen, disabled, held, onChoose, onPair }: {
   index: number; text: string; current: readonly string[]; pair: number; chosen: boolean; disabled: boolean;
+  /** Figures the study's engine did not produce, which hold this paragraph back (CSR slice 2). */
+  held: readonly string[];
   onChoose: (value: boolean) => void; onPair: (value: number) => void;
 }) {
   const selectId = useId();
+  const heldId = useId();
   const html = useMemo(() => renderSafeMarkdown(text), [text]);
   return (
     <div className="authoring-remedy" style={{ marginTop: 0 }}>
       <label style={{ fontSize: 12, display: 'flex', gap: 6, alignItems: 'baseline' }}>
-        <input type="checkbox" checked={chosen} disabled={disabled} onChange={e => onChoose(e.target.checked)} />
+        <input type="checkbox" checked={chosen && !held.length} disabled={disabled || held.length > 0}
+          aria-describedby={held.length ? heldId : undefined} onChange={e => onChoose(e.target.checked)} />
         {`Use paragraph ${index + 1}`}
       </label>
+      {held.length > 0 && (
+        <p id={heldId} data-testid="ai-draft-paragraph-held" style={{ ...QUIET, color: 'var(--error)' }}>
+          {`Not offered: ${held.join(', ')} ${held.length === 1 ? 'is not a figure' : 'are not figures'} the study’s engine produced for this section. Ask AnA to revise, or write the paragraph in the editor.`}
+        </p>
+      )}
       <AuthoredHtml html={html} />
       {current.length > 0 && (
         <>
@@ -288,7 +297,7 @@ export function ParagraphChoice({ draft, label, edited, savedContent, savedUpdat
       {edited && <p style={QUIET}>Paragraphs are offered as AnA drafted them. Edit a chosen paragraph in the editor after it is added; your words there are recorded as yours.</p>}
       {paragraphs.map((text, i) => (
         <ParagraphRow key={i} index={i} text={text} current={current} pair={pairing[i] ?? 0} chosen={chosen.includes(i)}
-          disabled={busy || proposing}
+          disabled={busy || proposing} held={csrFigureHold(draft, text)?.blocking ?? []}
           onChoose={value => setChosen(prev => (value ? [...prev, i] : prev.filter(x => x !== i)))}
           onPair={value => setPairing(prev => prev.map((p, k) => (k === i ? value : p)))} />
       ))}
@@ -307,5 +316,33 @@ export function ParagraphChoice({ draft, label, edited, savedContent, savedUpdat
       </p>
       {refusals.map((text, i) => <p key={i} role="alert" style={{ ...NOTE, color: 'var(--error)' }}>{text}</p>)}
     </fieldset>
+  );
+}
+
+/* ── CSR slice 2: the engine figure gate's finding, shown with each draft ── */
+
+const listed = (figures: readonly string[]) =>
+  figures.length === 1 ? figures[0] : `${figures.slice(0, -1).join(', ')} and ${figures[figures.length - 1]}`;
+
+/**
+ * The CSR engine figure gate's finding on the text as it now stands (slice 2): a figure no claimed engine cell of
+ * the section holds blocks the accept in a results section and is named; elsewhere it is reported. A results
+ * section with no receipts says it was not checked, never that it passed. The server re-checks at accept.
+ */
+export function CsrFigureNote({ draft, text, id }: { draft: PendingAiDraft; text: string; id?: string }) {
+  const hold = csrFigureHold(draft, text);
+  if (!hold) return null;
+  const line = hold.status === 'not_checked'
+    ? 'Figures were not checked against the study’s engine output: this CSR has no imported study claims for this section.'
+    : hold.blocking.length
+      ? `${listed(hold.blocking)} ${hold.blocking.length === 1 ? 'is not a figure' : 'are not figures'} the study’s engine produced for this section. Correct or remove ${hold.blocking.length === 1 ? 'it' : 'them'} to accept.`
+      : hold.reported.length
+        ? `${listed(hold.reported)} ${hold.reported.length === 1 ? 'is' : 'are'} not among the engine’s claimed figures for this section. Shown for review; outside the results sections it does not hold the accept.`
+        : 'Checked against the study’s engine output: every figure is one the engine claims for this section.';
+  return (
+    <div id={id} role="status" data-testid="ai-draft-csr-figures" data-blocking={hold.blocking.length > 0 ? 'true' : 'false'}
+      style={{ margin: 0, fontSize: 12, ...(hold.blocking.length ? { color: 'var(--error)' } : {}) }}>
+      {line}
+    </div>
   );
 }

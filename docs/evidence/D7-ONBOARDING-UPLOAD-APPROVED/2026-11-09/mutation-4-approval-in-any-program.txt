@@ -1,0 +1,7 @@
+MUTATION 4-approval-in-any-program in server/services/ectd/leaf-release-verdicts.ts (on the final code and tests, 2026-11-09T03:16:39.284259Z): replaced [JOIN vault.documents v ON v.organization_id = d.organization_id AND v.program_id = p.regulatory_program_id] with [JOIN vault.documents v ON v.organization_id = d.organization_id]
+ × server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > an onboarding upload is released only when the same bytes are approved in the project's Vault (P-94, P-108 3(a)) > the same bytes approved in another project's Vault do not clear it 53ms
+      Tests  1 failed | 13 skipped (14)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/services/ectd/__tests__/assess-dispatch-readiness.vault-leaf.pglite.test.ts > an onboarding upload is released only when the same bytes are approved in the project's Vault (P-94, P-108 3(a)) > the same bytes approved in another project's Vault do not clear it
+AssertionError: expected [] to have a length of 1 but got +0
+restored sha256 f1cf1c2d5e1ee1b6e5780e88be7837af159a6bba80255fa89cb0be99ee7d7171 (expected f1cf1c2d5e1ee1b6e5780e88be7837af159a6bba80255fa89cb0be99ee7d7171)

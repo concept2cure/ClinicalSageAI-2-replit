@@ -40,13 +40,14 @@ const READINESS = {
 const TRANSMIT = {
   sequenceStatus: 'dispatched', dispatchStatus: 'sent', route: { ok: true, region: 'fda', gateway: 'esg' },
   configured: { staging: true, production: false }, recordedApplicationNumber: '000512', gate: CLEAR,
-  refusal: "Sequence was already transmitted (dispatch status 'sent'); it is not sent again. A correction is a new sequence.",
+  refusal: 'Sequence was already transmitted; it is not sent again. A correction is a new sequence.',
 };
 const LIST_URL = `/api/mdx/gateways/transmittals?program_id=${PROGRAM}&region=fda`;
 const ROWS = [
   { id: 42, region: 'fda', gateway: 'esg', status: 'ack3_received', transmission_id: 'MDN-0042', submitted_at: '2026-10-08T09:00:00Z',
     ack_received_at: '2026-10-08T09:30:00Z', submitted_by: 5, submitted_by_name: 'Dana Approver',
-    metadata: { sequence: '0001', environment: 'staging' } },
+    // Bound to this sequence (F1 slice 1): marked "(this one)" by the binding, not the number (P-86 C3).
+    metadata: { sequence: '0001', environment: 'staging', dispatchBinding: { sequenceId: 21 } } },
   { id: 40, region: 'fda', gateway: 'esg', status: 'submitted', transmission_id: null, submitted_at: '2026-10-01T09:00:00Z',
     ack_received_at: null, submitted_by: 6, submitted_by_name: null, metadata: { sequence: '0000', environment: 'production' } },
 ];
@@ -95,6 +96,64 @@ describe('Dispatch tab: transmissions and acknowledgements (F13)', () => {
     expect(r.textContent).toContain('sent by user #6');
   });
 
+  /* F1 (row D7, 2026-11-01): after a reload the sequence reads only 'pending',
+     so the lasting word that a test send is not a filing is the row's. The
+     environment is said in words; the stored value never reaches the screen. */
+  it("says where each transmission went, in words, and that a test send is not a filing", async () => {
+    render(<DispatchWorkspace sub={SUB} seq={SEQ} onGoverned={vi.fn()} />);
+    await waitFor(() => expect(text()).toContain('Transmittal #42'));
+    const r = region();
+    const sentOn = (iso: string) => `on ${new Date(iso).toLocaleString()}`;
+    expect(r.textContent).toContain(`sent by Dana Approver ${sentOn('2026-10-08T09:00:00Z')} to the agency's test environment (a test send is not a filing)`);
+    expect(r.textContent).toContain(`sent by user #6 ${sentOn('2026-10-01T09:00:00Z')} to the agency's production environment`);
+    expect(r.textContent?.match(/a test send is not a filing/g)).toHaveLength(1);
+    expect(r.textContent).toContain('a transmittal records the number of the sequence it carried');
+    expect(r.textContent).not.toContain('(production)');
+    expect(text()).not.toMatch(/staging/i);
+  });
+
+  it('a recorded environment this screen does not name is not printed as stored', async () => {
+    list = () => json({ data: [{ ...ROWS[1], metadata: { sequence: '0000', environment: 'sandbox_x' } }], meta: { count: 1 } });
+    render(<DispatchWorkspace sub={SUB} seq={SEQ} onGoverned={vi.fn()} />);
+    await waitFor(() => expect(text()).toContain('Transmittal #40'));
+    expect(region().textContent).toContain('to an environment this screen does not name');
+    expect(region().textContent).not.toContain('sandbox_x');
+  });
+
+  /* F1 (row D7, 2026-11-08): a transmittal with no recorded environment is said to
+     have none, so it is never read as a send of either kind. */
+  it('a transmittal with no recorded environment says so', async () => {
+    list = () => json({ data: [{ ...ROWS[1], metadata: { sequence: '0000' } }], meta: { count: 1 } });
+    render(<DispatchWorkspace sub={SUB} seq={SEQ} onGoverned={vi.fn()} />);
+    await waitFor(() => expect(text()).toContain('Transmittal #40'));
+    expect(region().textContent).toContain('(environment not recorded)');
+    expect(region().textContent).not.toMatch(/production environment|test environment/);
+  });
+
+  /* P-92 C2 (S9): a held send settled by signature says so on its row, after what the gateway kept, and FDA's verified
+     answer kept against that settlement after it (P-108 1(c)). The stored values never reach the screen. */
+  it.each([
+    [{ outcome: 'received', kind: 'ack2', settledAt: '2026-11-04T09:00:00.000Z' }, [],
+      "recorded as received on FDA's Ack2, by signature, 4 November 2026"],
+    [{ outcome: 'not-received', kind: 'fda-non-receipt-confirmation', settledAt: '2026-11-04T09:00:00.000Z' },
+      [{ verified: true, contradicts: 'not-received', receivedAt: '2026-11-05T10:00:00.000Z' }],
+      "released as not received on FDA's written confirmation, by signature, 4 November 2026 · FDA's signed receipt, kept 5 November 2026, shows it was received"],
+    [{ outcome: 'not-received', kind: 'platform-proof', settledAt: '2026-11-04T09:00:00.000Z' }, [],
+      "released as not received on the platform's own record that it never left, by signature, 4 November 2026"],
+    [{ outcome: 'received', kind: 'ack3', settledAt: '2026-11-04T09:00:00.000Z' },
+      [{ verified: true, contradicts: 'received', receivedAt: '2026-11-05T10:00:00.000Z' }],
+      "recorded as received on FDA's Ack3, by signature, 4 November 2026 · FDA's signed answer, kept 5 November 2026, refuses it"],
+  ])('a held send settled by signature says so on its row: %j', async (heldSendSettlement, as2ReceiptHistory, words) => {
+    const held = { ...ROWS[1], id: 44, status: 'rejected', error_message: 'FDA ESG AS2 returned HTTP 502 after the whole bundle was sent; FDA may hold it.',
+      metadata: { sequence: '0001', environment: 'production', dispatchBinding: { sequenceId: 21 }, heldSendSettlement, as2ReceiptHistory } };
+    list = () => json({ data: [held], meta: { count: 1 } });
+    render(<DispatchWorkspace sub={SUB} seq={SEQ} onGoverned={vi.fn()} />);
+    await waitFor(() => expect(text()).toContain('Transmittal #44'));
+    const said = region().textContent ?? '';
+    expect(said).toContain(`FDA may hold it. · ${words}`);
+    expect(said).not.toMatch(/not-received|platform-proof|fda-non-receipt|ack2|heldSendSettlement/);
+  });
+
   it('a failed read is an error, not "none sent"', async () => {
     list = () => json({ error: 'Internal error' }, 500);
     render(<DispatchWorkspace sub={SUB} seq={SEQ} onGoverned={vi.fn()} />);
@@ -117,6 +176,8 @@ describe('Dispatch tab: transmissions and acknowledgements (F13)', () => {
   it('a submission with no project cannot be listed by project, and says so; nothing is read', async () => {
     render(<DispatchWorkspace sub={{ ...SUB, programId: null }} seq={SEQ} onGoverned={vi.fn()} />);
     await waitFor(() => expect(region().textContent).toContain('This submission is not anchored to a project'));
+    // A test send, which files nothing, is not listed either, and the note says so.
+    expect(region().textContent).toContain('test sends included (a test send files nothing)');
     expect(listCalls()).toEqual([]);
   });
 });

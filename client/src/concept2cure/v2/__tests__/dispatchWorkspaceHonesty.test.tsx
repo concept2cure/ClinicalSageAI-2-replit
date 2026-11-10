@@ -35,10 +35,10 @@ const BLOCKED = {
 
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => ({ success: true, data: payload }) } as Response);
 
-function serve(qc: unknown) {
+function serve(qc: unknown, readiness: unknown = BLOCKED) {
   apiRequest.mockImplementation(async (method: string, rawUrl: unknown) => {
     const url = String(rawUrl ?? '');
-    if (url.endsWith('/dispatch-readiness')) return ok(BLOCKED);
+    if (url.endsWith('/dispatch-readiness')) return ok(readiness);
     if (url.endsWith('/leaves')) return ok([{ id: 1, sectionCode: 'm1-1.3', title: 'Cover', granularity: null, lifecycleOp: 'new', documentTable: null, documentId: null, documentType: null }]);
     // mutateVerbatim passes the body through raw — no envelope.
     if (method === 'POST' && url.endsWith('/dispatch-qc')) return { ok: true, status: 200, json: async () => qc } as Response;
@@ -55,7 +55,7 @@ describe('DispatchWorkspace — nothing says "permitted" under a blocked gate', 
   it('the missing-shadow-review note is the reason the gate blocks, not a permission', async () => {
     serve({ clearedToDispatch: false, blockers: [], warnings: [], checklist: [] });
     render(<DispatchWorkspace {...({ sub: SUB, seq: SEQ, onGoverned: vi.fn() } as any)} />);
-    await waitFor(() => expect(text()).toMatch(/Dispatch blocked/));
+    await waitFor(() => expect(text()).toMatch(/Not yet\. /));
     expect(text()).toMatch(/one of the reasons the gate blocks/);
     expect(text()).not.toMatch(/dispatch is permitted/);
     expect(text()).not.toMatch(/The gate is clear/);
@@ -72,7 +72,7 @@ describe('DispatchWorkspace — nothing says "permitted" under a blocked gate', 
       narrativeUnavailable: { code: 'PROVIDER_UNAVAILABLE', message: 'No AI provider is configured.' },
     });
     render(<DispatchWorkspace {...({ sub: SUB, seq: SEQ, onGoverned: vi.fn() } as any)} />);
-    await waitFor(() => expect(text()).toMatch(/Dispatch blocked/));
+    await waitFor(() => expect(text()).toMatch(/Not yet\. /));
     fireEvent.click(screen.getByRole('button', { name: /Run dispatch QC/ }));
     await waitFor(() => expect(text()).toMatch(/Dispatch QC: cleared to dispatch/));
     expect(text()).toMatch(/deterministic gate above still blocks dispatch/);
@@ -82,5 +82,25 @@ describe('DispatchWorkspace — nothing says "permitted" under a blocked gate', 
     // The QC request was posted with the sequence's REAL leaves, not [].
     const post = apiRequest.mock.calls.find((c) => c[0] === 'POST' && String(c[1]).endsWith('/dispatch-qc'));
     expect((post![2] as any).leaves).toEqual([{ sectionCode: 'm1-1.3', operation: 'new' }]);
+  });
+});
+
+/* D7-A2 step 10: the one verdict is the engine's own answer (gate.cleared), never an empty blocker list's; and a
+   record key in a server sentence never reaches the page, not even in a tooltip (the coordinating session, 2026-11-09). */
+describe('DispatchWorkspace — the one verdict says what the engine answered', () => {
+  it('a gate that is not cleared and lists no reason is said as that, never as cleared', async () => {
+    serve({ clearedToDispatch: false, blockers: [], warnings: [], checklist: [] }, { ...BLOCKED, gate: { cleared: false, blockers: [] } });
+    render(<DispatchWorkspace {...({ sub: SUB, seq: SEQ, onGoverned: vi.fn() } as any)} />);
+    await waitFor(() => expect(text()).toMatch(/Not yet\. The gate has not cleared sequence 0001 for dispatch, and it listed no reason\./));
+    expect(text()).not.toMatch(/is cleared to dispatch|No things stand/);
+  });
+
+  it('a record key in a blocker is said in words, and is in no attribute either', async () => {
+    const blocker = 'A release signature is required (no dispatch-intent signature is recorded on ectd-sequence:7).';
+    serve({ clearedToDispatch: false, blockers: [], warnings: [], checklist: [] }, { ...BLOCKED, gate: { cleared: false, blockers: [blocker] } });
+    render(<DispatchWorkspace {...({ sub: SUB, seq: SEQ, onGoverned: vi.fn() } as any)} />);
+    await waitFor(() => expect(text()).toMatch(/Not yet\. One thing stands between sequence 0001 and dispatch\./));
+    expect(text()).toMatch(/is recorded on this sequence\)\./);
+    expect(document.body.innerHTML).not.toMatch(/ectd-sequence:7/);
   });
 });

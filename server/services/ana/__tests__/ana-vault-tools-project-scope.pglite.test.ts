@@ -16,6 +16,7 @@
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
+import type { RequestSqlClient } from '../../../db/requestDb';
 
 const h = vi.hoisted(() => ({
   pg: null as unknown as import('@electric-sql/pglite').PGlite,
@@ -30,6 +31,11 @@ vi.mock('../../../db.js', () => {
   const pool = { query, connect: async () => ({ query, release: () => undefined }) };
   return { pool, getPool: () => pool, db: {} };
 });
+// Current mandatory rules use the canonical runtime accessor, on the same real
+// database and its deliberately empty policy table, rather than a policy mock.
+vi.mock('../../../db/runtime.js', () => ({ getPool: () => ({
+  query: (sql: string, params?: unknown[]) => h.pg.query<Record<string, unknown>>(sql, params),
+}) }));
 /* The write's own audit, lineage and provenance rows have their suites (qms-vault-audit-atomicity.contract.test.ts);
    here they are recorded calls, so this suite sees only who may write. The module builder is the assembly's. */
 vi.mock('../../../routes/c2c/actions.js', () => ({ recordGovernedAction: vi.fn(async () => undefined) }));
@@ -51,8 +57,13 @@ vi.mock('../../document-data-disposition/eligibility.js', async (importOriginal)
 }));
 vi.mock('../drafting-source-lineage.js', () => ({ evidenceSourceIdsForRetrieval: async () => new Map() }));
 
-import { getToolHandler } from '../AnaToolExecutor';
-import { approvedToolHandler } from './support/approved-tool-handler';
+import { executeAgenticLoop, getToolHandler, type ToolContext } from '../AnaToolExecutor';
+import * as gatewayModule from '../../ai-gateway/gateway';
+import type { AnaGatewayResponse } from '../../ai-gateway/types';
+import { approvedToolHandler as approvedHandler } from './support/approved-tool-handler';
+import { asRequestOwner, ownerScopedClient } from './support/request-owner';
+import { captureCurrentRunSourceGate, createRunSourceAuthority, runWithSourceAuthority } from '../../ai-gateway/model-call-scope';
+import { loadToolSkillGates } from '../governed-tool-gate';
 
 vi.setConfig({ testTimeout: 60_000, hookTimeout: 60_000 });
 
@@ -63,6 +74,14 @@ const P_A2 = '22222222-2222-4222-8222-222222222222';
 const P_B = '33333333-3333-4333-8333-333333333333';
 const P_PRIV = '44444444-4444-4444-8444-444444444444';
 const P_THEIRS = '55555555-5555-4555-8555-555555555555';
+// PGlite is one session: the request client sets each caller's own verified owner
+// per statement, one at a time, so concurrent checks never see each other's (support/request-owner.ts).
+const fixtureSql: RequestSqlClient = ownerScopedClient((sql, params) => h.pg.query<Record<string, unknown>>(sql, params));
+const asFixtureOwner = asRequestOwner;
+function approvedToolHandler(name: string) {
+  const handler = approvedHandler(name); if (!handler) return undefined;
+  return (input: Record<string, unknown>, ctx?: ToolContext) => asFixtureOwner(ctx, () => handler(input, ctx));
+}
 
 beforeAll(async () => {
   h.pg = new PGlite();
@@ -78,6 +97,14 @@ beforeAll(async () => {
       owner_id integer, created_by_id integer, settings jsonb DEFAULT '{}');
     CREATE TABLE project_visibility_settings (organization_id integer, project_id integer, visibility text);
     CREATE TABLE project_members (organization_id integer, project_id integer, user_id integer, role text, status text);
+    CREATE TABLE account_skill_bundles (id integer PRIMARY KEY, bundle_id text, organization_id integer,
+      project_id integer, status text, metadata jsonb DEFAULT '{}');
+    CREATE TABLE connector_credentials (organization_id integer, connector_id text, credentials text, is_valid boolean);
+    CREATE TABLE user_intelligence_profiles (id serial PRIMARY KEY,user_id integer,organization_id integer,
+      workflow_preferences jsonb DEFAULT '{}',UNIQUE(user_id,organization_id));
+    CREATE TABLE audit_logs (id uuid PRIMARY KEY,tenant_id integer,user_id integer,record_id text,table_name text,
+      action text,new_values jsonb,occurred_at timestamptz DEFAULT now(),actor_id integer,target text,payload_hash text,
+      sha256_chain text,hmac_seal text,old_values json,ip_address text,user_agent text,reason text);
     CREATE TABLE concept2cure_review_assignments (organization_id integer, artifact_id integer, reviewer_id integer, status text);
     CREATE TABLE concept2cure_artifacts (id serial PRIMARY KEY, artifact_id text, organization_id integer, project_id integer,
       title text, type text DEFAULT 'document', category text DEFAULT 'document', ctd_section text,
@@ -136,19 +163,107 @@ beforeAll(async () => {
 afterAll(async () => { await h.pg.close(); });
 beforeEach(() => { h.failWhen = null; });
 
-type Ctx = { organizationId: number; userId?: number; projectId?: number | null; projectRef?: string | null };
-const MEMBER_CTX: Ctx = { organizationId: ORG, userId: MEMBER };
-const INSIDE_A: Ctx = { organizationId: ORG, userId: MEMBER, projectId: null, projectRef: P_A1 };
-const INSIDE_A_LEGACY: Ctx = { organizationId: ORG, userId: MEMBER, projectId: 10, projectRef: '10' };
+type Ctx = { organizationId: number; userId?: number; projectId?: number | null; projectRef?: string | null; sqlClient?: RequestSqlClient };
+const MEMBER_CTX: Ctx = { organizationId: ORG, userId: MEMBER, sqlClient: fixtureSql };
+const INSIDE_A: Ctx = { organizationId: ORG, userId: MEMBER, projectId: null, projectRef: P_A1, sqlClient: fixtureSql };
+const INSIDE_A_LEGACY: Ctx = { organizationId: ORG, userId: MEMBER, projectId: 10, projectRef: '10', sqlClient: fixtureSql };
 
 async function run(name: string, input: Record<string, unknown>, ctx: Ctx) {
-  return JSON.parse(String(await getToolHandler(name)!(input, ctx as never)));
+  return asFixtureOwner(ctx, async () => JSON.parse(String(await getToolHandler(name)!(input, ctx as never))));
 }
 const artifactIds = (out: { documents?: Array<{ artifact_id: string }> }) =>
   (out.documents ?? []).map((d) => d.artifact_id).sort();
 const documentIds = (out: { documents?: Array<{ id: string }> }) => (out.documents ?? []).map((d) => d.id).sort();
 /** The answer with the asked-for id taken out, so two answers can be compared word for word. */
 const without = (text: unknown, id: string) => String(text).split(id).join('<id>');
+
+describe('actual artifact reads issue private current-source routing checkpoints', () => {
+  const actor = { organizationId: ORG, userId: MEMBER, projectId: 10, programId: P_A1 };
+  function gateway(provider: 'openai' | 'local') {
+    return new gatewayModule.AIGateway({ deterministicMode: false, auditEnabled: false,
+      providers: [{ name: provider, enabled: true, apiKey: 'fixture-no-outbound', defaultModel: provider === 'local' ? 'local-default' : 'gpt-4o',
+        ...(provider === 'local' ? { baseUrl: 'http://127.0.0.1:11434/v1' } : {}), models: [] }],
+      policy: { maxTokensPerRequest: 128000, maxRequestsPerMinutePerOrg: 10000, maxRequestsPerMinutePerUser: 10000,
+        blockedPatterns: [], contentFilters: false, piiDetection: false } });
+  }
+  it('a real parent tool result cannot enter the next frontier SDK through forged public tiers or provenance', async () => {
+    const gw = gateway('openai'), sdk = vi.fn();
+    (gw as unknown as { openaiClient: object }).openaiClient = { chat: { completions: { create: sdk } } };
+    const initial: AnaGatewayResponse = { content: '', provider: 'openai', model: 'gpt-4o', requestId: 'fixture-first-local-decision',
+      latencyMs: 1, cached: false, deterministic: false, toolUses: [{ id: 'read-source', name: 'read_vault_document', input: { artifact_id: 'a-a1' } }],
+      usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2, estimatedCostUsd: 0 } };
+    // The decision to call the tool is scripted; the actual protected read and
+    // following gateway/placement/SDK boundary are real. No model PQ is claimed.
+    const route = vi.spyOn(gw, 'route').mockResolvedValueOnce(initial);
+    const accessor = vi.spyOn(gatewayModule, 'getGateway').mockReturnValue(gw);
+    try {
+      await expect(asFixtureOwner(INSIDE_A, () => executeAgenticLoop({ taskType: 'chat', ...actor, provider: 'openai', inputSensitivityTiers: [0], payloadProvenance: 'public',
+        messages: [{ role: 'user', content: 'Read the saved source.' }] }, { toolContext: INSIDE_A, maxRounds: 2 })))
+        .rejects.toThrow('DENY_INPUT_TIER');
+      expect(route).toHaveBeenCalledTimes(2);
+      expect(JSON.stringify(route.mock.calls[1][0].messages)).toContain('Northwind clinical overview memo');
+      expect(sdk).not.toHaveBeenCalled();
+    } finally { accessor.mockRestore(); route.mockRestore(); }
+  });
+  it('rechecks actual source SQL after the credential-client await directly before a permitted local SDK', async () => {
+    const gw = gateway('local'), sdk = vi.fn();
+    const probe = gw as unknown as { localClient: object; tenantProviderClient(): Promise<null> };
+    probe.localClient = { chat: { completions: { create: sdk } } };
+    const original = await h.pg.query<{ content: string }>("SELECT content FROM concept2cure_artifacts WHERE artifact_id='a-a1'");
+    const credential = vi.spyOn(probe, 'tenantProviderClient').mockImplementation(async () => {
+      await h.pg.query("UPDATE concept2cure_artifacts SET content=content || ' changed during credentials' WHERE artifact_id='a-a1'"); return null;
+    });
+    try {
+      await runWithSourceAuthority(createRunSourceAuthority(actor), async () => {
+        expect(await run('read_vault_document', { artifact_id: 'a-a1' }, INSIDE_A)).toMatchObject({ ok: true });
+        await expect(gw.route({ taskType: 'chat', ...actor, provider: 'local', messages: [{ role: 'user', content: 'Use the current source.' }] }))
+          .rejects.toMatchObject({ code: 'SOURCE_CONTEXT_UNAVAILABLE' });
+      });
+      expect(credential).toHaveBeenCalledOnce(); expect(sdk).not.toHaveBeenCalled();
+    } finally { credential.mockRestore(); await h.pg.query("UPDATE concept2cure_artifacts SET content=$1 WHERE artifact_id='a-a1'", [original.rows[0].content]); }
+  });
+  it('rechecks exact full bytes and live permission, including another authorized project of the same sponsor', async () => {
+    const original = await h.pg.query<{ content: string }>("SELECT content FROM concept2cure_artifacts WHERE artifact_id='a-a2'");
+    await runWithSourceAuthority(createRunSourceAuthority(actor), async () => {
+      expect(await run('read_vault_document', { artifact_id: 'a-a2', max_chars: 1 }, INSIDE_A)).toMatchObject({ ok: true });
+      const checkpoint = captureCurrentRunSourceGate(actor)!;
+      expect(checkpoint.tiers).toEqual([1, 3]); await checkpoint.recheck();
+      try {
+        // The legacy stored content_hash/version are deliberately unchanged.
+        await h.pg.query("UPDATE concept2cure_artifacts SET content=$1 WHERE artifact_id='a-a2'", [original.rows[0].content + ' changed outside the excerpt']);
+        await expect(checkpoint.recheck()).rejects.toThrow('SOURCE_ROUTING_CHANGED');
+      } finally { await h.pg.query("UPDATE concept2cure_artifacts SET content=$1 WHERE artifact_id='a-a2'", [original.rows[0].content]); }
+      await checkpoint.recheck();
+      try {
+        await h.pg.query('DELETE FROM organization_users WHERE organization_id=1 AND user_id=7');
+        await expect(checkpoint.recheck()).rejects.toThrow('SOURCE_ROUTING_CHANGED');
+      } finally { await h.pg.query("INSERT INTO organization_users VALUES(1,7,'member')"); }
+    });
+  });
+  it('keeps two real tenant sources isolated while one source changes', async () => {
+    await h.pg.query("INSERT INTO organization_users VALUES(2,7,'member')");
+    const other = { organizationId: 2, userId: MEMBER, projectId: 20, programId: P_THEIRS };
+    expect((await h.pg.query('SELECT id FROM regulatory_programs WHERE id=$1 AND organization_id=$2', [P_THEIRS,2])).rows).toHaveLength(1);
+    const original = await h.pg.query<{ content: string }>("SELECT content FROM concept2cure_artifacts WHERE artifact_id='a-a1'");
+    try {
+      const gates = await Promise.all([actor, other].map(current => runWithSourceAuthority(createRunSourceAuthority(current), async () => {
+        const id = current.organizationId === ORG ? 'a-a1' : 'a-theirs';
+        const context = { ...current, projectRef: current.programId, sqlClient: fixtureSql };
+        const rules = await asFixtureOwner(context, () => loadToolSkillGates(context));
+        expect(rules).toMatchObject({ rules: [] });
+        expect(await run('read_vault_document', { artifact_id: id }, context)).toMatchObject({ ok: true });
+        return captureCurrentRunSourceGate(current)!;
+      })));
+      await Promise.all(gates.map(gate => gate.recheck()));
+      await h.pg.query("UPDATE concept2cure_artifacts SET content=content || ' changed' WHERE artifact_id='a-a1'");
+      await expect(gates[0].recheck()).rejects.toThrow('SOURCE_ROUTING_CHANGED');
+      await expect(gates[1].recheck()).resolves.toBeUndefined();
+    } finally {
+      await h.pg.query("UPDATE concept2cure_artifacts SET content=$1 WHERE artifact_id='a-a1'", [original.rows[0].content]);
+      await h.pg.query('DELETE FROM organization_users WHERE organization_id=2 AND user_id=7');
+    }
+  });
+});
 
 /** An id outside the scope is answered exactly as an id of no artifact: the same words, nothing more. */
 async function expectAnsweredAsMissing(name: string, input: Record<string, unknown>, key: string, ctx: Ctx) {

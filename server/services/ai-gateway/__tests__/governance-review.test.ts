@@ -29,6 +29,7 @@ vi.mock('../../usage-recorder.js', async (importOriginal) => ({
   },
 }));
 
+import { GatewayPolicyEngine } from '../policy';
 import { isTerminalGatewayError } from '../gateway-outcome';
 import { GATEWAY_ERROR_HTTP_STATUS, classifyGatewayError } from '../gateway-error-map';
 import { ModelNotApprovedError } from '../gateway';
@@ -407,5 +408,19 @@ describe('[7] the PQ runner\'s own request shape (run-pq.ts: no organizationId, 
       stage: 'dispatch',
     });
     expect(sent).toEqual([]);
+  });
+});
+
+
+describe('final SDK content recheck', () => {
+  it('does not charge rate limits again while retaining content and token controls', () => {
+    const policy = new GatewayPolicyEngine({ maxRequestsPerMinutePerOrg: 1, maxRequestsPerMinutePerUser: 1,
+      maxTokensPerRequest: 100, contentFilters: false, piiDetection: false, blockedPatterns: ['forbidden-final-context'] });
+    const ordinary = chat({ organizationId: 74001, userId: 3 });
+    expect(policy.evaluate(ordinary).allowed).toBe(true);
+    for (let i = 0; i < 3; i++) expect(policy.evaluateContent(ordinary).allowed).toBe(true);
+    expect(policy.evaluateContent({ ...ordinary, messages: [{ role: 'system', content: 'forbidden-final-context' }] }).allowed).toBe(false);
+    expect(policy.evaluateContent({ ...ordinary, maxTokens: 101 }).allowed).toBe(false);
+    expect(policy.evaluate(ordinary)).toMatchObject({ allowed: false, rateLimit: { scope: 'organization', count: 2 } });
   });
 });

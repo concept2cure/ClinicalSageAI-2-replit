@@ -25,7 +25,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 
 import { Vault } from '../surfaces/Vault';
-import { statusText } from '../surfaces/VaultUploadStaging';
+import { notStagedReason, statusText } from '../surfaces/VaultUploadStaging';
 import { FAKE_BODY_BYTES, ingestReceipt, stubIngestXhr, type IngestInit } from './_ingest-xhr-fake';
 import { PID, ok, cabinetTree, vaultPayload, props } from './_vault-surface-fixtures';
 
@@ -86,6 +86,15 @@ describe("a device project's upload row offers the device's own vocabulary", () 
 });
 
 describe('the Vault uploader stages each file with its own fields (gap 7.1)', () => {
+  it('shows confidential as the default while keeping explicit internal classification available', async () => {
+    const panel = await choose([new File(['a'], 'stability-24m.pdf')]);
+    const row = within(panel).getByTestId('vault-stage-row');
+    const classification = within(row).getByLabelText('Classification') as HTMLSelectElement;
+    expect(classification.value).toBe('');
+    expect(within(classification).getByRole('option', { name: 'Confidential (default)' })).toBeTruthy();
+    fireEvent.change(classification, { target: { value: 'INTERNAL' } });
+    expect(classification.value).toBe('INTERNAL');
+  });
   it('lists chosen files as rows and sends nothing until asked', async () => {
     const sent = stubIngest([]);
     const panel = await choose([new File(['a'], 'stability-24m.pdf'), new File(['b'], 'tool.exe'), new File(['c'], '.DS_Store')]);
@@ -203,7 +212,7 @@ describe('the staged list is usable without sight or a pointer (accessibility re
     const group = within(panel).getByRole('group', { name: 'cover-letter.pdf' });
     const folder = within(group).getByLabelText('Folder') as HTMLSelectElement;
     expect([...folder.options].map((o) => o.value)).not.toContain('other-view');
-    expect(within(group).queryByText('Internal')).toBeNull();
+    expect(within(group).getByRole('option', { name: 'Confidential (default)' })).toBeTruthy();
     fireEvent.click(within(panel).getByTestId('vault-stage-upload'));
     await waitFor(() => expect(document.activeElement).toBe(within(panel).getByRole('button', { name: 'Close' })));
   });
@@ -285,5 +294,15 @@ describe('retry queue and current upload failures remain distinct', () => {
     expect(within(rows[0]).queryByText(/Waiting/)).toBeNull();
     release();
     await within(rows[1]).findByText(/Recorded as v1.0/);
+  });
+});
+
+// P-112 (2026-11-09): a dropped .zip is a file the Vault takes, stored as one version.
+describe('the Vault stages a .zip as one file (P-112)', () => {
+  it('offers a .zip for upload, and still says why it skips what it does not take', () => {
+    expect(notStagedReason('sponsor-copy/0003.zip', 4096)).toBeNull();
+    expect(notStagedReason('SPONSOR-COPY.ZIP', 4096)).toBeNull();
+    expect(notStagedReason('tools/setup.exe', 4096)).toBe('the Vault does not take .exe');
+    expect(notStagedReason('sponsor-copy/0003.zip', 0)).toBe('it is empty');
   });
 });

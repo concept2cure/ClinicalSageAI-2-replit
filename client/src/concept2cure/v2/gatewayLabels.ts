@@ -42,3 +42,46 @@ export function transmittalStatusTone(status: string): 'ok' | 'err' | 'warn' {
   if (v.includes('fail') || v.includes('error') || v.includes('reject')) return 'err';
   return 'warn';
 }
+
+/* ── P-92: a held FDA send, in words, for the Dispatch tab's transmissions and Gateway transmittals ─────── */
+
+const UTC_MONTH = (d: Date) => d.toLocaleString('en-GB', { month: 'long', timeZone: 'UTC' });
+/** "3 November 2026", in UTC, as the server says a held send's day; null when there is no readable instant. */
+export function heldSendDay(iso: string | null | undefined): string | null {
+  const d = iso ? new Date(iso) : null;
+  return d && Number.isFinite(d.getTime()) ? `${d.getUTCDate()} ${UTC_MONTH(d)} ${d.getUTCFullYear()}` : null;
+}
+/** "3 November 2026 at 14:05 UTC", as the server says when a held send was made. */
+export function heldSendWhen(iso: string | null | undefined): string | null {
+  const day = heldSendDay(iso);
+  if (!day) return null;
+  const d = new Date(iso as string);
+  return `${day} at ${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')} UTC`;
+}
+/** P-92: a held send settled by signature, as the transmittal keeps it (fda-esg-receipts.ts markHeldSendSettled). */
+export interface HeldSendSettlementRecord { outcome?: string; kind?: string; settledAt?: string }
+/** A verified FDA receipt kept with the transmittal; `contradicts` when it disagrees with a settlement (P-108 1(c)). */
+export interface KeptReceipt { verified?: boolean; contradicts?: string; receivedAt?: string }
+const SETTLED_ON: Record<string, string> = {
+  ack2: "FDA's Ack2", ack3: "FDA's Ack3", 'fda-non-receipt-confirmation': "FDA's written confirmation",
+  'platform-proof': "the platform's own record that it never left",
+};
+/** How a held send was settled, in words, and FDA's later verified answer against it; null for a row never settled.
+ *  `style` is the transmissions list's ("on …, by signature, DAY") or Gateway transmittals' ("by signature · … · DAY"). */
+export function heldSendSettlementWords(
+  m: { heldSendSettlement?: HeldSendSettlementRecord | null; as2ReceiptHistory?: KeptReceipt[] | null } | null | undefined,
+  style: 'row' | 'log',
+): string | null {
+  const s = m?.heldSendSettlement;
+  if (!s || (s.outcome !== 'received' && s.outcome !== 'not-received')) return null;
+  const way = s.outcome === 'received' ? 'recorded as received' : 'released as not received';
+  const ground = SETTLED_ON[s.kind ?? ''] ?? 'evidence this screen does not name';
+  const day = heldSendDay(s.settledAt) ?? 'an unrecorded day';
+  const settled = style === 'row' ? `${way} on ${ground}, by signature, ${day}` : `${way} by signature · ${ground} · ${day}`;
+  const kept = (m?.as2ReceiptHistory ?? []).find((e) => e?.verified === true && e.contradicts === s.outcome);
+  if (!kept) return settled;
+  const keptOn = heldSendDay(kept.receivedAt) ?? 'on an unrecorded day';
+  return s.outcome === 'not-received'
+    ? `${settled} · FDA's signed receipt, kept ${keptOn}, shows it was received`
+    : `${settled} · FDA's signed answer, kept ${keptOn}, refuses it`;
+}

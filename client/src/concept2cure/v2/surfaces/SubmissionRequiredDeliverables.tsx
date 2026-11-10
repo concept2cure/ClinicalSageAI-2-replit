@@ -181,7 +181,7 @@ export function SubmissionRequiredDeliverables(props: Props) {
     setEditorTarget({ docType: null, docId: source.editor.documentId, programId: source.editor.programId, ...(source.editor.sectionCode ? { code: source.editor.sectionCode } : {}) });
     props.onNav('document-authoring');
   };
-  return <div className="pj-card"><div className="pj-card-h"><span className="t">Required deliverables · sequence {seq.sequenceNumber}</span><span className="s">structural coverage</span></div><div className="pj-card-b">
+  return <div className="pj-sec"><div className="pj-sec-h"><h2>Required deliverables</h2><span className="sec-sub">sequence {seq.sequenceNumber}</span></div><div>
     <div className="scaf-note sc-mb">Coverage of retained material placed in this sequence. This view does not approve the documents or clear the submission for dispatch.</div>
     {!availability ? <UnavailableCoverage reason="Coverage availability could not be verified for this sequence." onValidation={props.onValidation} />
       : !availability.available ? <UnavailableCoverage reason={`A sequence coverage catalogue for ${sub.applicationType.toUpperCase()} is not available in this view.`} onValidation={props.onValidation} />

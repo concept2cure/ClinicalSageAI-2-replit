@@ -1,0 +1,4 @@
+ ✓ client/src/concept2cure/v2/editor/__tests__/sectionVaultReplacements.test.tsx > the Sources rail names a replaced Vault version (S12) > says "replaced since cited" with the versions, and opens the approved version in the Vault 146ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sectionVaultReplacements.test.tsx > the Sources rail names a replaced Vault version (S12) > draws nothing for a section with no replaced version, and nothing without a project 6ms
+ ✓ client/src/concept2cure/v2/editor/__tests__/sectionVaultReplacements.test.tsx > the Sources rail names a replaced Vault version (S12) > says a failed or malformed read could not be checked, never "none" 8ms
+      Tests  3 passed (3)

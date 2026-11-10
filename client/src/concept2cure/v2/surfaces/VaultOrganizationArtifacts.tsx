@@ -42,6 +42,8 @@ export interface OrganizationArtifactRow {
   model: string | null;
   when: string;
   ver: string;
+  /** Numeric registry version for source intake; display `ver` is not identity. */
+  sourceVersion?: number | null;
   sig: boolean;
   sigVersion?: number | null;
   sigStale?: boolean | null;
@@ -249,7 +251,7 @@ const OrganizationArtifactLine = React.forwardRef<HTMLDivElement, { row: Organiz
             {I.download} {downloadingId === r.id ? 'Downloading…' : 'Download DOCX'}
           </button>
           <button type="button" className="btn ghost small" onClick={() => onOpenInEditor(r)}>
-            {I.penLine} Open in editor
+            {I.penLine} Work on document
           </button>
           <button type="button" className="btn ghost small" onClick={() => onAsk(r)}>
             {I.sparkles} Ask AnA

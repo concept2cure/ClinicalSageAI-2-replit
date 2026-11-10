@@ -1303,6 +1303,19 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
   // views; library views and precedent rows have no cascade and are reached
   // only here.
   'saved_precedent_queries',
+  // Folders a person makes in a project's Vault (S6, 20261106_document_folders_project_scope.sql)
+  // reference the project with no cascade, so a tenant holding one project folder failed the
+  // whole erasure at regulatory_programs with 23503. The legacy simple documents filed in those
+  // folders go first, then the folders (one DELETE removes a folder tree, parent_id included),
+  // then the project. Customer content (2026-11-08, ci:purge-coverage on a blank database).
+  'simple_document_versions',
+  'simple_documents',
+  'document_folders',
+  // The report-pack register (C-3, P-91, aadca02cc7): its runs and project links before the
+  // bundle they name. Customer content: which reports a tenant packs, for which projects.
+  'report_bundle_runs',
+  'report_bundle_projects',
+  'report_bundles',
   'regulatory_programs',
   'file_uploads',
   // Digital-twin simulations. Customer content: each row stores the tenant's

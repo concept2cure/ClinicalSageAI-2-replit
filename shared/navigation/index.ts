@@ -52,6 +52,13 @@ export interface NavigationTarget {
   /** Logical grouping (module/area) for discovery. */
   group: string;
   /**
+   * A global screen that shows ONE program when one is open or named, and its
+   * own view across programs when none is: the Vault, global since 2026-11-06.
+   * Its scope says the screen opens with no program; this says a program named
+   * for it is still opened there (see programNeedOf).
+   */
+  programOptional?: boolean;
+  /**
    * The token the chat client applies as `action.path`. Defaults to `id`; set
    * explicitly only when the client path differs from the canonical id.
    */
@@ -116,10 +123,17 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   // ── Project-scoped tabs (require an active project) ──
   { id: 'project-home', label: 'Project Home', description: 'The active project overview / home.', scope: 'project', group: 'project' },
   { id: 'regulatory-workspace', label: 'Regulatory Workspace', description: 'The canonical project workspace (AnA + canvas).', scope: 'project', group: 'project' },
-  { id: 'documents', label: 'Documents', description: 'The project document list.', scope: 'project', group: 'project' },
+  // An alias of `vault` (registryModel DEEP_LINK_ALIASES), so it takes the Vault's program rule too (programOptional,
+  // below): "open BX-301's documents" opens BX-301's, where global alone dropped the program named.
+  { id: 'documents', label: 'Documents', description: 'The Vault\'s document list, which `documents` opens: the open project\'s, or, with no project open, the governed documents across your projects. Name a project to open that project\'s documents.', scope: 'global', group: 'project', programOptional: true },
   { id: 'review', label: 'Review', description: 'The review / readiness surface for the project.', scope: 'project', group: 'project' },
   { id: 'submissions', label: 'Submissions', description: 'The project submissions surface.', scope: 'project', group: 'project' },
-  { id: 'vault', label: 'Vault', description: 'The project document vault.', scope: 'project', group: 'project' },
+  // Global since 2026-11-06, by the founder: "Vault … should be accessible all the time, not just from within the
+  // project, but on the left rail." With a project open it is that project's vault; with none, Vault's own view of the
+  // governed documents across the projects the person can open (Vault.tsx, the organization view).
+  // programOptional: "take me to BX-301's Vault" still opens BX-301's. Global alone dropped the program named, and AnA
+  // said she had opened it over the organization view (self-drive-regressions.test.ts, 4b).
+  { id: 'vault', label: 'Vault', description: 'The document vault: the open project\'s, or, with no project open, the governed documents across your projects. Name a project to open that project\'s vault.', scope: 'global', group: 'project', programOptional: true },
   { id: 'section-workspace', label: 'Section Workspace', description: 'The CTD section authoring workspace.', scope: 'project', group: 'project', params: [{ name: 'sectionCode', required: false, description: 'CTD section code to open, e.g. "3.2.P.8".' }] },
   { id: 'csr-workflow', label: 'CSR Workflow', description: 'The clinical study report workflow.', scope: 'project', group: 'project' },
   { id: 'ind-checklist', label: 'IND forms', description: 'The IND checklist and Forms 1571, 1572 and 3674.', scope: 'project', group: 'project' },
@@ -183,7 +197,6 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   // by AnA. It was the one project surface `navigate_to` could not reach.
   { id: 'communication-center', label: 'Communication', description: 'The agency-communication hub for the project — the FDA loop, the agency inbox, meetings and commitments, and authority profiles.', scope: 'project', group: 'module' },
   { id: 'mission-control', label: 'Mission control', description: 'The portfolio mission-control board — every program and its cross-program status.', scope: 'global', group: 'global' },
-  { id: 'biostat-workbench', label: 'Biostatistics design calculators', description: 'The biostatistics design calculators — reviewer-risk assessment plus the deterministic design engines (assurance, group-sequential, sample size, multiplicity, and more).', scope: 'global', group: 'module' },
   { id: 'filing-strategy', label: 'Filing strategy', description: 'The filing-strategy workspace — filing-sequence optimization, agency divergence, and prediction calibration.', scope: 'project', group: 'module' },
   { id: 'safety-narrative', label: 'Safety narratives', description: 'The safety-narrative workbench — the SAE case worklist with the ICH E3 §16 narrative composer and expedited-reporting clocks.', scope: 'project', group: 'module' },
   { id: 'crl-library', label: 'FDA CRL library', description: 'The FDA Complete-Response-Letter evidence library — deficiency findings by discipline and severity across the corpus.', scope: 'global', group: 'module' },
@@ -232,6 +245,22 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   // ── Analysis & authoring tools ──
   { id: 'batch-draft', label: 'Batch draft', description: 'Parallel section drafting over the eCTD Co-Author document spine (running a batch stays a human click).', scope: 'global', group: 'module' },
   {
+    /* `scope: 'global'`, and it stays global. I set it to 'project' on
+       2026-11-09 so a project-less visit could not seed a pharma-oncology
+       preset for a device organisation, and REVERTED it the same day after
+       driving the rail in a real browser: a project-scoped target with nothing
+       open resolves to Projects (routing.ts destinationFor), and
+       reopenLastProject only helps an account that has opened a project
+       before. In a fresh session — a demo — clicking Biostatistics landed on
+       Projects and the work area never opened. The founder found it that way.
+
+       The founder's words authorising the rail entry are "the left rail should
+       be a navigation point for all of those entry points", and a navigation
+       point that opens Projects is not one. "Everything starts with a project"
+       is served by what the screen does with no project — it reads the
+       organisation's own client type for its preset and says what it is
+       looking at — not by refusing to open. The preset defect is fixed where it
+       lives, in defaultPresetFor (surfaces/Biostatistics.tsx). */
     id: 'biostatistics', label: 'Biostatistics designer', description: 'The deterministic biostatistics design engine — sample size, power, and governed statistical documents.', scope: 'global', group: 'module',
     // Consumed by the surface on mount: it loads THAT persisted study design
     // (cdisc_prm_studies.study_id) through the biostatistics bridge and seeds
@@ -275,6 +304,20 @@ const TARGETS_BY_ID: ReadonlyMap<string, NavigationTarget> = new Map(
 /** Look up a navigation target by id. */
 export function findNavigationTarget(id: string): NavigationTarget | undefined {
   return TARGETS_BY_ID.get(id);
+}
+
+/**
+ * Whether a screen shows one program. 'required': a project screen, which with
+ * none open is an "open a program" state, so AnA asks which before moving.
+ * 'optional': a global screen that shows the program open or named, and its
+ * own view across programs with none (programOptional). 'none': the program
+ * plays no part. An unknown id is 'none'; resolveNavigation refuses it anyway.
+ */
+export function programNeedOf(targetId: string): 'required' | 'optional' | 'none' {
+  const target = TARGETS_BY_ID.get(targetId);
+  if (!target) return 'none';
+  if (target.scope === 'project') return 'required';
+  return target.programOptional ? 'optional' : 'none';
 }
 
 /** All navigable target ids (e.g. for prompt/catalog injection or validation). */

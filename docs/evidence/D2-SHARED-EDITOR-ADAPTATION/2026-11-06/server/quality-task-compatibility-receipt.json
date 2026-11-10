@@ -1,0 +1,77 @@
+{
+  "observedAt": "2026-11-06T21:35:02.376825+00:00",
+  "sourceCommit": "4b7798ea1f1a1eb3423f73e2b40d6e02171db14c",
+  "sourceCommitAfterRun": "4b7798ea1f1a1eb3423f73e2b40d6e02171db14c",
+  "branch": "concept2cure-v2",
+  "scope": "Bounded Quality source-task/project and CAPA reassignment integration",
+  "validation": {
+    "suites": 8,
+    "tests": 93,
+    "passed": 93,
+    "failed": 0,
+    "exitCode": 0,
+    "durationSeconds": 46.86,
+    "sourceOrFixtureEdits": false
+  },
+  "command": "NODE_OPTIONS=--max-old-space-size=4096 PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH npx --no-install vitest run --config vitest.config.ts --maxWorkers=1 --fileParallelism=false server/routes/__tests__/taskBoard-quality-source.test.ts server/routes/__tests__/taskBoard-quality-source.pglite.test.ts server/routes/__tests__/taskBoard-review-route.test.ts server/services/tasking/__tests__/source-task-quality-project.test.ts server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts server/services/tasking/__tests__/source-task-training-project.test.ts server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts server/services/tasking/__tests__/source-task.test.ts --reporter=dot",
+  "inputsBeforeRun": {
+    "observedAt": "2026-11-06T21:33:33.089695+00:00",
+    "sourceCommit": "4b7798ea1f1a1eb3423f73e2b40d6e02171db14c",
+    "files": {
+      "server/routes/taskBoard.routes.ts": "0f1f9103a9d90c32ff47e1eac562e30648923620ccc5fb1173cb58ac2722525e",
+      "server/services/tasking/source-task.ts": "353baa5bef0efb2139900d92345988acbd9a0af3a5330401170bd4be43880cd1",
+      "server/services/tasking/task-project.ts": "0dc2b50d3fcf9085c9511629dc36402229af98e9097feccb7fa50fd76ebd29ea",
+      "server/services/c2c/current-program-access.ts": "3be8312ccf10d2a1d3a260c039caf24c3385ff506f50c9ae60eafbc6c6771a4c",
+      "server/services/report-os/project-access.ts": "1f65ab78bebd43e97563c42cbe16345845de58277efa79e03f2d8c2c753b5731",
+      "server/services/qms/controlled-document-content.ts": "e9fe6cd4664fe5506b52bed4599f51d66f49afcc2ddc47d3f195da0b2931c007",
+      "server/services/qms/training-assignment.ts": "3e877b07beeb9ca37ef86eee7a3744b6b1a43e6296ab2ddae22980f15f91c726",
+      "server/services/qms/current-release-approval.ts": "f0f53cd5cf0f876a2783f03caadeddab4d0b1a9d6d8a84c6037912801476ec86",
+      "server/services/qms/in-force-release.ts": "1c9eb8f3fb969d7b7d0f74abe8fbdc423870b3ad09e92c809425f4e0ea3a5a7f",
+      "server/routes/__tests__/taskBoard-quality-source.test.ts": "70082b5d44197b16c8a06ca09c372d76de54c1c5179d9f3eff6daaf59a2686ff",
+      "server/routes/__tests__/taskBoard-quality-source.pglite.test.ts": "c1cc4378f463fe6ff15c150275dea9194b4e8fc31abce1f253ce2cebcc73e85d",
+      "server/routes/__tests__/taskBoard-review-route.test.ts": "1393396f61d5039799bf7e656694ee0d2cf81f2b417fe650ae341c717a69e9a9",
+      "server/services/tasking/__tests__/source-task-quality-project.test.ts": "b7fa2e9990d0c2e2121a16b2e6d99fccc738f85f47097d0494b4095198ffb1aa",
+      "server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts": "34b712e7f5b7e36f3684b505c6e115c971c501976601953187a1ddd46e4411c9",
+      "server/services/tasking/__tests__/source-task-training-project.test.ts": "ec9f26f4e764b324b574a46ca335b0ca1478c9ca41c84386bca45c0059725ff4",
+      "server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts": "895a0f45b46407854982af1bf93d04db1394af2bd9b9da2c81be98f8ac60c05f",
+      "server/services/tasking/__tests__/source-task.test.ts": "e9bbdc49e8fb1165d4c38f986333a4e302bf4587600dc07c4aa40e1ddb995777"
+    }
+  },
+  "sourceFingerprintsAfterRun": {
+    "server/routes/taskBoard.routes.ts": "0f1f9103a9d90c32ff47e1eac562e30648923620ccc5fb1173cb58ac2722525e",
+    "server/services/tasking/source-task.ts": "353baa5bef0efb2139900d92345988acbd9a0af3a5330401170bd4be43880cd1",
+    "server/services/tasking/task-project.ts": "0dc2b50d3fcf9085c9511629dc36402229af98e9097feccb7fa50fd76ebd29ea",
+    "server/services/c2c/current-program-access.ts": "3be8312ccf10d2a1d3a260c039caf24c3385ff506f50c9ae60eafbc6c6771a4c",
+    "server/services/report-os/project-access.ts": "1f65ab78bebd43e97563c42cbe16345845de58277efa79e03f2d8c2c753b5731",
+    "server/services/qms/controlled-document-content.ts": "e9fe6cd4664fe5506b52bed4599f51d66f49afcc2ddc47d3f195da0b2931c007",
+    "server/services/qms/training-assignment.ts": "3e877b07beeb9ca37ef86eee7a3744b6b1a43e6296ab2ddae22980f15f91c726",
+    "server/services/qms/current-release-approval.ts": "f0f53cd5cf0f876a2783f03caadeddab4d0b1a9d6d8a84c6037912801476ec86",
+    "server/services/qms/in-force-release.ts": "1c9eb8f3fb969d7b7d0f74abe8fbdc423870b3ad09e92c809425f4e0ea3a5a7f",
+    "server/routes/__tests__/taskBoard-quality-source.test.ts": "70082b5d44197b16c8a06ca09c372d76de54c1c5179d9f3eff6daaf59a2686ff",
+    "server/routes/__tests__/taskBoard-quality-source.pglite.test.ts": "c1cc4378f463fe6ff15c150275dea9194b4e8fc31abce1f253ce2cebcc73e85d",
+    "server/routes/__tests__/taskBoard-review-route.test.ts": "1393396f61d5039799bf7e656694ee0d2cf81f2b417fe650ae341c717a69e9a9",
+    "server/services/tasking/__tests__/source-task-quality-project.test.ts": "b7fa2e9990d0c2e2121a16b2e6d99fccc738f85f47097d0494b4095198ffb1aa",
+    "server/services/tasking/__tests__/source-task-quality-sql.pglite.test.ts": "34b712e7f5b7e36f3684b505c6e115c971c501976601953187a1ddd46e4411c9",
+    "server/services/tasking/__tests__/source-task-training-project.test.ts": "ec9f26f4e764b324b574a46ca335b0ca1478c9ca41c84386bca45c0059725ff4",
+    "server/services/tasking/__tests__/source-task-capa-reassignment.pglite.test.ts": "895a0f45b46407854982af1bf93d04db1394af2bd9b9da2c81be98f8ac60c05f",
+    "server/services/tasking/__tests__/source-task.test.ts": "e9bbdc49e8fb1165d4c38f986333a4e302bf4587600dc07c4aa40e1ddb995777"
+  },
+  "inputsUnchanged": true,
+  "log": {
+    "path": "docs/evidence/D2-SHARED-EDITOR-ADAPTATION/2026-11-06/server/shared-editor-quality-task-compatibility.txt",
+    "rawBytes": 26820,
+    "rawLines": 715,
+    "rawSha256": "cd5ea4f750e1a06d93df38e6bf6584f8eed85879ad434e40e637c74c33024100"
+  },
+  "proof": [
+    "Existing Quality records, controlled-document tenant/program bindings and CAPA ownership supply project placement, rather than caller metadata or stale task project fields.",
+    "Source-task replacement delegates current actor/project/source admission; CAPA assignee changes preserve replacement and rollback behavior.",
+    "Assigned training placement remains classification through its existing controlled-release/read policy, rather than a new project edit grant.",
+    "The shared task board exposes native Quality source links while retaining the existing review-route task destination and honest unavailable-version behavior."
+  ],
+  "limits": [
+    "Real ownership/anchor/rollback SQL runs in minimal in-process PGlite fixtures; some actor, project-policy and task-store adapters are explicit test seams. This is not native PostgreSQL/RLS/concurrency, deployed-auth or full-migration qualification.",
+    "No source/test edits, native schema application, reporting/source-import suites, credential/provider calls, full typecheck/build, commit or deployment in this scope.",
+    "Earlier receipts keep their own source snapshots and executed counts; the separate SDK guards were not repeated."
+  ]
+}

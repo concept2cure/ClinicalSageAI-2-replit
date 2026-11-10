@@ -26,8 +26,11 @@
  */
 
 import { sql } from 'drizzle-orm';
-import type { RequestDb } from '../../db/requestDb';
+import type { RequestDb, RequestSqlClient } from '../../db/requestDb';
 import { readProgramAnchorRow } from '../c2c/program-project-anchor';
+import { ProgramReadAccessError, readCurrentProgramActor } from '../c2c/current-program-access';
+import { canAccessReportProject, getAccessibleReportProjectIds } from '../report-os/project-access';
+import { GOVERNED_WRITE_ROLES } from '../../middleware/orgMembership';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -43,6 +46,175 @@ export const CANONICAL_DOCUMENT_SOURCE = 'canonical_document';
 
 /** The source kinds whose project this module can tell. */
 export const PROJECT_TELLING_SOURCES: readonly string[] = [AUTHORING_DOCUMENT_SOURCE, CANONICAL_DOCUMENT_SOURCE];
+
+/** Known admission refusals describe the existing task writer, not its database. */
+export class TaskProjectAdmissionError extends Error {
+  constructor(readonly status: 400 | 403 | 404 | 409 | 503, readonly code: string, message: string) {
+    super(message);
+    this.name = 'TaskProjectAdmissionError';
+  }
+}
+
+const projectDenied = () => new TaskProjectAdmissionError(403, 'TASK_PROJECT_ACCESS_DENIED',
+  'Your current project permissions do not allow these tasks. Nothing was created.');
+const projectUnavailable = () => new TaskProjectAdmissionError(503, 'TASK_PROJECT_ACCESS_UNAVAILABLE',
+  'Current project access could not be verified. Nothing was created. Try again.');
+const validProjectId = (value: unknown): value is number => typeof value === 'number'
+  && Number.isSafeInteger(value) && value > 0 && value <= 2_147_483_647;
+
+/** An explicit project never falls back to unfiled or organization-wide work. */
+export function requireTaskProjectId(value: unknown): number {
+  if (!validProjectId(value)) throw new TaskProjectAdmissionError(400, 'TASK_PROJECT_INVALID',
+    'Choose a valid project before creating these tasks. Nothing was created.');
+  return value;
+}
+
+function actualTaskWorkspace(row: Record<string, unknown>, projectId: number): number | null {
+  if (row.id !== projectId || typeof row.status !== 'string' || !row.status.trim()
+    || row.client_workspace_id !== null && !validProjectId(row.client_workspace_id)) throw projectUnavailable();
+  if (['archived', 'deleted'].includes(row.status)) throw new TaskProjectAdmissionError(409, 'TASK_PROJECT_CLOSED',
+    'New tasks cannot be created in an archived or deleted project. Nothing was created.');
+  return row.client_workspace_id as number | null;
+}
+
+/** Retain the selected workspace after actor admission. Project-bound callers
+ * pass the parent's actual workspace; unfiled intake may select an owned one. */
+export async function retainTaskWorkspace(q: RequestSqlClient, organizationId: number, workspaceId: number | null,
+  claimed: unknown): Promise<void> {
+  try {
+    if (workspaceId !== null && !validProjectId(workspaceId)) throw projectDenied();
+    if (claimed != null) {
+      const numeric = typeof claimed === 'string' && /^\d+$/.test(claimed) ? Number(claimed) : claimed;
+      if (!validProjectId(numeric) || numeric !== workspaceId) throw projectDenied();
+    }
+    if (workspaceId === null) return;
+    const owned = await q.query(`SELECT id FROM client_workspaces
+      WHERE id=$1 AND organization_id=$2 FOR SHARE`, [workspaceId, organizationId]);
+    if (owned.rows.length !== 1 || owned.rows[0].id !== workspaceId) throw projectDenied();
+  } catch (error) {
+    if (error instanceof TaskProjectAdmissionError) throw error;
+    throw projectUnavailable();
+  }
+}
+
+/** Unfiled work still requires current active write membership, retained on the
+ * writer's own transaction just like the actor of project-bound work. */
+export async function admitTaskCreationActor(q: RequestSqlClient, input: {
+  organizationId: number; actorUserId: number;
+}) {
+  try {
+    const actor = await readCurrentProgramActor(q, { organizationId: input.organizationId,
+      userId: input.actorUserId, forShare: true });
+    if (!GOVERNED_WRITE_ROLES.has(actor.role)) throw projectDenied();
+    return actor;
+  } catch (error) {
+    if (error instanceof TaskProjectAdmissionError) throw error;
+    if (error instanceof ProgramReadAccessError && error.status === 403) throw projectDenied();
+    throw projectUnavailable();
+  }
+}
+
+/** A work project's tasks (P-111; the coordinating session's ruling (b), 2026-11-09): the exact project's own access
+ * decides first, exactly as canAccessReportProject decides it, so nothing is looser than before. Beyond it, one clause
+ * only: a writer on the work project's filing project (its root) may read and add its tasks, unless the work project
+ * has its own private visibility setting. One direction: a work project's members gain nothing on its parent or its
+ * siblings, and the walk never leaves the organisation. */
+export async function canWorkOnProjectTasks(q: RequestSqlClient, organizationId: number,
+  actor: { userId: number; role: string | null | undefined }, projectId: number,
+  options: { forWrite?: boolean; /** The caller already read the row: no parent means no filing-project clause, and
+     *  no further read (an ordinary project's denial runs exactly the SQL it ran before P-111). */ hasParent?: boolean } = {}): Promise<boolean> {
+  /* Exactly today's call, arguments included, so the exact-row decision is unchanged. */
+  const exact = options.forWrite === true
+    ? await canAccessReportProject(organizationId, actor, projectId, q, { forWrite: true })
+    : await canAccessReportProject(organizationId, actor, projectId, q);
+  if (exact) return true;
+  if (options.hasParent === false) return false;
+  const { rows } = await q.query(`WITH RECURSIVE up AS (
+        SELECT id, parent_project_id, 0 AS hops FROM projects WHERE id = $1 AND organization_id = $2
+        UNION ALL
+        SELECT p.id, p.parent_project_id, up.hops + 1 FROM projects p
+          JOIN up ON p.id = up.parent_project_id AND p.organization_id = $2 WHERE up.hops < 8)
+      SELECT (SELECT id FROM up WHERE parent_project_id IS NULL) AS root,
+        EXISTS(SELECT 1 FROM project_visibility_settings v
+          WHERE v.project_id = $1 AND v.organization_id = $2 AND v.visibility = 'private') AS private_child`,
+  [projectId, organizationId]);
+  const root = Number(rows[0]?.root);
+  if (!Number.isSafeInteger(root) || root <= 0 || root === projectId || rows[0]?.private_child === true) return false;
+  return canAccessReportProject(organizationId, actor, root, q, { forWrite: true });
+}
+
+/** The work projects under a filing project whose tasks this reader may read, decided for all of them at once and by
+ * the same rule as canWorkOnProjectTasks (read): the work project's own access, or a writer on the filing project
+ * where the work project is not private. A project with a parent is not a filing project, so it rolls nothing up.
+ * Three reads, whatever the number of work projects: the descendants with their private flag, the reader's readable
+ * projects, and the reader's write access on the filing project. */
+export async function workProjectsReadableBy(q: RequestSqlClient, organizationId: number,
+  actor: { userId: number; role: string | null | undefined }, filingProjectId: number): Promise<Array<{ id: number; name: string }>> {
+  const { rows } = await q.query(`WITH RECURSIVE down AS (
+        SELECT c.id, c.name, 1 AS hops FROM projects c
+          JOIN projects f ON f.id = c.parent_project_id AND f.organization_id = c.organization_id
+         WHERE f.id = $1 AND f.organization_id = $2 AND f.parent_project_id IS NULL
+        UNION ALL
+        SELECT c.id, c.name, down.hops + 1 FROM projects c
+          JOIN down ON c.parent_project_id = down.id WHERE c.organization_id = $2 AND down.hops < 8)
+      SELECT down.id, down.name, EXISTS(SELECT 1 FROM project_visibility_settings v
+          WHERE v.project_id = down.id AND v.organization_id = $2 AND v.visibility = 'private') AS private_child
+        FROM down ORDER BY down.id`, [filingProjectId, organizationId]);
+  if (!rows.length) return [];
+  const readable = new Set(await getAccessibleReportProjectIds(organizationId, actor, q));
+  const parentWriter = await canAccessReportProject(organizationId, actor, filingProjectId, q, { forWrite: true });
+  return (rows as Array<Record<string, unknown>>)
+    .filter((r) => readable.has(Number(r.id)) || (parentWriter && r.private_child !== true))
+    .map((r) => ({ id: Number(r.id), name: String(r.name) }));
+}
+
+/** P-111 item 4: a subtask's parent, decided in the writer's own transaction. The parent must be a task of the same
+ * organisation and the same project, live (not deleted), and not itself a subtask: one level only. Every reason gives
+ * the same refusal, so a parent id cannot be used to learn about another project's tasks. The parent row is read
+ * under a share lock, so it cannot become a subtask or move while this task is written. */
+export async function admitParentTask(q: RequestSqlClient, input: {
+  organizationId: number; projectId: number | undefined; parentTaskId: unknown;
+}): Promise<number> {
+  const refused = () => new TaskProjectAdmissionError(409, 'PARENT_TASK_REFUSED',
+    'A subtask goes under a task of the same project that is not itself a subtask. Nothing was created.');
+  const parentTaskId = input.parentTaskId;
+  if (typeof parentTaskId !== 'number' || !Number.isSafeInteger(parentTaskId) || parentTaskId <= 0 || parentTaskId > 2_147_483_647) throw refused();
+  if (input.projectId === undefined) throw refused();
+  const { rows } = await q.query(`SELECT project_id, parent_task_id FROM unified_tasks
+    WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL FOR SHARE`, [parentTaskId, input.organizationId]);
+  const parent = rows[0] as { project_id?: unknown; parent_task_id?: unknown } | undefined;
+  if (!parent || Number(parent.project_id) !== input.projectId || parent.parent_task_id != null) throw refused();
+  return parentTaskId;
+}
+
+/** Extend the existing task/project boundary on the writer's own transaction.
+ * Locks retain the current actor, parent, visibility and edit membership through
+ * the task/edge/audit commit; a read/review share never becomes write authority. */
+export async function admitTaskCreationProject(q: RequestSqlClient, input: {
+  organizationId: number; actorUserId: number; projectId: number; clientWorkspaceId?: unknown;
+}): Promise<{ projectId: number; clientWorkspaceId: number | null }> {
+  const projectId = requireTaskProjectId(input.projectId);
+  try {
+    const actor = await admitTaskCreationActor(q, input);
+    const { rows } = await q.query(`SELECT id,client_workspace_id,status,parent_project_id FROM projects
+      WHERE id=$1 AND organization_id=$2 FOR SHARE`, [projectId, input.organizationId]);
+    if (!rows.length) throw new TaskProjectAdmissionError(404, 'TASK_PROJECT_NOT_FOUND',
+      'Project not found for this organization. Nothing was created.');
+    if (rows.length !== 1) throw projectUnavailable();
+    const clientWorkspaceId = actualTaskWorkspace(rows[0], projectId);
+    await retainTaskWorkspace(q, input.organizationId, clientWorkspaceId, input.clientWorkspaceId);
+    await q.query(`SELECT project_id FROM project_visibility_settings
+      WHERE project_id=$1 AND organization_id=$2 FOR SHARE`, [projectId, input.organizationId]);
+    /* P-111 (b): the filing project's writer is considered only for a work project, read from the same locked row. */
+    const hasParent = rows[0].parent_project_id !== null && rows[0].parent_project_id !== undefined;
+    if (!await canWorkOnProjectTasks(q, input.organizationId, actor, projectId, { forWrite: true, hasParent })) throw projectDenied();
+    return { projectId, clientWorkspaceId };
+  } catch (error) {
+    if (error instanceof TaskProjectAdmissionError) throw error;
+    if (error instanceof ProgramReadAccessError && error.status === 403) throw projectDenied();
+    throw projectUnavailable();
+  }
+}
 
 /** The project a Vault version's lifecycle record anchors to, or null. */
 async function canonicalDocumentProject(db: RequestDb, orgId: number, sourceEntityId: string | null | undefined): Promise<number | null> {

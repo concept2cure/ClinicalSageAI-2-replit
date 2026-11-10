@@ -60,7 +60,7 @@ beforeAll(async () => {
   author = asToken(await new SignJWT({ userId: AUTHOR.id, email: AUTHOR.email, organizationId: ORG, role: 'member' })
     .setProtectedHeader({ alg: 'HS256' }).setIssuedAt().setExpirationTime('1h').sign(new TextEncoder().encode(JWT_SECRET)));
   const { default: router } = await import('../authoring.router');
-  app = makeApp(router);
+  app = makeApp(router, { dbClient: db.pool });
   // The CSR document, from the CSR template, as Project → New document makes it.
   const created = await author(request(app).post('/api/authoring/docs')).send({ title: 'SYN-201 Clinical Study Report', module: 'M5',
     template_id: CSR_TEMPLATE, client_program_id: PROGRAM });
@@ -215,5 +215,214 @@ describe('a CSR build’s approved headings, imported into the CSR document it w
     const verified = await verifyWorkflowImportWorkingCopy(db.pool, { organizationId: ORG, doc, sections, actor: { id: AUTHOR.id, email: AUTHOR.email } });
     // Machine-drafted text from the build remains: the same hold a working copy has applies to this document.
     expect(verified).toMatchObject({ origin: { kind: 'csr', id: String(jobId) }, knownMachineRemains: true });
+  });
+});
+
+/** Two late-cut reports remain two documents. These are synthetic saved jobs
+ * and cut receipts, not a live clinical-source freeze, model run or approval. */
+interface Cut {
+  documentId: string;
+  studyDataId: string;
+  sourceDocumentId: string;
+  sourceSha: string;
+  dataCutDate: string;
+  disposition: string;
+  jobId: number;
+}
+const collaborator = { id: '9', email: 'collaborator@canvas.example', name: 'Casey Collaborator' };
+let colleague: (r: request.Test) => request.Test;
+let initial: Cut;
+let later: Cut;
+
+async function savedBuild(documentId: string, studyDataId: string, disposition: string): Promise<number> {
+  const job = await one<{ id: number }>(`INSERT INTO csr_build_jobs
+    (organization_id,project_id,study_id,status,progress,sections_to_generate,requested_by,study_info_snapshot)
+    VALUES($1,42,'SYN-201','complete',100,ARRAY['10.1'],$2,$3) RETURNING id`,
+  [ORG, Number(AUTHOR.id), JSON.stringify({ studyInfo: { title: 'SYN-201 Phase 2', protocolNumber: 'SYN-201' },
+    evidenceSource: { programId: PROGRAM, runId: studyDataId, studyId: 'SYN-201' } })]);
+  await db.pool.query(`INSERT INTO csr_section_outputs
+    (organization_id,project_id,job_id,section_number,content,content_hash,ai_generated,model,
+     review_status,reviewer_id,reviewed_content_hash,review_decided_at)
+    VALUES($1,42,$2,'10.1',$3,$4,true,NULL,'approved',$5,$4,'2026-11-05T09:00:00Z')`,
+  [ORG, job.id, disposition, hash(disposition), REVIEWER]);
+  const binding = await one<{ authoring_document_id: string }>(`SELECT s.authoring_document_id::text FROM csr_build_jobs j
+    JOIN csr_study_data s ON s.study_data_id::text=j.source_run_id AND s.organization_id=j.organization_id
+    WHERE j.id=$1 AND j.organization_id=$2`, [job.id, ORG]);
+  expect(binding.authoring_document_id).toBe(documentId);
+  return Number(job.id);
+}
+
+async function savedCut(label: string, dataCutDate: string, disposition: string): Promise<Cut> {
+  const created = await author(request(app).post('/api/authoring/docs')).send({
+    title: `SYN-201 CSR — ${label}`, module: 'M5', template_id: CSR_TEMPLATE, client_program_id: PROGRAM,
+  });
+  expect(created.status, JSON.stringify(created.body)).toBeLessThan(300);
+  const documentId = String(created.body.data?.id ?? created.body.document?.id ?? created.body.id);
+  expect(documentId).toMatch(/^[0-9a-f-]{36}$/);
+  const studyDataId = randomUUID();
+  const sourceDocumentId = randomUUID();
+  const sourceSha = hash(`SYNTHETIC ${dataCutDate}: ${disposition}`);
+  const snapshot = { organizationId: ORG, programId: PROGRAM, authoringDocumentId: documentId,
+    clinicalSourceReceipts: [{ documentId: sourceDocumentId, documentTitle: `SYN-201 source — ${label}`,
+      version: label, sha256: sourceSha, dataCutDate, studyId: 'SYN-201', protocolNumber: 'SYN-201',
+      clinicalVerification: 'not-established' }] };
+  // The ordinary immutable table is used. This fixture does not pretend to
+  // exercise the Vault-byte loader or manufacture a clinical source approval.
+  await db.pool.query(`INSERT INTO csr_study_data
+    (study_data_id,organization_id,program_id,authoring_document_id,input_snapshot,input_digest,created_by)
+    VALUES($1,$2,$3,$4,$5::jsonb,$6,$7)`,
+  [studyDataId, ORG, PROGRAM, documentId, JSON.stringify(snapshot), hash(JSON.stringify(snapshot)), Number(AUTHOR.id)]);
+  return { documentId, studyDataId, sourceDocumentId, sourceSha, dataCutDate, disposition,
+    jobId: await savedBuild(documentId, studyDataId, disposition) };
+}
+
+const cutSource = (cut: Pick<Cut, 'jobId'>) => ({ kind: 'csr', jobId: cut.jobId, sectionNumbers: ['10.1'], approvedOnly: true });
+const requestImport = (cut: Pick<Cut, 'jobId'>, targetDocumentId: string, extra: Record<string, unknown>) =>
+  importInto({ source: cutSource(cut), targetDocumentId, ...extra });
+
+async function retained(documentId: string) {
+  return one(`SELECT
+    (SELECT to_jsonb(d) FROM authoring_documents d WHERE d.id=$1 AND d.tenant_id=$2) AS document,
+    (SELECT jsonb_agg(to_jsonb(s) ORDER BY s.id) FROM authoring_sections s WHERE s.doc_id=$1 AND s.tenant_id=$2) AS sections,
+    (SELECT jsonb_agg(to_jsonb(r) ORDER BY r.id) FROM doc_revisions r JOIN authoring_sections s ON s.id=r.section_id AND s.tenant_id=r.tenant_id
+      WHERE s.doc_id=$1 AND s.tenant_id=$2) AS revisions,
+    (SELECT jsonb_agg(to_jsonb(a) ORDER BY a.id) FROM authoring_audit_trail a WHERE a.doc_id=$1 AND a.tenant_id=$2) AS receipts,
+    (SELECT jsonb_agg(to_jsonb(l) ORDER BY l.id) FROM document_span_lineage l JOIN authoring_sections s
+      ON s.id::text=l.document_id AND s.tenant_id=l.organization_id
+      WHERE l.document_table='authoring_sections' AND s.doc_id=$1 AND s.tenant_id=$2) AS lineage,
+    (SELECT jsonb_agg(to_jsonb(c) ORDER BY c.study_data_id) FROM csr_study_data c
+      WHERE c.authoring_document_id=$1 AND c.organization_id=$2) AS cuts`, [documentId, ORG]);
+}
+
+describe('two CSR documents in one project retain their own cuts and imports', () => {
+  beforeAll(async () => {
+    await db.pool.query('INSERT INTO users(id,name,email) VALUES($1,$2,$3)', [Number(collaborator.id), collaborator.name, collaborator.email]);
+    await db.pool.query("INSERT INTO organization_users(organization_id,user_id,role) VALUES($1,$2,'member')", [ORG, Number(collaborator.id)]);
+    await db.pool.query("INSERT INTO project_members(project_id,organization_id,user_id,role,status) VALUES(42,$1,$2,'use','active')", [ORG, Number(collaborator.id)]);
+    colleague = asToken(await new SignJWT({ userId: collaborator.id, email: collaborator.email, organizationId: ORG, role: 'member' })
+      .setProtectedHeader({ alg: 'HS256' }).setIssuedAt().setExpirationTime('1h').sign(new TextEncoder().encode(JWT_SECRET)));
+    initial = await savedCut('initial cut', '2026-09-30', 'At the initial data cut, 21 of 23 randomized participants completed the study.');
+    later = await savedCut('later cut', '2026-10-31', 'At the later data cut, 22 of 23 randomized participants completed the study.');
+  }, 60_000);
+
+  it('imports each approved job into its own CSR-template document with a distinct frozen cut and retained origin', async () => {
+    expect(initial.documentId).not.toBe(later.documentId);
+    expect(initial.studyDataId).not.toBe(later.studyDataId);
+    expect(initial.jobId).not.toBe(later.jobId);
+    const before = await counts();
+    for (const cut of [initial, later]) {
+      const p = await requestImport(cut, cut.documentId, { previewOnly: true });
+      expect(p.status, JSON.stringify(p.body)).toBe(200);
+      const written = await requestImport(cut, cut.documentId, { expectedFingerprint: p.body.data.fingerprint, reason });
+      expect(written.status, JSON.stringify(written.body)).toBe(200);
+      expect(outcomes(written.body)).toEqual({ '10.1': 'written' });
+      const doc = await one<{ client_program_id: string; template_id: string; provenance: { importSource: { id: string } } }>(
+        'SELECT client_program_id::text,template_id::text,provenance FROM authoring_documents WHERE id=$1 AND tenant_id=$2', [cut.documentId, ORG]);
+      expect(doc).toMatchObject({ client_program_id: PROGRAM, template_id: CSR_TEMPLATE,
+        provenance: { importSource: { kind: 'csr', id: String(cut.jobId) } } });
+      const saved = await section('10.1', cut.documentId);
+      expect(saved.content).toContain(cut.disposition);
+      const receipts = (await db.pglite.query<{ imported: { jobId: number | string } }>(`SELECT metadata->'csrBuildImport' AS imported FROM authoring_audit_trail
+        WHERE doc_id=$1 AND tenant_id=$2 AND operation_type IN ('UPDATE','CSR_IMPORT') AND metadata ? 'csrBuildImport'`, [cut.documentId, ORG])).rows;
+      expect(receipts).toHaveLength(2);
+      expect(receipts.every(row => Number(row.imported.jobId) === cut.jobId)).toBe(true);
+      const { listCsrStudyData } = await import('../../services/csr/csr-study-data');
+      const cuts = await listCsrStudyData(db.pool as never, { organizationId: ORG, programId: PROGRAM, userId: Number(AUTHOR.id) }, cut.documentId);
+      expect(cuts).toHaveLength(1);
+      expect(cuts[0]).toMatchObject({ studyDataId: cut.studyDataId, via: 'this-document', sources: [{ documentId: cut.sourceDocumentId,
+        sha256: cut.sourceSha, dataCutDate: cut.dataCutDate, clinicalVerification: 'not-established' }] });
+    }
+    expect((await counts()).docs).toBe(before.docs);
+    expect((await counts()).revisions).toBe(before.revisions + 2);
+    expect((await section('10.1', initial.documentId)).id).not.toBe((await section('10.1', later.documentId)).id);
+  });
+
+  it('refuses either cut in the other CSR and retains both documents, revisions, lineage, snapshots and receipts exactly', async () => {
+    const before = [await retained(initial.documentId), await retained(later.documentId)];
+    const countBefore = await counts();
+    for (const [cut, wrongDocumentId] of [[initial, later.documentId], [later, initial.documentId]] as const) {
+      const valid = await requestImport(cut, cut.documentId, { previewOnly: true });
+      expect(valid.status).toBe(200);
+      for (const extra of [{ previewOnly: true }, { expectedFingerprint: valid.body.data.fingerprint, reason }]) {
+        const refused = await requestImport(cut, wrongDocumentId, extra);
+        expect(refused.status, JSON.stringify(refused.body)).toBe(409);
+        expect(refused.body.error).toBe('IMPORT_TARGET_STUDY_DATA_MISMATCH');
+        expect([await retained(initial.documentId), await retained(later.documentId)]).toEqual(before);
+      }
+    }
+    expect(await counts()).toEqual(countBefore);
+  });
+
+  it('refuses a second build of the same frozen cut after the first import, without replacing the original origin', async () => {
+    const secondBuild = { jobId: await savedBuild(initial.documentId, initial.studyDataId,
+      'A second synthetic build of the initial cut must not replace its retained report.') };
+    // A source-only preview is a read; it supplies the exact second build's
+    // fingerprint without creating a copy or bypassing target admission.
+    const sourcePreview = await importInto({ source: cutSource(secondBuild), previewOnly: true });
+    expect(sourcePreview.status, JSON.stringify(sourcePreview.body)).toBe(200);
+    const before = [await retained(initial.documentId), await retained(later.documentId)];
+    const countBefore = await counts();
+    for (const extra of [{ previewOnly: true }, { expectedFingerprint: sourcePreview.body.data.fingerprint, reason }]) {
+      const refused = await requestImport(secondBuild, initial.documentId, extra);
+      expect(refused.status, JSON.stringify(refused.body)).toBe(409);
+      expect(refused.body.error).toBe('IMPORT_TARGET_BOUND_TO_OTHER_BUILD');
+      expect([await retained(initial.documentId), await retained(later.documentId)]).toEqual(before);
+    }
+    expect(await counts()).toEqual(countBefore);
+  });
+
+});
+
+describe('collaborators share the existing CSR with current document and project grants', () => {
+  it('lets two authorized collaborators open the same CSR and exact sections, without importing another copy', async () => {
+    await db.pool.query(`INSERT INTO doc_permissions(doc_id,tenant_id,principal_id,email,role,granted_by,grant_reason)
+      VALUES($1,$2,$3,$4,'AUTHOR',$5,'Collaborate on this existing synthetic CSR')`,
+    [initial.documentId, ORG, collaborator.id, collaborator.email, AUTHOR.id]);
+    const before = await retained(initial.documentId);
+    const countBefore = await counts();
+    const opened: Array<{ id: string; sections: Array<{ id: string; doc_id: string; code: string; content: string }> }> = [];
+    for (const actor of [author, colleague]) {
+      const doc = await actor(request(app).get(`/api/authoring/docs/${initial.documentId}`)).query({ programId: PROGRAM });
+      expect(doc.status, JSON.stringify(doc.body)).toBe(200);
+      expect(doc.body.document).toMatchObject({ id: initial.documentId, client_program_id: PROGRAM,
+        provenance: { importSource: { kind: 'csr', id: String(initial.jobId) } } });
+      const sections = await actor(request(app).get(`/api/authoring/docs/${initial.documentId}/sections`)).query({ programId: PROGRAM });
+      expect(sections.status, JSON.stringify(sections.body)).toBe(200);
+      expect(sections.body.sections.find((s: { code: string }) => s.code === '10.1').content).toContain(initial.disposition);
+      expect(sections.body.sections.every((s: { doc_id: string }) => s.doc_id === initial.documentId)).toBe(true);
+      opened.push({ id: doc.body.document.id, sections: sections.body.sections });
+    }
+    expect(opened[1]).toEqual(opened[0]);
+    // Project 'use' permits the read above, but a document AUTHOR grant does
+    // not elevate it into project editing. The current native edit grant is
+    // required even for the source preview of a planned import.
+    const previewBody = { programId: PROGRAM, source: cutSource(initial), targetDocumentId: initial.documentId, previewOnly: true };
+    const readOnlyProject = await colleague(request(app).post('/api/authoring/import/source')).send(previewBody);
+    expect(readOnlyProject.status, JSON.stringify(readOnlyProject.body)).toBe(403);
+    expect(readOnlyProject.body.error).toBe('PROJECT_PERMISSION_DENIED');
+    expect(await retained(initial.documentId)).toEqual(before);
+    await db.pool.query("UPDATE project_members SET role='edit' WHERE project_id=42 AND organization_id=$1 AND user_id=$2", [ORG, Number(collaborator.id)]);
+    const previewByColleague = await colleague(request(app).post('/api/authoring/import/source')).send({
+      programId: PROGRAM, source: cutSource(initial), targetDocumentId: initial.documentId, previewOnly: true });
+    expect(previewByColleague.status, JSON.stringify(previewByColleague.body)).toBe(200);
+    expect(outcomes(previewByColleague.body)).toEqual({ '10.1': 'unchanged' });
+    expect(await retained(initial.documentId)).toEqual(before);
+    expect(await counts()).toEqual(countBefore);
+  });
+
+  it('does not turn a shared CSR into access to another report, and rechecks a revoked document grant', async () => {
+    const before = [await retained(initial.documentId), await retained(later.documentId)];
+    const hidden = await colleague(request(app).get(`/api/authoring/docs/${later.documentId}`)).query({ programId: PROGRAM });
+    expect(hidden.status, JSON.stringify(hidden.body)).toBe(404);
+    expect(hidden.body.document).toBeUndefined();
+    await db.pool.query(`UPDATE doc_permissions SET revoked_at=NOW(),revoked_by=$3,revoke_reason='Synthetic collaboration ended'
+      WHERE doc_id=$1 AND tenant_id=$2 AND principal_id=$4`, [initial.documentId, ORG, AUTHOR.id, collaborator.id]);
+    for (const suffix of ['', '/sections']) {
+      const revoked = await colleague(request(app).get(`/api/authoring/docs/${initial.documentId}${suffix}`)).query({ programId: PROGRAM });
+      expect(revoked.status, JSON.stringify(revoked.body)).toBe(404);
+      expect(revoked.body.document).toBeUndefined();
+      expect(revoked.body.sections).toBeUndefined();
+    }
+    expect([await retained(initial.documentId), await retained(later.documentId)]).toEqual(before);
   });
 });

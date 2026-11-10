@@ -262,7 +262,124 @@ export interface LibrarySkillDetailDto extends LibrarySkillSummaryDto {
   disabledReason: string | null;
 }
 
+/** Human-authored runtime restrictions carried by an existing skill bundle. */
+export interface SkillApprovalBinding {
+  policyType: 'requires_approval';
+  enforcement: 'mandatory';
+  toolName: string;
+  description: string;
+}
+
+/** Explicit human corrections stored in the existing skill bundle metadata. */
+export type StandingRuleLevel = 'soft' | 'standing' | 'hard_gate';
+export interface StandingRuleReference { bundleId: string; version: number }
+export interface RuleConflictDecisionPackage {
+  conflictKey: string;
+  ruleRefs: Array<StandingRuleReference & { id?: number; projectId?: number | null; level?: StandingRuleLevel }>;
+  resolution: string;
+}
+export interface StandingRuleInput {
+  level: StandingRuleLevel;
+  state: 'active' | 'revoked';
+  conflictKey: string;
+  supersedes?: StandingRuleReference[];
+}
+export interface StandingRuleRecord extends Omit<StandingRuleInput, 'state' | 'supersedes'> {
+  schemaVersion: 1;
+  state: 'active' | 'revoked' | 'superseded';
+  scope: 'tenant' | 'project';
+  sourceAuditEventId: string;
+  sourceInteractionId: string;
+  supersedes: StandingRuleReference[];
+  createdAt: string;
+  revokedBy?: number;
+  revokedAt?: string;
+}
+export interface HumanCorrectionInput {
+  text: string;
+  agency: string;
+  documentType: string;
+  intent: string;
+}
+
+export interface PrivateUserRuleReference { ruleId: string; version: number }
+export interface PrivateUserRuleDto {
+  ruleId: string;
+  version: number;
+  scope: 'user';
+  level: StandingRuleLevel;
+  state: 'active' | 'revoked' | 'superseded';
+  name: string;
+  instructions: string;
+  conflictKey: string;
+  policyBindings: SkillApprovalBinding[];
+  source: { correctionId: string; sourceAuditEventId: string; correctionSha256: string };
+  supersedes: PrivateUserRuleReference[];
+  createdAt: string;
+  updatedAt: string;
+}
+export interface PrivateUserRuleLedgerDto {
+  schemaVersion: 1;
+  organizationId: number;
+  userId: number;
+  revision: number;
+  /** Restriction only; actual use still requires capture and a permitted qualified dispatch. */
+  promptUse: 'held_privacy_boundary' | 'protected_turns_only';
+  rules: PrivateUserRuleDto[];
+  conflicts: Array<{ conflictKey: string; ruleRefs: PrivateUserRuleReference[] }>;
+  receipts: Array<{ intentId: string; payloadSha256: string; ruleId: string; version: number; revision: number }>;
+}
+export interface PrivateUserRuleInput {
+  name: string;
+  instructions: string;
+  level: StandingRuleLevel;
+  conflictKey: string;
+  policyBindings?: SkillApprovalBinding[];
+  supersedes?: PrivateUserRuleReference[];
+}
+export type PrivateUserRuleAction = {
+  intentId: string;
+  reason: string;
+} & (
+  | { action: 'create_rule'; rule: PrivateUserRuleInput; correction: HumanCorrectionInput }
+  | { action: 'update_rule'; ruleId: string; expectedVersion: number; rule: PrivateUserRuleInput }
+  | { action: 'revoke_rule'; ruleId: string; expectedVersion: number }
+);
+export interface PrivateUserRuleWriteDto {
+  success: true;
+  audited: true;
+  replayed: boolean;
+  intentId: string;
+  privateRules: PrivateUserRuleLedgerDto;
+}
+
+/** Metadata only. The server also requires its private in-process issuance proof. */
+export interface PrivateRuleContextReceipt {
+  readonly schemaVersion: 1;
+  readonly organizationId: number;
+  readonly ownerUserId: number;
+  readonly profileId: number | null;
+  readonly revision: number;
+  readonly ruleSetSha256: string;
+  readonly ruleRefs: ReadonlyArray<Readonly<{ ruleId: string; version: number; sourceAuditEventId: string }>>;
+  readonly promptUse: 'held_privacy_boundary' | 'protected_turns_only';
+}
+
+/** Project gates require a tool whose canonical project target is provable. */
+export const PROJECT_SKILL_APPROVAL_TOOLS = ['check_dossier_consistency'] as const;
+
+/** Server-held authorization for one exact action under current rule versions. */
+export interface SkillPolicyApproval {
+  actionHash: string;
+  rulesHash: string;
+}
+
 export interface OrgSkillDto extends SkillFacets {
+  /** Public immutable library provenance; no donor, source or client-content metadata. */
+  libraryReceipt?: { schemaVersion: 1; libraryVersionId: string; artifactSha256: string; signatureHash: string };
+  standingRule?: StandingRuleRecord | null;
+  policyBindings?: SkillApprovalBinding[];
+  sourceAuditEventId?: string | null;
   id: number;
   bundleId: string;
   key: string;
@@ -310,6 +427,7 @@ export interface ProjectSkillSettingDto {
 }
 
 export interface ProjectSkillsDto {
+  ruleConflicts?: RuleConflictDecisionPackage[];
   projectId: number;
   settings: ProjectSkillSettingDto[];
   /** Skills written for this project. */
@@ -320,6 +438,8 @@ export interface ProjectSkillsDto {
 }
 
 export interface SkillHistoryEntryDto {
+  standingRule?: StandingRuleRecord;
+  auditEventId?: string;
   occurredAt: string;
   action: string;
   actorName: string | null;

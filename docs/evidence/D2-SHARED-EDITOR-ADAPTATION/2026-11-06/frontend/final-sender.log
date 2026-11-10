@@ -1,0 +1,39 @@
+
+ RUN  v4.1.7 /workspace/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault — Open in editor carries the selected document > pulls an uploaded document through verified intake and opens the exact saved working copy 914ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault governed section navigation > publishes the selected section on the editor deep-link channel before navigating 166ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault governed section navigation > retains the recorded IND family on the common editor channel 143ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault governed section navigation > leaves no stale target behind for the next, unrelated visit to the editor 124ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault exact governed filing identity > retains the recorded IND family 102ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault exact governed filing identity > retains the recorded NDA family 96ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault exact governed filing identity > retains the recorded BLA family 89ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault exact governed filing identity > retains the recorded MAA family 93ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault exact governed filing identity > retains the recorded CER family 84ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault exact governed filing identity > retains the recorded IVDR family 92ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault exact governed filing identity > uses explicit filing identity independent of folder id vaultdoc-display-only 103ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault exact governed filing identity > uses explicit filing identity independent of folder id presentation-folder 87ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault exact governed filing identity > refuses an explicit invalid filing identity null 111ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault exact governed filing identity > refuses an explicit invalid filing identity 12 101ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault exact governed filing identity > refuses an explicit invalid filing identity  114ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault exact governed filing identity > refuses an explicit invalid filing identity ../invalid-filing 95ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault whole document and exact section intents > carries whole-filing intent without a presentation code or title 92ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault whole document and exact section intents > uses the recorded section key instead of its display number 87ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault whole document and exact section intents > refuses whole-filing intent without exact filing identity 105ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault whole document and exact section intents > refuses an explicit malformed section claim 88ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault whole document and exact section intents > does not dispatch a retained button after the selected project changed 106ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault governed artifacts use the existing verified source intake > opens the exact version as a source-linked working copy 531ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault governed artifacts use the existing verified source intake > refuses missing or malformed numeric artifact version undefined 223ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault governed artifacts use the existing verified source intake > refuses missing or malformed numeric artifact version 3 227ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault governed artifacts use the existing verified source intake > refuses missing or malformed numeric artifact version 0 492ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault governed artifacts use the existing verified source intake > refuses missing or malformed numeric artifact version 1.5 320ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault governed artifacts use the existing verified source intake > refuses a preview for another recorded version 487ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault governed handoff retains the current account owner > refuses a retained editor action during an account transition 142ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault governed handoff retains the current account owner > does not hydrate a previous account’s delayed project tree 54ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx > Vault organization artifacts retain their numeric source version > uses sourceVersion from the row rather than its displayed v999 label 474ms
+
+ Test Files  1 passed (1)
+      Tests  30 passed (30)
+   Start at  18:17:47
+   Duration  10.65s (transform 2.89s, setup 228ms, import 3.52s, tests 5.95s, environment 694ms)
+

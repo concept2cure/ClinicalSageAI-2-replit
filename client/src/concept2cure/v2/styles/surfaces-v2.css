@@ -291,6 +291,9 @@
 .c2c-v2 .ver-note{font-size:12px;line-height:1.45;margin-top:2px;}
 
 /* review */
+/* The board's scopes (D4-7, §D4.J): two of D0's segmented controls on one line, the project switch at its end. */
+.c2c-v2 .rv-scopes{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 12px;}
+.c2c-v2 .rv-scopes > .rv-scope-program{margin-left:auto;}
 .c2c-v2 .esign-banner{display:flex;align-items:center;gap:9px;margin:16px 20px;padding:11px 14px;border:1px solid var(--border);border-left:3px solid var(--accent-100);border-radius:var(--radius-md);background:var(--bg-000);font-size:12px;color:var(--text-300);line-height:1.4;}
 .c2c-v2 .esign-banner .ico{color:var(--accent-100);font-size:15px;flex-shrink:0;}
 .c2c-v2 .rv-doc{margin:16px 20px 0;border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;background:var(--bg-000);}
@@ -328,9 +331,10 @@
    edge of the head, "Open in editor" past the right of the document's bar,
    and Comment past the right of the reply row. Each now
    wraps onto a line of its own, and every control a reviewer taps here is a
-   44px target ("Open in editor" was 28px). The project switch names the
-   project, and a button does not wrap: a long name (or, opened from a link,
-   the project's id) ran 36px past the screen; it wraps inside the column. */
+   44px target ("Open in editor" was 28px). The project switch named the
+   project, and a long name ran 36px past the screen; since D4-7 it is D0's
+   segmented control with fixed labels, the name in its tooltip, and it
+   scrolls inside itself. */
 @media (max-width:760px){
   .c2c-v2 .dt-head{flex-wrap:wrap;}
   .c2c-v2 .dt-acts{flex-wrap:wrap;}
@@ -338,7 +342,6 @@
   .c2c-v2 .dt-acts .btn,.c2c-v2 .btn.rv-doc-open,.c2c-v2 .rv-reply .btn{height:auto;min-height:44px;}
   .c2c-v2 .rv-reply{flex-wrap:wrap;}
   .c2c-v2 .rv-reply-in{min-width:0;min-height:44px;}
-  .c2c-v2 .btn.rv-scope-program{max-width:100%;height:auto;min-height:32px;white-space:normal;overflow-wrap:anywhere;text-align:left;}
 }
 .c2c-v2 .thread{display:flex;flex-direction:column;gap:10px;padding:0 20px 20px;}
 .c2c-v2 .cmt{border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;background:var(--bg-000);}

@@ -1,0 +1,724 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:40) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > lists the program's persisted designs with their statistical readiness 400ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > with a project open, its first design loads on arrival, seeded from the server adapter, not from a preset 318ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > loads the design handed over on the navigation channel 64ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > a design the server could not size shows its blocking gap and disables the write-back 262ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > summarises the engine's figures in the section heading, once 230ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > says "Not sized" in that heading for a design the engine could not size 218ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > files the document under the module the placement catalog names, and says where 459ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > applying the sample size requires a reason and reports only what the server confirmed 388ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > a refused write-back is shown as the refusal, never as success 425ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > raising tasks posts exactly the chosen keys and skips what is already on the board 289ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > renders the statistical review as a risk table with the verdict and each row's finding 197ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge > traces each finding to its gates in the row's title, and prints no gate code on screen 216ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — the loaded design, where and when it shows > renders the assessment and the review full width, not in the 300px design column 78ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — the loaded design, where and when it shows > with a project open, never sizes a worked example before the project's design arrives 1047ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — the ask row is named for a screen reader > exposes the starters as a group with an accessible name 25ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatBridge.test.tsx > Biostatistics — study design bridge, cross-links > cross-links open the protocol workspace, the task board and the submission center 287ms
+(node:51) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > atomically saves the statistical document and its source basis, then navigates 529ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > never writes the retired localStorage note 314ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > scopes the document to the open project, like every project-aware surface 301ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > a double click creates ONE document, not two 301ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor > hands off the document the user actually chose 381ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor: every way it can fail > does NOT navigate when the document create fails — and saves no section 308ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor: every way it can fail > says so, and stays put, when the session is not authenticated 293ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor: every way it can fail > does NOT navigate when the atomic receipt omits the saved section 297ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Biostatistics — Open in editor: every way it can fail > does NOT navigate when the request throws 295ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > ReportEngine — Open in editor > creates the document and section from the AnswerLead action, then navigates 77ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > ReportEngine — Open in editor > the document-bar button runs the same handoff 47ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > ReportEngine — Open in editor > does NOT navigate when the document create fails 51ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > ReportEngine — Open in editor > does NOT navigate when the section create fails 50ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > CmcModule change simulator — Open in editor > creates the document and section carrying the assessment, then navigates 166ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > CmcModule change simulator — Open in editor > does NOT navigate when the document create fails — the assessment stays on screen 158ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > CmcModule change simulator — Open in editor > does NOT navigate when the section create fails 158ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Open in editor with no project open — nothing is created (PF-07) > Biostatistics posts nothing, stays put, and says to open a project 283ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Open in editor with no project open — nothing is created (PF-07) > a legacy numeric workspace id is not a project — Biostatistics still posts nothing 304ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Open in editor with no project open — nothing is created (PF-07) > ReportEngine posts nothing, stays put, and says to open a project 55ms
+ ✓ client/src/concept2cure/v2/__tests__/openInEditorHandoff.test.tsx > Open in editor with no project open — nothing is created (PF-07) > CmcModule change simulator posts nothing, stays put, and says to open a project 141ms
+(node:59) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > independent actual caller recovery admission > atomic statistical recovery never continues without its full saved section (mismatched basis: false) 743ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > independent actual caller recovery admission > atomic statistical recovery never continues without its full saved section (mismatched basis: true) 499ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > independent actual caller recovery admission > Biostatistics Open and Attach share one synchronous creation lane 310ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > independent actual caller recovery admission > Reporting retains an unknown document attempt and prevents repeat creation 117ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > independent actual caller recovery admission > Reporting retains a known document after a lost section response 83ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > the five existing modules retain uncertain writes beside their real controls > Biostatistics cannot create a second document while the first identity is unknown 334ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > the five existing modules retain uncertain writes beside their real controls > calculator cannot create a second document while the first identity is unknown 294ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > the five existing modules retain uncertain writes beside their real controls > PV cannot create a second document while the first identity is unknown 210ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > the five existing modules retain uncertain writes beside their real controls > CMC change cannot create a second document while the first identity is unknown 87ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > the five existing modules retain uncertain writes beside their real controls > CMC quality cannot create a second document while the first identity is unknown 76ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > read-only recovery and deliberate saved-text continuation > checks a known parent and resumes only the original section payload after the source result changes 154ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > read-only recovery and deliberate saved-text continuation > preserves a matching section code with different text and opens that exact row only on inspection 97ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > read-only recovery and deliberate saved-text continuation > a scoped inventory check never guesses which unknown document response belonged to this request 111ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > read-only recovery and deliberate saved-text continuation > repeated explicit open reuses the exact confirmed receipt without another document or section write 77ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > late explicit recovery cannot publish across account or project visits > project-away-and-back suppresses a late inventory check 97ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > late explicit recovery cannot publish across account or project visits > account suppresses a late inventory check 78ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > late explicit recovery cannot publish across account or project visits > organization suppresses a late inventory check 77ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > late explicit recovery cannot publish across account or project visits > unmount suppresses a late inventory check 72ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > late explicit recovery cannot publish across account or project visits > an older check finalizer cannot release a newer project save 97ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > late explicit recovery cannot publish across account or project visits > an older continuation finalizer cannot release a newer project save 127ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > fresh verification preserves intervening saved work > a section saved after Check prevents section-only continuation from overwriting it 125ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > fresh verification preserves intervening saved work > the confirmed empty document opens without inventing a section target 97ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > fresh verification preserves intervening saved work > an empty section list cannot establish a parent missing from the scoped inventory 106ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > fresh verification preserves intervening saved work > a repeated completed action stays held after missing-section instead of creating another copy 106ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistRecoveryInteraction.test.tsx > fresh verification preserves intervening saved work > a repeated completed action stays held after refused-read instead of creating another copy 96ms
+(node:67) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T17:50:40.665Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T17:50:41.880Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T17:50:41.881Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T17:50:41.881Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft exact extraction identity > saves complete V2 identities in document and CREATE audit source receipts without a source prose copy
+{
+  "timestamp": "2026-11-08T17:50:48.475Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 7e94d764-ad5e-4664-975c-c18f6b0f13cf by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > direct from-draft private project boundary > refuses direct private-program source references before reading source text or creating evidence 53ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft exact extraction identity > saves complete V2 identities in document and CREATE audit source receipts without a source prose copy 168ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft exact extraction identity > refuses a same-length correction inside the excerpt before any durable authoring write 40ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft exact extraction identity > refuses a same-length correction outside the excerpt before any durable authoring write 43ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft exact extraction identity > refuses a new HTTP reference stripped of version 9ms
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "timestamp": "2026-11-08T17:50:48.638Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8df768ad-524c-4c76-829e-f8f88078b468 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "timestamp": "2026-11-08T17:50:48.651Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8df768ad-524c-4c76-829e-f8f88078b468 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } }
+{
+  "timestamp": "2026-11-08T17:50:48.660Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8df768ad-524c-4c76-829e-f8f88078b468 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft exact extraction identity > refuses a new HTTP reference stripped of extractedTextSha256 8ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft exact extraction identity > refuses a new HTTP reference stripped of spanSha256 6ms
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > sanitizes the content: a <script> tag and an onerror handler never reach the store
+{
+  "timestamp": "2026-11-08T17:50:48.728Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 0652cff7-9357-436d-b8d3-875c1f938b7f by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > creates the document with its sections in one go and returns { data: { doc, sections } } 96ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > sanitizes the content: a <script> tag and an onerror handler never reach the store 44ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 on an empty section list — nothing written 5ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 without a programId 2ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 404 a project of another organization — nothing written (PF-02: the draft route checked the id's shape only) 4ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 400 on a provenance source it does not know 2ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft > refuses 403 without a tenant 2ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > the root cause, demonstrated: the alias map admits ONE canonical document per filing 5ms
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "timestamp": "2026-11-08T17:50:48.834Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 72ca18c0-eaa4-44cf-a1dd-e75f2fcad55e by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "timestamp": "2026-11-08T17:50:48.846Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 72ca18c0-eaa4-44cf-a1dd-e75f2fcad55e by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId=
+{
+  "timestamp": "2026-11-08T17:50:48.859Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 72ca18c0-eaa4-44cf-a1dd-e75f2fcad55e by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre>
+{
+  "timestamp": "2026-11-08T17:50:48.963Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b4933644-47b1-4a37-9c16-00cc5689fde5 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre>
+{
+  "timestamp": "2026-11-08T17:50:48.975Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b4933644-47b1-4a37-9c16-00cc5689fde5 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre>
+{
+  "timestamp": "2026-11-08T17:50:48.985Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b4933644-47b1-4a37-9c16-00cc5689fde5 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft's section that held only an image is stored empty (a gap), not as <p></p>
+{
+  "timestamp": "2026-11-08T17:50:49.014Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b19c7ee5-d5be-4405-b2e5-6cac8dbc42b5 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > an imported draft keeps its governed figure (a person placed it)
+{
+  "timestamp": "2026-11-08T17:50:49.051Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 65394fc5-b67b-4032-aadc-8cbb20c8e8ad by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > a program holds many documents (control tower, 2026-09-21) > two POST /docs with client_program_id for one program → both 201, both listed by GET /docs?programId= 173ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft keeps no image: not an inline PNG, not a governed reference, not one inside <pre> 60ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > a machine draft's section that held only an image is stored empty (a gap), not as <p></p> 32ms
+ ✓ server/routes/__tests__/authoringFromDraft.pglite.integration.test.ts > POST /docs/from-draft: a model's image is never a figure (item 18) > an imported draft keeps its governed figure (a person placed it) 33ms
+(node:80) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ client/src/concept2cure/v2/__tests__/biostatServerEngine.test.tsx > Biostatistics — a preset is a worked example, not the person's study > says so until a design is loaded — an edited example is still an example 545ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatServerEngine.test.tsx > Biostatistics — the statistics come from the server engine > exports no in-browser statistics engine at all 1ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatServerEngine.test.tsx > Biostatistics — the statistics come from the server engine > posts the design to the engine in its StatisticalInput shape 233ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatServerEngine.test.tsx > Biostatistics — the statistics come from the server engine > renders the engine’s figures and none the browser could have produced 267ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatServerEngine.test.tsx > Biostatistics — the statistics come from the server engine > renders the engine’s verdict, not a second judgment written in the browser 227ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatServerEngine.test.tsx > Biostatistics — the statistics come from the server engine > re-asks the engine when a design input changes, and never answers locally 440ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatServerEngine.test.tsx > Biostatistics — the statistics come from the server engine > takes the governed document from the engine, built on the engine’s own result 222ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatServerEngine.test.tsx > Biostatistics — the statistics come from the server engine > hands the engine’s document — not a browser draft — to the authoring store 324ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatServerEngine.test.tsx > Biostatistics — an engine refusal is shown as the engine’s own sentence > shows a 422 refusal verbatim, with no result and no document beside it 248ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatServerEngine.test.tsx > Biostatistics — an engine refusal is shown as the engine’s own sentence > shows the normalizer’s own errors when the engine returns no computation 248ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatServerEngine.test.tsx > Biostatistics — an engine refusal is shown as the engine’s own sentence > says the session is not signed in rather than showing an empty design 242ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatServerEngine.test.tsx > Biostatistics — an engine refusal is shown as the engine’s own sentence > an in-flight compute is a stated wait, not an empty result 242ms
+(node:88) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > specialist document identity through the existing editor channel > Reporting publishes the exact confirmed document, project and section before navigation 310ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > specialist document identity through the existing editor channel > double clicking the real open control starts one two-request writer 103ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > a real token refresh of the same authenticated account preserves the pending handoff 129ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > same-project metadata updates retain the pending handoff and its exact identity 142ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > project change suppresses navigation after a committed section response 166ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > project-away-and-back change suppresses navigation after a committed section response 152ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > account change suppresses navigation after a committed section response 142ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > organization change suppresses navigation after a committed section response 137ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > a new project never receives the older request’s refusal status 113ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > late specialist completions own only their starting account and project > unmounting the specialist prevents its old success from navigating another host 113ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > Biostatistics distinguishes saved working documents from filed documents > binding false cannot become a dossier-filed claim 322ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > Biostatistics distinguishes saved working documents from filed documents > binding null cannot become a dossier-filed claim 306ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > other existing specialist controls use the exact editor target > CMC change refuses deferred assessment when launch scope is true 25ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > other existing specialist controls use the exact editor target > CMC change refuses deferred assessment when launch scope is null 29ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > other existing specialist controls use the exact editor target > CMC change retains doc, project and code at actual navigation 95ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > other existing specialist controls use the exact editor target > CMC quality retains doc, project and code at actual navigation 97ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > other existing specialist controls use the exact editor target > Biostatistics Open passes its saved document rather than depending on list order 289ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > non-navigating specialist insertions retain their current host status > calculator does not toast an old write into a new project 256ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffInteraction.test.tsx > non-navigating specialist insertions retain their current host status > PV does not toast an old write into a new project 159ms
+(node:96) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stderr | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T17:50:58.071Z",
+  "level": "warn",
+  "message": "[audit-service] Database pool not available — audit logging to console only",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T17:50:58.376Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T17:50:58.377Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts
+{
+  "timestamp": "2026-11-08T17:50:58.377Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts
+✅ Template tables initialized
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a caller cannot name the model: the stored model is the turn record’s
+{
+  "timestamp": "2026-11-08T17:51:01.522Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3d3692d3-b503-4985-ab6b-87e12ad4152e by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a caller cannot name the model: the stored model is the turn record’s
+{
+  "timestamp": "2026-11-08T17:51:01.535Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3d3692d3-b503-4985-ab6b-87e12ad4152e by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a caller cannot name the model: the stored model is the turn record’s
+{
+  "timestamp": "2026-11-08T17:51:01.549Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 3d3692d3-b503-4985-ab6b-87e12ad4152e by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > records every model that served the turn, with RULE 2’s verdict
+{
+  "timestamp": "2026-11-08T17:51:01.606Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8cedc62e-dc82-49ba-ac72-62d39a07fcb4 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > records every model that served the turn, with RULE 2’s verdict
+{
+  "timestamp": "2026-11-08T17:51:01.619Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8cedc62e-dc82-49ba-ac72-62d39a07fcb4 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > records every model that served the turn, with RULE 2’s verdict
+{
+  "timestamp": "2026-11-08T17:51:01.629Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 8cedc62e-dc82-49ba-ac72-62d39a07fcb4 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > says the rule admits a turn every model of which it admits
+{
+  "timestamp": "2026-11-08T17:51:01.678Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 0ad4260c-eb2d-429b-b30b-43449bca9ffe by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > says the rule admits a turn every model of which it admits
+{
+  "timestamp": "2026-11-08T17:51:01.688Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 0ad4260c-eb2d-429b-b30b-43449bca9ffe by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > says the rule admits a turn every model of which it admits
+{
+  "timestamp": "2026-11-08T17:51:01.697Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 0ad4260c-eb2d-429b-b30b-43449bca9ffe by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a caller cannot name the model: the stored model is the turn record’s 152ms
+ ✓ server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > records every model that served the turn, with RULE 2’s verdict 73ms
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a turn whose record names NO model is not admitted
+{
+  "timestamp": "2026-11-08T17:51:01.741Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc eaf2bbea-bd32-4aff-97a5-616219b1ade2 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a turn whose record names NO model is not admitted
+{
+  "timestamp": "2026-11-08T17:51:01.751Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc eaf2bbea-bd32-4aff-97a5-616219b1ade2 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a turn whose record names NO model is not admitted
+{
+  "timestamp": "2026-11-08T17:51:01.761Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc eaf2bbea-bd32-4aff-97a5-616219b1ade2 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a turn that cannot be resolved is unverified, with the reason, and no model
+{
+  "timestamp": "2026-11-08T17:51:01.800Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc e5788114-6d1f-4ec9-b98e-bbe56fdf92b8 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a turn that cannot be resolved is unverified, with the reason, and no model
+{
+  "timestamp": "2026-11-08T17:51:01.808Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc e5788114-6d1f-4ec9-b98e-bbe56fdf92b8 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a turn that cannot be resolved is unverified, with the reason, and no model
+{
+  "timestamp": "2026-11-08T17:51:01.816Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc e5788114-6d1f-4ec9-b98e-bbe56fdf92b8 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > says the rule admits a turn every model of which it admits 67ms
+ ✓ server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a turn whose record names NO model is not admitted 64ms
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a turn that cannot be resolved is unverified, with the reason, and no model
+{
+  "timestamp": "2026-11-08T17:51:01.856Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b32f7118-b380-4c31-b21c-358fbb8b8972 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a turn that cannot be resolved is unverified, with the reason, and no model
+{
+  "timestamp": "2026-11-08T17:51:01.866Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b32f7118-b380-4c31-b21c-358fbb8b8972 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a turn that cannot be resolved is unverified, with the reason, and no model
+{
+  "timestamp": "2026-11-08T17:51:01.874Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc b32f7118-b380-4c31-b21c-358fbb8b8972 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > resolves the AnA tool’s turnId, which is a RUN id, not a record id
+{
+  "timestamp": "2026-11-08T17:51:01.920Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 25748bf5-b718-43f0-a680-41078d2665dc by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > resolves the AnA tool’s turnId, which is a RUN id, not a record id
+{
+  "timestamp": "2026-11-08T17:51:01.929Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 25748bf5-b718-43f0-a680-41078d2665dc by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > resolves the AnA tool’s turnId, which is a RUN id, not a record id
+{
+  "timestamp": "2026-11-08T17:51:01.938Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 25748bf5-b718-43f0-a680-41078d2665dc by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > a turn that cannot be resolved is unverified, with the reason, and no model 112ms
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a seed or an import is not a machine draft and carries no verdict
+{
+  "timestamp": "2026-11-08T17:51:01.975Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f68cf84c-600d-4b45-9654-aa10f95919bb by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a seed or an import is not a machine draft and carries no verdict
+{
+  "timestamp": "2026-11-08T17:51:01.984Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f68cf84c-600d-4b45-9654-aa10f95919bb by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a seed or an import is not a machine draft and carries no verdict
+{
+  "timestamp": "2026-11-08T17:51:01.992Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc f68cf84c-600d-4b45-9654-aa10f95919bb by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a seed or an import is not a machine draft and carries no verdict
+{
+  "timestamp": "2026-11-08T17:51:02.028Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 471751fd-91a9-4534-8074-14668b385847 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a seed or an import is not a machine draft and carries no verdict
+{
+  "timestamp": "2026-11-08T17:51:02.036Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 471751fd-91a9-4534-8074-14668b385847 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a seed or an import is not a machine draft and carries no verdict
+{
+  "timestamp": "2026-11-08T17:51:02.044Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc 471751fd-91a9-4534-8074-14668b385847 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft records the model from the turn, never from the caller > resolves the AnA tool’s turnId, which is a RUN id, not a record id 67ms
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a seed or an import cannot name a model either
+{
+  "timestamp": "2026-11-08T17:51:02.079Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc fba54edb-c74e-4b62-b169-ab85c51ad230 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a seed or an import cannot name a model either
+{
+  "timestamp": "2026-11-08T17:51:02.087Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc fba54edb-c74e-4b62-b169-ab85c51ad230 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a seed or an import cannot name a model either
+{
+  "timestamp": "2026-11-08T17:51:02.096Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc fba54edb-c74e-4b62-b169-ab85c51ad230 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a seed or an import cannot name a model either
+{
+  "timestamp": "2026-11-08T17:51:02.126Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc be18ca16-a1bd-4f9d-8b5d-b2602e2071b8 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a seed or an import cannot name a model either
+{
+  "timestamp": "2026-11-08T17:51:02.134Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc be18ca16-a1bd-4f9d-8b5d-b2602e2071b8 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a seed or an import cannot name a model either
+{
+  "timestamp": "2026-11-08T17:51:02.141Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc be18ca16-a1bd-4f9d-8b5d-b2602e2071b8 by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a seed or an import is not a machine draft and carries no verdict 105ms
+ ✓ server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a seed or an import cannot name a model either 96ms
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a run named by more than one record is refused, not guessed at
+{
+  "timestamp": "2026-11-08T17:51:02.185Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc acf4dd0b-63d8-46f4-a381-21a58b433d0a by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a run named by more than one record is refused, not guessed at
+{
+  "timestamp": "2026-11-08T17:51:02.192Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc acf4dd0b-63d8-46f4-a381-21a58b433d0a by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a run named by more than one record is refused, not guessed at
+{
+  "timestamp": "2026-11-08T17:51:02.200Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc acf4dd0b-63d8-46f4-a381-21a58b433d0a by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > the in-process caller’s model is dropped too when the turn does not resolve
+{
+  "timestamp": "2026-11-08T17:51:02.229Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc d5543faa-c4a7-48ed-b28f-b583fdfded34 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > the in-process caller’s model is dropped too when the turn does not resolve
+{
+  "timestamp": "2026-11-08T17:51:02.237Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc d5543faa-c4a7-48ed-b28f-b583fdfded34 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > the in-process caller’s model is dropped too when the turn does not resolve
+{
+  "timestamp": "2026-11-08T17:51:02.244Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc d5543faa-c4a7-48ed-b28f-b583fdfded34 by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > the immutable audit row carries the same verdict as the document
+{
+  "timestamp": "2026-11-08T17:51:02.281Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc dc240a82-5337-474f-8963-ab09435cfaaa by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > the immutable audit row carries the same verdict as the document
+{
+  "timestamp": "2026-11-08T17:51:02.290Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc dc240a82-5337-474f-8963-ab09435cfaaa by a***@canvas.example",
+  "context": {}
+}
+
+stdout | server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > the immutable audit row carries the same verdict as the document
+{
+  "timestamp": "2026-11-08T17:51:02.299Z",
+  "level": "info",
+  "message": "[authoring-evidence] Audit trail created: CREATE on doc dc240a82-5337-474f-8963-ab09435cfaaa by a***@canvas.example",
+  "context": {}
+}
+
+ ✓ server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > a run named by more than one record is refused, not guessed at 58ms
+ ✓ server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > the in-process caller’s model is dropped too when the turn does not resolve 43ms
+ ✓ server/routes/__tests__/authoringFromDraftProvenance.pglite.integration.test.ts > from-draft: what carries a verdict, and what a caller may still not name > the immutable audit row carries the same verdict as the document 56ms
+(node:108) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ client/src/concept2cure/v2/__tests__/biostatAttachHonesty.test.tsx > Biostatistics — the attach control reports only what the server confirmed > files the document through the real authoring path 552ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatAttachHonesty.test.tsx > Biostatistics — the attach control reports only what the server confirmed > saves the same document once, and says so instead of writing a second copy 661ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatAttachHonesty.test.tsx > Biostatistics — the attach control reports only what the server confirmed > with no project open, files nothing, reports no filing, and says why (PF-07) 269ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatAttachHonesty.test.tsx > Biostatistics — the attach control reports only what the server confirmed > does not report a filing when the server refuses it 275ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatAttachHonesty.test.tsx > Biostatistics — the attach control reports only what the server confirmed > does not report a filing when the transport throws 296ms
+(node:116) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffRecoveryUi.test.tsx > specialist recovery stays beside the retained source > retains an actionable unknown-outcome notice and blocks repeat creation 336ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffRecoveryUi.test.tsx > specialist recovery stays beside the retained source > does not create a second document after its confirmed first document has no saved text 111ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffRecoveryUi.test.tsx > specialist recovery stays beside the retained source > shows the checked inventory with uncertainty and only opens the list after another explicit action 194ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffRecoveryUi.test.tsx > specialist recovery stays beside the retained source > keeps the check control and creation guard after a failed inventory read 160ms
+ ✓ client/src/concept2cure/v2/__tests__/specialistHandoffRecoveryUi.test.tsx > specialist recovery stays beside the retained source > checks without writing, continues only the text, then offers a separate exact document open 203ms
+(node:124) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ client/src/concept2cure/v2/__tests__/biostatGovernedDocRows.test.tsx > Biostatistics — governed document rows > opens the generator for a row that HAS a recorded statistical type 94ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatGovernedDocRows.test.tsx > Biostatistics — governed document rows > renders the untyped row as DISABLED rather than as a button that declines 30ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatGovernedDocRows.test.tsx > Biostatistics — governed document rows > says on the row why it cannot be opened 39ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatGovernedDocRows.test.tsx > Biostatistics — governed document rows > leaves the generator alone when the untyped row is clicked 31ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatGovernedDocRows.test.tsx > Biostatistics — governed document rows > does not describe an untyped artifact as a document type it does not have 35ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatGovernedDocRows.test.tsx > Biostatistics — governed document rows > keeps the artifact id reachable on the row, and off its face 36ms
+ ✓ client/src/concept2cure/v2/__tests__/biostatGovernedDocRows.test.tsx > Biostatistics — governed document rows > says a stored status as a word, never as the token the store holds 33ms
+(node:132) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > returns the exact document, project and section code with its binding outcome 4ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 0 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 1 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 2 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 3 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not write a section after an unconfirmed document receipt 4 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 0 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 1 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 2 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 3 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains the document identity after an unconfirmed section receipt 4 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > does not claim nothing was saved after a lost document response 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > retains confirmed document identity after a lost section response 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a project change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a project-round-trip change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a account change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a organization change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > refuses a session change before the section write 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > rechecks scope after reading the response body 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > allows same-project metadata updates for the unchanged account 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoffScope.test.ts > specialist handoff exact receipts and current context > opens the exact saved target and refuses a later project or account change 2ms
+(node:140) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > saves a statistical draft and its verified basis in one atomic request 4ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring > never reports a statistical save whose receipt drops the calculation basis 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring document and section receipts > writes the document and its section, then reports ok 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring document and section receipts > says so when the new document is not bound to a filing 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring document and section receipts > stays quiet when the document IS bound 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring document and section receipts > invents no warning when the server reports no binding at all 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring document and section receipts > reports NOT ok when the section write fails, even though the document exists 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring document and section receipts > reports an unknown document outcome after a server failure and never attempts the section 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring document and section receipts > names the 401 as a session problem rather than a server error 1ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring document and section receipts > never throws — a transport failure comes back as a message 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring document and section receipts > creates the document in the open project 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring document and section receipts > posts nothing and keeps the work when no project is open (PF-07) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring document and section receipts > posts nothing and keeps the work when the open id is not a project (PF-07) 0ms
+ ✓ client/src/concept2cure/v2/__tests__/authoringHandoff.test.ts > saveToAuthoring document and section receipts > carries the caller’s module rather than defaulting it 0ms
+
+ Test Files  12 passed (12)
+      Tests  174 passed (174)
+   Start at  09:50:21
+   Duration  47.70s (transform 6.56s, setup 739ms, import 10.43s, tests 31.25s, environment 3.81s)
+

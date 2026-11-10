@@ -21,11 +21,11 @@ import { readAuthoringDocuments, readAuthoringDocument, readAuthoringDocumentSec
 import { authoringReviewInputSchema } from '../../shared/authoring/peer-review';
 import {
   readAuthoringPeerReviews, submitAuthoringPeerReview, requestAuthoringPeerReviews, reassignAuthoringReviewRequest,
-  AuthoringPeerReviewRefused, AuthoringPeerReviewCommitUnconfirmed,
+  AuthoringPeerReviewRefused, AuthoringPeerReviewCommitUnconfirmed, runAuthoringIndependentCheck,
 } from '../services/authoring/peer-review';
 import {
-  authoringReviewerPrecheck, authoringRouteSubject, authoringStanding, closeAuthoringReviewerTask, parseAuthoringRoute,
-  routeOnVerdict, routeReviewRequest,
+  authoringApprovalReviewRefusal, authoringReviewerPrecheck, authoringRouteSubject, authoringStanding, closeAuthoringReviewerTask,
+  parseAuthoringRoute, routeOnVerdict, routeReviewRequest,
 } from '../services/authoring/authoring-review-route';
 import { ReviewRouteRefusal } from '../services/review/review-route-member';
 import { handBackMember, reassignMember, routeTxOf, senderTimeZone } from '../services/review/review-route';
@@ -83,7 +83,7 @@ import { resolveRequirements } from '../services/ind/ctd/requirements-resolver.j
 import { resolveSectionBriefSource } from '../services/ind/ctd/section-brief.js';
 import { basisLabel, type RegulatoryBasis } from '../../shared/regulatory/regulatory-basis';
 import { claimDocRoleOf } from '../../shared/ana/clinical-claims-vocabulary';
-import { sectionReadableText } from '../services/authoring/authoring-read-render';
+import { acceptedSectionText, renderSection, sectionReadableText } from '../services/authoring/authoring-read-render';
 import {
   checkDocumentFigureConsistency,
   type ConsistencySection,
@@ -161,7 +161,7 @@ import {
 } from '../services/authoring/authoring-export';
 import { SavedDraftSourceError, withSavedDraftSourceReservation, savedSourceExcerptsForSigning } from '../services/authoring/draft-source-references';
 import { unverifiedFiguresAtSigning, figureAcknowledgementDigest, figureAcknowledgementVerdict, type UnverifiedFigureAtSigning } from '../services/authoring/draft-figure-check';
-import { assertWorkflowImportRelease, prepareWorkflowImportAdoption, WorkflowImportGovernanceError } from '../services/authoring/workflow-import-governance';
+import { assertWorkflowImportRelease, assertIndependentCheckRelease, prepareWorkflowImportAdoption, WorkflowImportGovernanceError } from '../services/authoring/workflow-import-governance';
 import { admitAnaProjectScope, AnaProjectScopeError } from '../services/ana/project-scope-admission';
 import { savedSectionDraftTemplate, buildSectionDraftPrompt, draftRevisionFor, recordedFilingDraftContext } from '../services/authoring/authoring-draft-template';
 import { draftPassageFor } from '../services/authoring/authoring-draft-passage';
@@ -1634,55 +1634,37 @@ router.patch('/sections/:sectionId', dispatchSavedSectionRefile, async (req: Req
       });
     }
 
-    /* LAST WRITE NO LONGER SILENTLY WINS.
-     *
-     * This UPDATE was `WHERE id = $n AND tenant_id = $n` and nothing else, and
-     * the client sent only `{ content }`. So two authors on one section — the
-     * normal case for a CTD module, where a writer and a reviewer work the same
-     * §3.2.P.5 at once — ended with whoever saved second replacing the OTHER'S
-     * ENTIRE SECTION. No 409, no warning, no merge, no "this changed while you
-     * were editing". The overwrite then entered the hash-chained revision
-     * ledger as an ordinary authored revision, so the record does not show a
-     * collision either; the only way back is for someone to notice and revert.
-     *
-     * `updated_at` is the concurrency token because it is already on the row
-     * the client loaded, already returned by every read, and already bumped by
-     * every write — no new column, no new migration, nothing to keep in sync.
-     *
-     * OPT-IN, deliberately. A client that sends no `expectedUpdatedAt` keeps
-     * the old behaviour rather than being refused: a caller that PATCHes a
-     * section without having read a timestamp cannot hit the race, and failing
-     * it closed would break saving to fix nothing. The editor sends it;
-     * anything that does not is exactly as safe as it was yesterday and no
-     * less.
-     *
-     * This comment used to name "the MDX dossier drawer" as one of those
-     * callers. It is not a caller of this route at all: it PATCHes
-     * `/api/c2c/documents/:id/sections/:key` (mdx/hooks/useSectionSave.ts),
-     * the FILING side. Correcting it is not housekeeping — the stale line said
-     * the drawer saved through this door, which is seal-guarded, and so helped
-     * hide that the door it really uses was not (round 15, the exit-path
-     * verification). The other two client PATCHes here carry `track_changes`
-     * or `code`/`title` only. */
+    /* The editor's loaded updated_at is its concurrency token. Missing tokens
+       remain supported for existing metadata/demo callers, without claiming
+       stale-editor protection for them. A supplied malformed token is not an
+       opt-out. This first comparison is only an early refusal: the authoritative
+       comparison runs again under the parent reservation and section lock. */
     const expectedUpdatedAt = req.body?.expectedUpdatedAt;
-    if (typeof expectedUpdatedAt === 'string' && expectedUpdatedAt.trim()) {
-      const current = currentSection.rows[0]?.updated_at;
-      const currentMs = current ? new Date(current).getTime() : NaN;
-      const expectedMs = new Date(expectedUpdatedAt).getTime();
-      if (Number.isFinite(currentMs) && Number.isFinite(expectedMs) && currentMs !== expectedMs) {
-        return res.status(409).json({
-          success: false,
-          error: {
-            code: 'SECTION_CHANGED',
-            message:
-              'This section was changed by someone else while you were editing. ' +
-              'Your text has not been saved and nothing was overwritten — reload the ' +
-              'section to see their version, then reapply your changes.',
-          },
-          /* The caller can show WHEN it moved under them without another read. */
-          currentUpdatedAt: current,
-        });
-      }
+    const expectedVersionMs = expectedUpdatedAt === undefined ? null
+      : typeof expectedUpdatedAt === 'string' && expectedUpdatedAt.trim()
+        ? new Date(expectedUpdatedAt).getTime() : NaN;
+    if (expectedVersionMs !== null && !Number.isFinite(expectedVersionMs)) {
+      return res.status(400).json({
+        success: false,
+        error: { code: 'INVALID_SECTION_VERSION', message: 'The loaded section version is invalid. Reload the section before saving. Nothing was changed.' },
+        field: 'expectedUpdatedAt',
+      });
+    }
+    const versionMatches = (current: unknown) => expectedVersionMs === null
+      || ((typeof current === 'string' || current instanceof Date) && new Date(current).getTime() === expectedVersionMs);
+    const sectionChanged = (current: unknown) => res.status(409).json({
+      success: false,
+      error: {
+        code: 'SECTION_CHANGED',
+        message:
+          'This section was changed by someone else while you were editing. ' +
+          'Your text has not been saved and nothing was overwritten — reload the ' +
+          'section to see their version, then reapply your changes.',
+      },
+      currentUpdatedAt: current,
+    });
+    if (!versionMatches(currentSection.rows[0]?.updated_at)) {
+      return sectionChanged(currentSection.rows[0]?.updated_at);
     }
 
     /* ── A SECTION'S CODE IS ITS IDENTITY IN THE FILING ──
@@ -1818,8 +1800,10 @@ router.patch('/sections/:sectionId', dispatchSavedSectionRefile, async (req: Req
       values.push(track_changes);
     }
 
-    // Always update the updated_at timestamp
-    updates.push('updated_at = NOW()');
+    // NOW() is transaction-start time, which can predate a lock wait. The
+    // browser receives millisecond Dates, so even same-millisecond saves must
+    // advance that observable token from the row we hold locked below.
+    updates.push("updated_at = GREATEST(clock_timestamp(), date_trunc('milliseconds', updated_at) + interval '1 millisecond')");
 
     // Add section_id and tenant_id to values
     values.push(sectionId, tenantId);
@@ -1904,13 +1888,22 @@ router.patch('/sections/:sectionId', dispatchSavedSectionRefile, async (req: Req
       await reserveWritableSection(client, String(sectionId), tenantId);
       if (content !== undefined) await refuseNarrativeReferenceContentWrite(client, String(sectionId), tenantId);
 
-      // The previous body is a transaction-held fact, read after the parent
-      // reservation and before this update. Client-supplied text and the
-      // pre-reservation lookup cannot establish a retained span's integrity.
-      const previous = content === undefined ? null : await client.query<{ content: string | null }>(
-        'SELECT content FROM authoring_sections WHERE id=$1 AND tenant_id=$2 FOR UPDATE',
+      // The version and all before-images belong to the same locked row,
+      // after the parent reservation. Two overlapping callers can both pass
+      // the earlier lookup; only this check can authorize their actual write.
+      const previous = await client.query<{
+        content: string | null; updated_at: Date | string | null;
+        title: string | null; code: string | null; track_changes: boolean | null;
+      }>(
+        'SELECT content, updated_at, title, code, track_changes FROM authoring_sections WHERE id=$1 AND tenant_id=$2 FOR UPDATE',
         [String(sectionId), tenantId],
       );
+      const before = previous.rows[0];
+      if (!before) throw new DocumentWriteReservationError(404, 'SECTION_NOT_FOUND', 'Section not found. Nothing was changed.');
+      if (!versionMatches(before.updated_at)) {
+        await client.query('ROLLBACK');
+        return sectionChanged(before.updated_at);
+      }
 
       result = await client.query(updateQuery, values);
 
@@ -1927,7 +1920,7 @@ router.patch('/sections/:sectionId', dispatchSavedSectionRefile, async (req: Req
         content,
         updatedByUser,
         {
-          previousContent: previous ? previous.rows[0]?.content ?? '' : undefined,
+          previousContent: content !== undefined ? before.content ?? '' : undefined,
           /* Only the claims a record vouched for. An unverifiable claim's
              clause is not dropped — no accepted-machine text matches it, so
              the gate records it as this person's own assertion, which is what
@@ -2009,7 +2002,7 @@ router.patch('/sections/:sectionId', dispatchSavedSectionRefile, async (req: Req
           result.rows[0]?.doc_id,
           sectionId,
           'UPDATE',
-          currentSection.rows[0].content ?? null,
+          before.content ?? null,
           content ?? null,
           changeReason,
           {
@@ -2040,7 +2033,7 @@ router.patch('/sections/:sectionId', dispatchSavedSectionRefile, async (req: Req
          * a metadata change and its audit row commit together or neither does —
          * and because it goes through createAuditTrail on the caller's client,
          * it lands in the hash-chained ledger too, not only the soft table. */
-        const cur = currentSection.rows[0] ?? {};
+        const cur = before;
         const metaChanges: Array<{ field: string; from: unknown; to: unknown }> = [];
         if (title !== undefined && String(title) !== String(cur.title ?? '')) {
           metaChanges.push({ field: 'title', from: cur.title ?? null, to: title });
@@ -3261,6 +3254,11 @@ async function closeReviewTasksOnVerdict(
 // POST /api/authoring/documents/:id/review - Record an assigned, saved-content-bound verdict.
 router.post('/documents/:id/review', async (req: Request, res: Response) => {
   try {
+    if (req.body?.action === 'run_independent_checks') {
+      if (Object.keys(req.body).some(key => !['action', 'expectedSnapshotHash'].includes(key))) return res.status(400).json({ success: false, error: { code: 'REVIEW_INPUT_INVALID', message: 'Only the current saved snapshot is accepted for independent checks.' } });
+      return res.json(await runAuthoringIndependentCheck(requestConnectable(req),
+        { ...peerReviewInput(req), expectedSnapshotHash: req.body.expectedSnapshotHash }, peerReviewAudit(req)));
+    }
     const body = authoringReviewInputSchema.safeParse(req.body);
     if (!body.success) return res.status(400).json({ success: false,
       error: { code: 'REVIEW_INPUT_INVALID', message: 'A verdict and the exact saved review context are required.' } });
@@ -3576,6 +3574,82 @@ function draftAcceptUnconfirmed(res: Response) {
     message: 'The server could not confirm whether this draft was accepted. Check the exact saved section before another acceptance.' } });
 }
 
+/* ── CSR slice 2: the engine figure gate on AnA's candidates (docs/design/CSR_DRAFT_HUMAN_CONTROL_2026-10-29.md,
+   decision 5) ──────────────────────────────────────────────────────────────────────────────────────────────────
+   A candidate in a section of a document that carries CSR import receipts is checked by the saved-CSR verdict's
+   own figure step (csr-saved-evidence planSections, exported for this and not copied), against that section's
+   claimed engine cells and study-information numbers, on the text as the verdict reads it once saved. In §2 and
+   §10–13 (the verdict's RESULTS rule) a figure no claim carries blocks the accept; elsewhere it is reported. A CSR
+   results section of a document with no receipts has nothing to be checked against, and says so: never "passed".
+   The saved-CSR verdict and P-89 still apply to whatever is accepted. */
+type CsrCandidateFigures =
+  | { status: 'checked'; basis: 'csr_claim_receipts'; results: boolean; figures: Array<{ figure: string; blocking: boolean }> }
+  | { status: 'not_checked'; reason: 'no_csr_receipts'; results: true };
+interface CsrFigureSubject {
+  code: unknown; title: unknown; provenance: unknown; module: unknown; product_code: unknown; doc_title: unknown; template_id: unknown;
+}
+const someText = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
+
+async function csrCandidateFigures(subject: CsrFigureSubject, content: string): Promise<CsrCandidateFigures | null> {
+  const { importedCsrEvidence, planSections } = await import('../services/ana/csr-saved-evidence');
+  const receipts = importedCsrEvidence(subject.provenance);
+  const [plan] = planSections([{ code: someText(subject.code) ?? null, content,
+    text: acceptedSectionText(renderSection(content)), title: someText(subject.title) }], receipts);
+  if (receipts.size) return { status: 'checked', basis: 'csr_claim_receipts', results: plan.results,
+    figures: plan.unclaimed.map(figure => ({ figure, blocking: plan.results })) };
+  const { savedIsCsr } = await import('../services/ana/saved-document-critique');
+  return plan.results && savedIsCsr({ module: subject.module, product_code: subject.product_code, title: subject.doc_title,
+    template_id: subject.template_id, provenance: subject.provenance })
+    ? { status: 'not_checked', reason: 'no_csr_receipts', results: true } : null;
+}
+
+/** The figures that refuse an accept: blocking ones of a checked candidate. */
+const blockingCsrFigures = (check: CsrCandidateFigures | null) =>
+  check?.status === 'checked' ? check.figures.filter(f => f.blocking) : [];
+
+function csrFigureRefusal(res: Response, code: unknown, figures: Array<{ figure: string; blocking: boolean }>) {
+  const named = figures.map(f => f.figure);
+  const list = named.length === 1 ? named[0] : `${named.slice(0, -1).join(', ')} and ${named[named.length - 1]}`;
+  const where = typeof code === 'string' && code.trim() ? `§${code.trim()}` : 'this section';
+  return res.status(422).json({ success: false, error: { code: 'CSR_FIGURE_NOT_FROM_ENGINE', figures,
+    message: `Not accepted: ${list} in ${where} ${named.length === 1 ? 'is not a figure' : 'are not figures'} the study’s engine ` +
+      'produced for this section. No claimed table cell of the section holds ' + (named.length === 1 ? 'it' : 'them') +
+      '. Correct or remove ' + (named.length === 1 ? 'it' : 'them') + ', then accept again. Nothing was saved.' } });
+}
+
+/* Decision 3 of slice 1 (the lead, 2026-10-29): the accept's audit row names the option set the accepted text came
+   from, as the panel offered it ("alternative 2 of 3, concise", "revision 2 of alternative 1"). The panel sends its
+   parts; the label is written here from them, so a label of any other wording cannot be recorded. */
+const DRAFT_OPTION_APPROACHES = ['professional', 'concise', 'detailed'] as const;
+type DraftAlternativeOption = { kind: 'alternative'; position: number; count: number; approach: typeof DRAFT_OPTION_APPROACHES[number] };
+type DraftOptionSet = (DraftAlternativeOption | { kind: 'revision'; revision: number; of: DraftAlternativeOption | { kind: 'draft' } })
+  & { label: string };
+const plainRecord = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
+const exactKeys = (v: Record<string, unknown>, keys: readonly string[]) =>
+  Object.keys(v).length === keys.length && keys.every(k => Object.hasOwn(v, k));
+const wholeIn = (v: unknown, min: number, max: number): v is number => Number.isSafeInteger(v) && (v as number) >= min && (v as number) <= max;
+
+function readAlternativeOption(v: unknown): DraftAlternativeOption | null {
+  if (!plainRecord(v) || !exactKeys(v, ['kind', 'position', 'count', 'approach']) || v.kind !== 'alternative') return null;
+  const approach = DRAFT_OPTION_APPROACHES.find(a => a === v.approach);
+  return approach && wholeIn(v.count, 1, DRAFT_OPTION_APPROACHES.length) && wholeIn(v.position, 1, v.count)
+    ? { kind: 'alternative', position: v.position, count: v.count, approach } : null;
+}
+
+/** The option set an accept names: undefined when none was sent (a single draft), null when it is malformed. */
+function readDraftOptionSet(raw: unknown): DraftOptionSet | null | undefined {
+  if (raw === undefined) return undefined;
+  const alternative = readAlternativeOption(raw);
+  if (alternative) return { ...alternative, label: `alternative ${alternative.position} of ${alternative.count}, ${alternative.approach}` };
+  if (!plainRecord(raw) || !exactKeys(raw, ['kind', 'revision', 'of']) || raw.kind !== 'revision' || !wholeIn(raw.revision, 1, 50)) return null;
+  const of = plainRecord(raw.of) && exactKeys(raw.of, ['kind']) && raw.of.kind === 'draft' ? { kind: 'draft' as const } : readAlternativeOption(raw.of);
+  return of ? { kind: 'revision', revision: raw.revision, of,
+    label: `revision ${raw.revision} of ${of.kind === 'draft' ? 'the draft' : `alternative ${of.position}`}` } : null;
+}
+
+const optionSetRefusal = (res: Response, why: string) => res.status(400).json({ success: false,
+  error: { code: 'OPTION_SET_INVALID', message: `${why} Nothing was saved. Choose the text again in the panel and accept it.` } });
+
 // POST /api/authoring/sections/:sectionId/ai/draft - Generate AI draft
 router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response) => {
   /* The turn this draft is (RT-6, AnA reasoning round 12): one record, opened
@@ -3591,7 +3665,7 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
     const sectionResult = await pool.query(
       `SELECT s.id, s.doc_id, s.code, s.title, s.content, s.order_index, s.track_changes, s.created_at, s.updated_at,
               s.updated_at::text AS base_updated_at, s.tenant_id, d.module, d.product_code,
-              d.template_id::text, to_jsonb(d)->'provenance' AS provenance,
+              d.template_id::text, d.title AS doc_title, to_jsonb(d)->'provenance' AS provenance,
               to_jsonb(d)->>'client_program_id' AS client_program_id
        FROM authoring_sections s
        JOIN authoring_documents d ON d.id = s.doc_id AND d.tenant_id = s.tenant_id
@@ -3841,6 +3915,8 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
         },
       });
     }
+    // CSR slice 2: the saved-CSR verdict's figure step on this candidate, before anything is parked.
+    const csrFigures = await csrCandidateFigures(section, generatedContent);
     /* The engine's check of the draft against what the model was SHOWN, and
        the turn's record, filed before the candidate is parked so the parked
        generator can name it. */
@@ -3960,6 +4036,8 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
         draftId,
         // The engine's check of the draft as generated, and whether its turn was filed.
         check: drafted?.check ?? null,
+        // CSR slice 2: figures no claimed engine cell of this section holds; blocking in §2 and §10–13.
+        csrFigures,
         turnRecord: drafted?.turnRecord ?? { status: 'not_recorded', reason: 'This draft had no organization to file it under.' },
         ...revision.generator,
         ...passage.response,
@@ -4038,10 +4116,16 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
     if (!draftId || typeof draftId !== 'string') {
       return res.status(400).json({ success: false, error: 'draftId is required' });
     }
+    const optionSet = readDraftOptionSet(req.body?.optionSet);
+    if (optionSet === null) return optionSetRefusal(res, 'The option set this text was chosen from is not one the panel offers.');
 
-    // Section must exist and belong to this tenant.
+    // Section must exist and belong to this tenant. Its code and its document's CSR provenance are read with it,
+    // as the draft route reads them, for the figure gate below (CSR slice 2).
     const sectionResult = await pool.query(
-      `SELECT id, doc_id, content FROM authoring_sections WHERE id = $1 AND tenant_id = $2`,
+      `SELECT s.id, s.doc_id, s.content, s.code, s.title, d.module, d.product_code, d.title AS doc_title,
+              d.template_id::text AS template_id, to_jsonb(d)->'provenance' AS provenance
+         FROM authoring_sections s JOIN authoring_documents d ON d.id = s.doc_id AND d.tenant_id = s.tenant_id
+        WHERE s.id = $1 AND s.tenant_id = $2`,
       [sectionId, tenantId],
     );
     if ((sectionResult.rowCount ?? 0) === 0) {
@@ -4118,6 +4202,21 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
         typeof req.body?.content === 'string' ? req.body.content : candidate.content;
       draftModifiedOnAccept = acceptedContent !== candidate.content;
       generatedDraft = candidate.content;
+
+      // A revision's option set names a revision, and only a revision's does: the record is not the panel's guess.
+      if (optionSet && (optionSet.kind === 'revision') !== (generator?.derivedFrom !== undefined)) {
+        await rollbackAuthoringTransaction(client, transaction);
+        return optionSetRefusal(res, `The option set names ${optionSet.label}, which this draft is not.`);
+      }
+      /* CSR slice 2: the gate re-runs here on the content the person accepts, their edits included, never on the
+         draft as generated. A blocking figure refuses the accept; the rollback leaves the candidate for a
+         corrected accept and writes nothing. */
+      const csrSubject = sectionResult.rows[0] as CsrFigureSubject;
+      const blocking = blockingCsrFigures(await csrCandidateFigures(csrSubject, acceptedContent));
+      if (blocking.length) {
+        await rollbackAuthoringTransaction(client, transaction);
+        return csrFigureRefusal(res, csrSubject.code, blocking);
+      }
 
       saved = await client.query(
         `UPDATE authoring_sections SET content = $1, updated_at = NOW()
@@ -4218,6 +4317,7 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
           draft_modified_on_accept: draftModifiedOnAccept,
           generated_draft_sha256: textSha256(generatedDraft),
           ...(draftModifiedOnAccept ? { generated_draft: generatedDraft } : {}),
+          ...(optionSet ? { option_set: optionSet } : {}),
         },
         client,
       );
@@ -4957,6 +5057,7 @@ async function approvalRefused(
   ids: { docId: string | string[] | undefined; tenantId: number; meaning: string },
 ): Promise<boolean> {
   if (await signingRefused(client, req, res, ids)) return true;
+  if (await reviewRefused(client, req, res, current, ids)) return true; // P-95
   const { openCommentCount, pendingEdits } = await freezeCensus(ids.docId, ids.tenantId, current.sections, client);
   if (openCommentCount > 0 || pendingEdits > 0) {
     if (req.body?.acknowledgeUnresolved !== true) {
@@ -4968,6 +5069,32 @@ async function approvalRefused(
       { openCommentCount, pendingEdits, acknowledged: true }, client);
   }
   return figuresRefused(client, req, res, current, { docId: ids.docId, act: 'approve' });
+}
+
+/* ── P-95: A REGULATED DOCUMENT IS APPROVED ONLY AFTER ITS REVIEW ──
+ *
+ * The founder, 2026-11-02, clarified 2026-11-09 (docs/LAUNCH_DEFINITION_OF_DONE.md
+ * P-95). An APPROVER signature, by E-sign or by the workflow /sign, is taken only
+ * when the document's RR5 review route is complete over the text being approved
+ * (authoringApprovalReviewRefusal, services/authoring/authoring-review-route.ts).
+ * Every document is treated as regulated until the document-type catalog says
+ * otherwise (fail closed). Nothing is retroactive.
+ *
+ * Before the credential, so a refusal spends no password or code; on the
+ * signing transaction, after the document's row lock. A route read failure
+ * throws and is answered as the transaction's error, never as "no review needed".
+ */
+async function reviewRefused(
+  client: Queryable, req: Request, res: Response,
+  current: Awaited<ReturnType<typeof lockedSigningContent>>,
+  ids: { docId: string | string[] | undefined; tenantId: number },
+): Promise<boolean> {
+  const refusal = await authoringApprovalReviewRefusal(client, {
+    tenantId: ids.tenantId, docId: String(current.doc?.id ?? ids.docId), digest: sectionsDigest(current.sections),
+  });
+  if (!refusal) return false;
+  res.status(refusal.status).json({ success: false, error: { code: refusal.code, message: refusal.message } });
+  return true;
 }
 
 /* ── P-89: AN UNVERIFIED FIGURE IS NOT SEALED UNNOTICED ──
@@ -5190,10 +5317,12 @@ async function lockedSigningContent(client: Queryable, req: Request, docId: stri
     'SELECT id, doc_id, code, title, content, order_index, track_changes, created_at, updated_at, tenant_id FROM authoring_sections WHERE doc_id=$1 AND tenant_id=$2 ORDER BY order_index, created_at, id',
     [docId, tenantId],
   );
-  return { organizationId: tenantId, doc: document.rows[0], sections: sections.rows,
+  const current = { organizationId: tenantId, doc: document.rows[0], sections: sections.rows,
     actor: { id: String(getActorId(req) ?? ''), email: getActorEmail(req) },
     /** Set by figuresRefused when the signer acknowledged unverified figures (P-89); the act's chained row names it. */
     figuresAcknowledged: null as { digest: string; count: number } | null };
+  await assertIndependentCheckRelease(client, current);
+  return current;
 }
 
 async function adoptionForSigning(client: Queryable, req: Request, current: Awaited<ReturnType<typeof lockedSigningContent>>, meaning: string) {
@@ -7652,6 +7781,7 @@ router.post('/docs/:docId/sign', async (req: Request, res: Response) => {
          they cannot clear, narrow this to the sealing step — do not weaken the
          refusal. */
       if (await signingRefused(client, req, res, { docId, tenantId, meaning })) return;
+      if (meaning === 'APPROVER' && await reviewRefused(client, req, res, current, { docId, tenantId })) return; // P-95
       if (meaning === 'APPROVER' && await figuresRefused(client, req, res, current, { docId, act: 'approve' })) return; // P-89
 
       const signer = await reverifyAuthoringSigner(req, res);

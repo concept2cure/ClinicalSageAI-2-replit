@@ -1,0 +1,32 @@
+[
+  {
+    "viewport": "1440x1000",
+    "theme": "light",
+    "stream_source": "Playwright intercepted POST /api/ana-ri/stream and held the full response; both text/post_done frames were synthetic; no provider called",
+    "intercepted_stream_requests": 1,
+    "rail_and_palette_refused_B_while_pending": true,
+    "full_A_url_preserved": "http://127.0.0.1:5000/concept2cure/conversation-thread/f1_recent_1793988502724_tin7x95fa?program=6c89e2c1-2d76-4356-80cb-001821956b5a",
+    "same_composer_node_and_unsent_followup_preserved": true,
+    "refused_handoff_consumed": true,
+    "no_B_history_request_before_fresh_selection": true,
+    "completion_did_not_replay_B": true,
+    "fresh_B_selection_loaded_history": true,
+    "accepted_retry_cleared_refusal_notice": true,
+    "page_errors": []
+  },
+  {
+    "viewport": "390x844",
+    "theme": "dark",
+    "stream_source": "Playwright intercepted POST /api/ana-ri/stream and held the full response; both text/post_done frames were synthetic; no provider called",
+    "intercepted_stream_requests": 1,
+    "rail_and_palette_refused_B_while_pending": true,
+    "full_A_url_preserved": "http://127.0.0.1:5000/concept2cure/conversation-thread/f1_recent_1793988502724_tin7x95fa?program=6c89e2c1-2d76-4356-80cb-001821956b5a",
+    "same_composer_node_and_unsent_followup_preserved": true,
+    "refused_handoff_consumed": true,
+    "no_B_history_request_before_fresh_selection": true,
+    "completion_did_not_replay_B": true,
+    "fresh_B_selection_loaded_history": true,
+    "accepted_retry_cleared_refusal_notice": true,
+    "page_errors": []
+  }
+]

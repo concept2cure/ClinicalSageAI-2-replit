@@ -726,16 +726,6 @@
     "source": "engine"
    }
   },
-  "assess_benefit_risk": {
-   "class": "read",
-   "writes": "none",
-   "site": "AnaToolExecutor.ts registerToolHandler('assess_benefit_risk')",
-   "present": {
-    "verb": "compute",
-    "object": "the benefit-risk score",
-    "source": "engine"
-   }
-  },
   "assess_benefit_risk_balance": {
    "class": "read",
    "writes": "none",

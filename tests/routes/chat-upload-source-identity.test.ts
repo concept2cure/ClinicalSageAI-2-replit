@@ -22,7 +22,7 @@ const {
   mockResolveGovernedContext,
   mockPoolQuery,
   mockGetEmbeddingService,
-  mockCreateSource,
+  mockCaptureClientSource,
   mockFindSourceByChecksum,
   mockFindSupersededCandidate,
   mockCreateSupersedingSource,
@@ -31,7 +31,7 @@ const {
   mockResolveGovernedContext: vi.fn(),
   mockPoolQuery: vi.fn(),
   mockGetEmbeddingService: vi.fn(),
-  mockCreateSource: vi.fn(),
+  mockCaptureClientSource: vi.fn(),
   mockFindSourceByChecksum: vi.fn(),
   mockFindSupersededCandidate: vi.fn(),
   mockCreateSupersedingSource: vi.fn(),
@@ -61,7 +61,7 @@ vi.mock('../../server/services/enhancedEmbeddingService.js', () => ({
   getEmbeddingService: mockGetEmbeddingService,
 }));
 vi.mock('../../server/services/clinical-regulatory-evidence/evidence-spine.service.js', () => ({
-  createSource: mockCreateSource,
+  captureClientSource: mockCaptureClientSource,
   findSourceByChecksum: mockFindSourceByChecksum,
   // The upload handler resolves whether this document supersedes an earlier
   // source before it creates identity; a mocked ESM module THROWS on a missing
@@ -178,9 +178,8 @@ beforeEach(() => {
     },
   });
   mockFindSourceByChecksum.mockResolvedValue(null);
-  mockCreateSource.mockResolvedValue({ id: 4242 });
-  // No predecessor by default: the upload is a new document, so the handler
-  // takes the createSource path (createSupersedingSource stays unused).
+  mockCaptureClientSource.mockResolvedValue({ source: { id: 4242 }, reused: false, supersededId: null });
+  // The service owns identity and predecessor decisions in one transaction.
   mockFindSupersededCandidate.mockResolvedValue(null);
   mockCreateSupersedingSource.mockResolvedValue({ source: { id: 4242 } });
   mockProcessCapturedSource.mockResolvedValue({ ok: true, processed: true, status: 'completed' });
@@ -201,8 +200,8 @@ describe('chat upload → canonical source identity', () => {
   it('creates one client_document source and returns its id', async () => {
     const res = await runUpload();
 
-    expect(mockCreateSource).toHaveBeenCalledTimes(1);
-    const [orgId, params] = mockCreateSource.mock.calls[0];
+    expect(mockCaptureClientSource).toHaveBeenCalledTimes(1);
+    const [orgId, params] = mockCaptureClientSource.mock.calls[0];
     expect(orgId).toBe(5);
     expect(params.sourceType).toBe('client_document');
     expect(params.title).toBe('protocol.txt');
@@ -211,7 +210,7 @@ describe('chat upload → canonical source identity', () => {
 
   it('scopes a numeric project upload to the workspace', async () => {
     await runUpload({ projectId: 'proj_12' });
-    const [, params] = mockCreateSource.mock.calls[0];
+    const [, params] = mockCaptureClientSource.mock.calls[0];
     expect(params.visibilityClass).toBe('project_private');
     expect(params.clientWorkspaceId).toBe(12);
     expect(params.clientProgramId).toBeNull();
@@ -227,7 +226,7 @@ describe('chat upload → canonical source identity', () => {
     const res = await runUpload({ projectId: uuid });
 
     expect(res.status).not.toHaveBeenCalledWith(400);
-    const [, params] = mockCreateSource.mock.calls[0];
+    const [, params] = mockCaptureClientSource.mock.calls[0];
     expect(params.clientProgramId).toBe(uuid);
     expect(params.clientWorkspaceId).toBeNull();
     expect(params.visibilityClass).toBe('project_private');
@@ -239,7 +238,7 @@ describe('chat upload → canonical source identity', () => {
     // processor commits it on this source (9c266724f), and the answer calls the
     // file readable only once it has.
     const res = await runUpload({ content: 'enrollment data' });
-    const [, params] = mockCreateSource.mock.calls[0];
+    const [, params] = mockCaptureClientSource.mock.calls[0];
     expect(params.ingestionStatus).toBe('ingested');
     expect(params.extractionStatus).toBe('pending');
     expect(params.provenance.extractionMethod).toBe('utf8');
@@ -254,7 +253,7 @@ describe('chat upload → canonical source identity', () => {
 
   it('carries the upload back to its bytes and its file_uploads row', async () => {
     const res = await runUpload();
-    const [, params] = mockCreateSource.mock.calls[0];
+    const [, params] = mockCaptureClientSource.mock.calls[0];
     expect(params.storedArtifactRef).toMatch(/^uploads\/org-5\//);
     expect(params.provenance.fileUploadId).toBe(payload(res).fileId);
     expect(params.provenance.origin).toBe('chat_upload');
@@ -263,24 +262,24 @@ describe('chat upload → canonical source identity', () => {
 
   it('hashes the raw bytes, so identity survives a re-upload', async () => {
     await runUpload({ content: 'identical bytes' });
-    const first = mockCreateSource.mock.calls[0][1].checksum;
+    const first = mockCaptureClientSource.mock.calls[0][1].checksum;
 
     vi.clearAllMocks();
     mockPoolQuery.mockResolvedValue({ rows: [] });
     mockGetEmbeddingService.mockReturnValue({ embedAtom: vi.fn().mockResolvedValue(undefined) });
     mockFindSourceByChecksum.mockResolvedValue(null);
-    mockCreateSource.mockResolvedValue({ id: 1 });
+    mockCaptureClientSource.mockResolvedValue({ source: { id: 1 }, reused: false, supersededId: null });
 
     await runUpload({ content: 'identical bytes' });
-    expect(mockCreateSource.mock.calls[0][1].checksum).toBe(first);
+    expect(mockCaptureClientSource.mock.calls[0][1].checksum).toBe(first);
   });
 
   it('resolves an existing identity instead of creating a second one', async () => {
-    mockFindSourceByChecksum.mockResolvedValue({ id: 777 });
+    mockCaptureClientSource.mockResolvedValue({ source: { id: 777 }, reused: true, supersededId: null });
 
     const res = await runUpload();
 
-    expect(mockCreateSource).not.toHaveBeenCalled();
+    expect(mockCaptureClientSource).toHaveBeenCalledOnce();
     expect(payload(res).sourceId).toBe(777);
   });
 
@@ -290,7 +289,7 @@ describe('chat upload → canonical source identity', () => {
     // owner onto the canonical identity — worse than having no identity.
     const res = await runUpload({ tenantId: null, projectId: null });
     expect(mockFindSourceByChecksum).not.toHaveBeenCalled();
-    expect(mockCreateSource).not.toHaveBeenCalled();
+    expect(mockCaptureClientSource).not.toHaveBeenCalled();
     expect(payload(res).sourceId).toBeNull();
   });
 });
@@ -305,7 +304,7 @@ describe('chat upload → a Data Room source belongs to a project (PF-02, PF-07)
     const res = await runUpload({ projectId: '22222222-2222-4222-8222-222222222222' });
     expect(res.status).toHaveBeenCalledWith(404);
     expect(payload(res)).toMatchObject({ code: 'PROJECT_NOT_FOUND' });
-    expect(mockCreateSource).not.toHaveBeenCalled();
+    expect(mockCaptureClientSource).not.toHaveBeenCalled();
     const writes = mockPoolQuery.mock.calls.filter(([sql]) => /^\s*(INSERT|UPDATE|DELETE)\b/i.test(String(sql)));
     expect(writes).toEqual([]);
   });
@@ -318,7 +317,7 @@ describe('chat upload → a Data Room source belongs to a project (PF-02, PF-07)
     expect(mockProjectBelongs).toHaveBeenCalledWith({ organizationId: 5, projectId: '99' }, expect.anything());
     expect(res.status).toHaveBeenCalledWith(404);
     expect(payload(res)).toMatchObject({ code: 'PROJECT_NOT_FOUND' });
-    expect(mockCreateSource).not.toHaveBeenCalled();
+    expect(mockCaptureClientSource).not.toHaveBeenCalled();
     const writes = mockPoolQuery.mock.calls.filter(([sql]) => /^\s*(INSERT|UPDATE|DELETE)\b/i.test(String(sql)));
     expect(writes).toEqual([]);
   });
@@ -329,7 +328,7 @@ describe('chat upload → a Data Room source belongs to a project (PF-02, PF-07)
     // project listed.
     const res = await runUpload({ projectId: null });
     expect(mockFindSourceByChecksum).not.toHaveBeenCalled();
-    expect(mockCreateSource).not.toHaveBeenCalled();
+    expect(mockCaptureClientSource).not.toHaveBeenCalled();
     const body = payload(res);
     expect(body.sourceId).toBeNull();
     expect(body.dataRoom).toMatchObject({ recorded: false });
@@ -338,13 +337,13 @@ describe('chat upload → a Data Room source belongs to a project (PF-02, PF-07)
 
   it('resolves identity within the project, never across the organization (PF-07 / VR-10)', async () => {
     await runUpload({ projectId: 'proj_12' });
-    expect(mockFindSourceByChecksum.mock.calls[0][2]).toMatchObject({ clientWorkspaceId: 12, clientProgramId: null });
+    expect(mockCaptureClientSource.mock.calls[0][1]).toMatchObject({ clientWorkspaceId: 12, clientProgramId: null });
     vi.clearAllMocks();
     mockFindSourceByChecksum.mockResolvedValue(null);
-    mockCreateSource.mockResolvedValue({ id: 4243 });
+    mockCaptureClientSource.mockResolvedValue({ source: { id: 4243 }, reused: false, supersededId: null });
     programsOfOrg5('11111111-1111-4111-8111-111111111111');
     const res = await runUpload({ projectId: '11111111-1111-4111-8111-111111111111' });
-    expect(mockFindSourceByChecksum.mock.calls[0][2]).toMatchObject({
+    expect(mockCaptureClientSource.mock.calls[0][1]).toMatchObject({
       clientProgramId: '11111111-1111-4111-8111-111111111111',
       clientWorkspaceId: null,
     });
@@ -356,7 +355,7 @@ describe('chat upload → a Data Room source belongs to a project (PF-02, PF-07)
   it('a project-scoped source that cannot be written answers 503 — never 200 "ready" (PF-07)', async () => {
     // The user's file is stored; the Data Room does not hold it, and the answer
     // says so instead of reporting a completed upload.
-    mockCreateSource.mockRejectedValue(new Error('cre tables missing'));
+    mockCaptureClientSource.mockRejectedValue(new Error('cre tables missing'));
 
     const res = await runUpload();
 
@@ -375,7 +374,7 @@ describe('chat upload → source version is observed, never invented (L21)', () 
       content: 'CLINICAL STUDY PROTOCOL\nProtocol C2C-401\nVersion 3.2\n15 January 2026',
     });
 
-    const [, params] = mockCreateSource.mock.calls[0];
+    const [, params] = mockCaptureClientSource.mock.calls[0];
     expect(params.version).toBe('3.2');
     expect(params.provenance.versionDeclaration).toMatchObject({
       declared: true,
@@ -389,7 +388,7 @@ describe('chat upload → source version is observed, never invented (L21)', () 
   it('reads the version off the filename when the document declares none', async () => {
     await runUpload({ fileName: 'SAP_v2.txt', content: 'Primary endpoint is ORR.' });
 
-    const [, params] = mockCreateSource.mock.calls[0];
+    const [, params] = mockCaptureClientSource.mock.calls[0];
     expect(params.version).toBe('2');
     expect(params.provenance.versionDeclaration).toMatchObject({
       declared: true, basis: 'filename_declaration',
@@ -407,7 +406,7 @@ describe('chat upload → source version is observed, never invented (L21)', () 
       content: 'Investigator Brochure. Section 1. Physical properties.',
     });
 
-    const [, params] = mockCreateSource.mock.calls[0];
+    const [, params] = mockCaptureClientSource.mock.calls[0];
     expect(params.version).toBeNull();
     for (const tempting of ['1', 1, 'v1', 'latest', '1.0']) {
       expect(params.version).not.toBe(tempting);
@@ -428,7 +427,7 @@ describe('chat upload → source version is observed, never invented (L21)', () 
       content: 'Protocol Version 2.0, superseding Version 1.0.',
     });
 
-    const [, params] = mockCreateSource.mock.calls[0];
+    const [, params] = mockCaptureClientSource.mock.calls[0];
     expect(params.version).toBeNull();
     expect(params.provenance.versionDeclaration).toMatchObject({
       declared: false, reason: 'ambiguous_declarations', candidates: ['2.0', '1.0'],
@@ -439,17 +438,16 @@ describe('chat upload → source version is observed, never invented (L21)', () 
   });
 
   it('carries the determination onto a superseding upload too', async () => {
-    // A revision is exactly where a version matters most; the supersession
-    // branch builds its own params object and must not drop it.
-    mockFindSupersededCandidate.mockResolvedValue({ id: 300 });
+    mockCaptureClientSource.mockResolvedValue({ source: { id: 4242 }, reused: false, supersededId: 300 });
 
     await runUpload({ fileName: 'protocol.txt', content: 'PROTOCOL\nVersion 4.0' });
 
-    expect(mockCreateSource).not.toHaveBeenCalled();
-    const [, params] = mockCreateSupersedingSource.mock.calls[0];
+    expect(mockCaptureClientSource).toHaveBeenCalledOnce();
+    const [, params, input] = mockCaptureClientSource.mock.calls[0];
     expect(params.version).toBe('4.0');
     expect(params.provenance.versionDeclaration).toMatchObject({ declared: true, version: '4.0' });
-    // The supersedes record still travels alongside it.
-    expect(params.provenance.supersedes).toMatchObject({ sourceId: 300 });
+    // The exact extracted text reaches the transactional study matcher. The
+    // service suite proves that only its same-study decision writes the link.
+    expect(input).toEqual({ text: 'PROTOCOL\nVersion 4.0' });
   });
 });

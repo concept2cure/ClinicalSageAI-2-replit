@@ -25,9 +25,17 @@ vi.mock('../../csr/project-scope.js', async (orig) => ({
   resolveCsrScope: vi.fn(async (_db: unknown, _org: number, input: { projectId?: number }) => ({ projectId: input.projectId })),
 }));
 vi.mock('../../../db.js', () => ({ db: {}, pool: { query: vi.fn() }, getPool: vi.fn() }));
+// Not a standing-rule suite: its stub sqlClient has no rule store (see _standing-rule-fixture.ts).
+vi.mock('../governed-tool-gate.js', async orig =>
+  (await import('./_standing-rule-fixture')).withNoStandingRules(await orig()));
 
 import { getToolHandler } from '../AnaToolExecutor.js';
 import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
+
+// The Module 2.4/2.6 drafts read the project's protected study records only on the request's own connection
+// (67e4720790), and refuse before anything else without one; a stub stands in, as in
+// nonclinical-drafts-refuse-model-figures.test.ts.
+const RECORD_CTX = { organizationId: 3, userId: 5, projectId: 9, sqlClient: { query: vi.fn(async () => ({ rows: [] })) } } as never;
 
 const NEW_TOOLS = [
   'compute_fih_dose',
@@ -137,7 +145,7 @@ describe('draft_nonclinical_overview_m2_4 handler', () => {
           findings: [{ organ: 'liver', finding: 'hepatocellular hypertrophy' }],
           drugSubstanceName: 'BX-115',
         },
-        { organizationId: 3, projectId: 9 } as never,
+        RECORD_CTX,
       ),
     );
     expect(out).toMatchObject({ ok: false, status: 'needs_data', ignoredSuppliedFigures: true, projectId: 9 });
@@ -207,7 +215,7 @@ describe('draft_nonclinical_summaries_m2_6 handler', () => {
     const out = JSON.parse(
       await handler(
         { studies: [{ studyType: 'repeat_dose_tox', studyId: 'TX-1', species: 'rat', durationWeeks: 13, noael: '50 mg/kg/day' }] },
-        { organizationId: 3, projectId: 9 } as never,
+        RECORD_CTX,
       ),
     );
     expect(out).toMatchObject({ ok: false, status: 'needs_data', ignoredSuppliedFigures: true });

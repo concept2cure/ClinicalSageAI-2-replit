@@ -40,25 +40,29 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   apiRequest,
 }));
 
-import { BiostatWorkbench } from '../surfaces/BiostatWorkbench';
+import { Biostatistics } from '../surfaces/Biostatistics';
 
-const props = () => ({ surface: { id: 'biostat-workbench', label: 'Biostat' } as any, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biopharma' });
+const props = () => ({ surface: { id: 'biostatistics', label: 'Biostatistics' } as any, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biopharma' });
+const BiostatWorkbench = Biostatistics as unknown as React.ComponentType<Record<string, unknown>>;
 /** The work area, named as missing rather than thrown through as a null. */
 function area(): HTMLElement {
-  const el = document.querySelector<HTMLElement>('[data-work-area="biostat-workbench"]');
-  if (!el) throw new Error('the workbench rendered no [data-work-area="biostat-workbench"] root');
+  const el = document.querySelector<HTMLElement>('[data-work-area="biostatistics"]');
+  if (!el) throw new Error('the workbench rendered no [data-work-area="biostatistics"] root');
   return el;
 }
 
 afterEach(() => cleanup());
 
-describe('BiostatWorkbench — the work-area pattern (D5-4)', () => {
-  it('carries exactly one filled primary, and it is the defensibility assessment', () => {
+describe('Biostatistics — the work-area pattern (D5-4), on the one surface', () => {
+  it('carries exactly one filled primary, and it is the editor hand-off', () => {
     render(<BiostatWorkbench {...props()} />);
-    expect(
-      [...area().querySelectorAll('.btn.primary')].map((el) => el.textContent?.trim()),
-      'a work area has one primary (§WA.4.2 rule 7)',
-    ).toEqual(['Assess defensibility']);
+    /* §WA.4.2 rule 7: one primary per view. The merged surface's primary is
+       taking the document into the one editor. "Assess defensibility" was the
+       retired surface's primary and is a plain button here — otherwise the fold
+       would have put two orange fills on one page. */
+    const primaries = [...area().querySelectorAll('.btn.primary')].map((el) => el.textContent?.trim());
+    expect(primaries, 'a work area has one primary (§WA.4.2 rule 7)').toHaveLength(1);
+    expect(primaries[0]).toMatch(/editor/i);
   });
 
   it('offers the engines as a choice, not as twenty-nine next actions', () => {
@@ -70,13 +74,11 @@ describe('BiostatWorkbench — the work-area pattern (D5-4)', () => {
     expect(pills.filter((el) => el.getAttribute('aria-pressed') === 'true')).toHaveLength(1);
   });
 
-  it('frames the page with the back link and one heading, not an intro card', () => {
+  it('frames the page with one heading', () => {
     render(<BiostatWorkbench {...props()} />);
-    expect(area().querySelector('.pj-back')?.textContent).toMatch(/Biostatistics/);
     const h1 = area().querySelectorAll('h1.ph-title');
     expect(h1).toHaveLength(1);
-    expect(h1[0].textContent).toBe('Design calculators');
-    expect(area().querySelector('.pj-card'), 'a card is left inside the work area').toBeNull();
+    expect(h1[0].textContent).toBe('Biostatistics');
   });
 
   it('never repeats the page title as one of its section headings', () => {
@@ -86,6 +88,13 @@ describe('BiostatWorkbench — the work-area pattern (D5-4)', () => {
     const title = area().querySelector('h1.ph-title')!.textContent;
     const sections = [...area().querySelectorAll('.pj-sec h2')].map((el) => el.textContent);
     expect(sections).not.toContain(title);
-    expect(sections).toEqual(['Statistical defensibility', 'Engines', 'Adaptive monitoring', 'Method precedent']);
+    /* The two capabilities folded in from the retired `biostat-workbench` on
+       2026-11-09 are sections of this surface, named as themselves. "Engines"
+       became "Design calculators" when it stopped repeating a page title that
+       no longer exists. Asserted by presence rather than as an exact list: the
+       rule under test is that no section repeats the page's own title. */
+    expect(sections).toContain('Statistical defensibility');
+    expect(sections).toContain('Design calculators');
+    expect(new Set(sections).size, 'two sections share a heading').toBe(sections.length);
   });
 });

@@ -1,0 +1,432 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ RUN  v4.1.7 /workspace/scratch/3002d574f952/concept2cure-v2
+
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:27) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+stdout | server/services/ana/__tests__/qms-change-tools.test.ts
+{
+  "timestamp": "2026-11-08T17:02:55.106Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-08T17:02:55.107Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/qms-change-tools.test.ts
+{
+  "timestamp": "2026-11-08T17:02:55.108Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+stderr | server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_create > raises a controlled change and persists it
+{
+  "timestamp": "2026-11-08T17:03:04.131Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/account-skill-bundles.ts:712:33",
+    "queryPreview": "SELECT * FROM account_skill_bundles WHERE organization_id = $1 AND (status NOT IN ('draft', 'archived') OR metadata->'standingRule'->>'schemaVersion'='1') AN...",
+    "enforcement": "off"
+  }
+}
+
+stderr | server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_create > raises a controlled change and persists it
+{
+  "timestamp": "2026-11-08T17:03:04.176Z",
+  "level": "warn",
+  "message": "[tenant-rls-observability] Query issued without tenant scope (will be blocked once RLS is enabled)",
+  "context": {
+    "op": "pool.query",
+    "caller": "server/services/csr/project-scope.ts:40:20",
+    "queryPreview": "SELECT ou.role FROM organization_users ou JOIN users u ON u.id=ou.user_id JOIN organizations o ON o.id=ou.organization_id WHERE ou.organization_id=$1 AND ou....",
+    "enforcement": "off"
+  }
+}
+
+ × server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_create > raises a controlled change and persists it 539ms
+   → expected undefined to be true // Object.is equality
+ × server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_create > requires change_number and title 3ms
+   → expected 'SKILL_POLICY_UNAVAILABLE' to match /required/i
+ × server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > advances a change through the lifecycle with a reason (Part 11) 3ms
+   → expected undefined to be true // Object.is equality
+ × server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > refuses a transition without a reason-for-change 2ms
+   → expected undefined to be 'REASON_REQUIRED' // Object.is equality
+ × server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > cannot approve a change from chat, and the change stays under assessment 4ms
+   → expected 'SKILL_POLICY_UNAVAILABLE' to match /electronic signature/i
+ ✓ server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > does not offer AnA an approval, and says where a change is approved 1ms
+ × server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > rejects an illegal transition 11ms
+   → expected 'SKILL_POLICY_UNAVAILABLE' to match /cannot move change/i
+ × server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_link > links a change to a deviation 2ms
+   → expected undefined to be true // Object.is equality
+ × server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_link > refuses a deviation this organisation has not recorded, and links nothing (MR-12 Stage 8) 3ms
+   → expected 'SKILL_POLICY_UNAVAILABLE' to match /No deviation DEV-NOT-RECORDED is reco…/
+ × server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > carries a recorded row out as auditTrail 3ms
+   → expected undefined to deeply equal { persisted: true, chained: true }
+ × server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > create: says audit persistence was not confirmed 1ms
+   → the change itself stands: expected undefined to be true // Object.is equality
+ × server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > transition: says audit persistence was not confirmed 2ms
+   → the change itself stands: expected undefined to be true // Object.is equality
+ × server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > link: says audit persistence was not confirmed 2ms
+   → the change itself stands: expected undefined to be true // Object.is equality
+ × server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > opens a controlled revision (bumps version, back to draft, clears approval) 10ms
+   → expected undefined to be true // Object.is equality
+ × server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > requires a reason to revise 5ms
+   → expected undefined to be 'REASON_REQUIRED' // Object.is equality
+ × server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > a revision reason under 8 characters is refused and nothing is written 4ms
+   → expected 'SKILL_POLICY_UNAVAILABLE' to match /at least 8 characters/i
+ × server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > without a reason: refuses, nothing is written and no placeholder reaches the ledger 4ms
+   → expected undefined to be false // Object.is equality
+ × server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > with a reason: still refuses — retirement is signed from the Quality register 7ms
+   → expected undefined to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 17 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_create > raises a controlled change and persists it
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/qms-change-tools.test.ts:111:20
+    109|       classification: 'major', reason: 'Supply resilience.',
+    110|     });
+    111|     expect(res.ok).toBe(true);
+       |                    ^
+    112|     expect(res.change_number).toBe('CC-2026-050');
+    113|     expect(res.status).toBe('proposed');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/17]⎯
+
+ FAIL  server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_create > requires change_number and title
+AssertionError: expected 'SKILL_POLICY_UNAVAILABLE' to match /required/i
+
+- Expected:
+/required/i
+
++ Received:
+"SKILL_POLICY_UNAVAILABLE"
+
+ ❯ server/services/ana/__tests__/qms-change-tools.test.ts:121:23
+    119|   it('requires change_number and title', async () => {
+    120|     const res = await call('qms_change_create', { title: 'x' });
+    121|     expect(res.error).toMatch(/required/i);
+       |                       ^
+    122|   });
+    123| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/17]⎯
+
+ FAIL  server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > advances a change through the lifecycle with a reason (Part 11)
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/qms-change-tools.test.ts:129:20
+    127|     const created = await call('qms_change_create', { change_number: '…
+    128|     const res = await call('qms_change_transition', { change_id: creat…
+    129|     expect(res.ok).toBe(true);
+       |                    ^
+    130|     expect(res.governed).toBe(true);
+    131|     expect(res.status).toBe('under_assessment');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/17]⎯
+
+ FAIL  server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > refuses a transition without a reason-for-change
+AssertionError: expected undefined to be 'REASON_REQUIRED' // Object.is equality
+
+- Expected:
+"REASON_REQUIRED"
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/qms-change-tools.test.ts:141:24
+    139|     for (const reason of [undefined, 'ok!']) {
+    140|       const res = await call('qms_change_transition', { change_id: cre…
+    141|       expect(res.code).toBe('REASON_REQUIRED');
+       |                        ^
+    142|       expect(res.error).toMatch(/no reason of at least 8 characters wa…
+    143|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/17]⎯
+
+ FAIL  server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > cannot approve a change from chat, and the change stays under assessment
+AssertionError: expected 'SKILL_POLICY_UNAVAILABLE' to match /electronic signature/i
+
+- Expected:
+/electronic signature/i
+
++ Received:
+"SKILL_POLICY_UNAVAILABLE"
+
+ ❯ server/services/ana/__tests__/qms-change-tools.test.ts:156:23
+    154|     await call('qms_change_transition', { change_id: created.id, to: '…
+    155|     const res = await call('qms_change_transition', { change_id: creat…
+    156|     expect(res.error).toMatch(/electronic signature/i);
+       |                       ^
+    157|     // AnA tells the person what to do, so it needs the kind of refusa…
+    158|     // place a person can go: the Approve button, not an API path.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/17]⎯
+
+ FAIL  server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_transition > rejects an illegal transition
+AssertionError: expected 'SKILL_POLICY_UNAVAILABLE' to match /cannot move change/i
+
+- Expected:
+/cannot move change/i
+
++ Received:
+"SKILL_POLICY_UNAVAILABLE"
+
+ ❯ server/services/ana/__tests__/qms-change-tools.test.ts:186:23
+    184|     // pins the state machine on a target she may otherwise request.
+    185|     const res = await call('qms_change_transition', { change_id: creat…
+    186|     expect(res.error).toMatch(/cannot move change/i);
+       |                       ^
+    187|   });
+    188| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/17]⎯
+
+ FAIL  server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_link > links a change to a deviation
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/qms-change-tools.test.ts:194:20
+    192|     const created = await call('qms_change_create', { change_number: '…
+    193|     const res = await call('qms_change_link', { change_id: created.id,…
+    194|     expect(res.ok).toBe(true);
+       |                    ^
+    195|     const db = await pglite.query(`SELECT link_type, linked_ref FROM q…
+    196|     expect((db.rows[0] as { linked_ref: string }).linked_ref).toBe('DE…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/17]⎯
+
+ FAIL  server/services/ana/__tests__/qms-change-tools.test.ts > qms_change_link > refuses a deviation this organisation has not recorded, and links nothing (MR-12 Stage 8)
+AssertionError: expected 'SKILL_POLICY_UNAVAILABLE' to match /No deviation DEV-NOT-RECORDED is reco…/
+
+- Expected:
+/No deviation DEV-NOT-RECORDED is recorded in this organisation/
+
++ Received:
+"SKILL_POLICY_UNAVAILABLE"
+
+ ❯ server/services/ana/__tests__/qms-change-tools.test.ts:202:23
+    200|     const created = await call('qms_change_create', { change_number: '…
+    201|     const res = await call('qms_change_link', { change_id: created.id,…
+    202|     expect(res.error).toMatch(/No deviation DEV-NOT-RECORDED is record…
+       |                       ^
+    203|     expect((await pglite.query(`SELECT 1 FROM qms_change_links WHERE c…
+    204|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/17]⎯
+
+ FAIL  server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > carries a recorded row out as auditTrail
+AssertionError: expected undefined to deeply equal { persisted: true, chained: true }
+
+- Expected:
+{
+  "chained": true,
+  "persisted": true,
+}
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/qms-change-tools.test.ts:225:28
+    223|   it('carries a recorded row out as auditTrail', async () => {
+    224|     const res = await call('qms_change_create', { change_number: 'CC-2…
+    225|     expect(res.auditTrail).toEqual({ persisted: true, chained: true });
+       |                            ^
+    226|   });
+    227|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/17]⎯
+
+ FAIL  server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > create: says audit persistence was not confirmed
+AssertionError: the change itself stands: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ expectLost server/services/ana/__tests__/qms-change-tools.test.ts:217:48
+    215|
+    216|   function expectLost(res: Record<string, unknown>) {
+    217|     expect(res.ok, 'the change itself stands').toBe(true);
+       |                                                ^
+    218|     expect(res.auditTrail).toMatchObject({ persisted: false, code: 'AU…
+    219|     expect(String(res.message)).toMatch(/audit entry .* could not be c…
+ ❯ server/services/ana/__tests__/qms-change-tools.test.ts:230:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/17]⎯
+
+ FAIL  server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > transition: says audit persistence was not confirmed
+AssertionError: the change itself stands: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ expectLost server/services/ana/__tests__/qms-change-tools.test.ts:217:48
+    215|
+    216|   function expectLost(res: Record<string, unknown>) {
+    217|     expect(res.ok, 'the change itself stands').toBe(true);
+       |                                                ^
+    218|     expect(res.auditTrail).toMatchObject({ persisted: false, code: 'AU…
+    219|     expect(String(res.message)).toMatch(/audit entry .* could not be c…
+ ❯ server/services/ana/__tests__/qms-change-tools.test.ts:236:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/17]⎯
+
+ FAIL  server/services/ana/__tests__/qms-change-tools.test.ts > the audit row each change-control tool writes > link: says audit persistence was not confirmed
+AssertionError: the change itself stands: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ expectLost server/services/ana/__tests__/qms-change-tools.test.ts:217:48
+    215|
+    216|   function expectLost(res: Record<string, unknown>) {
+    217|     expect(res.ok, 'the change itself stands').toBe(true);
+       |                                                ^
+    218|     expect(res.auditTrail).toMatchObject({ persisted: false, code: 'AU…
+    219|     expect(String(res.message)).toMatch(/audit entry .* could not be c…
+ ❯ server/services/ana/__tests__/qms-change-tools.test.ts:242:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/17]⎯
+
+ FAIL  server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > opens a controlled revision (bumps version, back to draft, clears approval)
+AssertionError: expected undefined to be true // Object.is equality
+
+- Expected:
+true
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/qms-change-tools.test.ts:260:20
+    258|     const id = await effectiveDoc('SOP-900');
+    259|     const res = await call('revise_qms_document', { document_id: id, r…
+    260|     expect(res.ok).toBe(true);
+       |                    ^
+    261|     expect(res.status).toBe('draft');
+    262|     expect(res.version).toBe('4.0');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/17]⎯
+
+ FAIL  server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > requires a reason to revise
+AssertionError: expected undefined to be 'REASON_REQUIRED' // Object.is equality
+
+- Expected:
+"REASON_REQUIRED"
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/qms-change-tools.test.ts:271:22
+    269|     const res = await call('revise_qms_document', { document_id: id });
+    270|     // 2026-09-29: read with gatedReason, so it is the shared refusal …
+    271|     expect(res.code).toBe('REASON_REQUIRED');
+       |                      ^
+    272|     expect(res.error).toMatch(/Nothing was recorded or changed/);
+    273|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/17]⎯
+
+ FAIL  server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > a revision reason under 8 characters is refused and nothing is written
+AssertionError: expected 'SKILL_POLICY_UNAVAILABLE' to match /at least 8 characters/i
+
+- Expected:
+/at least 8 characters/i
+
++ Received:
+"SKILL_POLICY_UNAVAILABLE"
+
+ ❯ server/services/ana/__tests__/qms-change-tools.test.ts:280:23
+    278|     vi.mocked(recordGovernedAction).mockClear();
+    279|     const res = await call('revise_qms_document', { document_id: id, r…
+    280|     expect(res.error).toMatch(/at least 8 characters/i);
+       |                       ^
+    281|     const db = await pglite.query(`SELECT status, version FROM qms_doc…
+    282|     expect(db.rows[0]).toMatchObject({ status: 'effective', version: '…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/17]⎯
+
+ FAIL  server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > without a reason: refuses, nothing is written and no placeholder reaches the ledger
+AssertionError: expected undefined to be false // Object.is equality
+
+- Expected:
+false
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/qms-change-tools.test.ts:294:20
+    292|     vi.mocked(recordGovernedAction).mockClear();
+    293|     const res = await call('retire_qms_document', { document_id: id });
+    294|     expect(res.ok).toBe(false);
+       |                    ^
+    295|     expect(res.signatureRequired).toBe(true);
+    296|     const db = await pglite.query(`SELECT status FROM qms_documents WH…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/17]⎯
+
+ FAIL  server/services/ana/__tests__/qms-change-tools.test.ts > revise_qms_document / retire_qms_document (SOP register) > with a reason: still refuses — retirement is signed from the Quality register
+AssertionError: expected undefined to be false // Object.is equality
+
+- Expected:
+false
+
++ Received:
+undefined
+
+ ❯ server/services/ana/__tests__/qms-change-tools.test.ts:305:20
+    303|     vi.mocked(recordGovernedAction).mockClear();
+    304|     const res = await call('retire_qms_document', { document_id: id, r…
+    305|     expect(res.ok).toBe(false);
+       |                    ^
+    306|     expect(res.signatureRequired).toBe(true);
+    307|     expect(res.message).toMatch(/electronic signature/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/17]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  17 failed | 1 passed (18)
+   Start at  09:02:52
+   Duration  11.38s (transform 6.61s, setup 61ms, import 8.71s, tests 2.39s, environment 0ms)
+

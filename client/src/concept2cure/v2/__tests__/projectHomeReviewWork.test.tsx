@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 /**
- * ProjectHome — the Review stage lists the OPEN program's tasks and approvals.
+ * ProjectHome — Plan lists the OPEN program's tasks and approvals (D3-4: they were on Review until 2026-11-08,
+ * D3.md §4.7; one panel on Plan, by due date, rows as hairline rows with the status in words).
  *
  * QA 2026-10-08 (j1, "Plan (schedule) and Review (tasks and approvals) stage
  * panels never load on the project home"): the Review stage said "Review tasks
@@ -20,7 +21,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 /* useDocumentList reads the signed-in session (CanvasDocumentList.tsx); with
@@ -83,9 +84,13 @@ function route(workResponse: () => Response) {
   });
 }
 
-function openReviewStage() {
-  fireEvent.click(screen.getByTitle('Review, approve & e-sign'));
+function openStage(name: string) {
+  const step = Array.from(document.querySelectorAll<HTMLButtonElement>('.pj-lc-stage')).find((b) => b.textContent?.trim() === name);
+  if (!step) throw new Error(`no step ${name}`);
+  fireEvent.click(step);
 }
+const openReviewStage = () => openStage('Plan');
+const panel = () => screen.findByRole('region', { name: 'Tasks and approvals' });
 
 beforeEach(() => {
   clearNavParams();
@@ -97,7 +102,7 @@ afterEach(() => {
   delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
 });
 
-describe('ProjectHome — Review stage: the program’s tasks and approvals', () => {
+describe('ProjectHome — Plan: the program’s tasks and approvals', () => {
   it('opens the exact task handed off by the board, even beyond the list cap or already done', async () => {
     const rows = Array.from({ length: 12 }, (_, i) => item({ id: `schedule:${i}`, title: `Schedule ${i}` }));
     rows.push(item({ id: 'review:target', title: 'The requested older review', status: 'done' }));
@@ -156,7 +161,9 @@ describe('ProjectHome — Review stage: the program’s tasks and approvals', ()
 
     expect(await screen.findByText(/This project has no tracking record/)).toBeTruthy();
     expect(screen.queryByText(/No tasks or approvals on this project/)).toBeNull();
-    expect(screen.queryByText(/Couldn't load/)).toBeNull();
+    /* The step's body, not the page: since D3-3 the Team card in Project knowledge reads the team on every step, and
+       this test serves no team, so the card rightly says the team could not be read. */
+    expect(within(document.querySelector('.pj-main') as HTMLElement).queryByText(/Couldn't load/)).toBeNull();
   });
 
   it('a failed read is an error, never an empty list', async () => {
@@ -166,5 +173,75 @@ describe('ProjectHome — Review stage: the program’s tasks and approvals', ()
 
     expect(await screen.findByText(/Couldn't load this project's tasks/)).toBeTruthy();
     expect(screen.queryByText(/No tasks or approvals on this project/)).toBeNull();
+  });
+
+});
+
+/* D3-4 (D3.md §4.7 Plan item 3, §4.6 item 4): one panel on Plan, by due date, rows as hairline rows. */
+describe('ProjectHome — Plan’s tasks and approvals, by due date (D3-4)', () => {
+  it('orders open work by due date, undated last, and says each status in words at the row’s right', async () => {
+    route(() => ok(work([
+      item({ id: 'a', title: 'Due late', dueAt: '2026-11-28T00:00:00Z', blocking: false, status: 'open' }),
+      item({ id: 'b', title: 'No date', dueAt: null, blocking: false }),
+      item({ id: 'c', title: 'Due first', dueAt: '2026-11-05T00:00:00Z', blocking: true, status: 'blocked', source: 'board', ownerName: 'JM Smith' }),
+      item({ id: 'd', title: 'Due middle', dueAt: '2026-11-14T00:00:00Z', blocking: false, ownerName: null, priority: null }),
+    ])));
+    render(<ProjectHome {...props()} />);
+    openStage('Plan');
+    const tasks = await panel();
+    await within(tasks).findByText('Due first');
+    const titles = Array.from(tasks.querySelectorAll('.pj-file-n')).map((n) => n.textContent);
+    expect(titles).toEqual(['Due first', 'Due middle', 'Due late', 'No date']);
+    expect(within(tasks).getByText('On this project, by due date')).toBeTruthy();
+    const first = within(tasks).getByText('Due first').closest('.pj-file') as HTMLElement;
+    expect(first.querySelector('.pj-work-status')?.textContent).toBe('Blocked · blocking the filing');
+    expect(first.querySelector('.pj-work-status')?.getAttribute('data-blocked')).toBe('true');
+    expect(first.querySelector('.pj-file-m')?.textContent).toMatch(/^Task board · JM Smith · High priority · Due Nov 5, 2026$/);
+    const middle = within(tasks).getByText('Due middle').closest('.pj-file') as HTMLElement;
+    expect(middle.querySelector('.pj-file-m')?.textContent).toMatch(/^Review thread · Unassigned · Due Nov 14, 2026$/);
+    expect(within(tasks).getByText('No date').closest('.pj-file')?.textContent).toContain('No due date');
+    expect(tasks.querySelector('.rd-chip, .pj-file-badge'), 'no chip or badge on a row').toBeNull();
+  });
+
+  it('a past due date is marked overdue', async () => {
+    route(() => ok(work([item({ id: 'old', title: 'Long overdue', dueAt: '2020-01-02T00:00:00Z' })])));
+    render(<ProjectHome {...props()} />);
+    openStage('Plan');
+    const tasks = await panel();
+    await within(tasks).findByText('Long overdue');
+    expect(tasks.querySelector('.pj-overdue')?.textContent).toBe('Due Jan 2, 2020');
+  });
+
+  it('Review lists no tasks: the one list is on Plan', async () => {
+    route(() => ok(work([item()])));
+    render(<ProjectHome {...props()} />);
+    openStage('Review');
+    await screen.findByRole('region', { name: 'Reviews' });
+    expect(screen.queryByRole('region', { name: /Tasks/ })).toBeNull();
+    expect(screen.queryByText('Approve the 2.5 Clinical Overview')).toBeNull();
+  });
+
+  it('a task handed over from Tasks with stage "review" opens Plan, the requested row first and focused', async () => {
+    const rows = [item({ id: 'board:first', title: 'Earliest', dueAt: '2026-11-01T00:00:00Z' }), item({ id: 'board:target', title: 'The handed-over task', dueAt: '2026-12-30T00:00:00Z' })];
+    route(() => ok(work(rows)));
+    stashNavParamsForTarget('project-home', { workId: 'board:target', stage: 'review' });
+    render(<ProjectHome {...props()} />);
+    const tasks = await panel();
+    const target = await within(tasks).findByText('The handed-over task');
+    expect(document.querySelector('.pj-lc-stage[data-status="active"]')?.textContent?.trim()).toBe('Plan');
+    expect(tasks.querySelector('.pj-file-n')?.textContent).toBe('The handed-over task');
+    await waitFor(() => expect(document.activeElement).toBe(target.closest('[data-work-target]')));
+  });
+
+  /* The dev server renders under React.StrictMode, which runs mount effects twice. An effect that cleared the requested
+     task on mount ran again after the handoff was consumed and dropped it (walked in the running app, 2026-11-08). */
+  it('keeps the handed-over task under React.StrictMode', async () => {
+    route(() => ok(work([item({ id: 'board:a', title: 'First' }), item({ id: 'board:target', title: 'The handed-over task', dueAt: '2026-12-30T00:00:00Z' })])));
+    stashNavParamsForTarget('project-home', { workId: 'board:target', stage: 'review' });
+    render(<React.StrictMode><ProjectHome {...props()} /></React.StrictMode>);
+    const tasks = await panel();
+    await within(tasks).findByText('The handed-over task');
+    await waitFor(() => expect(tasks.querySelector('[data-work-target]')?.textContent).toContain('The handed-over task'));
+    expect(tasks.querySelector('.pj-file-n')?.textContent).toBe('The handed-over task');
   });
 });

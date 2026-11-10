@@ -8,7 +8,7 @@
  * states none.
  */
 import { describe, expect, it } from 'vitest';
-import type { OrgSkillRecord } from '../../../account-skill-bundles';
+import { loadMandatorySkillGates, type OrgSkillRecord } from '../../../account-skill-bundles';
 import { selectSkills, type SelectableSkill } from '../selector';
 import {
   applyProjectScope,
@@ -229,5 +229,77 @@ describe('market skills', () => {
     // HSA is also human serum albumin; CDE is also a common data element.
     expect(markets(loaded('Is HSA acceptable as an excipient in our lyophilized biologic formulation?'))).toEqual([]);
     expect(markets(loaded('Map our case report forms to the NIH CDE definitions before database lock.'))).toEqual([]);
+  });
+});
+
+
+describe('sourced mandatory rules outside prompt selection', () => {
+  const sourceAuditEventId = '741e0191-6844-4f0c-a6f1-948914ba474a';
+  const binding = { policyType: 'requires_approval', enforcement: 'mandatory', toolName: 'lookup_fda_guidance',
+    description: 'Ask the regulatory lead before querying external guidance.' };
+  const row = { id: 91, bundle_id: 'bundle_91', organization_id: 4, project_id: null, status: 'active', version: 1,
+    policy_bindings: [binding], metadata: { standingRule: { sourceAuditEventId } } };
+  function store(rows: Array<Record<string, unknown>>, sourceExists = true) {
+    const seen: Array<{ sql: string; params?: unknown[] }> = [];
+    return { seen, query: async (sql: string, params?: unknown[]) => {
+      seen.push({ sql, params });
+      return { rows: sql.includes('FROM audit_logs') ? sourceExists ? [{ id: params?.[0], table_name: 'organization_skill_settings', action: 'ana_skill.library_disabled', record_id: 'labeling', user_id: 5 }] : [] : rows };
+    } };
+  }
+
+  it('reads tenant and project rules without selector, off switches or trigger dependency', async () => {
+    const db = store([row, { ...row, id: 92, bundle_id: 'bundle_92', project_id: 9, status: 'locked', policy_bindings: [{ ...binding, toolName: 'check_dossier_consistency' }] }]);
+    const loaded = await loadMandatorySkillGates(db, 4, 9);
+    expect(loaded.rules.map(r => [r.bundleId, r.projectId])).toEqual([['bundle_91', null], ['bundle_92', 9]]);
+    expect(loaded.ruleHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(db.seen[0].params).toEqual([4, 9]);
+    expect(db.seen[0].sql).toContain("status NOT IN ('draft', 'archived')");
+    expect(db.seen[0].sql).toContain('project_id IS NULL OR project_id = $2');
+    expect(db.seen.some(q => /project_skill_settings|organization_skill_settings/.test(q.sql))).toBe(false);
+    expect(db.seen.filter(q => q.sql.includes('FROM audit_logs'))).toHaveLength(2); // source verified for each owning scope
+  });
+
+  it('changes its approval binding when source, instructions version, description or scope changes', async () => {
+    const initial = await loadMandatorySkillGates(store([row]), 4, 9);
+    const reordered = await loadMandatorySkillGates(store([{ ...row }]), 4, 9);
+    const changed = await loadMandatorySkillGates(store([{ ...row, version: 2 }]), 4, 9);
+    const description = await loadMandatorySkillGates(store([{ ...row, policy_bindings: [{ ...binding, description: 'Require approval before every external guidance query.' }] }]), 4, 9);
+    const source = await loadMandatorySkillGates(store([{ ...row, metadata: { standingRule: { sourceAuditEventId: '4a85ad6b-f289-4dbd-879b-1760c929fdbc' } } }]), 4, 9);
+    const scope = await loadMandatorySkillGates(store([row]), 4, 10);
+    expect(reordered.ruleHash).toBe(initial.ruleHash);
+    for (const next of [changed, description, source, scope]) expect(next.ruleHash).not.toBe(initial.ruleHash);
+  });
+
+  it.each([
+    { policy_bindings: [{ ...binding, enforcement: 'optional' }] },
+    { policy_bindings: [{ ...binding, policyType: 'allow' }] },
+    { policy_bindings: [{ ...binding, toolName: 'unknown_model_tool' }] },
+    { policy_bindings: {} },
+    { metadata: {} },
+    { version: 0 },
+    { status: 'unrecognized' },
+    { organization_id: 8 },
+    { project_id: 10 },
+  ])('refuses malformed or wrong-scope rules rather than silently discarding them (%j)', async over => {
+    await expect(loadMandatorySkillGates(store([{ ...row, ...over }]), 4, 9)).rejects.toThrow();
+  });
+
+  it('allows a project correction only within its recorded project, never as a tenant rule or another project rule', async () => {
+    const projectSource = { id: sourceAuditEventId, table_name: 'project_skill_settings',
+      action: 'ana_skill.project_turned_off', record_id: '9:labeling', user_id: 5, new_values: { projectId: 9 } };
+    const client = (projectId: number | null) => ({ query: async (sql: string) => ({ rows: sql.includes('FROM audit_logs')
+      ? [projectSource] : [{ ...row, project_id: projectId, policy_bindings: [{ ...binding, toolName: 'check_dossier_consistency' }] }] }) });
+    expect((await loadMandatorySkillGates(client(9), 4, 9)).rules[0].projectId).toBe(9);
+    await expect(loadMandatorySkillGates(client(10), 4, 10)).rejects.toThrow('only govern that project');
+    await expect(loadMandatorySkillGates(client(null), 4, 9)).rejects.toThrow('only govern that project');
+  });
+
+  it('refuses a project-only binding whose actual target cannot be resolved safely', async () => {
+    await expect(loadMandatorySkillGates(store([{ ...row, project_id: 9 }]), 4, 9)).rejects.toThrow('verified project target');
+  });
+
+  it('refuses absent or foreign sources and unavailable policy reads', async () => {
+    await expect(loadMandatorySkillGates(store([row], false), 4, 9)).rejects.toThrow('source');
+    await expect(loadMandatorySkillGates({ query: async () => { throw new Error('read unavailable'); } }, 4, 9)).rejects.toThrow('read unavailable');
   });
 });

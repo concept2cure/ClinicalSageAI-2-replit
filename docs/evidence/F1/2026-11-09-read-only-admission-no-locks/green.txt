@@ -1,0 +1,14 @@
+ ✓ server/services/authoring/__tests__/authoring-program-access.pglite.test.ts > authoring applies the existing project edit policy on its actual SQL connection > keeps the current owner able to read and write 31ms
+ ✓ server/services/authoring/__tests__/authoring-program-access.pglite.test.ts > authoring applies the existing project edit policy on its actual SQL connection > keeps the current editor able to read and write 19ms
+ ✓ server/services/authoring/__tests__/authoring-program-access.pglite.test.ts > authoring applies the existing project edit policy on its actual SQL connection > keeps the current administrator able to read and write 18ms
+ ✓ server/services/authoring/__tests__/authoring-program-access.pglite.test.ts > authoring applies the existing project edit policy on its actual SQL connection > keeps a use member able to read but refuses default and explicit 
+ ✓ server/services/authoring/__tests__/authoring-program-access.pglite.test.ts > authoring applies the existing project edit policy on its actual SQL connection > keeps a pending reviewer able to read without granting project ed
+ ✓ server/services/authoring/__tests__/authoring-program-access.pglite.test.ts > authoring applies the existing project edit policy on its actual SQL connection > does not turn organization-public reading into project editing 18
+ ✓ server/services/authoring/__tests__/authoring-program-access.pglite.test.ts > authoring applies the existing project edit policy on its actual SQL connection > reads the actual edit downgrade while retaining the member’s re
+ ✓ server/services/authoring/__tests__/authoring-program-access.pglite.test.ts > authoring applies the existing project edit policy on its actual SQL connection > retains the organization viewer refusal even when the project adm
+ ✓ server/services/authoring/__tests__/authoring-program-access.pglite.test.ts > authoring applies the existing project edit policy on its actual SQL connection > refuses a revoked private-project member for reads and writes 17m
+ ✓ server/services/authoring/__tests__/authoring-program-access.pglite.test.ts > a read admits inside a READ ONLY transaction; a write still locks > admits the owner to read 12ms
+ ✓ server/services/authoring/__tests__/authoring-program-access.pglite.test.ts > a read admits inside a READ ONLY transaction; a write still locks > admits the use member to read 10ms
+ ✓ server/services/authoring/__tests__/authoring-program-access.pglite.test.ts > a read admits inside a READ ONLY transaction; a write still locks > admits the pending reviewer to read 10ms
+ ✓ server/services/authoring/__tests__/authoring-program-access.pglite.test.ts > a read admits inside a READ ONLY transaction; a write still locks > a write in a READ ONLY transaction still asks for its lock, and is refused rath
+      Tests  13 passed (13)

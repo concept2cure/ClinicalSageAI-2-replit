@@ -646,7 +646,9 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
        The query text lives here; the matches and the focused index live in
        the editor's plugin state (the one source of truth for what is
        highlighted) and are mirrored into `findInfo` for the counter. */
-    const [findOpen, setFindOpen] = useState(false);
+    /** Row 2 of the ribbon (D4.md §D4.D): Superscript, Subscript, Highlight, alignment, image, caption, symbol. */
+  const [moreFmt, setMoreFmt] = useState(false);
+  const [findOpen, setFindOpen] = useState(false);
     const [findQuery, setFindQuery] = useState('');
     const [findCase, setFindCase] = useState(false);
     const [replaceWith, setReplaceWith] = useState('');
@@ -2194,19 +2196,6 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
             <RB title="Underline" shortcut="⌘U" active={!!editor?.isActive('underline')} onClick={() => editor?.chain().focus().toggleUnderline().run()}>
               <span style={{ textDecoration: 'underline' }}>U</span>
             </RB>
-            <RB title="Superscript" visibleLabel="x2" shortcut="⌘." active={!!editor?.isActive('superscript')} onClick={() => editor?.chain().focus().toggleSuperscript().run()}>
-              <span aria-hidden="true">
-                x<sup>2</sup>
-              </span>
-            </RB>
-            <RB title="Subscript" visibleLabel="x2" shortcut="⌘," active={!!editor?.isActive('subscript')} onClick={() => editor?.chain().focus().toggleSubscript().run()}>
-              <span aria-hidden="true">
-                x<sub>2</sub>
-              </span>
-            </RB>
-            <RB title="Highlight" visibleLabel="ab" active={!!editor?.isActive('highlight')} onClick={() => editor?.chain().focus().toggleHighlight().run()}>
-              <span className="rse-hl-glyph" aria-hidden="true">ab</span>
-            </RB>
             <span className="rse-sep" />
             <RB title="Bullet list" shortcut="⌘⇧8" active={!!editor?.isActive('bulletList')} onClick={() => editor?.chain().focus().toggleBulletList().run()}>
               {I.listBullet}
@@ -2215,15 +2204,6 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
               {I.listOrdered}
             </RB>
             <span className="rse-sep" />
-            <RB title="Align left" active={!!editor?.isActive({ textAlign: 'left' })} onClick={() => editor?.chain().focus().setTextAlign('left').run()}>
-              {I.alignLeft}
-            </RB>
-            <RB title="Align center" active={!!editor?.isActive({ textAlign: 'center' })} onClick={() => editor?.chain().focus().setTextAlign('center').run()}>
-              {I.alignCenter}
-            </RB>
-            <RB title="Align right" active={!!editor?.isActive({ textAlign: 'right' })} onClick={() => editor?.chain().focus().setTextAlign('right').run()}>
-              {I.alignRight}
-            </RB>
             <RB
               title={editor?.isActive('link') ? 'Edit or remove the link' : 'Insert a link'}
               active={!!editor?.isActive('link') || linkOpen}
@@ -2236,15 +2216,6 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
             >
               {I.link}
             </RB>
-            {crossRefsApi && (
-              <RB
-                title="Insert a cross-reference to another section"
-                active={xrefOpen}
-                onClick={() => (xrefOpen ? closeXref() : openXref())}
-              >
-                § Ref
-              </RB>
-            )}
             {citationsApi && (
               <RB
                 title="Cite a source — inserts a numbered citation and adds the source to this document’s reference list"
@@ -2252,6 +2223,15 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                 onClick={() => (citeOpen ? closeCite() : openCite())}
               >
                 Cite
+              </RB>
+            )}
+            {crossRefsApi && (
+              <RB
+                title="Insert a cross-reference to another section"
+                active={xrefOpen}
+                onClick={() => (xrefOpen ? closeXref() : openXref())}
+              >
+                § Ref
               </RB>
             )}
             <span className="rse-sep" />
@@ -2312,6 +2292,97 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                 </RB>
               </>
             )}
+            <span className="rse-sep" />
+            <RB title="Undo" shortcut="⌘Z" onClick={() => editor?.chain().focus().undo().run()}>
+              {I.undo}
+            </RB>
+            <RB title="Redo" shortcut="⌘⇧Z" onClick={() => editor?.chain().focus().redo().run()}>
+              {I.redo}
+            </RB>
+            <span className="rse-sep" />
+            <RB title="Find & replace (Ctrl/⌘-F)" active={findOpen} onClick={() => (findOpen ? closeFind() : openFind())}>
+              {I.search}
+            </RB>
+            <RB title="More formatting" active={moreFmt} onClick={() => setMoreFmt((v) => !v)}>
+              {I.chevDown}
+            </RB>
+            <span className="rse-ribbon-end">
+            {onAsk && (
+              <>
+                {/* THIS CONTROL WAS LABELLED "Cite" AND CITED NOTHING. It sends
+                    the selected sentence to the assistant pane as a question;
+                    it creates no citation, stores nothing, numbers nothing and
+                    puts nothing in the reference list. With a control beside it
+                    that does cite, a label claiming this one does too is not a
+                    naming quibble — it is a writer believing a claim is sourced
+                    when the filed document has no record of it. The label now
+                    says what it does. */}
+                <RB
+                  title="Ask AnA to suggest a source for the selected claim — this does not insert a citation"
+                  visibleLabel="Ask for a source"
+                  onClick={askForSource}
+                >
+                  {I.bookOpen}
+                </RB>
+              </>
+            )}
+            {onOfferAlternatives && !readOnly && (
+              <RB title="Offer alternatives for the selected passage: AnA drafts up to three, and nothing changes until you choose one"
+                visibleLabel="Offer alternatives" onClick={offerAlternatives}>
+                <span className="ed-spark" aria-hidden="true">✻</span>
+              </RB>
+            )}
+            {commentsApi && (
+              <RB title="Comment on the selection" visibleLabel="Comment" onClick={() => void commentOnSelection()}>
+                {I.messageSquare}
+              </RB>
+            )}
+            {suggestions.length > 0 && (
+              <button
+                type="button"
+                className="rse-chip"
+                onClick={() => setReviewOpen((o) => !o)}
+                aria-expanded={reviewOpen}
+              >
+                {suggestions.length} suggested edit{suggestions.length === 1 ? '' : 's'}
+              </button>
+            )}
+            {track && (
+              <label className="rse-track" title="Suggest text edits instead of applying them. Edits within a paragraph are captured as attributed suggestions; structural changes (paragraph joins and splits, table changes) and formatting apply directly and are not tracked.">
+                <input type="checkbox" checked={trackOn} onChange={() => void toggleTrack()} />
+                Track changes
+              </label>
+            )}
+            </span>
+          </div>
+        )}
+        {/* Row 2, "More formatting": the controls a person reaches for less often, same titles and shortcuts. */}
+        {full && boot.mode === 'rich' && !readOnly && (
+          <div className="rse-ribbon rse-ribbon-more" role="toolbar" aria-label="More formatting" hidden={!moreFmt}>
+            <RB title="Superscript" visibleLabel="x2" shortcut="⌘." active={!!editor?.isActive('superscript')} onClick={() => editor?.chain().focus().toggleSuperscript().run()}>
+              <span aria-hidden="true">
+                x<sup>2</sup>
+              </span>
+            </RB>
+            <RB title="Subscript" visibleLabel="x2" shortcut="⌘," active={!!editor?.isActive('subscript')} onClick={() => editor?.chain().focus().toggleSubscript().run()}>
+              <span aria-hidden="true">
+                x<sub>2</sub>
+              </span>
+            </RB>
+            <RB title="Highlight" visibleLabel="ab" active={!!editor?.isActive('highlight')} onClick={() => editor?.chain().focus().toggleHighlight().run()}>
+              <span className="rse-hl-glyph" aria-hidden="true">ab</span>
+            </RB>
+            <span className="rse-sep" />
+            <RB title="Align left" active={!!editor?.isActive({ textAlign: 'left' })} onClick={() => editor?.chain().focus().setTextAlign('left').run()}>
+              {I.alignLeft}
+            </RB>
+            <RB title="Align center" active={!!editor?.isActive({ textAlign: 'center' })} onClick={() => editor?.chain().focus().setTextAlign('center').run()}>
+              {I.alignCenter}
+            </RB>
+            <RB title="Align right" active={!!editor?.isActive({ textAlign: 'right' })} onClick={() => editor?.chain().focus().setTextAlign('right').run()}>
+              {I.alignRight}
+            </RB>
+            <span className="rse-sep" />
             {imagesApi && (
               <RB
                 title="Insert an image (PNG, JPEG or GIF — stored in the tenant's governed image store)"
@@ -2353,64 +2424,6 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                 </option>
               ))}
             </select>
-            <span className="rse-sep" />
-            <RB title="Undo" shortcut="⌘Z" onClick={() => editor?.chain().focus().undo().run()}>
-              {I.undo}
-            </RB>
-            <RB title="Redo" shortcut="⌘⇧Z" onClick={() => editor?.chain().focus().redo().run()}>
-              {I.redo}
-            </RB>
-            <span className="rse-sep" />
-            <RB title="Find & replace (Ctrl/⌘-F)" active={findOpen} onClick={() => (findOpen ? closeFind() : openFind())}>
-              {I.search}
-            </RB>
-            {onAsk && (
-              <>
-                <span className="rse-sep" />
-                {/* THIS CONTROL WAS LABELLED "Cite" AND CITED NOTHING. It sends
-                    the selected sentence to the assistant pane as a question;
-                    it creates no citation, stores nothing, numbers nothing and
-                    puts nothing in the reference list. With a control beside it
-                    that does cite, a label claiming this one does too is not a
-                    naming quibble — it is a writer believing a claim is sourced
-                    when the filed document has no record of it. The label now
-                    says what it does. */}
-                <RB
-                  title="Ask AnA to suggest a source for the selected claim — this does not insert a citation"
-                  onClick={askForSource}
-                >
-                  Ask for a source
-                </RB>
-              </>
-            )}
-            {onOfferAlternatives && !readOnly && (
-              <RB title="Offer alternatives for the selected passage: AnA drafts up to three, and nothing changes until you choose one"
-                onClick={offerAlternatives}>
-                Offer alternatives
-              </RB>
-            )}
-            {commentsApi && (
-              <RB title="Comment on the selection" onClick={() => void commentOnSelection()}>
-                Comment
-              </RB>
-            )}
-            <span style={{ flex: 1 }} />
-            {suggestions.length > 0 && (
-              <button
-                type="button"
-                className="rse-chip"
-                onClick={() => setReviewOpen((o) => !o)}
-                aria-expanded={reviewOpen}
-              >
-                {suggestions.length} suggested edit{suggestions.length === 1 ? '' : 's'}
-              </button>
-            )}
-            {track && (
-              <label className="rse-track" title="Suggest text edits instead of applying them. Edits within a paragraph are captured as attributed suggestions; structural changes (paragraph joins and splits, table changes) and formatting apply directly and are not tracked.">
-                <input type="checkbox" checked={trackOn} onChange={() => void toggleTrack()} />
-                Track changes
-              </label>
-            )}
           </div>
         )}
 

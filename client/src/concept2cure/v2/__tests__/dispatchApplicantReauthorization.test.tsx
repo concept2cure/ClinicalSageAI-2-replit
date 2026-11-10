@@ -33,7 +33,7 @@ describe('existing dispatch action renews only a server-authorized unsent releas
   });
   it.each(['fda', 'ema', 'jp', 'unknown'])('hides %s renewal without explicit server authorization', async region => {
     mount({ dispatchAuthorization: undefined }, vi.fn(), region);
-    await screen.findByText(/Dispatch gate clear except/);
+    await screen.findByText(/Only its release signature stands between sequence/);
     expect(screen.queryByRole('button', { name: /Re-sign release/ })).toBeNull();
   });
   it.each(['ema', 'jp'])('shows a refused %s renewal without asking for a signature', async region => {
@@ -46,17 +46,17 @@ describe('existing dispatch action renews only a server-authorized unsent releas
   });
   it('does not infer renewal from eligibility alone', async () => {
     mount({ dispatchAuthorization: { reauthorizing: false, eligible: true, refusal: null } }, vi.fn(), 'ema');
-    await screen.findByText(/Dispatch gate clear except/);
+    await screen.findByText(/Only its release signature stands between sequence/);
     expect(screen.queryByRole('button', { name: /Re-sign release/ })).toBeNull();
   });
   it.each(['fda', 'ema', 'jp'])('does not offer %s renewal while another dispatch gate blocks', async region => {
     mount({ dispatchGateOnSigning: { cleared: false, blockers: ['A completed Shadow Review is required.'] } }, vi.fn(), region);
-    await screen.findByText(/Dispatch blocked/);
+    await screen.findByText(/Not yet\. /);
     expect(screen.queryByRole('button', { name: /Re-sign release/ })).toBeNull();
   });
   it('does not offer unnecessary renewal for a currently valid release', async () => {
     mount({ gate: clear, releaseSignature: { required: true, verdict: 'valid', cleared: true } });
-    await screen.findByText(/Dispatch gate clear/);
+    await screen.findByText(/is cleared to dispatch/);
     expect(screen.queryByRole('button', { name: /Re-sign release/ })).toBeNull();
   });
   it.each(['fda', 'ema', 'jp'])('shows the independent signer requirement for a %s renewal', async region => {

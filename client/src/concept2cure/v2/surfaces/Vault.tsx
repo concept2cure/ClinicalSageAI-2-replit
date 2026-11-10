@@ -3,8 +3,7 @@ import { authService } from '@/services/portal/authService';
 import { useAuthoringReadSession } from '../editor/authoringCurrentRead';
 
 import { usePublishSurfaceContext } from '../surfaceContext';
-import { applySurfaceAction, notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
-import { resolveSurfaceAction } from '@shared/navigation/surface-actions';
+import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
 import { I } from '../icons';
 import { VaultPlaceIntoSubmission } from './VaultPlaceIntoSubmission';
 import { VaultEditDetails } from './VaultEditDetails';
@@ -39,7 +38,7 @@ import {
   type OrganizationArtifactRow,
 } from './VaultOrganizationArtifacts';
 import { downloadArtifactManifest } from '../artifactManifest';
-import { useLiveData, EmptyState, ProjectBack } from '../dataConnect';
+import { useLiveData, EmptyState, ProjectBack, type DataReadOwner } from '../dataConnect';
 import { RecordHistory } from '../RecordHistory';
 import { useSurfaceAvailable } from '../surfaceAvailable';
 import { useVaultUpload, VAULT_UPLOAD_ACCEPT } from '../useVaultUpload';
@@ -84,15 +83,18 @@ import { VaultAnnotations } from './VaultAnnotations';
 import { DocumentDisposition } from './DocumentDisposition';
 import { downloadBlob, safeFileName } from '../download';
 import {
-  EDITOR_TARGET_DOC_TYPES,
   clearEditorTarget,
   setEditorTarget,
-  type EditorTargetDocType,
+  isEditorFilingDocumentId,
 } from '../editorTarget';
-import { readShellProject } from '../shellProject';
+import { readShellProject, publishShellProject } from '../shellProject';
+import { usePaletteProjects, type PaletteProject } from '../paletteProjects';
 import { useDialog } from '../useDialog';
+import { VaultFolderEdit, type FolderEditMode } from './VaultFolderEdit';
+import { cabinetFolderOptions, indentedLabel, newFolderParentOf, personFolderOf, type CabinetFolder } from './vaultFolders';
 import { locateVaultDocument, takeVaultTarget, vaultTargetIsFor, VAULT_TARGET_EVENT, type TakenVaultTarget } from '../vaultTarget';
-import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason } from '../editor/SourceImportDialog';
+import { SourceImportDialog, openImportedDocument, sourceImportUnavailableReason, type ImportSource } from '../editor/SourceImportDialog';
+import { artifactImportId } from '@shared/authoring/source-import';
 import { VaultSourceBuildAction } from '../editor/VaultSourceBuildAction';
 import '../styles/project-home-v2.css';
 import { getSurfaceMeta } from '../registryModel';
@@ -265,37 +267,53 @@ function currentProjectId(): string | null {
   return id || null;
 }
 
-/**
- * The governed document family a vault leaf sits under, uppercased, or null.
- *
- * The read-model nests every authored leaf inside `vaultdoc-<c2c_documents.id>`
- * whose `code` is that row's `doc_type` uppercased
- * (server/routes/c2c/project-vault.ts documentFolder). Branches with no
- * governed document above them — the governed-artifacts branch, the filing
- * cabinet — inherit null, and null is reported as null: a family this cannot
- * see must never be guessed, because naming the wrong one turns a resolvable
- * section into a refusal in the editor.
- *
- * `undefined` means "leaf not in this tree" and is distinct from "found, no
- * family", so a miss can never be read as an unfiled document.
- */
-export function vaultDocFamilyCode(
-  nodes: readonly (VaultFolder | VaultDoc)[],
-  leafId: string,
-  inherited: string | null = null,
-): string | null | undefined {
+/** Recorded filing facts follow their folder, never a display title or parsed ID. */
+type VaultFilingReference = { family: string | null; filingDocumentId?: unknown };
+function vaultDocFilingReference(
+  nodes: readonly (VaultFolder | VaultDoc)[], leafId: string,
+  inherited: VaultFilingReference = { family: null },
+): VaultFilingReference | undefined {
   for (const node of nodes) {
     if (isVaultDoc(node)) {
       if (node.id === leafId) return inherited;
       continue;
     }
-    const carried = node.id.startsWith('vaultdoc-')
-      ? (node.code || '').trim() || null
-      : inherited;
-    const hit = vaultDocFamilyCode(node.children, leafId, carried);
+    const explicit = Object.prototype.hasOwnProperty.call(node, 'filingDocumentId');
+    const carried = explicit || node.id.startsWith('vaultdoc-')
+      ? { family: typeof node.code === 'string' ? node.code.trim() || null : null,
+        ...(explicit ? { filingDocumentId: node.filingDocumentId } : {}) } : inherited;
+    const hit = vaultDocFilingReference(node.children, leafId, carried);
     if (hit !== undefined) return hit;
   }
   return undefined;
+}
+
+/** Compatibility reader for the existing family-only callers. */
+export function vaultDocFamilyCode(
+  nodes: readonly (VaultFolder | VaultDoc)[], leafId: string, inherited: string | null = null,
+): string | null | undefined {
+  return vaultDocFilingReference(nodes, leafId, { family: inherited })?.family;
+}
+
+function vaultEditorSection(doc: VaultDoc): { code: string | null; label: string | null } | null {
+  if (doc.filingSectionKey === null) return { code: null, label: null };
+  const explicit = Object.prototype.hasOwnProperty.call(doc, 'filingSectionKey');
+  if (explicit && (typeof doc.filingSectionKey !== 'string' || !doc.filingSectionKey.trim())) return null;
+  const code = explicit ? doc.filingSectionKey! : doc.num && doc.num !== '—' ? doc.num : null;
+  const label = doc.title && doc.title !== '—' ? doc.title : null;
+  return code || label ? { code, label } : null;
+}
+
+function vaultEditorReference(tree: VaultFolder[], doc: VaultDoc, programId: string, programTitle?: string): Parameters<typeof setEditorTarget>[0] | null {
+  const filing = vaultDocFilingReference(tree, doc.id);
+  const section = vaultEditorSection(doc);
+  if (!filing || !section) return null;
+  const docType = filing.family?.toLowerCase() ?? null;
+  const explicit = Object.prototype.hasOwnProperty.call(filing, 'filingDocumentId');
+  if (explicit && (!isEditorFilingDocumentId(filing.filingDocumentId) || !docType)) return null;
+  if (doc.filingSectionKey === null && !explicit) return null;
+  return { docType, ...section, programId, programTitle: programTitle ?? null,
+    ...(isEditorFilingDocumentId(filing.filingDocumentId) ? { filingDocumentId: filing.filingDocumentId } : {}) };
 }
 
 /**
@@ -1279,22 +1297,68 @@ function VaultSourceWorkButton({ source, onPull }: { source: VaultDoc; onPull: (
 /* Local files, private metadata and read state belong to this project and
    canonical account session. Replacement remounts the existing body; ordinary
    bearer refresh keeps the same session and preserves the person's work. */
-export function Vault(props: SurfaceViewProps) {
-  const session = useAuthoringReadSession(authService.getUser());
-  return <VaultForProject key={JSON.stringify([currentProjectId() ?? '', session.actor, session.key])} {...props} />;
+/**
+ * The Vault with no project open lists the projects whose Vaults the person can open (2026-11-06, by the founder:
+ * Vault "should be accessible all the time, not just from within the project, but on the left rail"). It read "Open
+ * a project to see its vault" and sent the person to Projects. The list is the one the ⌘K palette and Projects read
+ * (GET /api/c2c/projects); a row opens that project and its Vault, as the rail's Vault does inside a project.
+ */
+function ProjectVaults({ onNav }: { onNav?: (id: string) => void }) {
+  const read = usePaletteProjects(true);
+  const open = (p: PaletteProject) => {
+    publishShellProject({ id: p.id, title: p.title, ...(p.code ? { code: p.code } : {}), ...(p.ws ? { ws: p.ws } : {}), ...(p.status ? { status: p.status } : {}) });
+    onNav?.('vault');
+  };
+  if (read.state !== 'ready') {
+    return read.state === 'failed'
+      ? <p role="alert" className="scaf-note">Your projects could not be read, so their Vaults are not listed. Open one from Projects.</p>
+      : <p role="status" className="scaf-note">Reading your projects…</p>;
+  }
+  if (read.projects.length === 0) {
+    return <p className="scaf-note">You have no projects yet. A Vault belongs to a project: create one with New project in Projects.</p>;
+  }
+  return (
+    <section className="pj-sec vd-org" aria-labelledby="vault-project-list-h" data-testid="vault-project-list">
+      <div className="pj-sec-h">
+        <h2 id="vault-project-list-h">Your projects' Vaults</h2>
+        <span className="sec-sub">{read.projects.length === 1 ? '1 project' : `${read.projects.length} projects`}</span>
+      </div>
+      <div className="ctable">
+        {read.projects.map((p) => (
+          <div key={p.id} className="ct-row" style={{ gridTemplateColumns: 'minmax(0,1fr) auto' }}>
+            <span className="ct-strong">{p.title}</span>
+            <button type="button" className="btn ghost small" onClick={() => open(p)} aria-label={`Open the Vault of ${p.title}`}>
+              Open its Vault
+            </button>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
 }
 
-function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
+export function Vault(props: SurfaceViewProps) {
+  const session = useAuthoringReadSession(authService.getUser());
+  return <VaultForProject key={JSON.stringify([currentProjectId() ?? '', session.actor, session.key])} {...props} session={session} />;
+}
+
+function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session: ReturnType<typeof useAuthoringReadSession> }) {
   const available = useSurfaceAvailable();
   const projectId = currentProjectId();
-  const [pullDoc, setPullDoc] = useState<VaultDoc | null>(null);
+  const [workingSource, setWorkingSource] = useState<{ source: ImportSource; title: string } | null>(null);
+  const ownerKey = JSON.stringify([projectId, session.actor, session.key]);
+  const currentOwner = React.useRef(ownerKey);
+  currentOwner.current = ownerKey;
+  const readOwner = useMemo<DataReadOwner>(() => ({ key: ownerKey,
+    current: () => currentOwner.current === ownerKey && session.sameRevision() && currentProjectId() === projectId,
+  }), [ownerKey, projectId, session]);
   const vaultPath = projectId
     ? '/api/c2c/project-vault/' + encodeURIComponent(projectId)
     : null;
   /* Bumped after an upload so the tree is re-read from the server rather than
      patched locally: what the Vault shows is what the Vault stored. */
   const [vaultEpoch, setVaultEpoch] = useState(0);
-  const vaultState = useLiveData<VaultDisplayShape>(vaultPath, [vaultPath, vaultEpoch]);
+  const vaultState = useLiveData<VaultDisplayShape>(vaultPath, [vaultPath, vaultEpoch], undefined, readOwner);
   // The placeholder shows only before there is data to show. A re-read after a change keeps the
   // body mounted, so a confirmation held in it (a save, a post, a decision) stays on screen.
   const vault = vaultState.data;
@@ -1591,16 +1655,14 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
     [tree],
   );
   /* Folder options for "Move to…" — derived from the server's cabinet (the
-     program's real view taxonomy), never a client-side folder list. */
-  const cabinetFolders = useMemo(() => {
-    if (!cabinet) return [] as Array<{ id: string; label: string }>;
-    return cabinet.children
-      .filter((c): c is VaultFolder => !isVaultDoc(c) && (c as VaultFolder).id !== 'cab-unfiled')
-      .map((c) => ({ id: c.id.replace(/^cab-/, ''), label: c.label }));
-  }, [cabinet]);
-  /* An upload may name only a folder of this program's own view: the cabinet's
-     "filed under another view" group is listed for review, and ingest refuses it. */
-  const uploadFolders = useMemo(() => cabinetFolders.filter((f) => f.id !== 'other-view'), [cabinetFolders]);
+     project's binder, its presets and the folders people made, at every depth),
+     never a client-side folder list (vaultFolders.ts). The review queues are
+     not places to file to. */
+  const cabinetFolders = useMemo(() => cabinetFolderOptions(cabinet), [cabinet]);
+  /* An upload may name any folder the server accepts: the same list. */
+  const uploadFolders = cabinetFolders;
+  /* New folder and Rename folder (S6): the form open, or none. */
+  const [folderEdit, setFolderEdit] = useState<FolderEditMode | null>(null);
   const [moveTarget, setMoveTarget] = useState('');
   /* The uploaded documents a person may file at a missing section (VR-15). */
   const coverageDocuments = useMemo<CoverageDocument[]>(() => {
@@ -2103,68 +2165,30 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
 
   const st = (s: string) => vaultStatus(s);
 
-  /* ── "Open in editor" carries the SELECTED document ───────────────────────
-     It used to be `onNav('document-authoring')` and nothing else: the user
-     picked a specific section out of the dossier tree, clicked the one control
-     that promises to open it, and landed on the editor's default view with the
-     selection gone.
-
-     The deep-link channel for exactly this already exists — v2/editorTarget.ts,
-     one-shot and TTL-guarded, consumed by DocumentAuthoring on mount, which
-     resolves the named section by code then by title and posts an HONEST notice
-     when it cannot find it. Nothing new is invented here; this surface becomes
-     its second sender.
-
-     What is and is NOT claimed:
-       • section code/label — `num` is the rule pack's section key and `title`
-         its label (project-vault.ts leafDoc), the exact pair
-         `matchEditorTargetSection` matches on. '—' is the read-model's "no such
-         column" placeholder, so it is dropped rather than sent as a code.
-       • docType — only when the enclosing governed document's doc_type is in
-         the channel's vocabulary. A project filed as an IND resolves to null,
-         and null means "I hold a section but cannot name a family", which is
-         the truth. Guessing a family would make the editor REFUSE the target
-         ("this project's governed dossier is X, not Y") — a near-miss that
-         reads as a wrong-document error the user cannot act on.
-       • programId — sent only when the shell's project id is a string, because
-         that is what DocumentAuthoring's own `projectIdForOutline` accepts; a
-         numeric id there resolves to null and would fail the equality guard,
-         refusing a target that was never wrong.
-
-     A leaf with neither a code nor a title cannot be addressed at all, so the
-     channel is CLEARED rather than fed an empty claim — the plain "open the
-     editor" navigation it always was. */
+  /* The common editor verifies this exact recorded filing and working copy. */
   const openDoc = (doc: VaultDoc) => {
-    const family = vaultDocFamilyCode(tree, doc.id);
-    const normalized = typeof family === 'string' ? family.toLowerCase() : null;
-    const docType =
-      normalized && (EDITOR_TARGET_DOC_TYPES as readonly string[]).includes(normalized)
-        ? (normalized as EditorTargetDocType)
-        : null;
-    const code = doc.num && doc.num !== '—' ? doc.num : null;
-    const label = doc.title && doc.title !== '—' ? doc.title : null;
     const shell = readShellProject();
-    if (!code && !label) {
+    const target = projectId ? vaultEditorReference(tree, doc, projectId, shell?.title) : null;
+    if (!readOwner.current() || !target) {
       clearEditorTarget();
-    } else {
-      setEditorTarget({
-        docType,
-        code,
-        label,
-        programId: typeof shell?.id === 'string' ? shell.id : null,
-        programTitle: shell?.title ?? null,
-      });
+      setDownloadNote({ tone: 'error', text: 'The recorded filing identity could not be verified in the current project and account. Reopen the document from its project.' });
+      return;
     }
-    onNav && onNav('document-authoring');
+    setEditorTarget(target);
+    onNav('document-authoring');
   };
-  /* A governed artifact opens in the editor the way the Artifacts center opens
-     one (slice B): the authoring.open-document directive, by title. The editor
-     resolves the title against its own list with honest misses; a title the
-     registry cannot address still lands on the editor, never on a guess. */
-  const openArtifactInEditor = (doc: Pick<VaultDoc, 'title'>) => {
-    const res = resolveSurfaceAction('authoring.open-document', { title: doc.title });
-    if (res.ok) applySurfaceAction(res.directive, (t) => onNav && onNav(t));
-    else onNav && onNav('document-authoring');
+  const openArtifactInEditor = (source: { artifactId: unknown; version: unknown; title: string }) => {
+    clearEditorTarget();
+    if (!projectId) {
+      setDownloadNote({ tone: 'error', text: 'Open the artifact’s project before creating an editable working copy.' });
+      return;
+    }
+    if (!readOwner.current() || !artifactImportId(source.artifactId, source.version)) {
+      setDownloadNote({ tone: 'error', text: 'The recorded source identity and version could not be verified in the current project and account.' });
+      return;
+    }
+    setDownloadNote(null);
+    setWorkingSource({ source: { kind: 'artifact', artifactId: source.artifactId as string, version: source.version as number }, title: source.title });
   };
 
   const organizationView = (
@@ -2175,7 +2199,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
       focusId={orgFocusId}
       downloadingId={downloading}
       onDownload={(row) => void downloadOrganizationArtifact(row)}
-      onOpenInEditor={(row) => openArtifactInEditor({ title: row.name })}
+      onOpenInEditor={(row) => openArtifactInEditor({ title: row.name, artifactId: row.id, version: row.sourceVersion })}
       onAsk={(row) => onAsk(organizationArtifactAskPrompt(row))}
       onExportManifest={exportOrganizationManifest}
     />
@@ -2187,9 +2211,21 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
      with the library first. The drop zone is the whole page, so a file dropped
      anywhere on it is staged in the Uploads view. */
 
-  /** "Add files" and "Add a folder" open the picker on the view where what is chosen is staged. */
+  /** "Add files" and "Upload a folder" open the picker on the view where what is chosen is staged. */
   const addFiles = () => { setView('uploads'); uploadControls.current?.chooseFiles(); };
   const addFolder = () => { setView('uploads'); uploadControls.current?.chooseFolder(); };
+  /** New folder: made in the cabinet folder open in the tree, or at its top. */
+  const newFolder = () => { setView('library'); leaveFind(); setFolderEdit({ kind: 'create', parentId: newFolderParentOf(activeFolder) }); };
+  const folderMade = (folderId: string) => {
+    /* The folder it was made in is opened, so the new folder shows beneath it. */
+    const parent = folderEdit?.kind === 'create' && folderEdit.parentId ? `cab-${folderEdit.parentId}` : null;
+    setExpanded((e) => ({ ...e, cabinet: true, ...(parent ? { [parent]: true } : {}) }));
+    setFolderEdit(null);
+    setVaultEpoch((n) => n + 1);
+    setView('library');
+    setActiveFolder(`cab-${folderId}`);
+    leaveFind();
+  };
   const headerParts = vaultHeaderParts(vault);
   /* The tab's count is the server's programme-wide uploads count, never the window shown. */
   const uploadCount = vault?.documentCounts?.uploads ?? vault?.uploadsWindow?.total ?? null;
@@ -2301,14 +2337,14 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
 
   const recordActions = sel ? (
     <div className="vd-d-actions">
-      {sel.src === 'upload' && sel.docId && projectId && <VaultSourceWorkButton source={sel} onPull={setPullDoc} />}
+      {sel.src === 'upload' && sel.docId && projectId && <VaultSourceWorkButton source={sel} onPull={doc => { if (readOwner.current() && doc.docId) setWorkingSource({ source: { kind: 'vault', documentId: doc.docId }, title: doc.title }); }} />}
       {sel.src !== 'upload' && (
         <button
           type="button"
           className="btn ghost small"
-          onClick={() => (sel.src === 'artifact' ? openArtifactInEditor(sel) : openDoc(sel))}
+          onClick={() => (sel.src === 'artifact' ? openArtifactInEditor({ title: sel.title, artifactId: sel.artifact?.artifactId, version: sel.artifact?.version }) : openDoc(sel))}
         >
-          {I.penLine || I.fileText} Open in editor
+          {I.penLine || I.fileText} {sel.src === 'artifact' ? 'Work on document' : 'Open in editor'}
         </button>
       )}
       {/* Into a submission. Dossier filing decides where the document sits in
@@ -2465,7 +2501,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
               >
                 <option value="">Move to…</option>
                 {cabinetFolders.map((f) => (
-                  <option key={f.id} value={f.id}>{f.label}</option>
+                  <option key={f.id} value={f.id}>{indentedLabel(f)}</option>
                 ))}
               </select>
               <button
@@ -2777,8 +2813,16 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
             {!searching && folder && (
               <span className="vd-here">
                 {folder.code ? <b>{folder.code}</b> : null} {folder.label}
+                {(folder as CabinetFolder).kind === 'person' && (folder as CabinetFolder).madeBy
+                  ? <>{' '}<span className="vd-sub-part">· made by {(folder as CabinetFolder).madeBy}</span></> : null}
               </span>
             )}
+            {!searching && folder && canWrite && projectId && personFolderOf(folder.id) ? (
+              <button type="button" className="sp-ask" data-testid="vault-rename-folder"
+                onClick={() => setFolderEdit({ kind: 'rename', folderId: personFolderOf(folder.id)!, name: folder.label })}>
+                Rename
+              </button>
+            ) : null}
             {searching && (
               <span className="vd-here">
                 {appliedView ? <>View &ldquo;{appliedView.label}&rdquo;{viewChanged ? ' (changed)' : ''} · </> : null}
@@ -2810,6 +2854,20 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
               Searching…
             </div>
           )}
+          {!searching && folder && folder.id.startsWith('cab') && (cabinet as CabinetFolder | null)?.note ? (
+            /* Said plainly: this filing or region has no binder template yet. */
+            <div className="scaf-note" role="status" data-testid="vault-binder-note">{(cabinet as CabinetFolder).note}</div>
+          ) : null}
+          {folderEdit && projectId ? (
+            <VaultFolderEdit
+              key={folderEdit.kind === 'rename' ? folderEdit.folderId : `new-${folderEdit.parentId}`}
+              projectId={projectId}
+              mode={folderEdit}
+              folders={cabinetFolders}
+              onDone={folderMade}
+              onCancel={() => setFolderEdit(null)}
+            />
+          ) : null}
           {!searching ? <ConfirmSuggestedBar docs={folderDocs} state={confirmSuggested} /> : null}
           {!searching && projectId && folder ? (
             <FolderExportButton projectId={projectId} treeFolderId={folder.id} label={folder.label}
@@ -3012,7 +3070,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
   };
 
   const page = (
-    <div className="page-inner vd vd-wrap" data-work-area="vault">
+    <div className="page-inner vd-wrap" data-work-area="vault">
       {/* Back to the project (D5 §WA.4.2 rule 2); it replaces "Open project". */}
       <ProjectBack onNav={onNav} />
       <header className="ph">
@@ -3049,11 +3107,22 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
               <button
                 type="button"
                 className="btn ghost"
+                disabled={!projectId || !cabinet}
+                onClick={newFolder}
+                title={projectId ? 'Make a folder in this project’s Vault, in the folder open on the left' : 'Open a project first.'}
+                data-testid="vault-new-folder-button"
+              >
+                {I.folder} New folder
+              </button>
+              <button
+                type="button"
+                className="btn ghost"
                 disabled={!projectId}
                 onClick={addFolder}
+                title="Choose a folder of files on your computer to upload into this project’s Vault"
                 data-testid="vault-upload-folder-button"
               >
-                {I.folder} Add a folder
+                {I.upload} Upload a folder
               </button>
               <button
                 ref={addFilesButton}
@@ -3129,10 +3198,10 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
         <>
           <EmptyState
             icon={I.folder}
-            title="Open a project to see its vault"
-            hint="The Vault shows the governed document tree of the project you have open: its CTD, eSTAR, IVDR or TMF spine. The governed artifacts of every project you can open are listed below."
-            action={onNav ? { label: 'Go to Projects', onAct: () => onNav('projects') } : undefined}
+            title="Choose a project's Vault"
+            hint="Each project keeps its own governed document tree: its CTD, eSTAR, IVDR or TMF spine. Open one below. The governed artifacts of every project you can open are listed after them."
           />
+          <ProjectVaults onNav={onNav} />
           {organizationView}
         </>
       ) : vaultState.loading && !vault ? (
@@ -3204,7 +3273,7 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
           label={`Record: ${sel.title}`}
           className="vd-detail"
           onClose={() => setRecordOpen(false)}
-          suspended={Boolean(filingIntoSubmission) || Boolean(projectId && pullDoc?.docId)}
+          suspended={Boolean(filingIntoSubmission) || Boolean(projectId && workingSource)}
         >
           {recordView}
         </VaultDrawer>
@@ -3225,9 +3294,9 @@ function VaultForProject({ onAsk, onNav }: SurfaceViewProps) {
           onClose={() => setFilingIntoSubmission(null)}
         />
       )}
-      {projectId && pullDoc?.docId && <SourceImportDialog programId={projectId}
-        source={{ kind: 'vault', documentId: pullDoc.docId }} title={pullDoc.title}
-        onClose={() => setPullDoc(null)} onOpenDocument={docId => openImportedDocument(docId, projectId, onNav)} />}
+      {projectId && workingSource && <SourceImportDialog programId={projectId}
+        source={workingSource.source} title={workingSource.title}
+        onClose={() => setWorkingSource(null)} onOpenDocument={(docId, code) => { if (readOwner.current()) openImportedDocument(docId, projectId, onNav, code); }} />}
     </div>
   );
 

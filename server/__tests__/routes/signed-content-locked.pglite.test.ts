@@ -75,6 +75,8 @@ function app() {
   a.use(express.json());
   a.use((req: Request, _res: Response, next: NextFunction) => {
     (req as unknown as { user: unknown }).user = { id: SIGNER, organizationId: ORG, role: h.role };
+    // The request's pinned connection, which a withdrawal's transaction runs on (requestConnectable).
+    (req as unknown as { dbClient: unknown }).dbClient = conn;
     next();
   });
   a.use('/api/mdx', labelingRouter);

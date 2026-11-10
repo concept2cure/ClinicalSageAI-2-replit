@@ -1,0 +1,9 @@
+{
+  "status": "failed before browser started",
+  "reason": "Harness used /api/readyz instead of existing public /readyz; the app correctly refused the wrong authenticated path. No browser case ran.",
+  "capturedExitCode": null,
+  "completion": "Traceback recorded; runner did not retain a process exit receipt. Not a pass.",
+  "helperSha256BeforeFix": "54fe582657dae1f37e18e3ac6a6a9ea412432bcbe5b15ac73af8d1ae8426ff3d",
+  "rawOutput": "native-browser-wrong-probe.log.gz",
+  "rawGzipSha256": "b95e045696536b67e1d11f6fe6812d097ce4e037231c116f5525818777359440"
+}

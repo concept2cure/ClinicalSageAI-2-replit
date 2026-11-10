@@ -1,0 +1,33 @@
+=== ci:undefined-css-classes
+[ci:undefined-css-classes] OK — every static className in v2 is defined, 2 reviewed exception(s).
+exit 0
+=== ci:surface-text-ramp
+[ci:surface-text-ramp] OK — 3 generated ramp sheet(s) match the stylesheets.
+exit 0
+=== ci:check-phantom-tokens
+[ci:phantom-tokens] 8 phantom token(s) across 51 site(s) (baseline 8).
+[ci:phantom-tokens] OK — no new phantom tokens.
+exit 0
+=== ci:one-product
+ci:one-product: 102 surfaces, 11 rail entries, none new.
+exit 0
+=== ci:check-shell-css-collisions
+[ci:shell-css-collisions] 22 class name(s) defined in more than one shell tree (baseline 22) — pdev+v2:22
+[ci:shell-css-collisions] OK — no new cross-shell collisions.
+exit 0
+=== ci:fixture-fallback
+  ungated content fallbacks  : 0
+  baselined (known, unfixed) : 0
+
+✅ no new ungated fixture fallback. 0 baselined.
+exit 0
+=== ci:token-contrast
+✅ token-contrast: 131 pairs checked — text ≥ 4.5:1, non-text ≥ 3:1.
+   15 documented exceptions (brand, muted-text ramp, structural borders) held at or above their recorded ratios.
+exit 0
+=== ci:check-css-selector-shadowing
+      defined at lines 14 and 16 — the later one wins, silently.
+      Rename one, or scope the override under @media if it is meant to be conditional.
+
+  This is invisible to jsdom tests: the DOM is right and the pixels are not.
+exit 1

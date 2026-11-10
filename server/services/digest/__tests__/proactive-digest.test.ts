@@ -5,12 +5,30 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { buildProactiveDigest } from '../proactive-digest.js';
+import { alignmentDigestCounts, alignmentDigestWindow, buildProactiveDigest } from '../proactive-digest.js';
 import { bucketObligations, type ObligationLike } from '../../ana/deadline-radar.js';
 import type { OpenBlocker } from '../../ana/risk-watch.js';
 import type { OpenContradiction } from '../../ana/contradiction-watch.js';
 
 const NOW = new Date('2026-06-17T00:00:00.000Z');
+
+describe('deterministic alignment reporting', () => {
+  it('uses the same complete UTC days across offsets and excludes the current partial day', () => {
+    expect(alignmentDigestWindow(new Date('2026-06-17T23:45:00Z'))).toEqual({ start: '2026-06-10T00:00:00.000Z',end: '2026-06-17T00:00:00.000Z' });
+    expect(alignmentDigestWindow(new Date('2026-06-18T01:45:00+02:00'))).toEqual(alignmentDigestWindow(new Date('2026-06-17T09:00:00Z')));
+    expect(() => alignmentDigestWindow(new Date('invalid'))).toThrow(/invalid/);
+  });
+
+  it('distinguishes an actual promotion event from a hard rule merely edited', () => {
+    const version = { bundleId: 'rule1',version: 2,level: 'hard_gate' as const,state: 'active' as const,sourceAuditEventId: 'server-issued-ref' };
+    const counts = alignmentDigestCounts({ rules: [
+      { ...version,action: 'ana_rule.promoted',occurredAt: '2026-06-16T09:00:00.000Z' },
+      { ...version,action: 'ana_skill.updated',occurredAt: '2026-06-16T10:00:00.000Z' },
+      { ...version,action: 'ana_rule.created',occurredAt: '2026-06-17T01:00:00.000Z' },
+    ],issues: [] },alignmentDigestWindow(NOW),2);
+    expect(counts).toEqual({ learned: 0,changed: 1,promoted: 1,revoked: 0,issues: 0,openReviews: 2 });
+  });
+});
 
 function radar(rows: Array<Partial<ObligationLike> & { id: number }>) {
   const full: ObligationLike[] = rows.map(r => ({

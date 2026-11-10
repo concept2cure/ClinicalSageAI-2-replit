@@ -41,7 +41,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { APPROVED_MODELS } from '../../services/ai-governance/approved-models.js';
-import { getGateway } from '../../services/ai-gateway/gateway.js';
+import type { getGateway } from '../../services/ai-gateway/gateway.js';
 import {
   type GoldDocTask,
   buildExtractionPrompt,
@@ -64,6 +64,8 @@ import { runRagPhase, unavailableRagRecord, defaultRagDependencies } from './rag
 import type { GoldItem } from '../rag/rag-metrics.js';
 import { isCompletedProviderText, providerResponseMetadata } from './output-integrity.js';
 import type { GuidanceManifest } from '../rag/qualification-corpus.js';
+import { requireEvaluationScope, withEvaluationTenantScope, type EvaluationScope } from '../rag/qualification-corpus.js';
+import { qualificationPreflight, type QualificationPreflight } from './verify-pq-record.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(HERE, '..', '..', '..');
@@ -179,7 +181,7 @@ async function runExtractionPhase(
 }
 
 /** The canonical RAG bank/manifest are fixed; operational prerequisites are explicit. */
-async function runRequiredRag(protocol: PqProtocol, opts: RunPqOptions, entry: typeof APPROVED_MODELS[number], gateway: Pick<ReturnType<typeof getGateway>, 'evaluateModel'>): Promise<PqRagRecord> {
+async function runRequiredRag(protocol: PqProtocol, opts: RunPqOptions, entry: typeof APPROVED_MODELS[number], admission: QualificationAdmission): Promise<PqRagRecord> {
   const goldText = readFileSync(path.join(HERE, '..', 'rag', 'gold-dataset.json'), 'utf8');
   const manifestText = readFileSync(path.join(HERE, '..', 'rag', 'guidance-corpus-manifest.json'), 'utf8');
   const gold = JSON.parse(goldText) as { items: GoldItem[] };
@@ -189,11 +191,9 @@ async function runRequiredRag(protocol: PqProtocol, opts: RunPqOptions, entry: t
   if (!protocol.components.rag?.required || !protocol.components.rag.executable) return unavailableRagRecord(gold.items, 'Canonical protocol does not require an executable RAG phase');
   if (!opts.organizationUuid || !opts.programId || !judge) return unavailableRagRecord(gold.items, 'Verified tenant/programme scope and a registry-pinned independent judge are required (--org-uuid, --program-id, --judge-model)');
   try {
-    const deps = await defaultRagDependencies(gateway.evaluateModel.bind(gateway));
-    const organizationId = await deps.resolveOrganizationId(opts.organizationUuid);
     return runRagPhase({ items: gold.items, manifest: JSON.parse(manifestText) as GuidanceManifest,
-      scope: { organizationId, organizationUuid: opts.organizationUuid, programId: opts.programId },
-      generator, judge, goldBankSha256: sha256(goldText), corpusManifestSha256: sha256(manifestText) }, deps);
+      scope: admission.scope,
+      generator, judge, goldBankSha256: sha256(goldText), corpusManifestSha256: sha256(manifestText) }, admission.dependencies);
   } catch {
     return unavailableRagRecord(gold.items, 'TENANT_BOOTSTRAP_FAILED: verified live organization/programme and database access are required', { generator, judge });
   }
@@ -221,6 +221,28 @@ export interface RunPqOptions {
   judgeModelId?: string;
 }
 
+interface QualificationAdmission {
+  scope: EvaluationScope;
+  gateway: Pick<ReturnType<typeof getGateway>, 'evaluateModel'>;
+  dependencies: Awaited<ReturnType<typeof defaultRagDependencies>>;
+}
+
+/** The CLI must bind its tenant before generation, extraction or IA can select credentials or placement. */
+async function admitQualificationRun(opts: RunPqOptions): Promise<QualificationAdmission> {
+  if (!opts.organizationUuid || !opts.programId) throw new Error('Verified evaluation organization UUID and programme are required (--org-uuid, --program-id); nothing was sent.');
+  const target = opts.gateway ?? (await import('../../services/ai-gateway/gateway.js')).getGateway();
+  const evaluateModel = target.evaluateModel.bind(target);
+  try {
+    const dependencies = await defaultRagDependencies(evaluateModel);
+    const scope = Object.freeze(requireEvaluationScope({ organizationId: await dependencies.resolveOrganizationId(opts.organizationUuid),
+      organizationUuid: opts.organizationUuid, programId: opts.programId }));
+    await dependencies.verifyScope(scope);
+    const gateway: QualificationAdmission['gateway'] = { evaluateModel: (modelId, request) => withEvaluationTenantScope(scope, () =>
+      evaluateModel(modelId, { ...request, organizationId: scope.organizationId, projectId: scope.programId })) };
+    return { scope, gateway, dependencies: { ...dependencies, evaluateModel: gateway.evaluateModel } };
+  } catch { throw new Error('QUALIFICATION_SCOPE_UNAVAILABLE: the live evaluation organization/programme binding could not be verified; nothing was sent.'); }
+}
+
 export interface RunPqResult {
   verdict: PqRecord['verdict'];
   reasons: string[];
@@ -228,16 +250,25 @@ export interface RunPqResult {
   extraction: PqExtractionResult[];
   rag: PqRagRecord;
   recordPath: string | null;
+  preflight?: QualificationPreflight;
+}
+
+function blockedQualificationRun(preflight: QualificationPreflight): RunPqResult {
+  return { verdict: 'INCOMPLETE', reasons: preflight.blockers.map(blocker => `${blocker.code}: ${blocker.message}`),
+    generation: [], extraction: [], rag: unavailableRagRecord([], 'QUALIFICATION_PREFLIGHT_BLOCKED: prerequisites require review before any provider call'),
+    recordPath: null, preflight };
 }
 
 /** Independent reviewer capture; it does not contribute a score or a PQ PASS. */
 export async function runIaReview(opts: RunPqOptions): Promise<IaCaptureResult & { recordPath: string | null }> {
+  opts = Object.freeze({ ...opts });
   const entry = APPROVED_MODELS.find(m => m.id === opts.modelId);
   if (!entry) throw new Error(`IA review refused: "${opts.modelId}" is not in approved-models`);
   const bankText = readFileSync(path.join(HERE, 'ia-review-cases.json'), 'utf8');
   const bank = JSON.parse(bankText) as IaReviewBank;
   const startedAt = new Date().toISOString();
-  const result = await captureIaReview(bank, entry, opts.gateway ?? getGateway());
+  const admission = await admitQualificationRun(opts);
+  const result = await withEvaluationTenantScope(admission.scope, () => captureIaReview(bank, entry, admission.gateway, admission.scope));
   let recordPath: string | null = null;
   if (opts.record) {
     const dir = opts.outDir ?? path.join(REPO_ROOT, 'docs', 'evidence', 'PQ', startedAt.slice(0, 10));
@@ -246,6 +277,7 @@ export async function runIaReview(opts: RunPqOptions): Promise<IaCaptureResult &
     writeFileSync(recordPath, `${JSON.stringify({
       kind: 'ia-review-capture', purpose: 'supplemental-ia-policy-review',
       modelId: entry.id, pinnedVersion: entry.pinnedVersion, provider: entry.provider,
+      evaluationScope: admission.scope,
       bankVersion: bank.version, bankStatus: bank.status, bankSha256: sha256(bankText),
       gitSha: gitSha(), gitWorkingTreeDirty: gitWorkingTreeDirty(),
       harnessSha256: sha256(readFileSync(path.join(HERE, 'ia-review.ts'), 'utf8')),
@@ -312,6 +344,7 @@ export function preflightIaReview() {
 }
 
 export async function runPq(opts: RunPqOptions): Promise<RunPqResult> {
+  opts = Object.freeze({ ...opts });
   const entry = APPROVED_MODELS.find((m) => m.id === opts.modelId);
   if (!entry) {
     throw new Error(
@@ -319,6 +352,13 @@ export async function runPq(opts: RunPqOptions): Promise<RunPqResult> {
         `Known: ${APPROVED_MODELS.map((m) => m.id).join(', ')}`,
     );
   }
+  const preflight = qualificationPreflight();
+  if (!preflight.readyToEvaluate) return blockedQualificationRun(preflight);
+  const admission = await admitQualificationRun(opts);
+  return withEvaluationTenantScope(admission.scope, () => runAdmittedPq(opts, entry, admission));
+}
+
+async function runAdmittedPq(opts: RunPqOptions, entry: typeof APPROVED_MODELS[number], admission: QualificationAdmission): Promise<RunPqResult> {
 
   const protocolText = readFileSync(path.join(HERE, 'pq-protocol.json'), 'utf8');
   const protocol = JSON.parse(protocolText) as PqProtocol;
@@ -335,7 +375,7 @@ export async function runPq(opts: RunPqOptions): Promise<RunPqResult> {
       `[${entry.provider}], ${tasks.length} generation task(s), gold bank ${bank.version}\n${'─'.repeat(72)}`,
   );
 
-  const gateway = opts.gateway ?? getGateway();
+  const gateway = admission.gateway;
   const generation: PqGenerationResult[] = [];
   for (const task of tasks) {
     let serving = { servedModel: null as string | null, servedProvider: null as string | null, finishReason: null as string | null, cached: null as boolean | null, deterministic: null as boolean | null };
@@ -379,7 +419,7 @@ export async function runPq(opts: RunPqOptions): Promise<RunPqResult> {
   }
 
   const extraction = await runExtractionPhase(protocol, bank.tasks, gateway, entry);
-  const rag = await runRequiredRag(protocol, opts, entry, gateway);
+  const rag = await runRequiredRag(protocol, opts, entry, admission);
 
   const { verdict, reasons } = computeVerdict(protocol, generation, extraction, rag);
   console.info(`${'─'.repeat(72)}\nVerdict: ${verdict}`);
@@ -387,8 +427,10 @@ export async function runPq(opts: RunPqOptions): Promise<RunPqResult> {
 
   let recordPath: string | null = null;
   if (opts.record) {
-    const rec: PqRecord = {
+    const rec: PqRecord & { evaluationScope: EvaluationScope } = {
       kind: 'pq-record',
+      intendedUses: ['document_drafting'],
+      evaluationScope: admission.scope,
       protocolId: protocol.protocolId,
       protocolVersion: protocol.version,
       protocolStatus: protocol.status,
@@ -419,7 +461,11 @@ export async function runPq(opts: RunPqOptions): Promise<RunPqResult> {
 /* CLI. Only when invoked directly — the tests import runPq. */
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const modelId = arg('--model');
-  if (process.argv.includes('--ia-preflight')) {
+  if (process.argv.includes('--preflight')) {
+    const result = qualificationPreflight();
+    console.info(JSON.stringify(result, null, 2));
+    process.exitCode = result.readyToEvaluate ? 0 : 1;
+  } else if (process.argv.includes('--ia-preflight')) {
     try {
       const result = preflightIaReview();
       console.info(JSON.stringify(result, null, 2));
@@ -429,10 +475,11 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
       process.exitCode = 2;
     }
   } else if (!modelId) {
-    console.error('usage: run-pq --model <approved-models id> [--record] [--ia-review-only] | run-pq --ia-preflight');
+    console.error('usage: run-pq --model <approved-models id> --org-uuid <organization UUID> --program-id <programme UUID> [--record] [--ia-review-only] | run-pq --ia-preflight');
     process.exitCode = 2;
   } else if (process.argv.includes('--ia-review-only')) {
-    runIaReview({ modelId, record: process.argv.includes('--record') })
+    runIaReview({ modelId, record: process.argv.includes('--record'), organizationUuid: arg('--org-uuid') ?? undefined,
+      programId: arg('--program-id') ?? undefined })
       .then(() => { process.exitCode = 1; }) // Capture is always unqualified and awaiting reviewer adjudication.
       .catch(() => { console.error('IA review failed before capture; no qualification was established'); process.exitCode = 2; });
   } else {

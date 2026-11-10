@@ -1,8 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, chmodSync, rmSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { resolve } from 'node:path';
+import { resolve, join } from 'node:path';
+import { tmpdir } from 'node:os';
 const root = resolve(import.meta.dirname, '../..');
 const startup = resolve(root, 'scripts/startup.sh');
 const postStart = resolve(root, '.devcontainer/post-start.sh');
@@ -17,7 +18,7 @@ test('Codespaces shell hooks and startup script have valid bash syntax', () => {
 
 test('sourcing Codespaces startup retains an injected Neon DSN, not .env or localhost', () => {
   const owner = 'postgresql://fake_owner:FAKE_PASSWORD@ep-diagnostic.neon.tech/neondb?sslmode=require';
-  const runtime = 'postgresql://fake_app:DIFFERENT_FAKE_PASSWORD@ep-diagnostic-pooler.neon.tech/neondb?sslmode=require';
+  const runtime = 'postgresql://fake_app:DIFFERENT_FAKE_PASSWORD@ep-diagnostic-pooler.neon.tech/neondb?sslmode=require'; // ci-secret-scan-ignore: synthetic DSN for shell environment-retention assertions; no database connection is made.
   const env = { ...process.env, C2C_CODESPACE: '1', CODESPACES: 'true',
     DATABASE_URL: owner, APP_DATABASE_URL: runtime };
   const result = spawnSync('bash', ['-c',
@@ -103,3 +104,89 @@ test('a running app started without a model key this start holds is restarted, n
   // What the app itself reports for AnA is printed, not only this shell's key check.
   assert.match(post, /AnA in the running app: /);
 });
+
+function healthyAppDecision({ current, missingKeys = '' }) {
+  const post = readFileSync(postStart, 'utf8');
+  const start = post.indexOf('\nif c2c_app_up; then\n');
+  const end = post.indexOf('\nc2c_log "The app is serving.', start);
+  assert.ok(start >= 0 && end > start, 'exercise the actual healthy-app decision');
+  return spawnSync('bash', ['-c', `
+    set -u
+    C2C_PORT=5000
+    c2c_app_up() { return 0; }
+    c2c_app_current() { return ${current ? 0 : 1}; }
+    c2c_keys_app_lacks() { printf '%s' "$C2C_TEST_MISSING_KEYS"; }
+    c2c_ana_state() { printf ready; }
+    c2c_log() { printf '%s\\n' "$*"; }
+    c2c_stop_app() { printf 'STOP_CALLED\\n'; }
+    c2c_start_app() { printf 'START_CALLED\\n'; }
+    ${post.slice(start, end)}
+  `], { cwd: root, env: { ...process.env, C2C_TEST_MISSING_KEYS: missingKeys }, encoding: 'utf8' });
+}
+
+test('a healthy backend from another or unknown served commit is restarted after a pull', () => {
+  const run = healthyAppDecision({ current: false });
+  assert.equal(run.status, 0, run.stderr);
+  assert.match(run.stdout, /STOP_CALLED\nSTART_CALLED/);
+});
+
+test('a healthy backend at the current commit is retained unless it lacks a newly supplied key', () => {
+  const current = healthyAppDecision({ current: true });
+  assert.equal(current.status, 0, current.stderr);
+  assert.doesNotMatch(current.stdout, /STOP_CALLED|START_CALLED/);
+  const missingKey = healthyAppDecision({ current: true, missingKeys: 'ANTHROPIC_API_KEY' });
+  assert.equal(missingKey.status, 0, missingKey.stderr);
+  assert.match(missingKey.stdout, /STOP_CALLED\nSTART_CALLED/);
+});
+
+function servedCommitCheck({ head = 'a'.repeat(40), body = JSON.stringify({ commit: 'a'.repeat(40) }), gitStatus = 0, curlStatus = 0 }) {
+  const post = readFileSync(postStart, 'utf8');
+  const start = post.indexOf('c2c_app_current() {');
+  const end = post.indexOf('\n}\n', start);
+  assert.ok(start >= 0 && end > start, 'use the actual served-commit helper');
+  return spawnSync('bash', ['-c', `
+    set -uo pipefail
+    C2C_PORT=5000
+    git() { printf '%s' "$C2C_TEST_HEAD"; return "$C2C_TEST_GIT_STATUS"; }
+    curl() { printf '%s' "$C2C_TEST_VERSION"; return "$C2C_TEST_CURL_STATUS"; }
+    ${post.slice(start, end + 3)}
+    c2c_app_current
+  `], { cwd: root, env: { ...process.env, C2C_TEST_HEAD: head, C2C_TEST_VERSION: body,
+    C2C_TEST_GIT_STATUS: String(gitStatus), C2C_TEST_CURL_STATUS: String(curlStatus) }, encoding: 'utf8' });
+}
+
+test('served-commit check accepts only an exact complete matching public build stamp', () => {
+  assert.equal(servedCommitCheck({}).status, 0);
+  for (const fixture of [
+    { body: JSON.stringify({ commit: 'b'.repeat(40) }) },
+    { body: JSON.stringify({ commit: 'unknown' }) },
+    { body: JSON.stringify({ commit: 'a'.repeat(7) }) },
+    { body: '{}' }, { body: 'not-json' }, { body: '' },
+    { head: 'unknown' }, { gitStatus: 1 }, { curlStatus: 22 },
+  ]) {
+    const run = servedCommitCheck(fixture);
+    assert.notEqual(run.status, 0, JSON.stringify(fixture));
+    assert.equal(run.stdout, '', 'build-stamp check does not print process or configuration data');
+  }
+});
+
+for (const command of ['dev', 'dev:local']) {
+  test(`npm run ${command} reaches its local tsx binary after the existing startup gate`, () => {
+    const directory = mkdtempSync(join(tmpdir(), 'c2c-startup-path-'));
+    try {
+      const pkg = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8'));
+      mkdirSync(join(directory, 'scripts'), { recursive: true });
+      mkdirSync(join(directory, 'node_modules', '.bin'), { recursive: true });
+      writeFileSync(join(directory, 'package.json'), JSON.stringify({ scripts: { [command]: pkg.scripts[command] } }));
+      writeFileSync(join(directory, 'scripts', 'startup.sh'), 'main() { printf "STARTUP_GATE_CALLED\\n"; }\n');
+      const binary = join(directory, 'node_modules', '.bin', 'tsx');
+      writeFileSync(binary, '#!/bin/sh\nprintf "LOCAL_TSX_CALLED:%s\\n" "$*"\n');
+      chmodSync(binary, 0o755);
+      const run = spawnSync('npm', ['run', '--silent', command], { cwd: directory,
+        env: process.env, encoding: 'utf8', timeout: 15000 });
+      assert.equal(run.status, 0, run.stdout + run.stderr);
+      assert.match(run.stdout, /STARTUP_GATE_CALLED/);
+      assert.match(run.stdout, /LOCAL_TSX_CALLED:--inspect=0 server\/index\.ts/);
+    } finally { rmSync(directory, { recursive: true, force: true }); }
+  });
+}

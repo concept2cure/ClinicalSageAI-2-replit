@@ -1,0 +1,5 @@
+# P-92 C2 red for the refusal line's record key (found by the walk), before the change
+ × client/src/concept2cure/v2/__tests__/dispatchHeldSend.test.tsx > T1b — a way chosen: FDA's document, or the platform's own proof, then the statement > the transmit refusal line never shows a record key 5088ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+Expected: "Transmit is not available: Dispatch gate blocks transmit: no dispatch-intent signature is recorded on this sequence."
+      Tests  1 failed | 27 skipped (28)

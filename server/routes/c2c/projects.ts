@@ -23,7 +23,10 @@ import { randomUUID } from 'crypto';
 import { pool } from '../../db.js';
 import { readProjectActivity } from '../../services/c2c/project-activity.js';
 import { readDossier, readDossierFigures, readDossierSupporting, type DossierFigure } from '../../services/c2c/dossier-read.js';
-import { requestPgClient } from '../../db/requestDb';
+import { requestConnectable, requestPgClient, type RequestSqlClient } from '../../db/requestDb';
+import { requireCurrentProgramAccess } from '../../services/c2c/current-program-access';
+import { requireProjectAdmission, ProjectAdmissionRefusal } from './project-access';
+import { writeChainedAuditRow } from '../../services/auditService';
 import type { PoolClient } from 'pg';
 import {
   scaffoldProjectDocuments,
@@ -32,6 +35,7 @@ import {
 import {
   ProgramAnchorUnavailableError,
   requireProgramProjectAnchor,
+  WORK_KINDS, WorkProjectRefusal, ensureWorkProjectUnderAnchor, isWorkKind, programOfProject, type WorkProjectResult,
 } from '../../services/c2c/program-project-anchor.js';
 import {
   canCreateProgram,
@@ -660,6 +664,90 @@ function objectiveAuditDetails(recorded: RecordedObjectives | null): Record<stri
   } : {};
 }
 
+// ── POST /api/c2c/projects with { parentProjectId, workKind } — a work project ─────────────────────────────────────
+//
+// A work project (CMC, a study's biostatistics, its risk-based monitoring…; founder decisions P-83, P-109, with the
+// coordinating session's rulings of 2026-11-09) is a child of its filing project: `parent_project_id` is the
+// program's anchor row or one of its descendants, and it carries no program of its own (PF-08 keeps one anchor row
+// per program). Canonical intake stays the one creator (A2.9): this is a branch inside it, not a second door, and the
+// row is written by the anchor module's one `projects` writer. The program, quota, pathway, workspace and scaffold
+// steps are a program's and do not apply; the work project takes its parent's workspace and priority.
+//
+// Body: { parentProjectId, name, workKind } (P-83's kinds). In one transaction: a current editor of the
+// organization, the program (read from the parent's root) admitted for writing, the parent within that program's
+// anchor tree, the row, and its chained audit row. 201 when added; 200 with created:false when that parent already
+// has a work project of that name and kind. 400 on a malformed body, 403 for a role that cannot create a project,
+// 404 when the parent is not a project of a program this person may change, 409 below the hierarchy's last level.
+
+const isWorkProjectIntake = (body: unknown): boolean => {
+  const b = (body ?? {}) as Record<string, unknown>;
+  return b.parentProjectId !== undefined || b.workKind !== undefined;
+};
+
+interface WorkProjectIntake { parentId: number; name: string; workKind: (typeof WORK_KINDS)[number] }
+
+function workProjectIntake(body: Record<string, unknown>): WorkProjectIntake | null {
+  const raw = body.parentProjectId;
+  const parentId = typeof raw === 'number' ? raw : typeof raw === 'string' && /^\d+$/.test(raw) ? Number(raw) : NaN;
+  const name = typeof body.name === 'string' ? body.name.trim() : '';
+  if (!Number.isSafeInteger(parentId) || parentId <= 0 || !name || name.length > 200 || !isWorkKind(body.workKind)) return null;
+  return { parentId, name, workKind: body.workKind };
+}
+
+async function recordWorkProject(req: Request, client: RequestSqlClient, orgId: number, userId: number,
+  input: WorkProjectIntake): Promise<WorkProjectResult & { programId: string }> {
+  await requireProjectCreationAccess(client, orgId, userId, true);
+  const programId = await programOfProject(client, orgId, input.parentId);
+  if (!programId) throw new WorkProjectRefusal(404, 'PARENT_NOT_IN_PROGRAM', 'The parent is not a program\'s project or one of its work projects.');
+  const access = await requireCurrentProgramAccess(client, { organizationId: orgId, userId, programId, forShare: true });
+  await requireProjectAdmission(req, String(access.projectId), true, { executor: client, programId, forShare: true });
+  const result = await ensureWorkProjectUnderAnchor({ client, orgId, userId, anchorProjectId: access.projectId, ...input });
+  if (result.created) {
+    await writeChainedAuditRow(client, { tenantId: orgId, userId, action: 'project.work_project.create',
+      resourceType: 'projects', resourceId: String(result.projectId),
+      reason: `Work project "${input.name}" (${input.workKind}) added under project ${input.parentId}`,
+      details: { programId, parentId: input.parentId, anchorProjectId: access.projectId, workKind: input.workKind,
+        depth: result.depth, path: result.path } });
+  }
+  return { ...result, programId };
+}
+
+function sendWorkProjectFailure(res: Response, error: unknown): Response {
+  if (error instanceof ProgramReadAccessError) return sendProjectAccessFailure(res, error);
+  if (error instanceof WorkProjectRefusal || error instanceof ProjectAdmissionRefusal) {
+    return res.status(error.status).json({ error: error.code, message: error.message });
+  }
+  logger.error('Work project not added', { err: error });
+  return res.status(500).json({ error: 'WORK_PROJECT_NOT_ADDED', message: 'The work project and its audit record were not recorded.' });
+}
+
+async function addWorkProjectThroughIntake(req: Request, res: Response, orgId: number, userId: number): Promise<Response> {
+  const input = workProjectIntake((req.body ?? {}) as Record<string, unknown>);
+  if (!input) return res.status(400).json({ error: 'INVALID_WORK_PROJECT', message: `A work project needs its parent project, a name of 1 to 200 characters and one of: ${WORK_KINDS.join(', ')}.` });
+  const client = await requestConnectable(req).connect();
+  let committing = false;
+  let discard: Error | undefined;
+  try {
+    await client.query('BEGIN');
+    const result = await recordWorkProject(req, client, orgId, userId, input);
+    committing = true;
+    await client.query('COMMIT');
+    return res.status(result.created ? 201 : 200).json({ data: { ...result, name: input.name, workKind: input.workKind },
+      meta: { created: result.created, organizationId: orgId, actorUserId: userId } });
+  } catch (error) {
+    if (committing) {
+      discard = error instanceof Error ? error : new Error('Work project commit was not acknowledged');
+      return res.status(503).json({ error: 'WORK_PROJECT_OUTCOME_UNKNOWN', message: 'Whether the work project was added could not be confirmed. Read the project before trying again.' });
+    }
+    await client.query('ROLLBACK').catch((rollbackError: unknown) => {
+      discard = rollbackError instanceof Error ? rollbackError : new Error('Work project rollback was not acknowledged');
+    });
+    return sendWorkProjectFailure(res, error);
+  } finally {
+    client.release(discard);
+  }
+}
+
 // ── POST /api/c2c/projects ────────────────────────────────────────────────────
 //
 // Create a real regulatory program from the v2 New-Project wizard. Persists to
@@ -704,6 +792,8 @@ router.post('/', async (req: Request, res: Response) => {
   try {
     await requireProjectCreationAccess(pool, orgId, userId);
   } catch (err) { return sendProjectAccessFailure(res, err); }
+  // A work project under this program's project (S12): the same door, its own branch (below).
+  if (isWorkProjectIntake(req.body)) return addWorkProjectThroughIntake(req, res, orgId, userId);
 
   let workspaceInput: ReturnType<typeof projectWorkspaceInput>;
   try { workspaceInput = projectWorkspaceInput(req); }
@@ -1817,6 +1907,7 @@ function catalogSummary(s: ShapeableSource, meta: Record<string, any>) {
     documentDate: s.documentDate ?? null,
     dataCutDate: meta.dataCutDate ?? null,
     product: s.product ?? null,
+    nativeRecord: nativeCatalogFacts(s),
     dataset: profile
       ? {
           format: profile.format ?? null,
@@ -1828,6 +1919,14 @@ function catalogSummary(s: ShapeableSource, meta: Record<string, any>) {
         }
       : null,
   };
+}
+
+/** The canonical native snapshot's identity and lifecycle, alongside file facts. */
+function nativeCatalogFacts(s: ShapeableSource) {
+  if (s.provenance?.origin !== 'native_record_snapshot') return null;
+  const native = (s.provenance as Record<string, any>).recordSnapshot;
+  return { workArea: native?.workArea, sourceScope: native?.sourceScope, kind: native?.native?.kind,
+    id: native?.native?.id, lifecycle: native?.lifecycle, version: s.version ?? null };
 }
 
 /** What kind of file a source is and how it arrived, without a second round trip. */
@@ -1870,7 +1969,7 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
     /* Superseded sources stay in the list unless current=true: the authoring
        canvas and sources rail read this route too, and each carries isCurrent,
        so a reader that counts can count once. */
-    const { total, currentTotal, sources } = await searchDataRoom(orgId, query);
+    const { total, currentTotal, sources } = await searchDataRoom(orgId, query, { userId: resolveUserId(req) ?? undefined });
     const truncated = (query.offset ?? 0) + sources.length < total;
     const unscoped =
       req.query.includeUnscoped === 'true'
@@ -1916,6 +2015,10 @@ router.get('/:id/sources', async (req: Request, res: Response) => {
 // GET /:id/source-changes — what in this project was written against superseded
 // content
 //
+// `changes`: data-room citations. `vaultChanges` (S12): sections drafted from a
+// Vault version that a later approved version replaced (vault-citation-changes.ts).
+// `vaultFeeds` (S12 gap 5): every Vault-fed section, current or replaced.
+//
 // Every citation in this project still carrying a checksum its source no longer
 // has. That is a fact recorded at cite time
 // (authoring_citations.payload_sha256), not a comparison invented per render, so
@@ -1941,8 +2044,20 @@ router.get('/:id/source-changes', async (req: Request, res: Response) => {
       '../../services/clinical-regulatory-evidence/source-usage.service.js'
     );
     const changes = await listChangedSourceUsages(pool, orgId, { userId: resolveUserId(req) ?? undefined, programId: String(req.params.id) });
+    /* S12 (P-83, P-109): sections drafted from a Vault version that a later approved version replaced. */
+    const { listVaultFamilies, listVaultFedSections, replacedVaultCitations } = await import(
+      '../../services/clinical-regulatory-evidence/vault-citation-changes.js'
+    );
+    /* One read: every Vault-fed section with its standing (S12 gap 5, the program's map), and its replaced half. */
+    const vaultFeeds = await listVaultFedSections(pool, orgId, { userId: resolveUserId(req) ?? undefined, programId: String(req.params.id) });
+    const vaultChanges = replacedVaultCitations(vaultFeeds);
 
-    return res.json({ projectId: String(req.params.id), changes, count: changes.length });
+    /* The program's current Vault families (S12 gap 5, slice 2): a work project's family picker, and the re-check of
+       an assignment on every read. */
+    const families = await listVaultFamilies(pool, orgId, String(req.params.id));
+
+    return res.json({ projectId: String(req.params.id), changes, count: changes.length, vaultChanges, vaultCount: vaultChanges.length,
+      vaultFeeds, vaultFeedCount: vaultFeeds.length, vaultFamilies: families.families, vaultFamiliesTruncated: families.truncated });
   } catch (err: unknown) {
     if (err instanceof ProgramReadAccessError || err instanceof SourceReadAccessError) return sendProjectAccessFailure(res, new ProgramReadAccessError(err.status, err.code, err.message), true);
     return serverError(res, logger, 'loading the source changes', err, { programId: String(req.params.id) });

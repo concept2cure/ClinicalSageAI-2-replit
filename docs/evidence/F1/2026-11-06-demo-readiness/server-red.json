@@ -1,0 +1,11 @@
+{
+  "pid": 18268,
+  "startedAt": "2026-11-06T20:06:20.466384+00:00",
+  "entrypoint": "npm run dev",
+  "port": 5100,
+  "codespacesFlags": true,
+  "runtimeRole": "app_service",
+  "ownerCredentialInApp": false,
+  "privateLog": "/workspace/scratch/demo-readiness-server.log",
+  "status": "starting"
+}

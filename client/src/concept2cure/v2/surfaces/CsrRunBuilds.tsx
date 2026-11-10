@@ -28,7 +28,7 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type { CsrIntoDocumentOutcome, CsrIntoDocumentReceipt } from '@shared/authoring/source-import';
 import { GOVERNED_REASON_MAX, GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
-import { apiCall, apiErrorText } from '../apiCall';
+import { apiCall, apiErrorText, type ApiResult } from '../apiCall';
 import { I } from '../icons';
 import { CsrHeadingReview, CsrNarrativeBuild, type CsrBoardHeading } from './CsrBuildProgress';
 import { CsrAssemblyControl } from './CsrAssemblyControl';
@@ -186,6 +186,18 @@ function readReceipt(body: unknown, documentId: string, preview: boolean): CsrIn
     && Object.prototype.hasOwnProperty.call(OUTCOME, s.outcome) && typeof s.placeholder === 'boolean') ? r as CsrIntoDocumentReceipt : null;
 }
 
+/** Keep the recorded refusal, with the existing project/document route for a different cut. */
+function importFailure(result: ApiResult, fallback: string): string {
+  const message = apiErrorText(result, fallback);
+  const code = (result.body as { error?: unknown } | null)?.error;
+  if (!result.ok && result.status === 409
+    && (code === 'IMPORT_TARGET_BOUND_TO_OTHER_BUILD' || code === 'IMPORT_TARGET_STUDY_DATA_MISMATCH')) {
+    return `${message} For a different data cut, go to Project → New document → Clinical Study Report. ` +
+      'Freeze that cut for the new document, then build and import there. Collaborators should open this existing CSR.';
+  }
+  return message;
+}
+
 /** The preview read on opening, then the write against that preview's fingerprint. */
 function useImportIntoDocument(programId: string, documentId: string, jobId: number, sectionNumbers: string[]) {
   const [preview, setPreview] = useState<CsrIntoDocumentReceipt | null>(null);
@@ -200,7 +212,7 @@ function useImportIntoDocument(programId: string, documentId: string, jobId: num
       .then(result => {
         if (!live) return;
         const read = result.ok ? readReceipt(result.body, documentId, true) : null;
-        if (read) setPreview(read); else setError(apiErrorText(result, 'What this import would write could not be read. Nothing was imported.'));
+        if (read) setPreview(read); else setError(importFailure(result, 'What this import would write could not be read. Nothing was imported.'));
       });
     return () => { live = false; };
   }, [programId, documentId, jobId, key]);
@@ -210,7 +222,7 @@ function useImportIntoDocument(programId: string, documentId: string, jobId: num
     const result = await apiCall('POST', IMPORT, { programId, source, targetDocumentId: documentId, expectedFingerprint: preview.fingerprint, reason });
     setBusy(false);
     const read = result.ok ? readReceipt(result.body, documentId, false) : null;
-    if (read) setDone(read); else setError(apiErrorText(result, 'The import was not confirmed. Reload the document before importing again.'));
+    if (read) setDone(read); else setError(importFailure(result, 'The import was not confirmed. Reload the document before importing again.'));
     return read;
   };
   return { preview, done, error, busy, write };

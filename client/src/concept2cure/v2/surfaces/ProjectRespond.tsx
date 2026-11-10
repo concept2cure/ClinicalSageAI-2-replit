@@ -34,9 +34,11 @@ import React, { useEffect, useId, useRef, useState } from 'react';
 import { I } from '../icons';
 import { stashNavParamsForTarget } from '../navParams';
 import { useChatUpload, CHAT_UPLOAD_ACCEPT, type ChatAttachment } from '../../hooks/useChatUpload';
-import { C2CToast, useToast } from '../toast';
 import { AgencyInboxList, letterSourceRef, submissionLabel, useAgencyInbox, type LogCommunicationBody, type LogResult } from './AgencyInbox';
 import type { MarketSubmission, ProgramMarkets } from './programSequence';
+import { EmptyState, type DataState } from '../dataConnect';
+import { CommitmentRowView, type CommitmentRow, type CommitmentsPayload } from './CommitmentRow';
+import { CommitmentFulfilDialog } from './CommitmentFulfilment';
 
 /**
  * The market a letter came from, chosen once for the step that logs the letter
@@ -226,26 +228,78 @@ function SequenceStep({ markets, choice, onChoose, onNav }: {
   );
 }
 
-export function ProjectRespond({ pid, markets, onNav, onAsk }: {
+/** The project's commitments to the agency (D3-4, D3.md §4.7 Respond item 3), from the page's one commitments read: the
+ *  rows Communication lists, with the same "Record fulfilment" dialog on the project's door. Null before the project's
+ *  integer id is verified (the route takes it), so nothing is listed for a project not yet known. */
+function ProjectCommitments({ state, unverified, projectId, fire, onReload, onNav, onAsk }: {
+  state: DataState<CommitmentsPayload> | null;
+  /** With no read: why the project's id is not known, or null while it is still being verified. */
+  unverified: string | null;
+  projectId: number | null;
+  fire: (message: string, tone?: 'ok' | 'error') => void;
+  onReload: () => void;
+  onNav: (id: string) => void;
+  onAsk: (q: string) => void;
+}) {
+  const [fulfilling, setFulfilling] = useState<CommitmentRow | null>(null);
+  let body: React.ReactNode;
+  if (!state && unverified) body = <p className="scaf-note">{unverified}</p>;
+  else if (!state || state.loading) body = <p role="status" aria-busy="true" className="scaf-note">Reading this project’s commitments…</p>;
+  else if (state.error || !state.data) {
+    body = <EmptyState tone="error" icon={I.alertTriangle} title="Couldn't load this project's commitments" read={state} readWhat="this project's commitments"
+      hint="The commitments register didn't respond, so none is shown as met or open." retry={onReload} />;
+  } else if (state.data.commitments.length === 0) {
+    body = <EmptyState icon={I.checkCircle} title="No commitments to the agency on this project."
+      hint="Commitments made in answers to this project's agency letters, and PMR, PMC and REMS commitments recorded on it, appear here." />;
+  } else {
+    body = (
+      <div className="cc-list" data-testid="pj-commitments">
+        {state.data.commitments.map((c) => (
+          <CommitmentRowView key={`${c.project_id ?? 'org'}-${c.id}`} c={c} onNav={onNav} onAsk={onAsk} onFulfil={() => setFulfilling(c)} />
+        ))}
+      </div>
+    );
+  }
+  return (
+    <section className="pj-sec" aria-labelledby="pj-commitments-h">
+      <div className="pj-sec-h"><h2 id="pj-commitments-h">Commitments to the agency</h2></div>
+      {body}
+      {fulfilling && projectId !== null && (
+        <CommitmentFulfilDialog row={fulfilling} door="project" projectId={String(projectId)} fire={fire}
+          onClose={() => setFulfilling(null)} onDone={() => { setFulfilling(null); onReload(); }} />
+      )}
+    </section>
+  );
+}
+
+/** The Respond step. Its inbox is the page's one read (D3-2b, D3.md §4.10): the Filing card in Project knowledge
+ *  says the same letters' count and next due date, and the page shows the inbox's notices once. */
+export function ProjectRespond({ pid, markets, onNav, onAsk, inbox, commitments, commitmentsUnverified = null, projectId, onCommitmentsChanged }: {
   pid: string;
   markets: ProgramMarkets;
   onNav: (id: string) => void;
   onAsk: (q: string) => void;
+  inbox: ReturnType<typeof useAgencyInbox>;
+  /** The page's one commitments read (D3.md §4.10), null until the project's integer id is verified. */
+  commitments: DataState<CommitmentsPayload> | null;
+  commitmentsUnverified?: string | null;
+  projectId: number | null;
+  onCommitmentsChanged: () => void;
 }) {
-  const [toast, fire] = useToast();
-  const inbox = useAgencyInbox(pid, fire);
   const [choice, setChoice] = useState<MarketChoice>(null);
   return (
     <div className="pj-stagebody">
       <section className="pj-sec" data-testid="pj-respond">
-        <div className="pj-sec-h"><h2>Respond</h2><span className="sec-sub">Answer the agency's letter, then place the answer into filing</span></div>
+        {/* The segmented control names the step; the heading stays for screen readers (D3.md §4.7 Respond item 1). */}
+        <h2 className="sr-only">Respond</h2>
+        <p className="sr-only">Answer the agency's letter, then place the answer into filing</p>
         <ol className="pj-respond">
           <LetterStep pid={pid} log={inbox.log} markets={markets} choice={choice} onChoose={setChoice} />
           <InboxStep inbox={inbox} onAsk={onAsk} onNav={onNav} onAdvance={(id) => void inbox.advance(id)} />
           <SequenceStep markets={markets} choice={choice} onChoose={setChoice} onNav={onNav} />
         </ol>
       </section>
-      <C2CToast msg={toast} />
+      <ProjectCommitments state={commitments} unverified={commitmentsUnverified} projectId={projectId} fire={inbox.fire} onReload={onCommitmentsChanged} onNav={onNav} onAsk={onAsk} />
     </div>
   );
 }

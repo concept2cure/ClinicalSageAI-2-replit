@@ -1,0 +1,4 @@
+ × server/services/cmc/__tests__/deliverable-feeds.test.ts > a deliverable lists the sections it feeds > lists the sections from the write-through’s own impact map, not a copy of it 4ms
+   → expected [ '3.2.S.4' ] to include '3.2.P.5'
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  1 failed | 7 passed (8)

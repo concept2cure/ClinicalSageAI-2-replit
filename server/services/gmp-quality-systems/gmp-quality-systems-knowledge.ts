@@ -44,7 +44,15 @@
 /* eslint-disable @typescript-eslint/no-magic-numbers */
 
 import { ComputationRefusal, refuseUnlessStated } from '../ana-biostats/computation-engine.js';
-import { booleanInputStates, statedBoolean, statedNumber, statedOneOf } from '../immunogenicity/immunogenicity-reference.js';
+import {
+  allOf,
+  anyOf,
+  booleanInputStates,
+  statedBoolean,
+  statedNumber,
+  statedOneOf,
+  unstated,
+} from '../immunogenicity/immunogenicity-reference.js';
 import { cites } from './gmp-quality-systems-citations.js';
 import type { Citation } from './gmp-quality-systems-citations.js';
 
@@ -73,22 +81,6 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 /** Whether a fact was left out (undefined or null). Absent and false are different facts. */
-function unstated(value: unknown): boolean {
-  return value === undefined || value === null;
-}
-
-/** Three-valued OR: true if any fact is true, false only when every one is stated, else undefined (not assessed). */
-function anyOf(...facts: Array<boolean | null | undefined>): boolean | undefined {
-  if (facts.some((f) => f === true)) return true;
-  return facts.some(unstated) ? undefined : false;
-}
-
-/** Three-valued AND: false if any stated fact is not true, true only when every one is true, else undefined. */
-function allOf(...facts: Array<boolean | null | undefined>): boolean | undefined {
-  if (facts.some((f) => !unstated(f) && f !== true)) return false;
-  return facts.some(unstated) ? undefined : true;
-}
-
 type BooleanState = boolean | 'not_stated';
 
 /** Refuse, naming each, required text and enums missing or unknown; never a default. */

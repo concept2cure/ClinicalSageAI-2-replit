@@ -104,8 +104,10 @@ test('wrong selected quote, location, or quote checksum is refused', () => {
   }
 });
 test('claim must contain the exact retained display, not a newly invented conversion', () => {
+  // An invented conversion is no longer the retained cell's value, so it is refused at the cell check, which since
+  // c88d89239 runs before the display check (reportedInSpan, over the whole saved section).
   const f=fixture(); f.submission.sections[1].claims[0].expectedValue='76%';
-  expectCode(()=>core.prepareScientificReviewReceipt(f.args),'CSR_EVIDENCE_CLAIM_CHANGED');
+  expectCode(()=>core.prepareScientificReviewReceipt(f.args),'CSR_EVIDENCE_CELL_MISMATCH');
 });
 test('cell coordinates and study identity must resolve in the selected source', () => {
   for(const change of [{row:8},{column:6},{studyId:'OTHER-STUDY'},{table:'exposure'}]) {

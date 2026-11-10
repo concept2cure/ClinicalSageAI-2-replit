@@ -6,7 +6,7 @@
 import * as React from 'react';
 import { I } from '../icons';
 import { K510_STAGES } from '../data/k510';
-import type { Predicate } from '../data/k510';
+import type { Predicate, SeRow } from '../data/k510';
 import type { Program } from '../data/programs';
 import {
   useK510EstarSections,
@@ -28,7 +28,7 @@ import { PathwayPanes } from './pathway/PathwayPanes';
 import { DeviceProfilePanel } from './DeviceProfilePanel';
 import { EstarFilingPanel } from './EstarFilingPanel';
 import { OfficialEstarPanel, officialEstarTypeFor, officialEstarVariantFor } from './OfficialEstarPanel';
-import { readyRows, toDataState } from '../lib/dataState';
+import { readyRows, toDataState, type DataState } from '../lib/dataState';
 import { DataGate } from '../components/DataGate';
 import type { EditorSectionRef } from '../../v2/editorTarget';
 import { downloadCsv } from '../../v2/download';
@@ -188,9 +188,13 @@ export function K510Surface({ program, onAskAna, onOpenEditor, onOpenLetter }: K
   const predicatesState = toDataState(predicates.rows, predicates.loading, predicates.error, {
     idleReason: 'Predicate candidates are searched per device project.',
   });
-  const seState = toDataState(seMatrix.rows, seMatrix.loading, seMatrix.error, {
-    idleReason: 'The substantial-equivalence matrix is held per project.',
-  });
+  /* Not configured is not a failed read: there are no rows, and the gate says
+     why, with no retry that cannot change the answer (2026-11-09). */
+  const seState: DataState<SeRow[]> = seMatrix.notConfigured
+    ? { status: 'empty' }
+    : toDataState(seMatrix.rows, seMatrix.loading, seMatrix.error, {
+        idleReason: 'The substantial-equivalence matrix is held per project.',
+      });
   const estarState = toDataState(estar.rows, estar.loading, estar.error, {
     idleReason: 'eSTAR sections are held per submission.',
   });
@@ -397,9 +401,13 @@ export function K510Surface({ program, onAskAna, onOpenEditor, onOpenLetter }: K
         >
           <span className="banner-ic">{I.alertCircle}</span>
           <span>
-            {'Predicate intelligence is not reachable for this tenant. Live K-number candidates ' +
-              'appear here once the shadow service is reachable; until then the reduced openFDA ' +
-              'clearance lookup below is the only source.'}
+            {(predicates.notConfigured
+              ? 'Predicate intelligence is not configured for this workspace. Live K-number candidates ' +
+                'and the substantial-equivalence matrix appear here once it is; until then the reduced ' +
+                'openFDA clearance lookup below is the only source.'
+              : 'Predicate intelligence is not reachable for this tenant. Live K-number candidates ' +
+                'appear here once the shadow service is reachable; until then the reduced openFDA ' +
+                'clearance lookup below is the only source.')}
           </span>
         </div>
       )}
@@ -488,7 +496,9 @@ export function K510Surface({ program, onAskAna, onOpenEditor, onOpenLetter }: K
                 would have hidden the degraded-mode path behind the error it
                 exists to answer. The gate speaks only when there is nothing
                 at all to show. */}
-            {predicatesState.status !== 'ready' &&
+            {/* Not configured: the banner above has said so once; a read
+                failure with a retry here cannot change that (2026-11-09). */}
+            {predicatesState.status !== 'ready' && !predicates.notConfigured &&
               !(predicateFallbackActive && (predicateFallback.rows?.length ?? 0) > 0) && (
                 <DataGate
                   state={predicatesState}
@@ -669,8 +679,10 @@ export function K510Surface({ program, onAskAna, onOpenEditor, onOpenLetter }: K
             <DataGate
               state={seState}
               label="substantial-equivalence rows"
-              onRetry={seMatrix.refresh}
-              emptyHint="Compare this device against a selected predicate to build the SE matrix."
+              onRetry={seMatrix.notConfigured ? undefined : seMatrix.refresh}
+              emptyHint={seMatrix.notConfigured
+                ? 'The SE matrix is built by predicate intelligence, which is not configured for this workspace.'
+                : 'Compare this device against a selected predicate to build the SE matrix.'}
               regulation="Serves the 510(k) substantial-equivalence discussion"
             >
               {() => (

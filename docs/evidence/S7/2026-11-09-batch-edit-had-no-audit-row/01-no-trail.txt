@@ -1,0 +1,82 @@
+Live, against the running app, on a real batch record of the demo programme.
+
+BID=fb5f3b7f-bbad-454e-afa7-c1476795a9bc   (C2C101-DS-2412, C2C-101 drug substance)
+
+════════════════════════════════════════════════════════════════════════════
+POST-FIX first, because it is what the row should look like
+════════════════════════════════════════════════════════════════════════════
+
+BEFORE: audit rows = 1            # the create's row, from createOnConnection
+
+$ PUT /api/cmc/batch-records/$BID
+  {"manufacturingSite":"Building 4, Cambridge MA (fictional)",
+   "reason":"Manufacturing site was missing from the batch record; taken from the executed batch record."}
+PUT success = True | site now = Building 4, Cambridge MA (fictional)
+
+AFTER: audit rows = 2
+
+$ psql -xc "select action, user_id, actor_id, table_name, record_id, old_values,
+            new_values, reason, sha256_chain is not null as chained, occurred_at
+            from audit_logs where record_id='$BID' order by occurred_at desc limit 1;"
+
+action      | cmc.register.update
+user_id     | 1
+actor_id    | 1
+table_name  | cmc_batch_records
+record_id   | fb5f3b7f-bbad-454e-afa7-c1476795a9bc
+new_values  | {"register":"batch_record","projectId":"b55a6ff4-dd72-4200-93b0-e76cb9cc58f7",
+               "recordId":"fb5f3b7f-bbad-454e-afa7-c1476795a9bc",
+               "changed":{"manufacturing_site":{"from":null,"to":"Building 4, Cambridge MA (fictional)"}},
+               "changedFields":["manufacturing_site"]}
+reason      | Manufacturing site was missing from the batch record; taken from the executed batch record.
+chained     | t
+occurred_at | 2026-11-09 21:41:53.283+00
+
+   ^ who, when, which record, what moved, why, and a chain value.
+
+════════════════════════════════════════════════════════════════════════════
+PRE-FIX: the same route with the bare pool.query restored, server restarted
+════════════════════════════════════════════════════════════════════════════
+
+BEFORE: audit rows = 2
+
+$ PUT /api/cmc/batch-records/$BID
+  {"batchNumber":"C2C101-DS-2412-R2","manufacturingSite":"Somewhere else entirely",
+   "reason":"no trail will be kept of this"}
+PUT success = True | batch_number now = C2C101-DS-2412-R2
+
+AFTER: audit rows = 2
+
+$ psql -tAc "select batch_number, manufacturing_site from cmc_batch_records where id='$BID';"
+C2C101-DS-2412-R2|Somewhere else entirely
+
+   ^ The BATCH NUMBER of a manufacturing record was changed. The API said the
+     edit succeeded. Nothing was recorded: not who, not when, not what moved,
+     not the reason the request supplied. The `reason` was accepted and
+     discarded. 21 CFR 211.188 and §11.10(e).
+
+════════════════════════════════════════════════════════════════════════════
+What the gap leaves behind
+════════════════════════════════════════════════════════════════════════════
+
+Fix restored, server restarted, and the scratch edit reverted through the API
+so the revert is itself on the trail:
+
+$ psql -tAc "select occurred_at, action, new_values->>'changedFields', left(coalesce(reason,''),50)
+             from audit_logs where record_id='$BID' order by occurred_at;"
+2026-11-09 02:09:53|cmc.register.create|(create)|
+2026-11-09 21:41:53|cmc.register.update|["manufacturing_site"]|Manufacturing site was missing from the batch reco
+2026-11-09 21:43:18|cmc.register.update|["batch_number","manufacturing_site"]|Reverting a verification edit made while proving t
+
+$ psql -tAc "select new_values->'changed' from audit_logs where record_id='$BID' order by occurred_at desc limit 1;"
+{"batch_number":{"from":"C2C101-DS-2412-R2","to":"C2C101-DS-2412"},
+ "manufacturing_site":{"from":"Somewhere else entirely","to":"Building 4, Cambridge MA (fictional)"}}
+
+   ^ The last row says the batch number changed FROM "C2C101-DS-2412-R2".
+     No row in the trail records the record ever arriving at that value.
+     An inspector reading this trail finds a `from` that came from nowhere.
+     That is the unaudited edit, visible in the trail's own shape.
+
+The batch's data is back to what it was, except the manufacturing site, which
+is now recorded (Building 4 is where C2C-101 drug substance is made, per the
+drug substance register) rather than blank.

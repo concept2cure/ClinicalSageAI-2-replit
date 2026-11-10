@@ -7,7 +7,9 @@ const io = vi.hoisted(() => ({ query: vi.fn(), thread: vi.fn(), embedding: vi.fn
 vi.mock('../../../db.js', () => ({ pool: { query: io.query }, getPool: () => ({ query: io.query }), db: {} }));
 vi.mock('../../../db/currentTenant.js', () => ({ currentTenantOrgUuid: async () => '77777777-2222-4333-8444-555555555555' }));
 vi.mock('../../../services/ana/AnaToolExecutor.js', () => ({ executeAgenticLoop: vi.fn() }));
-vi.mock('../../../services/chat-thread-helpers.js', () => ({ getOrCreateThread: io.thread,
+vi.mock('../../../services/chat-thread-helpers.js', async importOriginal => ({
+  OwnerPrivateChatError: (await importOriginal<typeof import('../../../services/chat-thread-helpers.js')>()).OwnerPrivateChatError,
+  threadHasOwnerPrivateBoundary: async () => false, getOrCreateThread: io.thread,
   getThreadMessages: async () => [], saveChatMessage: async () => 1, ThreadAccessError: class extends Error {} }));
 vi.mock('../../../services/enhancedEmbeddingService.js', () => ({ getEmbeddingService: io.embedding }));
 vi.mock('../shared.js', () => ({ ensureGateway: io.gateway, normalizeBody: (req: Request) => {

@@ -1,0 +1,4 @@
+[
+  "server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts",
+  "client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx"
+]

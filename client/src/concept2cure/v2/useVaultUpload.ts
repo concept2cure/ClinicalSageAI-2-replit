@@ -73,7 +73,7 @@ export interface VaultUploadOutcome {
  * What the person said about one file, row by row, before it was sent (gap 7.1,
  * docs/design/VEEVA_GAP_2026-10-22.md). Every field is one POST /api/vault/ingest
  * already validates: a blank one is not sent, and the server's default applies
- * (the title from the file name, classification INTERNAL, and a placement the
+ * (the title from the file name, classification CONFIDENTIAL, and a placement the
  * classifier suggests). A folder named here is recorded as a person's filing
  * ('confirmed'), and only with a folder are the evidence kind and CTD section
  * written, so they are sent only with one.

@@ -1,0 +1,232 @@
+{
+  "baseline": "21a21849d7cfb8a35794489a87fad2b849c7011c",
+  "results": [
+    {
+      "file": "client/src/concept2cure/v2/__tests__/documentAuthoringSourcesRail.test.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "growth": [],
+      "messages": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/__tests__/useScopedDocuments.test.tsx",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "growth": [],
+      "messages": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/editor/useScopedDocuments.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "growth": [],
+      "messages": []
+    },
+    {
+      "file": "client/src/concept2cure/v2/surfaces/ReviewThreads.tsx",
+      "errors": 0,
+      "warnings": 5,
+      "baselineWarnings": 5,
+      "growth": [],
+      "messages": [
+        {
+          "ruleId": "max-lines-per-function",
+          "severity": 1,
+          "message": "Function 'ReviewThreadsPane' has too many lines (256). Maximum allowed is 100.",
+          "line": 205,
+          "column": 8,
+          "messageId": "exceed",
+          "endLine": 205,
+          "endColumn": 34
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Function 'ReviewThreadsPane' has a complexity of 40. Maximum allowed is 15.",
+          "line": 205,
+          "column": 8,
+          "messageId": "complex",
+          "endLine": 205,
+          "endColumn": 34
+        },
+        {
+          "ruleId": "react-hooks/exhaustive-deps",
+          "severity": 1,
+          "message": "The 'threads' logical expression could make the dependencies of useMemo Hook (at line 323) change on every render. To fix this, wrap the initialization of 'threads' in its own useMemo() Hook.",
+          "line": 233,
+          "column": 9,
+          "endLine": 233,
+          "endColumn": 44
+        },
+        {
+          "ruleId": "react-hooks/exhaustive-deps",
+          "severity": 1,
+          "message": "The 'tasks' logical expression could make the dependencies of useMemo Hook (at line 323) change on every render. To fix this, wrap the initialization of 'tasks' in its own useMemo() Hook.",
+          "line": 234,
+          "column": 9,
+          "endLine": 234,
+          "endColumn": 40
+        },
+        {
+          "ruleId": "complexity",
+          "severity": 1,
+          "message": "Arrow function has a complexity of 20. Maximum allowed is 15.",
+          "line": 251,
+          "column": 33,
+          "messageId": "complex",
+          "endLine": 251,
+          "endColumn": 35
+        }
+      ]
+    },
+    {
+      "file": "scripts/ci/__tests__/lineage-save-gate-strings.test.mjs",
+      "errors": 0,
+      "warnings": 1,
+      "baselineWarnings": 1,
+      "growth": [],
+      "messages": [
+        {
+          "ruleId": null,
+          "fatal": false,
+          "severity": 1,
+          "message": "File ignored because of a matching ignore pattern. Use \"--no-ignore\" to disable file ignore settings or use \"--no-warn-ignored\" to suppress this warning."
+        }
+      ]
+    },
+    {
+      "file": "scripts/ci/check-lineage-save-gate.mjs",
+      "errors": 0,
+      "warnings": 1,
+      "baselineWarnings": 1,
+      "growth": [],
+      "messages": [
+        {
+          "ruleId": null,
+          "fatal": false,
+          "severity": 1,
+          "message": "File ignored because of a matching ignore pattern. Use \"--no-ignore\" to disable file ignore settings or use \"--no-warn-ignored\" to suppress this warning."
+        }
+      ]
+    },
+    {
+      "file": "scripts/ci/lib/lineage-authoring-transaction.mjs",
+      "errors": 0,
+      "warnings": 1,
+      "baselineWarnings": 1,
+      "growth": [],
+      "messages": [
+        {
+          "ruleId": null,
+          "fatal": false,
+          "severity": 1,
+          "message": "File ignored because of a matching ignore pattern. Use \"--no-ignore\" to disable file ignore settings or use \"--no-warn-ignored\" to suppress this warning."
+        }
+      ]
+    },
+    {
+      "file": "scripts/ci/lib/lineage-content-writers.mjs",
+      "errors": 0,
+      "warnings": 1,
+      "baselineWarnings": 1,
+      "growth": [],
+      "messages": [
+        {
+          "ruleId": null,
+          "fatal": false,
+          "severity": 1,
+          "message": "File ignored because of a matching ignore pattern. Use \"--no-ignore\" to disable file ignore settings or use \"--no-warn-ignored\" to suppress this warning."
+        }
+      ]
+    },
+    {
+      "file": "server/routes/__tests__/authoringSourceImport.pglite.integration.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "growth": [],
+      "messages": []
+    },
+    {
+      "file": "server/services/authoring/__tests__/authoring-program-access.pglite.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "growth": [],
+      "messages": []
+    },
+    {
+      "file": "server/services/authoring/authoring-program-access.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "growth": [],
+      "messages": []
+    },
+    {
+      "file": "server/services/entitlements/__tests__/launch-reproof-narrowing.test.ts",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "growth": [],
+      "messages": []
+    },
+    {
+      "file": "shared/constants/ui-surface-registry.ts",
+      "errors": 0,
+      "warnings": 1,
+      "baselineWarnings": 1,
+      "growth": [],
+      "messages": [
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (788). Maximum allowed is 500.",
+          "line": 843,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 1217,
+          "endColumn": 1
+        }
+      ]
+    },
+    {
+      "file": "shared/constants/ui-surface-registry.ui-v2.ts",
+      "errors": 0,
+      "warnings": 1,
+      "baselineWarnings": 1,
+      "growth": [],
+      "messages": [
+        {
+          "ruleId": "max-lines",
+          "severity": 1,
+          "message": "File has too many lines (1109). Maximum allowed is 500.",
+          "line": 624,
+          "column": 1,
+          "messageId": "exceed",
+          "endLine": 1427,
+          "endColumn": 1
+        }
+      ]
+    },
+    {
+      "file": "docs/evidence/F1/2026-11-06-authoring-project-write-access/lint.mjs",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "growth": [],
+      "messages": []
+    },
+    {
+      "file": "docs/evidence/F1/2026-11-06-authoring-project-write-access/browser-scope.cjs",
+      "errors": 0,
+      "warnings": 0,
+      "baselineWarnings": 0,
+      "growth": [],
+      "messages": []
+    }
+  ]
+}

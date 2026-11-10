@@ -1,0 +1,19 @@
+not ok 1 - biotech (C2C-101): records the drug substance §3.2.S is written about
+not ok 2 - biotech (C2C-101): records the drug product §3.2.P is written about
+ok 3 - biotech (C2C-101): a biologic substance states its origin, as §3.2.A.2 asks
+not ok 4 - lumen (LMN-201): records the drug substance §3.2.S is written about
+not ok 5 - lumen (LMN-201): records the drug product §3.2.P is written about
+ok 6 - lumen (LMN-201): a biologic substance states its origin, as §3.2.A.2 asks
+not ok 7 - the seeder records the substance and the product first of all
+not ok 8 - the substance carries the modality the boundary reads, as stated
+not ok 9 - a second run records neither material twice
+# tests 9
+# pass 2
+# fail 7
+--- vitest ---
+   → Cannot read properties of undefined (reading 'name')
+   → Cannot read properties of undefined (reading 'modality')
+   → Cannot read properties of undefined (reading 'name')
+   → Cannot read properties of undefined (reading 'modality')
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 1 passed (5)

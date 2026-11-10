@@ -628,17 +628,33 @@ export async function createDTCCheckoutSession(params: DTCCheckoutParams): Promi
  * Creates a Stripe Customer Portal session for self-service billing management.
  * Mirrors Claude's approach to subscription management.
  */
-export async function createPortalSession(organizationId: number, returnUrl: string): Promise<string> {
-  const stripe = getStripe();
+/**
+ * Why the billing portal cannot open, as a known state rather than a failure (2026-11-06, the founder's Codespace
+ * click-through): both cases answered 500 "Failed to create portal session" and the page showed it as an error,
+ * beside its own note that billing is not set up.
+ */
+export class BillingPortalUnavailableError extends Error {
+  constructor(readonly code: 'BILLING_NOT_SET_UP' | 'BILLING_NOT_CONFIGURED', message: string) {
+    super(message);
+    this.name = 'BillingPortalUnavailableError';
+  }
+}
 
+export async function createPortalSession(organizationId: number, returnUrl: string): Promise<string> {
   const orgResult = await pool.query(
     `SELECT stripe_customer_id FROM organizations WHERE id = $1`,
     [organizationId]
   );
 
   if (orgResult.rows.length === 0 || !orgResult.rows[0].stripe_customer_id) {
-    throw new Error('No billing account found for this organization');
+    throw new BillingPortalUnavailableError('BILLING_NOT_SET_UP',
+      'Billing is not set up for this organization yet. Its billing record is created the first time a subscription is checked out.');
   }
+  if (!process.env.STRIPE_SECRET_KEY && !process.env.STRIPE_API_KEY) {
+    throw new BillingPortalUnavailableError('BILLING_NOT_CONFIGURED',
+      'Billing is not configured on this deployment, so the billing portal cannot open.');
+  }
+  const stripe = getStripe();
 
   const session = await stripe.billingPortal.sessions.create({
     customer: orgResult.rows[0].stripe_customer_id,
@@ -661,6 +677,9 @@ export interface SubscriptionStatus {
   cancelAtPeriodEnd: boolean;
   seats: number;
   stripeSubscriptionId: string | null;
+  /** Whether the organization has a billing record (a Stripe customer). Without one the billing portal cannot open,
+   *  so the page says so beside "Manage billing" instead of answering a click with a failure (2026-11-06). */
+  billingAccount: boolean;
 }
 
 /**
@@ -669,7 +688,7 @@ export interface SubscriptionStatus {
 export async function getSubscriptionStatus(organizationId: number): Promise<SubscriptionStatus> {
   const orgResult = await pool.query(
     `SELECT tier, billing_cycle, payment_status, stripe_subscription_id,
-            next_billing_date, seats_purchased
+            next_billing_date, seats_purchased, stripe_customer_id IS NOT NULL AS billing_account
      FROM organizations WHERE id = $1`,
     [organizationId]
   );
@@ -701,6 +720,7 @@ export async function getSubscriptionStatus(organizationId: number): Promise<Sub
     cancelAtPeriodEnd,
     seats: org.seats_purchased || 5,
     stripeSubscriptionId: org.stripe_subscription_id || null,
+    billingAccount: org.billing_account === true,
   };
 }
 

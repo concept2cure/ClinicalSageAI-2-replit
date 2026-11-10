@@ -177,6 +177,7 @@ describe('SubmissionCenter selectors — actual session revision changes', () =>
     expect(guard.credentialsCurrent()).toBe(false);
     await act(async () => { body.resolve([SUB_A]); await body.promise; });
     expect(await screen.findByRole('button', { name: 'Open Recorded trial dossier A' })).toBeTruthy();
-    await screen.findByRole('button', { name: 'Open the sequences' });
+    // The header's state sentence counts the sequences once they are read (D7-A1 replaced the AnswerLead's action).
+    await waitFor(() => expect(screen.getByTestId('sc-state').textContent).toMatch(/\d+ sequences?: /));
   });
 });

@@ -1,0 +1,6 @@
+(node:5) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:18) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[ci:server-error-leaks] OK — 9 baselined site(s) across 9 file(s); no file gained one.
+[ci:server-error-leaks] 1 site(s) fixed since the baseline — shrink it with --write-baseline.

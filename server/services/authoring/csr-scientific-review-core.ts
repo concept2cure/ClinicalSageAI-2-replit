@@ -11,10 +11,11 @@ import { createHash } from 'node:crypto';
    (shared/authoring/csr-scientific-review.ts), so the screen never offers a
    figure this verifier would refuse. Re-exported for this module's importers. */
 import {
-  CSR_SCIENTIFIC_REVIEW_FORMAT, CSR_TABLE_KEYS, containsExactNumericalDisplay, markupRanges, placeholderIn, quotedPlaceholder, reportedDisplayAt,
+  CSR_SCIENTIFIC_REVIEW_FORMAT, CSR_TABLE_KEYS, numericalText, placeholderIn, quotedPlaceholder, reportedDisplaySpans,
   type CsrTableKey, type RetainedScientificRun, type RetainedScientificTable,
   type ScientificCellClaim, type ScientificReviewSubmission, type ScientificSectionReview,
 } from '../../../shared/authoring/csr-scientific-review.js';
+import { looksLikeHtml } from '../../../shared/authoring/plain-text-html.js';
 export { CSR_SCIENTIFIC_REVIEW_FORMAT, CSR_TABLE_KEYS };
 export type {
   CsrTableKey, RetainedScientificRun, RetainedScientificTable,
@@ -142,12 +143,9 @@ function scientificTableBundle(runs: readonly RetainedScientificRun[]) {
   }).sort((a, b) => a.runId.localeCompare(b.runId));
 }
 /** The cell's value is reported somewhere inside the claimed span, judged against the whole section. */
-function reportedInSpan(content: string, claim: { start: number; end: number; expectedValue: string }, header: string): boolean {
-  const markup = markupRanges(content);
-  for (let at = claim.start; at + claim.expectedValue.length <= claim.end; at++) {
-    if (reportedDisplayAt(content, at, claim.expectedValue, header, markup)) return true;
-  }
-  return false;
+function reportedInSpan(content: string, claim: { start: number; end: number; expectedValue: string }, header: string,
+  view: ReturnType<typeof numericalText>): boolean {
+  return reportedDisplaySpans(content, claim.expectedValue, header, view, claim).length > 0;
 }
 
 export function scientificTablesSha256(runs: readonly RetainedScientificRun[]): string {
@@ -194,9 +192,10 @@ export function prepareScientificReviewReceipt(args: {
       return fail('CSR_EVIDENCE_SECTION_CHANGED', 'A saved section is missing, blank or no longer matches its reviewed content.');
     }
     refuseHeldPlaceholder(section.content);
+    const view = numericalText(section.content, looksLikeHtml(section.content) ? 'encoded' : 'text');
     for (const claim of review.claims) {
       const quote = section.content.slice(claim.start, claim.end);
-      if (claim.end > section.content.length || scientificSha256(quote) !== claim.quoteSha256 || !containsExactNumericalDisplay(quote, claim.expectedValue)) {
+      if (claim.end > section.content.length || scientificSha256(quote) !== claim.quoteSha256) {
         return fail('CSR_EVIDENCE_CLAIM_CHANGED', 'A mapped claim no longer contains the exact reviewed source value at its recorded location.');
       }
       const study = bundle.find(r => r.runId === claim.runId)?.studies.find(s => s.source.studyId === claim.studyId);
@@ -207,7 +206,7 @@ export function prepareScientificReviewReceipt(args: {
       }
       // 2026-10-30: where the figure stands in the whole saved section, not only
       // inside the span, which has no neighbours ("190" claimed inside "1190").
-      if (!reportedInSpan(section.content, claim, table.headers[claim.column] ?? '')) {
+      if (!reportedInSpan(section.content, claim, table.headers[claim.column] ?? '', view)) {
         return fail('CSR_EVIDENCE_CLAIM_CHANGED', 'A mapped claim no longer contains the exact reviewed source value at its recorded location.');
       }
       checkedClaims++;

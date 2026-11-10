@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "package": "F1",
+  "launchRow": "D2",
+  "branch": "concept2cure-v2",
+  "startingCommit": "21a21849d7cfb8a35794489a87fad2b849c7011c",
+  "packagedAtUtc": "2026-11-06T18:27:37.387485+00:00",
+  "scope": "Complete the existing Vault to shared editor handoff in eight existing frontend/test owners.",
+  "sourcePins": {
+    "path": "source-pins.json",
+    "sha256": "43b520d38de6f773661ece5a08157fedbc81c37da49f355cdd7b74b50c08ffc0"
+  },
+  "redSourcePins": {
+    "path": "red-source-pins.json",
+    "sha256": "b845660f691779fffa7d4ae38a9e6c069d88a7b178d8e04a4aca572e199ad57e"
+  },
+  "runs": [
+    {
+      "name": "red",
+      "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --maxWorkers=1 --fileParallelism=false client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx",
+      "exitCode": 1,
+      "suitesFailed": 3,
+      "testsFailed": 25,
+      "testsPassed": 43,
+      "log": {
+        "path": "red.log.gz",
+        "sha256": "cc2834ff675a6011a602bed0f3a49ef209a8f72fef8755f44612d50f9ffcc1f1",
+        "bytes": 16237,
+        "originalSha256": "3fd70fd52e53bfe34a977b43535afd02c72a0dcfdb1fe57bb8834a3566325d9f",
+        "originalBytes": 361336,
+        "originalLines": 11866,
+        "gzipMtime": 0
+      }
+    },
+    {
+      "name": "first-green",
+      "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --maxWorkers=1 --fileParallelism=false client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx",
+      "exitCode": 0,
+      "suitesPassed": 3,
+      "testsPassed": 69,
+      "log": {
+        "path": "first-green.log",
+        "sha256": "d1ca35ae384f49fa2ae2b788cafcc7680ac34650913c8024985a0bc5f87b7c19",
+        "bytes": 15332,
+        "originalSha256": "d1ca35ae384f49fa2ae2b788cafcc7680ac34650913c8024985a0bc5f87b7c19",
+        "originalBytes": 15332,
+        "originalLines": 102,
+        "gzipMtime": null
+      }
+    },
+    {
+      "name": "regression",
+      "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --maxWorkers=1 --fileParallelism=false client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx client/src/concept2cure/v2/editor/__tests__/sourceIntakeOwnership.test.tsx client/src/concept2cure/v2/editor/__tests__/sourceIntakeTransport.test.ts client/src/concept2cure/v2/__tests__/workbenchFileToVault.test.tsx client/src/concept2cure/v2/__tests__/authoringVaultPlacementFlow.test.tsx client/src/concept2cure/v2/__tests__/fileToVaultContinuity.test.tsx client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx client/src/concept2cure/v2/__tests__/vaultGovernedArtifacts.test.tsx client/src/concept2cure/v2/__tests__/foldVaultArtifactsCenter.test.ts client/src/concept2cure/v2/__tests__/vaultStagingSessionOwnership.test.tsx client/src/concept2cure/v2/__tests__/vaultDocumentOpenReads.test.tsx",
+      "exitCode": 0,
+      "suitesPassed": 12,
+      "testsPassed": 313,
+      "log": {
+        "path": "regression.log",
+        "sha256": "df22337a71e71766d212a6b047099ad6ca97f08d0cceca9e74f50c858505b1bc",
+        "bytes": 66691,
+        "originalSha256": "df22337a71e71766d212a6b047099ad6ca97f08d0cceca9e74f50c858505b1bc",
+        "originalBytes": 66691,
+        "originalLines": 346,
+        "gzipMtime": null
+      }
+    },
+    {
+      "name": "final-sender",
+      "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH NODE_OPTIONS=--max-old-space-size=4096 npx vitest run --maxWorkers=1 --fileParallelism=false client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx",
+      "exitCode": 0,
+      "suitesPassed": 1,
+      "testsPassed": 30,
+      "log": {
+        "path": "final-sender.log",
+        "sha256": "11c54281da4daf4e57e6ea346f36475fe4b89f3f1acb329bb4c246c534939a39",
+        "bytes": 5970,
+        "originalSha256": "11c54281da4daf4e57e6ea346f36475fe4b89f3f1acb329bb4c246c534939a39",
+        "originalBytes": 5970,
+        "originalLines": 39,
+        "gzipMtime": null
+      }
+    },
+    {
+      "name": "lint",
+      "command": "PATH=/workspace/scratch/mdx-node-runtime/node_modules/.bin:$PATH npx eslint client/src/concept2cure/v2/surfaces/Vault.tsx client/src/concept2cure/v2/fixtures/vault-data.ts client/src/concept2cure/v2/surfaces/VaultOrganizationArtifacts.tsx client/src/concept2cure/v2/editor/SourceImportDialog.tsx client/src/concept2cure/v2/authoringHandoff.ts client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx",
+      "exitCode": 0,
+      "errors": 0,
+      "warnings": 7,
+      "newWarningSites": 0,
+      "log": {
+        "path": "lint.log",
+        "sha256": "f1100e16ff7624c119a9a1af1eac1c51bf67e303ec46cd32585d334194bc88f3",
+        "bytes": 1061,
+        "originalSha256": "f1100e16ff7624c119a9a1af1eac1c51bf67e303ec46cd32585d334194bc88f3",
+        "originalBytes": 1061,
+        "originalLines": 16,
+        "gzipMtime": null
+      }
+    },
+    {
+      "name": "diff-check",
+      "command": "git diff --check -- client/src/concept2cure/v2/surfaces/Vault.tsx client/src/concept2cure/v2/fixtures/vault-data.ts client/src/concept2cure/v2/surfaces/VaultOrganizationArtifacts.tsx client/src/concept2cure/v2/editor/SourceImportDialog.tsx client/src/concept2cure/v2/authoringHandoff.ts client/src/concept2cure/v2/__tests__/vaultOpenInEditorCarriesDoc.test.tsx client/src/concept2cure/v2/__tests__/vaultArtifactLeaf.test.tsx client/src/concept2cure/v2/__tests__/vaultOrganizationArtifacts.test.tsx",
+      "exitCode": 0,
+      "log": {
+        "path": "diff-check.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      }
+    }
+  ],
+  "overlap": "The 3-suite/69-test green and final 30 sender tests overlap the 12-suite/313-test cohort. Do not sum these counts.",
+  "finalTestCleanup": "After the broader cohort, the existing project-transition assertion was wrapped in async act. Its 30-case suite passed again; frozen production bytes did not change.",
+  "warningSites": "Seven existing lint sites: writeHandoffStage complexity; fixture d parameters/unused; Vault file length, body length/complexity and existing context callback complexity. No new sites.",
+  "qualificationLimits": "Synthetic component/transport records; backend durability, full MDX scientific tailoring, deployed behavior and every client/document combination are not established by this frontend receipt."
+}

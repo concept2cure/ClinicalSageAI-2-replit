@@ -38,6 +38,9 @@ const h = vi.hoisted(() => ({
   failCommit: 0,
   transactions: 0,
   realSignoff: null as null | ((...a: any[]) => Promise<any>),
+  currentRole: 'member' as string | null,
+  admissionSql: [] as Array<{ tag: string; sql: string; params: unknown[] }>,
+  discard: vi.fn(async () => undefined),
 }));
 
 const svc = vi.hoisted(() => ({
@@ -60,10 +63,36 @@ const spies = vi.hoisted(() => ({
 /** Which runner a service write was handed: the transaction, the db, or none. */
 const runnerTag = (r: unknown) => (r as { __tag?: string } | undefined)?.__tag ?? 'none';
 
-vi.mock('../../db', () => {
+vi.mock('../../db', async () => {
+  const { PgDialect } = await import('drizzle-orm/pg-core');
+  const dialect = new PgDialect();
+  // Concrete same-organization parents; the real sharing policy evaluates
+  // owner/private facts rather than an admission function mocked to allow.
+  const parents = [{ id: 3, client_workspace_id: 71, status: 'active', owner_id: 7 },
+    { id: 4, client_workspace_id: 72, status: 'active', owner_id: 8 }];
+  const admissionRows = (sql: string, params: unknown[]) => {
+    if (sql.includes('SELECT ou.role')) {
+      return params[0] === 2 && params[1] === 7 && h.currentRole ? [{ role: h.currentRole }] : [];
+    }
+    // P-111 (b): the admission's locked row read also names parent_project_id.
+    if (/SELECT id,client_workspace_id,status(,parent_project_id)? FROM projects/.test(sql)) return params[1] === 2 ? parents.filter(row => row.id === params[0]) : [];
+    if (sql.includes('FROM client_workspaces')) return params[1] === 2 && [71, 72].includes(Number(params[0])) ? [{ id: params[0] }] : [];
+    // Repeated placeholders bind in SQL occurrence order: the reviewer comes
+    // first; the outer organization is third from last and project is last.
+    if (sql.includes('FROM projects p LEFT JOIN project_visibility_settings')) return params.at(-3) === 2
+      ? parents.filter(row => row.id === params.at(-1)).map(row => ({ ...row, created_by_id: row.owner_id,
+        settings: {}, visibility: 'private', members: [], review_assigned: false })) : [];
+    if (sql.includes('FROM project_members') || sql.includes('FROM project_visibility_settings')) return [];
+    throw new Error(`Unexpected admission fixture SQL: ${sql}`);
+  };
   const runner = (tag: string) => ({
     __tag: tag,
-    execute: async () => {
+    execute: async (query: Parameters<typeof dialect.sqlToQuery>[0]) => {
+      const statement = dialect.sqlToQuery(query);
+      if (statement.sql.trim().startsWith('SELECT')) {
+        h.admissionSql.push({ tag, ...statement });
+        return { rows: admissionRows(statement.sql, statement.params) };
+      }
       h.log.push(`${tag}:execute`);
       return { rows: [] };
     },
@@ -103,9 +132,10 @@ vi.mock('../../db', () => {
 });
 // The routes open their transactions on requestDb(req), the request's
 // tenant-scoped connection; here that is the same recording db.
-vi.mock('../../db/requestDb', async () => {
+vi.mock('../../db/requestDb', async importOriginal => {
+  const original = await importOriginal<typeof import('../../db/requestDb')>();
   const m = (await import('../../db')) as unknown as { db: unknown };
-  return { requestDb: () => m.db };
+  return { ...original, requestDb: () => m.db };
 });
 
 vi.mock('../c2c/actions', () => ({
@@ -182,6 +212,7 @@ function makeApp(role: string | null = 'member', userId: number | null = 7, org:
       ...(role ? { role } : {}),
     };
     if (role) (req as any).userRole = role;
+    (req as any).dbClient = { query: async () => ({ rows: [] }), discard: h.discard };
     next();
   });
   app.use('/api/regulatory/tasks', unifiedTaskRoutes);
@@ -211,6 +242,8 @@ beforeEach(() => {
   h.auditFails = false;
   h.failCommit = 0;
   h.transactions = 0;
+  h.currentRole = 'member';
+  h.admissionSql = [];
   vi.clearAllMocks();
   spies.requireTaskSignoff.mockImplementation((...a: any[]) => h.realSignoff!(...a));
   spies.cascadeUnblockOnCompletionInTx.mockResolvedValue({ ledger: [], notices: [] });
@@ -263,12 +296,13 @@ describe('T1 — each write and its ledger row commit or roll back together', ()
   it('POST /unified creates on ONE transaction with its task.create row, as the session actor', async () => {
     const res = await request(makeApp())
       .post(`${BASE}/unified`)
-      .send({ moduleType: 'IND', title: 'Draft', organizationId: 9, reason: 'Raised from the IND checklist' });
+      .send({ moduleType: 'IND', title: 'Draft', organizationId: 9, projectId: 3, reason: 'Raised from the IND checklist' });
 
     expect(res.status).toBe(201);
     expect(h.log).toEqual(['BEGIN', 'svc:createUnifiedTask@tx', 'tx:execute', 'COMMIT']);
     // Body said org 9; the verified org 2 wins, and the creator is the session.
-    expect(svc.createUnifiedTask.mock.calls[0][0]).toMatchObject({ organizationId: 2, createdById: 7, title: 'Draft' });
+    expect(svc.createUnifiedTask.mock.calls[0][0]).toMatchObject({ organizationId: 2, createdById: 7, title: 'Draft', projectId: 3, clientWorkspaceId: 71 });
+    expect(h.admissionSql.every(read => read.tag === 'tx')).toBe(true);
     expect(h.audits).toEqual([
       expect.objectContaining({
         command: 'task.create', userId: 7, orgId: 2, target: 'task:TASK-N', reason: 'Raised from the IND checklist',
@@ -419,7 +453,22 @@ describe('T1 — each write and its ledger row commit or roll back together', ()
     expect(res.body.error).toBe('OUTCOME_UNKNOWN');
     expect(res.body.message).toMatch(/unknown/);
     expect(h.log).toContain('COMMIT-LOST');
+    expect(h.discard).toHaveBeenCalledTimes(_name === 'POST /unified' ? 1 : 0);
     expect(spies.notifyTaskEvent).not.toHaveBeenCalled();
+  });
+});
+
+describe('unified creation evaluates current scope before writing', () => {
+  it('refuses a private same-org project owned by somebody else', async () => {
+    const res = await request(makeApp()).post(`${BASE}/unified`).send({ moduleType: 'IND', title: 'Refused', organizationId: 2, projectId: 4 });
+    expect(res.status).toBe(403); expect(res.body.code).toBe('TASK_PROJECT_ACCESS_DENIED');
+    expect(h.log).toEqual(['BEGIN', 'ROLLBACK']); expect(svc.createUnifiedTask).not.toHaveBeenCalled(); expect(h.audits).toEqual([]);
+  });
+  it('refuses an actual unfiled viewer despite a claimed write role', async () => {
+    h.currentRole = 'viewer';
+    const res = await request(makeApp('admin')).post(`${BASE}/unified`).send({ moduleType: 'IND', title: 'Refused', organizationId: 2 });
+    expect(res.status).toBe(403); expect(h.log).toEqual(['BEGIN', 'ROLLBACK']);
+    expect(svc.createUnifiedTask).not.toHaveBeenCalled(); expect(h.audits).toEqual([]);
   });
 });
 

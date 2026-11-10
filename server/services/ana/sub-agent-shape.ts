@@ -11,8 +11,17 @@
 
 import { isTerminalGatewayError } from '../ai-gateway/gateway-outcome.js';
 import { describeToolPlan } from './agentic-loop.js';
-import type { CheckReading, HarnessCheck, VerifyVerdict } from './sub-agent-result.js';
+import type { CheckReading, VerifyVerdict } from './sub-agent-result.js';
 import type { AgentBrief } from './sub-agent-limits.js';
+import type { RunCoordinationHost } from './run-events.js';
+
+/** Recorded operational context only. Encrypted message bodies stay held until
+ * a private final-SDK capture and derived-output ownership wall admits them. */
+export function recordedTeamContext(board: Awaited<ReturnType<RunCoordinationHost['snapshot']>>): string {
+  return JSON.stringify({ workers: board.workers, messages: board.messages.map(message => ({ sender: message.sender,
+    recipient: message.recipient, kind: message.kind, receipt: message.receipt,
+    ...(message.text || message.held ? { held: true } : {}) })) });
+}
 
 export type AgentStatus = 'completed' | 'incomplete' | 'cancelled';
 /** Which budget stopped an incomplete agent. */
@@ -103,7 +112,8 @@ export interface ShapeInput {
   models: readonly AgentModelRecord[];
   usage: { inputTokens: number; outputTokens: number; modelCalls: number };
   reportText: string;
-  checks: { readings: CheckReading[]; verdict: VerifyVerdict; outputs: Array<{ check: HarnessCheck; output: string }> } | null;
+  advisoryFailure?: { code: string; message: string; started: boolean };
+  checks: { readings: CheckReading[]; verdict: VerifyVerdict; outputs: Array<{ check: CheckReading['check']; output: string }> } | null;
 }
 
 /** The full result, as a JSON string. `trace` holds every step whole; the view drops it. */
@@ -114,6 +124,7 @@ export function shapeAgentResult(a: ShapeInput): string {
     .map(({ s, code }) => ({ tool: s.tool, label: labelOf(s), code }));
   const notes = [statusNote(a.status, a.budget, a.heldExpired, a.reportText.trim().length > 0)];
   if (a.checks) notes.push('The verdict comes only from the checks; the agent\'s report is advisory.');
+  if (a.advisoryFailure) notes.push('The advisory model report was unavailable. The deterministic findings remain recorded; no model qualification is implied.');
   if (notExecuted.length > 0) {
     notes.push(
       `Tried ${notExecuted.length} step${notExecuted.length === 1 ? '' : 's'} it may not take: ` +
@@ -132,10 +143,15 @@ export function shapeAgentResult(a: ShapeInput): string {
       ? {
           verdict: a.checks.verdict,
           checks: a.checks.readings,
-          notChecked: NOT_CHECKED,
+          notChecked: a.checks.readings.some(r => r.check === 'source_claims')
+            ? ['General prose, unrecognized comparative or negative claims, ambiguous frames, and scientific source authenticity remain unverified. Exact clinical comparisons cover only the named current source windows.']
+            : a.checks.readings.some(r => r.check === 'source_spans')
+            ? [NOT_CHECKED[0], 'Quotations outside the explicitly checked source spans; semantic support and source authenticity.']
+            : NOT_CHECKED,
           checkOutputs: a.checks.outputs.map(o => ({ check: o.check, output: cap(o.output, CHECK_OUTPUT_MAX) })),
         }
       : {}),
+    ...(a.advisoryFailure ? { advisoryUnavailable: a.advisoryFailure } : {}),
     report: {
       text: cap(a.reportText, REPORT_MAX),
       ...(a.reportText.length > REPORT_MAX ? { truncated: true } : {}),
@@ -147,7 +163,7 @@ export function shapeAgentResult(a: ShapeInput): string {
     models: a.models,
     usage: a.usage,
     note: notes.filter(Boolean).join(' '),
-    trace: { steps: a.steps, finalText: a.reportText },
+    trace: { steps: a.steps, finalText: a.reportText, ...(a.checks ? { checkOutputs: a.checks.outputs } : {}) },
   });
 }
 
@@ -165,7 +181,26 @@ export function runAgentViewForModel(full: string): string {
   }
 }
 
-export type AgentFailureCode = 'MODEL_NOT_APPROVED' | 'MODEL_DECLINED' | 'RATE_OR_POLICY_LIMIT' | 'ERROR';
+/** The live operational wire carries aliases and fixed states; the retained
+ * record and the parent's model context keep the original brief and report. */
+export function runAgentInputForWire(input: Record<string, unknown>, assignment: string): Record<string, unknown> {
+  const action = input.action === undefined ? 'spawn' : String(input.action);
+  return { action: ['spawn','team','message','revision'].includes(action) ? action : 'unknown', assignment,
+    ...(input.role === 'research' || input.role === 'verify' ? { role: input.role } : {}) };
+}
+export function runAgentResultForWire(full: string): string {
+  try {
+    const raw: unknown = JSON.parse(full);
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('AGENT_RESULT_UNAVAILABLE');
+    const result = raw as Record<string, unknown>;
+    const status = ['completed','incomplete','cancelled','failed'].includes(String(result.status)) ? result.status : result.error ? 'failed' : 'unknown';
+    const role = result.agent && typeof result.agent === 'object' ? (result.agent as { role?: unknown }).role : null;
+    return JSON.stringify({ status, ...(role === 'research' || role === 'verify' ? { agent: { role } } : {}),
+      reportDisposition: 'pending', message: 'The recorded worker result is available for AnA review.' });
+  } catch { return JSON.stringify({ status: 'unknown', reportDisposition: 'pending', message: 'The worker result could not be read.' }); }
+}
+
+export type AgentFailureCode = 'MODEL_NOT_APPROVED' | 'MODEL_DECLINED' | 'RATE_OR_POLICY_LIMIT' | 'RUN_COORDINATION_UNAVAILABLE' | 'ERROR';
 
 /**
  * D8: by code and name, never instanceof — route tests mock the gateway with
@@ -180,7 +215,10 @@ export function classifyAgentFailure(
   const verb = modelCalls === 0 ? 'could not start' : 'could not finish';
   let code: AgentFailureCode;
   let why: string;
-  if (e.code === 'MODEL_NOT_APPROVED_FOR_HIGH_RISK' || e.code === 'MODEL_NOT_PQ_QUALIFIED') {
+  if (e.code === 'RUN_COORDINATION_UNAVAILABLE') {
+    code = 'RUN_COORDINATION_UNAVAILABLE';
+    why = 'the refused action could not be durably recorded, so further work was held';
+  } else if (e.code === 'MODEL_NOT_APPROVED_FOR_HIGH_RISK' || e.code === 'MODEL_NOT_PQ_QUALIFIED') {
     code = 'MODEL_NOT_APPROVED';
     why = 'no model approved for this work was available';
   } else if (e.name === 'GatewayModelDeclinedError') {
