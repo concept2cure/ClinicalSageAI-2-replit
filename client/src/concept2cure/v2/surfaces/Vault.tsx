@@ -91,7 +91,7 @@ import { readShellProject, publishShellProject } from '../shellProject';
 import { type PaletteProject } from '../paletteProjects';
 import { useDialog } from '../useDialog';
 import { VaultFolderEdit, type FolderEditMode } from './VaultFolderEdit';
-import { cabinetFolderOptions, folderParentOf, openFolderMatches, indentedLabel, newFolderParentOf, personFolderOf, type CabinetFolder } from './vaultFolders';
+import { cabinetFolderOptions, folderParentOf, openFolderMatches, indentedLabel, newFolderParentOf, personFolderOf, vaultShowsCabinet, type CabinetFolder } from './vaultFolders';
 import { VaultPlanWork } from './VaultPlanWork';
 import { sponsorGate, useVaultProjects, type SponsorGate, type VaultProjectsRead } from './vaultSponsors';
 import { locateVaultDocument, takeVaultTarget, vaultTargetIsFor, VAULT_TARGET_EVENT, type TakenVaultTarget } from '../vaultTarget';
@@ -2763,13 +2763,15 @@ function VaultForProject({ onAsk, onNav, session }: SurfaceViewProps & { session
   ) : null;
 
   /* ── The views ── */
-  const libraryView = allDocs.length === 0 ? (
+  const libraryView = !vaultShowsCabinet(allDocs.length, cabinetFolders, folderEdit !== null) ? (
     <EmptyState
       icon={I.fileText}
       title="No documents in this project's vault yet"
       hint={
         vault?.pendingStore
           ? "The governed document store isn't provisioned for this environment yet. Documents built here organize by build type into the CTD / eSTAR / IVDR / TMF spine, each classified."
+          : !canWrite
+            ? "Nothing has been filed into this project's vault yet. Your access to this project is view only."
           : "Nothing has been filed into this project's vault yet. Add files — each one is recorded in the folder you choose for it, or classified and filed to a suggested folder for you to confirm — or start a document build; both organize into the submission spine. A changed file uploaded under an existing document's name is offered as a new version of that document."
       }
     />
