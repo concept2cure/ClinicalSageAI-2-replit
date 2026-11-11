@@ -57,6 +57,9 @@ After: two (Memory and Instructions, outside this scope). No failed request and 
 
 ## Found, not fixed
 
+The first three are fixed in `../defects/` (`8846faf52` milestones, `43920b3e7` the roll-up, `5bbb56e3a` the demo data;
+blockers still unseeded, for the reason given there).
+
 - `project_milestones.project_id` references `cer_projects`, not `projects` (`shared/schema.ts`,
   `migrations/0000_sweet_joseph.sql`): no milestone can be recorded on a project through `/api/project-sections`.
   The timeline reads none. A schema change under Rule 1, not a reach.

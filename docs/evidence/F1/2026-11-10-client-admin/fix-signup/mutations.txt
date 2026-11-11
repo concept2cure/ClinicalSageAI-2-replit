@@ -1,0 +1,27 @@
+CAUGHT M1 the deployment sign-up drops the acceptance from its audit event | failing: 2 | restored: True
+     × server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup: what the person agreed to, and their job title, are kept > records
+CAUGHT M2 the development sign-up drops it | failing: 1 | restored: True
+     × server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup: what the person agreed to, and their job title, are kept > records
+CAUGHT M3 an acceptance of false is admitted | failing: 1 | restored: True
+     × server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup: what the person agreed to, and their job title, are kept > refuses
+CAUGHT M4 an unknown agreement key is admitted | failing: 1 | restored: True
+     × server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup: what the person agreed to, and their job title, are kept > refuses
+CAUGHT M5 the job title is not stored | failing: 2 | restored: True
+     × server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup: what the person agreed to, and their job title, are kept > records
+CAUGHT M6 a revision is not required | failing: 2 | restored: True
+     × server/routes/__tests__/auth-signup-verification.test.ts > POST /api/auth/signup: what the person agreed to, and their job title, are kept > refuses
+CAUGHT M7 the audit row holds no agreements | failing: 2 | restored: True
+     × server/services/audit/__tests__/auth-event-audit.test.ts > a sign-up's audit row says what was agreed to > holds the revision shown and each agreeme
+CAUGHT M8 the audit sentence does not say what was agreed | failing: 2 | restored: True
+     × server/services/audit/__tests__/auth-event-audit.test.ts > a sign-up's audit row says what was agreed to > holds the revision shown and each agreeme
+CAUGHT M9 a sign-up with no acceptance is recorded as if it had one | failing: 1 | restored: True
+     × server/services/audit/__tests__/auth-event-audit.test.ts > a sign-up's audit row says what was agreed to > says that no acceptance was sent, and rec
+CAUGHT M10 the page does not send the acceptances | failing: 1 | restored: True
+     × client/src/concept2cure/auth/__tests__/signupAgreements.test.tsx > sign-up sends what the person agreed to > carries the three acceptances, the revi
+CAUGHT M11 the page does not send the job title | failing: 1 | restored: True
+     × client/src/concept2cure/auth/__tests__/signupAgreements.test.tsx > sign-up sends what the person agreed to > carries the three acceptances, the revi
+CAUGHT M12 a word of the agreement text changes with no new revision | failing: 1 | restored: True
+     × client/src/concept2cure/auth/__tests__/signupAgreements.test.tsx > the revision names one text > pins the agreement text to its revision 144ms
+CAUGHT M13 the revision changes with no pinned digest | failing: 1 | restored: True
+     × client/src/concept2cure/auth/__tests__/signupAgreements.test.tsx > the revision names one text > pins the agreement text to its revision 187ms
+ALL CAUGHT

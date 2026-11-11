@@ -5,7 +5,7 @@
  * Merged under /api/ind-lifecycle (auth applied at mount).
  */
 
-import { Router } from 'express';
+import { Router, type Request, type Response } from 'express';
 import { requireRole } from '../../middleware/auth';
 import { validateSequenceLeaves, filingTypeForSequence } from '../../services/ind-lifecycle/ind-sequence-validation';
 import { buildPackageManifest } from '../../services/ind-lifecycle/ind-package-manifest';
@@ -18,6 +18,9 @@ import { diffSequences } from '../../services/ind-lifecycle/ind-sequence-diff';
 import { createDispatchSnapshot, listDispatchSnapshots } from '../../services/ind-lifecycle/ind-dispatch-snapshot-service';
 import { renderPackageManifestPdf, renderSequenceDiffPdf } from '../../services/ind-lifecycle/ind-document-renderer';
 import { listLeaves, getSequence } from '../../services/submission-service/submission-service';
+import { readSubmissionSequenceForRequest, SubmissionReadError } from '../../services/submission-service/submission-request-read';
+import { ProgramReadAccessError } from '../../services/c2c/current-program-access';
+import { MissingRequestDbContextError, requestPgClient } from '../../db/requestDb';
 import { listOverdueSafetyReports } from '../../services/ind-lifecycle/ind-safety-report-persistence';
 import { AUTHOR, limiter, ctxOf, body, fail, noAuth, sendPdf, readinessFrom, filingTypeParam, FILING_TYPE_VALUES } from './shared';
 
@@ -39,6 +42,35 @@ async function manifestForSequence(seqId: number, ctx: Ctx) {
     submissionType: sequence.type,
     leaves: leaves.map((l) => ({ sectionCode: l.sectionCode, title: l.title, lifecycleOp: l.lifecycleOp, checksum: l.checksum })),
   });
+}
+
+/**
+ * The sequence QC reads (diff, manifest and their PDFs) admit the sequence's project for this person first, as every
+ * Submission Center sequence read does (readSubmissionSequenceForRequest): getSequence answers for any sequence of
+ * the organisation, so without this a colleague not on a private project read its leaves and checksums. Production
+ * serves these four since P-122 (2026-11-10), claimed by the eCTD view (`ectd-compile`); a diff compares two
+ * sequences of the same submission. tests/db/p122-sequence-qc.dbtest.ts.
+ */
+async function admitSequences(req: Request, ctx: Ctx, ids: number[]): Promise<void> {
+  const q = requestPgClient(req);
+  const admitted = [];
+  for (const id of ids) admitted.push(await readSubmissionSequenceForRequest(q, ctx, id));
+  if (new Set(admitted.map((a) => a.submissionId)).size > 1) {
+    throw new SubmissionReadError(400, 'VALIDATION', 'The prior sequence must belong to the same submission.');
+  }
+}
+
+/** A project or read refusal, answered with its own status; anything else goes to `fail`. */
+function refuse(res: Response, err: unknown): void {
+  if (err instanceof MissingRequestDbContextError) {
+    // No request scope to admit the project in: refused, never read organisation-wide.
+    return void res.status(503).json({ error: { code: err.code, message: 'The project could not be verified for this read.' } });
+  }
+  if (err instanceof SubmissionReadError || err instanceof ProgramReadAccessError) {
+    const message = err.status === 503 ? 'The submission records could not be verified. Refresh and try again.' : err.message;
+    return void res.status(err.status).json({ error: { code: err.code, message } });
+  }
+  fail(res, err);
 }
 
 /** Load a sequence's number + leaves (for the diff). */
@@ -179,10 +211,11 @@ router.get('/sequence/:currentId/diff', limiter, requireRole(AUTHOR), async (req
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'A valid current sequence id and ?priorId are required.' } });
   }
   try {
+    await admitSequences(req, ctx, [currentId, priorId]);
     const [prior, current] = await Promise.all([sequenceForDiff(priorId, ctx), sequenceForDiff(currentId, ctx)]);
     res.json(diffSequences(prior, current));
   } catch (err) {
-    fail(res, err);
+    refuse(res, err);
   }
 });
 
@@ -196,10 +229,11 @@ router.get('/sequence/:currentId/diff/pdf', limiter, requireRole(AUTHOR), async 
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'A valid current sequence id and ?priorId are required.' } });
   }
   try {
+    await admitSequences(req, ctx, [currentId, priorId]);
     const [prior, current] = await Promise.all([sequenceForDiff(priorId, ctx), sequenceForDiff(currentId, ctx)]);
     await sendPdf(req, res, 'ind-sequence-diff.pdf', await renderSequenceDiffPdf(diffSequences(prior, current)));
   } catch (err) {
-    fail(res, err);
+    refuse(res, err);
   }
 });
 
@@ -210,9 +244,10 @@ router.get('/sequence/:seqId/manifest', limiter, requireRole(AUTHOR), async (req
   const seqId = seqIdOf(req.params.seqId);
   if (!seqId) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid sequence id.' } });
   try {
+    await admitSequences(req, ctx, [seqId]);
     res.json(await manifestForSequence(seqId, ctx));
   } catch (err) {
-    fail(res, err);
+    refuse(res, err);
   }
 });
 
@@ -223,9 +258,10 @@ router.get('/sequence/:seqId/manifest/pdf', limiter, requireRole(AUTHOR), async 
   const seqId = seqIdOf(req.params.seqId);
   if (!seqId) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid sequence id.' } });
   try {
+    await admitSequences(req, ctx, [seqId]);
     await sendPdf(req, res, 'ind-package-manifest.pdf', await renderPackageManifestPdf(await manifestForSequence(seqId, ctx)));
   } catch (err) {
-    fail(res, err);
+    refuse(res, err);
   }
 });
 

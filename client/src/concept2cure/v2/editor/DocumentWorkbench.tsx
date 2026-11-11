@@ -87,6 +87,7 @@ import { scopedProposalResult, type EditorProposalReceipt } from './editorPropos
 import { readSavedTemplateContext, savedTemplateFacts, sourceMetadataUnavailable } from './savedTemplateContext';
 import { AuthoringOversightActions } from './AuthoringOversightActions';
 import { MenuButton, MenuItem, WORKING_COPY_NOTE, downloadWorkingCopy } from './DownloadMenu';
+import { MoreReviewGroups, WorkbenchInspectorDoors } from './WorkbenchInspectorDoors';
 import { StatusPill, ToDocumentsButton } from './CanvasDocumentList';
 import { AuthoringAssemblyBuild, useAuthoringAssemblyBuild } from './AuthoringAssemblyBuild';
 import { StudyDataBuild } from './StudyDataBuild';
@@ -4907,6 +4908,14 @@ export function DocumentWorkbench({
             >
               {I.messageSquare}{cc > 0 && <span className="ed-n" aria-hidden="true">{cc}</span>}
             </button>
+            {/* P-122: the inspector's doors, back on the bar from More (WorkbenchInspectorDoors.tsx). */}
+            {activeDoc && (
+              <WorkbenchInspectorDoors open={rail} onToggle={(id, from) => { if (rail === id) setRail(null); else openRail(id, from); }}
+                sendRefusal={actRefusal(docAccess.assignReview)}
+                vaultRefusal={actRefusal(docAccess.fileToVault) ?? (dirty ? 'Save the open section first — the vault files the saved document.' : null)}
+                onSend={() => { if (activeDocId) setSendForReviewOpen({ context: writerContext, documentId: activeDocId }); }}
+                onFile={() => { if (activeDocId) setFileToVaultOpen({ context: writerContext, documentId: activeDocId }); }} />
+            )}
             <AuthoringCreateExport
               docId={activeDoc?.id ?? null}
               docTitle={activeDoc?.title ?? null}
@@ -4945,39 +4954,14 @@ export function DocumentWorkbench({
                       {/* The section's citation count, as the old toggle said it ("Sources 3"). */}
                       <MenuItem label={`Sources${citations > 0 ? ` ${citations}` : ''}`} onChoose={fromMore('sources')} testId="sources-rail-open" />
                       <MenuItem label="Vault" onChoose={fromMore('vault')} testId="vault-rail-open" />
-                      <MenuItem label="Versions" onChoose={fromMore('history')} />
                       <MenuItem label="Exports" onChoose={fromMore('exports')} testId="exports-rail-open" />
-                      <MenuItem label="Review tasks" onChoose={fromMore('tasks')} testId="tasks-rail-open" />
-                      <MenuItem label="Signatures" onChoose={fromMore('signatures')} />
-                      <MenuItem label="Audit trail" onChoose={fromMore('audit')} />
                       <MenuItem label="Access" onChoose={fromMore('access')} testId="access-rail-open" />
                     </div>
-                    {activeDoc && (
-                      <div role="group" aria-label="Review and file" className="dlm-group">
-                        {/* GE-P-3 (2026-09-28): disabled, not hidden, when the server
-                            will refuse this caller — the reason is the item's note.
-                            Send for review records the review request the board
-                            lists, and each reviewer's task with it, as one act. */}
-                        <MenuItem
-                          label="Send for review…"
-                          disabled={!!assignRefusal}
-                          note={assignRefusal ?? undefined}
-                          onChoose={choose(() => { if (activeDocId) setSendForReviewOpen({ context: writerContext, documentId: activeDocId }); })}
-                          testId="send-for-review-open"
-                        />
-                        <MenuItem
-                          label="File to vault…"
-                          disabled={dirty || !!vaultRefusal}
-                          note={vaultRefusal ?? (dirty
-                            ? 'Save the open section first — the vault files the saved document.'
-                            : !programId
-                              ? 'This document is not filed under a project; the vault is project-scoped.'
-                              : 'Export this document and file the file into the project vault, with its SHA-256 recorded.')}
-                          onChoose={choose(() => { if (activeDocId) setFileToVaultOpen({ context: writerContext, documentId: activeDocId }); })}
-                          testId="file-to-vault-open"
-                        />
-                      </div>
-                    )}
+                    {/* On the bar wider than a phone (P-122); here at phone width. */}
+                    <MoreReviewGroups fromMore={fromMore} documentOpen={!!activeDoc} assignRefusal={assignRefusal}
+                      vaultRefusal={vaultRefusal} dirty={dirty} filedUnderProject={!!programId}
+                      onSend={choose(() => { if (activeDocId) setSendForReviewOpen({ context: writerContext, documentId: activeDocId }); })}
+                      onFile={choose(() => { if (activeDocId) setFileToVaultOpen({ context: writerContext, documentId: activeDocId }); })} />
                     <div role="group" aria-label="Create" className="dlm-group">
                       <MenuItem label="New document…" onChoose={choose(() => setCreateRequests(r => ({ ...r, document: r.document + 1 })))} />
                       {activeDoc && (

@@ -1,0 +1,4 @@
+ Test Files  21 passed (21) — the 21 suites that touch the editor's bar or More (list in the commit)
+      Tests  303 passed (303)
+ Test Files  10 passed (10) — after the split: workbenchFileToVault, sendForReview, workbenchAssignReview, documentAuthoringAuditRail, workbenchA11ySweep, workbenchDocumentAccess, workbenchBar, workbenchBarInspectorDoors, documentCanvasLive, auditTrailSignedRow
+      Tests  155 passed (155)

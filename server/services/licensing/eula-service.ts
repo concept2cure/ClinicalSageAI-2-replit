@@ -17,6 +17,15 @@
  * - Fail-closed: a read that fails throws. (Until 2026-10-15 every read caught
  *   its error and returned [], so an unreadable store meant "nothing
  *   outstanding" and hasAcceptedAll() answered true.)
+ * - Not set up is said, not hidden (2026-11-10, F1 W1-05): when the two tables
+ *   do not exist and cannot be created (the hosted runtime role may not create
+ *   tables), every call throws AgreementStoreUnavailableError, which the routes
+ *   answer 503 with a plain sentence. Tables that exist are never re-created.
+ *   Whether db/migrations/20260621_intelligent_licensing_eula.sql goes on the
+ *   migration applier is a founder decision.
+ * - Publishing is audited (2026-11-10, F1 ADM-01): a new version takes a
+ *   reason, and its sealed audit row, with what it superseded and what replaced
+ *   it, commits in the same transaction.
  */
 
 import crypto from 'crypto';
@@ -126,6 +135,36 @@ export class AgreementPublishTextMissingError extends Error {
 }
 
 /**
+ * The agreement records (license_agreements, license_acceptances) do not exist
+ * on this installation and could not be created. 2026-11-10: every agreement
+ * route, and GET /api/licensing/entitlements, answered a bare 500 for it
+ * ("permission denied for schema public" in the log, nothing on the wire).
+ */
+export class AgreementStoreUnavailableError extends Error {
+  readonly code = 'AGREEMENTS_NOT_SET_UP';
+  readonly statusCode = 503;
+  constructor() {
+    super(
+      'Agreements are not set up on this installation yet: their records do not exist, so no agreement can be read, accepted or published.'
+    );
+    this.name = 'AgreementStoreUnavailableError';
+  }
+}
+
+/** A publish with no stated reason (2026-11-10, F1 ADM-01). Nothing is written. */
+export class AgreementPublishReasonRequiredError extends Error {
+  readonly code = 'AGREEMENT_PUBLISH_REASON_REQUIRED';
+  readonly statusCode = 400;
+  constructor() {
+    super('A reason of at least 3 characters is required to publish an agreement.');
+    this.name = 'AgreementPublishReasonRequiredError';
+  }
+}
+
+/** The shortest reason a governed change accepts, as the platform routes do. */
+export const MIN_PUBLISH_REASON_LENGTH = 3;
+
+/**
  * sha256 of the agreement text an acceptance is given against: the inline body
  * and the url, as a labelled pair. null when the agreement holds neither.
  * For a url-only agreement this binds the url, not the document behind it.
@@ -173,6 +212,37 @@ let ensurePromise: Promise<void> | null = null;
 async function ensureSchema(): Promise<void> {
   if (ensurePromise) return ensurePromise;
   ensurePromise = (async () => {
+    // Tables that exist are used as they are. CREATE TABLE IF NOT EXISTS is
+    // refused to a role without CREATE on the schema even when the table is
+    // there, so it runs only when one is missing (a developer's database).
+    const present = await pool.query(
+      `SELECT to_regclass('license_agreements') IS NOT NULL AS agreements,
+              to_regclass('license_acceptances') IS NOT NULL AS acceptances`
+    );
+    const row = present.rows[0] as { agreements?: boolean; acceptances?: boolean } | undefined;
+    if (row?.agreements === true && row?.acceptances === true) return;
+    try {
+      await createAgreementTables();
+    } catch (err) {
+      logger.warn('Agreement tables do not exist and could not be created', {
+        err: err instanceof Error ? err.message : String(err),
+      });
+      throw new AgreementStoreUnavailableError();
+    }
+  })().catch(err => {
+    // Reset so a later call can retry. The caller's read or write fails with it.
+    ensurePromise = null;
+    if (!(err instanceof AgreementStoreUnavailableError)) {
+      logger.warn('Failed to ensure EULA schema', { err: err instanceof Error ? err.message : String(err) });
+    }
+    throw err;
+  });
+  return ensurePromise;
+}
+
+/** The developer-database path: create the two tables and seed the baseline rows. */
+async function createAgreementTables(): Promise<void> {
+  {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS license_agreements (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -223,13 +293,7 @@ async function ensureSchema(): Promise<void> {
              'Organization-level terms of service.', 'organization', TRUE, 'active'
       WHERE NOT EXISTS (SELECT 1 FROM license_agreements WHERE agreement_key = 'tos');
     `);
-  })().catch(err => {
-    // Reset so a later call can retry. The caller's read or write fails with it.
-    ensurePromise = null;
-    logger.warn('Failed to ensure EULA schema', { err: err instanceof Error ? err.message : String(err) });
-    throw err;
-  });
-  return ensurePromise;
+  }
 }
 
 function mapAgreement(r: any): LicenseAgreement {
@@ -441,10 +505,63 @@ export async function getAcceptanceHistory(userId: number): Promise<AcceptanceRe
   }));
 }
 
+/** What a publish must carry before anything is written: the text it asks people to accept, and why. */
+function checkedPublishInput(input: { body?: string; url?: string; reason: string }): {
+  body: string | undefined; url: string | undefined; reason: string;
+} {
+  const body = input.body?.trim() ? input.body : undefined;
+  const url = input.url?.trim() ? input.url : undefined;
+  if (!body && !url) throw new AgreementPublishTextMissingError();
+  const reason = typeof input.reason === 'string' ? input.reason.trim() : '';
+  if (reason.length < MIN_PUBLISH_REASON_LENGTH) throw new AgreementPublishReasonRequiredError();
+  return { body, url, reason };
+}
+
+/** One agreement version as the audit row keeps it: its identity and the digest of its text. */
+function agreementAuditView(r: any) {
+  return {
+    id: r.id,
+    version: r.version,
+    title: r.title,
+    scope: r.scope,
+    required: r.required !== false,
+    contentHash: hashAgreementContent({ body: r.body ?? null, url: r.url ?? null }),
+  };
+}
+
 /**
- * Publish a new agreement version (admin). Supersedes the prior active version
- * with the same key. Existing acceptances of the prior version remain valid
- * history, but the new version becomes outstanding for everyone.
+ * The publish's sealed audit row, written inside the publish transaction.
+ * Platform-wide act: the platform's own chain (tenant 0), as the other
+ * platform-staff routes write it (routes/admin/access-management.ts).
+ */
+async function auditPublish(
+  client: Parameters<typeof writeChainedAuditRow>[0],
+  p: { agreementKey: string; actorUserId?: number | null; reason: string; superseded: any[]; published: any },
+): Promise<void> {
+  await writeChainedAuditRow(client, {
+    tenantId: 0,
+    userId: p.actorUserId ?? undefined,
+    action: 'license_agreement_published',
+    resourceType: 'license_agreements',
+    resourceId: p.published.id,
+    reason: p.reason,
+    details: {
+      agreementKey: p.agreementKey,
+      before: p.superseded.map(agreementAuditView),
+      after: agreementAuditView(p.published),
+      reason: p.reason,
+    },
+  });
+}
+
+/**
+ * Publish a new agreement version. Supersedes the prior active version with the
+ * same key. Existing acceptances of the prior version remain valid history, but
+ * the new version becomes outstanding for everyone, in every organisation: the
+ * catalogue is platform-wide, so the caller must be platform staff (the route
+ * checks it). 2026-11-10 (F1 ADM-01): it takes the publisher's reason and writes
+ * a sealed audit row, with the superseded and the new version, before COMMIT;
+ * if that row cannot be written nothing is published.
  */
 export async function publishAgreement(input: {
   agreementKey: string;
@@ -456,17 +573,20 @@ export async function publishAgreement(input: {
   scope?: AgreementScope;
   required?: boolean;
   createdBy?: string;
+  /** The platform staff member publishing it: the audit row's actor. */
+  actorUserId?: number | null;
+  /** Why this version is published. Required, at least 3 characters. */
+  reason: string;
 }): Promise<LicenseAgreement> {
-  const body = input.body?.trim() ? input.body : undefined;
-  const url = input.url?.trim() ? input.url : undefined;
-  if (!body && !url) throw new AgreementPublishTextMissingError();
+  const { body, url, reason } = checkedPublishInput(input);
   await ensureSchema();
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    await client.query(
+    const superseded = await client.query(
       `UPDATE license_agreements SET status = 'superseded', superseded_at = NOW()
-       WHERE agreement_key = $1 AND status = 'active'`,
+       WHERE agreement_key = $1 AND status = 'active'
+       RETURNING *`,
       [input.agreementKey]
     );
     const { rows } = await client.query(
@@ -486,10 +606,15 @@ export async function publishAgreement(input: {
         input.createdBy ?? null,
       ]
     );
+    const published = rows[0];
+    await auditPublish(client, {
+      agreementKey: input.agreementKey, actorUserId: input.actorUserId, reason,
+      superseded: superseded.rows ?? [], published,
+    });
     await client.query('COMMIT');
-    return mapAgreement(rows[0]);
+    return mapAgreement(published);
   } catch (err) {
-    await client.query('ROLLBACK');
+    try { await client.query('ROLLBACK'); } catch { /* the original error is the answer */ }
     throw err;
   } finally {
     client.release();

@@ -181,13 +181,14 @@ describe('the real registry, launch scope on', () => {
   it('judges a path as Express routes it, whatever its letter case', async () => {
     for (const p of [
       '/API/mdx/imports', '/Api/Orchestration/execute', '/API/governed-intelligence/contradictions/scan/1',
-      '/api/mdx/qms/Readiness', '/api/chat/Actions/run', '/api/chat/STREAM', '/api/regulatory/tasks/Sync',
+      '/api/regulatory/tasks/Dashboard', '/api/chat/Actions/run', '/api/chat/STREAM', '/api/regulatory/tasks/Sync',
       '/api/concept2cure/projects/ALL', '/api/mdx/Gateways/FDA/esg/transmit', '/api/mdx/Ldt',
     ]) {
       expect(await refused(p), p).toBe(true);
     }
-    // Launch paths are served in any case: Quality (P-48), project risk files (62a8d5e7), and RBM (P-76).
-    for (const p of ['/API/mdx/qms/Documents', '/api/mdx/qms/Suppliers', '/API/mdx/risk-items/1', '/api/mdx/Risk-Items/1', '/api/mdx/Rbm-Kris']) expect(await refused(p), p).toBe(false);
+    // Launch paths are served in any case: Quality (P-48), its readiness figures (P-122: reached by Quality's figure
+    // line, so no longer the excluded example above), project risk files (62a8d5e7), and RBM (P-76).
+    for (const p of ['/API/mdx/qms/Documents', '/api/mdx/qms/Suppliers', '/api/mdx/qms/Readiness', '/API/mdx/risk-items/1', '/api/mdx/Risk-Items/1', '/api/mdx/Rbm-Kris']) expect(await refused(p), p).toBe(false);
   });
 
   it('refuses the device kit under /api/mdx, and passes the launch apps that live there', async () => {

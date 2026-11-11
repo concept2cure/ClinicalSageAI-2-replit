@@ -1,0 +1,4 @@
+ FAIL  client/src/concept2cure/v2/__tests__/ectdSequenceQc.test.tsx [ client/src/concept2cure/v2/__tests__/ectdSequenceQc.test.tsx ]
+Error: Failed to resolve import "../surfaces/EctdSequenceQc" from "client/src/concept2cure/v2/__tests__/ectdSequenceQc.test.tsx". Does the file exist?
+ Test Files  1 failed (1)
+      Tests  no tests

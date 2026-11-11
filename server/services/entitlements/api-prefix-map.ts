@@ -64,6 +64,12 @@ export function buildPrefixMap(
  * Longest-prefix wins, so a more specific registration is not shadowed by a
  * broader one. A path matches a prefix only at a segment boundary — `/api/risk`
  * must not gate `/api/risk-assessment-unrelated`.
+ *
+ * A prefix may name a `:param` segment (`/api/ind-lifecycle/sequence/:id/diff`),
+ * which stands for exactly one non-empty path segment. Without it a route whose
+ * id sits mid-path could be claimed only by the segment above the id, which
+ * admits every route mounted beneath it (P-122, 2026-11-10:
+ * sequence-qc-launch-claim.test.ts).
  */
 export function modulesForPath(
   pathname: string,
@@ -71,10 +77,19 @@ export function modulesForPath(
 ): Set<string> | null {
   let best: { len: number; modules: Set<string> } | null = null;
   for (const [prefix, modules] of prefixMap) {
-    const atBoundary =
-      pathname === prefix || pathname.startsWith(`${prefix}/`) || pathname.startsWith(`${prefix}?`);
+    const atBoundary = prefix.includes('/:')
+      ? onParamPrefix(pathname, prefix)
+      : pathname === prefix || pathname.startsWith(`${prefix}/`) || pathname.startsWith(`${prefix}?`);
     if (!atBoundary) continue;
     if (!best || prefix.length > best.len) best = { len: prefix.length, modules };
   }
   return best ? best.modules : null;
+}
+
+/** A path under a prefix with `:param` segments, compared segment by segment (each `:param` is one non-empty segment). */
+function onParamPrefix(pathname: string, prefix: string): boolean {
+  const want = prefix.split('/');
+  const got = pathname.split('?')[0].split('/');
+  if (got.length < want.length) return false;
+  return want.every((seg, i) => (seg.startsWith(':') ? got[i] !== '' : seg === got[i]));
 }

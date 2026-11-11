@@ -22,6 +22,9 @@ import type { PoolClient } from 'pg';
 import { getPool } from '../db';
 import { createSourceHash } from './cmc-module3-compiler';
 import { isKnownSampleType } from '../../shared/cmc/qc-sample-types';
+/* The source types' labels are shared with the CMC screens, which say a missing source record in the same words
+   (P-122 defects, 2026-11-10): see shared/cmc/module3-input-words.ts. */
+import { CMC_SOURCE_TYPE_LABELS } from '../../shared/cmc/module3-input-words';
 import {
   FINISHED_PRODUCT,
   NON_BATCH_SAMPLE_TYPES,
@@ -104,30 +107,6 @@ interface WriteThroughInput {
   /** Numeric project ID for the unified task system (concept2cure projects table) */
   numericProjectId?: number;
 }
-
-/** Human-readable labels for CMC source types */
-const SOURCE_TYPE_LABELS: Record<string, string> = {
-  drug_substance: 'Drug Substance',
-  drug_product: 'Drug Product',
-  method: 'Analytical Method',
-  stability: 'Stability Study',
-  specification: 'Specification',
-  batch: 'Batch Record',
-  change_control: 'Change Control',
-  comparability: 'Comparability Assessment',
-  process_validation: 'Process Validation',
-  manufacturing_process: 'Manufacturing Process',
-  characterization: 'Characterization',
-  reference_standard: 'Reference Standard',
-  container_closure: 'Container Closure',
-  excipient: 'Excipient',
-  impurity_profile: 'Impurity Profile',
-  dissolution_profile: 'Dissolution Profile',
-  material_spec: 'Material Specification',
-  qc_result: 'QC Result',
-  raw_material_spec: 'Raw Material Specification',
-  formulation_record: 'Formulation Record',
-};
 
 // ── Mapping helpers: legacy CMC record → canonical source payload ─────────
 
@@ -1449,7 +1428,7 @@ async function createReviewTaskFor(
   staleSections: string[],
 ): Promise<void> {
   const { orgId, sourceType, sourceKey } = input;
-  const label = SOURCE_TYPE_LABELS[sourceType] || sourceType;
+  const label = CMC_SOURCE_TYPE_LABELS[sourceType] || sourceType;
   try {
     await unifiedTaskService.createUnifiedTask({
       moduleType: 'CMC',

@@ -1,0 +1,66 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+{"level":30,"time":"2026-11-10T14:26:48.563Z","pid":1334,"hostname":"vm","context":{},"msg":"[database] Initializing PostgreSQL connection pool"}
+{"level":30,"time":"2026-11-10T14:26:48.564Z","pid":1334,"hostname":"vm","context":{"mode":"on"},"msg":"[database] RLS enforcement mode resolved"}
+{"level":40,"time":"2026-11-10T14:26:48.564Z","pid":1334,"hostname":"vm","context":{},"msg":"[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)"}
+stdout | tests/db/p122-project-milestones.dbtest.ts
+[database] Database connection successful
+
+ × tests/db/p122-project-milestones.dbtest.ts > a milestone is recorded on a project > project_milestones.project_id references projects 10ms
+   → expected [ 'cer_projects' ] to deeply equal [ 'projects' ]
+stderr | tests/db/p122-project-milestones.dbtest.ts > a milestone is recorded on a project > a member records one on a regulatory project of their organization, and the Schedule's timeline lists it
+[ProjectSections] Milestone create error: insert or update on table "project_milestones" violates foreign key constraint "project_milestones_project_id_cer_projects_id_fk"
+
+ × tests/db/p122-project-milestones.dbtest.ts > a milestone is recorded on a project > a member records one on a regulatory project of their organization, and the Schedule's timeline lists it 107ms
+   → {"error":"Failed to create milestone"}: expected 500 to be 200 // Object.is equality
+ ✓ tests/db/p122-project-milestones.dbtest.ts > a milestone is recorded on a project > another organization's project is refused as one that does not exist, and nothing is written 47ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/db/p122-project-milestones.dbtest.ts > a milestone is recorded on a project > project_milestones.project_id references projects
+AssertionError: expected [ 'cer_projects' ] to deeply equal [ 'projects' ]
+
+- Expected
++ Received
+
+  [
+-   "projects",
++   "cer_projects",
+  ]
+
+ ❯ tests/db/p122-project-milestones.dbtest.ts:96:39
+     94|       FROM pg_constraint c JOIN pg_attribute a ON a.attrelid = c.conre…
+     95|       WHERE c.conrelid = 'public.project_milestones'::regclass AND c.c…
+     96|     expect(rows.map((r) => r.target)).toEqual(['projects']);
+       |                                       ^
+     97|   });
+     98|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/db/p122-project-milestones.dbtest.ts > a milestone is recorded on a project > a member records one on a regulatory project of their organization, and the Schedule's timeline lists it
+AssertionError: {"error":"Failed to create milestone"}: expected 500 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 500
+
+ ❯ tests/db/p122-project-milestones.dbtest.ts:103:64
+    101|     const res = await request(app).post('/api/project-sections/milesto…
+    102|       .send({ project_id: project.ours, name, target_date: '2027-02-15…
+    103|     expect(res.status, JSON.stringify(res.body).slice(0, 300)).toBe(20…
+       |                                                                ^
+    104|     expect(res.body.milestone).toMatchObject({ project_id: project.our…
+    105|     expect(await milestonesNamed(name)).toEqual([{ organization_id: or…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  14:26:46
+   Duration  2.89s (transform 1.28s, setup 75ms, import 2.27s, tests 222ms, environment 0ms)
+

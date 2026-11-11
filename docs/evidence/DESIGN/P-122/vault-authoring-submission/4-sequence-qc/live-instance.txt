@@ -1,0 +1,6 @@
+create 0001 201 {"id":4,"submissionId":2,"region":"fda","sequenceNumber":"0001","type":"amendment","status":"draft","validationStatus":null,"dispatchStatus":null,"transmitSigna
+leaf m2.3 200 {"id":19,"sequenceId":4,"sectionCode":"m2.3","title":"Quality Overall Summary — C2C-101 (updated)","granularity":null,"l
+leaf m3.2.p.8 200 {"id":20,"sequenceId":4,"sectionCode":"m3.2.p.8","title":"Stability — drug product lot C2C101-DP-2501","granularity":nul
+leaf m5.3.5.1 200 {"id":21,"sequenceId":4,"sectionCode":"m5.3.5.1","title":"Protocol C2C-101-201 v2.0","granularity":null,"lifecycleOp":"r
+diff 200 {"added":1,"replaced":2,"unchanged":0,"deleted":3,"total":6}
+manifest 200 3 3

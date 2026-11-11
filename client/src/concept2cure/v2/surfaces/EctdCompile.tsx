@@ -51,6 +51,7 @@ import { useSubmissionReadSession } from './submissionScopedRead';
 import { PackageDtdValidation, RegionalPackageFact, type PackageDtdStatus } from './EctdCompileDtdEvidence';
 import { COMPILED_ECTD_VERSION, EctdReferenceCards, ectdReferenceActionHandlers, ectdReferenceFacts, ectdReferenceSummary, useEctdReference } from './EctdCompileReference';
 import { EctdModuleReadiness, isStatusView, statusReadinessWords, type StatusView } from './EctdModuleReadiness';
+import { EctdSequenceQc } from './EctdSequenceQc';
 import { EctdFiledState } from './EctdFiledState';
 
 interface ValidationResult {
@@ -354,6 +355,8 @@ interface SignedPackageView {
 /** A refusal from the signed-package seam. Distinct from "not loaded". */
 interface SignatureRefusal { error: string; message: string }
 
+/** A project's regulatory program id (the eCTD view's ident when it names a program). */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 /** Human labels; the raw keys are dotted machine ids and read badly in a list. */
 const ORCH_STEP_LABELS: Record<string, string> = {
   'm3.compose': 'Module 3 — compose (S / P)',
@@ -1533,6 +1536,8 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
 
       {/* ── Readiness ── (EctdModuleReadiness.tsx, F23 6/9) */}
       <EctdModuleReadiness status={status} state={statusState} reason={statusNote} />
+      {/* Sequence QC: the diff and the manifest (P-122; EctdSequenceQc.tsx). */}
+      <EctdSequenceQc programId={ident && UUID_RE.test(ident) ? ident : null} openedSequence={openedSequence ? Number(openedSequence) : null} />
 
       {/* ── Compile result ──
           `errors` and `warnings` are read through these locals rather than off
@@ -1664,7 +1669,7 @@ function EctdCompileForScope({ onAsk, onNav, proj, openedSequence, isScopeCurren
           </span>
         </div>
         <OrchestratorRunControls
-          programId={ident && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(ident) ? ident : null}
+          programId={ident && UUID_RE.test(ident) ? ident : null}
           sequenceId={openedSequence ? Number(openedSequence) : null}
           run={orchRun}
           onLoad={loadOrchestrator}

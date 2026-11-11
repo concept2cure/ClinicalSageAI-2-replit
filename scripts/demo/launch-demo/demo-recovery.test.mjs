@@ -64,6 +64,8 @@ async function fixture(t) {
     }
     if (url.startsWith('/api/cmc/module3-os/sections/')) return ok({ data: [] });
     if (url === '/api/c2c/project-vault/demo-program') return ok({ data: { documentCount: 0 } });
+    // P-122: with no second signer the pack looks for its synthetic reviewer (lib.mjs ensureSyntheticReviewer).
+    if (method === 'GET' && /^\/api\/tenant-users\/\d+$/.test(url)) return ok([{ id: 9, email: 'demo-reviewer@example.test' }]);
     throw new Error(`Unexpected test request: ${method} ${url}`);
   };
   state.login = async (base, email) => {

@@ -1,0 +1,89 @@
+Signed in as rr5-author@example.test (user 1, organisation 5) at http://localhost:5265
+
+⚠ On the standard plan these demo areas are locked for organisation 5, and show "not included in your subscription":
+    Risk-based monitoring (from professional)
+    Biostatistics (from professional)
+  Their records are still seeded. To open them, the platform owner sets the plan in Master licensing → Tenants, or re-runs this with --plan enterprise.
+
+
+=== seed: biotech ===
+  • Projects: program C2C-101 (IND) … ok — found d56ad63d-8530-4cd5-b81f-dc55102a6dea (C2C-101)
+  • Vault: Investigator's Brochure C2C-101 v3.0 … ok — found b1ce2254-857a-42d9-a2f5-95dd44b40eeb → module-1 (2 pages, 7296 bytes)
+  • Vault: Protocol C2C-101-201 v1.0 — Phase 2, randomized, placebo-controlled … ok — found 9728dc67-756b-4fe3-8b57-ec9e160a0483 → module-5 (2 pages, 9196 bytes)
+  • Vault: Statistical Analysis Plan C2C-101-201 v1.0 … ok — found edcac7fa-8084-4111-8fea-47dc091a5d16 → module-5 (2 pages, 6891 bytes)
+  • Vault: CMC Quality Summary (3.2.S / 3.2.P overview) — C2C-101 … ok — found 6d52e92e-6cec-4141-8280-5529dbef6262 → module-2 (2 pages, 6467 bytes)
+  • Vault: Nonclinical Toxicology Summary — C2C-101 … ok — found 3820dab4-93ed-453d-80f2-84791dde847d → module-2 (2 pages, 5781 bytes)
+  • Vault: Pre-IND Meeting Minutes — C2C-101 (Type B) … ok — found cb860602-861c-48c8-a718-9e595b188081 → module-1 (2 pages, 5599 bytes)
+  • Vault: read model lists the filed documents … ok — documentCount=7, unfiled=0, standard=biotech
+  • Authoring: Protocol Synopsis C2C-101-201 … ok — found 1568922d-8ea5-49f5-91a1-db4eb77c071b; sections 6 (0 added)
+  • Authoring: comments on Protocol Synopsis C2C-101-201 … ok — d351a9ab:resolved, 2f3a8dfc:resolved
+  • Authoring: review request on Protocol Synopsis C2C-101-201 … ok — reviewer demo-reviewer@example.test (pending); past review on a previous run
+  • Authoring: freeze Protocol Synopsis C2C-101-201 v1.0 … ok — frozen vapproved ec6d20e2d722…
+  • Authoring: e-signature by the second signer on Protocol Synopsis C2C-101-201 … ok — found signature 83e44709-4fab-4577-862f-bf1207ca02d9 by rr5-reviewer2@example.test
+  • Authoring: Module 2.5 Clinical Overview — C2C-101 … ok — found 7a169b14-6dda-47de-a97b-8d45300e3542; sections 6 (0 added)
+  • Authoring: review request on Module 2.5 Clinical Overview — C2C-101 … ok — reviewer demo-reviewer@example.test (pending); review already signed by demo-reviewer@example.test
+  • Authoring: IB Summary of Data and Guidance for the Investigator — C2C-101 … ok — found 75a08ac7-ebf2-4788-84c2-5bb981fb93c5; sections 4 (0 added)
+  • Authoring: comments on IB Summary of Data and Guidance for the Investigator — C2C-101 … ok — bbd1a842:open
+  • Protocol development: C2C-101-201 document … ok — found #1
+  • Protocol development: section content … ok — 10 sections (0 written)
+  • Protocol development: objectives, eligibility, visits, team … ok — added objectives 0, criteria 0, visits 0, team 0
+  • Protocol development: schedule of assessments matrix … ok — 10 assessments × 9 visits, 51 cells (0 rows, 0 cells added)
+  • Protocol development: risk register … ok — 6 risks (0 added)
+  • Protocol development: milestones … ok — 5 milestones (0 added)
+  • Protocol development: amendment 1 … ok — #1 Amendment 1 — add Week 2 PK sampling and align stratification wording
+  • Protocol development: version snapshot … ok — found 1 version(s)
+  • Protocol development: GET /api/protocol-dev returns it … ok — #1: objectives 6, risks 6, milestones 5, amendments 1
+  • Biostatistics: study design "[Demo · Biotech] C2C-101-201 — Phase 2 dose-ranging study in plaque psoriasis" … ok — updated sd_96c14a9396844b2784f7de0ec29f004d
+  • Biostatistics: adaptive plan "[Demo · Biotech] C2C-101-201 — group-sequential monitoring plan" … ok — plan 1 already recorded, 2 look(s)
+  • Biostatistics: raise the design's proposed tasks … ok — all 6 already raised
+  • Applicant identity: C2C-101 (anti-IL-23p19 monoclonal antibody, fictional)'s application number and sponsor (fictional) … ok — already recorded (999101)
+  • Submission Center: the program's canonical submission (IND) … ok — #2 "[Demo · Biotech] C2C-101 anti-IL-23p19 mAb — plaque psoriasis (IND)" (ind/fda)
+  • Submission Center: sequence 0000 (original) … ok — #1 status assembling
+  • Submission Center: place the vault documents as eCTD leaves … ok — 6 leaves (0 placed)
+  • Submission Center: sequence moves draft → assembling … ok — already assembling
+  • Submission Readiness: deterministic structural validation (GET dispatch-readiness) … ok — gate.cleared=false; validationErrors=8; shadowCriticals=0; blockers=4
+  • Submission Center: sequence moves assembling → validated when the structural check is clean … ok — left assembling (8 validation errors)
+  • Submission Readiness: Shadow Review (agency-lens readiness assessment) … ok — not executed — 1 prior run(s), none completed (failed)
+  • Submission Readiness: dispatch QC (deterministic verdict; narrative only from a provider) … ok — clearedToDispatch=false (assess-dispatch-readiness); blockers 4; narrative null (PROVIDER_UNAVAILABLE)
+  • Submission Readiness: readiness review orchestration (deterministic template) … ok — not executed — the orchestration engine reads the integer project spine; this program is keyed by a uuid — Orchestration is not in the launch catalog
+  • QMS: SOP-001 Document Control … ok — found #1 C2C-SOP-001 → draft
+  • QMS: SOP-002 Change Control … ok — found #2 C2C-SOP-002 → draft
+  • QMS: SOP-003 Deviation Management … ok — found #3 C2C-SOP-003 → draft — review not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)
+  • QMS: SOP-004 Training … ok — found #4 C2C-SOP-004 → draft
+  • QMS: change-control record C2C-CC-001 … ok — #1 C2C-CC-001 (proposed)
+  • QMS: deviation record … ok — not supported by the QMS API (recorded as a finding)
+  • QMS: inspect personal acknowledgement readiness on SOP-001 … ok — Only an effective controlled document can be acknowledged.
+  • CMC / Module 3: drug substance and drug product on C2C-101 … ok — 0 created of 2
+  • CMC / Module 3: analytical methods on C2C-101 … ok — 0 created of 5; validation not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD) — their specifications are refused at approval until a method is validated
+  • CMC / Module 3: specifications on C2C-101 … ok — 0 created of 5
+  • CMC / Module 3: stability programme on C2C-101 … ok — 0 created of 2
+  • CMC / Module 3: batch records on C2C-101 … ok — 0 created of 3
+  • Projects: program C2C-201 (IND) … ok — found 2d6292f3-eeb0-4ae1-9b3c-e68e89c197ad (C2C-201)
+  • CMC / Module 3: drug substance and drug product on C2C-201 … ok — 0 created of 2
+  • CMC / Module 3: analytical methods on C2C-201 … ok — 0 created of 4; validation not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD) — their specifications are refused at approval until a method is validated
+  • CMC / Module 3: specifications on C2C-201 … ok — 0 created of 6
+  • CMC / Module 3: stability programme on C2C-201 … ok — 0 created of 3
+  • CMC / Module 3: batch records on C2C-201 … ok — 0 created of 3
+  • CMC / Module 3: recorded release results on C2C-201 … ok — 0 created of 5 — second-person review is left to the register, so these compose as not reviewed
+  • CMC / Module 3: referenceStandards on C2C-201 … ok — 0 created of 2
+  • CMC / Module 3: impurities on C2C-201 … ok — 0 created of 6
+  • CMC / Module 3: dissolution on C2C-201 … ok — 0 created of 2
+  • CMC / Module 3: characterisation on C2C-201 … ok — 0 created of 2
+  • CMC / Module 3: processes on C2C-201 … ok — 0 created of 2
+  • CMC / Module 3: processValidation on C2C-201 … ok — 0 created of 1
+  • CMC / Module 3: formulations on C2C-201 … ok — 0 created of 1
+  • CMC / Module 3: materials on C2C-201 … ok — 0 created of 5
+  • CMC / Module 3: containerClosures on C2C-201 … ok — 0 created of 2
+  • CMC / Module 3: changes on C2C-201 … ok — 0 created of 2
+  • CMC / Module 3: comparability on C2C-201 … ok — 0 created of 1
+  • CMC / Module 3: compile the dossier on C2C-201 … ok — 21 section(s) composed, 21 with recorded data
+  • Tasks: 6 tasks on C2C-101 … ok — 0 created, 6 already there (board project 2)
+  • Plan: start 5 deliverables on C2C-101 … ok — 0 started, 5 already started
+  • Communication: data-room source "[Demo] FDA information request (fictional) - IND C2C-101.txt" on C2C-101 … ok — found 163
+  • Communication: agency inbox entry for "FDA information request (fictional demo), IND C2C-101" on C2C-101 … ok — found ace_1794309996343_0e830ca2
+  • Communication: the inbox reads "[Demo] FDA information request (fictional) - IND C2C-101.txt" … ok — 3 questions, 0 commitments proposed
+  • Communication: record the questions of "[Demo] FDA information request (fictional) - IND C2C-101.txt" on C2C-101 … ok — 0 recorded of 3
+  • Audit trail: ledger after the run … ok — 3 chained entries written this run (window 500); meta.chain.ok=true
+  ⇒ biotech pack: created 1, found 264
+manifest → /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/2dce5675-71af-532e-b288-abcf4efad803/scratchpad/vas122/demo-run/biotech/manifest.json
+exit 0

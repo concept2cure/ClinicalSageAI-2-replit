@@ -1,0 +1,10 @@
+ok 1 - the seed adds a synthetic @example.test reviewer through the product and sets its password from the activation link
+ok 2 - on a later run the reviewer is found, and the seed says it cannot sign rather than inventing a password
+not ok 3 - with no second signer, the synthetic reviewer is named on the round and signs it REVIEWER: the round is complete
+  error: "Cannot read properties of undefined (reading 'body')"
+  name: 'TypeError'
+not ok 4 - a reviewer this run cannot sign for leaves the round open, and says so
+  name: 'AssertionError'
+# tests 4
+# pass 2
+# fail 2

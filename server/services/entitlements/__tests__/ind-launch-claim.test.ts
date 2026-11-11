@@ -48,6 +48,12 @@ const CALLED = [
   '/api/ind-lifecycle/annual-report/file',
   '/api/ind-lifecycle/amendment-plan', //          wired.amendment
   '/api/ind-lifecycle/amendment/file',
+  // client/src/concept2cure/v2/surfaces/EctdSequenceQc.tsx, in the eCTD view (P-122, 2026-11-10): the sequence QC,
+  // claimed exactly by `ectd-compile` (sequence-qc-launch-claim.test.ts).
+  '/api/ind-lifecycle/sequence/{currentId}/diff',
+  '/api/ind-lifecycle/sequence/{currentId}/diff/pdf',
+  '/api/ind-lifecycle/sequence/{seqId}/manifest',
+  '/api/ind-lifecycle/sequence/{seqId}/manifest/pdf',
   // client/src/concept2cure/v2/surfaces/IndFormsPanel.tsx (embedded in the IND screen)
   '/api/ind-forms/',
   '/api/ind-forms/program-facts',

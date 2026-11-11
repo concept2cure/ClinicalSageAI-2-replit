@@ -47,6 +47,7 @@ import { governedActorId, requireEditorAccess } from '../../middleware/orgMember
 import { clientIpOf } from '../../utils/client-ip';
 import { requireRole } from '../../middleware/auth';
 import { requireGovernedReason } from '../../routes/governed-reason';
+import { module3InputList } from '../../../shared/cmc/module3-input-words';
 
 /** The §11.50(a)(3) meanings a signature may carry. */
 type SignatureMeaning = (typeof SIGNATURE_MEANINGS)[number];
@@ -72,7 +73,7 @@ function incompleteSectionRefusal(sectionKey: string, record: CompiledRecordStat
       : `§${sectionKey} is ${record.completeness}% complete and cannot be approved.`;
   const remedy =
     record.missingInputs.length > 0
-      ? ` Missing required inputs: ${record.missingInputs.join(', ')}. Record them and recompile.`
+      ? ` Missing required inputs: ${module3InputList(record.missingInputs)}. Record them and recompile.`
       : ' Recompile the section so the compiler records what it establishes.';
   return verdict + remedy;
 }

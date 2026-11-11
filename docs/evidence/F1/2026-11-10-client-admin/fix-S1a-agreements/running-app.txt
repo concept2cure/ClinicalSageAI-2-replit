@@ -1,0 +1,14 @@
+# 5220 (runtime role, RLS, launch gate on), restarted on this working tree, signed in through the real form
+signed in as the organisation administrator of the seeded organisation; role = undefined
+POST /api/licensing/agreements (with a reason) -> 403 {"error":"Agreements are published by platform staff. An organisation's administrator cannot publish or replace one."}
+POST /api/licensing/agreements (no reason) -> 403 {"error":"Agreements are published by platform staff. An organisation's administrator cannot publish or replace one."}
+GET /api/licensing/entitlements -> 503 {"error":"Agreements are not set up on this installation yet: their records do not exist, so no agreement can be read, accepted or published.","code":"AGREEMENTS_NOT_SET_UP"}
+GET /api/licensing/agreements/active -> 503 {"error":"Agreements are not set up on this installation yet: their records do not exist, so no agreement can be read, accepted or published.","code":"AGREEMENTS_NOT_SET_UP"}
+GET /api/licensing/agreements/outstanding -> 503 {"error":"Agreements are not set up on this installation yet: their records do not exist, so no agreement can be read, accepted or published.","code":"AGREEMENTS_NOT_SET_UP"}
+GET /api/licensing/acceptances -> 503 {"error":"Agreements are not set up on this installation yet: their records do not exist, so no agreement can be read, accepted or published.","code":"AGREEMENTS_NOT_SET_UP"}
+POST /api/licensing/agreements/00000000-0000-4000-8000-000000000000/accept -> 503 {"error":"Agreements are not set up on this installation yet: their records do not exist, so no agreement can be read, accepted or published.","code":"AGREEMENTS_NOT_SET_UP"}
+
+# The caller, from the database: organisation | membership role; active platform grants; agreement tables (empty = absent)
+2 | admin
+0
+|

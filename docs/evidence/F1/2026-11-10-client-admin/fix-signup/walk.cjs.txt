@@ -1,0 +1,43 @@
+const { chromium } = require('playwright');
+const OUT = '/home/user/ClinicalSageAI-2-replit/docs/evidence/F1/2026-11-10-client-admin/fix-signup';
+(async () => {
+  const browser = await chromium.launch();
+  const res = {};
+  for (const [w, h] of [[1440, 900], [390, 844]]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 2 });
+    const page = await ctx.newPage();
+    const errs = []; page.on('pageerror', e => errs.push(String(e).slice(0, 200)));
+    await page.goto('http://127.0.0.1:5220/concept2cure/signup', { waitUntil: 'networkidle' });
+    await page.click('#firstName');
+    await page.keyboard.type('Avery', { delay: 40 });
+    await page.keyboard.press('Tab');
+    await page.keyboard.type('Lind', { delay: 40 });
+    await page.keyboard.press('Tab');
+    await page.keyboard.type('avery.lind@example.test', { delay: 20 });
+    const typed = await page.evaluate(() => ({ first: document.querySelector('#firstName').value, last: document.querySelector('#lastName').value, email: document.querySelector('#email').value, focus: document.activeElement && document.activeElement.id }));
+    await page.screenshot({ path: `${OUT}/signup-${w}-typed-by-keyboard.png` });
+    // refusal tied to the field
+    await page.fill('#email', '');
+    await page.getByRole('button', { name: /continue/i }).click();
+    const refused = await page.evaluate(() => { const e = document.querySelector('#email'); const d = e.getAttribute('aria-describedby'); return { invalid: e.getAttribute('aria-invalid'), describedBy: d, text: d && document.getElementById(d) && document.getElementById(d).textContent }; });
+    await page.focus('#email');
+    await page.keyboard.press('Shift+Tab'); await page.keyboard.press('Tab');
+    await page.screenshot({ path: `${OUT}/signup-${w}-refusal-and-focus-ring.png` });
+    // to the agreements step: no AI switch
+    await page.fill('#email', 'avery.lind@example.test'); await page.fill('#password', 'Example-not-submitted-1!'); await page.fill('#confirmPassword', 'Example-not-submitted-1!'); await page.fill('#jobTitle', 'Regulatory Affairs Manager');
+    await page.getByRole('button', { name: /continue/i }).click();
+    await page.click('#organization'); await page.keyboard.type('Northgate Biologics', { delay: 20 });
+    const org = await page.inputValue('#organization');
+    await page.selectOption('#organizationType', 'biotech'); await page.fill('#country', 'Germany');
+    await page.selectOption('#useCase', { index: 1 });
+    await page.getByRole('button', { name: /continue/i }).click();
+    await page.getByRole('button', { name: /continue/i }).click();
+    await page.waitForSelector('input[type=checkbox]');
+    const body = await page.evaluate(() => document.body.innerText);
+    await page.screenshot({ path: `${OUT}/signup-${w}-agreements-no-ai-switch.png`, fullPage: true });
+    res[w] = { typed, refused, org, aiSwitch: body.includes('AI Model Improvement'), pageErrors: errs };
+    await ctx.close();
+  }
+  await browser.close();
+  console.log(JSON.stringify(res, null, 1));
+})().catch(e => { console.error('WALK FAILED', e); process.exit(1); });

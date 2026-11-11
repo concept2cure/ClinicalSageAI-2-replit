@@ -539,11 +539,15 @@ describe('DB-write + program surface (full HTTP flow)', () => {
     expect(m535.checksum.length).toBe(32); // md5 hex
   });
 
-  it('GET /sequence/:id/manifest → 200 with the filed leaf', async () => {
+  /* P-122 (2026-11-10): the manifest is served in production for the eCTD view, so it admits the sequence's project
+     first (readSubmissionSequenceForRequest), as every Submission Center sequence read does. This harness installs no
+     request scope and files no project, so the read is refused, never answered organisation-wide. The served path,
+     with its leaves and checksums, is tests/db/p122-sequence-qc.dbtest.ts (real PostgreSQL, RLS on). */
+  it('GET /sequence/:id/manifest is refused without the project admitted', async () => {
     const res = await request(app).get(`/api/ind-lifecycle/sequence/${filedSequenceId}/manifest`);
-    expect(res.status).toBe(200);
-    expect(res.body.totalLeaves).toBeGreaterThanOrEqual(1);
-    expect(res.body.modules.length).toBeGreaterThanOrEqual(1);
+    expect(res.status).toBe(503);
+    expect(res.body.error.code).toBe('REQUEST_DB_CONTEXT_REQUIRED');
+    expect(res.body).not.toHaveProperty('modules');
   });
 
   it('POST /sequence/:id/dispatch-gate → 200 with the one verdict (P-33)', async () => {
