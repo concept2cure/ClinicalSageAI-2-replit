@@ -141,3 +141,29 @@ describe('a PDF rendition of a Word version', () => {
     expect(renditionNote(null)).not.toMatch(/verified/);
   });
 });
+
+/* 2026-11-10, the click-through: on Seals & fixity, "Open" framed the document under the seal's 17 rows, below the
+   fold, so the click looked as if it had done nothing. What a view opens, or says, is brought into view. */
+describe('what a view opens is brought into view', () => {
+  const scrolled: Element[] = [];
+  beforeEach(() => {
+    scrolled.length = 0;
+    (Element.prototype as unknown as { scrollIntoView: () => void }).scrollIntoView = function scrollIntoView(this: Element) { scrolled.push(this); };
+  });
+  afterEach(() => { delete (Element.prototype as unknown as { scrollIntoView?: () => void }).scrollIntoView; });
+
+  it('scrolls to the framed version', async () => {
+    mount();
+    fireEvent.click(await screen.findByRole('button', { name: 'View version 2.0 of Clinical protocol' }));
+    const viewer = await screen.findByTestId('vault-version-viewer');
+    await waitFor(() => expect(scrolled).toContain(viewer));
+  });
+
+  it('scrolls to what the Vault said when it refuses', async () => {
+    download = () => ({ ok: false, status: 409, json: async () => ({ error: { message: 'The stored bytes do not match the recorded hash' } }) });
+    mount();
+    fireEvent.click(await screen.findByRole('button', { name: 'View version 2.0 of Clinical protocol' }));
+    const alert = await screen.findByRole('alert');
+    await waitFor(() => expect(scrolled).toContain(alert));
+  });
+});
