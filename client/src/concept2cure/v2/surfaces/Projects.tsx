@@ -8,7 +8,7 @@ import { projectIntakeId, type ProjectIntakeActor } from '@shared/project-intake
 import { createProjectIntake, readProjectIntakeWorkspaces, type IntakeOptionsAnswer } from './projectIntakeRequest';
 import { ClientChoicesNote, ProjectClientFilter, portfolioClients, portfolioClientContext } from './ProjectClientFilter';
 import { PortfolioLine, PortfolioLinesNote, usePortfolioLines } from './PyramidProject';
-import { CardFacts, PortfolioFigures, PortfolioPagedNote, ProjectPortfolioFilters, WS_LABEL, portfolioCounts, portfolioFilterUrl, portfolioIsUnfilteredEmpty, portfolioStatusChoices, readIsPaged, searchPlaceholder, stated, useRememberedView } from './ProjectPortfolioFilters';
+import { CardFacts, PortfolioFigures, PortfolioPagedNote, ProjectPortfolioFilters, WS_LABEL, averageReadinessFigure, averageReadinessSentence, portfolioCounts, portfolioFilterUrl, portfolioIsUnfilteredEmpty, portfolioStatusChoices, readIsPaged, searchPlaceholder, stated, useRememberedView } from './ProjectPortfolioFilters';
 import { NewProjectObjectiveField, NewProjectObjectiveReview } from './ProjectObjective';
 import { enumWords } from './projectWords';
 import { useDialog } from '../useDialog';
@@ -1407,7 +1407,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         (truncated ? ` — showing the first ${projects.length} only; more exist. Readiness, status and search cover this page${counts ? '; total and filing counts cover all matching projects' : '; counts are page floors'}` : '') +
         (filtered ? `, filtered to ${list.length} by ${by.join(' and ')}` : '') +
         (counts ? `; ${counts.filingWithin60Days} with a target filing date in the next 60 days, as the server counted. ` : '. The portfolio figures could not be read. ') +
-        'No portfolio average readiness is computed; each project\'s dossier readiness is listed. Blockers are not assessed on this list. ' +
+        `${averageReadinessSentence(counts) ?? 'No portfolio average readiness is computed.'} Each project\'s dossier readiness is listed. Blockers are not assessed on this list. ` +
         `Shown as a ${view}.`,
       facts: {
         totalPrograms: counts?.total ?? projects.length,
@@ -1423,6 +1423,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         ...clientContext.facts,
         searchQuery: q.trim() || null,
         filingWithin60Days: counts?.filingWithin60Days ?? null,
+        averageReadiness: averageReadinessFigure(counts),
         blockersAssessed: false,
         // Enough to name a programme back to the user, not the whole row set.
         // `p.lead` is deliberately NOT published: the server projects it as

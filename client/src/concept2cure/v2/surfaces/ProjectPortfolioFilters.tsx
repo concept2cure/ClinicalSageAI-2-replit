@@ -8,6 +8,11 @@ interface PortfolioCounts {
   byWorkstream: Record<string, number>;
   byPathway: Record<string, number>;
   filingWithin60Days: number;
+  /** The server's mean of the measured dossier readiness over every selected project (P-122 §3.2);
+   *  server/services/c2c/project-portfolio.ts `readPortfolioReadiness`. Absent on an older response. */
+  averageReadiness?: unknown;
+  readinessMeasured?: unknown;
+  readinessState?: unknown;
 }
 
 const isCount = (value: unknown): value is number => Number.isSafeInteger(value) && Number(value) >= 0;
@@ -152,6 +157,49 @@ const formatted = (n: number) => n.toLocaleString('en-US');
  * project's own readiness, which the server measures, is on its card and its row.
  * Nothing is said while the read is in flight or failed: the page says that.
  */
+/**
+ * The portfolio's average readiness as the server sent it. Never computed here (Rule 2): a response
+ * that carries no state has no average at all (null), and a 'measured' state without a usable figure
+ * is read as not read.
+ */
+export type AverageReadinessFigure =
+  | { state: 'measured'; pct: number; measured: number }
+  | { state: 'none' | 'not_measured' | 'unavailable' };
+export function averageReadinessFigure(counts: PortfolioCounts | null): AverageReadinessFigure | null {
+  const state = counts?.readinessState;
+  if (!counts || (state !== 'measured' && state !== 'none' && state !== 'not_measured' && state !== 'unavailable')) return null;
+  if (state !== 'measured') return { state };
+  const { averageReadiness: pct, readinessMeasured: measured } = counts;
+  if (typeof pct !== 'number' || !Number.isFinite(pct) || !isCount(measured) || measured === 0) return { state: 'unavailable' };
+  return { state: 'measured', pct: Math.round(pct), measured };
+}
+
+/** The same figure as a sentence, for the screen context AnA reads; null when the server sent none. */
+export function averageReadinessSentence(counts: PortfolioCounts | null): string | null {
+  const f = averageReadinessFigure(counts);
+  if (!f) return null;
+  if (f.state === 'none') return 'No project has a measured dossier readiness yet, so there is no average.';
+  if (f.state === 'not_measured') return 'The average dossier readiness is not measured for this many projects.';
+  if (f.state === 'unavailable') return 'The average dossier readiness could not be read.';
+  return `The server measured an average dossier readiness of ${f.pct}% over the ${f.measured} project(s) with a measured figure.`;
+}
+
+function AverageReadiness({ counts }: { counts: PortfolioCounts }) {
+  const f = averageReadinessFigure(counts);
+  if (!f) return null;
+  let said: React.ReactNode = 'average readiness could not be read';
+  let title = DOSSIER_READINESS_MEANS;
+  if (f.state === 'none') said = 'no readiness measured yet';
+  else if (f.state === 'not_measured') {
+    said = 'average readiness not measured for this many projects';
+    title = 'Narrow the list by client, workstream or pathway to measure it.';
+  } else if (f.state === 'measured') {
+    said = <><strong>{f.pct}%</strong> average readiness{f.measured < counts.total ? ` over ${formatted(f.measured)} measured` : ''}</>;
+    title = `${DOSSIER_READINESS_MEANS} The average is over the projects with a measured figure.`;
+  }
+  return <>{' · '}<span className="pj-summary-i" title={title}>{said}</span></>;
+}
+
 export function PortfolioFigures({ settled, counts }: { settled: boolean; counts: PortfolioCounts | null }) {
   if (!settled) return null;
   if (!counts) return <p className="pj-summary" role="status">The portfolio figures could not be read.</p>;
@@ -159,6 +207,7 @@ export function PortfolioFigures({ settled, counts }: { settled: boolean; counts
   return (
     <p className="pj-summary">
       <span className="pj-summary-i"><strong>{formatted(counts.total)}</strong> {counts.total === 1 ? 'active project' : 'active projects'}</span>
+      <AverageReadiness counts={counts} />
       {' · '}
       <span className="pj-summary-i" data-tone={soon > 0 ? 'warn' : undefined}>
         <strong>{formatted(soon)}</strong> {soon === 1 ? 'filing' : 'filings'} due within 60 days

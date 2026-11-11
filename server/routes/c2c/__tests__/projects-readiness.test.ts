@@ -213,3 +213,85 @@ describe('GET /api/c2c/projects/:id: the same figure the card reads', () => {
     expect(params).toEqual([[P1], 7]);
   });
 });
+
+/**
+ * P-122 §3.2 and ONE_DESIGN_PLAN §2 name three portfolio figures: active projects,
+ * average readiness, filings due within 60 days. The second was the browser's mean
+ * over the loaded page and was removed (Rule 2). The server now measures it: the
+ * mean of the measured dossier readiness over every selected project, through the
+ * one reader the cards use.
+ */
+describe('GET /api/c2c/projects: the portfolio’s average readiness (meta.counts)', () => {
+  const P3 = '33333333-3333-3333-3333-333333333333';
+  const isIds = (sql: unknown) => /AS portfolio_program_id/.test(String(sql));
+  const row = (id: string, title: string) => ({ ...listRows()[0], id, title, code: title });
+
+  /** A portfolio of `total` selected projects, whose list page is `page` and whose every id is `ids`. */
+  function servePortfolio(total: number, page: unknown[], ids: string[], sections: unknown[] | Error) {
+    queryMock.mockImplementation(async (sql: string) => {
+      if (isList(sql)) return { rows: page };
+      if (/AS portfolio_counts/.test(sql)) return { rows: [{ portfolio_counts: { total, byWorkstream: { Biotech: total }, byPathway: { other: total }, filingWithin60Days: 0 } }] };
+      if (isIds(sql)) return { rows: ids.map((id) => ({ portfolio_program_id: id })) };
+      if (isSections(sql)) {
+        if (sections instanceof Error) throw sections;
+        return { rows: sections };
+      }
+      return { rows: [] };
+    });
+  }
+
+  it('is the mean over the projects with a measured figure, and says how many that is', async () => {
+    serve([section(P1, 'approved'), section(P1, 'todo')]);
+    const res = await request(app(7)).get('/api/c2c/projects');
+    // P1 is 50%; P2 has no sections, so it is not in the mean and is not a 0.
+    expect(res.body.meta.counts).toMatchObject({ total: 2, averageReadiness: 50, readinessMeasured: 1, readinessState: 'measured' });
+  });
+
+  it('rounds the mean of every measured project to a whole percent', async () => {
+    serve([section(P1, 'approved'), section(P1, 'todo'), section(P1, 'todo'), section(P2, 'locked')]);
+    const res = await request(app(7)).get('/api/c2c/projects');
+    // 33% and 100%.
+    expect(res.body.meta.counts).toMatchObject({ averageReadiness: 67, readinessMeasured: 2, readinessState: 'measured' });
+  });
+
+  it('a page that holds the whole portfolio is not read twice', async () => {
+    serve([section(P1, 'approved')]);
+    await request(app(7)).get('/api/c2c/projects');
+    expect(queryMock.mock.calls.filter(([s]) => isSections(s))).toHaveLength(1);
+    expect(queryMock.mock.calls.filter(([s]) => isIds(s))).toHaveLength(0);
+  });
+
+  it('says none is measured when no project has sections to count, never 0', async () => {
+    serve([]);
+    const res = await request(app(7)).get('/api/c2c/projects');
+    expect(res.body.meta.counts).toMatchObject({ averageReadiness: null, readinessMeasured: 0, readinessState: 'none' });
+  });
+
+  it('says it could not be read when a figure could not, never a mean over the rest', async () => {
+    serve(connectionReset());
+    const res = await request(app(7)).get('/api/c2c/projects');
+    expect(res.status).toBe(200);
+    expect(res.body.meta.counts).toMatchObject({ total: 2, averageReadiness: null, readinessMeasured: 0, readinessState: 'unavailable' });
+  });
+
+  it('covers the projects beyond this page: every selected project is measured, in the caller’s organization', async () => {
+    seatProgram(7, P3);
+    // limit=2 with a third row behind it: the page shows two, the portfolio holds three.
+    servePortfolio(3, [row(P1, 'A'), row(P2, 'B'), row(P3, 'C')], [P1, P2, P3],
+      [section(P1, 'approved'), section(P2, 'approved'), section(P2, 'todo'), section(P3, 'todo')]);
+    const res = await request(app(7)).get('/api/c2c/projects?limit=2');
+    expect(res.body.data).toHaveLength(2);
+    expect(res.body.meta.hasMore).toBe(true);
+    // 100%, 50% and 0%: the third project counts although it is not on the page.
+    expect(res.body.meta.counts).toMatchObject({ total: 3, averageReadiness: 50, readinessMeasured: 3, readinessState: 'measured' });
+    const reads = queryMock.mock.calls.filter(([s]) => isSections(s)).map(([, params]) => params);
+    expect(reads).toContainEqual([[P1, P2, P3], 7]);
+  });
+
+  it('does not measure a portfolio past the bound, and says so', async () => {
+    servePortfolio(201, [row(P1, 'A'), row(P2, 'B'), row('44444444-4444-4444-4444-444444444444', 'D')], [], []);
+    const res = await request(app(7)).get('/api/c2c/projects?limit=2');
+    expect(res.body.meta.counts).toMatchObject({ total: 201, averageReadiness: null, readinessMeasured: 0, readinessState: 'not_measured' });
+    expect(queryMock.mock.calls.filter(([s]) => isIds(s))).toHaveLength(0);
+  });
+});

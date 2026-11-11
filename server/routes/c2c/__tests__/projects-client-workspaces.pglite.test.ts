@@ -228,7 +228,7 @@ async function seedPathwayPortfolio() {
 describe('Projects pathway and workstream facets over the admitted portfolio', () => {
   beforeEach(seedPathwayPortfolio);
 
-  it('counts all 60 admitted programs while measuring only the 50 returned rows', async () => {
+  it('counts all 60 admitted programs; the cards measure the 50 returned rows, the average every selected one', async () => {
     const res = await list('?limit=50');
     expect(res.status, JSON.stringify(res.body)).toBe(200);
     expect(res.body.meta).toMatchObject({ count: 50, hasMore: true, counts: {
@@ -236,8 +236,12 @@ describe('Projects pathway and workstream facets over the admitted portfolio', (
       byPathway: { pma: 20, cer: 10, ide: 10, ind: 10, ivdr: 5, mdl: 4, other: 1 }, filingWithin60Days: 20,
     } });
     expect(Object.values(res.body.meta.counts.byPathway).reduce((sum, n) => Number(sum)+Number(n), 0)).toBe(60);
-    expect(h.figureReads).toHaveLength(1);
+    // The page's cards, then the portfolio's average readiness over every selected project
+    // (P-122 §3.2: the server's figure, not a mean over the page), read once each.
+    expect(h.figureReads).toHaveLength(2);
     expect(h.figureReads[0]).toHaveLength(50);
+    expect(new Set(h.figureReads[1]).size).toBe(60);
+    expect(res.body.meta.counts).toMatchObject({ averageReadiness: null, readinessMeasured: 0, readinessState: 'none' });
     const second = await list('?limit=50&offset=50');
     expect(second.body.meta.counts).toEqual(res.body.meta.counts);
     expect(second.body.data.some((row: {pathway: string}) => row.pathway==='other')).toBe(true);
@@ -271,7 +275,10 @@ describe('Projects pathway and workstream facets over the admitted portfolio', (
     expect(res.body.data.every((row: {pathway: string; ws: string; client_workspace_id: number}) =>
       row.pathway==='ide' && row.ws==='MDX' && row.client_workspace_id===B)).toBe(true);
     expect(res.body.meta.counts).toEqual({ total:10,
-      byWorkstream:{MDX:19,Biotech:10,Mystery:1}, byPathway:{ide:10,ivdr:5,mdl:4}, filingWithin60Days:0 });
+      byWorkstream:{MDX:19,Biotech:10,Mystery:1}, byPathway:{ide:10,ivdr:5,mdl:4}, filingWithin60Days:0,
+      averageReadiness:null, readinessMeasured:0, readinessState:'none' });
+    // The average is over the same selection as the total: the ten filtered projects, not the four on the page.
+    expect(h.figureReads[1]).toHaveLength(10);
     expect(res.body.meta.clients).toEqual([{ id:A,name:'Client Alpha' },{ id:B,name:'Client Beta' }]);
   });
 
