@@ -100,18 +100,32 @@ export function useVaultVersionViewer(projectId: string) {
   return { viewer, closeViewer, viewing, note, view };
 }
 
+/**
+ * Brings what a view opened, or said, into view. The viewer renders under the list it was opened from, and a seal's
+ * list of documents is longer than the page: "Open" framed the document below the fold, and the click looked as if
+ * it had done nothing (click-through, 2026-11-10). Instant, with no motion. jsdom has no scrollIntoView, hence the
+ * optional call.
+ */
+function useBroughtIntoView(shown: unknown) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (shown) ref.current?.scrollIntoView?.({ block: 'nearest' }); }, [shown]);
+  return ref;
+}
+
 /** The open version, framed, with its served hash; and the note of the last attempt. */
 export function VaultVersionViewer({ state }: { state: ReturnType<typeof useVaultVersionViewer> }) {
   const { viewer, closeViewer, note } = state;
+  const noteRef = useBroughtIntoView(note);
+  const viewerRef = useBroughtIntoView(viewer?.url);
   return (
     <>
       {note && (
-        <div className={note.tone === 'error' ? 'vd-dr-err' : 'vd-d-idx'} role={note.tone === 'error' ? 'alert' : 'status'}>
+        <div ref={noteRef} className={note.tone === 'error' ? 'vd-dr-err' : 'vd-d-idx'} role={note.tone === 'error' ? 'alert' : 'status'}>
           {note.tone === 'error' ? I.alertTriangle : null} {note.text}
         </div>
       )}
       {viewer && (
-        <div className="pf-viewer" data-testid="vault-version-viewer">
+        <div ref={viewerRef} className="pf-viewer" data-testid="vault-version-viewer">
           <div className="pf-viewer-h">
             <button type="button" className="nda-open" onClick={closeViewer}>{I.close} Close viewer</button>
             <span className="pf-viewer-t" title={viewer.doc.title}>{viewer.doc.title}</span>
