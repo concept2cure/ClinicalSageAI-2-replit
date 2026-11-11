@@ -29,6 +29,7 @@ import { pool } from '../db.js';
 import { ProgramReadAccessError, readCurrentProgramActor } from '../services/c2c/current-program-access.js';
 import { canAccessReportProject } from '../services/report-os/project-access.js';
 import { ProjectAdmissionRefusal, requireProjectAdmission } from './c2c/project-access.js';
+import { launchScopeEnforced } from '../services/entitlements/launch-scope.js';
 import {
   getAllINDSections,
   getSectionByCode,
@@ -774,7 +775,15 @@ router.patch('/milestones/:id', admitMilestoneProject, async (req: Request, res:
   }
 });
 
+/* A milestone is a project record: it is moved or marked done. This hard delete keeps no history, and no screen,
+   seed or AnA tool calls it. project-home's claim on /api/project-sections/milestones (P-122) admits the path in
+   production, so while launch scope is on the route refuses itself, as /api/cmc-changes does, and touches nothing. */
 router.delete('/milestones/:id', admitMilestoneProject, async (req: Request, res: Response) => {
+  if (launchScopeEnforced()) {
+    return res.status(409).json({
+      error: { code: 'MILESTONE_NOT_DELETED', message: 'A milestone is not deleted: move its date or mark it done. Nothing was changed.' },
+    });
+  }
   try {
     const milestoneId = parseInt(String(req.params.id), 10);
     const orgId = extractOrgId(req);

@@ -204,10 +204,32 @@ describe('who may not', () => {
     expect(await seeded(milestone.theirs)).toEqual([{ name: `${TAG} Seeded on theirs`, target: '2027-03-01', done: false }]);
   });
 
-  it('the project owner deletes a milestone (DELETE shares the claimed path, and is admitted as a write)', async () => {
-    const id = await seedMilestone(org.A, project.priv, `${TAG} To delete`);
-    expect((await request(app).delete(`/api/project-sections/milestones/${id}`).set(as('ownerA'))).status).toBe(200);
-    expect(await seeded(id)).toEqual([]);
+  /* DELETE shares the claimed path, so the claim admits it. A milestone is a project record: it is moved or marked
+     done, and a hard delete leaves no history. No screen, seed or AnA tool calls this route. So while launch scope
+     is on (production) the route refuses itself, as /api/cmc-changes does, and the row stays. */
+  describe('deleting a milestone', () => {
+    const prior = process.env.LAUNCH_SCOPE_ENFORCE;
+    const restore = () => { if (prior === undefined) delete process.env.LAUNCH_SCOPE_ENFORCE; else process.env.LAUNCH_SCOPE_ENFORCE = prior; };
+
+    it('is refused while launch scope is on, with the reason, and the milestone stays', async () => {
+      const id = await seedMilestone(org.A, project.priv, `${TAG} Not deleted`);
+      process.env.LAUNCH_SCOPE_ENFORCE = 'on';
+      try {
+        const res = await request(app).delete(`/api/project-sections/milestones/${id}`).set(as('ownerA'));
+        expect(outcome(res)).toEqual({ status: 409, code: 'MILESTONE_NOT_DELETED' });
+        expect(String(res.body?.error?.message)).toMatch(/move its date or mark it done/i);
+      } finally { restore(); }
+      expect(await seeded(id)).toEqual([{ name: `${TAG} Not deleted`, target: '2027-03-01', done: false }]);
+    });
+
+    it('outside launch scope the project owner still deletes one (admitted as a write)', async () => {
+      const id = await seedMilestone(org.A, project.priv, `${TAG} To delete`);
+      process.env.LAUNCH_SCOPE_ENFORCE = 'off';
+      try {
+        expect((await request(app).delete(`/api/project-sections/milestones/${id}`).set(as('ownerA'))).status).toBe(200);
+      } finally { restore(); }
+      expect(await seeded(id)).toEqual([]);
+    });
   });
 });
 
