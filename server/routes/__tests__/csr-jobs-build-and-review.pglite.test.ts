@@ -163,7 +163,7 @@ describe('POST /api/csr/jobs/:jobId/resume — a stopped build is resumed as the
     await pg.query(`INSERT INTO csr_build_jobs (id, organization_id, project_id, study_id, status, progress, study_info_snapshot, requested_by)
       VALUES (63, 7, 11, 'NCT05330182', 'drafting', 30, $1, 5)`, [bound]);
     expect((await request(app).post('/api/csr/jobs/63/cancel').send({})).status).toBe(204);
-    expect((await pg.query('SELECT status FROM csr_build_jobs WHERE id = 63')).rows[0].status).toBe('cancelled');
+    expect((await pg.query('SELECT status FROM csr_build_jobs WHERE id = 63')).rows[0]).toEqual({ status: 'cancelled' });
     const res = await request(app).post('/api/csr/jobs/63/resume').send({});
     expect(res.status).toBe(202);
     expect(res.body).toEqual({ jobId: 63, status: 'queued', resumed: true });
