@@ -1,0 +1,55 @@
+// Walk 2, flow 6c: change what can be changed on the profile card and the PDF/A requirement (own org); read the records.
+const c = require('./lib.cjs');
+const audit = (n = 2) => c.psql(`select action, actor_id, coalesce(reason,'(no reason)'), left(coalesce(old_values::text,''),160), left(new_values::text, 380) from audit_logs where tenant_id=7 order by occurred_at desc limit ${n}`);
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.pageFor(browser, 'w2owner', 'walk2.owner@example.test');
+  const calls = []; page.on('response', async (r) => { if (r.url().includes('/api/') && r.request().method() !== 'GET') { let b = ''; try { b = (await r.text()).slice(0, 260); } catch {} calls.push(`${r.status()} ${r.request().method()} ${r.url().replace(c.BASE, '')} body=${(r.request().postData() || '').slice(0, 200)} -> ${b}`); } });
+  const open = async () => { await page.goto(`${c.BASE}/concept2cure/admin-console`, { waitUntil: 'networkidle' }); await c.sleep(1200); await page.getByRole('tab', { name: 'Settings' }).or(page.getByRole('button', { name: 'Settings', exact: true })).first().click(); await c.sleep(4000); };
+  const profileRow = () => 'org ' + c.psql('select name, industry_mode from organizations where id=7') + ' | profile ' + c.psql(`select primary_industry, coalesce(mdx_specialization,''), updated_by from organization_industry_profiles where organization_id=7`);
+  await c.step('profile card: change the client type, no reason, then with a reason; then put it back', async (s) => {
+    await open();
+    const chips = page.locator('main button.txw-pchip');
+    const state = async () => JSON.stringify(await chips.evaluateAll(els => els.map(e => `${e.textContent.trim()}${e.hasAttribute('data-on') ? ' (selected)' : ''}${e.getAttribute('aria-pressed') ? ' aria-pressed=' + e.getAttribute('aria-pressed') : ''}`)));
+    s.notes.push('chips: ' + await state()); s.notes.push('before: ' + profileRow());
+    const original = await chips.evaluateAll(els => (els.find(e => e.hasAttribute('data-on')) || {}).textContent || null);
+    await chips.filter({ hasText: /^CRO$/ }).click(); await c.sleep(500);
+    const save = page.getByRole('button', { name: /^(Save to organization|No unsaved changes|Saving…)$/ });
+    s.notes.push('after picking CRO: button "' + (await save.innerText()) + '"');
+    calls.length = 0; await save.click(); await c.sleep(1200);
+    s.notes.push('no reason -> requests ' + JSON.stringify(calls) + ' | says: ' + (await page.locator('main .txw-set-card, main section').filter({ hasText: 'Profile & client type' }).first().locator('[role=status], [role=alert]').allInnerTexts()).filter(Boolean).join(' / ').slice(0, 300));
+    await page.getByLabel('Reason for change').first().fill('F1 walk 2: change the client type to read the record');
+    await save.click(); await c.sleep(3000);
+    s.notes.push('with reason -> requests ' + JSON.stringify(calls));
+    s.notes.push('says: ' + (await page.locator('main .txw-set-card, main section').filter({ hasText: 'Profile & client type' }).first().locator('[role=status], [role=alert]').allInnerTexts()).filter(Boolean).join(' / ').slice(0, 300));
+    s.notes.push('after: ' + profileRow()); s.notes.push('audit:\n' + audit(2));
+    await page.getByText('Profile & client type').first().scrollIntoViewIfNeeded(); await c.shot(page, 'w2-61-profile-saved.png');
+    await page.reload({ waitUntil: 'networkidle' }); await c.sleep(1500); await page.getByRole('tab', { name: 'Settings' }).or(page.getByRole('button', { name: 'Settings', exact: true })).first().click(); await c.sleep(3500);
+    s.notes.push('after reload, chips: ' + await state());
+    s.notes.push('rail after the change: ' + (await page.locator('nav, aside').first().innerText()).replace(/\n+/g, ' | ').slice(0, 260));
+    if (original) {
+      await chips.filter({ hasText: new RegExp('^' + original.trim().replace(/[()]/g, '\\$&') + '$') }).click(); await c.sleep(400);
+      await page.getByLabel('Reason for change').first().fill('F1 walk 2: put the client type back');
+      await save.click(); await c.sleep(3000);
+      s.notes.push('restored: ' + profileRow() + ' chips ' + await state());
+    }
+  });
+  await c.step('PDF/A requirement: turn on, then off', async (s) => {
+    await open();
+    const change = page.getByRole('button', { name: 'Require PDF/A for production submissions' });
+    for (const want of ['on', 'off']) {
+      await change.scrollIntoViewIfNeeded(); calls.length = 0; await change.click(); await c.sleep(700);
+      const act = page.getByRole('button', { name: want === 'on' ? 'Require PDF/A' : 'Stop requiring PDF/A', exact: true });
+      s.notes.push(`(${want}) act enabled with no reason: ` + await act.isEnabled());
+      await page.getByLabel('Reason for the change').last().fill(`F1 walk 2: PDF/A requirement ${want}, to read the record`);
+      if (want === 'on') { await act.scrollIntoViewIfNeeded(); await c.shot(page, 'w2-61-pdfa-editor.png'); }
+      await act.click(); await c.sleep(2500);
+      s.notes.push('requests: ' + JSON.stringify(calls));
+      s.notes.push('card now: ' + (await c.mainText(page, 60000)).split('Require PDF/A')[1]?.slice(0, 420).replace(/\n+/g, ' | '));
+      s.notes.push('db submissions settings: ' + c.psql(`select coalesce(settings->'submissions', settings->'submission', '{}'::jsonb)::text, (settings::text like '%pdfa%' or settings::text like '%PdfA%') from organizations where id=7`));
+      s.notes.push('audit:\n' + audit(1));
+    }
+  });
+  c.report(); c.save('w2-27-cards-write');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

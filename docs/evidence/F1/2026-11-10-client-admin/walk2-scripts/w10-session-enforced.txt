@@ -1,0 +1,37 @@
+// Walk 2, flow 2b: is the idle window ENFORCED? Own organization, idle 1 minute, 2 concurrent sessions.
+const c = require('./lib.cjs');
+const claimsOf = (page) => page.evaluate(() => { const t = localStorage.getItem('trialsage_access_token') || sessionStorage.getItem('trialsage_access_token'); if (!t) return null; const p = JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))); return { idl: p.idl, sst: p.sst, exp: p.exp, iat: p.iat, role: p.role, sid: Boolean(p.sid) }; });
+async function fresh(browser, who, email) {
+  const ctx = await browser.newContext({ viewport: c.VIEWPORTS.desktop }); const page = await ctx.newPage();
+  const calls = [];
+  page.on('response', (r) => { if (r.url().includes('/api/')) calls.push({ t: Date.now(), s: r.status(), m: r.request().method(), u: r.url().replace(c.BASE, '').slice(0, 90) }); });
+  await c.signIn(page, email);
+  return { ctx, page, calls };
+}
+(async () => {
+  const browser = await c.chromium.launch();
+  await c.step('idle 1 minute: a signed-in page left open and untouched for 150 seconds', async (s) => {
+    const { ctx, page, calls } = await fresh(browser, 'w2member', 'walk2.member2@example.test');
+    s.notes.push('token claims: ' + JSON.stringify(await claimsOf(page)));
+    const t0 = Date.now(); calls.length = 0;
+    await c.sleep(150000);
+    const during = calls.filter((x) => x.t > t0);
+    s.notes.push(`requests the open page made by itself in 150 s: ${during.length}`);
+    s.notes.push(during.map((x) => `+${Math.round((x.t - t0) / 1000)}s ${x.s} ${x.m} ${x.u}`).join('\n'));
+    s.notes.push('url after 150 s idle: ' + page.url());
+    s.notes.push('screen after 150 s idle: ' + (await c.textOf(page, 'body')).slice(0, 400).replace(/\n+/g, ' | '));
+    await c.shot(page, 'w2-21-idle-150s-untouched.png');
+    calls.length = 0;
+    await page.getByRole('link', { name: 'Projects' }).or(page.getByRole('button', { name: 'Projects' })).first().click().catch((e) => s.notes.push('click failed: ' + e.message.split('\n')[0]));
+    await c.sleep(4000);
+    s.notes.push('after clicking Projects: url ' + page.url());
+    s.notes.push('requests: ' + calls.map((x) => `${x.s} ${x.m} ${x.u}`).slice(0, 12).join(' ; '));
+    s.notes.push('screen: ' + (await c.textOf(page, 'body')).split('Română').pop().slice(0, 600).replace(/\n+/g, ' | '));
+    await c.shot(page, 'w2-21-idle-after-click.png');
+    const me = await c.api(page, 'GET', '/api/users/me').catch((e) => ({ status: 'ERR', body: e.message }));
+    s.notes.push('GET /api/users/me with the stored token: ' + me.status + ' ' + JSON.stringify(me.body).slice(0, 300));
+    await ctx.close();
+  });
+  c.report(); c.save('w2-10-session-enforced');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

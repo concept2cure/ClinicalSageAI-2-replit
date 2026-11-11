@@ -1,0 +1,20 @@
+// Walk 2: first sign-in to the walk's own organization on the lead's instance, and its Admin console.
+const c = require('./lib.cjs');
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.pageFor(browser, 'w2owner', 'walk2.owner@example.test', { fresh: true });
+  await c.step('own organization: first screen', async (s) => {
+    s.notes.push('url ' + page.url());
+    s.notes.push((await c.textOf(page, 'body')).slice(0, 1500));
+    await c.shot(page, 'w2-00d-own-org-first-screen.png');
+  });
+  await c.step('own organization: admin console', async (s) => {
+    await page.goto(`${c.BASE}/concept2cure/admin-console`, { waitUntil: 'networkidle' }); await c.sleep(2000);
+    s.notes.push((await c.mainText(page)).slice(0, 2500));
+    await c.shot(page, 'w2-00d-own-org-admin.png');
+    const me = await c.api(page, 'GET', '/api/users/me');
+    s.notes.push('me ' + JSON.stringify(me.body).slice(0, 600));
+  });
+  c.report(); c.save('w2-05-own-org');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

@@ -1,0 +1,42 @@
+// Walk 2, flow 0b: with sign-up refused, the seeded administrator invites this walk's two accounts.
+const c = require('./lib.cjs');
+const PEOPLE = [
+  { name: 'Wanda Walker', email: 'walk2.admin@example.test', role: 'admin', title: 'Head of Regulatory Operations' },
+  { name: 'Miles Member', email: 'walk2.member@example.test', role: 'member', title: 'Regulatory Associate' },
+];
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.pageFor(browser, 'owner', 'jm.smith@concept2cure.pro');
+  const links = {};
+  for (const p of PEOPLE) {
+    await c.step(`invite ${p.email} as ${p.role}`, async (s) => {
+      await page.goto(`${c.BASE}/concept2cure/admin-console`, { waitUntil: 'networkidle' }); await c.sleep(1500);
+      await page.getByRole('button', { name: 'Invite member' }).click(); await c.sleep(800);
+      s.notes.push('form: ' + (await page.locator('[role=dialog], .c2c-form, form').first().innerText().catch(() => '')).replace(/\n+/g, ' | ').slice(0, 600));
+      await c.shot(page, `w2-00b-invite-form-${p.role}.png`);
+      const dlg = page.locator('[role=dialog]').first();
+      const scope = (await dlg.count()) ? dlg : page;
+      await scope.getByLabel('Full name').fill(p.name);
+      await scope.getByLabel('Email').fill(p.email);
+      await scope.getByLabel('Role').selectOption(p.role);
+      await scope.getByLabel('Job title').fill(p.title);
+      await scope.getByRole('button', { name: 'Send invite' }).click(); await c.sleep(2500);
+      const t = await c.mainText(page, 20000);
+      const i = t.indexOf(p.email);
+      s.notes.push('after: ' + t.slice(Math.max(0, t.indexOf('Invitation')), Math.max(0, t.indexOf('Invitation')) + 900).replace(/token=[^\s&"]+/g, 'token=<redacted>'));
+      const all = await page.locator('main').first().innerHTML();
+      const m = all.match(/https?:\/\/[^"'<\s]+password-reset\?[^"'<\s]+/);
+      const inputs = await page.locator('main input').evaluateAll(els => els.map(e => e.value));
+      const fromInput = inputs.find(v => /password-reset\?/.test(v));
+      links[p.email] = (fromInput || (m && m[0].replace(/&amp;/g, '&')) || null);
+      s.notes.push('setup link captured: ' + Boolean(links[p.email]));
+      await page.setViewportSize({ width: 1440, height: 1800 }); await c.sleep(400);
+      // the setup link is on screen: mask it in the capture
+      await c.shot(page, `w2-00b-invite-result-${p.role}.png`, { mask: [page.locator('main input'), page.locator('main code')] });
+      await page.setViewportSize({ width: 1440, height: 900 });
+    });
+  }
+  c.fs.writeFileSync(c.SCRATCH + '/walk2/.setup-links.json', JSON.stringify(links), { mode: 0o600 });
+  c.report(); c.save('w2-04-invite');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });
