@@ -111,8 +111,8 @@ function RecordCrossReference({ submissionId, onDone }: { submissionId: number; 
       </Field>
       {error && <p role="alert" className="sec-sub">{error}</p>}
       <span className="pj-sec-acts">
-        <button type="submit" className="btn primary sm" disabled={busy}>{busy ? 'Recording…' : 'Record'}</button>
-        <button type="button" className="btn ghost sm" onClick={() => onDone(null)}>Cancel</button>
+        <button type="submit" className="btn primary small" disabled={busy}>{busy ? 'Recording…' : 'Record'}</button>
+        <button type="button" className="btn ghost small" onClick={() => onDone(null)}>Cancel</button>
       </span>
     </form>
   );
@@ -146,8 +146,8 @@ function FileLetter({ submissionId, row, sponsorName, onDone }: {
       <Field label="Signatory title (optional)"><input className="c2c-input" value={f.title} onChange={set('title')} /></Field>
       {error && <p role="alert" className="sec-sub">{error}</p>}
       <span className="pj-sec-acts">
-        <button type="submit" className="btn primary sm" disabled={busy}>{busy ? 'Filing…' : 'File the letter'}</button>
-        <button type="button" className="btn ghost sm" onClick={() => onDone(null)}>Cancel</button>
+        <button type="submit" className="btn primary small" disabled={busy}>{busy ? 'Filing…' : 'File the letter'}</button>
+        <button type="button" className="btn ghost small" onClick={() => onDone(null)}>Cancel</button>
       </span>
     </form>
   );
@@ -161,18 +161,18 @@ function CrossReferenceActions({ row, busy, onFile, onMark, onRemove }: {
   if (confirming) {
     return (
       <span className="pj-sec-acts">
-        <button type="button" className="btn ghost sm" disabled={busy} onClick={onRemove}>Remove {row.referencedFileType} {row.referencedFileNumber}</button>
-        <button type="button" className="btn ghost sm" onClick={() => setConfirming(false)}>Keep</button>
+        <button type="button" className="btn ghost small" disabled={busy} onClick={onRemove}>Remove {row.referencedFileType} {row.referencedFileNumber}</button>
+        <button type="button" className="btn ghost small" onClick={() => setConfirming(false)}>Keep</button>
       </span>
     );
   }
   return (
     <span className="pj-sec-acts">
-      {!row.loaOnFile && <button type="button" className="btn ghost sm" disabled={busy} onClick={onFile}>File the letter</button>}
-      <button type="button" className="btn ghost sm" disabled={busy} onClick={() => onMark(!row.loaOnFile)}>
+      {!row.loaOnFile && <button type="button" className="btn ghost small" disabled={busy} onClick={onFile}>File the letter</button>}
+      <button type="button" className="btn ghost small" disabled={busy} onClick={() => onMark(!row.loaOnFile)}>
         {row.loaOnFile ? 'Mark letter not on file' : 'Mark letter on file'}
       </button>
-      <button type="button" className="btn ghost sm" disabled={busy} onClick={() => setConfirming(true)}>Remove</button>
+      <button type="button" className="btn ghost small" disabled={busy} onClick={() => setConfirming(true)}>Remove</button>
     </span>
   );
 }
@@ -227,7 +227,7 @@ function CrossReferenceBody({ rows, register, recording, retry, children }: {
 }) {
   if ((rows.loading && !rows.data) || (register.loading && !register.data)) return <p role="status" className="sec-sub">Reading the cross-reference register…</p>;
   if (rows.error || register.error || !rows.data || !register.data) {
-    return <p role="alert" className="sec-sub">The cross-reference register could not be read, so nothing is shown. <button type="button" className="btn ghost sm" onClick={retry}>Retry</button></p>;
+    return <p role="alert" className="sec-sub">The cross-reference register could not be read, so nothing is shown. <button type="button" className="btn ghost small" onClick={retry}>Retry</button></p>;
   }
   if (rows.data.length === 0) return recording ? null : <p className="sec-sub">No file this IND relies on is recorded yet.</p>;
   return <>{children(rows.data, register.data)}</>;
@@ -255,7 +255,7 @@ function CrossReferences({ submissionId, sponsorName }: { submissionId: number; 
       <div className="pj-sec-h">
         <h3>Cross-references and letters of authorization</h3>
         {mode.kind === 'none' && (
-          <span className="pj-sec-acts"><button type="button" className="btn ghost sm" onClick={() => { setNote(null); setMode({ kind: 'record' }); }}>Record a cross-reference</button></span>
+          <span className="pj-sec-acts"><button type="button" className="btn ghost small" onClick={() => { setNote(null); setMode({ kind: 'record' }); }}>Record a cross-reference</button></span>
         )}
       </div>
       {note && <p role={note.failed ? 'alert' : 'status'} className="sec-sub">{note.text}</p>}
@@ -299,8 +299,8 @@ function TrackAnnualReport({ submissionId, productName, onDone }: { submissionId
       <Field label="IND effective date (sets the due date)"><input className="c2c-input" type="date" value={f.effective} onChange={set('effective')} /></Field>
       {error && <p role="alert" className="sec-sub">{error}</p>}
       <span className="pj-sec-acts">
-        <button type="submit" className="btn primary sm" disabled={busy}>{busy ? 'Tracking…' : 'Track'}</button>
-        <button type="button" className="btn ghost sm" onClick={() => onDone(null)}>Cancel</button>
+        <button type="submit" className="btn primary small" disabled={busy}>{busy ? 'Tracking…' : 'Track'}</button>
+        <button type="button" className="btn ghost small" onClick={() => onDone(null)}>Cancel</button>
       </span>
     </form>
   );
@@ -356,7 +356,7 @@ function AnnualReports({ submissionId, productName }: { submissionId: number; pr
   let body: React.ReactNode;
   if ((rows.loading && !rows.data) || (feed.loading && !feed.data)) body = <p role="status" className="sec-sub">Reading the annual-report tracker…</p>;
   else if (rows.error || feed.error || !rows.data || !feed.data) {
-    body = <p role="alert" className="sec-sub">The annual-report tracker could not be read, so nothing is shown. <button type="button" className="btn ghost sm" onClick={() => setVersion((v) => v + 1)}>Retry</button></p>;
+    body = <p role="alert" className="sec-sub">The annual-report tracker could not be read, so nothing is shown. <button type="button" className="btn ghost small" onClick={() => setVersion((v) => v + 1)}>Retry</button></p>;
   } else if (rows.data.length === 0) body = tracking ? null : <p className="sec-sub">No annual report is tracked for this IND yet.</p>;
   else {
     body = (
@@ -370,7 +370,7 @@ function AnnualReports({ submissionId, productName }: { submissionId: number; pr
     <div data-testid="indl-annual-register" style={{ marginTop: 16 }}>
       <div className="pj-sec-h">
         <h3>Annual reports (21 CFR 312.33)</h3>
-        {!tracking && <span className="pj-sec-acts"><button type="button" className="btn ghost sm" onClick={() => { setNote(null); setTracking(true); }}>Track an annual report</button></span>}
+        {!tracking && <span className="pj-sec-acts"><button type="button" className="btn ghost small" onClick={() => { setNote(null); setTracking(true); }}>Track an annual report</button></span>}
       </div>
       {note && <p role="status" className="sec-sub">{note}</p>}
       {tracking && <TrackAnnualReport submissionId={submissionId} productName={productName} onDone={done} />}
@@ -411,8 +411,8 @@ function TrackAmendment({ submissionId, onDone }: { submissionId: number; onDone
       <Field label="Earlier leaf it replaces (its GUID)"><input className="c2c-input" value={f.guid} onChange={set('guid')} placeholder="Needed to revise, append or withdraw" /></Field>
       {error && <p role="alert" className="sec-sub">{error}</p>}
       <span className="pj-sec-acts">
-        <button type="submit" className="btn primary sm" disabled={busy}>{busy ? 'Tracking…' : 'Track'}</button>
-        <button type="button" className="btn ghost sm" onClick={() => onDone(null)}>Cancel</button>
+        <button type="submit" className="btn primary small" disabled={busy}>{busy ? 'Tracking…' : 'Track'}</button>
+        <button type="button" className="btn ghost small" onClick={() => onDone(null)}>Cancel</button>
       </span>
     </form>
   );
@@ -455,14 +455,14 @@ function Amendments({ submissionId }: { submissionId: number }) {
   let body: React.ReactNode;
   if (rows.loading && !rows.data) body = <p role="status" className="sec-sub">Reading the amendment tracker…</p>;
   else if (rows.error || !rows.data) {
-    body = <p role="alert" className="sec-sub">The amendment tracker could not be read, so nothing is shown. <button type="button" className="btn ghost sm" onClick={() => setVersion((v) => v + 1)}>Retry</button></p>;
+    body = <p role="alert" className="sec-sub">The amendment tracker could not be read, so nothing is shown. <button type="button" className="btn ghost small" onClick={() => setVersion((v) => v + 1)}>Retry</button></p>;
   } else if (rows.data.length === 0) body = tracking ? null : <p className="sec-sub">No amendment is tracked for this IND yet.</p>;
   else body = <AmendmentTable rows={rows.data} />;
   return (
     <div data-testid="indl-amendment-register" style={{ marginTop: 16 }}>
       <div className="pj-sec-h">
         <h3>Amendments (21 CFR 312.30, 312.31)</h3>
-        {!tracking && <span className="pj-sec-acts"><button type="button" className="btn ghost sm" onClick={() => { setNote(null); setTracking(true); }}>Track an amendment</button></span>}
+        {!tracking && <span className="pj-sec-acts"><button type="button" className="btn ghost small" onClick={() => { setNote(null); setTracking(true); }}>Track an amendment</button></span>}
       </div>
       {note && <p role="status" className="sec-sub">{note}</p>}
       {tracking && <TrackAmendment submissionId={submissionId} onDone={done} />}
