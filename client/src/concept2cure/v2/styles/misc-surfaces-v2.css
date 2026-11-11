@@ -531,6 +531,8 @@
   /* Coverage: a module's line, then its missing sections with Upload and File here. */
   .vd-cov-mod{ padding-top:12px; }
   .vd-cov-mod .vd-dr-name{ max-width:none; }
+  /* A required section's name is read whole beside its number (VaultCoverage.tsx): it wraps and is never cut. */
+  .vd-cov-rows .vd-dr-row:not(.vd-cov-mod) .vd-dr-name{ flex:0 1 auto; max-width:45%; overflow:visible; white-space:normal; }
   .vd-cov-pick{ width:auto; max-width:240px; }
   /* File into Vault (VR-11): a checkbox per source not yet filed, the action, and a line per source answered. */
   .vd-dr-pick{ flex-shrink:0; width:16px; height:16px; margin:0; accent-color:var(--text-100); }
