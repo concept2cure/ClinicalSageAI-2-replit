@@ -112,7 +112,7 @@ describe('ChangeControl — the change-control log', () => {
     const table = screen.getByRole('table');
     expect(table.classList.contains('reg-tbl')).toBe(true);
     expect(within(table).getAllByRole('columnheader').map((h) => h.textContent))
-      .toEqual(['Number', 'Title', 'Type', 'Class', 'Status', 'Target', 'Links', 'Actions']);
+      .toEqual(['Number', 'Title', 'Type', 'Class', 'Status', 'Target', 'Links']);
     expect(container.querySelectorAll('tbody.qcc-change')).toHaveLength(FIXTURE_CHANGES.length);
     expect(screen.getByText('Critical').className).toBe('rd-chip tone-err');
     expect(container.querySelector('.qms-row, .qms-thead, .qcc-class, .qms-pill, .qms-tag, .qms-chip')).toBeNull();
@@ -122,7 +122,9 @@ describe('ChangeControl — the change-control log', () => {
   it('shows each change the moves that fit its state inline; the rest are behind More', () => {
     const onAsk = vi.fn();
     render(<Harness onAsk={onAsk} />);
-    const names = (row: HTMLElement) => within(row.querySelector('tr') as HTMLElement).getAllByRole('button').map((b) => b.getAttribute('aria-label') ?? b.textContent?.trim());
+    // The record's facts, then the line of actions under them (w37).
+    const names = (row: HTMLElement) => [...row.querySelectorAll<HTMLElement>(':scope > tr:not(.qms-row-more-tr):not(.qcc-detail-tr) button')]
+      .map((b) => b.getAttribute('aria-label') ?? b.textContent?.trim());
     // Under assessment: Approve (the signed route) and Advance are inline.
     const assessed = screen.getByText('CC-2026-014').closest('tbody') as HTMLElement;
     expect(names(assessed)).toEqual(['CC-2026-014', '3 linked records', 'Approve', 'Advance', 'Ask AnA about this change', 'More actions for CC-2026-014']);

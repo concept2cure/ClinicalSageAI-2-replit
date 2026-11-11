@@ -193,7 +193,7 @@ function RecordRegister<R extends { id: number | string }>({ config, onAsk, onCo
                   ))}
                   after={config.detail && isOpen && (
                     <tr className="qcc-detail-tr">
-                      <td colSpan={columns.length + 1}>
+                      <td colSpan={columns.length}>
                         <div className="qcc-detail" key={`${r.id}:${version}`}>{config.detail.render(r, (text) => { if (text) fire(text); read.refresh(); })}</div>
                       </td>
                     </tr>

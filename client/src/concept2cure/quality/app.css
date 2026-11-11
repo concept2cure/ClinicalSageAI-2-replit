@@ -41,13 +41,24 @@
 /* ─── Sections ─────────────────────────────────────────────────── */
 .qms-sec { margin-bottom: 26px; }
 
+/* Quality has nine registers since P-122 added Complaints and MDR: 1072px of tabs in a 1040px column. In D0's one
+   scrolling row the last was cut off at 1440 and 1280 ("Management revie"), and four were out of sight at 1024, with
+   nothing saying there was more (walked 2026-11-11, probe-tabs). From tablet width up every register is named: the
+   nine fit one line at 1440 (a 9px tab inset, no gap), and where they do not fit they wrap into balanced rows, never
+   one tab alone on a second line. On a phone the row scrolls, as D0's does. */
+@media (min-width: 641px) {
+  .c2c-v2 .qms-shell .tabs { display: block; overflow: visible; text-wrap: balance; line-height: 0; }
+  .c2c-v2 .qms-shell .tabs > .tab { padding: 0 9px; vertical-align: top; line-height: normal; }
+}
+
 /* ─── Register cells (the registers are D0's .reg-tbl since C6, C8 and C11) ─── */
 .qms-num { color: var(--text-200); text-align: left; }
 .qms-num:hover { color: var(--text-100); text-decoration: underline; }
 .qms-title { color: var(--text-100); }
 
-/* One line: the actions that fit the row's state, Ask AnA and "More" (D7-B item 6; P-122); the rest open in .qms-row-more. */
-.qms-rowacts { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; justify-content: flex-end; white-space: normal; }
+/* A record's actions: the ones that fit its state, Ask AnA and "More" (D7-B item 6; P-122), on the line under its
+   facts; the rest open in .qms-row-more. They wrap where the line is narrower than they are. */
+.qms-rowacts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; justify-content: flex-start; white-space: normal; }
 /* A figure line's overdue or unapproved number takes its status colour, and nothing else does (P-122; §2: status
    colour only for meaning). The work area's figure line sits under the header, one line of text, not tiles. */
 .qms-shell p.sec-sub [data-tone="err"] { color: var(--error); }
@@ -58,15 +69,15 @@
 .qms-vigilance { list-style: none; margin: 0; padding: 0; }
 .qms-vigilance li { display: flex; flex-wrap: wrap; gap: 4px 12px; padding: 6px 0; border-bottom: 1px solid var(--border-subtle); font-size: var(--fs-small); }
 .qms-vigilance .qms-vigilance-why { flex-basis: 100%; color: var(--text-300); }
-/* A register scrolls inside its own box at every width (P-122), and from tablet width up its actions column is pinned
-   at the box's right edge, on the page's own background, so a wide register never clips a row's actions. At phone
-   width the column scrolls with the row: pinned, it would cover the facts. */
+/* A register scrolls inside its own box at every width, never the page (P-122). A record's actions are the line under
+   its facts, not a column: pinned at the box's right edge they covered the last columns, the Effective and Next
+   review dates of every document at 1280 and the Status at 1024 (walked 2026-11-11, w37). The record is one band:
+   no rule between its facts and its actions, and the whole record takes the hover. */
 .qms-reg-scroll { max-width: 100%; overflow-x: auto; }
-@media (min-width: 641px) {
-  .c2c-v2 .reg-tbl.qms-reg > thead > tr > th:last-child,
-  .c2c-v2 .reg-tbl.qms-reg > tbody > tr:first-child > td:last-child { position: sticky; right: 0; z-index: 1; background: var(--bg-000); }
-  .c2c-v2 .reg-tbl.qms-reg > tbody:is(:hover, [data-more]) > tr:first-child > td:last-child { background: var(--bg-050); }
-}
+.c2c-v2 .reg-tbl.qms-reg > tbody > tr:not(:last-child) > td { border-bottom: 0; }
+.c2c-v2 .reg-tbl.qms-reg > tbody > tr:not(:last-child):not(.qms-row-acts-tr) > td { padding-bottom: 4px; }
+.c2c-v2 .reg-tbl.qms-reg > tbody > tr.qms-row-acts-tr > td { padding-top: 0; }
+.c2c-v2 .reg-tbl.qms-reg > tbody:hover > tr > td { background: var(--bg-050); }
 /* Ask AnA on a row: the spark at 16px in the quiet text colour, the button its name for assistive technology. */
 .qms-ask-ico { display: inline-flex; width: 16px; height: 16px; color: var(--text-300); }
 .qms-ask-ico svg { width: 16px; height: 16px; }
@@ -172,7 +183,7 @@
 .c2c-v2 .reg-tbl.qms-reg .qcc-detail { padding: 0 0 4px; background: none; border-bottom: 0; }
 /* A row's More and its linked records stay in view while the table scrolls sideways on a phone (walked at 390, C8):
    they span every column, so without this their words ran past the section's right edge. */
-.c2c-v2 .reg-tbl.qms-reg :is(.qcc-detail, .qms-row-more) { position: sticky; left: 0; max-width: calc(100vw - 64px); }
+.c2c-v2 .reg-tbl.qms-reg :is(.qcc-detail, .qms-row-more, .qms-rowacts) { position: sticky; left: 0; max-width: calc(100vw - 64px); }
 .qcc-detail-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .qcc-detail-title { font-size: var(--fs-small); color: var(--text-300); font-weight: 600; }
 /* A change's record in its row (C9, ChangeRecordDetail.tsx): the fields its approval signs, as a definition list, then

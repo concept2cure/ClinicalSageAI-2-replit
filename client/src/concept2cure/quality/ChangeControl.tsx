@@ -351,7 +351,7 @@ function ChangeControlSession({
                   </>}
                   after={open && (
                     <tr className="qcc-detail-tr">
-                      <td colSpan={CHANGE_COLUMNS.length + 1}>
+                      <td colSpan={CHANGE_COLUMNS.length}>
                         <ChangeRecordDetail change={c} onAsk={onAsk} />
                       </td>
                     </tr>
