@@ -155,6 +155,28 @@ describe('POST /api/csr/jobs/:jobId/resume — a stopped build is resumed as the
     expect(h.resume).not.toHaveBeenCalled();
   });
 
+  /* Reach (R1), 2026-11-11: the page now stops a running build (POST …/cancel, recorded `cancelled`). A document
+     takes its imported sections from one build, so a build a person stopped must be resumable as itself, or the
+     rest of the report could never be imported. The runner takes a queued or failed build only, so the stopped
+     build is queued again, in one statement, and then handed to it. */
+  it('queues a build a person stopped again, as the same build, and hands it to the runner', async () => {
+    await pg.query(`INSERT INTO csr_build_jobs (id, organization_id, project_id, study_id, status, progress, study_info_snapshot, requested_by)
+      VALUES (63, 7, 11, 'NCT05330182', 'drafting', 30, $1, 5)`, [bound]);
+    expect((await request(app).post('/api/csr/jobs/63/cancel').send({})).status).toBe(204);
+    expect((await pg.query('SELECT status FROM csr_build_jobs WHERE id = 63')).rows[0].status).toBe('cancelled');
+    const res = await request(app).post('/api/csr/jobs/63/resume').send({});
+    expect(res.status).toBe(202);
+    expect(res.body).toEqual({ jobId: 63, status: 'queued', resumed: true });
+    const row = (await pg.query('SELECT status, progress FROM csr_build_jobs WHERE id = 63')).rows[0];
+    expect(row).toMatchObject({ status: 'queued', progress: 30 });
+    expect(h.resume).toHaveBeenCalledExactlyOnceWith(63);
+    // Asked twice: it is queued now, not stopped, and is not handed over a second time.
+    const again = await request(app).post('/api/csr/jobs/63/resume').send({});
+    expect(again.status).toBe(409);
+    expect(again.body).toMatchObject({ code: 'CSR_BUILD_NOT_RESUMABLE', status: 'queued' });
+    expect(h.resume).toHaveBeenCalledTimes(1);
+  });
+
   it('does not find another organization\'s build, a build that does not exist, or a malformed id', async () => {
     expect((await request(app).post('/api/csr/jobs/62/resume').send({})).status).toBe(404);
     expect((await request(app).post('/api/csr/jobs/9999/resume').send({})).status).toBe(404);
