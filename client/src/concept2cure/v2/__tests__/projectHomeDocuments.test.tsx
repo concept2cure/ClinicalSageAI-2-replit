@@ -241,6 +241,20 @@ describe('Author — the project\'s documents', () => {
   });
 });
 
+describe('Author — the dossier\'s door (P-122)', () => {
+  /* P-122 (2026-11-10): the dossier (Dossier.tsx and DossierMap.tsx until 8b192f1e7) is the readiness card and the
+     module rows under the document list, below the fold on a project with documents, and nothing on the step said
+     it was there. The step's doors now include it, and it moves the person to it. */
+  it('offers the dossier as a door, which moves to its readiness and module completion', async () => {
+    serve();
+    render(<ProjectHome {...props()} />);
+    await screen.findByText('Clinical overview (2.5)');
+    fireEvent.click(screen.getByRole('button', { name: 'See readiness and completion by CTD module' }));
+    await waitFor(() => expect(document.activeElement?.id).toBe('pj-modules-h'));
+    expect(document.activeElement?.textContent).toBe('Module completion');
+  });
+});
+
 /* F3 part C (2026-10-29): the readiness card names each added market on its
    own line. The line opens the editing copy of the filing it measures
    (DossierMarket.documentId), as that market's own rows do, or says why not in

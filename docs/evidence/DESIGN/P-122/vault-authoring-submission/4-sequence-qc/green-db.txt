@@ -1,0 +1,12 @@
+ ✓ tests/db/p122-sequence-qc.dbtest.ts > the sequence QC is served for a member of the organisation > what changed against the previous sequence, leaf by leaf 127ms
+ ✓ tests/db/p122-sequence-qc.dbtest.ts > the sequence QC is served for a member of the organisation > the package manifest, every leaf by module with its checksum 32ms
+ ✓ tests/db/p122-sequence-qc.dbtest.ts > the sequence QC is served for a member of the organisation > the PDF of each 186ms
+ ✓ tests/db/p122-sequence-qc.dbtest.ts > and refused to anyone who cannot open the project > another organisation 51ms
+ ✓ tests/db/p122-sequence-qc.dbtest.ts > and refused to anyone who cannot open the project > a colleague who is not on a private project 77ms
+ ✓ tests/db/p122-sequence-qc.dbtest.ts > and refused to anyone who cannot open the project > a diff across two submissions 31ms
+ ✓ tests/db/p122-sequence-qc.dbtest.ts > what was not admitted under /sequence is still refused in production > validation 6ms
+ ✓ tests/db/p122-sequence-qc.dbtest.ts > what was not admitted under /sequence is still refused in production > the dispatch gate 13ms
+ ✓ tests/db/p122-sequence-qc.dbtest.ts > what was not admitted under /sequence is still refused in production > a persisted readiness snapshot 6ms
+ ✓ tests/db/p122-sequence-qc.dbtest.ts > what was not admitted under /sequence is still refused in production > the snapshot list 5ms
+ Test Files  1 passed (1)
+      Tests  10 passed (10)

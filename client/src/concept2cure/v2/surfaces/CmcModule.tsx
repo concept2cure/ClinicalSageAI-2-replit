@@ -1,5 +1,6 @@
 import { serverMessage } from '@/lib/queryClient';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
+import { module3InputList } from '@shared/cmc/module3-input-words';
 import React, { useState, useEffect, useRef } from 'react';
 import { I } from '../icons';
 import { getSurfaceMeta } from '../registryModel';
@@ -398,7 +399,7 @@ function incompleteReason(s: CmcSection): string {
   return (
     '§' + s.key + (s.completeness == null ? ' has no compiled completeness record' : ' is ' + s.completeness + '% complete') +
     ' and cannot be approved.' +
-    (missing.length ? ' Missing required inputs: ' + missing.join(', ') + '.' : '') +
+    (missing.length ? ' Missing required inputs: ' + module3InputList(missing) + '.' : '') +
     ' Record the inputs on the Module 3 build board and recompile.'
   );
 }
@@ -461,7 +462,7 @@ function CmcSectionReview({
             <>
               <div className="pj-dim" style={{ marginBottom: 10 }}>
                 {d.completeness == null ? 'No compiled completeness record' : `${d.completeness}% complete`}
-                {d.missingInputs.length > 0 ? ` · missing: ${d.missingInputs.join('; ')}` : ''}
+                {d.missingInputs.length > 0 ? ` · missing: ${module3InputList(d.missingInputs)}` : ''}
                 {d.compiledHash ? ` · content hash ${d.compiledHash.slice(0, 12)}…` : ''}
               </div>
               {d.stale && (
@@ -1138,7 +1139,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
                       {s.completeness == null
                         ? <span className="cm-meta">not established — never scored by the compiler</span>
                         : <b className={incomplete ? 'sp-tone-warn' : undefined} style={{ fontVariantNumeric: 'tabular-nums' }}>{s.completeness}%</b>}
-                      {missing.length > 0 && <div className="cm-meta">missing: {missing.join(', ')}</div>}
+                      {missing.length > 0 && <div className="cm-meta">Missing: {module3InputList(missing)}</div>}
                     </td>
                     <td>
                       <span className={'rd-chip tone-' + stTone(s.st)}>{cmcStateWord(s.st)}</span>
@@ -3264,7 +3265,7 @@ function provenanceDetail(payload: Record<string, unknown> | null): string {
     parts.push(`${label} ${Array.isArray(value) ? value.join(', ') : String(value)}`);
   };
   push('completeness', payload.completeness != null ? `${payload.completeness}%` : null);
-  push('missing', Array.isArray(payload.missingInputs) && payload.missingInputs.length ? payload.missingInputs : null);
+  push('missing', Array.isArray(payload.missingInputs) && payload.missingInputs.length ? module3InputList(payload.missingInputs.map(String)) : null);
   push('reason', payload.reason);
   push('note', payload.resolutionNote);
   push('version', payload.versionNumber);

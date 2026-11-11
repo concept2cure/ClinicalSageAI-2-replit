@@ -16,6 +16,7 @@
  * Reuses the validation harness's API client and PDF fixture (tests/validation/
  * lib) — one client, one rate-limit strategy, one PDF writer.
  */
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -244,6 +245,59 @@ export async function connectSigner({ baseUrl, authorEmail, onRecord } = {}) {
   const session = await devLogin(base, email);
   const api = createApiClient({ baseUrl: base, accessToken: session.accessToken, onRecord: onRecord || (() => {}), identity: email });
   return { email, password, session, api, userId: session.user?.id ?? null };
+}
+
+/**
+ * The synthetic second person who reviews the demo's documents (P-122, 2026-11-10). Since P-95 (33c3e4de9) an
+ * approval is refused (409 REVIEW_REQUIRED) until the document's latest review route names a reviewer and every
+ * reviewer has signed, and the author is never their own reviewer. With no second signer supplied, the seed left
+ * every review "not executed", so no seeded document could be approved in a live demo.
+ *
+ * This member is made through the product, as an administrator adds anyone: POST /api/tenant-users (role
+ * reviewer), then the activation link the server hands back when it sends no email, redeemed with a random password
+ * (POST /api/auth/reset-password). The password is held in memory for this run's review signatures and is never
+ * printed, recorded or written. The address is synthetic (`@example.test`, a reserved domain) and nothing else is
+ * accepted. On a later run the member is found and its password is not known: what still needs its signature is
+ * said, never faked. Null when the seed identity may not add members, or the server sent the link by email.
+ */
+export const SYNTHETIC_REVIEWER = { email: 'demo-reviewer@example.test', name: 'Demo Reviewer (synthetic)', role: 'reviewer' };
+
+export async function ensureSyntheticReviewer({ api, baseUrl, identity, onRecord } = {}) {
+  const { email, name, role } = SYNTHETIC_REVIEWER;
+  if (!/^[a-z0-9.+-]+@example\.test$/.test(email)) throw new Error('The synthetic reviewer must be an @example.test address');
+  const base = (baseUrl || process.env.DEMO_BASE_URL || 'http://localhost:5200').replace(/\/$/, '');
+  const org = Number(identity?.organizationId);
+  const listed = await api('GET', `/api/tenant-users/${org}`);
+  const rows = Array.isArray(listed.json) ? listed.json : [];
+  const found = rows.find((r) => String(r.email ?? '').toLowerCase() === email) || null;
+  let password = null;
+  let note = null;
+  if (!found) {
+    const created = await api('POST', '/api/tenant-users', { email, name, role, organizationId: org });
+    if (created.status !== 201) return { state: 'not created', note: `adding the synthetic reviewer answered HTTP ${created.status} ${JSON.stringify(created.json ?? '').slice(0, 160)}` };
+    const setupUrl = created.json?.invitation?.setupUrl;
+    const token = setupUrl ? new URL(setupUrl).searchParams.get('token') : null;
+    if (!token) return { state: 'created, no password', note: 'the server emailed its activation link, so the seed cannot set its password' };
+    const candidate = `${crypto.randomBytes(18).toString('base64url')}-Rv9!`;
+    const redeemed = await fetch(`${base}/api/auth/reset-password`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Origin: base },
+      body: JSON.stringify({ token, newPassword: candidate }),
+    });
+    if (redeemed.ok) password = candidate;
+    else note = `its activation link was refused (HTTP ${redeemed.status})`;
+  } else {
+    note = 'it was added on an earlier run, and its password is never kept';
+  }
+  /* Signed in as a person is: the development sign-in on a local server, else the password just set. */
+  let session;
+  try { session = await devLogin(base, email); } catch (err) {
+    if (!password) return { state: found ? 'found' : 'created', email, password: null, note: `${note ?? 'no password'}; ${err.message.slice(0, 120)}` };
+    // Read when needed: a stand-in harness (demo-recovery.test.mjs) carries only what the rest of the seed uses.
+    const { passwordLogin } = await import('../../../tests/validation/lib/harness.mjs');
+    session = await passwordLogin(base, { email, password });
+  }
+  const reviewerApi = createApiClient({ baseUrl: base, accessToken: session.accessToken, onRecord: onRecord || (() => {}), identity: email });
+  return { state: found ? 'found' : 'created', email, password, session, api: reviewerApi, userId: session.user?.id ?? null, note };
 }
 
 /** PDF string escaping: parentheses and backslashes, and anything outside Latin-1 becomes '?'. */

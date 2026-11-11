@@ -40,6 +40,7 @@ import { C2CToast, useToast } from '../toast';
 import { SectionEvidence } from './CmcSectionEvidence';
 import { PlaceIntoSubmission } from './CmcPlaceIntoSubmission';
 import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
+import { module3InputList } from '@shared/cmc/module3-input-words';
 
 /* ── The read models ─────────────────────────────────────────────────────── */
 
@@ -665,8 +666,8 @@ export function CmModule3Build({ nav }: { ask: (text: string) => void; nav?: (id
                             {s.missingInputs.length === 0 ? (
                               <span className="cm-meta">--</span>
                             ) : (
-                              <span className="sp-tone-warn" title={s.missingInputs.join(', ')}>
-                                {s.missingInputs.slice(0, 2).join(', ')}
+                              <span className="sp-tone-warn" title={module3InputList(s.missingInputs)}>
+                                {module3InputList(s.missingInputs.slice(0, 2))}
                                 {s.missingInputs.length > 2 ? ` +${s.missingInputs.length - 2}` : ''}
                               </span>
                             )}

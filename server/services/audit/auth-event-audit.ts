@@ -36,6 +36,16 @@ import auditService from '../auditService';
 
 const logger = createScopedLogger('auth');
 
+/**
+ * What a person accepted at sign-up: the revision of the agreement text that was on the page, and each agreement
+ * accepted, by key. Until 2026-11-10 the page required the acceptances and sent none, so no record of them existed
+ * (docs/evidence/F1/2026-11-10-client-admin/, W1-02).
+ */
+export interface SignupAgreementsRecord {
+  revision: string;
+  accepted: readonly string[];
+}
+
 export interface AuthAuditEvent {
   action: string;
   userId?: number | string | null;
@@ -45,6 +55,8 @@ export interface AuthAuditEvent {
   reason?: string;
   ipAddress?: string;
   userAgent?: string;
+  /** A successful sign-up only: what was accepted, or null when the request sent no acceptance. */
+  agreements?: SignupAgreementsRecord | null;
 }
 
 /**
@@ -111,6 +123,20 @@ export function describeAuthEvent(entry: Pick<AuthAuditEvent, 'action' | 'outcom
   );
 }
 
+const AGREEMENT_NAMES: Readonly<Record<string, string>> = {
+  terms_of_service: 'the Terms of Service',
+  privacy_policy: 'the Privacy Policy',
+  regulatory_acknowledgement: 'the regulatory acknowledgement',
+};
+
+/** The second sentence of a sign-up's ledger line: what was accepted, or that nothing was sent. Never a guess. */
+export function describeSignupAgreements(agreements: SignupAgreementsRecord | null | undefined): string {
+  if (!agreements || agreements.accepted.length === 0) return 'No acceptance of the agreements was sent with this sign-up';
+  const names = agreements.accepted.map(key => AGREEMENT_NAMES[key] ?? key);
+  const list = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+  return `Accepted ${list} (agreements revision ${agreements.revision})`;
+}
+
 /** The organisation an event records, when it names one: a positive integer id. */
 function recordedTenant(tenantId: AuthAuditEvent['tenantId']): number | null {
   if (tenantId === null || tenantId === undefined || tenantId === '') return null;
@@ -119,6 +145,13 @@ function recordedTenant(tenantId: AuthAuditEvent['tenantId']): number | null {
 }
 
 export async function recordAuthEvent(entry: AuthAuditEvent): Promise<void> {
+  // A created account's row also says what its holder agreed to. Every other event is unchanged.
+  const signedUp = entry.action === 'user_signup' && entry.outcome === 'success';
+  const agreements = signedUp
+    ? entry.agreements && entry.agreements.accepted.length > 0
+      ? { revision: entry.agreements.revision, accepted: [...entry.agreements.accepted] }
+      : null
+    : undefined;
   const write = () =>
     auditService.logAction({
       tenantId: entry.tenantId ?? undefined,
@@ -129,10 +162,11 @@ export async function recordAuthEvent(entry: AuthAuditEvent): Promise<void> {
       ipAddress: entry.ipAddress,
       userAgent: entry.userAgent,
       details: {
-        description: describeAuthEvent(entry),
+        description: signedUp ? `${describeAuthEvent(entry)}. ${describeSignupAgreements(agreements)}` : describeAuthEvent(entry),
         outcome: entry.outcome,
         reason: entry.reason,
         email: entry.email,
+        ...(agreements !== undefined ? { agreements } : {}),
       },
     });
 

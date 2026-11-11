@@ -37,7 +37,7 @@ import { FileDropZone } from '../FileDropZone';
 import { ProjectRespond } from './ProjectRespond';
 import { ProjectObjective } from './ProjectObjective';
 import { ProjectMarkets, ProjectStatusLine, regionalPreparationReason } from './ProjectMarkets';
-import { DossierReadinessCard, ModuleCompletion, dossierFacts, dossierSummaryValue, useProjectDossier, type DossierState, type RowCopy } from './ProjectDossier';
+import { DossierDoor, DossierReadinessCard, ModuleCompletion, dossierFacts, dossierSummaryValue, useProjectDossier, type DossierState, type RowCopy } from './ProjectDossier';
 import { editingCopyOf } from '../editor/editingCopy';
 import { sourceReadView } from '@shared/data-room-processing-status';
 import { ProjectTeamCard, ProjectTeamDrawer, PROJECT_TEAM_AUTHORITY_NOTE, useProjectTeam } from './ProjectTeamResponsibilities';
@@ -1625,6 +1625,7 @@ function ProjectDocuments({ pid, read, onRetry, onOpen, onNav, available, cmcCom
               {STEP_DOORS.editor} {I.right}
             </button>
           )}
+          <DossierDoor />
           {/* CMC / Module 3 reads the open program; offered where it composes, with the name Plan's
               phase 3 gives the same job (section 9: one job, one name). */}
           {cmcComposes && available('cmc') && (

@@ -588,6 +588,16 @@ router.get('/notifications', async (req: Request, res: Response) => {
 // MILESTONES — Project timeline management
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/* `linked_sections` is a text[] on every shape of the table (db/migrations/20260730_project_milestones_reconciliation.sql,
+   20260220_ind_section_tracking.sql). It was written as JSON.stringify(...), which PostgreSQL refuses as a malformed
+   array literal, so no milestone could be recorded (P-122 defects, 2026-11-10). It is passed as an array of section
+   codes; anything else is refused before the write. */
+function linkedSectionCodes(value: unknown): string[] | null {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value) || !value.every((code) => typeof code === 'string' && code.trim())) return null;
+  return value.map((code: string) => code.trim());
+}
+
 router.post('/milestones', async (req: Request, res: Response) => {
   try {
     const { project_id, name, description, target_date, linked_sections } = req.body;
@@ -599,6 +609,10 @@ router.post('/milestones', async (req: Request, res: Response) => {
 
     if (!project_id || !name || !target_date) {
       return res.status(400).json({ error: 'project_id, name, and target_date are required' });
+    }
+    const linkedSections = linkedSectionCodes(linked_sections);
+    if (linkedSections === null) {
+      return res.status(400).json({ error: 'linked_sections must be a list of section codes' });
     }
 
     const projectId = parseInt(String(project_id), 10);
@@ -614,7 +628,7 @@ router.post('/milestones', async (req: Request, res: Response) => {
         name,
         description || null,
         new Date(target_date),
-        JSON.stringify(linked_sections || []),
+        linkedSections,
         userId,
       ]
     );
@@ -690,8 +704,12 @@ router.patch('/milestones/:id', admitMilestoneProject, async (req: Request, res:
       updates.push(`completed_at = NOW()`);
     }
     if (linked_sections !== undefined) {
+      const linkedSections = linkedSectionCodes(linked_sections);
+      if (linkedSections === null) {
+        return res.status(400).json({ error: 'linked_sections must be a list of section codes' });
+      }
       updates.push(`linked_sections = $${idx++}`);
-      params.push(JSON.stringify(linked_sections));
+      params.push(linkedSections);
     }
 
     const result = await pool.query(

@@ -1,0 +1,4 @@
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx > compile DTD proof ownership > drops a delayed compile success across project A → B → A 100ms
+ ✓ client/src/concept2cure/v2/__tests__/ectdCompileDtdEvidence.test.tsx > compile DTD proof ownership > drops a delayed compile refusal across project A → B → A 91ms
+ Test Files  12 passed (12)
+      Tests  129 passed (129)

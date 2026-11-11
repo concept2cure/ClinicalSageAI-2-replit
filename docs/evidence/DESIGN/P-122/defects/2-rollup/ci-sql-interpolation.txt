@@ -1,0 +1,4 @@
+# npm run -s ci:sql-interpolation (2026-11-10T15:14:04Z)
+# Before lowering the baseline: server/services/project-rollup-service.ts: now 0 (baseline 2) — good news; lower the baseline to lock it in
+# (the two were the batched UPDATE persistRollups built; removed with the write). After:
+[ci:sql-interpolation] OK — no new value interpolated into SQL text. 1045 baselined interpolation(s) in 221 file(s); the baseline may only shrink.

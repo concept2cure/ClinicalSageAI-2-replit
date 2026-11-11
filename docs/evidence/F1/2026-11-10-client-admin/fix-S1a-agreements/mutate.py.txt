@@ -1,0 +1,30 @@
+import hashlib, subprocess, sys, os
+os.chdir('/home/user/ClinicalSageAI-2-replit')
+R='server/routes/licensing.ts'; E='server/services/licensing/eula-service.ts'; M='server/middleware/requireLicenseAcceptance.ts'
+TESTS=['server/routes/__tests__/licensing-agreements-publish-and-store.test.ts','server/services/licensing/__tests__/eula-publish-audited.pglite.test.ts','server/middleware/__tests__/require-license-acceptance-fails-closed.test.ts','server/services/licensing/__tests__/eula-reads-fail-closed-and-acceptance-binds-text.test.ts']
+MUT=[
+ ('M1 platform check removed (a client admin passes)', R, "if (!(await resolvePlatformAdmin(req))) {", "if (false) {"),
+ ('M2 reason check removed in the service', E, "if (reason.length < MIN_PUBLISH_REASON_LENGTH) throw new AgreementPublishReasonRequiredError();", ""),
+ ('M3 publish audit row not written', E, "    await writeChainedAuditRow(client, {\n      tenantId: 0,", "    if (false) await writeChainedAuditRow(client, {\n      tenantId: 0,"),
+ ('M4 superseded version not returned to the audit', E, "WHERE agreement_key = $1 AND status = 'active'\n       RETURNING *`", "WHERE agreement_key = $1 AND status = 'active'\n       RETURNING id WHERE false`".replace(" WHERE false","") if False else "WHERE agreement_key = $1 AND status = 'active' AND false\n       RETURNING *`"),
+ ('M5 existing tables re-created (no existence check)', E, "if (row?.agreements === true && row?.acceptances === true) return;", ""),
+ ('M6 creation failure rethrown raw (no not-set-up refusal)', E, "      throw new AgreementStoreUnavailableError();\n    }\n  })()", "      throw err;\n    }\n  })()"),
+ ('M7 route does not answer not-set-up', R, "if (!(error instanceof AgreementStoreUnavailableError)) return false;", "return false;"),
+ ('M8 gate does not tell not-set-up apart', M, "if (err instanceof AgreementStoreUnavailableError) {", "if (false) {"),
+ ('M9 actor not passed to the audit', R, "      actorUserId,\n      reason:", "      reason:"),
+]
+def sha(p): return hashlib.sha256(open(p,'rb').read()).hexdigest()
+killed=0
+for name,f,a,b in MUT:
+    src=open(f).read(); before=sha(f)
+    assert src.count(a)==1, (name, src.count(a))
+    open(f,'w').write(src.replace(a,b))
+    r=subprocess.run(['npx','vitest','run',*TESTS,'--maxWorkers=2'],capture_output=True,text=True,timeout=600)
+    open(f,'w').write(src); after=sha(f)
+    out=r.stdout+r.stderr
+    failed=[l.strip() for l in out.splitlines() if l.strip().startswith('×')]
+    status='KILLED' if r.returncode!=0 else 'SURVIVED'
+    killed+= r.returncode!=0
+    print(f"{name}: {status}; {len(failed)} failing; restored sha256 {'ok' if before==after else 'MISMATCH'}")
+    for l in failed[:3]: print('   ', l[:200])
+print(f"{killed}/{len(MUT)} killed")

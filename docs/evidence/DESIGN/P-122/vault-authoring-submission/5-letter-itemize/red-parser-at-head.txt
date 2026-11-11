@@ -1,0 +1,13 @@
+ ✓ server/services/agency-responses/__tests__/letter-question-proposals.pglite.test.ts > readLetterQuestionProposals > proposes the letter's three numbered questions verbatim, and writes nothing 12ms
+ ✓ server/services/agency-responses/__tests__/letter-question-proposals.pglite.test.ts > readLetterQuestionProposals > marks a question already recorded under the same number 3ms
+ ✓ server/services/agency-responses/__tests__/letter-question-proposals.pglite.test.ts > readLetterQuestionProposals > reads no other project's file, and says when a file's text was not read 2ms
+ × server/services/agency-responses/__tests__/letter-question-proposals.pglite.test.ts > readLetterQuestionProposals: the deficiency parser reads each question > a question no rule names is said to be not classified, and nothing is suggested for it 8ms
+   → expected undefined to deeply equal { topics: [ { …(3) } ], …(1) }
+ × server/services/agency-responses/__tests__/letter-question-proposals.pglite.test.ts > readLetterQuestionProposals: the deficiency parser reads each question > a numbered question a rule names carries its topic and the suggestion for the record form 3ms
+   → expected undefined to deeply equal [ 'CMC and quality' ]
+ × server/services/agency-responses/__tests__/letter-question-proposals.pglite.test.ts > readLetterQuestionProposals: the deficiency parser reads each question > itemizes the deficiencies of a letter that numbers no question, each passage verbatim 2ms
+   → Cannot read properties of undefined (reading 'map')
+ × server/services/agency-responses/__tests__/letter-question-proposals.pglite.test.ts > readLetterQuestionProposals: the deficiency parser reads each question > reads with the device vocabulary on a device project, never the CTD one 3ms
+   → Cannot read properties of undefined (reading 'length')
+ Test Files  1 failed (1)
+      Tests  4 failed | 3 passed (7)
