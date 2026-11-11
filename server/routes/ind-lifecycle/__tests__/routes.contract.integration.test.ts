@@ -74,6 +74,7 @@ import { createSubmission } from '../../../services/submission-service/submissio
 import { persistAnnualReport } from '../../../services/ind-lifecycle/ind-lifecycle-persistence';
 import { createAnnualReportDraft } from '../../../services/ind-lifecycle/ind-annual-report-persistence';
 import { createAmendmentDraft } from '../../../services/ind-lifecycle/ind-amendment-persistence';
+import type { IndAmendmentInput } from '../../../services/ind-lifecycle/ind-amendment-service';
 
 let harness: IndPgliteDb;
 let seededSubmissionId: number;
@@ -930,7 +931,7 @@ describe('persisted IND annual reports (21 CFR 312.33)', () => {
 
 describe('persisted IND amendments (21 CFR 312.30/.31)', () => {
   let draftId: string;
-  const amendment = () => ({
+  const amendment = (): Omit<IndAmendmentInput, 'organizationId'> => ({
     indNumber: '123456',
     projectId: 'proj-1',
     changedDocuments: [
