@@ -1,0 +1,8 @@
+$ VAULT_NAMES_STYLES=<the stylesheets at 2b0c842d9d> npx vitest run client/src/concept2cure/v2/__tests__/vaultNamesReadWhole.contract.test.ts
+ × client/src/concept2cure/v2/__tests__/vaultNamesReadWhole.contract.test.ts > the Vault reads a name whole > a folder name in the binder tree wraps and is never cut 5ms
+ × client/src/concept2cure/v2/__tests__/vaultNamesReadWhole.contract.test.ts > the Vault reads a name whole > a document title in the list wraps, ranked above the one-line title other lists keep 3ms
+ × client/src/concept2cure/v2/__tests__/vaultNamesReadWhole.contract.test.ts > the Vault reads a name whole > a document’s line of fields (type, versions, review stage, owner, date) wraps 1ms
+ × client/src/concept2cure/v2/__tests__/vaultNamesReadWhole.contract.test.ts > the Vault reads a name whole > the Vault takes a wide screen: its page is wider than the reading width, and the tree takes part of it 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed (4)
