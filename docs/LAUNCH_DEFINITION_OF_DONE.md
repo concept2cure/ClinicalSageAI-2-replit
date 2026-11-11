@@ -3177,3 +3177,53 @@ behind it and every change says who made it and why.
 
 Evidence: `docs/evidence/D2-ETMF/2026-11-10/`, `docs/evidence/D2-ETMF/2026-11-10-vault-section/`. The steps of E4
 are in the plan's §3a.
+
+### P-125 — Decided under the founder's delegation: client administration shows the work (P-122 applied to Administration, Licensing, Onboarding and the account)
+
+The founder, 2026-11-11: **"Continue and focus entirely on getting what we built surfaces correctly on the UI and
+working for GA. Stay aligned with our roadmap and rules."** Decided by session `…01T2wooCZu` (client administration)
+under the founder's standing delegation ("make the best decisions based on our highly regulated clients and their
+needs and the longevity of our product") and inside P-122. Each call is reversible by the founder. The test applied:
+a regulated customer's administrator pays for a console that shows their organisation as it is (people, access,
+security, licence, data) and that an auditor can read without finding a figure nobody recorded.
+
+**What was found.** The four P-122 inventories left this area out. The fifth is
+`docs/evidence/DESIGN/P-122/inventory/administration.md`: 66 capabilities, of which 23 are hidden, 21 were built on
+the server and never reached, 15 are shown but were never recorded (invented), 6 were removed and 1 is reached but
+refused. Little was deleted. The losses are reach and truth: the Setup fold put twelve settings cards in one column
+under a tab that does not open by default (the company card sat 9,193 px down), and the Administration screen shows
+single sign-on status, seats and groups the server never recorded.
+
+1. **The fifth inventory is the work list, in its own order.** `administration-restoration-order.json` beside it lists 30
+   restorations, highest value and smallest size first. Each reaches or shows what exists. None builds a screen, a
+   route file, a service or a table (RULE 6).
+2. **Invented is made true, never removed.** Where a screen shows something the server never recorded (seats, the
+   single sign-on status, how a member signs in, groups), the screen reads the server. Where the server records
+   nothing, the screen says "Not recorded" in that place. Groups becomes job roles (P-119).
+3. **Plan cards keep every line.** Each line says what it is: a term of the plan, or a figure that was measured.
+   Nothing is shown as usage that no meter recorded. A line is not taken off a plan card without a founder decision.
+4. **Settings is reached by name.** It opens with an index of its cards, and a door elsewhere in the product lands
+   on the card it names. No setting is reachable only by scrolling a column.
+5. **The organisation's data return is reached in production.** `GET /api/tenant-export/full` and the custody
+   record are admitted for Audit & compliance reports, for administrators and owners, with a stated reason and an
+   audit row, as the route already requires. The subscription agreement promises the customer its data at any time;
+   until now no screen could ask for it.
+6. **A control nothing enforces says so.** The sign-in policy keys an organisation can store but the sign-in path
+   does not enforce (require an authenticator app, password rules, a sign-in address list) stay on screen and read
+   "not enforced in this release". They are never shown as on. Enforcing them is finish-what-exists work, after the
+   reach items.
+7. **Single sign-on and provisioning are read by the client, and changed by Concept2Cure, for now.** A client
+   administrator sees what is configured for their organisation, by whom and when, in the Identity console that
+   exists. Changing it stays with platform staff until the security review of the write path is filed. Whether a
+   client administrator configures their own identity provider is the founder's call (open question 3 of
+   2026-11-10).
+8. **Legal holds are placed where the record is.** "Place legal hold" belongs on the record in the Vault, for
+   everyone the server already allows. The Vault lane holds that file; this is handed to it, not done beside it.
+
+**Not decided here** (the founder's): which number is the contract seat limit; whether credits and tokens are
+metered and enforced at GA; the free plan's limits; the module-enforcement default; closing an organisation and
+deleting a person's data on request.
+
+Evidence: `docs/evidence/DESIGN/P-122/inventory/administration.md` and `administration-restoration-order.json`; the walk and audit
+behind them, `docs/evidence/F1/2026-11-10-client-admin/`. Each restoration files its before and after beside the
+inventory, as the other areas do.
