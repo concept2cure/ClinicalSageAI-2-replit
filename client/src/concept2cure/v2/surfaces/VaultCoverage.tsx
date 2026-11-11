@@ -42,40 +42,63 @@ interface Props {
   defaultOpen?: boolean;
   /** Open the filing's own outline, in the Library, for a filing the Vault does not count (S6). */
   onShowOutline?: () => void;
+  /** A required section's name by its number, from the filing's outline; null where the outline names none. */
+  sectionName?: (code: string) => string | null;
+}
+
+/** An agency as people write it: the rule pack records "fda", a person reads "FDA". A longer name is left as recorded. */
+function agencyName(agency: string | undefined): string {
+  const a = (agency ?? '').trim();
+  if (!a) return 'the agency';
+  return a.length <= 5 ? a.toUpperCase() : a;
 }
 
 function provenanceLine(p: Extract<VaultCoverageShape, { state: 'available' }>['provenance']): string {
   if (p.source === 'rule_pack') {
-    return `Required list from the ${(p.docType ?? '').toUpperCase()} rule pack for ${p.agency ?? 'the agency'}, version ${p.packVersion ?? 'unrecorded'}.`;
+    return `Required list from the ${(p.docType ?? '').toUpperCase()} rule pack for ${agencyName(p.agency)}, version ${p.packVersion ?? 'unrecorded'}.`;
   }
   return `Required list is the ICH CTD baseline, not this project's own: ${p.reason ?? 'no rule pack applies.'}`;
 }
 
-function MissingLine({ code }: { code: string }) {
+/**
+ * A missing section: its number, its name where the filing's outline has one, and the gap. A person reads
+ * "1.12.14 Environmental analysis", not a number alone. Where the outline has no name the row is the number and the
+ * gap, as before; no name is made up.
+ */
+function SectionCells({ code, name }: { code: string; name: string | null }) {
+  return (
+    <>
+      <span className="vd-dr-kind">{code}</span>
+      {name ? <span className="vd-dr-name" data-testid={`vault-coverage-name-${code}`}>{name}</span> : null}
+      <span className={name ? 'vd-dr-detail' : 'vd-dr-name'}>No confirmed document</span>
+    </>
+  );
+}
+
+function MissingLine({ code, name }: { code: string; name: string | null }) {
   return (
     <div className="vd-dr-row" data-testid={`vault-coverage-missing-${code}`}>
-      <span className="vd-dr-kind">{code}</span>
-      <span className="vd-dr-name">No confirmed document</span>
+      <SectionCells code={code} name={name} />
     </div>
   );
 }
 
 function MissingSection({
   code,
+  name,
   moduleCode,
   documents,
   onUpload,
   onFileHere,
   busy,
-}: { code: string; moduleCode: string } & Omit<Props, 'coverage' | 'defaultOpen'>) {
+}: { code: string; name: string | null; moduleCode: string } & Omit<Props, 'coverage' | 'defaultOpen' | 'sectionName'>) {
   const [docId, setDocId] = useState('');
   // The gap is stated to every reader; uploading and filing into it only to a role the routes admit.
   const canWrite = useVaultCanWrite();
-  if (!canWrite) return <MissingLine code={code} />;
+  if (!canWrite) return <MissingLine code={code} name={name} />;
   return (
     <div className="vd-dr-row" data-testid={`vault-coverage-missing-${code}`}>
-      <span className="vd-dr-kind">{code}</span>
-      <span className="vd-dr-name">No confirmed document</span>
+      <SectionCells code={code} name={name} />
       <button type="button" className="btn ghost small" onClick={onUpload} disabled={busy}>
         {I.upload} Upload
       </button>
@@ -109,7 +132,7 @@ function MissingSection({
   );
 }
 
-export function VaultCoverage({ coverage, documents, onUpload, onFileHere, busy, defaultOpen = false, onShowOutline }: Props) {
+export function VaultCoverage({ coverage, documents, onUpload, onFileHere, busy, defaultOpen = false, onShowOutline, sectionName }: Props) {
   const [open, setOpen] = useState(defaultOpen);
   const headingId = useId();
   /* A section of the Required documents view (D6 §C.4 step 11): the heading,
@@ -167,6 +190,7 @@ export function VaultCoverage({ coverage, documents, onUpload, onFileHere, busy,
                 <MissingSection
                   key={code}
                   code={code}
+                  name={sectionName?.(code) ?? null}
                   moduleCode={m.code}
                   documents={documents}
                   onUpload={onUpload}
