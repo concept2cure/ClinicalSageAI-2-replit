@@ -158,6 +158,12 @@ the source's name on hover; a source not admitted to the section is stated, as o
 (`after-d9-01`, `12-document-view-citation-red-green.txt`). The reviewer's copy (`ReviewDecisionDialog.tsx`, held by
 Wave B) still shows the cached name until its holder passes the same numbering; noted in COORDINATION.
 
+**The editor's paused-attribution note** said "paused while you edit" on a frozen section nobody can edit. On a
+read-only section the painting stops because the text shown differs from the text the origins were recorded against
+(a citation shows as "[1]"); the note now says that there (`RichSectionEditor.tsx` `attributionPausedNote`; red first in
+`15-editor-note-and-real-postgres.txt`, with the real-PostgreSQL runs of the leaf evidence changes: 41 of 41, and the
+deliverables suite 38 of 38).
+
 **The editor's attribution legend** (`client/src/concept2cure/lineage/DocumentAttributionBar.tsx`) said of
 author-asserted text "a person stands behind it; nothing is cited", on a section that cites a Data Room source. The
 bar counts recorded origins; a citation marker in a sentence the author wrote does not make its recorded origin a
