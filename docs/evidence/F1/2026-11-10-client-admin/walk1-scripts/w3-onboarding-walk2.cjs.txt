@@ -1,0 +1,48 @@
+// Flow 1d continued: project discovery (step 3), then steps 4-10 read with their defaults.
+const L = require('./lib.cjs');
+const STOP = Number(process.argv[3] || 10);
+const note = (k, v) => console.log(`## ${k}:`, typeof v === 'string' ? v : JSON.stringify(v));
+const stepBody = async (page) => (await L.textOf(page, 'main')).split('Review & activate\n').slice(1).join('Review & activate\n');
+(async () => {
+  const browser = await L.chromium.launch();
+  const { page } = await L.signedIn(browser, 'avery.lind@northgate-bio.example.test');
+  await page.goto(L.BASE + '/concept2cure/onboarding', { waitUntil: 'networkidle' }); await L.sleep(1500);
+  L.drain(page);
+  const next = async (label) => {
+    const b = page.getByRole('button', { name: /^(Continue|Save & continue|Next)$/ }).last();
+    const enabled = await b.isEnabled();
+    note(`${label}: continue button`, `${await b.innerText()}${enabled ? '' : ' (disabled)'}`);
+    if (!enabled) return false;
+    await b.click(); await L.sleep(1500);
+    const w = L.drain(page); if (w.length) note(`${label}: writes`, w.map(x => x.slice(0, 500)));
+    return true;
+  };
+  await next('step 1');
+  note('step 2 answers on return', await page.locator('main select').evaluateAll(els => els.map(e => e.options[e.selectedIndex]?.text)));
+  await next('step 2');
+  // step 3
+  const ids = await page.locator('main [id^=discovery-]').evaluateAll(els => els.map(e => `${e.id}:${e.tagName.toLowerCase()}`));
+  note('step 3 field ids', ids);
+  await page.fill('#discovery-projectName', 'NGB-101 IND');
+  for (const lbl of ['Biologic', 'United States', 'Document authoring and review', 'Submission assembly']) await page.locator('main label').filter({ hasText: new RegExp(`^${lbl}$`) }).locator('input').check();
+  await page.selectOption('#discovery-developmentStage', { label: 'Preclinical / feasibility' });
+  await page.selectOption('#discovery-firstDeliverable', { label: 'Submission package' });
+  await page.selectOption('#discovery-dataReadiness', { label: 'Some sources available; gaps remain' });
+  await page.fill('#discovery-projectGoal', 'Open the IND for NGB-101 so the first-in-human study can start in 2027.');
+  await page.fill('#discovery-therapeuticAreas', 'immunology, dermatology');
+  await page.fill('#discovery-indication', 'Adults with moderate to severe atopic dermatitis not controlled by topical therapy.');
+  await page.fill('#discovery-successCriteria', 'The IND is accepted without a clinical hold; QA signs each section before filing.');
+  await L.sleep(300);
+  note('step 3 required line', (await stepBody(page)).match(/Required:[^\n]*/)?.[0] || '(none)');
+  await L.shot(page, 'w1-37-onboarding-step03-filled.png', { fullPage: true });
+  await next('step 3');
+  for (let i = 4; i <= STOP; i += 1) {
+    note(`STEP ${i}`, (await stepBody(page)).slice(0, 4200));
+    note(`STEP ${i} controls`, (await L.controls(page)).filter(x => !/Collaborate|New task|Your work/.test(x)));
+    await L.shot(page, `w1-36-onboarding-step${String(i).padStart(2, '0')}.png`, { fullPage: true });
+    if (i === STOP) break;
+    if (!(await next(`step ${i}`))) break;
+  }
+  note('errors', L.errs());
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

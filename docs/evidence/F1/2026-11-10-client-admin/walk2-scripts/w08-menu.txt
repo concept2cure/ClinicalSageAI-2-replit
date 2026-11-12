@@ -1,0 +1,31 @@
+// Walk 2: the account menu as the organization's administrator, and each destination it names.
+const c = require('./lib.cjs');
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.pageFor(browser, 'w2owner', 'walk2.owner@example.test');
+  let items = [];
+  await c.step('account menu (administrator)', async (s) => {
+    await page.goto(`${c.BASE}/concept2cure`, { waitUntil: 'networkidle' }); await c.sleep(1500);
+    await page.locator('button', { hasText: 'Wanda Walker' }).first().click(); await c.sleep(700);
+    items = await page.locator('[role=menu] [role=menuitem], [role=menu] button, [role=menu] a').evaluateAll(els => els.map(e => e.textContent.trim().replace(/\s+/g, ' ')));
+    s.notes.push('menu: ' + JSON.stringify(items));
+    s.notes.push('menu text: ' + (await page.locator('[role=menu]').first().innerText().catch(() => '')).replace(/\n+/g, ' | '));
+    await c.shot(page, 'w2-11-account-menu-admin-1440.png');
+  });
+  for (const label of ['Account', 'Usage & limits', 'Subscription & features', 'Subscription & billing', 'Compare subscriptions', 'Set up a workspace', 'Admin', 'Biotech & Pharma']) {
+    await c.step(`menu -> ${label}`, async (s) => {
+      await page.goto(`${c.BASE}/concept2cure`, { waitUntil: 'networkidle' }); await c.sleep(1000);
+      await page.locator('button', { hasText: 'Wanda Walker' }).first().click(); await c.sleep(600);
+      const item = page.locator('[role=menu]').getByText(label, { exact: true }).first();
+      if (!(await item.count())) { s.notes.push('NOT IN MENU'); return { outcome: 'absent' }; }
+      await item.click(); await c.sleep(3000);
+      s.notes.push('url ' + page.url());
+      const dlg = page.locator('[role=dialog]').first();
+      const where = (await dlg.count()) ? dlg : page.locator('main').first();
+      s.notes.push(((await dlg.count()) ? '[dialog] ' : '[main] ') + (await where.innerText().catch(() => '')).replace(/\n{2,}/g, '\n').slice(0, 5000));
+      await c.shot(page, `w2-11-menu-${label.toLowerCase().replace(/[^a-z]+/g, '-')}-1440.png`);
+    });
+  }
+  c.report(); c.save('w2-08-menu');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

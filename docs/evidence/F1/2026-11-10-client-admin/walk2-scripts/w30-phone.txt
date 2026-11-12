@@ -1,0 +1,67 @@
+// Walk 2, flow 7: each screen of this walk at 390x844 (own organisation, administrator).
+const c = require('./lib.cjs');
+const measure = (page) => page.evaluate(() => {
+  const vw = window.innerWidth; const out = { overflowX: Math.max(0, document.documentElement.scrollWidth - vw), wide: [], small: [] };
+  for (const el of document.querySelectorAll('main *, [role=dialog] *')) {
+    const r = el.getBoundingClientRect(); if (!r.width || !r.height) continue;
+    const cs = getComputedStyle(el); if (cs.visibility === 'hidden' || cs.display === 'none') continue;
+    if (r.right > vw + 2 && r.left < vw && out.wide.length < 6 && !el.querySelector('*')) out.wide.push(`${el.tagName.toLowerCase()}.${String(el.className).split(' ')[0]}:"${(el.textContent || '').trim().slice(0, 30)}" right=${Math.round(r.right)}`);
+    if ((el.tagName === 'BUTTON' || el.tagName === 'A' || el.getAttribute('role') === 'switch' || el.getAttribute('role') === 'tab') && (r.height < 24 || r.width < 24) && out.small.length < 8) out.small.push(`${(el.getAttribute('aria-label') || el.textContent || '').trim().slice(0, 28)} ${Math.round(r.width)}x${Math.round(r.height)}`);
+  }
+  // elements that scroll sideways inside themselves
+  out.scrollers = [...document.querySelectorAll('main *')].filter((e) => e.scrollWidth > e.clientWidth + 8 && ['auto', 'scroll'].includes(getComputedStyle(e).overflowX)).slice(0, 5).map((e) => `${e.tagName.toLowerCase()}.${String(e.className).split(' ')[0]} ${e.scrollWidth}>${e.clientWidth}`);
+  out.clipped = [...document.querySelectorAll('main *')].filter((e) => e.scrollWidth > e.clientWidth + 8 && getComputedStyle(e).overflowX === 'hidden' && !e.querySelector('*') === false && e.clientWidth > 40).slice(0, 5).map((e) => `${e.tagName.toLowerCase()}.${String(e.className).split(' ')[0]} ${e.scrollWidth}>${e.clientWidth}`);
+  return out;
+});
+(async () => {
+  const browser = await c.chromium.launch();
+  const ctx = await browser.newContext({ viewport: c.VIEWPORTS.phone, isMobile: true, hasTouch: true, deviceScaleFactor: 1 });
+  const page = await ctx.newPage();
+  const bad = []; page.on('response', (r) => { if (r.status() >= 400 && r.url().includes('/api/')) bad.push(`${r.status()} ${r.request().method()} ${r.url().replace(c.BASE, '').slice(0, 80)}`); });
+  page.on('console', (m) => { if (m.type() === 'error') bad.push('console: ' + m.text().slice(0, 160)); });
+  await c.step('phone: sign in', async (s) => {
+    await page.goto(c.BASE + '/concept2cure/login', { waitUntil: 'networkidle' }); await c.shot(page, 'w2-80-phone-signin.png');
+    s.notes.push(JSON.stringify(await measure(page)));
+    await c.signIn(page, 'walk2.owner@example.test', process.env.WALK_PASSWORD);
+    await c.shot(page, 'w2-80-phone-home.png'); s.notes.push('home: ' + JSON.stringify(await measure(page)));
+  });
+  const visit = async (name, url, after) => c.step(`phone: ${name}`, async (s) => {
+    bad.length = 0;
+    await page.goto(c.BASE + url, { waitUntil: 'networkidle' }); await c.sleep(2500);
+    if (after) await after(s);
+    const m = await measure(page); s.notes.push(JSON.stringify(m));
+    await c.shot(page, `w2-80-phone-${name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.png`);
+    await page.setViewportSize({ width: 390, height: 2400 }); await c.sleep(500);
+    await page.screenshot({ path: `${c.SHOTS}/w2-80-phone-${name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-tall.png` });
+    await page.setViewportSize(c.VIEWPORTS.phone);
+    if (bad.length) s.notes.push('errors: ' + JSON.stringify(bad.slice(0, 8)));
+    return m.overflowX > 0 ? { outcome: 'overflow' } : undefined;
+  });
+  const tab = (label) => async () => { const t = page.getByRole('tab', { name: label }).or(page.getByRole('button', { name: label, exact: true })).first(); await t.scrollIntoViewIfNeeded().catch(() => {}); await t.click({ timeout: 5000 }).catch((e) => { throw new Error(`tab "${label}" not reachable: ${e.message.split('\n')[0]}`); }); await c.sleep(2500); };
+  await visit('admin members', '/concept2cure/admin-console');
+  await visit('admin roles', '/concept2cure/admin-console', tab('Roles + scopes'));
+  await visit('admin sso', '/concept2cure/admin-console', tab('SSO + provisioning'));
+  await visit('admin api keys', '/concept2cure/admin-console', tab('API keys'));
+  await visit('admin api key form', '/concept2cure/admin-console', async (s) => { await tab('API keys')(); await page.getByRole('button', { name: 'Create API key' }).click(); await c.sleep(800); const d = page.locator('[role=dialog]').first(); const b = await d.boundingBox(); s.notes.push('drawer box ' + JSON.stringify(b)); const submit = d.getByRole('button', { name: /Create API key/ }); await submit.scrollIntoViewIfNeeded(); const sb = await submit.boundingBox(); s.notes.push('submit box ' + JSON.stringify(sb) + ' inside viewport: ' + Boolean(sb && sb.y + sb.height <= 844 && sb.x + sb.width <= 390)); });
+  await page.keyboard.press('Escape');
+  await visit('admin settings', '/concept2cure/admin-console', tab('Settings'));
+  await visit('account panel', '/concept2cure', async (s) => {
+    const acct = page.locator('button', { hasText: 'Wanda Walker' }).first();
+    if (!(await acct.isVisible().catch(() => false))) { const open = page.getByRole('button', { name: /menu|sidebar|navigation/i }).first(); s.notes.push('account button hidden; opening: ' + await open.getAttribute('aria-label').catch(() => 'none')); await open.click().catch(() => {}); await c.sleep(600); }
+    await acct.click({ timeout: 5000 }); await c.sleep(600);
+    await c.shot(page, 'w2-80-phone-account-menu.png');
+    const menu = page.locator('[role=menu]').first(); const mb = await menu.boundingBox(); s.notes.push('menu box ' + JSON.stringify(mb));
+    await menu.getByText('Account', { exact: true }).first().click(); await c.sleep(1500);
+    const d = page.locator('[role=dialog]').first(); s.notes.push('panel box ' + JSON.stringify(await d.boundingBox()));
+  });
+  await page.keyboard.press('Escape');
+  await visit('features', '/concept2cure/features');
+  await visit('features admin controls', '/concept2cure/features', async () => { await page.getByRole('button', { name: /^Admin controls/ }).click(); await c.sleep(1200); });
+  await visit('licensing', '/concept2cure/licensing');
+  await visit('usage', '/concept2cure/usage');
+  await visit('usage rate limits', '/concept2cure/usage', tab('Rate limits'));
+  await visit('access requests', '/concept2cure/access-requests');
+  await visit('audit trail', '/concept2cure/audit-trail');
+  c.report(); c.save('w2-30-phone');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });

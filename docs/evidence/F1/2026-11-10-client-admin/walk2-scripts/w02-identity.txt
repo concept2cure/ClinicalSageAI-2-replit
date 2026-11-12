@@ -1,0 +1,19 @@
+// Walk 2, flow 1b: SSO + provisioning -> Identity console, as the seeded administrator (read-only).
+const c = require('./lib.cjs');
+(async () => {
+  const browser = await c.chromium.launch();
+  const { page } = await c.pageFor(browser, 'owner', 'jm.smith@concept2cure.pro');
+  await c.step('SSO tab -> Open Identity console', async (s) => {
+    await page.goto(`${c.BASE}/concept2cure/admin-console`, { waitUntil: 'networkidle' }); await c.sleep(1500);
+    await page.getByRole('tab', { name: 'SSO + provisioning' }).or(page.getByRole('button', { name: 'SSO + provisioning' })).first().click(); await c.sleep(1200);
+    await page.getByRole('button', { name: /Open Identity console/ }).click(); await c.sleep(3000);
+    s.notes.push('url ' + page.url());
+    s.notes.push(await c.mainText(page));
+    await c.shot(page, 'w2-01-identity-console-1440.png');
+    await c.tallShot(page, 'w2-01-identity-console-1440-tall.png', 2600);
+    s.notes.push('buttons: ' + JSON.stringify(await page.locator('main button:visible, main a:visible, main [role=tab]:visible').evaluateAll(els => els.map(e => (e.getAttribute('aria-label') || e.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 60)).filter(Boolean))));
+    s.notes.push('inputs: ' + JSON.stringify(await page.locator('main input:visible, main select:visible, main textarea:visible').evaluateAll(els => els.map(e => `${e.tagName}:${e.getAttribute('type') || ''}:${e.getAttribute('aria-label') || e.getAttribute('placeholder') || e.id || e.getAttribute('name') || ''}`))));
+  });
+  c.report(); c.save('w2-02-identity');
+  await browser.close();
+})().catch(e => { console.error('ERR', e.message); process.exit(1); });
