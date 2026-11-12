@@ -4585,6 +4585,33 @@ async function consentElementsField(docId: unknown, tenantId: unknown, templateI
   }
 }
 
+/** The CTD-shaped heuristics the section check does not run on an informed-consent form, and why. */
+const CONSENT_SKIPPED_HEURISTICS: ReadonlySet<string> = new Set(['content_length', 'module_keywords', 'data_presence', 'structure']);
+const CONSENT_SKIP_REASON =
+  'Not run on an informed consent form, which is short plain language with no tables. It is checked against the 21 CFR 50.25 elements instead.';
+/** Why no keyword profile ran. A document with no module is said to have none, not quoted as `""`. */
+function keywordProfileAbsentReason(moduleLabel: string): string {
+  return moduleLabel
+    ? `No heuristic keyword profile is defined for document module "${moduleLabel}".`
+    : 'This document has no CTD module, so no keyword profile applies.';
+}
+
+/**
+ * What the section must contain. An informed-consent form's requirement is the 21 CFR 50.25 elements, which the
+ * check reports below (`consent_elements`); the CTD guidance record has no entry for its section codes, and saying
+ * only that read as if nothing were required.
+ */
+function sectionRequirementsFor(code: unknown, templateId: unknown): RecordRequirements {
+  return isConsentTemplateId(templateId)
+    ? { indexed: false, reason: 'This is an informed consent form. What it must contain is the 21 CFR 50.25 elements of informed consent, checked below.' }
+    : recordRequirementsFor(code);
+}
+
+/** The heuristics not run on a document of this template, or null when all of them apply. */
+function heuristicsNotRunOn(templateId: unknown): ReadonlySet<string> | null {
+  return isConsentTemplateId(templateId) ? CONSENT_SKIPPED_HEURISTICS : null;
+}
+
 // POST /api/authoring/sections/:sectionId/ai/deficiency-scan - Scan for deficiencies
 router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res: Response) => {
   try {
@@ -4629,7 +4656,15 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
        to trust a bare number. */
     const checks: Array<{ id: string; flagged: boolean }> = [];
     const checksSkipped: Array<{ id: string; reason: string }> = [];
+    /* 2026-11-12 (F1): three heuristics below are written for CTD sections. On an informed-consent form, which is
+       meant to be short plain language with no tables, they told the author a correct section was "insufficient",
+       had "no data tables" and "lacked structure". There they are skipped, saying why; the 50.25 elements are its check. */
+    const notForThisType = heuristicsNotRunOn(section.template_id);
     const runCheck = (id: string, fn: () => void) => {
+      if (notForThisType?.has(id)) {
+        checksSkipped.push({ id, reason: CONSENT_SKIP_REASON });
+        return;
+      }
       const before = deficiencies.length;
       fn();
       checks.push({ id, flagged: deficiencies.length > before });
@@ -4690,7 +4725,7 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
         });
       });
     } else {
-      checksSkipped.push({ id: 'module_keywords', reason: `No heuristic keyword profile is defined for document module "${moduleLabel}".` });
+      checksSkipped.push({ id: 'module_keywords', reason: keywordProfileAbsentReason(moduleLabel) });
     }
 
     /* CTD required-element check, migrated from POST /ai/validate-compliance.
@@ -4806,7 +4841,7 @@ router.post('/sections/:sectionId/ai/deficiency-scan', async (req: Request, res:
            present: an omitted field reads as "nothing required", which is the
            one thing this must never say. It is not a check and not counted as
            one — see recordRequirementsFor above. */
-        record_requirements: recordRequirementsFor(section.code),
+        record_requirements: sectionRequirementsFor(section.code, section.template_id),
         /* Whether the open DOCUMENT agrees with itself: the same figure stated
            twice in two sections with two different values. Absent when the
            sections could not be read — never an empty result, which would read
