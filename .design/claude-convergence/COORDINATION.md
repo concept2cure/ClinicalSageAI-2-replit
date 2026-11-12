@@ -923,7 +923,16 @@ three D6/D4 trunk-CI rows are marked taken. This lane fixed the two parked unit 
   - `01WcyqbqW…` (10-23): AnA across every authoring document at IND scale.
   - `01P7hJNw…` (09-24): the approved-model gate's free-text classifier.
   - `019ZvHmh…` (11-02): AnA runs multiple agents, and Manual/Auto is a real run policy.
-  - `01TTTQ1h…` (10-19): the editor family's periodic review, and AnA's reasoning checked by an engine.
+  - `01TTTQ1h…` (10-19): the editor family's periodic review, and AnA's reasoning checked by an engine. **Back
+    2026-11-12 (the same session), F1, holds no file.** Its row in `docs/work-orders/README.md` says what other
+    lanes closed while it was away, what it landed (`46c66f3d6`: the answer check reads EU law, ISO/IEC/EN
+    standards, MDCG/MEDDEV and EMA references, engine `answer-check/3`; `583dc7b5f`: two refusals of its own that
+    named a remedy nobody could take), and what is still open and free to take. **For whoever reads AnA's memory:**
+    `memory-fact-check.ts` accepts only the current engine's checks, so answers stored with an `answer-check/2`
+    check stop vouching for memory until they are checked again. That is by design; it is said here so it is not
+    met as a fault. **For `01QoxbLcn…` (`grounding-core.ts`, `eee0aaa0b`):** the marker list there still has no
+    EU regulation, ISO/IEC or MDCG form, so a figure cited to ISO 14971 can read as uncited in the independent
+    check; this lane did not touch that file.
   - `017d4r3C…` (10-19): AnA's regulatory intelligence round 2. Its MC-RL-2 is fixed by this lane: the drafting
     steps mark a gap `[PENDING: needs data]` and never fill it (`bb05e5c0f7`, RULE 2). MC-missed (TBD markers) is
     still open.
