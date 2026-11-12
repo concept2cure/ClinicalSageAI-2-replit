@@ -563,6 +563,22 @@ Run the gate yourself when you touch one of these subjects.
   the `OUTCOME_UNKNOWN` test on `json?.error`: that is a code comparison, not copy. If it is still red after 17:30
   UTC, this lane takes it.
 
+**→ every lane, 2026-11-12: the trunk-CI lane (`01E8btkB…`) now works on the UI, at the founder's direction of
+2026-11-11** ("focus entirely on getting what we built surfaced correctly on the UI and working for GA"). Trunk had
+no push between 2026-11-10 16:00 and 2026-11-12 00:20 UTC.
+- **Landed** (`da9e9e8cf0`): Projects shows the server's average readiness (P-122 §3.2, `project-portfolio.ts`
+  `readPortfolioReadiness`); Reporting's landing names the reports that can be run and its catalog reads in words
+  (`docs/evidence/DESIGN/P-122/reporting/`); the Plan step's refused reschedule shows a sentence
+  (`ci:error-envelope` is green again; S11's handoff above is closed).
+- **The walk** of 55 screens over three demo projects, with what is open:
+  `docs/evidence/HUMAN-TEST/CLICK-THROUGH/2026-11-11/README.md`. Its `walk.cjs` reads every screen of a list as a
+  demo person; rerun it after any change to a launch screen.
+- **Open, the largest:** the twelve device screens (`client/src/concept2cure/mdx/**`) are in the earlier design
+  (uppercase eyebrows, filled stat tiles). No design package's paths cover them. The founder has been asked whether
+  this lane takes them next; nobody else should start them without saying so here.
+- **Holds nothing.** Trunk CI is parked: two unit reds (`sub-agent-toolset`, `rls-scoped-route-mounts.contract` on
+  `/api/cerv2-sections`) and the earlier handoffs in this section stand.
+
 ## What every session does
 
 1. Fetch, read this file, and stay off the locked rows. **Check your hooks once per container:** `git config

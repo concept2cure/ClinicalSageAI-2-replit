@@ -471,8 +471,9 @@ router.get('/:jobId/headings', async (req: Request, res: Response) => {
  * A build that stopped (a rate limit that did not lift, a refused key, a provider that did not answer) is resumed
  * rather than replaced: the runner keeps every section it saved and drafts the headings that have no saved text.
  * It matters because a CSR document takes its imported sections from one build (workflow-source-import.ts): once a
- * document holds the first build's sections, a second build's are refused. Only a failed build is resumed; the
- * runner claims it with its own conditional update, so two presses run one resume.
+ * document holds the first build's sections, a second build's are refused. A failed build is resumed, and so is one
+ * a person stopped (recorded `cancelled`; the page's "Stop build", 2026-11-11), which is queued again first. The
+ * runner claims the build with its own conditional update, so two presses run one resume.
  */
 router.post('/:jobId/resume', async (req: Request, res: Response) => {
   const jobId = parseJobIdParam(req.params.jobId);
@@ -487,9 +488,17 @@ router.post('/:jobId/resume', async (req: Request, res: Response) => {
     const [row] = await requireDb().select({ status: csrBuildJobs.status }).from(csrBuildJobs)
       .where(and(eq(csrBuildJobs.id, jobId), eq(csrBuildJobs.organizationId, organizationId))).limit(1);
     if (!row) return res.status(404).json({ error: 'Job not found' });
-    if (row.status !== 'failed') {
-      return res.status(409).json({ code: 'CSR_BUILD_NOT_RESUMABLE', status: row.status,
-        error: `This build is ${row.status} and cannot be resumed. Only a build that stopped before it finished is resumed.` });
+    const notResumable = (status: string) => res.status(409).json({ code: 'CSR_BUILD_NOT_RESUMABLE', status,
+      error: `This build is ${status} and cannot be resumed. Only a build that stopped before it finished is resumed.` });
+    if (row.status === 'cancelled') {
+      // A person stopped it (POST …/cancel). The runner takes a queued or failed build only, so it is queued again,
+      // as the same build, in one statement: a second request finds it queued and hands nothing over.
+      const requeued = await requireDb().update(csrBuildJobs).set({ status: 'queued', updatedAt: new Date() })
+        .where(and(eq(csrBuildJobs.id, jobId), eq(csrBuildJobs.organizationId, organizationId), eq(csrBuildJobs.status, 'cancelled')))
+        .returning({ id: csrBuildJobs.id });
+      if (!requeued.length) return notResumable((await getCSRBuildJobStatus(jobId, organizationId))?.status ?? 'unknown');
+    } else if (row.status !== 'failed') {
+      return notResumable(row.status);
     }
     resumeCSRBuildInBackground(jobId);
     return res.status(202).json({ jobId, status: 'queued', resumed: true });
