@@ -1,0 +1,6 @@
+authoring subsystem tables: 11 (expected 11)
+tenant-parentage FKs: 4 (expected 4)
+authoring tables carrying tenant_isolation_policy: 11 (expected 11)
+collaboration CRDT state table: 1 (expected 1)
+rbm_* tables: 12 · cre_* tables: 6
+readiness contract exit=0

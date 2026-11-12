@@ -114,7 +114,7 @@ vi.mock('../../../services/anthropic-files.js', async () => (await harnessModule
 import { mountStreamRoute } from '../stream.js';
 import { MAX_PAUSE_MS } from '../../../services/ana/run-status.js';
 import { DETACHED_WALL_MS, UNATTENDED_MS } from '@shared/ana/run-detach';
-import { harness as h, resetHarness, streamApp, turn, type ToolUse } from './support/stream-route-harness.js';
+import { harness as h, resetHarness, streamApp, turn, APPROVED_DRAFTING_MODEL, type ToolUse } from './support/stream-route-harness.js';
 
 const app = streamApp(router => {
   router.use((_req, res, next) => {
@@ -158,6 +158,8 @@ afterAll(() => {
 });
 beforeEach(() => {
   resetHarness();
+  // Their subject is the approval of a governed write, so the turn is served by a model that may draft.
+  h.state.servedBy = { ...APPROVED_DRAFTING_MODEL };
   Object.assign(io, { response: null, duringCall: null, calls: 0, records: [], notices: [], budgetExceeded: false });
   const realNow = Date.now.bind(Date);
   vi.spyOn(Date, 'now').mockImplementation(() => realNow() + h.state.clockOffset);

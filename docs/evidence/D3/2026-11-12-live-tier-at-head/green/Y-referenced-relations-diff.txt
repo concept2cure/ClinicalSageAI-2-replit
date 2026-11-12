@@ -1,0 +1,9 @@
+Referenced relations, every file attribution, before and after the change (diff of the two full listings):
+539d538
+< portfolio	server/services/c2c/project-portfolio.ts
+709d707
+< selected	server/services/c2c/project-portfolio.ts
+799d796
+< workstream	server/services/c2c/project-portfolio.ts
+
+before: 799 relations; after: 796

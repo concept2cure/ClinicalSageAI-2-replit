@@ -63,6 +63,7 @@ import { AUTO_ACTIVE_MS, AUTO_MAX_ROUNDS } from '@shared/ana/run-control-limits'
 import {
   harness as h,
   resetHarness,
+  APPROVED_DRAFTING_MODEL,
   streamApp,
   turn as streamTurn,
   type SseEvent,
@@ -102,6 +103,8 @@ afterAll(() => {
 
 beforeEach(() => {
   resetHarness();
+  // Their subject is the approval of a governed write, so the turn is served by a model that may draft.
+  h.state.servedBy = { ...APPROVED_DRAFTING_MODEL };
   h.state.script = TWO_ROUNDS();
   const realNow = Date.now.bind(Date);
   vi.spyOn(Date, 'now').mockImplementation(() => realNow() + h.state.clockOffset);
