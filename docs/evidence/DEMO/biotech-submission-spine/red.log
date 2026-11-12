@@ -1,0 +1,103 @@
+TAP version 13
+# Subtest: a submission anchored to another program is never chosen, whatever its product name
+not ok 1 - a submission anchored to another program is never chosen, whatever its product name
+  ---
+  duration_ms: 1.579334
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/scripts/demo/launch-demo/biotech-submission-spine.test.mjs:16:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    29 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 29
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/scripts/demo/launch-demo/biotech-submission-spine.test.mjs:21:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: only another program's submission matches by name: none is chosen
+not ok 2 - only another program's submission matches by name: none is chosen
+  ---
+  duration_ms: 0.825706
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/scripts/demo/launch-demo/biotech-submission-spine.test.mjs:24:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + {
+    +   id: 29,
+    +   productName: 'C2C-101',
+    +   programId: '312c459d-564c-4c62-9f70-fdaa02c977d2',
+    +   title: 'Sweep'
+    + }
+    - null
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: ~
+  actual:
+    id: 29
+    title: 'Sweep'
+    productName: 'C2C-101'
+    programId: '312c459d-564c-4c62-9f70-fdaa02c977d2'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/scripts/demo/launch-demo/biotech-submission-spine.test.mjs:26:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: an unanchored submission matching the program's identity is still found
+ok 3 - an unanchored submission matching the program's identity is still found
+  ---
+  duration_ms: 0.19827
+  type: 'test'
+  ...
+# Subtest: the program's own anchored submission wins over an unanchored name match
+not ok 4 - the program's own anchored submission wins over an unanchored name match
+  ---
+  duration_ms: 0.218134
+  type: 'test'
+  location: '/home/user/ClinicalSageAI-2-replit/scripts/demo/launch-demo/biotech-submission-spine.test.mjs:34:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    
+    7 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 7
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///home/user/ClinicalSageAI-2-replit/scripts/demo/launch-demo/biotech-submission-spine.test.mjs:39:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 1
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 75.591227

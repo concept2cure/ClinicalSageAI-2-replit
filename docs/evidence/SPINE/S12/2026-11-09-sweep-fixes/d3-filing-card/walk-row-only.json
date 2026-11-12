@@ -1,0 +1,37 @@
+{
+  "base": "http://127.0.0.1:5000",
+  "program": "6065271c-d4b0-4936-aad1-02855423a738",
+  "label": "row-only",
+  "startedAt": "2026-11-09T20:29:12.611Z",
+  "row": "IND · FDA (US) Dispatch blocked · 4 blockers. Open it on Submit",
+  "before": {
+    "scrollTop": 0,
+    "scrollHeight": 900,
+    "clientHeight": 900,
+    "headerTop": 0,
+    "headerClass": "topbar",
+    "looseSrSpans": 0,
+    "stage": "Author",
+    "verdictTop": null,
+    "focused": ""
+  },
+  "after": {
+    "scrollTop": 48,
+    "scrollHeight": 949,
+    "clientHeight": 900,
+    "headerTop": -48,
+    "headerClass": "topbar",
+    "looseSrSpans": 1,
+    "stage": "Submit",
+    "verdictTop": 0,
+    "focused": "pj-mkt-verdict"
+  },
+  "assertions": {
+    "document.scrollingElement.scrollTop === 0": false,
+    "top bar top >= 0": false,
+    "Submit is the open step": true,
+    "the market's verdict is on screen and focused": true
+  },
+  "finishedAt": "2026-11-09T20:29:25.464Z",
+  "result": "FAIL"
+}

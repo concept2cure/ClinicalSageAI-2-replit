@@ -38,7 +38,8 @@ type RowOffer =
   | { kind: 'offer'; offer: FilingOfferView }
   | { kind: 'unclaimed'; offer: FilingOfferView; type: string; agency: string; names: string[] };
 type MarketRow = MarketSupportView & { offer?: FilingOfferView };
-interface MarketSupportRead { applicationType: string; markets: MarketRow[] }
+/** One type's read answers `markets`; a list of types (2026-11-09) answers `byType`. */
+interface MarketSupportRead { applicationType?: string; markets?: MarketRow[]; byType?: Record<string, MarketRow[]> }
 
 /** 'Health Canada', 'Health_Canada' and 'health-canada' are one agency name. */
 const agencyKey = (a: string | null | undefined) => String(a ?? '').trim().toLowerCase().replace(/[\s_-]+/g, '_');
@@ -75,6 +76,27 @@ function readOffer(path: string, guard: ShapeGuard<MarketSupportRead>, fresh: bo
 /** Tests only: forget every shared read. */
 export function __resetFilingOfferReads() { offerReads.clear(); }
 
+/* One read for every listed type at every listed market (every market the platform names when none is listed).
+   The first open after a page load still asked once per type and once per unnamed (type, agency): ~87 parallel reads,
+   and two opens a minute rate-limited the whole app (S12 biotech sweep, 2026-11-09). The route takes a
+   comma-separated list of types, answered by type; one type is its single form, answered as `markets`. Each type's
+   rows, or null when the read failed or a row carries no offer: such a read cannot say what is offered, a failure,
+   not "none". */
+async function readOffersByType(types: string[], markets: string[] | null, fresh: boolean): Promise<Map<string, MarketRow[]> | null> {
+  const list = types.length > 1;
+  const path = marketSupportPath(types.join(','), markets?.join(','));
+  const r = await readOffer(path, hasKeys<MarketSupportRead>(list ? 'byType' : 'markets'), fresh);
+  if (r.error || !r.data) return null;
+  const byType = list ? r.data.byType : { [types[0]]: r.data.markets };
+  const out = new Map<string, MarketRow[]>();
+  for (const t of types) {
+    const rows = byType?.[t];
+    if (!Array.isArray(rows) || rows.some((m) => !m?.offer)) return null;
+    out.set(t, [...rows]);
+  }
+  return out;
+}
+
 function useFilingOffers(pairs: Pair[]) {
   const key = pairs.map((p) => `${p.type}|${p.agency}`).join(';');
   const [bump, setBump] = useState(0);
@@ -87,20 +109,20 @@ function useFilingOffers(pairs: Pair[]) {
     // A re-read keeps the failure on screen (and its Retry button mounted,
     // marked busy) until the answer arrives, so focus never falls to the page.
     setState((s) => ({ ...s, loading: true }));
-    const guard = hasKeys<MarketSupportRead>('markets');
-    // A read with no offer on a row cannot say what is offered: a failure, not "none".
-    const bad = (r: { error?: unknown; data?: MarketSupportRead | null }) =>
-      !!r.error || !r.data || !Array.isArray(r.data.markets) || r.data.markets.some((m) => !m?.offer);
     const types = [...new Set(pairs.map((p) => p.type))];
+    const failed = { error: true, byType: new Map<string, MarketRow[]>() };
     (async () => {
       const fresh = bump > 0;
-      const first = await Promise.all(types.map((t) => readOffer(marketSupportPath(t), guard, fresh)));
-      if (first.some(bad)) return { error: true, byType: new Map<string, MarketRow[]>() };
-      const byType = new Map<string, MarketRow[]>(types.map((t, i) => [t, [...first[i].data!.markets]]));
+      const byType = await readOffersByType(types, null, fresh);
+      if (!byType) return failed;
       const unnamed = pairs.filter((p) => !rowFor(byType.get(p.type), p.agency));
-      const second = await Promise.all(unnamed.map((p) => readOffer(marketSupportPath(p.type, p.agency), guard, fresh)));
-      if (second.some(bad)) return { error: true, byType: new Map<string, MarketRow[]>() };
-      unnamed.forEach((p, i) => byType.get(p.type)!.push(...second[i].data!.markets));
+      if (!unnamed.length) return { error: false, byType };
+      /* One read for every unnamed type at every unnamed market; each pair keeps only its own market's row, as asked. */
+      const second = await readOffersByType(
+        [...new Set(unnamed.map((p) => p.type))], [...new Set(unnamed.map((p) => p.agency))], fresh,
+      );
+      if (!second) return failed;
+      unnamed.forEach((p) => byType.get(p.type)!.push(...second.get(p.type)!.filter((m) => agencyKey(m.market) === agencyKey(p.agency))));
       return { error: false, byType };
     })().then((out) => {
       if (!cancelled) setState({ loading: false, ...out });

@@ -1,0 +1,71 @@
+# 2026-11-09T19:54:34Z review finding 1: what each portfolio project's data room holds from the product's Quality capture, read straight from the local database.
+# All SQL ran inside BEGIN READ ONLY; nothing was written. Reading through the API would itself run the capture: GET /api/c2c/projects/:id/sources at offset 0 calls data-room-search.ts prepareSourceScope -> record-source.ts syncQualityProjectSources.
+# native_quality = current cre_evidence_sources rows the capture wrote (metadata.nativeRecord = true); first_capture = when the first of them was written, i.e. the first data-room read of that project.
+# Timeline: the pack's stage h letter step read h's data room first at 19:14:33 (round 1's runs). The other seven were first read at 19:31:40-19:31:58 by the verifier's GET /sources calls (verify-ui.log, 'SIDE EFFECT OF THIS VERIFICATION'). No portfolio pack step reads those seven projects' data rooms; the capture is the same whoever reads first.
+
+## every portfolio project: board workspace, status, captured Quality records
+BEGIN
+id | workspace | workspace_name | status | study | native_quality | first_capture
+8835514e-ff8c-4b1c-9a23-c0049189780f | 53496 | Varnhollow Oncology (fictional demo) | active | VNH-310-201 Phase 2 CSR (in review) | 21 | 2026-11-09 19:31:55.086136+00
+7a266309-5fc1-4c18-8438-8619b1b5e805 | 53496 | Varnhollow Oncology (fictional demo) | active | VNH-310-301 Phase 3 CSR (planning) | 21 | 2026-11-09 19:31:40.671303+00
+92907d1f-3b68-418f-873c-9065a8186c2b | 53497 | Petrelline Rare Therapeutics (fictional demo) | active | PTR-022-102 Phase 1/2 CSR (awaiting signature) | 21 | 2026-11-09 19:31:56.400403+00
+62f11671-1d20-49d6-b745-1ad081e2a4b6 | 53497 | Petrelline Rare Therapeutics (fictional demo) | active | PTR-022-301 Phase 3 CSR (enrolling) | 21 | 2026-11-09 19:31:55.70131+00
+452c2405-5393-4c8a-81aa-15c1530a81b5 | 53498 | Quillmont Immunology (fictional demo) | active | QLM-118 IND — Phase 1 CSR ready to file at 5.3.5.1 | 21 | 2026-11-09 19:31:57.723265+00
+61dc7ed7-279a-4de8-942d-4e44e34ee342 | 53498 | Quillmont Immunology (fictional demo) | active | QLM-118-202 Phase 2b CSR (database locked) | 21 | 2026-11-09 19:31:57.088884+00
+66b59a65-359b-4858-9e6a-80d3eb084653 | 53499 | Halcyra Vaccines (fictional demo) | active | HLY-09 IND — Phase 1 CSR, agency information request | 21 | 2026-11-09 19:14:33.04223+00
+d67b4cc4-6484-4a91-ac01-1d8717e66cf1 | 53499 | Halcyra Vaccines (fictional demo) | active | HLY-09-201 Phase 2 CSR (drafting) | 21 | 2026-11-09 19:31:58.361692+00
+f235cef6-e64b-4830-abad-cd5b0306cd70 | 2 | Concept2Cure Therapeutics | archived | CRV-310-201 Phase 2 CSR (in review) | 21 | 2026-11-09 18:19:55.39184+00
+138395e0-06b1-4617-8761-9fcc5091ce7b | 2 | Concept2Cure Therapeutics | archived | CRV-310-301 Phase 3 CSR (planning) | 21 | 2026-11-09 18:19:37.328038+00
+c7019221-64ae-46b6-b979-50fa0a122f79 | 2 | Concept2Cure Therapeutics | archived | HLY-09 IND — Phase 1 CSR, agency information request | 21 | 2026-11-09 18:03:27.859798+00
+ef21f2b4-41c6-4e32-af92-c862746d4342 | 2 | Concept2Cure Therapeutics | archived | HLY-09-201 Phase 2 CSR (drafting) | 21 | 2026-11-09 18:19:46.402734+00
+cca22f86-489f-4b58-ba6b-2a5a8c5c8d79 | 2 | Concept2Cure Therapeutics | archived | PTR-022-102 Phase 1/2 CSR (awaiting signature) | 21 | 2026-11-09 18:20:04.789551+00
+3a0d3318-03dd-4497-9a34-761440301c81 | 2 | Concept2Cure Therapeutics | archived | PTR-022-301 Phase 3 CSR (enrolling) | 21 | 2026-11-09 18:24:53.91909+00
+bde83be9-cb24-4997-b132-08cd413506b8 | 2 | Concept2Cure Therapeutics | archived | QLM-118 IND — Phase 1 CSR filed at 5.3.5.1 | 0 | 
+bddfa0d1-144f-40ee-a922-31a522648eec | 2 | Concept2Cure Therapeutics | archived | QLM-118 IND — Phase 1 CSR ready to file at 5.3.5.1 | 21 | 2026-11-09 18:25:05.089488+00
+412badea-f1bf-406f-91e9-92314ed443df | 2 | Concept2Cure Therapeutics | archived | QLM-118-202 Phase 2b CSR (database locked) | 21 | 2026-11-09 18:24:34.625594+00
+(17 rows)
+COMMIT
+
+## the 21 records on VNH-310-301 (7a266309, workspace 53496); the archived CRV-310-301 (138395e0, workspace 2) holds the same keys
+BEGIN
+key | title
+quality:qc_deviations:1 | GMP deviation: [Demo · Lumen] Site 104: week-12 visit outside the protocol window (participant 
+quality:qc_deviations:2 | GMP deviation: [Demo · Lumen] Site 107: two serious adverse events reported to the sponsor afte
+quality:qc_deviations:3 | GMP deviation: [Demo · Lumen] Site 102: participant re-consented on ICF version 3 eleven days a
+quality:qc_deviations:4 | GMP deviation: [Demo · Lumen] Site 105: kit dispensed before the screening toxin result was ent
+quality:qms_change_controls:1 | Change control: [Demo · Biotech] Add Week 2 PK sampling to Protocol C2C-101-201 (Amendment 1)
+quality:qms_change_controls:2 | Change control: [Demo · MDX] NP-100 software v2.3.0 — parechovirus channel mapping and thermal 
+quality:qms_change_links:1 | Quality record relationship: 1
+quality:qms_change_links:2 | Quality record relationship: 2
+quality:qms_change_links:3 | Quality record relationship: 3
+quality:qms_change_links:4 | Quality record relationship: 4
+quality:qms_internal_audits:1 | Internal audit: LMN-IA-2026-03
+quality:qms_internal_audits:2 | Internal audit: LMN-IA-2026-04
+quality:qms_internal_audits:3 | Internal audit: LMN-IA-2026-05
+quality:qms_internal_audits:4 | Internal audit: LMN-IA-2027-01
+quality:qms_management_reviews:1 | Management review: Lumen 2026-Q3
+quality:qms_management_reviews:2 | Management review: Lumen 2026-Q2
+quality:qms_suppliers:1 | Supplier: [Demo · Lumen] Larkmere Clinical Research
+quality:qms_suppliers:2 | Supplier: [Demo · Lumen] Thistlegate Central Laboratory
+quality:qms_suppliers:3 | Supplier: [Demo · Lumen] Corvane Biologics
+quality:qms_suppliers:4 | Supplier: [Demo · Lumen] Glacierpath Logistics
+quality:qms_suppliers:5 | Supplier: [Demo · Lumen] Quorvex IRT Systems
+(21 rows)
+keys_on_138395e0_not_on_7a266309
+0
+(1 row)
+COMMIT
+
+## why they are admitted in workspace 53496 (server/services/qms/project-evidence-queries.ts): suppliers, internal audits and management reviews have no program or workspace predicate; change controls admit program_id IS NULL; GMP deviations admit client_workspace_id IS NULL. The source rows:
+BEGIN
+family | id | program_id | title
+qms_change_controls | 1 | (none) | [Demo · Biotech] Add Week 2 PK sampling to Protocol C2C-101-201 (Amend
+qms_change_controls | 2 | (none) | [Demo · MDX] NP-100 software v2.3.0 — parechovirus channel mapping and
+(2 rows)
+family | id | client_workspace_id | title
+qc_deviations | 1 | (none) | [Demo · Lumen] Site 104: week-12 visit outside the protocol window (pa
+qc_deviations | 2 | (none) | [Demo · Lumen] Site 107: two serious adverse events reported to the sp
+qc_deviations | 3 | (none) | [Demo · Lumen] Site 102: participant re-consented on ICF version 3 ele
+qc_deviations | 4 | (none) | [Demo · Lumen] Site 105: kit dispensed before the screening toxin resu
+(4 rows)
+COMMIT

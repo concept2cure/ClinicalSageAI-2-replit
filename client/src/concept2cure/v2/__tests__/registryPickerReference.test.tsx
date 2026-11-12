@@ -17,11 +17,17 @@ function openUnavailable() {
 }
 beforeEach(() => {
   props.onChange.mockClear();
+  /* As the route answers (2026-11-09): one row per market asked, as asked; a list of types is answered by type. */
   request.mockReset().mockImplementation(async (_method: string, raw: string) => {
     const url = new URL(raw, 'http://test');
-    const blocked = url.searchParams.get('applicationType') === 'blocked';
-    return { ok: true, status: 200, json: async () => ({ markets: [{ agency: url.searchParams.get('market') || 'FDA',
-      offer: { tier: blocked ? 'not_offered' : 'author_only', label: blocked ? 'Not offered' : 'Author documents for this market', reason: blocked ? 'Recorded server refusal' : 'Recorded server authoring offer' } }] }) };
+    const types = (url.searchParams.get('applicationType') ?? '').split(',');
+    const rows = (type: string) => (url.searchParams.get('market') || 'FDA').split(',').map((market) => {
+      const blocked = type === 'blocked';
+      return { agency: market, market,
+        offer: { tier: blocked ? 'not_offered' : 'author_only', label: blocked ? 'Not offered' : 'Author documents for this market', reason: blocked ? 'Recorded server refusal' : 'Recorded server authoring offer' } };
+    });
+    const body = types.length > 1 ? { byType: Object.fromEntries(types.map((t) => [t, rows(t)])) } : { markets: rows(types[0]) };
+    return { ok: true, status: 200, json: async () => body };
   });
 });
 afterEach(cleanup);

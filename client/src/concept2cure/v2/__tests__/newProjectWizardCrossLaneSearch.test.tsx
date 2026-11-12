@@ -17,12 +17,17 @@ beforeEach(() => {
   Object.assign(window, { GLOBAL_REGISTRY: ids.map(id => getSubmissionTypeContext(id)) });
   apiRequest.mockImplementation(async (method: string, path: string) => {
     const url = new URL(path, 'http://localhost');
-    const markets = ['FDA', 'EU / Notified Body'].filter(market => !url.searchParams.get('market') || url.searchParams.get('market') === market);
+    const asked = (url.searchParams.get('market') ?? '').split(',').filter(Boolean);
+    const markets = ['FDA', 'EU / Notified Body'].filter(market => !asked.length || asked.includes(market));
+    const rows = () => markets.map(market => ({
+      market, agency: market, summary: 'Outline only', line: 'Authoring outline available', offered: true, buildable: false,
+      offer: { tier: 'author_only', label: 'Author documents for this market', reason: 'Test authoring offer.', appliesTo: null },
+    }));
+    // A comma-separated list of types is answered by type, as the route answers it (2026-11-09).
+    const types = (url.searchParams.get('applicationType') ?? '').split(',');
     const data = method === 'POST' ? { data: { id: 'b6d3e141-7abb-4f1d-9b8b-f0f334604a05' } }
-      : { applicationType: url.searchParams.get('applicationType'), markets: markets.map(market => ({
-          market, agency: market, summary: 'Outline only', line: 'Authoring outline available', offered: true, buildable: false,
-          offer: { tier: 'author_only', label: 'Author documents for this market', reason: 'Test authoring offer.', appliesTo: null },
-        })) };
+      : types.length > 1 ? { applicationTypes: types, byType: Object.fromEntries(types.map(t => [t, rows()])) }
+        : { applicationType: types[0], markets: rows() };
     return { ok: true, status: method === 'POST' ? 201 : 200, json: async () => data };
   });
 });

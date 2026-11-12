@@ -422,34 +422,87 @@ router.get('/validation-rules', limiter, requireRole(AUTHOR), async (req, res) =
 // model writes any of it. `?applicationType=` is required; `?market=` (an
 // agency, a region code or a submission region) narrows to one market, and
 // without it every region the platform names is returned.
+//
+// 2026-11-09 (S12 biotech sweep): `applicationType` may also be a
+// comma-separated list of at most 100 types, each one the platform knows
+// (VALID_PROGRAM_TYPES, the types project creation accepts), answered by type
+// as { applicationTypes, asOf, byType: { [type]: markets[] } } from the one
+// pack read readMarketSupport already made for a list of inputs. `market` may
+// likewise list up to 32 markets; each listed type is stated at each. The New
+// project picker asked once per type and again per unnamed (type, agency),
+// ~87 parallel reads per open, enough to rate-limit the whole app. A single
+// type keeps its answer exactly as before: { applicationType, asOf, markets }.
 // Registered before '/:id' so the literal path is not shadowed.
+const MARKET_SUPPORT_MAX_TYPES = 100;
+const MARKET_SUPPORT_MAX_MARKETS = 32;
+/* The product is capped too (L9's ask, 2026-11-09): every type the platform knows at every region it names is
+   64 × 12 = 768 inputs (the picker's first read), computed in ~12 ms after the one pack read; 1,600 leaves room for
+   the catalog to grow and refuses anything larger in words. */
+const MARKET_SUPPORT_MAX_INPUTS = 1600;
+/** Each listed type's answers, keyed by the answer's own type and market, never by position alone. Null when the
+ *  answers are not exactly one per input in input order: a misaligned list would state one type's market support
+ *  under another type, so it is refused rather than reshaped. */
+export function marketSupportByType<T extends { applicationType: string; market: string }>(
+  inputs: Array<{ applicationType: string; market: string }>, out: T[],
+): Record<string, T[]> | null {
+  if (out.length !== inputs.length) return null;
+  const byType: Record<string, T[]> = {};
+  for (let i = 0; i < inputs.length; i += 1) {
+    const row = out[i];
+    if (!row || row.applicationType !== inputs[i].applicationType || row.market !== inputs[i].market) return null;
+    (byType[row.applicationType] ??= []).push(row);
+  }
+  return byType;
+}
+/** The types and markets a market-support request asks about, each list without repeats; null when malformed. */
+function marketSupportQuery(query: Request['query']): { applicationType: string; isList: boolean; types: string[]; asked: string[] } | null {
+  const first = (v: unknown) => String(Array.isArray(v) ? v[0] : v ?? '').trim();
+  const parts = (v: string) => v.split(',').map((s) => s.trim()).filter(Boolean);
+  const applicationType = first(query.applicationType);
+  const market = first(query.market);
+  const isList = applicationType.includes(',');
+  const typeParts = isList ? parts(applicationType) : [applicationType];
+  const marketParts = market.includes(',') ? parts(market) : [market].filter(Boolean);
+  if (!applicationType || !typeParts.length || typeParts.length > MARKET_SUPPORT_MAX_TYPES
+    || marketParts.length > MARKET_SUPPORT_MAX_MARKETS || [...typeParts, ...marketParts].some((v) => v.length > 64)) return null;
+  return { applicationType, isList, types: [...new Set(typeParts)], asked: [...new Set(marketParts)] };
+}
 router.get('/market-support', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
   if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
-  const first = (v: unknown) => String(Array.isArray(v) ? v[0] : v ?? '').trim();
-  const applicationType = first(req.query.applicationType);
-  const market = first(req.query.market);
-  if (!applicationType || applicationType.length > 64 || market.length > 64) {
-    return res.status(400).json({ error: { code: 'VALIDATION', message: 'applicationType is required (at most 64 characters); market, when given, is at most 64.' } });
+  const query = marketSupportQuery(req.query);
+  if (!query) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: `applicationType is required: one type, or a comma-separated list of at most ${MARKET_SUPPORT_MAX_TYPES}, each at most 64 characters; market, when given, is one market or a list of at most ${MARKET_SUPPORT_MAX_MARKETS}, each at most 64.` } });
   }
+  const { applicationType, isList, types, asked } = query;
   try {
-    const [{ readMarketSupport }, { REGION_IDENTITY }] = await Promise.all([
+    const [{ readMarketSupport }, { REGION_IDENTITY }, { VALID_PROGRAM_TYPES }] = await Promise.all([
       import('../services/regulatory/market-support.js'),
       import('../../shared/regulatory/region-identity.js'),
+      import('./c2c/project-intake.js'),
     ]);
-    const markets = market ? [market] : Object.keys(REGION_IDENTITY);
+    const unknown = isList ? types.filter((t) => !VALID_PROGRAM_TYPES.has(t)) : [];
+    if (unknown.length) {
+      return res.status(400).json({ error: { code: 'VALIDATION', message: `Unknown application type${unknown.length === 1 ? '' : 's'}: ${unknown.slice(0, 5).join(', ')}${unknown.length > 5 ? ', …' : ''}.` } });
+    }
+    const markets = asked.length ? asked : Object.keys(REGION_IDENTITY);
+    if (types.length * markets.length > MARKET_SUPPORT_MAX_INPUTS) {
+      return res.status(400).json({ error: { code: 'VALIDATION', message: `This asks about ${types.length * markets.length} type and market pairs; at most ${MARKET_SUPPORT_MAX_INPUTS} can be read at once. Ask fewer types or name the markets.` } });
+    }
     const asOf = new Date().toISOString().slice(0, 10);
     /* The request's own pinned connection, not the shared pool
        (ci:requestdb-coverage). readMarketSupport reads the platform's active
        rule packs — reference data, not this tenant's rows — but it reads them
        on the caller's request scope like every other read in this router, so
        the route holds no second path to the database. */
-    const out = await readMarketSupport(
-      requestPgClient(req),
-      markets.map((m) => ({ applicationType, market: m })),
-      asOf,
-    );
-    res.json({ applicationType, asOf, markets: out });
+    const inputs = types.flatMap((t) => markets.map((m) => ({ applicationType: t, market: m })));
+    const out = await readMarketSupport(requestPgClient(req), inputs, asOf);
+    if (!isList) return res.json({ applicationType, asOf, markets: out });
+    const byType = marketSupportByType(inputs, out);
+    if (!byType) {
+      return res.status(500).json({ error: { code: 'MARKET_SUPPORT_MISALIGNED', message: 'Market support did not answer one row per type and market asked, so none is stated.' } });
+    }
+    res.json({ applicationTypes: types, asOf, byType });
   } catch (err) {
     fail(res, err);
   }

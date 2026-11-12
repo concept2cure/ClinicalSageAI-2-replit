@@ -44,6 +44,10 @@ vi.mock('../surfaces/RegistryBridge', () => ({
 }));
 
 import { NewProjectWizard, filingLabel, reviewDate, wizardMissing, wizardSetupText } from '../surfaces/Projects';
+import { programTypeLabel } from '../surfaces/programSequence';
+import { SC_APPTYPES } from '../fixtures/submission';
+import { FILING_DOCUMENT_CLASSES } from '@shared/regulatory/filing-document-classes';
+import { REGULATORY_PATHWAYS, REGULATORY_PATH_TO_PATHWAY } from '@shared/constants/mdx';
 
 const MARKET = {
   applicationType: 'ind', market: 'FDA', region: 'us', agency: 'FDA', offered: true, buildable: true,
@@ -135,6 +139,24 @@ describe('New Project wizard — what the project gets, and the review', () => {
     expect(filingLabel('mdr')).toBe('MDR');
     expect(filingLabel('ivd')).toBe('IVD');
     expect(reviewDate('')).toBe('Not set');
+  });
+
+  /* Sweep defect D3 (c), 2026-11-09: the project's header (filingTypeWords → programTypeLabel) printed "dmf" and
+     "clinical study report" for a project this list names "DMF" and "Clinical study report". One answer everywhere. */
+  it('the project header, its markets and its records name a filing as this list does', () => {
+    expect(programTypeLabel('dmf')).toBe('DMF');
+    expect(programTypeLabel('csr')).toBe('Clinical study report');
+    expect(programTypeLabel('ind_amendment')).toBe('IND amendment');
+    const keys = new Set<string>([
+      ...SC_APPTYPES.map((a) => a.v),
+      ...FILING_DOCUMENT_CLASSES.map((c) => c.docType),
+      ...REGULATORY_PATHWAYS,
+      ...Object.keys(REGULATORY_PATH_TO_PATHWAY),
+      'dmf', 'j_nda', 'eu_cta', 'mdr', 'ivd', 'CER', 'De Novo', 'IND',
+    ]);
+    const disagree = [...keys].filter((k) => programTypeLabel(k) !== filingLabel(k))
+      .map((k) => `${k}: header "${programTypeLabel(k)}" vs list "${filingLabel(k)}"`);
+    expect(disagree).toEqual([]);
   });
 
   it('says when the name is already a project in the portfolio, and does not refuse it', async () => {

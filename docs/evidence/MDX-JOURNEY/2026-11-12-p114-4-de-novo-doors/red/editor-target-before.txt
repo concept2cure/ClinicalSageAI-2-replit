@@ -1,0 +1,43 @@
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.deNovo.test.tsx > the 510(k) screen, opened on a De Novo project > calls the pathway and its package De Novo 151ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.deNovo.test.tsx > the 510(k) screen, opened on a De Novo project > claims no predicate and no substantial equivalence: similar devices, and how this one differs 44ms
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.deNovo.test.tsx > the 510(k) screen, opened on a De Novo project > shows the De Novo stages in place of the two that are a 510(k)'s, and keeps the count 22ms
+ × client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.deNovo.test.tsx > the 510(k) screen, opened on a De Novo project > opens the section that says why a De Novo is appropriate, not an SE discussion 41ms
+   → expected { docType: 'de_novo', …(7) } to match object { docType: 'denovo', …(2) }
+(5 matching properties omitted from actual)
+ ✓ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.deNovo.test.tsx > the 510(k) screen, opened on a 510(k) project, says what it said > keeps its pathway, package, panels and stages 20ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.deNovo.test.tsx > the 510(k) screen, opened on a De Novo project > opens the section that says why a De Novo is appropriate, not an SE discussion
+AssertionError: expected { docType: 'de_novo', …(7) } to match object { docType: 'denovo', …(2) }
+(5 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "docType": "denovo",
++   "docType": "de_novo",
+    "sectionCode": "C1",
+    "sectionLabel": "Reason De Novo is appropriate (no legally marketed predicate)",
+  }
+
+ ❯ client/src/concept2cure/mdx/surfaces/__tests__/K510Surface.deNovo.test.tsx:113:35
+    111|        `de_novo` the editor answered "No DE_NOVO filing is recorded fo…
+    112|        project. Nothing was opened." for a project whose De Novo filin…
+    113|     expect(consumeEditorTarget()).toMatchObject({
+       |                                   ^
+    114|       docType: 'denovo', sectionCode: 'C1', sectionLabel: 'Reason De N…
+    115|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  21:57:44
+   Duration  3.41s (transform 1.94s, setup 191ms, import 2.34s, tests 282ms, environment 445ms)
+
