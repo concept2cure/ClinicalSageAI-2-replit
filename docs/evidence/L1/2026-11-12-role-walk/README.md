@@ -45,6 +45,19 @@ One ordering note, left as it is: `POST /api/tenant-users` validates the body be
 target organization may be named in the body; an incomplete body from a non-administrator answers 400 with the
 missing field's name, and a complete one answers 403. Nothing is written either way.
 
+## A second organization's administrator (tenant isolation, in the running app)
+
+A second organization and its administrator were added to the local database for this check, and that person
+signed in through the sign-in page. Against the first organization's records, by their real ids:
+
+| Attempt | Answer |
+|---|---|
+| Projects screen and `GET /api/c2c/projects` | "No projects yet"; `{"data":[]}`. No name of the other organization's projects anywhere on screen |
+| `GET /api/c2c/projects/<its project>`, `GET /api/c2c/project-vault/<its program>`, a Vault document's catalog record, a project's children | 404 `PROJECT_NOT_FOUND` |
+| `POST` a folder into its Vault; `POST` a filing confirmation for its document | 404 `PROJECT_NOT_FOUND`; nothing written |
+| `GET /api/organizations/2`, its settings; `PATCH` its profile | 403 "Not authorized to access this organization" |
+| `GET /api/audit-trail/ledger` | 200 with one row: the outsider's own sign-in |
+
 ## Found and fixed (each red first, each re-walked)
 
 1. **Organization settings returned stored credentials and the network allowlist to every role.**
