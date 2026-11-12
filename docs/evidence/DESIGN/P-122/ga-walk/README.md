@@ -33,6 +33,21 @@ The raw record is `findings.json`.
     rests on real-time data. So the refusal is scientifically right, and turning the Q1E engine on for a biologic
     would not be. A Q5C trend for biologics is an engine addition and a founder decision (P-73, P-74 item 4).
 
+## What was done about the three
+
+- **Enterprise identity: fixed** (`fixes/identity-red.txt`, `identity-green.txt`). ⌘K offers the page only to a
+  platform administrator (`ADMIN_AUDIENCE` in `Shell.tsx`). The Admin console's SSO tab gives its "Open Identity
+  console" button only to one; a customer's administrator reads who sets up single sign-on and SCIM instead
+  (`IdentityConsoleDoor` in `AdminSettings.tsx`). The page's refusal no longer prints the role names
+  `super_admin` and `platform_admin`. Red: 2 tests failed. Green: 116 of 116 across the 13 suites that read these
+  files.
+- **Predicate intelligence: a deployment setting, no code change.** The 510(k) screen's predicate candidates and
+  SE matrix are proxied to a separate service (`server/routes/predicate-intelligence.ts`: `SHADOW_SERVICE_URL`,
+  `REVIEW_ADMIN_TOKEN`). Without the token the route answers 503 with its code, and the screen says once that it is
+  not configured (2026-11-09). For GA, production needs that service and token, or the two tabs say so.
+- **IVDR checklist: by design, no code change.** `useIvdGsprMatrix` (`mdx/hooks/useIvd.ts:256`) reads the 404
+  `IVDR_GSPR_NOT_FOUND` as "this project has no checklist yet" and the screen shows that.
+
 ## What this does not show
 
 - The walk opens screens and tabs. It does not create, edit, sign or file anything. Those flows are qualified by the
