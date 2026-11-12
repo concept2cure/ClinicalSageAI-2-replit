@@ -32,7 +32,7 @@
  *
  *   Site risk
  *     GET   /api/mdx/rbm-site-risk?program_id=
- *     POST  /api/mdx/rbm-site-risk/recompute   (derives from site_intel)
+ *     POST  /api/mdx/rbm-site-risk/recompute   (mdx-rbm-data.ts; from site_intel, else the study's site-level indicators)
  *
  *   Monitoring plan + actions
  *     GET   /api/mdx/rbm-monitoring-plans?program_id=

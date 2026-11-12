@@ -1070,6 +1070,17 @@ RBM, QMS and more; Vault … and tasking too")
     answered 503 there.
   - Open: the other system packages a Codespace lacks beside the production image (LibreOffice, Ghostscript,
     veraPDF, `xmllint`, python-docx). Not exercised.
+- **Risk-based monitoring, the two defects the GA map lists under S8** (2026-11-11, the founder: "focus entirely
+  on getting what we built surfaced correctly on the UI and working for GA"). Record:
+  `docs/evidence/SPINE/S8/2026-11-11-site-risk-from-study-data/README.md`.
+  - GA-S8-01, "New KRI" answered 500 from the screen and from AnA: one KRI INSERT, typed (`c7f797d89`).
+  - GA-S8-02, Site risk and Site oversight read "0 sites": a study's sites are scored from its own site-level
+    indicator readings where Site Intelligence holds none (`e9fad2163`). The rule is stated on the screen and on
+    every row. A load that carries site rows rescores the sites.
+  - The Lumen seed scores LMN-201's eight sites, and no longer stops on an indicator a person added
+    (`bcf2b595f`).
+  - Open: clinical operations has not confirmed the scoring weights; a change to a KRI's limits does not rescore;
+    Site Intelligence itself stays unreached and needs a founder decision to reach or retire.
 
 **Finding shared with the design lead**
 

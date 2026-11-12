@@ -44,6 +44,8 @@ interface IngestResult {
     siteObservations: number;
     unmatched: string[];
   };
+  /** Present when the extract carried site rows: the study's sites were rescored from them, or why they were not. */
+  siteRisk?: { rescored: number; source: string } | { notRescored: string };
 }
 
 const TEMPLATE = 'metric_key,scope_level,scope_id,value,numerator,denominator,unit,observed_at';
@@ -69,7 +71,15 @@ function IngestOutcome({ result }: { result: IngestResult }) {
         {p.qtlUpdates} QTL value{p.qtlUpdates === 1 ? '' : 's'} ·{' '}
         {p.subjectProfiles} subject profile{p.subjectProfiles === 1 ? '' : 's'} ·{' '}
         {p.siteObservations} site/country observation{p.siteObservations === 1 ? '' : 's'} stored
+        {result.siteRisk && 'rescored' in result.siteRisk && (
+          <> · site risk rescored for {result.siteRisk.rescored} site{result.siteRisk.rescored === 1 ? '' : 's'}</>
+        )}
       </div>
+      {result.siteRisk && 'notRescored' in result.siteRisk && (
+        <div className="rbm-ingest-warn">
+          {I.alertTriangle}<b>Site risk was not rescored from this load.</b> {result.siteRisk.notRescored} The site rows are stored; use “Recompute site risk” on Site risk once this is resolved.
+        </div>
+      )}
       {/* Rows landed but bound to no indicator. Stated plainly: without this,
           "accepted 400, rejected 0" would read as a clean load while every
           indicator stayed unevaluated. */}

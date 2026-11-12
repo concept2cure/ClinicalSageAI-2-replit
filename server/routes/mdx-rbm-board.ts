@@ -87,6 +87,22 @@ function num(v: unknown): number | null {
 }
 
 /** Serialize a timestamp column (Date | string | null) to an ISO string, or null. */
+/**
+ * Where a site-risk row's figures came from, and for a row scored from the study's own indicators, how many of
+ * them are red, amber, green or have no limit (site-risk-engine.ts writes both into the row's metadata). A row
+ * stored before the source was recorded came from Site Intelligence: it was the only source then.
+ */
+function siteBasis(metadata: unknown): {
+  source: 'site_intelligence' | 'study_indicators';
+  basis: { red: number; amber: number; green: number; unbanded: number } | null;
+} {
+  const m = metadata && typeof metadata === 'object' ? metadata as { source?: unknown; indicators?: unknown } : {};
+  if (m.source !== 'study_indicators') return { source: 'site_intelligence', basis: null };
+  const statuses = (Array.isArray(m.indicators) ? m.indicators : []).map((i) => (i as { status?: unknown })?.status);
+  const count = (status: string) => statuses.filter((s) => s === status).length;
+  return { source: 'study_indicators', basis: { red: count('red'), amber: count('amber'), green: count('green'), unbanded: count('not_evaluated') } };
+}
+
 function iso(v: unknown): string | null {
   if (!v) return null;
   if (v instanceof Date) return v.toISOString();
@@ -521,6 +537,7 @@ export default function createRbmBoardRoutes(): Router {
           tier: s.monitoringTier,
           drivers: Array.isArray(s.drivers) ? (s.drivers as string[]) : [],
           at: iso(s.scoredAt),
+          ...siteBasis(s.metadata),
         }));
 
       const actions = [...actionRows]
