@@ -22,8 +22,10 @@ import {
 
 type RegisterFn = (name: string, handler: (input: Record<string, unknown>, ctx?: ToolContext) => Promise<string>) => void;
 
-/** Where an article is read in the product, for AnA to link. */
+/** Where an article is read in the product: its address, and the navigate_to call that opens it (a chip under the
+ *  answer; AnA's markdown keeps only web links, so an in-app address is never a link in her text). */
 export const helpArticleLink = (slug: string) => `/concept2cure/training?article=${encodeURIComponent(slug)}`;
+export const helpNavigation = (params: Record<string, string>) => ({ tool: 'navigate_to', input: { target: 'training', params } });
 
 export const SEARCH_HELP_CENTER: AnaTool = {
   name: 'search_help_center',
@@ -66,7 +68,7 @@ export const OPEN_SUPPORT_TICKET: AnaTool = {
     'Draft a support request to Concept2Cure support for the person, when the Help Center does not answer them, something in the product looks broken, or they ask for a person. ' +
     'It records nothing: it returns the draft and a link that opens it on Help & training, where the person reads it, changes it if they want, and sends it. ' +
     'Before drafting, search the Help Center once. Write the subject as the problem in a few words; in details say what they were doing, where (screen, project), what they expected, what happened, and the words of any message shown. ' +
-    'Then show the draft and tell them to select the link to send it. Never say a request was sent or opened.',
+    'Then show the draft and open it for them with navigate_to (the result gives the call); they send it there. Never say a request was sent or opened.',
   input_schema: {
     type: 'object',
     properties: {
@@ -84,7 +86,7 @@ export const LIST_MY_SUPPORT_TICKETS: AnaTool = {
   name: 'list_my_support_tickets',
   description:
     "List the person's support requests to Concept2Cure support (an administrator sees the organisation's), open ones first: number, subject, status, replies and when it last changed. " +
-    'Use when they ask about a request they sent, whether support has answered, or what they asked before. Link each request to Help & training, where its replies are read.',
+    'Use when they ask about a request they sent, whether support has answered, or what they asked before. Its replies are read on Help & training: open one with navigate_to (each request gives the call).',
   input_schema: {
     type: 'object',
     properties: { limit: { type: 'number', description: 'How many, 1–20 (default 10).' } },
@@ -165,8 +167,10 @@ export function handleReadHelpArticle(input: Record<string, unknown>): string {
       related: article.related ?? [],
       link: helpArticleLink(article.slug),
     },
+    open_article: helpNavigation({ article: article.slug }),
     instruction:
-      'Answer from this article in your own words; keep its steps and its exact labels; name it ("Help: ' + article.title + '"). Add nothing it does not say.',
+      'Answer from this article in your own words; keep its steps and its exact labels; name it ("Help: ' + article.title + '"). Add nothing it does not say. ' +
+      'To let them read it whole, call navigate_to with open_article\'s input (a chip they select).',
   });
 }
 
@@ -192,8 +196,12 @@ export function handleOpenSupportTicket(input: Record<string, unknown>): string 
     sent: false,
     draft: { subject, details, category, priority, articles },
     link: supportDraftLink({ subject, details: shortened ? details.slice(0, DETAILS_IN_LINK) : details, category, priority, articles }),
+    open_draft: helpNavigation({
+      request: 'new', subject, details: shortened ? details.slice(0, DETAILS_IN_LINK) : details, category, priority,
+      ...(articles.length ? { articles: articles.join(',') } : {}),
+    }),
     instruction:
-      'Nothing has been sent. Show the person this draft, then tell them to select the link ("Review and send the request") to read it on Help & training and send it.' +
+      'Nothing has been sent. Show the person this draft, then call navigate_to with open_draft\'s input: it opens the draft on Help & training (a chip they select), where they read it and send it.' +
       (shortened ? ' The details were long; the link carries the first part, and the person can add the rest before sending.' : ''),
   });
 }
@@ -217,6 +225,7 @@ export async function handleListMySupportTickets(input: Record<string, unknown>,
       requests: tickets.map((t) => ({
         number: t.number, subject: t.subject, status: t.status, replies: t.replies,
         openedBy: t.openedBy.you ? 'you' : t.openedBy.name, updatedAt: t.updatedAt, link: supportRequestLink(t.number),
+        open: helpNavigation({ request: t.number }),
       })),
       ...(tickets.length ? {} : { instruction: 'The person has no support requests. Say so; offer to draft one if they need help.' }),
     });
@@ -247,6 +256,6 @@ export const SUPPORT_TURN_BRIEF = `## Support
 The person opened Concept2Cure support. Answer as its support agent: about using the product, not about regulatory substance.
 1. Find the answer in the Help Center first (search_help_center, then read_help_article) and give its steps with the article's name.
 2. Where an article offers a demonstration, offer to show it (start_product_demo); where a screen holds the answer, offer to take them there.
-3. When no article answers, something looks broken, or they ask for a person, draft a support request with open_support_ticket and show it with its link. They send it themselves; never say it was sent.
+3. When no article answers, something looks broken, or they ask for a person, draft a support request with open_support_ticket, show it, and open it for them with navigate_to as its result says. They send it themselves; never say it was sent.
 4. When they ask about a request they sent, read it with list_my_support_tickets.
 Say plainly what you do not know. Do not invent product steps, screens or timelines.`;

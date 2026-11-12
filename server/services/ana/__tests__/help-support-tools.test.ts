@@ -93,3 +93,17 @@ describe('a support turn', () => {
     expect(SUPPORT_TURN_BRIEF).toMatch(/never say it was sent/);
   });
 });
+
+describe('opening Help & training from the conversation', () => {
+  it('hands navigate_to a call the navigation registry accepts, for a draft and for an article', async () => {
+    const { handleOpenSupportTicket, handleReadHelpArticle } = await import('../help-support-tools');
+    const { resolveNavigation } = await import('../../../../shared/navigation');
+    const draft = JSON.parse(handleOpenSupportTicket({ subject: 'Export fails', details: 'The export stops at 80 percent every time.', category: 'bug_report', priority: 'high' }));
+    expect(draft.open_draft.tool).toBe('navigate_to');
+    const r = resolveNavigation(draft.open_draft.input.target, draft.open_draft.input.params);
+    expect(r).toMatchObject({ ok: true, directive: { targetId: 'training', params: { request: 'new', subject: 'Export fails', category: 'bug_report', priority: 'high' } } });
+    const art = JSON.parse(handleReadHelpArticle({ slug: 'assign-work' }));
+    expect(resolveNavigation(art.open_article.input.target, art.open_article.input.params)).toMatchObject({ ok: true, directive: { params: { article: 'assign-work' } } });
+    expect(resolveNavigation('training', { request: 'new', priority: 'urgent' })).toMatchObject({ ok: false, code: 'invalid_param' });
+  });
+});
