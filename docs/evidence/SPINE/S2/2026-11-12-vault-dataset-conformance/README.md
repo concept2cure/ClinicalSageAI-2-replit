@@ -67,3 +67,10 @@ confirmed its catalog record. Both are acts in the Vault.
   dataset names belong to `server/services/cdisc/`, not this lane.
 - The Vault lane was told before this landed (through the lead session). If it would rather make the profile at
   ingest, the catalog only needs to read the column.
+
+## The row says what the dataset holds (`catalog-cdisc-pilot.png`)
+
+From the stored profile, on the Vault document's row in the catalog: "Dataset: ADLBC · ADaM BDS · 46 columns ·
+74,264 rows"; a define file reads "Describes: ADSL · ADaM · 48 columns; … and 5 more". Walked as Ana Author on the
+CDISC pilot project (project page → Evidence → Open the data catalog → this project): seven Vault rows, each with its
+grade and, for the five datasets and the define file, this line. No API response ≥ 400.

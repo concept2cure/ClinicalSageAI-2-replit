@@ -99,6 +99,7 @@ describe('a dataset filed in the Vault', () => {
     expect(JSON.parse(String(update[1][0]))).toMatchObject({ format: 'csv', tables: [{ cdisc: { standard: 'ADaM', domain: 'BDS' } }] });
     expect(page.documents[0].grade.basis.find(b => b.criterion === 'conformance'))
       .toMatchObject({ points: 15, detail: expect.stringMatching(/^1 of 1 table pass the ADaM validator/) });
+    expect(page.documents[0].dataset).toEqual({ format: 'csv', tableCount: 1, tables: [{ name: 'advs.csv', standard: 'ADaM', domain: 'BDS', columns: 12, rows: 1 }] });
   });
 
   it('reads no bytes for a document already profiled, not a dataset format, with no catalog record, or too large', async () => {

@@ -45,6 +45,8 @@ export interface VaultCatalogDocument {
   placementStatus: string | null;
   originalFileAvailable: boolean;
   textAvailable: boolean;
+  /** What a dataset holds, from its profile: each table's name, CDISC standard and class, columns and rows. Null for a document that is not a profiled dataset. */
+  dataset: { format: string | null; tableCount: number; tables: Array<{ name: string; standard: string | null; domain: string | null; columns: number; rows: number }> } | null;
   grade: StoredGrade;
 }
 
@@ -89,11 +91,27 @@ export function vaultGradeFacts(r: Record<string, any>): DataRoomGradeFacts {
 }
 
 const orNull = <T>(v: T | null | undefined): T | null => v ?? null;
+const list = <T>(v: unknown): T[] => (Array.isArray(v) ? v as T[] : []);
 const numberOrNull = (v: unknown): number | null => (v == null ? null : Number(v));
 
 /** What the document is called: its title, else its file, else its code. */
 function titleOf(r: Record<string, any>): string {
   return String(r.document_title || r.title || r.file_name || r.document_code || 'Untitled Vault document');
+}
+
+/** The profile as the catalog row says it: the first few tables, never the column list. */
+function datasetSummary(profile: unknown): VaultCatalogDocument['dataset'] {
+  const p = profile && typeof profile === 'object' ? profile as Record<string, any> : null;
+  const tables = list<Record<string, any>>(p?.tables);
+  if (!p || tables.length === 0) return null;
+  return {
+    format: typeof p.format === 'string' ? p.format : null,
+    tableCount: Number(p.tableCount ?? tables.length),
+    tables: tables.slice(0, 5).map((t) => ({
+      name: String(t.name ?? ''), standard: orNull(t.cdisc?.standard), domain: orNull(t.cdisc?.domain),
+      columns: Number(t.columnCount ?? 0), rows: Number(t.rowCount ?? 0),
+    })),
+  };
 }
 
 function shape(r: Record<string, any>, nameFolder: FolderNamer, gradedAt: string): VaultCatalogDocument {
@@ -117,6 +135,7 @@ function shape(r: Record<string, any>, nameFolder: FolderNamer, gradedAt: string
     placementStatus: orNull(r.placement_status),
     originalFileAvailable: r.original_file_available !== false,
     textAvailable: r.text_available === true,
+    dataset: datasetSummary(r.dataset_profile),
     grade: { grade: g.grade, score: g.score, basis: g.basis, cap: g.cap, engine: g.engine, gradedAt },
   };
 }
@@ -218,7 +237,6 @@ export async function listVaultForCatalog(orgId: number, p: DataRoomQuery, q: Qu
   return vaultPage(row, programIds, await folderNamer(orgId, programIds));
 }
 
-const list = <T>(v: unknown): T[] => (Array.isArray(v) ? v as T[] : []);
 
 function vaultPage(row: Record<string, any>, programIds: string[], nameFolder: FolderNamer): VaultCatalogPage {
   const listed = list<Record<string, any>>(row.documents);
