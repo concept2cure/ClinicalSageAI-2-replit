@@ -293,6 +293,10 @@ async function rescheduleInTx(req: Request, q: RequestSqlClient, input: Reschedu
     if (error instanceof TaskAssignmentError && error.code === 'TASK_NOT_ASSIGNABLE') {
       throw new TaskAssignmentError(409, 'TASK_NOT_RESCHEDULABLE', 'Only unfinished tasks in an active project can be given a new due date.');
     }
+    // The same refusal as a reassignment's, in this change's words.
+    if (error instanceof TaskAssignmentError && error.code === 'TASK_ASSIGNMENT_DENIED') {
+      throw new TaskAssignmentError(403, 'TASK_ASSIGNMENT_DENIED', "Current task and project permissions do not allow changing this task's due date.");
+    }
     throw error;
   }
   const before = dueMs(ctx.task.due_date);
