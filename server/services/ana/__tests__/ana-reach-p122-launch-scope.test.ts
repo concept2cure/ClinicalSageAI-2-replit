@@ -11,13 +11,18 @@
  * simulated in the protocol workspace (`protocol-dev`, /api/study-design).
  *
  * Re-filed, with the REAL toolset, inventory and dispatch gates:
- *   create_regulatory_commitment, review_commitment_portfolio   communication-center
+ *   create_regulatory_commitment, review_commitment_portfolio,
+ *   fulfill_regulatory_commitment                                communication-center
  *   simulate_study_design, evaluate_endpoint, recommend_endpoints   protocol-dev
  *
- * Left withheld, on purpose: fulfill_regulatory_commitment. It refuses a PMR,
- * PMC or REMS (a signed act, P-41), but for a meeting commitment or other it
- * records the fulfilment itself, which is terminal, on a confirmation in
- * chat. That is not re-filed without the founder's word.
+ * fulfill_regulatory_commitment: this lane first left it withheld, because for
+ * a meeting commitment or other it records the fulfilment itself, which is
+ * terminal. R1 re-filed all three commitment tools on 2026-11-11 (7994dc8f1) on
+ * P-41's own words ("a meeting commitment or other is fulfilled by a governed
+ * write with a reason"), and the merge of the two lanes keeps that. A PMR, PMC
+ * or REMS is still refused in conversation (ana-cannot-sign.test.ts). Still
+ * withheld under lifecycle-mgmt: the three obligation tools, which have no
+ * launch screen (ana-launch-scope-execution.test.ts).
  *
  * Evidence: docs/evidence/DESIGN/P-122/ana-reach/.
  */
@@ -40,11 +45,11 @@ import { governedToolsetFor } from '../governed-toolset';
 
 vi.setConfig({ testTimeout: 60_000, hookTimeout: 60_000 });
 
-const COMMUNICATION_TOOLS = ['create_regulatory_commitment', 'review_commitment_portfolio'] as const;
+const COMMUNICATION_TOOLS = ['create_regulatory_commitment', 'review_commitment_portfolio', 'fulfill_regulatory_commitment'] as const;
 const PROTOCOL_TOOLS = ['simulate_study_design'] as const;
 const PROTOCOL_COMMANDS = ['evaluate_endpoint', 'recommend_endpoints'] as const;
 const REFILED_TOOLS = [...COMMUNICATION_TOOLS, ...PROTOCOL_TOOLS];
-const STILL_WITHHELD = 'fulfill_regulatory_commitment';
+const STILL_WITHHELD = 'create_lifecycle_obligation';
 
 const pool = { query: vi.fn(async () => ({ rows: [] })) };
 const production = () => {
@@ -81,7 +86,7 @@ describe('what AnA is offered under launch scope', () => {
     for (const name of REFILED_TOOLS) expect(offered.has(name), name).toBe(true);
   });
 
-  it('in production, the fulfilment tool is still withheld', async () => {
+  it('in production, an obligation tool of the locked lifecycle screen is still withheld', async () => {
     production();
     const offered = new Set((await governedToolsetFor(pool, 42)).map((t) => t.name));
     expect(offered.has(STILL_WITHHELD)).toBe(false);
@@ -100,7 +105,7 @@ describe('what runs when it is reached by name', () => {
     expect(await reach(name)).not.toContain('LAUNCH_SCOPE');
   });
 
-  it('in production, the fulfilment tool is refused as outside the release, before anyone is asked to confirm', async () => {
+  it('in production, that obligation tool is refused as outside the release, before anyone is asked to confirm', async () => {
     production();
     const out = JSON.parse(await reach(STILL_WITHHELD));
     expect(out).toMatchObject({ error: 'LAUNCH_SCOPE', tool: STILL_WITHHELD });

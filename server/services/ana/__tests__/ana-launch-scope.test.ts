@@ -104,6 +104,12 @@ describe('governedToolsetFor, the one toolset every chat door composes', () => {
     'create_clinical_study', // device-clinical-studies (launch since 62a8d5e7f)
     'list_vault_documents', // vault (launch)
     'update_protocol_section', // protocol-dev (launch)
+    // Agency commitments are Communication's records (/api/ha-interactions; launch since 327bc9fb6). The three
+    // tools write and read that same store, and were withheld only because the inventory still filed them under
+    // lifecycle-mgmt (reach map of 2026-11-11, section 4 rank 7).
+    'create_regulatory_commitment',
+    'fulfill_regulatory_commitment',
+    'review_commitment_portfolio',
     'navigate_to', // AnA's hands
     'execute_platform_command', // the bridge; commands are judged at dispatch
   ];
