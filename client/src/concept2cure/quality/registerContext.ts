@@ -9,6 +9,7 @@
  * @module client/src/concept2cure/quality/registerContext
  */
 import { useMemo, useRef, useSyncExternalStore } from 'react';
+import { onQualityWritten, qualityWriteCount } from './qmsWrites';
 import { useFetchJson } from '../mdx/hooks/useFetchJson';
 import { shellProgramId, useShellProject, type ShellProject } from '../v2/shellProject';
 import { listOf } from './qmsList';
@@ -107,4 +108,10 @@ export function useAnswerOf<T>(path: string, data: T | null | undefined): T | nu
   const owner = useRef<{ data: unknown; path: string } | null>(null);
   if (data != null && owner.current?.data !== data) owner.current = { data, path };
   return data != null && owner.current?.data === data && owner.current.path === path ? data : null;
+}
+
+/** The Quality writes the server has confirmed in this page: a dependency for a read that another part of the screen
+ *  may have changed (the header's figure line; a register beside the one written to). */
+export function useQualityWrites(): number {
+  return useSyncExternalStore(onQualityWritten, qualityWriteCount, () => 0);
 }

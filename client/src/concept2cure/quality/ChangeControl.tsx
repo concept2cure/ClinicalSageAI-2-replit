@@ -46,11 +46,14 @@ import {
   CLASSIFICATION_TONE,
   RISK_LABEL,
   ASSESSABLE_STATES,
+  LINK_TYPE_LABEL,
+  takesLinks,
   deriveStageCounts,
   summaryOfChanges,
   isImplementationOverdue,
   formatDate,
   type ChangeState,
+  type ChangeLink,
   /* The row type shares this component's name; the alias keeps both usable. */
   type ChangeControl as ChangeControlRow,
 } from './changeData';
@@ -66,7 +69,7 @@ import { GOVERNED_REASON_MIN } from '@shared/constants/governed-reason';
 import { useSopTemplates } from './hooks';
 import { NewControlledDocumentForm } from './NewControlledDocumentForm';
 import { ControlledDocumentWorkbench } from './ControlledDocumentWorkbench';
-import { createQmsChange, transitionQmsChange, linkQmsChange, updateQmsChange } from './qmsWrites';
+import { createQmsChange, transitionQmsChange, linkQmsChange, unlinkQmsChange, updateQmsChange } from './qmsWrites';
 import { ChangeLinkForm } from './ChangeLinkForm';
 import { shellProgramId, useShellProject, type ShellProject } from '../v2/shellProject';
 import type { ChangeType, Classification, Relationship, RiskLevel } from './changeData';
@@ -162,6 +165,7 @@ function ChangeControlSession({
     | { kind: 'raise' }
     | { kind: 'advance'; change: ChangeControlRow }
     | { kind: 'link'; change: ChangeControlRow }
+    | { kind: 'unlink'; change: ChangeControlRow; link: ChangeLink }
     | { kind: 'assess'; change: ChangeControlRow }
     | { kind: 'document' }
     | null
@@ -315,11 +319,14 @@ function ChangeControlSession({
                     Edit assessment
                   </button>,
                 ] : []),
-                <button key="link" type="button" className="btn ghost small"
-                  title="Link the deviation, CAPA or validation record this change touches"
-                  onClick={() => openDrawer({ kind: 'link', change: c })}>
-                  Link a record
-                </button>,
+                /* The server takes no link on a closed, cancelled or rejected change, so none is offered (2026-11-12). */
+                ...(takesLinks(c) ? [
+                  <button key="link" type="button" className="btn ghost small"
+                    title="Link the deviation, CAPA or validation record this change touches"
+                    onClick={() => openDrawer({ kind: 'link', change: c })}>
+                    Link a record
+                  </button>,
+                ] : []),
               ].filter((b): b is React.ReactElement => b !== null);
               const ask = <AskAnaButton key="ask" label="Ask AnA about this change"
                 onAsk={() => onAsk(`Summarize change ${c.changeNumber} ${c.title}: its impact assessment, linked records, and what it needs next.`)} />;
@@ -351,8 +358,9 @@ function ChangeControlSession({
                   </>}
                   after={open && (
                     <tr className="qcc-detail-tr">
-                      <td colSpan={CHANGE_COLUMNS.length + 1}>
-                        <ChangeRecordDetail change={c} onAsk={onAsk} />
+                      <td colSpan={CHANGE_COLUMNS.length}>
+                        <ChangeRecordDetail change={c} onAsk={onAsk}
+                          onUnlink={takesLinks(c) ? (link) => openDrawer({ kind: 'unlink', change: c, link }) : undefined} />
                       </td>
                     </tr>
                   )}
@@ -524,6 +532,35 @@ function ChangeControlSession({
             void runWrite(async () => {
               await linkQmsChange(c.id, { ...v, relationship: v.relationship as Relationship | undefined });
               return `${v.linkedRef} was linked to ${c.changeNumber}.`;
+            });
+          }}
+        />
+      )}
+      {drawer?.kind === 'unlink' && (
+        <C2CForm
+          config={{
+            eyebrow: 'Change control',
+            title: `Remove ${drawer.link.linkedRef} from ${drawer.change.changeNumber}`,
+            sub: `${LINK_TYPE_LABEL[drawer.link.linkType]}${drawer.link.linkedLabel ? `: ${drawer.link.linkedLabel}` : ''}. It leaves this change's linked records.`,
+            governed: 'The link is kept on the record as removed, with your name, the time and this reason.',
+            submitLabel: 'Remove link',
+            ...(refusal ? { notice: refusal } : {}),
+            fields: [
+              { key: 'reason', label: 'Reason for removing it', type: 'textarea', rows: 3, required: true,
+                desc: `At least ${GOVERNED_REASON_MIN} characters, recorded verbatim.` },
+            ],
+          }}
+          onCancel={closeDrawer}
+          onSubmit={(v) => {
+            const { change: c, link } = drawer;
+            const reason = v.reason.trim();
+            if (reason.length < GOVERNED_REASON_MIN) {
+              setRefusal(`A reason of at least ${GOVERNED_REASON_MIN} characters is required. Nothing was removed.`);
+              return;
+            }
+            void runWrite(async () => {
+              await unlinkQmsChange(c.id, link.id, reason);
+              return `${link.linkedRef} was removed from ${c.changeNumber}'s linked records.`;
             });
           }}
         />

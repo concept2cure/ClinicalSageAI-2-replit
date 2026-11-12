@@ -1,0 +1,145 @@
+   ✓ QMS quality: 9 controlled docs, 0 training acks, 6 changes, 9 links seeded
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > seeds the controlled-document register and change-control log 11ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > summary reflects the seeded lifecycle spread 3ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > counts every change past its target whose implementation is unfinished, whatever its stage 2ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > flags each such change on the register from the server’s date, with the same predicate 3ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > reads every change’s linked records for the register in one org-scoped query 6ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > links a change to its deviation and validation records 3ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > GA demo seed → service reads (real Postgres) > seeds no effective document and no training against one: approval is a signature the seed cannot give 2ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > advances proposed → assessed → approved (by a different user) → implemented → verified → closed 30ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > rejects an illegal transition (closed is terminal) 6ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > refuses approval without a signature, for the proposer and anyone else, and changes nothing 8ms
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > links only a record of this organisation, and keeps a removed link with who removed it and why 44ms
+   → expected true to deeply equal { link_type: 'capa', …(1) }
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > removes only the owned active change through an executor that supplies rows alone 6ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > keeps a change that is approved 5ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > keeps a change that is in_implementation 6ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > keeps a change that is verification 5ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > keeps a change that is closed 5ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > keeps a change that is rejected 4ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > controlled lifecycle against real SQL > keeps a change that is cancelled 4ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > content is editable until approval > edits a change that is proposed 5ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > content is editable until approval > edits a change that is under_assessment 4ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > content is editable until approval > returns each field the edit changed, before and after, and none it left as it was 3ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > content is editable until approval > refuses an edit to a change that is approved, and leaves its content as it was 4ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > content is editable until approval > refuses an edit to a change that is in_implementation, and leaves its content as it was 4ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > content is editable until approval > refuses an edit to a change that is verification, and leaves its content as it was 4ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > content is editable until approval > refuses an edit to a change that is closed, and leaves its content as it was 7ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > content is editable until approval > refuses an edit to a change that is rejected, and leaves its content as it was 7ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > content is editable until approval > refuses an edit to a change that is cancelled, and leaves its content as it was 6ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure requires an admitted verifier and effectiveness review > requires a recorded effectiveness review: undefined 4ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure requires an admitted verifier and effectiveness review > requires a recorded effectiveness review: null 3ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure requires an admitted verifier and effectiveness review > requires a recorded effectiveness review: "" 3ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure requires an admitted verifier and effectiveness review > requires a recorded effectiveness review: "   " 6ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure requires an admitted verifier and effectiveness review > does not record anonymous closure 7ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure requires an admitted verifier and effectiveness review > holds closure when the verifier loses current role admission 13ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure requires an admitted verifier and effectiveness review > holds closure when the verifier loses current membership admission 11ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure requires an admitted verifier and effectiveness review > holds closure when the verifier loses current account admission 11ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure requires an admitted verifier and effectiveness review > holds closure when the verifier loses current organization admission 11ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > only a required native deviation blocks closure; a descriptive reference does not 32ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > does not treat a failed CAPA effectiveness check as completed required work 16ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > resolves a CAPA code inside the change programme and refuses an ambiguous organization-only code 19ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure checks its declared required work > does not treat a live document status or typed validation reference as exact accepted completion 12ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure refuses stale requirements and later mutation > rechecks native prerequisite state in the same statement that records closure 8ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure refuses stale requirements and later mutation > refuses a stale closure after an interleaved state change 7ms
+ ✓ server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure refuses stale requirements and later mutation > refuses a stale closure after an interleaved link change 8ms
+ × server/services/qms/__tests__/changeControl.pglite.integration.test.ts > change closure refuses stale requirements and later mutation > does not attach or erase a requirement after closure 9ms
+   → expected false to be null
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > creates a controlled document through POST /documents, then opens it 509ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > the template field of New controlled document sets the type, as the library card did 158ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > the document number opens the document, not a chat 97ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > Revise opens a reason-for-change dialog and posts the reason to /revise 167ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > a periodic-review row opens the document instead of asking AnA to "schedule" it 65ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > SOP register — governed actions reach their routes > the register carries no AnA request of its own above its rows 56ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > raises a change request through POST /changes 311ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > Advance offers the server's next states, never approval, and posts the move with its reason 179ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > edits the assessment through PATCH /changes/:id, starting from the recorded one 287ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > keeps a drawer open while its write is in flight 227ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > links a record through POST /changes/:id/links 275ms
+ × client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > removes a linked record through DELETE /changes/:id/links/:linkId, with its reason 391ms
+   → Unable to find an accessible element with the role "button" and name "Remove DEV-2026-041 from CC-2026-014"
+ × client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > shows why a record was linked, and offers no removal where the change takes none 5ms
+   → Unable to find an element with the text: The excursion that raised this change.. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > opens the one New controlled document door with the change-control templates to choose from 167ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > creates a change-control document with the selected program and reason, then opens its bound editing copy 108ms
+ ✓ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx > Change control — governed actions reach their routes > the log carries no AnA request of its own above its rows 104ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > renders the register from fixtures with numbers and status 148ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > filters by lifecycle stage with one segmented control whose items carry the stage and its count 355ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > filters the log when a flowchart stage is selected 179ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > is a table with column headers, one body per change, and the shared chips 72ms
+ × client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > shows each change the moves that fit its state inline; the rest are behind More 184ms
+   → expected [ 'CC-2026-002', …(3) ] to deeply equal [ 'CC-2026-002', …(2) ]
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > expands a change to its linked deviation / validation records 71ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > raising a change request opens the governed drawer, not a chat turn 141ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — the change-control log > keeps how a change is raised in a closed disclosure under the log, with no AnA button of its own 116ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — a failed read is not an empty log > renders a failed read as a failure with a retry, and no stage counts 23ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — a failed read is not an empty log > claims nothing while the log is loading 8ms
+ ✓ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx > ChangeControl — a failed read is not an empty log > shows a log that answered empty as empty 8ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > GET /api/mdx/qms/changes > 403 without org context 20ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > GET /api/mdx/qms/changes > lists the register, org-scoped 8ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > GET /api/mdx/qms/changes > returns each change with its linked records and the moves its state allows 9ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > GET /api/mdx/qms/changes > fails closed to an empty list when the store is missing (42P01) 3ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > GET /api/mdx/qms/changes — the digest an approval binds > returns each change with the content digest its approval signs 4ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes > creates a change request and returns the row 12ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes > 422 on invalid body (missing title) 5ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes > 409 on duplicate change number (23505) 3ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > advances a legal transition (proposed → under_assessment), recording the reason 7ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > 422 without a reason for the move, reading and writing nothing 3ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > 409 on an illegal transition (closed → approved) 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/transition — controlled lifecycle > 428 for approval through the transition route, whoever asks 5ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > PATCH /api/mdx/qms/changes/:id — content is editable until approval > edits a change under assessment, guarded in the statement itself, and records the reason and each field before and after 5ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > PATCH /api/mdx/qms/changes/:id — content is editable until approval > 422 without a reason for the edit, reading and writing nothing 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > PATCH /api/mdx/qms/changes/:id — content is editable until approval > 409 for a change that is approved: its content is fixed 3ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > PATCH /api/mdx/qms/changes/:id — content is editable until approval > 409 for a change that is in_implementation: its content is fixed 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > PATCH /api/mdx/qms/changes/:id — content is editable until approval > 409 for a change that is verification: its content is fixed 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > PATCH /api/mdx/qms/changes/:id — content is editable until approval > 409 for a change that is closed: its content is fixed 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > PATCH /api/mdx/qms/changes/:id — content is editable until approval > 409 for a change that is rejected: its content is fixed 3ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > PATCH /api/mdx/qms/changes/:id — content is editable until approval > 409 for a change that is cancelled: its content is fixed 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > PATCH /api/mdx/qms/changes/:id — content is editable until approval > 404 for a change this organization does not have 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id — only before approval, with a reason > removes a proposed change, guarded in the statement itself, and records why 3ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id — only before approval, with a reason > 422 without a reason, reading and writing nothing 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id — only before approval, with a reason > 409 for a change that is approved: it is kept 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id — only before approval, with a reason > 409 for a change that is in_implementation: it is kept 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id — only before approval, with a reason > 409 for a change that is verification: it is kept 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id — only before approval, with a reason > 409 for a change that is closed: it is kept 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id — only before approval, with a reason > 409 for a change that is rejected: it is kept 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id — only before approval, with a reason > 409 for a change that is cancelled: it is kept 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id — only before approval, with a reason > 404 for a change this organization does not have 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/links — cross-references > links a change to a deviation 3ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/links — cross-references > 422 CHANGE_LINK_TARGET_NOT_FOUND for a deviation the organisation has not recorded; nothing is inserted 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/links — cross-references > 422 on an invalid link type 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/links — cross-references > 422 for a link to a change past proposal that does not say why; nothing is read further or inserted 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/links — cross-references > records how the linked record relates and why it was linked 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > POST /api/mdx/qms/changes/:id/links — cross-references > a link to a proposed change may say why, and needs not 2ms
+ × server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id/links/:linkId — a link is removed with its reason > removes the link, and records which record it was and why 8ms
+   → expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+ ✓ server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id/links/:linkId — a link is removed with its reason > 422 without a reason; nothing is read or written 5ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > DELETE /api/mdx/qms/changes/:id/links/:linkId — a link is removed with its reason > 404 for a link that is not a standing link of an open change; no audit row 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer post /api/mdx/qms/changes: 403, nothing read or written 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer patch /api/mdx/qms/changes/1: 403, nothing read or written 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer post /api/mdx/qms/changes/1/transition: 403, nothing read or written 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer delete /api/mdx/qms/changes/1: 403, nothing read or written 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer post /api/mdx/qms/changes/1/links: 403, nothing read or written 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer delete /api/mdx/qms/changes/1/links/3: 403, nothing read or written 2ms
+ ✓ server/routes/__tests__/qms-changes.test.ts > change-control writes refuse a viewer (DP-60) > a viewer still reads the register 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected "vi.fn()" to be called with arguments: [ ObjectContaining{…} ]
+ ❯ server/routes/__tests__/qms-changes.test.ts:364:23
+AssertionError: expected true to deeply equal { link_type: 'capa', …(1) }
+ ❯ server/services/qms/__tests__/changeControl.pglite.integration.test.ts:274:8
+AssertionError: expected false to be null
+ ❯ server/services/qms/__tests__/changeControl.pglite.integration.test.ts:482:111
+AssertionError: expected [ 'CC-2026-002', …(3) ] to deeply equal [ 'CC-2026-002', …(2) ]
+ ❯ client/src/concept2cure/quality/__tests__/ChangeControl.test.tsx:145:27
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx:339:33
+ ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ client/src/concept2cure/quality/__tests__/qmsGovernedActions.test.tsx:352:19
+ Test Files  4 failed (4)
+      Tests  6 failed | 111 passed (117)

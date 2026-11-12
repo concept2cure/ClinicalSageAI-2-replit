@@ -259,7 +259,7 @@ describe('Quality is one work area with one header (D7-B)', () => {
     const register = screen.getByRole('region', { name: 'Controlled documents' });
     const table = within(register).getByRole('table');
     expect(table.classList.contains('reg-tbl')).toBe(true);
-    expect(within(table).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Number', 'Title', 'Type', 'Version', 'Status', 'Effective', 'Next review', 'Actions']);
+    expect(within(table).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Number', 'Title', 'Type', 'Version', 'Status', 'Effective', 'Next review']);
     expect(container.querySelectorAll('tbody.qms-doc')).toHaveLength(1);
     // C18a: a date is kept on one line; it broke at its hyphen ("2026-" over "11-10") in the narrow column at 1440.
     expect([...container.querySelectorAll('tbody.qms-doc .qms-when')].map((e) => e.textContent)).toEqual(['—']);

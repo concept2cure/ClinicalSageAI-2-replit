@@ -16,6 +16,7 @@
  * @module client/src/concept2cure/quality/qmsReviewRoute
  */
 import { ApiRequestError, apiRequest, redactInternals, serverMessage } from '@/lib/queryClient';
+import { qualityWritten } from './qmsWrites';
 import type { EsigSignedManifest } from '../_shared/components/EsignModal';
 import type { RouteMemberView, RouteRoundView } from '../v2/reviewRoute/routeRound';
 import { routeShapeBody, routeShapeMissing, withReason, type RouteShapeInput } from '../v2/reviewRoute/routeShape';
@@ -91,6 +92,7 @@ async function qmsRequest(method: 'POST' | 'PATCH', url: string, body: Record<st
   }
   const json = (await res.json().catch(() => null)) as Record<string, unknown> | null;
   if (!res.ok || !json) throw new Error(`${failed} ${redactInternals(serverMessage(json), 'No reason was returned. Reload and try again.')}`);
+  qualityWritten();
   return json;
 }
 
@@ -151,6 +153,7 @@ export async function postQmsReviewSignature(id: number, input: { reason: string
   const json = (await res.json().catch(() => null)) as { signedAt?: string; sha256Chain?: string } | null;
   if (res.status === 401) throw new Error(`${serverMessage(json) ?? 'Your password or code was not verified.'} Nothing was signed.`);
   if (!json?.signedAt) throw new Error('The server did not confirm the review signature. Reload the register and check the route before you sign again.');
+  qualityWritten();
   return { meaning: 'review', reason: input.reason, signedAt: json.signedAt, ...(json.sha256Chain ? { hash: json.sha256Chain } : {}) };
 }
 
