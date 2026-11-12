@@ -31,6 +31,20 @@ Nothing was added.
 Writes checked on the way: a viewer's `POST /api/c2c/projects` is refused 403 "Your current role cannot create a
 project. Nothing was changed."; a viewer's Vault folder write 403 (see the earlier walk).
 
+## The write matrix (administrative writes sent as manager, member and viewer)
+
+| Write | Manager | Member | Viewer |
+|---|---|---|---|
+| Change organization settings or profile | 403 | 403 | 403 ("Organization admin role required for this action") |
+| Invite a user as `admin` (`POST /api/tenant-users`, complete body) | 403 | 403 | 403 ("Admin of the target organization required"); no account or invitation was created |
+| Create an API key | 403 | 403 | 403 |
+| Change the AI placement policy; deploy an organization skill | 403 | 403 | 403 |
+| Record a periodic audit review | admitted to validation (a manager may record one; signing asks signing authority) | 403 | 403 |
+
+One ordering note, left as it is: `POST /api/tenant-users` validates the body before it asks the role, because the
+target organization may be named in the body; an incomplete body from a non-administrator answers 400 with the
+missing field's name, and a complete one answers 403. Nothing is written either way.
+
 ## Found and fixed (each red first, each re-walked)
 
 1. **Organization settings returned stored credentials and the network allowlist to every role.**
