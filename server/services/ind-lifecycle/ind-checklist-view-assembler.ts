@@ -16,6 +16,13 @@
  * Placed sections remain an inventory, not the denominator for completeness. An
  * org with no IND submission returns [] and the surface shows its honest empty state.
  *
+ * 2026-11-10 (GA-D7-13): a section placed by a Vault leaf (vault_documents) of
+ * this organisation reads 'placed' — a document is there and it is not approved.
+ * Until then only co-authored leaves were read, so the Investigator's Brochure,
+ * QOS and Tox summary placed from the Vault read "Not started". A Vault leaf
+ * never reads approved here: approving a Vault version is its own gate
+ * (leaf-source-resolver vaultVersionNotTransmittable), so readiness is unchanged.
+ *
  * Section status is sourced from coauthor_documents.status, whose 5-value authoring
  * vocabulary (draft / in-progress / review / approved / finalized) is mapped into the
  * surface's SectionStatus vocabulary; the mapping is deliberately lossy where the real
@@ -115,7 +122,7 @@ const mapStatus = (raw: unknown): string => STATUS_MAP[str(raw).toLowerCase()] ?
 /** A section with several current documents is only as complete as its least
  * advanced document. One approval must not conceal another document's draft. */
 const RANK: Record<string, number> = {
-  not_started: 0, data_gathering: 1, drafting: 2, revision: 3, internal_review: 3,
+  not_started: 0, data_gathering: 1, placed: 2, drafting: 2, revision: 3, internal_review: 3,
   qa_review: 4, frozen: 5, locked: 5, approved: 6, signed: 7,
 };
 
@@ -196,6 +203,42 @@ async function readAuthoredDocuments(orgId: number): Promise<CoauthorDoc[]> {
 }
 
 const norm = (v: unknown): string => str(v).trim().toLowerCase();
+
+/** A document placed from the Vault: there, and not approved (GA-D7-13). */
+const VAULT_PLACED = 'placed';
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * The Vault documents the leaves name that belong to this organisation: scoped
+ * through the programme, the authoritative owner of a vault document, as the
+ * leaf resolver scopes it (vault.documents.organization_id is nullable
+ * attribution, not a scope). A leaf names its document by a polymorphic
+ * reference with no FK, so a uuid of another tenant's document, or of nothing,
+ * places nothing. An absent store or column (42P01 / 42703) knows of none.
+ */
+async function resolveOwnedVaultDocs(leaves: ChecklistLeaf[], orgId: number): Promise<Set<string>> {
+  const uuids = [...new Set(leaves.flatMap((l) =>
+    l.document_table === 'vault_documents' && l.document_uuid && UUID_RE.test(String(l.document_uuid))
+      ? [String(l.document_uuid).toLowerCase()] : []))];
+  if (uuids.length === 0) return new Set();
+  try {
+    const res = await pool.query(
+      `SELECT d.id::text AS id
+         FROM vault.documents d
+        WHERE d.id = ANY($1::uuid[])
+          AND d.deleted_at IS NULL
+          AND EXISTS (
+            SELECT 1 FROM regulatory_programs rp
+             WHERE rp.id = d.program_id AND rp.organization_id = $2 AND rp.deleted_at IS NULL
+          )`,
+      [uuids, orgId],
+    );
+    return new Set((res.rows as Array<{ id: string }>).map((r) => String(r.id).toLowerCase()));
+  } catch (err) {
+    if (isUnprovisioned(err)) return new Set();
+    throw err;
+  }
+}
 
 /** An absent table (42P01) or column (42703, before 20261008e or the 2026-10-15
  *  attestation columns): nothing is known complete. */
@@ -416,14 +459,44 @@ function formRows(
 }
 
 /**
+ * A Vault leaf of this organisation places its section as 'placed', never
+ * approved (GA-D7-13). The forms and their heading are judged by their own
+ * evidence (a signed authored form, an attested attachment), so a Vault leaf
+ * at a form code places nothing.
+ */
+function placeVaultLeaf(
+  l: ChecklistLeaf,
+  seqToSub: Map<number, number>,
+  ownedVaultDocs: ReadonlySet<string>,
+  placedBySub: Map<number, Map<string, { status: string; name: string }>>,
+): void {
+  const subId = seqToSub.get(Number(l.sequence_id));
+  const code = sectionKey(str(l.section_code));
+  if (subId == null || !l.document_uuid || !ownedVaultDocs.has(String(l.document_uuid).toLowerCase())) return;
+  if (FORM_CODES.has(code) || code === FORMS_HEADING) return;
+  const m = placedBySub.get(subId) ?? new Map<string, { status: string; name: string }>();
+  put(m, code, VAULT_PLACED, '');
+  placedBySub.set(subId, m);
+}
+
+/**
  * Placed sections per submission: leaf.section_code (authoritative) → the
  * referenced coauthor doc's mapped status; and the authored documents at each
  * form's code, per submission, whose signature is checked separately.
  */
-function placedDocuments(leaves: ChecklistLeaf[], docById: Map<number, CoauthorDoc>, seqToSub: Map<number, number>) {
+function placedDocuments(
+  leaves: ChecklistLeaf[],
+  docById: Map<number, CoauthorDoc>,
+  seqToSub: Map<number, number>,
+  ownedVaultDocs: ReadonlySet<string> = new Set(),
+) {
   const placedBySub = new Map<number, Map<string, { status: string; name: string }>>();
   const formDocsBySub = new Map<number, Map<string, FormDoc[]>>();
   for (const l of leaves) {
+    if (l.document_table === 'vault_documents') {
+      placeVaultLeaf(l, seqToSub, ownedVaultDocs, placedBySub);
+      continue;
+    }
     if (l.document_table !== 'coauthor_documents' || l.document_id == null) continue;
     const doc = docById.get(Number(l.document_id));
     const subId = seqToSub.get(Number(l.sequence_id));
@@ -646,7 +719,7 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
      completed, signed form (2026-10-15). */
   const attachedFormsBySub = await resolveAttachedForms(leaves, seqToSub, orgId);
 
-  const { placedBySub, formDocsBySub } = placedDocuments(leaves, docById, seqToSub);
+  const { placedBySub, formDocsBySub } = placedDocuments(leaves, docById, seqToSub, await resolveOwnedVaultDocs(leaves, orgId));
   const signedFormDocs = await resolveSignedFormDocs(
     [...formDocsBySub.values()].flatMap((m) => [...m.values()].flat().filter((d) => d.status === 'signed').map((d) => d.id)),
     orgId,
