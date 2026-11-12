@@ -50,6 +50,9 @@ export interface DhfRow {
   /** The section's document (c2c_documents.id) and its title. */
   documentId?: string;
   document?: string;
+  /** A design record, or the filing's own paperwork (P-114 item 2; the route's
+   *  designFileStanding). Absent on an answer from before it was sent. */
+  record?: 'design-file' | 'filing-content';
 }
 
 export interface TraceRow {

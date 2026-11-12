@@ -1,0 +1,6 @@
+MUTATION C2M16-route-precheck-generic in server/routes/submissions.ts (on the final code and tests, 2026-11-09T21:17:50.638176Z): replaced [    if (parsed.data.step === 'sent-record') return res.json(await precheckSentRecord(seqId, ctx));
+] with []
+ × server/routes/__tests__/submissions-sent-record.test.ts > the read-back's precheck, answered at the route > sends the step to its own function, never to the generic precheck 38ms
+      Tests  1 failed | 3 skipped (4)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 102a89e7757a17a172b98f72bb62cfaf4c1fbf8669c3743a3204bccbf6413148 (expected 102a89e7757a17a172b98f72bb62cfaf4c1fbf8669c3743a3204bccbf6413148)

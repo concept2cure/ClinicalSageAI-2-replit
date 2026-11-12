@@ -1,0 +1,6 @@
+# P-92 C4 red for the duplicated error message the walk found, 2026-11-09T18:38:58Z, before the change
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > T1 the precheck states it; the act sets the sequence rejected, records the transmittal, and writes the chained row 394ms
+   → expected 'Technical rejection recorded: FDA\'s …' to be null
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 25 skipped (26)

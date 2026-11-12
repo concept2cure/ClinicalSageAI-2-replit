@@ -4,9 +4,12 @@
  *
  * M3 (CMC), M4 (Nonclinical), and M5 (Clinical) already have homes; M1 and M2
  * were authored piecemeal. This module gives them a canonical, region-aware
- * section structure plus a pure build-state derivation that mirrors the M3 OS
- * shape (sections[] + readiness summary), computed from the existing
- * c2c_document_sections store — no new tables.
+ * section structure, read by AnA's `get_ctd_module_home`.
+ *
+ * 2026-11-09 (R1 S12): the build-state derivation that annotated this tree
+ * from c2c_document_sections served only `/api/biopharma/ctd`, which no screen
+ * called, and was retired with it. A filing's section state is its outline:
+ * GET /api/c2c/documents/:id/outline and AnA `list_authoring_outline`.
  *
  * Module 1 is region-specific (FDA / EMA / PMDA differ). Module 2 is the
  * ICH-common summary set (2.1–2.7); each summary section declares the source
@@ -17,7 +20,6 @@
  */
 
 export type CtdRegion = 'FDA' | 'EMA' | 'PMDA';
-export type SectionStatus = 'not_started' | 'todo' | 'drafted' | 'review' | 'approved' | 'locked';
 
 export interface CtdSectionDef {
   /** CTD code, e.g. '1.1' or '2.3'. */
@@ -29,28 +31,6 @@ export interface CtdSectionDef {
   sourceModules?: number[];
   regulatoryRef?: string;
   children?: CtdSectionDef[];
-}
-
-export interface CtdSectionState extends Omit<CtdSectionDef, 'children'> {
-  status: SectionStatus;
-  /** For M2 summaries: fraction of the source module(s) that is approved/locked. */
-  upstreamReadyPercent?: number;
-  /** True when the source module(s) are sufficiently ready to compose this summary. */
-  upstreamReady?: boolean;
-  children?: CtdSectionState[];
-}
-
-export interface ModuleBuildState {
-  module: 1 | 2;
-  region: CtdRegion | null;
-  sections: CtdSectionState[];
-  summary: {
-    total: number;
-    notStarted: number;
-    inProgress: number; // todo | drafted | review
-    approved: number;   // approved | locked
-    readinessPercent: number;
-  };
 }
 
 // ── Region normalization ───────────────────────────────────────────────────────
@@ -236,97 +216,4 @@ export interface CtdModuleHome {
 
 export function getCtdModuleHome(region: CtdRegion): CtdModuleHome {
   return { region, module1: getModule1Structure(region), module2: M2_SECTIONS };
-}
-
-// ── Build-state derivation (pure) ──────────────────────────────────────────────
-
-export interface SectionStatusRow {
-  /** section_key from c2c_document_sections, e.g. 'm2.3' | '2.3' | '3.2.S'. */
-  section_key: string;
-  status: string;
-}
-
-/** Normalize a section key for matching: lowercase, drop a leading 'm', trim. */
-function normKey(key: string): string {
-  return key.trim().toLowerCase().replace(/^m/, '');
-}
-
-const APPROVED_STATUSES = new Set(['approved', 'locked']);
-const VALID_STATUSES = new Set(['todo', 'drafted', 'review', 'approved', 'locked']);
-
-function coerceStatus(raw: string | undefined): SectionStatus {
-  if (!raw) return 'not_started';
-  const v = raw.toLowerCase();
-  return (VALID_STATUSES.has(v) ? v : 'not_started') as SectionStatus;
-}
-
-/** Fraction (0..1) of a module's sections that are approved/locked, from all rows. */
-function moduleReadiness(moduleNumber: number, rows: SectionStatusRow[]): number {
-  const inModule = rows.filter((r) => normKey(r.section_key).startsWith(`${moduleNumber}`) || normKey(r.section_key).startsWith(`${moduleNumber}.`));
-  if (inModule.length === 0) return 0;
-  const done = inModule.filter((r) => APPROVED_STATUSES.has(r.status.toLowerCase())).length;
-  return done / inModule.length;
-}
-
-/**
- * Annotate a module's section tree with per-section status from the section
- * store, and (for M2 summaries) the readiness of the upstream source module(s).
- *
- * @param sections the module structure (M1 region or M2)
- * @param allRows  ALL of the program's section rows (any module) — needed so M2
- *                 upstream readiness can read the M3/M4/M5 sections.
- */
-export function annotateModuleBuildState(
-  module: 1 | 2,
-  region: CtdRegion | null,
-  sections: CtdSectionDef[],
-  allRows: SectionStatusRow[],
-): ModuleBuildState {
-  const byKey = new Map<string, string>();
-  for (const r of allRows) byKey.set(normKey(r.section_key), r.status);
-
-  let total = 0;
-  let notStarted = 0;
-  let inProgress = 0;
-  let approved = 0;
-
-  const annotate = (def: CtdSectionDef): CtdSectionState => {
-    const status = coerceStatus(byKey.get(normKey(def.code)));
-    total += 1;
-    if (status === 'not_started') notStarted += 1;
-    else if (APPROVED_STATUSES.has(status)) approved += 1;
-    else inProgress += 1;
-
-    let upstreamReadyPercent: number | undefined;
-    let upstreamReady: boolean | undefined;
-    if (def.sourceModules && def.sourceModules.length) {
-      const pcts = def.sourceModules.map((m) => moduleReadiness(m, allRows));
-      upstreamReadyPercent = pcts.reduce((a, b) => a + b, 0) / pcts.length;
-      upstreamReady = upstreamReadyPercent >= 0.8; // upstream substantially approved
-    }
-
-    const { children, ...rest } = def;
-    return {
-      ...rest,
-      status,
-      upstreamReadyPercent,
-      upstreamReady,
-      children: children?.map(annotate),
-    };
-  };
-
-  const annotated = sections.map(annotate);
-
-  return {
-    module,
-    region,
-    sections: annotated,
-    summary: {
-      total,
-      notStarted,
-      inProgress,
-      approved,
-      readinessPercent: total === 0 ? 0 : Math.round((approved / total) * 100),
-    },
-  };
 }

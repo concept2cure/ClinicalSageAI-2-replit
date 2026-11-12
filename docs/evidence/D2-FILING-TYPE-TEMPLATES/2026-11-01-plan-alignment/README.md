@@ -72,7 +72,7 @@ for the founder to say which holds. Slices 3 and 4 are valid under both.
 | Done | S01–S07 and C4a–c (this session) | 7 done | — |
 | Convergences onto the one ICH M2–M5 record (headings, titles, outlines, blueprints) | S24, S25, S31–S42, S44, S46–S57 | open (S44 partial) | The package owning each file: `server/services/market-specs/**` and `services/regulatory/**` S11; `server/services/ectd/**` and `shared/regulatory/**` S5; `server/services/ana/**` S4; `server/services/csr/**` S3; the editor D4 (the UI session's) |
 | Gates that hold the record as the one source | S08, S31, S60 | open | F1 |
-| Deletions of unreached routes and modules | S05b, S09–S23, S26–S29, GF-1–GF-5 | open | **R1, founder retirement.** Where a route is served and fabricates (S09 `POST /api/v1/drafting/start_task`, S11 `/api/ai`'s invented compliance score), F1 first makes it refuse |
+| Deletions of unreached routes and modules | S05b, S09–S23, S26–S29, GF-1–GF-5 | S05b, S12, S13, S19 and S29 done, founder-approved (R1 batch 1, 2026-11-09). S10 approved, after RIM's C3. The other open items go to the founder one at a time, with the list's blockers (S18, S28, GF-2, GF-4, GF-5) | **R1, founder retirement.** Where a route is served and fabricates (S09 `POST /api/v1/drafting/start_task`, S11 `/api/ai`'s invented compliance score), F1 first makes it refuse |
 | Blocked | GF-6 | R1's retirement decision, or the connector owner | — |
 | Superseded | 1 | — | — |
 
@@ -94,7 +94,7 @@ change (plan §4.6).
 | S9: safety narratives from the CSR source | partial; the remainder is in the CSR lane (`csr/narrative-subject-facts.ts`) | S3, coordinated with the CSR lane |
 | S10, S11a, S11b: device post-market and premarket from the program | open | F1 |
 | S12 (cover letter, 510(k) summary, declaration of conformity, output confidence, biowaiver, SPL) | open. The re-check corrected the design: no deployed record holds a Basic UDI-DI, and `honesty-envelope.ts` has no other caller | F1 / S4 |
-| S13: the dead request-body routes, and regenerate | open | **R1, founder retirement**, coordinated with R1's inventory |
+| S13: the dead request-body routes, and regenerate | the five request-body routes retired (cleanup S13, R1 batch 1, 2026-11-09); regenerate is open, for the founder | **R1, founder retirement**, coordinated with R1's inventory |
 | S14a–e: nonclinical records | R-1 decided; production value waits on a writer the catalog can reach (P-83's nonclinical work project) | S12 / S4 |
 
 ## What this session does next, in order
@@ -118,4 +118,6 @@ For the founder:
   Nothing to undo: no component class was built, and the `clin_overview` / `nonclin_*` ids are only legacy catalog
   aliases, with section blueprints used inside the filing project.
 - The R1 retirements: the cleanup deletions above and Rule 2 S13. **Answered 2026-11-09: list first.** The founder
-  sees the exact files, routes and replacements, and only what is then approved is deleted.
+  sees the exact files, routes and replacements, and only what is then approved is deleted. **The list, 2026-11-09:** 26
+  items: 6 ready, 13 for a decision, 5 blocked, 2 changed. The founder approved the six ready items; five are done
+  (cleanup README, "R1 batch 1"), and S10 follows RIM's C3. The 13 decision items go to the founder one at a time.

@@ -1,0 +1,8 @@
+s29 red: server/services/__tests__/cmc-module3-second-compile-path-retired.test.ts on trunk 51c52751e (the parent of this change), 2026-11-09T19:52Z
+ × server/services/__tests__/cmc-module3-second-compile-path-retired.test.ts > S29: the second Module 3 compile path is retired > the compile and stale functions are gone from the compiler module 
+ ✓ server/services/__tests__/cmc-module3-second-compile-path-retired.test.ts > S29: the second Module 3 compile path is retired > the live helpers stay 
+ ✓ server/services/__tests__/cmc-module3-second-compile-path-retired.test.ts > S29: the second Module 3 compile path is retired > the replacement is reached: Module 3 build compiles through the composer 
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected { …(5), …(1) } to not have property "compileModule3Sections"
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)

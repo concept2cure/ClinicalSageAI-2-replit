@@ -238,8 +238,16 @@ function unrecordedRefusal(sequences: string[]): string {
     : `Sequences ${sequences.slice(0, -1).join(', ')} and ${sequences[sequences.length - 1]} were`;
   return (
     `${named} sent to the agency, but nothing on record says what ${one ? 'it' : 'they'} carried: ` +
-    'no record of the send, and no compile. What is on file cannot be read, so nothing was bound against it.'
+    'no record of the send, and no compile. What is on file cannot be read, so nothing was bound against it. ' +
+    `Put ${one ? 'it' : 'each'} on record from ${one ? 'its' : 'their'} Dispatch tab in Submission Center.`
   );
+}
+
+/** P-99 C2 (R6): the earlier sequences of a submission, before `before`, sent with nothing on record of what they
+ *  carried, ascending; empty when every one is on record. The lifecycle read refuses exactly these. */
+export async function unrecordedSequencesBefore(pool: PoolLike, args: { organizationId: number; submissionId: number; before: string }): Promise<string[]> {
+  const rows = await readFiledManifestRows(pool, args.organizationId, args.submissionId, args.before);
+  return rows.filter((r) => r.basis === 'none').map((r) => r.sequence_number);
 }
 
 /**
@@ -256,6 +264,8 @@ interface FiledRecordRow {
   leaf_manifest: unknown;
   /** 'none': sent, with neither a record of the send nor a compile; it adds no leaves. */
   basis: FiledRecordBasis | 'none';
+  /** P-99 C2: when a 'transmit' record was read back from the package the send kept, not stamped at the send. */
+  restored_on?: string | null;
 }
 
 /**
@@ -317,20 +327,25 @@ async function readFiledManifestRows(
           AND ($3::text IS NULL OR s.sequence_number < $3)
      )
      SELECT f.sequence_number, 'sequence' AS kind, f.region AS sequence_region, NULL::text AS transmittal_region,
-            NULL::json AS leaf_manifest, NULL::integer AS transmittal_id, NULL::timestamptz AS compiled_at, NULL::integer AS compilation_id
+            NULL::json AS leaf_manifest, NULL::integer AS transmittal_id, NULL::timestamptz AS compiled_at, NULL::integer AS compilation_id,
+            NULL::text AS derived_at
        FROM filed f
      UNION ALL
      SELECT f.sequence_number, 'transmittal', f.region, t.region,
             CASE WHEN jsonb_typeof(t.metadata -> 'leafManifest') = 'array' THEN (t.metadata -> 'leafManifest')::json END,
-            t.id, NULL::timestamptz, NULL::integer
+            t.id, NULL::timestamptz, NULL::integer, t.metadata -> 'leafManifestDerivation' ->> 'derivedAt'
        FROM filed f
        JOIN submission_transmittals t
          ON t.organization_id = $1
-        AND lower(t.metadata -> 'dispatchBinding' ->> 'attemptId') = f.transmit_attempt_id::text
-        AND t.metadata -> 'dispatchBinding' ->> 'sequenceId' = f.id::text
-        AND t.metadata -> 'dispatchBinding' ->> 'signatureActionId' = f.transmit_signature_action_id
+        AND ((lower(t.metadata -> 'dispatchBinding' ->> 'attemptId') = f.transmit_attempt_id::text
+              AND t.metadata -> 'dispatchBinding' ->> 'sequenceId' = f.id::text
+              AND t.metadata -> 'dispatchBinding' ->> 'signatureActionId' = f.transmit_signature_action_id)
+          -- P-99 C2: a binding the read-back act restored from the send's own chained record (both null on a legacy claim).
+          OR (t.metadata -> 'restoredBinding' ->> 'sequenceId' = f.id::text
+              AND lower(t.metadata -> 'restoredBinding' ->> 'attemptId') IS NOT DISTINCT FROM f.transmit_attempt_id::text
+              AND t.metadata -> 'restoredBinding' ->> 'signatureActionId' IS NOT DISTINCT FROM f.transmit_signature_action_id))
      UNION ALL
-     SELECT c.sequence_number, 'compile', f.region, NULL::text, c.leaf_manifest::json, NULL::integer, c.compiled_at::timestamptz, c.id
+     SELECT c.sequence_number, 'compile', f.region, NULL::text, c.leaf_manifest::json, NULL::integer, c.compiled_at::timestamptz, c.id, NULL::text
        FROM filed f
        JOIN ectd_compilations c
          ON c.organization_id = $1
@@ -351,21 +366,24 @@ async function readFiledManifestRows(
     // Its own agency's gateway wrote it; an unknown region is never a match.
     else if (row.kind === 'transmittal' && sameAgency(read.region, row.transmittal_region)) read.sent.push(row);
   }
-  const rows: FiledRecordRow[] = [];
-  for (const [seq, read] of bySequence) {
-    if (read.sent.length > 1) {
-      throw new Error(
-        `Sequence ${seq} is bound to more than one transmittal of what it sent (${read.sent.map((t) => t.transmittal_id).join(', ')}); ` +
-          'what is on file cannot be read, so none of it was.',
-      );
-    }
-    const record = read.sent[0]?.leaf_manifest;
-    if (record != null) rows.push({ sequence_number: seq, leaf_manifest: record, basis: 'transmit' });
-    else if (read.compiles.length > 0) {
-      for (const c of read.compiles) rows.push({ sequence_number: seq, leaf_manifest: c.leaf_manifest, basis: 'compiles' });
-    } else rows.push({ sequence_number: seq, leaf_manifest: null, basis: 'none' });
+  return [...bySequence].flatMap(([seq, read]) => recordRowsOf(seq, read));
+}
+
+/** One filed sequence's record rows: its send's record when exactly one row binds it, else its compiles, else 'none'. */
+function recordRowsOf(seq: string, read: { sent: Array<Record<string, unknown>>; compiles: Array<Record<string, unknown>> }): FiledRecordRow[] {
+  if (read.sent.length > 1) {
+    throw new Error(
+      `Sequence ${seq} is bound to more than one transmittal of what it sent (${read.sent.map((t) => t.transmittal_id).join(', ')}); ` +
+        'what is on file cannot be read, so none of it was.',
+    );
   }
-  return rows;
+  const record = read.sent[0]?.leaf_manifest;
+  if (record != null) {
+    const derivedAt = read.sent[0].derived_at;
+    return [{ sequence_number: seq, leaf_manifest: record, basis: 'transmit', restored_on: typeof derivedAt === 'string' ? derivedAt : null }];
+  }
+  if (read.compiles.length > 0) return read.compiles.map((c) => ({ sequence_number: seq, leaf_manifest: c.leaf_manifest, basis: 'compiles' as const }));
+  return [{ sequence_number: seq, leaf_manifest: null, basis: 'none' }];
 }
 
 /** Whether a sequence's region and a transmittal's gateway region name one agency ('fda'/'fda', 'eu'/'ema'). */
@@ -383,6 +401,9 @@ export interface SubmissionSequenceState {
   filed: boolean;
   /** Where that record came from (readFiledManifestRows); null when not filed. */
   basis: FiledRecordBasis | null;
+  /** P-99 C2: a record put on record after the send, and when: read back from the package it sent. Present only then,
+   *  so every other sequence's state reads exactly as before. */
+  restored?: { how: 'read-back'; on: string };
 }
 
 /**
@@ -421,18 +442,24 @@ export async function loadFiledStateBySubmission(
   // A sequence's rows share one basis (readFiledManifestRows reads its
   // compiles only when it has no transmit record).
   const basisOf = new Map<string, FiledRecordBasis>();
-  for (const r of recorded) basisOf.set(r.sequence_number, r.basis === 'transmit' ? 'transmit' : 'compiles');
+  const restoredOf = new Map<string, string>();
+  for (const r of recorded) {
+    basisOf.set(r.sequence_number, r.basis === 'transmit' ? 'transmit' : 'compiles');
+    if (r.restored_on) restoredOf.set(r.sequence_number, r.restored_on);
+  }
   const sequences = (seqs?.rows ?? []).map((r) => {
     const sequenceNumber = String(r.sequence_number ?? '');
     const dispatchStatus = r.dispatch_status == null ? null : String(r.dispatch_status);
     const basis = basisOf.get(sequenceNumber) ?? null;
-    return { sequenceNumber, dispatchStatus, filed: basis !== null, basis };
+    const on = restoredOf.get(sequenceNumber);
+    return { sequenceNumber, dispatchStatus, filed: basis !== null, basis, ...(on ? { restored: { how: 'read-back' as const, on } } : {}) };
   });
   return { throughSequence: priorSequenceNumber || null, leaves, sequences };
 }
 
-/** The filed leaf a `modified-file` pointer names: its sequence, backbone and ID. */
-const MODIFIED_FILE = /^(?:\.\.\/)+([0-9A-Za-z._-]+)\/((?:[A-Za-z0-9_-][A-Za-z0-9._-]*\/)*[A-Za-z0-9_-][A-Za-z0-9._-]*\.xml)#([A-Za-z_][A-Za-z0-9._-]*)$/;
+/** The filed leaf a `modified-file` pointer names: its sequence, backbone and ID. Exported as the one pointer rule
+ *  (P-99 C2: filed-sequence-pointers.ts bindToFiledState binds a read-back sequence's pointers by it). */
+export const MODIFIED_FILE = /^(?:\.\.\/)+([0-9A-Za-z._-]+)\/((?:[A-Za-z0-9_-][A-Za-z0-9._-]*\/)*[A-Za-z0-9_-][A-Za-z0-9._-]*\.xml)#([A-Za-z_][A-Za-z0-9._-]*)$/;
 
 /**
  * Fold stored manifests, oldest sequence first, into the state they leave on
@@ -566,4 +593,69 @@ export async function loadRehearsalPriorManifestBySubmission(
     .map((r) => String(r.sequence_number ?? ''));
   const { priorSequenceNumber, leaves } = foldManifestRows(rows);
   return { priorSequenceNumber, leaves, unfiledSequences };
+}
+
+// ── P-99 C2: which transmittal holds a send's record (design §3.0, re-cut 2026-11-09 item 2) ──────────────────────
+
+export interface SendTransmittalSequence {
+  id: number; sequenceNumber: string; region: string | null; transmitAttemptId: string | null; transmitSignatureActionId: string | null;
+}
+export interface SendTransmittal {
+  id: number; status: string; region: string | null; bundleSha256: string | null; submittedAt: string | null;
+  metadata: Record<string, any>;
+  /** Set when rule 2 found the row: the binding the act writes beside the record. */
+  restoredBinding: { sequenceId: number; attemptId: string | null; signatureActionId: string | null; source: 'ECTD_TRANSMITTED'; sourceOccurredAt: string | null; transmittalId: number } | null;
+}
+type SendQueryable = { query: (sql: string, args?: unknown[]) => Promise<{ rows: any[] }> };
+
+/**
+ * The send's own transmittal row. Rule 1: the row the fold binds (dispatchBinding naming the sequence's attempt, id and
+ * signature, of its agency); two refuse, as the fold does. Rule 2, for a send whose gateway wrote no binding: the row the
+ * platform's own chained record of that send names (ECTD_TRANSMITTED, written by the transmit with both transmittalId and
+ * packageSha256; the receipt path's and the settlement's rows of that action carry no packageSha256), exactly one, with
+ * that package and no binding of another send. Null when neither finds one row. Locked FOR UPDATE under the act.
+ */
+export async function sendTransmittal(q: SendQueryable, organizationId: number, seq: SendTransmittalSequence, opts: { lock?: boolean } = {}): Promise<SendTransmittal | null> {
+  const bound = await boundSendRow(q, organizationId, seq, opts);
+  return bound ?? chainedSendRow(q, organizationId, seq, opts);
+}
+
+/** Rule 1: the row the fold binds; two refuse. */
+async function boundSendRow(q: SendQueryable, organizationId: number, seq: SendTransmittalSequence, opts: { lock?: boolean }): Promise<SendTransmittal | null> {
+  const bound = (await (opts.lock
+    ? q.query(`SELECT id, status, region, bundle_sha256, submitted_at, metadata FROM submission_transmittals
+        WHERE organization_id = $1 AND lower(metadata->'dispatchBinding'->>'attemptId') = lower($2::text)
+          AND metadata->'dispatchBinding'->>'sequenceId' = $3::text AND metadata->'dispatchBinding'->>'signatureActionId' = $4::text ORDER BY id FOR UPDATE`,
+    [organizationId, seq.transmitAttemptId, String(seq.id), seq.transmitSignatureActionId])
+    : q.query(`SELECT id, status, region, bundle_sha256, submitted_at, metadata FROM submission_transmittals
+        WHERE organization_id = $1 AND lower(metadata->'dispatchBinding'->>'attemptId') = lower($2::text)
+          AND metadata->'dispatchBinding'->>'sequenceId' = $3::text AND metadata->'dispatchBinding'->>'signatureActionId' = $4::text ORDER BY id`,
+    [organizationId, seq.transmitAttemptId, String(seq.id), seq.transmitSignatureActionId]))).rows.filter((r) => sameAgency(seq.region, r.region));
+  if (bound.length > 1) throw new Error(`Sequence ${seq.sequenceNumber} is bound to more than one transmittal of what it sent (${bound.map((r) => r.id).join(', ')}).`);
+  return bound.length === 1 ? sendRow(bound[0], null) : null;
+}
+
+/** Rule 2: the row the send's own chained record names, exactly once, with that package and no other send's binding. */
+async function chainedSendRow(q: SendQueryable, organizationId: number, seq: SendTransmittalSequence, opts: { lock?: boolean }): Promise<SendTransmittal | null> {
+  const named = (await q.query(`SELECT occurred_at, new_values::jsonb AS v FROM audit_logs
+      WHERE tenant_id = $1 AND table_name = 'ectd_sequence' AND record_id = $2::text AND action = 'ECTD_TRANSMITTED'
+        AND new_values::jsonb ? 'transmittalId' AND new_values::jsonb ? 'packageSha256'
+        AND COALESCE(new_values::jsonb->>'testSend', 'false') <> 'true' AND COALESCE(new_values::jsonb->>'environment', '') <> 'staging'
+        AND ($3::text IS NULL OR new_values::jsonb->>'signatureActionId' = $3::text)`,
+  [organizationId, String(seq.id), seq.transmitSignatureActionId])).rows;
+  if (named.length !== 1) return null;
+  const v = named[0].v as Record<string, unknown>;
+  const row = (await (opts.lock
+    ? q.query(`SELECT id, status, region, bundle_sha256, submitted_at, metadata FROM submission_transmittals WHERE id = $1 AND organization_id = $2 FOR UPDATE`, [Number(v.transmittalId), organizationId])
+    : q.query(`SELECT id, status, region, bundle_sha256, submitted_at, metadata FROM submission_transmittals WHERE id = $1 AND organization_id = $2`, [Number(v.transmittalId), organizationId]))).rows[0];
+  if (!row || !sameAgency(seq.region, row.region) || row.bundle_sha256 !== v.packageSha256) return null;
+  const other = row.metadata?.dispatchBinding;
+  if (other && (String(other.sequenceId) !== String(seq.id) || String(other.attemptId ?? '').toLowerCase() !== String(seq.transmitAttemptId ?? '').toLowerCase())) return null;
+  return sendRow(row, { sequenceId: seq.id, attemptId: seq.transmitAttemptId, signatureActionId: seq.transmitSignatureActionId, source: 'ECTD_TRANSMITTED',
+    sourceOccurredAt: named[0].occurred_at ? new Date(named[0].occurred_at).toISOString() : null, transmittalId: Number(row.id) });
+}
+
+function sendRow(r: Record<string, any>, restoredBinding: SendTransmittal['restoredBinding']): SendTransmittal {
+  return { id: Number(r.id), status: String(r.status ?? ''), region: r.region ?? null, bundleSha256: r.bundle_sha256 ?? null,
+    submittedAt: r.submitted_at ? new Date(r.submitted_at).toISOString() : null, metadata: r.metadata ?? {}, restoredBinding };
 }

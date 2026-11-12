@@ -1,0 +1,6 @@
+ id | sequence_number | dispatch_status | transmittal_id |    status     |   settled    | kept 
+----+-----------------+-----------------+----------------+---------------+--------------+------
+ 31 | 0001            | pending         |              1 | rejected      | not-received |    1
+ 34 | 0004            | sent            |              4 | ack2_received | received     |    1
+(2 rows)
+

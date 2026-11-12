@@ -11,18 +11,13 @@ import { describe, it, expect } from 'vitest';
 import {
   composeModule3FromCanonicalSources,
   MODULE3_SECTION_RULES,
+  impactedSectionsForSourceType,
   tablesToMarkdown,
   type CmcSourceType,
   type CanonicalSource,
   type GeneratedTable,
 } from '../server/services/module3Composer';
-import {
-  compileModule3Sections,
-  createSourceHash,
-  markStaleSections,
-  canFinalizeExport,
-  type CmcSourceObject,
-} from '../server/services/cmc-module3-compiler';
+import { createSourceHash, canFinalizeExport } from '../server/services/cmc-module3-compiler';
 import {
   detectContradictions,
   deriveImpactTasks,
@@ -71,15 +66,6 @@ function makeSources(): CanonicalSource[] {
     { id: 'dp-1b', sourceType: 'dissolution_profile', sourcePayload: { purpose: 'release-specification', productName: 'Amlodipine 5 mg tablet', batchNumber: 'B-2026-001', apparatus: 'USP II (paddle)', rotationSpeed: '50 rpm', medium: 'pH 6.8 phosphate buffer', mediumVolume: '900 mL', unitsTested: 12, dissolutionSpecification: 'Q = 80% at 30 min', dissolutionResults: [{ timepoint: '15', meanPercent: '72', rsd: '4.1', n: '12' }, { timepoint: '30', meanPercent: '94', rsd: '2.2', n: '12' }], status: 'reported', releaseDissolutionProfile: 'Amlodipine 5 mg tablet', releaseDissolutionProfileComplete: 'B-2026-001' } },
     { id: 'fr-1', sourceType: 'formulation_record', sourcePayload: { formulationName: 'Amlodipine 5mg tablet v2', version: 'F-v2.0', components: [{ component: 'Amlodipine Besylate', amount: '6.93 mg', role: 'Active' }] } },
   ];
-}
-
-function makeCompilerSources(): CmcSourceObject[] {
-  return makeSources().map((s) => ({
-    id: s.id,
-    sourceType: s.sourceType,
-    sourcePayload: s.sourcePayload,
-    sourceHash: createSourceHash(s.sourcePayload),
-  }));
 }
 
 // ── 1. Composer Coverage ──────────────────────────────────────────────────────
@@ -248,57 +234,25 @@ describe('Module 3 Composer — Missing Inputs', () => {
   });
 });
 
-// ── 6. Compiler ───────────────────────────────────────────────────────────────
+// ── 6–7. The second compile path and its stale marking (retired) ─────────────
+// compileModule3Sections and markStaleSections were retired (R1 S29, 2026-11-09):
+// only tests used them, and their source-to-section map disagreed with the
+// composer. The composer is the one compile path (section 12 below); staleness
+// is impactedSectionsForSourceType over the composer's own rule table.
 
-describe('Module 3 Compiler', () => {
-  it('compiles all 17 sections', () => {
-    const compiled = compileModule3Sections(makeCompilerSources());
-    expect(compiled).toHaveLength(17);
+describe('Module 3 — stale sections follow the composer\'s rule table', () => {
+  it('names the sections that use the changed source type', () => {
+    const staleKeys = impactedSectionsForSourceType('stability');
+    expect(staleKeys).toContain('3.2.S.7');
+    expect(staleKeys).toContain('3.2.P.8');
   });
 
-  it('each compiled section has a deterministic hash', () => {
-    const compiled = compileModule3Sections(makeCompilerSources());
-    for (const section of compiled) {
-      expect(section.compiledHash).toBeTruthy();
-      expect(section.compiledHash.length).toBe(64); // SHA-256 hex
-    }
+  it('does not name unrelated sections', () => {
+    expect(impactedSectionsForSourceType('stability')).not.toContain('3.2.S.1');
   });
 
-  it('compiled sections are not stale by default', () => {
-    const compiled = compileModule3Sections(makeCompilerSources());
-    for (const section of compiled) {
-      expect(section.stale).toBe(false);
-      expect(section.staleReason).toBeNull();
-    }
-  });
-});
-
-// ── 7. Stale Section Marking ──────────────────────────────────────────────────
-
-describe('Module 3 Compiler — Stale Marking', () => {
-  it('marks sections that use the changed source type as stale', () => {
-    const compiled = compileModule3Sections(makeCompilerSources());
-    const marked = markStaleSections(compiled, 'stability', 'New stability data uploaded');
-    // 3.2.S.7 and 3.2.P.8 use stability
-    const s7 = marked.find((s) => s.sectionKey === '3.2.S.7')!;
-    const p8 = marked.find((s) => s.sectionKey === '3.2.P.8')!;
-    expect(s7.stale).toBe(true);
-    expect(s7.staleReason).toBe('New stability data uploaded');
-    expect(p8.stale).toBe(true);
-  });
-
-  it('does not mark unrelated sections as stale', () => {
-    const compiled = compileModule3Sections(makeCompilerSources());
-    const marked = markStaleSections(compiled, 'stability', 'reason');
-    const s1 = marked.find((s) => s.sectionKey === '3.2.S.1')!;
-    expect(s1.stale).toBe(false);
-  });
-
-  it('marks batch-dependent sections for batch changes', () => {
-    const compiled = compileModule3Sections(makeCompilerSources());
-    const marked = markStaleSections(compiled, 'batch', 'New batch record');
-    const p3 = marked.find((s) => s.sectionKey === '3.2.P.3')!;
-    expect(p3.stale).toBe(true);
+  it('names the batch-dependent sections for a batch change', () => {
+    expect(impactedSectionsForSourceType('batch')).toContain('3.2.P.3');
   });
 });
 
@@ -488,21 +442,14 @@ describe('Module 3 Compiler — Finalize Export', () => {
 
 // ── 12. Full Pipeline Integration ─────────────────────────────────────────────
 
-describe('Module 3 Full Pipeline — Compose → Compile → Contradict', () => {
+describe('Module 3 Full Pipeline — Compose → Contradict', () => {
   it('full pipeline produces consistent results', () => {
     const sources = makeSources();
     const composed = composeModule3FromCanonicalSources(sources);
     expect(composed).toHaveLength(17);
 
-    const compilerSources = makeCompilerSources();
-    const compiled = compileModule3Sections(compilerSources);
-    expect(compiled).toHaveLength(17);
-
-    // All compiled hashes should be stable
-    const compiled2 = compileModule3Sections(compilerSources);
-    for (let i = 0; i < compiled.length; i++) {
-      expect(compiled[i].compiledHash).toBe(compiled2[i].compiledHash);
-    }
+    // Composing the same sources again gives the same sections
+    expect(composeModule3FromCanonicalSources(sources)).toEqual(composed);
 
     // No contradictions with clean data
     const contradictions = detectContradictions({
@@ -513,27 +460,17 @@ describe('Module 3 Full Pipeline — Compose → Compile → Contradict', () => 
     expect(contradictions).toHaveLength(0);
   });
 
-  it('stale marking after source change invalidates correct sections', () => {
-    const compiled = compileModule3Sections(makeCompilerSources());
-
-    // Simulate new specification data
-    const marked = markStaleSections(compiled, 'specification', 'Spec v2 uploaded');
-    const staleSections = marked.filter((s) => s.stale);
-
+  it('a source change names the right sections stale', () => {
     // 3.2.S.4 and 3.2.P.5 both depend on specification
-    const staleKeys = staleSections.map((s) => s.sectionKey);
+    const staleKeys = impactedSectionsForSourceType('specification');
     expect(staleKeys).toContain('3.2.S.4');
     expect(staleKeys).toContain('3.2.P.5');
 
-    // Sections not using specification should be unaffected
-    const s1 = marked.find((s) => s.sectionKey === '3.2.S.1')!;
-    expect(s1.stale).toBe(false);
+    // Sections not using specification are unaffected
+    expect(staleKeys).not.toContain('3.2.S.1');
   });
 
-  it('contradiction + stale combo blocks finalization', () => {
-    const compiled = compileModule3Sections(makeCompilerSources());
-    const staleMarked = markStaleSections(compiled, 'batch', 'Batch rejected');
-
+  it('an unresolved critical contradiction blocks finalization', () => {
     const contradictions = detectContradictions({
       batch: [{ batchNumber: 'B-001', disposition: 'rejected' }],
     });

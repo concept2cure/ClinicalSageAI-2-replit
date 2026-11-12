@@ -1,0 +1,16 @@
+# P-92 §10.5 B: red at df3f1e2bdf (code as f71ca16bb4), 2026-11-09T16:56:29Z. The test lives in the scratchpad only, built on held-send-settlement.pglite.test.ts's setup.
+ × server/__tests__/retire-contradicted.test.ts > P-92 §10.5 B (scratchpad proof, not in the repo): a release that FDA's verified receipt contradicts is not retired > released on FDA's letter, then FDA's receipt shows it received: the retirement is refused, and so is its precheck 515ms
+   → expected { precheckCleared: true, …(2) } to deeply equal { precheckCleared: false, …(2) }
+ × server/__tests__/retire-contradicted.test.ts > P-92 §10.5 B (scratchpad proof, not in the repo): a release that FDA's verified receipt contradicts is not retired > released on the platform's own proof, then FDA's receipt shows it received: the retirement is refused, and so is its precheck 91ms
+   → expected { precheckCleared: true, …(2) } to deeply equal { precheckCleared: false, …(2) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+- Expected
++ Received
+-   "actCode": "SEQUENCE_NOT_RETIRABLE",
+-   "deleted": false,
+-   "precheckCleared": false,
++   "actCode": "RETIRED",
++   "deleted": true,
++   "precheckCleared": true,
+ Test Files  1 failed (1)
+      Tests  2 failed (2)

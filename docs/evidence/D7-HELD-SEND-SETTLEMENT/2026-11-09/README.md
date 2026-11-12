@@ -466,6 +466,9 @@ more than 50 files, and its pattern is shown to match the act and nothing near i
 
 - **Gateway transmittals:** four other uses of `var(--muted, inherit)` render near-invisible, among them the technical
   rejection note and the row's "sequence NNNN". Its Actions column also runs past the card at 1440.
+  - *Closed for the technical rejection note* by P-92 C4's commit ("F1: FDA's failed Ack3 is recorded on the sequence
+    by a named person's signed act", `10-technical-rejection/`), at the coordinating session's ruling of 2026-11-09:
+    the note is how C4's record shows, now in `--text-300` and in words. The other three uses stand as seen.
 - **The Dispatch tab's transmit button** ("Send sequence NNNN to the agency's test environment") runs past its
   container at 390.
 - **Raw statuses on screen:** the transmissions list and Gateway transmittals print the stored status as a chip

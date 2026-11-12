@@ -1565,6 +1565,73 @@ router.post('/sequences/:seqId/held-send/settle', limiter, requireRole(AUTHOR), 
   }
 });
 
+// A sent sequence's send put on record, read back from the package the platform kept (P-99 C2). Ask POST
+// governed-precheck { step: 'sent-record' } for what would be recorded; then pass the reason and the read-back's
+// manifestSha256 here. Unsigned: the content is the kept bytes', and the person binds what they read. 409
+// SENT_RECORD_NOT_RESTORABLE with what keeps it; 403 FORBIDDEN. No AnA tool reaches it.
+const sentRecordRederiveSchema = z.object({ reason: z.string().trim().min(1).max(2000), manifestSha256: z.string().regex(/^[0-9a-f]{64}$/) });
+router.post('/sequences/:seqId/sent-record/rederive', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  const parsed = sentRecordRederiveSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { rederiveSentRecord } = await import('../services/submission-service/submission-service');
+    res.json(await rederiveSentRecord(seqId, ctx, { reason: parsed.data.reason, manifestSha256: parsed.data.manifestSha256 }));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// A settlement FDA's verified answer contradicts, re-opened on that answer (P-92 C3,
+// P-108 1(c)). Ask POST governed-precheck { step: 'held-send-reopen' } for the
+// statement; sign ectd-sequence:<seqId> with intent 'held-send-reopen', the
+// meaning responsibility, the settlement's signature, FDA's answer and the
+// statement, with the reason; then pass its actionId here. 409
+// HELD_SEND_NOT_REOPENABLE with what keeps it; 403 GOVERNED_REQUIRED or
+// FORBIDDEN; a refused act voids its signature. No AnA tool reaches it.
+const heldSendReopenSchema = z.object({ signatureActionId: z.string().min(1).max(128) });
+router.post('/sequences/:seqId/held-send/reopen', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  const parsed = heldSendReopenSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { recordHeldSendReopen } = await import('../services/submission-service/submission-service');
+    res.json(await recordHeldSendReopen({ sequenceId: seqId, signatureActionId: parsed.data.signatureActionId }, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
+// FDA's failed Ack3 for a sequence recorded as received (P-92 C4, P-108 1(a)).
+// Ask POST governed-precheck { step: 'technical-rejection', evidenceDocumentId }
+// for the statement; sign ectd-sequence:<seqId> with intent
+// 'technical-rejection', the meaning responsibility, the transmittal, the
+// attempt, FDA's Ack3 from the project's Vault and the statement, with the
+// reason; then pass its actionId here. The sequence becomes 'rejected'. 409
+// TECHNICAL_REJECTION_NOT_RECORDABLE with what keeps it; 403 GOVERNED_REQUIRED
+// or FORBIDDEN; a refused act voids its signature. No AnA tool reaches it.
+const technicalRejectionSchema = z.object({ signatureActionId: z.string().min(1).max(128) });
+router.post('/sequences/:seqId/technical-rejection', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const seqId = idParam(req.params.seqId);
+  if (seqId === null) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid sequence id.' } });
+  const parsed = technicalRejectionSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const { recordTechnicalRejection } = await import('../services/submission-service/submission-service');
+    res.json(await recordTechnicalRejection({ sequenceId: seqId, signatureActionId: parsed.data.signatureActionId }, ctx));
+  } catch (err) {
+    fail(res, err);
+  }
+});
+
 // ── Closing a critical Shadow Review finding (P-35, decided 2026-10-15) ─────
 // Each open critical finding is closed on its own: 'accepted' (risk accepted)
 // or 'fixed' (offered only when a completed Shadow Review ran after the
@@ -2201,7 +2268,14 @@ const governedPrecheckSchema = z
     // 'held-send-settlement' (P-92): whether a held FDA send may be settled,
     // which way, on which evidence, and the statement the signature carries;
     // its own rule answers it too.
-    step: z.enum(['freeze', 'dispatch', 'transmit', 'shadow-waiver', 'shadow-finding-disposition', 'retire', 'held-send-settlement']),
+    // 'technical-rejection' (P-92 C4): whether FDA's failed Ack3 may be recorded
+    // on the sequence, by this person, on which Vault document, and the
+    // statement the signature carries; its own rule answers it.
+    // 'held-send-reopen' (P-92 C3): whether a settlement FDA's verified answer
+    // contradicts may be re-opened, by this person, and the statement signed.
+    // 'sent-record' (P-99 C2): whether a sent sequence's send can be put on
+    // record, how, and what would be recorded.
+    step: z.enum(['freeze', 'dispatch', 'transmit', 'shadow-waiver', 'shadow-finding-disposition', 'retire', 'held-send-settlement', 'technical-rejection', 'held-send-reopen', 'sent-record']),
     environment: z.enum(['staging', 'production']).optional(),
     // Transmit: the number the person typed, judged against the program record
     // before anyone signs (P-23), by the rule transmit itself applies.
@@ -2218,7 +2292,7 @@ const governedPrecheckSchema = z
     message: "A 'shadow-finding-disposition' precheck names the finding (findingId) and the disposition (accepted or fixed).",
     path: ['findingId'],
   })
-  .refine((b) => (b.evidenceDocumentId === undefined && b.evidenceKind === undefined) || b.outcome !== undefined, {
+  .refine((b) => (b.evidenceDocumentId === undefined && b.evidenceKind === undefined) || b.outcome !== undefined || b.step === 'technical-rejection', {
     message: 'A document or a kind of evidence is asked about only with an outcome.',
     path: ['outcome'],
   })
@@ -2234,8 +2308,14 @@ router.post('/sequences/:seqId/governed-precheck', limiter, requireRole(AUTHOR),
   const parsed = governedPrecheckSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
   try {
-    const { precheckGovernedStep, precheckSequenceRetirement, precheckHeldSendSettlement } = await import('../services/submission-service/submission-service');
+    const { precheckGovernedStep, precheckSequenceRetirement, precheckHeldSendSettlement, precheckTechnicalRejection, precheckHeldSendReopen, precheckSentRecord } = await import('../services/submission-service/submission-service');
     if (parsed.data.step === 'retire') return res.json(await precheckSequenceRetirement(seqId, ctx));
+    if (parsed.data.step === 'sent-record') return res.json(await precheckSentRecord(seqId, ctx));
+    if (parsed.data.step === 'held-send-reopen') return res.json(await precheckHeldSendReopen(seqId, ctx));
+    if (parsed.data.step === 'technical-rejection') {
+      const { evidenceDocumentId } = parsed.data;
+      return res.json(await precheckTechnicalRejection(seqId, ctx, evidenceDocumentId ? { evidenceDocumentId } : {}));
+    }
     if (parsed.data.step === 'held-send-settlement') {
       const { outcome, evidenceKind, evidenceDocumentId } = parsed.data;
       return res.json(await precheckHeldSendSettlement(seqId, ctx, {

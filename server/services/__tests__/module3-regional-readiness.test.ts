@@ -58,9 +58,9 @@ describe('SUBMISSION_REGIONS is the canonical list, not a fourth copy', () => {
     // No hand-written region list anywhere in the file. When this assertion was
     // first written it failed, and correctly: there was a SECOND literal enum 600
     // lines below (ValidatorRegionSchema), the same drift hazard already repeated
-    // once. It now derives from JURISDICTION_REGIONS.
+    // once. It was then derived from JURISDICTION_REGIONS, and it went with the
+    // standalone /validate/hardened route it served (R1 S13, 2026-11-09).
     expect(route).not.toMatch(/z\.enum\(\s*\[\s*'US'/);
-    expect(route).toContain('JURISDICTION_REGIONS');
   });
 
   it('JURISDICTION_REGIONS is exactly the twelve the validator route used to list', () => {
