@@ -105,9 +105,26 @@ says of stale drafts that they need a compile. `04-gate-sentence-red-green.txt`.
 
 `shots/` holds eight of the walks' screenshots for the items above.
 
+## Screen repairs, CMC (2026-11-12)
+
+Each was used in the running app after the change, signed in as the author (a member with no signing authority) or
+the second person; `shots/after-*.png`. Tests red first: `06-cmc-screens-red-green.txt`.
+
+| Found | Repair | Used in the running app |
+|---|---|---|
+| A person cannot record the product's shelf-life claim | The stability registration form offers "Proposed shelf life" (not required). On a running study the Shelf life cell is its own control ("Set" / "Change"), an ordinary audited edit; the study stays open. The signed act is now labelled "Close out" (`cmcRegisterForms.ts`, `CmcModule.tsx`) | A study registered with "24 months at or below 25 °C" shows it; a second study went from "not set" to "18 months…" and stayed Active (`after-a1-*`) |
+| A refused close-out hid the saved edit | The refusal says both facts and the row shows what was saved. The branch that said so was unreachable, because the request helper throws on a refusal | As the author: "The shelf life is saved and the study is still running. Couldn't save the close-out — Your role does not permit applying an electronic signature…" (`after-b8-01`) |
+| A signed batch rejection never showed | The row reads the signed decision (`release_status`) before the working status, and adopts the answer where the route puts it (`data.batchRecord`). A released batch, whose status becomes `completed`, had read "Pending" too. The control is named "Disposition" and its button "Sign the disposition" (`cmcBatch.ts`, `CmcModule.tsx`) | Rejected under signature by the second person: "Batch … rejected · signed 2efad9f6a080…"; the row reads Rejected with no disposition control, and the same after a reload (`after-b2-*`) |
+| A placement showed no result | The verdict is kept with the sequence it was made into and shown again when the board remounts the control. It says what was written: "Already placed. Nothing was written. All 21 sections in sequence 0001 are unchanged."; "1 section filed again; 20 unchanged, in sequence 0001" (`CmcPlaceIntoSubmission.tsx`) | On the fully approved programme of the OQ run, a repeat from the board (`after-b3-01`) |
+
+Still open on the CMC screens, in files this session holds: the method form's per-characteristic ICH Q2 evidence; the
+wording when an authenticator code is missing; a hint on the QC sample type; stale sections on the Overview. In
+`CmcModule3Build.tsx` (held by the screen-work session): the remount itself, "21 ready to compile" after a compile,
+and finding types shown as stored tokens.
+
 ## Not done
 
-- The screen repairs listed above.
+- The screen repairs not listed in the table above.
 - `tests/db/*.dbtest.ts` (real PostgreSQL) were not run. Repair 1 was proven on real PostgreSQL by the live checks.
 - `server/api/cmc/__tests__/module3OperatingSystemRoutes.test.ts` "refuses to approve a section whose own compiled
   record is incomplete" fails on trunk without these changes: it expects raw field keys in a message that now uses
