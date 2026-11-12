@@ -1,0 +1,127 @@
+# RED — 2026-11-09T20:34:14Z — before the fix (HEAD 8d30ddf60 + new tests only)
+$ npx vitest run server/routes/c2c/__tests__/projects-create-market-offer.test.ts shared/constants/domain/__tests__/filing-application-type.test.ts
+
+ RUN  v4.1.7 /home/user/ClinicalSageAI-2-replit
+
+stderr | server/routes/c2c/__tests__/projects-create-market-offer.test.ts
+[SECURITY WARNING] AUDIT_HMAC_SECRET not set. Using a non-production development fallback — audit-chain integrity is NOT guaranteed. Set AUDIT_HMAC_SECRET before deploying.
+
+stderr | server/routes/c2c/__tests__/projects-create-market-offer.test.ts
+{
+  "timestamp": "2026-11-09T20:34:17.161Z",
+  "level": "error",
+  "message": "[audit-service] Failed to initialize tamper-proof audit table (non-fatal):",
+  "context": {}
+}
+
+stdout | server/routes/c2c/__tests__/projects-create-market-offer.test.ts
+{
+  "timestamp": "2026-11-09T20:34:18.022Z",
+  "level": "info",
+  "message": "[database] Initializing PostgreSQL connection pool",
+  "context": {}
+}
+{
+  "timestamp": "2026-11-09T20:34:18.022Z",
+  "level": "info",
+  "message": "[database] RLS enforcement mode resolved",
+  "context": {
+    "mode": "off"
+  }
+}
+
+stderr | server/routes/c2c/__tests__/projects-create-market-offer.test.ts
+{
+  "timestamp": "2026-11-09T20:34:18.022Z",
+  "level": "warn",
+  "message": "[database] Skipping database startup connectivity test (SKIP_DB_STARTUP_TEST=true)",
+  "context": {}
+}
+
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an MHRA "IND" with 422 FILING_NOT_OFFERED and its reason, before any SQL 28ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses a new Japanese NDA with 422 FILING_NOT_OFFERED and its reason, before any SQL 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an agency nothing maps (Swissmedic) with 422 FILING_NOT_OFFERED and its reason, before any SQL 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses a drug application at a Notified Body with 422 FILING_NOT_OFFERED and its reason, before any SQL 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses Module 3.2.S at "ICH / Global", sent as the wizard sends it (an NDA) with 422 FILING_NOT_OFFERED and its reason, before any SQL 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses the Quality Overall Summary at "ICH / Global", by its legacy id with 422 FILING_NOT_OFFERED and its reason, before any SQL 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses any other filing at "ICH / Global" (a comparability protocol) with 422 FILING_NOT_OFFERED and its reason, before any SQL 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses Health Canada (an NDS, sent as the wizard sends it) once the scaffold finds no outline, rolled back, nothing committed 8ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an agency with no outline (TGA) once the scaffold finds no outline, rolled back, nothing committed 4ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > refuses an EMA application with no EU outline (an NDA) once the scaffold finds no outline, rolled back, nothing committed 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing the verdict does not offer is refused at creation > a program type with no document class (a bare device) has no outline to look for: refused before any SQL 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > an EU MAA: created, "Author documents for this market", with the reason 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > a continuing PMDA application (an approval number on file): created, author-only 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — offered markets are created, and say what is offered > a US commercial IND: created, build and sequence 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an EU mdr technical file at "EU / Notified Body": created, author-only, scaffolded from the EU device outline 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an EU ivdr technical file at "EU / Notified Body": created, author-only, scaffolded from the EU device outline 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an NDA sent with the region code us: scaffolded against FDA and created 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the scaffold reads the agency the verdict judged > an NDA sent with the region code US: scaffolded against FDA and created 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing that is a document is created as its own class > a Prior Approval Supplement at FDA: created author-only, its own outline, no submission spine 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing that is a document is created as its own class > a clinical study report at "ICH / Global": created author-only, scaffolded against ICH, no submission spine 3ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — a filing that is a document is created as its own class > a class covers drugs and biologics alike, so the product class must be stated 2ms
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the filing chosen decides the application type > a Type II Variation (by its catalog id) sent as an MAA is refused 422 FILING_NOT_OFFERED, before any SQL 6ms
+   → {"data":{"id":"x","title":"x","readiness":null,"readinessState":"no_sections"},"program":{"id":"b6d3e141-7abb-4f1d-9b8b-f0f334604a05","registry_id":null,"submission_type_id":null,"riskBasedMonitoring":false,"product_type":null,"device_class":null,"regulatory_path":null,"product_code":null,"predicate_devices":[],"review_panel":null,"regulation_number":null,"device_flags":null,"readiness":null,"readinessState":"no_sections","readinessAsOf":null},"meta":{"created":true,"organizationId":7,"actorUserId":3,"clientWorkspaceId":55,"clientWorkspaceName":"Fixture client","documentId":"doc_test","scaffoldedSections":24,"marketSupport":{"tier":"author_only","label":"Author documents for this market","reason":"Author the documents here. Module 1 leaves are filed flat under the agency's root element, not under its headings, so no EMA sequence is built.","appliesTo":null},"submissionId":3101,"submissionCreated":true,"projectAnchorId":9001,"projectAnchorCreated":true}}: expected 201 to be 422 // Object.is equality
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the filing chosen decides the application type > a Type II Variation (by its legacy id) sent as an MAA is refused 422 FILING_NOT_OFFERED, before any SQL 2ms
+   → {"data":{"id":"x","title":"x","readiness":null,"readinessState":"no_sections"},"program":{"id":"b6d3e141-7abb-4f1d-9b8b-f0f334604a05","registry_id":null,"submission_type_id":null,"riskBasedMonitoring":false,"product_type":null,"device_class":null,"regulatory_path":null,"product_code":null,"predicate_devices":[],"review_panel":null,"regulation_number":null,"device_flags":null,"readiness":null,"readinessState":"no_sections","readinessAsOf":null},"meta":{"created":true,"organizationId":7,"actorUserId":3,"clientWorkspaceId":55,"clientWorkspaceName":"Fixture client","documentId":"doc_test","scaffoldedSections":24,"marketSupport":{"tier":"author_only","label":"Author documents for this market","reason":"Author the documents here. Module 1 leaves are filed flat under the agency's root element, not under its headings, so no EMA sequence is built.","appliesTo":null},"submissionId":3101,"submissionCreated":true,"projectAnchorId":9001,"projectAnchorCreated":true}}: expected 201 to be 422 // Object.is equality
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the filing chosen decides the application type > the type the picker gives the filing, sent with it, is still created (an EU MAA as an MAA): 201 2ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the filing chosen decides the application type > a filing whose pathway names its application (a 505(b)(2) is an NDA) is created as that application: 201 2ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  shared/constants/domain/__tests__/filing-application-type.test.ts [ shared/constants/domain/__tests__/filing-application-type.test.ts ]
+Error: Cannot find module '../filing-application-type' imported from /home/user/ClinicalSageAI-2-replit/shared/constants/domain/__tests__/filing-application-type.test.ts
+ ❯ shared/constants/domain/__tests__/filing-application-type.test.ts:18:1
+     16|  */
+     17| import { describe, it, expect } from 'vitest';
+     18| import { programTypeFor } from '../filing-application-type';
+       | ^
+     19| import { FILING_CATALOG, resolveFilingCatalogEntry } from '../../../re…
+     20|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the filing chosen decides the application type > a Type II Variation (by its catalog id) sent as an MAA is refused 422 FILING_NOT_OFFERED, before any SQL
+ FAIL  server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the filing chosen decides the application type > a Type II Variation (by its legacy id) sent as an MAA is refused 422 FILING_NOT_OFFERED, before any SQL
+AssertionError: {"data":{"id":"x","title":"x","readiness":null,"readinessState":"no_sections"},"program":{"id":"b6d3e141-7abb-4f1d-9b8b-f0f334604a05","registry_id":null,"submission_type_id":null,"riskBasedMonitoring":false,"product_type":null,"device_class":null,"regulatory_path":null,"product_code":null,"predicate_devices":[],"review_panel":null,"regulation_number":null,"device_flags":null,"readiness":null,"readinessState":"no_sections","readinessAsOf":null},"meta":{"created":true,"organizationId":7,"actorUserId":3,"clientWorkspaceId":55,"clientWorkspaceName":"Fixture client","documentId":"doc_test","scaffoldedSections":24,"marketSupport":{"tier":"author_only","label":"Author documents for this market","reason":"Author the documents here. Module 1 leaves are filed flat under the agency's root element, not under its headings, so no EMA sequence is built.","appliesTo":null},"submissionId":3101,"submissionCreated":true,"projectAnchorId":9001,"projectAnchorCreated":true}}: expected 201 to be 422 // Object.is equality
+
+- Expected
++ Received
+
+- 422
++ 201
+
+ ❯ server/routes/c2c/__tests__/projects-create-market-offer.test.ts:328:50
+    326|     const res = await request(app()).post('/api/c2c/projects')
+    327|       .send(body({ programType: 'maa', primaryAgency: 'EMA', submissio…
+    328|     expect(res.status, JSON.stringify(res.body)).toBe(422);
+       |                                                  ^
+    329|     expect(res.body.error).toBe('FILING_NOT_OFFERED');
+    330|     expect(res.body.message).toMatch(/^Type II Variation creates an ND…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 23 passed (25)
+   Start at  20:34:15
+   Duration  4.32s (transform 2.31s, setup 85ms, import 3.83s, tests 111ms, environment 0ms)
+
+
+# RED (2) — 2026-11-09T20:36:50Z — the route as at HEAD (git show HEAD:server/routes/c2c/projects.ts, restored afterwards), against the final test block, incl. the refused-own-type case and the message wording aligned to the catalog display name
+$ npx vitest run server/routes/c2c/__tests__/projects-create-market-offer.test.ts -t "the filing chosen decides the application type"
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the filing chosen decides the application type > a Type II Variation (by its catalog id) sent as an MAA is refused 422 FILING_NOT_OFFERED, before any SQL 33ms
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the filing chosen decides the application type > a Type II Variation (by its legacy id) sent as an MAA is refused 422 FILING_NOT_OFFERED, before any SQL 6ms
+ × server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the filing chosen decides the application type > where the verdict refuses the filing's own type in that market, the refusal says so too, with that offer 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the filing chosen decides the application type > the type the picker gives the filing, sent with it, is still created (an EU MAA as an MAA): 201 5ms
+ ✓ server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the filing chosen decides the application type > a filing whose pathway names its application (a 505(b)(2) is an NDA) is created as that application: 201 5ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the filing chosen decides the application type > a Type II Variation (by its catalog id) sent as an MAA is refused 422 FILING_NOT_OFFERED, before any SQL
+ FAIL  server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the filing chosen decides the application type > a Type II Variation (by its legacy id) sent as an MAA is refused 422 FILING_NOT_OFFERED, before any SQL
+ FAIL  server/routes/c2c/__tests__/projects-create-market-offer.test.ts > POST /api/c2c/projects — the filing chosen decides the application type > where the verdict refuses the filing's own type in that market, the refusal says so too, with that offer
+ Test Files  1 failed (1)
+      Tests  3 failed | 2 passed | 21 skipped (26)

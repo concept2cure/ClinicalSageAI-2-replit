@@ -308,8 +308,17 @@ export const WORKSTREAM_FILING_TYPES: Record<Workstream, readonly string[]> = {
  */
 const WORKSTREAM_BY_PRODUCT_CLASS: Readonly<Record<string, Workstream>> = { biologic: 'Biotech', drug: 'Pharma' };
 
+/**
+ * Applications that bucket by their stated product class, as a filing document
+ * class does: a DMF covers drugs and biologics alike, and the person states its
+ * class at creation (P-21; server/routes/c2c/project-intake.ts). Added
+ * 2026-11-09: a DMF was in no list, so its row bucketed as a title-cased "Dmf"
+ * that matched no client-type filter, and About read "not recorded".
+ */
+const APPLICATIONS_BUCKETED_BY_PRODUCT_CLASS: readonly string[] = ['dmf'];
+
 /** The portfolio workstream a filing type belongs to, or null if unclassified. A
- *  filing document class reads it from the product class, when one is given. */
+ *  filing document class or a DMF reads it from the product class, when one is given. */
 export function workstreamForFilingType(
   filingType: string | null | undefined,
   productType?: string | null,
@@ -318,7 +327,7 @@ export function workstreamForFilingType(
   for (const [ws, types] of Object.entries(WORKSTREAM_FILING_TYPES) as [Workstream, readonly string[]][]) {
     if (types.includes(key)) return ws;
   }
-  if (filingDocumentClassOf(key)) return WORKSTREAM_BY_PRODUCT_CLASS[String(productType ?? '').trim().toLowerCase()] ?? null;
+  if (filingDocumentClassOf(key) || APPLICATIONS_BUCKETED_BY_PRODUCT_CLASS.includes(key)) return WORKSTREAM_BY_PRODUCT_CLASS[String(productType ?? '').trim().toLowerCase()] ?? null;
   return null;
 }
 
@@ -335,10 +344,10 @@ export function workstreamForFilingType(
 export function workstreamSqlCase(column: string, productTypeColumn?: string): string {
   const branch = (ws: Workstream) =>
     `WHEN lower(${column}) IN (${WORKSTREAM_FILING_TYPES[ws].map((t) => `'${t}'`).join(',')}) THEN '${ws}'`;
-  // A filing document class buckets by its product class (workstreamForFilingType).
+  // A filing document class or a DMF buckets by its product class (workstreamForFilingType).
   const byClass = (ws: Workstream) => Object.entries(WORKSTREAM_BY_PRODUCT_CLASS)
     .filter(([, w]) => w === ws).map(([cls]) => `'${cls}'`).join(',');
-  const classes = filingDocumentClassTypes().map((t) => `'${t}'`).join(',');
+  const classes = [...filingDocumentClassTypes(), ...APPLICATIONS_BUCKETED_BY_PRODUCT_CLASS].map((t) => `'${t}'`).join(',');
   const classBranch = productTypeColumn
     ? `WHEN lower(${column}) IN (${classes}) AND lower(${productTypeColumn}) IN (${byClass('Biotech')}) THEN 'Biotech'
          WHEN lower(${column}) IN (${classes}) AND lower(${productTypeColumn}) IN (${byClass('Pharma')}) THEN 'Pharma'`

@@ -1,0 +1,104 @@
+Signed in as ana.author@concept2cure.pro (user 1, organisation 2) at http://127.0.0.1:5100
+Every demo area is open on the enterprise plan.
+
+=== seed: portfolio ===
+  • Editor: the canonical CSR template … ok — 
+  • Client workspace: Varnhollow Oncology (fictional demo) … ok — created 5
+  • Client workspace: Petrelline Rare Therapeutics (fictional demo) … ok — created 6
+  • Client workspace: Quillmont Immunology (fictional demo) … ok — created 7
+  • Client workspace: Halcyra Vaccines (fictional demo) … ok — created 8
+  • Project (a) Varnhollow Oncology (fictional) · VNH-310-301 Phase 3 CSR (planning) — SYNTHETIC — workspace 5 … ok — 
+  • Vault: VNH-310-301 protocol · synthetic … ok — 
+  • Vault: VNH-310-301 statistical analysis plan · synthetic … ok — 
+  • Editor: CSR working document for VNH-310-301 … ok — 
+  • Tasks: no completed claim the product refused on [Demo · Portfolio] Varnhollow Oncology (fictional) · VNH-310 … ok — 0 corrected
+  • Tasks: 3 tasks on VNH-310-301 … ok — 3 created, 0 already there (board project 8)
+  • Project (b) Petrelline Rare Therapeutics (fictional) · PTR-022-301 Phase 3 CSR (enrolling) — SYNTHETIC — workspace 6 … ok — 
+  • Vault: PTR-022-301 protocol · synthetic … ok — 
+  • Biostatistics: study design "[Demo · Portfolio] PTR-022-301 — Phase 3 study design (fictional)" … ok — created sd_54897cd9830747a5a2c398a95149ce7e
+  • Editor: CSR working document for PTR-022-301 … ok — 
+  • Tasks: no completed claim the product refused on [Demo · Portfolio] Petrelline Rare Therapeutics (fictional)  … ok — 0 corrected
+  • Tasks: 3 tasks on PTR-022-301 … ok — 3 created, 0 already there (board project 9)
+  • Project (c) Quillmont Immunology (fictional) · QLM-118-202 Phase 2b CSR (database locked) — SYNTHETIC — workspace 7 … ok — 
+  • Vault: QLM-118-202 protocol · synthetic … ok — 
+  • Vault: QLM-118-202 statistical analysis plan · synthetic … ok — 
+  • Vault: QLM-118-202 clinical study source · synthetic v2 … ok — 
+  • Study data: the editor's source preview reads the synthetic source … ok — 
+  • Editor: CSR working document for QLM-118-202 … ok — 
+  • Tasks: no completed claim the product refused on [Demo · Portfolio] Quillmont Immunology (fictional) · QLM-11 … ok — 0 corrected
+  • Tasks: 3 tasks on QLM-118-202 … ok — 3 created, 0 already there (board project 10)
+  • Project (d) Halcyra Vaccines (fictional) · HLY-09-201 Phase 2 CSR (drafting) — SYNTHETIC — workspace 8 … ok — 
+  • Vault: HLY-09-201 protocol · synthetic … ok — 
+  • Vault: HLY-09-201 clinical study source · synthetic v2 … ok — 
+  • Study data: the editor's source preview reads the synthetic source … ok — 
+  • Editor: CSR working document for HLY-09-201 … ok — 
+  • Editor: write 6 ICH E3 narrative headings (saved revisions) … ok — 
+  • Tasks: no completed claim the product refused on [Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09-201 … ok — 0 corrected
+  • Tasks: 3 tasks on HLY-09-201 … ok — 3 created, 0 already there (board project 11)
+  • Project (e) Varnhollow Oncology (fictional) · VNH-310-201 Phase 2 CSR (in review) — SYNTHETIC — workspace 5 … ok — 
+  • Vault: VNH-310-201 protocol · synthetic … ok — 
+  • Vault: VNH-310-201 clinical study source · synthetic v2 … ok — 
+  • Study data: the editor's source preview reads the synthetic source … ok — 
+  • Editor: CSR working document for VNH-310-201 … ok — 
+  • Editor: write 11 ICH E3 narrative headings (saved revisions) … ok — 
+  • Editor: 4 reviewer comments … ok — 
+  • Tasks: no completed claim the product refused on [Demo · Portfolio] Varnhollow Oncology (fictional) · VNH-310 … ok — 0 corrected
+  • Tasks: 3 tasks on VNH-310-201 … ok — 3 created, 0 already there (board project 12)
+  • Project (f) Petrelline Rare Therapeutics (fictional) · PTR-022-102 Phase 1/2 CSR (awaiting signature) — SYNTHETIC — workspace 6 … ok — 
+  • Vault: PTR-022-102 protocol · synthetic … ok — 
+  • Vault: PTR-022-102 clinical study source · synthetic v3 … ok — 
+  • Study data: the editor's source preview reads the synthetic source … ok — 
+  • Editor: CSR working document for PTR-022-102 … ok — 
+  • Editor: write 11 ICH E3 narrative headings (saved revisions) … ok — 
+  • Editor: 2 reviewer comments … ok — 
+  • Signature: freeze and e-sign PTR-022-102 … ok — not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)
+  • Tasks: no completed claim the product refused on [Demo · Portfolio] Petrelline Rare Therapeutics (fictional)  … ok — 0 corrected
+  • Tasks: 3 tasks on PTR-022-102 … ok — 3 created, 0 already there (board project 13)
+  • Project (g) Quillmont Immunology (fictional) · QLM-118 IND — Phase 1 CSR ready to file at 5.3.5.1 — SYNTHETIC — workspace 7 … ok — 
+  • Vault: QLM-118-101 protocol · synthetic … ok — 
+  • Vault: QLM-118-101 clinical study source · synthetic v2 … ok — 
+  • Study data: the editor's source preview reads the synthetic source … ok — 
+  • Editor: CSR working document for QLM-118-101 … ok — 
+  • Editor: write 11 ICH E3 narrative headings (saved revisions) … ok — 
+  • Submission Center: CSR at m5.3.5.1 in IND sequence 0000 … ok — 
+  • Tasks: no completed claim the product refused on [Demo · Portfolio] Quillmont Immunology (fictional) · QLM-11 … ok — 0 corrected
+  • Tasks: 3 tasks on QLM-118-101 … ok — 3 created, 0 already there (board project 14)
+  • Project (h) Halcyra Vaccines (fictional) · HLY-09 IND — Phase 1 CSR, agency information request — SYNTHETIC — workspace 8 … ok — 
+  • Vault: HLY-09-101 protocol · synthetic … ok — 
+  • Vault: HLY-09-101 clinical study source · synthetic v2 … ok — 
+  • Study data: the editor's source preview reads the synthetic source … ok — 
+  • Editor: CSR working document for HLY-09-101 … ok — 
+  • Editor: write 11 ICH E3 narrative headings (saved revisions) … ok — 
+  • Submission Center: CSR at m5.3.5.1 in IND sequence 0000 … ok — 
+  • Communication: data-room source "[Demo - Portfolio] FDA information request (fictional) - IND HLY-09 - CSR HLY-09-101.txt" on HLY-09-101 … ok — uploaded 231 (text read: completed)
+  • Communication: agency inbox entry for "FDA information request (fictional demo) on CSR HLY-09-101, IND HLY-09" on HLY-09-101 … ok — logged ace_1794256651836_e0700a76
+  • Communication: the inbox reads "[Demo - Portfolio] FDA information request (fictional) - IND HLY-09 - CSR HLY-09-101.txt" … ok — 3 questions, 0 commitments proposed
+  • Data room: sources on the stage h project after the letter (a first-page read; the product runs its Quality capture on it) … ok — 
+  • Tasks: no completed claim the product refused on [Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09 IND … ok — 0 corrected
+  • Tasks: 3 tasks on HLY-09-101 … ok — 3 created, 0 already there (board project 15)
+  summary: created 124, found 0, not executed 20, refused 0
+  workspace 5 · Varnhollow Oncology (fictional demo): a 01094c3c-ce80-49af-b2d8-42729824f403, e b5335677-f581-416b-920c-9018a1493b52
+  workspace 6 · Petrelline Rare Therapeutics (fictional demo): b 2c68119d-53d0-47c9-b164-868ffd64ce9e, f 9789baf1-6216-4c26-8661-e87951e0e0ca
+  workspace 7 · Quillmont Immunology (fictional demo): c 9c3adce2-f7bb-4d18-b2da-75a04376acd4, g 74b6fb0e-710e-46a9-b78d-602f0a831ef3
+  workspace 8 · Halcyra Vaccines (fictional demo): d 7fea0e52-1866-4f18-9b6b-d32ce77fa2c8, h f658bac3-bd4e-48d6-b6d1-1d89c027678b
+  not executed · [Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-301 Phase 3 CSR (enrolling) — SYNTHETIC · enrolment register: not executed — no enrolment register has a mounted writer; enrolment is shown through the project's tasks
+  not executed · [Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118-202 Phase 2b CSR (database locked) — SYNTHETIC · study-source approval and freeze: not executed — Vault approval of the study source needs two further people (reviewer and approver, not the uploader) with signing credentials; the study data cannot be frozen until then
+  not executed · [Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118-202 Phase 2b CSR (database locked) — SYNTHETIC · build from the study's data / AnA drafting: not executed — the build from the study's data needs an approved, frozen source, and AnA drafting needs a model provider (none is configured)
+  not executed · [Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09-201 Phase 2 CSR (drafting) — SYNTHETIC · study-source approval and freeze: not executed — Vault approval of the study source needs two further people (reviewer and approver, not the uploader) with signing credentials; the study data cannot be frozen until then
+  not executed · [Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09-201 Phase 2 CSR (drafting) — SYNTHETIC · build from the study's data / AnA drafting: not executed — the build from the study's data needs an approved, frozen source, and AnA drafting needs a model provider (none is configured)
+  not executed · [Demo · Portfolio] Varnhollow Oncology (fictional) · VNH-310-201 Phase 2 CSR (in review) — SYNTHETIC · study-source approval and freeze: not executed — Vault approval of the study source needs two further people (reviewer and approver, not the uploader) with signing credentials; the study data cannot be frozen until then
+  not executed · [Demo · Portfolio] Varnhollow Oncology (fictional) · VNH-310-201 Phase 2 CSR (in review) — SYNTHETIC · build from the study's data / AnA drafting: not executed — the build from the study's data needs an approved, frozen source, and AnA drafting needs a model provider (none is configured)
+  not executed · [Demo · Portfolio] Varnhollow Oncology (fictional) · VNH-310-201 Phase 2 CSR (in review) — SYNTHETIC · formal review request: not executed — a formal review request needs a second organisation member as reviewer; the server refuses the author as their own reviewer (REVIEWER_IS_AUTHOR)
+  not executed · [Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-102 Phase 1/2 CSR (awaiting signature) — SYNTHETIC · study-source approval and freeze: not executed — Vault approval of the study source needs two further people (reviewer and approver, not the uploader) with signing credentials; the study data cannot be frozen until then
+  not executed · [Demo · Portfolio] Petrelline Rare Therapeutics (fictional) · PTR-022-102 Phase 1/2 CSR (awaiting signature) — SYNTHETIC · build from the study's data / AnA drafting: not executed — the build from the study's data needs an approved, frozen source, and AnA drafting needs a model provider (none is configured)
+  not executed · [Demo · Portfolio] PTR-022-102 Clinical Study Report (ICH E3) — Petrelline Rare Therapeutics (fictional) · CSR freeze and e-signature: not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)
+  not executed · [Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118 IND — Phase 1 CSR ready to file at 5.3.5.1 — SYNTHETIC · study-source approval and freeze: not executed — Vault approval of the study source needs two further people (reviewer and approver, not the uploader) with signing credentials; the study data cannot be frozen until then
+  not executed · [Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118 IND — Phase 1 CSR ready to file at 5.3.5.1 — SYNTHETIC · build from the study's data / AnA drafting: not executed — the build from the study's data needs an approved, frozen source, and AnA drafting needs a model provider (none is configured)
+  not executed · [Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118 IND — Phase 1 CSR ready to file at 5.3.5.1 — SYNTHETIC · CSR placement at m5.3.5.1: not executed — the server refused: file the CSR to the Vault: HTTP 409 {"success":false,"error":{"code":"CSR_SCIENTIFIC_REVIEW_REQUIRED","message":"No current scientific-review receipt covers the saved CSR and its approved source versions. Nothing was signed or released."}}
+  not executed · [Demo · Portfolio] Quillmont Immunology (fictional) · QLM-118 IND — Phase 1 CSR ready to file at 5.3.5.1 — SYNTHETIC · eCTD compile and dispatch: not executed — the eCTD compile, validation and dispatch are the person's governed actions in Submission Center; no agency acknowledgement is invented
+  not executed · [Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09 IND — Phase 1 CSR, agency information request — SYNTHETIC · study-source approval and freeze: not executed — Vault approval of the study source needs two further people (reviewer and approver, not the uploader) with signing credentials; the study data cannot be frozen until then
+  not executed · [Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09 IND — Phase 1 CSR, agency information request — SYNTHETIC · build from the study's data / AnA drafting: not executed — the build from the study's data needs an approved, frozen source, and AnA drafting needs a model provider (none is configured)
+  not executed · [Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09 IND — Phase 1 CSR, agency information request — SYNTHETIC · CSR placement at m5.3.5.1: not executed — the server refused: file the CSR to the Vault: HTTP 409 {"success":false,"error":{"code":"CSR_SCIENTIFIC_REVIEW_REQUIRED","message":"No current scientific-review receipt covers the saved CSR and its approved source versions. Nothing was signed or released."}}
+  not executed · [Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09 IND — Phase 1 CSR, agency information request — SYNTHETIC · eCTD compile and dispatch: not executed — the eCTD compile, validation and dispatch are the person's governed actions in Submission Center; no agency acknowledgement is invented
+  not executed · [Demo · Portfolio] Halcyra Vaccines (fictional) · HLY-09 IND — Phase 1 CSR, agency information request — SYNTHETIC · approval of the response to the information request: not executed — signer credential not supplied (OQ_SIGNER_EMAIL / OQ_SIGNER_PASSWORD)
+manifest → /tmp/claude-0/-home-user-ClinicalSageAI-2-replit/0d57ee1e-feb7-587e-9df6-b4664672a1d4/scratchpad/clean-db/manifests/portfolio/manifest.json
