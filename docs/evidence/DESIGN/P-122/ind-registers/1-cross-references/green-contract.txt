@@ -1,0 +1,12 @@
+# routes.contract.integration.test.ts: the cross-reference cases assert the refusal without a request scope or project (the served register is the DB test).
+  ✓ POST /cross-reference-register → 200 not ready when an LOA is missing
+  ✓ POST /cross-reference-register → 400 without references[]
+  ✓ POST /submission/:id/cross-references → 400 on a bad file type, before anything is read
+  ✓ POST …/file-loa → 400 without a 4-digit sequenceNumber, before anything is read
+  ✓ GET /submission/:id/cross-references is refused without the project admitted
+  ✓ GET /submission/:id/cross-reference-register is refused without the project admitted
+  ✓ POST /submission/:id/cross-references is refused without the project admitted
+  ✓ POST /submission/:id/cross-references/00000000-0000-4000-8000-000000000000/file-loa is refused without the project admitted
+  ✓ PATCH and DELETE /cross-references/:id are refused without the project admitted
+ Test Files  1 passed (1)
+      Tests  90 passed (90)

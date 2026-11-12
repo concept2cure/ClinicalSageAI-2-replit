@@ -1,0 +1,18 @@
+# tests/db/ind-audit-outcomes.dbtest.ts, anchored
+  ✓ IND audit outcome native qualification > uses genuine membership, ALS, LazyRequestDbClient, configured transport and FORCE RLS as app_service
+  ✓ IND draft and filing audit outcomes > safety returns its real draft and filed record for none, without a false 500
+  ✓ IND draft and filing audit outcomes > safety returns its real draft and filed record for audit-refusal, without a false 500
+  ✓ IND draft and filing audit outcomes > safety returns its real draft and filed record for audit-thrown, without a false 500
+  ✓ IND draft and filing audit outcomes > annual returns its real draft and filed record for none, without a false 500
+  ✓ IND draft and filing audit outcomes > annual returns its real draft and filed record for audit-refusal, without a false 500
+  ✓ IND draft and filing audit outcomes > annual returns its real draft and filed record for audit-thrown, without a false 500
+  ✓ IND draft and filing audit outcomes > amendment returns its real draft and filed record for none, without a false 500
+  ✓ IND draft and filing audit outcomes > amendment returns its real draft and filed record for audit-refusal, without a false 500
+  ✓ IND draft and filing audit outcomes > amendment returns its real draft and filed record for audit-thrown, without a false 500
+  ✓ IND snapshots and admission > returns the saved blocked snapshot and root outcome for none
+  ✓ IND snapshots and admission > returns the saved blocked snapshot and root outcome for audit-refusal
+  ✓ IND snapshots and admission > returns the saved blocked snapshot and root outcome for audit-thrown
+  ✓ IND snapshots and admission > denies anonymous, viewer and forged membership before a register write
+  ✓ IND snapshots and admission > reports an actual PostgreSQL business refusal without an audit or a saved row, then recovers
+ Test Files  1 passed (1)
+      Tests  15 passed (15)

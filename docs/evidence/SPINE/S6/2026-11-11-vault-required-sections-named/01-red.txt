@@ -1,0 +1,16 @@
+$ npx vitest run client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx   (the new cases, before the change)
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > shows the counts and the rule pack they come from, and no percentage 217ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > tells AnA the same counts the page shows 112ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > says when the list is the ICH baseline and not the program's own 144ms
+ × client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > names each missing section from the filing’s outline, and says only the number where the outline has no name 313ms
+   → Unable to find an element by: [data-testid="vault-coverage-name-2.5"]
+ × client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > names a missing section for a reader who may not file, too 122ms
+   → Unable to find an element by: [data-testid="vault-coverage-name-2.5"]
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > files an existing document at a missing section through the filing call 305ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > shows why when there is no figure, and never "0 of" 167ms
+ ✓ client/src/concept2cure/v2/__tests__/vaultCoverage.test.tsx > Vault coverage > a device filing's coverage opens its outline in the Library 461ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+TestingLibraryElementError: Unable to find an element by: [data-testid="vault-coverage-name-2.5"]
+TestingLibraryElementError: Unable to find an element by: [data-testid="vault-coverage-name-2.5"]
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)

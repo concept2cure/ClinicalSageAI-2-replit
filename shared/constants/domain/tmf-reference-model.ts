@@ -14,6 +14,9 @@
  *   - shared/constants/domain/vault-taxonomy.ts — the service view's zone folders
  *   - server/services/vault/vault-filing.service.ts — zone → folder id
  *   - client/src/concept2cure/v2/surfaces/Etmf.tsx — artifact names
+ *   - server/services/gcp-operations/gcp-operations-reference.ts — the zone
+ *     each essential document is filed in, and the TMF structure AnA's
+ *     plan_essential_documents returns
  *
  * Until 2026-10-30 (docs/design/ETMF_CONVERGENCE_2026-10-30.md, slice E1) this
  * file was a zone-level mirror, the full catalog lived in tmf-completeness.ts
@@ -21,14 +24,15 @@
  * zone list; zone 4 was spelled "Other" here and in etmf-logic.ts, "other" in
  * the two full catalogs. The content below is tmf-completeness.ts's, verbatim
  * (zone 4 included); etmf-logic.ts and tmf-completeness.ts import it and the
- * client copy is deleted. The seven zones in
- * server/services/gcp-operations/gcp-operations-reference.ts are not this
- * catalog: they group the essential-records library into sponsor-TMF and
- * investigator-site-file areas and are left as they are.
+ * client copy is deleted. E1 left the seven "abridged" zones in
+ * server/services/gcp-operations/gcp-operations-reference.ts as they were; its
+ * review (2026-11-10) found AnA returning them as the TMF's structure, so they
+ * are deleted too and that library names zones of this catalog by number.
  *
  * DRIFT GUARD: server/services/__tests__/vault-taxonomy-etmf.test.ts requires
  * the server catalog to be this object, zone numbers and names to agree in
- * every consumer, and no other source file to spell out the catalog.
+ * every consumer, no other tracked source file to spell out the catalog or
+ * declare a zone list, and the essential-documents library to sit in its zones.
  *
  * Reference: DIA Trial Master File Reference Model v3.x (zone/artifact taxonomy);
  * ICH E6(R3) Appendix C (Essential Records for the Conduct of a Clinical Trial).
