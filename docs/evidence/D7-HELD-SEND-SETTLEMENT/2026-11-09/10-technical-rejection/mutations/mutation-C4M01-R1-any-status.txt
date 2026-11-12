@@ -1,0 +1,13 @@
+MUTATION C4M01-R1-any-status in server/services/ectd/filed-sequence-rejection.ts (on the final code and tests, 2026-11-09T18:27:21.040631Z): replaced [  if (status === 'sent') return null;
+] with [  if (status !== null || true) return null;
+]
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > R1-R3 refuse acknowledged, before anyone signs, in words 383ms
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > R1-R3 refuse already rejected, before anyone signs, in words 14ms
+ × server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > R1-R3 refuse not received, before anyone signs, in words 13ms
+ ✓ server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > R1-R3 refuse a send with no claim, before anyone signs, in words 11ms
+ ✓ server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > R1-R3 refuse a test send, before anyone signs, in words 15ms
+ ✓ server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > R1-R3 refuse a send with no environment named, before anyone signs, in words 11ms
+ ✓ server/services/submission-service/__tests__/technical-rejection.pglite.test.ts > P-92 C4: FDA's failed Ack3 is recorded on the sequence by a signed act > R1-R3 refuse a transmission FDA's center accepted, before anyone signs, in words 11ms
+      Tests  3 failed | 4 passed | 19 skipped (26)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 414123a00f55a460f9eefc0a230219dfbabab1dca99a12fc1ed03a96a87004a3 (expected 414123a00f55a460f9eefc0a230219dfbabab1dca99a12fc1ed03a96a87004a3)

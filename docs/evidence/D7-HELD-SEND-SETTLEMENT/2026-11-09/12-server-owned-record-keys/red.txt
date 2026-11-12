@@ -1,0 +1,11 @@
+# F1 (P-92): red, 2026-11-09T20:21:04Z, at dbeb901b17, before the guard stamps P-92's record keys: transmit-records-what-was-sent.test.ts
+ ✓ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > stamps the leaf manifest of the package it hands the gateway, and its binding 15ms
+ ✓ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > a caller cannot supply what was sent: a bound transmit’s are overwritten 3ms
+ ✓ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > and an unbound transmit’s are removed, so nothing reads it as a sequence’s send 3ms
+ × server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > a caller cannot supply a signed act’s record either: P-92’s keys never reach the row, bound or unbound 8ms
+   → heldSendSettlement (bound): expected { applicationId: 'IND123456', …(10) } to not have property "heldSendSettlement"
+ ✓ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > a sequence transmit with no leaf manifest is refused before anything is kept or sent 1ms
+ ✓ server/services/submission-gateways/__tests__/transmit-records-what-was-sent.test.ts > a sequence transmit records what it carries, beside where its bytes are kept > the FDA ESG transmittal row, written before any connection, carries both 3ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)

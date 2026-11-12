@@ -1,0 +1,9 @@
+MUTATION refusal-dropped in server/routes/ectd-compile.ts (2026-11-09T19:46:13.901617Z): the on-file refusal's call removed; tests/db/ectd-filed-state-view.dbtest.ts -t 'already on file', on PostgreSQL as app_service with RLS_ENFORCE=on
+ × tests/db/ectd-filed-state-view.dbtest.ts > a compile of a sequence already on file is refused and not recorded (P-99 C1) > a sent sequence with a placed leaf and no compile: 409, no compilation row, and the view unchanged 5313ms
+   → {"id":"comp_1794253573796_af22a917-4750-4cc8-bc95-683c1f7486c3","projectId":null,"projectIdent":"af22a917-4750-4cc8-bc95-683c1f7486c3","programId":"af22a917-4750-4cc8-bc95-683c1f7486c3","status":"failed","startedAt":"2026-11-09T19:46:11.917Z","completedAt":"2026-11-09T19:46:13.796Z","modules":[{"moduleCode":"m1","moduleName":"Administrative Information","totalSections":0,"completedSections":0,"req: expected 200 to be 409 // Object.is equality
+      Tests  1 failed | 7 skipped (8)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: {"id":"comp_1794253573796_af22a917-4750-4cc8-bc95-683c1f7486c3","projectId":null,"projectIdent":"af22a917-4750-4cc8-bc95-683c1f7486c3","programId":"af22a917-4750-4cc8-bc95-683c1f7486c3","status":"failed","startedAt":"2026-11-09T19:46:11.917Z","completedAt":"2026-11-09T19:46:13.796Z","modules":[{"moduleCode":"m1","moduleName":"Administrative Information","totalSections":0,"completedSections":0,"req: expected 200 to be 409 // Object.is equality
+- Expected
++ Received
+restored sha256 5dab32d91326cbc63d1c395851beda9a894766b153e828e9a6d0ffcc2792c883 (expected 5dab32d91326cbc63d1c395851beda9a894766b153e828e9a6d0ffcc2792c883)

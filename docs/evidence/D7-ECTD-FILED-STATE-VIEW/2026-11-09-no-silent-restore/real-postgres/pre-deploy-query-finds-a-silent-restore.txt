@@ -1,0 +1,34 @@
+-- P-99 C1: the pre-deploy query finds what it is for, on the throwaway database (2026-11-09T19:46:56Z), in a transaction rolled back.
+
+BEGIN;
+BEGIN
+INSERT INTO audit_logs (tenant_id, action, table_name, record_id, occurred_at)
+SELECT organization_id, 'ECTD_TRANSMITTED', 'ectd_sequence', id::text, now() - interval '1 day' FROM ectd_sequences WHERE id IN (16, 25);
+INSERT 0 2
+INSERT INTO ectd_compilations (organization_id, compilation_name, compilation_type, status, sequence_number, submission_id, compiled_at)
+SELECT organization_id, 'pre-deploy query check (after the send)', 'module', 'completed', sequence_number, submission_id, now() FROM ectd_sequences WHERE id = 16;
+INSERT 0 1
+INSERT INTO ectd_compilations (organization_id, compilation_name, compilation_type, status, sequence_number, submission_id, compiled_at)
+SELECT organization_id, 'pre-deploy query check (before the send)', 'module', 'completed', sequence_number, submission_id, now() - interval '2 days' FROM ectd_sequences WHERE id = 25;
+INSERT 0 1
+SELECT s.organization_id, s.submission_id, s.id AS sequence_id, s.sequence_number, s.dispatch_status, t.sent_at
+  FROM ectd_sequences s
+  JOIN LATERAL (SELECT min(a.occurred_at) AS sent_at FROM audit_logs a
+                 WHERE a.tenant_id = s.organization_id AND a.action = 'ECTD_TRANSMITTED'
+                   AND a.record_id = s.id::text) t ON t.sent_at IS NOT NULL
+ WHERE s.deleted_at IS NULL AND s.dispatch_status IN ('sent', 'acknowledged')
+   AND EXISTS (SELECT 1 FROM ectd_compilations c
+                WHERE c.organization_id = s.organization_id AND c.submission_id = s.submission_id
+                  AND c.sequence_number = s.sequence_number AND c.compilation_type <> 'rehearsal')
+   AND NOT EXISTS (SELECT 1 FROM ectd_compilations c
+                WHERE c.organization_id = s.organization_id AND c.submission_id = s.submission_id
+                  AND c.sequence_number = s.sequence_number AND c.compilation_type <> 'rehearsal'
+                  AND c.compiled_at <= t.sent_at);
+ organization_id | submission_id | sequence_id | sequence_number | dispatch_status |            sent_at            
+-----------------+---------------+-------------+-----------------+-----------------+-------------------------------
+              15 |             8 |          16 | 0000            | sent            | 2026-11-08 19:46:56.446767+00
+(1 row)
+
+ROLLBACK;
+ROLLBACK
+psql exit=0

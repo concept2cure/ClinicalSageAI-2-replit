@@ -1,0 +1,5 @@
+MUTATION C3M10-receipt-not-applied in server/services/submission-gateways/fda-esg-receipts.ts (on the final code and tests, 2026-11-09T19:27:29.350198Z): replaced [            mdn_raw = COALESCE($6::text, mdn_raw),] with [            mdn_raw = mdn_raw,]
+ × server/services/submission-service/__tests__/held-send-reopen.pglite.test.ts > P-92 C3: a settlement FDA's verified answer contradicts is re-opened on that answer > a release FDA received: the sequence is sent with its claim restored, the transmittal received with FDA's receipt 398ms
+      Tests  1 failed | 11 skipped (12)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 9caa7a9cf41bb3cf42f1fe9fc00237507da772199f5d3e6153b77dc3d85ce711 (expected 9caa7a9cf41bb3cf42f1fe9fc00237507da772199f5d3e6153b77dc3d85ce711)

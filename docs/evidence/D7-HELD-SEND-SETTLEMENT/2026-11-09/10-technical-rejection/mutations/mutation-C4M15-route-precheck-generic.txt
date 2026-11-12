@@ -1,0 +1,5 @@
+MUTATION C4M15-route-precheck-generic in server/routes/submissions.ts (on the final code and tests, 2026-11-09T18:29:37.087198Z): replaced [    if (parsed.data.step === 'technical-rejection') {] with [    if (parsed.data.step === ('never' as string)) {]
+ × server/routes/__tests__/submissions-technical-rejection.test.ts > the technical rejection's precheck, answered at the route > sends the step, with or without the Ack3, to its own function, never to the generic precheck 38ms
+      Tests  1 failed | 4 skipped (5)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+restored sha256 ff29a929a6c76a0136e4d253e3ffb223754a90a8b9da4a9ffef9c9c8afc4df84 (expected ff29a929a6c76a0136e4d253e3ffb223754a90a8b9da4a9ffef9c9c8afc4df84)
