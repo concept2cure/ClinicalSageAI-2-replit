@@ -195,3 +195,46 @@ export function evaluateConsentCompleteness(elements: ConsentElementView[], opts
   const readyToApprove = requiredTotal > 0 && missingRequired.length === 0;
   return { requiredPresentPct, requiredTotal, requiredPresent, missingRequired, findings, readyToApprove };
 }
+
+/** What a read-only screen shows of a consent form: the approval gate's own verdict. */
+export interface ConsentGateView {
+  requiredTotal: number;
+  requiredComplete: number;
+  /** Null when nothing is required: there is then no ratio. */
+  pct: number | null;
+  readyToApprove: boolean;
+  /** Why each incomplete required element is incomplete, in the gate's words. */
+  findings: string[];
+  /** Element keys the gate counts as not satisfied. */
+  incomplete: string[];
+  /** For an approved or superseded form: required elements added to the platform's requirements after it. */
+  predates: string[];
+}
+
+/**
+ * The gate's verdict for display (2026-11-11, F1). The protocol's consent tab
+ * computed "% complete" from the `present` ticks, so a form approval would
+ * refuse — no content, no FDA-inspection wording, an element not yet on the
+ * form — read "100% complete". A screen shows this instead: the same
+ * evaluateConsentCompleteness the approve path enforces.
+ */
+export function consentGateView(elements: ConsentElementView[], status: string): ConsentGateView {
+  const expected = consentElementTemplates();
+  /* The gate names an element by its key, which is what the approve path's
+     refusal and the audit row carry. A person reads its title. */
+  const titleOf = (key: string): string =>
+    canonicalKeysFor(key).map((k) => byId.get(k)?.label).filter(Boolean).join('; ') || key;
+  const readable = (message: string): string =>
+    message.replace(/^Required consent element "([^"]+)"/, (_m, key: string) => `"${titleOf(key)}"`);
+  const r = evaluateConsentCompleteness(elements, { expected });
+  const signed = status === 'approved' || status === 'superseded';
+  return {
+    requiredTotal: r.requiredTotal,
+    requiredComplete: r.requiredPresent,
+    pct: r.requiredPresentPct,
+    readyToApprove: r.readyToApprove,
+    findings: r.findings.filter((f) => f.severity === 'critical').map((f) => readable(f.message)),
+    incomplete: r.missingRequired,
+    predates: signed ? missingTemplateElements(elements, expected).filter((t) => t.required).map((t) => t.title) : [],
+  };
+}
