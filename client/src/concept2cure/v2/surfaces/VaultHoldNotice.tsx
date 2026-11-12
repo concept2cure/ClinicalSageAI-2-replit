@@ -4,8 +4,9 @@
  * Every reader of the project sees that the document is held, under which
  * matter reference and since when, before they are offered a withdrawal. A
  * project hold covers every document; a document hold covers the version it
- * names. The hold's reason, and placing and lifting, are in Admin › Settings,
- * for the roles that hold that authority. When the holds could not be read the
+ * names. A hold is placed from the record itself (VaultPlaceHold.tsx, P-125
+ * point 8) by the roles that hold that authority; its reason, and lifting it,
+ * are in Admin › Settings. When the holds could not be read the
  * notice says so: an unread hold is never shown as no hold.
  */
 import React from 'react';
@@ -30,7 +31,7 @@ const day = (iso: string) => {
 
 export function holdNoticeText(covering: readonly VaultHoldNoticeShape[]): string {
   const each = covering.map((h) => `${h.reference} (${h.scope === 'program' ? 'the whole project' : 'this version'}, since ${day(h.placedAt)})`);
-  return `On legal hold: ${each.join('; ')}. While a hold is in place this document cannot be withdrawn or disposed of. Holds are placed and lifted in Admin, Settings.`;
+  return `On legal hold: ${each.join('; ')}. While a hold is in place this document cannot be withdrawn or disposed of. A hold is lifted in Admin, Settings.`;
 }
 
 export function VaultHoldNotice({ holds, unreadable, documentId }: {
