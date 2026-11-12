@@ -131,7 +131,7 @@ describe('it refuses rather than assess the wrong thing', () => {
   it('does not assess an EMA readiness for a program recorded as a US NDA either', async () => {
     stub({ type: typeRow('EU_EMA'), project: { metadata: { registryId: 'US_NDA' } } });
     await expect(computeRegionalRun(EMA_MAA, 3, 'project', '11')).rejects.toThrow(
-      /assesses a EU filing/,
+      /assesses an EU filing/,
     );
   });
 
@@ -162,7 +162,7 @@ describe('it refuses rather than assess the wrong thing', () => {
     // its own branch: the market matches and the report still does not.
     stub({ project: { metadata: { registryId: 'US_ANDA' } } });
     await expect(computeRegionalRun(FDA_NDA, 3, 'project', '11')).rejects.toThrow(
-      /assesses a nda or bla filing. This project is recorded as/,
+      /assesses an NDA or BLA filing\. This project is recorded as/,
     );
   });
 

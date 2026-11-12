@@ -94,3 +94,14 @@ describe('the catalog says a region and a reporting role in words, never as the 
     expect(document.querySelectorAll('.rl-card')).toHaveLength(1);
   });
 });
+
+describe('a report that is not offered is named once', () => {
+  it('shows the server’s sentence as it is when it opens with the report’s name', () => {
+    const reason = 'EMA MAA assessment assesses an EU filing. This project is recorded as an IND, so it was not assessed under this market’s name.';
+    render(<CatalogPanel canRun onRun={onRun} programLabel="LMN-201" projectId={11}
+      types={[row('ema.maa_readiness_assessment', 'EMA MAA assessment', 'not-applicable', reason, 'EU_EMA')]} />);
+    const note = screen.getByRole('note');
+    expect(note.textContent?.trim()).toBe(reason);
+    expect(note.textContent?.match(/EMA MAA assessment/g)).toHaveLength(1);
+  });
+});

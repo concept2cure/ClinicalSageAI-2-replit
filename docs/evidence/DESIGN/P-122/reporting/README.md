@@ -47,10 +47,24 @@ LMN-201 as the Lumen lead, 1440 px: `screenshots/after-landing-1440.png` (the li
 `screenshots/after-catalog-1440.png` (reached by that button; the first card in words). No request failed and the
 console was clean.
 
+## Second change (2026-11-12, `5ed006764b`): why a regional report is not offered, in words
+
+The catalog's three notes for LMN-201 read "EMA MAA Readiness Assessment — EMA MAA Readiness Assessment assesses a
+EU filing…", "…assesses a nda or bla filing…" and "…assesses a JP filing…"
+(`screenshots/before-catalog-1440.png`).
+- `server/services/report-os/regional/filing-applicability.ts` now words the market and the filing kinds: "an EU
+  filing", "a Japanese filing", "an NDA or BLA filing". Its reason for a filing with no Module 1 record lists what
+  the record covers in words. The reason codes and the refusals are unchanged.
+- The catalog shows a reason that opens with the report's name as it is, so the name is said once.
+- **Red first:** three server cases (`filing-applicability.test.ts`) and one client case
+  (`insightsRegionalCatalog.test.tsx`). **Green:** the five regional suites and the 32 Reporting suites, 373 of 373.
+- **Walked** after a restart on that commit: `screenshots/after-catalog-notes-1440.png`. The three notes read
+  "EMA MAA Readiness Assessment assesses an EU filing. …", "FDA NDA / BLA Filing Readiness Assessment (eCTD) assesses
+  an NDA or BLA filing. …" and "PMDA J-NDA / Shonin Approval Readiness Pack assesses a Japanese filing. …". No
+  request failed.
+
 ## Found, not fixed
 
-- **The reasons a regional report is not offered are written with stored values:** "assesses a nda or bla filing",
-  "a JP filing", and each begins by repeating the report's name. They are the server's `availabilityReason`.
 - **The catalog's count lines use internal words:** "0 unregistered", "25 uncomputed", "5 prediction unavailable".
 - **"Runs over: project, submission, program, account"** reads as stored scope names.
 - **Not walked at 390 px or in dark.**
