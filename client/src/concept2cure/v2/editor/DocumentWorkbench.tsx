@@ -151,6 +151,7 @@ import { AuthoringSignatures } from '../surfaces/AuthoringSignatures';
 import { useDialog } from '../useDialog';
 import { AuthoredHtml, documentReadCitations } from './AuthoredHtml';
 import { ConsentElementsCheck, type ConsentElementsCheckData } from './ConsentElementsCheck';
+import { noFlagsSentence, notRunSentence, type SkippedCheck } from './sectionCheckSentences';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { getSurfaceMeta } from '../registryModel';
 
@@ -721,6 +722,8 @@ interface ScanResults {
    *  cannot drift from the checks the handler actually runs. */
   checks_run?: number;
   checks_passed?: number;
+  /** Checks the server did not run on this section, each with its reason. */
+  checks_skipped?: SkippedCheck[];
   scanned_at?: string;
 }
 
@@ -5384,13 +5387,7 @@ export function DocumentWorkbench({
                       </button>
                     </div>
                     {check.deficiencies.length === 0 ? (
-                      <span style={{ fontSize: 12 }}>
-                        {typeof check.checks_run === 'number' && check.checks_run > 0
-                          ? `No flags. The section passed all ${check.checks_run} mechanical checks `
-                          : 'No flags. The section passed the mechanical checks '}
-                        (length, module keywords, CTD elements where defined, tables,
-                        placeholders, structure) — this is not a review.
-                      </span>
+                      <span style={{ fontSize: 12 }}>{noFlagsSentence(check.checks_run, check.checks_skipped)}</span>
                     ) : (
                       [...check.deficiencies]
                         .sort(
@@ -5521,6 +5518,9 @@ export function DocumentWorkbench({
                         when the server sent it — a failed read of the sections is not "it agrees" —
                         and it never says the figures are consistent, only that none of the pairs it
                         compared disagree, with the count it compared beside it. */}
+                    {notRunSentence(check.checks_skipped) && (
+                      <span data-testid="section-check-not-run" style={{ fontSize: 12, opacity: 0.75 }}>{notRunSentence(check.checks_skipped)}</span>
+                    )}
                     {check.consent_elements && <ConsentElementsCheck check={check.consent_elements} />}
                     {check.document_figure_consistency && (
                       <div
