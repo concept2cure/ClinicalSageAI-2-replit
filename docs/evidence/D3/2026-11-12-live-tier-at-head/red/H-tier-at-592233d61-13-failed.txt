@@ -1,0 +1,23 @@
+npm run test:db at 592233d61dee47f7be8bc8d062586008baf8609b, 2026-11-12 21:23:22Z to 21:38:52Z
+Read from the JSON report of that run (vitest --reporter=json). The default reporter printed the same totals.
+Test files  2 failed | 262 passed (264)
+Tests       13 failed | 3248 passed (3261)
+Skipped or todo: 0 pending, 0 todo
+
+tests/db/tenant-purge-blocking-keys.dbtest.ts: 3 failed, 3 passed
+  x a tenant with a row in every table that names a purged row with no delete action A's export holds each of A's rows the purge will erase and none of B's, table by table, in A's scope and as the owner
+  x a tenant with a row in every table that names a purged row with no delete action is purged, the way the route runs it, once custody of its export is signed
+  x a tenant with a row in every table that names a purged row with no delete action A's rows are gone from every table the purge erases, and B keeps every one of its rows, table by table
+
+tests/db/vault-estar-required-sections.dbtest.ts: 10 failed, 2 passed
+  x a 510(k): the Library and the eSTAR mapper give one answer every section: the Library's mark and blocker are the mapper's answer for this device
+  x a 510(k): the Library and the eSTAR mapper give one answer D4 Sterilization is required of a sterile device, and blocks while D4 and D5 are empty
+  x a 510(k): the Library and the eSTAR mapper give one answer D6 risk management turns on the kind of 510(k), and does not block
+  x a 510(k): the Library and the eSTAR mapper give one answer performance testing is one requirement: animal testing on file, so bench testing does not block
+  x a 510(k): the Library and the eSTAR mapper give one answer a section no mapper slot takes keeps its pack's flag: A2 and B3 stay required
+  x a 510(k): the Library and the eSTAR mapper give one answer follows the device: once the project answers that it is not sterile, D4 is not applicable
+  x a De Novo whose device questions were never answered every section: the Library's mark and blocker are the mapper's answer
+  x a De Novo whose device questions were never answered a section no mapper slot takes keeps its pack's flag: B2, C2 and C4 stay required
+  x a De Novo whose device questions were never answered a section that turns on an unanswered question is not decided, never optional, and names the question
+  x where no eSTAR applies, the pack's flag is still the rule pma:fda fda-pma-21cfr814-20-v1.1
+

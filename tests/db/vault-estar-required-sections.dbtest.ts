@@ -101,20 +101,31 @@ async function filing(t: Tenant, docType: string, agency: string, version: strin
   return { id, pack };
 }
 
-/** The Library's leaves under one filing document, by section key. */
+/**
+ * The Library's leaves of one filing document, by section key.
+ *
+ * Read from wherever the Library puts them, not from one top-level folder. Since
+ * the Library lists a filing's outline once (P-123 item 8,
+ * `placeAuthoredSectionsInBinder` in server/services/vault/vault-binder-outline.ts),
+ * an authored section sits in the binder heading with its key and carries its
+ * filing document's id; a section the binder has no heading for stays under the
+ * document's own folder, and that folder leaves the tree once nothing is left in
+ * it. A filing the binder is not the outline of (another agency, another type)
+ * keeps its folder whole. All three are the same document's sections.
+ */
 async function libraryLeaves(t: Tenant, documentId: string): Promise<Map<string, Leaf>> {
   const res = await request(await appFor(t)).get(`/api/c2c/project-vault/${t.programId}`);
   expect(res.status, JSON.stringify(res.body).slice(0, 400)).toBe(200);
-  const folder = (res.body.data.tree as Array<{ filingDocumentId?: string; children: unknown[] }>).find((f) => f.filingDocumentId === documentId);
-  expect(folder, 'the filing document is in the Library').toBeTruthy();
   const out = new Map<string, Leaf>();
-  const walk = (nodes: unknown[]) => {
-    for (const n of nodes as Array<Leaf & { children?: unknown[] }>) {
-      if (Array.isArray(n.children)) walk(n.children);
-      else out.set(n.num, n);
+  const walk = (nodes: unknown[], underDocument: boolean) => {
+    for (const n of nodes as Array<Leaf & { filingDocumentId?: string; children?: unknown[] }>) {
+      const ofDocument = underDocument || n.filingDocumentId === documentId;
+      if (Array.isArray(n.children)) walk(n.children, ofDocument);
+      else if (ofDocument) out.set(n.num, n);
     }
   };
-  walk(folder!.children);
+  walk(res.body.data.tree as unknown[], false);
+  expect(out.size, 'the filing document is in the Library').toBeGreaterThan(0);
   return out;
 }
 
